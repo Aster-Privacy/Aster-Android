@@ -13,7 +13,7 @@
     <string name="settings_feat_max_attachment">Tamanho máximo de anexo</string>
     <string name="settings_feat_daily_send">Limite diário de envio</string>
     <string name="settings_feat_email_retention">Retenção de e-mails</string>
-    <string name="settings_feat_e2ee">Criptografia de ponta a ponta</string>
+    <string name="settings_feat_e2ee">Encriptação de ponta a ponta</string>
     <string name="settings_feat_zero_knowledge">Arquitetura de acesso zero</string>
     <string name="settings_feat_aliases">Aliases de e-mail</string>
     <string name="settings_feat_custom_domains">Domínios personalizados</string>
@@ -31,14 +31,14 @@
     <string name="settings_feat_smart_folders">Pastas inteligentes</string>
     <string name="settings_feat_advanced_search">Pesquisa avançada</string>
     <string name="settings_feat_search_history">Histórico de pesquisa</string>
-    <string name="settings_feat_contacts">Contatos</string>
+    <string name="settings_feat_contacts">Contactos</string>
     <string name="settings_feat_contact_groups">Grupos de contactos</string>
     <string name="settings_feat_two_factor">Autenticação de dois fatores</string>
     <string name="settings_feat_recovery_codes">Códigos de recuperação</string>
     <string name="settings_feat_password_folders">Pastas protegidas por palavra-passe</string>
     <string name="settings_feat_session_mgmt">Gestão de sessões</string>
     <string name="settings_feat_login_notifs">Notificações de início de sessão</string>
-    <string name="settings_feat_encrypted_exports">Exportações criptografadas</string>
+    <string name="settings_feat_encrypted_exports">Exportações encriptadas</string>
     <string name="settings_feat_hardware_keys">Chaves de segurança físicas</string>
     <string name="settings_feat_no_ads">Sem anúncios</string>
     <string name="settings_feat_no_tracking">Sem rastreamento</string>

@@ -22,7 +22,7 @@
     <string name="refresh">Atualizar</string>
     <string name="loading">A carregar...</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
-    <string name="password">Senha</string>
+    <string name="password">Palavra-passe</string>
     <string name="email">E-mail</string>
     <string name="username">Nome de utilizador</string>
     <string name="unknown">Desconhecido</string>
@@ -46,7 +46,7 @@
     <string name="password_placeholder">Introduza a sua palavra-passe</string>
     <string name="forgot_password">Esqueceu-se da palavra-passe?</string>
     <string name="sign_in">Entrar</string>
-    <string name="sign_up">Cadastrar</string>
+    <string name="sign_up">Registar</string>
     <string name="no_account_prompt">Não tem uma conta? </string>
     <string name="have_account_prompt">Já tem uma conta? </string>
 
@@ -132,9 +132,9 @@
     <string name="folder_scheduled">Agendados</string>
     <string name="folder_snoozed">Adiados</string>
     <string name="folder_spam">Spam</string>
-    <string name="folder_trash">Lixeira</string>
+    <string name="folder_trash">Lixo</string>
     <string name="folder_all_mail">Todos os e-mails</string>
-    <string name="folder_contacts">Contatos</string>
+    <string name="folder_contacts">Contactos</string>
     <string name="folder_subscriptions">Inscrições</string>
 
     <string name="all_caught_up">A sua caixa de entrada está vazia</string>
@@ -167,7 +167,7 @@
     <string name="mark_all_unread">Marcar tudo como não lido</string>
     <string name="select">Selecionar</string>
     <string name="select_all">Selecionar tudo</string>
-    <string name="empty_trash">Esvaziar lixeira</string>
+    <string name="empty_trash">Esvaziar lixo</string>
     <string name="empty_trash_confirm">Eliminar permanentemente todas as mensagens no Lixo? Esta ação não pode ser anulada.</string>
     <string name="delete_all">Eliminar tudo</string>
     <string name="open_drawer">Abrir gaveta</string>
@@ -301,7 +301,7 @@
     <string name="image">Imagem</string>
     <string name="device_file">Ficheiro do dispositivo</string>
     <string name="photo">Foto</string>
-    <string name="camera">Câmera</string>
+    <string name="camera">Câmara</string>
     <string name="cloud">Nuvem</string>
     <string name="send_from">Enviar de</string>
     <string name="primary_account">Conta principal</string>
@@ -320,7 +320,7 @@
     <string name="filter_unread">Não lido</string>
     <string name="filter_unread_only">Apenas não lidos</string>
     <string name="filter_starred">Com estrela</string>
-    <string name="filter_encrypted">Criptografado</string>
+    <string name="filter_encrypted">Encriptado</string>
     <string name="decrypting_indexing">A desencriptar e a indexar o correio...</string>
     <string name="search_operators">OPERADORES DE PESQUISA</string>
     <string name="op_from">from:</string>
@@ -350,7 +350,7 @@
     <string name="search_privacy_note">Todas as pesquisas são encriptadas ponto a ponto. O seu correio é desencriptado localmente neste dispositivo - nada é enviado para o servidor.</string>
     <string name="no_results_found">Nenhum resultado encontrado</string>
 
-    <string name="contacts">Contatos</string>
+    <string name="contacts">Contactos</string>
     <string name="syncing">A sincronizar</string>
     <string name="sync_contacts">Sincronizar contactos</string>
     <string name="search_contacts">Pesquisar contactos</string>
@@ -371,7 +371,7 @@
     <string name="personal">Pessoal</string>
     <string name="work">Trabalho</string>
     <string name="phone">Telefone</string>
-    <string name="mobile">Celular</string>
+    <string name="mobile">Telemóvel</string>
     <string name="company">Empresa</string>
     <string name="title">Título</string>
     <string name="birthday">Aniversário</string>
@@ -432,7 +432,7 @@
     <string name="settings_accessibility_subtitle">Reduzir movimento, contraste</string>
     <string name="settings_security">Segurança</string>
     <string name="settings_security_subtitle">Palavra-passe, 2FA, sessões</string>
-    <string name="settings_encryption">Criptografia</string>
+    <string name="settings_encryption">Encriptação</string>
     <string name="settings_encryption_subtitle">Chaves PGP e recuperação</string>
     <string name="settings_aliases">Aliases</string>
     <string name="settings_domains">Domínios</string>
@@ -455,7 +455,7 @@
     <string name="smtp_token_port">Porta</string>
     <string name="smtp_token_security">Segurança</string>
     <string name="smtp_token_username">Nome de utilizador</string>
-    <string name="smtp_token_password">Senha</string>
+    <string name="smtp_token_password">Palavra-passe</string>
     <string name="smtp_token_copy_all">Copiar tudo</string>
     <string name="smtp_token_never_used">Nunca</string>
     <string name="smtp_token_revoke_title">Revogar token?</string>
@@ -669,7 +669,7 @@
     <string name="hours_ago">%dh atrás</string>
     <string name="days_ago">%dd atrás</string>
 
-    <string name="encryption_title">Criptografia</string>
+    <string name="encryption_title">Encriptação</string>
     <string name="identity_key">Chave de identidade</string>
     <string name="account">Conta</string>
     <string name="identity_key_fingerprint">Impressão digital da chave de identidade</string>
@@ -681,7 +681,7 @@
     <string name="recovery">Recuperação</string>
     <string name="key_rotation">Rotação de chaves</string>
     <string name="key_rotation_description">A sua chave de identidade é renovada sempre que muda a sua palavra-passe. As chaves anteriores são guardadas localmente para que as mensagens antigas continuem a poder ser desencriptadas.</string>
-    <string name="key_management">Gerenciamento de chaves</string>
+    <string name="key_management">Gestão de chaves</string>
     <string name="key_management_description">A rotação de chaves, a gestão de chaves PGP e a verificação de chaves de contactos estão disponíveis na aplicação web.</string>
 
     <string name="enter_your_password">Introduza a sua palavra-passe</string>
@@ -887,7 +887,7 @@
     <string name="ext_smtp_username">Nome de utilizador SMTP</string>
     <string name="ext_smtp_password">Palavra-passe SMTP</string>
     <string name="ext_field_email">Endereço de e-mail</string>
-    <string name="ext_field_password">Senha</string>
+    <string name="ext_field_password">Palavra-passe</string>
     <string name="ext_app_password_required">Este fornecedor exige uma palavra-passe de aplicação e não a palavra-passe habitual da conta.</string>
     <string name="ext_app_password_create">Criar uma palavra-passe de aplicação</string>
     <string name="ext_server_settings">Definições do servidor</string>
@@ -922,7 +922,7 @@
     <string name="ext_gmail_wizard_step_5_title">Cole a palavra-passe de app</string>
     <string name="ext_gmail_wizard_step_5_body">Cole a palavra-passe de aplicação abaixo, com ou sem espaços. O Aster guarda-a encriptada e utiliza-a apenas para sincronizar esta caixa de correio.</string>
     <string name="ext_gmail_wizard_import_note">O Aster importa todo o seu correio, incluindo as mensagens arquivadas, as enviadas e as etiquetas. Caixas de correio grandes podem demorar alguns dias, e pode continuar a utilizar o Aster durante a importação.</string>
-    <string name="ext_gmail_wizard_password_label">Senha de app</string>
+    <string name="ext_gmail_wizard_password_label">Palavra-passe de aplicação</string>
     <string name="ext_gmail_wizard_connect">Ligar o Gmail</string>
     <string name="ext_save_imap">Guardar conta IMAP</string>
     <string name="ext_no_accounts">Ainda não há contas externas.</string>
@@ -1180,7 +1180,7 @@
     <string name="locked_data_banner_dismiss">Dispensar</string>
     <string name="recover_data_title">Recuperar dados</string>
     <string name="recover_data_description">Para desbloquear dados anteriores a uma alteração ou reposição da palavra-passe, introduza a palavra-passe que utilizava nessa altura.</string>
-    <string name="recover_data_previous_password">Senha anterior</string>
+    <string name="recover_data_previous_password">Palavra-passe anterior</string>
     <string name="recover_data_button">Recuperar</string>
     <string name="recover_data_success">Os seus dados mais antigos foram desbloqueados.</string>
     <string name="recover_data_no_match">Essa palavra-passe não desbloqueou nenhum dado. Experimente outra palavra-passe anterior.</string>
@@ -1249,7 +1249,7 @@
     <string name="settings_plan_supernova_tagline">O máximo de armazenamento, aliases e domínios ilimitados e suporte dedicado.</string>
     <string name="settings_plan_lead_star">Tudo do Star, mais:</string>
     <string name="settings_plan_lead_nova">Tudo do Nova, mais:</string>
-    <string name="settings_plan_bullet_e2ee">Criptografia de ponta a ponta</string>
+    <string name="settings_plan_bullet_e2ee">Encriptação de ponta a ponta</string>
     <string name="settings_plan_bullet_zero_knowledge">Arquitetura de acesso zero</string>
     <string name="settings_plan_bullet_star_storage">50 GB de armazenamento encriptado</string>
     <string name="settings_plan_bullet_star_attachments">Anexos até 50 MB</string>
@@ -1274,7 +1274,7 @@
     <string name="settings_plan_bullet_unlimited_signatures">Assinaturas HTML ilimitadas</string>
     <string name="settings_plan_bullet_carddav_import">Importação de contactos CardDAV</string>
     <string name="settings_plan_bullet_contact_merge">Assistente de fusão de contactos</string>
-    <string name="settings_plan_bullet_encrypted_export">Exportação criptografada</string>
+    <string name="settings_plan_bullet_encrypted_export">Exportação encriptada</string>
     <string name="settings_plan_bullet_protected_folders">Pastas protegidas por palavra-passe</string>
     <string name="settings_plan_bullet_key_rotation">Intervalos personalizados de rotação de chaves</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB de armazenamento encriptado</string>
@@ -1561,10 +1561,10 @@
     <string name="links_cleaned">LIGAÇÕES LIMPAS</string>
     <string name="decrypt_retrying">A tentar novamente</string>
     <string name="decrypt_retry_failed">Continua a não ser possível desencriptar esta mensagem</string>
-    <string name="trash">Lixeira</string>
+    <string name="trash">Lixo</string>
     <string name="unarchive">Desarquivar</string>
     <string name="label">Etiqueta</string>
-    <string name="encryption">Criptografia</string>
+    <string name="encryption">Encriptação</string>
     <string name="tracker_protection">Proteção contra rastreadores</string>
     <string name="encrypted_e2e">Encriptado ponto a ponto</string>
     <string name="encrypted_in_transit">Encriptado em trânsito</string>
@@ -1854,7 +1854,7 @@
     <string name="auto_discover_keys_sub">Encontrar automaticamente as chaves de encriptação dos contactos</string>
     <string name="encrypt_by_default">Encriptar por predefinição</string>
     <string name="encrypt_by_default_sub">Encriptar automaticamente todos os e-mails enviados</string>
-    <string name="require_encryption">Exigir criptografia</string>
+    <string name="require_encryption">Exigir encriptação</string>
     <string name="require_encryption_sub">Enviar apenas para destinatários com chaves conhecidas</string>
     <string name="show_encryption_indicators">Mostrar indicadores de encriptação</string>
     <string name="show_encryption_indicators_sub">Apresentar ícones de cadeado nos e-mails encriptados</string>
@@ -1930,8 +1930,8 @@
     <string name="auto_delete_spam_90">90 dias</string>
     <string name="auto_delete_spam_180">180 dias</string>
     <string name="auto_delete_spam_365">365 dias</string>
-    <string name="auto_delete_trash">Eliminar a lixeira automaticamente após</string>
-    <string name="auto_delete_trash_subtitle">Os e-mails na Lixeira mais antigos do que este período são eliminados permanentemente.</string>
+    <string name="auto_delete_trash">Eliminar o lixo automaticamente após</string>
+    <string name="auto_delete_trash_subtitle">Os e-mails no Lixo mais antigos do que este período são eliminados permanentemente.</string>
     <string name="auto_delete_spam_never">Nunca (manter para sempre)</string>
     <string name="emails_per_page">E-mails por página</string>
     <string name="emails_per_page_subtitle">Número de e-mails carregados por página na Caixa de entrada, Arquivo e outras pastas</string>
@@ -2071,7 +2071,7 @@
     <string name="alias_delete_behavior_info_title">Ação ao eliminar</string>
     <string name="alias_delete_behavior_info_desc">Define se os aliases eliminados vão primeiro para o Lixo ou são removidos imediatamente.</string>
     <string name="alias_delete_behavior_subtitle">Mover para o Lixo ou eliminar imediatamente</string>
-    <string name="alias_delete_behavior_trash">Lixeira</string>
+    <string name="alias_delete_behavior_trash">Lixo</string>
     <string name="alias_delete_behavior_immediate">Imediata</string>
     <string name="alias_always_expand_info_title">Sempre expandir</string>
     <string name="alias_always_expand_info_desc">Quando esta opção está ativada, o painel completo de definições do alias é apresentado por predefinição em vez de recolhido.</string>
@@ -2128,7 +2128,7 @@
     <string name="export_scope_section">O que exportar</string>
     <string name="export_scope_emails">E-mails</string>
     <string name="export_scope_emails_subtitle">Todas as mensagens da sua caixa de correio</string>
-    <string name="export_scope_contacts">Contatos</string>
+    <string name="export_scope_contacts">Contactos</string>
     <string name="export_scope_contacts_subtitle">A sua lista de contactos</string>
     <string name="export_format_section">Formato da exportação</string>
     <string name="export_format_mbox">MBOX</string>
@@ -2143,7 +2143,7 @@
     <string name="export_share_save">Partilhar / Guardar</string>
     <string name="export_private_key_dialog_title">Exportar chave privada</string>
     <string name="export_private_key_message">A sua chave privada será exportada no formato PGP armored. Introduza a palavra-passe da sua conta para autorizar a exportação.</string>
-    <string name="export_private_key_password_label">Senha da conta</string>
+    <string name="export_private_key_password_label">Palavra-passe da conta</string>
     <string name="export_private_key_exporting">A exportar...</string>
     <string name="export_private_key_button">Exportar</string>
     <string name="toast_private_key_copied">Chave privada copiada para a área de transferência</string>
@@ -2460,7 +2460,7 @@
     <string name="chip_advanced_search">Pesquisa avançada</string>
     <string name="spam_trash_hidden_notice">Algumas mensagens no Spam e no Lixo correspondem à sua pesquisa.</string>
     <string name="view_spam_trash_messages">Ver mensagens</string>
-    <string name="search_scope_anywhere">E-mail, spam e Lixo</string>
+    <string name="search_scope_anywhere">Correio, spam e lixo</string>
     <string name="search_scope_only_in">Apenas em %1$s</string>
     <string name="search_scope_everywhere">Em todo o lado</string>
     <string name="advanced_has_words">Contém as palavras</string>
@@ -3007,7 +3007,7 @@
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Pode restaurar contactos a partir do Lixo.</string>
     <string name="empty_contacts_trash_confirm_message">Eliminar permanentemente todos os contactos no Lixo? Esta ação não pode ser anulada.</string>
-    <string name="contact_restored">Contato restaurado</string>
+    <string name="contact_restored">Contacto restaurado</string>
     <string name="contact_moved_to_trash">Contacto movido para o Lixo</string>
     <string name="contacts_in_trash_notice">Os contactos no Lixo são eliminados definitivamente após 30 dias.</string>
     <string name="contacts_import_empty">Nenhum contacto encontrado nesse ficheiro</string>
@@ -3151,7 +3151,7 @@
     <string name="alias_direction_received">Recebidos</string>
     <string name="alias_direction_sent">Enviados</string>
     <string name="alias_sent_indexing">As mensagens enviadas mais antigas ainda estão a ser indexadas.</string>
-    <string name="enc_keys_section_title">Chaves de Criptografia</string>
+    <string name="enc_keys_section_title">Chaves de encriptação</string>
     <string name="enc_openpgp_key_title">Sua chave OpenPGP</string>
     <string name="enc_verification_code_label">Código de verificação</string>
     <string name="enc_verification_code_info_title">O que é este código?</string>
