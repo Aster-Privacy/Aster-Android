@@ -138,4 +138,41 @@ class RatchetStateContainerTest {
             RatchetStateContainer.state_fingerprint(sample_state("conv-a")),
         )
     }
+    private val web_state = """{"dh_keypair":{"public_key":"pub","secret_key":"sec"},"root_key":"root","send_message_number":2,"bootstrap":{"ephemeral_key":"eph","sender_identity_key":"s","recipient_identity_key":"r","x3dh_version":2}}"""
+
+    @Test
+    fun `a web state without an inner binding decodes under the outer binding`() {
+        val text = """{"state":$web_state,"conversation_id":"conv-a","sync_version":3}"""
+
+        val decoded = RatchetStateContainer.decode(text, "conv-a", floor = 0L, opened_bound = false)
+
+        assertTrue(decoded is RatchetStateContainerResult.Accepted)
+        decoded as RatchetStateContainerResult.Accepted
+        assertEquals("conv-a", decoded.state.conversation_id)
+        assertEquals(2, decoded.state.send_message_number)
+        assertEquals(2, decoded.state.bootstrap?.x3dh_version)
+        assertEquals(3L, decoded.sync_version)
+    }
+
+    @Test
+    fun `a web state without an inner binding still refuses a swapped conversation`() {
+        val text = """{"state":$web_state,"conversation_id":"conv-b","sync_version":3}"""
+
+        assertEquals(
+            RatchetStateContainerResult.WrongConversation,
+            RatchetStateContainer.decode(text, "conv-a", floor = 0L, opened_bound = false),
+        )
+    }
+
+    @Test
+    fun `a bootstrap x3dh version survives a round trip`() {
+        val state = sample_state("conv-a").apply {
+            bootstrap = BootstrapData(ephemeral_key = "eph", x3dh_version = 2)
+        }
+        val text = RatchetStateContainer.encode("conv-a", state, 5L)
+
+        val decoded = RatchetStateContainer.decode(text, "conv-a", floor = 0L, opened_bound = false)
+
+        assertEquals(2, (decoded as RatchetStateContainerResult.Accepted).state.bootstrap?.x3dh_version)
+    }
 }

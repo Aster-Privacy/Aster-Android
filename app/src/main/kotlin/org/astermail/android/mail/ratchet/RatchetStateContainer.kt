@@ -74,17 +74,22 @@ object RatchetStateContainer {
         val parsed = runCatching { json.parseToJsonElement(plaintext_json) }.getOrNull() as? JsonObject
             ?: return RatchetStateContainerResult.Malformed
         val wrapped = parsed[state_field] as? JsonObject
+        val outer_id = (parsed[conversation_field] as? JsonPrimitive)?.takeIf { it.isString }?.content
+        val inner = if (wrapped != null && !wrapped.containsKey(conversation_field) && outer_id != null) {
+            JsonObject(wrapped + (conversation_field to JsonPrimitive(outer_id)))
+        } else {
+            wrapped ?: parsed
+        }
         val state = runCatching {
-            json.decodeFromString(RatchetState.serializer(), (wrapped ?: parsed).toString())
+            json.decodeFromString(RatchetState.serializer(), inner.toString())
         }.getOrNull() ?: return RatchetStateContainerResult.Malformed
 
         if (state.conversation_id != conversation_id) return RatchetStateContainerResult.WrongConversation
         if (wrapped != null) {
-            val bound_id = (parsed[conversation_field] as? JsonPrimitive)?.takeIf { it.isString }?.content
-            if (bound_id != null && bound_id != conversation_id) {
+            if (outer_id != null && outer_id != conversation_id) {
                 return RatchetStateContainerResult.WrongConversation
             }
-            if (bound_id == null && opened_bound) return RatchetStateContainerResult.Unbound
+            if (outer_id == null && opened_bound) return RatchetStateContainerResult.Unbound
         }
 
         val sync_version = if (wrapped != null) (parsed[version_field] as? JsonPrimitive)?.longOrNull else null

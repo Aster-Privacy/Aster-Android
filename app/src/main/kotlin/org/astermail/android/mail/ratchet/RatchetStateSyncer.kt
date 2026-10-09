@@ -74,24 +74,38 @@ class RatchetStateSyncer @Inject constructor(
         return legacy?.let { it to false }
     }
 
+    private sealed class RemoteFetch {
+        data class Found(val state: RatchetState) : RemoteFetch()
+        object Missing : RemoteFetch()
+        object Rejected : RemoteFetch()
+        object Unreadable : RemoteFetch()
+        object Failed : RemoteFetch()
+    }
+
     suspend fun fetch_from_server(conversation_id: String): RatchetState? {
         if (state_recently_missing(conversation_id)) return null
+        return (fetch_remote(conversation_id) as? RemoteFetch.Found)?.state
+    }
+
+    private suspend fun fetch_remote(conversation_id: String): RemoteFetch {
         val keys = state_store.state_encryption_key_candidates()
-        if (keys.isEmpty()) return null
+        if (keys.isEmpty()) return RemoteFetch.Failed
         return try {
             val conv_b64 = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8))
             val resp = ratchet_api.fetch_state(conv_b64)
             if (resp == null) {
                 missing_state_at[conversation_id] = System.currentTimeMillis()
-                return null
+                return RemoteFetch.Missing
             }
             missing_state_at.remove(conversation_id)
             val ciphertext = RatchetCrypto.b64_decode(resp.encrypted_state)
             val nonce = RatchetCrypto.b64_decode(resp.state_nonce)
             val floor = state_store.sync_floor(conversation_id)
+            var opened = false
             var accepted: RatchetStateContainerResult.Accepted? = null
             for (candidate in keys) {
                 val (plaintext, opened_bound) = open_state(ciphertext, candidate, nonce, conversation_id) ?: continue
+                opened = true
                 val decoded = RatchetStateContainer.decode(
                     String(plaintext, Charsets.UTF_8),
                     conversation_id,
@@ -102,15 +116,16 @@ class RatchetStateSyncer @Inject constructor(
                 if (decoded is RatchetStateContainerResult.Accepted) accepted = decoded
                 break
             }
-            if (accepted == null) return null
+            if (!opened) return RemoteFetch.Unreadable
+            if (accepted == null) return RemoteFetch.Rejected
             accepted.sync_version?.let { state_store.raise_sync_floor(conversation_id, it) }
             known_versions[conversation_id] = resp.state_version
-            accepted.state
+            RemoteFetch.Found(accepted.state)
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "fetch_from_server failed: ${t.javaClass.simpleName}")
-            null
+            RemoteFetch.Failed
         } finally {
             keys.forEach { it.fill(0) }
         }
@@ -138,14 +153,25 @@ class RatchetStateSyncer @Inject constructor(
     }
 
 
+    private sealed class Absorb {
+        data class Merged(val state: RatchetState) : Absorb()
+        object Overwrite : Absorb()
+        object Abort : Absorb()
+    }
+
     private suspend fun absorb_remote(
         conversation_id: String,
         working: RatchetState,
-    ): RatchetState? {
-        val remote = fetch_from_server(conversation_id) ?: return null
-        val merged = RatchetStateMerge.merge(working, remote)
-        state_store.save(merged)
-        return merged
+    ): Absorb {
+        return when (val remote = fetch_remote(conversation_id)) {
+            is RemoteFetch.Found -> {
+                val merged = RatchetStateMerge.merge(working, remote.state)
+                state_store.save(merged)
+                Absorb.Merged(merged)
+            }
+            RemoteFetch.Missing, RemoteFetch.Rejected -> Absorb.Overwrite
+            RemoteFetch.Unreadable, RemoteFetch.Failed -> Absorb.Abort
+        }
     }
 
     private suspend fun do_sync(conversation_id: String, state: RatchetState): Boolean {
@@ -187,13 +213,9 @@ class RatchetStateSyncer @Inject constructor(
                                 return true
                             }
                             PostStateOutcome.AlreadyExists -> {
-                                val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
-                                if (recheck == null) {
-                                    last_error = "post 409 recheck failed"
-                                    delay(50L * (attempt + 1))
-                                    continue
-                                }
-                                known_version = recheck.state_version
+                                last_error = "post 409"
+                                delay(50L * (attempt + 1))
+                                continue
                             }
                             is PostStateOutcome.Failure -> {
                                 last_error = "post failed status=${outcome.status}"
@@ -204,16 +226,20 @@ class RatchetStateSyncer @Inject constructor(
                     } else {
                         known_version = existing.state_version
                         known_versions[conversation_id] = existing.state_version
-                        absorb_remote(conversation_id, working)?.let { merged ->
-                            working = merged
-                            fingerprint = RatchetStateContainer.state_fingerprint(working)
-                            sync_version = RatchetStateContainer.next_version(
-                                state_store.sync_floor(conversation_id),
-                                System.currentTimeMillis(),
-                            )
-                            plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
-                                .toByteArray(Charsets.UTF_8)
-                            known_version = known_versions[conversation_id] ?: known_version
+                        when (val absorbed = absorb_remote(conversation_id, working)) {
+                            is Absorb.Merged -> {
+                                working = absorbed.state
+                                fingerprint = RatchetStateContainer.state_fingerprint(working)
+                                sync_version = RatchetStateContainer.next_version(
+                                    state_store.sync_floor(conversation_id),
+                                    System.currentTimeMillis(),
+                                )
+                                plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
+                                    .toByteArray(Charsets.UTF_8)
+                                known_version = known_versions[conversation_id] ?: known_version
+                            }
+                            Absorb.Overwrite -> Unit
+                            Absorb.Abort -> return abandon_sync(conversation_id)
                         }
                         continue
                     }
@@ -229,23 +255,26 @@ class RatchetStateSyncer @Inject constructor(
                         return true
                     }
                     PutStateOutcome.VersionConflict -> {
-                        val merged = absorb_remote(conversation_id, working)
-                        if (merged != null) {
-                            working = merged
-                            fingerprint = RatchetStateContainer.state_fingerprint(working)
-                            sync_version = RatchetStateContainer.next_version(
-                                state_store.sync_floor(conversation_id),
-                                System.currentTimeMillis(),
-                            )
-                            plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
-                                .toByteArray(Charsets.UTF_8)
-                            known_version = known_versions[conversation_id]
-                        } else {
-                            val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
-                            if (recheck != null) {
-                                known_version = recheck.state_version
-                                known_versions[conversation_id] = recheck.state_version
+                        when (val absorbed = absorb_remote(conversation_id, working)) {
+                            is Absorb.Merged -> {
+                                working = absorbed.state
+                                fingerprint = RatchetStateContainer.state_fingerprint(working)
+                                sync_version = RatchetStateContainer.next_version(
+                                    state_store.sync_floor(conversation_id),
+                                    System.currentTimeMillis(),
+                                )
+                                plaintext = RatchetStateContainer.encode(conversation_id, working, sync_version)
+                                    .toByteArray(Charsets.UTF_8)
+                                known_version = known_versions[conversation_id]
                             }
+                            Absorb.Overwrite -> {
+                                val recheck = try { ratchet_api.fetch_state(conv_b64) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (_: Throwable) { null }
+                                if (recheck != null) {
+                                    known_version = recheck.state_version
+                                    known_versions[conversation_id] = recheck.state_version
+                                }
+                            }
+                            Absorb.Abort -> return abandon_sync(conversation_id)
                         }
                         last_error = "put 409"
                         delay(50L * (attempt + 1))
@@ -274,6 +303,13 @@ class RatchetStateSyncer @Inject constructor(
         } finally {
             key.fill(0)
         }
+    }
+
+    private fun abandon_sync(conversation_id: String): Boolean {
+        if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "sync refused: server state is not readable here, keeping it")
+        known_versions.remove(conversation_id)
+        synced_fingerprints.remove(conversation_id)
+        return false
     }
 
     private suspend fun try_post(
