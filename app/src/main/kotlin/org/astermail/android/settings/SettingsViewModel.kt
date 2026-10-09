@@ -1795,6 +1795,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun set_alias_expanded(alias_id: String, expanded: Boolean) {
+        if (_state.value.expanded_alias_ids.contains(alias_id) == expanded) {
+            if (expanded) load_alias_detail(alias_id)
+            return
+        }
         _state.update { s ->
             s.copy(
                 expanded_alias_ids = if (expanded) {

@@ -48,7 +48,7 @@ function _onLoad() {
 setTimeout(function() { _fail('script_timeout'); }, 15000);
 function _reset() {
   _reported = false;
-  if (_wid !== undefined) { turnstile.reset(_wid); } else { _fail('script_blocked'); }
+  if (_wid !== undefined) { turnstile.reset(_wid); } else { window.location.reload(); }
 }
 </script>
 </head>
