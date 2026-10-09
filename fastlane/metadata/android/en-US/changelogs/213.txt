@@ -1,11 +1,15 @@
 What's new:
 
-- Changing your profile picture opens a full page with a large preview, and the gallery fills the screen.
-- Each picture in the gallery shows its credit underneath.
-- Compare plans opens full screen and shows only the differences at first.
+- Swipe from the edge of the screen to open the side menu.
+- Drag the scroll bar to move through long messages.
+- Profile pictures open on a full page with a preview.
+- Compare plans opens full screen.
 
 Fixed:
 
-- Profile pictures from the gallery or your device are sharp and centered.
-- Signing in to another account with a passkey no longer fails with "Too many attempts."
-- Tapping a button plays one sound instead of two.
+- Creating or opening an alias no longer freezes your phone.
+- The reaction button opens the emoji picker.
+- Copy and Share appear above the text you select.
+- Profile pictures are sharp and centered.
+- Passkey sign-in to another account works again.
+- Fewer crashes.
