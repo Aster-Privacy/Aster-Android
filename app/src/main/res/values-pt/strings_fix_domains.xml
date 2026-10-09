@@ -34,9 +34,9 @@
     <string name="domain_bimi_state_pending">A aguardar DNS</string>
     <string name="domain_bimi_state_live">Ativo</string>
     <string name="domain_bimi_state_attention">Requer atenção</string>
-    <string name="domain_bimi_state_external">Gerenciado em outro lugar</string>
+    <string name="domain_bimi_state_external">Gerido noutro local</string>
     <string name="domain_bimi_set_up">Configurar</string>
-    <string name="domain_bimi_manage">Gerenciar</string>
+    <string name="domain_bimi_manage">Gerir</string>
     <string name="domain_bimi_step_logo">Logotipo</string>
     <string name="domain_bimi_step_publish">Publicar</string>
     <string name="domain_bimi_step_of">Etapa %1$d de %2$d</string>
