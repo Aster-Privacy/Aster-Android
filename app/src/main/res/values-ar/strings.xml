@@ -1363,6 +1363,7 @@
     <string name="translation_failed">فشلت الترجمة</string>
     <string name="translation_wifi_required">لتنزيل حزمة اللغة هذه، اتصل بشبكة Wi-Fi أو أوقف خيار التنزيل عبر Wi-Fi فقط في الإعدادات.</string>
     <string name="translation_webview_outdated">لترجمة البريد، حدّث %1$s.</string>
+    <string name="webview_unavailable">لعرض هذا المحتوى، حدّث %1$s.</string>
     <string name="translation_webview_update">تحديث</string>
     <string name="translate_webview_outdated_notice">تحتاج الترجمة إلى إصدار أحدث من %1$s. لترجمة البريد على هذا الجهاز، حدّث %1$s من Google Play.</string>
     <string name="customize_toolbar">تخصيص شريط الأدوات</string>

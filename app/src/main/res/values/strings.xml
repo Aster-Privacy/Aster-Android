@@ -2520,6 +2520,7 @@
     <string name="translation_failed">Translation failed</string>
     <string name="translation_wifi_required">To download this language pack, connect to Wi-Fi or turn off Download over Wi-Fi only in Settings.</string>
     <string name="translation_webview_outdated">To translate mail, update %1$s.</string>
+    <string name="webview_unavailable">To show this content, update %1$s.</string>
     <string name="translation_webview_update">Update</string>
     <string name="translate_webview_outdated_notice">Translation needs a newer version of %1$s. To translate mail on this device, update %1$s from Google Play.</string>
     <string name="mail_rules_regex_empty">A regex pattern is needed before saving.</string>

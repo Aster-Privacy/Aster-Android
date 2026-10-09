@@ -140,6 +140,7 @@ class PersistentPushService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val in_foreground = runCatching { enter_foreground() }.isSuccess
         if (intent?.action == ACTION_STOP) {
             set_enabled(this, false)
             stop_cleanly()
@@ -149,7 +150,7 @@ class PersistentPushService : Service() {
             stop_cleanly()
             return START_NOT_STICKY
         }
-        if (runCatching { enter_foreground() }.isFailure) {
+        if (!in_foreground) {
             stop_cleanly()
             return START_NOT_STICKY
         }

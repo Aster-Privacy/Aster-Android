@@ -2235,6 +2235,7 @@
     <string name="translation_failed">अनुवाद नहीं हो सका</string>
     <string name="translation_wifi_required">यह भाषा पैक डाउनलोड करने के लिए, Wi-Fi से कनेक्ट करें या सेटिंग में सिर्फ़ Wi-Fi पर डाउनलोड करें को बंद करें।</string>
     <string name="translation_webview_outdated">ईमेल का अनुवाद करने के लिए, %1$s अपडेट करें।</string>
+    <string name="webview_unavailable">यह सामग्री दिखाने के लिए, %1$s अपडेट करें।</string>
     <string name="translation_webview_update">अपडेट करें</string>
     <string name="translate_webview_outdated_notice">अनुवाद के लिए %1$s का नया वर्शन ज़रूरी है। इस डिवाइस पर ईमेल का अनुवाद करने के लिए, Google Play से %1$s अपडेट करें।</string>
     <string name="mail_rules_regex_empty">सहेजने से पहले एक regex पैटर्न चाहिए।</string>

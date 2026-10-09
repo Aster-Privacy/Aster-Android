@@ -1353,6 +1353,7 @@
     <string name="translation_failed">Falha na tradução</string>
     <string name="translation_wifi_required">Para baixar este pacote de idioma, conecte-se a uma rede Wi-Fi ou desative Baixar apenas por Wi-Fi nas Configurações.</string>
     <string name="translation_webview_outdated">Para traduzir e-mails, atualize o %1$s.</string>
+    <string name="webview_unavailable">Para mostrar este conteúdo, atualize o %1$s.</string>
     <string name="translation_webview_update">Atualizar</string>
     <string name="translate_webview_outdated_notice">A tradução precisa de uma versão mais recente do %1$s. Para traduzir e-mails neste dispositivo, atualize o %1$s pelo Google Play.</string>
     <string name="customize_toolbar">Personalizar barra de ferramentas</string>

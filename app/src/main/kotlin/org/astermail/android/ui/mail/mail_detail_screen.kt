@@ -214,7 +214,7 @@ import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.common.horizontal_pan_signal
 import org.astermail.android.ui.common.horizontal_scroll_indicator
 import org.astermail.android.ui.common.local_horizontal_pan_signal
-import org.astermail.android.ui.common.vertical_scroll_indicator
+import org.astermail.android.ui.common.vertical_scroll_bar
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
@@ -1320,7 +1320,6 @@ fun MailDetailScreen(
                 state = list_state,
                 modifier = Modifier
                     .fillMaxSize()
-                    .vertical_scroll_indicator(list_state, bottom_inset = bottom_bar_height)
                     .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
@@ -1669,6 +1668,11 @@ fun MailDetailScreen(
                 item { Spacer(Modifier.height(bottom_bar_height + 16.dp)) }
             }
             }
+            if (email != null) vertical_scroll_bar(
+                state = list_state,
+                modifier = Modifier.align(Alignment.TopEnd),
+                bottom_inset = bottom_bar_height,
+            )
             detail_skeleton_layer(
                 phase = detail_phase,
                 message_count = expected_message_count,
@@ -1705,7 +1709,8 @@ fun MailDetailScreen(
                     .navigationBarsPadding(),
             ) {
                 if (!colors.is_glass) AsterDivider(modifier = Modifier.fillMaxWidth())
-                val latest_restriction = reaction_restriction_for(latest_msg)
+                val react_target = messages.lastOrNull { reaction_restriction_for(it) == null } ?: latest_msg
+                val latest_restriction = reaction_restriction_for(react_target)
                 LaunchedEffect(latest_restriction) {
                     if (latest_restriction != null) reaction_picker_open = false
                 }
@@ -1714,7 +1719,7 @@ fun MailDetailScreen(
                         visible = reaction_picker_open && latest_restriction == null,
                         on_pick = { emoji ->
                             reaction_picker_open = false
-                            val blocked = reaction_restriction_for(latest_msg)
+                            val blocked = reaction_restriction_for(react_target)
                             if (blocked != null) {
                                 show_toast(
                                     context.getString(
@@ -1724,9 +1729,9 @@ fun MailDetailScreen(
                                 return@reaction_quick_picker
                             }
                             haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                            val identity = reaction_identity_for(latest_msg.id)
+                            val identity = reaction_identity_for(react_target.id)
                             mail_vm.send_reaction(
-                                message_id = latest_msg.id,
+                                message_id = react_target.id,
                                 emoji = emoji,
                                 sender_email = identity.email,
                                 sender_alias_hash = identity.alias_hash,
@@ -1746,7 +1751,7 @@ fun MailDetailScreen(
                         show_react = latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled,
                         react_enabled = latest_restriction == null,
                         on_react = {
-                            val blocked = reaction_restriction_for(latest_msg)
+                            val blocked = reaction_restriction_for(react_target)
                             if (blocked != null) {
                                 show_toast(
                                     context.getString(
@@ -3025,7 +3030,7 @@ private fun reply_action_row(
                     .size(48.dp)
                     .clip(SquircleShape(999.dp))
                     .background(if (react_enabled) field_surface_color(colors) else disabled_surface_color(colors))
-                    .clickable(enabled = react_enabled, onClick = on_react)
+                    .clickable(onClick = on_react)
                     .testTag("detail_react"),
                 contentAlignment = Alignment.Center,
             ) {
@@ -5662,7 +5667,19 @@ internal class mail_body_web_view(
 
     private fun wrap(
         callback: android.view.ActionMode.Callback,
-    ): android.view.ActionMode.Callback = object : android.view.ActionMode.Callback {
+    ): android.view.ActionMode.Callback = object : android.view.ActionMode.Callback2() {
+        override fun onGetContentRect(
+            mode: android.view.ActionMode,
+            view: android.view.View?,
+            out_rect: android.graphics.Rect,
+        ) {
+            if (callback is android.view.ActionMode.Callback2) {
+                callback.onGetContentRect(mode, view, out_rect)
+            } else {
+                super.onGetContentRect(mode, view, out_rect)
+            }
+        }
+
         override fun onCreateActionMode(
             mode: android.view.ActionMode,
             menu: android.view.Menu,
@@ -6116,6 +6133,10 @@ internal fun email_html_view(
     on_image_click: (String) -> Unit = {},
     on_glass_backing: (Color) -> Unit = {},
 ) {
+    val webview_usable = org.astermail.android.ui.common.remember_webview_usable()
+    LaunchedEffect(webview_usable) {
+        if (!webview_usable) on_ready()
+    }
     val colors = AsterMaterial.colors
     val settings_vm: SettingsViewModel = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -7014,7 +7035,9 @@ internal fun email_html_view(
                 .clipToBounds(),
             contentAlignment = Alignment.TopCenter,
         ) {
-        androidx.compose.runtime.key(web_generation) {
+        if (!webview_usable) {
+            org.astermail.android.ui.common.webview_unavailable_notice()
+        } else androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
                 mail_body_web_view(ctx).apply {
@@ -7273,7 +7296,7 @@ private fun link_options_sheet(
                         type = "text/plain"
                         putExtra(android.content.Intent.EXTRA_TEXT, url)
                     }
-                    context.startActivity(android.content.Intent.createChooser(send, null))
+                    runCatching { context.startActivity(android.content.Intent.createChooser(send, null)) }
                     on_close()
                 }
             }

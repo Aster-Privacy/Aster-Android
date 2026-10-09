@@ -1352,6 +1352,7 @@
     <string name="translation_failed">Übersetzung fehlgeschlagen</string>
     <string name="translation_wifi_required">Um dieses Sprachpaket herunterzuladen, verbinden Sie sich mit einem WLAN oder deaktivieren Sie „Nur über WLAN laden“ in den Einstellungen.</string>
     <string name="translation_webview_outdated">Aktualisieren Sie %1$s, um E-Mails zu übersetzen.</string>
+    <string name="webview_unavailable">Aktualisieren Sie %1$s, um diesen Inhalt anzuzeigen.</string>
     <string name="translation_webview_update">Aktualisieren</string>
     <string name="translate_webview_outdated_notice">Für die Übersetzung ist eine neuere Version von %1$s erforderlich. Um E-Mails auf diesem Gerät zu übersetzen, aktualisieren Sie %1$s über Google Play.</string>
     <string name="customize_toolbar">Symbolleiste anpassen</string>
