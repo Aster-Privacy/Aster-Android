@@ -1179,6 +1179,28 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
     }
 }
 
+internal fun operator_value_label(op: SearchOperator): Int? = when (op.key) {
+    "in" -> when (op.value) {
+        "anywhere" -> R.string.search_scope_anywhere
+        "all" -> R.string.folder_all_mail
+        "inbox" -> R.string.folder_inbox
+        "sent" -> R.string.folder_sent
+        "drafts", "draft" -> R.string.folder_drafts
+        "archive", "archived" -> R.string.folder_archive
+        "starred" -> R.string.folder_starred
+        "spam" -> R.string.folder_spam
+        "trash" -> R.string.folder_trash
+        else -> null
+    }
+    "is" -> when (op.value) {
+        "unread" -> R.string.filter_unread
+        "starred" -> R.string.filter_starred
+        "encrypted" -> R.string.filter_encrypted
+        else -> null
+    }
+    else -> null
+}
+
 @Composable
 private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
     val colors = AsterMaterial.colors
@@ -1196,15 +1218,16 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         "label" -> stringResource(R.string.search_chip_label)
         else -> op.key.replaceFirstChar { it.uppercase() }
     }
+    val value = operator_value_label(op)?.let { stringResource(it) } ?: op.value
     val chip_label = if (op.negated) {
         stringResource(
             R.string.search_chip_format_negated,
             stringResource(R.string.search_chip_not_prefix),
             label_key,
-            op.value,
+            value,
         )
     } else {
-        stringResource(R.string.search_chip_format, label_key, op.value)
+        stringResource(R.string.search_chip_format, label_key, value)
     }
     Row(
         modifier = Modifier
