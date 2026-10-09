@@ -172,6 +172,7 @@ private const val SCOPE_ID_MAX_PAGES = 200
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val BULK_SCOPE_MAX_ROUNDS = 1_000
 internal const val SNOOZE_BULK_LIMIT = 100
+internal const val BULK_SCOPE_ID_LIMIT = 1_000
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
@@ -2897,7 +2898,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun archive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "archive", ids = item_ids))
+        bulk_action_by_ids("archive", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -2993,7 +2994,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_spam_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_spam", ids = item_ids))
+        bulk_action_by_ids("mark_spam", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -3013,7 +3014,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun unmark_spam_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
+        val response = bulk_action_by_ids("unmark_spam", item_ids)
         patch_metadata_for_items(
             item_ids,
             emptyList(),
@@ -3089,7 +3090,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun unarchive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))
+        val response = bulk_action_by_ids("unarchive", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -3105,7 +3106,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun restore_trash_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "restore_trash", ids = item_ids))
+        val response = bulk_action_by_ids("restore_trash", item_ids)
         patch_metadata_for_items(
             item_ids,
             emptyList(),
@@ -3124,7 +3125,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_read_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_read", ids = item_ids))
+        bulk_action_by_ids("mark_read", item_ids)
     }
 
     suspend fun mark_thread_read_all(thread_token: String): Result<Unit> =
@@ -3142,7 +3143,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_unread_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", ids = item_ids))
+        bulk_action_by_ids("mark_unread", item_ids)
     }
 
     suspend fun mark_all_read_scope(folder: String): Result<BulkScopeResponse> =
@@ -3282,21 +3283,40 @@ class MailRepository @Inject constructor(
         ScopeIds(ids = ids.toList(), capped = capped)
     }
 
-    private fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
+    private suspend fun bulk_action_by_ids(action: String, item_ids: List<String>): BulkScopeResponse {
+        val chunks = item_ids.chunked(BULK_SCOPE_ID_LIMIT)
+        if (chunks.size <= 1) return mail_api.bulk_action(BulkScopeRequest(action = action, ids = item_ids))
+        var affected = 0
+        var completed = true
+        chunks.forEach { chunk ->
+            val response = mail_api.bulk_action(BulkScopeRequest(action = action, ids = chunk))
+            affected += response.affected_count
+            completed = completed && response.completed
+        }
+        return BulkScopeResponse(affected_count = affected, completed = completed)
+    }
+
+    internal fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
         return when (folder) {
-            "inbox" -> BulkScopeFilter(item_type = "received")
-            "sent" -> BulkScopeFilter(item_type = "sent")
-            "starred" -> BulkScopeFilter(is_starred = true)
+            "inbox" -> BulkScopeFilter(
+                item_type = "received",
+                is_archived = false,
+                is_trashed = false,
+                is_spam = false,
+                is_snoozed = false,
+            )
+            "sent" -> BulkScopeFilter(item_type = "sent", is_trashed = false, is_spam = false)
+            "starred" -> BulkScopeFilter(is_starred = true, is_trashed = false, is_spam = false)
             "trash" -> BulkScopeFilter(is_trashed = true)
             "spam" -> BulkScopeFilter(is_spam = true)
-            "archive" -> BulkScopeFilter(is_archived = true)
-            "snoozed" -> BulkScopeFilter(is_snoozed = true)
+            "archive" -> BulkScopeFilter(is_archived = true, is_trashed = false, is_spam = false)
+            "snoozed" -> BulkScopeFilter(is_snoozed = true, is_trashed = false, is_spam = false)
             else -> when {
                 folder.startsWith("label:") ->
-                    BulkScopeFilter(label_token = folder.removePrefix("label:"), is_trashed = false)
+                    BulkScopeFilter(label_token = folder.removePrefix("label:"), is_trashed = false, is_spam = false)
                 folder.startsWith("tag:") ->
-                    BulkScopeFilter(tag_token = folder.removePrefix("tag:"), is_trashed = false)
-                else -> BulkScopeFilter()
+                    BulkScopeFilter(tag_token = folder.removePrefix("tag:"), is_trashed = false, is_spam = false)
+                else -> BulkScopeFilter(is_trashed = false, is_spam = false)
             }
         }
     }

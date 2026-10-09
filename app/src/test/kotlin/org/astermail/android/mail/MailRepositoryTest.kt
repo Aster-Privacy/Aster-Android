@@ -640,7 +640,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "archive",
-                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -718,9 +718,67 @@ class MailRepositoryTest {
         assertEquals(4200, result.getOrThrow().affected_count)
         coVerify {
             mail_api.bulk_action(
-                BulkScopeRequest(action = "star", scope = BulkScopeFilter(item_type = "received")),
+                BulkScopeRequest(
+                    action = "star",
+                    scope = BulkScopeFilter(
+                        item_type = "received",
+                        is_archived = false,
+                        is_trashed = false,
+                        is_spam = false,
+                        is_snoozed = false,
+                    ),
+                ),
             )
         }
+    }
+
+    @Test
+    fun `inbox scope leaves archived spam trashed snoozed and filed mail alone`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 7)
+
+        repo.bulk_scope_action("inbox", "trash")
+
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "trash",
+                    scope = BulkScopeFilter(
+                        item_type = "received",
+                        is_archived = false,
+                        is_trashed = false,
+                        is_spam = false,
+                        is_snoozed = false,
+                    ),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `every scoped folder except trash and spam excludes trashed and spam mail`() {
+        listOf("inbox", "sent", "starred", "archive", "snoozed", "label:a", "tag:b").forEach { folder ->
+            val scope = repo.folder_to_bulk_scope(folder)
+            assertEquals(folder, false, scope.is_trashed)
+            assertEquals(folder, false, scope.is_spam)
+        }
+        assertEquals(true, repo.folder_to_bulk_scope("trash").is_trashed)
+        assertEquals(true, repo.folder_to_bulk_scope("spam").is_spam)
+    }
+
+    @Test
+    fun `id based scope actions split large selections under the request body limit`() = runTest {
+        val captured = mutableListOf<BulkScopeRequest>()
+        coEvery { mail_api.bulk_action(capture(captured)) } answers {
+            BulkScopeResponse(affected_count = firstArg<BulkScopeRequest>().ids!!.size)
+        }
+        coEvery { mail_api.bulk_patch_metadata(any()) } returns
+            BulkPatchMetadataResponse(success = true, updated_count = 0)
+
+        val result = repo.restore_trash((1..2_500).map { "item_$it" })
+
+        assertEquals(2_500, result.getOrThrow().affected_count)
+        assertEquals(listOf(1_000, 1_000, 500), captured.map { it.ids!!.size })
+        assertTrue(captured.all { it.action == "restore_trash" })
     }
 
     @Test
@@ -731,7 +789,10 @@ class MailRepositoryTest {
 
         coVerify {
             mail_api.bulk_action(
-                BulkScopeRequest(action = "unstar", scope = BulkScopeFilter(is_starred = true)),
+                BulkScopeRequest(
+                    action = "unstar",
+                    scope = BulkScopeFilter(is_starred = true, is_trashed = false, is_spam = false),
+                ),
             )
         }
     }
@@ -780,7 +841,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "mark_read",
-                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -797,7 +858,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "trash",
-                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -813,7 +874,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "mark_read",
-                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
