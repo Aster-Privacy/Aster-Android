@@ -785,6 +785,7 @@ fun InboxScreen(
                 folder_chip = all_mail_folder_chip?.invoke(it)
                     ?: archived_folder_chip(current_folder, it.is_archived, archived_chip_name),
                 context = toast_context,
+                hidden_tag_token = current_tag_token(current_folder),
             )
         }
     }
