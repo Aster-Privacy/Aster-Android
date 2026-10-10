@@ -1944,7 +1944,7 @@
     <string name="upgrade_get_plan">Choisir %1$s</string>
     <string name="upgrade_reassurance">Annulez à tout moment</string>
     <string name="upgrade_trust_line">Pas de publicité, pas de suivi</string>
-    <string name="upgrade_perk_aliases">Alias illimités et domaines personnalisés</string>
+    <string name="upgrade_perk_aliases">Plus d\'alias et de domaines personnalisés</string>
     <string name="upgrade_perk_domains">Domaines personnalisés et fonctionnalités pro</string>
     <string name="upgrade_perk_features">Filtres, modèles, signatures et plus</string>
     <string name="upgrade_perk_storage">Plus de stockage pour les messages et pièces jointes</string>

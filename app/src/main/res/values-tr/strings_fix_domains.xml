@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">%1$s için sonuçlar</string>
     <string name="domain_purchase_change_name">Adı değiştir</string>
     <string name="domain_purchase_show_more">Daha fazla sonuç göster</string>
-    <string name="domain_purchase_empty_included">Her alan adı WHOIS gizliliği, sizin için yapılan DNS kurulumu ve sınırsız adres içerir.</string>
+    <string name="domain_purchase_empty_included">Her alan adı WHOIS gizliliği ve sizin için yapılan DNS kurulumunu içerir.</string>
     <string name="domain_purchase_retry">Tekrar dene</string>
     <string name="domain_purchase_progress_note">Aster Mail alan adınızı kaydediyor ve posta kutularınızı kuruyor. Bu genellikle yaklaşık bir dakika sürer.</string>
     <string name="domain_purchase_awaiting_note">Ödemeniz henüz ulaşmadı. Siparişinizi tamamlamak için ödemeyi bitirin. Bu pencereyi kapatıp daha sonra Satın alınan alan adları bölümünden de ödeme yapabilirsiniz.</string>

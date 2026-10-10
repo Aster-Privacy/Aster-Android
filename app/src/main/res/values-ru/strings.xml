@@ -1260,7 +1260,6 @@
     <string name="settings_plan_bullet_star_domains">5 собственных доменов</string>
     <string name="settings_plan_bullet_daily_send_limits">Более высокие суточные лимиты отправки</string>
     <string name="settings_plan_bullet_star_templates">10 шаблонов писем</string>
-    <string name="settings_plan_bullet_tracker_protection">Защита от трекеров</string>
     <string name="settings_plan_bullet_vacation_reply">Автоответ на время отпуска</string>
     <string name="settings_plan_bullet_catch_all">Адрес для приёма всей почты</string>
     <string name="settings_plan_bullet_auto_forwarding">Автоматическая пересылка</string>
@@ -1279,7 +1278,6 @@
     <string name="settings_plan_bullet_contact_merge">Мастер объединения контактов</string>
     <string name="settings_plan_bullet_encrypted_export">Зашифрованный экспорт</string>
     <string name="settings_plan_bullet_protected_folders">Папки с паролем</string>
-    <string name="settings_plan_bullet_key_rotation">Настраиваемые интервалы ротации ключей</string>
     <string name="settings_plan_bullet_supernova_storage">5 ТБ зашифрованного хранилища</string>
     <string name="settings_plan_bullet_supernova_attachments">Вложения до 250 МБ</string>
     <string name="settings_plan_bullet_unlimited_domains">Безлимитные собственные домены</string>
@@ -1822,7 +1820,7 @@
     <string name="upgrade_reassurance">Отмена в любой момент</string>
     <string name="upgrade_trust_line">Без рекламы, без отслеживания</string>
     <string name="upgrade_perk_storage">Больше места для писем и вложений</string>
-    <string name="upgrade_perk_aliases">Неограниченные псевдонимы и собственные домены</string>
+    <string name="upgrade_perk_aliases">Больше псевдонимов и собственных доменов</string>
     <string name="upgrade_perk_domains">Свои домены и профессиональные возможности</string>
     <string name="upgrade_perk_features">Фильтры, шаблоны, подписи и другое</string>
     <string name="upgrade_resource_aliases">псевдонимов</string>

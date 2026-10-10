@@ -1260,7 +1260,6 @@
     <string name="settings_plan_bullet_star_domains">5 własnych domen</string>
     <string name="settings_plan_bullet_daily_send_limits">Wyższe dzienne limity wysyłki</string>
     <string name="settings_plan_bullet_star_templates">10 szablonów wiadomości</string>
-    <string name="settings_plan_bullet_tracker_protection">Ochrona przed trackerami</string>
     <string name="settings_plan_bullet_vacation_reply">Automatyczna odpowiedź urlopowa</string>
     <string name="settings_plan_bullet_catch_all">Adres zbiorczy</string>
     <string name="settings_plan_bullet_auto_forwarding">Automatyczne przekazywanie</string>
@@ -1279,7 +1278,6 @@
     <string name="settings_plan_bullet_contact_merge">Kreator scalania kontaktów</string>
     <string name="settings_plan_bullet_encrypted_export">Szyfrowany eksport</string>
     <string name="settings_plan_bullet_protected_folders">Foldery chronione hasłem</string>
-    <string name="settings_plan_bullet_key_rotation">Własne interwały rotacji kluczy</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB zaszyfrowanej przestrzeni</string>
     <string name="settings_plan_bullet_supernova_attachments">Załączniki do 250 MB</string>
     <string name="settings_plan_bullet_unlimited_domains">Nieograniczone własne domeny</string>
@@ -1822,7 +1820,7 @@
     <string name="upgrade_reassurance">Anuluj w dowolnym momencie</string>
     <string name="upgrade_trust_line">Bez reklam, bez śledzenia</string>
     <string name="upgrade_perk_storage">Więcej miejsca na wiadomości i załączniki</string>
-    <string name="upgrade_perk_aliases">Nieograniczone aliasy i własne domeny</string>
+    <string name="upgrade_perk_aliases">Więcej aliasów i własnych domen</string>
     <string name="upgrade_perk_domains">Własne domeny i funkcje pro</string>
     <string name="upgrade_perk_features">Filtry, szablony, podpisy i więcej</string>
     <string name="upgrade_resource_aliases">aliasów</string>

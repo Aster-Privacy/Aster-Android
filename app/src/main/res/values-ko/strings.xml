@@ -1251,7 +1251,6 @@
     <string name="settings_plan_bullet_star_domains">5개 맞춤 도메인</string>
     <string name="settings_plan_bullet_daily_send_limits">더 높은 일일 발송 한도</string>
     <string name="settings_plan_bullet_star_templates">이메일 템플릿 10개</string>
-    <string name="settings_plan_bullet_tracker_protection">추적기 차단</string>
     <string name="settings_plan_bullet_vacation_reply">부재중 자동 답장</string>
     <string name="settings_plan_bullet_catch_all">캐치올 이메일 주소</string>
     <string name="settings_plan_bullet_auto_forwarding">자동 전달</string>
@@ -1270,7 +1269,6 @@
     <string name="settings_plan_bullet_contact_merge">연락처 병합 마법사</string>
     <string name="settings_plan_bullet_encrypted_export">암호화 내보내기</string>
     <string name="settings_plan_bullet_protected_folders">비밀번호로 잠근 폴더</string>
-    <string name="settings_plan_bullet_key_rotation">사용자 정의 키 교체 주기</string>
     <string name="settings_plan_bullet_supernova_storage">5TB 암호화 저장 공간</string>
     <string name="settings_plan_bullet_supernova_attachments">최대 250 MB 첨부 파일</string>
     <string name="settings_plan_bullet_unlimited_domains">무제한 맞춤 도메인</string>
@@ -1810,7 +1808,7 @@
     <string name="upgrade_reassurance">언제든지 해지 가능</string>
     <string name="upgrade_trust_line">광고 없음, 추적 없음</string>
     <string name="upgrade_perk_storage">메일과 첨부 파일을 위한 더 많은 저장 공간</string>
-    <string name="upgrade_perk_aliases">무제한 별칭과 맞춤 도메인</string>
+    <string name="upgrade_perk_aliases">더 많은 별칭과 맞춤 도메인</string>
     <string name="upgrade_perk_domains">사용자 지정 도메인 및 프로 기능</string>
     <string name="upgrade_perk_features">필터, 템플릿, 서명 등</string>
     <string name="upgrade_resource_aliases">별칭</string>

@@ -332,11 +332,15 @@ private fun parse_iso_timestamp(raw: String): Long = try {
     0L
 }
 
+fun current_tag_token(folder: String): String? =
+    folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")?.takeIf { it.isNotEmpty() }
+
 fun inbox_item_to_email(
     item: org.astermail.android.mail.InboxItem,
     tags: List<org.astermail.android.api.tags.TagItem> = emptyList(),
     folder_chip: list_folder_chip? = null,
     context: android.content.Context? = null,
+    hidden_tag_token: String? = null,
 ): Email {
     val ts = parse_iso_timestamp(item.timestamp)
     val unknown_sender_label = context?.getString(org.astermail.android.R.string.unknown) ?: "Unknown"
@@ -344,7 +348,9 @@ fun inbox_item_to_email(
     val display_name = item.sender_name.ifBlank {
         item.sender_email.substringBefore('@').ifBlank { unknown_sender_label }
     }
-    val matched_tags = tags.filter { it.tag_token in item.tag_tokens && it.encrypted_name.isNotBlank() }
+    val matched_tags = tags.filter {
+        it.tag_token in item.tag_tokens && it.encrypted_name.isNotBlank() && it.tag_token != hidden_tag_token
+    }
     return Email(
         id = item.id,
         thread_id = item.thread_token?.takeIf { it.isNotBlank() } ?: item.id,

@@ -181,6 +181,31 @@ class InboundAttachmentKeyTest {
     }
 
     @Test
+    fun imported_plaintext_with_a_key_and_zero_nonce_opens() {
+        val payload = "%PDF-1.7 imported".toByteArray()
+        val key = ByteArray(32) { (it + 9).toByte() }
+
+        val out = MailRepository.decrypt_attachment_bytes(b64(payload), b64(ByteArray(12)), b64(key))
+
+        assertArrayEquals(payload, out)
+    }
+
+    @Test
+    fun wrong_key_with_a_real_nonce_still_fails() {
+        val key = ByteArray(32) { (it + 3).toByte() }
+        val nonce = ByteArray(12) { (it + 5).toByte() }
+        val sealed = seal("secret".toByteArray(), key, nonce)
+
+        try {
+            MailRepository.decrypt_attachment_bytes(b64(sealed), b64(nonce), b64(ByteArray(32) { 1 }))
+            fail("expected a decryption failure")
+        } catch (_: AttachmentKeyUnavailableException) {
+            fail("expected a decryption failure")
+        } catch (_: Exception) {
+        }
+    }
+
+    @Test
     fun registered_key_decrypts_when_the_metadata_session_key_is_empty() {
         val key = ByteArray(32) { (it + 3).toByte() }
         val nonce = ByteArray(12) { (it + 5).toByte() }

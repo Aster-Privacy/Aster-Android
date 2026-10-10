@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">복구 이메일 추가</string>
     <string name="recovery_reminder_later">나중에</string>
     <string name="plan_prompt_title">Aster Mail 더 활용하기</string>
-    <string name="plan_prompt_body">업그레이드하면 저장 공간이 늘어나고 사용자 지정 도메인과 무제한 별칭을 사용할 수 있습니다.</string>
+    <string name="plan_prompt_body">업그레이드하면 저장 공간이 늘어나고 더 많은 별칭과 사용자 지정 도메인을 사용할 수 있습니다.</string>
     <string name="plan_prompt_action">요금제 보기</string>
     <string name="plan_prompt_dismiss">나중에</string>
     <string name="recovery_codes_reminder_title">복구 코드 저장</string>

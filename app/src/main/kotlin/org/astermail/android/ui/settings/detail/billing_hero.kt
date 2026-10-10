@@ -62,7 +62,6 @@ import compose.icons.tablericons.Lifebuoy
 import compose.icons.tablericons.ListCheck
 import compose.icons.tablericons.Paperclip
 import compose.icons.tablericons.Refresh
-import compose.icons.tablericons.Shield
 import compose.icons.tablericons.Users
 import compose.icons.tablericons.World
 import org.astermail.android.R
@@ -646,7 +645,6 @@ private fun billing_advantage_fallback_rows(plan_code: String): List<billing_adv
         billing_advantage_row(stringResource(R.string.special_offer_compare_aliases), "5", aliases, TablerIcons.At),
         billing_advantage_row(stringResource(R.string.special_offer_compare_domains), "1", domains, TablerIcons.World),
         billing_advantage_row(stringResource(R.string.special_offer_compare_attachments), "25 MB", attachments, TablerIcons.Paperclip),
-        billing_advantage_row(stringResource(R.string.settings_plan_bullet_tracker_protection), null, billing_included_marker, TablerIcons.Shield),
         billing_advantage_row(stringResource(R.string.billing_compare_external_accounts), null, billing_included_marker, TablerIcons.Refresh),
         billing_advantage_row(stringResource(R.string.settings_plan_bullet_priority_support), null, billing_included_marker, TablerIcons.Lifebuoy),
     )

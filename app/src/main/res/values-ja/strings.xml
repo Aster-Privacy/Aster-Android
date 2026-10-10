@@ -1251,7 +1251,6 @@
     <string name="settings_plan_bullet_star_domains">5 個 のカスタムドメイン</string>
     <string name="settings_plan_bullet_daily_send_limits">1日あたりの送信上限が拡大</string>
     <string name="settings_plan_bullet_star_templates">10個のメールテンプレート</string>
-    <string name="settings_plan_bullet_tracker_protection">トラッカー保護</string>
     <string name="settings_plan_bullet_vacation_reply">不在時の自動返信</string>
     <string name="settings_plan_bullet_catch_all">キャッチオールメールアドレス</string>
     <string name="settings_plan_bullet_auto_forwarding">自動転送</string>
@@ -1270,7 +1269,6 @@
     <string name="settings_plan_bullet_contact_merge">連絡先結合ウィザード</string>
     <string name="settings_plan_bullet_encrypted_export">暗号化エクスポート</string>
     <string name="settings_plan_bullet_protected_folders">パスワード保護フォルダ</string>
-    <string name="settings_plan_bullet_key_rotation">カスタム鍵ローテーション間隔</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB の暗号化ストレージ</string>
     <string name="settings_plan_bullet_supernova_attachments">250 MBまでの添付ファイル</string>
     <string name="settings_plan_bullet_unlimited_domains">無制限 のカスタムドメイン</string>
@@ -1810,7 +1808,7 @@
     <string name="upgrade_reassurance">いつでも解約できます</string>
     <string name="upgrade_trust_line">広告なし、トラッキングなし</string>
     <string name="upgrade_perk_storage">メールと添付のための容量を追加</string>
-    <string name="upgrade_perk_aliases">エイリアスとカスタムドメインが無制限</string>
+    <string name="upgrade_perk_aliases">より多くのエイリアスとカスタムドメイン</string>
     <string name="upgrade_perk_domains">カスタムドメインとプロ向け機能</string>
     <string name="upgrade_perk_features">フィルタ、テンプレート、署名など</string>
     <string name="upgrade_resource_aliases">エイリアス</string>

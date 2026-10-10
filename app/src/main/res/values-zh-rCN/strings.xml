@@ -1251,7 +1251,6 @@
     <string name="settings_plan_bullet_star_domains">5 个自定义域名</string>
     <string name="settings_plan_bullet_daily_send_limits">更高的每日发送上限</string>
     <string name="settings_plan_bullet_star_templates">10 个邮件模板</string>
-    <string name="settings_plan_bullet_tracker_protection">跟踪器防护</string>
     <string name="settings_plan_bullet_vacation_reply">假期自动回复</string>
     <string name="settings_plan_bullet_catch_all">全部接收邮箱地址</string>
     <string name="settings_plan_bullet_auto_forwarding">自动转发</string>
@@ -1270,7 +1269,6 @@
     <string name="settings_plan_bullet_contact_merge">联系人合并向导</string>
     <string name="settings_plan_bullet_encrypted_export">加密导出</string>
     <string name="settings_plan_bullet_protected_folders">密码保护文件夹</string>
-    <string name="settings_plan_bullet_key_rotation">自定义密钥轮换间隔</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB 加密存储</string>
     <string name="settings_plan_bullet_supernova_attachments">最大 250 MB 附件</string>
     <string name="settings_plan_bullet_unlimited_domains">无限自定义域名</string>
@@ -1810,7 +1808,7 @@
     <string name="upgrade_reassurance">随时可取消</string>
     <string name="upgrade_trust_line">无广告、无跟踪</string>
     <string name="upgrade_perk_storage">为邮件和附件提供更多空间</string>
-    <string name="upgrade_perk_aliases">无限别名和自定义域名</string>
+    <string name="upgrade_perk_aliases">更多别名和自定义域名</string>
     <string name="upgrade_perk_domains">自定义域名和专业功能</string>
     <string name="upgrade_perk_features">过滤器、模板、签名等</string>
     <string name="upgrade_resource_aliases">别名</string>
