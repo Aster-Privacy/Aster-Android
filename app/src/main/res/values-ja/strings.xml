@@ -1658,10 +1658,6 @@
     <string name="settings_section_other">その他</string>
     <string name="phishing_warning_title">このメッセージは疑わしいようです</string>
     <string name="phishing_dangerous_title">危険なメールをブロックしました</string>
-    <string name="phishing_signal_sender_domain_mimics">差出人ドメイン「%1$s」が酷似した文字で「%2$s」を装っています</string>
-    <string name="phishing_signal_sender_domain_resembles">差出人ドメイン「%1$s」は文字を置き換えた「%2$s」に似ています</string>
-    <string name="phishing_signal_display_name_brand">表示名に「%1$s」が含まれますが、メールの送信元は %2$s です</string>
-    <string name="phishing_signal_display_name_email">表示名にアドレス「%1$s」が含まれますが、差出人は %2$s です</string>
     <string name="phishing_show_details">詳細を表示</string>
     <string name="phishing_hide_details">詳細を非表示</string>
     <string name="phishing_privacy_note">端末上で検出しました。Aster がメールを読むことはありません。</string>
@@ -3349,4 +3345,14 @@
     <string name="moved_to_category">カテゴリに移動しました</string>
     <string name="metadata_undecryptable_change">このデバイスではこのメッセージの詳細を開けないため、変更は保存されません。鍵を再読み込みするには、サインアウトして再度サインインしてください。サーバー上のメッセージは変わりません。</string>
     <string name="color_swatch_option">色 %1$d/%2$d</string>
+    <string name="sender_warning_title">送信者のアドレスを確認してください</string>
+    <string name="sender_warning_address_in_name">送信者名には %1$s と表示されていますが、このメッセージは %2$s から届いています。</string>
+    <string name="sender_warning_lookalike_name">送信者名は %1$s に見えるように書かれていますが、このメッセージは %2$s から届いています。</string>
+    <string name="sender_warning_brand_name">送信者名には %1$s とありますが、このメッセージは %2$s から届いています。これは %1$s が使用しているアドレスとして確認されていません。</string>
+    <string name="sender_warning_home_brand_name">このメッセージは Aster からのものではありません。%1$s から届いています。Aster がメールでパスワードやリカバリーフレーズを尋ねることはありません。</string>
+    <string name="sender_warning_lookalike_domain">ドメイン %1$s は %2$s に似ていますが、別のドメインです。</string>
+    <string name="sender_contact_notice">この送信者は連絡先の %1$s と同じ名前ですが、別のアドレスを使用しています。</string>
+    <string name="sender_reply_to_notice">このメッセージへの返信は %1$s に送られます。これは送信者とは別のドメインのアドレスです。</string>
+    <string name="email_auth_unverified">未確認</string>
+    <string name="email_auth_unverified_desc">Aster は %1$s がこのメッセージを送信したことを確認できませんでした。リンクや添付ファイルを開く前に、送信者に心当たりがあるか確認してください。</string>
 </resources>

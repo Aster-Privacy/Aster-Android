@@ -404,6 +404,7 @@ data class InboxItem(
     val is_undecryptable: Boolean = false,
     val raw_item: MailItem,
     val is_decrypt_pending: Boolean = false,
+    val sender_verification: String? = null,
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
@@ -449,6 +450,7 @@ data class ThreadMessageDecrypted(
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     val draft_attachments: List<DraftAttachmentFile> = emptyList(),
+    val sender_verification: String? = null,
 )
 
 @Singleton
@@ -849,7 +851,9 @@ class MailRepository @Inject constructor(
     private val _draft_changes = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 8)
     val draft_changes: kotlinx.coroutines.flow.SharedFlow<Unit> = _draft_changes
 
-    fun get_user_email(): String? = session_key_store.get_user_email()
+    fun get_user_email(): String? = session_key_store.get_user_email().also {
+        org.astermail.android.security.SenderTrustStore.set_primary_address(it)
+    }
 
     fun current_account_id(): String? = session_key_store.get_user_id()
 
@@ -1098,6 +1102,7 @@ class MailRepository @Inject constructor(
             .map { normalize_own_address(it) }
             .filter { it.isNotBlank() }
             .toSet()
+        org.astermail.android.security.SenderTrustStore.set_own_addresses("registered", addresses)
     }
 
     internal fun is_own_address(address: String, sender_email: String?): Boolean {
@@ -3554,6 +3559,7 @@ class MailRepository @Inject constructor(
         key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
         base_envelope: DecryptedEnvelope? = null,
     ): InboxItem {
+        get_user_email()
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
@@ -3620,6 +3626,7 @@ class MailRepository @Inject constructor(
             is_undecryptable = is_undecryptable,
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
             is_decrypt_pending = is_decrypt_pending,
+            sender_verification = envelope?.sender_verification,
         )
     }
 
@@ -3652,6 +3659,7 @@ class MailRepository @Inject constructor(
     }
 
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
+        get_user_email()
         val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
         val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
@@ -3682,6 +3690,7 @@ class MailRepository @Inject constructor(
             pgp_encrypted = envelope?.pgp_encrypted ?: false,
             pgp_signature = envelope?.pgp_signature
                 ?: org.astermail.android.crypto.PgpSignatureStatus.NONE,
+            sender_verification = envelope?.sender_verification,
         )
     }
 

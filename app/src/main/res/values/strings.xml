@@ -850,10 +850,6 @@
     <string name="settings_section_other">Other</string>
     <string name="phishing_warning_title">This message looks suspicious</string>
     <string name="phishing_dangerous_title">Dangerous email blocked</string>
-    <string name="phishing_signal_sender_domain_mimics">Sender domain \"%1$s\" mimics \"%2$s\" using look-alike characters</string>
-    <string name="phishing_signal_sender_domain_resembles">Sender domain \"%1$s\" resembles \"%2$s\" with substituted characters</string>
-    <string name="phishing_signal_display_name_brand">Display name contains \"%1$s\" but email is from %2$s</string>
-    <string name="phishing_signal_display_name_email">Display name contains email \"%1$s\" but sender is %2$s</string>
     <string name="phishing_show_details">Show details</string>
     <string name="phishing_hide_details">Hide details</string>
     <string name="phishing_privacy_note">Detected on your device. Aster never reads your email.</string>
@@ -3408,4 +3404,14 @@
     <string name="moved_to_category">Moved to category</string>
     <string name="metadata_undecryptable_change">This device cannot open this message\'s details, so your change is not saved. To reload your keys, sign out and back in. Your message on the server is unchanged.</string>
     <string name="color_swatch_option">Color %1$d of %2$d</string>
+    <string name="sender_warning_title">Check the sender\'s address</string>
+    <string name="sender_warning_address_in_name">The sender\'s name shows %1$s, but this message comes from %2$s.</string>
+    <string name="sender_warning_lookalike_name">The sender\'s name is written to look like %1$s, but this message comes from %2$s.</string>
+    <string name="sender_warning_brand_name">The sender\'s name mentions %1$s, but this message comes from %2$s, which isn\'t an address that %1$s is known to use.</string>
+    <string name="sender_warning_home_brand_name">This message isn\'t from Aster. It comes from %1$s. Aster never asks for your password or recovery phrase by email.</string>
+    <string name="sender_warning_lookalike_domain">The domain %1$s looks like %2$s, but it\'s a different domain.</string>
+    <string name="sender_contact_notice">This sender has the same name as your contact %1$s, but uses a different address.</string>
+    <string name="sender_reply_to_notice">Replies to this message go to %1$s, which is on a different domain than the sender.</string>
+    <string name="email_auth_unverified">Unverified</string>
+    <string name="email_auth_unverified_desc">Aster couldn\'t confirm that %1$s sent this message. Before you open links or attachments, check that you know the sender.</string>
 </resources>

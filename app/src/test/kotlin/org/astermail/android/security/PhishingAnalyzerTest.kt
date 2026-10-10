@@ -48,53 +48,23 @@ class PhishingAnalyzerTest {
     private fun has_signal(result: PhishingResult, name: String) = result.signals.any { it.name == name }
 
     @Test
-    fun regional_brand_domain_is_not_a_spoof() {
-        val result = analyze("Amazon.ca", "shipment-tracking@amazon.ca")
-        assertFalse(has_signal(result, "display_name_brand_spoof"))
-        assertEquals(PhishingLevel.safe, result.level)
-    }
-
-    @Test
-    fun brand_bulk_mail_domain_is_not_a_spoof() {
-        val result = analyze("Facebook", "notification@facebookmail.com")
-        assertFalse(has_signal(result, "display_name_brand_spoof"))
-    }
-
-    @Test
-    fun multi_label_suffix_domain_resolves_to_brand_label() {
-        val result = analyze("Microsoft Account Team", "account-security-noreply@microsoft.co.uk")
-        assertFalse(has_signal(result, "display_name_brand_spoof"))
-    }
-
-    @Test
-    fun personal_name_matching_an_ambiguous_brand_is_not_a_spoof() {
-        val result = analyze("Chase Miller", "chase.miller@example.com")
-        assertFalse(has_signal(result, "display_name_brand_spoof"))
-        assertEquals(PhishingLevel.safe, result.level)
-    }
-
-    @Test
-    fun ambiguous_brand_with_service_context_is_still_flagged() {
-        val result = analyze("Chase Support", "alerts@chase-secure-login.com")
-        assertTrue(has_signal(result, "display_name_brand_spoof"))
-    }
-
-    @Test
-    fun brand_display_name_on_unrelated_domain_is_flagged() {
-        val result = analyze("PayPal Service", "billing@pypal-secure.com")
-        assertTrue(has_signal(result, "display_name_brand_spoof"))
-    }
-
-    @Test
-    fun passing_authentication_downgrades_a_lone_display_name_signal() {
-        val result = analyze(
-            "PayPal Service",
-            "billing@merchant-notices.example",
-            spf = "pass",
-            dkim = "pass",
-            dmarc = "pass",
+    fun sender_names_and_domains_are_left_to_sender_trust() {
+        val cases = listOf(
+            "Example Billing" to "billing@examp1e-secure.example",
+            "billing@example.com" to "someone@other.example",
+            "Chase Support" to "alerts@chase-secure-login.example",
         )
-        assertTrue(has_signal(result, "display_name_brand_spoof"))
+        for ((name, email) in cases) {
+            val result = analyze(name, email)
+            assertTrue(email, result.signals.isEmpty())
+            assertEquals(email, PhishingLevel.safe, result.level)
+        }
+    }
+
+    @Test
+    fun passing_authentication_is_safe() {
+        val result = analyze("Someone", "someone@example.com", spf = "pass", dkim = "pass", dmarc = "pass")
+        assertTrue(result.signals.isEmpty())
         assertEquals(PhishingLevel.safe, result.level)
     }
 
@@ -119,7 +89,7 @@ class PhishingAnalyzerTest {
 
     @Test
     fun internal_mail_is_never_analyzed() {
-        val result = analyze_email("", "", "PayPal", "x@evil.com", is_external = false)
+        val result = analyze_email("", "", "Someone", "someone@example.com", is_external = false, spf_result = "fail", dmarc_result = "fail")
         assertEquals(PhishingLevel.safe, result.level)
         assertTrue(result.signals.isEmpty())
     }

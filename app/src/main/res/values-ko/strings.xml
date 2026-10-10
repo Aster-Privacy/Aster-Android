@@ -1658,10 +1658,6 @@
     <string name="settings_section_other">기타</string>
     <string name="phishing_warning_title">이 메시지는 수상해 보입니다</string>
     <string name="phishing_dangerous_title">위험한 메일을 차단했습니다</string>
-    <string name="phishing_signal_sender_domain_mimics">발신자 도메인 \"%1$s\"이(가) 비슷한 문자로 \"%2$s\"을(를) 흉내 냅니다</string>
-    <string name="phishing_signal_sender_domain_resembles">발신자 도메인 \"%1$s\"은(는) 문자를 바꿔 \"%2$s\"과(와) 비슷하게 만든 도메인입니다</string>
-    <string name="phishing_signal_display_name_brand">표시 이름에 \"%1$s\"이(가) 있지만 메일은 %2$s에서 왔습니다</string>
-    <string name="phishing_signal_display_name_email">표시 이름에 주소 \"%1$s\"이(가) 있지만 실제 발신자는 %2$s입니다</string>
     <string name="phishing_show_details">세부정보 표시</string>
     <string name="phishing_hide_details">세부정보 숨기기</string>
     <string name="phishing_privacy_note">기기에서 감지했습니다. Aster는 메일을 읽지 않습니다.</string>
@@ -3342,4 +3338,14 @@
     <string name="moved_to_category">카테고리로 이동됨</string>
     <string name="metadata_undecryptable_change">이 기기에서는 이 메시지의 세부 정보를 열 수 없어 변경사항이 저장되지 않습니다. 키를 다시 불러오려면 로그아웃한 다음 다시 로그인하세요. 서버의 메시지는 그대로입니다.</string>
     <string name="color_swatch_option">색상 %1$d/%2$d</string>
+    <string name="sender_warning_title">발신자 주소를 확인하세요</string>
+    <string name="sender_warning_address_in_name">발신자 이름에는 %1$s(이)라고 표시되지만, 이 메시지는 %2$s에서 보냈습니다.</string>
+    <string name="sender_warning_lookalike_name">발신자 이름이 %1$s처럼 보이도록 작성되었지만, 이 메시지는 %2$s에서 보냈습니다.</string>
+    <string name="sender_warning_brand_name">발신자 이름에 %1$s이(가) 포함되어 있지만, 이 메시지는 %2$s에서 보냈으며 이 주소는 %1$s이(가) 사용하는 것으로 알려진 주소가 아닙니다.</string>
+    <string name="sender_warning_home_brand_name">이 메시지는 Aster에서 보낸 것이 아닙니다. %1$s에서 보냈습니다. Aster는 이메일로 비밀번호나 복구 문구를 요청하지 않습니다.</string>
+    <string name="sender_warning_lookalike_domain">도메인 %1$s은(는) %2$s와(과) 비슷해 보이지만 다른 도메인입니다.</string>
+    <string name="sender_contact_notice">이 발신자는 연락처 %1$s와(과) 이름이 같지만 다른 주소를 사용합니다.</string>
+    <string name="sender_reply_to_notice">이 메시지에 대한 답장은 %1$s(으)로 전송되며, 이 주소는 발신자와 다른 도메인에 속합니다.</string>
+    <string name="email_auth_unverified">확인되지 않음</string>
+    <string name="email_auth_unverified_desc">Aster가 %1$s에서 이 메시지를 보냈는지 확인하지 못했습니다. 링크나 첨부 파일을 열기 전에 아는 발신자인지 확인하세요.</string>
 </resources>

@@ -74,18 +74,22 @@ internal fun collect_chip_people(items: List<InboxItem>, limit: Int = 200): List
 
         if (email.isEmpty() || !email.contains("@")) continue
 
-        val name = (item.display_sender_name ?: item.sender_name).trim()
         val existing = by_email[email]
 
-        if (existing == null) {
-            by_email[email] = ChipPerson(name, email, 1)
+        if (existing != null && existing.name.isNotEmpty()) {
+            by_email[email] = existing.copy(count = existing.count + 1)
             continue
         }
 
-        by_email[email] = existing.copy(
-            name = existing.name.ifEmpty { name },
-            count = existing.count + 1,
+        val raw_name = (item.display_sender_name ?: item.sender_name).trim()
+        val trusted_name = org.astermail.android.security.trusted_sender_name(
+            org.astermail.android.ui.mail.inbox_item_trust_message(item),
+            raw_name,
+            "",
         )
+        val name = if (trusted_name != raw_name && trusted_name.equals(email, ignoreCase = true)) "" else trusted_name
+
+        by_email[email] = ChipPerson(name, email, (existing?.count ?: 0) + 1)
     }
 
     return by_email.values

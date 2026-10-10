@@ -111,6 +111,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.security.sanitize_display_name
+import org.astermail.android.security.trusted_sender_name
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -168,6 +170,13 @@ fun EmailRow(
     val tap_guard = remember { row_tap_guard() }
     val metrics = remember(list_density) { inbox_row_metrics(list_density) }
     val is_unread = !email.is_read
+    val trust = remember_sender_trust(email.trust_message)
+    val shown_sender_name = trusted_sender_name(
+        trust,
+        displayed_sender_name(email.display_sender_name, email.sender_name),
+        stringResource(R.string.unknown),
+    )
+    val marks_hidden = trust?.show_identity_marks == false
     val sender_color = inbox_sender_color(colors, is_unread)
     val subject_color = inbox_subject_color(colors, is_unread)
     val preview_color = inbox_preview_color(colors, is_unread)
@@ -239,16 +248,19 @@ fun EmailRow(
         inbox_leading_slot(show_sender_pictures, is_selected, metrics.avatar_size) {
             SenderAvatar(
                 email = displayed_sender_email(email.display_sender_email, email.sender_email),
-                name = displayed_sender_name(email.display_sender_name, email.sender_name),
+                name = shown_sender_name,
                 size = metrics.avatar_size,
-                sender_authenticated = system_avatar_authenticated(email),
+                sender_authenticated = !marks_hidden &&
+                    trust?.warning == null &&
+                    system_avatar_authenticated(email),
+                plain = marks_hidden,
             )
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = displayed_sender_name(email.display_sender_name, email.sender_name),
+                    text = shown_sender_name,
                     style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
                     color = sender_color,
                     fontSize = 16.sp,
@@ -479,6 +491,30 @@ fun ThreadInboxRow(
     }
     val metrics = remember(row_density) { inbox_row_metrics(row_density) }
     val is_unread = thread.has_unread
+    val trust = remember_sender_trust(email.trust_message)
+    val newest_sender_name = trusted_sender_name(
+        trust,
+        displayed_sender_name(email.display_sender_name, email.sender_name),
+        stringResource(R.string.unknown),
+    )
+    val newest_sender_email = displayed_sender_email(email.display_sender_email, email.sender_email)
+    val single_plain_sender = trust != null && (!trust.show_identity_marks || trust.warning != null)
+    val shown_participants = remember(
+        thread.thread_id,
+        thread.participants,
+        newest_sender_name,
+        newest_sender_email,
+        single_plain_sender,
+        trust != null,
+    ) {
+        vetted_participants(
+            participants = thread.participants,
+            newest_name = newest_sender_name,
+            newest_email = newest_sender_email,
+            single_sender = single_plain_sender,
+            newest_vetted = trust != null,
+        )
+    }
     val sender_color = inbox_sender_color(colors, is_unread)
     val subject_color = inbox_subject_color(colors, is_unread)
     val preview_color = inbox_preview_color(colors, is_unread)
@@ -559,30 +595,21 @@ fun ThreadInboxRow(
             is_selected,
             metrics.avatar_size,
         ) {
-            val participants = androidx.compose.runtime.remember(
-                thread.thread_id, thread.participants, email.sender_name, email.sender_email,
-                email.display_sender_name, email.display_sender_email,
-            ) {
-                thread.participants.ifEmpty {
-                    listOf(
-                        displayed_sender_name(email.display_sender_name, email.sender_name) to
-                            displayed_sender_email(email.display_sender_email, email.sender_email),
-                    )
-                }
-            }
             val authenticated_system_email = androidx.compose.runtime.remember(
                 email.sender_email, email.display_sender_email, email.is_external, email.system_origin,
+                single_plain_sender,
             ) {
-                if (system_avatar_authenticated(email)) {
+                if (!single_plain_sender && system_avatar_authenticated(email)) {
                     displayed_sender_email(email.display_sender_email, email.sender_email)
                 } else {
                     null
                 }
             }
             StackedAvatars(
-                participants = participants,
+                participants = shown_participants,
                 size = metrics.avatar_size,
                 authenticated_system_email = authenticated_system_email,
+                plain = single_plain_sender,
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -590,14 +617,13 @@ fun ThreadInboxRow(
             val others_template = pluralStringResource(R.plurals.participants_and_others, others_count)
             val participants_text = remember(
                 thread.thread_id,
-                thread.participants,
-                email.display_sender_name,
-                email.sender_name,
+                shown_participants,
+                newest_sender_name,
                 others_template,
             ) {
                 format_participants(
-                    thread.participants,
-                    displayed_sender_name(email.display_sender_name, email.sender_name),
+                    shown_participants,
+                    newest_sender_name,
                     others_template = others_template,
                 )
             }
@@ -895,6 +921,26 @@ internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
 
 internal fun inbox_card_selected_color(colors: AsterSemanticColors): Color =
     colors.bg_selected
+
+internal fun vetted_participants(
+    participants: List<Pair<String, String>>,
+    newest_name: String,
+    newest_email: String,
+    single_sender: Boolean,
+    newest_vetted: Boolean,
+): List<Pair<String, String>> {
+    if (single_sender || participants.isEmpty()) return listOf(newest_name to newest_email)
+    val newest_key = newest_email.trim().lowercase()
+    return participants.map { (name, address) ->
+        if (newest_vetted && newest_key.isNotEmpty() && address.trim().lowercase() == newest_key) {
+            newest_name to address
+        } else {
+            val cleaned = sanitize_display_name(name)
+            val claims_other_address = cleaned.contains('@') && !cleaned.equals(address.trim(), ignoreCase = true)
+            (if (claims_other_address) "" else cleaned) to address
+        }
+    }
+}
 
 private fun format_participants(
     participants: List<Pair<String, String>>,

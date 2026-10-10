@@ -1658,10 +1658,6 @@
     <string name="settings_section_other">其他</string>
     <string name="phishing_warning_title">这封邮件看起来可疑</string>
     <string name="phishing_dangerous_title">已拦截危险邮件</string>
-    <string name="phishing_signal_sender_domain_mimics">发件域名“%1$s”用形近字符冒充“%2$s”</string>
-    <string name="phishing_signal_sender_domain_resembles">发件域名“%1$s”与替换字符后的“%2$s”相似</string>
-    <string name="phishing_signal_display_name_brand">显示名称含有“%1$s”，但邮件来自 %2$s</string>
-    <string name="phishing_signal_display_name_email">显示名称含有地址“%1$s”，但发件人是 %2$s</string>
     <string name="phishing_show_details">查看详情</string>
     <string name="phishing_hide_details">收起详情</string>
     <string name="phishing_privacy_note">在您的设备上检测。Aster 从不读取您的邮件。</string>
@@ -3342,4 +3338,14 @@
     <string name="moved_to_category">已移至分类</string>
     <string name="metadata_undecryptable_change">此设备无法打开这封邮件的详细信息，因此您的更改未保存。要重新加载密钥，请退出并重新登录。服务器上的邮件保持不变。</string>
     <string name="color_swatch_option">颜色 %1$d/%2$d</string>
+    <string name="sender_warning_title">请检查发件人地址</string>
+    <string name="sender_warning_address_in_name">发件人名称显示为 %1$s，但此邮件来自 %2$s。</string>
+    <string name="sender_warning_lookalike_name">发件人名称的写法看起来像 %1$s，但此邮件来自 %2$s。</string>
+    <string name="sender_warning_brand_name">发件人名称中提到了 %1$s，但此邮件来自 %2$s，这不是 %1$s 已知使用的地址。</string>
+    <string name="sender_warning_home_brand_name">此邮件并非来自 Aster，而是来自 %1$s。Aster 绝不会通过电子邮件索要你的密码或恢复短语。</string>
+    <string name="sender_warning_lookalike_domain">域名 %1$s 看起来像 %2$s，但它是另一个域名。</string>
+    <string name="sender_contact_notice">此发件人与你的联系人 %1$s 同名，但使用了不同的地址。</string>
+    <string name="sender_reply_to_notice">对此邮件的回复会发送到 %1$s，该地址与发件人不属于同一域名。</string>
+    <string name="email_auth_unverified">未验证</string>
+    <string name="email_auth_unverified_desc">Aster 无法确认此邮件是由 %1$s 发送的。在打开链接或附件之前，请确认你认识发件人。</string>
 </resources>

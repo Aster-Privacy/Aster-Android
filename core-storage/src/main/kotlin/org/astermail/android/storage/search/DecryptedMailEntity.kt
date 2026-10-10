@@ -54,4 +54,12 @@ data class DecryptedMailEntity(
     val has_recipient_key: Boolean? = null,
     val is_pinned: Boolean = false,
     val tag_tokens: String? = null,
+    val spf_result: String? = null,
+    val dkim_result: String? = null,
+    val dmarc_result: String? = null,
+    val sender_aligned: Boolean? = null,
+    val sender_verified: Boolean? = null,
+    val sender_verified_domain: String? = null,
+    val sender_verification: String? = null,
+    val item_type: String? = null,
 )

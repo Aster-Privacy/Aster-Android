@@ -109,25 +109,41 @@ private fun verdict_tone(verdict: EmailAuthVerdict): Color {
 }
 
 @Composable
-internal fun email_auth_badge(msg: ThreadMessage, modifier: Modifier = Modifier) {
+internal fun email_auth_badge(
+    msg: ThreadMessage,
+    modifier: Modifier = Modifier,
+    unverified: Boolean = false,
+    unverified_domain: String? = null,
+) {
     val summary = remember(msg.item_type, msg.spf_result, msg.dkim_result, msg.dmarc_result) {
         summarize_email_authentication(msg)
-    } ?: return
-    if (!shows_auth_badge(summary.verdict)) return
-    val domain = remember(msg.sender_email) { auth_display_domain(msg.sender_email) }
-    if (domain.isEmpty()) return
+    }
+    val verdict_domain = remember(msg.sender_email) { auth_display_domain(msg.sender_email) }
+    val shows_verdict = summary != null && shows_auth_badge(summary.verdict) && verdict_domain.isNotEmpty()
+    val domain = if (shows_verdict) verdict_domain else unverified_domain.orEmpty().ifEmpty { verdict_domain }
+    if (!shows_verdict && (!unverified || domain.isEmpty())) return
     var show_checks by remember(msg.id) { mutableStateOf(false) }
-    val verdict_label = stringResource(verdict_label_res(summary.verdict))
-    val label = stringResource(R.string.email_auth_label, verdict_label)
+    val title_res = if (shows_verdict && summary != null) {
+        verdict_label_res(summary.verdict)
+    } else {
+        R.string.email_auth_unverified
+    }
+    val description_res = if (shows_verdict && summary != null) {
+        verdict_description_res(summary.verdict)
+    } else {
+        R.string.email_auth_unverified_desc
+    }
+    val badge_label = stringResource(title_res)
+    val label = stringResource(R.string.email_auth_label, badge_label)
     tone_badge(
-        text = verdict_label,
-        tone = verdict_tone(summary.verdict),
-        icon = verdict_icon(summary.verdict),
+        text = badge_label,
+        tone = if (shows_verdict && summary != null) verdict_tone(summary.verdict) else AsterMaterial.colors.text_muted,
+        icon = if (shows_verdict && summary != null) verdict_icon(summary.verdict) else Icons.Rounded.RemoveCircle,
         icon_size = 12.dp,
         modifier = modifier
             .clip(AsterShapes.item)
             .semantics(mergeDescendants = true) {}
-            .testTag("email_auth_badge")
+            .testTag(if (shows_verdict) "email_auth_badge" else "email_auth_unverified_badge")
             .clearAndSetSemantics {
                 contentDescription = label
                 role = Role.Button
@@ -139,17 +155,34 @@ internal fun email_auth_badge(msg: ThreadMessage, modifier: Modifier = Modifier)
             .clickable { show_checks = true },
     )
     if (show_checks) {
-        email_auth_dialog(summary = summary, domain = domain, on_dismiss = { show_checks = false })
+        email_auth_dialog(
+            title_res = title_res,
+            description_res = description_res,
+            checks = summary?.checks.orEmpty(),
+            domain = domain,
+            on_dismiss = { show_checks = false },
+        )
     }
 }
 
 @Composable
-private fun email_auth_dialog(summary: EmailAuthSummary, domain: String, on_dismiss: () -> Unit) {
+private fun email_auth_dialog(
+    title_res: Int,
+    description_res: Int,
+    checks: List<EmailAuthCheckResult>,
+    domain: String,
+    on_dismiss: () -> Unit,
+) {
     val colors = AsterMaterial.colors
     val surface = if (colors.is_glass) colors.solid_bg else colors.bg_card
-    val shown_domain = if (domain.length <= nowrap_domain_length) domain.replace('-', non_breaking_hyphen) else domain
+    val safe_domain = domain.filterNot { it in '\u202A'..'\u202E' || it in '\u2066'..'\u2069' }
+    val shown_domain = if (safe_domain.length <= nowrap_domain_length) {
+        safe_domain.replace('-', non_breaking_hyphen)
+    } else {
+        safe_domain
+    }
     val isolated_domain = "$first_strong_isolate$shown_domain$pop_directional_isolate"
-    val sentence = stringResource(verdict_description_res(summary.verdict), isolated_domain)
+    val sentence = stringResource(description_res, isolated_domain)
     val description = remember(sentence, isolated_domain, colors.text_primary) {
         val at = sentence.indexOf(isolated_domain)
         buildAnnotatedString {
@@ -166,7 +199,7 @@ private fun email_auth_dialog(summary: EmailAuthSummary, domain: String, on_dism
     }
     AsterDialog(
         on_dismiss = on_dismiss,
-        title = stringResource(verdict_label_res(summary.verdict)),
+        title = stringResource(title_res),
         body = {
             Column(modifier = Modifier.fillMaxWidth().testTag("email_auth_checks")) {
                 Text(
@@ -176,7 +209,7 @@ private fun email_auth_dialog(summary: EmailAuthSummary, domain: String, on_dism
                     lineHeight = 20.sp,
                 )
                 Spacer(Modifier.height(AsterSpacing.sm))
-                summary.checks.forEach { result ->
+                checks.forEach { result ->
                     email_auth_check_row(result = result, surface = surface)
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))

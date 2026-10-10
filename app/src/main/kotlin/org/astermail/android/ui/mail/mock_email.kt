@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.security.EmailAuthVerdict
+import org.astermail.android.security.SenderTrustMessage
 import org.astermail.android.security.summarize_email_authentication
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -64,6 +65,7 @@ data class Email(
     val system_origin: Boolean = false,
     val send_status: String? = null,
     val send_error: String? = null,
+    val trust_message: SenderTrustMessage? = null,
 )
 
 data class list_folder_chip(
@@ -255,6 +257,7 @@ data class ThreadMessage(
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     val send_status: String? = null,
     val send_error: String? = null,
+    val trust_message: SenderTrustMessage? = null,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
@@ -377,6 +380,45 @@ fun inbox_item_to_email(
         system_origin = item.raw_item.system_origin,
         send_status = item.raw_item.send_status,
         send_error = item.raw_item.send_error,
+        trust_message = inbox_item_trust_message(item),
+    )
+}
+
+fun inbox_item_trust_message(item: org.astermail.android.mail.InboxItem): SenderTrustMessage? {
+    val item_type = item.raw_item.item_type ?: item.raw_item.metadata?.item_type
+    if (item_type != "received" || item.is_undecryptable) return null
+    return SenderTrustMessage(
+        sender_name = item.sender_name,
+        sender_email = item.sender_email,
+        display_sender_name = item.display_sender_name,
+        display_sender_email = item.display_sender_email,
+        spf_result = item.raw_item.spf_result,
+        dkim_result = item.raw_item.dkim_result,
+        dmarc_result = item.raw_item.dmarc_result,
+        sender_aligned = item.raw_item.sender_aligned,
+        sender_verified = item.raw_item.sender_verified,
+        sender_verified_domain = item.raw_item.sender_verified_domain,
+        is_external = item.raw_item.is_external,
+        sender_verification = item.sender_verification,
+    )
+}
+
+fun thread_message_trust_message(msg: org.astermail.android.mail.ThreadMessageDecrypted): SenderTrustMessage? {
+    if ((msg.raw_item.item_type ?: "received") != "received" || msg.is_undecryptable) return null
+    return SenderTrustMessage(
+        sender_name = msg.sender_name,
+        sender_email = msg.sender_email,
+        display_sender_name = msg.display_sender_name,
+        display_sender_email = msg.display_sender_email,
+        reply_to = org.astermail.android.security.reply_to_header_value(msg.raw_headers),
+        spf_result = msg.raw_item.spf_result,
+        dkim_result = msg.raw_item.dkim_result,
+        dmarc_result = msg.raw_item.dmarc_result,
+        sender_aligned = msg.raw_item.sender_aligned,
+        sender_verified = msg.raw_item.sender_verified,
+        sender_verified_domain = msg.raw_item.sender_verified_domain,
+        is_external = msg.raw_item.is_external,
+        sender_verification = msg.sender_verification,
     )
 }
 
@@ -424,6 +466,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         pgp_signature = msg.pgp_signature,
         send_status = msg.raw_item.send_status,
         send_error = msg.raw_item.send_error,
+        trust_message = thread_message_trust_message(msg),
     )
 }
 

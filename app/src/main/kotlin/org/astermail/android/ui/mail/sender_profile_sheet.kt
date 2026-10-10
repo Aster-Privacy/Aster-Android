@@ -74,6 +74,8 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
+import org.astermail.android.security.SenderAuthState
+import org.astermail.android.security.SenderTrust
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.contacts.Contact
 
@@ -97,6 +99,7 @@ fun sender_profile_sheet(
     on_block: (String) -> Unit,
     on_result: (String) -> Unit,
     contacts_vm: ContactsViewModel = hiltViewModel(),
+    trust: SenderTrust? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -105,7 +108,14 @@ fun sender_profile_sheet(
     val state = rememberModalBottomSheetState()
     val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
     val normalized = remember(sender_email) { sender_email.trim().lowercase() }
-    val is_internal = remember(normalized) { is_internal_sender(normalized) }
+    val marks_hidden = trust?.show_identity_marks == false
+    val is_internal = remember(normalized, trust) {
+        if (trust == null) {
+            is_internal_sender(normalized)
+        } else {
+            trust.auth_state == SenderAuthState.internal && trust.warning == null && is_internal_sender(normalized)
+        }
+    }
     val existing_contact = remember(contacts_state.contacts, normalized) {
         contacts_state.contacts.firstOrNull { it.email.trim().lowercase() == normalized }
     }
@@ -148,7 +158,7 @@ fun sender_profile_sheet(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SenderAvatar(email = normalized, name = sender_name, size = 64.dp)
+                SenderAvatar(email = normalized, name = sender_name, size = 64.dp, plain = marks_hidden)
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = sender_name.ifBlank { normalized },

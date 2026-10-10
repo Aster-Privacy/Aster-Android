@@ -742,10 +742,6 @@
     <string name="settings_section_other">अन्य</string>
     <string name="phishing_warning_title">यह संदेश संदिग्ध लगता है</string>
     <string name="phishing_dangerous_title">ख़तरनाक ईमेल रोकी गई</string>
-    <string name="phishing_signal_sender_domain_mimics">प्रेषक का डोमेन \"%1$s\" मिलते-जुलते अक्षरों से \"%2$s\" की नकल करता है</string>
-    <string name="phishing_signal_sender_domain_resembles">प्रेषक का डोमेन \"%1$s\" बदले हुए अक्षरों के साथ \"%2$s\" जैसा लगता है</string>
-    <string name="phishing_signal_display_name_brand">प्रदर्शित नाम में \"%1$s\" है, लेकिन ईमेल %2$s से आई है</string>
-    <string name="phishing_signal_display_name_email">प्रदर्शित नाम में ईमेल \"%1$s\" है, लेकिन प्रेषक %2$s है</string>
     <string name="phishing_show_details">विवरण दिखाएं</string>
     <string name="phishing_hide_details">विवरण छिपाएं</string>
     <string name="phishing_privacy_note">आपके डिवाइस पर पकड़ा गया। Aster आपकी ईमेल कभी नहीं पढ़ता।</string>
@@ -3249,4 +3245,14 @@
     <string name="moved_to_category">श्रेणी में ले जाया गया</string>
     <string name="metadata_undecryptable_change">यह डिवाइस इस संदेश का विवरण नहीं खोल सकता, इसलिए आपका बदलाव सहेजा नहीं गया। अपनी कुंजियां दोबारा लोड करने के लिए, साइन आउट करके फिर से साइन इन करें। सर्वर पर आपका संदेश जस का तस है।</string>
     <string name="color_swatch_option">रंग %1$d / %2$d</string>
+    <string name="sender_warning_title">भेजने वाले का पता जाँचें</string>
+    <string name="sender_warning_address_in_name">भेजने वाले के नाम में %1$s दिख रहा है, लेकिन यह संदेश %2$s से आया है।</string>
+    <string name="sender_warning_lookalike_name">भेजने वाले का नाम इस तरह लिखा गया है कि वह %1$s जैसा दिखे, लेकिन यह संदेश %2$s से आया है।</string>
+    <string name="sender_warning_brand_name">भेजने वाले के नाम में %1$s का ज़िक्र है, लेकिन यह संदेश %2$s से आया है, जो %1$s का ज्ञात पता नहीं है।</string>
+    <string name="sender_warning_home_brand_name">यह संदेश Aster की ओर से नहीं है। यह %1$s से आया है। Aster कभी भी ईमेल से आपका पासवर्ड या रिकवरी वाक्यांश नहीं माँगता।</string>
+    <string name="sender_warning_lookalike_domain">डोमेन %1$s देखने में %2$s जैसा है, लेकिन यह एक अलग डोमेन है।</string>
+    <string name="sender_contact_notice">इस भेजने वाले का नाम आपके संपर्क %1$s जैसा ही है, लेकिन पता अलग है।</string>
+    <string name="sender_reply_to_notice">इस संदेश के जवाब %1$s पर जाते हैं, जो भेजने वाले से अलग डोमेन पर है।</string>
+    <string name="email_auth_unverified">असत्यापित</string>
+    <string name="email_auth_unverified_desc">Aster यह पुष्टि नहीं कर सका कि %1$s ने यह संदेश भेजा है। लिंक या अटैचमेंट खोलने से पहले जाँच लें कि आप भेजने वाले को जानते हैं।</string>
 </resources>

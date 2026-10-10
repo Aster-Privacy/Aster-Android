@@ -57,4 +57,11 @@ data class FolderRowEntity(
     val system_origin: Boolean,
     val has_recipient_key: Boolean?,
     val cached_at: Long,
+    val spf_result: String? = null,
+    val dkim_result: String? = null,
+    val dmarc_result: String? = null,
+    val sender_aligned: Boolean? = null,
+    val sender_verified: Boolean? = null,
+    val sender_verified_domain: String? = null,
+    val sender_verification: String? = null,
 )
