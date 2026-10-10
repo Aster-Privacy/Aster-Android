@@ -223,7 +223,9 @@ private val script_ranges = arrayOf(
 
 private val local_part_forbidden = Regex("""[<>()\[\],;:"\\]""")
 private val address_in_name_pattern = Regex("""[^ <>()\[\]"',;:]+@[^ <>()\[\]"',;:@]+""")
-private val trailing_sentence_marks = Regex("""[.!?]+$""")
+private val trailing_sentence_marks = Regex("""[^\p{L}\p{N}]+$""")
+private val domain_edge_marks = Regex("""^[.-]+|[.-]+$""")
+private val domain_last_label = Regex("""^[a-z]{2,}$""")
 private val ideographic_dots = Regex("[。．｡]")
 private val all_digits = Regex("^[0-9]+$")
 private val mark_symbols = Regex("[\u2120\u2122]")
@@ -612,6 +614,9 @@ private fun match_brand_name(claim: NameClaim, names: List<PreparedName>): Brand
     if (claim.compact_skeleton.isEmpty()) return null
     for (name in names) {
         for (variant in name.variants) {
+            if (variant.compact_fold == claim.compact_fold || variant.compact_fold == claim.bare_fold) {
+                return BrandNameMatch(claimed = name.candidate, lookalike = false, solo = name.solo)
+            }
             if (variant.compact_skeleton == claim.compact_skeleton) {
                 return BrandNameMatch(
                     claimed = name.candidate,
@@ -654,6 +659,39 @@ private fun find_address_in_name(name: String): ParsedAddress? {
     for (match in address_in_name_pattern.findAll(folded)) {
         val parsed = parse_address(match.value.replace(trailing_sentence_marks, ""))
         if (parsed != null) return parsed
+    }
+    return null
+}
+
+private fun is_domain_label_char(code: Int): Boolean =
+    code in 0x61..0x7a || code in 0x30..0x39 || code == 0x2d || code == 0x2e
+
+private fun domain_shaped(run: String): String? {
+    val trimmed = run.replace(domain_edge_marks, "")
+    val labels = trimmed.split(".")
+    if (labels.size < 2 || labels.any { it.isEmpty() }) return null
+    if (!domain_last_label.matches(labels.last())) return null
+    return trimmed
+}
+
+private fun find_brand_domain_in_name(name: String): String? {
+    val runs = ArrayList<String>()
+    val run = StringBuilder()
+    for (code in code_points(sender_skeleton(name))) {
+        if (is_domain_label_char(code)) {
+            run.appendCodePoint(code)
+            continue
+        }
+        if (run.isNotEmpty()) runs.add(run.toString())
+        run.setLength(0)
+    }
+    if (run.isNotEmpty()) runs.add(run.toString())
+    for (candidate in runs) {
+        val shaped = domain_shaped(candidate) ?: continue
+        val target = sender_registrable_domain(shaped)
+        if (target.isEmpty()) continue
+        val known = sender_trust_data.brand_domain_index.by_skeleton[target] ?: continue
+        if (known !in sender_trust_data.public_mailbox_domains) return known
     }
     return null
 }
@@ -860,12 +898,28 @@ private fun find_warning(
     if (name.isEmpty()) return null
 
     val in_name = find_address_in_name(name)
-    if (
-        in_name != null &&
-        in_name.registrable != parsed.registrable &&
-        sender_trust_data.relay_domains.none { within_domain(parsed.ascii_domain, it) }
-    ) {
+    val relayed = sender_trust_data.relay_domains.any { within_domain(parsed.ascii_domain, it) }
+    val other_mailbox = in_name != null &&
+        parsed.ascii_domain in sender_trust_data.public_mailbox_domains &&
+        address_key(in_name) != address_key(parsed)
+    if (in_name != null && (in_name.registrable != parsed.registrable || other_mailbox) && !relayed) {
         return SenderWarning(SenderWarningKind.address_in_name, in_name.address)
+    }
+
+    val named_domain = if (relayed) null else find_brand_domain_in_name(name)
+    if (named_domain != null && named_domain != parsed.registrable) {
+        val home_named = sender_trust_data.home_domains.any { sender_registrable_domain(it) == named_domain }
+        val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
+        val owners = sender_trust_data.brands.filter { entry ->
+            entry.domains.any { sender_registrable_domain(it) == named_domain }
+        }
+        if (home_named) {
+            if (!from_home) {
+                return SenderWarning(SenderWarningKind.home_brand_name, sender_trust_data.home_first_name)
+            }
+        } else if (owners.isNotEmpty() && owners.none { is_trust_brand_domain(parsed, it, trusted_auth) }) {
+            return SenderWarning(SenderWarningKind.brand_name, named_domain)
+        }
     }
 
     val claim = name_claim(name)
