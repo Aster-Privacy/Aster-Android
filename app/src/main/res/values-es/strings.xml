@@ -1258,7 +1258,6 @@
     <string name="settings_plan_bullet_star_domains">5 dominios personalizados</string>
     <string name="settings_plan_bullet_daily_send_limits">Límites de envío diarios más altos</string>
     <string name="settings_plan_bullet_star_templates">10 plantillas de correo</string>
-    <string name="settings_plan_bullet_tracker_protection">Protección contra rastreadores</string>
     <string name="settings_plan_bullet_vacation_reply">Respuesta automática de vacaciones</string>
     <string name="settings_plan_bullet_catch_all">Dirección de correo catch-all</string>
     <string name="settings_plan_bullet_auto_forwarding">Reenvío automático</string>
@@ -1277,7 +1276,6 @@
     <string name="settings_plan_bullet_contact_merge">Asistente de combinación de contactos</string>
     <string name="settings_plan_bullet_encrypted_export">Exportación cifrada</string>
     <string name="settings_plan_bullet_protected_folders">Carpetas protegidas con contraseña</string>
-    <string name="settings_plan_bullet_key_rotation">Intervalos de rotación de claves personalizados</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB de almacenamiento cifrado</string>
     <string name="settings_plan_bullet_supernova_attachments">Adjuntos de hasta 250 MB</string>
     <string name="settings_plan_bullet_unlimited_domains">Ilimitados dominios personalizados</string>
@@ -1819,7 +1817,7 @@
     <string name="upgrade_reassurance">Cancela cuando quieras</string>
     <string name="upgrade_trust_line">Sin anuncios, sin rastreo</string>
     <string name="upgrade_perk_storage">Más espacio para mensajes y adjuntos</string>
-    <string name="upgrade_perk_aliases">Alias ilimitados y dominios propios</string>
+    <string name="upgrade_perk_aliases">Más alias y dominios propios</string>
     <string name="upgrade_perk_domains">Dominios propios y funciones pro</string>
     <string name="upgrade_perk_features">Filtros, plantillas, firmas y más</string>
     <string name="upgrade_resource_aliases">alias</string>

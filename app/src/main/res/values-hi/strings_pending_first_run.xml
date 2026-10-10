@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">रिकवरी ईमेल जोड़ें</string>
     <string name="recovery_reminder_later">बाद में</string>
     <string name="plan_prompt_title">Aster Mail से और ज़्यादा पाएं</string>
-    <string name="plan_prompt_body">ज़्यादा स्टोरेज, कस्टम डोमेन और असीमित एलियास के लिए अपग्रेड करें।</string>
+    <string name="plan_prompt_body">ज़्यादा स्टोरेज, ज़्यादा एलियास और ज़्यादा कस्टम डोमेन के लिए अपग्रेड करें।</string>
     <string name="plan_prompt_action">प्लान देखें</string>
     <string name="plan_prompt_dismiss">अभी नहीं</string>
     <string name="recovery_codes_reminder_title">अपने रिकवरी कोड सहेजें</string>

@@ -92,7 +92,6 @@
     <string name="settings_plan_bullet_daily_send_limits">Higher daily sending limits</string>
     <string name="settings_plan_bullet_daily_emails">1,000 daily emails</string>
     <string name="settings_plan_bullet_star_templates">10 email templates</string>
-    <string name="settings_plan_bullet_tracker_protection">Tracker protection</string>
     <string name="settings_plan_bullet_vacation_reply">Vacation auto-reply</string>
     <string name="settings_plan_bullet_catch_all">Catch-all email address</string>
     <string name="settings_plan_bullet_auto_forwarding">Automatic forwarding</string>
@@ -112,7 +111,6 @@
     <string name="settings_plan_bullet_contact_merge">Contact merge wizard</string>
     <string name="settings_plan_bullet_encrypted_export">Encrypted export</string>
     <string name="settings_plan_bullet_protected_folders">Password-protected folders</string>
-    <string name="settings_plan_bullet_key_rotation">Custom key rotation intervals</string>
 
     <string name="settings_plan_bullet_supernova_storage">5 TB encrypted storage</string>
     <string name="settings_plan_bullet_supernova_attachments">Up to 250 MB attachments</string>

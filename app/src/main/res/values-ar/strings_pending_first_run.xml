@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">إضافة بريد للاسترداد</string>
     <string name="recovery_reminder_later">لاحقًا</string>
     <string name="plan_prompt_title">احصل على المزيد من Aster Mail</string>
-    <string name="plan_prompt_body">قم بالترقية للحصول على مساحة أكبر ونطاقات مخصصة وأسماء مستعارة غير محدودة.</string>
+    <string name="plan_prompt_body">قم بالترقية للحصول على مساحة أكبر والمزيد من الأسماء المستعارة والنطاقات المخصصة.</string>
     <string name="plan_prompt_action">عرض الخطط</string>
     <string name="plan_prompt_dismiss">ليس الآن</string>
     <string name="recovery_codes_reminder_title">احفظ رموز الاسترداد</string>

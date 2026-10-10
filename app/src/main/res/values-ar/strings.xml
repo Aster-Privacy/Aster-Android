@@ -1266,7 +1266,6 @@
     <string name="settings_plan_bullet_star_domains">5 نطاقات مخصصة</string>
     <string name="settings_plan_bullet_daily_send_limits">حدود إرسال يومية أعلى</string>
     <string name="settings_plan_bullet_star_templates">10 قوالب بريد</string>
-    <string name="settings_plan_bullet_tracker_protection">الحماية من المتعقّبات</string>
     <string name="settings_plan_bullet_vacation_reply">رد تلقائي لفترة الإجازة</string>
     <string name="settings_plan_bullet_catch_all">عنوان استقبال شامل</string>
     <string name="settings_plan_bullet_auto_forwarding">التحويل التلقائي</string>
@@ -1285,7 +1284,6 @@
     <string name="settings_plan_bullet_contact_merge">معالج دمج جهات الاتصال</string>
     <string name="settings_plan_bullet_encrypted_export">تصدير مشفر</string>
     <string name="settings_plan_bullet_protected_folders">مجلدات محمية بكلمة مرور</string>
-    <string name="settings_plan_bullet_key_rotation">فترات تدوير مفاتيح مخصصة</string>
     <string name="settings_plan_bullet_supernova_storage">5 تيرابايت تخزين مشفر</string>
     <string name="settings_plan_bullet_supernova_attachments">مرفقات حتى 250 ميغابايت</string>
     <string name="settings_plan_bullet_unlimited_domains">غير محدود من النطاقات المخصصة</string>
@@ -1830,7 +1828,7 @@
     <string name="upgrade_reassurance">يمكنك الإلغاء في أي وقت</string>
     <string name="upgrade_trust_line">بدون إعلانات، بدون تتبع</string>
     <string name="upgrade_perk_storage">مساحة أكبر للرسائل والمرفقات</string>
-    <string name="upgrade_perk_aliases">أسماء مستعارة غير محدودة ونطاقات مخصصة</string>
+    <string name="upgrade_perk_aliases">المزيد من الأسماء المستعارة والنطاقات المخصصة</string>
     <string name="upgrade_perk_domains">نطاقات مخصصة وميزات احترافية</string>
     <string name="upgrade_perk_features">عوامل التصفية والقوالب والتواقيع والمزيد</string>
     <string name="upgrade_resource_aliases">الأسماء المستعارة</string>

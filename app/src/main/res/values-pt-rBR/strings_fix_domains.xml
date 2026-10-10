@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">Resultados para %1$s</string>
     <string name="domain_purchase_change_name">Alterar nome</string>
     <string name="domain_purchase_show_more">Mostrar mais resultados</string>
-    <string name="domain_purchase_empty_included">Todo domínio inclui privacidade WHOIS, DNS configurado para você e endereços ilimitados.</string>
+    <string name="domain_purchase_empty_included">Todo domínio inclui privacidade WHOIS e DNS configurado para você.</string>
     <string name="domain_purchase_retry">Tentar novamente</string>
     <string name="domain_purchase_progress_note">O Aster Mail está registrando seu domínio e configurando suas caixas de correio. Isso geralmente leva cerca de um minuto.</string>
     <string name="domain_purchase_awaiting_note">Seu pagamento ainda não chegou. Para concluir seu pedido, finalize o checkout. Você também pode fechar esta janela e pagar mais tarde em Domínios comprados.</string>

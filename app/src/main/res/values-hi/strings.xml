@@ -1706,7 +1706,7 @@
     <string name="upgrade_reassurance">कभी भी रद्द करें</string>
     <string name="upgrade_trust_line">कोई विज्ञापन नहीं, कोई ट्रैकिंग नहीं</string>
     <string name="upgrade_perk_storage">संदेशों और अटैचमेंट के लिए ज़्यादा स्टोरेज</string>
-    <string name="upgrade_perk_aliases">असीमित उपनाम और कस्टम डोमेन</string>
+    <string name="upgrade_perk_aliases">ज़्यादा उपनाम और कस्टम डोमेन</string>
     <string name="upgrade_perk_domains">कस्टम डोमेन और प्रो सुविधाएं</string>
     <string name="upgrade_perk_features">फ़िल्टर, टेम्पलेट, हस्ताक्षर और बहुत कुछ</string>
     <string name="upgrade_resource_aliases">एलियास</string>

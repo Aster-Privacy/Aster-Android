@@ -1254,7 +1254,6 @@
     <string name="settings_plan_bullet_star_domains">5 eigen domeinen</string>
     <string name="settings_plan_bullet_daily_send_limits">Hogere dagelijkse verzendlimieten</string>
     <string name="settings_plan_bullet_star_templates">10 e-mailsjablonen</string>
-    <string name="settings_plan_bullet_tracker_protection">Trackerbescherming</string>
     <string name="settings_plan_bullet_vacation_reply">Automatisch vakantieantwoord</string>
     <string name="settings_plan_bullet_catch_all">Catch-all e-mailadres</string>
     <string name="settings_plan_bullet_auto_forwarding">Automatisch doorsturen</string>
@@ -1273,7 +1272,6 @@
     <string name="settings_plan_bullet_contact_merge">Contacten samenvoegen</string>
     <string name="settings_plan_bullet_encrypted_export">Versleutelde export</string>
     <string name="settings_plan_bullet_protected_folders">Met wachtwoord beveiligde mappen</string>
-    <string name="settings_plan_bullet_key_rotation">Aangepaste sleutelrotatie-intervallen</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB versleutelde opslag</string>
     <string name="settings_plan_bullet_supernova_attachments">Bijlagen tot 250 MB</string>
     <string name="settings_plan_bullet_unlimited_domains">Onbeperkt eigen domeinen</string>
@@ -1814,7 +1812,7 @@
     <string name="upgrade_reassurance">Altijd opzegbaar</string>
     <string name="upgrade_trust_line">Geen advertenties, geen tracking</string>
     <string name="upgrade_perk_storage">Meer ruimte voor berichten en bijlagen</string>
-    <string name="upgrade_perk_aliases">Onbeperkt aliassen en eigen domeinen</string>
+    <string name="upgrade_perk_aliases">Meer aliassen en eigen domeinen</string>
     <string name="upgrade_perk_domains">Eigen domeinen en pro-functies</string>
     <string name="upgrade_perk_features">Filters, sjablonen, handtekeningen en meer</string>
     <string name="upgrade_resource_aliases">aliassen</string>
