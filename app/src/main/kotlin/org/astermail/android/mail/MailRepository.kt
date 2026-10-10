@@ -3215,6 +3215,44 @@ class MailRepository @Inject constructor(
         else -> null
     }
 
+    suspend fun collect_routing_ids(routing_token: String, direction: String?): Result<ScopeIds> = runCatching {
+        val locked = org.astermail.android.folders.folder_lock_store.locked_folder_tokens()
+        val ids = LinkedHashSet<String>()
+        var offset = 0
+        var capped = false
+        var pages = 0
+        while (pages < SCOPE_ID_MAX_PAGES) {
+            pages++
+            val response = mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                offset = offset,
+                item_type = null,
+                is_trashed = false,
+                routing_token = routing_token,
+                direction = direction,
+                group_by_thread = false,
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+            )
+            if (response.items.isEmpty()) break
+            offset += response.items.size
+            for (raw in response.items) {
+                if (raw.is_reaction == true) continue
+                if (locked.isNotEmpty() &&
+                    org.astermail.android.folders.raw_item_folder_tokens(raw).any { it in locked }
+                ) continue
+                ids.add(raw.id)
+                if (ids.size >= SCOPE_ID_MAX) {
+                    capped = true
+                    break
+                }
+            }
+            if (capped || !response.has_more) break
+        }
+        ScopeIds(ids = ids.toList(), capped = capped)
+    }
+
     suspend fun collect_scope_ids(folder: String): Result<ScopeIds> = runCatching {
         require(folder_supports_bulk_scope(folder)) { "folder $folder has no scope listing" }
         val label_token = scope_label_token(folder)

@@ -1436,8 +1436,10 @@ class MailViewModel @Inject constructor(
             load_more_failures = 0
             load_more_retry_at = 0L
         }
-        var cursor = state.next_cursor ?: return
         val started_folder = state.current_folder
+        var cursor = state.next_cursor?.let {
+            if (folder_uses_offset_cursor(started_folder)) rebase_offset_cursor(it, state.items.size) else it
+        } ?: return
         _inbox_state.update { it.copy(is_loading_more = true) }
         val load_more_gen = ++load_more_generation
         load_more_job = viewModelScope.launch {
@@ -4312,7 +4314,8 @@ class MailViewModel @Inject constructor(
                 if (repository.folder_supports_bulk_scope(folder)) {
                     repository.mark_all_read_scope(folder)
                 } else {
-                    val ids = current_read_ids(prior_reads.keys, sequence)
+                    val ids = scope_read_ids(folder, prior_reads.keys, sequence)
+                        ?: return@withLock Result.failure<org.astermail.android.api.mail.BulkScopeResponse>(IllegalStateException("alias listing failed"))
                     if (ids.isEmpty()) return@launch else repository.mark_read_bulk(ids)
                 }
             }
@@ -4347,7 +4350,8 @@ class MailViewModel @Inject constructor(
                 if (repository.folder_supports_bulk_scope(folder)) {
                     repository.mark_all_unread_scope(folder)
                 } else {
-                    val ids = current_read_ids(prior_reads.keys, sequence)
+                    val ids = scope_read_ids(folder, prior_reads.keys, sequence)
+                        ?: return@withLock Result.failure<org.astermail.android.api.mail.BulkScopeResponse>(IllegalStateException("alias listing failed"))
                     if (ids.isEmpty()) return@launch else repository.mark_unread_bulk(ids)
                 }
             }
@@ -4366,6 +4370,22 @@ class MailViewModel @Inject constructor(
                 },
             )
         }
+    }
+
+    private suspend fun scope_read_ids(
+        folder: String,
+        loaded: Set<String>,
+        sequence: Long,
+    ): List<String>? {
+        val live = current_read_ids(loaded, sequence)
+        if (!folder.startsWith("routing:")) return live
+        val routing_scope = parse_alias_routing_folder(folder)
+            ?: alias_routing_scope(folder.removePrefix("routing:"), alias_direction_all)
+        val collected = repository.collect_routing_ids(
+            routing_scope.routing_token,
+            alias_direction_query(routing_scope.direction),
+        ).getOrNull() ?: return null
+        return merge_scope_read_ids(live, loaded, collected.ids)
     }
 
     fun folder_supports_scope_selection(folder: String): Boolean =
@@ -5498,6 +5518,26 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
 )
 
 private val folders_keeping_archived = setOf("archive", "starred", "snoozed", "sent")
+
+private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "snoozed")
+
+internal fun folder_uses_offset_cursor(folder: String): Boolean = when {
+    folder == "scheduled" -> true
+    folder in CURSOR_PAGED_FOLDERS || is_all_mail_folder(folder) -> false
+    folder.startsWith("label:") || folder.startsWith("tag:") || folder.startsWith("routing:") -> true
+    else -> is_folder_token(folder)
+}
+
+internal fun rebase_offset_cursor(cursor: String, loaded_count: Int): String {
+    val offset = cursor.toIntOrNull() ?: return cursor
+    return minOf(offset, maxOf(0, loaded_count)).toString()
+}
+
+internal fun merge_scope_read_ids(
+    live: List<String>,
+    loaded: Set<String>,
+    collected: List<String>,
+): List<String> = (live + collected.filter { it !in loaded }).distinct()
 
 internal fun folder_keeps_archived(folder: String): Boolean =
     folder in folders_keeping_archived ||

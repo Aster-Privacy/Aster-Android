@@ -3154,6 +3154,44 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `collect_routing_ids pages an alias listing by offset`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), 0, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (1..500).map { MailItem(id = "m$it") }, has_more = true)
+        coEvery { mail_api.list_messages(any(), any(), 500, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (501..560).map { MailItem(id = "m$it") } + MailItem(id = "r1", is_reaction = true), has_more = false)
+
+        val result = repo.collect_routing_ids("hash-alias", "received").getOrThrow()
+
+        assertEquals(560, result.ids.size)
+        assertFalse(result.capped)
+        assertFalse("r1" in result.ids)
+        coVerify(exactly = 2) {
+            mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = any(),
+                offset = any(),
+                item_type = null,
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = any(),
+                is_spam = any(),
+                include_spam = any(),
+                include_trash = any(),
+                label_token = null,
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = any(),
+                routing_token = "hash-alias",
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+                direction = "received",
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
     fun `collect_scope_ids pages a folder by offset`() = runTest {
         coEvery { mail_api.list_messages(any(), any(), 0, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(items = (1..500).map { MailItem(id = "f$it") }, has_more = true)
