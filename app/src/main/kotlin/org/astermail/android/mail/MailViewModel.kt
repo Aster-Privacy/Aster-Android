@@ -4389,7 +4389,23 @@ class MailViewModel @Inject constructor(
     }
 
     fun folder_supports_scope_selection(folder: String): Boolean =
+        repository.folder_supports_bulk_scope(folder) || is_routing_scope_folder(folder)
+
+    fun folder_uses_server_scope(folder: String): Boolean =
         repository.folder_supports_bulk_scope(folder)
+
+    private fun is_routing_scope_folder(folder: String): Boolean =
+        folder.startsWith("routing:") && folder.length > "routing:".length
+
+    private suspend fun collect_folder_scope_ids(folder: String): Result<ScopeIds> {
+        if (!is_routing_scope_folder(folder)) return repository.collect_scope_ids(folder)
+        val routing_scope = parse_alias_routing_folder(folder)
+            ?: alias_routing_scope(folder.removePrefix("routing:"), alias_direction_all)
+        return repository.collect_routing_ids(
+            routing_scope.routing_token,
+            alias_direction_query(routing_scope.direction),
+        )
+    }
 
     fun action_supports_scope_selection(action: String): Boolean =
         repository.action_supports_bulk_scope(action)
@@ -4517,7 +4533,7 @@ class MailViewModel @Inject constructor(
 
     fun collect_scope_selection_ids(folder: String, expected_total: Int, on_ready: (List<String>) -> Unit) {
         viewModelScope.launch {
-            repository.collect_scope_ids(folder)
+            collect_folder_scope_ids(folder)
                 .onSuccess { result ->
                     if (result.capped) {
                         emit_toast(context.getString(R.string.scope_applied_to_first, result.ids.size, maxOf(expected_total, result.ids.size)))
