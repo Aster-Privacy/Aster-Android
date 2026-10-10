@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.search
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -938,7 +939,7 @@ fun SearchScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .vertical_scroll_with_indicator()
                     .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
             ) {
                 Text(
@@ -1617,10 +1618,10 @@ internal fun search_results_list(
             )
         }
     }
-        org.astermail.android.ui.common.fast_scroll_bar(
+        org.astermail.android.ui.common.vertical_scroll_bar(
             state = list_state,
             modifier = Modifier.align(Alignment.TopEnd),
-            bottom_padding = AsterSpacing.lg,
+            bottom_inset = AsterSpacing.lg,
         )
     }
 }

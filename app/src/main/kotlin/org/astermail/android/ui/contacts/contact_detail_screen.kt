@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.text.style.TextOverflow
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -276,7 +277,7 @@ fun ContactDetailScreen(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .vertical_scroll_with_indicator()
                 .padding(bottom = AsterSpacing.xxl),
         ) {
             Column(

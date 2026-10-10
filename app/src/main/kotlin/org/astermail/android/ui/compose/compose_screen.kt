@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.graphics.RectangleShape
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
@@ -2302,7 +2303,7 @@ fun ComposeScreen(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .vertical_scroll_with_indicator(),
         ) {
             val scheduled_label = iso_to_epoch_ms(scheduled_at_iso)?.format_full_datetime()
             if (scheduled_send && scheduled_label != null) {
@@ -4520,7 +4521,7 @@ private fun TemplatePickerSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 420.dp)
-                            .verticalScroll(rememberScrollState()),
+                            .vertical_scroll_with_indicator(),
                     ) {
                     items.forEach { tpl ->
                         Row(
@@ -4984,7 +4985,7 @@ internal fun ExpiringSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .vertical_scroll_with_indicator()
                 .padding(horizontal = AsterSpacing.md),
         ) {
             Text(

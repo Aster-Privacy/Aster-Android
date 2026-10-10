@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -1276,7 +1277,7 @@ private fun new_group_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 320.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1392,7 +1393,7 @@ private fun group_picker_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 320.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 groups.forEach { group ->
                     Row(
@@ -1457,7 +1458,7 @@ private fun merge_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 380.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 cluster.contacts.forEachIndexed { index, contact ->
                     val is_primary = contact.id == primary_id

@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -84,6 +86,28 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.ui.common.remember_zoom_state
+import org.astermail.android.ui.common.vertical_scroll_bar
+import org.astermail.android.ui.common.zoom_layer
+import org.astermail.android.ui.common.zoomable
+import kotlin.math.abs
+
+private const val PDF_MAX_ZOOM = 5f
+private const val PDF_ZOOM_RENDER_FACTOR = 2
+private const val PDF_MAX_RENDER_WIDTH_PX = 2400
+
+internal data class pdf_page_span(val index: Int, val top_px: Int, val bottom_px: Int)
+
+internal fun pdf_render_width(target_width_px: Int, zoomed: Boolean): Int = if (zoomed) {
+    (target_width_px * PDF_ZOOM_RENDER_FACTOR).coerceAtMost(maxOf(PDF_MAX_RENDER_WIDTH_PX, target_width_px))
+} else {
+    target_width_px
+}
+
+internal fun pdf_page_at(spans: List<pdf_page_span>, center_px: Int): Int? {
+    spans.firstOrNull { center_px >= it.top_px && center_px < it.bottom_px }?.let { return it.index }
+    return spans.minByOrNull { minOf(abs(center_px - it.top_px), abs(center_px - it.bottom_px)) }?.index
+}
 
 private sealed interface pdf_view_state {
     data object loading : pdf_view_state
@@ -241,18 +265,58 @@ private fun pdf_password_prompt(
 
 @Composable
 private fun pdf_pages(document: pdf_document, filename: String) {
+    val list_state = rememberLazyListState()
+    val zoom = remember_zoom_state(document, max_scale = PDF_MAX_ZOOM)
+    val zoomed by remember(zoom) { derivedStateOf { zoom.is_zoomed } }
+    val current_page by remember(list_state) {
+        derivedStateOf {
+            val info = list_state.layoutInfo
+            pdf_page_at(
+                spans = info.visibleItemsInfo.map { pdf_page_span(it.index, it.offset, it.offset + it.size) },
+                center_px = (info.viewportEndOffset - info.viewportStartOffset) / 2,
+            ) ?: 0
+        }
+    }
     BoxWithConstraints(modifier = Modifier.fillMaxSize().testTag("pdf_pages")) {
         val density = LocalDensity.current
         val target_width_px = with(density) { (maxWidth - 24.dp).roundToPx() }.coerceAtLeast(1)
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        val render_width_px = pdf_render_width(target_width_px, zoomed)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zoomable(
+                    state = zoom,
+                    on_overscroll = { leftover ->
+                        if (leftover.y != 0f) list_state.dispatchRawDelta(-leftover.y / zoom.scale)
+                    },
+                ),
         ) {
-            items((0 until document.page_count).toList(), key = { it }) { index ->
-                pdf_page(document, index, target_width_px, filename)
+            LazyColumn(
+                state = list_state,
+                modifier = Modifier.fillMaxSize().zoom_layer(zoom),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                items((0 until document.page_count).toList(), key = { it }) { index ->
+                    pdf_page(document, index, render_width_px, filename)
+                }
             }
+        }
+        vertical_scroll_bar(state = list_state, modifier = Modifier.align(Alignment.TopEnd))
+        if (document.page_count > 1) {
+            Text(
+                text = stringResource(R.string.pdf_page_of_total, current_page + 1, document.page_count),
+                color = Color.White,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+                    .clip(SquircleShape(999.dp))
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .testTag("pdf_page_indicator"),
+            )
         }
     }
 }

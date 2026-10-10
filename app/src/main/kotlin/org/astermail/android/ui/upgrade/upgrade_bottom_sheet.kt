@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.upgrade
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -202,7 +203,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .vertical_scroll_with_indicator()
                 .padding(horizontal = AsterSpacing.xl)
                 .padding(bottom = AsterSpacing.xxl),
         ) {

@@ -280,7 +280,7 @@ fun FilteredInboxScreen(
                             }
                         }
                     }
-                    org.astermail.android.ui.common.fast_scroll_bar(
+                    org.astermail.android.ui.common.vertical_scroll_bar(
                         state = list_state,
                         modifier = Modifier.align(Alignment.TopEnd),
                     )

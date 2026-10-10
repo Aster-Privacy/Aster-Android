@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
@@ -504,7 +505,7 @@ private fun profile_picture_main_view(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .vertical_scroll_with_indicator()
             .navigationBarsPadding()
             .padding(horizontal = AsterSpacing.lg)
             .padding(top = AsterSpacing.lg, bottom = AsterSpacing.xl),

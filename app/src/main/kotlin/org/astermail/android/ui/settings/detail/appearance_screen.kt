@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.tablericons.ChevronDown
 import compose.icons.tablericons.ChevronUp
 import androidx.compose.animation.animateContentSize
@@ -884,7 +885,7 @@ fun AppearanceScreen(
             Column(
                 modifier = Modifier
                     .heightIn(max = 480.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 FONT_OPTIONS.forEach { option ->
                     font_option_row(

@@ -174,7 +174,6 @@ class MailPollingWorker(
         val stats = try {
             kotlinx.coroutines.withTimeout(20_000L) { mail_api.get_stats() }
         } catch (_: ApiError.UnauthorizedError) {
-            schedule_next(context)
             return Result.success()
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -695,6 +694,11 @@ class MailPollingWorker(
         fun schedule_next(context: Context) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             if (!prefs.getBoolean(KEY_PUSH_ENABLED, true)) return
+            val chain_needed = org.astermail.android.api.network.should_chain_polls(
+                push_registered = !UnifiedPushState.has_pending_registration(context),
+                socket_live = PersistentPushService.socket_live,
+            )
+            if (!chain_needed) return
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()

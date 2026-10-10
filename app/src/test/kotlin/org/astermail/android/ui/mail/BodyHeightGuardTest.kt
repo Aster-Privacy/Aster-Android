@@ -22,6 +22,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -70,5 +71,64 @@ class BodyHeightGuardTest {
         assertFalse(body_width_measurable(300, 2.625f))
         assertTrue(body_width_measurable(1028, 2.625f))
         assertTrue(body_width_measurable(320, 1f))
+    }
+
+    @Test
+    fun growth_by_the_same_factor_each_pass_is_rejected() {
+        val guard = body_growth_guard()
+
+        assertEquals(208, guard.settle(179, 208))
+        assertEquals(241, guard.settle(208, 241))
+        assertEquals(179, guard.settle(241, 279))
+        assertEquals(179, guard.settle(179, 208))
+    }
+
+    @Test
+    fun a_body_that_grows_once_keeps_its_new_height() {
+        val guard = body_growth_guard()
+
+        assertEquals(838, guard.settle(106, 838))
+        assertEquals(838, guard.settle(838, 838))
+        assertEquals(400, guard.settle(838, 400))
+    }
+
+    @Test
+    fun uneven_growth_from_late_images_is_accepted() {
+        val guard = body_growth_guard()
+
+        assertEquals(300, guard.settle(200, 300))
+        assertEquals(620, guard.settle(300, 620))
+        assertEquals(700, guard.settle(620, 700))
+        assertEquals(1900, guard.settle(700, 1900))
+    }
+
+    @Test
+    fun a_reset_guard_accepts_growth_again() {
+        val guard = body_growth_guard()
+        guard.settle(179, 208)
+        guard.settle(208, 241)
+        guard.settle(241, 279)
+
+        guard.reset()
+
+        assertEquals(279, guard.settle(241, 279))
+    }
+
+    @Test
+    fun a_page_wider_than_the_screen_overflows_sideways() {
+        assertTrue(body_overflows_sideways(1727, 1080))
+        assertFalse(body_overflows_sideways(1080, 1080))
+        assertFalse(body_overflows_sideways(1081, 1080))
+        assertFalse(body_overflows_sideways(1727, 0))
+    }
+
+    @Test
+    fun a_height_that_only_fills_the_stretched_viewport_is_not_a_measurement() {
+        assertTrue(body_height_viewport_filled(213, 133, 1727, 1080))
+        assertTrue(body_height_viewport_filled(187, 133, 1510, 1080))
+        assertFalse(body_height_viewport_filled(900, 133, 1727, 1080))
+        assertFalse(body_height_viewport_filled(213, 133, 1080, 1080))
+        assertFalse(body_height_viewport_filled(0, 133, 1727, 1080))
+        assertFalse(body_height_viewport_filled(213, 0, 1727, 1080))
     }
 }

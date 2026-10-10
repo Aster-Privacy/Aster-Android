@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.text.style.TextOverflow
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -202,7 +203,7 @@ internal fun detail_scaffold(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(effective_scroll)
+                        .vertical_scroll_with_indicator(effective_scroll)
                         .settings_search_content(anchor_host)
                         .padding(AsterSpacing.lg),
                     content = content,
@@ -236,7 +237,7 @@ internal fun embeddable_detail_scaffold(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scroll_state)
+                    .vertical_scroll_with_indicator(scroll_state)
                     .settings_search_content(anchor_host)
                     .padding(AsterSpacing.lg),
                 content = content,

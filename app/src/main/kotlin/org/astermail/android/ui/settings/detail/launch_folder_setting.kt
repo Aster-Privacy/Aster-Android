@@ -22,6 +22,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -155,7 +156,7 @@ internal fun launch_folder_picker(
         Column(
             modifier = Modifier
                 .heightIn(max = 480.dp)
-                .verticalScroll(rememberScrollState()),
+                .vertical_scroll_with_indicator(),
         ) {
             options.forEach { option ->
                 choice_option_row(

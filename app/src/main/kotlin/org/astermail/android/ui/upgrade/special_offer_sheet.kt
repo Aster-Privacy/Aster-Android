@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.upgrade
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
@@ -419,7 +420,7 @@ fun SpecialOfferHost() {
             if (offer_success) {
                 SpecialOfferSuccess(benefits = benefits, onDone = { offer_vm.close() })
             } else Column {
-                Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                Column(modifier = Modifier.weight(1f, fill = false).vertical_scroll_with_indicator()) {
                     SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
 
                     Column(
