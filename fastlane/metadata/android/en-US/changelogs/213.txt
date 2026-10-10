@@ -1,15 +1,15 @@
 What's new:
 
-- Swipe from the edge of the screen to open the side menu.
-- Drag the scroll bar to move through long messages.
-- Profile pictures open on a full page with a preview.
-- Compare plans opens full screen.
+- Pinch to zoom images and PDFs in attachments.
+- Swipe from the screen edge to open the side menu.
+- Drag the scroll bar in long messages and lists.
+- Reply from your catch-all address on paid plans.
 
 Fixed:
 
-- Creating or opening an alias no longer freezes your phone.
-- The reaction button opens the emoji picker.
-- Copy and Share appear above the text you select.
-- Profile pictures are sharp and centered.
-- Passkey sign-in to another account works again.
+- Some messages no longer scroll into endless blank space.
+- Bulk actions apply to every selected message.
+- Creating an alias no longer freezes your phone.
+- Text you write stays readable on dark themes.
+- Less battery use in the background.
 - Fewer crashes.
