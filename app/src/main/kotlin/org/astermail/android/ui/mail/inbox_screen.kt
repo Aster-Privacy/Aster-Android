@@ -2692,6 +2692,13 @@ fun InboxScreen(
                                 android.widget.Toast.LENGTH_SHORT,
                             ).show()
                         },
+                        on_too_far_ahead = {
+                            android.widget.Toast.makeText(
+                                picker_context,
+                                picker_context.getString(R.string.scheduled_too_far_ahead),
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        },
                     )
                 },
                 on_delete = {
@@ -3980,6 +3987,7 @@ internal fun show_reschedule_picker(
     on_picked: (String) -> Unit,
     on_cancel: () -> Unit,
     on_invalid: () -> Unit = on_cancel,
+    on_too_far_ahead: () -> Unit = on_invalid,
 ) {
     val initial = runCatching { java.time.OffsetDateTime.parse(initial_iso).toInstant() }
         .recoverCatching { java.time.Instant.parse(initial_iso) }
@@ -3999,6 +4007,13 @@ internal fun show_reschedule_picker(
                     cal.set(java.util.Calendar.MILLISECOND, 0)
                     if (cal.timeInMillis <= System.currentTimeMillis()) {
                         on_invalid()
+                    } else if (
+                        org.astermail.android.mail.exceeds_sealed_schedule_window(
+                            cal.timeInMillis,
+                            System.currentTimeMillis(),
+                        )
+                    ) {
+                        on_too_far_ahead()
                     } else {
                         on_picked(java.time.Instant.ofEpochMilli(cal.timeInMillis).toString())
                     }
@@ -4015,6 +4030,8 @@ internal fun show_reschedule_picker(
         calendar.get(java.util.Calendar.DAY_OF_MONTH),
     )
     date_picker.datePicker.minDate = System.currentTimeMillis()
+    date_picker.datePicker.maxDate =
+        org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
     date_picker.setOnCancelListener { on_cancel() }
     date_picker.show()
 }

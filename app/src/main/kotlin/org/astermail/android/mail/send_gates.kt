@@ -31,8 +31,10 @@ enum class ScheduledSendBlock { TOO_FAR_AHEAD, REQUIRES_ENCRYPTION }
 
 private fun address_key(address: String): String = address.trim().lowercase(Locale.ROOT)
 
+fun latest_sealed_schedule_ms(now_ms: Long): Long = now_ms + MAX_SEALED_SCHEDULE_DAYS * DAY_MS
+
 fun exceeds_sealed_schedule_window(scheduled_at_ms: Long, now_ms: Long): Boolean =
-    scheduled_at_ms > now_ms + MAX_SEALED_SCHEDULE_DAYS * DAY_MS
+    scheduled_at_ms > latest_sealed_schedule_ms(now_ms)
 
 fun scheduled_send_block(
     recipients: List<String>,
