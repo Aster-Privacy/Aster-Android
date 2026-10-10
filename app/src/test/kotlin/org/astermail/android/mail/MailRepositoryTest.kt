@@ -431,6 +431,119 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `snooze_bulk sends 300 ids as three requests of at most 100`() = runTest {
+        val sent = mutableListOf<List<String>>()
+        coEvery { snooze_api.bulk_snooze(any()) } answers {
+            val request = firstArg<org.astermail.android.api.snooze.BulkSnoozeRequest>()
+            sent.add(request.mail_item_ids)
+            org.astermail.android.api.snooze.BulkSnoozeResponse(snoozed_count = request.mail_item_ids.size)
+        }
+        val ids = (1..300).map { "id_$it" }
+
+        val outcome = repo.snooze_bulk(ids, "2026-10-10T09:00:00Z").getOrThrow()
+
+        assertEquals(listOf(100, 100, 100), sent.map { it.size })
+        assertEquals(ids, sent.flatten())
+        assertTrue(outcome.failed_ids.isEmpty())
+        assertEquals(0, outcome.skipped)
+        coVerify(exactly = 0) { snooze_api.snooze(any()) }
+    }
+
+    @Test
+    fun `snooze_bulk reports the ids of a rejected chunk and keeps going`() = runTest {
+        var call = 0
+        coEvery { snooze_api.bulk_snooze(any()) } answers {
+            call += 1
+            if (call == 2) throw org.astermail.android.api.ApiError.PlanLimitExceeded("limit", "snoozed emails")
+            val request = firstArg<org.astermail.android.api.snooze.BulkSnoozeRequest>()
+            org.astermail.android.api.snooze.BulkSnoozeResponse(snoozed_count = request.mail_item_ids.size - 1)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val outcome = repo.snooze_bulk(ids, "2026-10-10T09:00:00Z").getOrThrow()
+
+        assertEquals(3, call)
+        assertEquals(ids.subList(100, 200).toSet(), outcome.failed_ids)
+        assertEquals(2, outcome.skipped)
+    }
+
+    @Test
+    fun `snooze_bulk fails on a transient error so the action can be retried`() = runTest {
+        coEvery { snooze_api.bulk_snooze(any()) } throws java.io.IOException("offline")
+
+        val result = repo.snooze_bulk(listOf("a", "b"), "2026-10-10T09:00:00Z")
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `unsnooze_bulk sends 300 ids as three requests of at most 100`() = runTest {
+        val sent = mutableListOf<List<String>>()
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            val request = firstArg<org.astermail.android.api.snooze.BulkUnsnoozeRequest>()
+            sent.add(request.mail_item_ids)
+            org.astermail.android.api.snooze.BulkUnsnoozeResponse(unsnoozed_count = request.mail_item_ids.size)
+        }
+        var single_calls = 0
+        coEvery { snooze_api.unsnooze_by_mail_item(any()) } answers { single_calls += 1 }
+        val ids = (1..300).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(listOf(100, 100, 100), sent.map { it.size })
+        assertEquals(ids, sent.flatten())
+        assertTrue(failed.isEmpty())
+        assertEquals(0, single_calls)
+    }
+
+    @Test
+    fun `unsnooze_bulk falls back to one request per message when the server has no bulk route`() = runTest {
+        var bulk_calls = 0
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            bulk_calls += 1
+            throw org.astermail.android.api.ApiError.NotFoundError
+        }
+        val single = mutableListOf<String>()
+        coEvery { snooze_api.unsnooze_by_mail_item(any()) } answers {
+            val id = firstArg<String>()
+            if (id == "id_150") throw org.astermail.android.api.ApiError.ForbiddenError("locked", null)
+            single.add(id)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(1, bulk_calls)
+        assertEquals(ids - "id_150", single)
+        assertEquals(setOf("id_150"), failed)
+    }
+
+    @Test
+    fun `unsnooze_bulk reports the ids of a rejected chunk and keeps going`() = runTest {
+        var call = 0
+        coEvery { snooze_api.bulk_unsnooze(any()) } answers {
+            call += 1
+            if (call == 2) throw org.astermail.android.api.ApiError.ForbiddenError("locked", null)
+            org.astermail.android.api.snooze.BulkUnsnoozeResponse(unsnoozed_count = 100)
+        }
+        val ids = (1..250).map { "id_$it" }
+
+        val failed = repo.unsnooze_bulk(ids).getOrThrow()
+
+        assertEquals(3, call)
+        assertEquals(ids.subList(100, 200).toSet(), failed)
+    }
+
+    @Test
+    fun `unsnooze_bulk fails on a transient error so the action can be retried`() = runTest {
+        coEvery { snooze_api.bulk_unsnooze(any()) } throws java.io.IOException("offline")
+
+        val result = repo.unsnooze_bulk(listOf("a", "b"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `mark_read calls patch_metadata with is_read true`() = runTest {
         repo.mark_read("item_1", true)
         coVerify { mail_api.patch_metadata("item_1", PatchMetadataRequest(is_read = true)) }
@@ -510,6 +623,41 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `custom folder opened by its bare token supports bulk scope`() {
+        assertTrue(repo.folder_supports_bulk_scope("4JB5b0fX1K/XLf+Q3RpcSg=="))
+        assertEquals("4JB5b0fX1K/XLf+Q3RpcSg==", repo.folder_to_bulk_scope("4JB5b0fX1K/XLf+Q3RpcSg==").label_token)
+        assertFalse(repo.folder_supports_bulk_scope("all"))
+        assertFalse(repo.folder_supports_bulk_scope("all+spam"))
+        assertFalse(repo.folder_supports_bulk_scope("not a token"))
+        assertEquals(null, repo.folder_to_bulk_scope("spam").label_token)
+        assertEquals(null, repo.folder_to_bulk_scope("sent").label_token)
+    }
+
+    @Test
+    fun `unknown folders never fall back to an unscoped bulk filter`() {
+        listOf("all", "all+spam", "drafts", "scheduled", "routing:alias_token", "label:", "tag:").forEach { folder ->
+            assertTrue(folder, runCatching { repo.folder_to_bulk_scope(folder) }.isFailure)
+        }
+    }
+
+    @Test
+    fun `bulk_scope_action on a bare folder token scopes by that folder`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 306)
+
+        val result = repo.bulk_scope_action("4JB5b0fX1K/XLf+Q3RpcSg==", "archive")
+
+        assertEquals(306, result.getOrThrow().affected_count)
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "archive",
+                    scope = BulkScopeFilter(label_token = "4JB5b0fX1K/XLf+Q3RpcSg==", is_trashed = false, is_spam = false),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `custom tag folder supports bulk scope`() {
         assertTrue(repo.folder_supports_bulk_scope("tag:work_token"))
         assertFalse(repo.folder_supports_bulk_scope("tag:"))
@@ -527,7 +675,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "archive",
-                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -605,9 +753,67 @@ class MailRepositoryTest {
         assertEquals(4200, result.getOrThrow().affected_count)
         coVerify {
             mail_api.bulk_action(
-                BulkScopeRequest(action = "star", scope = BulkScopeFilter(item_type = "received")),
+                BulkScopeRequest(
+                    action = "star",
+                    scope = BulkScopeFilter(
+                        item_type = "received",
+                        is_archived = false,
+                        is_trashed = false,
+                        is_spam = false,
+                        is_snoozed = false,
+                    ),
+                ),
             )
         }
+    }
+
+    @Test
+    fun `inbox scope leaves archived spam trashed snoozed and filed mail alone`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 7)
+
+        repo.bulk_scope_action("inbox", "trash")
+
+        coVerify {
+            mail_api.bulk_action(
+                BulkScopeRequest(
+                    action = "trash",
+                    scope = BulkScopeFilter(
+                        item_type = "received",
+                        is_archived = false,
+                        is_trashed = false,
+                        is_spam = false,
+                        is_snoozed = false,
+                    ),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `every scoped folder except trash and spam excludes trashed and spam mail`() {
+        listOf("inbox", "sent", "starred", "archive", "snoozed", "label:a", "tag:b", "4JB5b0fX1K/XLf+Q3RpcSg==").forEach { folder ->
+            val scope = repo.folder_to_bulk_scope(folder)
+            assertEquals(folder, false, scope.is_trashed)
+            assertEquals(folder, false, scope.is_spam)
+        }
+        assertEquals(true, repo.folder_to_bulk_scope("trash").is_trashed)
+        assertEquals(true, repo.folder_to_bulk_scope("spam").is_spam)
+    }
+
+    @Test
+    fun `id based scope actions split large selections under the request body limit`() = runTest {
+        val captured = mutableListOf<BulkScopeRequest>()
+        coEvery { mail_api.bulk_action(capture(captured)) } answers {
+            BulkScopeResponse(affected_count = firstArg<BulkScopeRequest>().ids!!.size)
+        }
+        coEvery { mail_api.bulk_patch_metadata(any()) } returns
+            BulkPatchMetadataResponse(success = true, updated_count = 0)
+
+        val result = repo.restore_trash((1..2_500).map { "item_$it" })
+
+        assertEquals(2_500, result.getOrThrow().affected_count)
+        assertEquals(listOf(1_000, 1_000, 500), captured.map { it.ids!!.size })
+        assertTrue(captured.all { it.action == "restore_trash" })
     }
 
     @Test
@@ -618,7 +824,10 @@ class MailRepositoryTest {
 
         coVerify {
             mail_api.bulk_action(
-                BulkScopeRequest(action = "unstar", scope = BulkScopeFilter(is_starred = true)),
+                BulkScopeRequest(
+                    action = "unstar",
+                    scope = BulkScopeFilter(is_starred = true, is_trashed = false, is_spam = false),
+                ),
             )
         }
     }
@@ -667,7 +876,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "mark_read",
-                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(tag_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -684,7 +893,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "trash",
-                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -700,7 +909,7 @@ class MailRepositoryTest {
             mail_api.bulk_action(
                 BulkScopeRequest(
                     action = "mark_read",
-                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false),
+                    scope = BulkScopeFilter(label_token = "work_token", is_trashed = false, is_spam = false),
                 ),
             )
         }
@@ -2905,5 +3114,138 @@ class MailRepositoryTest {
         assertEquals(PendingSendOutcome.FAILED, outcome)
         assertEquals("failed", pending_send_dao.get_by_id("pend_weak")?.status)
         coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `collect_scope_ids pages the inbox by cursor until the folder is exhausted`() = runTest {
+        val first = (1..500).map { MailItem(id = "a$it") }
+        val second = (1..300).map { MailItem(id = "b$it") } + MailItem(id = "a1") + MailItem(id = "r1", is_reaction = true)
+        coEvery { mail_api.list_messages(any(), null, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = first, has_more = true, next_cursor = "c2")
+        coEvery { mail_api.list_messages(any(), "c2", any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = second, has_more = false, next_cursor = null)
+
+        val result = repo.collect_scope_ids("inbox").getOrThrow()
+
+        assertEquals(800, result.ids.size)
+        assertFalse(result.capped)
+        assertFalse("r1" in result.ids)
+        coVerify(exactly = 2) {
+            mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = any(),
+                offset = null,
+                item_type = "received",
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = false,
+                is_spam = false,
+                label_token = null,
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = false,
+                routing_token = any(),
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `collect_routing_ids pages an alias listing by offset`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), 0, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (1..500).map { MailItem(id = "m$it") }, has_more = true)
+        coEvery { mail_api.list_messages(any(), any(), 500, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (501..560).map { MailItem(id = "m$it") } + MailItem(id = "r1", is_reaction = true), has_more = false)
+
+        val result = repo.collect_routing_ids("hash-alias", "received").getOrThrow()
+
+        assertEquals(560, result.ids.size)
+        assertFalse(result.capped)
+        assertFalse("r1" in result.ids)
+        coVerify(exactly = 2) {
+            mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = any(),
+                offset = any(),
+                item_type = null,
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = any(),
+                is_spam = any(),
+                include_spam = any(),
+                include_trash = any(),
+                label_token = null,
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = any(),
+                routing_token = "hash-alias",
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+                direction = "received",
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `collect_scope_ids pages a folder by offset`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), 0, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (1..500).map { MailItem(id = "f$it") }, has_more = true)
+        coEvery { mail_api.list_messages(any(), any(), 500, any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = (501..540).map { MailItem(id = "f$it") }, has_more = false)
+
+        val result = repo.collect_scope_ids("label:work").getOrThrow()
+
+        assertEquals(540, result.ids.size)
+        coVerify {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = null,
+                offset = 500,
+                item_type = null,
+                is_starred = any(),
+                is_trashed = false,
+                is_archived = any(),
+                is_spam = any(),
+                label_token = "work",
+                tag_token = null,
+                group_by_thread = false,
+                is_snoozed = any(),
+                routing_token = any(),
+                order = any(),
+                skip_total = any(),
+                include_envelope = any(),
+                pinned_first = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `collect_scope_ids refuses folders without a scope listing`() = runTest {
+        assertTrue(repo.collect_scope_ids("drafts").isFailure)
+    }
+
+    @Test
+    fun `bulk_scope_action keeps going while the server makes progress`() = runTest {
+        val responses = ArrayDeque<BulkScopeResponse>()
+        repeat(15) { responses.add(BulkScopeResponse(affected_count = 500, completed = false)) }
+        responses.add(BulkScopeResponse(affected_count = 0, completed = true))
+        coEvery { mail_api.bulk_action(any()) } answers { responses.removeFirst() }
+
+        val result = repo.bulk_scope_action("inbox", "archive").getOrThrow()
+
+        assertEquals(7500, result.affected_count)
+        assertTrue(result.completed)
+    }
+
+    @Test
+    fun `bulk_scope_action fails once the server stops making progress`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 0, completed = false)
+
+        assertTrue(repo.bulk_scope_action("inbox", "archive").isFailure)
     }
 }

@@ -60,6 +60,8 @@ data class MailingListsState(
     val message: String? = null,
 )
 
+internal const val BULK_UNSUBSCRIBE_LIMIT = 50
+
 @HiltViewModel
 class MailingListsViewModel @Inject constructor(
     private val api: SubscriptionsApi,
@@ -255,8 +257,12 @@ class MailingListsViewModel @Inject constructor(
         if (ids.isEmpty()) return
         _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + ids)
         viewModelScope.launch {
+            val done = mutableSetOf<String>()
             try {
-                api.bulk_unsubscribe(BulkUnsubscribeRequest(ids))
+                ids.chunked(BULK_UNSUBSCRIBE_LIMIT).forEach { chunk ->
+                    api.bulk_unsubscribe(BulkUnsubscribeRequest(chunk))
+                    done.addAll(chunk)
+                }
                 _state.value = _state.value.copy(
                     items = _state.value.items.map { item ->
                         if (item.id in ids) item.copy(status = "unsubscribed") else item
@@ -268,8 +274,12 @@ class MailingListsViewModel @Inject constructor(
                 throw e
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(
+                    items = _state.value.items.map { item ->
+                        if (item.id in done) item.copy(status = "unsubscribed") else item
+                    },
                     error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.bulk_unsubscribe_failed)),
                 )
+                if (done.isNotEmpty()) load()
             } finally {
                 _state.value = _state.value.copy(
                     pending_ids = _state.value.pending_ids - ids.toSet(),

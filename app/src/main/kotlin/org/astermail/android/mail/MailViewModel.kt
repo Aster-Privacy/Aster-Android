@@ -67,7 +67,6 @@ private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val WARM_CACHE_MAX_AGE_MS = 300_000L
 private const val WARM_CACHE_STALE_MAX_AGE_MS = 86_400_000L
-private const val BULK_ACTION_CONCURRENCY = 6
 private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
@@ -1437,8 +1436,10 @@ class MailViewModel @Inject constructor(
             load_more_failures = 0
             load_more_retry_at = 0L
         }
-        var cursor = state.next_cursor ?: return
         val started_folder = state.current_folder
+        var cursor = state.next_cursor?.let {
+            if (folder_uses_offset_cursor(started_folder)) rebase_offset_cursor(it, state.items.size) else it
+        } ?: return
         _inbox_state.update { it.copy(is_loading_more = true) }
         val load_more_gen = ++load_more_generation
         load_more_job = viewModelScope.launch {
@@ -3115,9 +3116,7 @@ class MailViewModel @Inject constructor(
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
         viewModelScope.launch {
-            val failed_ids = run_bulk_action(ids) { id ->
-                repository.unsnooze(id).isSuccess
-            }
+            val failed_ids = repository.unsnooze_bulk(ids).getOrElse { ids.toSet() }
             val ok_ids = ids.filter { it !in failed_ids }.toSet()
             if (ok_ids.isNotEmpty()) {
                 _inbox_state.value = _inbox_state.value.copy(
@@ -3362,19 +3361,21 @@ class MailViewModel @Inject constructor(
         pending_removed_ids.addAll(ids)
         protect_removed(ids)
         viewModelScope.launch {
+            var resync = false
             try {
-                val failed_ids = run_bulk_action(ids) { id ->
-                    repository.snooze(id, snoozed_until_iso).isSuccess
+                val outcome = repository.snooze_bulk(ids, snoozed_until_iso).getOrElse {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    MailRepository.SnoozeBulkOutcome(failed_ids = id_set)
                 }
-                val ok_ids = ids.filter { it !in failed_ids }.toSet()
-                if (ok_ids.isNotEmpty()) {
+                val failed_set = outcome.failed_ids
+                if (failed_set.size < ids.size) {
                     invalidate_caches(listOf("inbox", "snoozed"))
                     load_stats(force = true)
                 }
-                if (failed_ids.isNotEmpty()) {
-                    val failed_set = failed_ids.toSet()
+                if (failed_set.isNotEmpty() || outcome.skipped > 0) {
                     undo_local_restore(removed_items.filter { it.id in failed_set })
                     undo_search_restore(search_removed.filter { it.id in failed_set })
+                    resync = outcome.skipped > 0
                     emit_toast(context.getString(R.string.couldnt_snooze))
                 } else {
                     emit_toast(context.getString(R.string.snoozed_until, label))
@@ -3386,6 +3387,10 @@ class MailViewModel @Inject constructor(
                 emit_toast(context.getString(R.string.couldnt_snooze))
             } finally {
                 pending_removed_ids.removeAll(id_set)
+            }
+            if (resync) {
+                clear_removal_protection(id_set)
+                refresh()
             }
         }
     }
@@ -3451,18 +3456,6 @@ class MailViewModel @Inject constructor(
         }
         _search_state.value.all_items.forEach { if (it.id in id_set && it.id !in prior) prior[it.id] = it.is_read }
         return prior
-    }
-
-    private suspend fun run_bulk_action(
-        ids: List<String>,
-        action: suspend (String) -> Boolean,
-    ): Set<String> = kotlinx.coroutines.coroutineScope {
-        val failed = mutableSetOf<String>()
-        ids.chunked(BULK_ACTION_CONCURRENCY).forEach { chunk ->
-            val results = chunk.map { id -> async { id to runCatching { action(id) }.getOrDefault(false) } }.awaitAll()
-            results.forEach { (id, ok) -> if (!ok) failed.add(id) }
-        }
-        failed
     }
 
     private fun count_label(n: Int, singular: String, plural: String): String {
@@ -4020,7 +4013,7 @@ class MailViewModel @Inject constructor(
         invalidate_caches(listOf("inbox", "archive", "label:$label_token"))
         viewModelScope.launch {
             try {
-                val removed = item_ids.all { repository.remove_label_from_item(it, label_token).isSuccess }
+                val removed = repository.remove_label_bulk(item_ids, label_token).isEmpty()
                 val restored = repository.unarchive(item_ids, raw_items).isSuccess
                 if (removed && restored) {
                     runCatching { search_index_manager.mark_unarchived(item_ids) }
@@ -4321,7 +4314,8 @@ class MailViewModel @Inject constructor(
                 if (repository.folder_supports_bulk_scope(folder)) {
                     repository.mark_all_read_scope(folder)
                 } else {
-                    val ids = current_read_ids(prior_reads.keys, sequence)
+                    val ids = scope_read_ids(folder, prior_reads.keys, sequence)
+                        ?: return@withLock Result.failure<org.astermail.android.api.mail.BulkScopeResponse>(IllegalStateException("alias listing failed"))
                     if (ids.isEmpty()) return@launch else repository.mark_read_bulk(ids)
                 }
             }
@@ -4356,7 +4350,8 @@ class MailViewModel @Inject constructor(
                 if (repository.folder_supports_bulk_scope(folder)) {
                     repository.mark_all_unread_scope(folder)
                 } else {
-                    val ids = current_read_ids(prior_reads.keys, sequence)
+                    val ids = scope_read_ids(folder, prior_reads.keys, sequence)
+                        ?: return@withLock Result.failure<org.astermail.android.api.mail.BulkScopeResponse>(IllegalStateException("alias listing failed"))
                     if (ids.isEmpty()) return@launch else repository.mark_unread_bulk(ids)
                 }
             }
@@ -4377,8 +4372,40 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private suspend fun scope_read_ids(
+        folder: String,
+        loaded: Set<String>,
+        sequence: Long,
+    ): List<String>? {
+        val live = current_read_ids(loaded, sequence)
+        if (!folder.startsWith("routing:")) return live
+        val routing_scope = parse_alias_routing_folder(folder)
+            ?: alias_routing_scope(folder.removePrefix("routing:"), alias_direction_all)
+        val collected = repository.collect_routing_ids(
+            routing_scope.routing_token,
+            alias_direction_query(routing_scope.direction),
+        ).getOrNull() ?: return null
+        return merge_scope_read_ids(live, loaded, collected.ids)
+    }
+
     fun folder_supports_scope_selection(folder: String): Boolean =
+        repository.folder_supports_bulk_scope(folder) || is_routing_scope_folder(folder)
+
+    fun folder_uses_server_scope(folder: String): Boolean =
         repository.folder_supports_bulk_scope(folder)
+
+    private fun is_routing_scope_folder(folder: String): Boolean =
+        folder.startsWith("routing:") && folder.length > "routing:".length
+
+    private suspend fun collect_folder_scope_ids(folder: String): Result<ScopeIds> {
+        if (!is_routing_scope_folder(folder)) return repository.collect_scope_ids(folder)
+        val routing_scope = parse_alias_routing_folder(folder)
+            ?: alias_routing_scope(folder.removePrefix("routing:"), alias_direction_all)
+        return repository.collect_routing_ids(
+            routing_scope.routing_token,
+            alias_direction_query(routing_scope.direction),
+        )
+    }
 
     fun action_supports_scope_selection(action: String): Boolean =
         repository.action_supports_bulk_scope(action)
@@ -4502,6 +4529,22 @@ class MailViewModel @Inject constructor(
 
     fun notify_partial_scope_selection(applied: Int, total: Int) {
         emit_toast(context.getString(R.string.applied_to_loaded_only, applied, total))
+    }
+
+    fun collect_scope_selection_ids(folder: String, expected_total: Int, on_ready: (List<String>) -> Unit) {
+        viewModelScope.launch {
+            collect_folder_scope_ids(folder)
+                .onSuccess { result ->
+                    if (result.capped) {
+                        emit_toast(context.getString(R.string.scope_applied_to_first, result.ids.size, maxOf(expected_total, result.ids.size)))
+                    }
+                    on_ready(result.ids)
+                }
+                .onFailure { error ->
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    emit_toast(context.getString(R.string.scope_collect_failed))
+                }
+        }
     }
 
     fun star_scope(folder: String, is_starred: Boolean) {
@@ -5491,6 +5534,26 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
 )
 
 private val folders_keeping_archived = setOf("archive", "starred", "snoozed", "sent")
+
+private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "snoozed")
+
+internal fun folder_uses_offset_cursor(folder: String): Boolean = when {
+    folder == "scheduled" -> true
+    folder in CURSOR_PAGED_FOLDERS || is_all_mail_folder(folder) -> false
+    folder.startsWith("label:") || folder.startsWith("tag:") || folder.startsWith("routing:") -> true
+    else -> is_folder_token(folder)
+}
+
+internal fun rebase_offset_cursor(cursor: String, loaded_count: Int): String {
+    val offset = cursor.toIntOrNull() ?: return cursor
+    return minOf(offset, maxOf(0, loaded_count)).toString()
+}
+
+internal fun merge_scope_read_ids(
+    live: List<String>,
+    loaded: Set<String>,
+    collected: List<String>,
+): List<String> = (live + collected.filter { it !in loaded }).distinct()
 
 internal fun folder_keeps_archived(folder: String): Boolean =
     folder in folders_keeping_archived ||

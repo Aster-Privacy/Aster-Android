@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">Selecionar todos os %1$d em %2$s</string>
     <string name="selection_scope_offer_categories">Selecionar todos os %1$d em %2$s, incluindo todas as categorias</string>
     <string name="selection_scope_confirmed">Todos os %1$d em %2$s estão selecionados</string>
+    <string name="scope_applied_to_first">Esta ação abrange as primeiras %1$d de %2$d mensagens.</string>
+    <string name="scope_collect_failed">Não foi possível carregar todas as mensagens desta pasta, por isso nada foi alterado. Tente novamente.</string>
     <string name="inbox_a11y_state_read">Lida</string>
     <string name="inbox_a11y_state_unread">Não lida</string>
 </resources>

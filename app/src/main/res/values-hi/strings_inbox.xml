@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">%2$s के सभी %1$d चुनें</string>
     <string name="selection_scope_offer_categories">हर श्रेणी समेत %2$s के सभी %1$d चुनें</string>
     <string name="selection_scope_confirmed">%2$s के सभी %1$d चुने गए हैं</string>
+    <string name="scope_applied_to_first">यह कार्रवाई %2$d में से पहले %1$d संदेशों पर लागू होती है।</string>
+    <string name="scope_collect_failed">इस फ़ोल्डर के सभी संदेश लोड नहीं हो सके, इसलिए कुछ नहीं बदला। फिर से कोशिश करें।</string>
     <string name="inbox_a11y_state_read">पढ़ा गया</string>
     <string name="inbox_a11y_state_unread">अपठित</string>
 </resources>

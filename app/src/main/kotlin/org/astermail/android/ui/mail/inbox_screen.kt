@@ -1057,7 +1057,7 @@ fun InboxScreen(
         "scheduled" -> inbox_state.stats?.scheduled ?: 0
         "spam" -> inbox_state.stats?.spam ?: 0
         "trash" -> inbox_state.stats?.trash ?: 0
-        else -> if (current_folder.startsWith("label:") || current_folder.startsWith("tag:")) {
+        else -> if (mail_vm.folder_supports_scope_selection(current_folder)) {
             inbox_state.total
         } else {
             0
@@ -1469,6 +1469,17 @@ fun InboxScreen(
         return emails.filter { (thread_row_covers(it, thread_ids, grouping_enabled)) }.map { it.id }
     }
 
+    fun with_selection_ids(on_ready: (List<String>) -> Unit) {
+        val loaded = selected_email_ids()
+        if (!scope_selection) {
+            on_ready(loaded)
+            return
+        }
+        mail_vm.collect_scope_selection_ids(current_folder, folder_total) { ids ->
+            on_ready((loaded + ids).distinct())
+        }
+    }
+
     fun notify_if_scope_incomplete(applied: Int) {
         if (scope_selection && folder_total > applied) {
             mail_vm.notify_partial_scope_selection(applied, folder_total)
@@ -1477,15 +1488,17 @@ fun InboxScreen(
 
     fun archive_selected() {
         if (current_folder == "scheduled") return
-        val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
-        mail_vm.archive(ids, thread_count)
-        if (archive_removes_row(current_folder)) {
-            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        val removes_row = archive_removes_row(current_folder)
+        with_selection_ids { ids ->
+            mail_vm.archive(ids, maxOf(thread_count, ids.size))
+            if (removes_row) {
+                emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            }
+            notify_if_scope_incomplete(ids.size)
         }
         exit_select_mode()
-        notify_if_scope_incomplete(ids.size)
     }
 
     fun delete_selected() {
@@ -1498,10 +1511,12 @@ fun InboxScreen(
             exit_select_mode()
             return
         }
-        mail_vm.trash(ids, thread_count)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { scope_ids ->
+            mail_vm.trash(scope_ids, maxOf(thread_count, scope_ids.size))
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            notify_if_scope_incomplete(scope_ids.size)
+        }
         exit_select_mode()
-        notify_if_scope_incomplete(ids.size)
     }
 
     fun restore_selected() {
@@ -1529,11 +1544,12 @@ fun InboxScreen(
     }
 
     fun mark_spam_selected() {
-        val ids = selected_email_ids()
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
-        mail_vm.mark_spam(ids, thread_count)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { ids ->
+            mail_vm.mark_spam(ids, maxOf(thread_count, ids.size))
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
         exit_select_mode()
     }
 
@@ -1547,11 +1563,15 @@ fun InboxScreen(
 
     fun mark_read_selected() {
         val thread_ids = selected_ids.toSet()
-        val email_ids = emails
-            .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_read }
-            .map { it.id }
-        if (email_ids.isNotEmpty()) {
-            mail_vm.mark_read_bulk(email_ids)
+        if (scope_selection) {
+            with_selection_ids { ids -> mail_vm.mark_read_bulk(ids) }
+        } else {
+            val email_ids = emails
+                .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_read }
+                .map { it.id }
+            if (email_ids.isNotEmpty()) {
+                mail_vm.mark_read_bulk(email_ids)
+            }
         }
         for (i in emails.indices) {
             if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && !emails[i].is_read) {
@@ -1564,11 +1584,15 @@ fun InboxScreen(
 
     fun mark_unread_selected() {
         val thread_ids = selected_ids.toSet()
-        val email_ids = emails
-            .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && it.is_read }
-            .map { it.id }
-        if (email_ids.isNotEmpty()) {
-            mail_vm.mark_unread_bulk(email_ids)
+        if (scope_selection) {
+            with_selection_ids { ids -> mail_vm.mark_unread_bulk(ids) }
+        } else {
+            val email_ids = emails
+                .filter { (thread_row_covers(it, thread_ids, grouping_enabled)) && it.is_read }
+                .map { it.id }
+            if (email_ids.isNotEmpty()) {
+                mail_vm.mark_unread_bulk(email_ids)
+            }
         }
         for (i in emails.indices) {
             if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && emails[i].is_read) {
@@ -1582,7 +1606,7 @@ fun InboxScreen(
     fun star_selected() {
         val thread_ids = selected_ids.toSet()
         val new_starred = emails.any { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_starred }
-        mail_vm.star_bulk(selected_email_ids())
+        with_selection_ids { ids -> mail_vm.star_bulk(ids) }
         for (i in emails.indices) {
             if ((thread_row_covers(emails[i], thread_ids, grouping_enabled)) && emails[i].is_starred != new_starred) {
                 emails[i] = emails[i].copy(is_starred = new_starred)
@@ -1606,45 +1630,36 @@ fun InboxScreen(
 
     fun snooze_selected(iso: String, label: String) {
         val to_remove = selected_ids.toSet()
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.snooze_bulk(ids, iso, label)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { ids ->
+            mail_vm.snooze_bulk(ids, iso, label)
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
         exit_select_mode()
     }
 
     fun move_selected_to_folder(label_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.move_to_folder_bulk(ids, label_token, display_name)
+        with_selection_ids { ids -> mail_vm.move_to_folder_bulk(ids, label_token, display_name) }
         exit_select_mode()
     }
 
     fun move_selected_to_inbox() {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.move_to_inbox(ids, current_folder)
+        val from_folder = current_folder
+        with_selection_ids { ids -> mail_vm.move_to_inbox(ids, from_folder) }
         exit_select_mode()
     }
 
     fun label_selected(tag_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.apply_tag_bulk(ids, tag_token, display_name)
+        with_selection_ids { ids -> mail_vm.apply_tag_bulk(ids, tag_token, display_name) }
         exit_select_mode()
     }
 
     fun unlabel_selected(tag_token: String, display_name: String) {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.remove_tag_bulk(ids, tag_token, display_name)
+        with_selection_ids { ids -> mail_vm.remove_tag_bulk(ids, tag_token, display_name) }
         exit_select_mode()
     }
 
     fun unsnooze_selected() {
-        val ids = selected_email_ids()
-        notify_if_scope_incomplete(ids.size)
-        mail_vm.unsnooze_bulk(ids)
+        with_selection_ids { ids -> mail_vm.unsnooze_bulk(ids) }
         exit_select_mode()
     }
 
@@ -1688,14 +1703,15 @@ fun InboxScreen(
             show_bulk_delete_permanent_dialog = true
             return
         }
-        if (scope_selection && action_id == "star") {
+        val server_scope = scope_selection && mail_vm.folder_uses_server_scope(current_folder)
+        if (server_scope && action_id == "star") {
             val thread_ids = selected_ids.toSet()
             mail_vm.star_scope(current_folder, emails.any { (thread_row_covers(it, thread_ids, grouping_enabled)) && !it.is_starred })
             exit_select_mode()
             return
         }
         val scope_action = scope_action_name(action_id)
-        if (scope_selection && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
+        if (server_scope && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
             mail_vm.bulk_scope_action(current_folder, scope_action, null)
             exit_select_mode()
             return
@@ -2480,10 +2496,10 @@ fun InboxScreen(
                             select_mode = true
                             selected_ids.clear()
                         },
-                        on_refresh = ::do_refresh,
+                        on_refresh = { do_refresh() },
                         on_mark_all_read = { target_read -> mark_all_read(target_read) },
                         has_unread = threads.any { it.has_unread },
-                        on_select_all = ::select_all,
+                        on_select_all = { select_all() },
                         on_open_settings = on_open_settings,
                         on_open_upgrade = on_open_upgrade,
                         show_upgrade = show_upgrade_button,
@@ -2502,13 +2518,13 @@ fun InboxScreen(
                         show_tools = tools_visible,
                         active_filter = active_filter,
                         on_filter_change = { active_filter = it },
-                        on_quick_action = ::run_quick_action,
+                        on_quick_action = { run_quick_action(it) },
                         selection_content = if (select_mode) {
                             {
                                 select_mode_top_bar(
                                     selected_count = selection_count,
-                                    on_close = ::exit_select_mode,
-                                    on_select_all = ::toggle_select_all,
+                                    on_close = { exit_select_mode() },
+                                    on_select_all = { toggle_select_all() },
                                     counting = select_all_loading,
                                     all_selected = select_all_active ||
                                         (visible_threads.isNotEmpty() && selection_count >= visible_threads.size),
@@ -2566,7 +2582,7 @@ fun InboxScreen(
             select_mode_bottom_bar(
                 selected_count = selection_count,
                 custom_actions = selection_toolbar_slots,
-                on_action = ::run_selection_action,
+                on_action = { run_selection_action(it) },
                 on_more = { show_selection_overflow = true },
                 current_folder = current_folder,
                 selection_all_starred = selection_all_starred,
@@ -2818,7 +2834,7 @@ fun InboxScreen(
                 confirm_thread_id_pending = null
             }
             org.astermail.android.design.components.AsterAlertDialog(
-                on_dismiss = ::dismiss_confirm,
+                on_dismiss = { dismiss_confirm() },
                 title = stringResource(when (pending_action) {
                     "archive" -> R.string.confirm_archive_title
                     "delete", "trash" -> R.string.confirm_trash_title

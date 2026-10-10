@@ -8,6 +8,8 @@
     <string name="selection_scope_offer">Выбрать все %1$d в разделе «%2$s»</string>
     <string name="selection_scope_offer_categories">Выбрать все %1$d в разделе «%2$s», включая все категории</string>
     <string name="selection_scope_confirmed">Выбраны все %1$d в разделе «%2$s»</string>
+    <string name="scope_applied_to_first">Это действие затрагивает первые %1$d из %2$d писем.</string>
+    <string name="scope_collect_failed">Не удалось загрузить все письма в этой папке, поэтому ничего не изменено. Повторите попытку.</string>
     <string name="inbox_a11y_state_read">Прочитано</string>
     <string name="inbox_a11y_state_unread">Не прочитано</string>
 </resources>

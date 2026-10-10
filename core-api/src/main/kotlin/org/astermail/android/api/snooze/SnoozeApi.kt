@@ -46,9 +46,33 @@ data class SnoozeResponse(
     val snoozed_until: String = "",
 )
 
+@Serializable
+data class BulkSnoozeRequest(
+    val mail_item_ids: List<String>,
+    val snoozed_until: String,
+)
+
+@Serializable
+data class BulkSnoozeResponse(
+    val snoozed_count: Int = 0,
+    val failed_count: Int = 0,
+)
+
+@Serializable
+data class BulkUnsnoozeRequest(
+    val mail_item_ids: List<String>,
+)
+
+@Serializable
+data class BulkUnsnoozeResponse(
+    val unsnoozed_count: Int = 0,
+)
+
 interface SnoozeApi {
     suspend fun snooze(request: SnoozeRequest): SnoozeResponse
+    suspend fun bulk_snooze(request: BulkSnoozeRequest): BulkSnoozeResponse
     suspend fun unsnooze_by_mail_item(mail_item_id: String)
+    suspend fun bulk_unsnooze(request: BulkUnsnoozeRequest): BulkUnsnoozeResponse
 }
 
 class SnoozeApiImpl(private val client: ApiClient) : SnoozeApi {
@@ -63,6 +87,15 @@ class SnoozeApiImpl(private val client: ApiClient) : SnoozeApi {
         return decode_or_throw(response)
     }
 
+    override suspend fun bulk_snooze(request: BulkSnoozeRequest): BulkSnoozeResponse {
+        val response = client.http.post("${client.base_url}$base/bulk") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
     override suspend fun unsnooze_by_mail_item(mail_item_id: String) {
         val response = client.http.delete("${client.base_url}$base/mail/$mail_item_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -70,6 +103,15 @@ class SnoozeApiImpl(private val client: ApiClient) : SnoozeApi {
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
+    }
+
+    override suspend fun bulk_unsnooze(request: BulkUnsnoozeRequest): BulkUnsnoozeResponse {
+        val response = client.http.post("${client.base_url}$base/bulk/unsnooze") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {

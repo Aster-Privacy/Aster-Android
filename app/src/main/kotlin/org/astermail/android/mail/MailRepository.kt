@@ -166,7 +166,14 @@ private const val DRAFT_UPDATE_CONFLICT_RETRIES = 2
 private const val METADATA_PATCH_BATCH_SIZE = 100
 private const val METADATA_RESOLVE_CONCURRENCY = 8
 private const val BULK_SCOPE_COMPLETION_ATTEMPTS = 10
+internal const val SCOPE_ID_PAGE_SIZE = 500
+internal const val SCOPE_ID_MAX = 50_000
+private const val SCOPE_ID_MAX_PAGES = 200
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
+private const val BULK_SCOPE_MAX_ROUNDS = 1_000
+internal const val SNOOZE_BULK_LIMIT = 100
+internal const val BULK_SCOPE_ID_LIMIT = 1_000
+private val SYSTEM_FOLDER_IDS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "scheduled", "snoozed")
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
@@ -618,8 +625,8 @@ class MailRepository @Inject constructor(
                 payload.folder?.let { star_scope_now(it, payload.value == "true") } ?: Result.success(Unit)
             PendingActionKind.pin -> replay_each(ids) { toggle_pin_now(it, true) }
             PendingActionKind.unpin -> replay_each(ids) { toggle_pin_now(it, false) }
-            PendingActionKind.snooze -> replay_each(ids) { snooze_now(it, payload.value.orEmpty()) }
-            PendingActionKind.unsnooze -> replay_each(ids) { unsnooze_now(it) }
+            PendingActionKind.snooze -> snooze_bulk_now(ids, payload.value.orEmpty())
+            PendingActionKind.unsnooze -> unsnooze_bulk_now(ids).map { }
             PendingActionKind.add_label -> when {
                 token == null -> Result.success(Unit)
                 patch -> replay_each(ids) { add_label_to_item_now(it, token) }
@@ -2534,6 +2541,36 @@ class MailRepository @Inject constructor(
         Unit
     }
 
+    data class SnoozeBulkOutcome(val failed_ids: Set<String> = emptySet(), val skipped: Int = 0)
+
+    suspend fun snooze_bulk(item_ids: List<String>, snoozed_until_iso: String): Result<SnoozeBulkOutcome> =
+        run_or_queue(
+            PendingActionKind.snooze,
+            PendingActionPayload(ids = item_ids, value = snoozed_until_iso),
+            SnoozeBulkOutcome(),
+        ) { snooze_bulk_now(item_ids, snoozed_until_iso) }
+
+    private suspend fun snooze_bulk_now(item_ids: List<String>, snoozed_until_iso: String): Result<SnoozeBulkOutcome> {
+        val failed = mutableSetOf<String>()
+        var skipped = 0
+        for (chunk in item_ids.filter { it.isNotBlank() }.distinct().chunked(SNOOZE_BULK_LIMIT)) {
+            try {
+                val response = snooze_api.bulk_snooze(
+                    org.astermail.android.api.snooze.BulkSnoozeRequest(
+                        mail_item_ids = chunk,
+                        snoozed_until = snoozed_until_iso,
+                    ),
+                )
+                skipped += (chunk.size - response.snoozed_count).coerceAtLeast(0)
+            } catch (error: Throwable) {
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                failed.addAll(chunk)
+            }
+        }
+        return Result.success(SnoozeBulkOutcome(failed, skipped))
+    }
+
     suspend fun unsnooze(item_id: String): Result<Unit> =
         run_or_queue(PendingActionKind.unsnooze, PendingActionPayload(ids = listOf(item_id)), Unit) {
             unsnooze_now(item_id)
@@ -2542,6 +2579,42 @@ class MailRepository @Inject constructor(
     private suspend fun unsnooze_now(item_id: String): Result<Unit> = runCatching {
         snooze_api.unsnooze_by_mail_item(item_id)
     }
+
+    suspend fun unsnooze_bulk(item_ids: List<String>): Result<Set<String>> =
+        run_or_queue(PendingActionKind.unsnooze, PendingActionPayload(ids = item_ids), emptySet()) {
+            unsnooze_bulk_now(item_ids)
+        }
+
+    private suspend fun unsnooze_bulk_now(item_ids: List<String>): Result<Set<String>> {
+        val failed = mutableSetOf<String>()
+        var per_item = false
+        for (chunk in item_ids.filter { it.isNotBlank() }.distinct().chunked(SNOOZE_BULK_LIMIT)) {
+            if (!per_item) {
+                try {
+                    snooze_api.bulk_unsnooze(org.astermail.android.api.snooze.BulkUnsnoozeRequest(mail_item_ids = chunk))
+                    continue
+                } catch (error: Throwable) {
+                    if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                    if (!is_missing_endpoint(error)) {
+                        if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                        failed.addAll(chunk)
+                        continue
+                    }
+                    per_item = true
+                }
+            }
+            for (id in chunk) {
+                val error = unsnooze_now(id).exceptionOrNull() ?: continue
+                if (error is CancellationException && error !is TimeoutCancellationException) throw error
+                if (is_transient_failure(error) || error is ApiError.UnauthorizedError) return Result.failure(error)
+                failed.add(id)
+            }
+        }
+        return Result.success(failed)
+    }
+
+    private fun is_missing_endpoint(error: Throwable): Boolean =
+        error is ApiError.NotFoundError || (error is ApiError.ServerError && error.code == 405)
 
     suspend fun list_notifiable_folders(): Result<List<org.astermail.android.api.labels.LabelItem>> = runCatching {
         labels_api.list_labels(include_counts = true)
@@ -2586,7 +2659,7 @@ class MailRepository @Inject constructor(
         val moved = item_ids.filter { it !in failed }
         if (moved.isEmpty()) return failed
         if (from_label_token != null && from_label_token != folder_token) {
-            remove_label_bulk_now(moved, from_label_token)
+            failed.addAll(remove_label_bulk_now(moved, from_label_token))
         }
         return failed
     }
@@ -2826,7 +2899,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun archive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "archive", ids = item_ids))
+        bulk_action_by_ids("archive", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -2922,7 +2995,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_spam_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_spam", ids = item_ids))
+        bulk_action_by_ids("mark_spam", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -2942,7 +3015,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun unmark_spam_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "unmark_spam", ids = item_ids))
+        val response = bulk_action_by_ids("unmark_spam", item_ids)
         patch_metadata_for_items(
             item_ids,
             emptyList(),
@@ -3018,7 +3091,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun unarchive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "unarchive", ids = item_ids))
+        val response = bulk_action_by_ids("unarchive", item_ids)
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -3034,7 +3107,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun restore_trash_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        val response = mail_api.bulk_action(BulkScopeRequest(action = "restore_trash", ids = item_ids))
+        val response = bulk_action_by_ids("restore_trash", item_ids)
         patch_metadata_for_items(
             item_ids,
             emptyList(),
@@ -3053,7 +3126,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_read_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_read", ids = item_ids))
+        bulk_action_by_ids("mark_read", item_ids)
     }
 
     suspend fun mark_thread_read_all(thread_token: String): Result<Unit> =
@@ -3071,7 +3144,7 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun mark_unread_bulk_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
-        mail_api.bulk_action(BulkScopeRequest(action = "mark_unread", ids = item_ids))
+        bulk_action_by_ids("mark_unread", item_ids)
     }
 
     suspend fun mark_all_read_scope(folder: String): Result<BulkScopeResponse> =
@@ -3110,11 +3183,13 @@ class MailRepository @Inject constructor(
         var response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
         var total = response.affected_count
         var attempts = 0
-        while (!response.completed && attempts < BULK_SCOPE_COMPLETION_ATTEMPTS) {
+        var stalled = 0
+        while (!response.completed && stalled < BULK_SCOPE_COMPLETION_ATTEMPTS && attempts < BULK_SCOPE_MAX_ROUNDS) {
             attempts++
             delay(BULK_SCOPE_COMPLETION_DELAY_MS)
             response = mail_api.bulk_action(BulkScopeRequest(action = action, scope = scope))
             total += response.affected_count
+            stalled = if (response.affected_count > 0) 0 else stalled + 1
         }
         if (!response.completed) {
             throw IllegalStateException("bulk $action on $folder did not finish after $attempts retries")
@@ -3129,25 +3204,167 @@ class MailRepository @Inject constructor(
 
     fun folder_supports_bulk_scope(folder: String): Boolean = when (folder) {
         "inbox", "sent", "starred", "trash", "spam", "archive", "snoozed" -> true
-        else -> (folder.startsWith("label:") && folder.length > "label:".length) ||
+        else -> scope_label_token(folder) != null ||
             (folder.startsWith("tag:") && folder.length > "tag:".length)
     }
 
-    private fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
+    internal fun scope_label_token(folder: String): String? = when {
+        folder.startsWith("label:") -> folder.removePrefix("label:").takeIf { it.isNotEmpty() }
+        folder in SYSTEM_FOLDER_IDS || is_all_mail_folder(folder) -> null
+        is_folder_token(folder) -> folder
+        else -> null
+    }
+
+    suspend fun collect_routing_ids(routing_token: String, direction: String?): Result<ScopeIds> = runCatching {
+        val locked = org.astermail.android.folders.folder_lock_store.locked_folder_tokens()
+        val ids = LinkedHashSet<String>()
+        var offset = 0
+        var capped = false
+        var pages = 0
+        while (pages < SCOPE_ID_MAX_PAGES) {
+            pages++
+            val response = mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                offset = offset,
+                item_type = null,
+                is_trashed = false,
+                routing_token = routing_token,
+                direction = direction,
+                group_by_thread = false,
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+            )
+            if (response.items.isEmpty()) break
+            offset += response.items.size
+            for (raw in response.items) {
+                if (raw.is_reaction == true) continue
+                if (locked.isNotEmpty() &&
+                    org.astermail.android.folders.raw_item_folder_tokens(raw).any { it in locked }
+                ) continue
+                ids.add(raw.id)
+                if (ids.size >= SCOPE_ID_MAX) {
+                    capped = true
+                    break
+                }
+            }
+            if (capped || !response.has_more) break
+        }
+        ScopeIds(ids = ids.toList(), capped = capped)
+    }
+
+    suspend fun collect_scope_ids(folder: String): Result<ScopeIds> = runCatching {
+        require(folder_supports_bulk_scope(folder)) { "folder $folder has no scope listing" }
+        val label_token = scope_label_token(folder)
+        val tag_token = folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")
+        val is_token_scope = label_token != null || tag_token != null
+        val locked = org.astermail.android.folders.folder_lock_store.locked_folder_tokens()
+        val now_ms = System.currentTimeMillis()
+        val ids = LinkedHashSet<String>()
+        var offset = 0
+        var cursor: String? = null
+        var capped = false
+        var pages = 0
+        while (pages < SCOPE_ID_MAX_PAGES) {
+            pages++
+            val response = mail_api.list_messages(
+                limit = SCOPE_ID_PAGE_SIZE,
+                cursor = if (is_token_scope) null else cursor,
+                offset = if (is_token_scope) offset else null,
+                item_type = when (folder) {
+                    "inbox" -> "received"
+                    "sent" -> "sent"
+                    else -> null
+                },
+                is_starred = if (folder == "starred") true else null,
+                is_trashed = when {
+                    folder == "trash" -> true
+                    folder == "inbox" || is_token_scope -> false
+                    else -> null
+                },
+                is_archived = when (folder) {
+                    "archive" -> true
+                    "inbox" -> false
+                    else -> null
+                },
+                is_spam = when (folder) {
+                    "spam" -> true
+                    "inbox", "starred" -> false
+                    else -> null
+                },
+                is_snoozed = when (folder) {
+                    "snoozed" -> true
+                    "inbox" -> false
+                    else -> null
+                },
+                label_token = label_token,
+                tag_token = tag_token,
+                group_by_thread = false,
+                order = "desc",
+                skip_total = true,
+                include_envelope = false,
+            )
+            if (response.items.isEmpty()) break
+            offset += response.items.size
+            for (raw in response.items) {
+                if (raw.is_reaction == true) continue
+                if (folder == "inbox") {
+                    val until = raw.snoozed_until ?: raw.metadata?.snoozed_until
+                    if (until != null && (parse_timestamp_ms(until) ?: 0L) > now_ms) continue
+                }
+                if (locked.isNotEmpty() &&
+                    org.astermail.android.folders.raw_item_folder_tokens(raw).any { it in locked }
+                ) continue
+                ids.add(raw.id)
+                if (ids.size >= SCOPE_ID_MAX) {
+                    capped = true
+                    break
+                }
+            }
+            if (capped || !response.has_more) break
+            if (!is_token_scope) {
+                cursor = response.next_cursor ?: break
+            }
+        }
+        ScopeIds(ids = ids.toList(), capped = capped)
+    }
+
+    private suspend fun bulk_action_by_ids(action: String, item_ids: List<String>): BulkScopeResponse {
+        val chunks = item_ids.chunked(BULK_SCOPE_ID_LIMIT)
+        if (chunks.size <= 1) return mail_api.bulk_action(BulkScopeRequest(action = action, ids = item_ids))
+        var affected = 0
+        var completed = true
+        chunks.forEach { chunk ->
+            val response = mail_api.bulk_action(BulkScopeRequest(action = action, ids = chunk))
+            affected += response.affected_count
+            completed = completed && response.completed
+        }
+        return BulkScopeResponse(affected_count = affected, completed = completed)
+    }
+
+    internal fun folder_to_bulk_scope(folder: String): org.astermail.android.api.mail.BulkScopeFilter {
         return when (folder) {
-            "inbox" -> BulkScopeFilter(item_type = "received")
-            "sent" -> BulkScopeFilter(item_type = "sent")
-            "starred" -> BulkScopeFilter(is_starred = true)
+            "inbox" -> BulkScopeFilter(
+                item_type = "received",
+                is_archived = false,
+                is_trashed = false,
+                is_spam = false,
+                is_snoozed = false,
+            )
+            "sent" -> BulkScopeFilter(item_type = "sent", is_trashed = false, is_spam = false)
+            "starred" -> BulkScopeFilter(is_starred = true, is_trashed = false, is_spam = false)
             "trash" -> BulkScopeFilter(is_trashed = true)
             "spam" -> BulkScopeFilter(is_spam = true)
-            "archive" -> BulkScopeFilter(is_archived = true)
-            "snoozed" -> BulkScopeFilter(is_snoozed = true)
-            else -> when {
-                folder.startsWith("label:") ->
-                    BulkScopeFilter(label_token = folder.removePrefix("label:"), is_trashed = false)
-                folder.startsWith("tag:") ->
-                    BulkScopeFilter(tag_token = folder.removePrefix("tag:"), is_trashed = false)
-                else -> BulkScopeFilter()
+            "archive" -> BulkScopeFilter(is_archived = true, is_trashed = false, is_spam = false)
+            "snoozed" -> BulkScopeFilter(is_snoozed = true, is_trashed = false, is_spam = false)
+            else -> {
+                val label_token = scope_label_token(folder)
+                val tag_token = folder.takeIf { it.startsWith("tag:") }?.removePrefix("tag:")?.takeIf { it.isNotEmpty() }
+                when {
+                    label_token != null -> BulkScopeFilter(label_token = label_token, is_trashed = false, is_spam = false)
+                    tag_token != null -> BulkScopeFilter(tag_token = tag_token, is_trashed = false, is_spam = false)
+                    else -> throw IllegalArgumentException("folder $folder has no bulk scope")
+                }
             }
         }
     }
@@ -6235,6 +6452,11 @@ class AttachmentKeyUnavailableException : Exception("attachment key unavailable"
 private const val OFFLINE_PREFETCH_LIMIT = 25
 private const val OFFLINE_PREFETCH_CONCURRENCY = 2
 private const val OFFLINE_PREFETCH_TIMEOUT_MS = 20_000L
+
+data class ScopeIds(
+    val ids: List<String>,
+    val capped: Boolean,
+)
 
 data class InboxPage(
     val items: List<InboxItem>,
