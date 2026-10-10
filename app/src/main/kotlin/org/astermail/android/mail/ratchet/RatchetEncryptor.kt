@@ -414,6 +414,7 @@ class RatchetEncryptor @Inject constructor(
                 recipient_pq_prekey = pq_prekey_pair,
                 recipient_pq_identity = pq_identity_raw,
                 signature_covers_pq_identity = signature_covers_pq_identity,
+                x3dh_version = X3dh.negotiated_sender_version(resolved_bundle.x3dh_max_version),
             )
 
             try {
@@ -427,6 +428,7 @@ class RatchetEncryptor @Inject constructor(
                     pq_ciphertext_b64 = RatchetCrypto.b64_encode(x3dh_result.pq_ciphertext!!)
                     pq_key_id = x3dh_result.pq_key_id
                 }
+                x3dh_version = x3dh_result.x3dh_version.takeIf { it > X3dh.VERSION_LEGACY }
                 state.bootstrap = BootstrapData(
                     ephemeral_key = ephemeral_b64!!,
                     pq_ciphertext = pq_ciphertext_b64,
@@ -434,6 +436,7 @@ class RatchetEncryptor @Inject constructor(
                     sender_identity_key = sender_identity_public,
                     recipient_identity_key = resolved_bundle.kem_identity_key,
                     recipient_pq_identity_key = resolved_bundle.pq_kem_public_key,
+                    x3dh_version = x3dh_version,
                 )
             } finally {
                 x3dh_result.shared_secret.fill(0)
