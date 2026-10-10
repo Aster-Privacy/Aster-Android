@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
@@ -70,7 +71,7 @@ fun move_to_category_sheet(
     val selected = category_for_tab(current_category, active_tabs)
     val entries = category_entries(active_tabs, sanitize_custom_categories(custom_categories))
     base_sheet(on_dismiss = on_close, title = stringResource(R.string.move_to_category)) {
-        Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
+        Column(modifier = Modifier.heightIn(max = 480.dp).vertical_scroll_with_indicator()) {
             entries.forEach { entry ->
                 row_select(
                     label = entry.label,

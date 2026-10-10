@@ -991,6 +991,9 @@ private fun AsterNavHost() {
                 if (inbox_entry != null) hiltViewModel(inbox_entry) else hiltViewModel()
             val shared_settings_vm: org.astermail.android.settings.SettingsViewModel =
                 org.astermail.android.settings.shared_settings_view_model()
+            org.astermail.android.ui.common.on_return_to_foreground {
+                shared_mail_vm.refresh_after_background()
+            }
             val visible_order by shared_mail_vm.visible_order.collectAsStateWithLifecycle()
             val stable_order = androidx.compose.runtime.remember {
                 androidx.compose.runtime.mutableStateOf(visible_order)

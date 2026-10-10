@@ -21,12 +21,12 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.zoom_layer
+import org.astermail.android.ui.common.zoomable
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -38,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -67,7 +65,6 @@ import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterScale
 import org.astermail.android.design.aster_reduce_motion
 
-private const val LIGHTBOX_MIN_SCALE = 1f
 private const val LIGHTBOX_MAX_SCALE = 6f
 private const val LIGHTBOX_MAX_DATA_URI_CHARS = 16 * 1024 * 1024
 
@@ -161,11 +158,7 @@ fun email_image_lightbox(
     val painter = rememberAsyncImagePainter(model = request)
     val state = painter.state
 
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offset_x by remember { mutableFloatStateOf(0f) }
-    var offset_y by remember { mutableFloatStateOf(0f) }
-    var double_tap_target by remember { mutableStateOf(1f) }
-    val animated_scale by animateFloatAsState(targetValue = double_tap_target, label = "lightbox_zoom")
+    val zoom = org.astermail.android.ui.common.remember_zoom_state(src, max_scale = LIGHTBOX_MAX_SCALE)
 
     val reduce_motion = aster_reduce_motion()
     var visible by remember { mutableStateOf(false) }
@@ -192,38 +185,7 @@ fun email_image_lightbox(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = LIGHTBOX_SCRIM_ALPHA * scrim_progress))
-                .pointerInput(src) {
-                    detectTapGestures(
-                        onTap = { start_dismiss() },
-                        onDoubleTap = {
-                            if (scale > 1.05f) {
-                                scale = 1f
-                                double_tap_target = 1f
-                                offset_x = 0f
-                                offset_y = 0f
-                            } else {
-                                scale = 2.5f
-                                double_tap_target = 2.5f
-                            }
-                        },
-                    )
-                }
-                .pointerInput(src) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        val next = (scale * zoom).coerceIn(LIGHTBOX_MIN_SCALE, LIGHTBOX_MAX_SCALE)
-                        scale = next
-                        double_tap_target = next
-                        if (next > 1.01f) {
-                            val bound_x = size.width * (next - 1f) / 2f
-                            val bound_y = size.height * (next - 1f) / 2f
-                            offset_x = (offset_x + pan.x * next).coerceIn(-bound_x, bound_x)
-                            offset_y = (offset_y + pan.y * next).coerceIn(-bound_y, bound_y)
-                        } else {
-                            offset_x = 0f
-                            offset_y = 0f
-                        }
-                    }
-                },
+                .zoomable(zoom, on_tap = start_dismiss),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -239,12 +201,7 @@ fun email_image_lightbox(
                 val image_modifier = Modifier
                     .fillMaxSize()
                     .padding(12.dp)
-                    .graphicsLayer(
-                        scaleX = animated_scale,
-                        scaleY = animated_scale,
-                        translationX = offset_x,
-                        translationY = offset_y,
-                    )
+                    .zoom_layer(zoom)
 
                 val decoded = inline_bitmap
                 if (local_source) {

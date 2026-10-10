@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.account
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -153,7 +154,7 @@ fun SuspendedAccountGate(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .vertical_scroll_with_indicator()
                 .padding(horizontal = AsterSpacing.xl)
                 .padding(top = 40.dp, bottom = AsterSpacing.xxxl),
         ) {

@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.acrylic
 import org.astermail.android.ui.mail.format_long_date
@@ -2478,7 +2479,7 @@ private fun preferences_tab(
                 Column(
                     modifier = Modifier
                         .heightIn(max = 360.dp)
-                        .verticalScroll(rememberScrollState()),
+                        .vertical_scroll_with_indicator(),
                     verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 ) {
                     available_domains.forEach { option ->

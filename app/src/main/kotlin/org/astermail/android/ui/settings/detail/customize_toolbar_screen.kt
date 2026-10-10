@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -208,7 +209,7 @@ fun CustomizeToolbarScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .vertical_scroll_with_indicator()
                     .navigationBarsPadding()
                     .padding(bottom = AsterSpacing.lg),
             ) {

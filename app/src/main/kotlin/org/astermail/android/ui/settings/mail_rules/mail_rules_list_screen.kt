@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -167,7 +168,7 @@ fun MailRulesListScreen(
                     else -> Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .vertical_scroll_with_indicator()
                             .padding(horizontal = AsterSpacing.lg),
                     ) {
                         settings_group {

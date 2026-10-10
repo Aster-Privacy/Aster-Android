@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import android.content.ClipData
 import org.astermail.android.design.readable_on
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -215,7 +216,7 @@ internal fun crypto_invoice_screen(
         AsterTopBar(title = stringResource(R.string.crypto_native_invoice_screen_title), on_back = on_back)
         settings_row_gap()
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(AsterSpacing.lg),
+            modifier = Modifier.fillMaxSize().vertical_scroll_with_indicator().padding(AsterSpacing.lg),
         ) {
             when {
                 invoice == null && state.is_loading -> crypto_loading_view()

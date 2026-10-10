@@ -115,13 +115,36 @@ class scroll_indicator_test {
     }
 
     @Test
-    fun estimator_forgets_sizes_when_items_shift() {
+    fun estimator_drops_stale_positions_when_items_shift() {
         val estimator = lazy_extent_estimator()
         estimator.record(0, "header", 300)
         estimator.record(1, "a", 5000)
         estimator.record(1, "b", 100)
         val extent = estimator.extent(total_items = 2, first_index = 0, first_scroll_px = 0)
-        assertEquals(200f, extent.content_px, delta)
+        assertEquals(400f, extent.content_px, delta)
+    }
+
+    @Test
+    fun estimator_keeps_the_typical_row_size_when_a_row_is_removed() {
+        val estimator = lazy_extent_estimator()
+        repeat(10) { estimator.record(it, "k$it", 100) }
+        val before = estimator.extent(total_items = 200, first_index = 0, first_scroll_px = 0)
+        assertEquals(20_000f, before.content_px, delta)
+        estimator.record(0, "k1", 100)
+        estimator.record(1, "k2", 100)
+        val after = estimator.extent(total_items = 199, first_index = 0, first_scroll_px = 0)
+        assertEquals(19_900f, after.content_px, delta)
+    }
+
+    @Test
+    fun estimator_places_the_offset_from_measured_and_typical_rows() {
+        val estimator = lazy_extent_estimator()
+        estimator.record(40, "k40", 100)
+        estimator.record(41, "k41", 100)
+        estimator.record(42, "k42", 300)
+        val extent = estimator.extent(total_items = 100, first_index = 41, first_scroll_px = 25, spacing_px = 2)
+        assertEquals(41 * 100f + 41 * 2f + 25f, extent.offset_px, delta)
+        assertEquals(99 * 100f + 300f + 99 * 2f, extent.content_px, delta)
     }
 
     @Test

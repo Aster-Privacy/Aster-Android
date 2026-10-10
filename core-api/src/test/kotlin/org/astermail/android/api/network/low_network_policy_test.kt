@@ -127,6 +127,21 @@ class low_network_policy_test {
     }
 
     @Test
+    fun the_poll_chain_stops_while_push_delivers_new_mail() {
+        assertTrue(should_chain_polls(push_registered = false, socket_live = false))
+        assertFalse(should_chain_polls(push_registered = true, socket_live = false))
+        assertFalse(should_chain_polls(push_registered = false, socket_live = true))
+        assertFalse(should_chain_polls(push_registered = true, socket_live = true))
+    }
+
+    @Test
+    fun an_offline_socket_waits_for_the_network_instead_of_retrying() {
+        assertTrue(should_wait_for_network(has_network = false, network_callback_registered = true))
+        assertFalse(should_wait_for_network(has_network = false, network_callback_registered = false))
+        assertFalse(should_wait_for_network(has_network = true, network_callback_registered = true))
+    }
+
+    @Test
     fun stats_are_cached_longer_when_low_network_is_on() {
         assertEquals(LOW_NETWORK_STATS_TTL_MS, stats_ttl_ms(60_000L, true))
         assertEquals(60_000L, stats_ttl_ms(60_000L, false))

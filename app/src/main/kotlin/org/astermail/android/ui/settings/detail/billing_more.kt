@@ -18,6 +18,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -476,7 +477,7 @@ internal fun billing_credits_sheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 760.dp)
-                .verticalScroll(rememberScrollState())
+                .vertical_scroll_with_indicator()
                 .padding(horizontal = AsterSpacing.xl)
                 .navigationBarsPadding(),
         ) {

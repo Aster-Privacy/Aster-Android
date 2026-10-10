@@ -71,6 +71,7 @@ private const val RESTORE_PROTECTION_MS = 15_000L
 private const val REMOVAL_PROTECTION_MS = 15_000L
 private const val STATS_TTL_MS = 30_000L
 private const val RESUME_FRESH_MS = 20_000L
+private const val RESUME_RETRY_MS = 5_000L
 private const val STATS_DEBOUNCE_MS = 400L
 private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
@@ -1344,6 +1345,33 @@ class MailViewModel @Inject constructor(
         load_stats(force = true)
         if (fresh) return
         load_inbox(folder, force = true)
+        retry_resume_revalidate(folder)
+    }
+
+    fun refresh_after_background() {
+        load_stats(force = true)
+        val s = _inbox_state.value
+        if (!s.initial && !s.is_loading && !s.is_loading_more && !s.is_refreshing) {
+            silent_revalidate(s.current_folder)
+            retry_resume_revalidate(s.current_folder)
+        }
+        val thread = _thread_state.value
+        if (thread.item != null && !thread.is_loading) refresh_current_thread()
+    }
+
+    private var resume_retry_job: Job? = null
+
+    private fun retry_resume_revalidate(folder: String) {
+        val started = System.currentTimeMillis()
+        resume_retry_job?.cancel()
+        resume_retry_job = viewModelScope.launch {
+            delay(RESUME_RETRY_MS)
+            if (!resume_retry_due(folder_cache_time[folder], started)) return@launch
+            if (silent_revalidate_job?.isActive == true || !foreground_check()) return@launch
+            val s = _inbox_state.value
+            if (s.current_folder != folder || s.is_loading || s.is_loading_more || s.is_refreshing) return@launch
+            silent_revalidate(folder)
+        }
     }
 
     fun foreground_fallback_tick() {
@@ -5536,6 +5564,9 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
 private val folders_keeping_archived = setOf("archive", "starred", "snoozed", "sent")
 
 private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "snoozed")
+
+internal fun resume_retry_due(loaded_at: Long?, resumed_at: Long): Boolean =
+    loaded_at == null || loaded_at < resumed_at
 
 internal fun folder_uses_offset_cursor(folder: String): Boolean = when {
     folder == "scheduled" -> true

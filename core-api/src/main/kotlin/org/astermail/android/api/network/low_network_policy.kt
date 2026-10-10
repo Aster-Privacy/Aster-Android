@@ -70,6 +70,12 @@ fun draft_autosave_delay_ms(low_network: Boolean): Long =
 fun poll_chain_delay_minutes(low_network: Boolean): Long =
     if (low_network) LOW_NETWORK_POLL_CHAIN_DELAY_MINUTES else DEFAULT_POLL_CHAIN_DELAY_MINUTES
 
+fun should_chain_polls(push_registered: Boolean, socket_live: Boolean): Boolean =
+    !push_registered && !socket_live
+
+fun should_wait_for_network(has_network: Boolean, network_callback_registered: Boolean): Boolean =
+    !has_network && network_callback_registered
+
 fun should_run_expedited_poll(low_network: Boolean): Boolean = !low_network
 
 fun stats_ttl_ms(default_ttl_ms: Long, low_network: Boolean): Long =

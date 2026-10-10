@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -279,6 +280,7 @@ private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
 
 private const val EMPTY_STATE_SETTLE_MS = 700L
+private const val ROW_REMOVAL_QUIET_MS = 1_500L
 private const val CATEGORY_DRAIN_SKELETON_MAX_MS = 2500L
 
 private const val SCROLL_RESTORE_WINDOW_MS = 2_500L
@@ -629,10 +631,13 @@ fun InboxScreen(
             },
         )
     }
-    LaunchedEffect(mail_vm) {
-        while (true) {
-            kotlinx.coroutines.delay(60_000)
-            mail_vm.foreground_fallback_tick()
+    val fallback_tick_owner = LocalLifecycleOwner.current
+    LaunchedEffect(mail_vm, fallback_tick_owner) {
+        fallback_tick_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                kotlinx.coroutines.delay(60_000)
+                mail_vm.foreground_fallback_tick()
+            }
         }
     }
     LaunchedEffect(mail_vm) {
@@ -1988,11 +1993,39 @@ fun InboxScreen(
                 LaunchedEffect(threads.isEmpty()) {
                     if (!threads.isEmpty()) empty_state_seen = false
                 }
+                val had_rows = remember(current_folder, active_category_label) { booleanArrayOf(false) }
+                if (inbox_state.initial) {
+                    had_rows[0] = false
+                } else if (threads.isNotEmpty()) {
+                    had_rows[0] = true
+                }
+                val emptied_by_action = inbox_emptied_by_action(
+                    had_rows = had_rows[0],
+                    is_empty = threads.isEmpty(),
+                    initial = inbox_state.initial,
+                )
+                val refill_pending = emptied_by_action &&
+                    (inbox_state.is_loading || inbox_state.is_loading_more || threads_pending || inbox_state.has_more)
+                LaunchedEffect(emptied_by_action, inbox_state.has_more, inbox_state.is_loading_more) {
+                    if (emptied_by_action && inbox_state.has_more && !inbox_state.is_loading_more) mail_vm.load_more()
+                }
+                var removal_quiet by remember(current_folder, active_category_label) { mutableStateOf(false) }
+                val shown_count = threads.size
+                val last_shown_count = remember(current_folder, active_category_label) { intArrayOf(shown_count) }
+                LaunchedEffect(shown_count, current_folder, active_category_label) {
+                    val removed = shown_count < last_shown_count[0]
+                    last_shown_count[0] = shown_count
+                    if (removed) {
+                        removal_quiet = true
+                        kotlinx.coroutines.delay(ROW_REMOVAL_QUIET_MS)
+                    }
+                    removal_quiet = false
+                }
                 val skeleton_now = (
                     cache_pending ||
                         skeleton_target ||
                         (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
-                    ) && !(is_refreshing && empty_state_seen)
+                    ) && !(is_refreshing && empty_state_seen) && !emptied_by_action
                 val rows_imminent = threads.isEmpty() &&
                     (cache_pending || (threads_pending && inbox_state.items.isNotEmpty()))
                 val skeleton_phase by remember_skeleton_phase(
@@ -2029,6 +2062,8 @@ fun InboxScreen(
                             },
                         )
                     }
+                } else if (refill_pending) {
+                    Box(Modifier.padding(top = header_height_dp))
                 } else if (threads.isEmpty()) {
                     LaunchedEffect(Unit) { empty_state_seen = true }
                     org.astermail.android.ui.common.overscroll_stretch(
@@ -2380,7 +2415,7 @@ fun InboxScreen(
                                 }
                             }
                         }
-                        if (inbox_state.is_loading_more && !filter_active) {
+                        if (footer_skeleton_wanted(inbox_state.is_loading_more, filter_active, removal_quiet)) {
                             items(
                                 count = 3,
                                 key = { "_loading_more_$it" },
@@ -2424,11 +2459,11 @@ fun InboxScreen(
                             }
                         }
                     }
-                    org.astermail.android.ui.common.fast_scroll_bar(
+                    org.astermail.android.ui.common.vertical_scroll_bar(
                         state = list_state,
                         modifier = Modifier.align(Alignment.TopEnd),
-                        top_padding = header_height_dp,
-                        bottom_padding = list_bottom_pad,
+                        top_inset = header_height_dp,
+                        bottom_inset = list_bottom_pad,
                     )
                 }
                 inbox_skeleton_layer(
@@ -4283,7 +4318,7 @@ private fun empty_category_state(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .vertical_scroll_with_indicator(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -4378,7 +4413,7 @@ private fun empty_inbox_state(folder: String = "inbox") {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .vertical_scroll_with_indicator(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -4537,3 +4572,9 @@ private fun android.content.Context.review_prompt_activity(): android.app.Activi
     }
     return null
 }
+
+internal fun inbox_emptied_by_action(had_rows: Boolean, is_empty: Boolean, initial: Boolean): Boolean =
+    had_rows && is_empty && !initial
+
+internal fun footer_skeleton_wanted(is_loading_more: Boolean, filter_active: Boolean, removal_quiet: Boolean): Boolean =
+    is_loading_more && !filter_active && !removal_quiet

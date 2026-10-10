@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.auto_mirrored
@@ -119,6 +120,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -3819,7 +3821,7 @@ private fun blocked_content_details_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 360.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 Text(
                     text = stringResource(R.string.blocked_content_details_hint),
@@ -3900,7 +3902,7 @@ internal fun tracker_details_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 360.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 Text(
                     text = stringResource(R.string.tracker_details_hint),
@@ -4126,7 +4128,7 @@ private fun raw_source_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 420.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 Text(
                     text = stringResource(R.string.detail_raw_source_headers),
@@ -4224,7 +4226,7 @@ private fun message_details_dialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 440.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             ) {
                 message_detail_row(
                     stringResource(R.string.from_label),
@@ -4441,7 +4443,7 @@ internal fun message_details_panel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 260.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .vertical_scroll_with_indicator(),
             )
         }
     }
@@ -5647,6 +5649,10 @@ internal class mail_body_web_view(
 
     var on_horizontal_scroll: ((Int, Int, Int) -> Unit)? = null
 
+    fun horizontal_scroll_range(): Int = computeHorizontalScrollRange()
+
+    fun horizontal_scroll_extent(): Int = computeHorizontalScrollExtent()
+
     fun report_horizontal_scroll() {
         on_horizontal_scroll?.invoke(
             computeHorizontalScrollOffset(),
@@ -5775,6 +5781,21 @@ private suspend fun await_web_visual_state(web: android.webkit.WebView) {
 @Suppress("DEPRECATION")
 private fun web_viewport_css_height(web: android.webkit.WebView): Int =
     if (web.scale > 0f) (web.height / web.scale).toInt() else 0
+
+private fun web_overflows_sideways(web: android.webkit.WebView): Boolean {
+    val body = web as? mail_body_web_view ?: return false
+    return body_overflows_sideways(body.horizontal_scroll_range(), body.horizontal_scroll_extent())
+}
+
+private fun web_height_viewport_filled(web: android.webkit.WebView, content_css: Int): Boolean {
+    val body = web as? mail_body_web_view ?: return false
+    return body_height_viewport_filled(
+        content_css = content_css,
+        viewport_css = web_viewport_css_height(web),
+        scroll_range = body.horizontal_scroll_range(),
+        scroll_extent = body.horizontal_scroll_extent(),
+    )
+}
 
 private class height_channel(private val on_height: (Int, Boolean) -> Unit) {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -6362,6 +6383,7 @@ internal fun email_html_view(
     val has_toggles_ref = remember { booleanArrayOf(true) }
     val reload_policy = remember(height_cache_key) { body_reload_policy() }
     val height_guard = remember(height_cache_key) { body_height_guard() }
+    val growth_guard = remember(height_cache_key) { body_growth_guard() }
     val height_recheck = remember(height_cache_key) { mutableStateOf(false) }
     val web_view_context = androidx.compose.ui.platform.LocalContext.current
     val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
@@ -6421,8 +6443,14 @@ internal fun email_html_view(
                 scale_ref[0] = natural_scale
                 zoom_scale_ref[0] = natural_scale
                 if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
+                growth_guard.reset()
             }
-            val visual_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
+            val reported_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
+            val visual_h = if (has_measured && exact && !forced) {
+                growth_guard.settle(content_height_dp.value.toInt(), reported_h)
+            } else {
+                reported_h
+            }
             if (exact && height_guard.should_remeasure_capped(visual_h, max_body_height_px)) height_recheck.value = true
             val new_dp = visual_h.dp
             fun remember_known_height(value: Float) {
@@ -6549,7 +6577,8 @@ internal fun email_html_view(
             if (content <= 0) continue
             @Suppress("DEPRECATION")
             val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
-            if (!probed && !has_measured && !body_shown && content <= viewport_floor + 2) {
+            val filled = web_height_viewport_filled(web, content)
+            if (!probed && !has_measured && !body_shown && (content <= viewport_floor + 2 || filled)) {
                 probed = true
                 measure_probe.value = true
                 last_reported = 0
@@ -6565,11 +6594,11 @@ internal fun email_html_view(
                 stable_ms = 0L
                 exact_sent = false
                 last_reported = content
-                height_sink.report(content, exact = false)
+                if (!(filled && has_measured)) height_sink.report(content, exact = false)
             }
             if (!exact_sent && stable_ms >= height_watch_exact_stable_ms) {
                 exact_sent = true
-                height_sink.report(content, exact = true)
+                if (!(filled && has_measured)) height_sink.report(content, exact = true)
                 measure_probe.value = false
             }
             if (has_measured && stable_ms >= height_watch_settle_ms) break
@@ -6606,7 +6635,7 @@ internal fun email_html_view(
             if ((first_web as? mail_body_web_view)?.selection_active == true) return@LaunchedEffect
             await_web_visual_state(first_web)
             val grown = first_web.contentHeight
-            if (grown > 0 && (grown * scale_ref[0]) > start_dp.value + 8f) {
+            if (grown > 0 && (grown * scale_ref[0]) > start_dp.value + 8f && !web_overflows_sideways(first_web)) {
                 probe_hold_dp.value = start_dp
                 probe_height_dp.value = (grown * scale_ref[0]).coerceAtMost(max_body_height_px.toFloat()).dp
                 measure_probe.value = true
@@ -6647,6 +6676,7 @@ internal fun email_html_view(
                     }
                 }
                 if (last <= 0) return null
+                if (web_height_viewport_filled(web, last)) return 0
                 return if (last > web_viewport_css_height(web) + remeasure_viewport_slack_px) last else 0
             }
 
@@ -7792,6 +7822,26 @@ private fun attachment_preview_dialog(
     val colors = AsterMaterial.colors
     val ct = attachment.content_type.lowercase()
     val context = LocalContext.current
+    val open_externally = {
+        try {
+            val opened = open_attachment_externally(
+                context,
+                attachment.filename,
+                attachment.content_type,
+                bytes,
+            )
+            if (!opened) {
+                Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
+            }
+        } catch (_: Throwable) {
+            Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
+        }
+    }
+    val share = {
+        if (!share_attachment(context, attachment.filename, attachment.content_type, bytes)) {
+            Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     BackHandler { on_close() }
 
@@ -7810,123 +7860,52 @@ private fun attachment_preview_dialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .zIndex(1f)
                     .height(64.dp)
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                AsterIconButton(
-                    icon = TablerIcons.X,
-                    content_description = stringResource(R.string.close),
-                    onClick = on_close,
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp),
-                )
+                attachment_viewer_button(TablerIcons.X, stringResource(R.string.close), "attachment_viewer_close", on_close)
                 Text(
-                    text = attachment.filename,
+                    text = display_filename(attachment.filename),
                     color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 )
-                AsterIconButton(
-                    icon = TablerIcons.Download,
-                    content_description = stringResource(R.string.download),
-                    onClick = on_download,
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp),
+                attachment_viewer_button(
+                    TablerIcons.Share,
+                    stringResource(R.string.share_attachment),
+                    "attachment_viewer_share",
+                    share,
                 )
-                AsterIconButton(
-                    icon = TablerIcons.ExternalLink,
-                    content_description = stringResource(R.string.open_with),
-                    onClick = {
-                        try {
-                            val opened = open_attachment_externally(
-                                context,
-                                attachment.filename,
-                                attachment.content_type,
-                                bytes,
-                            )
-                            if (!opened) {
-                                Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (_: Throwable) {
-                            Toast.makeText(context, context.getString(R.string.no_app_to_open), Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    tint = Color.White,
-                    modifier = Modifier.size(48.dp),
+                attachment_viewer_button(
+                    TablerIcons.Download,
+                    stringResource(R.string.download),
+                    "attachment_viewer_download",
+                    on_download,
+                )
+                attachment_viewer_button(
+                    TablerIcons.ExternalLink,
+                    stringResource(R.string.open_with),
+                    "attachment_viewer_open",
+                    open_externally,
                 )
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f),
+                    .weight(1f)
+                    .clipToBounds(),
                 contentAlignment = Alignment.Center,
             ) {
                 when {
-                    ct.startsWith("image/") -> {
-                        val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, bytes) {
-                            value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                                runCatching {
-                                    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-                                    val max_dim = 2048
-                                    var sample = 1
-                                    while (bounds.outWidth / sample > max_dim || bounds.outHeight / sample > max_dim) {
-                                        sample *= 2
-                                    }
-                                    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-                                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
-                                }.getOrNull()
-                            }
-                        }
-                        val bmp = bitmap
-                        if (bmp != null) {
-                            androidx.compose.runtime.DisposableEffect(bmp) {
-                                onDispose { runCatching { bmp.recycle() } }
-                            }
-                            var scale by remember { mutableStateOf(1f) }
-                            Image(
-                                bitmap = bmp.asImageBitmap(),
-                                contentDescription = attachment.filename,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                                    .graphicsLayer(scaleX = scale, scaleY = scale)
-                                    .pointerInput(Unit) {
-                                        detectTransformGestures { _, _, zoom, _ ->
-                                            scale = (scale * zoom).coerceIn(0.5f, 5f)
-                                        }
-                                    },
-                            )
-                        } else {
-                            Text(stringResource(R.string.cannot_decode_image), color = Color.White.copy(alpha = 0.7f))
-                        }
-                    }
-                    ct.startsWith("text/") -> {
-                        val text = remember(bytes) { String(bytes, Charsets.UTF_8) }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                                .clip(SquircleShape(8.dp))
-                                .page_surface(colors)
-                                .padding(12.dp),
-                        ) {
-                            val scroll = rememberScrollState()
-                            Text(
-                                text = text,
-                                color = colors.text_primary,
-                                fontSize = 13.sp,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .horizontalScroll(scroll),
-                            )
-                        }
-                    }
+                    ct.startsWith("image/") -> image_attachment_viewer(bytes, display_filename(attachment.filename))
+                    is_text_attachment(ct, attachment.filename) -> text_attachment_viewer(bytes)
                     is_pdf_attachment(ct, attachment.filename) -> pdf_attachment_viewer(
                         bytes = bytes,
                         filename = attachment.filename,
@@ -7936,6 +7915,42 @@ private fun attachment_preview_dialog(
                     else -> attachment_fallback_panel(attachment, ct, bytes, on_download)
                 }
             }
+        }
+    }
+}
+
+@Composable
+internal fun attachment_viewer_button(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    test_tag: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(52.dp)
+            .testTag(test_tag)
+            .clip(androidx.compose.foundation.shape.CircleShape)
+            .clickable(
+                role = androidx.compose.ui.semantics.Role.Button,
+                onClickLabel = label,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(Color.White.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = Color.White,
+                modifier = Modifier.size(22.dp),
+            )
         }
     }
 }

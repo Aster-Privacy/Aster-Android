@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.drawer
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -466,7 +467,7 @@ fun DrawerContent(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .vertical_scroll_with_indicator(),
         ) {
             Spacer(Modifier.height(AsterSpacing.sm))
 
@@ -2316,7 +2317,7 @@ internal fun workspace_switcher_sheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
-                .verticalScroll(rememberScrollState()),
+                .vertical_scroll_with_indicator(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Column(

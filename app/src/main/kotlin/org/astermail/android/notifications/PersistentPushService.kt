@@ -96,6 +96,10 @@ class PersistentPushService : Service() {
 
     @Volatile
     private var authenticated = false
+        set(value) {
+            field = value
+            socket_live = value
+        }
 
     @Volatile
     private var had_connected = false
@@ -154,7 +158,7 @@ class PersistentPushService : Service() {
             stop_cleanly()
             return START_NOT_STICKY
         }
-        connect()
+        if (!authenticated) connect()
         return START_STICKY
     }
 
@@ -262,7 +266,11 @@ class PersistentPushService : Service() {
                 return@launch
             }
             if (!has_network()) {
-                schedule_reconnect()
+                val wait_for_network = org.astermail.android.api.network.should_wait_for_network(
+                    has_network = false,
+                    network_callback_registered = network_callback != null,
+                )
+                if (!wait_for_network) schedule_reconnect()
                 return@launch
             }
             open_socket(token)
@@ -373,9 +381,7 @@ class PersistentPushService : Service() {
                     reconnect_attempt = 0
                     start_heartbeat(marker)
                     if (had_connected) {
-                        runCatching {
-                            MailPollingWorker.enqueue_forced_notify(this@PersistentPushService)
-                        }
+                        runCatching { MailPollingWorker.enqueue(this@PersistentPushService) }
                     }
                     had_connected = true
                 }
@@ -457,6 +463,10 @@ class PersistentPushService : Service() {
         private const val WAKE_PAYLOAD = "{\"type\":\"wake\"}"
         private const val PING_FRAME = "{\"type\":\"ping\"}"
         private const val PONG_FRAME = "{\"type\":\"pong\"}"
+
+        @Volatile
+        var socket_live = false
+            private set
 
         fun websocket_url(): String = websocket_url_for(BuildConfig.API_BASE_URL)
 

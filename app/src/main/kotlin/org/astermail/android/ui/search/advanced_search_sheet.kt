@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.search
 
+import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
 
@@ -368,7 +369,7 @@ internal fun advanced_search_sheet(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .vertical_scroll_with_indicator()
                     .padding(horizontal = 20.dp)
                     .padding(top = 18.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(22.dp),
