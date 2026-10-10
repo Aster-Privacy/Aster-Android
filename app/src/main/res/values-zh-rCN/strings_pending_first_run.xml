@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">添加恢复邮箱</string>
     <string name="recovery_reminder_later">稍后</string>
     <string name="plan_prompt_title">解锁更多 Aster Mail 功能</string>
-    <string name="plan_prompt_body">升级即可获得更多存储空间、自定义域名和无限别名。</string>
+    <string name="plan_prompt_body">升级即可获得更多存储空间、更多别名和更多自定义域名。</string>
     <string name="plan_prompt_action">查看方案</string>
     <string name="plan_prompt_dismiss">暂不</string>
     <string name="recovery_codes_reminder_title">保存恢复代码</string>

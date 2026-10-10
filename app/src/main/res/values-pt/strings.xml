@@ -1257,7 +1257,6 @@
     <string name="settings_plan_bullet_star_domains">5 domínios personalizados</string>
     <string name="settings_plan_bullet_daily_send_limits">Limites diários de envio mais altos</string>
     <string name="settings_plan_bullet_star_templates">10 modelos de e-mail</string>
-    <string name="settings_plan_bullet_tracker_protection">Proteção contra rastreadores</string>
     <string name="settings_plan_bullet_vacation_reply">Resposta automática de férias</string>
     <string name="settings_plan_bullet_catch_all">Endereço de e-mail catch-all</string>
     <string name="settings_plan_bullet_auto_forwarding">Encaminhamento automático</string>
@@ -1276,7 +1275,6 @@
     <string name="settings_plan_bullet_contact_merge">Assistente de fusão de contactos</string>
     <string name="settings_plan_bullet_encrypted_export">Exportação encriptada</string>
     <string name="settings_plan_bullet_protected_folders">Pastas protegidas por palavra-passe</string>
-    <string name="settings_plan_bullet_key_rotation">Intervalos personalizados de rotação de chaves</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB de armazenamento encriptado</string>
     <string name="settings_plan_bullet_supernova_attachments">Anexos até 250 MB</string>
     <string name="settings_plan_bullet_unlimited_domains">Domínios personalizados ilimitados</string>
@@ -1818,7 +1816,7 @@
     <string name="upgrade_reassurance">Cancele quando quiser</string>
     <string name="upgrade_trust_line">Sem anúncios, sem rastreamento</string>
     <string name="upgrade_perk_storage">Mais espaço para mensagens e anexos</string>
-    <string name="upgrade_perk_aliases">Aliases ilimitados e domínios personalizados</string>
+    <string name="upgrade_perk_aliases">Mais aliases e domínios personalizados</string>
     <string name="upgrade_perk_domains">Domínios personalizados e funcionalidades profissionais</string>
     <string name="upgrade_perk_features">Filtros, modelos, assinaturas e mais</string>
     <string name="upgrade_resource_aliases">aliases</string>

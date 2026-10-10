@@ -85,7 +85,6 @@
     <string name="settings_plan_bullet_daily_send_limits">रोज़ाना भेजने की ज़्यादा सीमाएं</string>
     <string name="settings_plan_bullet_daily_emails">रोज़ाना 1,000 ईमेल</string>
     <string name="settings_plan_bullet_star_templates">10 ईमेल टेम्पलेट</string>
-    <string name="settings_plan_bullet_tracker_protection">ट्रैकर से सुरक्षा</string>
     <string name="settings_plan_bullet_vacation_reply">छुट्टी का अपने आप जवाब</string>
     <string name="settings_plan_bullet_catch_all">कैच-ऑल ईमेल पता</string>
     <string name="settings_plan_bullet_auto_forwarding">अपने आप फ़ॉरवर्ड करना</string>
@@ -104,7 +103,6 @@
     <string name="settings_plan_bullet_contact_merge">संपर्क मिलाने का विज़ार्ड</string>
     <string name="settings_plan_bullet_encrypted_export">एन्क्रिप्टेड एक्सपोर्ट</string>
     <string name="settings_plan_bullet_protected_folders">पासवर्ड से सुरक्षित फ़ोल्डर</string>
-    <string name="settings_plan_bullet_key_rotation">कुंजी बदलने के अपने अंतराल</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB एन्क्रिप्टेड स्टोरेज</string>
     <string name="settings_plan_bullet_supernova_attachments">250 MB तक के अटैचमेंट</string>
     <string name="settings_plan_bullet_unlimited_domains">असीमित कस्टम डोमेन</string>

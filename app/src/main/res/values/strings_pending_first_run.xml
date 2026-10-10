@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Add recovery email</string>
     <string name="recovery_reminder_later">Later</string>
     <string name="plan_prompt_title">Get more from Aster Mail</string>
-    <string name="plan_prompt_body">Upgrade for more storage, custom domains, and unlimited aliases.</string>
+    <string name="plan_prompt_body">Upgrade for more storage, more aliases, and more custom domains.</string>
     <string name="plan_prompt_action">See plans</string>
     <string name="plan_prompt_dismiss">Not now</string>
     <string name="recovery_codes_reminder_title">Save your recovery codes</string>

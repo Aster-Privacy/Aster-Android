@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">%1$s の検索結果</string>
     <string name="domain_purchase_change_name">名前を変更</string>
     <string name="domain_purchase_show_more">さらに結果を表示</string>
-    <string name="domain_purchase_empty_included">すべてのドメインに WHOIS 保護、設定済みの DNS、無制限のアドレスが付いています。</string>
+    <string name="domain_purchase_empty_included">すべてのドメインに WHOIS 保護と設定済みの DNS が付いています。</string>
     <string name="domain_purchase_retry">再試行</string>
     <string name="domain_purchase_progress_note">Aster Mail がドメインを登録し、メールボックスを設定しています。通常は1分ほどで完了します。</string>
     <string name="domain_purchase_awaiting_note">お支払いはまだ確認できていません。チェックアウトを完了して注文を確定するか、このウィンドウを閉じて後で「購入したドメイン」からお支払いください。</string>

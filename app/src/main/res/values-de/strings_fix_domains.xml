@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">Ergebnisse für %1$s</string>
     <string name="domain_purchase_change_name">Namen ändern</string>
     <string name="domain_purchase_show_more">Weitere Ergebnisse anzeigen</string>
-    <string name="domain_purchase_empty_included">Jede Domain enthält WHOIS-Datenschutz, eingerichtetes DNS und unbegrenzte Adressen.</string>
+    <string name="domain_purchase_empty_included">Jede Domain enthält WHOIS-Datenschutz und eingerichtetes DNS.</string>
     <string name="domain_purchase_retry">Erneut versuchen</string>
     <string name="domain_purchase_progress_note">Aster Mail registriert Ihre Domain und richtet Ihre Postfächer ein. Das dauert in der Regel etwa eine Minute.</string>
     <string name="domain_purchase_awaiting_note">Ihre Zahlung ist noch nicht eingegangen. Um Ihre Bestellung abzuschließen, schließen Sie den Bezahlvorgang ab. Sie können dieses Fenster auch schließen und später unter „Gekaufte Domains“ bezahlen.</string>

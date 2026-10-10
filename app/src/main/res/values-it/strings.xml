@@ -1257,7 +1257,6 @@
     <string name="settings_plan_bullet_star_domains">5 domini personalizzati</string>
     <string name="settings_plan_bullet_daily_send_limits">Limiti di invio giornalieri più alti</string>
     <string name="settings_plan_bullet_star_templates">10 modelli email</string>
-    <string name="settings_plan_bullet_tracker_protection">Protezione dai tracker</string>
     <string name="settings_plan_bullet_vacation_reply">Risposta automatica per le assenze</string>
     <string name="settings_plan_bullet_catch_all">Indirizzo email catch-all</string>
     <string name="settings_plan_bullet_auto_forwarding">Inoltro automatico</string>
@@ -1276,7 +1275,6 @@
     <string name="settings_plan_bullet_contact_merge">Procedura guidata unione contatti</string>
     <string name="settings_plan_bullet_encrypted_export">Esportazione crittografata</string>
     <string name="settings_plan_bullet_protected_folders">Cartelle protette da password</string>
-    <string name="settings_plan_bullet_key_rotation">Intervalli personalizzati di rotazione chiavi</string>
     <string name="settings_plan_bullet_supernova_storage">5 TB di spazio crittografato</string>
     <string name="settings_plan_bullet_supernova_attachments">Allegati fino a 250 MB</string>
     <string name="settings_plan_bullet_unlimited_domains">Domini personalizzati illimitati</string>
@@ -1818,7 +1816,7 @@
     <string name="upgrade_reassurance">Disdici quando vuoi</string>
     <string name="upgrade_trust_line">Nessuna pubblicità, nessun tracciamento</string>
     <string name="upgrade_perk_storage">Più spazio per messaggi e allegati</string>
-    <string name="upgrade_perk_aliases">Alias illimitati e domini personalizzati</string>
+    <string name="upgrade_perk_aliases">Più alias e domini personalizzati</string>
     <string name="upgrade_perk_domains">Domini personalizzati e funzioni pro</string>
     <string name="upgrade_perk_features">Filtri, modelli, firme e altro</string>
     <string name="upgrade_resource_aliases">alias</string>
