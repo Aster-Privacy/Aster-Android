@@ -58,7 +58,22 @@ private val secure_prefs_namespaces = listOf(
 )
 
 @HiltAndroidApp
-class AsterApplication : Application(), ImageLoaderFactory {
+class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Configuration.Provider {
+
+    override val workManagerConfiguration: androidx.work.Configuration
+        get() = androidx.work.Configuration.Builder()
+            .setInitializationExceptionHandler { report_work_initialization_failure() }
+            .build()
+
+    private fun report_work_initialization_failure() {
+        runCatching {
+            org.astermail.android.api.errors.ClientErrorReporter.report(
+                feature = "app",
+                error_code = "work_initialization_failed",
+                severity = "warning",
+            )
+        }
+    }
 
     private fun install_crash_reporting() {
         runCatching {
