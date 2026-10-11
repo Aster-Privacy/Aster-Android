@@ -82,7 +82,23 @@ class SenderTrustRowTest {
             newest_vetted = true,
         )
 
-        assertEquals(listOf("" to "x@evil.example", "y@plain.example" to "y@plain.example"), shown)
+        assertEquals(listOf("" to "x@evil.example", "" to "y@plain.example"), shown)
+    }
+
+    @Test
+    fun participant_name_that_imitates_a_brand_is_dropped() {
+        val shown = vetted_participants(
+            participants = listOf(
+                "PaypaI Support" to "x@evil.example",
+                "Jane Doe" to "jane@company.example",
+            ),
+            newest_name = "Newest",
+            newest_email = "n@n.example",
+            single_sender = false,
+            newest_vetted = true,
+        )
+
+        assertEquals(listOf("" to "x@evil.example", "Jane Doe" to "jane@company.example"), shown)
     }
 
     @Test

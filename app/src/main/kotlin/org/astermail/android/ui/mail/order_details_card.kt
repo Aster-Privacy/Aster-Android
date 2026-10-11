@@ -81,6 +81,7 @@ import org.astermail.android.mail.extraction.EmailExtractionResult
 import org.astermail.android.mail.extraction.ShippingStatus
 import org.astermail.android.mail.extraction.extract_email_details
 import org.astermail.android.mail.extraction.extract_order_url
+import org.astermail.android.security.safe_sender_name
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.remember_copy_action
 import java.util.Collections
@@ -234,7 +235,7 @@ internal fun order_details_card_for_message(
                 body_text = msg.body,
                 body_html = msg.body_html,
                 from_email = msg.sender_email,
-                from_name = msg.sender_name,
+                from_name = safe_sender_name(msg.sender_name, msg.sender_email),
             )
             if (result.is_empty) {
                 null

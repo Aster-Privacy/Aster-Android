@@ -111,7 +111,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.api.preferences.UserPreferences
-import org.astermail.android.security.sanitize_display_name
+import org.astermail.android.security.safe_sender_name
 import org.astermail.android.security.trusted_sender_name
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -935,9 +935,7 @@ internal fun vetted_participants(
         if (newest_vetted && newest_key.isNotEmpty() && address.trim().lowercase() == newest_key) {
             newest_name to address
         } else {
-            val cleaned = sanitize_display_name(name)
-            val claims_other_address = cleaned.contains('@') && !cleaned.equals(address.trim(), ignoreCase = true)
-            (if (claims_other_address) "" else cleaned) to address
+            safe_sender_name(name, address) to address
         }
     }
 }

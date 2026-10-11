@@ -287,6 +287,7 @@ private fun trim_spaces(text: String): String = text.trim { it == ' ' }
 
 private fun clean_text(text: String, keep_joiners: Boolean): String {
     val result = StringBuilder(text.length)
+    var after_joiner = false
     var pending_space = false
     for (code in code_points(text)) {
         if (is_lone_surrogate(code)) continue
@@ -295,12 +296,18 @@ private fun clean_text(text: String, keep_joiners: Boolean): String {
             continue
         }
         if (in_ranges(code, invisible_ranges)) continue
-        if (!keep_joiners && in_ranges(code, joiner_ranges)) continue
+        if (in_ranges(code, joiner_ranges)) {
+            if (!keep_joiners || pending_space || after_joiner || result.isEmpty()) continue
+            result.appendCodePoint(code)
+            after_joiner = true
+            continue
+        }
         if (pending_space) {
             result.append(' ')
             pending_space = false
         }
         result.appendCodePoint(code)
+        after_joiner = false
     }
     return result.toString()
 }
@@ -757,13 +764,14 @@ private fun tighten_address(candidate: String): String {
     return String(points, start, end - start)
 }
 
-private fun find_address_in_name(name: String): ParsedAddress? {
+private fun find_addresses_in_name(name: String): List<ParsedAddress> {
     val folded = clean_text(nfkc(name), false).replace(spaced_at_sign, "@")
+    val found = ArrayList<ParsedAddress>()
     for (match in address_in_name_pattern.findAll(folded)) {
         val parsed = parse_address(tighten_address(match.value))
-        if (parsed != null) return parsed
+        if (parsed != null) found.add(parsed)
     }
-    return null
+    return found
 }
 
 private fun is_domain_label_char(code: Int): Boolean =
@@ -1148,7 +1156,7 @@ private fun auth_state_of(input: SenderTrustInput): SenderAuthState {
 
 private fun claims_identity(name: String): Boolean {
     if (name.isEmpty()) return false
-    if (find_address_in_name(name) != null) return true
+    if (find_addresses_in_name(name).isNotEmpty()) return true
     val claim = name_claim(name, true)
     if (match_brand_name(claim, sender_trust_data.home_names) != null) return true
     return sender_trust_data.brand_names.any { match_brand_name(claim, it) != null }
@@ -1170,15 +1178,18 @@ private fun find_warning(
     }
     if (name.isEmpty()) return null
 
-    val in_name = find_address_in_name(name)
     val relayed = sender_trust_data.relay_domains.any { within_domain(parsed.ascii_domain, it) }
     val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
-    val other_mailbox = in_name != null &&
-        (parsed.ascii_domain in sender_trust_data.public_mailbox_domains || from_home) &&
-        mailbox_key(in_name) != mailbox_key(parsed)
-    if (in_name != null && (in_name.registrable != parsed.registrable || other_mailbox) && !relayed) {
-        return SenderWarning(SenderWarningKind.address_in_name, in_name.address)
+    val shared_domain = parsed.ascii_domain in sender_trust_data.public_mailbox_domains || from_home
+    val in_name = if (relayed) {
+        null
+    } else {
+        find_addresses_in_name(name).firstOrNull { candidate ->
+            candidate.registrable != parsed.registrable ||
+                (shared_domain && mailbox_key(candidate) != mailbox_key(parsed))
+        }
     }
+    if (in_name != null) return SenderWarning(SenderWarningKind.address_in_name, in_name.address)
 
     val named_targets = if (relayed) emptyList() else domains_in_name(name)
     for (target in named_targets) {

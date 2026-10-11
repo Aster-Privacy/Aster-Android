@@ -99,6 +99,19 @@ fun trusted_sender_name(trust: SenderTrust?, raw_name: String, placeholder: Stri
 fun trusted_sender_name(message: SenderTrustMessage?, raw_name: String, placeholder: String): String =
     trusted_sender_name(sender_trust_for(message, SenderTrustStore.context.value), raw_name, placeholder)
 
+fun safe_sender_name(name: String?, email: String?): String {
+    if (name.isNullOrEmpty()) return ""
+    val context = SenderTrustStore.context.value
+    return evaluate_sender_trust(
+        SenderTrustInput(
+            name = name,
+            email = email ?: "",
+            own_addresses = context.own_addresses,
+            contacts = context.contacts,
+        ),
+    ).name
+}
+
 fun reply_to_header_value(raw_headers: List<Pair<String, String>>): String? {
     val values = raw_headers
         .filter { it.first.equals("reply-to", ignoreCase = true) }
