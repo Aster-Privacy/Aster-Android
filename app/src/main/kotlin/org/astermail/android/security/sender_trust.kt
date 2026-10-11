@@ -293,12 +293,15 @@ private fun cap_trust_code_points(text: String, max: Int): String {
     return trim_spaces(text.substring(0, text.offsetByCodePoints(0, max)))
 }
 
-fun sanitize_display_name(raw: String?): String {
+private fun capped_display_name(raw: String?, max: Int): String {
     if (raw == null) return ""
     val cleaned = strip_outer_quotes(trim_spaces(clean_text(raw, true)))
     if (clean_text(cleaned, false).isEmpty()) return ""
-    return cap_trust_code_points(cleaned, sender_trust_data.max_name_length)
+    return cap_trust_code_points(cleaned, max)
 }
+
+fun sanitize_display_name(raw: String?): String =
+    capped_display_name(raw, sender_trust_data.max_name_length)
 
 private fun fold(text: String): String = lower(clean_text(nfkc(text), false))
 
@@ -1165,7 +1168,13 @@ fun evaluate_sender_trust(input: SenderTrustInput): SenderTrust {
     val base_name = if (name_is_address) "" else sanitized
     val internal = auth_state == SenderAuthState.internal
     val personal = personal_context_of(input)
+    val whole_name = if (name_is_address) {
+        ""
+    } else {
+        capped_display_name(input.name, sender_trust_data.max_name_length + max_address_length)
+    }
     val warning = find_warning(base_name, parsed, auth_state, personal)
+        ?: if (whole_name == base_name) null else find_warning(whole_name, parsed, auth_state, personal)
     val hide_name = warning != null && warning.kind != SenderWarningKind.lookalike_domain
     val distrusted = auth_state == SenderAuthState.failed || auth_state == SenderAuthState.unverified
     val verified_domain = sender_domain_to_ascii(input.sender_verified_domain.orEmpty())
