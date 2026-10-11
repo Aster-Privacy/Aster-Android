@@ -71,6 +71,7 @@ private class BrandEntry(
     val names: List<String>,
     val solo_names: List<String>,
     val ambiguous: Boolean,
+    val company_claim: Boolean,
     val any_suffix: Boolean,
     val suffix_labels: List<String>,
     val domains: List<String>,
@@ -91,6 +92,7 @@ private class NameClaim(
     val bare_fold: String,
     val has_generic: Boolean,
     val has_home_generic: Boolean,
+    val has_company: Boolean,
     val foreign_script: Boolean,
 )
 
@@ -130,8 +132,8 @@ private const val max_address_length = 320
 private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
 private const val min_contact_name_length = 5
-private const val max_reply_to_entries = 2048
-private const val max_reply_to_length = 4096
+private const val max_reply_to_entries = 32768
+private const val max_reply_to_length = 32768
 
 private const val puny_base = 36
 private const val puny_t_min = 1
@@ -669,9 +671,13 @@ private fun name_claim(text: String, capitals_aware: Boolean): NameClaim {
     val bare = StringBuilder()
     var has_generic = false
     var has_home_generic = false
+    var has_company = false
     for (token in tokenize(text)) {
         val word = lower(token)
-        if (word in sender_trust_data.company_words) continue
+        if (word in sender_trust_data.company_words) {
+            has_company = true
+            continue
+        }
         if (word in sender_trust_data.generic_words) {
             has_generic = true
             if (word !in sender_trust_data.home_neutral_words) has_home_generic = true
@@ -689,6 +695,7 @@ private fun name_claim(text: String, capitals_aware: Boolean): NameClaim {
         bare_fold = fold(bare_joined),
         has_generic = has_generic,
         has_home_generic = has_home_generic,
+        has_company = has_company,
         foreign_script = is_foreign_script(joined),
     )
 }
@@ -1072,6 +1079,7 @@ private object sender_trust_data {
                     names = string_list(entry.getJSONArray("names")),
                     solo_names = string_list(entry.optJSONArray("solo_names")),
                     ambiguous = entry.optBoolean("ambiguous", false),
+                    company_claim = entry.optBoolean("company_claim", false),
                     any_suffix = entry.optBoolean("any_suffix", false),
                     suffix_labels = string_list(entry.optJSONArray("suffix_labels")),
                     domains = string_list(entry.getJSONArray("domains")),
@@ -1258,7 +1266,9 @@ private fun find_warning(
         val match = match_brand_name(claim, brand_names[position]) ?: continue
         if (is_trust_brand_domain(parsed, brands[position], trusted_auth)) return null
         if (reads_as_lookalike(match, claim)) return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
-        if (match.solo || claim.has_generic) return SenderWarning(SenderWarningKind.brand_name, match.claimed)
+        if (match.solo || claim.has_generic || (claim.has_company && brands[position].company_claim)) {
+            return SenderWarning(SenderWarningKind.brand_name, match.claimed)
+        }
         return null
     }
     return null

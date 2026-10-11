@@ -65,17 +65,12 @@ fun sender_trust_input(
     val name = shown_name ?: message.display_sender_name ?: message.sender_name ?: ""
     val is_rewritten = folded_address(email) != folded_address(actual_email)
     val aligned = message.sender_aligned
-    val dkim = recorded_status(message.dkim_result)
     val dmarc = recorded_status(message.dmarc_result)
+    val unrecorded = recorded_status(message.spf_result).isEmpty() &&
+        recorded_status(message.dkim_result).isEmpty() &&
+        dmarc.isEmpty()
     val carrier_trusted = aligned == true ||
-        (
-            aligned == null &&
-                (
-                    (dkim.isEmpty() && dmarc.isEmpty()) ||
-                        dmarc == "pass" ||
-                        (dkim == "pass" && (dmarc.isEmpty() || dmarc == "none"))
-                    )
-            )
+        (aligned == null && (unrecorded || dmarc == "pass"))
     val drop_auth = is_rewritten && carrier_trusted
     return SenderTrustInput(
         name = name,
