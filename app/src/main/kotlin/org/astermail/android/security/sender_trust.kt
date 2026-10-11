@@ -769,28 +769,82 @@ private fun plain_dots(name: String): String {
     return from_code_points(out)
 }
 
-private fun domains_in_name(name: String): List<String> {
-    val targets = ArrayList<String>()
-    val plain = plain_dots(name)
-    val bases = if (plain == name) listOf(name) else listOf(name, plain)
-    val texts = bases.flatMap { listOf(sender_skeleton(it), sender_skeleton(fold(it))) }
-    for (text in texts) {
-        val runs = ArrayList<String>()
-        val run = StringBuilder()
-        for (code in code_points(text)) {
-            if (is_domain_label_char(code)) {
-                run.appendCodePoint(code)
+private fun loose_dots(name: String): String {
+    val points = code_points(name)
+    val out = ArrayList<Int>()
+    var position = 0
+    while (position < points.size) {
+        val code = points[position]
+        if (code == 0x2e) {
+            var before = out.size
+            var after = position + 1
+            while (before > 0 && is_gap(out[before - 1])) before -= 1
+            while (is_gap(point_at(points, after))) after += 1
+            if (
+                before > 0 &&
+                after < points.size &&
+                is_letter_or_number(out[before - 1]) &&
+                is_letter_or_number(points[after])
+            ) {
+                while (out.size > before) out.removeAt(out.size - 1)
+                out.add(0x2e)
+                position = after
                 continue
             }
-            if (run.isNotEmpty()) runs.add(run.toString())
-            run.setLength(0)
+        }
+        out.add(code)
+        position += 1
+    }
+    return from_code_points(out)
+}
+
+private fun label_runs(text: String): List<String> {
+    val runs = ArrayList<String>()
+    val run = StringBuilder()
+    for (code in code_points(text)) {
+        if (is_domain_label_char(code)) {
+            run.appendCodePoint(code)
+            continue
         }
         if (run.isNotEmpty()) runs.add(run.toString())
-        for (candidate in runs) {
-            val shaped = domain_shaped(candidate) ?: continue
-            val target = sender_registrable_domain(shaped)
-            if (target.isNotEmpty() && target !in targets) targets.add(target)
+        run.setLength(0)
+    }
+    if (run.isNotEmpty()) runs.add(run.toString())
+    return runs
+}
+
+private fun shaped_targets(text: String): List<String> {
+    val targets = ArrayList<String>()
+    for (candidate in label_runs(text)) {
+        val shaped = domain_shaped(candidate) ?: continue
+        targets.add(sender_registrable_domain(shaped))
+    }
+    return targets
+}
+
+private fun domains_in_name(name: String): List<String> {
+    val targets = ArrayList<String>()
+    fun keep(target: String) {
+        if (target.isNotEmpty() && target !in targets) targets.add(target)
+    }
+    val plain = plain_dots(name)
+    val bases = if (plain == name) listOf(name) else listOf(name, plain)
+    for (base in bases) {
+        shaped_targets(sender_skeleton(base)).forEach { keep(it) }
+        shaped_targets(sender_skeleton(fold(base))).forEach { keep(it) }
+    }
+    val loose = loose_dots(plain)
+    if (loose != plain) {
+        for (text in listOf(sender_skeleton(loose), sender_skeleton(fold(loose)))) {
+            for (target in shaped_targets(text)) {
+                if (sender_trust_data.brand_domain_index.by_skeleton.containsKey(target)) keep(target)
+            }
         }
+    }
+    for (target in shaped_targets(fold(plain))) {
+        if (!target.contains("xn--")) continue
+        val unicode = domain_unicode(target)
+        if (unicode != target) keep(sender_skeleton(unicode))
     }
     return targets
 }
