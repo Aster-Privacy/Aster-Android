@@ -699,9 +699,79 @@ private fun domain_shaped(run: String): String? {
     return trimmed
 }
 
+private fun point_at(points: IntArray, position: Int): Int =
+    if (position >= 0 && position < points.size) points[position] else -1
+
+private fun is_gap(code: Int): Boolean = code == 0x20 || code == 0x09 || code == 0xa0
+
+private fun ascii_lower(code: Int): Int = if (code in 0x41..0x5a) code + 0x20 else code
+
+private fun bracketed_dot_end(points: IntArray, open: Int): Int {
+    var position = open + 1
+    while (is_gap(point_at(points, position))) position += 1
+    if (point_at(points, position) == 0x2e) {
+        position += 1
+    } else if (
+        ascii_lower(point_at(points, position)) == 0x64 &&
+        ascii_lower(point_at(points, position + 1)) == 0x6f &&
+        ascii_lower(point_at(points, position + 2)) == 0x74
+    ) {
+        position += 3
+    } else {
+        return -1
+    }
+    while (is_gap(point_at(points, position))) position += 1
+    val close = point_at(points, position)
+    return if (close == 0x29 || close == 0x5d || close == 0x7d) position + 1 else -1
+}
+
+private fun starts_framework_suffix(points: IntArray, position: Int): Boolean {
+    val after = point_at(points, position + 3)
+    return ascii_lower(point_at(points, position)) == 0x6e &&
+        ascii_lower(point_at(points, position + 1)) == 0x65 &&
+        ascii_lower(point_at(points, position + 2)) == 0x74 &&
+        (after < 0 || !is_letter_or_number(after))
+}
+
+private fun plain_dots(name: String): String {
+    val points = code_points(name)
+    val out = ArrayList<Int>()
+    var position = 0
+    while (position < points.size) {
+        val code = points[position]
+        val end = if (code == 0x28 || code == 0x5b || code == 0x7b) bracketed_dot_end(points, position) else -1
+        if (end >= 0) {
+            while (out.isNotEmpty() && is_gap(out[out.size - 1])) out.removeAt(out.size - 1)
+            out.add(0x2e)
+            position = end
+            while (is_gap(point_at(points, position))) position += 1
+            continue
+        }
+        if (
+            code == 0x2e &&
+            out.isNotEmpty() &&
+            is_gap(out[out.size - 1]) &&
+            position + 1 < points.size &&
+            is_letter_or_number(points[position + 1]) &&
+            !starts_framework_suffix(points, position + 1)
+        ) {
+            while (out.isNotEmpty() && is_gap(out[out.size - 1])) out.removeAt(out.size - 1)
+            out.add(0x2e)
+            position += 1
+            continue
+        }
+        out.add(code)
+        position += 1
+    }
+    return from_code_points(out)
+}
+
 private fun domains_in_name(name: String): List<String> {
     val targets = ArrayList<String>()
-    for (text in listOf(sender_skeleton(name), sender_skeleton(fold(name)))) {
+    val plain = plain_dots(name)
+    val bases = if (plain == name) listOf(name) else listOf(name, plain)
+    val texts = bases.flatMap { listOf(sender_skeleton(it), sender_skeleton(fold(it))) }
+    for (text in texts) {
         val runs = ArrayList<String>()
         val run = StringBuilder()
         for (code in code_points(text)) {
@@ -887,7 +957,7 @@ private fun personal_context_of(input: SenderTrustInput): PersonalContext {
 }
 
 private fun status_of(raw: String?): String {
-    val value = raw?.let { lower(it.trim()) }.orEmpty()
+    val value = raw?.let { lower(it.trim(' ', '\t', '\r', '\n')) }.orEmpty()
     return when (value) {
         "", "missing" -> "missing"
         "pass", "none" -> value
