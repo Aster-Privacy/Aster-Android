@@ -132,8 +132,6 @@ private const val max_address_length = 320
 private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
 private const val min_contact_name_length = 5
-private const val max_reply_to_entries = 32768
-private const val max_reply_to_length = 32768
 
 private const val puny_base = 36
 private const val puny_t_min = 1
@@ -1318,7 +1316,6 @@ private fun split_address_list(text: String): List<String> {
         if (!quoted && !angle && (char == ',' || char == ';')) {
             if (current.isNotBlank()) entries.add(current.toString())
             current.setLength(0)
-            if (entries.size >= max_reply_to_entries) return entries
             continue
         }
         current.append(char)
@@ -1329,7 +1326,7 @@ private fun split_address_list(text: String): List<String> {
 
 private fun reply_to_notice(parsed: ParsedAddress, reply_to: String?): String? {
     if (reply_to == null || clean_text(reply_to, false).isEmpty()) return null
-    for (entry in split_address_list(reply_to.take(max_reply_to_length))) {
+    for (entry in split_address_list(reply_to)) {
         val reply = parse_address(entry) ?: continue
         if (reply.registrable != parsed.registrable) return reply.address
     }
