@@ -90,6 +90,8 @@ private class NameClaim(
     val bare_skeleton: String,
     val bare_fold: String,
     val has_generic: Boolean,
+    val has_home_generic: Boolean,
+    val foreign_script: Boolean,
 )
 
 private class BrandNameMatch(
@@ -125,6 +127,7 @@ private class CachedPersonalContext(
 
 private const val sender_trust_data_resource = "sender_trust_data.json"
 private const val max_address_length = 320
+private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
 private const val min_contact_name_length = 5
 private const val max_reply_to_entries = 20
@@ -185,6 +188,22 @@ private val mark_ranges = arrayOf(
     0x1dc0..0x1dff,
     0x20d0..0x20ff,
     0xfe20..0xfe2f,
+    0x0591..0x05bd,
+    0x05bf..0x05bf,
+    0x05c1..0x05c2,
+    0x05c4..0x05c5,
+    0x05c7..0x05c7,
+    0x0610..0x061a,
+    0x064b..0x065f,
+    0x0670..0x0670,
+    0x06d6..0x06dc,
+    0x06df..0x06e4,
+    0x06e7..0x06e8,
+    0x06ea..0x06ed,
+    0x0e31..0x0e31,
+    0x0e34..0x0e3a,
+    0x0e47..0x0e4e,
+    0x3099..0x309a,
 )
 
 private val separator_ranges = arrayOf(
@@ -199,6 +218,16 @@ private val separator_ranges = arrayOf(
     0x3001..0x303f,
     0x1f000..0x1faff,
 )
+
+private val name_separator_ranges = arrayOf(
+    0x02b0..0x02ff,
+    0x2e00..0x2e7f,
+    0x30a0..0x30a0,
+    0x30fb..0x30fb,
+    0xa700..0xa71f,
+)
+
+private val enclosed_letter_starts = intArrayOf(0x1f150, 0x1f170)
 
 private val script_ranges = arrayOf(
     Triple(0x0370, 0x03ff, "greek"),
@@ -295,13 +324,27 @@ private fun cap_trust_code_points(text: String, max: Int): String {
 
 private fun capped_display_name(raw: String?, max: Int): String {
     if (raw == null) return ""
-    val cleaned = strip_outer_quotes(trim_spaces(clean_text(raw, true)))
+    val cleaned = strip_outer_quotes(
+        cap_trust_code_points(trim_spaces(clean_text(raw, true)), max_raw_name_length),
+    )
     if (clean_text(cleaned, false).isEmpty()) return ""
     return cap_trust_code_points(cleaned, max)
 }
 
 fun sanitize_display_name(raw: String?): String =
     capped_display_name(raw, sender_trust_data.max_name_length)
+
+private fun enclosed_plain(text: String): String {
+    val out = StringBuilder(text.length)
+    for (code in code_points(text)) {
+        var plain = code
+        for (start in enclosed_letter_starts) {
+            if (code >= start && code < start + 26) plain = 0x41 + code - start
+        }
+        out.appendCodePoint(plain)
+    }
+    return out.toString()
+}
 
 private fun fold(text: String): String = lower(clean_text(nfkc(text), false))
 
@@ -564,7 +607,12 @@ private fun parse_address(raw: String?): ParsedAddress? {
 private fun address_key(parsed: ParsedAddress): String = "${fold(parsed.local)}@${parsed.ascii_domain}"
 
 private fun mailbox_key(parsed: ParsedAddress): String {
-    val local = fold(parsed.local).split("+")[0].replace(".", "")
+    val tagless = fold(parsed.local).split("+")[0]
+    val local = if (parsed.ascii_domain in sender_trust_data.dotless_mailbox_domains) {
+        tagless.replace(".", "")
+    } else {
+        tagless
+    }
     return "$local@${parsed.ascii_domain}"
 }
 
@@ -573,7 +621,11 @@ private fun tokenize(text: String): List<String> {
     val current = StringBuilder()
     val spaced = text.replace(mark_symbols, " ")
     for (code in code_points(clean_text(nfkc(spaced), false))) {
-        if (in_ranges(code, separator_ranges) || in_ranges(code, space_ranges)) {
+        if (
+            in_ranges(code, separator_ranges) ||
+            in_ranges(code, name_separator_ranges) ||
+            in_ranges(code, space_ranges)
+        ) {
             if (current.isNotEmpty()) tokens.add(current.toString())
             current.setLength(0)
             continue
@@ -584,13 +636,31 @@ private fun tokenize(text: String): List<String> {
     return tokens
 }
 
-private fun name_claim(text: String): NameClaim {
+private fun plain_capitals(text: String): String =
+    if (text.any { it in 'a'..'z' }) text else text.replace("I", "i")
+
+private fun is_foreign_script(text: String): Boolean {
+    var found = ""
+    for (code in code_points(text)) {
+        val script = script_of(code)
+        if (script == "common") continue
+        if (script == "latin" || script == "other") return false
+        if (found.isNotEmpty() && found != script) return false
+        found = script
+    }
+    return found.isNotEmpty()
+}
+
+private fun name_claim(text: String, capitals_aware: Boolean): NameClaim {
     val kept = StringBuilder()
     val bare = StringBuilder()
     var has_generic = false
+    var has_home_generic = false
     for (token in tokenize(text)) {
-        if (lower(token) in sender_trust_data.generic_words) {
+        val word = lower(token)
+        if (word in sender_trust_data.generic_words) {
             has_generic = true
+            if (word !in sender_trust_data.home_neutral_words) has_home_generic = true
             continue
         }
         kept.append(token)
@@ -599,13 +669,18 @@ private fun name_claim(text: String): NameClaim {
     val joined = kept.toString()
     val bare_joined = bare.toString()
     return NameClaim(
-        compact_skeleton = sender_skeleton(joined),
+        compact_skeleton = sender_skeleton(if (capitals_aware) plain_capitals(joined) else joined),
         compact_fold = fold(joined),
-        bare_skeleton = sender_skeleton(bare_joined),
+        bare_skeleton = sender_skeleton(if (capitals_aware) plain_capitals(bare_joined) else bare_joined),
         bare_fold = fold(bare_joined),
         has_generic = has_generic,
+        has_home_generic = has_home_generic,
+        foreign_script = is_foreign_script(joined),
     )
 }
+
+private fun reads_as_lookalike(match: BrandNameMatch, claim: NameClaim): Boolean =
+    match.lookalike && (match.solo || !claim.foreign_script)
 
 private fun prepare_names(names: List<String>, solo_names: List<String>, ambiguous: Boolean): List<PreparedName> =
     names.map { candidate ->
@@ -613,7 +688,7 @@ private fun prepare_names(names: List<String>, solo_names: List<String>, ambiguo
             candidate = candidate,
             solo = !ambiguous || candidate in solo_names,
             variants = listOf(candidate, lower(candidate), candidate.uppercase(Locale.ROOT))
-                .map { name_claim(it) }
+                .map { name_claim(it, false) }
                 .filter { it.compact_skeleton.isNotEmpty() },
         )
     }
@@ -822,6 +897,30 @@ private fun shaped_targets(text: String): List<String> {
     return targets
 }
 
+private fun inner_targets(text: String): List<String> {
+    val targets = ArrayList<String>()
+    for (candidate in label_runs(text)) {
+        val shaped = domain_shaped(candidate) ?: continue
+        val labels = shaped.split(".")
+        for (start in 0 until labels.size - 2) {
+            for (size in 2..3) {
+                val end = start + size
+                if (end >= labels.size) break
+                if (
+                    end == labels.size - 1 &&
+                    labels[end].length == 2 &&
+                    labels[end - 1] in sender_trust_data.second_level_suffixes
+                ) {
+                    continue
+                }
+                val inner = labels.subList(start, end).joinToString(".")
+                if (sender_trust_data.brand_domain_index.by_skeleton.containsKey(inner)) targets.add(inner)
+            }
+        }
+    }
+    return targets
+}
+
 private fun domains_in_name(name: String): List<String> {
     val targets = ArrayList<String>()
     fun keep(target: String) {
@@ -846,15 +945,10 @@ private fun domains_in_name(name: String): List<String> {
         val unicode = domain_unicode(target)
         if (unicode != target) keep(sender_skeleton(unicode))
     }
-    return targets
-}
-
-private fun find_brand_domain(targets: List<String>): String? {
-    for (target in targets) {
-        val known = sender_trust_data.brand_domain_index.by_skeleton[target] ?: continue
-        if (known !in sender_trust_data.public_mailbox_domains) return known
+    for (base in bases) {
+        inner_targets(sender_skeleton(fold(base))).forEach { keep(it) }
     }
-    return null
+    return targets
 }
 
 private fun build_domain_index(domains: List<String>, label_level: Boolean): DomainIndex {
@@ -879,9 +973,19 @@ private fun lookalike_of(parsed: ParsedAddress, index: DomainIndex): String? {
     val full = index.by_skeleton[sender_skeleton(unicode)]
     if (full != null) return full
     val label = trust_registrable_label(parsed.registrable)
-    val bucket = index.by_label_skeleton[sender_skeleton(trust_registrable_label(unicode))] ?: return null
+    val bucket = index.by_label_skeleton[sender_skeleton(trust_registrable_label(unicode))].orEmpty()
     for (target in bucket) {
         if (trust_registrable_label(target) != label) return target
+    }
+    val labels = parsed.ascii_domain.split(".")
+    val depth = labels.size - parsed.registrable.split(".").size
+    for (start in 0 until depth) {
+        for (size in 2..3) {
+            if (start + size > depth) break
+            val inner = labels.subList(start, start + size).joinToString(".")
+            val known = index.by_skeleton[sender_skeleton(domain_unicode(inner))]
+            if (known != null) return known
+        }
     }
     return null
 }
@@ -901,12 +1005,14 @@ private object sender_trust_data {
     val generic_words: Set<String>
     val relay_domains: List<String>
     val public_mailbox_domains: Set<String>
+    val dotless_mailbox_domains: Set<String>
     val reserved_local_parts: Set<String>
     val country_suffixes: Set<String>
     val brands: List<BrandEntry>
     val home_first_name: String
     val home_domains: List<String>
     val home_official_local_parts: List<String>
+    val home_neutral_words: Set<String>
     private val home_names_raw: List<String>
     private val home_solo_names_raw: List<String>
     private val lookalike_only_domains: List<String>
@@ -934,6 +1040,7 @@ private object sender_trust_data {
         generic_words = string_list(root.getJSONArray("generic_words")).toSet()
         relay_domains = string_list(root.getJSONArray("relay_domains"))
         public_mailbox_domains = string_list(root.getJSONArray("public_mailbox_domains")).toSet()
+        dotless_mailbox_domains = string_list(root.getJSONArray("dotless_mailbox_domains")).toSet()
         reserved_local_parts = string_list(root.getJSONArray("reserved_local_parts")).toSet()
         country_suffixes = string_list(root.getJSONArray("country_suffixes")).toSet()
         val brand_array = root.getJSONArray("brands")
@@ -958,6 +1065,7 @@ private object sender_trust_data {
         home_first_name = home_names_raw[0]
         home_domains = string_list(home.getJSONArray("domains"))
         home_official_local_parts = string_list(home.getJSONArray("official_local_parts"))
+        home_neutral_words = string_list(home.getJSONArray("neutral_words")).toSet()
         lookalike_only_domains = string_list(root.getJSONArray("lookalike_only_domains"))
     }
 
@@ -1041,7 +1149,7 @@ private fun auth_state_of(input: SenderTrustInput): SenderAuthState {
 private fun claims_identity(name: String): Boolean {
     if (name.isEmpty()) return false
     if (find_address_in_name(name) != null) return true
-    val claim = name_claim(name)
+    val claim = name_claim(name, true)
     if (match_brand_name(claim, sender_trust_data.home_names) != null) return true
     return sender_trust_data.brand_names.any { match_brand_name(claim, it) != null }
 }
@@ -1056,6 +1164,10 @@ private fun find_warning(
     if (trusted_auth && address_key(parsed) in personal.own_keys) return null
     val lookalike = lookalike_of(parsed, sender_trust_data.brand_domain_index) ?: lookalike_of(parsed, personal.domains)
     if (lookalike != null) return SenderWarning(SenderWarningKind.lookalike_domain, lookalike)
+    val in_local = if (parsed.local.contains('@')) parse_address(parsed.local) else null
+    if (in_local != null && in_local.registrable != parsed.registrable) {
+        return SenderWarning(SenderWarningKind.lookalike_domain, in_local.registrable)
+    }
     if (name.isEmpty()) return null
 
     val in_name = find_address_in_name(name)
@@ -1069,8 +1181,10 @@ private fun find_warning(
     }
 
     val named_targets = if (relayed) emptyList() else domains_in_name(name)
-    val named_domain = find_brand_domain(named_targets)
-    if (named_domain != null && named_domain != parsed.registrable) {
+    for (target in named_targets) {
+        val named_domain = sender_trust_data.brand_domain_index.by_skeleton[target] ?: continue
+        if (named_domain == parsed.registrable) continue
+        if (named_domain in sender_trust_data.public_mailbox_domains) continue
         val home_named = sender_trust_data.home_domains.any { sender_registrable_domain(it) == named_domain }
         val owners = sender_trust_data.brands.filter { entry ->
             entry.domains.any { sender_registrable_domain(it) == named_domain }
@@ -1088,9 +1202,9 @@ private fun find_warning(
         if (target == parsed.registrable) continue
         if (sender_trust_data.brand_domain_index.by_skeleton.containsKey(target)) continue
         val label = trust_registrable_label(target)
-        val label_claim = name_claim(label)
+        val label_claim = name_claim(label, true)
         val home_label = match_brand_name(label_claim, sender_trust_data.home_names)
-        if (home_label != null && (home_label.lookalike || home_label.solo)) {
+        if (home_label != null && (reads_as_lookalike(home_label, label_claim) || home_label.solo)) {
             if (!from_home) {
                 return SenderWarning(SenderWarningKind.home_brand_name, sender_trust_data.home_first_name)
             }
@@ -1100,15 +1214,17 @@ private fun find_warning(
         for (position in sender_trust_data.brands.indices) {
             val match = match_brand_name(label_claim, sender_trust_data.brand_names[position]) ?: continue
             if (is_trust_brand_domain(parsed, sender_trust_data.brands[position], trusted_auth)) break
-            if (match.lookalike) return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
+            if (reads_as_lookalike(match, label_claim)) {
+                return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
+            }
             if (match.solo || country) return SenderWarning(SenderWarningKind.brand_name, match.claimed)
             break
         }
     }
 
-    val claim = name_claim(name)
+    val claim = name_claim(name, true)
     val home = match_brand_name(claim, sender_trust_data.home_names)
-    if (home != null && (home.lookalike || home.solo || claim.has_generic)) {
+    if (home != null && (reads_as_lookalike(home, claim) || home.solo || claim.has_home_generic)) {
         val trusted = is_official_home_address(parsed) && trusted_auth
         return if (trusted) null else SenderWarning(SenderWarningKind.home_brand_name, sender_trust_data.home_first_name)
     }
@@ -1118,7 +1234,7 @@ private fun find_warning(
     for (position in brands.indices) {
         val match = match_brand_name(claim, brand_names[position]) ?: continue
         if (is_trust_brand_domain(parsed, brands[position], trusted_auth)) return null
-        if (match.lookalike) return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
+        if (reads_as_lookalike(match, claim)) return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
         if (match.solo || claim.has_generic) return SenderWarning(SenderWarningKind.brand_name, match.claimed)
         return null
     }
@@ -1227,9 +1343,16 @@ fun evaluate_sender_trust(input: SenderTrustInput): SenderTrust {
     } else {
         capped_display_name(input.name, sender_trust_data.max_name_length + max_address_length)
     }
-    val warning = find_warning(base_name, parsed, auth_state, personal)
-        ?: if (whole_name == base_name) null else find_warning(whole_name, parsed, auth_state, personal)
-    val hide_name = warning != null && warning.kind != SenderWarningKind.lookalike_domain
+    var found_warning = find_warning(base_name, parsed, auth_state, personal)
+    val checked = arrayListOf(base_name)
+    for (other in listOf(whole_name, enclosed_plain(whole_name))) {
+        if (found_warning != null || other in checked) continue
+        checked.add(other)
+        found_warning = find_warning(other, parsed, auth_state, personal)
+    }
+    val warning = found_warning
+    val hide_name = warning != null &&
+        (warning.kind != SenderWarningKind.lookalike_domain || claims_identity(base_name))
     val distrusted = auth_state == SenderAuthState.failed || auth_state == SenderAuthState.unverified
     val verified_domain = sender_domain_to_ascii(input.sender_verified_domain.orEmpty())
     val verified_matches = verified_domain.isNotEmpty() && within_domain(parsed.ascii_domain, verified_domain)
