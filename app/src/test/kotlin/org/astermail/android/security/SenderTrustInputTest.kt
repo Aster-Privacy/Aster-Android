@@ -87,6 +87,21 @@ class SenderTrustInputTest {
 
         assertEquals(SenderAuthState.unknown, evaluate_sender_trust(legacy).auth_state)
 
+        val signed = sender_trust_input(
+            relayed.copy(spf_result = "pass", dkim_result = "pass", dmarc_result = "none"),
+            context,
+        )
+
+        assertEquals(SenderAuthState.unknown, evaluate_sender_trust(signed).auth_state)
+
+        val unsigned = sender_trust_input(
+            relayed.copy(spf_result = "pass", dkim_result = "fail", dmarc_result = "none"),
+            context,
+        )
+
+        assertEquals(false, unsigned.sender_aligned)
+        assertFalse(evaluate_sender_trust(unsigned).auth_state == SenderAuthState.unknown)
+
         val failed = sender_trust_input(
             relayed.copy(spf_result = "fail", dkim_result = "fail", dmarc_result = "fail", sender_aligned = false),
             context,

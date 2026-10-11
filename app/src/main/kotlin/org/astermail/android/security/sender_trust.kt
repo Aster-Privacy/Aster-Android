@@ -130,7 +130,8 @@ private const val max_address_length = 320
 private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
 private const val min_contact_name_length = 5
-private const val max_reply_to_entries = 400
+private const val max_reply_to_entries = 2048
+private const val max_reply_to_length = 4096
 
 private const val puny_base = 36
 private const val puny_t_min = 1
@@ -578,6 +579,11 @@ private fun domain_unicode(ascii_domain: String): String =
 fun sender_registrable_domain(ascii_domain: String): String {
     val labels = ascii_domain.split(".")
     if (labels.size <= 2) return ascii_domain
+    for (tenant in sender_trust_data.shared_tenant_domains) {
+        if (ascii_domain.endsWith(".$tenant")) {
+            return labels.takeLast(tenant.split(".").size + 1).joinToString(".")
+        }
+    }
     val tld = labels[labels.size - 1]
     val second = labels[labels.size - 2]
     val take = if (tld.length == 2 && second in sender_trust_data.second_level_suffixes) 3 else 2
@@ -665,6 +671,7 @@ private fun name_claim(text: String, capitals_aware: Boolean): NameClaim {
     var has_home_generic = false
     for (token in tokenize(text)) {
         val word = lower(token)
+        if (word in sender_trust_data.company_words) continue
         if (word in sender_trust_data.generic_words) {
             has_generic = true
             if (word !in sender_trust_data.home_neutral_words) has_home_generic = true
@@ -986,7 +993,8 @@ private fun lookalike_of(parsed: ParsedAddress, index: DomainIndex): String? {
         if (trust_registrable_label(target) != label) return target
     }
     val labels = parsed.ascii_domain.split(".")
-    val depth = labels.size - parsed.registrable.split(".").size
+    val depth = labels.size - parsed.registrable.split(".").size +
+        (if (is_tenant_host(parsed.registrable)) 1 else 0)
     for (start in 0 until depth) {
         for (size in 2..3) {
             if (start + size > depth) break
@@ -1011,6 +1019,7 @@ private object sender_trust_data {
     val digraphs: List<Pair<String, String>>
     val second_level_suffixes: Set<String>
     val generic_words: Set<String>
+    val company_words: Set<String>
     val relay_domains: List<String>
     val public_mailbox_domains: Set<String>
     val dotless_mailbox_domains: Set<String>
@@ -1047,6 +1056,7 @@ private object sender_trust_data {
         digraphs = digraph_list
         second_level_suffixes = string_list(root.getJSONArray("second_level_suffixes")).toSet()
         generic_words = string_list(root.getJSONArray("generic_words")).toSet()
+        company_words = string_list(root.getJSONArray("company_words")).toSet()
         relay_domains = string_list(root.getJSONArray("relay_domains"))
         public_mailbox_domains = string_list(root.getJSONArray("public_mailbox_domains")).toSet()
         dotless_mailbox_domains = string_list(root.getJSONArray("dotless_mailbox_domains")).toSet()
@@ -1264,10 +1274,12 @@ private fun find_contact_notice(name: String, parsed: ParsedAddress, personal: P
     return personal.contact_names[name_key]
 }
 
+private fun is_tenant_host(registrable: String): Boolean =
+    sender_trust_data.shared_tenant_domains.any { registrable.endsWith(".$it") }
+
 private fun is_shared_domain(parsed: ParsedAddress): Boolean =
     parsed.ascii_domain in sender_trust_data.public_mailbox_domains ||
-        sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) } ||
-        sender_trust_data.shared_tenant_domains.any { within_domain(parsed.ascii_domain, it) }
+        sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
 
 private fun split_address_list(text: String): List<String> {
     val entries = ArrayList<String>()
@@ -1307,15 +1319,9 @@ private fun split_address_list(text: String): List<String> {
 
 private fun reply_to_notice(parsed: ParsedAddress, reply_to: String?): String? {
     if (reply_to == null || clean_text(reply_to, false).isEmpty()) return null
-    val shared_domain = is_shared_domain(parsed)
-    for (entry in split_address_list(reply_to)) {
+    for (entry in split_address_list(reply_to.take(max_reply_to_length))) {
         val reply = parse_address(entry) ?: continue
-        if (
-            reply.registrable != parsed.registrable ||
-            (shared_domain && mailbox_key(reply) != mailbox_key(parsed))
-        ) {
-            return reply.address
-        }
+        if (reply.registrable != parsed.registrable) return reply.address
     }
     return null
 }
