@@ -49,6 +49,11 @@ data class SenderTrustContext(
 
 private fun folded_address(value: String): String = value.trim().lowercase(Locale.ROOT)
 
+private fun recorded_status(raw: String?): String {
+    val value = (raw ?: "").trim().lowercase(Locale.ROOT)
+    return if (value == "missing") "" else value
+}
+
 fun sender_trust_input(
     message: SenderTrustMessage,
     context: SenderTrustContext,
@@ -59,14 +64,22 @@ fun sender_trust_input(
     val email = shown_email ?: message.display_sender_email ?: actual_email
     val name = shown_name ?: message.display_sender_name ?: message.sender_name ?: ""
     val is_rewritten = folded_address(email) != folded_address(actual_email)
+    val aligned = message.sender_aligned
+    val unrecorded = aligned == null &&
+        recorded_status(message.spf_result).isEmpty() &&
+        recorded_status(message.dkim_result).isEmpty() &&
+        recorded_status(message.dmarc_result).isEmpty()
+    val carrier_trusted = aligned == true ||
+        (aligned == null && recorded_status(message.dmarc_result) == "pass")
+    val drop_auth = is_rewritten && (unrecorded || carrier_trusted)
     return SenderTrustInput(
         name = name,
         email = email,
         reply_to = message.reply_to,
-        spf_result = message.spf_result,
-        dkim_result = message.dkim_result,
-        dmarc_result = message.dmarc_result,
-        sender_aligned = message.sender_aligned,
+        spf_result = if (drop_auth) null else message.spf_result,
+        dkim_result = if (drop_auth) null else message.dkim_result,
+        dmarc_result = if (drop_auth) null else message.dmarc_result,
+        sender_aligned = if (drop_auth) null else if (is_rewritten) false else aligned,
         sender_verified = if (is_rewritten) {
             false
         } else {

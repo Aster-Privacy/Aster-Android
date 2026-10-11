@@ -130,7 +130,7 @@ private const val max_address_length = 320
 private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
 private const val min_contact_name_length = 5
-private const val max_reply_to_entries = 20
+private const val max_reply_to_entries = 400
 
 private const val puny_base = 36
 private const val puny_t_min = 1
@@ -1014,6 +1014,7 @@ private object sender_trust_data {
     val relay_domains: List<String>
     val public_mailbox_domains: Set<String>
     val dotless_mailbox_domains: Set<String>
+    val shared_tenant_domains: List<String>
     val reserved_local_parts: Set<String>
     val country_suffixes: Set<String>
     val brands: List<BrandEntry>
@@ -1049,6 +1050,7 @@ private object sender_trust_data {
         relay_domains = string_list(root.getJSONArray("relay_domains"))
         public_mailbox_domains = string_list(root.getJSONArray("public_mailbox_domains")).toSet()
         dotless_mailbox_domains = string_list(root.getJSONArray("dotless_mailbox_domains")).toSet()
+        shared_tenant_domains = string_list(root.getJSONArray("shared_tenant_domains"))
         reserved_local_parts = string_list(root.getJSONArray("reserved_local_parts")).toSet()
         country_suffixes = string_list(root.getJSONArray("country_suffixes")).toSet()
         val brand_array = root.getJSONArray("brands")
@@ -1180,7 +1182,7 @@ private fun find_warning(
 
     val relayed = sender_trust_data.relay_domains.any { within_domain(parsed.ascii_domain, it) }
     val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
-    val shared_domain = parsed.ascii_domain in sender_trust_data.public_mailbox_domains || from_home
+    val shared_domain = is_shared_domain(parsed)
     val in_name = if (relayed) {
         null
     } else {
@@ -1262,6 +1264,11 @@ private fun find_contact_notice(name: String, parsed: ParsedAddress, personal: P
     return personal.contact_names[name_key]
 }
 
+private fun is_shared_domain(parsed: ParsedAddress): Boolean =
+    parsed.ascii_domain in sender_trust_data.public_mailbox_domains ||
+        sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) } ||
+        sender_trust_data.shared_tenant_domains.any { within_domain(parsed.ascii_domain, it) }
+
 private fun split_address_list(text: String): List<String> {
     val entries = ArrayList<String>()
     val current = StringBuilder()
@@ -1300,9 +1307,15 @@ private fun split_address_list(text: String): List<String> {
 
 private fun reply_to_notice(parsed: ParsedAddress, reply_to: String?): String? {
     if (reply_to == null || clean_text(reply_to, false).isEmpty()) return null
+    val shared_domain = is_shared_domain(parsed)
     for (entry in split_address_list(reply_to)) {
         val reply = parse_address(entry) ?: continue
-        if (reply.registrable != parsed.registrable) return reply.address
+        if (
+            reply.registrable != parsed.registrable ||
+            (shared_domain && mailbox_key(reply) != mailbox_key(parsed))
+        ) {
+            return reply.address
+        }
     }
     return null
 }

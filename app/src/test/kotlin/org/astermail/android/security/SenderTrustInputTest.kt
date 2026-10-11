@@ -67,6 +67,52 @@ class SenderTrustInputTest {
     }
 
     @Test
+    fun rewritten_shown_sender_does_not_borrow_the_carrier_authentication() {
+        val relayed = SenderTrustMessage(
+            sender_name = "Bank",
+            sender_email = "relay@forwarder.example",
+            display_sender_email = "ceo@bank.example",
+            is_external = true,
+        )
+        val passed = sender_trust_input(
+            relayed.copy(spf_result = "pass", dkim_result = "pass", dmarc_result = "pass", sender_aligned = true),
+            context,
+        )
+
+        assertNull(passed.sender_aligned)
+        assertNull(passed.dmarc_result)
+        assertEquals(SenderAuthState.unknown, evaluate_sender_trust(passed).auth_state)
+
+        val legacy = sender_trust_input(relayed.copy(dkim_result = "pass", dmarc_result = "pass"), context)
+
+        assertEquals(SenderAuthState.unknown, evaluate_sender_trust(legacy).auth_state)
+
+        val failed = sender_trust_input(
+            relayed.copy(spf_result = "fail", dkim_result = "fail", dmarc_result = "fail", sender_aligned = false),
+            context,
+        )
+
+        assertEquals(false, failed.sender_aligned)
+        assertEquals(SenderAuthState.failed, evaluate_sender_trust(failed).auth_state)
+
+        val direct = sender_trust_input(
+            SenderTrustMessage(
+                sender_name = "Bank",
+                sender_email = "ceo@bank.example",
+                is_external = true,
+                spf_result = "pass",
+                dkim_result = "pass",
+                dmarc_result = "pass",
+                sender_aligned = true,
+            ),
+            context,
+        )
+
+        assertEquals(true, direct.sender_aligned)
+        assertEquals(SenderAuthState.authenticated, evaluate_sender_trust(direct).auth_state)
+    }
+
+    @Test
     fun verified_domain_reads_as_verified_when_no_flag_is_carried() {
         val message = SenderTrustMessage(
             sender_name = "Shop",
