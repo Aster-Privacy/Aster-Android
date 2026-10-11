@@ -223,7 +223,7 @@ private val script_ranges = arrayOf(
 
 private val local_part_forbidden = Regex("""[<>()\[\],;:"\\]""")
 private val address_in_name_pattern = Regex("""[^ <>()\[\]"',;:]+@[^ <>()\[\]"',;:@]+""")
-private val trailing_sentence_marks = Regex("""[^\p{L}\p{N}]+$""")
+private val letter_or_number = Regex("""[\p{L}\p{N}]""")
 private val domain_edge_marks = Regex("""^[.-]+|[.-]+$""")
 private val domain_last_label = Regex("""^[a-z]{2,}$""")
 private val ideographic_dots = Regex("[。．｡]")
@@ -560,6 +560,11 @@ private fun parse_address(raw: String?): ParsedAddress? {
 
 private fun address_key(parsed: ParsedAddress): String = "${fold(parsed.local)}@${parsed.ascii_domain}"
 
+private fun mailbox_key(parsed: ParsedAddress): String {
+    val local = fold(parsed.local).split("+")[0].replace(".", "")
+    return "$local@${parsed.ascii_domain}"
+}
+
 private fun tokenize(text: String): List<String> {
     val tokens = ArrayList<String>()
     val current = StringBuilder()
@@ -654,10 +659,30 @@ private fun is_official_home_address(parsed: ParsedAddress): Boolean =
     parsed.ascii_domain in sender_trust_data.home_domains &&
         lower(parsed.local) in sender_trust_data.home_official_local_parts
 
+private fun is_letter_or_number(code: Int): Boolean =
+    letter_or_number.matches(String(Character.toChars(code)))
+
+private fun is_local_part_char(code: Int): Boolean =
+    is_letter_or_number(code) || code == 0x2e || code == 0x2d || code == 0x5f || code == 0x2b
+
+private fun tighten_address(candidate: String): String {
+    val points = code_points(candidate)
+    val at = points.lastIndexOf(0x40)
+    if (at < 0) return candidate
+    var start = at
+    while (start > 0 && is_local_part_char(points[start - 1])) start -= 1
+    var end = at + 1
+    while (end < points.size && (is_letter_or_number(points[end]) || points[end] == 0x2d || points[end] == 0x2e)) {
+        end += 1
+    }
+    while (end > at + 1 && !is_letter_or_number(points[end - 1])) end -= 1
+    return String(points, start, end - start)
+}
+
 private fun find_address_in_name(name: String): ParsedAddress? {
     val folded = clean_text(nfkc(name), false).replace(spaced_at_sign, "@")
     for (match in address_in_name_pattern.findAll(folded)) {
-        val parsed = parse_address(match.value.replace(trailing_sentence_marks, ""))
+        val parsed = parse_address(tighten_address(match.value))
         if (parsed != null) return parsed
     }
     return null
@@ -674,22 +699,31 @@ private fun domain_shaped(run: String): String? {
     return trimmed
 }
 
-private fun find_brand_domain_in_name(name: String): String? {
-    val runs = ArrayList<String>()
-    val run = StringBuilder()
-    for (code in code_points(sender_skeleton(name))) {
-        if (is_domain_label_char(code)) {
-            run.appendCodePoint(code)
-            continue
+private fun domains_in_name(name: String): List<String> {
+    val targets = ArrayList<String>()
+    for (text in listOf(sender_skeleton(name), sender_skeleton(fold(name)))) {
+        val runs = ArrayList<String>()
+        val run = StringBuilder()
+        for (code in code_points(text)) {
+            if (is_domain_label_char(code)) {
+                run.appendCodePoint(code)
+                continue
+            }
+            if (run.isNotEmpty()) runs.add(run.toString())
+            run.setLength(0)
         }
         if (run.isNotEmpty()) runs.add(run.toString())
-        run.setLength(0)
+        for (candidate in runs) {
+            val shaped = domain_shaped(candidate) ?: continue
+            val target = sender_registrable_domain(shaped)
+            if (target.isNotEmpty() && target !in targets) targets.add(target)
+        }
     }
-    if (run.isNotEmpty()) runs.add(run.toString())
-    for (candidate in runs) {
-        val shaped = domain_shaped(candidate) ?: continue
-        val target = sender_registrable_domain(shaped)
-        if (target.isEmpty()) continue
+    return targets
+}
+
+private fun find_brand_domain(targets: List<String>): String? {
+    for (target in targets) {
         val known = sender_trust_data.brand_domain_index.by_skeleton[target] ?: continue
         if (known !in sender_trust_data.public_mailbox_domains) return known
     }
@@ -899,17 +933,18 @@ private fun find_warning(
 
     val in_name = find_address_in_name(name)
     val relayed = sender_trust_data.relay_domains.any { within_domain(parsed.ascii_domain, it) }
+    val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
     val other_mailbox = in_name != null &&
-        parsed.ascii_domain in sender_trust_data.public_mailbox_domains &&
-        address_key(in_name) != address_key(parsed)
+        (parsed.ascii_domain in sender_trust_data.public_mailbox_domains || from_home) &&
+        mailbox_key(in_name) != mailbox_key(parsed)
     if (in_name != null && (in_name.registrable != parsed.registrable || other_mailbox) && !relayed) {
         return SenderWarning(SenderWarningKind.address_in_name, in_name.address)
     }
 
-    val named_domain = if (relayed) null else find_brand_domain_in_name(name)
+    val named_targets = if (relayed) emptyList() else domains_in_name(name)
+    val named_domain = find_brand_domain(named_targets)
     if (named_domain != null && named_domain != parsed.registrable) {
         val home_named = sender_trust_data.home_domains.any { sender_registrable_domain(it) == named_domain }
-        val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
         val owners = sender_trust_data.brands.filter { entry ->
             entry.domains.any { sender_registrable_domain(it) == named_domain }
         }
@@ -919,6 +954,28 @@ private fun find_warning(
             }
         } else if (owners.isNotEmpty() && owners.none { is_trust_brand_domain(parsed, it, trusted_auth) }) {
             return SenderWarning(SenderWarningKind.brand_name, named_domain)
+        }
+    }
+
+    for (target in named_targets) {
+        if (target == parsed.registrable) continue
+        if (sender_trust_data.brand_domain_index.by_skeleton.containsKey(target)) continue
+        val label = trust_registrable_label(target)
+        val label_claim = name_claim(label)
+        val home_label = match_brand_name(label_claim, sender_trust_data.home_names)
+        if (home_label != null && (home_label.lookalike || home_label.solo)) {
+            if (!from_home) {
+                return SenderWarning(SenderWarningKind.home_brand_name, sender_trust_data.home_first_name)
+            }
+            continue
+        }
+        val country = target.drop(label.length + 1) in sender_trust_data.country_suffixes
+        for (position in sender_trust_data.brands.indices) {
+            val match = match_brand_name(label_claim, sender_trust_data.brand_names[position]) ?: continue
+            if (is_trust_brand_domain(parsed, sender_trust_data.brands[position], trusted_auth)) break
+            if (match.lookalike) return SenderWarning(SenderWarningKind.lookalike_name, match.claimed)
+            if (match.solo || country) return SenderWarning(SenderWarningKind.brand_name, match.claimed)
+            break
         }
     }
 
