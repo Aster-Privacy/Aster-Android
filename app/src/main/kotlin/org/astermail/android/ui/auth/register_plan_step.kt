@@ -22,6 +22,19 @@
 package org.astermail.android.ui.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Circle
+import compose.icons.tablericons.CircleCheck
+import org.astermail.android.billing.billing_interval_per_label
+import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
+import org.astermail.android.ui.settings.detail.format_bytes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +69,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.SubscriptionResponse
@@ -73,13 +88,16 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.ui.settings.detail.aster_segmented
 import org.astermail.android.ui.settings.detail.switcher_option
-import org.astermail.android.ui.upgrade.UpgradePlanCard
 import org.astermail.android.ui.upgrade.upgrade_plan_display_name
 import org.astermail.android.ui.upgrade.upgrade_plans_split_by_period
 
 private val signup_plan_codes = listOf("star", "nova", "supernova")
 
 private const val SIGNUP_RECOMMENDED_PLAN = "nova"
+
+private const val PLAY_PRICES_WAIT_MS = 6000L
+
+private val whole_unit_suffix = Regex("[.,]0 ")
 
 internal fun signup_plan_options(plans: List<AvailablePlan>, interval: String): List<AvailablePlan> {
     val split = upgrade_plans_split_by_period(plans)
@@ -125,6 +143,7 @@ fun RegisterPlanStep(
     var selected_code by remember { mutableStateOf(SIGNUP_RECOMMENDED_PLAN) }
     var billing_interval by remember { mutableStateOf("year") }
     var plans_unavailable by remember { mutableStateOf(false) }
+    var play_settled by remember { mutableStateOf(!play_install) }
 
     LaunchedEffect(Unit) {
         billing_vm.clear_messages()
@@ -140,6 +159,17 @@ fun RegisterPlanStep(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (play_settled) return@LaunchedEffect
+        withTimeoutOrNull(PLAY_PRICES_WAIT_MS) {
+            billing_vm.ensure_play_config()?.join()
+            if (billing_vm.state.value.play_enabled) {
+                billing_vm.state.first { it.play_offers.isNotEmpty() }
+            }
+        }
+        play_settled = true
+    }
+
     LaunchedEffect(state.checkout_url) {
         val url = state.checkout_url ?: return@LaunchedEffect
         open_billing_tab(context, url)
@@ -150,7 +180,9 @@ fun RegisterPlanStep(
     DisposableEffect(lifecycle_owner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                val was_awaiting_checkout = billing_vm.state.value.awaiting_checkout
                 billing_vm.on_resume()
+                if (!was_awaiting_checkout) billing_vm.load_subscription()
             }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
@@ -180,13 +212,19 @@ fun RegisterPlanStep(
     val active_plan = options.firstOrNull { it.code.equals(selected_code, ignoreCase = true) }
         ?: options.firstOrNull { it.code.equals(SIGNUP_RECOMMENDED_PLAN, ignoreCase = true) }
         ?: options.firstOrNull()
-    val is_loading_plans = plans.isEmpty() && !plans_unavailable && !state.plans_failed
+    val is_loading_plans = if (plans.isEmpty()) {
+        !plans_unavailable && !state.plans_failed
+    } else {
+        options.isEmpty() && !play_settled
+    }
     val save_percent = active_plan?.let { signup_plan_save_percent(plans, it.code) }
     val active_price = active_plan?.let { plan ->
         play_price_label(state.play_offers, state.play_products, plan.code, effective_interval)
             ?.takeIf { play_install }
             ?: format_money(signup_plan_price_cents(plan, effective_interval).toLong(), currency)
     }
+
+    val show_abandoned_notice = state.checkout_abandoned_plan != null && !state.checking_payment && !is_paid
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -195,27 +233,33 @@ fun RegisterPlanStep(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = AsterSpacing.xxl)
-                .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg),
+                .padding(top = AsterSpacing.xs),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(R.string.choose_your_plan),
                 color = colors.text_primary,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
+                fontSize = 28.sp,
+                lineHeight = 34.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.3).sp,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(AsterSpacing.md))
+            Spacer(Modifier.height(AsterSpacing.sm))
             Text(
-                text = stringResource(R.string.signup_plan_subtitle),
+                text = stringResource(
+                    when {
+                        paid_at_entry -> R.string.billing_play_success
+                        show_abandoned_notice -> R.string.finish_plan_setup_message
+                        else -> R.string.signup_plan_subtitle
+                    },
+                ),
                 color = colors.text_tertiary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(Modifier.height(AsterSpacing.xl))
+            Spacer(Modifier.height(AsterSpacing.lg))
 
             state.error?.let { message ->
                 error_banner(message = message)
@@ -223,17 +267,6 @@ fun RegisterPlanStep(
             }
             state.info?.let { message ->
                 plan_step_notice(title = null, message = message)
-                Spacer(Modifier.height(AsterSpacing.lg))
-            }
-            val abandoned_plan = state.checkout_abandoned_plan
-            if (abandoned_plan != null && !state.checking_payment) {
-                plan_step_notice(
-                    title = stringResource(
-                        R.string.finish_plan_setup_title,
-                        org.astermail.android.billing.plan_display_name(plans, abandoned_plan) ?: abandoned_plan,
-                    ),
-                    message = stringResource(R.string.finish_plan_setup_message),
-                )
                 Spacer(Modifier.height(AsterSpacing.lg))
             }
             if (state.checking_payment) {
@@ -250,7 +283,7 @@ fun RegisterPlanStep(
             }
 
             if (paid_at_entry) {
-                plan_step_notice(title = null, message = stringResource(R.string.billing_play_success))
+                Spacer(Modifier.height(AsterSpacing.xs))
             } else if (is_loading_plans) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
@@ -287,27 +320,24 @@ fun RegisterPlanStep(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    Spacer(Modifier.height(AsterSpacing.lg))
+                    Spacer(Modifier.height(AsterSpacing.md))
                 }
 
                 options.forEach { plan ->
-                    UpgradePlanCard(
+                    signup_plan_row(
                         plan = plan,
                         is_selected = plan.code == active_plan?.code,
                         is_recommended = plan.code.equals(SIGNUP_RECOMMENDED_PLAN, ignoreCase = true),
                         billing_interval = effective_interval,
-                        currency = currency,
-                        price_label = if (play_install) {
-                            play_price_label(state.play_offers, state.play_products, plan.code, effective_interval)
-                        } else {
-                            null
-                        },
+                        price = play_price_label(state.play_offers, state.play_products, plan.code, effective_interval)
+                            ?.takeIf { play_install }
+                            ?: format_money(signup_plan_price_cents(plan, effective_interval).toLong(), currency),
                         on_select = {
                             selected_code = plan.code
                             billing_vm.clear_messages()
                         },
                     )
-                    Spacer(Modifier.height(AsterSpacing.md))
+                    Spacer(Modifier.height(AsterSpacing.sm))
                 }
             }
         }
@@ -316,7 +346,7 @@ fun RegisterPlanStep(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = AsterSpacing.xxl)
-                .padding(bottom = AsterSpacing.lg),
+                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (paid_at_entry) {
@@ -342,7 +372,7 @@ fun RegisterPlanStep(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(AsterSpacing.md))
+                    Spacer(Modifier.height(AsterSpacing.sm))
                     AsterButton(
                         label = stringResource(R.string.upgrade_get_plan, upgrade_plan_display_name(active_plan)),
                         onClick = {
@@ -358,6 +388,104 @@ fun RegisterPlanStep(
                     onClick = on_continue,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun signup_plan_row(
+    plan: AvailablePlan,
+    is_selected: Boolean,
+    is_recommended: Boolean,
+    billing_interval: String,
+    price: String,
+    on_select: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val shape = SquircleShape(18.dp)
+    val aliases_text = if (plan.max_email_aliases < 0) {
+        stringResource(R.string.unlimited_aliases)
+    } else {
+        pluralStringResource(R.plurals.aliases_count_plural, plan.max_email_aliases, plan.max_email_aliases)
+    }
+    val domains_text = if (plan.max_custom_domains < 0) {
+        stringResource(R.string.unlimited_domains)
+    } else {
+        pluralStringResource(R.plurals.domains_count_plural, plan.max_custom_domains, plan.max_custom_domains)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .acrylic(
+                colors,
+                shape,
+                if (is_selected) tonal_surface_color(colors, colors.accent_blue) else colors.bg_card,
+            )
+            .border(
+                if (is_selected) 2.dp else 1.dp,
+                if (is_selected) colors.accent_blue else colors.border_secondary,
+                shape,
+            )
+            .selectable(selected = is_selected, role = Role.RadioButton, onClick = on_select)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (is_selected) TablerIcons.CircleCheck else TablerIcons.Circle,
+            contentDescription = null,
+            tint = if (is_selected) colors.accent_blue else colors.text_tertiary,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = upgrade_plan_display_name(plan),
+                    color = colors.text_primary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (is_recommended) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.checkout_plan_recommended),
+                        color = colors.accent_blue,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(
+                    R.string.plan_features_format_v2,
+                    format_bytes(plan.storage_limit_bytes).replace(whole_unit_suffix, " "),
+                    aliases_text,
+                    domains_text,
+                ),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = price,
+                color = colors.text_primary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Text(
+                text = billing_interval_per_label(context, billing_interval),
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                maxLines = 1,
+            )
         }
     }
 }
