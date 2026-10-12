@@ -1073,6 +1073,7 @@ class AuthRepository @Inject constructor(
         runCatching { mail_repository.clear_account_data() }
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
         runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
         runCatching { org.astermail.android.billing.AvailablePlansCache.reset() }
@@ -1112,6 +1113,9 @@ class AuthRepository @Inject constructor(
                 wipe_outbox_attachments(context.filesDir, if (current_id == null) null else outbox_ids.orEmpty())
             }
             current_id?.let { runCatching { mail_repository.clear_pending_actions(it) } }
+        }
+        runCatching {
+            wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
         }
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
@@ -1688,6 +1692,7 @@ class AuthRepository @Inject constructor(
         mail_repository.clear_account_data()
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+        runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
         runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { theme_store.clear() }
         runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
@@ -1722,6 +1727,9 @@ class AuthRepository @Inject constructor(
             runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
+        }
+        runCatching {
+            wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
         }
         val next_account = account_store.get_all()
             .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
