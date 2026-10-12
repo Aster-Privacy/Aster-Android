@@ -900,12 +900,15 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch { reload_subscription() }
     }
 
-    private suspend fun reload_subscription() {
+    suspend fun refresh_subscription(): Boolean = reload_subscription()
+
+    private suspend fun reload_subscription(): Boolean {
         _state.update { it.copy(is_loading = true, subscription_error = null) }
         try {
             val sub = billing_api.get_subscription()
             _state.update { it.copy(subscription = sub, is_loading = false, subscription_error = null) }
             PaymentFailedNotifier.observe(ctx, sub.status, sub.payment_failed_at, sub.current_period_end, sub.plan.name)
+            return true
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_subscription failed", t)
@@ -915,6 +918,7 @@ class BillingViewModel @Inject constructor(
                     subscription_error = localized_api_error(ctx, t, ctx.getString(R.string.subscription_refresh_failed)),
                 )
             }
+            return false
         }
     }
 

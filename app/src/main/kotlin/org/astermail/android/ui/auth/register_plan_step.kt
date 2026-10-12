@@ -139,15 +139,35 @@ fun RegisterPlanStep(
     val state by billing_vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val play_install = remember_play_install()
-    val paid_at_entry = remember { has_paid_plan(billing_vm.state.value.subscription) }
+    var subscription_fresh by remember { mutableStateOf(false) }
+    var paid_at_entry by remember { mutableStateOf(false) }
+    var has_continued by remember { mutableStateOf(false) }
+    var refresh_attempt by remember { mutableStateOf(0) }
     var selected_code by remember { mutableStateOf(SIGNUP_RECOMMENDED_PLAN) }
     var billing_interval by remember { mutableStateOf("year") }
     var plans_unavailable by remember { mutableStateOf(false) }
     var play_settled by remember { mutableStateOf(!play_install) }
 
+    val finish: () -> Unit = {
+        if (!has_continued) {
+            has_continued = true
+            billing_vm.clear_messages()
+            billing_vm.consume_play_confirmation()
+            on_continue()
+        }
+    }
+
+    val is_busy = state.is_acting || state.checking_payment || state.awaiting_checkout
+    LaunchedEffect(is_busy, refresh_attempt) {
+        if (is_busy || subscription_fresh) return@LaunchedEffect
+        if (billing_vm.refresh_subscription()) {
+            paid_at_entry = has_paid_plan(billing_vm.state.value.subscription)
+            subscription_fresh = true
+        }
+    }
+
     LaunchedEffect(Unit) {
         billing_vm.clear_messages()
-        billing_vm.load_subscription()
         billing_vm.load_plans()
         delay(2000)
         if (billing_vm.state.value.available_plans.isEmpty()) {
@@ -182,24 +202,25 @@ fun RegisterPlanStep(
             if (event == Lifecycle.Event.ON_RESUME) {
                 val was_awaiting_checkout = billing_vm.state.value.awaiting_checkout
                 billing_vm.on_resume()
-                if (!was_awaiting_checkout) billing_vm.load_subscription()
+                if (!subscription_fresh) {
+                    refresh_attempt += 1
+                } else if (!was_awaiting_checkout) {
+                    billing_vm.load_subscription()
+                }
             }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    val is_paid = has_paid_plan(state.subscription)
-    LaunchedEffect(is_paid) {
-        if (is_paid && !paid_at_entry) {
-            billing_vm.consume_play_confirmation()
-            on_continue()
-        }
+    val is_paid = subscription_fresh && has_paid_plan(state.subscription)
+    LaunchedEffect(is_paid, paid_at_entry) {
+        if (is_paid && !paid_at_entry) finish()
     }
 
     val plans = state.available_plans
     val currency = state.play_currency?.takeIf { state.play_enabled }
-        ?: state.subscription?.currency?.takeIf { it.isNotBlank() }
+        ?: state.subscription?.currency?.takeIf { subscription_fresh && it.isNotBlank() }
         ?: "usd"
     val yearly_options = signup_plan_options(plans, "year")
     val monthly_options = signup_plan_options(plans, "month")
@@ -352,7 +373,7 @@ fun RegisterPlanStep(
             if (paid_at_entry) {
                 AsterButton(
                     label = stringResource(R.string.continue_action),
-                    onClick = on_continue,
+                    onClick = finish,
                 )
             } else {
                 if (active_plan != null && active_price != null) {
@@ -385,7 +406,7 @@ fun RegisterPlanStep(
                 }
                 AsterSecondaryButton(
                     label = stringResource(R.string.continue_with_free),
-                    onClick = on_continue,
+                    onClick = finish,
                 )
             }
         }
