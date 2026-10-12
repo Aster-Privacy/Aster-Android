@@ -58,6 +58,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -112,7 +115,7 @@ fun onboarding_checklist_card(
     ) {
         tutorial_list_toggle(
             is_open = is_open,
-            remaining = progress.remaining,
+            progress = progress,
             on_toggle = on_toggle,
         )
         AnimatedVisibility(
@@ -137,12 +140,18 @@ fun onboarding_checklist_card(
 @Composable
 private fun tutorial_list_toggle(
     is_open: Boolean,
-    remaining: Int,
+    progress: tutorial_list_progress,
     on_toggle: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    val remaining = progress.remaining
     val label = stringResource(
         if (is_open) R.string.onboarding_checklist_close else R.string.onboarding_checklist_open,
+    )
+    val progress_label = stringResource(
+        R.string.onboarding_checklist_progress,
+        progress.done,
+        progress.total,
     )
     Box {
         Box(
@@ -152,12 +161,27 @@ private fun tutorial_list_toggle(
                 .background(island_surface_color(colors))
                 .border(1.dp, colors.border_primary, CircleShape)
                 .clickable(role = Role.Button, onClick = on_toggle)
+                .semantics {
+                    contentDescription = label
+                    stateDescription = progress_label
+                    if (is_open) {
+                        collapse {
+                            on_toggle()
+                            true
+                        }
+                    } else {
+                        expand {
+                            on_toggle()
+                            true
+                        }
+                    }
+                }
                 .testTag(tutorial_list_toggle_tag),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = if (is_open) TablerIcons.X else TablerIcons.Book,
-                contentDescription = label,
+                contentDescription = null,
                 tint = colors.text_secondary,
                 modifier = Modifier.size(20.dp),
             )

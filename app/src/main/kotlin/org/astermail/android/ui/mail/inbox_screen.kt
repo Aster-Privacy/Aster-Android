@@ -534,12 +534,14 @@ fun InboxScreen(
             onboarding_task_destination.import_mail -> on_open_import()
             onboarding_task_destination.compose -> on_compose()
             onboarding_task_destination.download_page -> {
-                org.astermail.android.ui.common.open_external_url(
+                val opened = org.astermail.android.ui.common.open_external_url(
                     onboarding_task_context,
                     onboarding_download_url,
                 )
-                install_app_done = true
-                onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                if (opened) {
+                    install_app_done = true
+                    onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                }
             }
             onboarding_task_destination.settings -> on_open_settings()
         }
