@@ -5719,6 +5719,13 @@ internal class mail_body_web_view(
     var selection_active: Boolean = false
         private set
 
+    var selection_gesture: Boolean = false
+        private set
+
+    fun end_selection_gesture() {
+        selection_gesture = false
+    }
+
     var on_width_change: (() -> Unit)? = null
 
     var on_horizontal_scroll: ((Int, Int, Int) -> Unit)? = null
@@ -5765,6 +5772,7 @@ internal class mail_body_web_view(
             menu: android.view.Menu,
         ): Boolean {
             selection_active = true
+            selection_gesture = true
             parent?.requestDisallowInterceptTouchEvent(true)
             return callback.onCreateActionMode(mode, menu)
         }
@@ -5781,6 +5789,7 @@ internal class mail_body_web_view(
 
         override fun onDestroyActionMode(mode: android.view.ActionMode) {
             selection_active = false
+            selection_gesture = false
             parent?.requestDisallowInterceptTouchEvent(false)
             callback.onDestroyActionMode(mode)
         }
@@ -7152,7 +7161,11 @@ internal fun email_html_view(
                     var touch_down_y = 0f
                     var multi_touch = false
                     setOnTouchListener { v, ev ->
-                        if ((v as? mail_body_web_view)?.selection_active == true) {
+                        val body = v as? mail_body_web_view
+                        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                            body?.end_selection_gesture()
+                        }
+                        if (body?.selection_gesture == true) {
                             v.parent?.requestDisallowInterceptTouchEvent(true)
                             return@setOnTouchListener false
                         }

@@ -275,6 +275,7 @@ private const val UNREAD_MISMATCH_GRACE_MS = 3000L
 private const val MIN_FILLED_ROWS = 15
 
 private const val CATEGORY_DRAIN_MAX_ITEMS = 200
+private const val UNREAD_FILTER_DRAIN_MAX_ITEMS = 1000
 
 private const val LOCAL_READ_MUTATION_TTL_MS = 15_000L
 
@@ -1162,7 +1163,7 @@ fun InboxScreen(
         }
     }
 
-    val scope_selection = select_all_active &&
+    val scope_selection = scope_selection_allowed(select_all_active, filter_active) &&
         scope_selection_confirmed &&
         mail_vm.folder_supports_scope_selection(current_folder)
     val selection_count = scope_selection_count(scope_selection, folder_total, selected_ids.size)
@@ -1177,7 +1178,7 @@ fun InboxScreen(
             picked.isNotEmpty() && picked.none { !it.is_read }
         }
     val can_offer_scope_selection = select_mode &&
-        select_all_active &&
+        scope_selection_allowed(select_all_active, filter_active) &&
         !scope_selection_confirmed &&
         folder_total > selected_ids.size &&
         mail_vm.folder_supports_scope_selection(current_folder)
@@ -1190,7 +1191,7 @@ fun InboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
-                !filter_active &&
+                scroll_paging_allowed(active_filter, list_state.canScrollBackward, s.items.size) &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -1209,21 +1210,25 @@ fun InboxScreen(
         active_tabs,
         emails_fingerprint,
         threads.size,
+        active_filter,
+        visible_threads.size,
+        folder_count,
         inbox_state.has_more,
         inbox_state.is_loading,
         inbox_state.is_loading_more,
         inbox_state.initial,
     ) {
         val s = inbox_state
-        if (!filter_active &&
-            s.has_more &&
+        if (s.has_more &&
             !s.is_loading &&
             !s.is_loading_more &&
             !s.initial &&
             s.next_cursor != null &&
             s.current_folder == current_folder
         ) {
-            val visible_rows = if (categories_enabled) {
+            val visible_rows = if (filter_active && threads.isNotEmpty()) {
+                visible_threads.size
+            } else if (categories_enabled) {
                 emails.count {
                     org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
                 }
@@ -1232,7 +1237,16 @@ fun InboxScreen(
             } else {
                 threads.size
             }
-            if (visible_rows < MIN_FILLED_ROWS && s.items.size < CATEGORY_DRAIN_MAX_ITEMS) mail_vm.load_more()
+            if (inbox_auto_fill_wanted(
+                    active_filter,
+                    visible_rows,
+                    visible_threads.size,
+                    folder_count,
+                    s.items.size,
+                )
+            ) {
+                mail_vm.load_more()
+            }
         }
     }
 
@@ -2416,7 +2430,7 @@ fun InboxScreen(
                                 }
                             }
                         }
-                        if (footer_skeleton_wanted(inbox_state.is_loading_more, filter_active, removal_quiet)) {
+                        if (footer_skeleton_wanted(inbox_state.is_loading_more, removal_quiet)) {
                             items(
                                 count = 3,
                                 key = { "_loading_more_$it" },
@@ -2438,7 +2452,35 @@ fun InboxScreen(
                                 }
                             }
                         } else if (
-                            (!inbox_state.has_more || filter_active) &&
+                            filtered_load_more_wanted(
+                                active_filter = active_filter,
+                                has_more = inbox_state.has_more,
+                                is_busy = inbox_state.is_loading || inbox_state.is_loading_more || inbox_state.initial,
+                                loaded_items = inbox_state.items.size,
+                            )
+                        ) {
+                            item(key = "_filtered_load_more") {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().animateItem(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                    TextButton(
+                                        onClick = { mail_vm.load_more() },
+                                        modifier = Modifier.testTag("filtered_load_more"),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.check_for_older_messages),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.accent_blue,
+                                            fontWeight = FontWeight.Medium,
+                                        )
+                                    }
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                }
+                            }
+                        } else if (
+                            !inbox_state.has_more &&
                             !inbox_state.is_loading &&
                             !inbox_state.initial &&
                             visible_threads.isNotEmpty()
@@ -2553,7 +2595,10 @@ fun InboxScreen(
                         on_all_mail_scope_change = on_all_mail_scope_change,
                         show_tools = tools_visible,
                         active_filter = active_filter,
-                        on_filter_change = { active_filter = it },
+                        on_filter_change = {
+                            if (it != active_filter) exit_select_mode()
+                            active_filter = it
+                        },
                         on_quick_action = { run_quick_action(it) },
                         selection_content = if (select_mode) {
                             {
@@ -4594,5 +4639,42 @@ private fun android.content.Context.review_prompt_activity(): android.app.Activi
 internal fun inbox_emptied_by_action(had_rows: Boolean, is_empty: Boolean, initial: Boolean): Boolean =
     had_rows && is_empty && !initial
 
-internal fun footer_skeleton_wanted(is_loading_more: Boolean, filter_active: Boolean, removal_quiet: Boolean): Boolean =
-    is_loading_more && !filter_active && !removal_quiet
+internal fun unread_filter_rows_missing(
+    active_filter: String,
+    visible_rows: Int,
+    unread_count: Int,
+    loaded_items: Int,
+): Boolean =
+    active_filter == inbox_filter_unread &&
+        visible_rows < unread_count &&
+        loaded_items < UNREAD_FILTER_DRAIN_MAX_ITEMS
+
+internal fun scope_selection_allowed(select_all_active: Boolean, filter_active: Boolean): Boolean =
+    select_all_active && !filter_active
+
+internal fun inbox_auto_fill_wanted(
+    active_filter: String,
+    visible_rows: Int,
+    filtered_rows: Int,
+    unread_count: Int,
+    loaded_items: Int,
+): Boolean =
+    unread_filter_rows_missing(active_filter, filtered_rows, unread_count, loaded_items) ||
+        (visible_rows < MIN_FILLED_ROWS && loaded_items < CATEGORY_DRAIN_MAX_ITEMS)
+
+internal fun scroll_paging_allowed(active_filter: String, has_scrolled: Boolean, loaded_items: Int): Boolean =
+    active_filter == inbox_filter_all || has_scrolled || loaded_items < UNREAD_FILTER_DRAIN_MAX_ITEMS
+
+internal fun filtered_load_more_wanted(
+    active_filter: String,
+    has_more: Boolean,
+    is_busy: Boolean,
+    loaded_items: Int,
+): Boolean =
+    active_filter != inbox_filter_all &&
+        has_more &&
+        !is_busy &&
+        loaded_items >= UNREAD_FILTER_DRAIN_MAX_ITEMS
+
+internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
+    is_loading_more && !removal_quiet
