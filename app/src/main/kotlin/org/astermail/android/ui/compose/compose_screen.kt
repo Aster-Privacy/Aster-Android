@@ -440,7 +440,8 @@ fun ComposeScreen(
         base_alias_options + catch_all_sender_options(
             unlocked = catch_all_unlocked,
             domains = settings_state.domains,
-            candidates = catch_all_reply_candidates(target, base_alias_options),
+            candidates = catch_all_reply_candidates(target, base_alias_options) +
+                catch_all_draft_candidates(mode, thread_state.messages.firstOrNull()?.sender_email),
             existing = base_alias_options,
             disabled = disabled,
         )
@@ -631,6 +632,7 @@ fun ComposeScreen(
     var from_alias by rememberSaveable { mutableStateOf(initial_from.address) }
     var from_alias_tier by rememberSaveable { mutableStateOf(initial_from.tier) }
     var from_manually_selected by rememberSaveable { mutableStateOf(false) }
+    var pending_draft_from by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email) {
         val next = next_from_alias(
@@ -1191,14 +1193,28 @@ fun ComposeScreen(
                     initial_attachments = attachments
                     observed_attachments = attachments
                 }
-                val draft_from = msg.sender_email
-                if (draft_from.isNotBlank() && draft_from in alias_options) {
+                val draft_from = find_sender_option(alias_options, msg.sender_email)
+                if (draft_from != null) {
                     from_alias = draft_from
                     from_manually_selected = true
+                } else {
+                    pending_draft_from = msg.sender_email.trim()
                 }
                 draft_loaded = true
             }
         }
+    }
+
+    LaunchedEffect(alias_options, pending_draft_from) {
+        if (pending_draft_from.isBlank()) return@LaunchedEffect
+        if (from_manually_selected) {
+            pending_draft_from = ""
+            return@LaunchedEffect
+        }
+        val draft_from = find_sender_option(alias_options, pending_draft_from) ?: return@LaunchedEffect
+        from_alias = draft_from
+        from_manually_selected = true
+        pending_draft_from = ""
     }
 
     LaunchedEffect(prefill) {

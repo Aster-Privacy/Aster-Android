@@ -82,3 +82,18 @@ fun catch_all_reply_candidates(
         .any { it.isNotBlank() && normalize_address_ignoring_dots(it) in known }
     return if (registered) emptyList() else listOf(delivered)
 }
+
+fun catch_all_draft_candidates(
+    mode: String?,
+    saved_sender: String?,
+): List<String> {
+    if (mode != "draft") return emptyList()
+    val saved = saved_sender?.takeIf { it.isNotBlank() } ?: return emptyList()
+    return listOf(saved)
+}
+
+fun find_sender_option(options: List<String>, saved: String): String? {
+    val wanted = saved.trim()
+    if (wanted.isEmpty()) return null
+    return options.firstOrNull { it.equals(wanted, ignoreCase = true) }
+}
