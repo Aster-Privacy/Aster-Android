@@ -93,6 +93,14 @@ class InboxRowRemovalTest {
     }
 
     @Test
+    fun a_short_filtered_list_does_not_page_the_whole_mailbox_by_itself() {
+        assertTrue(scroll_paging_allowed(inbox_filter_unread, has_scrolled = false, loaded_items = 999))
+        assertFalse(scroll_paging_allowed(inbox_filter_unread, has_scrolled = false, loaded_items = 1000))
+        assertTrue(scroll_paging_allowed(inbox_filter_unread, has_scrolled = true, loaded_items = 5000))
+        assertTrue(scroll_paging_allowed(inbox_filter_all, has_scrolled = false, loaded_items = 5000))
+    }
+
+    @Test
     fun loading_stops_once_the_counted_threads_are_listed() {
         assertFalse(inbox_auto_fill_wanted(inbox_filter_unread, 27, 27, 27, 300))
         assertTrue(inbox_auto_fill_wanted(inbox_filter_unread, 3, 3, 3, 50))

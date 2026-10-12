@@ -1191,6 +1191,7 @@ fun InboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
+                scroll_paging_allowed(active_filter, list_state.canScrollBackward, s.items.size) &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -4632,6 +4633,9 @@ internal fun inbox_auto_fill_wanted(
 ): Boolean =
     unread_filter_rows_missing(active_filter, filtered_rows, unread_count, loaded_items) ||
         (visible_rows < MIN_FILLED_ROWS && loaded_items < CATEGORY_DRAIN_MAX_ITEMS)
+
+internal fun scroll_paging_allowed(active_filter: String, has_scrolled: Boolean, loaded_items: Int): Boolean =
+    active_filter == inbox_filter_all || has_scrolled || loaded_items < UNREAD_FILTER_DRAIN_MAX_ITEMS
 
 internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
     is_loading_more && !removal_quiet
