@@ -98,6 +98,7 @@ fun FilteredInboxScreen(
         FilterType.alias -> "routing:$filter_value"
     }
     LaunchedEffect(requested_folder) {
+        mail_vm.drop_read_filter()
         mail_vm.load_inbox(requested_folder, force = true)
         if (filter_type == FilterType.folder && filter_value in stats_backed_folders) {
             mail_vm.load_stats(force = false)
