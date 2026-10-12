@@ -4,6 +4,11 @@
     <string name="alias_filter_active">已启用</string>
     <string name="alias_filter_disabled">已停用</string>
     <string name="alias_filter_all_domains">所有域名</string>
+    <string name="alias_sort_label">排序</string>
+    <string name="alias_sort_newest">最新优先</string>
+    <string name="alias_sort_oldest">最早优先</string>
+    <string name="alias_sort_az">地址 A–Z</string>
+    <string name="alias_sort_za">地址 Z–A</string>
     <string name="alias_import_file_hint">选择要导入的 CSV 或 JSON 文件</string>
     <string name="alias_import_change_file">更换文件</string>
     <string name="alias_import_remove_file">移除文件</string>

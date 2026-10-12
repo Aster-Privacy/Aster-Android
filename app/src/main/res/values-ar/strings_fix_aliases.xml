@@ -4,6 +4,11 @@
     <string name="alias_filter_active">نشط</string>
     <string name="alias_filter_disabled">معطّل</string>
     <string name="alias_filter_all_domains">كل النطاقات</string>
+    <string name="alias_sort_label">ترتيب</string>
+    <string name="alias_sort_newest">الأحدث أولاً</string>
+    <string name="alias_sort_oldest">الأقدم أولاً</string>
+    <string name="alias_sort_az">العنوان A–Z</string>
+    <string name="alias_sort_za">العنوان Z–A</string>
     <string name="alias_import_file_hint">اختر ملف CSV أو JSON للاستيراد</string>
     <string name="alias_import_change_file">تغيير الملف</string>
     <string name="alias_import_remove_file">إزالة الملف</string>

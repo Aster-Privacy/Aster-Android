@@ -4,6 +4,11 @@
     <string name="alias_filter_active">Etkin</string>
     <string name="alias_filter_disabled">Devre dışı</string>
     <string name="alias_filter_all_domains">Tüm alan adları</string>
+    <string name="alias_sort_label">Sırala</string>
+    <string name="alias_sort_newest">Önce en yeni</string>
+    <string name="alias_sort_oldest">Önce en eski</string>
+    <string name="alias_sort_az">Adres A–Z</string>
+    <string name="alias_sort_za">Adres Z–A</string>
     <string name="alias_import_file_hint">İçe aktarmak için bir CSV veya JSON dosyası seçin</string>
     <string name="alias_import_change_file">Dosyayı değiştir</string>
     <string name="alias_import_remove_file">Dosyayı kaldır</string>
