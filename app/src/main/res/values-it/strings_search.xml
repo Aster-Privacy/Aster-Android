@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Cancella filtro</string>
     <string name="no_favorite_contacts">Nessun contatto preferito</string>
     <string name="no_favorite_contacts_match">Nessun contatto preferito corrisponde a \"%1$s\"</string>
+    <string name="search_chip_filename">Nome file</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Cerca nei nomi degli allegati</string>
 </resources>

@@ -4241,13 +4241,18 @@ private fun FromAliasSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     var query by remember { mutableStateOf("") }
-    val normalized_query = query.trim().lowercase()
+    val normalized_query = org.astermail.android.ui.search.fold_text(query.trim())
     val first_option = options.firstOrNull()
     val visible_options = remember(options, primary, normalized_query) {
         val filtered = if (normalized_query.isEmpty()) {
             options
         } else {
-            options.filter { it.lowercase().contains(normalized_query) }
+            options.filter { option ->
+                org.astermail.android.ui.search.fold_text(option).contains(normalized_query) ||
+                    resolve_display_name(option)?.let {
+                        org.astermail.android.ui.search.fold_text(it).contains(normalized_query)
+                    } == true
+            }
         }
         val (pinned, rest) = filtered.partition { it.equals(primary, ignoreCase = true) }
         pinned + rest

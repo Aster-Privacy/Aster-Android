@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Wyczyść filtr</string>
     <string name="no_favorite_contacts">Brak ulubionych kontaktów</string>
     <string name="no_favorite_contacts_match">Żaden ulubiony kontakt nie pasuje do \"%1$s\"</string>
+    <string name="search_chip_filename">Nazwa pliku</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Szukaj w nazwach załączników</string>
 </resources>

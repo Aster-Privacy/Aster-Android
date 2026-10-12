@@ -96,10 +96,13 @@ class SearchQueryRulesTest {
     fun recognized_keys_become_operators() {
         val parsed = parse_query(
             "from:ann to:bob contact:cy subject:plan has:attachment is:unread in:sent " +
-                "before:7d after:2026-08-01 date:today label:work",
+                "before:7d after:2026-08-01 date:today label:work filename:report",
         )
         assertEquals(
-            listOf("from", "to", "contact", "subject", "has", "is", "in", "before", "after", "date", "label"),
+            listOf(
+                "from", "to", "contact", "subject", "has", "is", "in", "before", "after", "date", "label",
+                "filename",
+            ),
             parsed.operators.map { it.key },
         )
         assertEquals("", parsed.free_text)
@@ -590,6 +593,25 @@ class SearchQueryRulesTest {
         assertTrue(typed_match("has:video has:pdf"))
         assertFalse(typed_match("has:pdf", item(has_attachments = false)))
         assertFalse(matches("has:pdf", with_files))
+    }
+
+    @Test
+    fun filename_operator_matches_attachment_names_without_case_or_accents() {
+        val with_files = item(has_attachments = true)
+        val named = env.copy(
+            attachments = mapOf("1" to listOf(SearchAttachment("Résumé Final.PDF", "application/pdf"))),
+        )
+        fun named_match(query: String, target: InboxItem = with_files) =
+            matches_item(target, parse_query(query), env = named)
+
+        assertTrue(named_match("filename:resume"))
+        assertTrue(named_match("filename:\"resume final\""))
+        assertTrue(named_match("filename:.pdf"))
+        assertFalse(named_match("filename:invoice"))
+        assertTrue(named_match("-filename:invoice"))
+        assertFalse(named_match("filename:resume", item(has_attachments = false)))
+        assertFalse(matches("filename:resume", with_files))
+        assertTrue(needs_attachment_details(op("filename", "resume")))
     }
 
     @Test

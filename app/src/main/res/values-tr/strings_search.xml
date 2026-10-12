@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Filtreyi temizle</string>
     <string name="no_favorite_contacts">Favori kişi yok</string>
     <string name="no_favorite_contacts_match">\"%1$s\" ile eşleşen favori kişi yok</string>
+    <string name="search_chip_filename">Dosya adı</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Ek dosya adlarında ara</string>
 </resources>

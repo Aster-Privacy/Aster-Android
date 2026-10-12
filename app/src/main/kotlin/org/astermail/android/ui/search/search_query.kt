@@ -39,6 +39,7 @@ internal val RECOGNIZED_OPERATOR_KEYS = setOf(
     "after",
     "date",
     "label",
+    "filename",
 )
 
 internal val ANY_OF_OPERATOR_KEYS = setOf("from", "to", "contact", "has")
@@ -86,6 +87,9 @@ internal fun is_attachment_type_value(value: String): Boolean = ATTACHMENT_TYPE_
 
 internal fun is_attachment_type_operator(op: SearchOperator): Boolean =
     op.key == "has" && is_attachment_type_value(op.value)
+
+internal fun needs_attachment_details(op: SearchOperator): Boolean =
+    is_attachment_type_operator(op) || op.key == "filename"
 
 internal fun attachment_matches_type(type: String, attachment: SearchAttachment): Boolean {
     val extensions = ATTACHMENT_TYPE_EXTENSIONS[type] ?: return false
@@ -233,7 +237,7 @@ internal fun is_evaluable_operator(key: String, value: String): Boolean = when (
     "has" -> HAS_OPERATOR_VALUES.contains(value) || is_attachment_type_value(value)
     "before", "after" -> parse_iso_date(value) != null || parse_relative_days(value) != null
     "date" -> DATE_OPERATOR_VALUES.contains(value) || parse_iso_date(value) != null
-    "from", "to", "contact", "subject", "label" -> value.isNotBlank()
+    "from", "to", "contact", "subject", "label", "filename" -> value.isNotBlank()
     else -> false
 }
 
@@ -486,6 +490,8 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
     "after" -> date_bound_millis(op.value, env)?.let { parse_item_timestamp(item.timestamp) >= it }
     "date" -> date_window_millis(op.value, env)?.contains(parse_item_timestamp(item.timestamp))
     "label" -> matches_label(item, op.value, env.labels)
+    "filename" -> item.has_attachments &&
+        env.attachments[item.id].orEmpty().any { fold_text(it.filename).contains(fold_text(op.value)) }
     else -> null
 }
 

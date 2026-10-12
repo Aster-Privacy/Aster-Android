@@ -601,10 +601,12 @@ fun numeric_value_picker(
                 }
             }
             Spacer(Modifier.height(AsterSpacing.lg))
+            val entered = value.toDoubleOrNull()
             AsterButton(
                 label = stringResource(R.string.mail_rules_confirm),
+                enabled = entered != null && (!is_size || entered > 0.0),
                 onClick = {
-                    val v = value.toDoubleOrNull() ?: 0.0
+                    val v = entered ?: 0.0
                     val multiplier = when (unit) {
                         "KB" -> 1024L
                         "MB" -> 1024L * 1024L
@@ -639,6 +641,7 @@ fun decimal_value_picker(
             Spacer(Modifier.height(AsterSpacing.lg))
             AsterButton(
                 label = stringResource(R.string.mail_rules_confirm),
+                enabled = value.toDoubleOrNull() != null,
                 onClick = {
                     val raw = value.toDoubleOrNull() ?: 0.0
                     val rounded = (raw * 10.0).roundToInt() / 10.0

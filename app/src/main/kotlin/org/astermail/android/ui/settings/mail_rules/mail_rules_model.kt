@@ -117,9 +117,9 @@ fun default_condition_for(field: field_id): Condition = when (field_kind_of(fiel
         else -> Condition.HasAttachment(true)
     }
     field_kind.numeric_size -> when (field) {
-        field_id.attachment_size -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1_000_000L)
-        field_id.total_size -> Condition.TotalSize(NumericOp.GREATER_THAN, 1_000_000L)
-        else -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1_000_000L)
+        field_id.attachment_size -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1024L * 1024L)
+        field_id.total_size -> Condition.TotalSize(NumericOp.GREATER_THAN, 1024L * 1024L)
+        else -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1024L * 1024L)
     }
     field_kind.numeric_plain -> when (field) {
         field_id.recipient_count -> Condition.RecipientCount(NumericOp.GREATER_THAN, 5L)

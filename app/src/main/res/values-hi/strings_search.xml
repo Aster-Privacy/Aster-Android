@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">फ़िल्टर हटाएँ</string>
     <string name="no_favorite_contacts">कोई पसंदीदा संपर्क नहीं</string>
     <string name="no_favorite_contacts_match">कोई पसंदीदा संपर्क \"%1$s\" से मेल नहीं खाता</string>
+    <string name="search_chip_filename">फ़ाइल का नाम</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">अटैचमेंट के फ़ाइल नाम खोजें</string>
 </resources>

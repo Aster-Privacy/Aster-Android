@@ -399,8 +399,8 @@ fun SearchScreen(
         value = null
         if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
         val base_env = current_search_env(search_labels)
-        val env = if (parsed.operators.any { is_attachment_type_operator(it) }) {
-            val untyped = parsed.copy(operators = parsed.operators.filterNot { is_attachment_type_operator(it) })
+        val env = if (parsed.operators.any { needs_attachment_details(it) }) {
+            val untyped = parsed.copy(operators = parsed.operators.filterNot { needs_attachment_details(it) })
             val candidate_ids = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 corpus.asSequence()
                     .filter { it.has_attachments && matches_item(it, untyped, apply_scope = false, env = base_env) }
@@ -818,6 +818,7 @@ fun SearchScreen(
                 search_tip(stringResource(R.string.op_after), stringResource(R.string.op_after_desc)) { set_free_text("after:"); focus_requester.requestFocus() }
                 search_tip(stringResource(R.string.op_date_today), stringResource(R.string.op_date_today_desc)) { set_free_text("date:"); focus_requester.requestFocus() }
                 search_tip(stringResource(R.string.op_label), stringResource(R.string.op_label_desc)) { set_free_text("label:"); focus_requester.requestFocus() }
+                search_tip(stringResource(R.string.op_filename), stringResource(R.string.op_filename_desc)) { set_free_text("filename:"); focus_requester.requestFocus() }
                 search_tip(stringResource(R.string.op_negate), stringResource(R.string.op_negate_desc)) { set_free_text("-from:"); focus_requester.requestFocus() }
                 Spacer(Modifier.height(AsterSpacing.lg))
                 Text(
@@ -1104,6 +1105,7 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         "after" -> stringResource(R.string.search_chip_after)
         "date" -> stringResource(R.string.search_chip_date)
         "label" -> stringResource(R.string.search_chip_label)
+        "filename" -> stringResource(R.string.search_chip_filename)
         else -> op.key.replaceFirstChar { it.uppercase() }
     }
     val value = operator_value_text(op)

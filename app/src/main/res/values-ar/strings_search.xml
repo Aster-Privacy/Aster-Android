@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">مسح عامل التصفية</string>
     <string name="no_favorite_contacts">لا توجد جهات اتصال مفضلة</string>
     <string name="no_favorite_contacts_match">لا توجد جهات اتصال مفضلة تطابق \"%1$s\"</string>
+    <string name="search_chip_filename">اسم الملف</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">البحث في أسماء ملفات المرفقات</string>
 </resources>

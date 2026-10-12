@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Filter wissen</string>
     <string name="no_favorite_contacts">Geen favoriete contacten</string>
     <string name="no_favorite_contacts_match">Geen favoriete contacten komen overeen met \"%1$s\"</string>
+    <string name="search_chip_filename">Bestandsnaam</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Zoeken in bestandsnamen van bijlagen</string>
 </resources>

@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">フィルタを解除</string>
     <string name="no_favorite_contacts">お気に入りの連絡先はありません</string>
     <string name="no_favorite_contacts_match">\"%1$s\"に一致するお気に入りの連絡先はありません</string>
+    <string name="search_chip_filename">ファイル名</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">添付ファイルの名前を検索</string>
 </resources>

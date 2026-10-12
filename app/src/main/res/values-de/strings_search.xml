@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Filter löschen</string>
     <string name="no_favorite_contacts">Keine Favoriten</string>
     <string name="no_favorite_contacts_match">Keine Favoriten für \"%1$s\" gefunden</string>
+    <string name="search_chip_filename">Dateiname</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">In Dateinamen von Anhängen suchen</string>
 </resources>

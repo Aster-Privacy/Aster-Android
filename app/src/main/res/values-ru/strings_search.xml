@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Сбросить фильтр</string>
     <string name="no_favorite_contacts">Нет избранных контактов</string>
     <string name="no_favorite_contacts_match">Нет избранных контактов, соответствующих запросу \"%1$s\"</string>
+    <string name="search_chip_filename">Имя файла</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Поиск по именам вложений</string>
 </resources>

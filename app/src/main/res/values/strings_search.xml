@@ -26,4 +26,7 @@
     <string name="inbox_filter_clear">Clear filter</string>
     <string name="no_favorite_contacts">No favorite contacts</string>
     <string name="no_favorite_contacts_match">No favorite contacts match \"%1$s\"</string>
+    <string name="search_chip_filename">Filename</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Search attachment filenames</string>
 </resources>

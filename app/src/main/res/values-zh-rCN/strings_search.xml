@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">清除筛选条件</string>
     <string name="no_favorite_contacts">没有收藏的联系人</string>
     <string name="no_favorite_contacts_match">没有与\"%1$s\"匹配的收藏联系人</string>
+    <string name="search_chip_filename">文件名</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">搜索附件文件名</string>
 </resources>

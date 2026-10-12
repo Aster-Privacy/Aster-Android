@@ -27,4 +27,7 @@
     <string name="inbox_filter_clear">Borrar filtro</string>
     <string name="no_favorite_contacts">No hay contactos favoritos</string>
     <string name="no_favorite_contacts_match">Ningún contacto favorito coincide con \"%1$s\"</string>
+    <string name="search_chip_filename">Nombre de archivo</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Buscar en nombres de archivos adjuntos</string>
 </resources>
