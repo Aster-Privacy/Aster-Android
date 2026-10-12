@@ -22,4 +22,9 @@
     <string name="search_value_last_week">Vorige week</string>
     <string name="search_value_this_month">Deze maand</string>
     <string name="search_value_attachment">Bijlage</string>
+    <string name="search_results_incomplete">Sommige berichten zijn niet geladen, dus de resultaten zijn mogelijk onvolledig.</string>
+    <string name="inbox_filter_no_matches">Geen berichten komen overeen met dit filter</string>
+    <string name="inbox_filter_clear">Filter wissen</string>
+    <string name="no_favorite_contacts">Geen favoriete contacten</string>
+    <string name="no_favorite_contacts_match">Geen favoriete contacten komen overeen met \"%1$s\"</string>
 </resources>

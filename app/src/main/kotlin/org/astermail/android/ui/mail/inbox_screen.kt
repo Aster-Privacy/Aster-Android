@@ -919,6 +919,9 @@ fun InboxScreen(
     var active_filter by rememberSaveable { mutableStateOf(inbox_filter_all) }
     val filter_active = active_filter != inbox_filter_all
     val tools_visible = show_inbox_tools()
+    LaunchedEffect(tools_visible) {
+        if (!tools_visible) active_filter = inbox_filter_all
+    }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val initial_threads = remember {
         if (emails.isEmpty()) {
@@ -2084,6 +2087,19 @@ fun InboxScreen(
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) { empty_inbox_state(current_folder) }
+                } else if (filter_active && visible_threads.isEmpty()) {
+                    org.astermail.android.ui.common.overscroll_stretch(
+                        modifier = Modifier.padding(top = header_height_dp).then(handoff),
+                    ) {
+                        empty_filter_state(
+                            on_clear = { active_filter = inbox_filter_all },
+                            on_load_more = if (inbox_filter_can_load_more(inbox_state.has_more, inbox_state.is_loading, inbox_state.is_loading_more)) {
+                                { mail_vm.load_more() }
+                            } else {
+                                null
+                            },
+                        )
+                    }
                 } else {
                     val user_prefs_outer = settings_state.preferences
                     val right_action_outer = normalize_swipe_action(
@@ -4419,6 +4435,68 @@ private fun empty_category_state(
                 TextButton(
                     onClick = on_load_more,
                     modifier = Modifier.testTag("category_load_more"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.check_for_older_messages),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.accent_blue,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+internal fun inbox_filter_can_load_more(has_more: Boolean, is_loading: Boolean, is_loading_more: Boolean): Boolean =
+    has_more && !is_loading && !is_loading_more
+
+@Composable
+private fun empty_filter_state(
+    on_clear: () -> Unit,
+    on_load_more: (() -> Unit)?,
+) {
+    val colors = AsterMaterial.colors
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .vertical_scroll_with_indicator(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = AsterSpacing.lg).image_theme_panel(colors, 24.dp, 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
+            Icon(
+                imageVector = TablerIcons.Filter,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(48.dp),
+            )
+            Text(
+                text = stringResource(R.string.inbox_filter_no_matches),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.text_primary,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+            TextButton(
+                onClick = on_clear,
+                modifier = Modifier.testTag("filter_clear"),
+            ) {
+                Text(
+                    text = stringResource(R.string.inbox_filter_clear),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.accent_blue,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            if (on_load_more != null) {
+                TextButton(
+                    onClick = on_load_more,
+                    modifier = Modifier.testTag("filter_load_more"),
                 ) {
                     Text(
                         text = stringResource(R.string.check_for_older_messages),

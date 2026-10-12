@@ -22,4 +22,9 @@
     <string name="search_value_last_week">先週</string>
     <string name="search_value_this_month">今月</string>
     <string name="search_value_attachment">添付ファイル</string>
+    <string name="search_results_incomplete">一部のメッセージを読み込めなかったため、結果が不完全な可能性があります。</string>
+    <string name="inbox_filter_no_matches">このフィルタに一致するメッセージはありません</string>
+    <string name="inbox_filter_clear">フィルタを解除</string>
+    <string name="no_favorite_contacts">お気に入りの連絡先はありません</string>
+    <string name="no_favorite_contacts_match">\"%1$s\"に一致するお気に入りの連絡先はありません</string>
 </resources>

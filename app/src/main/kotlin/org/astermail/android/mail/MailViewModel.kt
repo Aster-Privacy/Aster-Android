@@ -138,8 +138,19 @@ data class SearchUiState(
     val all_items: List<InboxItem> = emptyList(),
     val is_indexing: Boolean = false,
     val is_indexed: Boolean = false,
+    val is_partial: Boolean = false,
     val error: String? = null,
 )
+
+internal fun search_state_after_index_failure(state: SearchUiState, message: String): SearchUiState {
+    val has_items = state.all_items.isNotEmpty()
+    return state.copy(
+        is_indexing = false,
+        is_indexed = state.is_indexed || has_items,
+        is_partial = has_items,
+        error = if (has_items) null else message,
+    )
+}
 
 data class ListScrollAnchor(val key: String, val offset: Int)
 
@@ -4825,11 +4836,9 @@ class MailViewModel @Inject constructor(
                             }
                         },
                         onFailure = { t ->
-                            val keep = _search_state.value.all_items
-                            _search_state.value = _search_state.value.copy(
-                                is_indexing = false,
-                                is_indexed = _search_state.value.is_indexed || keep.isNotEmpty(),
-                                error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
+                            _search_state.value = search_state_after_index_failure(
+                                _search_state.value,
+                                org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                             )
                         },
                     )
@@ -4837,11 +4846,9 @@ class MailViewModel @Inject constructor(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
-                val keep = _search_state.value.all_items
-                _search_state.value = _search_state.value.copy(
-                    is_indexing = false,
-                    is_indexed = _search_state.value.is_indexed || keep.isNotEmpty(),
-                    error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
+                _search_state.value = search_state_after_index_failure(
+                    _search_state.value,
+                    org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }

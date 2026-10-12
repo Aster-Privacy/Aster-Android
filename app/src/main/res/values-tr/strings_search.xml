@@ -22,4 +22,9 @@
     <string name="search_value_last_week">Geçen hafta</string>
     <string name="search_value_this_month">Bu ay</string>
     <string name="search_value_attachment">Ek</string>
+    <string name="search_results_incomplete">Bazı iletiler yüklenemedi, bu nedenle sonuçlar eksik olabilir.</string>
+    <string name="inbox_filter_no_matches">Bu filtreyle eşleşen ileti yok</string>
+    <string name="inbox_filter_clear">Filtreyi temizle</string>
+    <string name="no_favorite_contacts">Favori kişi yok</string>
+    <string name="no_favorite_contacts_match">\"%1$s\" ile eşleşen favori kişi yok</string>
 </resources>

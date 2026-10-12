@@ -117,6 +117,11 @@ internal data class SearchEnv(
     val labels: SearchLabelIndex = NO_SEARCH_LABELS,
 )
 
+internal fun search_local_day(
+    now: Long = System.currentTimeMillis(),
+    zone: ZoneId = org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id(),
+): Long = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().toEpochDay()
+
 internal fun current_search_env(labels: SearchLabelIndex = NO_SEARCH_LABELS): SearchEnv = SearchEnv(
     now = System.currentTimeMillis(),
     zone = org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id(),

@@ -22,4 +22,9 @@
     <string name="search_value_last_week">पिछले सप्ताह</string>
     <string name="search_value_this_month">इस महीने</string>
     <string name="search_value_attachment">अटैचमेंट</string>
+    <string name="search_results_incomplete">कुछ संदेश लोड नहीं हुए, इसलिए नतीजे अधूरे हो सकते हैं।</string>
+    <string name="inbox_filter_no_matches">कोई संदेश इस फ़िल्टर से मेल नहीं खाता</string>
+    <string name="inbox_filter_clear">फ़िल्टर हटाएँ</string>
+    <string name="no_favorite_contacts">कोई पसंदीदा संपर्क नहीं</string>
+    <string name="no_favorite_contacts_match">कोई पसंदीदा संपर्क \"%1$s\" से मेल नहीं खाता</string>
 </resources>

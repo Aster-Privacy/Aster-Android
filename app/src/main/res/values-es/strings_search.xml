@@ -22,4 +22,9 @@
     <string name="search_value_last_week">La semana pasada</string>
     <string name="search_value_this_month">Este mes</string>
     <string name="search_value_attachment">Archivo adjunto</string>
+    <string name="search_results_incomplete">Algunos mensajes no se cargaron, por lo que los resultados pueden estar incompletos.</string>
+    <string name="inbox_filter_no_matches">Ningún mensaje coincide con este filtro</string>
+    <string name="inbox_filter_clear">Borrar filtro</string>
+    <string name="no_favorite_contacts">No hay contactos favoritos</string>
+    <string name="no_favorite_contacts_match">Ningún contacto favorito coincide con \"%1$s\"</string>
 </resources>

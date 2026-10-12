@@ -22,4 +22,9 @@
     <string name="search_value_last_week">Прошлая неделя</string>
     <string name="search_value_this_month">Этот месяц</string>
     <string name="search_value_attachment">Вложение</string>
+    <string name="search_results_incomplete">Некоторые сообщения не загрузились, поэтому результаты могут быть неполными.</string>
+    <string name="inbox_filter_no_matches">Нет сообщений, соответствующих этому фильтру</string>
+    <string name="inbox_filter_clear">Сбросить фильтр</string>
+    <string name="no_favorite_contacts">Нет избранных контактов</string>
+    <string name="no_favorite_contacts_match">Нет избранных контактов, соответствующих запросу \"%1$s\"</string>
 </resources>

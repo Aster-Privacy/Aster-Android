@@ -158,6 +158,7 @@ private object search_screen_cache {
     var env_labels: SearchLabelIndex? = null
     var outcome: SearchOutcome? = null
     var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var outcome_day: Long = Long.MIN_VALUE
     var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
     var people: ChipPeopleLists? = null
 
@@ -171,8 +172,10 @@ private object search_screen_cache {
         parsed: ParsedQuery,
         labels: SearchLabelIndex,
         sorted: List<org.astermail.android.mail.InboxItem>?,
+        day: Long = search_local_day(),
     ) = outcome.takeIf {
-        sorted != null && outcome_corpus === sorted && this.parsed == parsed && env_labels == labels
+        sorted != null && outcome_corpus === sorted && this.parsed == parsed && env_labels == labels &&
+            outcome_day == day
     }
 }
 
@@ -387,6 +390,7 @@ fun SearchScreen(
         value = null
         if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
         val env = current_search_env(search_labels)
+        val env_day = search_local_day(env.now, env.zone)
         val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val results = mutableListOf<org.astermail.android.mail.InboxItem>()
             var hidden = 0
@@ -407,13 +411,17 @@ fun SearchScreen(
         search_screen_cache.env_labels = search_labels
         search_screen_cache.outcome = outcome
         search_screen_cache.outcome_corpus = corpus
+        search_screen_cache.outcome_day = env_day
         value = outcome
     }
 
     var last_results by remember {
         mutableStateOf(
             search_screen_cache.outcome
-                ?.takeIf { search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels }
+                ?.takeIf {
+                    search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels &&
+                        search_screen_cache.outcome_day == search_local_day()
+                }
                 ?.results
                 ?: emptyList(),
         )
@@ -587,10 +595,13 @@ fun SearchScreen(
 
         if (!select_mode) {
             search_chip_row(
-                operators = operator_chips,
+                operators = parsed.operators,
                 people = chip_people,
                 recipient_people = chip_recipients,
-                on_operators_change = { operator_chips = it },
+                on_operators_change = {
+                    operator_chips = it
+                    set_free_text(parsed.free_text)
+                },
                 on_advanced_click = { advanced_open = true },
             )
         }
@@ -725,6 +736,34 @@ fun SearchScreen(
                             if (index_paused) mail_vm.resume_search_indexing()
                             else mail_vm.pause_search_indexing()
                         }
+                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
+                )
+            }
+        }
+
+        if (has_query && search_state.is_partial && !search_state.is_indexing && !index_paused) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+            ) {
+                Text(
+                    text = stringResource(R.string.search_results_incomplete),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.retry),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(SquircleShape(8.dp))
+                        .clickable { mail_vm.build_search_index(force = true) }
                         .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
                 )
             }

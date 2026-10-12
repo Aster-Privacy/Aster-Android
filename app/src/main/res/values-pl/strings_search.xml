@@ -22,4 +22,9 @@
     <string name="search_value_last_week">Poprzedni tydzień</string>
     <string name="search_value_this_month">Ten miesiąc</string>
     <string name="search_value_attachment">Załącznik</string>
+    <string name="search_results_incomplete">Nie udało się wczytać niektórych wiadomości, więc wyniki mogą być niepełne.</string>
+    <string name="inbox_filter_no_matches">Żadna wiadomość nie pasuje do tego filtra</string>
+    <string name="inbox_filter_clear">Wyczyść filtr</string>
+    <string name="no_favorite_contacts">Brak ulubionych kontaktów</string>
+    <string name="no_favorite_contacts_match">Żaden ulubiony kontakt nie pasuje do \"%1$s\"</string>
 </resources>
