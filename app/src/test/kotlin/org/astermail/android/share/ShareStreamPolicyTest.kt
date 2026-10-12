@@ -42,7 +42,8 @@ class ShareStreamPolicyTest {
         context: ShareCallerContext = caller(),
         access: ShareCallerAccess = ShareCallerAccess.UNKNOWN,
         scheme: String? = "content",
-    ) = is_share_stream_allowed(scheme, authority, context, access)
+        owns_media_row: Boolean = false,
+    ) = is_share_stream_allowed(scheme, authority, context, access, owns_media_row)
 
     @Test
     fun the_apps_own_providers_are_refused_whatever_the_caller_claims() {
@@ -106,6 +107,58 @@ class ShareStreamPolicyTest {
         assertFalse(allowed("media", reads_storage, ShareCallerAccess.UNKNOWN))
         assertTrue(allowed("media", reads_storage, ShareCallerAccess.GRANTED))
         assertTrue(allowed("media", caller(app_reads_shared_storage = false), ShareCallerAccess.UNKNOWN))
+    }
+
+    @Test
+    fun a_media_row_the_app_owns_is_refused_from_a_caller_that_cannot_read_it() {
+        for (authority in listOf("media", "MEDIA", "0@media")) {
+            assertFalse(authority, allowed(authority, caller(), ShareCallerAccess.UNKNOWN, owns_media_row = true))
+            assertFalse(authority, allowed(authority, caller(), ShareCallerAccess.DENIED, owns_media_row = true))
+            assertFalse(
+                authority,
+                allowed(
+                    authority,
+                    caller(has_read_grant = false, caller_is_system = true),
+                    ShareCallerAccess.GRANTED,
+                    owns_media_row = true,
+                ),
+            )
+            assertFalse(
+                authority,
+                allowed(authority, caller(caller_is_system = true), ShareCallerAccess.DENIED, owns_media_row = true),
+            )
+        }
+    }
+
+    @Test
+    fun a_media_row_the_app_owns_is_accepted_from_a_caller_that_can_read_it() {
+        assertTrue(allowed("media", caller(), ShareCallerAccess.GRANTED, owns_media_row = true))
+        assertTrue(allowed("media", caller(caller_is_system = true), ShareCallerAccess.UNKNOWN, owns_media_row = true))
+    }
+
+    @Test
+    fun owning_a_media_row_does_not_guard_other_providers() {
+        assertTrue(allowed("com.example.gallery.fileprovider", owns_media_row = true))
+    }
+
+    @Test
+    fun a_media_uri_that_shows_no_rows_counts_as_owned() {
+        assertTrue(media_rows_include_own(0, emptyList(), own))
+        assertTrue(media_rows_include_own(0, null, own))
+    }
+
+    @Test
+    fun a_media_row_is_owned_only_when_the_owner_is_the_app() {
+        assertTrue(media_rows_include_own(1, listOf(own), own))
+        assertTrue(media_rows_include_own(2, listOf("com.example.gallery", own), own))
+        assertFalse(media_rows_include_own(1, listOf("com.example.gallery"), own))
+        assertFalse(media_rows_include_own(1, listOf<String?>(null), own))
+        assertFalse(media_rows_include_own(1, listOf("org.astermail.androidx"), own))
+    }
+
+    @Test
+    fun a_media_row_with_no_readable_owner_column_counts_as_owned() {
+        assertTrue(media_rows_include_own(1, null, own))
     }
 
     @Test

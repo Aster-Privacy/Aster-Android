@@ -123,6 +123,12 @@
     <string name="plan_free">Free</string>
     <string name="settings_upgrade_cta">Upgrade</string>
     <string name="continue_with_free">Continue with Free</string>
+    <string name="signup_plan_subtitle">Aster Mail is free to use. A paid plan adds more storage, aliases, and custom domains.</string>
+    <string name="signup_plan_yearly_savings">Save %1$d%% with yearly billing</string>
+    <string name="signup_plan_terms_play_year">%1$s every year, charged through Google Play. Your plan renews automatically until you cancel in Google Play.</string>
+    <string name="signup_plan_terms_play_month">%1$s every month, charged through Google Play. Your plan renews automatically until you cancel in Google Play.</string>
+    <string name="signup_plan_terms_year">%1$s every year. Your plan renews automatically until you cancel in Settings.</string>
+    <string name="signup_plan_terms_month">%1$s every month. Your plan renews automatically until you cancel in Settings.</string>
     <string name="continue_with_upgrade">Continue with upgrade</string>
     <string name="monthly">Monthly</string>
     <string name="yearly">Yearly</string>

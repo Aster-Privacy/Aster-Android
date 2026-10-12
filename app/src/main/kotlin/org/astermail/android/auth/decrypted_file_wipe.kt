@@ -60,3 +60,21 @@ fun wipe_outbox_attachments(files_dir: File, pending_ids: Collection<String>?): 
     }
     return removed
 }
+
+const val OUTBOX_ORPHAN_GRACE_MS = 60_000L
+
+fun wipe_orphaned_outbox_attachments(
+    files_dir: File,
+    live_pending_ids: Collection<String>,
+    now_ms: Long = System.currentTimeMillis(),
+): Int {
+    val entries = File(files_dir, OUTBOX_ATTACHMENTS_DIR_NAME).listFiles() ?: return 0
+    val live_names = live_pending_ids.mapTo(HashSet()) { "$it.json" }
+    var removed = 0
+    for (entry in entries) {
+        if (entry.name in live_names) continue
+        if (now_ms - entry.lastModified() < OUTBOX_ORPHAN_GRACE_MS) continue
+        if (runCatching { entry.deleteRecursively() }.getOrDefault(false)) removed += 1
+    }
+    return removed
+}

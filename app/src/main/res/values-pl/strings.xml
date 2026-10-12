@@ -84,6 +84,12 @@
     <string name="loading_plans">Ładowanie planów...</string>
     <string name="plan_free">Darmowy</string>
     <string name="continue_with_free">Kontynuuj z planem Free</string>
+    <string name="signup_plan_subtitle">Z Aster Mail korzystasz za darmo. Płatny plan daje więcej miejsca, aliasów i domen niestandardowych.</string>
+    <string name="signup_plan_yearly_savings">Oszczędź %1$d%% przy płatności rocznej</string>
+    <string name="signup_plan_terms_play_year">%1$s co rok, płatność przez Google Play. Plan odnawia się automatycznie, dopóki nie anulujesz go w Google Play.</string>
+    <string name="signup_plan_terms_play_month">%1$s co miesiąc, płatność przez Google Play. Plan odnawia się automatycznie, dopóki nie anulujesz go w Google Play.</string>
+    <string name="signup_plan_terms_year">%1$s co rok. Plan odnawia się automatycznie, dopóki nie anulujesz go w Ustawieniach.</string>
+    <string name="signup_plan_terms_month">%1$s co miesiąc. Plan odnawia się automatycznie, dopóki nie anulujesz go w Ustawieniach.</string>
     <string name="continue_with_upgrade">Kontynuuj i ulepsz plan</string>
     <string name="monthly">Miesięcznie</string>
     <string name="yearly">Rocznie</string>

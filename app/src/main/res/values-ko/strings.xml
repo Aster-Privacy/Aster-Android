@@ -84,6 +84,12 @@
     <string name="loading_plans">요금제를 불러오는 중...</string>
     <string name="plan_free">무료</string>
     <string name="continue_with_free">무료로 계속</string>
+    <string name="signup_plan_subtitle">Aster Mail은 무료로 사용할 수 있습니다. 유료 요금제는 저장 공간, 별칭, 사용자 지정 도메인을 더 제공합니다.</string>
+    <string name="signup_plan_yearly_savings">연간 결제 시 %1$d%% 절약</string>
+    <string name="signup_plan_terms_play_year">매년 %1$s, Google Play를 통해 결제됩니다. Google Play에서 취소할 때까지 요금제가 자동으로 갱신됩니다.</string>
+    <string name="signup_plan_terms_play_month">매월 %1$s, Google Play를 통해 결제됩니다. Google Play에서 취소할 때까지 요금제가 자동으로 갱신됩니다.</string>
+    <string name="signup_plan_terms_year">매년 %1$s. 설정에서 취소할 때까지 요금제가 자동으로 갱신됩니다.</string>
+    <string name="signup_plan_terms_month">매월 %1$s. 설정에서 취소할 때까지 요금제가 자동으로 갱신됩니다.</string>
     <string name="continue_with_upgrade">업그레이드하고 계속</string>
     <string name="monthly">월간</string>
     <string name="yearly">연간</string>

@@ -243,6 +243,7 @@ data class CustomDomainAddressInfo(
     val is_enabled: Boolean = true,
     val profile_picture: String? = null,
     val decryption_failed: Boolean = false,
+    val created_at: String = "",
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain_name.isNotBlank()) "@$domain_name" else id

@@ -6032,17 +6032,6 @@ private fun email_image_client(context: android.content.Context): okhttp3.OkHttp
                     64L * 1024 * 1024,
                 ),
             )
-            .addNetworkInterceptor { chain ->
-                val resp = chain.proceed(chain.request())
-                if (resp.isSuccessful) {
-                    resp.newBuilder()
-                        .header("Cache-Control", "max-age=86400")
-                        .removeHeader("Pragma")
-                        .build()
-                } else {
-                    resp
-                }
-            }
             .build()
             .apply {
                 dispatcher.maxRequests = 64
@@ -6053,6 +6042,12 @@ private fun email_image_client(context: android.content.Context): okhttp3.OkHttp
 }
 
 private val mail_detail_image_lock = Any()
+
+internal fun evict_email_image_cache() {
+    synchronized(mail_detail_image_lock) {
+        runCatching { email_image_client_instance?.cache?.evictAll() }
+    }
+}
 
 private sealed interface TranslationBannerState {
     object Hidden : TranslationBannerState

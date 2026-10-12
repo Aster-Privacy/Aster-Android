@@ -84,6 +84,12 @@
     <string name="loading_plans">Abonnementen laden...</string>
     <string name="plan_free">Gratis</string>
     <string name="continue_with_free">Doorgaan met Gratis</string>
+    <string name="signup_plan_subtitle">Aster Mail is gratis te gebruiken. Een betaald abonnement geeft je meer opslag, aliassen en eigen domeinen.</string>
+    <string name="signup_plan_yearly_savings">Bespaar %1$d%% met jaarlijkse betaling</string>
+    <string name="signup_plan_terms_play_year">%1$s per jaar, afgerekend via Google Play. Je abonnement wordt automatisch verlengd totdat je het opzegt in Google Play.</string>
+    <string name="signup_plan_terms_play_month">%1$s per maand, afgerekend via Google Play. Je abonnement wordt automatisch verlengd totdat je het opzegt in Google Play.</string>
+    <string name="signup_plan_terms_year">%1$s per jaar. Je abonnement wordt automatisch verlengd totdat je het opzegt in Instellingen.</string>
+    <string name="signup_plan_terms_month">%1$s per maand. Je abonnement wordt automatisch verlengd totdat je het opzegt in Instellingen.</string>
     <string name="continue_with_upgrade">Doorgaan met upgrade</string>
     <string name="monthly">Maandelijks</string>
     <string name="yearly">Jaarlijks</string>

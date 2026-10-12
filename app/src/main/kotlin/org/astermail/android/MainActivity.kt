@@ -384,6 +384,7 @@ class MainActivity :
                 uri.authority,
                 caller,
                 share_caller_access(uri, from_new_intent),
+                org.astermail.android.share.app_owns_media_row(contentResolver, uri, packageName),
             )
         }
     }

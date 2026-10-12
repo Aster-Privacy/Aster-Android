@@ -4,6 +4,11 @@
     <string name="alias_filter_active">Aktywne</string>
     <string name="alias_filter_disabled">Wyłączone</string>
     <string name="alias_filter_all_domains">Wszystkie domeny</string>
+    <string name="alias_sort_label">Sortuj</string>
+    <string name="alias_sort_newest">Najnowsze najpierw</string>
+    <string name="alias_sort_oldest">Najstarsze najpierw</string>
+    <string name="alias_sort_az">Adres A–Z</string>
+    <string name="alias_sort_za">Adres Z–A</string>
     <string name="alias_import_file_hint">Wybierz plik CSV lub JSON do zaimportowania</string>
     <string name="alias_import_change_file">Zmień plik</string>
     <string name="alias_import_remove_file">Usuń plik</string>

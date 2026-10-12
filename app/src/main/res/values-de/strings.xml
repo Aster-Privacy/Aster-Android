@@ -85,6 +85,12 @@
     <string name="loading_plans">Tarife werden geladen...</string>
     <string name="plan_free">Kostenlos</string>
     <string name="continue_with_free">Mit dem kostenlosen Tarif fortfahren</string>
+    <string name="signup_plan_subtitle">Aster Mail ist kostenlos nutzbar. Ein kostenpflichtiger Tarif bietet mehr Speicher, Aliasse und eigene Domains.</string>
+    <string name="signup_plan_yearly_savings">Sparen Sie %1$d%% bei jährlicher Zahlung</string>
+    <string name="signup_plan_terms_play_year">%1$s pro Jahr, abgerechnet über Google Play. Ihr Tarif verlängert sich automatisch, bis Sie ihn in Google Play kündigen.</string>
+    <string name="signup_plan_terms_play_month">%1$s pro Monat, abgerechnet über Google Play. Ihr Tarif verlängert sich automatisch, bis Sie ihn in Google Play kündigen.</string>
+    <string name="signup_plan_terms_year">%1$s pro Jahr. Ihr Tarif verlängert sich automatisch, bis Sie ihn in den Einstellungen kündigen.</string>
+    <string name="signup_plan_terms_month">%1$s pro Monat. Ihr Tarif verlängert sich automatisch, bis Sie ihn in den Einstellungen kündigen.</string>
     <string name="continue_with_upgrade">Mit Upgrade fortfahren</string>
     <string name="monthly">Monatlich</string>
     <string name="yearly">Jährlich</string>

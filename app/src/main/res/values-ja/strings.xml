@@ -84,6 +84,12 @@
     <string name="loading_plans">プランを読み込み中...</string>
     <string name="plan_free">無料</string>
     <string name="continue_with_free">無料で続ける</string>
+    <string name="signup_plan_subtitle">Aster Mail は無料で使えます。有料プランでは、ストレージ、エイリアス、カスタムドメインが増えます。</string>
+    <string name="signup_plan_yearly_savings">年払いで %1$d%% お得</string>
+    <string name="signup_plan_terms_play_year">1 年ごとに %1$s が Google Play 経由で請求されます。Google Play で解約するまで、プランは自動的に更新されます。</string>
+    <string name="signup_plan_terms_play_month">1 か月ごとに %1$s が Google Play 経由で請求されます。Google Play で解約するまで、プランは自動的に更新されます。</string>
+    <string name="signup_plan_terms_year">1 年ごとに %1$s。設定で解約するまで、プランは自動的に更新されます。</string>
+    <string name="signup_plan_terms_month">1 か月ごとに %1$s。設定で解約するまで、プランは自動的に更新されます。</string>
     <string name="continue_with_upgrade">アップグレードして続行</string>
     <string name="monthly">月払い</string>
     <string name="yearly">年払い</string>
