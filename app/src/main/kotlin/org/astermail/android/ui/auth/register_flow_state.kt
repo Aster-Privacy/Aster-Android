@@ -35,12 +35,7 @@ enum class RegisterStep {
     password,
     generating,
     recovery_key,
-    recovery_email,
     plan,
-    notifications,
-    addresses,
-    custom_domain,
-    import_mail,
 }
 
 class RegisterFlowState(
@@ -111,15 +106,10 @@ fun remember_register_flow_state(): RegisterFlowState {
 
 fun previous_register_step(step: RegisterStep): RegisterStep? = when (step) {
     RegisterStep.password -> RegisterStep.email
-    RegisterStep.plan -> RegisterStep.recovery_email
-    RegisterStep.notifications -> RegisterStep.plan
-    RegisterStep.addresses -> RegisterStep.notifications
-    RegisterStep.custom_domain -> RegisterStep.addresses
-    RegisterStep.import_mail -> RegisterStep.custom_domain
     RegisterStep.email,
     RegisterStep.generating,
     RegisterStep.recovery_key,
-    RegisterStep.recovery_email,
+    RegisterStep.plan,
     -> null
 }
 
