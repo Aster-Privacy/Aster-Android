@@ -346,9 +346,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">До определённой даты</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">За последние N дней</string>
+    <string name="op_after_desc">Начиная с определённой даты</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">Значения: today, yesterday, this_week</string>
+    <string name="op_date_today_desc">Значения: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">Поиск по метке</string>
     <string name="op_negate">-from:</string>

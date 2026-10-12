@@ -55,6 +55,7 @@ import org.astermail.android.design.components.AsterButton
 import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.ui.search.fold_text
 import org.astermail.android.ui.settings.mail_rules.regex_error_res
 
 data class alias_option(
@@ -65,11 +66,11 @@ data class alias_option(
 private const val alias_list_max_height_dp = 240
 
 fun filter_alias_options(options: List<alias_option>, query: String): List<alias_option> {
-    val needle = query.trim().lowercase()
+    val needle = fold_text(query.trim())
     if (needle.isEmpty()) return options
     return options.filter { option ->
-        option.address.lowercase().contains(needle) ||
-            option.display_name?.lowercase()?.contains(needle) == true
+        fold_text(option.address).contains(needle) ||
+            option.display_name?.let { fold_text(it).contains(needle) } == true
     }
 }
 

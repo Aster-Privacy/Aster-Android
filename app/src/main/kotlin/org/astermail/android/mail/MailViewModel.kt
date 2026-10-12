@@ -138,8 +138,19 @@ data class SearchUiState(
     val all_items: List<InboxItem> = emptyList(),
     val is_indexing: Boolean = false,
     val is_indexed: Boolean = false,
+    val is_partial: Boolean = false,
     val error: String? = null,
 )
+
+internal fun search_state_after_index_failure(state: SearchUiState, message: String): SearchUiState {
+    val has_items = state.all_items.isNotEmpty()
+    return state.copy(
+        is_indexing = false,
+        is_indexed = state.is_indexed || has_items,
+        is_partial = has_items,
+        error = if (has_items) null else message,
+    )
+}
 
 data class ListScrollAnchor(val key: String, val offset: Int)
 
@@ -787,6 +798,7 @@ class MailViewModel @Inject constructor(
         _search_state.value = SearchUiState()
         _inbox_attachment_ids.value = emptySet()
         inbox_attachment_probed.clear()
+        search_attachment_cache.clear()
         inbox_attachment_seeded.set(false)
         _thread_participants.value = emptyMap()
         _thread_count_corrections.value = emptyMap()
@@ -4762,6 +4774,25 @@ class MailViewModel @Inject constructor(
 
     private val search_folders_loading = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
+    private val search_attachment_cache =
+        java.util.concurrent.ConcurrentHashMap<String, List<org.astermail.android.ui.search.SearchAttachment>>()
+
+    internal suspend fun search_attachment_types(
+        item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.search.SearchAttachment>> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val missing = item_ids.filterNot { search_attachment_cache.containsKey(it) }
+        if (missing.isNotEmpty()) {
+            repository.fetch_attachment_metas_for_messages(missing).onSuccess { metas ->
+                missing.forEach { id ->
+                    search_attachment_cache[id] = metas[id].orEmpty().map {
+                        org.astermail.android.ui.search.SearchAttachment(it.filename, it.content_type)
+                    }
+                }
+            }
+        }
+        item_ids.mapNotNull { id -> search_attachment_cache[id]?.let { id to it } }.toMap()
+    }
+
     fun load_search_folder(folder: String) {
         val item_type = search_folder_item_type(folder) ?: return
         if (!search_folders_loading.add(folder)) return
@@ -4825,10 +4856,9 @@ class MailViewModel @Inject constructor(
                             }
                         },
                         onFailure = { t ->
-                            val keep = _search_state.value.all_items
-                            _search_state.value = _search_state.value.copy(
-                                is_indexing = false,
-                                error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
+                            _search_state.value = search_state_after_index_failure(
+                                _search_state.value,
+                                org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                             )
                         },
                     )
@@ -4836,10 +4866,9 @@ class MailViewModel @Inject constructor(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
-                val keep = _search_state.value.all_items
-                _search_state.value = _search_state.value.copy(
-                    is_indexing = false,
-                    error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
+                _search_state.value = search_state_after_index_failure(
+                    _search_state.value,
+                    org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
             }
         }

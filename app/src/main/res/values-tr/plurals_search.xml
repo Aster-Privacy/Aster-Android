@@ -4,4 +4,8 @@
         <item quantity="one">%d sonuç</item>
         <item quantity="other">%d sonuç</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">%d gün önce</item>
+        <item quantity="other">%d gün önce</item>
+    </plurals>
 </resources>

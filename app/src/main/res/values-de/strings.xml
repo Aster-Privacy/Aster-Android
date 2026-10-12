@@ -347,9 +347,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">Vor einem Datum</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">Innerhalb der letzten N Tage</string>
+    <string name="op_after_desc">Ab einem Datum</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">Werte: today, yesterday, this_week</string>
+    <string name="op_date_today_desc">Werte: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">Nach Label suchen</string>
     <string name="op_negate">-from:</string>

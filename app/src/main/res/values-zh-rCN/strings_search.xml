@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">排除</string>
     <string name="search_chip_format">%1$s：%2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s：%3$s</string>
+    <string name="search_no_results_filtered">没有符合当前筛选条件的结果</string>
+    <string name="search_clear_filters">清除筛选条件</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">本周</string>
+    <string name="search_value_last_week">上周</string>
+    <string name="search_value_this_month">本月</string>
+    <string name="search_value_attachment">附件</string>
+    <string name="search_results_incomplete">部分邮件未能加载，因此结果可能不完整。</string>
+    <string name="inbox_filter_no_matches">没有符合此筛选条件的邮件</string>
+    <string name="inbox_filter_clear">清除筛选条件</string>
+    <string name="no_favorite_contacts">没有收藏的联系人</string>
+    <string name="no_favorite_contacts_match">没有与\"%1$s\"匹配的收藏联系人</string>
+    <string name="search_chip_filename">文件名</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">搜索附件文件名</string>
 </resources>

@@ -14,4 +14,19 @@
     <string name="search_chip_not_prefix">Not</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">No results match the active filters</string>
+    <string name="search_clear_filters">Clear filters</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">This week</string>
+    <string name="search_value_last_week">Last week</string>
+    <string name="search_value_this_month">This month</string>
+    <string name="search_value_attachment">Attachment</string>
+    <string name="search_results_incomplete">Some messages didn\'t load, so results might be incomplete.</string>
+    <string name="inbox_filter_no_matches">No messages match this filter</string>
+    <string name="inbox_filter_clear">Clear filter</string>
+    <string name="no_favorite_contacts">No favorite contacts</string>
+    <string name="no_favorite_contacts_match">No favorite contacts match \"%1$s\"</string>
+    <string name="search_chip_filename">Filename</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Search attachment filenames</string>
 </resources>

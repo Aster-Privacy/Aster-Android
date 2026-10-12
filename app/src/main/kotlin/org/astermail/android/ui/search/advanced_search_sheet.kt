@@ -52,11 +52,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -239,18 +242,19 @@ internal fun advanced_search_sheet(
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var from_text by remember { mutableStateOf(operator_value(operators, "from") ?: "") }
-    var to_text by remember { mutableStateOf(operator_value(operators, "to") ?: "") }
-    var subject_text by remember { mutableStateOf(operator_value(operators, "subject") ?: "") }
-    var words_text by remember { mutableStateOf(free_text) }
-    var attachment_on by remember { mutableStateOf(has_attachment_active(operators)) }
-    var unread_on by remember {
-        mutableStateOf(operators.any { !it.negated && it.key == "is" && it.value == "unread" })
-    }
-    var preset by remember { mutableStateOf(detect_date_preset(operators)) }
-    var include_spam_trash by remember {
-        mutableStateOf(operator_value(operators, "in") == "anywhere")
-    }
+    val focus_manager = LocalFocusManager.current
+    val initial = remember { advanced_fields(operators) }
+
+    var from_text by rememberSaveable { mutableStateOf(initial.from) }
+    var to_text by rememberSaveable { mutableStateOf(initial.to) }
+    var subject_text by rememberSaveable { mutableStateOf(initial.subject) }
+    var words_text by rememberSaveable { mutableStateOf(free_text) }
+    var attachment_on by rememberSaveable { mutableStateOf(initial.attachment) }
+    var unread_on by rememberSaveable { mutableStateOf(initial.unread) }
+    var starred_on by rememberSaveable { mutableStateOf(initial.starred) }
+    var preset by rememberSaveable { mutableStateOf(initial.preset) }
+    var scope by rememberSaveable { mutableStateOf(initial.scope) }
+    var cleared by rememberSaveable { mutableStateOf(false) }
     var date_menu_open by remember { mutableStateOf(false) }
     var scope_menu_open by remember { mutableStateOf(false) }
 
@@ -261,54 +265,42 @@ internal fun advanced_search_sheet(
         DatePreset.SIX_MONTHS to R.string.chip_older_than_six_months,
         DatePreset.YEAR to R.string.chip_older_than_year,
     )
-    val preset_label = stringResource(
-        preset_labels.firstOrNull { it.first == preset }?.second ?: R.string.chip_custom_range,
+    val scope_labels = mapOf(
+        "" to R.string.folder_all_mail,
+        "inbox" to R.string.folder_inbox,
+        "sent" to R.string.folder_sent,
+        "drafts" to R.string.folder_drafts,
+        "archive" to R.string.folder_archive,
+        "spam" to R.string.folder_spam,
+        "trash" to R.string.folder_trash,
+        "anywhere" to R.string.search_scope_anywhere,
     )
-    val person_placeholder = stringResource(R.string.chip_name_or_email)
+    val custom_label = date_filter_label(operators)
+    val custom_available = initial.preset == DatePreset.CUSTOM && !cleared
+    val preset_label = preset_labels.firstOrNull { it.first == preset }
+        ?.let { stringResource(it.second) }
+        ?: custom_label
 
-    fun build_operators(): List<SearchOperator> {
-        var next = operators.filterNot {
-            !it.negated && (
-                it.key == "from" || it.key == "to" || it.key == "subject" ||
-                    it.key == "has" || it.key == "before" || it.key == "after" ||
-                    (it.key == "is" && it.value == "unread") ||
-                    (it.key == "in" && (it.value == "anywhere" || it.value == "all"))
-                )
-        }
-
-        if (from_text.isNotBlank()) {
-            next = next + SearchOperator(false, "from", from_text.trim().lowercase())
-        }
-        if (to_text.isNotBlank()) {
-            next = next + SearchOperator(false, "to", to_text.trim().lowercase())
-        }
-        if (subject_text.isNotBlank()) {
-            next = next + SearchOperator(false, "subject", subject_text.trim().lowercase())
-        }
-        if (attachment_on) {
-            val kept = active_attachment_types(operators)
-
-            next = if (kept.isEmpty()) {
-                next + SearchOperator(false, "has", "attachment")
-            } else {
-                next + kept.map { SearchOperator(false, "has", it) }
-            }
-        }
-        if (unread_on) next = next + SearchOperator(false, "is", "unread")
-
-        val days = PRESET_DAYS[preset]
-
-        if (days != null) {
-            next = next + SearchOperator(false, "before", "${days}d")
-        } else if (preset == DatePreset.CUSTOM) {
-            next = next + operators.filter {
-                !it.negated && (it.key == "before" || it.key == "after")
-            }
-        }
-        if (include_spam_trash) next = next + SearchOperator(false, "in", "anywhere")
-
-        return next
+    val apply_search = {
+        val lifted = lift_operators(words_text, submit = true)
+        val built = build_advanced_operators(
+            operators,
+            AdvancedFields(
+                from = from_text,
+                to = to_text,
+                subject = subject_text,
+                attachment = attachment_on,
+                unread = unread_on,
+                starred = starred_on,
+                preset = preset,
+                scope = scope,
+                cleared = cleared,
+            ),
+        )
+        on_apply(merge_lifted(built, lifted.operators), lifted.text.trim())
     }
+
+    val focus_next = { focus_manager.moveFocus(FocusDirection.Down) }
 
     val reset_all = {
         from_text = ""
@@ -317,8 +309,10 @@ internal fun advanced_search_sheet(
         words_text = ""
         attachment_on = false
         unread_on = false
+        starred_on = false
         preset = DatePreset.ANY
-        include_spam_trash = false
+        scope = ""
+        cleared = true
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
@@ -378,19 +372,19 @@ internal fun advanced_search_sheet(
                     advanced_input_row(
                         label = stringResource(R.string.from),
                         value = from_text,
-                        placeholder = person_placeholder,
+                        placeholder = stringResource(R.string.chip_name_or_email),
                         ime_action = ImeAction.Next,
                         on_change = { from_text = it },
-                        on_submit = {},
+                        on_submit = { focus_next() },
                     )
                     AsterDivider(modifier = Modifier.padding(start = 16.dp))
                     advanced_input_row(
                         label = stringResource(R.string.to),
                         value = to_text,
-                        placeholder = person_placeholder,
+                        placeholder = stringResource(R.string.email_address),
                         ime_action = ImeAction.Next,
                         on_change = { to_text = it },
-                        on_submit = {},
+                        on_submit = { focus_next() },
                     )
                 }
 
@@ -401,7 +395,7 @@ internal fun advanced_search_sheet(
                         placeholder = "",
                         ime_action = ImeAction.Next,
                         on_change = { subject_text = it },
-                        on_submit = {},
+                        on_submit = { focus_next() },
                     )
                     AsterDivider(modifier = Modifier.padding(start = 16.dp))
                     advanced_input_row(
@@ -410,7 +404,7 @@ internal fun advanced_search_sheet(
                         placeholder = "",
                         ime_action = ImeAction.Search,
                         on_change = { words_text = it },
-                        on_submit = { on_apply(build_operators(), words_text) },
+                        on_submit = { apply_search() },
                     )
                 }
 
@@ -434,6 +428,16 @@ internal fun advanced_search_sheet(
                                     },
                                 )
                             }
+                            if (custom_available) {
+                                aster_menu_item(
+                                    label = custom_label,
+                                    selected = preset == DatePreset.CUSTOM,
+                                    on_click = {
+                                        preset = DatePreset.CUSTOM
+                                        date_menu_open = false
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -441,35 +445,23 @@ internal fun advanced_search_sheet(
                 advanced_section(title = stringResource(R.string.filters)) {
                     advanced_value_row(
                         label = stringResource(R.string.advanced_search_scope),
-                        value = stringResource(
-                            if (include_spam_trash) {
-                                R.string.search_scope_anywhere
-                            } else {
-                                R.string.folder_all_mail
-                            },
-                        ),
+                        value = stringResource(scope_labels[scope] ?: R.string.folder_all_mail),
                         on_click = { scope_menu_open = true },
                     ) {
                         aster_menu(
                             expanded = scope_menu_open,
                             on_dismiss = { scope_menu_open = false },
                         ) {
-                            aster_menu_item(
-                                label = stringResource(R.string.folder_all_mail),
-                                selected = !include_spam_trash,
-                                on_click = {
-                                    include_spam_trash = false
-                                    scope_menu_open = false
-                                },
-                            )
-                            aster_menu_item(
-                                label = stringResource(R.string.search_scope_anywhere),
-                                selected = include_spam_trash,
-                                on_click = {
-                                    include_spam_trash = true
-                                    scope_menu_open = false
-                                },
-                            )
+                            ADVANCED_SCOPE_VALUES.forEach { option ->
+                                aster_menu_item(
+                                    label = stringResource(scope_labels[option] ?: R.string.folder_all_mail),
+                                    selected = scope == option,
+                                    on_click = {
+                                        scope = option
+                                        scope_menu_open = false
+                                    },
+                                )
+                            }
                         }
                     }
                     AsterDivider(modifier = Modifier.padding(start = 16.dp))
@@ -483,6 +475,12 @@ internal fun advanced_search_sheet(
                         label = stringResource(R.string.chip_is_unread),
                         checked = unread_on,
                         on_change = { unread_on = it },
+                    )
+                    AsterDivider(modifier = Modifier.padding(start = 16.dp))
+                    advanced_toggle_row(
+                        label = stringResource(R.string.starred),
+                        checked = starred_on,
+                        on_change = { starred_on = it },
                     )
                 }
             }
@@ -503,7 +501,7 @@ internal fun advanced_search_sheet(
                 )
                 AsterButton(
                     label = stringResource(R.string.search),
-                    onClick = { on_apply(build_operators(), words_text) },
+                    onClick = { apply_search() },
                     modifier = Modifier.weight(1.4f),
                 )
             }

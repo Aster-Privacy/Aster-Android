@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">제외</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">적용된 필터와 일치하는 결과가 없습니다</string>
+    <string name="search_clear_filters">필터 지우기</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">이번 주</string>
+    <string name="search_value_last_week">지난주</string>
+    <string name="search_value_this_month">이번 달</string>
+    <string name="search_value_attachment">첨부 파일</string>
+    <string name="search_results_incomplete">일부 메시지를 불러오지 못해 결과가 완전하지 않을 수 있습니다.</string>
+    <string name="inbox_filter_no_matches">이 필터와 일치하는 메시지가 없습니다</string>
+    <string name="inbox_filter_clear">필터 지우기</string>
+    <string name="no_favorite_contacts">즐겨찾는 연락처가 없습니다</string>
+    <string name="no_favorite_contacts_match">\"%1$s\"와(과) 일치하는 즐겨찾는 연락처가 없습니다</string>
+    <string name="search_chip_filename">파일 이름</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">첨부 파일 이름 검색</string>
 </resources>

@@ -3561,18 +3561,21 @@ private fun chip_input(
     show_encryption_indicator: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    val query = input.trim().lowercase()
+    val query = org.astermail.android.ui.search.fold_text(input.trim())
     var suggestions_dismissed by remember { mutableStateOf(false) }
     LaunchedEffect(chips.size) { suggestions_dismissed = false }
     val filtered_suggestions = remember(query, suggestions, chips) {
-        if (query.isEmpty() || suggestions.isEmpty() || is_valid_email_chip(query)) {
+        if (query.isEmpty() || suggestions.isEmpty()) {
             emptyList()
         } else {
+            val chosen = chips.map { it.lowercase() }
             suggestions
                 .filter { contact ->
                     val email = contact.email.lowercase()
-                    val name = contact.name.lowercase()
-                    (email.contains(query) || name.contains(query)) && email !in chips.map { it.lowercase() }
+                    val folded_email = org.astermail.android.ui.search.fold_text(contact.email)
+                    val folded_name = org.astermail.android.ui.search.fold_text(contact.name)
+                    (folded_email.contains(query) || folded_name.contains(query)) &&
+                        folded_email != query && email !in chosen
                 }
                 .take(3)
         }
@@ -4238,13 +4241,18 @@ private fun FromAliasSheet(
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
     var query by remember { mutableStateOf("") }
-    val normalized_query = query.trim().lowercase()
+    val normalized_query = org.astermail.android.ui.search.fold_text(query.trim())
     val first_option = options.firstOrNull()
     val visible_options = remember(options, primary, normalized_query) {
         val filtered = if (normalized_query.isEmpty()) {
             options
         } else {
-            options.filter { it.lowercase().contains(normalized_query) }
+            options.filter { option ->
+                org.astermail.android.ui.search.fold_text(option).contains(normalized_query) ||
+                    resolve_display_name(option)?.let {
+                        org.astermail.android.ui.search.fold_text(it).contains(normalized_query)
+                    } == true
+            }
         }
         val (pinned, rest) = filtered.partition { it.equals(primary, ignoreCase = true) }
         pinned + rest

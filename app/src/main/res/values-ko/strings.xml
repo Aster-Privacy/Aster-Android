@@ -346,9 +346,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">날짜 이전</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">최근 N일 이내</string>
+    <string name="op_after_desc">날짜 당일 또는 이후</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">오늘(today), 어제(yesterday), 이번 주(this_week)</string>
+    <string name="op_date_today_desc">값: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">라벨로 검색</string>
     <string name="op_negate">-from:</string>

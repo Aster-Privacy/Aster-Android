@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">Değil</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Etkin filtrelerle eşleşen sonuç yok</string>
+    <string name="search_clear_filters">Filtreleri temizle</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Bu hafta</string>
+    <string name="search_value_last_week">Geçen hafta</string>
+    <string name="search_value_this_month">Bu ay</string>
+    <string name="search_value_attachment">Ek</string>
+    <string name="search_results_incomplete">Bazı iletiler yüklenemedi, bu nedenle sonuçlar eksik olabilir.</string>
+    <string name="inbox_filter_no_matches">Bu filtreyle eşleşen ileti yok</string>
+    <string name="inbox_filter_clear">Filtreyi temizle</string>
+    <string name="no_favorite_contacts">Favori kişi yok</string>
+    <string name="no_favorite_contacts_match">\"%1$s\" ile eşleşen favori kişi yok</string>
+    <string name="search_chip_filename">Dosya adı</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Ek dosya adlarında ara</string>
 </resources>

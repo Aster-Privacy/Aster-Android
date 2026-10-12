@@ -4,4 +4,8 @@
         <item quantity="one">%d नतीजा</item>
         <item quantity="other">%d नतीजे</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">%d दिन पहले</item>
+        <item quantity="other">%d दिन पहले</item>
+    </plurals>
 </resources>

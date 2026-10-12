@@ -346,9 +346,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">指定日より前</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">過去N日以内</string>
+    <string name="op_after_desc">指定日以降</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">今日、昨日、今週</string>
+    <string name="op_date_today_desc">値: today、yesterday、this_week、last_week、this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">ラベルで検索</string>
     <string name="op_negate">-from:</string>

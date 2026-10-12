@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">No</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Ningún resultado coincide con los filtros activos</string>
+    <string name="search_clear_filters">Borrar filtros</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Esta semana</string>
+    <string name="search_value_last_week">La semana pasada</string>
+    <string name="search_value_this_month">Este mes</string>
+    <string name="search_value_attachment">Archivo adjunto</string>
+    <string name="search_results_incomplete">Algunos mensajes no se cargaron, por lo que los resultados pueden estar incompletos.</string>
+    <string name="inbox_filter_no_matches">Ningún mensaje coincide con este filtro</string>
+    <string name="inbox_filter_clear">Borrar filtro</string>
+    <string name="no_favorite_contacts">No hay contactos favoritos</string>
+    <string name="no_favorite_contacts_match">Ningún contacto favorito coincide con \"%1$s\"</string>
+    <string name="search_chip_filename">Nombre de archivo</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Buscar en nombres de archivos adjuntos</string>
 </resources>

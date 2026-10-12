@@ -5263,6 +5263,7 @@ internal fun label_picker_sheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding(),
         ) {
             Text(
@@ -5365,6 +5366,7 @@ internal fun tag_picker_sheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding(),
         ) {
             Text(

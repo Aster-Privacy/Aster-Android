@@ -22,6 +22,7 @@
 package org.astermail.android.ui.search
 
 import org.astermail.android.mail.InboxItem
+import java.time.LocalDate
 
 internal data class ChipPerson(
     val name: String,
@@ -37,18 +38,6 @@ internal fun chip_people_for(
     corpus: List<InboxItem>,
     produced: Pair<List<InboxItem>, ChipPeopleLists>?,
 ): ChipPeopleLists = produced?.takeIf { it.first === corpus }?.second ?: NO_CHIP_PEOPLE
-
-internal val ATTACHMENT_CHIP_TYPES = listOf("image", "document", "pdf", "video")
-
-internal val ATTACHMENT_EXTENSIONS: Map<String, List<String>> = mapOf(
-    "pdf" to listOf(".pdf"),
-    "image" to listOf(".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"),
-    "document" to listOf(".doc", ".docx", ".odt", ".txt", ".rtf"),
-    "spreadsheet" to listOf(".xls", ".xlsx", ".ods", ".csv"),
-    "video" to listOf(".mp4", ".webm", ".avi", ".mov"),
-    "audio" to listOf(".mp3", ".wav", ".ogg", ".aac", ".flac"),
-    "archive" to listOf(".zip", ".rar", ".7z", ".gz", ".tar"),
-)
 
 internal enum class DatePreset {
     ANY,
@@ -127,27 +116,41 @@ internal fun operator_values(ops: List<SearchOperator>, key: String): List<Strin
     ops.filter { !it.negated && it.key == key }.map { it.value }
 
 internal fun without_key(ops: List<SearchOperator>, key: String): List<SearchOperator> =
-    ops.filter { it.key != key }
+    ops.filterNot { !it.negated && it.key == key }
 
-internal fun is_quick_operator(op: SearchOperator): Boolean {
-    if (op.negated) return false
+internal fun has_operator(ops: List<SearchOperator>, key: String, value: String): Boolean =
+    ops.any { !it.negated && it.key == key && it.value == value }
 
-    return when (op.key) {
-        "from", "to", "before", "after" -> true
-        "has" -> op.value == "attachment" || op.value == "attachments" ||
-            ATTACHMENT_CHIP_TYPES.contains(op.value)
-        "is" -> op.value == "unread"
-        else -> false
+internal fun toggle_operator(ops: List<SearchOperator>, key: String, value: String): List<SearchOperator> {
+    if (has_operator(ops, key, value)) {
+        return ops.filterNot { !it.negated && it.key == key && it.value == value }
+    }
+
+    return ops + SearchOperator(false, key, value)
+}
+
+internal fun has_attachment_active(ops: List<SearchOperator>): Boolean =
+    operator_values(ops, "has").any { HAS_OPERATOR_VALUES.contains(it) }
+
+internal fun quick_row_operators(ops: List<SearchOperator>): List<SearchOperator> {
+    val seen = mutableSetOf<String>()
+
+    return ops.filter { op ->
+        if (op.negated) return@filter false
+
+        when (op.key) {
+            "from", "to", "before", "after" -> seen.add(op.key)
+            "has" -> HAS_OPERATOR_VALUES.contains(op.value)
+            "is" -> op.value == "unread"
+            else -> false
+        }
     }
 }
 
-internal fun active_attachment_types(ops: List<SearchOperator>): List<String> =
-    operator_values(ops, "has").filter { ATTACHMENT_CHIP_TYPES.contains(it) }
-
-internal fun has_attachment_active(ops: List<SearchOperator>): Boolean =
-    operator_values(ops, "has").any {
-        it == "attachment" || it == "attachments" || ATTACHMENT_CHIP_TYPES.contains(it)
-    }
+internal fun custom_chip_operators(ops: List<SearchOperator>): List<SearchOperator> {
+    val quick = quick_row_operators(ops)
+    return ops.filterNot { op -> quick.any { it === op } }
+}
 
 internal fun scope_includes_spam(ops: List<SearchOperator>): Boolean =
     ops.any { !it.negated && it.key == "in" && (it.value == "spam" || it.value == "anywhere") }
@@ -156,18 +159,32 @@ internal fun scope_includes_trash(ops: List<SearchOperator>): Boolean =
     ops.any { !it.negated && it.key == "in" && (it.value == "trash" || it.value == "anywhere") }
 
 internal fun detect_date_preset(ops: List<SearchOperator>): DatePreset {
-    val before = operator_value(ops, "before")
-    val after = operator_value(ops, "after")
+    val before = operator_values(ops, "before")
+    val after = operator_values(ops, "after")
 
-    if (before == null && after == null) return DatePreset.ANY
+    if (before.isEmpty() && after.isEmpty()) return DatePreset.ANY
 
-    if (after == null && before != null) {
+    if (after.isEmpty() && before.size == 1) {
         for ((preset, days) in PRESET_DAYS) {
-            if (before == "${days}d") return preset
+            if (before[0] == "${days}d") return preset
         }
     }
 
     return DatePreset.CUSTOM
+}
+
+internal fun custom_date_range(ops: List<SearchOperator>): Pair<LocalDate, LocalDate>? {
+    val before = operator_values(ops, "before")
+    val after = operator_values(ops, "after")
+
+    if (before.size != 1 || after.size != 1) return null
+
+    val first_day = parse_iso_date(after[0]) ?: return null
+    val end = parse_iso_date(before[0]) ?: return null
+
+    if (!end.isAfter(first_day)) return null
+
+    return first_day to end.minusDays(1)
 }
 
 internal fun set_person(
@@ -175,45 +192,31 @@ internal fun set_person(
     key: String,
     value: String,
 ): List<SearchOperator> {
-    val trimmed = value.trim()
-    val cleared = without_key(ops, key)
+    val trimmed = value.replace("\"", "").trim()
+    val shown = ops.firstOrNull { !it.negated && it.key == key }
+    val cleared = if (shown == null) ops else ops.filterNot { it === shown }
 
     if (trimmed.isEmpty()) return cleared
 
     return cleared + SearchOperator(false, key, trimmed.lowercase())
 }
 
-internal fun toggle_unread(ops: List<SearchOperator>): List<SearchOperator> {
-    val active = ops.any { !it.negated && it.key == "is" && it.value == "unread" }
-
-    if (active) return ops.filterNot { !it.negated && it.key == "is" && it.value == "unread" }
-
-    return ops + SearchOperator(false, "is", "unread")
-}
+internal fun toggle_unread(ops: List<SearchOperator>): List<SearchOperator> =
+    toggle_operator(ops, "is", "unread")
 
 internal fun toggle_attachment(ops: List<SearchOperator>): List<SearchOperator> {
-    if (has_attachment_active(ops)) return without_key(ops, "has")
+    if (has_attachment_active(ops)) {
+        return ops.filterNot { !it.negated && it.key == "has" && HAS_OPERATOR_VALUES.contains(it.value) }
+    }
 
     return ops + SearchOperator(false, "has", "attachment")
 }
 
-internal fun toggle_attachment_type(ops: List<SearchOperator>, type: String): List<SearchOperator> {
-    val active = active_attachment_types(ops)
-    val base = without_key(ops, "has")
-
-    if (active.contains(type)) {
-        val remaining = active.filterNot { it == type }
-
-        if (remaining.isEmpty()) return base + SearchOperator(false, "has", "attachment")
-
-        return base + remaining.map { SearchOperator(false, "has", it) }
-    }
-
-    return base + (active + type).map { SearchOperator(false, "has", it) }
-}
+internal fun without_date_bounds(ops: List<SearchOperator>): List<SearchOperator> =
+    without_key(without_key(ops, "before"), "after")
 
 internal fun apply_date_preset(ops: List<SearchOperator>, preset: DatePreset): List<SearchOperator> {
-    val base = without_key(without_key(ops, "before"), "after")
+    val base = without_date_bounds(ops)
     val days = PRESET_DAYS[preset] ?: return base
 
     return base + SearchOperator(false, "before", "${days}d")
@@ -221,23 +224,94 @@ internal fun apply_date_preset(ops: List<SearchOperator>, preset: DatePreset): L
 
 internal fun apply_custom_range(
     ops: List<SearchOperator>,
-    after_date: String,
-    before_date: String,
+    first_day: LocalDate,
+    last_day: LocalDate,
 ): List<SearchOperator> {
-    val base = without_key(without_key(ops, "before"), "after")
+    val start = if (last_day.isBefore(first_day)) last_day else first_day
+    val end = if (last_day.isBefore(first_day)) first_day else last_day
 
-    return base +
-        SearchOperator(false, "after", after_date) +
-        SearchOperator(false, "before", before_date)
+    return without_date_bounds(ops) +
+        SearchOperator(false, "after", start.toString()) +
+        SearchOperator(false, "before", end.plusDays(1).toString())
 }
 
-internal fun matches_attachment_type(item: InboxItem, type: String): Boolean {
-    if (!item.has_attachments) return false
+internal val ADVANCED_SCOPE_VALUES = listOf("", "inbox", "sent", "drafts", "archive", "spam", "trash", "anywhere")
 
-    val extensions = ATTACHMENT_EXTENSIONS[type] ?: return true
-    val haystack = (item.subject + " " + item.preview).lowercase()
+internal data class AdvancedFields(
+    val from: String,
+    val to: String,
+    val subject: String,
+    val attachment: Boolean,
+    val unread: Boolean,
+    val starred: Boolean,
+    val preset: DatePreset,
+    val scope: String,
+    val cleared: Boolean = false,
+)
 
-    return extensions.any { haystack.contains(it) }
+private fun advanced_scope(ops: List<SearchOperator>): String =
+    when (val scope = ops.lastOrNull { !it.negated && it.key == "in" }?.value) {
+        "draft" -> "drafts"
+        "archived" -> "archive"
+        null -> ""
+        else -> if (ADVANCED_SCOPE_VALUES.contains(scope)) scope else ""
+    }
+
+internal fun advanced_fields(ops: List<SearchOperator>): AdvancedFields = AdvancedFields(
+    from = operator_value(ops, "from").orEmpty(),
+    to = operator_value(ops, "to").orEmpty(),
+    subject = operator_value(ops, "subject").orEmpty(),
+    attachment = has_attachment_active(ops),
+    unread = has_operator(ops, "is", "unread"),
+    starred = has_operator(ops, "is", "starred") || has_operator(ops, "in", "starred"),
+    preset = detect_date_preset(ops),
+    scope = advanced_scope(ops),
+)
+
+private fun advanced_text_operator(key: String, text: String): SearchOperator? {
+    val value = text.replace("\"", "").trim().lowercase()
+    return if (value.isEmpty()) null else SearchOperator(false, key, value)
+}
+
+internal fun build_advanced_operators(
+    ops: List<SearchOperator>,
+    fields: AdvancedFields,
+): List<SearchOperator> {
+    val first_owned = listOf("from", "to", "subject").mapNotNull { key ->
+        ops.firstOrNull { !it.negated && it.key == key }
+    }
+    val kept = if (fields.cleared) {
+        emptyList()
+    } else {
+        ops.filterNot { op ->
+            !op.negated && (
+                first_owned.any { it === op } ||
+                    (op.key == "has" && HAS_OPERATOR_VALUES.contains(op.value)) ||
+                    (op.key == "is" && (op.value == "unread" || op.value == "starred")) ||
+                    op.key == "before" || op.key == "after" ||
+                    (op.key == "in" && (fields.scope.isNotEmpty() || advanced_scope(listOf(op)).isNotEmpty()))
+                )
+        }
+    }
+    val preset_days = PRESET_DAYS[fields.preset]
+    val dates = when {
+        preset_days != null -> listOf(SearchOperator(false, "before", "${preset_days}d"))
+        fields.preset == DatePreset.CUSTOM && !fields.cleared ->
+            ops.filter { !it.negated && (it.key == "before" || it.key == "after") }
+        else -> emptyList()
+    }
+
+    return kept +
+        listOfNotNull(
+            advanced_text_operator("from", fields.from),
+            advanced_text_operator("to", fields.to),
+            advanced_text_operator("subject", fields.subject),
+            if (fields.attachment) SearchOperator(false, "has", "attachment") else null,
+            if (fields.unread) SearchOperator(false, "is", "unread") else null,
+            if (fields.starred) SearchOperator(false, "is", "starred") else null,
+        ) +
+        dates +
+        listOfNotNull(if (fields.scope.isEmpty()) null else SearchOperator(false, "in", fields.scope))
 }
 
 internal enum class ScopeSuggestionKind {

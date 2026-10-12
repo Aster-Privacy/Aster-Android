@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">ليس</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">لا توجد نتائج تطابق عوامل التصفية النشطة</string>
+    <string name="search_clear_filters">مسح عوامل التصفية</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">هذا الأسبوع</string>
+    <string name="search_value_last_week">الأسبوع الماضي</string>
+    <string name="search_value_this_month">هذا الشهر</string>
+    <string name="search_value_attachment">مرفق</string>
+    <string name="search_results_incomplete">تعذّر تحميل بعض الرسائل، لذا قد تكون النتائج غير مكتملة.</string>
+    <string name="inbox_filter_no_matches">لا توجد رسائل تطابق عامل التصفية هذا</string>
+    <string name="inbox_filter_clear">مسح عامل التصفية</string>
+    <string name="no_favorite_contacts">لا توجد جهات اتصال مفضلة</string>
+    <string name="no_favorite_contacts_match">لا توجد جهات اتصال مفضلة تطابق \"%1$s\"</string>
+    <string name="search_chip_filename">اسم الملف</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">البحث في أسماء ملفات المرفقات</string>
 </resources>

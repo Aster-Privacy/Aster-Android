@@ -4,4 +4,8 @@
         <item quantity="one">%d resultaat</item>
         <item quantity="other">%d resultaten</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">%d dag geleden</item>
+        <item quantity="other">%d dagen geleden</item>
+    </plurals>
 </resources>

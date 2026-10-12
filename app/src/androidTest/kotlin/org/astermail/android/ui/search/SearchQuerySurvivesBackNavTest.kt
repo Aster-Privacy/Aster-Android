@@ -70,7 +70,9 @@ class SearchQuerySurvivesBackNavTest {
 
     private val typed_query = "github"
     private val chip = TestOperator(true, "from", "ci|bot alerts")
-    private val filter = "Unread"
+    private val filter_chip = TestOperator(false, "is", "unread")
+    private val typed_chips = listOf(chip, filter_chip)
+    private val typed_chips_text = typed_chips.joinToString(";") { "${it.negated},${it.key},${it.value}" }
 
     @Composable
     private fun fixed_search_state() {
@@ -78,10 +80,9 @@ class SearchQuerySurvivesBackNavTest {
         var operator_chips by rememberSaveable("", stateSaver = chips_saver) {
             mutableStateOf(emptyList<TestOperator>())
         }
-        var active_filter by rememberSaveable { mutableStateOf<String?>(null) }
         search_state_body(
-            free_text, operator_chips, active_filter,
-            { free_text = it }, { operator_chips = it }, { active_filter = it },
+            free_text, operator_chips,
+            { free_text = it }, { operator_chips = it },
         )
     }
 
@@ -89,10 +90,9 @@ class SearchQuerySurvivesBackNavTest {
     private fun buggy_search_state() {
         var free_text by remember("") { mutableStateOf("") }
         var operator_chips by remember("") { mutableStateOf(emptyList<TestOperator>()) }
-        var active_filter by remember { mutableStateOf<String?>(null) }
         search_state_body(
-            free_text, operator_chips, active_filter,
-            { free_text = it }, { operator_chips = it }, { active_filter = it },
+            free_text, operator_chips,
+            { free_text = it }, { operator_chips = it },
         )
     }
 
@@ -100,10 +100,8 @@ class SearchQuerySurvivesBackNavTest {
     private fun search_state_body(
         free_text: String,
         operator_chips: List<TestOperator>,
-        active_filter: String?,
         set_text: (String) -> Unit,
         set_chips: (List<TestOperator>) -> Unit,
-        set_filter: (String?) -> Unit,
     ) {
         Column {
             Text(free_text, modifier = Modifier.testTag("free_text"))
@@ -111,11 +109,9 @@ class SearchQuerySurvivesBackNavTest {
                 operator_chips.joinToString(";") { "${it.negated},${it.key},${it.value}" },
                 modifier = Modifier.testTag("chips"),
             )
-            Text(active_filter.orEmpty(), modifier = Modifier.testTag("filter"))
             Button(onClick = {
                 set_text(typed_query)
-                set_chips(listOf(chip))
-                set_filter(filter)
+                set_chips(typed_chips)
             }) { Text("type_query") }
         }
     }
@@ -156,9 +152,7 @@ class SearchQuerySurvivesBackNavTest {
         type_open_and_go_back()
 
         compose_rule.onNodeWithTag("free_text").assertTextEquals(typed_query)
-        compose_rule.onNodeWithTag("chips")
-            .assertTextEquals("${chip.negated},${chip.key},${chip.value}")
-        compose_rule.onNodeWithTag("filter").assertTextEquals(filter)
+        compose_rule.onNodeWithTag("chips").assertTextEquals(typed_chips_text)
     }
 
     @Test
@@ -170,6 +164,5 @@ class SearchQuerySurvivesBackNavTest {
 
         compose_rule.onNodeWithTag("free_text").assertTextEquals("")
         compose_rule.onNodeWithTag("chips").assertTextEquals("")
-        compose_rule.onNodeWithTag("filter").assertTextEquals("")
     }
 }

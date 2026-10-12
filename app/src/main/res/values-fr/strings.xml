@@ -370,9 +370,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">Avant une date</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">Dans les N derniers jours</string>
+    <string name="op_after_desc">À partir d’une date</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">today, yesterday, this_week</string>
+    <string name="op_date_today_desc">Valeurs : today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">Rechercher par étiquette</string>
     <string name="op_negate">-from:</string>

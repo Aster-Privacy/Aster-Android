@@ -134,6 +134,8 @@ class MailRulesOperatorParityTest {
     fun is_empty_needs_no_value_and_clears_the_old_one() {
         assertTrue(is_condition_complete(Condition.Cc(op = AddressOp.IS_EMPTY, value = "")))
         assertFalse(is_condition_complete(Condition.Cc(op = AddressOp.DOES_NOT_CONTAIN, value = "")))
+        assertFalse(is_condition_complete(Condition.From(op = AddressOp.IS_NOT, value = "")))
+        assertTrue(is_condition_complete(Condition.From(op = AddressOp.IS_NOT, value = "a@astermail.org")))
         assertFalse(is_condition_complete(Condition.From(op = AddressOp.STARTS_WITH, value = " ")))
         assertEquals("", value_for_address_op(AddressOp.IS_EMPTY, "old"))
         assertEquals("old", value_for_address_op(AddressOp.ENDS_WITH, "old"))

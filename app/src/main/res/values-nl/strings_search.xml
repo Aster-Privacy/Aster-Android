@@ -15,4 +15,19 @@
     <string name="search_chip_not_prefix">Niet</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Geen resultaten voor de actieve filters</string>
+    <string name="search_clear_filters">Filters wissen</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Deze week</string>
+    <string name="search_value_last_week">Vorige week</string>
+    <string name="search_value_this_month">Deze maand</string>
+    <string name="search_value_attachment">Bijlage</string>
+    <string name="search_results_incomplete">Sommige berichten zijn niet geladen, dus de resultaten zijn mogelijk onvolledig.</string>
+    <string name="inbox_filter_no_matches">Geen berichten komen overeen met dit filter</string>
+    <string name="inbox_filter_clear">Filter wissen</string>
+    <string name="no_favorite_contacts">Geen favoriete contacten</string>
+    <string name="no_favorite_contacts_match">Geen favoriete contacten komen overeen met \"%1$s\"</string>
+    <string name="search_chip_filename">Bestandsnaam</string>
+    <string name="op_filename">filename:</string>
+    <string name="op_filename_desc">Zoeken in bestandsnamen van bijlagen</string>
 </resources>

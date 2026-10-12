@@ -346,9 +346,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">Belirli bir tarihten önce</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">Son N gün içinde</string>
+    <string name="op_after_desc">Belirli bir tarihte veya sonrasında</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">Bugün (today), dün (yesterday), bu hafta (this_week)</string>
+    <string name="op_date_today_desc">Değerler: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">Etikete göre ara</string>
     <string name="op_negate">-from:</string>

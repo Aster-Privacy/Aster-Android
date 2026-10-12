@@ -117,9 +117,9 @@ fun default_condition_for(field: field_id): Condition = when (field_kind_of(fiel
         else -> Condition.HasAttachment(true)
     }
     field_kind.numeric_size -> when (field) {
-        field_id.attachment_size -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1_000_000L)
-        field_id.total_size -> Condition.TotalSize(NumericOp.GREATER_THAN, 1_000_000L)
-        else -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1_000_000L)
+        field_id.attachment_size -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1024L * 1024L)
+        field_id.total_size -> Condition.TotalSize(NumericOp.GREATER_THAN, 1024L * 1024L)
+        else -> Condition.AttachmentSize(NumericOp.GREATER_THAN, 1024L * 1024L)
     }
     field_kind.numeric_plain -> when (field) {
         field_id.recipient_count -> Condition.RecipientCount(NumericOp.GREATER_THAN, 5L)
@@ -255,12 +255,12 @@ fun is_condition_complete(c: Condition): Boolean =
 
 private fun has_condition_value(c: Condition): Boolean = when (c) {
     is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> false
-    is Condition.From -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
-    is Condition.ReplyTo -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
-    is Condition.To -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
-    is Condition.Cc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
-    is Condition.Bcc -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
-    is Condition.AnyRecipient -> c.value.isNotBlank() || c.op == AddressOp.IS_NOT || c.op == AddressOp.IS_EMPTY
+    is Condition.From -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
+    is Condition.ReplyTo -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
+    is Condition.To -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
+    is Condition.Cc -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
+    is Condition.Bcc -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
+    is Condition.AnyRecipient -> c.value.isNotBlank() || c.op == AddressOp.IS_EMPTY
     is Condition.Subject -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
     is Condition.Body -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
     is Condition.ListId -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()

@@ -20,6 +20,7 @@ package org.astermail.android.ui.search
 
 import org.astermail.android.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -43,6 +44,31 @@ class SearchChipValueLabelTest {
         assertEquals(R.string.filter_unread, operator_value_label(op("is", "unread")))
         assertEquals(R.string.filter_starred, operator_value_label(op("is", "starred")))
         assertEquals(R.string.filter_encrypted, operator_value_label(op("is", "encrypted")))
+        assertEquals(R.string.inbox_a11y_state_read, operator_value_label(op("is", "read")))
+        assertEquals(R.string.not_starred, operator_value_label(op("is", "unstarred")))
+        assertEquals(R.string.filter_unread, operator_value_label(op("is", "unread", negated = true)))
+    }
+
+    @Test
+    fun date_and_attachment_values_use_translated_names() {
+        assertEquals(R.string.security_activity_today, operator_value_label(op("date", "today")))
+        assertEquals(R.string.yesterday, operator_value_label(op("date", "yesterday")))
+        assertEquals(R.string.search_value_this_week, operator_value_label(op("date", "this_week")))
+        assertEquals(R.string.search_value_last_week, operator_value_label(op("date", "last_week")))
+        assertEquals(R.string.search_value_this_month, operator_value_label(op("date", "this_month")))
+        assertEquals(R.string.search_value_attachment, operator_value_label(op("has", "attachment")))
+        assertEquals(R.string.search_value_attachment, operator_value_label(op("has", "attachments")))
+    }
+
+    @Test
+    fun every_fixed_operator_value_has_a_translated_name() {
+        val fixed = IS_OPERATOR_VALUES.map { op("is", it) } +
+            IN_OPERATOR_VALUES.map { op("in", it) } +
+            HAS_OPERATOR_VALUES.map { op("has", it) } +
+            DATE_OPERATOR_VALUES.map { op("date", it) }
+        for (operator in fixed) {
+            assertNotNull("${operator.key}:${operator.value}", operator_value_label(operator))
+        }
     }
 
     @Test
@@ -50,6 +76,7 @@ class SearchChipValueLabelTest {
         assertNull(operator_value_label(op("in", "Receipts")))
         assertNull(operator_value_label(op("from", "inbox")))
         assertNull(operator_value_label(op("subject", "anywhere")))
-        assertNull(operator_value_label(op("is", "read")))
+        assertNull(operator_value_label(op("date", "2026-08-10")))
+        assertNull(operator_value_label(op("before", "7d")))
     }
 }

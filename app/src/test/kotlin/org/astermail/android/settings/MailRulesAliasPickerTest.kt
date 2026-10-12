@@ -294,4 +294,16 @@ class MailRulesAliasPickerTest {
         assertEquals(listOf("news@astermail.org"), filter_alias_options(options, "new").map { it.address })
         assertTrue(filter_alias_options(options, "nothing").isEmpty())
     }
+
+    @Test
+    fun `alias search ignores accents in the query and in the name`() {
+        val options = listOf(
+            alias_option(address = "jose@astermail.org", display_name = "José Álvarez"),
+            alias_option(address = "news@astermail.org", display_name = "Newsletter"),
+        )
+
+        assertEquals(listOf("jose@astermail.org"), filter_alias_options(options, "alvarez").map { it.address })
+        assertEquals(listOf("jose@astermail.org"), filter_alias_options(options, "JOSÉ").map { it.address })
+        assertEquals(listOf("news@astermail.org"), filter_alias_options(options, "néws").map { it.address })
+    }
 }

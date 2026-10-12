@@ -53,6 +53,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -220,13 +221,7 @@ fun ContactsScreen(
     val filtered = remember(query, filter_favorites, ui_state.contacts) {
         ui_state.contacts
             .filter { if (filter_favorites) it.is_favorite else true }
-            .filter {
-                val q = query.trim().lowercase()
-                if (q.isEmpty()) true
-                else it.name.lowercase().contains(q) ||
-                    it.email.lowercase().contains(q) ||
-                    it.company.lowercase().contains(q)
-            }
+            .filter { contact_matches_query(it, query) }
             .sortedBy { it.name.uppercase() }
     }
 
@@ -240,16 +235,7 @@ fun ContactsScreen(
     }
 
     val filtered_trash = remember(query, ui_state.trashed_contacts) {
-        val q = query.trim().lowercase()
-        if (q.isEmpty()) {
-            ui_state.trashed_contacts
-        } else {
-            ui_state.trashed_contacts.filter {
-                it.name.lowercase().contains(q) ||
-                    it.email.lowercase().contains(q) ||
-                    it.company.lowercase().contains(q)
-            }
-        }
+        ui_state.trashed_contacts.filter { contact_matches_query(it, query) }
     }
 
     val on_compose_selection: () -> Unit = {
@@ -265,7 +251,8 @@ fun ContactsScreen(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding(),
+            .systemBarsPadding()
+            .imePadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (ui_state.is_bulk_working && ui_state.bulk_total > 1) {
@@ -617,10 +604,13 @@ fun ContactsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         val empty_message = ui_state.error
-                            ?: if (query.isBlank()) {
-                                stringResource(R.string.no_contacts_yet)
-                            } else {
-                                stringResource(R.string.no_contacts_match, query.trim())
+                            ?: when (contacts_empty_reason(query, filter_favorites)) {
+                                ContactsEmptyReason.no_contacts -> stringResource(R.string.no_contacts_yet)
+                                ContactsEmptyReason.no_match ->
+                                    stringResource(R.string.no_contacts_match, query.trim())
+                                ContactsEmptyReason.no_favorites -> stringResource(R.string.no_favorite_contacts)
+                                ContactsEmptyReason.no_favorites_match ->
+                                    stringResource(R.string.no_favorite_contacts_match, query.trim())
                             }
                         Text(
                             text = empty_message,

@@ -561,9 +561,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">किसी तारीख़ से पहले</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">पिछले N दिनों के भीतर</string>
+    <string name="op_after_desc">किसी तारीख़ को या उसके बाद</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">today, yesterday, this_week</string>
+    <string name="op_date_today_desc">मान: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">लेबल से खोजें</string>
     <string name="op_negate">-from:</string>

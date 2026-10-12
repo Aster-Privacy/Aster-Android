@@ -5,4 +5,9 @@
         <item quantity="many">%d resultados</item>
         <item quantity="other">%d resultados</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">hace %d día</item>
+        <item quantity="many">hace %d días</item>
+        <item quantity="other">hace %d días</item>
+    </plurals>
 </resources>
