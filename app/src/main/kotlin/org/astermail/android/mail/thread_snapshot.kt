@@ -53,6 +53,7 @@ data class thread_snapshot_message(
     val display_sender_email: String? = null,
     val pgp_encrypted: Boolean = false,
     val pgp_signature: String = PgpSignatureStatus.NONE.name,
+    val sender_verification: String? = null,
 )
 
 fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message = thread_snapshot_message(
@@ -76,6 +77,7 @@ fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message
     display_sender_email = message.display_sender_email,
     pgp_encrypted = message.pgp_encrypted,
     pgp_signature = message.pgp_signature.name,
+    sender_verification = message.sender_verification,
 )
 
 fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted = ThreadMessageDecrypted(
@@ -102,4 +104,5 @@ fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted
     pgp_encrypted = snapshot.pgp_encrypted,
     pgp_signature = runCatching { PgpSignatureStatus.valueOf(snapshot.pgp_signature) }
         .getOrDefault(PgpSignatureStatus.NONE),
+    sender_verification = snapshot.sender_verification,
 )

@@ -1660,10 +1660,6 @@
     <string name="settings_section_other">Diğer</string>
     <string name="phishing_warning_title">Bu mesaj şüpheli görünüyor</string>
     <string name="phishing_dangerous_title">Tehlikeli e-posta engellendi</string>
-    <string name="phishing_signal_sender_domain_mimics">Gönderen alan adı \"%1$s\", benzer karakterlerle \"%2$s\" adresini taklit ediyor</string>
-    <string name="phishing_signal_sender_domain_resembles">Gönderen alan adı \"%1$s\", karakterleri değiştirilmiş \"%2$s\" adresine benziyor</string>
-    <string name="phishing_signal_display_name_brand">Görünen ad \"%1$s\" içeriyor ama e-posta %2$s adresinden geliyor</string>
-    <string name="phishing_signal_display_name_email">Görünen ad \"%1$s\" adresini içeriyor ama gönderen %2$s</string>
     <string name="phishing_show_details">Ayrıntıları göster</string>
     <string name="phishing_hide_details">Ayrıntıları gizle</string>
     <string name="phishing_privacy_note">Cihazınızda tespit edildi. Aster e-postalarınızı asla okumaz.</string>
@@ -3357,4 +3353,14 @@
     <string name="moved_to_category">Kategoriye taşındı</string>
     <string name="metadata_undecryptable_change">Bu cihaz bu mesajın ayrıntılarını açamıyor, bu yüzden değişikliğiniz kaydedilmiyor. Anahtarlarınızı yeniden yüklemek için oturumu kapatıp yeniden açın. Sunucudaki mesajınız değişmeden duruyor.</string>
     <string name="color_swatch_option">Renk %1$d / %2$d</string>
+    <string name="sender_warning_title">Gönderenin adresini kontrol edin</string>
+    <string name="sender_warning_address_in_name">Gönderenin adında %1$s görünüyor, ancak bu ileti %2$s adresinden geliyor.</string>
+    <string name="sender_warning_lookalike_name">Gönderenin adı %1$s gibi görünecek şekilde yazılmış, ancak bu ileti %2$s adresinden geliyor.</string>
+    <string name="sender_warning_brand_name">Gönderenin adında %1$s geçiyor, ancak bu ileti %2$s adresinden geliyor ve bu adres %1$s tarafından kullanıldığı bilinen bir adres değil.</string>
+    <string name="sender_warning_home_brand_name">Bu ileti Aster\'dan gelmiyor. %1$s adresinden geliyor. Aster, parolanızı veya kurtarma ifadenizi hiçbir zaman e-postayla istemez.</string>
+    <string name="sender_warning_lookalike_domain">%1$s alan adı %2$s alan adına benziyor, ancak farklı bir alan adı.</string>
+    <string name="sender_contact_notice">Bu gönderen, kişiniz %1$s ile aynı adı taşıyor, ancak farklı bir adres kullanıyor.</string>
+    <string name="sender_reply_to_notice">Bu iletiye verilen yanıtlar %1$s adresine gider ve bu adres gönderenden farklı bir alan adına aittir.</string>
+    <string name="email_auth_unverified">Doğrulanmadı</string>
+    <string name="email_auth_unverified_desc">Aster, bu iletiyi %1$s alan adının gönderdiğini doğrulayamadı. Bağlantıları veya ekleri açmadan önce göndereni tanıdığınızdan emin olun.</string>
 </resources>

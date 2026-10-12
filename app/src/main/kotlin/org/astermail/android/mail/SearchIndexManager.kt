@@ -631,6 +631,14 @@ class SearchIndexManager @Inject constructor(
                 has_recipient_key = item.raw_item.has_recipient_key,
                 is_pinned = item.raw_item.metadata?.is_pinned ?: false,
                 tag_tokens = item.tag_tokens.joinToString(",").ifBlank { null },
+                spf_result = item.raw_item.spf_result,
+                dkim_result = item.raw_item.dkim_result,
+                dmarc_result = item.raw_item.dmarc_result,
+                sender_aligned = item.raw_item.sender_aligned,
+                sender_verified = item.raw_item.sender_verified,
+                sender_verified_domain = item.raw_item.sender_verified_domain,
+                sender_verification = item.sender_verification,
+                item_type = item.raw_item.item_type,
             )
         }
         mutex.withLock {

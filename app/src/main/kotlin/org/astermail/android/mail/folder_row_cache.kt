@@ -79,6 +79,13 @@ fun folder_cache_rows(
                 system_origin = item.raw_item.system_origin,
                 has_recipient_key = item.raw_item.has_recipient_key,
                 cached_at = cached_at,
+                spf_result = item.raw_item.spf_result,
+                dkim_result = item.raw_item.dkim_result,
+                dmarc_result = item.raw_item.dmarc_result,
+                sender_aligned = item.raw_item.sender_aligned,
+                sender_verified = item.raw_item.sender_verified,
+                sender_verified_domain = item.raw_item.sender_verified_domain,
+                sender_verification = item.sender_verification,
             ),
         )
     }
@@ -109,6 +116,7 @@ fun FolderRowEntity.to_inbox_item(): InboxItem = InboxItem(
     display_sender_email = display_sender_email,
     to_addresses = split_tokens(to_addresses),
     routing_token = routing_token,
+    sender_verification = sender_verification,
     raw_item = MailItem(
         id = id,
         item_type = item_type,
@@ -128,6 +136,12 @@ fun FolderRowEntity.to_inbox_item(): InboxItem = InboxItem(
         is_pinned = is_pinned,
         has_attachments = has_attachments,
         attachment_count = attachment_count,
+        spf_result = spf_result,
+        dkim_result = dkim_result,
+        dmarc_result = dmarc_result,
+        sender_aligned = sender_aligned,
+        sender_verified = sender_verified,
+        sender_verified_domain = sender_verified_domain,
         metadata = MailItemMetadata(
             is_read = is_read,
             is_starred = is_starred,
@@ -194,6 +208,7 @@ fun carry_decrypted_content(item: InboxItem, previous: InboxItem?): InboxItem {
         display_sender_name = previous.display_sender_name,
         display_sender_email = previous.display_sender_email,
         to_addresses = previous.to_addresses,
+        sender_verification = previous.sender_verification,
         is_undecryptable = false,
         is_decrypt_pending = false,
     )

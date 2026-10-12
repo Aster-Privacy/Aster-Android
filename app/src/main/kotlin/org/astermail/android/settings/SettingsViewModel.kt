@@ -6530,6 +6530,11 @@ class SettingsViewModel @Inject constructor(
             )
         }
         org.astermail.android.mail.OwnAddressAvatars.publish(source, published)
+        org.astermail.android.security.SenderTrustStore.set_own_addresses(
+            "account_email",
+            listOfNotNull(account?.email),
+        )
+        org.astermail.android.security.SenderTrustStore.set_own_addresses(source.name, published.map { it.first })
     }
 
     private fun decrypt_alias(alias: AliasInfo): AliasInfo {

@@ -137,11 +137,15 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         envelope.from_email,
         envelope.raw_headers,
     )
-    val sender = safe_display_text(
-        forwarding?.display_sender_name
-            ?: envelope.from_name.takeIf { it.isNotBlank() }
-            ?: envelope.from_email,
+    val shown_email = forwarding?.display_sender_email ?: envelope.from_email
+    val trust_context = org.astermail.android.security.SenderTrustStore.context.value
+    val shown_name = org.astermail.android.security.notification_sender_name(
+        forwarding?.display_sender_name ?: envelope.from_name,
+        shown_email,
+        trust_context.own_addresses,
+        trust_context.contacts,
     )
+    val sender = safe_display_text(shown_name.ifBlank { shown_email })
     val subject = safe_display_text(envelope.subject)
     if (sender.isBlank() || subject.isBlank()) return PushResult.NeedsFetch
     val notification_id = if (item_id.isNotBlank()) {

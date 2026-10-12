@@ -299,11 +299,15 @@ class MailPollingWorker(
             val candidate_sender = if (candidate?.is_undecryptable == true) {
                 localized(context).getString(org.astermail.android.R.string.encrypted)
             } else {
-                (
-                    candidate?.display_sender_name
-                        ?: candidate?.sender_name?.takeIf { it.isNotBlank() }
-                        ?: candidate?.sender_email
-                    )?.trim()
+                candidate?.let { item ->
+                    org.astermail.android.security.trusted_sender_name(
+                        org.astermail.android.ui.mail.inbox_item_trust_message(item),
+                        item.display_sender_name
+                            ?: item.sender_name.takeIf { it.isNotBlank() }
+                            ?: item.sender_email,
+                        localized(context).getString(org.astermail.android.R.string.unknown),
+                    ).trim()
+                }
             }
             if (candidate != null &&
                 !candidate_sender.isNullOrBlank() &&

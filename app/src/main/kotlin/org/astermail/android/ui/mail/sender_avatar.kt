@@ -158,7 +158,13 @@ fun SenderAvatar(
     profile_color: String? = null,
     use_peer_profile_color: Boolean = true,
     use_contact_photo: Boolean = true,
+    plain: Boolean = false,
 ) {
+    if (plain) {
+        val (plain_bg, plain_fg) = avatar_colors_for(avatar_key_for(email, name), null)
+        initials_circle(name, email, plain_bg, plain_fg, size, modifier)
+        return
+    }
     if (use_contact_photo && !remember(email, sender_authenticated) { is_aster_system_sender(email, sender_authenticated) }) {
         val contact_photo = remember_contact_photo(email)
         if (contact_photo != null) {
@@ -510,6 +516,7 @@ fun StackedAvatars(
     max_visible: Int = 3,
     authenticated_system_email: String? = null,
     modifier: Modifier = Modifier,
+    plain: Boolean = false,
 ) {
     val list = if (participants.isEmpty()) emptyList() else participants
     if (list.size <= 1) {
@@ -522,6 +529,7 @@ fun StackedAvatars(
                 size = size,
                 sender_authenticated = matches_authenticated_system(em, authenticated_system_email),
                 modifier = modifier,
+                plain = plain,
             )
         }
         return
@@ -541,6 +549,7 @@ fun StackedAvatars(
                     size = each_size,
                     sender_authenticated = matches_authenticated_system(em, authenticated_system_email),
                     modifier = Modifier.align(alignments[idx]),
+                    plain = plain,
                 )
             }
         }

@@ -1668,10 +1668,6 @@
     <string name="settings_section_other">Другое</string>
     <string name="phishing_warning_title">Это сообщение выглядит подозрительно</string>
     <string name="phishing_dangerous_title">Опасное письмо заблокировано</string>
-    <string name="phishing_signal_sender_domain_mimics">Домен отправителя \"%1$s\" подражает \"%2$s\" с помощью похожих символов</string>
-    <string name="phishing_signal_sender_domain_resembles">Домен отправителя \"%1$s\" похож на \"%2$s\" с заменёнными символами</string>
-    <string name="phishing_signal_display_name_brand">Отображаемое имя содержит \"%1$s\", но письмо пришло с %2$s</string>
-    <string name="phishing_signal_display_name_email">Отображаемое имя содержит адрес \"%1$s\", но отправитель - %2$s</string>
     <string name="phishing_show_details">Показать подробности</string>
     <string name="phishing_hide_details">Скрыть подробности</string>
     <string name="phishing_privacy_note">Обнаружено на вашем устройстве. Aster никогда не читает вашу почту.</string>
@@ -3395,4 +3391,14 @@
     <string name="moved_to_category">Перемещено в категорию</string>
     <string name="metadata_undecryptable_change">Это устройство не может открыть данные этого письма, поэтому ваше изменение не сохраняется. Чтобы загрузить ключи заново, выйдите и войдите снова. Письмо на сервере остаётся без изменений.</string>
     <string name="color_swatch_option">Цвет %1$d из %2$d</string>
+    <string name="sender_warning_title">Проверьте адрес отправителя</string>
+    <string name="sender_warning_address_in_name">В имени отправителя указано %1$s, но это письмо пришло с адреса %2$s.</string>
+    <string name="sender_warning_lookalike_name">Имя отправителя написано так, чтобы выглядеть как %1$s, но это письмо пришло с адреса %2$s.</string>
+    <string name="sender_warning_brand_name">В имени отправителя упоминается %1$s, но это письмо пришло с адреса %2$s, который не относится к известным адресам %1$s.</string>
+    <string name="sender_warning_home_brand_name">Это письмо не от Aster. Оно пришло с адреса %1$s. Aster никогда не запрашивает по почте ваш пароль или фразу восстановления.</string>
+    <string name="sender_warning_lookalike_domain">Домен %1$s похож на %2$s, но это другой домен.</string>
+    <string name="sender_contact_notice">У этого отправителя такое же имя, как у вашего контакта %1$s, но другой адрес.</string>
+    <string name="sender_reply_to_notice">Ответы на это письмо уходят на адрес %1$s, который относится к другому домену, чем отправитель.</string>
+    <string name="email_auth_unverified">Не подтверждён</string>
+    <string name="email_auth_unverified_desc">Aster не удалось подтвердить, что это письмо отправлено с домена %1$s. Прежде чем открывать ссылки или вложения, убедитесь, что вы знаете отправителя.</string>
 </resources>

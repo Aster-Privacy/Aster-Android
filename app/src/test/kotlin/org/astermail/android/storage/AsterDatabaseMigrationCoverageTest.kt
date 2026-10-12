@@ -162,8 +162,8 @@ class AsterDatabaseMigrationCoverageTest {
     }
 
     @Test
-    fun the_pending_mail_action_table_is_created_by_the_latest_migration_step() {
-        val statements = migration_statements.getValue(aster_database_version)
+    fun the_pending_mail_action_table_is_created_by_its_migration_step() {
+        val statements = migration_statements.getValue(18)
 
         assertTrue(statements.contains(create_pending_mail_action))
         assertTrue(create_pending_mail_action.contains("`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"))
@@ -175,6 +175,25 @@ class AsterDatabaseMigrationCoverageTest {
         val actual = created_columns(create_pending_mail_action, pending_mail_action_table).sorted()
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun the_sender_authentication_columns_are_added_to_both_row_caches() {
+        val added = migration_columns.getValue(19)
+        val names = listOf(
+            "spf_result",
+            "dkim_result",
+            "dmarc_result",
+            "sender_aligned",
+            "sender_verified",
+            "sender_verified_domain",
+            "sender_verification",
+        )
+
+        for (table in listOf(decrypted_mail_table, folder_row_table)) {
+            assertEquals(names, added.filter { it.table == table && it.name in names }.map { it.name })
+        }
+        assertTrue(added.all { it.definition == "TEXT" || it.definition == "INTEGER" })
     }
 
     @Test

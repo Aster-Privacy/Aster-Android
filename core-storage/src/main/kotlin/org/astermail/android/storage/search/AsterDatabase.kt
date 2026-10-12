@@ -30,12 +30,13 @@ import org.astermail.android.storage.actions.PendingMailActionEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 18
+const val aster_database_version = 19
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
 private const val decrypted_mail_table = "decrypted_mail_cache"
 private const val pending_send_table = "pending_send_queue"
+private const val folder_row_table = "folder_row_cache"
 
 const val create_folder_row_cache =
     "CREATE TABLE IF NOT EXISTS `folder_row_cache` (" +
@@ -71,6 +72,13 @@ const val create_folder_row_cache =
         "`system_origin` INTEGER NOT NULL, " +
         "`has_recipient_key` INTEGER, " +
         "`cached_at` INTEGER NOT NULL, " +
+        "`spf_result` TEXT, " +
+        "`dkim_result` TEXT, " +
+        "`dmarc_result` TEXT, " +
+        "`sender_aligned` INTEGER, " +
+        "`sender_verified` INTEGER, " +
+        "`sender_verified_domain` TEXT, " +
+        "`sender_verification` TEXT, " +
         "PRIMARY KEY(`folder`, `id`))"
 
 private const val create_pending_send_queue =
@@ -121,6 +129,16 @@ const val create_pending_mail_action =
         "`created_at_ms` INTEGER NOT NULL, " +
         "`attempts` INTEGER NOT NULL)"
 
+private fun sender_auth_columns(table: String): List<schema_column> = listOf(
+    schema_column(table, "spf_result", "TEXT"),
+    schema_column(table, "dkim_result", "TEXT"),
+    schema_column(table, "dmarc_result", "TEXT"),
+    schema_column(table, "sender_aligned", "INTEGER"),
+    schema_column(table, "sender_verified", "INTEGER"),
+    schema_column(table, "sender_verified_domain", "TEXT"),
+    schema_column(table, "sender_verification", "TEXT"),
+)
+
 val migration_columns: Map<Int, List<schema_column>> = mapOf(
     3 to listOf(schema_column(decrypted_mail_table, "category", "TEXT NOT NULL DEFAULT 'primary'")),
     5 to listOf(
@@ -144,6 +162,9 @@ val migration_columns: Map<Int, List<schema_column>> = mapOf(
     12 to listOf(schema_column(decrypted_mail_table, "is_pinned", "INTEGER NOT NULL DEFAULT 0")),
     13 to listOf(schema_column(decrypted_mail_table, "tag_tokens", "TEXT")),
     14 to listOf(schema_column(decrypted_mail_table, "system_origin", "INTEGER NOT NULL DEFAULT 0")),
+    19 to sender_auth_columns(decrypted_mail_table) +
+        schema_column(decrypted_mail_table, "item_type", "TEXT") +
+        sender_auth_columns(folder_row_table),
 )
 
 val migration_statements: Map<Int, List<String>> = mapOf(
@@ -229,6 +250,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_15_16 = step_migration(16)
         val migration_16_17 = step_migration(17)
         val migration_17_18 = step_migration(18)
+        val migration_18_19 = step_migration(19)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -248,6 +270,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_15_16,
             migration_16_17,
             migration_17_18,
+            migration_18_19,
         )
     }
 }

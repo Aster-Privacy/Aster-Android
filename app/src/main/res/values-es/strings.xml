@@ -1665,10 +1665,6 @@
     <string name="settings_section_other">Otros</string>
     <string name="phishing_warning_title">Este mensaje parece sospechoso</string>
     <string name="phishing_dangerous_title">Correo peligroso bloqueado</string>
-    <string name="phishing_signal_sender_domain_mimics">El dominio del remitente \"%1$s\" imita a \"%2$s\" con caracteres parecidos</string>
-    <string name="phishing_signal_sender_domain_resembles">El dominio del remitente \"%1$s\" se parece a \"%2$s\" con caracteres sustituidos</string>
-    <string name="phishing_signal_display_name_brand">El nombre visible contiene \"%1$s\", pero el correo viene de %2$s</string>
-    <string name="phishing_signal_display_name_email">El nombre visible contiene la dirección \"%1$s\", pero el remitente es %2$s</string>
     <string name="phishing_show_details">Ver detalles</string>
     <string name="phishing_hide_details">Ocultar detalles</string>
     <string name="phishing_privacy_note">Detectado en tu dispositivo. Aster nunca lee tu correo.</string>
@@ -3377,4 +3373,14 @@
     <string name="moved_to_category">Movido a la categoría</string>
     <string name="metadata_undecryptable_change">Este dispositivo no puede abrir los detalles de este mensaje, por lo que tu cambio no se guarda. Para recargar tus claves, cierra sesión y vuelve a iniciarla. Tu mensaje en el servidor sigue igual.</string>
     <string name="color_swatch_option">Color %1$d de %2$d</string>
+    <string name="sender_warning_title">Comprueba la dirección del remitente</string>
+    <string name="sender_warning_address_in_name">El nombre del remitente muestra %1$s, pero este mensaje procede de %2$s.</string>
+    <string name="sender_warning_lookalike_name">El nombre del remitente está escrito para parecerse a %1$s, pero este mensaje procede de %2$s.</string>
+    <string name="sender_warning_brand_name">El nombre del remitente menciona %1$s, pero este mensaje procede de %2$s, que no es una dirección conocida de %1$s.</string>
+    <string name="sender_warning_home_brand_name">Este mensaje no es de Aster. Procede de %1$s. Aster nunca te pide la contraseña ni la frase de recuperación por correo electrónico.</string>
+    <string name="sender_warning_lookalike_domain">El dominio %1$s se parece a %2$s, pero es un dominio distinto.</string>
+    <string name="sender_contact_notice">Este remitente tiene el mismo nombre que tu contacto %1$s, pero usa una dirección distinta.</string>
+    <string name="sender_reply_to_notice">Las respuestas a este mensaje se envían a %1$s, que pertenece a un dominio distinto al del remitente.</string>
+    <string name="email_auth_unverified">Sin verificar</string>
+    <string name="email_auth_unverified_desc">Aster no ha podido confirmar que %1$s haya enviado este mensaje. Antes de abrir enlaces o archivos adjuntos, comprueba que conoces al remitente.</string>
 </resources>

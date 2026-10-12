@@ -52,6 +52,8 @@ import org.astermail.android.api.contacts.ImportContactsResponse
 import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.api.contacts.UpdateContactResponse
+import org.astermail.android.security.SenderTrustContact
+import org.astermail.android.security.SenderTrustStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.contacts.ContactEntry
@@ -76,16 +78,34 @@ class ContactsRepository @Inject constructor(
     private val contacts_api: ContactsApi,
     private val session_key_store: SessionKeyStore,
 ) : ContactPhotoSource {
-    suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> = runCatching {
-        fetch_all_contacts(group_id)
-    }.onSuccess { contacts ->
-        if (group_id == null) ContactPhotoDirectory.offer(contacts.mapNotNull { contact_photo_entry(it) })
+    suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> {
+        val trust_generation = SenderTrustStore.current_generation()
+        return runCatching {
+            fetch_all_contacts(group_id)
+        }.onSuccess { contacts ->
+            if (group_id == null) {
+                ContactPhotoDirectory.offer(contacts.mapNotNull { contact_photo_entry(it) })
+                publish_trust_contacts(contacts, trust_generation)
+            }
+        }
+    }
+
+    private fun publish_trust_contacts(contacts: List<Contact>, trust_generation: Long) {
+        SenderTrustStore.set_contacts(
+            contacts
+                .filter { it.deleted_at.isBlank() }
+                .map { contact -> SenderTrustContact(contact.name, contact.email_entries().map { it.value }) },
+            trust_generation,
+        )
     }
 
     override suspend fun list_photo_entries(): List<ContactPhotoEntry> {
         val passphrase = session_key_store.get_passphrase() ?: throw IllegalStateException("no session")
         passphrase.fill(0)
-        return fetch_all_contacts(null).mapNotNull { contact_photo_entry(it) }
+        val trust_generation = SenderTrustStore.current_generation()
+        val contacts = fetch_all_contacts(null)
+        publish_trust_contacts(contacts, trust_generation)
+        return contacts.mapNotNull { contact_photo_entry(it) }
     }
 
     override suspend fun fetch_contact_photo(contact_id: String): ContactPhotoFetch = try {

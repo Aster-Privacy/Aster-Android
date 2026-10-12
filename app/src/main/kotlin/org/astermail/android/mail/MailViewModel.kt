@@ -793,6 +793,7 @@ class MailViewModel @Inject constructor(
         repository.clear_account_data()
         runCatching { AsterProfileResolverHolder.shared?.clear() }
         runCatching { OwnAddressAvatars.clear() }
+        runCatching { org.astermail.android.security.SenderTrustStore.clear() }
         runCatching { org.astermail.android.contacts.ContactPhotoDirectory.clear() }
         viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             runCatching { search_index_manager.clear() }
@@ -5379,6 +5380,7 @@ class MailViewModel @Inject constructor(
             spf_result = raw.spf_result,
             dkim_result = raw.dkim_result,
             dmarc_result = raw.dmarc_result,
+            sender_aligned = raw.sender_aligned,
             sender_verified = raw.sender_verified,
             sender_verified_domain = raw.sender_verified_domain,
             is_reaction = raw.is_reaction,
@@ -5545,8 +5547,16 @@ fun org.astermail.android.storage.search.DecryptedMailEntity.to_inbox_item(): In
     display_sender_email = display_sender_email,
     to_addresses = to_addresses?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
     routing_token = routing_token,
+    sender_verification = sender_verification,
     raw_item = org.astermail.android.api.mail.MailItem(
         id = id,
+        item_type = item_type,
+        spf_result = spf_result,
+        dkim_result = dkim_result,
+        dmarc_result = dmarc_result,
+        sender_aligned = sender_aligned,
+        sender_verified = sender_verified,
+        sender_verified_domain = sender_verified_domain,
         is_external = is_external,
         system_origin = system_origin,
         has_recipient_key = has_recipient_key,

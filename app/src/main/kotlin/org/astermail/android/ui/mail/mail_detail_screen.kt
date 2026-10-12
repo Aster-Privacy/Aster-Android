@@ -750,6 +750,7 @@ fun MailDetailScreen(
     var pending_block_sender by remember { mutableStateOf<String?>(null) }
     var pending_delete_permanent by remember { mutableStateOf(false) }
     var profile_sender by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var profile_sender_trust by remember { mutableStateOf<org.astermail.android.security.SenderTrust?>(null) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var show_folder_sheet by remember { mutableStateOf(false) }
     var show_label_sheet by remember { mutableStateOf(false) }
@@ -1583,6 +1584,7 @@ fun MailDetailScreen(
                                 anchor_toggle(msg.id)
                                 user_expanded_ids.value = current_expanded_ids - msg.id
                             },
+                            on_sender_trust = { tapped_trust -> profile_sender_trust = tapped_trust },
                             on_sender_tap = { email, name ->
                                 profile_sender = email to name
                             },
@@ -2114,7 +2116,11 @@ fun MailDetailScreen(
         sender_profile_sheet(
             sender_email = profile_target.first,
             sender_name = profile_target.second,
-            on_close = { profile_sender = null },
+            trust = profile_sender_trust,
+            on_close = {
+                profile_sender = null
+                profile_sender_trust = null
+            },
             on_copy = { address ->
                 val copied = write_to_clipboard(
                     context,
@@ -2345,6 +2351,7 @@ internal fun expanded_message(
     on_image_click: (String) -> Unit = {},
     on_collapse: () -> Unit,
     on_sender_tap: (String, String) -> Unit = { _, _ -> },
+    on_sender_trust: (org.astermail.android.security.SenderTrust?) -> Unit = {},
     on_reply: () -> Unit,
     on_reply_all: () -> Unit,
     on_forward: () -> Unit,
@@ -2376,11 +2383,17 @@ internal fun expanded_message(
         )
         show_copy_result_toast(context, email, copied)
     }
+    val is_own_message = my_email.isNotEmpty() &&
+        msg.sender_email.trim().lowercase() == my_email &&
+        !msg.is_external
+    val trust = remember_sender_trust(if (is_own_message) null else msg.trust_message)
+    val marks_hidden = trust?.show_identity_marks == false
+    val shows_verified_check = trust?.show_verified_badge == true && msg.sender_verified_domain != null
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
     var sender_name_truncated by remember(msg.id) { mutableStateOf(false) }
     var show_sender_verified by remember(msg.id) { mutableStateOf(false) }
-    if (show_sender_verified) {
+    if (show_sender_verified && shows_verified_check) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_sender_verified = false },
             title = stringResource(R.string.sender_verified_title),
@@ -2460,16 +2473,26 @@ internal fun expanded_message(
                 .testTag("message_header_$message_index"),
             verticalAlignment = Alignment.Top,
         ) {
-            val shown_sender_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
+            val shown_sender_name = org.astermail.android.security.trusted_sender_name(
+                trust,
+                displayed_sender_name(msg.display_sender_name, msg.sender_name),
+                stringResource(R.string.unknown),
+            )
             val shown_sender_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
             SenderAvatar(
                 email = shown_sender_email,
                 name = shown_sender_name,
-                sender_authenticated = system_avatar_authenticated(msg),
-                profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
+                sender_authenticated = !marks_hidden &&
+                    trust?.warning == null &&
+                    system_avatar_authenticated(msg),
+                profile_picture_url = if (is_own_message) my_profile_pic else null,
+                plain = marks_hidden,
                 modifier = Modifier
                     .clip(CircleShape)
-                    .clickable { on_sender_tap(shown_sender_email, shown_sender_name) },
+                    .clickable {
+                        on_sender_trust(trust)
+                        on_sender_tap(shown_sender_email, shown_sender_name)
+                    },
             )
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
@@ -2503,7 +2526,7 @@ internal fun expanded_message(
                                         onLongClick = { copy_email(shown_sender_email) },
                                     ),
                             )
-                            if (msg.sender_verified_domain != null) {
+                            if (shows_verified_check) {
                                 Spacer(Modifier.width(4.dp))
                                 Icon(
                                     imageVector = TablerIcons.CircleCheck,
@@ -2516,7 +2539,11 @@ internal fun expanded_message(
                                 )
                             }
                         }
-                        email_auth_badge(msg = msg)
+                        email_auth_badge(
+                            msg = msg,
+                            unverified = trust?.auth_state == org.astermail.android.security.SenderAuthState.unverified,
+                            unverified_domain = trust?.domain,
+                        )
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
                     val header_yesterday_label = stringResource(R.string.yesterday)
@@ -2535,6 +2562,23 @@ internal fun expanded_message(
                 Row(verticalAlignment = Alignment.Top) {
                     Column(modifier = Modifier.weight(1f)) {
                         Spacer(Modifier.height(1.dp))
+                        if (trust != null && trust.name.isNotEmpty() && trust.address.isNotEmpty()) {
+                            Text(
+                                text = isolated_slot_value(trust.address),
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .testTag("message_sender_address_$message_index")
+                                    .combinedClickable(
+                                        hapticFeedbackEnabled = false,
+                                        onClick = { show_details = !show_details },
+                                        onLongClick = { copy_email(trust.address) },
+                                    ),
+                            )
+                            Spacer(Modifier.height(1.dp))
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.combinedClickable(
@@ -2582,7 +2626,11 @@ internal fun expanded_message(
                             exit = shrinkVertically() + fadeOut(),
                         ) {
                             LaunchedEffect(msg.id) {
-                                on_track(msg.sender_email, msg.sender_name, unsub_info.unsubscribe_link)
+                                on_track(
+                                    msg.sender_email,
+                                    if (trust != null && trust.name.isEmpty()) "" else msg.sender_name,
+                                    unsub_info.unsubscribe_link,
+                                )
                             }
                             unsubscribe_link(on_unsubscribe = { on_unsubscribe(unsub_info) })
                         }
@@ -2644,9 +2692,16 @@ internal fun expanded_message(
             val received_on = remember(msg) {
                 resolve_received_on_address(msg.raw_headers, msg.to_addresses + msg.cc_addresses, msg.sender_email)
             }
-            val details_sender_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
+            val details_sender_name = org.astermail.android.security.trusted_sender_name(
+                trust,
+                displayed_sender_name(msg.display_sender_name, msg.sender_name),
+                stringResource(R.string.unknown),
+            )
             val details_sender_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
-            val details_sender = if (details_sender_name.equals(details_sender_email, ignoreCase = true)) {
+            val details_name_hidden = trust != null && trust.name.isEmpty()
+            val details_sender = if (
+                details_name_hidden || details_sender_name.equals(details_sender_email, ignoreCase = true)
+            ) {
                 details_sender_email
             } else {
                 "$details_sender_name <$details_sender_email>"
@@ -2718,6 +2773,8 @@ internal fun expanded_message(
                 )
             }
         }
+
+        sender_trust_banner(trust)
 
         val phishing_result by produceState<org.astermail.android.security.PhishingResult?>(
             initialValue = null,
@@ -4228,10 +4285,15 @@ private fun message_details_dialog(
                     .heightIn(max = 440.dp)
                     .vertical_scroll_with_indicator(),
             ) {
+                val from_email = displayed_sender_email(message.display_sender_email, message.sender_email)
+                val from_name = org.astermail.android.security.trusted_sender_name(
+                    message.trust_message,
+                    displayed_sender_name(message.display_sender_name, message.sender_name),
+                    stringResource(R.string.unknown),
+                )
                 message_detail_row(
                     stringResource(R.string.from_label),
-                    "${displayed_sender_name(message.display_sender_name, message.sender_name)} " +
-                        "<${displayed_sender_email(message.display_sender_email, message.sender_email)}>",
+                    if (from_name.equals(from_email, ignoreCase = true)) from_email else "$from_name <$from_email>",
                 )
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
@@ -4665,6 +4727,16 @@ private fun collapsed_message(
     val colors = AsterMaterial.colors
 
     val is_undecryptable = msg.is_undecryptable || (msg.sender_email.isBlank() && msg.body.isBlank())
+    val is_own_message = my_email.isNotEmpty() &&
+        msg.sender_email.trim().lowercase() == my_email &&
+        !msg.is_external
+    val trust = remember_sender_trust(if (is_own_message || is_undecryptable) null else msg.trust_message)
+    val marks_hidden = trust?.show_identity_marks == false
+    val shown_sender_name = org.astermail.android.security.trusted_sender_name(
+        trust,
+        displayed_sender_name(msg.display_sender_name, msg.sender_name),
+        stringResource(R.string.unknown),
+    )
     val card_color = inbox_card_read_color(colors)
 
     val card_shape = remember(is_first_card, is_last_card) {
@@ -4711,18 +4783,20 @@ private fun collapsed_message(
             } else {
                 SenderAvatar(
                     email = displayed_sender_email(msg.display_sender_email, msg.sender_email),
-                    name = displayed_sender_name(msg.display_sender_name, msg.sender_name),
+                    name = shown_sender_name,
                     size = 40.dp,
-                    sender_authenticated = system_avatar_authenticated(msg),
-                    profile_picture_url = if (msg.sender_email.lowercase() == my_email) my_profile_pic else null,
+                    sender_authenticated = !marks_hidden &&
+                        trust?.warning == null &&
+                        system_avatar_authenticated(msg),
+                    profile_picture_url = if (is_own_message) my_profile_pic else null,
+                    plain = marks_hidden,
                 )
             }
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (is_undecryptable) stringResource(R.string.encrypted)
-                            else displayed_sender_name(msg.display_sender_name, msg.sender_name),
+                        text = if (is_undecryptable) stringResource(R.string.encrypted) else shown_sender_name,
                         color = colors.text_primary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,

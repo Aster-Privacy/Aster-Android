@@ -122,6 +122,7 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.DialogConfirmStyle
+import org.astermail.android.security.safe_sender_name
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.subscriptions.MailingListsViewModel
 import org.astermail.android.subscriptions.build_blocked_sender_index
@@ -542,7 +543,7 @@ fun MailingListsScreen(
             title = stringResource(R.string.stop_sender_title),
             message = stringResource(
                 R.string.stop_sender_body,
-                target.sender_name.ifBlank { target.sender_email },
+                safe_sender_name(target.sender_name, target.sender_email).ifBlank { target.sender_email },
             ),
             confirm_label = stringResource(R.string.stop_sender_confirm),
             cancel_label = stringResource(R.string.cancel),
@@ -960,7 +961,7 @@ private fun subscription_row(
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = item.sender_name.ifBlank { item.sender_email },
+                    text = safe_sender_name(item.sender_name, item.sender_email).ifBlank { item.sender_email },
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,

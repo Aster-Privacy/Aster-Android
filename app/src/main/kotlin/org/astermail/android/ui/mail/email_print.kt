@@ -83,7 +83,11 @@ internal fun print_job_name(subject: String, fallback: String): String {
 }
 
 internal fun print_sender_line(msg: ThreadMessage): String {
-    val name = displayed_sender_name(msg.display_sender_name, msg.sender_name).trim()
+    val name = org.astermail.android.security.trusted_sender_name(
+        msg.trust_message,
+        displayed_sender_name(msg.display_sender_name, msg.sender_name),
+        "",
+    ).trim()
     val address = displayed_sender_email(msg.display_sender_email, msg.sender_email).trim()
     return when {
         address.isEmpty() -> name

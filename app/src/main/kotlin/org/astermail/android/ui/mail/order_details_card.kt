@@ -81,6 +81,7 @@ import org.astermail.android.mail.extraction.EmailExtractionResult
 import org.astermail.android.mail.extraction.ShippingStatus
 import org.astermail.android.mail.extraction.extract_email_details
 import org.astermail.android.mail.extraction.extract_order_url
+import org.astermail.android.security.safe_sender_name
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.remember_copy_action
 import java.util.Collections
@@ -234,7 +235,7 @@ internal fun order_details_card_for_message(
                 body_text = msg.body,
                 body_html = msg.body_html,
                 from_email = msg.sender_email,
-                from_name = msg.sender_name,
+                from_name = safe_sender_name(msg.sender_name, msg.sender_email),
             )
             if (result.is_empty) {
                 null
@@ -277,8 +278,13 @@ private fun order_details_card(
         purchase?.total != null -> purchase.total.formatted
         else -> null
     }
-    val shown_sender_name = displayed_sender_name(msg.display_sender_name, msg.sender_name)
-    val shown_sender_email = displayed_sender_email(msg.display_sender_email, msg.sender_email)
+    val trust = remember_sender_trust(msg.trust_message)
+    val sender_marks_allowed = trust == null || (trust.show_identity_marks && trust.warning == null)
+    val shown_sender_email = if (sender_marks_allowed) {
+        displayed_sender_email(msg.display_sender_email, msg.sender_email)
+    } else {
+        ""
+    }
     val tracking_url = shipping?.tracking_url
     val order_url = model.order_url
     val has_actions = tracking_url != null || order_url != null

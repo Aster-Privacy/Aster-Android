@@ -1668,10 +1668,6 @@
     <string name="settings_section_other">Inne</string>
     <string name="phishing_warning_title">Ta wiadomość wygląda podejrzanie</string>
     <string name="phishing_dangerous_title">Zablokowano niebezpieczną wiadomość</string>
-    <string name="phishing_signal_sender_domain_mimics">Domena nadawcy \"%1$s\" naśladuje \"%2$s\" podobnymi znakami</string>
-    <string name="phishing_signal_sender_domain_resembles">Domena nadawcy \"%1$s\" przypomina \"%2$s\" z podmienionymi znakami</string>
-    <string name="phishing_signal_display_name_brand">Nazwa wyświetlana zawiera \"%1$s\", ale wiadomość pochodzi z %2$s</string>
-    <string name="phishing_signal_display_name_email">Nazwa wyświetlana zawiera adres \"%1$s\", ale nadawcą jest %2$s</string>
     <string name="phishing_show_details">Pokaż szczegóły</string>
     <string name="phishing_hide_details">Ukryj szczegóły</string>
     <string name="phishing_privacy_note">Wykryto na Twoim urządzeniu. Aster nigdy nie czyta Twojej poczty.</string>
@@ -3395,4 +3391,14 @@
     <string name="moved_to_category">Przeniesiono do kategorii</string>
     <string name="metadata_undecryptable_change">To urządzenie nie może otworzyć szczegółów tej wiadomości, więc Twoja zmiana nie zostaje zapisana. Aby ponownie wczytać klucze, wyloguj się i zaloguj ponownie. Twoja wiadomość na serwerze pozostaje bez zmian.</string>
     <string name="color_swatch_option">Kolor %1$d z %2$d</string>
+    <string name="sender_warning_title">Sprawdź adres nadawcy</string>
+    <string name="sender_warning_address_in_name">Nazwa nadawcy pokazuje %1$s, ale ta wiadomość pochodzi z adresu %2$s.</string>
+    <string name="sender_warning_lookalike_name">Nazwa nadawcy jest zapisana tak, aby wyglądała jak %1$s, ale ta wiadomość pochodzi z adresu %2$s.</string>
+    <string name="sender_warning_brand_name">Nazwa nadawcy wymienia %1$s, ale ta wiadomość pochodzi z adresu %2$s, który nie jest znanym adresem %1$s.</string>
+    <string name="sender_warning_home_brand_name">Ta wiadomość nie pochodzi od Aster. Wysłano ją z adresu %1$s. Aster nigdy nie prosi w wiadomości e-mail o hasło ani frazę odzyskiwania.</string>
+    <string name="sender_warning_lookalike_domain">Domena %1$s wygląda jak %2$s, ale jest to inna domena.</string>
+    <string name="sender_contact_notice">Ten nadawca ma taką samą nazwę jak Twój kontakt %1$s, ale używa innego adresu.</string>
+    <string name="sender_reply_to_notice">Odpowiedzi na tę wiadomość trafiają na adres %1$s, który należy do innej domeny niż nadawca.</string>
+    <string name="email_auth_unverified">Niezweryfikowany</string>
+    <string name="email_auth_unverified_desc">Aster nie mógł potwierdzić, że domena %1$s wysłała tę wiadomość. Zanim otworzysz linki lub załączniki, sprawdź, czy znasz nadawcę.</string>
 </resources>
