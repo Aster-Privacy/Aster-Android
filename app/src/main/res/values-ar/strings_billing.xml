@@ -33,7 +33,16 @@
     <string name="interval_year">سنة</string>
     <string name="notif_channel_billing_description">تنبيهات حول المدفوعات وخطتك.</string>
     <string name="notif_channel_billing_name">الفوترة</string>
-    <string name="onboarding_checklist_title">إعداد Aster (%1$d من %2$d)</string>
+    <string name="onboarding_checklist_close">إغلاق قائمة الخطوات</string>
+    <string name="onboarding_checklist_complete">اكتمل الإعداد</string>
+    <string name="onboarding_checklist_domain_badge">اختياري</string>
+    <string name="onboarding_checklist_domain_existing">استخدم نطاقًا تملكه</string>
+    <string name="onboarding_checklist_domain_get">احصل على نطاق مخصص</string>
+    <string name="onboarding_checklist_domain_heading">استخدم نطاقًا مخصصًا</string>
+    <string name="onboarding_checklist_hide_forever">إخفاء قائمة الخطوات نهائيًا</string>
+    <string name="onboarding_checklist_open">إظهار قائمة الخطوات</string>
+    <string name="onboarding_checklist_progress">%1$d من %2$d</string>
+    <string name="onboarding_checklist_title">ابدأ الآن</string>
     <string name="onboarding_task_first_email">أرسل رسالتك الأولى</string>
     <string name="onboarding_task_import">استيراد بريدك القديم</string>
     <string name="onboarding_task_install">ثبّت Aster على حاسوبك</string>

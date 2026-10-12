@@ -316,6 +316,8 @@ fun InboxScreen(
     on_open_upgrade: () -> Unit = {},
     on_open_recovery_email: () -> Unit = {},
     on_open_import: () -> Unit = {},
+    on_open_domains: () -> Unit = {},
+    on_open_buy_domain: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -486,10 +488,45 @@ fun InboxScreen(
             raw
         }
     }
-    val show_onboarding_checklist = onboarding != null &&
-        current_folder == "inbox" &&
-        onboarding.dismissed_at == null &&
-        onboarding_tasks.values.any { !it }
+    var tutorial_list_collapsed by rememberSaveable {
+        mutableStateOf(
+            onboarding_prefs.getBoolean(org.astermail.android.ui.common.tutorial_list_collapsed_key, false),
+        )
+    }
+    var tutorial_list_seen_incomplete by rememberSaveable {
+        mutableStateOf(
+            onboarding_prefs.getBoolean(org.astermail.android.ui.common.tutorial_list_seen_incomplete_key, false),
+        )
+    }
+    val onboarding_progress = remember(onboarding_tasks) {
+        org.astermail.android.ui.common.tutorial_list_progress_of(onboarding_tasks)
+    }
+    val onboarding_active = org.astermail.android.ui.common.tutorial_list_is_active(
+        is_loaded = onboarding != null,
+        is_dismissed = onboarding?.dismissed_at != null,
+        progress = onboarding_progress,
+    )
+    LaunchedEffect(onboarding_active, onboarding_progress, tutorial_list_seen_incomplete) {
+        if (
+            org.astermail.android.ui.common.tutorial_list_should_mark_seen(
+                is_active = onboarding_active,
+                progress = onboarding_progress,
+                seen_incomplete = tutorial_list_seen_incomplete,
+            )
+        ) {
+            onboarding_prefs.edit()
+                .putBoolean(org.astermail.android.ui.common.tutorial_list_seen_incomplete_key, true)
+                .apply()
+            tutorial_list_seen_incomplete = true
+        }
+    }
+    val show_onboarding_checklist = current_folder == "inbox" &&
+        org.astermail.android.ui.common.tutorial_list_visible(
+            is_active = onboarding_active,
+            progress = onboarding_progress,
+            seen_incomplete = tutorial_list_seen_incomplete,
+        )
+    val can_buy_domain = !org.astermail.android.billing.remember_play_install()
     val onboarding_task_context = LocalContext.current
     val on_onboarding_task: (String) -> Unit = { key ->
         when (onboarding_task_destination_for(key)) {
@@ -2237,6 +2274,20 @@ fun InboxScreen(
                                     tasks = onboarding_tasks,
                                     on_task = on_onboarding_task,
                                     on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
+                                    is_open = !tutorial_list_collapsed,
+                                    on_toggle = {
+                                        val collapsed = !tutorial_list_collapsed
+                                        tutorial_list_collapsed = collapsed
+                                        onboarding_prefs.edit()
+                                            .putBoolean(
+                                                org.astermail.android.ui.common.tutorial_list_collapsed_key,
+                                                collapsed,
+                                            )
+                                            .apply()
+                                    },
+                                    on_see_plans = if (show_upgrade_button) on_open_upgrade else null,
+                                    on_get_domain = if (can_buy_domain) on_open_buy_domain else null,
+                                    on_own_domain = on_open_domains,
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                 )
                             }

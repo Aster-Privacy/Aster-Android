@@ -33,7 +33,16 @@
     <string name="interval_year">jaar</string>
     <string name="notif_channel_billing_description">Meldingen over betalingen en je abonnement.</string>
     <string name="notif_channel_billing_name">Facturering</string>
-    <string name="onboarding_checklist_title">Aster instellen (%1$d van %2$d)</string>
+    <string name="onboarding_checklist_close">Sluit de tutoriallijst</string>
+    <string name="onboarding_checklist_complete">Installatie voltooid</string>
+    <string name="onboarding_checklist_domain_badge">Optioneel</string>
+    <string name="onboarding_checklist_domain_existing">Gebruik een domein dat je al hebt</string>
+    <string name="onboarding_checklist_domain_get">Koop een eigen domein</string>
+    <string name="onboarding_checklist_domain_heading">Gebruik een eigen domein</string>
+    <string name="onboarding_checklist_hide_forever">Verberg de tutoriallijst permanent</string>
+    <string name="onboarding_checklist_open">Toon de tutoriallijst</string>
+    <string name="onboarding_checklist_progress">%1$d van %2$d</string>
+    <string name="onboarding_checklist_title">Aan de slag</string>
     <string name="onboarding_task_first_email">Verstuur je eerste bericht</string>
     <string name="onboarding_task_import">Importeer je e-mail</string>
     <string name="onboarding_task_install">Installeer Aster op je computer</string>

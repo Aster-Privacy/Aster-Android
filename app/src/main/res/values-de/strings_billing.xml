@@ -33,7 +33,16 @@
     <string name="interval_year">Jahr</string>
     <string name="notif_channel_billing_description">Hinweise zu Zahlungen und Ihrem Tarif.</string>
     <string name="notif_channel_billing_name">Abrechnung</string>
-    <string name="onboarding_checklist_title">Aster einrichten (%1$d von %2$d)</string>
+    <string name="onboarding_checklist_close">Anleitungsliste schließen</string>
+    <string name="onboarding_checklist_complete">Einrichtung abgeschlossen</string>
+    <string name="onboarding_checklist_domain_badge">Optional</string>
+    <string name="onboarding_checklist_domain_existing">Vorhandene Domain verwenden</string>
+    <string name="onboarding_checklist_domain_get">Eigene Domain kaufen</string>
+    <string name="onboarding_checklist_domain_heading">Eigene Domain verwenden</string>
+    <string name="onboarding_checklist_hide_forever">Anleitungsliste dauerhaft ausblenden</string>
+    <string name="onboarding_checklist_open">Anleitungsliste anzeigen</string>
+    <string name="onboarding_checklist_progress">%1$d von %2$d</string>
+    <string name="onboarding_checklist_title">Erste Schritte</string>
     <string name="onboarding_task_first_email">Senden Sie Ihre erste Nachricht</string>
     <string name="onboarding_task_import">Alte E-Mails importieren</string>
     <string name="onboarding_task_install">Installieren Sie Aster auf Ihrem Computer</string>

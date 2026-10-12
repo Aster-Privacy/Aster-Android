@@ -21,7 +21,10 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -97,12 +100,121 @@ class OnboardingChecklistCardTest {
     }
 
     @Test
-    fun a_completed_row_is_not_clickable() {
+    fun a_completed_row_stays_clickable() {
         val tapped = mutableListOf<String>()
         render(tapped, all_pending + ("import_mail" to true))
 
         compose_rule.onNodeWithText("Import your old mail").performClick()
 
-        assertEquals(emptyList<String>(), tapped)
+        assertEquals(listOf("import_mail"), tapped)
+    }
+
+    @Test
+    fun header_shows_progress_and_the_footer_hides_the_list() {
+        var dismissed = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending + ("import_mail" to true),
+                    on_task = {},
+                    on_dismiss = { dismissed += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithText("Get started").assertIsDisplayed()
+        compose_rule.onNodeWithText("1 of 4").assertIsDisplayed()
+        compose_rule.onNodeWithText("Permanently hide tutorial list").performClick()
+
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun collapsed_list_shows_only_the_reopen_button_with_the_remaining_count() {
+        var toggled = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending + ("import_mail" to true),
+                    on_task = {},
+                    on_dismiss = {},
+                    is_open = false,
+                    on_toggle = { toggled += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithTag(tutorial_list_panel_tag).assertDoesNotExist()
+        compose_rule.onNodeWithTag(tutorial_list_remaining_tag, useUnmergedTree = true).assertExists()
+        compose_rule.onNodeWithContentDescription("Show tutorial list").performClick()
+
+        assertEquals(1, toggled)
+    }
+
+    @Test
+    fun open_list_offers_a_close_button_without_a_badge() {
+        render(mutableListOf())
+
+        compose_rule.onNodeWithContentDescription("Close tutorial list").assertIsDisplayed()
+        compose_rule.onNodeWithTag(tutorial_list_remaining_tag, useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun finished_list_offers_plans_only_when_a_handler_is_given() {
+        var opened = 0
+        val done = all_pending.mapValues { true }
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = done,
+                    on_task = {},
+                    on_dismiss = {},
+                    on_see_plans = { opened += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithText("Setup complete").assertIsDisplayed()
+        compose_rule.onNodeWithText("See plans").performClick()
+
+        assertEquals(1, opened)
+    }
+
+    @Test
+    fun finished_list_without_a_plans_handler_shows_progress_instead() {
+        render(mutableListOf(), all_pending.mapValues { true })
+
+        compose_rule.onNodeWithText("Setup complete").assertIsDisplayed()
+        compose_rule.onNodeWithText("4 of 4").assertIsDisplayed()
+        compose_rule.onNodeWithText("See plans").assertDoesNotExist()
+    }
+
+    @Test
+    fun domain_rows_open_their_own_destinations() {
+        val opened = mutableListOf<String>()
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending,
+                    on_task = {},
+                    on_dismiss = {},
+                    on_get_domain = { opened.add("buy") },
+                    on_own_domain = { opened.add("own") },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithText("Optional").assertIsDisplayed()
+        compose_rule.onNodeWithText("Get a custom domain").performClick()
+        compose_rule.onNodeWithText("Use a domain you own").performClick()
+
+        assertEquals(listOf("buy", "own"), opened)
+    }
+
+    @Test
+    fun domain_section_is_absent_without_handlers() {
+        render(mutableListOf())
+
+        compose_rule.onNodeWithText("Use a custom domain").assertDoesNotExist()
     }
 }
