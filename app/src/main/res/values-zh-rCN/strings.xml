@@ -84,6 +84,12 @@
     <string name="loading_plans">正在加载套餐...</string>
     <string name="plan_free">免费</string>
     <string name="continue_with_free">继续使用免费版</string>
+    <string name="signup_plan_subtitle">Aster Mail 可免费使用。付费套餐提供更多存储空间、别名和自定义域名。</string>
+    <string name="signup_plan_yearly_savings">按年付费可节省 %1$d%%</string>
+    <string name="signup_plan_terms_play_year">每年 %1$s，通过 Google Play 扣款。套餐会自动续订，直到您在 Google Play 中取消。</string>
+    <string name="signup_plan_terms_play_month">每月 %1$s，通过 Google Play 扣款。套餐会自动续订，直到您在 Google Play 中取消。</string>
+    <string name="signup_plan_terms_year">每年 %1$s。套餐会自动续订，直到您在设置中取消。</string>
+    <string name="signup_plan_terms_month">每月 %1$s。套餐会自动续订，直到您在设置中取消。</string>
     <string name="continue_with_upgrade">升级并继续</string>
     <string name="monthly">月付</string>
     <string name="yearly">年付</string>

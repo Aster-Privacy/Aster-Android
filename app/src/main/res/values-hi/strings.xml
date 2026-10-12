@@ -116,6 +116,12 @@
     <string name="plan_free">मुफ़्त</string>
     <string name="settings_upgrade_cta">अपग्रेड करें</string>
     <string name="continue_with_free">मुफ़्त प्लान के साथ जारी रखें</string>
+    <string name="signup_plan_subtitle">Aster Mail मुफ़्त में इस्तेमाल किया जा सकता है। पेड प्लान में ज़्यादा स्टोरेज, उपनाम और कस्टम डोमेन मिलते हैं।</string>
+    <string name="signup_plan_yearly_savings">सालाना बिलिंग पर %1$d%% बचाएँ</string>
+    <string name="signup_plan_terms_play_year">हर साल %1$s, Google Play के ज़रिए लिया जाता है। जब तक आप Google Play में रद्द नहीं करते, आपका प्लान अपने आप रिन्यू होता रहता है।</string>
+    <string name="signup_plan_terms_play_month">हर महीने %1$s, Google Play के ज़रिए लिया जाता है। जब तक आप Google Play में रद्द नहीं करते, आपका प्लान अपने आप रिन्यू होता रहता है।</string>
+    <string name="signup_plan_terms_year">हर साल %1$s। जब तक आप सेटिंग में रद्द नहीं करते, आपका प्लान अपने आप रिन्यू होता रहता है।</string>
+    <string name="signup_plan_terms_month">हर महीने %1$s। जब तक आप सेटिंग में रद्द नहीं करते, आपका प्लान अपने आप रिन्यू होता रहता है।</string>
     <string name="continue_with_upgrade">अपग्रेड के साथ जारी रखें</string>
     <string name="monthly">मासिक</string>
     <string name="yearly">सालाना</string>

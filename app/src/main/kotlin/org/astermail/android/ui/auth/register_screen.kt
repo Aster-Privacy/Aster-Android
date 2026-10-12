@@ -205,18 +205,21 @@ fun RegisterScreen(
                             val recovery_email = state.recovery_email.value.trim()
                             if (recovery_email == state.saved_recovery_email.value) {
                                 view_model.clear_recovery_email_error()
-                                state.step.value = RegisterStep.notifications
+                                state.step.value = RegisterStep.plan
                             } else {
                                 view_model.save_recovery_email(recovery_email) {
                                     state.saved_recovery_email.value = recovery_email
-                                    state.step.value = RegisterStep.notifications
+                                    state.step.value = RegisterStep.plan
                                 }
                             }
                         },
                         on_skip = {
                             view_model.clear_recovery_email_error()
-                            state.step.value = RegisterStep.notifications
+                            state.step.value = RegisterStep.plan
                         },
+                    )
+                    RegisterStep.plan -> RegisterPlanStep(
+                        on_continue = { state.step.value = RegisterStep.notifications },
                     )
                     RegisterStep.notifications -> RegisterNotificationsStep(
                         on_done = { state.step.value = RegisterStep.addresses },

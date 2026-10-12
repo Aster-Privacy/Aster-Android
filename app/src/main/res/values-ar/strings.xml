@@ -84,6 +84,12 @@
     <string name="loading_plans">جارٍ تحميل الخطط...</string>
     <string name="plan_free">مجاني</string>
     <string name="continue_with_free">المتابعة مجانًا</string>
+    <string name="signup_plan_subtitle">استخدام Aster Mail مجاني. تضيف الخطة المدفوعة مساحة تخزين أكبر وعناوين بديلة ونطاقات مخصصة.</string>
+    <string name="signup_plan_yearly_savings">وفّر %1$d%% مع الفوترة السنوية</string>
+    <string name="signup_plan_terms_play_year">%1$s كل سنة، وتُحصَّل عبر Google Play. تتجدد خطتك تلقائيًا إلى أن تلغيها في Google Play.</string>
+    <string name="signup_plan_terms_play_month">%1$s كل شهر، وتُحصَّل عبر Google Play. تتجدد خطتك تلقائيًا إلى أن تلغيها في Google Play.</string>
+    <string name="signup_plan_terms_year">%1$s كل سنة. تتجدد خطتك تلقائيًا إلى أن تلغيها من الإعدادات.</string>
+    <string name="signup_plan_terms_month">%1$s كل شهر. تتجدد خطتك تلقائيًا إلى أن تلغيها من الإعدادات.</string>
     <string name="continue_with_upgrade">متابعة الترقية</string>
     <string name="monthly">شهري</string>
     <string name="yearly">سنوي</string>

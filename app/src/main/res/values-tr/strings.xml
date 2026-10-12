@@ -84,6 +84,12 @@
     <string name="loading_plans">Planlar yükleniyor...</string>
     <string name="plan_free">Ücretsiz</string>
     <string name="continue_with_free">Ücretsiz ile devam et</string>
+    <string name="signup_plan_subtitle">Aster Mail\'i ücretsiz kullanabilirsiniz. Ücretli plan daha fazla depolama, takma ad ve özel alan adı ekler.</string>
+    <string name="signup_plan_yearly_savings">Yıllık ödemeyle %%%1$d tasarruf edin</string>
+    <string name="signup_plan_terms_play_year">Her yıl %1$s, Google Play üzerinden tahsil edilir. Planınız, Google Play\'de iptal edene kadar otomatik olarak yenilenir.</string>
+    <string name="signup_plan_terms_play_month">Her ay %1$s, Google Play üzerinden tahsil edilir. Planınız, Google Play\'de iptal edene kadar otomatik olarak yenilenir.</string>
+    <string name="signup_plan_terms_year">Her yıl %1$s. Planınız, Ayarlar\'da iptal edene kadar otomatik olarak yenilenir.</string>
+    <string name="signup_plan_terms_month">Her ay %1$s. Planınız, Ayarlar\'da iptal edene kadar otomatik olarak yenilenir.</string>
     <string name="continue_with_upgrade">Yükseltme ile devam et</string>
     <string name="monthly">Aylık</string>
     <string name="yearly">Yıllık</string>

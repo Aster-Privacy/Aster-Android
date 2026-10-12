@@ -84,6 +84,12 @@
     <string name="loading_plans">Загрузка тарифов...</string>
     <string name="plan_free">Бесплатный</string>
     <string name="continue_with_free">Продолжить с бесплатным тарифом</string>
+    <string name="signup_plan_subtitle">Aster Mail можно пользоваться бесплатно. Платный тариф добавляет больше места, псевдонимов и собственных доменов.</string>
+    <string name="signup_plan_yearly_savings">Экономия %1$d%% при оплате за год</string>
+    <string name="signup_plan_terms_play_year">%1$s каждый год, оплата через Google Play. Тариф продлевается автоматически, пока вы не отмените его в Google Play.</string>
+    <string name="signup_plan_terms_play_month">%1$s каждый месяц, оплата через Google Play. Тариф продлевается автоматически, пока вы не отмените его в Google Play.</string>
+    <string name="signup_plan_terms_year">%1$s каждый год. Тариф продлевается автоматически, пока вы не отмените его в настройках.</string>
+    <string name="signup_plan_terms_month">%1$s каждый месяц. Тариф продлевается автоматически, пока вы не отмените его в настройках.</string>
     <string name="continue_with_upgrade">Продолжить с улучшением тарифа</string>
     <string name="monthly">Ежемесячно</string>
     <string name="yearly">Ежегодно</string>
