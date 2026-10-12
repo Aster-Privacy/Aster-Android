@@ -1163,7 +1163,7 @@ fun InboxScreen(
         }
     }
 
-    val scope_selection = select_all_active &&
+    val scope_selection = scope_selection_allowed(select_all_active, filter_active) &&
         scope_selection_confirmed &&
         mail_vm.folder_supports_scope_selection(current_folder)
     val selection_count = scope_selection_count(scope_selection, folder_total, selected_ids.size)
@@ -1178,7 +1178,7 @@ fun InboxScreen(
             picked.isNotEmpty() && picked.none { !it.is_read }
         }
     val can_offer_scope_selection = select_mode &&
-        select_all_active &&
+        scope_selection_allowed(select_all_active, filter_active) &&
         !scope_selection_confirmed &&
         folder_total > selected_ids.size &&
         mail_vm.folder_supports_scope_selection(current_folder)
@@ -2566,7 +2566,10 @@ fun InboxScreen(
                         on_all_mail_scope_change = on_all_mail_scope_change,
                         show_tools = tools_visible,
                         active_filter = active_filter,
-                        on_filter_change = { active_filter = it },
+                        on_filter_change = {
+                            if (it != active_filter) exit_select_mode()
+                            active_filter = it
+                        },
                         on_quick_action = { run_quick_action(it) },
                         selection_content = if (select_mode) {
                             {
@@ -4616,6 +4619,9 @@ internal fun unread_filter_rows_missing(
     active_filter == inbox_filter_unread &&
         visible_rows < unread_count &&
         loaded_items < UNREAD_FILTER_DRAIN_MAX_ITEMS
+
+internal fun scope_selection_allowed(select_all_active: Boolean, filter_active: Boolean): Boolean =
+    select_all_active && !filter_active
 
 internal fun inbox_auto_fill_wanted(
     active_filter: String,

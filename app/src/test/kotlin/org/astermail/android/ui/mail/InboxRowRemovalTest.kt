@@ -86,6 +86,13 @@ class InboxRowRemovalTest {
     }
 
     @Test
+    fun a_filtered_select_all_never_widens_to_the_whole_folder() {
+        assertTrue(scope_selection_allowed(select_all_active = true, filter_active = false))
+        assertFalse(scope_selection_allowed(select_all_active = true, filter_active = true))
+        assertFalse(scope_selection_allowed(select_all_active = false, filter_active = false))
+    }
+
+    @Test
     fun loading_stops_once_the_counted_threads_are_listed() {
         assertFalse(inbox_auto_fill_wanted(inbox_filter_unread, 27, 27, 27, 300))
         assertTrue(inbox_auto_fill_wanted(inbox_filter_unread, 3, 3, 3, 50))
