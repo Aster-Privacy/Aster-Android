@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.astermail.android.mail.ListReadFilter
 
 const val inbox_filter_all = "all"
 const val inbox_filter_unread = "unread"
@@ -49,6 +50,29 @@ fun thread_matches_inbox_filter(thread: ThreadRow, filter: String): Boolean = wh
     inbox_filter_read -> !thread.has_unread
     inbox_filter_attachments -> thread.has_attachment
     else -> true
+}
+
+fun read_filter_for_inbox_filter(filter: String): ListReadFilter = when (filter) {
+    inbox_filter_unread -> ListReadFilter.unread
+    inbox_filter_read -> ListReadFilter.read
+    else -> ListReadFilter.all
+}
+
+fun filter_empty_state_wanted(
+    filter_active: Boolean,
+    server_filtered: Boolean,
+    threads_empty: Boolean,
+    visible_empty: Boolean,
+): Boolean = filter_active && visible_empty && (server_filtered || !threads_empty)
+
+fun mark_all_unread_count(
+    folder: String,
+    inbox_unread: Int?,
+    folder_unread_counts: Map<String, Int>,
+): Int? = when (folder) {
+    "inbox" -> inbox_unread
+    "spam", "trash" -> null
+    else -> folder_unread_counts[folder]
 }
 
 object inbox_tools_pref {

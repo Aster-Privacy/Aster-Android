@@ -64,6 +64,7 @@ interface MailApi {
         include_envelope: Boolean? = null,
         direction: String? = null,
         pinned_first: Boolean? = null,
+        is_read: Boolean? = null,
     ): MailItemsListResponse
 
     suspend fun backfill_sender_alias(request: SenderAliasBackfillRequest): SenderAliasBackfillResponse
@@ -219,6 +220,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         include_envelope: Boolean?,
         direction: String?,
         pinned_first: Boolean?,
+        is_read: Boolean?,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages") {
             timeout {
@@ -245,6 +247,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             include_envelope?.let { parameter("include_envelope", it) }
             direction?.let { parameter("direction", it) }
             pinned_first?.let { parameter("pinned_first", it) }
+            is_read?.let { parameter("is_read", it) }
         }
         return decode_or_throw(response)
     }

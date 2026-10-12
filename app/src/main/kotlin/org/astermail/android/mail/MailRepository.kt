@@ -1924,6 +1924,7 @@ class MailRepository @Inject constructor(
         include_spam: Boolean? = null,
         include_trash: Boolean? = null,
         direction: String? = null,
+        is_read: Boolean? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -1947,6 +1948,7 @@ class MailRepository @Inject constructor(
             group_by_thread = conversation_grouping,
             skip_total = if (cursor != null || (offset ?: 0) > 0) true else null,
             pinned_first = true,
+            is_read = is_read,
         )
         val filtered_raw = if (is_received) {
             val now_ms = System.currentTimeMillis()
@@ -1976,8 +1978,8 @@ class MailRepository @Inject constructor(
         runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull()
     }
 
-    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> {
-        return fetch_inbox(limit, cursor, "sent", label_token = null, order = order)
+    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> {
+        return fetch_inbox(limit, cursor, "sent", label_token = null, order = order, is_read = is_read)
     }
 
     suspend fun fetch_drafts(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
@@ -1998,26 +2000,26 @@ class MailRepository @Inject constructor(
         )
     }
 
-    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible.filterNot { it.is_spam }, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
@@ -2209,8 +2211,8 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
