@@ -2294,6 +2294,8 @@
         <item quantity="other">%d neue Abos gefunden</item>
     </plurals>
     <string name="reaction_info_title">Reaktion</string>
+    <string name="reaction_badge_label">Neue Reaktion</string>
+    <string name="notification_new_reaction">Sie haben eine neue Reaktion</string>
     <string name="reaction_info_you">Sie haben mit %1$s reagiert</string>
     <string name="reaction_info_other">%1$s hat mit %2$s reagiert</string>
     <string name="folder_locked_title">Gesperrter Ordner</string>

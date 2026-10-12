@@ -109,6 +109,19 @@ class FolderRowCacheTest {
     }
 
     @Test
+    fun a_cached_row_keeps_the_unseen_reaction_flag() {
+        val flagged = item(id = "m1").copy(has_unseen_reaction = true)
+        val plain = item(id = "m2")
+
+        val restored = folder_cache_rows("inbox", listOf(flagged, plain), cached_at = 0L).map { it.to_inbox_item() }
+
+        assertTrue(restored[0].has_unseen_reaction)
+        assertEquals(true, restored[0].raw_item.has_unseen_reaction)
+        assertEquals(false, restored[1].has_unseen_reaction)
+        assertEquals(null, restored[1].raw_item.has_unseen_reaction)
+    }
+
+    @Test
     fun a_cached_sent_row_still_matches_the_sent_folder() {
         val row = folder_cache_rows("sent", listOf(item(item_type = "sent")), cached_at = 0L).single()
 

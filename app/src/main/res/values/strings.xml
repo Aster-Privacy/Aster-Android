@@ -340,6 +340,8 @@
     <string name="reaction_failed">Could not send reaction</string>
     <string name="reaction_remove_failed">Could not remove reaction</string>
     <string name="reaction_info_title">Reaction</string>
+    <string name="reaction_badge_label">New reaction</string>
+    <string name="notification_new_reaction">You have a new reaction</string>
     <string name="reaction_info_you">You reacted with %1$s</string>
     <string name="reaction_info_other">%1$s reacted with %2$s</string>
     <string name="more">more</string>

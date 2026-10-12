@@ -2286,6 +2286,8 @@
         <item quantity="other">새 구독 %d개를 찾았습니다</item>
     </plurals>
     <string name="reaction_info_title">반응</string>
+    <string name="reaction_badge_label">새 반응</string>
+    <string name="notification_new_reaction">새 반응이 있습니다</string>
     <string name="reaction_info_you">%1$s 반응을 남겼습니다</string>
     <string name="reaction_info_other">%1$s님이 %2$s(으)로 반응했습니다</string>
     <string name="folder_locked_title">잠긴 폴더</string>

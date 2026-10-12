@@ -2286,6 +2286,8 @@
         <item quantity="other">找到 %d 个新订阅</item>
     </plurals>
     <string name="reaction_info_title">回应</string>
+    <string name="reaction_badge_label">新回应</string>
+    <string name="notification_new_reaction">您有一条新回应</string>
     <string name="reaction_info_you">您使用 %1$s 回应了</string>
     <string name="reaction_info_other">%1$s 用 %2$s 回应了</string>
     <string name="folder_locked_title">已锁定的文件夹</string>

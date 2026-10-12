@@ -86,6 +86,7 @@ fun folder_cache_rows(
                 sender_verified = item.raw_item.sender_verified,
                 sender_verified_domain = item.raw_item.sender_verified_domain,
                 sender_verification = item.sender_verification,
+                has_unseen_reaction = item.has_unseen_reaction,
             ),
         )
     }
@@ -117,6 +118,7 @@ fun FolderRowEntity.to_inbox_item(): InboxItem = InboxItem(
     to_addresses = split_tokens(to_addresses),
     routing_token = routing_token,
     sender_verification = sender_verification,
+    has_unseen_reaction = has_unseen_reaction,
     raw_item = MailItem(
         id = id,
         item_type = item_type,
@@ -142,6 +144,7 @@ fun FolderRowEntity.to_inbox_item(): InboxItem = InboxItem(
         sender_aligned = sender_aligned,
         sender_verified = sender_verified,
         sender_verified_domain = sender_verified_domain,
+        has_unseen_reaction = has_unseen_reaction.takeIf { it },
         metadata = MailItemMetadata(
             is_read = is_read,
             is_starred = is_starred,

@@ -259,6 +259,7 @@ class MailPollingWorker(
                 }.getOrNull()
             } catch (_: Throwable) { null }
             if (page != null) fetched_any_page = true
+            page?.items?.let { notify_for_unseen_reactions(it) }
             var candidate = page?.items?.let { pick_notifiable_candidate(context, it, floor_ms) }
             if (page?.items?.let { has_protected_candidate(context, it, floor_ms) } == true) protected_pending = true
 
@@ -345,6 +346,41 @@ class MailPollingWorker(
         )
     }
 
+    private var reactions_checked_this_run = false
+
+    private fun notify_for_unseen_reactions(items: List<org.astermail.android.mail.InboxItem>) {
+        if (reactions_checked_this_run) return
+        reactions_checked_this_run = true
+        for (item in items) {
+            if (item.has_unseen_reaction) continue
+            for (key in listOf(reaction_claim_key(item.thread_token, item.id), reaction_claim_key(null, item.id))) {
+                if (was_item_notified(context, key)) release_item_notification(context, key)
+            }
+        }
+        val groups = unseen_reaction_groups(items)
+        if (groups.isEmpty()) return
+        val muted = muted_folder_tokens(context)
+        val muted_categories = muted_notification_categories(context)
+        val category_tabs = active_category_tabs(context)
+        val protected_tokens = protected_folder_tokens(context)
+        var can_notify = !is_quiet_hours_now(context)
+        for ((key, group) in groups) {
+            val target = group.first()
+            val is_new = claim_item_notification(context, key)
+            val target_key = reaction_claim_key(null, target.id)
+            val target_is_new = target_key == key || claim_item_notification(context, target_key)
+            if (!is_new || !target_is_new || !can_notify) continue
+            if (is_item_in_muted_folder(target, muted) ||
+                is_item_in_protected_folder(target, protected_tokens) ||
+                is_item_in_muted_category(target, muted_categories, category_tabs)
+            ) {
+                continue
+            }
+            show_reaction(context, target.id, opens_target = true)
+            can_notify = false
+        }
+    }
+
     private suspend fun post_message_notification(
         item_id: String,
         sender: String,
@@ -403,6 +439,7 @@ class MailPollingWorker(
         private const val KEY_LAST_NOTIFIED_COUNT = "last_notified_notifiable_count"
         private const val KEY_NOTIFIED_ITEM_IDS = "notified_item_ids"
         private const val NOTIFIED_ITEM_IDS_MAX = 100
+        private const val REACTION_CLAIM_PREFIX = "reaction:"
         private const val KEY_PRIVATE_NOTIFICATIONS = "private_notifications"
         private const val KEY_NOTIFY_NEW_EMAIL = "notify_new_email"
         private const val KEY_NOTIFY_REPLIES = "notify_replies"
@@ -1158,6 +1195,73 @@ class MailPollingWorker(
             val manager = NotificationManagerCompat.from(context)
             manager.notify(message_id, notification)
             post_group_summary(context, manager, message_id)
+        }
+
+        fun reaction_claim_key(thread_token: String?, item_id: String): String =
+            REACTION_CLAIM_PREFIX + (thread_token?.takeIf { it.isNotBlank() } ?: item_id)
+
+        fun unseen_reaction_groups(
+            items: List<org.astermail.android.mail.InboxItem>,
+        ): Map<String, List<org.astermail.android.mail.InboxItem>> =
+            items.filter { it.has_unseen_reaction && !it.is_trashed && !it.is_spam }
+                .groupBy { reaction_claim_key(it.thread_token, it.id) }
+
+        fun reaction_notification_id(item_id: String): Int =
+            message_notification_id((REACTION_CLAIM_PREFIX + item_id).hashCode())
+
+        fun show_reaction(context: Context, target_item_id: String, opens_target: Boolean): Boolean {
+            if (!can_post(context)) return false
+            create_channel(context)
+            val message_id = reaction_notification_id(target_item_id)
+            val builder = base_builder(context)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setContentTitle(localized(context).getString(R.string.app_name))
+                .setContentText(localized(context).getString(R.string.notification_new_reaction))
+                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                .setGroup(GROUP_KEY_NEW_MAIL)
+                .setDeleteIntent(dismiss_intent(context, message_id))
+            if (opens_target && target_item_id.isNotBlank()) {
+                val open_intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    putExtra(MainActivity.EXTRA_OPEN_EMAIL_ID, target_item_id)
+                    putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
+                }
+                builder.setContentIntent(
+                    PendingIntent.getActivity(
+                        context, message_id, open_intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
+            }
+            val manager = NotificationManagerCompat.from(context)
+            return runCatching {
+                manager.cancel(message_id)
+                manager.notify(message_id, builder.build())
+                post_group_summary(context, manager, message_id)
+            }.isSuccess
+        }
+
+        fun clear_reaction_notifications(
+            context: Context,
+            thread_token: String?,
+            item_ids: Collection<String>,
+        ) {
+            val ids = item_ids.filter { it.isNotBlank() }.distinct()
+            val keys = (
+                ids.map { reaction_claim_key(null, it) } +
+                    listOfNotNull(thread_token?.takeIf { it.isNotBlank() }?.let { reaction_claim_key(it, "") })
+                ).distinct()
+            keys.forEach { key ->
+                if (was_item_notified(context, key)) release_item_notification(context, key)
+            }
+            if (ids.isEmpty()) return
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            val cancelled = ids.map { reaction_notification_id(it) }.toSet()
+            cancelled.forEach { manager.cancel(it) }
+            clear_summary_if_empty(manager, cancelled)
         }
 
         @Synchronized

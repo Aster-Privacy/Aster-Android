@@ -405,6 +405,7 @@ data class InboxItem(
     val raw_item: MailItem,
     val is_decrypt_pending: Boolean = false,
     val sender_verification: String? = null,
+    val has_unseen_reaction: Boolean = false,
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
@@ -423,6 +424,7 @@ data class DecryptedReaction(
     val emoji: String,
     val reactor_email: String,
     val is_own: Boolean = false,
+    val is_unseen: Boolean = false,
 )
 
 data class ThreadMessageDecrypted(
@@ -3504,6 +3506,7 @@ class MailRepository @Inject constructor(
         routing_token = item.routing_token,
         is_undecryptable = true,
         raw_item = item,
+        has_unseen_reaction = item.has_unseen_reaction == true,
     )
 
     suspend fun decrypt_items_for_cache(items: List<MailItem>): List<InboxItem> =
@@ -3627,6 +3630,7 @@ class MailRepository @Inject constructor(
             raw_item = if (meta != null) item.copy(metadata = meta) else item,
             is_decrypt_pending = is_decrypt_pending,
             sender_verification = envelope?.sender_verification,
+            has_unseen_reaction = item.has_unseen_reaction == true,
         )
     }
 
@@ -5430,6 +5434,17 @@ class MailRepository @Inject constructor(
                 response.message.ifBlank { context.getString(R.string.reaction_remove_failed) },
             )
         }
+    }
+
+    suspend fun mark_reactions_seen(thread_token: String?, message_id: String): Result<Unit> = runCatching {
+        val token = thread_token?.takeIf { it.isNotBlank() }
+        send_api.mark_reactions_seen(
+            org.astermail.android.api.send.ReactionsSeenRequest(
+                thread_token = token,
+                target_message_ids = if (token == null) listOf(message_id) else emptyList(),
+            ),
+        )
+        Unit
     }
 
     suspend fun resolve_reaction(mail_item_id: String): DecryptedReaction? =

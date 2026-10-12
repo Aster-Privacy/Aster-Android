@@ -2293,6 +2293,8 @@
         <item quantity="other">%d nieuwe abonnementen gevonden</item>
     </plurals>
     <string name="reaction_info_title">Reactie</string>
+    <string name="reaction_badge_label">Nieuwe reactie</string>
+    <string name="notification_new_reaction">Je hebt een nieuwe reactie</string>
     <string name="reaction_info_you">Je hebt gereageerd met %1$s</string>
     <string name="reaction_info_other">%1$s reageerde met %2$s</string>
     <string name="folder_locked_title">Vergrendelde map</string>

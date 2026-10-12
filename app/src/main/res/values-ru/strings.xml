@@ -2309,6 +2309,8 @@
         <item quantity="other">Найдено %d новой подписки</item>
     </plurals>
     <string name="reaction_info_title">Реакция</string>
+    <string name="reaction_badge_label">Новая реакция</string>
+    <string name="notification_new_reaction">У вас новая реакция</string>
     <string name="reaction_info_you">Вы отреагировали %1$s</string>
     <string name="reaction_info_other">%1$s отреагировал(а): %2$s</string>
     <string name="folder_locked_title">Заблокированная папка</string>

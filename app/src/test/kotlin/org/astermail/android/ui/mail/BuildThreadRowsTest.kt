@@ -90,6 +90,21 @@ class BuildThreadRowsTest {
     }
 
     @Test
+    fun an_unseen_reaction_marks_the_grouped_and_the_flat_row() {
+        val emails = listOf(
+            threaded("a", "t1", 300),
+            threaded("b", "t1", 200).copy(has_unseen_reaction = true),
+            threaded("c", "t2", 100),
+        )
+
+        val grouped = build(emails).rows
+        assertEquals(listOf(true, false), grouped.map { it.has_unseen_reaction })
+
+        val flat = build(emails, grouping_enabled = false).rows
+        assertEquals(listOf(false, true, false), flat.map { it.has_unseen_reaction })
+    }
+
+    @Test
     fun newest_first_keeps_pinned_threads_on_top() {
         val result = build(
             listOf(

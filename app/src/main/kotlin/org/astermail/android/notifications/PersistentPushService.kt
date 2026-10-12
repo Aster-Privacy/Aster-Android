@@ -352,6 +352,34 @@ class PersistentPushService : Service() {
         }
     }
 
+    private fun deliver_reaction(text: String) {
+        val frame = org.astermail.android.mail.parse_reaction_frame(text)
+        if (frame == null || frame.event == null) {
+            deliver_new_mail()
+            return
+        }
+        if (!frame.is_added) {
+            runCatching { handle_reaction_changed(this, frame) }
+            return
+        }
+        val power = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val lock = runCatching {
+            power?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)?.apply {
+                setReferenceCounted(false)
+                acquire(WAKE_LOCK_TIMEOUT_MS)
+            }
+        }.getOrNull()
+        try {
+            val result = runCatching { handle_reaction_added(this, frame) }
+                .getOrDefault(PushResult.NeedsFetch)
+            if (result == PushResult.NeedsFetch) {
+                runCatching { MailPollingWorker.enqueue_forced_notify(this) }
+            }
+        } finally {
+            runCatching { if (lock?.isHeld == true) lock.release() }
+        }
+    }
+
     private inner class AsterSocketListener(
         private val marker: Long,
         private val token: String,
@@ -392,7 +420,8 @@ class PersistentPushService : Service() {
                 }
                 "session_revoked" -> stop_cleanly()
                 "ping" -> runCatching { webSocket.send(PONG_FRAME) }
-                "new_mail", "new_reaction" -> deliver_new_mail()
+                "new_mail" -> deliver_new_mail()
+                "new_reaction" -> deliver_reaction(text)
                 "contacts_changed" -> runCatching {
                     org.astermail.android.contacts.sync.ContactSyncAccounts.notify_remote_updated()
                     org.astermail.android.contacts.sync.ContactSyncAccounts

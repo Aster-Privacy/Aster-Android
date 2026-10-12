@@ -110,6 +110,7 @@ data class MailItem(
     val is_reaction: Boolean? = null,
     val message_group_id: String? = null,
     val reactions: List<ReactionSummary>? = null,
+    val has_unseen_reaction: Boolean? = null,
 )
 
 @Serializable
@@ -120,6 +121,7 @@ data class ReactionSummary(
     val reactor_email: String? = null,
     val is_own: Boolean = false,
     val created_at: String? = null,
+    val is_unseen: Boolean = false,
 )
 
 @Serializable

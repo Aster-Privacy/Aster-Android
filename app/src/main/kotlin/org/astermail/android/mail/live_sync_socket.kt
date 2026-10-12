@@ -77,6 +77,31 @@ fun parse_live_sync_frame(text: String): LiveSyncFrame? {
     }
 }
 
+data class ReactionFrame(
+    val mail_item_id: String?,
+    val target_mail_item_id: String?,
+    val thread_token: String?,
+    val event: String?,
+) {
+    val is_added: Boolean get() = event == "added"
+    val clears_unseen: Boolean get() = event == "seen" || event == "hidden"
+}
+
+private fun optional_frame_field(frame: JSONObject, name: String): String? =
+    if (frame.isNull(name)) null else frame.optString(name).takeIf { it.isNotBlank() }
+
+fun parse_reaction_frame(text: String): ReactionFrame? {
+    if (text.length > LIVE_SYNC_MAX_FRAME_CHARS) return null
+    val frame = runCatching { JSONObject(text) }.getOrNull() ?: return null
+    if (frame.optString("type") != "new_reaction") return null
+    return ReactionFrame(
+        mail_item_id = optional_frame_field(frame, "mail_item_id"),
+        target_mail_item_id = optional_frame_field(frame, "target_mail_item_id"),
+        thread_token = optional_frame_field(frame, "thread_token"),
+        event = optional_frame_field(frame, "event"),
+    )
+}
+
 private const val LIVE_SYNC_MAX_FRAME_CHARS = 65_536
 
 @Singleton

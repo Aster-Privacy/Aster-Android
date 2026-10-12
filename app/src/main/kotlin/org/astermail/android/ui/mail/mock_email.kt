@@ -66,6 +66,7 @@ data class Email(
     val send_status: String? = null,
     val send_error: String? = null,
     val trust_message: SenderTrustMessage? = null,
+    val has_unseen_reaction: Boolean = false,
 )
 
 data class list_folder_chip(
@@ -89,6 +90,7 @@ data class ThreadRow(
     val label_icons: List<String> = emptyList(),
     val participants: List<Pair<String, String>> = emptyList(),
     val folder_chip: list_folder_chip? = null,
+    val has_unseen_reaction: Boolean = false,
 )
 
 fun thread_open_target_id(thread: ThreadRow): String = thread.newest.id
@@ -182,6 +184,7 @@ fun group_by_thread(
                 label_icons = icons,
                 participants = distinct_participants,
                 folder_chip = newest.folder_chip,
+                has_unseen_reaction = msgs.any { it.has_unseen_reaction },
             ),
         )
     }
@@ -207,6 +210,7 @@ fun flat_thread_rows(emails: List<Email>): List<ThreadRow> = emails.map { e ->
                 displayed_sender_email(e.display_sender_email, e.sender_email),
         ),
         folder_chip = e.folder_chip,
+        has_unseen_reaction = e.has_unseen_reaction,
     )
 }
 
@@ -387,6 +391,7 @@ fun inbox_item_to_email(
         send_status = item.raw_item.send_status,
         send_error = item.raw_item.send_error,
         trust_message = inbox_item_trust_message(item),
+        has_unseen_reaction = item.has_unseen_reaction,
     )
 }
 

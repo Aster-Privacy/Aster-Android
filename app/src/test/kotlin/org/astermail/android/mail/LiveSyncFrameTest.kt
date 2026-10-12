@@ -40,6 +40,45 @@ class LiveSyncFrameTest {
     }
 
     @Test
+    fun parses_an_added_reaction_frame() {
+        val frame = parse_reaction_frame(
+            """{"type":"new_reaction","mail_item_id":"r","target_mail_item_id":"t","thread_token":"dG9rZW4=","event":"added"}""",
+        )
+
+        assertEquals("r", frame?.mail_item_id)
+        assertEquals("t", frame?.target_mail_item_id)
+        assertEquals("dG9rZW4=", frame?.thread_token)
+        assertEquals(true, frame?.is_added)
+        assertEquals(false, frame?.clears_unseen)
+    }
+
+    @Test
+    fun only_an_added_reaction_event_is_notifiable() {
+        for (event in listOf("removed", "seen", "hidden", "other")) {
+            val frame = parse_reaction_frame("""{"type":"new_reaction","mail_item_id":"r","event":"$event"}""")
+            assertEquals(event, frame?.event)
+            assertEquals(false, frame?.is_added)
+            assertEquals(event == "seen" || event == "hidden", frame?.clears_unseen)
+        }
+    }
+
+    @Test
+    fun a_reaction_frame_without_an_event_keeps_the_event_empty() {
+        val frame = parse_reaction_frame("""{"type":"new_reaction","mail_item_id":"r","target_mail_item_id":null}""")
+
+        assertNull(frame?.event)
+        assertNull(frame?.target_mail_item_id)
+        assertNull(frame?.thread_token)
+        assertEquals(false, frame?.is_added)
+    }
+
+    @Test
+    fun reaction_parsing_ignores_other_frames() {
+        assertNull(parse_reaction_frame("""{"type":"new_mail","mail_item_id":"a","event":"added"}"""))
+        assertNull(parse_reaction_frame("not json"))
+    }
+
+    @Test
     fun parses_session_frames() {
         assertEquals(LiveSyncFrame.auth_success, parse_live_sync_frame("""{"type":"auth_success"}"""))
         assertEquals(LiveSyncFrame.auth_error, parse_live_sync_frame("""{"type":"auth_error","message":"x"}"""))

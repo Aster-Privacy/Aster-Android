@@ -64,4 +64,5 @@ data class FolderRowEntity(
     val sender_verified: Boolean? = null,
     val sender_verified_domain: String? = null,
     val sender_verification: String? = null,
+    val has_unseen_reaction: Boolean = false,
 )
