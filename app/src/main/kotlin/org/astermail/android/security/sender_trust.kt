@@ -1327,17 +1327,24 @@ private fun split_address_list(text: String): List<String> {
 private val reply_to_delimiters = charArrayOf(' ', '\t', '\n', '\r', '<', '>', '(', ')', '[', ']', ',', ';', ':', '"', '\\')
 
 private fun embedded_reply_to(parsed: ParsedAddress, entry: String, is_parsed: Boolean): String? {
-    val cleaned = clean_text(entry, false)
+    val cleaned = clean_text(entry, false).replace('\uff20', '@').replace('\ufe6b', '@')
     val first = cleaned.indexOf('@')
     if (first < 0) return null
     if (is_parsed && cleaned.indexOf('@', first + 1) < 0) return null
-    for (piece in cleaned.split(*reply_to_delimiters)) {
+    for (token in cleaned.split(*reply_to_delimiters)) {
+        val piece = token.trim('\'', '.')
         if (!piece.contains('@')) continue
         val parts = piece.split('@')
         for (index in 1 until parts.size) {
             val local = parts[index - 1]
             val reply = parse_address(local.ifEmpty { "a" } + "@" + parts[index])
-                ?: return cap_trust_code_points(piece, max_address_length)
+            if (reply == null) {
+                val host = parts[index].lowercase()
+                if (host.isEmpty() && local.isEmpty()) continue
+                if (host.isNotEmpty() && !host.contains('.')) continue
+                if (host == parsed.registrable || host.endsWith("." + parsed.registrable)) continue
+                return cap_trust_code_points(piece, max_address_length)
+            }
             if (reply.registrable != parsed.registrable) {
                 return if (local.isEmpty()) reply.domain else reply.address
             }
@@ -1348,7 +1355,9 @@ private fun embedded_reply_to(parsed: ParsedAddress, entry: String, is_parsed: B
 
 private fun reply_to_notice(parsed: ParsedAddress, reply_to: String?): String? {
     if (reply_to == null || clean_text(reply_to, false).isEmpty()) return null
+    val seen = HashSet<String>()
     for (entry in split_address_list(reply_to)) {
+        if (!seen.add(entry)) continue
         val reply = parse_address(entry)
         if (reply != null && reply.registrable != parsed.registrable) return reply.address
         val embedded = embedded_reply_to(parsed, entry, reply != null)
