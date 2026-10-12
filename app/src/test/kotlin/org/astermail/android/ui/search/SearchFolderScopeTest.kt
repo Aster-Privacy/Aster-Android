@@ -74,7 +74,7 @@ class SearchFolderScopeTest {
 
     private fun search(query: String): List<String> {
         val parsed = parse_query(query)
-        return corpus.filter { matches_item(it, parsed, filter = null) }.map { it.id }
+        return corpus.filter { matches_item(it, parsed) }.map { it.id }
     }
 
     private fun search_in(folder: String, text: String = "report"): List<String> {

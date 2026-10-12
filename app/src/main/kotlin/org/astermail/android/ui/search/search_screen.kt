@@ -122,28 +122,13 @@ import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.acrylic
 
-private data class FilterChip(val key: String, val label_res: Int)
+private data class FilterToggle(val key: String, val value: String, val label_res: Int)
 
-private val FILTER_CHIPS = listOf(
-    FilterChip("Has attachment", R.string.filter_has_attachment),
-    FilterChip("Unread", R.string.filter_unread),
-    FilterChip("Starred", R.string.filter_starred),
-    FilterChip("Encrypted", R.string.filter_encrypted),
-)
-
-internal val ANY_OF_OPERATOR_KEYS = setOf("from", "to", "contact")
-
-private val OPERATOR_REGEX = Regex("""(-?)(\w+):("([^"]+)"|(\S+))""")
-
-internal data class ParsedQuery(
-    val free_text: String,
-    val operators: List<SearchOperator>,
-)
-
-internal data class SearchOperator(
-    val negated: Boolean,
-    val key: String,
-    val value: String,
+private val FILTER_TOGGLES = listOf(
+    FilterToggle("has", "attachment", R.string.filter_has_attachment),
+    FilterToggle("is", "unread", R.string.filter_unread),
+    FilterToggle("is", "starred", R.string.filter_starred),
+    FilterToggle("is", "encrypted", R.string.filter_encrypted),
 )
 
 internal data class SearchOutcome(
@@ -170,7 +155,7 @@ private object search_screen_cache {
     var corpus: List<org.astermail.android.mail.InboxItem>? = null
     var sorted: List<org.astermail.android.mail.InboxItem>? = null
     var parsed: ParsedQuery? = null
-    var filter: String? = null
+    var env_labels: SearchLabelIndex? = null
     var outcome: SearchOutcome? = null
     var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
     var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
@@ -184,231 +169,11 @@ private object search_screen_cache {
 
     fun outcome_for(
         parsed: ParsedQuery,
-        filter: String?,
+        labels: SearchLabelIndex,
         sorted: List<org.astermail.android.mail.InboxItem>?,
     ) = outcome.takeIf {
-        sorted != null && outcome_corpus === sorted && this.parsed == parsed && this.filter == filter
+        sorted != null && outcome_corpus === sorted && this.parsed == parsed && env_labels == labels
     }
-}
-
-internal fun parse_query(raw: String): ParsedQuery {
-    val operators = mutableListOf<SearchOperator>()
-
-    OPERATOR_REGEX.findAll(raw).forEach { match ->
-        val negated = match.groupValues[1] == "-"
-        val key = match.groupValues[2].lowercase()
-        val value = (match.groupValues[4].ifEmpty { match.groupValues[5] }).lowercase()
-        operators.add(SearchOperator(negated, key, value))
-    }
-    val remaining = OPERATOR_REGEX.replace(raw, " ")
-
-    return ParsedQuery(
-        free_text = remaining.trim().lowercase(),
-        operators = operators,
-    )
-}
-
-internal fun effective_operators(ops: List<SearchOperator>): List<SearchOperator> {
-    val last_scope = ops.lastOrNull { !it.negated && it.key == "in" } ?: return ops
-    return ops.filter { it.negated || it.key != "in" || it === last_scope }
-}
-
-internal fun matches_item(
-    item: InboxItem,
-    parsed: ParsedQuery,
-    filter: String?,
-    apply_scope: Boolean = true,
-): Boolean {
-    val operators = effective_operators(parsed.operators)
-    if (apply_scope) {
-        if (item.is_spam && !scope_includes_spam(operators)) return false
-        if (item.is_trashed && !scope_includes_trash(operators)) return false
-    }
-
-    val filter_ok = when (filter) {
-        "Unread" -> !item.is_read
-        "Starred" -> item.is_starred
-        "Has attachment" -> item.has_attachments
-        "Encrypted" -> item.is_encrypted
-        else -> true
-    }
-    if (!filter_ok) return false
-
-    val attachment_type_ops = operators.filter {
-        !it.negated && it.key == "has" && ATTACHMENT_EXTENSIONS.containsKey(it.value)
-    }
-
-    if (attachment_type_ops.isNotEmpty() &&
-        attachment_type_ops.none { matches_attachment_type(item, it.value) }
-    ) {
-        return false
-    }
-
-    val grouped_ops = mutableSetOf<SearchOperator>()
-
-    operators
-        .filter { !it.negated && ANY_OF_OPERATOR_KEYS.contains(it.key) }
-        .groupBy { it.key }
-        .forEach { (key, group) ->
-            if (group.size < 2 && key != "contact") return@forEach
-            grouped_ops.addAll(group)
-            if (group.none { evaluate_operator(item, it) }) return false
-        }
-
-    for (op in operators) {
-        if (attachment_type_ops.contains(op)) continue
-        if (grouped_ops.contains(op)) continue
-        val pass = evaluate_operator(item, op)
-        if (!pass) return false
-    }
-
-    if (parsed.free_text.isNotEmpty()) {
-        val q = parsed.free_text
-        val hit = item.sender_name.contains(q, ignoreCase = true) ||
-            item.sender_email.contains(q, ignoreCase = true) ||
-            item.subject.contains(q, ignoreCase = true) ||
-            item.preview.contains(q, ignoreCase = true) ||
-            item.display_sender_name?.contains(q, ignoreCase = true) == true ||
-            item.display_sender_email?.contains(q, ignoreCase = true) == true
-        if (!hit) return false
-    }
-
-    return true
-}
-
-private fun evaluate_operator(item: InboxItem, op: SearchOperator): Boolean {
-    val result = when (op.key) {
-        "from" -> if (is_full_address(op.value)) {
-            address_field_matches(item.sender_email, op.value) ||
-                address_field_matches(item.display_sender_email, op.value)
-        } else {
-            item.sender_name.contains(op.value, ignoreCase = true) ||
-                item.sender_email.contains(op.value, ignoreCase = true) ||
-                item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
-                item.display_sender_email?.contains(op.value, ignoreCase = true) == true
-        }
-        "to" -> item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
-            item.received_on?.contains(op.value, ignoreCase = true) == true
-        "contact" -> if (is_full_address(op.value)) {
-            address_field_matches(item.sender_email, op.value) ||
-                address_field_matches(item.display_sender_email, op.value) ||
-                item.to_addresses.any { address_field_matches(it, op.value) } ||
-                address_field_matches(item.received_on, op.value)
-        } else item.sender_name.contains(op.value, ignoreCase = true) ||
-            item.sender_email.contains(op.value, ignoreCase = true) ||
-            item.display_sender_name?.contains(op.value, ignoreCase = true) == true ||
-            item.display_sender_email?.contains(op.value, ignoreCase = true) == true ||
-            item.to_addresses.any { it.contains(op.value, ignoreCase = true) } ||
-            item.received_on?.contains(op.value, ignoreCase = true) == true
-        "subject" -> item.subject.contains(op.value, ignoreCase = true)
-        "has" -> when (op.value) {
-            "attachment", "attachments" -> item.has_attachments
-            else -> matches_attachment_type(item, op.value)
-        }
-        "is" -> when (op.value) {
-            "unread" -> !item.is_read
-            "read" -> item.is_read
-            "starred" -> item.is_starred
-            "unstarred" -> !item.is_starred
-            "encrypted" -> item.is_encrypted
-            else -> true
-        }
-        "in" -> when (op.value) {
-            "inbox" -> is_received_item(item) && !item.is_trashed && !item.is_archived && !item.is_spam
-            "sent" -> item.raw_item.item_type == "sent"
-            "drafts", "draft" -> item.raw_item.item_type == "draft"
-            "trash" -> item.is_trashed
-            "archive", "archived" -> item.is_archived
-            "spam" -> item.is_spam
-            "starred" -> item.is_starred
-            "all" -> !item.is_trashed && !item.is_spam
-            "anywhere" -> true
-            else -> true
-        }
-        "before" -> {
-            val target = parse_date_value(op.value)
-            if (target != null) parse_item_timestamp(item.timestamp) < target else true
-        }
-        "after" -> {
-            val target = parse_date_value(op.value)
-            if (target != null) parse_item_timestamp(item.timestamp) > target else true
-        }
-        "date" -> {
-            val ts = parse_item_timestamp(item.timestamp)
-            when (op.value) {
-                "today" -> ts >= start_of_local_day(0)
-                "yesterday" -> ts >= start_of_local_day(1) && ts < start_of_local_day(0)
-                "this_week" -> ts >= start_of_local_day(6)
-                "last_week" -> ts >= start_of_local_day(13) && ts < start_of_local_day(6)
-                "this_month" -> ts >= start_of_local_day(29)
-                else -> true
-            }
-        }
-        "label" -> item.labels.any { it.lowercase().contains(op.value) }
-        else -> true
-    }
-    return if (op.negated) !result else result
-}
-
-private fun is_received_item(item: InboxItem): Boolean {
-    val type = item.raw_item.item_type
-    return type == null || type == "received"
-}
-
-private fun start_of_local_day(days_back: Int): Long {
-    val calendar = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
-    calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-    calendar.set(java.util.Calendar.MINUTE, 0)
-    calendar.set(java.util.Calendar.SECOND, 0)
-    calendar.set(java.util.Calendar.MILLISECOND, 0)
-    calendar.add(java.util.Calendar.DAY_OF_YEAR, -days_back)
-    return calendar.timeInMillis
-}
-
-private fun parse_digits(text: String, start: Int, end: Int): Int {
-    var acc = 0
-    for (i in start until end) {
-        val c = text[i]
-        if (c < '0' || c > '9') return -1
-        acc = acc * 10 + (c - '0')
-    }
-    return acc
-}
-
-private fun days_from_civil(year: Int, month: Int, day: Int): Long {
-    val y = if (month <= 2) year - 1 else year
-    val era = (if (y >= 0) y else y - 399) / 400
-    val yoe = (y - era * 400).toLong()
-    val mp = (month + 9) % 12
-    val doy = (153 * mp + 2) / 5 + day - 1
-    val doe = yoe * 365 + yoe / 4 - yoe / 100 + doy
-    return era * 146097L + doe - 719468L
-}
-
-private fun parse_date_value(value: String): Long? {
-    if (value.length >= 10 && value[4] == '-' && value[7] == '-') {
-        val year = parse_digits(value, 0, 4)
-        val month = parse_digits(value, 5, 7)
-        val day = parse_digits(value, 8, 10)
-        if (year >= 0 && month in 1..12 && day in 1..31) {
-            return days_from_civil(year, month, day) * 86_400_000L
-        }
-    }
-    val days = value.removeSuffix("d").toIntOrNull()
-    return if (days != null) System.currentTimeMillis() - days * 86_400_000L else null
-}
-
-private fun parse_item_timestamp(ts: String): Long {
-    if (ts.length < 19) return 0L
-    val year = parse_digits(ts, 0, 4)
-    val month = parse_digits(ts, 5, 7)
-    val day = parse_digits(ts, 8, 10)
-    val hour = parse_digits(ts, 11, 13)
-    val minute = parse_digits(ts, 14, 16)
-    val second = parse_digits(ts, 17, 19)
-    if (year < 0 || month !in 1..12 || day !in 1..31) return 0L
-    if (hour !in 0..23 || minute !in 0..59 || second !in 0..60) return 0L
-    return (days_from_civil(year, month, day) * 86_400L + hour * 3600L + minute * 60L + second) * 1000L
 }
 
 @Composable
@@ -441,15 +206,21 @@ fun SearchScreen(
     fun set_free_text(next: String) {
         field_value = TextFieldValue(text = next, selection = TextRange(next.length))
     }
-    val query = remember(operator_chips, free_text) {
-        val ops = operator_chips.joinToString(" ") {
-            val prefix = if (it.negated) "-" else ""
-            val v = if (it.value.contains(' ')) "\"${it.value}\"" else it.value
-            "$prefix${it.key}:$v"
+    fun apply_field_change(next: TextFieldValue) {
+        val lifted = lift_operators(next.text, submit = false)
+        if (lifted.operators.isEmpty()) {
+            field_value = next
+            return
         }
-        listOf(ops, free_text).filter { it.isNotBlank() }.joinToString(" ")
+        operator_chips = merge_lifted(operator_chips, lifted.operators)
+        set_free_text(lifted.text)
     }
-    var active_filter by rememberSaveable { mutableStateOf<String?>(null) }
+    fun submit_typed_operators() {
+        val lifted = lift_operators(free_text, submit = true)
+        if (lifted.operators.isEmpty()) return
+        operator_chips = merge_lifted(operator_chips, lifted.operators)
+        set_free_text(lifted.text.trim())
+    }
     val focus_requester = remember { FocusRequester() }
     var select_mode by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
@@ -523,16 +294,36 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) {
         androidx.compose.runtime.withFrameNanos {}
-        if (free_text.isEmpty() && operator_chips.isEmpty() && active_filter == null) {
+        if (free_text.isEmpty() && operator_chips.isEmpty()) {
             focus_requester.requestFocus()
         }
     }
 
-    val parsed = remember(query) { parse_query(query.trim()) }
+    val parsed = remember(operator_chips, free_text) { combined_query(operator_chips, free_text) }
 
-    val has_query = query.isNotBlank() || active_filter != null
+    val has_query = has_search_query(parsed)
 
-    var corpus_folders_requested by rememberSaveable { mutableStateOf(false) }
+    val label_index = remember(settings_state.labels, settings_state.tags) {
+        SearchLabelIndex(
+            settings_state.labels.mapNotNull { label ->
+                label.encrypted_name
+                    ?.takeIf { it.isNotBlank() && !org.astermail.android.looks_encrypted(it) }
+                    ?.let { SearchLabelEntry(it, label.label_token) }
+            } + settings_state.tags
+                .filter { org.astermail.android.labels.tag_name_readable(it) }
+                .map { SearchLabelEntry(it.encrypted_name, it.tag_token) },
+        )
+    }
+    val uses_labels = parsed.operators.any { it.key == "label" }
+    LaunchedEffect(uses_labels) {
+        if (uses_labels) {
+            if (settings_state.labels.isEmpty()) settings_vm.load_labels()
+            if (settings_state.tags.isEmpty()) settings_vm.load_tags()
+        }
+    }
+    val search_labels = if (uses_labels) label_index else NO_SEARCH_LABELS
+
+    var corpus_folders_requested by remember { mutableStateOf(false) }
     LaunchedEffect(has_query) {
         if (has_query && !corpus_folders_requested) {
             corpus_folders_requested = true
@@ -577,8 +368,8 @@ fun SearchScreen(
     }
 
     val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
-        initialValue = search_screen_cache.outcome_for(parsed, active_filter, sorted_corpus),
-        parsed, active_filter, sorted_corpus, has_query,
+        initialValue = search_screen_cache.outcome_for(parsed, search_labels, sorted_corpus),
+        parsed, search_labels, sorted_corpus, has_query,
     ) {
         if (!has_query) {
             value = SearchOutcome(emptyList(), 0)
@@ -589,22 +380,23 @@ fun SearchScreen(
             value = null
             return@produceState
         }
-        search_screen_cache.outcome_for(parsed, active_filter, corpus)?.let {
+        search_screen_cache.outcome_for(parsed, search_labels, corpus)?.let {
             value = it
             return@produceState
         }
         value = null
-        if (parsed.free_text.isNotEmpty()) kotlinx.coroutines.delay(120)
+        if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
+        val env = current_search_env(search_labels)
         val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val results = mutableListOf<org.astermail.android.mail.InboxItem>()
             var hidden = 0
             for (item in corpus) {
-                if (matches_item(item, parsed, active_filter)) {
+                if (matches_item(item, parsed, env = env)) {
                     results.add(item)
                     continue
                 }
                 if ((item.is_spam || item.is_trashed) &&
-                    matches_item(item, parsed, active_filter, apply_scope = false)
+                    matches_item(item, parsed, apply_scope = false, env = env)
                 ) {
                     hidden++
                 }
@@ -612,7 +404,7 @@ fun SearchScreen(
             SearchOutcome(results, hidden)
         }
         search_screen_cache.parsed = parsed
-        search_screen_cache.filter = active_filter
+        search_screen_cache.env_labels = search_labels
         search_screen_cache.outcome = outcome
         search_screen_cache.outcome_corpus = corpus
         value = outcome
@@ -621,7 +413,7 @@ fun SearchScreen(
     var last_results by remember {
         mutableStateOf(
             search_screen_cache.outcome
-                ?.takeIf { search_screen_cache.parsed == parsed && search_screen_cache.filter == active_filter }
+                ?.takeIf { search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels }
                 ?.results
                 ?: emptyList(),
         )
@@ -652,7 +444,7 @@ fun SearchScreen(
     val chip_people = people_lists.first
     val chip_recipients = people_lists.second
     val custom_chips = remember(operator_chips) {
-        operator_chips.filterNot { is_quick_operator(it) }
+        custom_chip_operators(operator_chips)
     }
     val visible_results = computed?.results ?: last_results
     val filtered = remember(visible_results, lock_revision) {
@@ -778,14 +570,18 @@ fun SearchScreen(
         } else {
             search_input_bar(
                 field_value = field_value,
-                on_field_change = { field_value = it },
+                on_field_change = { apply_field_change(it) },
                 show_placeholder = free_text.isEmpty() && operator_chips.isEmpty(),
                 show_clear = free_text.isNotEmpty() || operator_chips.isNotEmpty(),
                 on_clear = { set_free_text(""); operator_chips = emptyList() },
                 on_back = dismiss_and_back,
                 focus_requester = focus_requester,
-                active_filter = active_filter,
-                on_filter_change = { active_filter = it },
+                operators = operator_chips,
+                on_operators_change = { operator_chips = it },
+                on_submit = {
+                    submit_typed_operators()
+                    dismiss_keyboard()
+                },
             )
         }
 
@@ -990,6 +786,7 @@ fun SearchScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 val corpus_error = search_state.error
+                val filters_active = parsed.operators.isNotEmpty()
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = if (corpus_error != null) TablerIcons.AlertCircle else TablerIcons.Search,
@@ -999,7 +796,9 @@ fun SearchScreen(
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
                     Text(
-                        text = corpus_error ?: stringResource(R.string.no_results_found),
+                        text = corpus_error ?: stringResource(
+                            if (filters_active) R.string.search_no_results_filtered else R.string.no_results_found,
+                        ),
                         color = colors.text_muted,
                         fontSize = 15.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1009,6 +808,15 @@ fun SearchScreen(
                         org.astermail.android.design.components.AsterSecondaryButton(
                             label = stringResource(R.string.retry),
                             onClick = { mail_vm.build_search_index(force = true) },
+                        )
+                    } else if (filters_active) {
+                        Spacer(Modifier.height(AsterSpacing.md))
+                        org.astermail.android.design.components.AsterSecondaryButton(
+                            label = stringResource(R.string.search_clear_filters),
+                            onClick = {
+                                set_free_text(parse_query(free_text).free_text)
+                                operator_chips = emptyList()
+                            },
                         )
                     }
                 }
@@ -1195,12 +1003,29 @@ internal fun operator_value_label(op: SearchOperator): Int? = when (op.key) {
     }
     "is" -> when (op.value) {
         "unread" -> R.string.filter_unread
+        "read" -> R.string.inbox_a11y_state_read
         "starred" -> R.string.filter_starred
+        "unstarred" -> R.string.not_starred
         "encrypted" -> R.string.filter_encrypted
+        else -> null
+    }
+    "has" -> if (HAS_OPERATOR_VALUES.contains(op.value)) R.string.search_value_attachment else null
+    "date" -> when (op.value) {
+        "today" -> R.string.security_activity_today
+        "yesterday" -> R.string.yesterday
+        "this_week" -> R.string.search_value_this_week
+        "last_week" -> R.string.search_value_last_week
+        "this_month" -> R.string.search_value_this_month
         else -> null
     }
     else -> null
 }
+
+private fun filter_toggle_active(ops: List<SearchOperator>, toggle: FilterToggle): Boolean =
+    if (toggle.key == "has") has_attachment_active(ops) else has_operator(ops, toggle.key, toggle.value)
+
+private fun apply_filter_toggle(ops: List<SearchOperator>, toggle: FilterToggle): List<SearchOperator> =
+    if (toggle.key == "has") toggle_attachment(ops) else toggle_operator(ops, toggle.key, toggle.value)
 
 @Composable
 private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
@@ -1219,7 +1044,7 @@ private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         "label" -> stringResource(R.string.search_chip_label)
         else -> op.key.replaceFirstChar { it.uppercase() }
     }
-    val value = operator_value_label(op)?.let { stringResource(it) } ?: op.value
+    val value = operator_value_text(op)
     val chip_label = if (op.negated) {
         stringResource(
             R.string.search_chip_format_negated,
@@ -1349,8 +1174,9 @@ private fun search_input_bar(
     on_clear: () -> Unit,
     on_back: () -> Unit,
     focus_requester: FocusRequester,
-    active_filter: String?,
-    on_filter_change: (String?) -> Unit,
+    operators: List<SearchOperator>,
+    on_operators_change: (List<SearchOperator>) -> Unit,
+    on_submit: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var filter_menu_open by remember { mutableStateOf(false) }
@@ -1401,6 +1227,12 @@ private fun search_input_bar(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     ),
                     cursorBrush = SolidColor(colors.accent_blue),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Search,
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSearch = { on_submit() },
+                    ),
                     modifier = Modifier.fillMaxWidth().focusRequester(focus_requester),
                 )
             }
@@ -1435,7 +1267,11 @@ private fun search_input_bar(
                 Icon(
                     imageVector = TablerIcons.Filter,
                     contentDescription = stringResource(R.string.filters),
-                    tint = if (active_filter != null) colors.accent_blue else colors.text_secondary,
+                    tint = if (FILTER_TOGGLES.any { filter_toggle_active(operators, it) }) {
+                        colors.accent_blue
+                    } else {
+                        colors.text_secondary
+                    },
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -1443,15 +1279,11 @@ private fun search_input_bar(
                 expanded = filter_menu_open,
                 on_dismiss = { filter_menu_open = false },
             ) {
-                FILTER_CHIPS.forEach { chip ->
-                    val selected = active_filter == chip.key
+                FILTER_TOGGLES.forEach { toggle ->
                     aster_menu_item(
-                        label = stringResource(chip.label_res),
-                        selected = selected,
-                        on_click = {
-                            filter_menu_open = false
-                            on_filter_change(if (selected) null else chip.key)
-                        },
+                        label = stringResource(toggle.label_res),
+                        selected = filter_toggle_active(operators, toggle),
+                        on_click = { on_operators_change(apply_filter_toggle(operators, toggle)) },
                     )
                 }
             }

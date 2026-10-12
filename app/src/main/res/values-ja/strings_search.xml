@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">除外</string>
     <string name="search_chip_format">%1$s：%2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s：%3$s</string>
+    <string name="search_no_results_filtered">有効なフィルタに一致する結果はありません</string>
+    <string name="search_clear_filters">フィルタをクリア</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">今週</string>
+    <string name="search_value_last_week">先週</string>
+    <string name="search_value_this_month">今月</string>
+    <string name="search_value_attachment">添付ファイル</string>
 </resources>

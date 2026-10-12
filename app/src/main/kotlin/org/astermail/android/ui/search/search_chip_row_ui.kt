@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,6 +77,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.height
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 private val chip_height = 34.dp
 
@@ -131,6 +135,7 @@ internal fun person_picker_sheet(
     title: String,
     people: List<ChipPerson>,
     current: String?,
+    placeholder: String,
     on_apply: (String) -> Unit,
     on_clear: () -> Unit,
     on_dismiss: () -> Unit,
@@ -139,10 +144,10 @@ internal fun person_picker_sheet(
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var typed by remember { mutableStateOf(current ?: "") }
     val matches = remember(typed, people) {
-        val needle = typed.trim().lowercase()
+        val needle = fold_text(typed.trim())
         if (needle.isEmpty()) people
         else people.filter {
-            it.email.contains(needle) || it.name.lowercase().contains(needle)
+            fold_text(it.email).contains(needle) || fold_text(it.name).contains(needle)
         }
     }
 
@@ -195,7 +200,7 @@ internal fun person_picker_sheet(
                 value = typed,
                 onValueChange = { typed = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = stringResource(R.string.chip_name_or_email),
+                placeholder = placeholder,
                 singleLine = true,
                 keyboard_actions = androidx.compose.foundation.text.KeyboardActions(
                     onDone = { on_apply(typed) },
@@ -255,11 +260,71 @@ internal fun person_picker_sheet(
     }
 }
 
-private fun format_picker_date(year: Int, month: Int, day: Int): String {
-    val m = if (month < 10) "0$month" else "$month"
-    val d = if (day < 10) "0$day" else "$day"
+internal fun format_search_date(date: LocalDate): String =
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).format(date)
 
-    return "$year-$m-$d"
+@Composable
+internal fun date_value_text(value: String): String {
+    val day = parse_iso_date(value)
+    val days_back = parse_relative_days(value)
+
+    return when {
+        day != null -> format_search_date(day)
+        days_back != null -> pluralStringResource(R.plurals.search_days_ago, days_back, days_back)
+        else -> value
+    }
+}
+
+@Composable
+internal fun operator_value_text(op: SearchOperator): String {
+    val label_res = operator_value_label(op)
+
+    return when {
+        label_res != null -> stringResource(label_res)
+        op.key == "before" || op.key == "after" || op.key == "date" -> date_value_text(op.value)
+        else -> op.value
+    }
+}
+
+@Composable
+private fun date_bound_text(key_label: String, value: String?): String? {
+    if (value == null) return null
+
+    return stringResource(R.string.search_chip_format, key_label, date_value_text(value))
+}
+
+@Composable
+internal fun date_filter_label(operators: List<SearchOperator>): String {
+    val preset_res = when (detect_date_preset(operators)) {
+        DatePreset.ANY -> R.string.chip_any_time
+        DatePreset.WEEK -> R.string.chip_older_than_week
+        DatePreset.MONTH -> R.string.chip_older_than_month
+        DatePreset.SIX_MONTHS -> R.string.chip_older_than_six_months
+        DatePreset.YEAR -> R.string.chip_older_than_year
+        DatePreset.CUSTOM -> null
+    }
+    val range = custom_date_range(operators)
+    val after_text = date_bound_text(
+        stringResource(R.string.search_chip_after),
+        operator_value(operators, "after"),
+    )
+    val before_text = date_bound_text(
+        stringResource(R.string.search_chip_before),
+        operator_value(operators, "before"),
+    )
+
+    return when {
+        preset_res != null -> stringResource(preset_res)
+        range != null && range.first == range.second -> format_search_date(range.first)
+        range != null -> stringResource(
+            R.string.search_date_range,
+            format_search_date(range.first),
+            format_search_date(range.second),
+        )
+        else -> listOfNotNull(after_text, before_text)
+            .joinToString(", ")
+            .ifEmpty { stringResource(R.string.chip_custom_range) }
+    }
 }
 
 @Composable
@@ -279,18 +344,12 @@ internal fun search_chip_row(
     val from_value = operator_value(operators, "from")
     val to_value = operator_value(operators, "to")
     val attachment_active = has_attachment_active(operators)
-    val attachment_types = active_attachment_types(operators)
     val unread_active = operators.any { !it.negated && it.key == "is" && it.value == "unread" }
     val date_preset = detect_date_preset(operators)
 
-    val date_label = when (date_preset) {
-        DatePreset.ANY -> stringResource(R.string.chip_any_time)
-        DatePreset.WEEK -> stringResource(R.string.chip_older_than_week)
-        DatePreset.MONTH -> stringResource(R.string.chip_older_than_month)
-        DatePreset.SIX_MONTHS -> stringResource(R.string.chip_older_than_six_months)
-        DatePreset.YEAR -> stringResource(R.string.chip_older_than_year)
-        DatePreset.CUSTOM -> stringResource(R.string.chip_custom_range)
-    }
+    val date_label = date_filter_label(operators)
+    val start_title = stringResource(R.string.vacation_start_date)
+    val end_title = stringResource(R.string.vacation_end_date)
     val from_label = stringResource(R.string.from)
     val to_label = stringResource(R.string.to)
     val attachment_label = stringResource(R.string.has_attachment)
@@ -298,11 +357,25 @@ internal fun search_chip_row(
 
     val launch_custom_range = {
         val cal = org.astermail.android.ui.mail.AsterTimePreferences.account_calendar()
+        val today = LocalDate.of(
+            cal.get(java.util.Calendar.YEAR),
+            cal.get(java.util.Calendar.MONTH) + 1,
+            cal.get(java.util.Calendar.DAY_OF_MONTH),
+        )
+        val current_range = custom_date_range(operators)
+        val start_seed = current_range?.first ?: today
         android.app.DatePickerDialog(
             context,
             theme_res,
             { _, start_year, start_month, start_day ->
-                val after_date = format_picker_date(start_year, start_month + 1, start_day)
+                val first_day = LocalDate.of(start_year, start_month + 1, start_day)
+                val end_seed = listOfNotNull(current_range?.second, today)
+                    .firstOrNull { !it.isBefore(first_day) }
+                    ?: first_day
+                val earliest_end = java.util.Calendar.getInstance().apply {
+                    clear()
+                    set(start_year, start_month, start_day)
+                }
                 android.app.DatePickerDialog(
                     context,
                     theme_res,
@@ -310,20 +383,23 @@ internal fun search_chip_row(
                         on_operators_change(
                             apply_custom_range(
                                 operators,
-                                after_date,
-                                format_picker_date(end_year, end_month + 1, end_day),
+                                first_day,
+                                LocalDate.of(end_year, end_month + 1, end_day),
                             ),
                         )
                     },
-                    cal.get(java.util.Calendar.YEAR),
-                    cal.get(java.util.Calendar.MONTH),
-                    cal.get(java.util.Calendar.DAY_OF_MONTH),
-                ).show()
+                    end_seed.year,
+                    end_seed.monthValue - 1,
+                    end_seed.dayOfMonth,
+                ).apply {
+                    setTitle(end_title)
+                    datePicker.minDate = earliest_end.timeInMillis
+                }.show()
             },
-            cal.get(java.util.Calendar.YEAR),
-            cal.get(java.util.Calendar.MONTH),
-            cal.get(java.util.Calendar.DAY_OF_MONTH),
-        ).show()
+            start_seed.year,
+            start_seed.monthValue - 1,
+            start_seed.dayOfMonth,
+        ).apply { setTitle(start_title) }.show()
     }
 
     val chips = mutableListOf<Pair<Boolean, @Composable () -> Unit>>()
@@ -390,28 +466,6 @@ internal fun search_chip_row(
             )
         },
     )
-    if (attachment_active) {
-        ATTACHMENT_CHIP_TYPES.forEach { type ->
-            val type_label_res = when (type) {
-                "image" -> R.string.chip_attachment_image
-                "document" -> R.string.chip_attachment_document
-                "pdf" -> R.string.chip_attachment_pdf
-                else -> R.string.chip_attachment_video
-            }
-            chips.add(
-                attachment_types.contains(type) to {
-                    quick_chip(
-                        label = stringResource(type_label_res),
-                        active = attachment_types.contains(type),
-                        show_caret = false,
-                        on_click = {
-                            on_operators_change(toggle_attachment_type(operators, type))
-                        },
-                    )
-                },
-            )
-        }
-    }
     chips.add(
         (to_value != null) to {
             quick_chip(
@@ -478,6 +532,9 @@ internal fun search_chip_row(
             title = if (open_sheet == "from") from_label else to_label,
             people = if (open_sheet == "from") people else recipient_people,
             current = if (open_sheet == "from") from_value else to_value,
+            placeholder = stringResource(
+                if (open_sheet == "from") R.string.chip_name_or_email else R.string.email_address,
+            ),
             on_apply = { value ->
                 person_sheet = null
                 on_operators_change(set_person(operators, open_sheet, value))

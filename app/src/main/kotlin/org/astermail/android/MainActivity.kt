@@ -2383,7 +2383,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         alias_direction = org.astermail.android.mail.alias_direction_all
                         selected_folder = id
                     } else {
-                        nav_controller.navigate(routes.search_for("to:$name"))
+                        nav_controller.navigate(routes.search_for(org.astermail.android.ui.search.recipient_search_query(name)))
                     }
                 },
                 inbox_unread = if (categories_enabled && category_unread.isNotEmpty()) {

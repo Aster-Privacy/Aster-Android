@@ -4,4 +4,8 @@
         <item quantity="one">%d Treffer</item>
         <item quantity="other">%d Treffer</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">vor %d Tag</item>
+        <item quantity="other">vor %d Tagen</item>
+    </plurals>
 </resources>

@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">Кроме</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Нет результатов, соответствующих активным фильтрам</string>
+    <string name="search_clear_filters">Сбросить фильтры</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Эта неделя</string>
+    <string name="search_value_last_week">Прошлая неделя</string>
+    <string name="search_value_this_month">Этот месяц</string>
+    <string name="search_value_attachment">Вложение</string>
 </resources>

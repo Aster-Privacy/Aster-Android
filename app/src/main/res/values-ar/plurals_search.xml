@@ -8,4 +8,12 @@
         <item quantity="many">%d نتيجةً</item>
         <item quantity="other">%d نتيجة</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="zero">قبل %d يوم</item>
+        <item quantity="one">قبل يوم واحد</item>
+        <item quantity="two">قبل يومين</item>
+        <item quantity="few">قبل %d أيام</item>
+        <item quantity="many">قبل %d يومًا</item>
+        <item quantity="other">قبل %d يوم</item>
+    </plurals>
 </resources>

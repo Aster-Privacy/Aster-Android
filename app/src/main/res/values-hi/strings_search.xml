@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">नहीं</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">सक्रिय फ़िल्टर से कोई परिणाम मेल नहीं खाता</string>
+    <string name="search_clear_filters">फ़िल्टर हटाएँ</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">इस सप्ताह</string>
+    <string name="search_value_last_week">पिछले सप्ताह</string>
+    <string name="search_value_this_month">इस महीने</string>
+    <string name="search_value_attachment">अटैचमेंट</string>
 </resources>

@@ -6,4 +6,10 @@
         <item quantity="many">%d результатов</item>
         <item quantity="other">%d результатов</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="one">%d день назад</item>
+        <item quantity="few">%d дня назад</item>
+        <item quantity="many">%d дней назад</item>
+        <item quantity="other">%d дня назад</item>
+    </plurals>
 </resources>

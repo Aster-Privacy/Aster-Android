@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">Değil</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Etkin filtrelerle eşleşen sonuç yok</string>
+    <string name="search_clear_filters">Filtreleri temizle</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Bu hafta</string>
+    <string name="search_value_last_week">Geçen hafta</string>
+    <string name="search_value_this_month">Bu ay</string>
+    <string name="search_value_attachment">Ek</string>
 </resources>

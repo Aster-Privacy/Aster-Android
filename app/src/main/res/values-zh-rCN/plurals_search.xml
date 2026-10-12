@@ -3,4 +3,7 @@
     <plurals name="search_results_count">
         <item quantity="other">%d 条结果</item>
     </plurals>
+    <plurals name="search_days_ago">
+        <item quantity="other">%d 天前</item>
+    </plurals>
 </resources>

@@ -4828,6 +4828,7 @@ class MailViewModel @Inject constructor(
                             val keep = _search_state.value.all_items
                             _search_state.value = _search_state.value.copy(
                                 is_indexing = false,
+                                is_indexed = _search_state.value.is_indexed || keep.isNotEmpty(),
                                 error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
                             )
                         },
@@ -4839,6 +4840,7 @@ class MailViewModel @Inject constructor(
                 val keep = _search_state.value.all_items
                 _search_state.value = _search_state.value.copy(
                     is_indexing = false,
+                    is_indexed = _search_state.value.is_indexed || keep.isNotEmpty(),
                     error = if (keep.isNotEmpty()) null else (org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))),
                 )
             }

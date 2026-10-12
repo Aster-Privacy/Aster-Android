@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">Nicht</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
+    <string name="search_no_results_filtered">Keine Ergebnisse für die aktiven Filter</string>
+    <string name="search_clear_filters">Filter löschen</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">Diese Woche</string>
+    <string name="search_value_last_week">Letzte Woche</string>
+    <string name="search_value_this_month">Dieser Monat</string>
+    <string name="search_value_attachment">Anhang</string>
 </resources>

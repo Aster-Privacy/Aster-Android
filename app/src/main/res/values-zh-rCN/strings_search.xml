@@ -15,4 +15,11 @@
     <string name="search_chip_not_prefix">排除</string>
     <string name="search_chip_format">%1$s：%2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s：%3$s</string>
+    <string name="search_no_results_filtered">没有符合当前筛选条件的结果</string>
+    <string name="search_clear_filters">清除筛选条件</string>
+    <string name="search_date_range">%1$s - %2$s</string>
+    <string name="search_value_this_week">本周</string>
+    <string name="search_value_last_week">上周</string>
+    <string name="search_value_this_month">本月</string>
+    <string name="search_value_attachment">附件</string>
 </resources>

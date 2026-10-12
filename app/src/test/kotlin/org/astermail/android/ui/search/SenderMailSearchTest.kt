@@ -59,7 +59,7 @@ class SenderMailSearchTest {
     )
 
     private fun matches(query: String, item: InboxItem): Boolean {
-        return matches_item(item, parse_query(query), filter = null)
+        return matches_item(item, parse_query(query))
     }
 
     @Test

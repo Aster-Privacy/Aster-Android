@@ -340,9 +340,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">Prima di una data</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">Negli ultimi N giorni</string>
+    <string name="op_after_desc">A partire da una data</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">today, yesterday, this_week</string>
+    <string name="op_date_today_desc">Valori: today, yesterday, this_week, last_week, this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">Cerca per etichetta</string>
     <string name="op_negate">-from:</string>

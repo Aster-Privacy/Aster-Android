@@ -340,9 +340,9 @@
     <string name="op_before">before:</string>
     <string name="op_before_desc">قبل تاريخ</string>
     <string name="op_after">after:</string>
-    <string name="op_after_desc">خلال آخر N يوم</string>
+    <string name="op_after_desc">في تاريخ أو بعده</string>
     <string name="op_date_today">date:today</string>
-    <string name="op_date_today_desc">اليوم، أمس، هذا الأسبوع</string>
+    <string name="op_date_today_desc">القيم: today، yesterday، this_week، last_week، this_month</string>
     <string name="op_label">label:</string>
     <string name="op_label_desc">البحث حسب التصنيف</string>
     <string name="op_negate">-from:</string>
