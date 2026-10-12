@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Ödemeler ve planınızla ilgili uyarılar.</string>
     <string name="notif_channel_billing_name">Faturalandırma</string>
     <string name="onboarding_checklist_close">Eğitim listesini kapat</string>
-    <string name="onboarding_checklist_complete">Kurulum tamamlandı</string>
     <string name="onboarding_checklist_domain_badge">İsteğe bağlı</string>
-    <string name="onboarding_checklist_domain_existing">Sahip olduğunuz alan adını kullanın</string>
-    <string name="onboarding_checklist_domain_get">Özel alan adı alın</string>
     <string name="onboarding_checklist_domain_heading">Özel alan adı kullanın</string>
     <string name="onboarding_checklist_hide_forever">Eğitim listesini kalıcı olarak gizle</string>
     <string name="onboarding_checklist_open">Eğitim listesini göster</string>

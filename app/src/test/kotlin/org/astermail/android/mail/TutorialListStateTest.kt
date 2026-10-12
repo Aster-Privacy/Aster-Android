@@ -26,7 +26,6 @@ import org.astermail.android.ui.common.tutorial_list_is_active
 import org.astermail.android.ui.common.tutorial_list_progress
 import org.astermail.android.ui.common.tutorial_list_progress_of
 import org.astermail.android.ui.common.tutorial_list_rows
-import org.astermail.android.ui.common.tutorial_list_should_mark_seen
 import org.astermail.android.ui.common.tutorial_list_visible
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -111,28 +110,24 @@ class TutorialListStateTest {
     }
 
     @Test
-    fun incomplete_list_is_visible_and_marks_the_device_as_seen() {
-        val progress = tutorial_list_progress_of(all_pending)
-
-        assertTrue(tutorial_list_visible(is_active = true, progress = progress, seen_incomplete = false))
-        assertTrue(tutorial_list_should_mark_seen(is_active = true, progress = progress, seen_incomplete = false))
-        assertFalse(tutorial_list_should_mark_seen(is_active = true, progress = progress, seen_incomplete = true))
+    fun incomplete_list_is_visible() {
+        assertTrue(tutorial_list_visible(is_active = true, progress = tutorial_list_progress_of(all_pending)))
+        assertTrue(
+            tutorial_list_visible(
+                is_active = true,
+                progress = tutorial_list_progress_of(all_done + ("install_app" to false)),
+            ),
+        )
     }
 
     @Test
-    fun completed_list_stays_visible_only_when_it_was_seen_incomplete() {
-        val progress = tutorial_list_progress_of(all_done)
-
-        assertTrue(tutorial_list_visible(is_active = true, progress = progress, seen_incomplete = true))
-        assertFalse(tutorial_list_visible(is_active = true, progress = progress, seen_incomplete = false))
-        assertFalse(tutorial_list_should_mark_seen(is_active = true, progress = progress, seen_incomplete = false))
+    fun completed_list_goes_away() {
+        assertFalse(tutorial_list_visible(is_active = true, progress = tutorial_list_progress_of(all_done)))
     }
 
     @Test
-    fun inactive_list_is_never_visible_or_marked() {
-        val progress = tutorial_list_progress_of(all_pending)
-
-        assertFalse(tutorial_list_visible(is_active = false, progress = progress, seen_incomplete = true))
-        assertFalse(tutorial_list_should_mark_seen(is_active = false, progress = progress, seen_incomplete = false))
+    fun inactive_list_is_never_visible() {
+        assertFalse(tutorial_list_visible(is_active = false, progress = tutorial_list_progress_of(all_pending)))
+        assertFalse(tutorial_list_visible(is_active = false, progress = tutorial_list_progress_of(all_done)))
     }
 }

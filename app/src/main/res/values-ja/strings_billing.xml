@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">お支払いとプランに関する通知です。</string>
     <string name="notif_channel_billing_name">お支払い</string>
     <string name="onboarding_checklist_close">チュートリアルリストを閉じる</string>
-    <string name="onboarding_checklist_complete">設定が完了しました</string>
     <string name="onboarding_checklist_domain_badge">任意</string>
-    <string name="onboarding_checklist_domain_existing">お持ちのドメインを使う</string>
-    <string name="onboarding_checklist_domain_get">カスタムドメインを取得</string>
     <string name="onboarding_checklist_domain_heading">カスタムドメインを使う</string>
     <string name="onboarding_checklist_hide_forever">チュートリアルリストを今後表示しない</string>
     <string name="onboarding_checklist_open">チュートリアルリストを表示</string>

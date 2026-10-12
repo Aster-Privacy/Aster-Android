@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Alerts about payments and your plan.</string>
     <string name="notif_channel_billing_name">Billing</string>
     <string name="onboarding_checklist_close">Close tutorial list</string>
-    <string name="onboarding_checklist_complete">Setup complete</string>
     <string name="onboarding_checklist_domain_badge">Optional</string>
-    <string name="onboarding_checklist_domain_existing">Use a domain you own</string>
-    <string name="onboarding_checklist_domain_get">Get a custom domain</string>
     <string name="onboarding_checklist_domain_heading">Use a custom domain</string>
     <string name="onboarding_checklist_hide_forever">Permanently hide tutorial list</string>
     <string name="onboarding_checklist_open">Show tutorial list</string>

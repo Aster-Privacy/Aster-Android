@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">भुगतान और आपके प्लान से जुड़ी सूचनाएं।</string>
     <string name="notif_channel_billing_name">बिलिंग</string>
     <string name="onboarding_checklist_close">ट्यूटोरियल सूची बंद करें</string>
-    <string name="onboarding_checklist_complete">सेटअप पूरा हुआ</string>
     <string name="onboarding_checklist_domain_badge">वैकल्पिक</string>
-    <string name="onboarding_checklist_domain_existing">अपना मौजूदा डोमेन उपयोग करें</string>
-    <string name="onboarding_checklist_domain_get">कस्टम डोमेन पाएँ</string>
     <string name="onboarding_checklist_domain_heading">कस्टम डोमेन का उपयोग करें</string>
     <string name="onboarding_checklist_hide_forever">ट्यूटोरियल सूची हमेशा के लिए छिपाएँ</string>
     <string name="onboarding_checklist_open">ट्यूटोरियल सूची दिखाएँ</string>

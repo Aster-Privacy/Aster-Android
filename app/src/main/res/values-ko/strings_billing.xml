@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">결제와 요금제에 대한 알림입니다.</string>
     <string name="notif_channel_billing_name">결제</string>
     <string name="onboarding_checklist_close">튜토리얼 목록 닫기</string>
-    <string name="onboarding_checklist_complete">설정 완료</string>
     <string name="onboarding_checklist_domain_badge">선택 사항</string>
-    <string name="onboarding_checklist_domain_existing">보유한 도메인 사용</string>
-    <string name="onboarding_checklist_domain_get">맞춤 도메인 구입</string>
     <string name="onboarding_checklist_domain_heading">맞춤 도메인 사용</string>
     <string name="onboarding_checklist_hide_forever">튜토리얼 목록 영구적으로 숨기기</string>
     <string name="onboarding_checklist_open">튜토리얼 목록 표시</string>

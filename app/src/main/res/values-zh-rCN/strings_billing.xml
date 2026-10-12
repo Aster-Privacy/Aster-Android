@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">有关付款和套餐的提醒。</string>
     <string name="notif_channel_billing_name">账单</string>
     <string name="onboarding_checklist_close">关闭教程列表</string>
-    <string name="onboarding_checklist_complete">设置完成</string>
     <string name="onboarding_checklist_domain_badge">可选</string>
-    <string name="onboarding_checklist_domain_existing">使用您已有的域名</string>
-    <string name="onboarding_checklist_domain_get">获取自定义域名</string>
     <string name="onboarding_checklist_domain_heading">使用自定义域名</string>
     <string name="onboarding_checklist_hide_forever">永久隐藏教程列表</string>
     <string name="onboarding_checklist_open">显示教程列表</string>

@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Уведомления о платежах и вашем тарифе.</string>
     <string name="notif_channel_billing_name">Оплата</string>
     <string name="onboarding_checklist_close">Закрыть список обучения</string>
-    <string name="onboarding_checklist_complete">Настройка завершена</string>
     <string name="onboarding_checklist_domain_badge">Необязательно</string>
-    <string name="onboarding_checklist_domain_existing">Использовать уже имеющийся домен</string>
-    <string name="onboarding_checklist_domain_get">Купить свой домен</string>
     <string name="onboarding_checklist_domain_heading">Используйте свой домен</string>
     <string name="onboarding_checklist_hide_forever">Скрыть список обучения навсегда</string>
     <string name="onboarding_checklist_open">Показать список обучения</string>

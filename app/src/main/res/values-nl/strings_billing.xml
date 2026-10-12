@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Meldingen over betalingen en je abonnement.</string>
     <string name="notif_channel_billing_name">Facturering</string>
     <string name="onboarding_checklist_close">Sluit de tutoriallijst</string>
-    <string name="onboarding_checklist_complete">Installatie voltooid</string>
     <string name="onboarding_checklist_domain_badge">Optioneel</string>
-    <string name="onboarding_checklist_domain_existing">Gebruik een domein dat je al hebt</string>
-    <string name="onboarding_checklist_domain_get">Koop een eigen domein</string>
     <string name="onboarding_checklist_domain_heading">Gebruik een eigen domein</string>
     <string name="onboarding_checklist_hide_forever">Verberg de tutoriallijst permanent</string>
     <string name="onboarding_checklist_open">Toon de tutoriallijst</string>

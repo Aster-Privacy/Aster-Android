@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Avvisi sui pagamenti e sul tuo piano.</string>
     <string name="notif_channel_billing_name">Fatturazione</string>
     <string name="onboarding_checklist_close">Chiudi l\'elenco dei tutorial</string>
-    <string name="onboarding_checklist_complete">Configurazione completata</string>
     <string name="onboarding_checklist_domain_badge">Facoltativo</string>
-    <string name="onboarding_checklist_domain_existing">Usa un dominio che possiedi</string>
-    <string name="onboarding_checklist_domain_get">Ottieni un dominio personalizzato</string>
     <string name="onboarding_checklist_domain_heading">Usa un dominio personalizzato</string>
     <string name="onboarding_checklist_hide_forever">Nascondi definitivamente l\'elenco dei tutorial</string>
     <string name="onboarding_checklist_open">Mostra l\'elenco dei tutorial</string>

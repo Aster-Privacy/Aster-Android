@@ -22,7 +22,6 @@
 package org.astermail.android.ui.common
 
 const val tutorial_list_collapsed_key = "tutorial_list_collapsed"
-const val tutorial_list_seen_incomplete_key = "tutorial_list_seen_incomplete"
 
 val onboarding_checklist_order = listOf("import_mail", "first_email", "recovery_method", "install_app")
 
@@ -48,14 +47,5 @@ fun tutorial_list_progress_of(tasks: Map<String, Boolean>): tutorial_list_progre
 fun tutorial_list_is_active(is_loaded: Boolean, is_dismissed: Boolean, progress: tutorial_list_progress): Boolean =
     is_loaded && !is_dismissed && progress.total > 0
 
-fun tutorial_list_should_mark_seen(
-    is_active: Boolean,
-    progress: tutorial_list_progress,
-    seen_incomplete: Boolean,
-): Boolean = is_active && !progress.all_done && !seen_incomplete
-
-fun tutorial_list_visible(
-    is_active: Boolean,
-    progress: tutorial_list_progress,
-    seen_incomplete: Boolean,
-): Boolean = is_active && (!progress.all_done || seen_incomplete)
+fun tutorial_list_visible(is_active: Boolean, progress: tutorial_list_progress): Boolean =
+    is_active && !progress.all_done

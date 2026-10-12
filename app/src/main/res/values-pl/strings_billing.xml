@@ -34,10 +34,7 @@
     <string name="notif_channel_billing_description">Powiadomienia o płatnościach i Twoim planie.</string>
     <string name="notif_channel_billing_name">Rozliczenia</string>
     <string name="onboarding_checklist_close">Zamknij listę samouczków</string>
-    <string name="onboarding_checklist_complete">Konfiguracja zakończona</string>
     <string name="onboarding_checklist_domain_badge">Opcjonalne</string>
-    <string name="onboarding_checklist_domain_existing">Użyj domeny, którą już masz</string>
-    <string name="onboarding_checklist_domain_get">Kup własną domenę</string>
     <string name="onboarding_checklist_domain_heading">Użyj własnej domeny</string>
     <string name="onboarding_checklist_hide_forever">Ukryj listę samouczków na stałe</string>
     <string name="onboarding_checklist_open">Pokaż listę samouczków</string>
