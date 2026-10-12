@@ -319,4 +319,40 @@ class SendFailureClassificationTest {
         assertEquals(SendFailureReason.IDENTITY_CHANGED, send_failure_reason_for(err))
         assertTrue(is_permanent_send_failure_cause(err))
     }
+
+    @Test
+    fun `a refused sending address is named instead of blaming the recipients`() {
+        val err = ApiError.ForbiddenError("sender address not authorized", "SENDER_NOT_AUTHORIZED")
+
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.SENDER_REFUSED, send_failure_reason_for(err))
+        assertEquals(
+            SendFailureReason.SENDER_REFUSED,
+            send_failure_reason_for(IllegalStateException("send failed", err)),
+        )
+        assertEquals(SendFailureReason.SENDER_REFUSED, SendFailureReason.from_code("sender_refused"))
+    }
+
+    @Test
+    fun `a sender refusal from a server without the dedicated code is still named`() {
+        val err = ApiError.ForbiddenError("Address hash required for non-primary sender ", "FORBIDDEN")
+
+        assertEquals(SendFailureReason.SENDER_REFUSED, send_failure_reason_for(err))
+    }
+
+    @Test
+    fun `an unrelated forbidden send stays a general rejection`() {
+        assertEquals(
+            SendFailureReason.REJECTED,
+            send_failure_reason_for(ApiError.ForbiddenError("sending is disabled for this account", "ACCOUNT_SUSPENDED")),
+        )
+        assertEquals(
+            SendFailureReason.REJECTED,
+            send_failure_reason_for(ApiError.ForbiddenError("forbidden", "FORBIDDEN")),
+        )
+        assertEquals(
+            SendFailureReason.REJECTED,
+            send_failure_reason_for(ApiError.ForbiddenError("sender address not authorized", null)),
+        )
+    }
 }
