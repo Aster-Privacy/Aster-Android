@@ -69,9 +69,21 @@ fun is_own_share_authority(authority: String?, own_package: String): Boolean {
     return own.isNotEmpty() && (normalized == own || normalized.startsWith("$own."))
 }
 
-fun is_guarded_share_authority(authority: String?, app_reads_shared_storage: Boolean): Boolean {
+fun is_media_share_authority(authority: String?): Boolean =
+    normalize_share_authority(authority) == MEDIA_AUTHORITY
+
+fun media_rows_include_own(row_count: Int, owner_packages: Collection<String?>?, own_package: String): Boolean {
+    if (row_count <= 0 || owner_packages == null) return true
+    return owner_packages.any { it.equals(own_package, ignoreCase = true) }
+}
+
+fun is_guarded_share_authority(
+    authority: String?,
+    app_reads_shared_storage: Boolean,
+    app_owns_media_row: Boolean,
+): Boolean {
     val normalized = normalize_share_authority(authority)
-    if (normalized == MEDIA_AUTHORITY) return app_reads_shared_storage
+    if (normalized == MEDIA_AUTHORITY) return app_reads_shared_storage || app_owns_media_row
     return normalized in guarded_authorities || guarded_authority_prefixes.any { normalized.startsWith(it) }
 }
 
@@ -80,11 +92,12 @@ fun is_share_stream_allowed(
     authority: String?,
     caller: ShareCallerContext,
     caller_access: ShareCallerAccess,
+    app_owns_media_row: Boolean,
 ): Boolean {
     if (!scheme.equals("content", ignoreCase = true)) return false
     if (normalize_share_authority(authority).isEmpty()) return false
     if (is_own_share_authority(authority, caller.own_package)) return false
-    if (!is_guarded_share_authority(authority, caller.app_reads_shared_storage)) return true
+    if (!is_guarded_share_authority(authority, caller.app_reads_shared_storage, app_owns_media_row)) return true
     if (!caller.has_read_grant) return false
     return when (caller_access) {
         ShareCallerAccess.GRANTED -> true
