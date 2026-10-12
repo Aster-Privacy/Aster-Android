@@ -33,7 +33,13 @@
     <string name="interval_year">yıl</string>
     <string name="notif_channel_billing_description">Ödemeler ve planınızla ilgili uyarılar.</string>
     <string name="notif_channel_billing_name">Faturalandırma</string>
-    <string name="onboarding_checklist_title">Aster kurulumu (%1$d / %2$d)</string>
+    <string name="onboarding_checklist_close">Eğitim listesini kapat</string>
+    <string name="onboarding_checklist_domain_badge">İsteğe bağlı</string>
+    <string name="onboarding_checklist_domain_heading">Özel alan adı kullanın</string>
+    <string name="onboarding_checklist_hide_forever">Eğitim listesini kalıcı olarak gizle</string>
+    <string name="onboarding_checklist_open">Eğitim listesini göster</string>
+    <string name="onboarding_checklist_progress">%1$d / %2$d</string>
+    <string name="onboarding_checklist_title">Başlayın</string>
     <string name="onboarding_task_first_email">İlk mesajınızı gönderin</string>
     <string name="onboarding_task_import">Eski postanızı içe aktarın</string>
     <string name="onboarding_task_install">Aster\'i bilgisayarınıza kurun</string>

@@ -21,7 +21,9 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -97,12 +99,103 @@ class OnboardingChecklistCardTest {
     }
 
     @Test
-    fun a_completed_row_is_not_clickable() {
+    fun a_completed_row_stays_clickable() {
         val tapped = mutableListOf<String>()
         render(tapped, all_pending + ("import_mail" to true))
 
         compose_rule.onNodeWithText("Import your old mail").performClick()
 
-        assertEquals(emptyList<String>(), tapped)
+        assertEquals(listOf("import_mail"), tapped)
+    }
+
+    @Test
+    fun header_shows_progress_and_the_footer_hides_the_list() {
+        var dismissed = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending + ("import_mail" to true),
+                    on_task = {},
+                    on_dismiss = { dismissed += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithText("Get started").assertIsDisplayed()
+        compose_rule.onNodeWithText("1 of 4").assertIsDisplayed()
+        compose_rule.onNodeWithText("Permanently hide tutorial list").performClick()
+
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun collapsed_list_keeps_only_the_header_and_reopens_from_it() {
+        var toggled = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending + ("import_mail" to true),
+                    on_task = {},
+                    on_dismiss = {},
+                    is_open = false,
+                    on_toggle = { toggled += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithTag(tutorial_list_panel_tag).assertDoesNotExist()
+        compose_rule.onNodeWithText("Send your first message").assertDoesNotExist()
+        compose_rule.onNodeWithText("Get started").assertIsDisplayed()
+        compose_rule.onNodeWithText("1 of 4").assertIsDisplayed()
+        compose_rule.onNodeWithTag(tutorial_list_toggle_tag).performClick()
+
+        assertEquals(1, toggled)
+    }
+
+    @Test
+    fun open_list_closes_from_the_header() {
+        var toggled = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending,
+                    on_task = {},
+                    on_dismiss = {},
+                    on_toggle = { toggled += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithTag(tutorial_list_panel_tag).assertIsDisplayed()
+        compose_rule.onNodeWithTag(tutorial_list_toggle_tag).performClick()
+
+        assertEquals(1, toggled)
+    }
+
+    @Test
+    fun domain_row_opens_the_domain_destination() {
+        var opened = 0
+        compose_rule.setContent {
+            AsterTheme {
+                onboarding_checklist_card(
+                    tasks = all_pending,
+                    on_task = {},
+                    on_dismiss = {},
+                    on_domain = { opened += 1 },
+                )
+            }
+        }
+
+        compose_rule.onNodeWithText("Optional").assertIsDisplayed()
+        compose_rule.onNodeWithText("Use a custom domain").performClick()
+
+        assertEquals(1, opened)
+    }
+
+    @Test
+    fun domain_row_is_absent_without_a_handler() {
+        render(mutableListOf())
+
+        compose_rule.onNodeWithText("Use a custom domain").assertDoesNotExist()
     }
 }

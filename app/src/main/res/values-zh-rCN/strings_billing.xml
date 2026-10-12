@@ -33,7 +33,13 @@
     <string name="interval_year">年</string>
     <string name="notif_channel_billing_description">有关付款和套餐的提醒。</string>
     <string name="notif_channel_billing_name">账单</string>
-    <string name="onboarding_checklist_title">设置 Aster（第 %1$d 项，共 %2$d 项）</string>
+    <string name="onboarding_checklist_close">关闭教程列表</string>
+    <string name="onboarding_checklist_domain_badge">可选</string>
+    <string name="onboarding_checklist_domain_heading">使用自定义域名</string>
+    <string name="onboarding_checklist_hide_forever">永久隐藏教程列表</string>
+    <string name="onboarding_checklist_open">显示教程列表</string>
+    <string name="onboarding_checklist_progress">%1$d/%2$d</string>
+    <string name="onboarding_checklist_title">开始使用</string>
     <string name="onboarding_task_first_email">发送第一封邮件</string>
     <string name="onboarding_task_import">导入旧邮件</string>
     <string name="onboarding_task_install">在电脑上安装 Aster</string>

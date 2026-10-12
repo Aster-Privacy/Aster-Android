@@ -316,6 +316,7 @@ fun InboxScreen(
     on_open_upgrade: () -> Unit = {},
     on_open_recovery_email: () -> Unit = {},
     on_open_import: () -> Unit = {},
+    on_open_domains: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -486,10 +487,24 @@ fun InboxScreen(
             raw
         }
     }
-    val show_onboarding_checklist = onboarding != null &&
-        current_folder == "inbox" &&
-        onboarding.dismissed_at == null &&
-        onboarding_tasks.values.any { !it }
+    var tutorial_list_collapsed by rememberSaveable {
+        mutableStateOf(
+            onboarding_prefs.getBoolean(org.astermail.android.ui.common.tutorial_list_collapsed_key, false),
+        )
+    }
+    val onboarding_progress = remember(onboarding_tasks) {
+        org.astermail.android.ui.common.tutorial_list_progress_of(onboarding_tasks)
+    }
+    val onboarding_active = org.astermail.android.ui.common.tutorial_list_is_active(
+        is_loaded = onboarding != null,
+        is_dismissed = onboarding?.dismissed_at != null,
+        progress = onboarding_progress,
+    )
+    val show_onboarding_checklist = current_folder == "inbox" &&
+        org.astermail.android.ui.common.tutorial_list_visible(
+            is_active = onboarding_active,
+            progress = onboarding_progress,
+        )
     val onboarding_task_context = LocalContext.current
     val on_onboarding_task: (String) -> Unit = { key ->
         when (onboarding_task_destination_for(key)) {
@@ -497,12 +512,14 @@ fun InboxScreen(
             onboarding_task_destination.import_mail -> on_open_import()
             onboarding_task_destination.compose -> on_compose()
             onboarding_task_destination.download_page -> {
-                org.astermail.android.ui.common.open_external_url(
+                val opened = org.astermail.android.ui.common.open_external_url(
                     onboarding_task_context,
                     onboarding_download_url,
                 )
-                install_app_done = true
-                onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                if (opened) {
+                    install_app_done = true
+                    onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                }
             }
             onboarding_task_destination.settings -> on_open_settings()
         }
@@ -2288,6 +2305,18 @@ fun InboxScreen(
                                     tasks = onboarding_tasks,
                                     on_task = on_onboarding_task,
                                     on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
+                                    is_open = !tutorial_list_collapsed,
+                                    on_toggle = {
+                                        val collapsed = !tutorial_list_collapsed
+                                        tutorial_list_collapsed = collapsed
+                                        onboarding_prefs.edit()
+                                            .putBoolean(
+                                                org.astermail.android.ui.common.tutorial_list_collapsed_key,
+                                                collapsed,
+                                            )
+                                            .apply()
+                                    },
+                                    on_domain = on_open_domains,
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                 )
                             }
