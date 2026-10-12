@@ -99,6 +99,8 @@ import androidx.compose.ui.platform.testTag
 import org.astermail.android.ui.common.show_copied_toast
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -474,6 +476,21 @@ private fun aliases_tab(
     var alias_query by remember { mutableStateOf("") }
     var alias_filter by remember { mutableStateOf(AliasFilter.All) }
     var alias_domain_filter by remember { mutableStateOf<String?>(null) }
+    val sort_context = androidx.compose.ui.platform.LocalContext.current
+    val sort_prefs = remember {
+        sort_context.getSharedPreferences(
+            org.astermail.android.settings.alias_sort_prefs_name,
+            android.content.Context.MODE_PRIVATE,
+        )
+    }
+    var alias_sort by remember {
+        mutableStateOf(
+            org.astermail.android.settings.AliasSort.from_key(
+                sort_prefs.getString(org.astermail.android.settings.alias_sort_pref_key, null),
+            ),
+        )
+    }
+    val sort_locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     var note_editing by remember { mutableStateOf<Pair<String, String>?>(null) }
     val alias_load_settled = remember_load_settled(state.aliases_loading)
     val always_expand_aliases = state.alias_preferences?.alias_always_expand == true
@@ -493,7 +510,7 @@ private fun aliases_tab(
     val counted_alias_total = remember(state.aliases) {
         state.aliases.count { !it.is_retained_primary }
     }
-    val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter) {
+    val visible_aliases = remember(state.aliases, query, alias_filter, alias_domain_filter, alias_sort, sort_locale) {
         state.aliases.filter { alias ->
             matches_alias_query(
                 query,
@@ -503,6 +520,15 @@ private fun aliases_tab(
             ) &&
                 matches_alias_state(alias.is_enabled, alias_filter) &&
                 matches_alias_domain(alias.domain, alias_domain_filter)
+        }.let { filtered ->
+            org.astermail.android.settings.sort_aliases(
+                filtered,
+                alias_sort,
+                sort_locale,
+                address = { it.address },
+                created_at = { it.created_at },
+                pinned = { it.is_pinned },
+            )
         }
     }
     val visible_domain_addresses = remember(
@@ -510,11 +536,21 @@ private fun aliases_tab(
         query,
         alias_filter,
         alias_domain_filter,
+        alias_sort,
+        sort_locale,
     ) {
         state.custom_domain_addresses.filter { addr ->
             matches_alias_query(query, addr.address, addr.encrypted_display_name, null) &&
                 matches_alias_state(addr.is_enabled, alias_filter) &&
                 matches_alias_domain(addr.domain_name, alias_domain_filter)
+        }.let { filtered ->
+            org.astermail.android.settings.sort_aliases(
+                filtered,
+                alias_sort,
+                sort_locale,
+                address = { it.address },
+                created_at = { it.created_at },
+            )
         }
     }
 
@@ -626,6 +662,46 @@ private fun aliases_tab(
                                         },
                                     )
                                 }
+                            }
+                        }
+                    }
+                    var sort_menu_open by remember { mutableStateOf(false) }
+                    val sort_labels = listOf(
+                        org.astermail.android.settings.AliasSort.Newest to stringResource(R.string.alias_sort_newest),
+                        org.astermail.android.settings.AliasSort.Oldest to stringResource(R.string.alias_sort_oldest),
+                        org.astermail.android.settings.AliasSort.AddressAz to stringResource(R.string.alias_sort_az),
+                        org.astermail.android.settings.AliasSort.AddressZa to stringResource(R.string.alias_sort_za),
+                    )
+                    val sort_description = stringResource(R.string.alias_sort_label)
+                    Box(
+                        modifier = Modifier.semantics {
+                            contentDescription = sort_description
+                        },
+                    ) {
+                        alias_filter_chip(
+                            label = sort_labels.first { it.first == alias_sort }.second,
+                            active = false,
+                            test_tag = "alias_sort",
+                            on_click = { sort_menu_open = true },
+                            trailing_icon = TablerIcons.ChevronDown,
+                        )
+                        aster_menu(
+                            expanded = sort_menu_open,
+                            on_dismiss = { sort_menu_open = false },
+                        ) {
+                            sort_labels.forEach { (sort, label) ->
+                                aster_menu_item(
+                                    label = label,
+                                    selected = alias_sort == sort,
+                                    test_tag = "alias_sort_${sort.key}",
+                                    on_click = {
+                                        alias_sort = sort
+                                        sort_prefs.edit()
+                                            .putString(org.astermail.android.settings.alias_sort_pref_key, sort.key)
+                                            .apply()
+                                        sort_menu_open = false
+                                    },
+                                )
                             }
                         }
                     }
