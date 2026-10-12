@@ -100,4 +100,30 @@ class DecryptedFileWipeTest {
         assertEquals(0, wipe_outbox_attachments(files, listOf("../secret", "", "a/b", "a\\b")))
         assertTrue(outside.exists())
     }
+
+    @Test
+    fun orphan_wipe_removes_files_with_no_queued_send() {
+        val files = temp.newFolder("files")
+        val live = put(files, "outbox_attachments/send-1.json")
+        val orphan = put(files, "outbox_attachments/send-7.json")
+        val stray = put(files, "outbox_attachments/leftover.tmp")
+        val later = System.currentTimeMillis() + OUTBOX_ORPHAN_GRACE_MS + 1_000L
+        assertEquals(2, wipe_orphaned_outbox_attachments(files, listOf("send-1"), later))
+        assertTrue(live.exists())
+        assertFalse(orphan.exists())
+        assertFalse(stray.exists())
+    }
+
+    @Test
+    fun orphan_wipe_keeps_a_file_that_was_just_written() {
+        val files = temp.newFolder("files")
+        val fresh = put(files, "outbox_attachments/send-3.json")
+        assertEquals(0, wipe_orphaned_outbox_attachments(files, emptyList(), fresh.lastModified() + 1_000L))
+        assertTrue(fresh.exists())
+    }
+
+    @Test
+    fun orphan_wipe_tolerates_a_missing_directory() {
+        assertEquals(0, wipe_orphaned_outbox_attachments(temp.newFolder("none"), emptyList()))
+    }
 }
