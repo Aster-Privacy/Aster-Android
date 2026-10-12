@@ -193,7 +193,8 @@ internal fun set_person(
     value: String,
 ): List<SearchOperator> {
     val trimmed = value.replace("\"", "").trim()
-    val cleared = without_key(ops, key)
+    val shown = ops.firstOrNull { !it.negated && it.key == key }
+    val cleared = if (shown == null) ops else ops.filterNot { it === shown }
 
     if (trimmed.isEmpty()) return cleared
 
@@ -287,7 +288,8 @@ internal fun build_advanced_operators(
                 first_owned.any { it === op } ||
                     (op.key == "has" && HAS_OPERATOR_VALUES.contains(op.value)) ||
                     (op.key == "is" && (op.value == "unread" || op.value == "starred")) ||
-                    op.key == "before" || op.key == "after" || op.key == "in"
+                    op.key == "before" || op.key == "after" ||
+                    (op.key == "in" && (fields.scope.isNotEmpty() || advanced_scope(listOf(op)).isNotEmpty()))
                 )
         }
     }

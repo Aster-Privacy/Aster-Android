@@ -1263,6 +1263,22 @@ fun InboxScreen(
     }
 
     fun mark_all_read(target_read: Boolean) {
+        if (filter_active) {
+            val shown = visible_threads.map { it.thread_id }.toSet()
+            val ids = emails
+                .filter { thread_row_covers(it, shown, grouping_enabled) && it.is_read != target_read }
+                .map { it.id }
+            if (ids.isEmpty()) return
+            if (target_read) mail_vm.mark_read_bulk(ids) else mail_vm.mark_unread_bulk(ids)
+            val id_set = ids.toSet()
+            for (i in emails.indices) {
+                if (emails[i].id in id_set) {
+                    note_read_mutation(emails[i].id)
+                    emails[i] = emails[i].copy(is_read = target_read)
+                }
+            }
+            return
+        }
         if (target_read) {
             mail_vm.mark_all_read_scope(current_folder)
             for (i in emails.indices) {
@@ -1296,7 +1312,7 @@ fun InboxScreen(
                     quick_action_notice(quick_action_unavailable_text)
                     return
                 }
-                if (threads.none { it.has_unread }) {
+                if (visible_threads.none { it.has_unread }) {
                     quick_action_notice(quick_action_no_unread_text)
                     return
                 }
@@ -1307,7 +1323,7 @@ fun InboxScreen(
                     quick_action_notice(quick_action_unavailable_text)
                     return
                 }
-                val read_threads = threads.filter { !it.has_unread }.map { it.thread_id }.toSet()
+                val read_threads = visible_threads.filter { !it.has_unread }.map { it.thread_id }.toSet()
                 val ids = if (read_threads.isEmpty()) {
                     emptyList()
                 } else {
@@ -1329,7 +1345,7 @@ fun InboxScreen(
                 }
                 val cutoff = System.currentTimeMillis() -
                     inbox_quick_action_age_days.toLong() * 24L * 60L * 60L * 1000L
-                val old_threads = threads
+                val old_threads = visible_threads
                     .filter { it.newest.received_at < cutoff }
                     .map { it.thread_id }
                     .toSet()
@@ -2592,7 +2608,7 @@ fun InboxScreen(
                         },
                         on_refresh = { do_refresh() },
                         on_mark_all_read = { target_read -> mark_all_read(target_read) },
-                        has_unread = threads.any { it.has_unread },
+                        has_unread = visible_threads.any { it.has_unread },
                         on_select_all = { select_all() },
                         on_open_settings = on_open_settings,
                         on_open_upgrade = on_open_upgrade,

@@ -224,6 +224,12 @@ fun SearchScreen(
         operator_chips = merge_lifted(operator_chips, lifted.operators)
         set_free_text(lifted.text.trim())
     }
+    fun apply_chip_operators(next: List<SearchOperator>) {
+        val typed = parse_query(free_text)
+        val pending = pending_typed_operators(free_text)
+        operator_chips = next
+        set_free_text(pending_operator_text(pending, typed.free_text))
+    }
     val focus_requester = remember { FocusRequester() }
     var select_mode by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
@@ -334,8 +340,11 @@ fun SearchScreen(
         }
     }
 
-    val suggestion = remember(origin_folder, operator_chips) {
-        scope_suggestion(origin_folder, operator_chips)
+    val shown_operators = remember(operator_chips, free_text) {
+        chip_visible_operators(operator_chips, free_text)
+    }
+    val suggestion = remember(origin_folder, shown_operators) {
+        scope_suggestion(origin_folder, shown_operators)
     }
 
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
@@ -389,7 +398,20 @@ fun SearchScreen(
         }
         value = null
         if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
-        val env = current_search_env(search_labels)
+        val base_env = current_search_env(search_labels)
+        val env = if (parsed.operators.any { is_attachment_type_operator(it) }) {
+            val untyped = parsed.copy(operators = parsed.operators.filterNot { is_attachment_type_operator(it) })
+            val candidate_ids = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                corpus.asSequence()
+                    .filter { it.has_attachments && matches_item(it, untyped, apply_scope = false, env = base_env) }
+                    .take(ATTACHMENT_TYPE_SCAN_LIMIT)
+                    .map { it.id }
+                    .toList()
+            }
+            base_env.copy(attachments = mail_vm.search_attachment_types(candidate_ids))
+        } else {
+            base_env
+        }
         val env_day = search_local_day(env.now, env.zone)
         val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             val results = mutableListOf<org.astermail.android.mail.InboxItem>()
@@ -584,8 +606,8 @@ fun SearchScreen(
                 on_clear = { set_free_text(""); operator_chips = emptyList() },
                 on_back = dismiss_and_back,
                 focus_requester = focus_requester,
-                operators = operator_chips,
-                on_operators_change = { operator_chips = it },
+                operators = shown_operators,
+                on_operators_change = { apply_chip_operators(it) },
                 on_submit = {
                     submit_typed_operators()
                     dismiss_keyboard()
@@ -595,14 +617,14 @@ fun SearchScreen(
 
         if (!select_mode) {
             search_chip_row(
-                operators = parsed.operators,
+                operators = shown_operators,
                 people = chip_people,
                 recipient_people = chip_recipients,
-                on_operators_change = {
-                    operator_chips = it
-                    set_free_text(parsed.free_text)
+                on_operators_change = { apply_chip_operators(it) },
+                on_advanced_click = {
+                    submit_typed_operators()
+                    advanced_open = true
                 },
-                on_advanced_click = { advanced_open = true },
             )
         }
 
@@ -622,7 +644,7 @@ fun SearchScreen(
                 }
                 if (shown_suggestion != null) {
                     scope_suggestion_chip(shown_suggestion) {
-                        operator_chips = apply_scope_suggestion(operator_chips, shown_suggestion)
+                        apply_chip_operators(apply_scope_suggestion(shown_operators, shown_suggestion))
                     }
                 }
             }
@@ -637,8 +659,9 @@ fun SearchScreen(
                     .padding(horizontal = AsterSpacing.sm, vertical = 4.dp)
                     .clip(SquircleShape(8.dp))
                     .clickable {
-                        operator_chips = without_key(operator_chips, "in") +
-                            SearchOperator(false, "in", "anywhere")
+                        apply_chip_operators(
+                            without_key(shown_operators, "in") + SearchOperator(false, "in", "anywhere"),
+                        )
                     }
                     .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
                 verticalArrangement = Arrangement.spacedBy(2.dp),

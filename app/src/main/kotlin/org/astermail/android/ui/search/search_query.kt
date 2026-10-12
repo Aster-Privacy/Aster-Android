@@ -63,6 +63,39 @@ internal val IN_OPERATOR_VALUES = setOf(
 
 internal val HAS_OPERATOR_VALUES = setOf("attachment", "attachments")
 
+internal val ATTACHMENT_TYPE_EXTENSIONS: Map<String, List<String>> = mapOf(
+    "pdf" to listOf(".pdf"),
+    "image" to listOf(".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"),
+    "document" to listOf(".doc", ".docx", ".odt", ".txt", ".rtf"),
+    "spreadsheet" to listOf(".xls", ".xlsx", ".ods", ".csv"),
+    "video" to listOf(".mp4", ".webm", ".avi", ".mov"),
+    "audio" to listOf(".mp3", ".wav", ".ogg", ".aac", ".flac"),
+    "archive" to listOf(".zip", ".rar", ".7z", ".gz", ".tar"),
+)
+
+private val MIME_PREFIX_ATTACHMENT_TYPES = setOf("image", "video", "audio")
+
+internal const val ATTACHMENT_TYPE_SCAN_LIMIT = 400
+
+internal data class SearchAttachment(
+    val filename: String,
+    val content_type: String,
+)
+
+internal fun is_attachment_type_value(value: String): Boolean = ATTACHMENT_TYPE_EXTENSIONS.containsKey(value)
+
+internal fun is_attachment_type_operator(op: SearchOperator): Boolean =
+    op.key == "has" && is_attachment_type_value(op.value)
+
+internal fun attachment_matches_type(type: String, attachment: SearchAttachment): Boolean {
+    val extensions = ATTACHMENT_TYPE_EXTENSIONS[type] ?: return false
+    val filename = attachment.filename.trim().lowercase()
+    val content_type = attachment.content_type.trim().lowercase()
+    return extensions.any { filename.endsWith(it) } ||
+        (type == "pdf" && content_type == "application/pdf") ||
+        (MIME_PREFIX_ATTACHMENT_TYPES.contains(type) && content_type.startsWith("$type/"))
+}
+
 internal val DATE_OPERATOR_VALUES = setOf("today", "yesterday", "this_week", "last_week", "this_month")
 
 private const val DAY_MILLIS = 86_400_000L
@@ -115,6 +148,7 @@ internal data class SearchEnv(
     val now: Long,
     val zone: ZoneId,
     val labels: SearchLabelIndex = NO_SEARCH_LABELS,
+    val attachments: Map<String, List<SearchAttachment>> = emptyMap(),
 )
 
 internal fun search_local_day(
@@ -196,7 +230,7 @@ private fun classify_token(token: String): TokenKind {
 internal fun is_evaluable_operator(key: String, value: String): Boolean = when (key) {
     "is" -> IS_OPERATOR_VALUES.contains(value)
     "in" -> IN_OPERATOR_VALUES.contains(value)
-    "has" -> HAS_OPERATOR_VALUES.contains(value)
+    "has" -> HAS_OPERATOR_VALUES.contains(value) || is_attachment_type_value(value)
     "before", "after" -> parse_iso_date(value) != null || parse_relative_days(value) != null
     "date" -> DATE_OPERATOR_VALUES.contains(value) || parse_iso_date(value) != null
     "from", "to", "contact", "subject", "label" -> value.isNotBlank()
@@ -230,6 +264,17 @@ internal fun combined_query(chips: List<SearchOperator>, text: String): ParsedQu
     val typed = parse_query(text)
     return ParsedQuery(typed.free_text, chips + typed.operators)
 }
+
+private val CHIP_LIVE_KEYS = setOf("is", "has", "in")
+
+internal fun pending_typed_operators(text: String): List<SearchOperator> =
+    parse_query(text).operators.filterNot { it.key in CHIP_LIVE_KEYS }
+
+internal fun chip_visible_operators(chips: List<SearchOperator>, text: String): List<SearchOperator> =
+    chips + parse_query(text).operators.filter { it.key in CHIP_LIVE_KEYS }
+
+internal fun pending_operator_text(pending: List<SearchOperator>, free_text: String): String =
+    (pending.map { operator_token(it) } + free_text).filter { it.isNotBlank() }.joinToString(" ")
 
 internal fun quote_operator_value(value: String): String {
     val cleaned = value.replace("\"", "").trim()
@@ -410,7 +455,13 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
         sender_addresses(item) + recipient_fields(item),
     )
     "subject" -> fold_text(item.subject).contains(fold_text(op.value))
-    "has" -> if (HAS_OPERATOR_VALUES.contains(op.value)) item.has_attachments else null
+    "has" -> when {
+        HAS_OPERATOR_VALUES.contains(op.value) -> item.has_attachments
+        is_attachment_type_value(op.value) ->
+            item.has_attachments &&
+                env.attachments[item.id].orEmpty().any { attachment_matches_type(op.value, it) }
+        else -> null
+    }
     "is" -> when (op.value) {
         "unread" -> !item.is_read
         "read" -> item.is_read

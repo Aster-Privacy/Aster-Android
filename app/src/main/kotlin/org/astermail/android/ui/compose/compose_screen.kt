@@ -3561,18 +3561,21 @@ private fun chip_input(
     show_encryption_indicator: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    val query = input.trim().lowercase()
+    val query = org.astermail.android.ui.search.fold_text(input.trim())
     var suggestions_dismissed by remember { mutableStateOf(false) }
     LaunchedEffect(chips.size) { suggestions_dismissed = false }
     val filtered_suggestions = remember(query, suggestions, chips) {
-        if (query.isEmpty() || suggestions.isEmpty() || is_valid_email_chip(query)) {
+        if (query.isEmpty() || suggestions.isEmpty()) {
             emptyList()
         } else {
+            val chosen = chips.map { it.lowercase() }
             suggestions
                 .filter { contact ->
                     val email = contact.email.lowercase()
-                    val name = contact.name.lowercase()
-                    (email.contains(query) || name.contains(query)) && email !in chips.map { it.lowercase() }
+                    val folded_email = org.astermail.android.ui.search.fold_text(contact.email)
+                    val folded_name = org.astermail.android.ui.search.fold_text(contact.name)
+                    (folded_email.contains(query) || folded_name.contains(query)) &&
+                        folded_email != query && email !in chosen
                 }
                 .take(3)
         }

@@ -137,10 +137,10 @@ class SearchQueryRulesTest {
 
     @Test
     fun a_recognized_key_with_an_unusable_value_is_plain_text() {
-        val parsed = parse_query("is:banana in:receipts has:pdf date:someday before:soon report")
+        val parsed = parse_query("is:banana in:receipts has:hologram date:someday before:soon report")
         assertTrue(parsed.operators.isEmpty())
         assertEquals(
-            listOf("is:banana", "in:receipts", "has:pdf", "date:someday", "before:soon", "report"),
+            listOf("is:banana", "in:receipts", "has:hologram", "date:someday", "before:soon", "report"),
             parsed.terms,
         )
         assertFalse(matches("is:banana", item(subject = "Quarterly report")))
@@ -381,14 +381,14 @@ class SearchQueryRulesTest {
     }
 
     @Test
-    fun picking_a_person_replaces_only_positive_values() {
+    fun picking_a_person_replaces_the_first_positive_value() {
         val ops = listOf(op("from", "ann"), op("from", "bob", negated = true), op("from", "cy"), op("to", "dee"))
         assertEquals(
-            listOf(op("from", "bob", negated = true), op("to", "dee"), op("from", "eve@example.com")),
+            listOf(op("from", "bob", negated = true), op("from", "cy"), op("to", "dee"), op("from", "eve@example.com")),
             set_person(ops, "from", " Eve@Example.com "),
         )
         assertEquals(
-            listOf(op("from", "bob", negated = true), op("to", "dee")),
+            listOf(op("from", "bob", negated = true), op("from", "cy"), op("to", "dee")),
             set_person(ops, "from", ""),
         )
     }
@@ -565,5 +565,86 @@ class SearchQueryRulesTest {
         )
         assertEquals(ops.size, quick.size + custom.size)
         assertEquals(ops.toSet(), (quick + custom).toSet())
+    }
+
+    @Test
+    fun attachment_type_operator_matches_by_file_name_or_content_type() {
+        val with_files = item(has_attachments = true)
+        val typed = env.copy(
+            attachments = mapOf(
+                "1" to listOf(
+                    SearchAttachment("Invoice.PDF", "application/octet-stream"),
+                    SearchAttachment("scan", "image/heic"),
+                ),
+            ),
+        )
+        fun typed_match(query: String, target: InboxItem = with_files) =
+            matches_item(target, parse_query(query), env = typed)
+
+        assertEquals(listOf(op("has", "pdf")), parse_query("has:pdf").operators)
+        assertTrue(typed_match("has:pdf"))
+        assertTrue(typed_match("has:image"))
+        assertFalse(typed_match("has:video"))
+        assertTrue(typed_match("-has:video"))
+        assertFalse(typed_match("-has:pdf"))
+        assertTrue(typed_match("has:video has:pdf"))
+        assertFalse(typed_match("has:pdf", item(has_attachments = false)))
+        assertFalse(matches("has:pdf", with_files))
+    }
+
+    @Test
+    fun attachment_type_matching_covers_each_documented_type() {
+        fun hit(type: String, name: String, mime: String = "") =
+            attachment_matches_type(type, SearchAttachment(name, mime))
+
+        assertTrue(hit("pdf", "", "application/pdf"))
+        assertTrue(hit("document", "notes.docx"))
+        assertTrue(hit("spreadsheet", "budget.xlsx"))
+        assertTrue(hit("video", "clip", "video/mp4"))
+        assertTrue(hit("audio", "memo.flac"))
+        assertTrue(hit("archive", "backup.tar.gz"))
+        assertFalse(hit("archive", "report.pdf"))
+        assertFalse(hit("hologram", "report.pdf"))
+    }
+
+    @Test
+    fun half_typed_person_operator_stays_out_of_the_chips() {
+        val chips = listOf(SearchOperator(false, "is", "starred"))
+
+        assertEquals(chips, chip_visible_operators(chips, "from:wal invoice"))
+        assertEquals(
+            chips + SearchOperator(false, "is", "unread"),
+            chip_visible_operators(chips, "is:unread from:wal"),
+        )
+        assertEquals(listOf(SearchOperator(false, "from", "wal")), pending_typed_operators("is:unread from:wal"))
+        assertEquals("from:wal invoice", pending_operator_text(pending_typed_operators("from:wal invoice"), "invoice"))
+    }
+
+    @Test
+    fun picking_a_person_replaces_only_the_shown_operator() {
+        val ops = listOf(
+            SearchOperator(false, "from", "ann"),
+            SearchOperator(false, "from", "bob"),
+            SearchOperator(true, "from", "carl"),
+        )
+
+        assertEquals(
+            listOf(ops[1], ops[2], SearchOperator(false, "from", "dana")),
+            set_person(ops, "from", "Dana"),
+        )
+        assertEquals(listOf(ops[1], ops[2]), set_person(ops, "from", ""))
+    }
+
+    @Test
+    fun advanced_apply_keeps_a_scope_the_sheet_cannot_show() {
+        val ops = listOf(SearchOperator(false, "in", "starred"), SearchOperator(false, "is", "unread"))
+        val fields = advanced_fields(ops)
+
+        assertEquals("", fields.scope)
+        assertTrue(build_advanced_operators(ops, fields).contains(ops[0]))
+        assertFalse(build_advanced_operators(ops, fields.copy(scope = "sent")).contains(ops[0]))
+        assertTrue(
+            build_advanced_operators(ops, fields.copy(scope = "sent")).contains(SearchOperator(false, "in", "sent")),
+        )
     }
 }

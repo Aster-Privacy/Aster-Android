@@ -798,6 +798,7 @@ class MailViewModel @Inject constructor(
         _search_state.value = SearchUiState()
         _inbox_attachment_ids.value = emptySet()
         inbox_attachment_probed.clear()
+        search_attachment_cache.clear()
         inbox_attachment_seeded.set(false)
         _thread_participants.value = emptyMap()
         _thread_count_corrections.value = emptyMap()
@@ -4772,6 +4773,25 @@ class MailViewModel @Inject constructor(
     }
 
     private val search_folders_loading = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    private val search_attachment_cache =
+        java.util.concurrent.ConcurrentHashMap<String, List<org.astermail.android.ui.search.SearchAttachment>>()
+
+    internal suspend fun search_attachment_types(
+        item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.search.SearchAttachment>> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val missing = item_ids.filterNot { search_attachment_cache.containsKey(it) }
+        if (missing.isNotEmpty()) {
+            repository.fetch_attachment_metas_for_messages(missing).onSuccess { metas ->
+                missing.forEach { id ->
+                    search_attachment_cache[id] = metas[id].orEmpty().map {
+                        org.astermail.android.ui.search.SearchAttachment(it.filename, it.content_type)
+                    }
+                }
+            }
+        }
+        item_ids.mapNotNull { id -> search_attachment_cache[id]?.let { id to it } }.toMap()
+    }
 
     fun load_search_folder(folder: String) {
         val item_type = search_folder_item_type(folder) ?: return
