@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Добавить резервный адрес</string>
     <string name="recovery_reminder_later">Позже</string>
     <string name="plan_prompt_title">Используйте Aster Mail полнее</string>
-    <string name="plan_prompt_body">Перейдите на платный тариф, чтобы получить больше места, свои домены и неограниченные псевдонимы.</string>
+    <string name="plan_prompt_body">Перейдите на платный тариф, чтобы получить больше места, больше псевдонимов и больше своих доменов.</string>
     <string name="plan_prompt_action">Посмотреть тарифы</string>
     <string name="plan_prompt_dismiss">Не сейчас</string>
     <string name="recovery_codes_reminder_title">Сохраните коды восстановления</string>

@@ -69,7 +69,6 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     R.string.settings_plan_bullet_unlimited_templates,
     -> TablerIcons.Template
     R.string.settings_plan_bullet_unlimited_signatures -> TablerIcons.Signature
-    R.string.settings_plan_bullet_tracker_protection -> TablerIcons.Shield
     R.string.settings_plan_bullet_vacation_reply -> TablerIcons.Umbrella
     R.string.settings_plan_bullet_catch_all -> TablerIcons.Inbox
     R.string.settings_plan_bullet_auto_forwarding -> TablerIcons.MailForward
@@ -84,7 +83,6 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     R.string.settings_plan_bullet_contact_merge -> TablerIcons.Users
     R.string.settings_plan_bullet_encrypted_export -> TablerIcons.Upload
     R.string.settings_plan_bullet_protected_folders -> TablerIcons.Lock
-    R.string.settings_plan_bullet_key_rotation -> TablerIcons.Key
     R.string.settings_plan_bullet_receipt_tracking -> TablerIcons.Receipt
     R.string.settings_plan_bullet_early_access -> TablerIcons.Rocket
     R.string.settings_plan_bullet_e2ee -> TablerIcons.ShieldLock

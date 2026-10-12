@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">復旧用メールを追加</string>
     <string name="recovery_reminder_later">後で</string>
     <string name="plan_prompt_title">Aster Mail をもっと活用</string>
-    <string name="plan_prompt_body">アップグレードすると、容量が増え、カスタムドメインと無制限のエイリアスを利用できます。</string>
+    <string name="plan_prompt_body">アップグレードすると、容量が増え、より多くのエイリアスとカスタムドメインを利用できます。</string>
     <string name="plan_prompt_action">プランを見る</string>
     <string name="plan_prompt_dismiss">後で</string>
     <string name="recovery_codes_reminder_title">リカバリーコードを保存してください</string>

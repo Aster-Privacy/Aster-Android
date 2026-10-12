@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Kurtarma e-postası ekle</string>
     <string name="recovery_reminder_later">Daha sonra</string>
     <string name="plan_prompt_title">Aster Mail’den daha fazlasını alın</string>
-    <string name="plan_prompt_body">Daha fazla depolama, özel alan adları ve sınırsız takma ad için yükseltin.</string>
+    <string name="plan_prompt_body">Daha fazla depolama, daha fazla takma ad ve daha fazla özel alan adı için yükseltin.</string>
     <string name="plan_prompt_action">Planları gör</string>
     <string name="plan_prompt_dismiss">Şimdi değil</string>
     <string name="recovery_codes_reminder_title">Kurtarma kodlarınızı kaydedin</string>

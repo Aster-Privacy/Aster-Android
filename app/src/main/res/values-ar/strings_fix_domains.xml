@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">هذا ما وجدناه لـ %1$s</string>
     <string name="domain_purchase_change_name">تغيير الاسم</string>
     <string name="domain_purchase_show_more">عرض المزيد من النتائج</string>
-    <string name="domain_purchase_empty_included">كل نطاق يشمل خصوصية WHOIS، وإعداد DNS نيابةً عنك، وعناوين غير محدودة.</string>
+    <string name="domain_purchase_empty_included">كل نطاق يشمل خصوصية WHOIS وإعداد DNS نيابةً عنك.</string>
     <string name="domain_purchase_retry">إعادة المحاولة</string>
     <string name="domain_purchase_progress_note">يسجّل Aster Mail نطاقك ويجهّز صناديق بريدك. يستغرق ذلك عادةً نحو دقيقة.</string>
     <string name="domain_purchase_awaiting_note">لم نستلم دفعتك بعد. أكمل عملية الدفع لإتمام طلبك، أو أغلق هذه النافذة وادفع لاحقًا من قسم النطاقات المشتراة.</string>

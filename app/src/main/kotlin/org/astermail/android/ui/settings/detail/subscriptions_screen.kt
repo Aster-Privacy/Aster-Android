@@ -125,8 +125,8 @@ private fun fallback_alias_limit(plan_code: String?): Int = when (plan_code) {
 
 private fun fallback_domain_limit(plan_code: String?): Int = when (plan_code) {
     "star" -> 5
-    "nova", "duo", "family" -> 30
-    "supernova" -> 0
+    "nova", "duo" -> 30
+    "supernova", "family" -> 0
     else -> 1
 }
 
@@ -180,7 +180,6 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_star_domains,
             R.string.settings_plan_bullet_daily_send_limits,
             R.string.settings_plan_bullet_star_templates,
-            R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_vacation_reply,
             R.string.settings_plan_bullet_catch_all,
             R.string.settings_plan_bullet_auto_forwarding,
@@ -204,12 +203,10 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_daily_send_limits,
             R.string.settings_plan_bullet_unlimited_templates,
             R.string.settings_plan_bullet_unlimited_signatures,
-            R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_carddav_import,
             R.string.settings_plan_bullet_contact_merge,
             R.string.settings_plan_bullet_encrypted_export,
             R.string.settings_plan_bullet_protected_folders,
-            R.string.settings_plan_bullet_key_rotation,
             R.string.settings_plan_bullet_external_accounts,
             R.string.settings_plan_bullet_bridge_access,
         ),
@@ -225,7 +222,6 @@ private val plan_tiers = listOf(
             R.string.settings_plan_bullet_unlimited_aliases,
             R.string.settings_plan_bullet_unlimited_domains,
             R.string.settings_plan_bullet_daily_send_limits,
-            R.string.settings_plan_bullet_tracker_protection,
             R.string.settings_plan_bullet_receipt_tracking,
             R.string.settings_plan_bullet_external_accounts,
             R.string.settings_plan_bullet_bridge_access,

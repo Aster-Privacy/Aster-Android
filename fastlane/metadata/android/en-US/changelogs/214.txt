@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Aster Mail no longer stops in the background after you restart your phone.
+- Upgrade screens show the correct plan limits.
+- The schedule date picker offers only the next 28 days.
+- Attachments in imported mail open as expected.
+- A label's own chip is hidden when you view that label.

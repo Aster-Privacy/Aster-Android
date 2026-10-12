@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">%1$s के नतीजे</string>
     <string name="domain_purchase_change_name">नाम बदलें</string>
     <string name="domain_purchase_show_more">और नतीजे दिखाएं</string>
-    <string name="domain_purchase_empty_included">हर डोमेन के साथ WHOIS निजता, आपके लिए सेट किया गया DNS और असीमित पते मिलते हैं।</string>
+    <string name="domain_purchase_empty_included">हर डोमेन के साथ WHOIS निजता और आपके लिए सेट किया गया DNS मिलता है।</string>
     <string name="domain_purchase_retry">फिर से कोशिश करें</string>
     <string name="domain_purchase_progress_note">Aster Mail आपका डोमेन पंजीकृत कर रहा है और आपके मेलबॉक्स सेट कर रहा है। इसमें आमतौर पर करीब एक मिनट लगता है।</string>
     <string name="domain_purchase_awaiting_note">आपका भुगतान अभी तक नहीं मिला है। अपना ऑर्डर पूरा करने के लिए, चेकआउट पूरा करें। आप यह विंडो बंद करके बाद में खरीदे गए डोमेन से भी भुगतान कर सकते हैं।</string>

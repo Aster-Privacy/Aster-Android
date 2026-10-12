@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Aggiungi email di recupero</string>
     <string name="recovery_reminder_later">Più tardi</string>
     <string name="plan_prompt_title">Ottieni di più da Aster Mail</string>
-    <string name="plan_prompt_body">Passa a un piano superiore per più spazio, domini personalizzati e alias illimitati.</string>
+    <string name="plan_prompt_body">Passa a un piano superiore per più spazio, più alias e più domini personalizzati.</string>
     <string name="plan_prompt_action">Vedi i piani</string>
     <string name="plan_prompt_dismiss">Non ora</string>
     <string name="recovery_codes_reminder_title">Salva i tuoi codici di recupero</string>

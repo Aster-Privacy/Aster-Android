@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Herstel-e-mailadres toevoegen</string>
     <string name="recovery_reminder_later">Later</string>
     <string name="plan_prompt_title">Haal meer uit Aster Mail</string>
-    <string name="plan_prompt_body">Upgrade voor meer opslag, eigen domeinen en onbeperkte aliassen.</string>
+    <string name="plan_prompt_body">Upgrade voor meer opslag, meer aliassen en meer eigen domeinen.</string>
     <string name="plan_prompt_action">Abonnementen bekijken</string>
     <string name="plan_prompt_dismiss">Niet nu</string>
     <string name="recovery_codes_reminder_title">Sla je herstelcodes op</string>

@@ -80,6 +80,7 @@ data class PrekeyBundleResponse(
     val one_time_prekey: String? = null,
     val pq_prekey: PqPrekeyInfo? = null,
     val pq_kem_public_key: String? = null,
+    val x3dh_max_version: Int? = null,
     val pq_capable: Boolean? = null,
 )
 

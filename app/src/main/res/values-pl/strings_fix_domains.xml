@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">Wyniki dla %1$s</string>
     <string name="domain_purchase_change_name">Zmień nazwę</string>
     <string name="domain_purchase_show_more">Pokaż więcej wyników</string>
-    <string name="domain_purchase_empty_included">Każda domena zawiera prywatność WHOIS, skonfigurowany DNS i nieograniczoną liczbę adresów.</string>
+    <string name="domain_purchase_empty_included">Każda domena zawiera prywatność WHOIS i skonfigurowany DNS.</string>
     <string name="domain_purchase_retry">Spróbuj ponownie</string>
     <string name="domain_purchase_progress_note">Aster Mail rejestruje Twoją domenę i konfiguruje skrzynki. Zwykle trwa to około minuty.</string>
     <string name="domain_purchase_awaiting_note">Twoja płatność jeszcze nie dotarła. Aby sfinalizować zamówienie, dokończ płatność. Możesz też zamknąć to okno i zapłacić później w sekcji Kupione domeny.</string>

@@ -40,6 +40,14 @@ class SendGatesTest {
     }
 
     @Test
+    fun `latest schedule instant is the last one the window allows`() {
+        val latest = latest_sealed_schedule_ms(now)
+        assertEquals(now + 28 * day, latest)
+        assertFalse(exceeds_sealed_schedule_window(latest, now))
+        assertTrue(exceeds_sealed_schedule_window(latest + 1, now))
+    }
+
+    @Test
     fun `schedule block checks the window first`() {
         val block = scheduled_send_block(
             recipients = listOf("a@astermail.org", "b@example.com"),

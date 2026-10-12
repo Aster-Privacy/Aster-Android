@@ -26,6 +26,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.astermail.android.api.ApiError
+import org.astermail.android.api.encryption.EncryptionApi
 import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
@@ -38,13 +40,14 @@ import org.astermail.android.storage.SessionKeyStore
 private const val UPLOADED_FLAG_PREFS = "ratchet_bootstrap"
 private const val UPLOADED_FLAG_PREFIX = "uploaded_"
 private const val UPLOADED_GENERATION_PREFIX = "uploaded_generation_"
-private const val BUNDLE_UPLOAD_GENERATION = 4
+private const val BUNDLE_UPLOAD_GENERATION = 5
 
 @Singleton
 class RatchetBootstrapService @Inject constructor(
     private val session_key_store: SessionKeyStore,
     private val ratchet_api: RatchetApi,
     private val keys_api: KeysApi,
+    private val encryption_api: EncryptionApi,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -450,6 +453,7 @@ class RatchetBootstrapService @Inject constructor(
         vault_json.put("ratchet_identity_key", identity_jwk)
         vault_json.put("ratchet_signed_prekey", spk_jwk)
         vault_json.put("ratchet_signed_prekey_public", spk_pub)
+        vault_json.put("ratchet_regen_v4_done", true)
         runCatching { RatchetCrypto.p256_public_raw_from_private_jwk(identity_jwk) }
             .getOrNull()
             ?.let { vault_json.put("ratchet_identity_public", base64_encode(it)) }
@@ -541,26 +545,81 @@ class RatchetBootstrapService @Inject constructor(
         return GeneratedPqIdentity(secret_b64, public_b64)
     }
 
-    private fun signed_prekey_signature(
-        identity_public_b64: String,
-        signed_prekey_public_b64: String,
-        pq_identity_public_b64: String?,
-    ): String? =
-        pgp_prekey_signature(identity_public_b64, signed_prekey_public_b64, pq_identity_public_b64)
-
-    private fun pgp_prekey_signature(
+    private suspend fun signed_prekey_signature(
         identity_public_b64: String,
         signed_prekey_public_b64: String,
         pq_identity_public_b64: String?,
     ): String? {
-        val identity_key = session_key_store.get_identity_key() ?: return null
-        if (!PrekeyBindingSigner.looks_like_armored_private_key(identity_key)) return null
+        val signing_key = published_signing_key() ?: return null
+        return pgp_prekey_signature(
+            signing_key,
+            identity_public_b64,
+            signed_prekey_public_b64,
+            pq_identity_public_b64,
+        )
+    }
+
+    private suspend fun published_signing_key(): String? {
+        val candidates = PublishedSigningKey.candidates(
+            identity_key = session_key_store.get_identity_key(),
+            previous_keys = vault_previous_keys() + session_key_store.get_previous_keys().orEmpty(),
+        )
+        val published_fingerprint = try {
+            encryption_api.get_pgp_key_info().fingerprint
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: ApiError.NotFoundError) {
+            ""
+        } catch (error: Throwable) {
+            debug_log("published pgp key lookup threw: ${error.javaClass.simpleName}")
+            return null
+        }
+        return when (val choice = PublishedSigningKey.choose(candidates, published_fingerprint)) {
+            is PublishedSigningKeyChoice.Selected -> choice.armored_secret_key
+            PublishedSigningKeyChoice.NotHeld -> {
+                debug_log("deferred upload: the vault does not hold the published pgp key")
+                null
+            }
+            PublishedSigningKeyChoice.NoCandidates -> null
+        }
+    }
+
+    private fun vault_previous_keys(): List<String> {
+        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
+            ?: return emptyList()
+        val passphrase = session_key_store.get_passphrase() ?: return emptyList()
+        return runCatching {
+            val plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(encrypted_vault_b64),
+                base64_decode(vault_nonce_b64),
+                passphrase,
+            )
+            val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
+            plain.fill(0)
+            val keys = mutableListOf<String>()
+            json.optString("identity_key").takeIf { it.isNotBlank() }?.let { keys.add(it) }
+            val previous = json.optJSONArray("previous_keys")
+            if (previous != null) {
+                for (index in 0 until previous.length()) {
+                    previous.optString(index).takeIf { it.isNotBlank() }?.let { keys.add(it) }
+                }
+            }
+            keys.toList()
+        }.getOrDefault(emptyList())
+    }
+
+    private fun pgp_prekey_signature(
+        signing_key: String,
+        identity_public_b64: String,
+        signed_prekey_public_b64: String,
+        pq_identity_public_b64: String?,
+    ): String? {
         val passphrase_bytes = session_key_store.get_passphrase() ?: return null
         val passphrase = org.astermail.android.util.passphrase_chars(passphrase_bytes)
         passphrase_bytes.fill(0)
         return runCatching {
             val armored = PrekeyBindingSigner.sign_cleartext(
-                armored_secret_key = identity_key,
+                armored_secret_key = signing_key,
                 passphrase = passphrase,
                 text = PrekeyBindingSigner.binding_for_bundle(
                     identity_public_b64,

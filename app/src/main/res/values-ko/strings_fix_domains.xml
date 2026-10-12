@@ -13,7 +13,7 @@
     <string name="domain_purchase_results_for">%1$s 검색 결과</string>
     <string name="domain_purchase_change_name">이름 변경</string>
     <string name="domain_purchase_show_more">더 많은 결과 보기</string>
-    <string name="domain_purchase_empty_included">모든 도메인에 WHOIS 비공개, 자동 설정된 DNS, 무제한 주소가 포함됩니다.</string>
+    <string name="domain_purchase_empty_included">모든 도메인에 WHOIS 비공개와 자동 설정된 DNS가 포함됩니다.</string>
     <string name="domain_purchase_retry">다시 시도</string>
     <string name="domain_purchase_progress_note">Aster Mail에서 도메인을 등록하고 메일함을 설정하는 중입니다. 보통 1분 정도 걸립니다.</string>
     <string name="domain_purchase_awaiting_note">아직 결제가 확인되지 않았습니다. 주문을 완료하려면 결제를 마치세요. 이 창을 닫고 나중에 구매한 도메인에서 결제할 수도 있습니다.</string>

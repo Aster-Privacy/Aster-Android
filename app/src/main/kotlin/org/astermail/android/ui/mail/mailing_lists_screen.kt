@@ -123,7 +123,10 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.security.safe_sender_name
+import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.subscriptions.MailingListsViewModel
+import org.astermail.android.subscriptions.build_blocked_sender_index
+import org.astermail.android.subscriptions.without_blocked_senders
 import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
@@ -136,11 +139,16 @@ fun MailingListsScreen(
 ) {
     val vm: MailingListsViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
+    val settings_vm = shared_settings_view_model()
+    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val density = LocalDensity.current
+    var blocked_requested by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        settings_vm.load_blocked_senders()
+        blocked_requested = true
         vm.load()
         vm.auto_scan_if_empty()
     }
@@ -166,8 +174,20 @@ fun MailingListsScreen(
     var confirm_single by remember { mutableStateOf<MailingListSubscription?>(null) }
     var confirm_bulk by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    val (active, unsubscribed) = remember(state.items) {
-        state.items.partition { it.status == "active" }
+    val blocked_pending = settings_state.blocked_senders.isEmpty() &&
+        (!blocked_requested || settings_state.blocked_senders_loading)
+    val blocked_index = remember(settings_state.blocked_senders) {
+        build_blocked_sender_index(settings_state.blocked_senders.map { it.address to it.is_domain })
+    }
+    val items = remember(state.items, blocked_index, blocked_pending) {
+        if (blocked_pending) {
+            emptyList()
+        } else {
+            without_blocked_senders(state.items, blocked_index) { it.sender_email }
+        }
+    }
+    val (active, unsubscribed) = remember(items) {
+        items.partition { it.status == "active" }
     }
     val visible = if (show_unsubscribed) unsubscribed else active
     val visible_ids = remember(visible) { visible.map { it.id }.toSet() }
@@ -364,7 +384,8 @@ fun MailingListsScreen(
                     active_count = active.size,
                     unsubscribed_count = unsubscribed.size,
                     email_count = state.stats?.total_emails_from_subscriptions
-                        ?: state.items.sumOf { it.email_count },
+                        ?.takeIf { items.size == state.items.size }
+                        ?: items.sumOf { it.email_count },
                     is_scanning = state.is_scanning,
                     modifier = Modifier.padding(horizontal = inbox_card_horizontal_margin),
                 )
@@ -389,7 +410,7 @@ fun MailingListsScreen(
                 Spacer(Modifier.height(AsterSpacing.md))
             }
             when {
-                (state.is_loading || state.is_scanning) && state.items.isEmpty() -> item(key = "loading") {
+                (state.is_loading || state.is_scanning || blocked_pending) && items.isEmpty() -> item(key = "loading") {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
@@ -400,7 +421,7 @@ fun MailingListsScreen(
                         )
                     }
                 }
-                state.load_error != null && state.items.isEmpty() -> item(key = "load_error") {
+                state.load_error != null && items.isEmpty() -> item(key = "load_error") {
                     Box(modifier = Modifier.padding(horizontal = inbox_card_horizontal_margin)) {
                         Column {
                             org.astermail.android.ui.settings.detail.load_failed_card(

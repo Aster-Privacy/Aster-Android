@@ -10,7 +10,7 @@
     <string name="recovery_reminder_action">Wiederherstellungsadresse hinzufügen</string>
     <string name="recovery_reminder_later">Später</string>
     <string name="plan_prompt_title">Holen Sie mehr aus Aster Mail heraus</string>
-    <string name="plan_prompt_body">Führen Sie ein Upgrade durch, um mehr Speicher, eigene Domains und unbegrenzte Aliasse zu erhalten.</string>
+    <string name="plan_prompt_body">Führen Sie ein Upgrade durch, um mehr Speicher, mehr Aliasse und mehr eigene Domains zu erhalten.</string>
     <string name="plan_prompt_action">Tarife ansehen</string>
     <string name="plan_prompt_dismiss">Jetzt nicht</string>
     <string name="recovery_codes_reminder_title">Speichern Sie Ihre Wiederherstellungscodes</string>

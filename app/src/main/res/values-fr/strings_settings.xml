@@ -92,7 +92,6 @@
     <string name="settings_plan_bullet_daily_send_limits">Limites d\'envoi quotidiennes plus élevées</string>
     <string name="settings_plan_bullet_daily_emails">1 000 e-mails par jour</string>
     <string name="settings_plan_bullet_star_templates">10 modèles d\'e-mail</string>
-    <string name="settings_plan_bullet_tracker_protection">Protection contre les traqueurs</string>
     <string name="settings_plan_bullet_vacation_reply">Réponse automatique d\'absence</string>
     <string name="settings_plan_bullet_catch_all">Adresse e-mail attrape-tout</string>
     <string name="settings_plan_bullet_auto_forwarding">Transfert automatique</string>
@@ -112,7 +111,6 @@
     <string name="settings_plan_bullet_contact_merge">Assistant de fusion de contacts</string>
     <string name="settings_plan_bullet_encrypted_export">Export chiffré</string>
     <string name="settings_plan_bullet_protected_folders">Dossiers protégés par mot de passe</string>
-    <string name="settings_plan_bullet_key_rotation">Intervalles de rotation des clés personnalisés</string>
 
     <string name="settings_plan_bullet_supernova_storage">5 To de stockage chiffré</string>
     <string name="settings_plan_bullet_supernova_attachments">Pièces jointes jusqu\'à 250 Mo</string>
