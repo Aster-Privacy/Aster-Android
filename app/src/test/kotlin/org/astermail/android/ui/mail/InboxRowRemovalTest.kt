@@ -101,6 +101,15 @@ class InboxRowRemovalTest {
     }
 
     @Test
+    fun a_filtered_list_past_the_automatic_limit_offers_older_messages() {
+        assertTrue(filtered_load_more_wanted(inbox_filter_unread, has_more = true, is_busy = false, loaded_items = 1000))
+        assertFalse(filtered_load_more_wanted(inbox_filter_unread, has_more = true, is_busy = false, loaded_items = 999))
+        assertFalse(filtered_load_more_wanted(inbox_filter_unread, has_more = false, is_busy = false, loaded_items = 1000))
+        assertFalse(filtered_load_more_wanted(inbox_filter_unread, has_more = true, is_busy = true, loaded_items = 1000))
+        assertFalse(filtered_load_more_wanted(inbox_filter_all, has_more = true, is_busy = false, loaded_items = 5000))
+    }
+
+    @Test
     fun loading_stops_once_the_counted_threads_are_listed() {
         assertFalse(inbox_auto_fill_wanted(inbox_filter_unread, 27, 27, 27, 300))
         assertTrue(inbox_auto_fill_wanted(inbox_filter_unread, 3, 3, 3, 50))

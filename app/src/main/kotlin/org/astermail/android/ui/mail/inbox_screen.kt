@@ -2452,6 +2452,34 @@ fun InboxScreen(
                                 }
                             }
                         } else if (
+                            filtered_load_more_wanted(
+                                active_filter = active_filter,
+                                has_more = inbox_state.has_more,
+                                is_busy = inbox_state.is_loading || inbox_state.is_loading_more || inbox_state.initial,
+                                loaded_items = inbox_state.items.size,
+                            )
+                        ) {
+                            item(key = "_filtered_load_more") {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().animateItem(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                    TextButton(
+                                        onClick = { mail_vm.load_more() },
+                                        modifier = Modifier.testTag("filtered_load_more"),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.check_for_older_messages),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.accent_blue,
+                                            fontWeight = FontWeight.Medium,
+                                        )
+                                    }
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                }
+                            }
+                        } else if (
                             !inbox_state.has_more &&
                             !inbox_state.is_loading &&
                             !inbox_state.initial &&
@@ -4636,6 +4664,17 @@ internal fun inbox_auto_fill_wanted(
 
 internal fun scroll_paging_allowed(active_filter: String, has_scrolled: Boolean, loaded_items: Int): Boolean =
     active_filter == inbox_filter_all || has_scrolled || loaded_items < UNREAD_FILTER_DRAIN_MAX_ITEMS
+
+internal fun filtered_load_more_wanted(
+    active_filter: String,
+    has_more: Boolean,
+    is_busy: Boolean,
+    loaded_items: Int,
+): Boolean =
+    active_filter != inbox_filter_all &&
+        has_more &&
+        !is_busy &&
+        loaded_items >= UNREAD_FILTER_DRAIN_MAX_ITEMS
 
 internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
     is_loading_more && !removal_quiet
