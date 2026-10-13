@@ -3395,6 +3395,7 @@
     <string name="outbox_failed_reason_post_quantum">لم ينشر أحد المستلمين مفاتيح ما بعد الكم بعد، لذلك لم يرسل Aster هذه الرسالة. لإرسالها بالتشفير التام بين الطرفين القياسي، اضغط على أرسل على أي حال.</string>
     <string name="outbox_failed_reason_identity">تغيّر مفتاح التشفير لأحد المستلمين، لذلك لم يرسل Aster هذه الرسالة. لإرسالها، أكّد تغيير المفتاح في صندوق الوارد، ثم اضغط على إعادة المحاولة.</string>
     <string name="outbox_failed_reason_encryption">تعذّر على Aster تشفير هذه الرسالة لأحد المستلمين. يمكنك إعادة المحاولة أو تجاهلها.</string>
+    <string name="outbox_failed_reason_sender_refused">تعذّر على Aster إرسال هذه الرسالة من العنوان المحدد في حقل «من». لإرسالها، افتح الرسالة في المسودات واختر عنوانًا آخر.</string>
     <string name="outbox_failed_reason_rejected">لم يقبل الخادم هذه الرسالة. تحقّق من المستلمين وحجم المرفقات، ثم أعد المحاولة.</string>
     <string name="outbox_failed_reason_connection">تعذّر على Aster الوصول إلى الخادم بعد عدة محاولات. تحقّق من اتصالك، ثم أعد المحاولة.</string>
     <string name="outbox_failed_reason_attachment">لم يعد أحد المرفقات متاحًا على هذا الجهاز، لذلك لا يمكن لـ Aster إرسال هذه الرسالة. تجاهلها، ثم أرفق الملف مجددًا في رسالة جديدة.</string>

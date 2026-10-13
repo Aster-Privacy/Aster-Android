@@ -33,7 +33,13 @@
     <string name="interval_year">year</string>
     <string name="notif_channel_billing_description">Alerts about payments and your plan.</string>
     <string name="notif_channel_billing_name">Billing</string>
-    <string name="onboarding_checklist_title">Set up Aster (%1$d of %2$d)</string>
+    <string name="onboarding_checklist_close">Close tutorial list</string>
+    <string name="onboarding_checklist_domain_badge">Optional</string>
+    <string name="onboarding_checklist_domain_heading">Use a custom domain</string>
+    <string name="onboarding_checklist_hide_forever">Permanently hide tutorial list</string>
+    <string name="onboarding_checklist_open">Show tutorial list</string>
+    <string name="onboarding_checklist_progress">%1$d of %2$d</string>
+    <string name="onboarding_checklist_title">Get started</string>
     <string name="onboarding_task_first_email">Send your first message</string>
     <string name="onboarding_task_import">Import your old mail</string>
     <string name="onboarding_task_install">Install Aster on your computer</string>

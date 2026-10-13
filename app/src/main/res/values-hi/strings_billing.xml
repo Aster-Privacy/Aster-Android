@@ -33,7 +33,13 @@
     <string name="interval_year">साल</string>
     <string name="notif_channel_billing_description">भुगतान और आपके प्लान से जुड़ी सूचनाएं।</string>
     <string name="notif_channel_billing_name">बिलिंग</string>
-    <string name="onboarding_checklist_title">Aster सेट करें (%2$d में से %1$d)</string>
+    <string name="onboarding_checklist_close">ट्यूटोरियल सूची बंद करें</string>
+    <string name="onboarding_checklist_domain_badge">वैकल्पिक</string>
+    <string name="onboarding_checklist_domain_heading">कस्टम डोमेन का उपयोग करें</string>
+    <string name="onboarding_checklist_hide_forever">ट्यूटोरियल सूची हमेशा के लिए छिपाएँ</string>
+    <string name="onboarding_checklist_open">ट्यूटोरियल सूची दिखाएँ</string>
+    <string name="onboarding_checklist_progress">%2$d में से %1$d</string>
+    <string name="onboarding_checklist_title">शुरू करें</string>
     <string name="onboarding_task_first_email">अपना पहला संदेश भेजें</string>
     <string name="onboarding_task_import">अपना पुराना मेल इंपोर्ट करें</string>
     <string name="onboarding_task_install">अपने कंप्यूटर पर Aster इंस्टॉल करें</string>

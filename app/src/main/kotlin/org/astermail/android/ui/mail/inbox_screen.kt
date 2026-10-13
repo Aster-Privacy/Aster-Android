@@ -316,6 +316,7 @@ fun InboxScreen(
     on_open_upgrade: () -> Unit = {},
     on_open_recovery_email: () -> Unit = {},
     on_open_import: () -> Unit = {},
+    on_open_domains: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -486,10 +487,24 @@ fun InboxScreen(
             raw
         }
     }
-    val show_onboarding_checklist = onboarding != null &&
-        current_folder == "inbox" &&
-        onboarding.dismissed_at == null &&
-        onboarding_tasks.values.any { !it }
+    var tutorial_list_collapsed by rememberSaveable {
+        mutableStateOf(
+            onboarding_prefs.getBoolean(org.astermail.android.ui.common.tutorial_list_collapsed_key, false),
+        )
+    }
+    val onboarding_progress = remember(onboarding_tasks) {
+        org.astermail.android.ui.common.tutorial_list_progress_of(onboarding_tasks)
+    }
+    val onboarding_active = org.astermail.android.ui.common.tutorial_list_is_active(
+        is_loaded = onboarding != null,
+        is_dismissed = onboarding?.dismissed_at != null,
+        progress = onboarding_progress,
+    )
+    val show_onboarding_checklist = current_folder == "inbox" &&
+        org.astermail.android.ui.common.tutorial_list_visible(
+            is_active = onboarding_active,
+            progress = onboarding_progress,
+        )
     val onboarding_task_context = LocalContext.current
     val on_onboarding_task: (String) -> Unit = { key ->
         when (onboarding_task_destination_for(key)) {
@@ -497,12 +512,14 @@ fun InboxScreen(
             onboarding_task_destination.import_mail -> on_open_import()
             onboarding_task_destination.compose -> on_compose()
             onboarding_task_destination.download_page -> {
-                org.astermail.android.ui.common.open_external_url(
+                val opened = org.astermail.android.ui.common.open_external_url(
                     onboarding_task_context,
                     onboarding_download_url,
                 )
-                install_app_done = true
-                onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                if (opened) {
+                    install_app_done = true
+                    onboarding_prefs.edit().putBoolean(ONBOARDING_INSTALL_APP_DONE_KEY, true).apply()
+                }
             }
             onboarding_task_destination.settings -> on_open_settings()
         }
@@ -531,6 +548,7 @@ fun InboxScreen(
             org.astermail.android.mail.SendFailureReason.KEY_CHANGED -> stringResource(R.string.outbox_failed_reason_key_changed)
             org.astermail.android.mail.SendFailureReason.WEAK_PASSWORD -> stringResource(R.string.message_password_too_weak)
             org.astermail.android.mail.SendFailureReason.ENCRYPTION -> stringResource(R.string.outbox_failed_reason_encryption)
+            org.astermail.android.mail.SendFailureReason.SENDER_REFUSED -> stringResource(R.string.outbox_failed_reason_sender_refused)
             org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
             org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
             org.astermail.android.mail.SendFailureReason.ATTACHMENT -> stringResource(R.string.outbox_failed_reason_attachment)
@@ -922,6 +940,16 @@ fun InboxScreen(
     LaunchedEffect(tools_visible) {
         if (!tools_visible) active_filter = inbox_filter_all
     }
+    val wanted_read_filter = org.astermail.android.mail.effective_read_filter(
+        current_folder,
+        read_filter_for_inbox_filter(active_filter),
+    )
+    val server_filtered = inbox_state.read_filter != org.astermail.android.mail.ListReadFilter.all
+    LaunchedEffect(wanted_read_filter, current_folder, inbox_state.current_folder, inbox_state.read_filter) {
+        if (inbox_state.current_folder == current_folder && inbox_state.read_filter != wanted_read_filter) {
+            mail_vm.set_read_filter(wanted_read_filter)
+        }
+    }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val initial_threads = remember {
         if (emails.isEmpty()) {
@@ -1080,6 +1108,11 @@ fun InboxScreen(
             threads
         }
     }
+    val folder_has_unread = org.astermail.android.mail.mark_all_has_unread(
+        filter_active = filter_active,
+        loaded_has_unread = visible_threads.any { it.has_unread },
+        server_unread_count = mark_all_unread_count(current_folder, inbox_state.stats?.unread, folder_unread_counts),
+    )
     val top_thread_key = visible_threads.firstOrNull()?.thread_id
     val latest_visible_threads by rememberUpdatedState(visible_threads)
     LaunchedEffect(list_state) {
@@ -1312,7 +1345,7 @@ fun InboxScreen(
                     quick_action_notice(quick_action_unavailable_text)
                     return
                 }
-                if (visible_threads.none { it.has_unread }) {
+                if (!folder_has_unread) {
                     quick_action_notice(quick_action_no_unread_text)
                     return
                 }
@@ -1962,6 +1995,7 @@ fun InboxScreen(
                     !inbox_state.is_loading &&
                     !inbox_state.initial &&
                     current_folder == "inbox" &&
+                    !server_filtered &&
                     inbox_state.error == null &&
                     inbox_state.list_loaded_at > 0L &&
                     inbox_state.stats_loaded_at > inbox_state.list_loaded_at &&
@@ -2098,12 +2132,15 @@ fun InboxScreen(
                     }
                 } else if (refill_pending) {
                     Box(Modifier.padding(top = header_height_dp))
-                } else if (threads.isEmpty()) {
+                } else if (threads.isEmpty() &&
+                    !filter_empty_state_wanted(filter_active, server_filtered, true, visible_threads.isEmpty())
+                ) {
                     LaunchedEffect(Unit) { empty_state_seen = true }
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) { empty_inbox_state(current_folder) }
-                } else if (filter_active && visible_threads.isEmpty()) {
+                } else if (filter_empty_state_wanted(filter_active, server_filtered, threads.isEmpty(), visible_threads.isEmpty())) {
+                    if (threads.isEmpty()) LaunchedEffect(Unit) { empty_state_seen = true }
                     org.astermail.android.ui.common.overscroll_stretch(
                         modifier = Modifier.padding(top = header_height_dp).then(handoff),
                     ) {
@@ -2269,6 +2306,18 @@ fun InboxScreen(
                                     tasks = onboarding_tasks,
                                     on_task = on_onboarding_task,
                                     on_dismiss = { billing_vm.dismiss_onboarding_checklist() },
+                                    is_open = !tutorial_list_collapsed,
+                                    on_toggle = {
+                                        val collapsed = !tutorial_list_collapsed
+                                        tutorial_list_collapsed = collapsed
+                                        onboarding_prefs.edit()
+                                            .putBoolean(
+                                                org.astermail.android.ui.common.tutorial_list_collapsed_key,
+                                                collapsed,
+                                            )
+                                            .apply()
+                                    },
+                                    on_domain = on_open_domains,
                                     modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                 )
                             }
@@ -2608,7 +2657,7 @@ fun InboxScreen(
                         },
                         on_refresh = { do_refresh() },
                         on_mark_all_read = { target_read -> mark_all_read(target_read) },
-                        has_unread = visible_threads.any { it.has_unread },
+                        has_unread = folder_has_unread,
                         on_select_all = { select_all() },
                         on_open_settings = on_open_settings,
                         on_open_upgrade = on_open_upgrade,

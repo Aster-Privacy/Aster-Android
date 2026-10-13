@@ -318,4 +318,63 @@ class BillingViewModelTest {
 
         coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
     }
+
+    private val open_checklist = OnboardingChecklistResponse(tasks = mapOf("first_email" to true, "import_mail" to false))
+
+    @Test
+    fun `a dismissed checklist stays dismissed when a stale load returns`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        val stale_load = CompletableDeferred<OnboardingChecklistResponse>()
+        coEvery { billing_api.get_onboarding_checklist() } coAnswers { stale_load.await() }
+        billing.load_onboarding_checklist()
+        billing.dismiss_onboarding_checklist()
+        advanceUntilIdle()
+        stale_load.complete(open_checklist)
+        advanceUntilIdle()
+
+        assertNotNull(billing.state.value.onboarding?.dismissed_at)
+        assertEquals(open_checklist.tasks, billing.state.value.onboarding?.tasks)
+    }
+
+    @Test
+    fun `a dismissed checklist stays dismissed across a reload on resume`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        billing.dismiss_onboarding_checklist()
+        advanceUntilIdle()
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        assertNotNull(billing.state.value.onboarding?.dismissed_at)
+        coVerify(exactly = 1) { billing_api.dismiss_onboarding_checklist() }
+    }
+
+    @Test
+    fun `a failed dismissal restores the checklist`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
+        coEvery { billing_api.dismiss_onboarding_checklist() } throws java.io.IOException("offline")
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist()
+        advanceUntilIdle()
+
+        billing.dismiss_onboarding_checklist()
+        assertNotNull(billing.state.value.onboarding?.dismissed_at)
+        advanceUntilIdle()
+
+        assertNull(billing.state.value.onboarding?.dismissed_at)
+        assertEquals(open_checklist.tasks, billing.state.value.onboarding?.tasks)
+
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        assertNull(billing.state.value.onboarding?.dismissed_at)
+        coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
+    }
 }

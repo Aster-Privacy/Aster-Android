@@ -134,4 +134,34 @@ class catch_all_sender_test {
         )
         assertEquals("sales@example.com", received)
     }
+
+    @Test
+    fun draft_candidate_only_for_a_saved_draft_sender() {
+        assertEquals(listOf("sales@example.com"), catch_all_draft_candidates("draft", "sales@example.com"))
+        assertEquals(emptyList<String>(), catch_all_draft_candidates("reply", "sales@example.com"))
+        assertEquals(emptyList<String>(), catch_all_draft_candidates("new", "sales@example.com"))
+        assertEquals(emptyList<String>(), catch_all_draft_candidates("draft", null))
+        assertEquals(emptyList<String>(), catch_all_draft_candidates("draft", "  "))
+    }
+
+    @Test
+    fun reopened_draft_keeps_an_eligible_catch_all_sender() {
+        val base = listOf("me@astermail.org")
+        val candidates = catch_all_draft_candidates("draft", "Sales@Example.com")
+        val alias_options = base + options(candidates, existing = base)
+        assertEquals("sales@example.com", find_sender_option(alias_options, " Sales@Example.com "))
+    }
+
+    @Test
+    fun reopened_draft_drops_a_sender_the_account_cannot_use() {
+        val base = listOf("me@astermail.org")
+        val candidates = catch_all_draft_candidates("draft", "sales@example.com")
+        val locked = base + options(candidates, existing = base, unlocked = false)
+        val disabled = base + options(candidates, existing = base, domains = listOf(domain.copy(catch_all_enabled = false)))
+        val foreign = base + options(catch_all_draft_candidates("draft", "ceo@other.com"), existing = base)
+        assertNull(find_sender_option(locked, "sales@example.com"))
+        assertNull(find_sender_option(disabled, "sales@example.com"))
+        assertNull(find_sender_option(foreign, "ceo@other.com"))
+        assertNull(find_sender_option(base, ""))
+    }
 }

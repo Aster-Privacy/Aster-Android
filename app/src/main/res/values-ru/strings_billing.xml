@@ -33,7 +33,13 @@
     <string name="interval_year">год</string>
     <string name="notif_channel_billing_description">Уведомления о платежах и вашем тарифе.</string>
     <string name="notif_channel_billing_name">Оплата</string>
-    <string name="onboarding_checklist_title">Настройка Aster (%1$d из %2$d)</string>
+    <string name="onboarding_checklist_close">Закрыть список обучения</string>
+    <string name="onboarding_checklist_domain_badge">Необязательно</string>
+    <string name="onboarding_checklist_domain_heading">Используйте свой домен</string>
+    <string name="onboarding_checklist_hide_forever">Скрыть список обучения навсегда</string>
+    <string name="onboarding_checklist_open">Показать список обучения</string>
+    <string name="onboarding_checklist_progress">%1$d из %2$d</string>
+    <string name="onboarding_checklist_title">Начало работы</string>
     <string name="onboarding_task_first_email">Отправьте первое письмо</string>
     <string name="onboarding_task_import">Импортируйте старую почту</string>
     <string name="onboarding_task_install">Установите Aster на компьютер</string>

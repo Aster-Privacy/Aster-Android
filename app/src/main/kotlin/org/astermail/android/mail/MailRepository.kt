@@ -1926,6 +1926,7 @@ class MailRepository @Inject constructor(
         include_spam: Boolean? = null,
         include_trash: Boolean? = null,
         direction: String? = null,
+        is_read: Boolean? = null,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -1949,6 +1950,7 @@ class MailRepository @Inject constructor(
             group_by_thread = conversation_grouping,
             skip_total = if (cursor != null || (offset ?: 0) > 0) true else null,
             pinned_first = true,
+            is_read = is_read,
         )
         val filtered_raw = if (is_received) {
             val now_ms = System.currentTimeMillis()
@@ -1978,8 +1980,8 @@ class MailRepository @Inject constructor(
         runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull()
     }
 
-    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> {
-        return fetch_inbox(limit, cursor, "sent", label_token = null, order = order)
+    suspend fun fetch_sent(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> {
+        return fetch_inbox(limit, cursor, "sent", label_token = null, order = order, is_read = is_read)
     }
 
     suspend fun fetch_drafts(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
@@ -2000,26 +2002,26 @@ class MailRepository @Inject constructor(
         )
     }
 
-    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_starred(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_starred = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible.filterNot { it.is_spam }, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_trash(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_trashed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_spam(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_spam = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
 
-    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_archive(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_archived = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
@@ -2211,8 +2213,8 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null): Result<InboxPage> = runCatching {
-        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true)
+    suspend fun fetch_snoozed(limit: Int = 50, cursor: String? = null, order: String? = null, is_read: Boolean? = null): Result<InboxPage> = runCatching {
+        val response = mail_api.list_messages(limit = limit, cursor = cursor, is_snoozed = true, skip_total = if (cursor != null) true else null, order = order, group_by_thread = conversation_grouping, pinned_first = true, is_read = is_read)
         val batch = decrypt_items_batch(response.items)
         InboxPage(batch.visible, response.has_more, response.next_cursor, response.total.takeIf { it >= 0 }, batch.server_ids)
     }
@@ -6575,6 +6577,25 @@ internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
     else -> false
 }
 
+private const val SENDER_NOT_AUTHORIZED_CODE = "SENDER_NOT_AUTHORIZED"
+private const val GENERIC_FORBIDDEN_CODE = "FORBIDDEN"
+
+private val legacy_sender_refusal_details = setOf(
+    "this address is disabled",
+    "address hash required for non-primary sender",
+    "sending from this domain is not permitted",
+    "sender address domain mismatch",
+    "alias is disabled",
+    "sender address not authorized",
+    "domain address is disabled",
+)
+
+internal fun is_sender_refusal(err: Throwable): Boolean {
+    if (err !is org.astermail.android.api.ApiError.ForbiddenError) return false
+    if (err.code == SENDER_NOT_AUTHORIZED_CODE) return true
+    return err.code == GENERIC_FORBIDDEN_CODE && err.detail.trim().lowercase() in legacy_sender_refusal_details
+}
+
 internal fun server_rejection_cause(err: Throwable?): Throwable? {
     var cause = err
     var depth = 0
@@ -6592,6 +6613,7 @@ enum class SendFailureReason(val code: String) {
     KEY_CHANGED("key_changed"),
     WEAK_PASSWORD("weak_password"),
     ENCRYPTION("encryption"),
+    SENDER_REFUSED("sender_refused"),
     REJECTED("rejected"),
     CONNECTION("connection"),
     ATTACHMENT("attachment"),
@@ -6628,6 +6650,7 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
         SendFailureReason.POST_QUANTUM
     has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
         SendFailureReason.IDENTITY_CHANGED
+    has_cause(err) { is_sender_refusal(it) } -> SendFailureReason.SENDER_REFUSED
     server_rejection_cause(err) != null -> SendFailureReason.REJECTED
     is_transient_send_cause(err) || has_retryable_api_cause(err) -> SendFailureReason.CONNECTION
     has_cause(err) { it is AttachmentPrepareException } -> SendFailureReason.ATTACHMENT
