@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">色を選ぶと、それをもとにパレット全体を作成します</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">#3b82f6 のような有効な16進数カラーを入力してください</string>
+    <string name="custom_theme_colors_title">テーマカラー</string>
+    <string name="custom_theme_role_accent">アクセント</string>
+    <string name="custom_theme_role_accent_hover">アクセント(ホバー)</string>
+    <string name="custom_theme_role_background">背景</string>
+    <string name="custom_theme_role_background_secondary">背景(セカンダリ)</string>
+    <string name="custom_theme_role_sidebar">サイドバー</string>
+    <string name="custom_theme_role_text">テキスト</string>
+    <string name="custom_theme_role_text_secondary">テキスト(セカンダリ)</string>
+    <string name="custom_theme_role_border">枠線</string>
+    <string name="custom_theme_reset_role">自動に戻す</string>
+    <string name="custom_theme_reset_all">すべて自動に戻す</string>
     <string name="custom_theme_upgrade_title">カスタムテーマ</string>
     <string name="custom_theme_upgrade_description">好きなベースカラーからオリジナルのカラーテーマを作成できます。アップグレードしてロックを解除しましょう。</string>
     <string name="font">フォント</string>

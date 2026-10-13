@@ -111,4 +111,81 @@ class MaterialThemeGeneratorTest {
         val cleared = MaterialThemeGenerator.with_override(next, "accent_color", null)
         assertTrue(cleared.isEmpty())
     }
+
+    @Test
+    fun empty_overrides_keep_the_stock_palette() {
+        assertEquals(
+            MaterialThemeGenerator.generate_material_theme("#3b82f6", true),
+            MaterialThemeGenerator.compute_custom_theme_vars("#3b82f6", true, emptyMap()),
+        )
+    }
+
+    @Test
+    fun sidebar_follows_the_secondary_background() {
+        val base = MaterialThemeGenerator.generate_material_theme("#3b82f6", true)
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--bg-secondary" to "#2a1050"),
+        )
+        assertEquals("#2a1050", vars.sidebar_bg)
+        assertFalse(vars.sidebar_hover == base.sidebar_hover)
+    }
+
+    @Test
+    fun sidebar_override_wins_over_the_secondary_background() {
+        val overrides = mapOf("--bg-secondary" to "#2a1050", "--sidebar-bg" to "#103050")
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars("#3b82f6", true, overrides)
+        assertEquals("#103050", vars.sidebar_bg)
+        assertEquals("#2a1050", vars.bg_secondary)
+        assertTrue(MaterialThemeGenerator.has_sidebar_override(overrides))
+        assertFalse(MaterialThemeGenerator.has_sidebar_override(mapOf("--bg-secondary" to "#2a1050")))
+        assertEquals("#103050", MaterialThemeGenerator.role_color(vars, "sidebar_bg"))
+    }
+
+    @Test
+    fun background_override_derives_every_surface() {
+        val base = MaterialThemeGenerator.generate_material_theme("#3b82f6", true)
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--bg-primary" to "#3b1a6e"),
+        )
+        assertEquals("#3b1a6e", vars.bg_card)
+        assertEquals("#3b1a6e", vars.indicator_bg)
+        assertFalse(vars.bg_tertiary == base.bg_tertiary)
+        assertFalse(vars.bg_hover == base.bg_hover)
+        assertFalse(vars.bg_selected == base.bg_selected)
+        assertFalse(vars.border_primary == base.border_primary)
+        assertFalse(vars.text_muted == base.text_muted)
+    }
+
+    @Test
+    fun border_override_wins_over_the_derived_border() {
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--bg-primary" to "#3b1a6e", "--border-primary" to "#ff00ff"),
+        )
+        assertEquals("#ff00ff", vars.border_primary)
+    }
+
+    @Test
+    fun every_override_role_is_editable() {
+        assertEquals(MaterialThemeGenerator.CUSTOM_THEME_ROLE_KEYS, MaterialThemeGenerator.OVERRIDE_ROLES)
+        assertTrue(MaterialThemeGenerator.OVERRIDE_ROLES.contains("sidebar_bg"))
+    }
+
+    @Test
+    fun three_digit_overrides_render_as_opaque_six_digit_colors() {
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--sidebar-bg" to "#ABC", "--bg-primary" to "#123"),
+        )
+        assertEquals("#aabbcc", vars.sidebar_bg)
+        assertEquals("#112233", vars.bg_primary)
+        val palette = MaterialThemeGenerator.to_palette(vars)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF112233), palette.bg_primary)
+    }
 }

@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">اختر لوناً وسننشئ لوحة ألوان كاملة حوله</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">أدخل رمز لون ست عشري صالحًا، مثل #3b82f6</string>
+    <string name="custom_theme_colors_title">ألوان السمة</string>
+    <string name="custom_theme_role_accent">اللون المميز</string>
+    <string name="custom_theme_role_accent_hover">اللون المميز (عند التحويم)</string>
+    <string name="custom_theme_role_background">الخلفية</string>
+    <string name="custom_theme_role_background_secondary">الخلفية (ثانوية)</string>
+    <string name="custom_theme_role_sidebar">الشريط الجانبي</string>
+    <string name="custom_theme_role_text">النص</string>
+    <string name="custom_theme_role_text_secondary">النص (ثانوي)</string>
+    <string name="custom_theme_role_border">الحدود</string>
+    <string name="custom_theme_reset_role">إعادة التعيين إلى التلقائي</string>
+    <string name="custom_theme_reset_all">إعادة تعيين الكل إلى التلقائي</string>
     <string name="custom_theme_upgrade_title">سمة مخصصة</string>
     <string name="custom_theme_upgrade_description">أنشئ سمة ألوان خاصة بك من أي لون أساسي. قم بالترقية لإتاحتها.</string>
     <string name="font">الخط</string>

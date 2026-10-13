@@ -916,6 +916,17 @@
     <string name="custom_theme_base_color_subtitle">Pick a color and we\'ll build a full palette around it</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Enter a valid hex color, like #3b82f6</string>
+    <string name="custom_theme_colors_title">Theme colors</string>
+    <string name="custom_theme_role_accent">Accent</string>
+    <string name="custom_theme_role_accent_hover">Accent (hover)</string>
+    <string name="custom_theme_role_background">Background</string>
+    <string name="custom_theme_role_background_secondary">Background (secondary)</string>
+    <string name="custom_theme_role_sidebar">Sidebar</string>
+    <string name="custom_theme_role_text">Text</string>
+    <string name="custom_theme_role_text_secondary">Text (secondary)</string>
+    <string name="custom_theme_role_border">Border</string>
+    <string name="custom_theme_reset_role">Reset to automatic</string>
+    <string name="custom_theme_reset_all">Reset all to automatic</string>
     <string name="custom_theme_upgrade_title">Custom theme</string>
     <string name="custom_theme_upgrade_description">Build your own color theme from any base color. Upgrade to unlock it.</string>
     <string name="font">Font</string>

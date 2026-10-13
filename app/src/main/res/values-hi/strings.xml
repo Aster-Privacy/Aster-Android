@@ -804,6 +804,17 @@
     <string name="custom_theme_base_color_subtitle">कोई रंग चुनें और हम उसके आसपास पूरा रंग-समूह बना देंगे</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">कोई मान्य हेक्स रंग डालें, जैसे #3b82f6</string>
+    <string name="custom_theme_colors_title">थीम के रंग</string>
+    <string name="custom_theme_role_accent">उभार रंग</string>
+    <string name="custom_theme_role_accent_hover">उभार रंग (होवर)</string>
+    <string name="custom_theme_role_background">पृष्ठभूमि</string>
+    <string name="custom_theme_role_background_secondary">पृष्ठभूमि (द्वितीयक)</string>
+    <string name="custom_theme_role_sidebar">साइडबार</string>
+    <string name="custom_theme_role_text">पाठ</string>
+    <string name="custom_theme_role_text_secondary">पाठ (द्वितीयक)</string>
+    <string name="custom_theme_role_border">किनारा</string>
+    <string name="custom_theme_reset_role">अपने आप पर रीसेट करें</string>
+    <string name="custom_theme_reset_all">सभी को अपने आप पर रीसेट करें</string>
     <string name="custom_theme_upgrade_title">अपनी थीम</string>
     <string name="custom_theme_upgrade_description">किसी भी आधार रंग से अपनी रंग थीम बनाएं। इसे खोलने के लिए प्लान बढ़ाएं।</string>
     <string name="font">फ़ॉन्ट</string>

@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">Wybierz kolor, a my zbudujemy wokół niego pełną paletę</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Wprowadź prawidłowy kolor szesnastkowy, np. #3b82f6</string>
+    <string name="custom_theme_colors_title">Kolory motywu</string>
+    <string name="custom_theme_role_accent">Akcent</string>
+    <string name="custom_theme_role_accent_hover">Akcent (najechanie)</string>
+    <string name="custom_theme_role_background">Tło</string>
+    <string name="custom_theme_role_background_secondary">Tło (drugorzędne)</string>
+    <string name="custom_theme_role_sidebar">Pasek boczny</string>
+    <string name="custom_theme_role_text">Tekst</string>
+    <string name="custom_theme_role_text_secondary">Tekst (drugorzędny)</string>
+    <string name="custom_theme_role_border">Obramowanie</string>
+    <string name="custom_theme_reset_role">Przywróć automatyczny</string>
+    <string name="custom_theme_reset_all">Przywróć wszystko do automatycznego</string>
     <string name="custom_theme_upgrade_title">Motyw niestandardowy</string>
     <string name="custom_theme_upgrade_description">Stwórz własny motyw kolorystyczny na podstawie dowolnego koloru bazowego. Ulepsz plan, aby go odblokować.</string>
     <string name="font">Czcionka</string>

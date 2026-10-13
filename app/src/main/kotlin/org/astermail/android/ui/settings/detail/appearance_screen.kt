@@ -69,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
@@ -132,7 +133,73 @@ private val quick_compose_text_colors = listOf(
 )
 
 private fun parse_hex_color(hex: String): Color =
-    try { Color(android.graphics.Color.parseColor(hex)) } catch (_: Throwable) { Color.Gray }
+    try {
+        Color(android.graphics.Color.parseColor(MaterialThemeGenerator.normalize_hex_color(hex)))
+    } catch (_: Throwable) {
+        Color.Gray
+    }
+
+private fun custom_theme_role_label_res(role: String): Int = when (role) {
+    "accent_color" -> R.string.custom_theme_role_accent
+    "accent_color_hover" -> R.string.custom_theme_role_accent_hover
+    "bg_primary" -> R.string.custom_theme_role_background
+    "bg_secondary" -> R.string.custom_theme_role_background_secondary
+    "sidebar_bg" -> R.string.custom_theme_role_sidebar
+    "text_primary" -> R.string.custom_theme_role_text
+    "text_secondary" -> R.string.custom_theme_role_text_secondary
+    else -> R.string.custom_theme_role_border
+}
+
+@Composable
+private fun custom_theme_role_row(
+    role: String,
+    current_hex: String,
+    is_overridden: Boolean,
+    on_change: (String?) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var hex_input by remember(role, current_hex) { mutableStateOf(current_hex) }
+    val is_valid = MaterialThemeGenerator.is_valid_hex_color(hex_input)
+    LaunchedEffect(hex_input) {
+        if (hex_input.equals(current_hex, ignoreCase = true)) return@LaunchedEffect
+        if (!MaterialThemeGenerator.is_valid_hex_color(hex_input)) return@LaunchedEffect
+        delay(450)
+        on_change(hex_input)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .background(if (is_valid) parse_hex_color(hex_input) else Color.Gray, CircleShape)
+                .border(1.dp, colors.border_primary, CircleShape),
+        )
+        Spacer(Modifier.width(AsterSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(custom_theme_role_label_res(role)),
+                color = colors.text_primary,
+                fontSize = 14.sp,
+            )
+            if (is_overridden) {
+                Text(
+                    text = stringResource(R.string.custom_theme_reset_role),
+                    color = colors.accent_blue,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clickable { on_change(null) }
+                        .testTag("custom_role_reset_$role"),
+                )
+            }
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        AsterTextField(
+            value = hex_input,
+            onValueChange = { value -> hex_input = value },
+            placeholder = stringResource(R.string.custom_theme_hex_placeholder),
+            modifier = Modifier.width(132.dp).testTag("custom_role_hex_$role"),
+        )
+    }
+}
 
 private fun compose_font_size_label_res(label: String): Int = when (label) {
     "small" -> R.string.compose_size_small
@@ -358,6 +425,22 @@ fun AppearanceScreen(
         vm.set_custom_theme_seed(hex)
         val next = with_theme_values(base, custom_theme_seed = hex)
         if (next != base) settings_vm.save_preferences(next)
+    }
+
+    fun apply_custom_override(role: String, hex: String?) {
+        val base = prefs ?: return
+        remote_prefs_adopted = true
+        val next = MaterialThemeGenerator.with_override(custom_theme_overrides, role, hex)
+        if (next == custom_theme_overrides) return
+        vm.set_custom_theme_overrides(next)
+        settings_vm.save_preferences(base.copy(custom_theme_overrides = next))
+    }
+
+    fun reset_custom_overrides() {
+        val base = prefs ?: return
+        remote_prefs_adopted = true
+        vm.set_custom_theme_overrides(emptyMap())
+        settings_vm.save_preferences(base.copy(custom_theme_overrides = emptyMap()))
     }
 
     fun apply_theme_sync(enabled: Boolean) {
@@ -620,6 +703,42 @@ fun AppearanceScreen(
                                     },
                             )
                         }
+                    }
+                }
+            }
+        }
+        if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
+            v_gap(AsterSpacing.xxl)
+            section_label(stringResource(R.string.custom_theme_colors_title))
+            val role_vars = remember(custom_preview_seed, custom_theme_overrides, colors.bg_primary) {
+                MaterialThemeGenerator.compute_custom_theme_vars(
+                    custom_preview_seed,
+                    colors.bg_primary.luminance() < 0.5f,
+                    custom_theme_overrides,
+                )
+            }
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+                    MaterialThemeGenerator.OVERRIDE_ROLES.forEachIndexed { index, role ->
+                        if (index > 0) v_gap(AsterSpacing.md)
+                        custom_theme_role_row(
+                            role = role,
+                            current_hex = MaterialThemeGenerator.role_color(role_vars, role),
+                            is_overridden = MaterialThemeGenerator.override_for(custom_theme_overrides, role) != null,
+                            on_change = { hex -> apply_custom_override(role, hex) },
+                        )
+                    }
+                    if (custom_theme_overrides.isNotEmpty()) {
+                        v_gap(AsterSpacing.md)
+                        Text(
+                            text = stringResource(R.string.custom_theme_reset_all),
+                            color = colors.accent_blue,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .clickable { reset_custom_overrides() }
+                                .padding(vertical = AsterSpacing.xs)
+                                .testTag("custom_role_reset_all"),
+                        )
                     }
                 }
             }
