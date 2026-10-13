@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">Escolha uma cor e criamos uma paleta completa a partir dela</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Introduza uma cor hexadecimal válida, como #3b82f6</string>
+    <string name="custom_theme_colors_title">Cores do tema</string>
+    <string name="custom_theme_role_accent">Destaque</string>
+    <string name="custom_theme_role_accent_hover">Destaque (ao passar o rato)</string>
+    <string name="custom_theme_role_background">Fundo</string>
+    <string name="custom_theme_role_background_secondary">Fundo (secundário)</string>
+    <string name="custom_theme_role_sidebar">Barra lateral</string>
+    <string name="custom_theme_role_text">Texto</string>
+    <string name="custom_theme_role_text_secondary">Texto (secundário)</string>
+    <string name="custom_theme_role_border">Limite</string>
+    <string name="custom_theme_reset_role">Repor para automático</string>
+    <string name="custom_theme_reset_all">Repor tudo para automático</string>
     <string name="custom_theme_upgrade_title">Tema personalizado</string>
     <string name="custom_theme_upgrade_description">Crie o seu próprio tema de cores a partir de qualquer cor base. Atualize o plano para o desbloquear.</string>
     <string name="font">Fonte</string>

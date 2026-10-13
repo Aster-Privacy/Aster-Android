@@ -39,6 +39,7 @@ object MaterialThemeGenerator {
         "accent_color_hover",
         "bg_primary",
         "bg_secondary",
+        "sidebar_bg",
         "text_primary",
         "text_secondary",
         "border_primary",
@@ -230,6 +231,7 @@ object MaterialThemeGenerator {
         "accent_color_hover",
         "bg_primary",
         "bg_secondary",
+        "sidebar_bg",
         "text_primary",
         "text_secondary",
         "border_primary",
@@ -258,16 +260,74 @@ object MaterialThemeGenerator {
         val base = generate_material_theme(seed_hex, is_dark)
         if (overrides.isEmpty()) return base
 
-        return base.copy(
+        fun has(role: String) = override_for(overrides, role) != null
+        val roles = base.copy(
             accent_color = apply_override(base.accent_color, overrides, "accent_color"),
             accent_color_hover = apply_override(base.accent_color_hover, overrides, "accent_color_hover"),
             bg_primary = apply_override(base.bg_primary, overrides, "bg_primary"),
             bg_secondary = apply_override(base.bg_secondary, overrides, "bg_secondary"),
             text_primary = apply_override(base.text_primary, overrides, "text_primary"),
             text_secondary = apply_override(base.text_secondary, overrides, "text_secondary"),
-            border_primary = apply_override(base.border_primary, overrides, "border_primary"),
+        )
+        val bg = roles.bg_primary
+        val text = roles.text_primary
+        val surfaces = if (has("bg_primary") || has("text_primary")) {
+            val muted = mix_hex_srgb(text, bg, custom_text_muted_mix)
+            roles.copy(
+                bg_tertiary = mix_hex_srgb(text, bg, custom_tertiary_mix),
+                bg_hover = mix_hex_srgb(text, bg, custom_hover_mix),
+                bg_selected = mix_hex_srgb(roles.accent_color, bg, custom_selected_mix),
+                bg_card = bg,
+                avatar_bg = mix_hex_srgb(text, bg, custom_avatar_mix),
+                avatar_text = muted,
+                indicator_bg = bg,
+                text_tertiary = mix_hex_srgb(text, bg, custom_text_tertiary_mix),
+                text_muted = muted,
+                border_primary = mix_hex_srgb(text, bg, custom_border_primary_mix),
+                border_secondary = mix_hex_srgb(text, bg, custom_border_secondary_mix),
+                border_thread_divider = mix_hex_srgb(text, bg, custom_border_secondary_mix),
+            )
+        } else {
+            roles
+        }
+        val sidebar_bg = override_for(overrides, "sidebar_bg")
+            ?: if (has("bg_secondary")) surfaces.bg_secondary else surfaces.sidebar_bg
+        val sidebar_hover = if (has("bg_secondary") || has("sidebar_bg") || has("text_primary")) {
+            mix_hex_srgb(text, sidebar_bg, custom_sidebar_hover_mix)
+        } else {
+            surfaces.sidebar_hover
+        }
+
+        return surfaces.copy(
+            border_primary = apply_override(surfaces.border_primary, overrides, "border_primary"),
+            sidebar_bg = sidebar_bg,
+            sidebar_hover = sidebar_hover,
         )
     }
+
+    fun has_sidebar_override(overrides: Map<String, String>): Boolean =
+        override_for(overrides, "sidebar_bg") != null
+
+    fun role_color(vars: MaterialThemeVars, role: String): String = when (role) {
+        "accent_color" -> vars.accent_color
+        "accent_color_hover" -> vars.accent_color_hover
+        "bg_primary" -> vars.bg_primary
+        "bg_secondary" -> vars.bg_secondary
+        "sidebar_bg" -> vars.sidebar_bg
+        "text_primary" -> vars.text_primary
+        "text_secondary" -> vars.text_secondary
+        else -> vars.border_primary
+    }
+
+    private const val custom_tertiary_mix = 0.05
+    private const val custom_hover_mix = 0.09
+    private const val custom_avatar_mix = 0.14
+    private const val custom_selected_mix = 0.2
+    private const val custom_sidebar_hover_mix = 0.06
+    private const val custom_text_tertiary_mix = 0.68
+    private const val custom_text_muted_mix = 0.6
+    private const val custom_border_primary_mix = 0.16
+    private const val custom_border_secondary_mix = 0.13
 
     private const val custom_field_border_contrast = 1.5
 

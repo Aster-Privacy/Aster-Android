@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">Kies een kleur en we bouwen er een volledig kleurenpalet omheen</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Voer een geldige hexadecimale kleur in, zoals #3b82f6</string>
+    <string name="custom_theme_colors_title">Themakleuren</string>
+    <string name="custom_theme_role_accent">Accentkleur</string>
+    <string name="custom_theme_role_accent_hover">Accentkleur (bij aanwijzen)</string>
+    <string name="custom_theme_role_background">Achtergrond</string>
+    <string name="custom_theme_role_background_secondary">Achtergrond (secundair)</string>
+    <string name="custom_theme_role_sidebar">Zijbalk</string>
+    <string name="custom_theme_role_text">Tekst</string>
+    <string name="custom_theme_role_text_secondary">Tekst (secundair)</string>
+    <string name="custom_theme_role_border">Rand</string>
+    <string name="custom_theme_reset_role">Terugzetten naar automatisch</string>
+    <string name="custom_theme_reset_all">Alles terugzetten naar automatisch</string>
     <string name="custom_theme_upgrade_title">Aangepast thema</string>
     <string name="custom_theme_upgrade_description">Maak je eigen kleurenthema vanuit elke basiskleur. Upgrade om het te ontgrendelen.</string>
     <string name="font">Lettertype</string>

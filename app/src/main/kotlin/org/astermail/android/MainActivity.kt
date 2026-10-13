@@ -2014,6 +2014,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         }
     }
     val theme_vm_inbox: ThemeViewModel = hiltViewModel()
+    val drawer_color_theme by theme_vm_inbox.color_theme.collectAsStateWithLifecycle()
+    val drawer_theme_overrides by theme_vm_inbox.custom_theme_overrides.collectAsStateWithLifecycle()
+    val drawer_surface = if (
+        drawer_color_theme == org.astermail.android.design.ColorThemeId.custom.name &&
+        org.astermail.android.design.MaterialThemeGenerator.has_sidebar_override(drawer_theme_overrides)
+    ) {
+        colors.sidebar_bg
+    } else {
+        colors.bg_primary
+    }
 
     androidx.compose.runtime.LaunchedEffect(prefs?.custom_categories) {
         if (prefs != null) mail_vm.set_custom_categories(prefs.custom_categories.orEmpty())
@@ -2326,7 +2336,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         scrimColor = Color.Black.copy(alpha = 0.32f),
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = if (colors.is_glass) colors.sidebar_bg.copy(alpha = 1f) else colors.bg_primary,
+                drawerContainerColor = if (colors.is_glass) colors.sidebar_bg.copy(alpha = 1f) else drawer_surface,
                 drawerTonalElevation = 0.dp,
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(

@@ -522,6 +522,17 @@
     <string name="custom_theme_base_color_subtitle">Bir renk seçin, biz de bu renge göre eksiksiz bir palet oluşturalım</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">#3b82f6 gibi geçerli bir onaltılık renk kodu girin</string>
+    <string name="custom_theme_colors_title">Tema renkleri</string>
+    <string name="custom_theme_role_accent">Vurgu</string>
+    <string name="custom_theme_role_accent_hover">Vurgu (üzerine gelme)</string>
+    <string name="custom_theme_role_background">Arka plan</string>
+    <string name="custom_theme_role_background_secondary">Arka plan (ikincil)</string>
+    <string name="custom_theme_role_sidebar">Kenar çubuğu</string>
+    <string name="custom_theme_role_text">Metin</string>
+    <string name="custom_theme_role_text_secondary">Metin (ikincil)</string>
+    <string name="custom_theme_role_border">Kenarlık</string>
+    <string name="custom_theme_reset_role">Otomatiğe sıfırla</string>
+    <string name="custom_theme_reset_all">Tümünü otomatiğe sıfırla</string>
     <string name="custom_theme_upgrade_title">Özel tema</string>
     <string name="custom_theme_upgrade_description">İstediğiniz herhangi bir temel renkten kendi renk temanızı oluşturun. Kilidini açmak için yükseltin.</string>
     <string name="font">Yazı tipi</string>

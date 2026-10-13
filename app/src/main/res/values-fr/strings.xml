@@ -550,6 +550,17 @@
     <string name="custom_theme_base_color_subtitle">Choisissez une couleur et nous créerons une palette complète à partir de celle-ci</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Saisissez une couleur hexadécimale valide, par exemple #3b82f6</string>
+    <string name="custom_theme_colors_title">Couleurs du thème</string>
+    <string name="custom_theme_role_accent">Couleur d’accent</string>
+    <string name="custom_theme_role_accent_hover">Accent (survol)</string>
+    <string name="custom_theme_role_background">Arrière-plan</string>
+    <string name="custom_theme_role_background_secondary">Arrière-plan (secondaire)</string>
+    <string name="custom_theme_role_sidebar">Barre latérale</string>
+    <string name="custom_theme_role_text">Texte</string>
+    <string name="custom_theme_role_text_secondary">Texte (secondaire)</string>
+    <string name="custom_theme_role_border">Bordure</string>
+    <string name="custom_theme_reset_role">Réinitialiser en automatique</string>
+    <string name="custom_theme_reset_all">Tout réinitialiser en automatique</string>
     <string name="custom_theme_upgrade_title">Thème personnalisé</string>
     <string name="custom_theme_upgrade_description">Créez votre propre thème de couleurs à partir de n\'importe quelle couleur de base. Passez à un forfait supérieur pour le débloquer.</string>
     <string name="font">Police</string>
