@@ -598,6 +598,8 @@ fun MailDetailScreen(
         mail_vm.load_thread(email_id)
     }
 
+    failed_send_dialog(mail_vm)
+
     val thread_matches_email = thread_state.item?.id == email_id ||
         thread_state.messages.any { it.id == email_id }
     val unread_thread_ids = remember(thread_state.messages, thread_matches_email) {
