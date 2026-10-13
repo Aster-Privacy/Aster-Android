@@ -133,7 +133,11 @@ private val quick_compose_text_colors = listOf(
 )
 
 private fun parse_hex_color(hex: String): Color =
-    try { Color(android.graphics.Color.parseColor(hex)) } catch (_: Throwable) { Color.Gray }
+    try {
+        Color(android.graphics.Color.parseColor(MaterialThemeGenerator.normalize_hex_color(hex)))
+    } catch (_: Throwable) {
+        Color.Gray
+    }
 
 private fun custom_theme_role_label_res(role: String): Int = when (role) {
     "accent_color" -> R.string.custom_theme_role_accent

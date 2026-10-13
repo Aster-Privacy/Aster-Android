@@ -49,6 +49,11 @@ object MaterialThemeGenerator {
 
     fun is_valid_hex_color(value: String): Boolean = HEX_COLOR_PATTERN.matches(value)
 
+    fun normalize_hex_color(value: String): String {
+        val digits = value.removePrefix("#").lowercase()
+        return "#" + if (digits.length == 3) digits.map { "$it$it" }.joinToString("") else digits
+    }
+
     private fun srgb_to_linear(channel: Double): Double =
         if (channel <= 0.04045) channel / 12.92 else ((channel + 0.055) / 1.055).pow(2.4)
 
@@ -240,7 +245,9 @@ object MaterialThemeGenerator {
     fun web_override_key(role: String): String = "--" + role.replace('_', '-')
 
     fun override_for(overrides: Map<String, String>, role: String): String? =
-        (overrides[web_override_key(role)] ?: overrides[role])?.takeIf { is_valid_hex_color(it) }
+        (overrides[web_override_key(role)] ?: overrides[role])
+            ?.takeIf { is_valid_hex_color(it) }
+            ?.let { normalize_hex_color(it) }
 
     fun with_override(overrides: Map<String, String>, role: String, hex: String?): Map<String, String> {
         val next = overrides.toMutableMap()
@@ -345,7 +352,7 @@ object MaterialThemeGenerator {
     }
 
     fun to_palette(vars: MaterialThemeVars): ColorThemePalette {
-        fun c(hex: String) = androidx.compose.ui.graphics.Color(("FF" + hex.removePrefix("#")).toLong(16))
+        fun c(hex: String) = androidx.compose.ui.graphics.Color(("FF" + normalize_hex_color(hex).removePrefix("#")).toLong(16))
         val field_border = ensure_contrast(c(vars.border_primary), listOf(c(vars.bg_tertiary)), custom_field_border_contrast)
 
         return ColorThemePalette(

@@ -175,4 +175,17 @@ class MaterialThemeGeneratorTest {
         assertEquals(MaterialThemeGenerator.CUSTOM_THEME_ROLE_KEYS, MaterialThemeGenerator.OVERRIDE_ROLES)
         assertTrue(MaterialThemeGenerator.OVERRIDE_ROLES.contains("sidebar_bg"))
     }
+
+    @Test
+    fun three_digit_overrides_render_as_opaque_six_digit_colors() {
+        val vars = MaterialThemeGenerator.compute_custom_theme_vars(
+            "#3b82f6",
+            true,
+            mapOf("--sidebar-bg" to "#ABC", "--bg-primary" to "#123"),
+        )
+        assertEquals("#aabbcc", vars.sidebar_bg)
+        assertEquals("#112233", vars.bg_primary)
+        val palette = MaterialThemeGenerator.to_palette(vars)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF112233), palette.bg_primary)
+    }
 }
