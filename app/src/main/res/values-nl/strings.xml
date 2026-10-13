@@ -3331,6 +3331,7 @@
     <string name="outbox_failed_reason_identity">De versleutelingssleutel van een ontvanger is gewijzigd, dus Aster heeft dit bericht niet verzonden. Bevestig de sleutelwijziging in je inbox en tik daarna op Opnieuw proberen om het te verzenden.</string>
     <string name="outbox_failed_reason_encryption">Aster kon dit bericht niet versleutelen voor een ontvanger. Je kunt het opnieuw proberen of het bericht verwijderen.</string>
     <string name="outbox_failed_reason_sender_refused">Aster kon dit bericht niet verzenden vanaf het adres in het veld Van. Open het bericht in Concepten en kies een ander adres om het te verzenden.</string>
+    <string name="error_sender_address_refused">Aster kon dit bericht niet verzenden vanaf het adres in het veld Van. Kies een ander adres om het te verzenden.</string>
     <string name="outbox_failed_reason_rejected">De server heeft dit bericht niet geaccepteerd. Controleer de ontvangers en de grootte van de bijlagen en probeer het daarna opnieuw.</string>
     <string name="outbox_failed_reason_connection">Aster kon de server na meerdere pogingen niet bereiken. Controleer je verbinding en probeer het daarna opnieuw.</string>
     <string name="outbox_failed_reason_attachment">Een bijlage is niet meer beschikbaar op dit apparaat, dus Aster kan dit bericht niet verzenden. Verwijder het en voeg het bestand opnieuw toe in een nieuw bericht.</string>

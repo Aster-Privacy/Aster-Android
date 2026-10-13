@@ -3350,6 +3350,7 @@
     <string name="outbox_failed_reason_identity">A chave de encriptação de um destinatário mudou, por isso o Aster não enviou esta mensagem. Para a enviar, confirme a alteração da chave na sua caixa de entrada e toque em Tentar novamente.</string>
     <string name="outbox_failed_reason_encryption">O Aster não conseguiu encriptar esta mensagem para um destinatário. Pode tentar novamente ou descartá-la.</string>
     <string name="outbox_failed_reason_sender_refused">Não foi possível enviar esta mensagem a partir do endereço no campo De. Para a enviar, abra a mensagem em Rascunhos e escolha outro endereço.</string>
+    <string name="error_sender_address_refused">Não foi possível enviar esta mensagem a partir do endereço no campo De. Para a enviar, escolha outro endereço.</string>
     <string name="outbox_failed_reason_rejected">O servidor não aceitou esta mensagem. Verifique os destinatários e o tamanho dos anexos e tente novamente.</string>
     <string name="outbox_failed_reason_connection">O Aster não conseguiu contactar o servidor após várias tentativas. Verifique a sua ligação e tente novamente.</string>
     <string name="outbox_failed_reason_attachment">Um anexo já não está disponível neste dispositivo, por isso o Aster não pode enviar esta mensagem. Descarte-a e anexe o ficheiro novamente numa nova mensagem.</string>
