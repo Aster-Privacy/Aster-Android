@@ -2309,6 +2309,8 @@
         <item quantity="other">Znaleziono %d nowej subskrypcji</item>
     </plurals>
     <string name="reaction_info_title">Reakcja</string>
+    <string name="reaction_badge_label">Nowa reakcja</string>
+    <string name="notification_new_reaction">Masz nową reakcję</string>
     <string name="reaction_info_you">Zareagowałeś %1$s</string>
     <string name="reaction_info_other">%1$s zareagował(a): %2$s</string>
     <string name="folder_locked_title">Zablokowany folder</string>

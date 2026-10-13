@@ -207,6 +207,18 @@ data class UnreactResponse(
     val message: String = "",
 )
 
+@Serializable
+data class ReactionsSeenRequest(
+    val thread_token: String? = null,
+    val target_message_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class ReactionsSeenResponse(
+    val success: Boolean = false,
+    val updated: Int = 0,
+)
+
 interface SendApi {
     suspend fun send_simple(request: SimpleSendRequest): SimpleSendResponse
     suspend fun send_external(request: ExternalSendRequest): ExternalSendResponse
@@ -214,6 +226,7 @@ interface SendApi {
     suspend fun queue_status(queue_id: String): QueueStatusResponse
     suspend fun react(request: ReactRequest): ReactResponse
     suspend fun unreact(request: UnreactRequest): UnreactResponse
+    suspend fun mark_reactions_seen(request: ReactionsSeenRequest): ReactionsSeenResponse
 }
 
 private class StreamedJsonContent(private val file: java.io.File) : OutgoingContent.WriteChannelContent() {
@@ -303,6 +316,15 @@ class SendApiImpl(private val client: ApiClient) : SendApi {
 
     override suspend fun unreact(request: UnreactRequest): UnreactResponse {
         val response = client.http.post("${client.base_url}/api/mail/v1/react/remove") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun mark_reactions_seen(request: ReactionsSeenRequest): ReactionsSeenResponse {
+        val response = client.http.post("${client.base_url}/api/mail/v1/react/seen") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

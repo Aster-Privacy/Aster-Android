@@ -49,6 +49,13 @@ class EmailsFingerprintTest {
     )
 
     @Test
+    fun an_unseen_reaction_changes_the_fingerprint() {
+        val before = listOf(email())
+        val after = listOf(email().copy(has_unseen_reaction = true))
+        assertNotEquals(emails_fingerprint_of(before), emails_fingerprint_of(after))
+    }
+
+    @Test
     fun adding_a_label_changes_the_fingerprint() {
         val before = listOf(email())
         val after = listOf(

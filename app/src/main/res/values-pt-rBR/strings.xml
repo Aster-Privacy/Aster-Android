@@ -2300,6 +2300,8 @@
         <item quantity="other">%d inscrições novas encontradas</item>
     </plurals>
     <string name="reaction_info_title">Reação</string>
+    <string name="reaction_badge_label">Nova reação</string>
+    <string name="notification_new_reaction">Você tem uma nova reação</string>
     <string name="reaction_info_you">Você reagiu com %1$s</string>
     <string name="reaction_info_other">%1$s reagiu com %2$s</string>
     <string name="folder_locked_title">Pasta bloqueada</string>

@@ -4725,6 +4725,7 @@ fun emails_fingerprint_of(emails: List<Email>): Int {
         hash = 31 * hash + (if (e.is_starred) 1 else 0)
         hash = 31 * hash + (if (e.is_read) 2 else 0)
         hash = 31 * hash + (if (e.is_pinned) 4 else 0)
+        hash = 31 * hash + (if (e.has_unseen_reaction) 8 else 0)
         hash = 31 * hash + e.label_names.hashCode()
         hash = 31 * hash + e.label_colors.hashCode()
         hash = 31 * hash + e.label_icons.hashCode()

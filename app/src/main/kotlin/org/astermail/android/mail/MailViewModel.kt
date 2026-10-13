@@ -75,6 +75,7 @@ private const val RESUME_RETRY_MS = 5_000L
 private const val STATS_DEBOUNCE_MS = 400L
 private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
+private const val REACTION_SEEN_OVERRIDE_MS = 30_000L
 private const val READ_OVERRIDE_TTL_MS = 10 * 60_000L
 private const val READ_CONFIRM_GRACE_MS = 15_000L
 private const val TAG_OVERRIDE_TTL_MS = 5 * 60_000L
@@ -261,6 +262,7 @@ class MailViewModel @Inject constructor(
                             emoji = emoji,
                             reactor_email = summary.reactor_email.orEmpty(),
                             is_own = summary.is_own,
+                            is_unseen = summary.is_unseen,
                         ),
                     )
                 } else {
@@ -483,6 +485,7 @@ class MailViewModel @Inject constructor(
     }
 
     private val folder_cache = java.util.concurrent.ConcurrentHashMap<String, InboxUiState>()
+    private val reaction_seen_overrides = java.util.concurrent.ConcurrentHashMap<String, Long>()
     val list_scroll_anchors = java.util.concurrent.ConcurrentHashMap<String, ListScrollAnchor>()
     var consumed_scroll_top_token: Int = 0
     var last_list_scope_key: String = ""
@@ -669,7 +672,7 @@ class MailViewModel @Inject constructor(
         items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
         _inbox_state.value = state.copy(
             items = apply_demo_overlay(
-                apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))))),
+                apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(items))))),
                 folder,
             ),
             initial = false,
@@ -835,6 +838,72 @@ class MailViewModel @Inject constructor(
         return items.map { item ->
             val override = read_overrides[item.id]
             if (override == null || override == item.is_read) item else item.copy(is_read = override)
+        }
+    }
+
+    private fun apply_read_and_reaction_overrides(items: List<InboxItem>): List<InboxItem> =
+        apply_reaction_seen_overrides(apply_read_overrides(items))
+
+    private fun reaction_seen_keys(item: InboxItem): List<String> = listOfNotNull(
+        item.thread_token?.takeIf { it.isNotBlank() }?.let { "thread:$it" },
+        "item:${item.id}",
+    )
+
+    private fun without_unseen_reaction(item: InboxItem): InboxItem = item.copy(
+        has_unseen_reaction = false,
+        raw_item = item.raw_item.copy(has_unseen_reaction = null),
+    )
+
+    private fun apply_reaction_seen_overrides(items: List<InboxItem>): List<InboxItem> {
+        if (reaction_seen_overrides.isEmpty()) return items
+        val now = android.os.SystemClock.elapsedRealtime()
+        reaction_seen_overrides.entries.removeIf { now - it.value > REACTION_SEEN_OVERRIDE_MS }
+        if (reaction_seen_overrides.isEmpty()) return items
+        return items.map { item ->
+            if (item.has_unseen_reaction && reaction_seen_keys(item).any { reaction_seen_overrides.containsKey(it) }) {
+                without_unseen_reaction(item)
+            } else {
+                item
+            }
+        }
+    }
+
+    private fun mark_reactions_seen(item: InboxItem) {
+        val token = item.thread_token?.takeIf { it.isNotBlank() }
+        val matches: (InboxItem) -> Boolean = { other ->
+            other.id == item.id || (token != null && other.thread_token == token)
+        }
+        val is_flagged: (InboxItem) -> Boolean = { other -> other.has_unseen_reaction && matches(other) }
+        if (!item.has_unseen_reaction && _inbox_state.value.items.none(is_flagged)) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val keys = reaction_seen_keys(item)
+        val already_sent = keys.any { key ->
+            reaction_seen_overrides[key]?.let { now - it <= REACTION_SEEN_OVERRIDE_MS } == true
+        }
+        keys.forEach { reaction_seen_overrides[it] = now }
+        val clear: (InboxItem) -> InboxItem = { other ->
+            if (is_flagged(other)) without_unseen_reaction(other) else other
+        }
+        _inbox_state.update { state ->
+            if (state.items.any(is_flagged)) state.copy(items = state.items.map(clear)) else state
+        }
+        _thread_state.update { thread ->
+            val current = thread.item
+            if (current != null && is_flagged(current)) thread.copy(item = clear(current)) else thread
+        }
+        folder_cache.keys.toList().forEach { key ->
+            val cached = folder_cache[key] ?: return@forEach
+            if (cached.items.any(is_flagged)) {
+                folder_cache[key] = cached.copy(items = cached.items.map(clear))
+            }
+        }
+        if (already_sent) return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                org.astermail.android.notifications.MailPollingWorker
+                    .clear_reaction_notifications(context, token, listOf(item.id))
+            }
+            repository.mark_reactions_seen(token, item.id)
         }
     }
 
@@ -1194,7 +1263,7 @@ class MailViewModel @Inject constructor(
                     apply_tag_overrides(
                         apply_category_overrides(
                             apply_pin_overrides(
-                                apply_star_overrides(apply_read_overrides(strip_removed(cached.items, folder))),
+                                apply_star_overrides(apply_read_and_reaction_overrides(strip_removed(cached.items, folder))),
                             ),
                         ),
                     ),
@@ -1235,7 +1304,7 @@ class MailViewModel @Inject constructor(
                 emptyList()
             } else {
                 apply_demo_overlay(
-                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(seeded))))),
+                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(seeded))))),
                     folder,
                 )
             },
@@ -1273,7 +1342,7 @@ class MailViewModel @Inject constructor(
                             val warmed_at = System.currentTimeMillis()
                             items.forEach { item_last_confirmed.putIfAbsent(it.id, warmed_at) }
                             _inbox_state.value = _inbox_state.value.copy(
-                                items = apply_demo_overlay(apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(items))))), folder),
+                                items = apply_demo_overlay(apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(items))))), folder),
                                 initial = false,
                                 cache_pending = false,
                             )
@@ -1316,7 +1385,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
+                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(
@@ -1451,7 +1520,7 @@ class MailViewModel @Inject constructor(
                 val prior = _inbox_state.value
                 val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                 val merged_items = apply_demo_overlay(
-                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
+                    apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                     folder,
                 )
                 _inbox_state.value = prior.copy(
@@ -1722,7 +1791,7 @@ class MailViewModel @Inject constructor(
                 val combined = apply_tag_overrides(
                     apply_category_overrides(
                         apply_pin_overrides(
-                            apply_star_overrides(apply_read_overrides(existing + new_items)),
+                            apply_star_overrides(apply_read_and_reaction_overrides(existing + new_items)),
                         ),
                     ),
                 )
@@ -2030,6 +2099,7 @@ class MailViewModel @Inject constructor(
                 ThreadUiState(is_loading = true)
             }
         }
+        seed?.let { mark_reactions_seen(it) }
         thread_load_job?.cancel()
         if (offline_retry_item_id != item_id) offline_retry_item_id = null
         thread_open_started_at = android.os.SystemClock.elapsedRealtime()
@@ -2058,6 +2128,7 @@ class MailViewModel @Inject constructor(
             }
             val item = item_result.getOrNull()?.let { apply_tag_override(it) }
             if (item != null) resume_failed_open(item_id)
+            if (item != null) mark_reactions_seen(item)
             val thread_token = item?.thread_token
             if (thread_token != null) {
                 val fallback = listOf(message_from_item_safe(item))
@@ -2102,6 +2173,12 @@ class MailViewModel @Inject constructor(
                         }
                         load_attachments_for_thread(resolved)
                         load_reactions(resolved)
+                        if (resolved.any { message -> message.raw_item.reactions.orEmpty().any { it.is_unseen } }) {
+                            runCatching {
+                                org.astermail.android.notifications.MailPollingWorker
+                                    .clear_reaction_notifications(context, thread_token, resolved.map { it.id })
+                            }
+                        }
                     },
                     onFailure = { t ->
                         val kept = previous.ifEmpty { fallback }
@@ -5194,7 +5271,7 @@ class MailViewModel @Inject constructor(
                     val prior = _inbox_state.value
                     val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
                     val merged_items = apply_demo_overlay(
-                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_overrides(merge.items))))),
+                        apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                         folder,
                     )
                     _inbox_state.value = prior.copy(

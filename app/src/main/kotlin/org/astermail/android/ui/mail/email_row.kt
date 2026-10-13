@@ -280,6 +280,9 @@ fun EmailRow(
                             .testTag("row_pin_indicator"),
                     )
                 }
+                if (email.has_unseen_reaction) {
+                    reaction_badge()
+                }
                 if (email.has_attachment) {
                     Icon(
                         imageVector = TablerIcons.Paperclip,
@@ -379,6 +382,19 @@ private fun unread_dot(modifier: Modifier = Modifier) {
             .background(colors.accent_blue, CircleShape)
             .semantics { contentDescription = label }
             .testTag("unread_dot"),
+    )
+}
+
+@Composable
+private fun reaction_badge(modifier: Modifier = Modifier) {
+    Icon(
+        imageVector = TablerIcons.MoodSmile,
+        contentDescription = stringResource(R.string.reaction_badge_label),
+        tint = AsterMaterial.colors.accent_blue,
+        modifier = modifier
+            .padding(start = AsterSpacing.sm)
+            .size(14.dp)
+            .testTag("row_reaction_badge"),
     )
 }
 
@@ -647,6 +663,9 @@ fun ThreadInboxRow(
                             .size(14.dp)
                             .testTag("row_pin_indicator"),
                     )
+                }
+                if (thread.has_unseen_reaction) {
+                    reaction_badge()
                 }
                 if (thread.has_attachment) {
                     Icon(

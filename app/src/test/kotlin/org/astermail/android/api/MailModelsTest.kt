@@ -436,6 +436,27 @@ class MailModelsTest {
     }
 
     @Test
+    fun `MailItem unseen reaction flags deserialize when present`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val payload = """{"id":"m1","has_unseen_reaction":true,"reactions":[""" +
+            """{"reaction_mail_item_id":"r1","is_unseen":true},{"reaction_mail_item_id":"r2"}]}"""
+        val item = json.decodeFromString(MailItem.serializer(), payload)
+        assertEquals(true, item.has_unseen_reaction)
+        assertEquals(listOf(true, false), item.reactions.orEmpty().map { it.is_unseen })
+    }
+
+    @Test
+    fun `MailItem unseen reaction flags absent from old server stay off`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val item = json.decodeFromString(
+            MailItem.serializer(),
+            """{"id":"m1","reactions":[{"reaction_mail_item_id":"r1"}]}""",
+        )
+        assertNull(item.has_unseen_reaction)
+        assertFalse(item.reactions.orEmpty().single().is_unseen)
+    }
+
+    @Test
     fun `PatchMetadataRequest defaults all null`() {
         val request = PatchMetadataRequest()
         assertNull(request.encrypted_metadata)

@@ -30,7 +30,7 @@ import org.astermail.android.storage.actions.PendingMailActionEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 19
+const val aster_database_version = 20
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -79,6 +79,7 @@ const val create_folder_row_cache =
         "`sender_verified` INTEGER, " +
         "`sender_verified_domain` TEXT, " +
         "`sender_verification` TEXT, " +
+        "`has_unseen_reaction` INTEGER NOT NULL DEFAULT 0, " +
         "PRIMARY KEY(`folder`, `id`))"
 
 private const val create_pending_send_queue =
@@ -165,6 +166,7 @@ val migration_columns: Map<Int, List<schema_column>> = mapOf(
     19 to sender_auth_columns(decrypted_mail_table) +
         schema_column(decrypted_mail_table, "item_type", "TEXT") +
         sender_auth_columns(folder_row_table),
+    20 to listOf(schema_column(folder_row_table, "has_unseen_reaction", "INTEGER NOT NULL DEFAULT 0")),
 )
 
 val migration_statements: Map<Int, List<String>> = mapOf(
@@ -251,6 +253,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_16_17 = step_migration(17)
         val migration_17_18 = step_migration(18)
         val migration_18_19 = step_migration(19)
+        val migration_19_20 = step_migration(20)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -271,6 +274,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_16_17,
             migration_17_18,
             migration_18_19,
+            migration_19_20,
         )
     }
 }

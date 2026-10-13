@@ -2293,6 +2293,8 @@
         <item quantity="other">%d yeni abonelik bulundu</item>
     </plurals>
     <string name="reaction_info_title">Tepki</string>
+    <string name="reaction_badge_label">Yeni tepki</string>
+    <string name="notification_new_reaction">Yeni bir tepkiniz var</string>
     <string name="reaction_info_you">%1$s ile tepki verdiniz</string>
     <string name="reaction_info_other">%1$s, %2$s ile tepki verdi</string>
     <string name="folder_locked_title">Kilitli klasör</string>

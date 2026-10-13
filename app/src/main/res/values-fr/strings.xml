@@ -2330,6 +2330,8 @@
         <item quantity="other">%d nouveaux abonnements trouvés</item>
     </plurals>
     <string name="reaction_info_title">Réaction</string>
+    <string name="reaction_badge_label">Nouvelle réaction</string>
+    <string name="notification_new_reaction">Vous avez une nouvelle réaction</string>
     <string name="reaction_info_you">Vous avez réagi avec %1$s</string>
     <string name="reaction_info_other">%1$s a réagi avec %2$s</string>
     <string name="folder_locked_title">Dossier verrouillé</string>

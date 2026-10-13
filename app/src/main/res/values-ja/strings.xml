@@ -2286,6 +2286,8 @@
         <item quantity="other">新しい購読が %d 件見つかりました</item>
     </plurals>
     <string name="reaction_info_title">リアクション</string>
+    <string name="reaction_badge_label">新しいリアクション</string>
+    <string name="notification_new_reaction">新しいリアクションがあります</string>
     <string name="reaction_info_you">%1$s でリアクションしました</string>
     <string name="reaction_info_other">%1$s さんが %2$s でリアクションしました</string>
     <string name="folder_locked_title">ロックされたフォルダ</string>

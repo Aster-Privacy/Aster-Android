@@ -2325,6 +2325,8 @@
         <item quantity="other">تم العثور على %d اشتراك جديد</item>
     </plurals>
     <string name="reaction_info_title">تفاعل</string>
+    <string name="reaction_badge_label">تفاعل جديد</string>
+    <string name="notification_new_reaction">لديك تفاعل جديد</string>
     <string name="reaction_info_you">لقد تفاعلت بـ %1$s</string>
     <string name="reaction_info_other">تفاعل %1$s بـ %2$s</string>
     <string name="folder_locked_title">مجلد مقفل</string>

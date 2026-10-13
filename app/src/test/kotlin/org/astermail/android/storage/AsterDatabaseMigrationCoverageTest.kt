@@ -197,6 +197,17 @@ class AsterDatabaseMigrationCoverageTest {
     }
 
     @Test
+    fun the_unseen_reaction_column_is_added_to_the_folder_cache() {
+        val added = migration_columns.getValue(20)
+
+        assertEquals(1, added.size)
+        assertEquals(folder_row_table, added.first().table)
+        assertEquals("has_unseen_reaction", added.first().name)
+        assertEquals("INTEGER NOT NULL DEFAULT 0", added.first().definition)
+        assertTrue(create_folder_row_cache.contains("`has_unseen_reaction` INTEGER NOT NULL DEFAULT 0"))
+    }
+
+    @Test
     fun no_migration_step_is_declared_twice() {
         val steps = AsterDatabase.all_migrations.map { it.startVersion to it.endVersion }
 

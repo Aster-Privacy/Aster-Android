@@ -2302,6 +2302,8 @@
         <item quantity="other">Se encontraron %d suscripciones nuevas</item>
     </plurals>
     <string name="reaction_info_title">Reacción</string>
+    <string name="reaction_badge_label">Nueva reacción</string>
+    <string name="notification_new_reaction">Tienes una reacción nueva</string>
     <string name="reaction_info_you">Has reaccionado con %1$s</string>
     <string name="reaction_info_other">%1$s reaccionó con %2$s</string>
     <string name="folder_locked_title">Carpeta bloqueada</string>
