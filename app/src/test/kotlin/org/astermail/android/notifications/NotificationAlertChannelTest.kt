@@ -70,4 +70,19 @@ class NotificationAlertChannelTest {
         }
         assertEquals(ids.size, ids.distinct().size)
     }
+
+    @Test
+    fun no_current_channel_reuses_a_legacy_id() {
+        val current = MailPollingWorker.alert_channel_ids()
+
+        for (legacy in MailPollingWorker.LEGACY_CHANNEL_IDS) {
+            assertTrue(legacy !in current)
+        }
+        assertEquals(4, MailPollingWorker.LEGACY_CHANNEL_IDS.distinct().size)
+    }
+
+    @Test
+    fun the_vibration_pattern_vibrates() {
+        assertTrue(ALERT_VIBRATION_PATTERN.drop(1).any { it > 0L })
+    }
 }

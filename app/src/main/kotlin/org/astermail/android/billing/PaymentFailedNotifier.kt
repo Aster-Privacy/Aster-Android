@@ -35,9 +35,11 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import org.astermail.android.MainActivity
 import org.astermail.android.R
+import org.astermail.android.notifications.create_alert_channel
 
 object PaymentFailedNotifier {
-    const val CHANNEL_ID = "aster_billing"
+    const val CHANNEL_ID = "aster_billing_v2"
+    private const val LEGACY_CHANNEL_ID = "aster_billing"
     private const val NOTIFICATION_ID = 1990
     private const val PREFS = "billing_notices"
     private const val KEY_LAST_PAYMENT_FAILURE = "last_payment_failure"
@@ -65,7 +67,7 @@ object PaymentFailedNotifier {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_DISMISSED_LAPSE, key).apply()
     }
 
-    private fun create_channel(context: Context) {
+    internal fun create_channel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -74,7 +76,8 @@ object PaymentFailedNotifier {
         )
         channel.description = context.getString(R.string.notif_channel_billing_description)
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-        manager?.createNotificationChannel(channel)
+            ?: return
+        create_alert_channel(manager, channel, vibrate = true, replaced_ids = listOf(LEGACY_CHANNEL_ID))
     }
 
     private fun notify(context: Context, plan_name: String): Boolean {
