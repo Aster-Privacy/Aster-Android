@@ -3276,4 +3276,17 @@
     <string name="sender_reply_to_notice">इस संदेश के जवाब %1$s पर जाते हैं, जो भेजने वाले से अलग डोमेन पर है।</string>
     <string name="email_auth_unverified">असत्यापित</string>
     <string name="email_auth_unverified_desc">Aster यह पुष्टि नहीं कर सका कि %1$s ने यह संदेश भेजा है। लिंक या अटैचमेंट खोलने से पहले जाँच लें कि आप भेजने वाले को जानते हैं।</string>
+    <string name="dns_caveat_dkim_long_value">यह मान 255 वर्णों से लंबा है। Shopify जैसे कुछ DNS होस्ट इतने लंबे मान स्वीकार नहीं करते। अगर आपका होस्ट इसे अस्वीकार करता है, तो छोटी कुंजी का उपयोग करें।</string>
+    <string name="dkim_short_key_button">छोटी कुंजी का उपयोग करें</string>
+    <string name="dkim_short_key_confirm">Aster इस डोमेन की DKIM कुंजी को 1024-बिट कुंजी से बदल देता है, जो 255 वर्णों में आ जाती है। रिकॉर्ड का नाम और मान दोनों बदल जाते हैं, इसलिए अपने DNS होस्ट पर नया रिकॉर्ड जोड़ें और पुराना हटाएँ।</string>
+    <string name="dkim_short_key_confirm_button">कुंजी बदलें</string>
+    <string name="dkim_short_key_working">कुंजी बदली जा रही है</string>
+    <string name="dkim_short_key_done">नई DKIM कुंजी बन गई। अपने DNS होस्ट पर नया रिकॉर्ड जोड़ें।</string>
+    <string name="dkim_short_key_done_auto">नई DKIM कुंजी बन गई और आपके DNS में प्रकाशित हो गई।</string>
+    <string name="dkim_short_key_wait">कुछ सेकंड रुकें, फिर दोबारा कोशिश करें।</string>
+    <string name="domain_hint_dkim_truncated">आपका DKIM रिकॉर्ड कट गया है। ऐसा तब होता है जब कोई DNS होस्ट मानों को 255 वर्णों तक सीमित करता है। पूरा मान पेस्ट करें या छोटी कुंजी का उपयोग करें।</string>
+    <string name="domain_hint_dkim_quoted">आपके DKIM रिकॉर्ड में उद्धरण चिह्न हैं। उन्हें हटाएँ और मान को एक ही पंक्ति में पेस्ट करें।</string>
+    <string name="domain_hint_dkim_other_key">आपके DKIM रिकॉर्ड में कोई दूसरी कुंजी है। उसका मान यहाँ दिखाए गए मान से बदलें।</string>
+    <string name="domain_reason_dkim_missing_or_stale">आपका बाहर जाने वाला मेल हस्ताक्षरित नहीं है, जिससे वह नकली लगता है। हस्ताक्षर रिकॉर्ड जोड़ें ताकि आपके मेल पर भरोसा किया जाए।</string>
+    <string name="domain_check_generic_failure">यह रिकॉर्ड अभी सही तरह से सेट नहीं है। इसे ठीक करने के लिए नीचे दिया रिकॉर्ड जोड़ें।</string>
 </resources>

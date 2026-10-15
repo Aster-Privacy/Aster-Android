@@ -3384,4 +3384,17 @@
     <string name="sender_reply_to_notice">Antwoorden op dit bericht gaan naar %1$s. Dat adres hoort bij een ander domein dan de afzender.</string>
     <string name="email_auth_unverified">Niet geverifieerd</string>
     <string name="email_auth_unverified_desc">Aster kon niet bevestigen dat %1$s dit bericht heeft verzonden. Controleer of je de afzender kent voordat je links of bijlagen opent.</string>
+    <string name="dns_caveat_dkim_long_value">Deze waarde is langer dan 255 tekens. Sommige DNS-hosts, zoals Shopify, accepteren zulke lange waarden niet. Als de jouwe hem weigert, gebruik dan een kortere sleutel.</string>
+    <string name="dkim_short_key_button">Kortere sleutel gebruiken</string>
+    <string name="dkim_short_key_confirm">Aster vervangt de DKIM-sleutel van dit domein door een 1024-bits sleutel die in 255 tekens past. De naam en de waarde van het record veranderen, dus voeg het nieuwe record toe bij je DNS-host en verwijder het oude.</string>
+    <string name="dkim_short_key_confirm_button">Sleutel vervangen</string>
+    <string name="dkim_short_key_working">Sleutel wordt vervangen</string>
+    <string name="dkim_short_key_done">Nieuwe DKIM-sleutel gemaakt. Voeg het nieuwe record toe bij je DNS-host.</string>
+    <string name="dkim_short_key_done_auto">Nieuwe DKIM-sleutel gemaakt en gepubliceerd in je DNS.</string>
+    <string name="dkim_short_key_wait">Wacht een paar seconden en probeer het opnieuw.</string>
+    <string name="domain_hint_dkim_truncated">Je DKIM-record is afgekapt. Dat gebeurt als een DNS-host waarden beperkt tot 255 tekens. Plak de volledige waarde of gebruik een kortere sleutel.</string>
+    <string name="domain_hint_dkim_quoted">Je DKIM-record bevat aanhalingstekens. Verwijder ze en plak de waarde op één regel.</string>
+    <string name="domain_hint_dkim_other_key">Je DKIM-record bevat een andere sleutel. Vervang de waarde door de waarde die hier staat.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Je uitgaande mail is niet ondertekend en lijkt daardoor vervalst. Voeg het ondertekeningsrecord toe zodat je mail wordt vertrouwd.</string>
+    <string name="domain_check_generic_failure">Dit record is nog niet goed ingesteld. Voeg het onderstaande record toe om dit op te lossen.</string>
 </resources>

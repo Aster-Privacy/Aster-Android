@@ -3460,4 +3460,17 @@
     <string name="sender_reply_to_notice">تُرسل الردود على هذه الرسالة إلى %1$s، وهو عنوان على نطاق مختلف عن نطاق المرسل.</string>
     <string name="email_auth_unverified">غير مُتحقَّق منه</string>
     <string name="email_auth_unverified_desc">تعذّر على Aster تأكيد أن %1$s أرسل هذه الرسالة. قبل فتح الروابط أو المرفقات، تأكّد من أنك تعرف المرسل.</string>
+    <string name="dns_caveat_dkim_long_value">تتجاوز هذه القيمة 255 حرفًا. لا تقبل بعض جهات استضافة DNS، مثل Shopify، قيمًا بهذا الطول. إذا رفضتها جهة الاستضافة لديك، فاستخدم مفتاحًا أقصر.</string>
+    <string name="dkim_short_key_button">استخدام مفتاح أقصر</string>
+    <string name="dkim_short_key_confirm">يستبدل Aster مفتاح DKIM لهذا النطاق بمفتاح بطول 1024 بت يتسع في 255 حرفًا. يتغير اسم السجل وقيمته، لذا أضف السجل الجديد لدى جهة استضافة DNS واحذف السجل القديم.</string>
+    <string name="dkim_short_key_confirm_button">استبدال المفتاح</string>
+    <string name="dkim_short_key_working">جارٍ استبدال المفتاح</string>
+    <string name="dkim_short_key_done">تم إنشاء مفتاح DKIM جديد. أضف السجل الجديد لدى جهة استضافة DNS.</string>
+    <string name="dkim_short_key_done_auto">تم إنشاء مفتاح DKIM جديد ونشره في DNS الخاص بك.</string>
+    <string name="dkim_short_key_wait">انتظر بضع ثوانٍ، ثم حاول مرة أخرى.</string>
+    <string name="domain_hint_dkim_truncated">سجل DKIM لديك مقطوع، وهذا يحدث عندما تقيّد جهة استضافة DNS القيم بـ 255 حرفًا. الصق القيمة كاملة أو استخدم مفتاحًا أقصر.</string>
+    <string name="domain_hint_dkim_quoted">يحتوي سجل DKIM لديك على علامات اقتباس. احذفها والصق القيمة في سطر واحد.</string>
+    <string name="domain_hint_dkim_other_key">يحتوي سجل DKIM لديك على مفتاح مختلف. استبدل قيمته بالقيمة المعروضة هنا.</string>
+    <string name="domain_reason_dkim_missing_or_stale">بريدك الصادر غير موقَّع، ما يجعله يبدو مزوَّرًا. أضف سجل التوقيع ليصبح بريدك موثوقًا.</string>
+    <string name="domain_check_generic_failure">لم يُضبط هذا السجل بشكل صحيح بعد. أضف السجل أدناه لإصلاحه.</string>
 </resources>

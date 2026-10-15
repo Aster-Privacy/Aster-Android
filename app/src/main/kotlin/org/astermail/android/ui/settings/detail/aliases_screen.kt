@@ -116,6 +116,7 @@ import org.astermail.android.R
 import org.astermail.android.api.settings.AliasDirectory
 import org.astermail.android.api.settings.CustomDomain
 import org.astermail.android.api.settings.DnsRecord
+import org.astermail.android.api.settings.DomainHealth
 import org.astermail.android.api.settings.UpdateAliasPreferencesRequest
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
@@ -138,6 +139,12 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.DecryptedDeletedAlias
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.dns_caveat_res
+import org.astermail.android.settings.domain_check_message_res
+import org.astermail.android.settings.find_dkim_check
+import org.astermail.android.settings.is_dkim_record
+import org.astermail.android.settings.replace_dkim_record
+import org.astermail.android.settings.should_offer_short_dkim_key
 import org.astermail.android.ui.auth.TurnstileWidget
 import org.astermail.android.util.generate_random_local_part
 import org.astermail.android.settings.shared_settings_view_model
@@ -1801,11 +1808,17 @@ internal fun domains_tab(
             )
         }
     } else {
+        LaunchedEffect(expanded_domain_id) {
+            val id = expanded_domain_id ?: return@LaunchedEffect
+            val target = state.domains.firstOrNull { it.id == id } ?: return@LaunchedEffect
+            if (!target.is_shared) vm.get_domain_health_now(id)
+        }
         state.domains.forEach { domain ->
             domain_card(
                 domain = domain,
                 is_expanded = expanded_domain_id == domain.id,
                 dns_records = domain_dns[domain.id] ?: emptyList(),
+                health = state.domain_health[domain.id],
                 is_verifying = verifying_domain_id == domain.id,
                 on_expand = {
                     if (expanded_domain_id == domain.id) {
@@ -1833,6 +1846,7 @@ internal fun domains_tab(
                             if (!outcome.rate_limited) {
                                 val records = vm.get_dns_records_now(domain.id)
                                 if (!records.isNullOrEmpty()) on_dns_loaded(domain.id, records)
+                                if (!domain.is_shared) vm.get_domain_health_now(domain.id)
                             }
                         } finally {
                             on_verifying_change(null)
@@ -1846,6 +1860,14 @@ internal fun domains_tab(
                     if (outcome != null) {
                         val records = vm.get_dns_records_now(domain.id)
                         if (!records.isNullOrEmpty()) on_dns_loaded(domain.id, records)
+                    }
+                    outcome
+                },
+                on_shorten_dkim = {
+                    val outcome = vm.shorten_dkim_key_now(domain.id)
+                    if (outcome is SettingsViewModel.DkimShortKeyOutcome.Replaced && outcome.record != null) {
+                        val current = domain_dns[domain.id].orEmpty()
+                        on_dns_loaded(domain.id, replace_dkim_record(current, outcome.record))
                     }
                     outcome
                 },
@@ -2793,11 +2815,16 @@ private fun domain_card(
     catch_all_locked: Boolean = false,
     on_open_bimi: () -> Unit = {},
     on_rotate_dkim: suspend () -> SettingsViewModel.DkimRotateOutcome? = { null },
+    health: DomainHealth? = null,
+    on_shorten_dkim: suspend () -> SettingsViewModel.DkimShortKeyOutcome = { SettingsViewModel.DkimShortKeyOutcome.Failed },
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val card_scope = rememberCoroutineScope()
+    var confirm_short_key by remember(domain.id) { mutableStateOf(false) }
+    var is_shortening_key by remember(domain.id) { mutableStateOf(false) }
+    val dkim_check_message = health?.let { find_dkim_check(it.checks) }?.let { domain_check_message_res(it) }
     val is_active = domain.status.equals("active", ignoreCase = true) ||
         (domain.status.isBlank() && domain.txt_verified && domain.mx_verified && domain.spf_verified && domain.dkim_verified)
     val status_label = when (domain.status.lowercase()) {
@@ -2996,6 +3023,36 @@ private fun domain_card(
                             record = record,
                             on_copy = { label, value -> copy_dns_value(context, label, value) },
                         )
+                        if (is_dkim_record(record)) {
+                            dkim_record_notes(
+                                record = record,
+                                check_message_res = dkim_check_message,
+                                show_short_key = should_offer_short_dkim_key(
+                                    record = record,
+                                    can_shorten = health?.dkim_can_shorten == true,
+                                    can_manage = !domain.is_shared,
+                                ),
+                                confirm_open = confirm_short_key,
+                                is_working = is_shortening_key,
+                                on_open_confirm = { if (!is_shortening_key) confirm_short_key = true },
+                                on_cancel = { if (!is_shortening_key) confirm_short_key = false },
+                                on_replace = {
+                                    if (!is_shortening_key) {
+                                        is_shortening_key = true
+                                        card_scope.launch {
+                                            try {
+                                                val outcome = on_shorten_dkim()
+                                                if (outcome is SettingsViewModel.DkimShortKeyOutcome.Replaced) {
+                                                    confirm_short_key = false
+                                                }
+                                            } finally {
+                                                is_shortening_key = false
+                                            }
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -3057,6 +3114,74 @@ private fun domain_card(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun dkim_record_notes(
+    record: DnsRecord,
+    check_message_res: Int?,
+    show_short_key: Boolean,
+    confirm_open: Boolean,
+    is_working: Boolean,
+    on_open_confirm: () -> Unit,
+    on_cancel: () -> Unit,
+    on_replace: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    if (check_message_res != null) {
+        v_gap(4.dp)
+        Text(
+            text = stringResource(check_message_res),
+            color = colors.warning,
+            fontSize = 12.sp,
+        )
+    }
+    dns_caveat_res(record.caveat_key)?.let { res ->
+        v_gap(4.dp)
+        Text(
+            text = stringResource(res),
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+        )
+    }
+    if (!show_short_key) return
+    v_gap(AsterSpacing.sm)
+    if (!confirm_open) {
+        AsterSecondaryButton(
+            label = stringResource(R.string.dkim_short_key_button),
+            onClick = on_open_confirm,
+            enabled = !is_working,
+        )
+        return
+    }
+    Text(
+        text = stringResource(R.string.dkim_short_key_confirm),
+        color = colors.text_secondary,
+        fontSize = 12.sp,
+    )
+    v_gap(AsterSpacing.sm)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        AsterButton(
+            label = if (is_working) {
+                stringResource(R.string.dkim_short_key_working)
+            } else {
+                stringResource(R.string.dkim_short_key_confirm_button)
+            },
+            onClick = on_replace,
+            enabled = !is_working,
+            is_loading = is_working,
+            modifier = Modifier.weight(1f),
+        )
+        AsterGhostButton(
+            label = stringResource(R.string.cancel),
+            onClick = on_cancel,
+            enabled = !is_working,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

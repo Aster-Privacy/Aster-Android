@@ -3432,4 +3432,17 @@
     <string name="sender_reply_to_notice">Les réponses à ce message sont envoyées à %1$s, qui appartient à un autre domaine que celui de l\'expéditeur.</string>
     <string name="email_auth_unverified">Non vérifié</string>
     <string name="email_auth_unverified_desc">Aster n\'a pas pu confirmer que %1$s a envoyé ce message. Avant d\'ouvrir des liens ou des pièces jointes, vérifiez que vous connaissez l\'expéditeur.</string>
+    <string name="dns_caveat_dkim_long_value">Cette valeur dépasse 255 caractères. Certains hébergeurs DNS, comme Shopify, refusent les valeurs aussi longues. Si le vôtre la refuse, utilisez une clé plus courte.</string>
+    <string name="dkim_short_key_button">Utiliser une clé plus courte</string>
+    <string name="dkim_short_key_confirm">Aster remplace la clé DKIM de ce domaine par une clé de 1024 bits qui tient en 255 caractères. Le nom et la valeur de l’enregistrement changent : ajoutez le nouvel enregistrement chez votre hébergeur DNS et supprimez l’ancien.</string>
+    <string name="dkim_short_key_confirm_button">Remplacer la clé</string>
+    <string name="dkim_short_key_working">Remplacement de la clé</string>
+    <string name="dkim_short_key_done">Nouvelle clé DKIM créée. Ajoutez le nouvel enregistrement chez votre hébergeur DNS.</string>
+    <string name="dkim_short_key_done_auto">Nouvelle clé DKIM créée et publiée dans votre DNS.</string>
+    <string name="dkim_short_key_wait">Patientez quelques secondes, puis réessayez.</string>
+    <string name="domain_hint_dkim_truncated">Votre enregistrement DKIM est tronqué, ce qui arrive quand un hébergeur DNS limite les valeurs à 255 caractères. Collez la valeur complète ou utilisez une clé plus courte.</string>
+    <string name="domain_hint_dkim_quoted">Votre enregistrement DKIM contient des guillemets. Supprimez-les et collez la valeur sur une seule ligne.</string>
+    <string name="domain_hint_dkim_other_key">Votre enregistrement DKIM contient une autre clé. Remplacez sa valeur par celle affichée ici.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Vos e-mails sortants ne sont pas signés et semblent donc falsifiés. Ajoutez l’enregistrement de signature pour qu’ils soient approuvés.</string>
+    <string name="domain_check_generic_failure">Cet enregistrement n’est pas encore correctement configuré. Ajoutez l’enregistrement ci-dessous pour résoudre le problème.</string>
 </resources>

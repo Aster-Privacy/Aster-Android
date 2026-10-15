@@ -3403,4 +3403,17 @@
     <string name="sender_reply_to_notice">Le risposte a questo messaggio vengono inviate a %1$s, che appartiene a un dominio diverso da quello del mittente.</string>
     <string name="email_auth_unverified">Non verificato</string>
     <string name="email_auth_unverified_desc">Aster non ha potuto confermare che %1$s abbia inviato questo messaggio. Prima di aprire link o allegati, controlla di conoscere il mittente.</string>
+    <string name="dns_caveat_dkim_long_value">Questo valore supera i 255 caratteri. Alcuni provider DNS, come Shopify, non accettano valori così lunghi. Se il tuo lo rifiuta, usa una chiave più corta.</string>
+    <string name="dkim_short_key_button">Usa una chiave più corta</string>
+    <string name="dkim_short_key_confirm">Aster sostituisce la chiave DKIM di questo dominio con una chiave a 1024 bit che rientra in 255 caratteri. Cambiano sia il nome sia il valore del record, quindi aggiungi il nuovo record presso il tuo provider DNS ed elimina quello vecchio.</string>
+    <string name="dkim_short_key_confirm_button">Sostituisci chiave</string>
+    <string name="dkim_short_key_working">Sostituzione della chiave</string>
+    <string name="dkim_short_key_done">Nuova chiave DKIM creata. Aggiungi il nuovo record presso il tuo provider DNS.</string>
+    <string name="dkim_short_key_done_auto">Nuova chiave DKIM creata e pubblicata nel tuo DNS.</string>
+    <string name="dkim_short_key_wait">Attendi qualche secondo, poi riprova.</string>
+    <string name="domain_hint_dkim_truncated">Il tuo record DKIM è troncato, cosa che succede quando un provider DNS limita i valori a 255 caratteri. Incolla il valore completo oppure usa una chiave più corta.</string>
+    <string name="domain_hint_dkim_quoted">Il tuo record DKIM contiene virgolette. Rimuovile e incolla il valore su una sola riga.</string>
+    <string name="domain_hint_dkim_other_key">Il tuo record DKIM contiene una chiave diversa. Sostituisci il suo valore con quello mostrato qui.</string>
+    <string name="domain_reason_dkim_missing_or_stale">La tua posta in uscita non è firmata e sembra falsificata. Aggiungi il record di firma perché venga ritenuta affidabile.</string>
+    <string name="domain_check_generic_failure">Questo record non è ancora configurato correttamente. Aggiungi il record qui sotto per risolvere.</string>
 </resources>

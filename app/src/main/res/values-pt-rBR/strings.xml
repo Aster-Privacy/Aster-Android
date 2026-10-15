@@ -3403,4 +3403,17 @@
     <string name="sender_reply_to_notice">As respostas a esta mensagem vão para %1$s, que pertence a um domínio diferente do remetente.</string>
     <string name="email_auth_unverified">Não verificado</string>
     <string name="email_auth_unverified_desc">A Aster não conseguiu confirmar que %1$s enviou esta mensagem. Antes de abrir links ou anexos, verifique se você conhece o remetente.</string>
+    <string name="dns_caveat_dkim_long_value">Este valor tem mais de 255 caracteres. Alguns provedores de DNS, como a Shopify, não aceitam valores tão longos. Se o seu recusar, use uma chave mais curta.</string>
+    <string name="dkim_short_key_button">Usar uma chave mais curta</string>
+    <string name="dkim_short_key_confirm">O Aster substitui a chave DKIM deste domínio por uma chave de 1024 bits que cabe em 255 caracteres. O nome e o valor do registro mudam, então adicione o novo registro no seu provedor de DNS e exclua o antigo.</string>
+    <string name="dkim_short_key_confirm_button">Substituir chave</string>
+    <string name="dkim_short_key_working">Substituindo a chave</string>
+    <string name="dkim_short_key_done">Nova chave DKIM criada. Adicione o novo registro no seu provedor de DNS.</string>
+    <string name="dkim_short_key_done_auto">Nova chave DKIM criada e publicada no seu DNS.</string>
+    <string name="dkim_short_key_wait">Aguarde alguns segundos e tente novamente.</string>
+    <string name="domain_hint_dkim_truncated">Seu registro DKIM está cortado, o que acontece quando um provedor de DNS limita os valores a 255 caracteres. Cole o valor completo ou use uma chave mais curta.</string>
+    <string name="domain_hint_dkim_quoted">Seu registro DKIM contém aspas. Remova-as e cole o valor em uma única linha.</string>
+    <string name="domain_hint_dkim_other_key">Seu registro DKIM contém outra chave. Substitua o valor pelo que aparece aqui.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Seus e-mails enviados não são assinados, o que os faz parecer falsos. Adicione o registro de assinatura para que sejam confiáveis.</string>
+    <string name="domain_check_generic_failure">Este registro ainda não está configurado corretamente. Adicione o registro abaixo para resolver.</string>
 </resources>

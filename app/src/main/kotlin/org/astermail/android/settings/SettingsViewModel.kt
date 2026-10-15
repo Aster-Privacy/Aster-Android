@@ -204,6 +204,7 @@ data class SettingsUiState(
     val domains: List<CustomDomain> = emptyList(),
     val domains_loading: Boolean = false,
     val domain_dns_records: Map<String, List<org.astermail.android.api.settings.DnsRecord>> = emptyMap(),
+    val domain_health: Map<String, org.astermail.android.api.settings.DomainHealth> = emptyMap(),
     val storage: StorageOverview? = null,
     val subscription: SubscriptionInfo? = null,
     val subscription_load_failed: Boolean = false,
@@ -2609,6 +2610,57 @@ class SettingsViewModel @Inject constructor(
                 it.copy(action_result = localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
             }
             null
+        }
+    }
+
+    suspend fun get_domain_health_now(domain_id: String): org.astermail.android.api.settings.DomainHealth? {
+        return try {
+            val health = settings_api.get_domain_health(domain_id)
+            _state.update { it.copy(domain_health = it.domain_health + (domain_id to health)) }
+            health
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "get_domain_health_now", t)
+            null
+        }
+    }
+
+    sealed interface DkimShortKeyOutcome {
+        data class Replaced(val record: org.astermail.android.api.settings.DnsRecord?) : DkimShortKeyOutcome
+        object RateLimited : DkimShortKeyOutcome
+        object Failed : DkimShortKeyOutcome
+    }
+
+    suspend fun shorten_dkim_key_now(domain_id: String): DkimShortKeyOutcome {
+        return try {
+            val result = settings_api.rotate_dkim(domain_id, org.astermail.android.api.settings.DKIM_KEY_SIZE_COMPACT)
+            if (!result.success) {
+                _state.update { it.copy(action_result = context.getString(R.string.something_went_wrong)) }
+                return DkimShortKeyOutcome.Failed
+            }
+            val record = result.dns_record
+            if (record != null) {
+                _state.update { s ->
+                    val current = s.domain_dns_records[domain_id] ?: return@update s
+                    s.copy(domain_dns_records = s.domain_dns_records + (domain_id to replace_dkim_record(current, record)))
+                }
+            }
+            val done = if (result.dns_auto_published) R.string.dkim_short_key_done_auto else R.string.dkim_short_key_done
+            _state.update { it.copy(action_result = context.getString(done)) }
+            load_domains()
+            get_domain_health_now(domain_id)
+            DkimShortKeyOutcome.Replaced(record)
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (t is ApiError.RateLimited) {
+                _state.update { it.copy(action_result = context.getString(R.string.dkim_short_key_wait)) }
+                DkimShortKeyOutcome.RateLimited
+            } else {
+                _state.update {
+                    it.copy(action_result = localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
+                }
+                DkimShortKeyOutcome.Failed
+            }
         }
     }
 
