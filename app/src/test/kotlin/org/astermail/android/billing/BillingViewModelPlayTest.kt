@@ -350,6 +350,94 @@ class BillingViewModelPlayTest {
     }
 
     @Test
+    fun `reloads the play special offer after a first config without it`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = false)
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.play_enabled)
+        assertFalse(vm.state.value.play_special_offer_eligible)
+
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        vm.ensure_play_config()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.play_special_offer_eligible)
+
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.play_special_offer_eligible)
+        assertNotNull(play_special_offer_for(vm.state.value.play_offers, vm.state.value.play_special_offer))
+        coVerify(exactly = 2) { billing_api.get_google_play_config() }
+    }
+
+    @Test
+    fun `reloads the play special offer after the config request fails`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } throws ApiError.NetworkError
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.play_enabled)
+
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.play_enabled)
+        assertTrue(vm.state.value.play_special_offer_eligible)
+    }
+
+    @Test
+    fun `reloads the play special offer when play did not return it`() = runTest {
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        store.offers = emptyList()
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        assertNull(play_special_offer_for(vm.state.value.play_offers, vm.state.value.play_special_offer))
+
+        use_full_catalog()
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertNotNull(play_special_offer_for(vm.state.value.play_offers, vm.state.value.play_special_offer))
+    }
+
+    @Test
+    fun `does not reload play config once the special offer is ready`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.get_google_play_config() }
+    }
+
+    @Test
+    fun `reloads the play special offer after the active account changes`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        active_account.value = "user2"
+        advanceUntilIdle()
+        assertFalse(vm.state.value.play_enabled)
+
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.play_enabled)
+        assertTrue(vm.state.value.play_special_offer_eligible)
+    }
+
+    @Test
     fun `resets play state when the active account changes`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns enabled_config
         coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed

@@ -110,6 +110,7 @@ class SpecialOfferViewModel @Inject constructor(
     private var account_id: String? = null
     private var generation = 0L
     private var load_succeeded = false
+    private var loaded_at_ms = 0L
     private var last_plan_code: String? = null
     private var load_job: Job? = null
     private var account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
@@ -157,6 +158,7 @@ class SpecialOfferViewModel @Inject constructor(
         account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
         load_job = null
         load_succeeded = false
+        loaded_at_ms = 0L
         last_plan_code = null
         auto_show_suppressed = false
         preference_fallback = false
@@ -196,8 +198,13 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun retry_load() {
         if (account_id == null || load_job?.isActive == true) return
-        if (load_succeeded && !(quiet_blocked && !in_quiet_period())) return
+        if (load_succeeded && !(quiet_blocked && !in_quiet_period()) && !load_is_stale()) return
         fetch()
+    }
+
+    private fun load_is_stale(): Boolean {
+        val age_ms = now_ms() - loaded_at_ms
+        return age_ms < 0L || age_ms > OFFER_REFRESH_MS
     }
 
     fun on_plan_code(plan_code: String?) {
@@ -220,6 +227,7 @@ class SpecialOfferViewModel @Inject constructor(
                 }
                 if (expected != generation) return@launch_for_account
                 load_succeeded = true
+                loaded_at_ms = now_ms()
                 preference_fallback = !preference_loaded
                 if (preference_fallback) auto_show_suppressed = false
                 quiet_blocked = in_quiet_period()
@@ -380,5 +388,6 @@ class SpecialOfferViewModel @Inject constructor(
 
 private const val OFFER_CACHE_PREFS = "special_offer_cache"
 private const val OFFER_CACHE_TTL_MS = 12L * 60L * 60L * 1000L
+private const val OFFER_REFRESH_MS = 6L * 60L * 60L * 1000L
 private const val DISMISS_ATTEMPTS = 4
 private const val DISMISS_RETRY_MS = 2000L
