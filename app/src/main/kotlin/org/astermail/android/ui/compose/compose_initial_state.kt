@@ -250,7 +250,7 @@ fun build_compose_initial_state(
     }
 
     val quoted_html = target?.let { msg ->
-        msg.body_html.takeIf { it.isNotBlank() } ?: msg.body_text.replace("\n", "<br>")
+        msg.body_html.takeIf { it.isNotBlank() } ?: org.astermail.android.mail.build_plain_text_html(msg.body_text)
     }
 
     return compose_initial_state(

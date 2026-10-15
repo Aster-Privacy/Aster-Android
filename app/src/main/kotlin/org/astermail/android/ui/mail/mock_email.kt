@@ -435,16 +435,8 @@ fun thread_message_trust_message(msg: org.astermail.android.mail.ThreadMessageDe
 
 fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypted): ThreadMessage {
     val ts = parse_iso_timestamp(msg.timestamp)
-    val has_pgp_text = msg.body_text.contains("-----BEGIN PGP")
-    val html = if (msg.body_html != null && !msg.body_html.contains("-----BEGIN PGP")) {
-        msg.body_html
-    } else null
-    val raw_body = when {
-        html != null && (msg.body_text.isBlank() || has_pgp_text) -> html
-        has_pgp_text -> ""
-        else -> msg.body_text
-    }
-    val display_body = strip_html_simple(raw_body)
+    val html = select_display_html(msg.body_text, msg.body_html)
+    val display_body = select_display_body(msg.body_text, html)
     return ThreadMessage(
         id = msg.id,
         sender_name = msg.sender_name.ifBlank { msg.sender_email.substringBefore('@') },
@@ -479,6 +471,23 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         send_error = msg.raw_item.send_error,
         trust_message = thread_message_trust_message(msg),
     )
+}
+
+private const val PGP_ARMOR_MARKER = "-----BEGIN PGP"
+
+internal fun select_display_html(body_text: String, body_html: String?): String? {
+    if (body_html.isNullOrBlank()) return null
+    val text_was_decrypted = body_text.isNotBlank() && !body_text.contains(PGP_ARMOR_MARKER)
+    return if (text_was_decrypted && body_html.contains(PGP_ARMOR_MARKER)) null else body_html
+}
+
+private val PATCH_MARKER = Regex("^(?:diff --git |@@ -\\d)", RegexOption.MULTILINE)
+
+internal fun select_display_body(body_text: String, html: String?): String = when {
+    body_text.isBlank() && html != null -> strip_html_simple(html)
+    body_text.contains(PGP_ARMOR_MARKER) || PATCH_MARKER.containsMatchIn(body_text) -> body_text
+    org.astermail.android.mail.looks_like_html_body(body_text) -> strip_html_simple(body_text)
+    else -> body_text
 }
 
 fun thread_message_with_attachments(
