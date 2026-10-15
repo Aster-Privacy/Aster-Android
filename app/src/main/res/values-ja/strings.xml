@@ -3072,8 +3072,8 @@
     <string name="receipt_card_not_right">間違っていますか？</string>
     <string name="receipt_card_review_title">内容を修正</string>
     <string name="receipt_card_hide">このカードを非表示</string>
-    <string name="receipt_card_review_saved">この端末に保存しました。この送信者からの今後の領収書には修正した名前を使います。</string>
-    <string name="receipt_card_review_thanks">ありがとうございます。このデバイスに保存しました。</string>
+    <string name="receipt_card_review_saved">領収書の詳細を更新しました。この送信者からの今後の領収書には修正後の名前が使われます。</string>
+    <string name="receipt_card_review_thanks">フィードバックをありがとうございます</string>
     <string name="receipt_card_view_receipt">領収書を表示</string>
     <string name="receipt_card_payment">支払い</string>
     <string name="receipt_card_merchant">販売店</string>

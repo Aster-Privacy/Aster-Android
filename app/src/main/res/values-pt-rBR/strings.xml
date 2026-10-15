@@ -3103,8 +3103,8 @@
     <string name="receipt_card_not_right">Não está correto?</string>
     <string name="receipt_card_review_title">Corrigir os detalhes</string>
     <string name="receipt_card_hide">Ocultar este cartão</string>
-    <string name="receipt_card_review_saved">Salvo neste dispositivo. Os próximos recibos deste remetente usarão o nome corrigido.</string>
-    <string name="receipt_card_review_thanks">Obrigado. Salvo neste dispositivo.</string>
+    <string name="receipt_card_review_saved">Detalhes do recibo atualizados. Os próximos recibos deste remetente usam o nome corrigido.</string>
+    <string name="receipt_card_review_thanks">Obrigado pelo feedback</string>
     <string name="receipt_card_view_receipt">Ver recibo</string>
     <string name="receipt_card_payment">Pagamento</string>
     <string name="receipt_card_merchant">Loja</string>

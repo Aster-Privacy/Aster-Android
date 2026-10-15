@@ -3105,8 +3105,8 @@
     <string name="receipt_card_not_right">¿No es correcto?</string>
     <string name="receipt_card_review_title">Corregir los datos</string>
     <string name="receipt_card_hide">Ocultar esta tarjeta</string>
-    <string name="receipt_card_review_saved">Guardado en este dispositivo. Los próximos recibos de este remitente usarán el nombre corregido.</string>
-    <string name="receipt_card_review_thanks">Gracias. Guardado en este dispositivo.</string>
+    <string name="receipt_card_review_saved">Detalles del recibo actualizados. Los próximos recibos de este remitente usarán el nombre corregido.</string>
+    <string name="receipt_card_review_thanks">Gracias por tus comentarios</string>
     <string name="receipt_card_view_receipt">Ver recibo</string>
     <string name="receipt_card_payment">Pago</string>
     <string name="receipt_card_merchant">Comercio</string>

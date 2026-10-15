@@ -2978,8 +2978,8 @@
     <string name="receipt_card_not_right">सही नहीं है?</string>
     <string name="receipt_card_review_title">विवरण सुधारें</string>
     <string name="receipt_card_hide">यह कार्ड छिपाएँ</string>
-    <string name="receipt_card_review_saved">इस डिवाइस पर सहेजा गया। इस भेजने वाले की आगे की रसीदों में सुधारा गया नाम इस्तेमाल होगा।</string>
-    <string name="receipt_card_review_thanks">धन्यवाद. इस डिवाइस पर सहेजा गया.</string>
+    <string name="receipt_card_review_saved">रसीद का विवरण अपडेट किया गया. इस भेजने वाले की आगे की रसीदों में सही किया गया नाम इस्तेमाल होगा.</string>
+    <string name="receipt_card_review_thanks">आपकी प्रतिक्रिया के लिए धन्यवाद</string>
     <string name="receipt_card_view_receipt">रसीद देखें</string>
     <string name="receipt_card_payment">भुगतान</string>
     <string name="receipt_card_merchant">विक्रेता</string>

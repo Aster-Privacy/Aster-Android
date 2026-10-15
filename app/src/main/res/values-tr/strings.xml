@@ -3086,8 +3086,8 @@
     <string name="receipt_card_not_right">Doğru değil mi?</string>
     <string name="receipt_card_review_title">Bilgileri düzelt</string>
     <string name="receipt_card_hide">Bu kartı gizle</string>
-    <string name="receipt_card_review_saved">Bu cihaza kaydedildi. Bu göndericiden gelecek makbuzlarda düzeltilmiş ad kullanılır.</string>
-    <string name="receipt_card_review_thanks">Teşekkürler. Bu cihaza kaydedildi.</string>
+    <string name="receipt_card_review_saved">Fiş ayrıntıları güncellendi. Bu gönderenden gelecek fişlerde düzeltilen ad kullanılır.</string>
+    <string name="receipt_card_review_thanks">Geri bildiriminiz için teşekkürler</string>
     <string name="receipt_card_view_receipt">Makbuzu görüntüle</string>
     <string name="receipt_card_payment">Ödeme</string>
     <string name="receipt_card_merchant">Satıcı</string>

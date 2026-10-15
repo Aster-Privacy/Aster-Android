@@ -3086,8 +3086,8 @@
     <string name="receipt_card_not_right">Klopt niet?</string>
     <string name="receipt_card_review_title">Gegevens corrigeren</string>
     <string name="receipt_card_hide">Deze kaart verbergen</string>
-    <string name="receipt_card_review_saved">Opgeslagen op dit apparaat. Toekomstige bonnen van deze afzender gebruiken de gecorrigeerde naam.</string>
-    <string name="receipt_card_review_thanks">Bedankt. Opgeslagen op dit apparaat.</string>
+    <string name="receipt_card_review_saved">Bongegevens bijgewerkt. Toekomstige bonnen van deze afzender gebruiken de gecorrigeerde naam.</string>
+    <string name="receipt_card_review_thanks">Bedankt voor je feedback</string>
     <string name="receipt_card_view_receipt">Bon bekijken</string>
     <string name="receipt_card_payment">Betaling</string>
     <string name="receipt_card_merchant">Winkel</string>

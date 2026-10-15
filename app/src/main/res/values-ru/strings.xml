@@ -3122,8 +3122,8 @@
     <string name="receipt_card_not_right">Что-то не так?</string>
     <string name="receipt_card_review_title">Исправить данные</string>
     <string name="receipt_card_hide">Скрыть эту карточку</string>
-    <string name="receipt_card_review_saved">Сохранено на этом устройстве. Следующие чеки от этого отправителя будут использовать исправленное название.</string>
-    <string name="receipt_card_review_thanks">Спасибо. Сохранено на этом устройстве.</string>
+    <string name="receipt_card_review_saved">Данные чека обновлены. Следующие чеки от этого отправителя будут использовать исправленное название.</string>
+    <string name="receipt_card_review_thanks">Спасибо за отзыв</string>
     <string name="receipt_card_view_receipt">Открыть чек</string>
     <string name="receipt_card_payment">Оплата</string>
     <string name="receipt_card_merchant">Продавец</string>

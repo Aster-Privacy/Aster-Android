@@ -3158,8 +3158,8 @@
     <string name="receipt_card_not_right">غير صحيح؟</string>
     <string name="receipt_card_review_title">تصحيح التفاصيل</string>
     <string name="receipt_card_hide">إخفاء هذه البطاقة</string>
-    <string name="receipt_card_review_saved">تم الحفظ على هذا الجهاز. ستستخدم الإيصالات القادمة من هذا المرسل الاسم المصحح.</string>
-    <string name="receipt_card_review_thanks">شكرًا. تم الحفظ على هذا الجهاز.</string>
+    <string name="receipt_card_review_saved">تم تحديث تفاصيل الإيصال. ستستخدم الإيصالات القادمة من هذا المرسل الاسم المصحح.</string>
+    <string name="receipt_card_review_thanks">شكرًا على ملاحظاتك</string>
     <string name="receipt_card_view_receipt">عرض الإيصال</string>
     <string name="receipt_card_payment">الدفع</string>
     <string name="receipt_card_merchant">المتجر</string>

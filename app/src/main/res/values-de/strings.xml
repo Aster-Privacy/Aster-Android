@@ -3087,8 +3087,8 @@
     <string name="receipt_card_not_right">Stimmt nicht?</string>
     <string name="receipt_card_review_title">Angaben korrigieren</string>
     <string name="receipt_card_hide">Diese Karte ausblenden</string>
-    <string name="receipt_card_review_saved">Auf diesem Gerät gespeichert. Künftige Belege dieses Absenders verwenden den korrigierten Namen.</string>
-    <string name="receipt_card_review_thanks">Danke. Auf diesem Gerät gespeichert.</string>
+    <string name="receipt_card_review_saved">Belegdetails aktualisiert. Künftige Belege dieses Absenders verwenden den korrigierten Namen.</string>
+    <string name="receipt_card_review_thanks">Danke für Ihr Feedback</string>
     <string name="receipt_card_view_receipt">Beleg anzeigen</string>
     <string name="receipt_card_payment">Zahlung</string>
     <string name="receipt_card_merchant">Händler</string>

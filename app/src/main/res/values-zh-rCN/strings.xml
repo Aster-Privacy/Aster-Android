@@ -3070,8 +3070,8 @@
     <string name="receipt_card_not_right">有误？</string>
     <string name="receipt_card_review_title">更正信息</string>
     <string name="receipt_card_hide">隐藏此卡片</string>
-    <string name="receipt_card_review_saved">已保存在此设备上。此发件人以后的收据将使用更正后的名称。</string>
-    <string name="receipt_card_review_thanks">谢谢。已保存在此设备上。</string>
+    <string name="receipt_card_review_saved">收据详情已更新。此发件人今后的收据将使用更正后的名称。</string>
+    <string name="receipt_card_review_thanks">感谢您的反馈</string>
     <string name="receipt_card_view_receipt">查看收据</string>
     <string name="receipt_card_payment">付款</string>
     <string name="receipt_card_merchant">商家</string>

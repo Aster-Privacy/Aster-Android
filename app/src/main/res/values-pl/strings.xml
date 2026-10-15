@@ -3122,8 +3122,8 @@
     <string name="receipt_card_not_right">Coś się nie zgadza?</string>
     <string name="receipt_card_review_title">Popraw dane</string>
     <string name="receipt_card_hide">Ukryj tę kartę</string>
-    <string name="receipt_card_review_saved">Zapisano na tym urządzeniu. Przyszłe paragony od tego nadawcy będą używać poprawionej nazwy.</string>
-    <string name="receipt_card_review_thanks">Dziękujemy. Zapisano na tym urządzeniu.</string>
+    <string name="receipt_card_review_saved">Zaktualizowano szczegóły paragonu. Kolejne paragony od tego nadawcy będą używać poprawionej nazwy.</string>
+    <string name="receipt_card_review_thanks">Dziękujemy za opinię</string>
     <string name="receipt_card_view_receipt">Zobacz paragon</string>
     <string name="receipt_card_payment">Płatność</string>
     <string name="receipt_card_merchant">Sprzedawca</string>
