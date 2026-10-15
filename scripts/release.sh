@@ -40,9 +40,14 @@ clone="$work/Aster-Android-$ver"
 out_dir="$work/out-$ver"
 notes="$work/notes-$ver.md"
 cert_sha="88b0a8a6fb94ee73a454a0f92732bd408e92e51ec1e9556744e5f00556100977"
+play_cert_sha="c20da21dda9d35452675341911b001e53280b5c891ab909b13bf27637740a6af"
 
 say() { echo; echo "== $* =="; }
 die() { echo "FAIL: $*" >&2; exit 1; }
+colon_fp() { echo "$1" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//'; }
+cert_colon="$(colon_fp "$cert_sha")"
+play_colon="$(colon_fp "$play_cert_sha")"
+has_fp() { grep -qF "$1" < <(tr 'a-f' 'A-F' < "$2"); }
 
 say "preflight"
 sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-${LOCALAPPDATA:-}/Android/Sdk}}"
@@ -66,6 +71,7 @@ gh auth status >/dev/null 2>&1 || die "gh is not authenticated"
 [ -f "$repo_root/app/google-services.json" ] || die "app/google-services.json missing (gitignored build input)"
 [ -f "$repo_root/keystore/aster-mail-upload-v3.jks" ] || die "signing keystore missing"
 [ -f "$notes" ] || die "no release notes at $notes"
+grep -q '[^[:space:]]' "$notes" || die "release notes at $notes are empty"
 echo "apksigner: $apksigner (build-tools $bt_ver)"
 echo "notes:     $notes"
 
@@ -79,6 +85,14 @@ mkdir -p "$work"
 git clone -q --branch main https://github.com/Aster-Privacy/Aster-Android.git "$clone"
 cd "$clone"
 echo "HEAD $(git rev-parse --short HEAD)"
+
+verification="$clone/scripts/apk_verification.md"
+[ -f "$verification" ] || die "scripts/apk_verification.md missing on main"
+has_fp "$cert_colon" "$verification" || die "scripts/apk_verification.md does not carry the release fingerprint $cert_colon"
+has_fp "$play_colon" "$verification" || die "scripts/apk_verification.md does not carry the Play fingerprint $play_colon"
+for fp in $(grep -oiE '([0-9a-f]{2}:){31}[0-9a-f]{2}' "$verification" | tr 'a-f' 'A-F'); do
+  [ "$fp" = "$cert_colon" ] || [ "$fp" = "$play_colon" ] || die "scripts/apk_verification.md carries an unknown fingerprint $fp"
+done
 
 cur_vc=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | grep -oE '[0-9]+' | head -1)
 [ -n "$cur_vc" ] || die "could not read versionCode from main"
@@ -239,6 +253,19 @@ PYEOL
 echo "  OK fdroid APK text assets use LF line endings"
 fi
 
+say "release notes"
+final_notes="$out_dir/notes-$ver.md"
+if has_fp "$cert_colon" "$notes"; then
+  cp "$notes" "$final_notes"
+else
+  { cat "$notes"; printf '\n\n'; cat "$verification"; } > "$final_notes"
+fi
+has_fp "$cert_colon" "$final_notes" || die "release notes do not carry the release fingerprint"
+for fp in $(grep -oiE '([0-9a-f]{2}:){31}[0-9a-f]{2}' "$final_notes" | tr 'a-f' 'A-F'); do
+  [ "$fp" = "$cert_colon" ] || [ "$fp" = "$play_colon" ] || die "release notes carry an unknown fingerprint $fp"
+done
+echo "  OK $final_notes carries the signing fingerprint"
+
 if [ "$dry_run" = 1 ]; then
   say "dry run complete"
   echo "artifacts in $out_dir"
@@ -257,12 +284,21 @@ say "GitHub release"
 assets=("$out_dir/Aster-Mail.apk" "$out_dir/Aster-Mail-$ver-full.apk")
 if [ "$skip_fdroid" != "1" ]; then assets+=("$out_dir/Aster-Mail-fdroid-$ver.apk"); fi
 gh release create "v$ver" --repo Aster-Privacy/Aster-Android --title "v$ver" \
-  --notes-file "$notes" "${assets[@]}"
+  --notes-file "$final_notes" "${assets[@]}"
 
 say "carry APK to the site download target"
 mail_tag=$(gh api repos/Aster-Privacy/Aster-Mail/releases/latest -q .tag_name)
 gh release upload "$mail_tag" --repo Aster-Privacy/Aster-Mail --clobber "$out_dir/Aster-Mail.apk"
 echo "uploaded Aster-Mail.apk to Aster-Mail $mail_tag"
+mail_body="$out_dir/mail-body-$mail_tag.md"
+gh release view "$mail_tag" --repo Aster-Privacy/Aster-Mail --json body --jq .body > "$mail_body"
+if has_fp "$cert_colon" "$mail_body"; then
+  echo "Aster-Mail $mail_tag notes already carry the signing fingerprint"
+else
+  { cat "$mail_body"; printf '\n\n'; cat "$verification"; } > "$mail_body.new"
+  gh release edit "$mail_tag" --repo Aster-Privacy/Aster-Mail --notes-file "$mail_body.new"
+  echo "added the signing fingerprint to the Aster-Mail $mail_tag notes"
+fi
 
 say "Google Play"
 play_key="${ASTER_PLAY_SERVICE_ACCOUNT_JSON:-$repo_root/../.ops/play_service_account.json}"

@@ -13,7 +13,8 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 1. Write the Play changelog to `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` and
    commit it on `main`. The hard cap is 500 bytes, enforced by `validate-fastlane-supply-metadata`.
 2. Write the GitHub release notes to `../.release_work/notes-<version>.md`. Start with the standard
-   install alert, then group under `## What's new` and `## Fixed`.
+   install alert, then group under `## What's new` and `## Fixed`. Don't add the signing
+   fingerprint: the script appends `scripts/apk_verification.md` for you.
 
 ## What the script does
 
@@ -24,8 +25,8 @@ Add `--dry-run` to build, sign, and verify without pushing or publishing anythin
 | Bump | Sets `versionName` and `versionCode` in `app/build.gradle.kts`, commits, tags. |
 | Build | `assembleFullRelease bundleFullRelease` on this machine, then the `fdroid` flavor from the tag inside the F-Droid buildserver container (`scripts/build_fdroid_in_container.sh`, Docker Desktop must be running). The two builds are separate on purpose, see below. |
 | Sign | Signs the unsigned fdroid APK with `apksigner` and `--alignment-preserved`, never `zipalign`. |
-| Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, the fdroid APK must have no `0xd935` alignment padding, no CRLF in text assets or `META-INF/services`, and its dex must reference no Google Play Services, Firebase, or Play classes. |
-| Publish | Creates the GitHub release with `Aster-Mail.apk`, `Aster-Mail-<version>-full.apk`, and `Aster-Mail-fdroid-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. |
+| Verify | Both APKs must carry cert SHA-256 `88b0a8a6…`, the fdroid APK must have no `0xd935` alignment padding, no CRLF in text assets or `META-INF/services`, and its dex must reference no Google Play Services, Firebase, or Play classes. The notes must not be empty, and the final notes must carry the release fingerprint and no other fingerprint. |
+| Publish | Creates the GitHub release with `Aster-Mail.apk`, `Aster-Mail-<version>-full.apk`, and `Aster-Mail-fdroid-<version>.apk`, then re-uploads `Aster-Mail.apk` to the current Aster-Mail **Latest** release, which is what astermail.org serves. The **Verify the APK** section from `scripts/apk_verification.md` is appended to both release bodies when it's missing. |
 | Play | Uploads the AAB with `fastlane supply` if a service account is configured, otherwise copies the AAB to `~/Downloads` and says so. |
 | Audit | Runs the script named by `ASTER_CHANNEL_AUDIT`, if set, and prints the per-channel result. |
 
