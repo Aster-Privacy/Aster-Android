@@ -3065,6 +3065,27 @@
     <string name="order_card_view_order">注文を表示</string>
     <string name="order_card_collapse">注文の詳細を折りたたむ</string>
     <string name="order_card_expand">注文の詳細を展開する</string>
+    <string name="receipt_card_privacy">メールからローカルで抽出されており、サーバーには何も送信されていません。</string>
+    <string name="receipt_card_receipt_from">%1$sからの領収書</string>
+    <string name="receipt_card_receipt_number">領収書 #%1$s</string>
+    <string name="receipt_card_looks_right">正しい</string>
+    <string name="receipt_card_not_right">間違っていますか？</string>
+    <string name="receipt_card_review_title">内容を修正</string>
+    <string name="receipt_card_hide">このカードを非表示</string>
+    <string name="receipt_card_review_saved">この端末に保存しました。この送信者からの今後の領収書には修正した名前を使います。</string>
+    <string name="receipt_card_review_thanks">ありがとうございます。このデバイスに保存しました。</string>
+    <string name="receipt_card_view_receipt">領収書を表示</string>
+    <string name="receipt_card_payment">支払い</string>
+    <string name="receipt_card_merchant">販売店</string>
+    <string name="receipt_card_card_ending_in">カード下4桁 %1$s</string>
+    <string name="receipt_card_subtotal">小計</string>
+    <string name="receipt_card_shipping">配送</string>
+    <string name="receipt_card_tax">税金</string>
+    <string name="receipt_card_discount">割引</string>
+    <string name="receipt_card_unknown_merchant">不明な販売者</string>
+    <plurals name="receipt_card_more_items">
+        <item quantity="other">+%1$d件の商品</item>
+    </plurals>
     <string name="shipping_status_label_created">ラベル作成済み</string>
     <string name="shipping_status_shipped">発送済み</string>
     <string name="shipping_status_in_transit">輸送中</string>

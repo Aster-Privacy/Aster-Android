@@ -417,4 +417,117 @@ class extraction_test {
             assertTrue(subject, is_shipping_email(subject, body))
         }
     }
+
+    @Test
+    fun `accepts a stripe receipt link in plain text`() {
+        val url = extract_receipt_url(
+            "Thanks for your payment. View it here: https://pay.stripe.com/receipts/payment/abc123.",
+            null,
+            listOf("receipts@stripe.com"),
+        )
+        assertEquals("https://pay.stripe.com/receipts/payment/abc123", url)
+    }
+
+    @Test
+    fun `accepts a view your receipt anchor on the sender domain`() {
+        val url = extract_receipt_url(
+            "View your receipt",
+            "<p>Thanks.</p><a href=\"https://orders.shop.example.com/r/42\">View your receipt</a>",
+            listOf("hello@shop.example.com"),
+        )
+        assertEquals("https://orders.shop.example.com/r/42", url)
+    }
+
+    @Test
+    fun `rejects a receipt anchor on a third party domain`() {
+        val url = extract_receipt_url(
+            "View your receipt",
+            "<a href=\"https://tracker.example.net/r/42\">View your receipt</a>",
+            listOf("hello@shop.example.com"),
+        )
+        assertNull(url)
+    }
+
+    @Test
+    fun `rejects unsafe receipt links`() {
+        listOf(
+            "http://pay.stripe.com/receipts/payment/abc123",
+            "https://user:pw@pay.stripe.com/receipts/payment/abc123",
+            "javascript:alert(1)",
+            "https://pay.stripe.com/other/abc123",
+            "https://pay.stripe.com.evil.example/receipts/x",
+        ).forEach { href ->
+            val url = extract_receipt_url(
+                "View your receipt",
+                "<a href=\"$href\">View your receipt</a>",
+                listOf("hello@shop.example.com"),
+            )
+            assertNull(href, url)
+        }
+    }
+
+    @Test
+    fun `rejects an overlong receipt link`() {
+        val href = "https://pay.stripe.com/receipts/" + "a".repeat(2100)
+        assertNull(extract_receipt_url("Receipt: $href", null, listOf("receipts@stripe.com")))
+    }
+
+    @Test
+    fun `plain text links are checked against the allowlist only`() {
+        val url = extract_receipt_url(
+            "View your receipt: https://orders.shop.example.com/r/42",
+            null,
+            listOf("hello@shop.example.com"),
+        )
+        assertNull(url)
+    }
+
+    @Test
+    fun `classifies receipts and orders`() {
+        assertEquals(document_kind_receipt, detect_document_kind("Your receipt from Acme", "Amount paid \$10.00"))
+        assertEquals(document_kind_order, detect_document_kind("Order #1234 confirmed", "Thanks for your receipt"))
+        assertEquals(document_kind_order, detect_document_kind("Thanks for shopping", "Your order confirmation is below"))
+    }
+
+    @Test
+    fun `uses the merchant from a payment processor receipt`() {
+        val result = purchase(
+            "Your receipt from Northwind Traders",
+            "Amount paid \$42.00. Date paid: March 3, 2026. Receipt #1234-5678.",
+            "receipts@stripe.com",
+            "Stripe",
+        )
+        assertEquals("Northwind Traders", result.merchant_name)
+        assertEquals("receipts@stripe.com", result.merchant_source)
+        assertEquals(document_kind_receipt, result.document_kind)
+    }
+
+    @Test
+    fun `ignores the display name of a payment processor`() {
+        val result = purchase("Payment received", "Amount paid \$42.00.", "receipts@stripe.com", "Acme Payments via Stripe")
+        assertEquals("Stripe", result.merchant_name)
+    }
+
+    @Test
+    fun `reads the original sender of a forwarded receipt`() {
+        val body = "FYI\n\n---------- Forwarded message ---------\nFrom: Northwind Traders <orders@northwind.example>\n" +
+            "Date: Tue, Mar 3, 2026\nSubject: Your Northwind Traders receipt\nTo: me@example.com\n\n" +
+            "Order #NW-100. Total: \$12.00."
+        val result = purchase("Fwd: Your Northwind Traders receipt", body, "friend@example.com", "Friend")
+        assertEquals("orders@northwind.example", result.merchant_source)
+        assertEquals("Northwind Traders", result.merchant_name)
+        assertTrue(result.raw_signals.contains("forwarded_from:orders@northwind.example"))
+    }
+
+    @Test
+    fun `purchase details carry the receipt url`() {
+        val result = extract_purchase_details(
+            "Your receipt",
+            "Amount paid \$9.00. https://pay.stripe.com/receipts/payment/xyz",
+            "receipts@stripe.com",
+            "Stripe",
+            Locale.US,
+        )
+        assertEquals("https://pay.stripe.com/receipts/payment/xyz", result.receipt_url)
+    }
 }

@@ -3063,6 +3063,27 @@
     <string name="order_card_view_order">查看订单</string>
     <string name="order_card_collapse">收起订单详情</string>
     <string name="order_card_expand">展开订单详情</string>
+    <string name="receipt_card_privacy">在本地从您的邮件中提取，没有任何内容发送到我们的服务器。</string>
+    <string name="receipt_card_receipt_from">来自%1$s的收据</string>
+    <string name="receipt_card_receipt_number">收据 #%1$s</string>
+    <string name="receipt_card_looks_right">没问题</string>
+    <string name="receipt_card_not_right">有误？</string>
+    <string name="receipt_card_review_title">更正信息</string>
+    <string name="receipt_card_hide">隐藏此卡片</string>
+    <string name="receipt_card_review_saved">已保存在此设备上。此发件人以后的收据将使用更正后的名称。</string>
+    <string name="receipt_card_review_thanks">谢谢。已保存在此设备上。</string>
+    <string name="receipt_card_view_receipt">查看收据</string>
+    <string name="receipt_card_payment">付款</string>
+    <string name="receipt_card_merchant">商家</string>
+    <string name="receipt_card_card_ending_in">尾号%1$s的卡</string>
+    <string name="receipt_card_subtotal">小计</string>
+    <string name="receipt_card_shipping">运费</string>
+    <string name="receipt_card_tax">税费</string>
+    <string name="receipt_card_discount">折扣</string>
+    <string name="receipt_card_unknown_merchant">未知商户</string>
+    <plurals name="receipt_card_more_items">
+        <item quantity="other">+%1$d件更多商品</item>
+    </plurals>
     <string name="shipping_status_label_created">已创建运单</string>
     <string name="shipping_status_shipped">已发货</string>
     <string name="shipping_status_in_transit">运输中</string>

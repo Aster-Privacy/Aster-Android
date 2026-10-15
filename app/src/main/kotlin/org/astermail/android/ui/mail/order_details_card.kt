@@ -21,8 +21,9 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,10 +37,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.outlined.ThumbDown
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -47,54 +55,62 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.request.ImageRequest
 import compose.icons.TablerIcons
-import compose.icons.tablericons.BuildingStore
 import compose.icons.tablericons.ChevronDown
-import compose.icons.tablericons.ChevronUp
-import compose.icons.tablericons.Clock
+import compose.icons.tablericons.ExternalLink
+import compose.icons.tablericons.InfoCircle
 import compose.icons.tablericons.Package
 import compose.icons.tablericons.Receipt
-import compose.icons.tablericons.ShoppingCart
-import compose.icons.tablericons.Truck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.acrylic
+import org.astermail.android.design.components.AsterCompactButton
+import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.island_divider_color
 import org.astermail.android.mail.extraction.EmailExtractionResult
+import org.astermail.android.mail.extraction.ExtractedAmount
+import org.astermail.android.mail.extraction.ReceiptEmailReview
 import org.astermail.android.mail.extraction.ShippingStatus
+import org.astermail.android.mail.extraction.document_kind_receipt
 import org.astermail.android.mail.extraction.extract_email_details
 import org.astermail.android.mail.extraction.extract_order_url
+import org.astermail.android.mail.extraction.read_receipt_banner_collapsed
+import org.astermail.android.mail.extraction.receipt_review_store
+import org.astermail.android.mail.extraction.receipt_review_store_for
+import org.astermail.android.mail.extraction.write_receipt_banner_collapsed
 import org.astermail.android.security.safe_sender_name
+import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.open_external_url
 import org.astermail.android.ui.common.remember_copy_action
-import java.util.Collections
 import java.util.Locale
 
-private val collapsed_order_cards: MutableSet<String> = Collections.synchronizedSet(HashSet())
+private const val max_visible_receipt_items = 6
+private const val max_receipt_field_length = 80
 
 internal class order_card_model(
     val result: EmailExtractionResult,
     val order_url: String?,
+    val review: ReceiptEmailReview?,
+    val merchant: String?,
+    val order_id: String?,
 )
 
-private const val logo_sample_grid = 24
 private const val logo_min_ink_fraction = 0.04f
 private const val logo_opaque_fraction = 0.9f
 
@@ -124,86 +140,6 @@ internal fun is_blank_logo_pixels(pixels: IntArray): Boolean {
     return ink.toFloat() / pixels.size < logo_min_ink_fraction
 }
 
-private fun is_blank_logo(drawable: android.graphics.drawable.Drawable): Boolean {
-    val bitmap = (drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap ?: return false
-    if (bitmap.config == android.graphics.Bitmap.Config.HARDWARE) return false
-    if (bitmap.width <= 0 || bitmap.height <= 0) return true
-    val columns = minOf(logo_sample_grid, bitmap.width)
-    val rows = minOf(logo_sample_grid, bitmap.height)
-    val samples = IntArray(columns * rows)
-    for (row in 0 until rows) {
-        val y = (row * bitmap.height) / rows
-        for (column in 0 until columns) {
-            val x = (column * bitmap.width) / columns
-            samples[row * columns + column] = bitmap.getPixel(x, y)
-        }
-    }
-    return is_blank_logo_pixels(samples)
-}
-
-@Composable
-private fun merchant_avatar(
-    merchant: String,
-    sender_email: String,
-    size: Dp,
-) {
-    val context = LocalContext.current
-    val low_network = org.astermail.android.network.low_network_active()
-    val logos_allowed = org.astermail.android.api.network.should_load_sender_logo(low_network)
-    val (bg, fg) = remember(merchant) { avatar_colors_for(avatar_key_for("", merchant)) }
-    val logo_url = remember(merchant, sender_email) {
-        if (merchant_matches_sender_domain(merchant, sender_email)) {
-            get_favicon_url(get_root_domain(sender_email.substringAfter('@').trim().lowercase(Locale.ROOT)))
-        } else {
-            null
-        }
-    }
-    var logo_ok by remember(logo_url) { mutableStateOf(false) }
-    var logo_drawable by remember(logo_url) { mutableStateOf<android.graphics.drawable.Drawable?>(null) }
-    val logo_tone = remember_logo_tone(logo_url, logo_drawable)
-    val is_dark = AsterMaterial.colors.is_dark
-    val logo_inset = if (logo_ok && logo_contrast_backdrop(logo_tone, is_dark) != null) size * logo_backdrop_inset else 0.dp
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(if (logo_ok) sender_logo_backdrop(logo_tone, is_dark) else bg),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (!logo_ok) {
-            Text(
-                text = initial_for(merchant, sender_email),
-                color = fg,
-                style = avatar_initial_style(size),
-            )
-        }
-        if (logo_url != null && logos_allowed) {
-            val request = remember(logo_url) {
-                ImageRequest.Builder(context)
-                    .data(logo_url)
-                    .allowHardware(false)
-                    .crossfade(false)
-                    .build()
-            }
-            AsyncImage(
-                model = request,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                onState = { state ->
-                    logo_ok = state is AsyncImagePainter.State.Success &&
-                        !is_blank_logo(state.result.drawable)
-                    if (state is AsyncImagePainter.State.Success) logo_drawable = state.result.drawable
-                },
-                modifier = Modifier
-                    .size(size)
-                    .padding(logo_inset)
-                    .clip(CircleShape)
-                    .graphicsLayer { alpha = if (logo_ok) 1f else 0f },
-            )
-        }
-    }
-}
-
 @Composable
 internal fun shipping_status_text(status: ShippingStatus): String = stringResource(
     when (status) {
@@ -225,9 +161,12 @@ internal fun order_details_card_for_message(
 ) {
     if (msg.is_undecryptable || msg.is_body_pending || is_aster_system_sender(msg)) return
     if (msg.body.isBlank() && msg.body_html.isNullOrBlank()) return
+    val context = LocalContext.current
+    val store = remember { receipt_review_store_for(context) }
+    var review_version by remember(msg.id) { mutableIntStateOf(0) }
     val model by produceState<order_card_model?>(
         initialValue = null,
-        msg.id, msg.body, msg.body_html, subject,
+        msg.id, msg.body, msg.body_html, subject, review_version,
     ) {
         value = withContext(Dispatchers.Default) {
             val result = extract_email_details(
@@ -240,19 +179,38 @@ internal fun order_details_card_for_message(
             if (result.is_empty) {
                 null
             } else {
-                order_card_model(result, extract_order_url(msg.body, msg.body_html))
+                val purchase = result.purchase
+                val review = store.review_for(msg.id)
+                val reviewed = purchase?.let {
+                    store.apply_review(msg.id, it.merchant_source, it.merchant_name, it.order_id)
+                }
+                order_card_model(
+                    result = result,
+                    order_url = extract_order_url(msg.body, msg.body_html),
+                    review = review,
+                    merchant = reviewed?.first,
+                    order_id = reviewed?.second,
+                )
             }
         }
     }
     val snapshot = model ?: return
-    order_details_card(message_id = msg.id, msg = msg, model = snapshot, modifier = modifier)
+    if (snapshot.review?.hidden == true) return
+    order_details_card(
+        msg = msg,
+        model = snapshot,
+        store = store,
+        on_review_changed = { review_version += 1 },
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun order_details_card(
-    message_id: String,
     msg: ThreadMessage,
     model: order_card_model,
+    store: receipt_review_store,
+    on_review_changed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -260,48 +218,55 @@ private fun order_details_card(
     val copy_action = remember_copy_action()
     val purchase = model.result.purchase?.takeIf { it.has_meaningful_data }
     val shipping = model.result.shipping?.takeIf { it.has_meaningful_data }
-    var collapsed by remember(message_id) { mutableStateOf(message_id in collapsed_order_cards) }
+    var collapsed by remember { mutableStateOf(read_receipt_banner_collapsed(context)) }
+    var reviewing by remember(msg.id) { mutableStateOf(false) }
 
-    val merchant = purchase?.merchant_name
+    val review = model.review
+    val merchant = if (purchase != null) model.merchant else null
+    val order_id = if (purchase != null) model.order_id else null
+    val is_receipt = purchase?.document_kind == document_kind_receipt
     val carrier_name = shipping?.carrier_name?.takeIf { it.isNotBlank() }
     val title = when {
-        merchant != null -> stringResource(R.string.order_card_order_from, merchant)
-        carrier_name != null -> stringResource(R.string.order_card_package_from, carrier_name)
+        purchase != null && merchant != null ->
+            stringResource(if (is_receipt) R.string.receipt_card_receipt_from else R.string.order_card_order_from, merchant)
+        purchase == null && carrier_name != null -> stringResource(R.string.order_card_package_from, carrier_name)
         else -> stringResource(R.string.order_card_title_generic)
     }
     val status = shipping?.status
+    val purchase_subtitle = listOfNotNull(
+        order_id?.let {
+            stringResource(if (is_receipt) R.string.receipt_card_receipt_number else R.string.order_card_order_number_short, it)
+        },
+        purchase?.order_date,
+    ).joinToString(" · ").ifEmpty { null }
     val subtitle = when {
+        purchase_subtitle != null -> purchase_subtitle
         status == ShippingStatus.delivered -> shipping_status_text(status)
         shipping?.estimated_delivery != null -> stringResource(R.string.order_card_expected_by, shipping.estimated_delivery)
         status != null && status != ShippingStatus.unknown -> shipping_status_text(status)
-        purchase?.order_id != null -> stringResource(R.string.order_card_order_number_short, purchase.order_id)
-        purchase?.total != null -> purchase.total.formatted
         else -> null
     }
-    val trust = remember_sender_trust(msg.trust_message)
-    val sender_marks_allowed = trust == null || (trust.show_identity_marks && trust.warning == null)
-    val shown_sender_email = if (sender_marks_allowed) {
-        displayed_sender_email(msg.display_sender_email, msg.sender_email)
-    } else {
-        ""
-    }
     val tracking_url = shipping?.tracking_url
-    val order_url = model.order_url
-    val has_actions = tracking_url != null || order_url != null
+    val view_url = purchase?.receipt_url ?: model.order_url
     val copied_text = stringResource(R.string.copied_to_clipboard)
     val tracking_label = stringResource(R.string.order_card_tracking_number)
     val could_not_open = stringResource(R.string.could_not_open_link)
+    val privacy_text = stringResource(R.string.receipt_card_privacy)
+    val saved_text = stringResource(R.string.receipt_card_review_saved)
+    val thanks_text = stringResource(R.string.receipt_card_review_thanks)
+    val payment_text = when {
+        purchase?.card_last_four != null -> stringResource(R.string.receipt_card_card_ending_in, purchase.card_last_four)
+        else -> purchase?.payment_method
+    }
+    val open_link: (String) -> Unit = { url ->
+        if (!open_external_url(context, url)) app_toast.show(could_not_open)
+    }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(
-                start = inbox_card_horizontal_margin,
-                end = inbox_card_horizontal_margin,
-                bottom = inbox_group_split,
-            )
-            .clip(inbox_card_shape)
-            .background(inbox_card_read_color(colors))
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs)
+            .acrylic(colors, AsterShapes.island, colors.bg_secondary)
             .testTag("order_details_card"),
     ) {
         Row(
@@ -309,44 +274,23 @@ private fun order_details_card(
                 .fillMaxWidth()
                 .clickable {
                     collapsed = !collapsed
-                    if (collapsed) collapsed_order_cards.add(message_id) else collapsed_order_cards.remove(message_id)
+                    write_receipt_banner_collapsed(context, collapsed)
                 }
-                .padding(
-                    start = inbox_card_content_padding,
-                    end = AsterSpacing.sm,
-                    top = AsterSpacing.md,
-                    bottom = AsterSpacing.md,
-                ),
+                .padding(horizontal = AsterSpacing.row_pad_x, vertical = AsterSpacing.row_pad_y),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (merchant != null) {
-                merchant_avatar(
-                    merchant = merchant,
-                    sender_email = shown_sender_email,
-                    size = 36.dp,
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(colors.bg_tertiary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Package,
-                        contentDescription = null,
-                        tint = colors.text_secondary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
+            Icon(
+                imageVector = if (purchase != null) TablerIcons.Receipt else TablerIcons.Package,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(20.dp),
+            )
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     color = colors.text_primary,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -355,61 +299,108 @@ private fun order_details_card(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        color = colors.text_secondary,
-                        fontSize = 13.sp,
+                        color = colors.text_muted,
+                        fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
+            if (purchase?.total != null) {
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = purchase.total.formatted,
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
             Spacer(Modifier.width(AsterSpacing.sm))
+            val rotation by animateFloatAsState(if (collapsed) 0f else 180f, label = "receipt_card_chevron")
             Icon(
-                imageVector = if (collapsed) TablerIcons.ChevronDown else TablerIcons.ChevronUp,
+                imageVector = TablerIcons.ChevronDown,
                 contentDescription = stringResource(
                     if (collapsed) R.string.order_card_expand else R.string.order_card_collapse,
                 ),
                 tint = colors.text_muted,
-                modifier = Modifier.padding(AsterSpacing.sm).size(18.dp),
+                modifier = Modifier.size(18.dp).rotate(rotation),
             )
         }
         AnimatedVisibility(visible = !collapsed) {
             Column(modifier = Modifier.fillMaxWidth()) {
+                if (purchase != null && purchase.items.isNotEmpty()) {
+                    receipt_divider()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = AsterSpacing.row_pad_x, vertical = AsterSpacing.row_pad_y),
+                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+                    ) {
+                        for (item in purchase.items.take(max_visible_receipt_items)) {
+                            val quantity = item.quantity ?: 1
+                            val name = if (quantity > 1) "$quantity × " + item.name else item.name
+                            receipt_amount_row(label = name, amount = item.total_price ?: item.unit_price)
+                        }
+                        val hidden_count = purchase.items.size - max_visible_receipt_items
+                        if (hidden_count > 0) {
+                            Text(
+                                text = pluralStringResource(R.plurals.receipt_card_more_items, hidden_count, hidden_count),
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                            )
+                        }
+                    }
+                }
+                val has_totals = purchase != null && (
+                    purchase.subtotal != null || purchase.shipping_cost != null || purchase.tax != null ||
+                        purchase.discount != null || purchase.total != null
+                    )
+                if (purchase != null && has_totals) {
+                    receipt_divider()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = AsterSpacing.row_pad_x, vertical = AsterSpacing.row_pad_y),
+                        verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+                    ) {
+                        purchase.subtotal?.let { receipt_amount_row(stringResource(R.string.receipt_card_subtotal), it) }
+                        purchase.shipping_cost?.let { receipt_amount_row(stringResource(R.string.receipt_card_shipping), it) }
+                        purchase.tax?.let { receipt_amount_row(stringResource(R.string.receipt_card_tax), it) }
+                        purchase.discount?.let {
+                            receipt_amount_row(stringResource(R.string.receipt_card_discount), it, negative = true)
+                        }
+                        purchase.total?.let {
+                            receipt_amount_row(stringResource(R.string.order_card_total), it, emphasised = true)
+                        }
+                    }
+                }
+                receipt_divider()
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            start = inbox_card_content_padding,
-                            end = inbox_card_content_padding,
-                            bottom = AsterSpacing.sm,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+                        .padding(horizontal = AsterSpacing.row_pad_x, vertical = AsterSpacing.row_pad_y),
+                    verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 ) {
-                    if (merchant != null) {
-                        order_detail_row(
-                            icon = TablerIcons.BuildingStore,
-                            label = stringResource(R.string.order_card_ordered_from),
-                            value = merchant,
+                    if (purchase != null) {
+                        receipt_detail_row(
+                            label = stringResource(R.string.receipt_card_merchant),
+                            value = merchant ?: stringResource(R.string.receipt_card_unknown_merchant),
                         )
                     }
-                    if (purchase?.order_id != null) {
-                        order_detail_row(
-                            icon = TablerIcons.Receipt,
-                            label = stringResource(R.string.order_card_order_number),
-                            value = purchase.order_id,
-                        )
+                    if (order_id != null) {
+                        receipt_detail_row(label = stringResource(R.string.order_card_order_number), value = order_id)
+                    }
+                    if (purchase?.order_date != null) {
+                        receipt_detail_row(label = stringResource(R.string.date), value = purchase.order_date)
+                    }
+                    if (payment_text != null) {
+                        receipt_detail_row(label = stringResource(R.string.receipt_card_payment), value = payment_text)
                     }
                     if (status == ShippingStatus.delivered && shipping?.delivery_date != null) {
-                        order_detail_row(
-                            icon = TablerIcons.Clock,
-                            label = stringResource(R.string.order_card_delivered_on),
-                            value = shipping.delivery_date,
-                        )
+                        receipt_detail_row(label = stringResource(R.string.order_card_delivered_on), value = shipping.delivery_date)
                     } else if (shipping?.estimated_delivery != null) {
-                        order_detail_row(
-                            icon = TablerIcons.Clock,
-                            label = stringResource(R.string.order_card_expected),
-                            value = shipping.estimated_delivery,
-                        )
+                        receipt_detail_row(label = stringResource(R.string.order_card_expected), value = shipping.estimated_delivery)
                     }
                     if (shipping?.tracking_number != null) {
                         val tracking_value = if (carrier_name != null) {
@@ -417,73 +408,139 @@ private fun order_details_card(
                         } else {
                             shipping.tracking_number
                         }
-                        order_detail_row(
-                            icon = TablerIcons.Truck,
+                        receipt_detail_row(
                             label = tracking_label,
                             value = tracking_value,
                             copy_value = shipping.tracking_number,
                             on_click = { copy_action(tracking_label, shipping.tracking_number, copied_text) },
                         )
                     }
-                    if (purchase?.total != null) {
-                        order_detail_row(
-                            icon = TablerIcons.Receipt,
-                            label = stringResource(R.string.order_card_total),
-                            value = purchase.total.formatted,
+                }
+                receipt_divider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    receipt_info_button(
+                        on_show = {
+                            app_toast.show(if (review?.is_corrected == true) saved_text else privacy_text)
+                        },
+                    )
+                    if (tracking_url != null) {
+                        receipt_link_button(
+                            label = stringResource(R.string.order_card_track_package),
+                            test_tag = "order_card_track_package",
+                            on_click = { open_link(tracking_url) },
                         )
                     }
-                    if (purchase != null && purchase.items.isNotEmpty()) {
-                        order_detail_row(
-                            icon = TablerIcons.ShoppingCart,
-                            label = stringResource(R.string.order_card_items),
-                            value = purchase.items.take(3).joinToString(", ") { it.name },
+                    if (view_url != null) {
+                        receipt_link_button(
+                            label = stringResource(
+                                if (is_receipt) R.string.receipt_card_view_receipt else R.string.order_card_view_order,
+                            ),
+                            test_tag = "order_card_view_order",
+                            on_click = { open_link(view_url) },
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    if (purchase != null) {
+                        val confirmed = review?.confirmed == true
+                        val corrected = review?.is_corrected == true
+                        AsterIconButton(
+                            icon = if (confirmed) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
+                            content_description = stringResource(R.string.receipt_card_looks_right),
+                            onClick = {
+                                store.confirm(msg.id)
+                                if (!confirmed) app_toast.show(thanks_text)
+                                reviewing = false
+                                on_review_changed()
+                            },
+                            tint = if (confirmed) colors.accent_blue else colors.text_secondary,
+                            icon_size = 18,
+                            modifier = Modifier.testTag("receipt_card_looks_right"),
+                        )
+                        AsterIconButton(
+                            icon = if (corrected) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
+                            content_description = stringResource(R.string.receipt_card_not_right),
+                            onClick = { reviewing = !reviewing },
+                            tint = if (corrected) colors.accent_blue else colors.text_secondary,
+                            icon_size = 18,
+                            modifier = Modifier.testTag("receipt_card_not_right"),
                         )
                     }
                 }
-                if (has_actions) {
-                    AsterDivider(modifier = Modifier.padding(horizontal = inbox_card_content_padding))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs),
-                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (tracking_url != null) {
-                            order_text_button(
-                                label = stringResource(R.string.order_card_track_package),
-                                test_tag = "order_card_track_package",
-                                on_click = {
-                                    if (!open_external_url(context, tracking_url)) {
-                                        android.widget.Toast.makeText(context, could_not_open, android.widget.Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            )
-                        }
-                        if (order_url != null) {
-                            order_text_button(
-                                label = stringResource(R.string.order_card_view_order),
-                                test_tag = "order_card_view_order",
-                                on_click = {
-                                    if (!open_external_url(context, order_url)) {
-                                        android.widget.Toast.makeText(context, could_not_open, android.widget.Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            )
-                        }
-                    }
-                } else {
-                    Spacer(Modifier.height(AsterSpacing.sm))
+                if (purchase != null && reviewing) {
+                    receipt_divider()
+                    receipt_review_form(
+                        initial_merchant = merchant.orEmpty(),
+                        initial_order_id = order_id.orEmpty(),
+                        on_save = { merchant_input, order_input ->
+                            store.save_correction(msg.id, purchase.merchant_source, merchant_input, order_input)
+                            reviewing = false
+                            on_review_changed()
+                        },
+                        on_cancel = { reviewing = false },
+                        on_hide = {
+                            store.hide(msg.id)
+                            reviewing = false
+                            on_review_changed()
+                        },
+                    )
                 }
             }
         }
     }
 }
 
+@Composable
+private fun receipt_divider() {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(0.5.dp)
+            .background(island_divider_color(colors)),
+    )
+}
+
+@Composable
+private fun receipt_amount_row(
+    label: String,
+    amount: ExtractedAmount?,
+    negative: Boolean = false,
+    emphasised: Boolean = false,
+) {
+    val colors = AsterMaterial.colors
+    val size = if (emphasised) 14.sp else 13.sp
+    val weight = if (emphasised) FontWeight.SemiBold else FontWeight.Normal
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            color = if (emphasised) colors.text_primary else colors.text_secondary,
+            fontSize = size,
+            fontWeight = weight,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (amount != null) {
+            Spacer(Modifier.width(AsterSpacing.md))
+            Text(
+                text = if (negative) "−" + amount.formatted else amount.formatted,
+                color = colors.text_primary,
+                fontSize = size,
+                fontWeight = weight,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun order_detail_row(
-    icon: ImageVector,
+private fun receipt_detail_row(
     label: String,
     value: String,
     copy_value: String = value,
@@ -499,48 +556,160 @@ private fun order_detail_row(
                 onLongClick = { copy_action(label, copy_value, copied_text) },
                 onClick = { on_click?.invoke() },
             ),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(18.dp),
+        Text(
+            text = label,
+            color = colors.text_muted,
+            fontSize = 13.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(0.4f),
         )
         Spacer(Modifier.width(AsterSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = value,
-                color = colors.text_primary,
-                fontSize = 14.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Text(
+            text = value,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            textAlign = TextAlign.End,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(0.6f),
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun receipt_info_button(on_show: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .combinedClickable(onClick = on_show, onLongClick = on_show)
+            .testTag("receipt_card_info"),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = TablerIcons.InfoCircle,
+            contentDescription = stringResource(R.string.receipt_card_privacy),
+            tint = colors.text_muted,
+            modifier = Modifier.size(18.dp),
+        )
     }
 }
 
 @Composable
-private fun order_text_button(label: String, test_tag: String, on_click: () -> Unit) {
+private fun receipt_link_button(label: String, test_tag: String, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    Text(
-        text = label,
-        color = colors.accent_blue,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    Row(
         modifier = Modifier
             .clip(detail_chip_shape)
             .clickable(onClick = on_click)
             .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm)
             .testTag(test_tag),
-    )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+    ) {
+        Text(
+            text = label,
+            color = colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Icon(
+            imageVector = TablerIcons.ExternalLink,
+            contentDescription = null,
+            tint = colors.accent_blue,
+            modifier = Modifier.size(14.dp),
+        )
+    }
+}
+
+@Composable
+private fun receipt_ghost_button(label: String, muted: Boolean, test_tag: String, on_click: () -> Unit) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .height(40.dp)
+            .clip(RoundedCornerShape(AsterRadius.control))
+            .clickable(onClick = on_click)
+            .padding(horizontal = AsterSpacing.md)
+            .testTag(test_tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = if (muted) colors.text_muted else colors.accent_blue,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun receipt_review_form(
+    initial_merchant: String,
+    initial_order_id: String,
+    on_save: (String, String) -> Unit,
+    on_cancel: () -> Unit,
+    on_hide: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var merchant_input by remember { mutableStateOf(initial_merchant.take(max_receipt_field_length)) }
+    var order_input by remember { mutableStateOf(initial_order_id.take(max_receipt_field_length)) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.row_pad_x, vertical = AsterSpacing.row_pad_y)
+            .testTag("receipt_card_review_form"),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.receipt_card_review_title),
+            color = colors.text_primary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        AsterTextField(
+            value = merchant_input,
+            onValueChange = { merchant_input = it.take(max_receipt_field_length) },
+            label = stringResource(R.string.receipt_card_merchant),
+            modifier = Modifier.fillMaxWidth().testTag("receipt_card_merchant_field"),
+        )
+        AsterTextField(
+            value = order_input,
+            onValueChange = { order_input = it.take(max_receipt_field_length) },
+            label = stringResource(R.string.order_card_order_number),
+            modifier = Modifier.fillMaxWidth().testTag("receipt_card_order_field"),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+        ) {
+            AsterCompactButton(
+                label = stringResource(R.string.save),
+                onClick = { on_save(merchant_input, order_input) },
+                modifier = Modifier.testTag("receipt_card_review_save"),
+            )
+            receipt_ghost_button(
+                label = stringResource(R.string.cancel),
+                muted = false,
+                test_tag = "receipt_card_review_cancel",
+                on_click = on_cancel,
+            )
+            Spacer(Modifier.weight(1f))
+            receipt_ghost_button(
+                label = stringResource(R.string.receipt_card_hide),
+                muted = true,
+                test_tag = "receipt_card_review_hide",
+                on_click = on_hide,
+            )
+        }
+    }
 }

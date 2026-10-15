@@ -376,7 +376,7 @@ fun extract_email_details(
     return EmailExtractionResult(
         has_purchase_details = is_purchase,
         has_shipping_details = is_shipping,
-        purchase = if (is_purchase) extract_purchase_details(clean_subject, clean_text, from_email, from_name, locale) else null,
+        purchase = if (is_purchase) extract_purchase_details(clean_subject, clean_text, from_email, from_name, locale, body_html) else null,
         shipping = if (is_shipping) extract_shipping_details(clean_subject, clean_text, body_html, from_email) else null,
         extracted_at = System.currentTimeMillis(),
     )

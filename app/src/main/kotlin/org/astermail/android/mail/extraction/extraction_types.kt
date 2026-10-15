@@ -38,6 +38,9 @@ data class ExtractedPurchaseDetails(
     val order_id: String?,
     val order_date: String?,
     val merchant_name: String?,
+    val document_kind: String,
+    val merchant_source: String,
+    val receipt_url: String?,
     val items: List<ExtractedItem>,
     val subtotal: ExtractedAmount?,
     val tax: ExtractedAmount?,
@@ -52,7 +55,7 @@ data class ExtractedPurchaseDetails(
     val raw_signals: List<String>,
 ) {
     val has_meaningful_data: Boolean
-        get() = order_id != null || total != null || items.any { it.name.isNotBlank() }
+        get() = order_id != null || total != null || merchant_name != null || items.any { it.name.isNotBlank() }
 }
 
 enum class ShippingCarrier(val id: String, val display_name: String, val tracking_base_url: String) {
