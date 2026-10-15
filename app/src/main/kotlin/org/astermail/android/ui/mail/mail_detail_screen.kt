@@ -5749,9 +5749,30 @@ internal class mail_body_web_view(
         )
     }
 
+    private var pinching: Boolean = false
+
+    private fun vertical_scroll_allowed(): Boolean =
+        pinching || height >= max_body_layout_px - remeasure_viewport_slack_px
+
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
+        when (event.actionMasked) {
+            android.view.MotionEvent.ACTION_DOWN -> pinching = false
+            android.view.MotionEvent.ACTION_POINTER_DOWN -> pinching = true
+        }
+        val handled = super.dispatchTouchEvent(event)
+        if (event.actionMasked == android.view.MotionEvent.ACTION_UP ||
+            event.actionMasked == android.view.MotionEvent.ACTION_CANCEL
+        ) {
+            pinching = false
+            if (scrollY != 0 && !vertical_scroll_allowed()) scrollTo(scrollX, 0)
+        }
+        return handled
+    }
+
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
         if (l != oldl) report_horizontal_scroll()
+        if (t != 0 && !vertical_scroll_allowed()) scrollTo(l, 0)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
