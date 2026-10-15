@@ -960,7 +960,7 @@ object EmailHtmlSanitizer {
                 continue
             }
             if (src.startsWith(proxy_base)) continue
-            val encoded = java.net.URLEncoder.encode(src, "UTF-8")
+            val encoded = java.net.URLEncoder.encode(secure_image_url(src), "UTF-8")
             img.attr("src", "$proxy_base?url=$encoded")
         }
         return doc.body().html()
