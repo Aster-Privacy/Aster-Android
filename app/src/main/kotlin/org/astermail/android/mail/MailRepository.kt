@@ -173,6 +173,10 @@ private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val BULK_SCOPE_MAX_ROUNDS = 1_000
 internal const val SNOOZE_BULK_LIMIT = 100
 internal const val BULK_SCOPE_ID_LIMIT = 1_000
+private val cached_custom_categories_json = kotlinx.serialization.json.Json {
+    ignoreUnknownKeys = true
+}
+
 private val SYSTEM_FOLDER_IDS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "scheduled", "snoozed")
 private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
@@ -795,13 +799,33 @@ class MailRepository @Inject constructor(
     private var custom_categories: List<org.astermail.android.api.preferences.CustomCategoryRule> =
         emptyList()
 
+    @Volatile
+    private var custom_categories_set = false
+
     fun set_custom_categories(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
     ): Boolean {
+        custom_categories_set = true
         val sanitized = sanitize_custom_categories(rules)
         if (custom_categories == sanitized) return false
         custom_categories = sanitized
         return true
+    }
+
+    fun ensure_custom_categories_loaded() {
+        if (custom_categories_set) return
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return
+        val raw = runCatching {
+            org.astermail.android.storage.PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return
+        val cached = runCatching {
+            cached_custom_categories_json.decodeFromString(
+                org.astermail.android.api.preferences.UserPreferences.serializer(),
+                raw,
+            )
+        }.getOrNull() ?: return
+        if (custom_categories_set) return
+        set_custom_categories(cached.custom_categories.orEmpty())
     }
 
     val custom_categories_fingerprint: Int
