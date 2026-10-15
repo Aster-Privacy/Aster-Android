@@ -44,6 +44,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.astermail.android.MainActivity
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -147,9 +148,9 @@ class BodySelectionScrollTest {
         Thread.sleep(SETTLE_MS)
     }
 
-    private fun drag_up() {
+    private fun drag_up(x_fraction: Float = EDGE_X_FRACTION) {
         val (width, height) = screen_size()
-        val x = width * 0.92f
+        val x = width * x_fraction
         val start_y = height * 0.8f
         val end_y = height * 0.3f
         val down_time = SystemClock.uptimeMillis()
@@ -177,6 +178,12 @@ class BodySelectionScrollTest {
             total = state.firstVisibleItemIndex * INDEX_WEIGHT_PX + state.firstVisibleItemScrollOffset
         }
         return total
+    }
+
+    private fun body_scroll_y(): Int {
+        var offset = 0
+        instrumentation.runOnMainSync { offset = find_body(host.get())?.scrollY ?: 0 }
+        return offset
     }
 
     private fun selection_active(): Boolean {
@@ -229,6 +236,22 @@ class BodySelectionScrollTest {
         assertTrue("list stopped scrolling on the second drag: $middle -> $after", after > middle)
     }
 
+    @Test
+    fun the_body_never_scrolls_inside_itself_with_a_selection() {
+        show_body()
+        long_press_body()
+        wait_until("selection to start") { find_body(host.get())?.selection_active == true }
+        Thread.sleep(SETTLE_MS)
+        val before = scrolled_px()
+        drag_up(TEXT_X_FRACTION)
+        val after = scrolled_px()
+        val inner = body_scroll_y()
+        Log.i(TAG, "drag over text: $before -> $after inner=$inner")
+        assertTrue("list did not scroll from a drag over the text: $before -> $after", after > before)
+        assertEquals("message body scrolled inside its own frame", 0, inner)
+        assertTrue("selection was dropped by scrolling", selection_active())
+    }
+
     private companion object {
         const val TAG = "BodySelectionScroll"
         const val PARAGRAPH_COUNT = 240
@@ -240,5 +263,7 @@ class BodySelectionScrollTest {
         const val DRAG_STEPS = 14
         const val DRAG_STEP_MS = 40L
         const val INDEX_WEIGHT_PX = 1_000_000
+        const val EDGE_X_FRACTION = 0.92f
+        const val TEXT_X_FRACTION = 0.4f
     }
 }

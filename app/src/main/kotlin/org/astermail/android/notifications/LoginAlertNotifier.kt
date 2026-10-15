@@ -62,7 +62,8 @@ private fun localized(context: Context): Context =
     org.astermail.android.settings.app_language.wrap(context)
 
 object LoginAlertNotifier {
-    const val CHANNEL_ID = "aster_login_alerts"
+    const val CHANNEL_ID = "aster_login_alerts_v2"
+    private const val LEGACY_CHANNEL_ID = "aster_login_alerts"
     const val KEY_SESSION_ID = "session_id"
     const val KEY_DEVICE = "device"
     const val KEY_BROWSER = "browser"
@@ -112,7 +113,8 @@ object LoginAlertNotifier {
             channel.description = localized(context).getString(R.string.notif_channel_login_alerts_description)
             channel.setShowBadge(true)
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            manager?.createNotificationChannel(channel)
+                ?: return
+            create_alert_channel(manager, channel, vibrate = true, replaced_ids = listOf(LEGACY_CHANNEL_ID))
         }
     }
 

@@ -417,10 +417,16 @@ class MailPollingWorker(
     }
 
     companion object {
-        const val CHANNEL_ID = "aster_new_mail"
-        const val CHANNEL_ID_SOUND_ONLY = "aster_new_mail_sound_only"
-        const val CHANNEL_ID_VIBRATE_ONLY = "aster_new_mail_vibrate_only"
-        const val CHANNEL_ID_SILENT = "aster_new_mail_silent"
+        const val CHANNEL_ID = "aster_new_mail_v2"
+        const val CHANNEL_ID_SOUND_ONLY = "aster_new_mail_sound_only_v2"
+        const val CHANNEL_ID_VIBRATE_ONLY = "aster_new_mail_vibrate_only_v2"
+        const val CHANNEL_ID_SILENT = "aster_new_mail_silent_v2"
+        val LEGACY_CHANNEL_IDS = listOf(
+            "aster_new_mail",
+            "aster_new_mail_sound_only",
+            "aster_new_mail_vibrate_only",
+            "aster_new_mail_silent",
+        )
         const val NOTIFICATION_ID = 1001
         const val SUMMARY_NOTIFICATION_ID = 1000
         const val GROUP_KEY_NEW_MAIL = "aster_new_mail_group"
@@ -543,16 +549,15 @@ class MailPollingWorker(
             channel.description = localized(context)
                 .getString(R.string.notif_channel_new_mail_description)
             channel.setShowBadge(true)
-            channel.enableVibration(is_vibrate_enabled(context))
             if (!is_sound_enabled(context)) {
                 channel.setSound(null, null)
             }
-            manager.createNotificationChannel(channel)
-            for (id in alert_channel_ids()) {
-                if (id != active) {
-                    runCatching { manager.deleteNotificationChannel(id) }
-                }
-            }
+            create_alert_channel(
+                manager,
+                channel,
+                vibrate = is_vibrate_enabled(context),
+                replaced_ids = alert_channel_ids() + LEGACY_CHANNEL_IDS,
+            )
         }
 
         fun is_private_notifications(context: Context): Boolean {
