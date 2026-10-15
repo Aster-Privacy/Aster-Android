@@ -28,7 +28,13 @@ import org.astermail.android.api.settings.BlockedSendersResponse
 import org.astermail.android.api.settings.ChangePasswordRequest
 import org.astermail.android.api.settings.ChangePasswordResponse
 import org.astermail.android.api.settings.CustomDomain
+import org.astermail.android.api.settings.DKIM_KEY_SIZE_COMPACT
+import org.astermail.android.api.settings.DKIM_KEY_SIZE_STANDARD
+import org.astermail.android.api.settings.DkimRotateRequest
 import org.astermail.android.api.settings.DkimRotationResponse
+import org.astermail.android.api.settings.DnsRecord
+import org.astermail.android.api.settings.DomainHealth
+import org.astermail.android.api.settings.dkim_rotate_request
 import org.astermail.android.api.settings.DirectoryAvailabilityRequest
 import org.astermail.android.api.settings.DirectoryAvailabilityResponse
 import org.astermail.android.api.settings.FeedbackRequest
@@ -563,6 +569,59 @@ class SettingsModelsTest {
         val response = json.decodeFromString(DkimRotationResponse.serializer(), body)
         assertTrue(response.dns_auto_published)
         assertNull(response.dns_record)
+    }
+
+    @Test
+    fun `DkimRotationResponse decodes key_bits and defaults it to zero`() {
+        val with_bits = """{"success":true,"new_selector":"aster2","public_key":"k","dns_record":null,"dns_auto_published":false,"key_bits":1024}"""
+        assertEquals(1024, json.decodeFromString(DkimRotationResponse.serializer(), with_bits).key_bits)
+        val without_bits = """{"success":true,"new_selector":"aster2","public_key":"k"}"""
+        assertEquals(0, json.decodeFromString(DkimRotationResponse.serializer(), without_bits).key_bits)
+    }
+
+    @Test
+    fun `DnsRecord decodes caveat_key and defaults it to null`() {
+        val base = """"record_type":"TXT","host":"aster._domainkey.example.com","value":"v=DKIM1","purpose":"dkim","is_verified":false,"priority":null,"required":true"""
+        val with_caveat = json.decodeFromString(DnsRecord.serializer(), "{$base,\"caveat_key\":\"dkim_long_value\"}")
+        assertEquals("dkim_long_value", with_caveat.caveat_key)
+        val without_caveat = json.decodeFromString(DnsRecord.serializer(), "{$base}")
+        assertNull(without_caveat.caveat_key)
+    }
+
+    @Test
+    fun `DomainHealth decodes dkim_can_shorten and check hint`() {
+        val body = """{"domain_id":"d1","domain_name":"example.com","status":"active","health_status":"degraded","severity":"warning","receiving_mail":true,"sending_trusted":false,"checks":[{"key":"mx","outcome":"pass"},{"key":"dkim","outcome":"fail","reason":"dkim_missing_or_stale","hint":"dkim_truncated"}],"reasons":["dkim_missing_or_stale"],"dkim_can_shorten":true,"checked_at":"2026-10-15T00:00:00Z","cached":false}"""
+        val health = json.decodeFromString(DomainHealth.serializer(), body)
+        assertTrue(health.dkim_can_shorten)
+        val dkim = health.checks.first { it.key == "dkim" }
+        assertEquals("fail", dkim.outcome)
+        assertEquals("dkim_missing_or_stale", dkim.reason)
+        assertEquals("dkim_truncated", dkim.hint)
+        assertNull(health.checks.first { it.key == "mx" }.hint)
+    }
+
+    @Test
+    fun `DomainHealth treats missing dkim_can_shorten as false`() {
+        val body = """{"domain_id":"d1","domain_name":"example.com","status":"active","health_status":"healthy","severity":"ok","receiving_mail":true,"sending_trusted":true,"checks":[{"key":"dkim","outcome":"pass"}],"reasons":[],"checked_at":"2026-10-15T00:00:00Z","cached":true}"""
+        val health = json.decodeFromString(DomainHealth.serializer(), body)
+        assertFalse(health.dkim_can_shorten)
+        assertNull(health.checks.single().hint)
+        assertNull(health.dmarc_policy)
+    }
+
+    @Test
+    fun `dkim rotate request carries compact or standard and is absent by default`() {
+        val api_json = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            encodeDefaults = true
+        }
+        val compact = dkim_rotate_request(DKIM_KEY_SIZE_COMPACT)
+        assertEquals("""{"key_size":"compact"}""", api_json.encodeToString(DkimRotateRequest.serializer(), compact!!))
+        val standard = dkim_rotate_request(DKIM_KEY_SIZE_STANDARD)
+        assertEquals("""{"key_size":"standard"}""", api_json.encodeToString(DkimRotateRequest.serializer(), standard!!))
+        assertNull(dkim_rotate_request(null))
+        assertNull(dkim_rotate_request(""))
     }
 
     @Test

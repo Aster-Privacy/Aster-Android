@@ -3422,4 +3422,17 @@
     <string name="sender_reply_to_notice">Odpowiedzi na tę wiadomość trafiają na adres %1$s, który należy do innej domeny niż nadawca.</string>
     <string name="email_auth_unverified">Niezweryfikowany</string>
     <string name="email_auth_unverified_desc">Aster nie mógł potwierdzić, że domena %1$s wysłała tę wiadomość. Zanim otworzysz linki lub załączniki, sprawdź, czy znasz nadawcę.</string>
+    <string name="dns_caveat_dkim_long_value">Ta wartość ma ponad 255 znaków. Niektórzy dostawcy DNS, na przykład Shopify, nie przyjmują tak długich wartości. Jeśli Twój ją odrzuci, użyj krótszego klucza.</string>
+    <string name="dkim_short_key_button">Użyj krótszego klucza</string>
+    <string name="dkim_short_key_confirm">Aster zastąpi klucz DKIM tej domeny kluczem 1024-bitowym, który mieści się w 255 znakach. Zmieni się nazwa i wartość rekordu, więc dodaj nowy rekord u dostawcy DNS i usuń stary.</string>
+    <string name="dkim_short_key_confirm_button">Zastąp klucz</string>
+    <string name="dkim_short_key_working">Zastępowanie klucza</string>
+    <string name="dkim_short_key_done">Utworzono nowy klucz DKIM. Dodaj nowy rekord u dostawcy DNS.</string>
+    <string name="dkim_short_key_done_auto">Utworzono nowy klucz DKIM i opublikowano go w Twoim DNS.</string>
+    <string name="dkim_short_key_wait">Odczekaj kilka sekund i spróbuj ponownie.</string>
+    <string name="domain_hint_dkim_truncated">Twój rekord DKIM jest ucięty, co zdarza się, gdy dostawca DNS ogranicza wartości do 255 znaków. Wklej całą wartość lub użyj krótszego klucza.</string>
+    <string name="domain_hint_dkim_quoted">Twój rekord DKIM zawiera cudzysłowy. Usuń je i wklej wartość w jednym wierszu.</string>
+    <string name="domain_hint_dkim_other_key">Twój rekord DKIM zawiera inny klucz. Zastąp jego wartość tą widoczną tutaj.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Wysyłana poczta nie jest podpisana, więc wygląda na sfałszowaną. Dodaj rekord podpisu, aby była zaufana.</string>
+    <string name="domain_check_generic_failure">Ten rekord nie jest jeszcze poprawnie skonfigurowany. Dodaj poniższy rekord, aby to naprawić.</string>
 </resources>

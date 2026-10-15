@@ -3385,4 +3385,17 @@
     <string name="sender_reply_to_notice">Antworten auf diese Nachricht gehen an %1$s. Diese Adresse gehört zu einer anderen Domain als der Absender.</string>
     <string name="email_auth_unverified">Nicht bestätigt</string>
     <string name="email_auth_unverified_desc">Aster konnte nicht bestätigen, dass %1$s diese Nachricht gesendet hat. Prüfe, ob du den Absender kennst, bevor du Links oder Anhänge öffnest.</string>
+    <string name="dns_caveat_dkim_long_value">Dieser Wert ist länger als 255 Zeichen. Manche DNS-Anbieter, etwa Shopify, akzeptieren so lange Werte nicht. Wenn Ihrer ihn ablehnt, verwenden Sie einen kürzeren Schlüssel.</string>
+    <string name="dkim_short_key_button">Kürzeren Schlüssel verwenden</string>
+    <string name="dkim_short_key_confirm">Aster ersetzt den DKIM-Schlüssel dieser Domain durch einen 1024-Bit-Schlüssel, der in 255 Zeichen passt. Name und Wert des Eintrags ändern sich. Fügen Sie den neuen Eintrag bei Ihrem DNS-Anbieter hinzu und löschen Sie den alten.</string>
+    <string name="dkim_short_key_confirm_button">Schlüssel ersetzen</string>
+    <string name="dkim_short_key_working">Schlüssel wird ersetzt</string>
+    <string name="dkim_short_key_done">Neuer DKIM-Schlüssel erstellt. Fügen Sie den neuen Eintrag bei Ihrem DNS-Anbieter hinzu.</string>
+    <string name="dkim_short_key_done_auto">Neuer DKIM-Schlüssel erstellt und in Ihrem DNS veröffentlicht.</string>
+    <string name="dkim_short_key_wait">Warten Sie einige Sekunden und versuchen Sie es dann erneut.</string>
+    <string name="domain_hint_dkim_truncated">Ihr DKIM-Eintrag ist abgeschnitten. Das passiert, wenn ein DNS-Anbieter Werte auf 255 Zeichen begrenzt. Fügen Sie den vollständigen Wert ein oder verwenden Sie einen kürzeren Schlüssel.</string>
+    <string name="domain_hint_dkim_quoted">Ihr DKIM-Eintrag enthält Anführungszeichen. Entfernen Sie sie und fügen Sie den Wert in einer Zeile ein.</string>
+    <string name="domain_hint_dkim_other_key">Ihr DKIM-Eintrag enthält einen anderen Schlüssel. Ersetzen Sie seinen Wert durch den hier angezeigten.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Ihre ausgehende Mail ist unsigniert und wirkt dadurch gefälscht. Fügen Sie den Signatureintrag hinzu, damit Ihrer Mail vertraut wird.</string>
+    <string name="domain_check_generic_failure">Dieser Eintrag ist noch nicht korrekt eingerichtet. Fügen Sie den Eintrag unten hinzu.</string>
 </resources>

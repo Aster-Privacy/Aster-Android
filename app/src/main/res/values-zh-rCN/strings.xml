@@ -3367,4 +3367,17 @@
     <string name="sender_reply_to_notice">对此邮件的回复会发送到 %1$s，该地址与发件人不属于同一域名。</string>
     <string name="email_auth_unverified">未验证</string>
     <string name="email_auth_unverified_desc">Aster 无法确认此邮件是由 %1$s 发送的。在打开链接或附件之前，请确认你认识发件人。</string>
+    <string name="dns_caveat_dkim_long_value">此值超过 255 个字符。部分 DNS 服务商（例如 Shopify）不接受这么长的值。如果你的服务商拒绝，请使用较短的密钥。</string>
+    <string name="dkim_short_key_button">使用较短的密钥</string>
+    <string name="dkim_short_key_confirm">Aster 会将此域名的 DKIM 密钥替换为可容纳在 255 个字符内的 1024 位密钥。记录的名称和值都会改变，因此请在 DNS 服务商处添加新记录并删除旧记录。</string>
+    <string name="dkim_short_key_confirm_button">替换密钥</string>
+    <string name="dkim_short_key_working">正在替换密钥</string>
+    <string name="dkim_short_key_done">已创建新的 DKIM 密钥。请在 DNS 服务商处添加新记录。</string>
+    <string name="dkim_short_key_done_auto">已创建新的 DKIM 密钥并发布到你的 DNS。</string>
+    <string name="dkim_short_key_wait">请等待几秒后重试。</string>
+    <string name="domain_hint_dkim_truncated">你的 DKIM 记录被截断了。DNS 服务商将值限制为 255 个字符时会出现这种情况。请粘贴完整的值，或使用较短的密钥。</string>
+    <string name="domain_hint_dkim_quoted">你的 DKIM 记录包含引号。请删除引号，并将值粘贴在一行中。</string>
+    <string name="domain_hint_dkim_other_key">你的 DKIM 记录中是另一个密钥。请将其值替换为此处显示的值。</string>
+    <string name="domain_reason_dkim_missing_or_stale">你发出的邮件未签名，看起来像伪造邮件。添加签名记录后，邮件才会被信任。</string>
+    <string name="domain_check_generic_failure">这条记录尚未正确设置。添加下面的记录即可修复。</string>
 </resources>

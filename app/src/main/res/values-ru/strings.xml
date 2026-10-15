@@ -3422,4 +3422,17 @@
     <string name="sender_reply_to_notice">Ответы на это письмо уходят на адрес %1$s, который относится к другому домену, чем отправитель.</string>
     <string name="email_auth_unverified">Не подтверждён</string>
     <string name="email_auth_unverified_desc">Aster не удалось подтвердить, что это письмо отправлено с домена %1$s. Прежде чем открывать ссылки или вложения, убедитесь, что вы знаете отправителя.</string>
+    <string name="dns_caveat_dkim_long_value">Это значение длиннее 255 символов. Некоторые DNS-хостинги, например Shopify, не принимают такие длинные значения. Если ваш его отклоняет, используйте более короткий ключ.</string>
+    <string name="dkim_short_key_button">Использовать более короткий ключ</string>
+    <string name="dkim_short_key_confirm">Aster заменит DKIM-ключ этого домена 1024-битным ключом, который умещается в 255 символов. Изменятся и имя, и значение записи, поэтому добавьте новую запись у DNS-хостинга и удалите старую.</string>
+    <string name="dkim_short_key_confirm_button">Заменить ключ</string>
+    <string name="dkim_short_key_working">Замена ключа</string>
+    <string name="dkim_short_key_done">Новый DKIM-ключ создан. Добавьте новую запись у DNS-хостинга.</string>
+    <string name="dkim_short_key_done_auto">Новый DKIM-ключ создан и опубликован в вашем DNS.</string>
+    <string name="dkim_short_key_wait">Подождите несколько секунд и повторите попытку.</string>
+    <string name="domain_hint_dkim_truncated">Ваша DKIM-запись обрезана. Так бывает, когда DNS-хостинг ограничивает значения 255 символами. Вставьте значение целиком или используйте более короткий ключ.</string>
+    <string name="domain_hint_dkim_quoted">Ваша DKIM-запись содержит кавычки. Удалите их и вставьте значение одной строкой.</string>
+    <string name="domain_hint_dkim_other_key">Ваша DKIM-запись содержит другой ключ. Замените её значение на показанное здесь.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Исходящая почта не подписана и выглядит поддельной. Добавьте запись подписи, чтобы письмам доверяли.</string>
+    <string name="domain_check_generic_failure">Эта запись ещё настроена неверно. Добавьте запись ниже, чтобы исправить.</string>
 </resources>

@@ -3404,4 +3404,17 @@
     <string name="sender_reply_to_notice">Las respuestas a este mensaje se envían a %1$s, que pertenece a un dominio distinto al del remitente.</string>
     <string name="email_auth_unverified">Sin verificar</string>
     <string name="email_auth_unverified_desc">Aster no ha podido confirmar que %1$s haya enviado este mensaje. Antes de abrir enlaces o archivos adjuntos, comprueba que conoces al remitente.</string>
+    <string name="dns_caveat_dkim_long_value">Este valor supera los 255 caracteres. Algunos proveedores de DNS, como Shopify, no aceptan valores tan largos. Si el tuyo lo rechaza, usa una clave más corta.</string>
+    <string name="dkim_short_key_button">Usar una clave más corta</string>
+    <string name="dkim_short_key_confirm">Aster sustituye la clave DKIM de este dominio por una clave de 1024 bits que cabe en 255 caracteres. Cambian el nombre y el valor del registro, así que añade el registro nuevo en tu proveedor de DNS y elimina el anterior.</string>
+    <string name="dkim_short_key_confirm_button">Sustituir clave</string>
+    <string name="dkim_short_key_working">Sustituyendo la clave</string>
+    <string name="dkim_short_key_done">Se creó una clave DKIM nueva. Añade el registro nuevo en tu proveedor de DNS.</string>
+    <string name="dkim_short_key_done_auto">Se creó una clave DKIM nueva y se publicó en tu DNS.</string>
+    <string name="dkim_short_key_wait">Espera unos segundos y vuelve a intentarlo.</string>
+    <string name="domain_hint_dkim_truncated">Tu registro DKIM está cortado, algo que ocurre cuando un proveedor de DNS limita los valores a 255 caracteres. Pega el valor completo o usa una clave más corta.</string>
+    <string name="domain_hint_dkim_quoted">Tu registro DKIM contiene comillas. Quítalas y pega el valor en una sola línea.</string>
+    <string name="domain_hint_dkim_other_key">Tu registro DKIM contiene otra clave. Sustituye su valor por el que se muestra aquí.</string>
+    <string name="domain_reason_dkim_missing_or_stale">El correo que envías no va firmado, así que parece falsificado. Añade el registro de firma para que se confíe en tus mensajes.</string>
+    <string name="domain_check_generic_failure">Este registro todavía no está bien configurado. Añade el registro siguiente para solucionarlo.</string>
 </resources>

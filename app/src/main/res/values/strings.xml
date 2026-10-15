@@ -3435,4 +3435,17 @@
     <string name="sender_reply_to_notice">Replies to this message go to %1$s, which is on a different domain than the sender.</string>
     <string name="email_auth_unverified">Unverified</string>
     <string name="email_auth_unverified_desc">Aster couldn\'t confirm that %1$s sent this message. Before you open links or attachments, check that you know the sender.</string>
+    <string name="dns_caveat_dkim_long_value">This value is longer than 255 characters. Some DNS hosts, such as Shopify, don\'t accept values this long. If yours rejects it, use a shorter key.</string>
+    <string name="dkim_short_key_button">Use a shorter key</string>
+    <string name="dkim_short_key_confirm">Aster replaces this domain\'s DKIM key with a 1024-bit key that fits in 255 characters. The record name and value both change, so add the new record at your DNS host and delete the old one.</string>
+    <string name="dkim_short_key_confirm_button">Replace key</string>
+    <string name="dkim_short_key_working">Replacing key</string>
+    <string name="dkim_short_key_done">New DKIM key created. Add the new record at your DNS host.</string>
+    <string name="dkim_short_key_done_auto">New DKIM key created and published to your DNS.</string>
+    <string name="dkim_short_key_wait">Wait a few seconds, then try again.</string>
+    <string name="domain_hint_dkim_truncated">Your DKIM record is cut off, which can happen when a DNS host limits values to 255 characters. Paste the whole value, or use a shorter key.</string>
+    <string name="domain_hint_dkim_quoted">Your DKIM record contains quotation marks. Remove them and paste the value on one line.</string>
+    <string name="domain_hint_dkim_other_key">Your DKIM record holds a different key. Replace its value with the one shown here.</string>
+    <string name="domain_reason_dkim_missing_or_stale">Your outgoing mail is unsigned, which makes it look forged. Add the signing record so your mail is trusted.</string>
+    <string name="domain_check_generic_failure">This record is not set up correctly yet. Add the record below to fix it.</string>
 </resources>

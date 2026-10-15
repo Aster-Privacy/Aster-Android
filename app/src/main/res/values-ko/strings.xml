@@ -3367,4 +3367,17 @@
     <string name="sender_reply_to_notice">이 메시지에 대한 답장은 %1$s(으)로 전송되며, 이 주소는 발신자와 다른 도메인에 속합니다.</string>
     <string name="email_auth_unverified">확인되지 않음</string>
     <string name="email_auth_unverified_desc">Aster가 %1$s에서 이 메시지를 보냈는지 확인하지 못했습니다. 링크나 첨부 파일을 열기 전에 아는 발신자인지 확인하세요.</string>
+    <string name="dns_caveat_dkim_long_value">이 값은 255자를 넘습니다. Shopify 같은 일부 DNS 호스트는 이렇게 긴 값을 받지 않습니다. 사용하는 호스트에서 거부되면 더 짧은 키를 사용하세요.</string>
+    <string name="dkim_short_key_button">더 짧은 키 사용</string>
+    <string name="dkim_short_key_confirm">Aster가 이 도메인의 DKIM 키를 255자 안에 들어가는 1024비트 키로 바꿉니다. 레코드 이름과 값이 모두 바뀌므로 DNS 호스트에 새 레코드를 추가하고 이전 레코드를 삭제하세요.</string>
+    <string name="dkim_short_key_confirm_button">키 바꾸기</string>
+    <string name="dkim_short_key_working">키를 바꾸는 중</string>
+    <string name="dkim_short_key_done">새 DKIM 키를 만들었습니다. DNS 호스트에 새 레코드를 추가하세요.</string>
+    <string name="dkim_short_key_done_auto">새 DKIM 키를 만들어 DNS에 게시했습니다.</string>
+    <string name="dkim_short_key_wait">몇 초 기다린 후 다시 시도하세요.</string>
+    <string name="domain_hint_dkim_truncated">DKIM 레코드가 잘려 있습니다. DNS 호스트가 값을 255자로 제한하면 이런 일이 생깁니다. 전체 값을 붙여 넣거나 더 짧은 키를 사용하세요.</string>
+    <string name="domain_hint_dkim_quoted">DKIM 레코드에 따옴표가 들어 있습니다. 따옴표를 지우고 값을 한 줄로 붙여 넣으세요.</string>
+    <string name="domain_hint_dkim_other_key">DKIM 레코드에 다른 키가 들어 있습니다. 값을 여기에 표시된 값으로 바꾸세요.</string>
+    <string name="domain_reason_dkim_missing_or_stale">보내는 메일에 서명이 없어 위조처럼 보입니다. 서명 레코드를 추가하면 신뢰받습니다.</string>
+    <string name="domain_check_generic_failure">이 레코드가 아직 올바르게 설정되지 않았습니다. 아래 레코드를 추가하면 해결됩니다.</string>
 </resources>

@@ -3374,4 +3374,17 @@
     <string name="sender_reply_to_notice">このメッセージへの返信は %1$s に送られます。これは送信者とは別のドメインのアドレスです。</string>
     <string name="email_auth_unverified">未確認</string>
     <string name="email_auth_unverified_desc">Aster は %1$s がこのメッセージを送信したことを確認できませんでした。リンクや添付ファイルを開く前に、送信者に心当たりがあるか確認してください。</string>
+    <string name="dns_caveat_dkim_long_value">この値は 255 文字を超えています。Shopify など一部の DNS ホストは、これほど長い値を受け付けません。拒否された場合は、短いキーを使用してください。</string>
+    <string name="dkim_short_key_button">短いキーを使用</string>
+    <string name="dkim_short_key_confirm">Aster はこのドメインの DKIM キーを、255 文字に収まる 1024 ビットのキーに置き換えます。レコードの名前と値の両方が変わるため、DNS ホストで新しいレコードを追加し、古いレコードを削除してください。</string>
+    <string name="dkim_short_key_confirm_button">キーを置き換える</string>
+    <string name="dkim_short_key_working">キーを置き換えています</string>
+    <string name="dkim_short_key_done">新しい DKIM キーを作成しました。DNS ホストで新しいレコードを追加してください。</string>
+    <string name="dkim_short_key_done_auto">新しい DKIM キーを作成し、DNS に公開しました。</string>
+    <string name="dkim_short_key_wait">数秒待ってから、もう一度お試しください。</string>
+    <string name="domain_hint_dkim_truncated">DKIM レコードが途中で切れています。DNS ホストが値を 255 文字に制限している場合に起こります。値全体を貼り付けるか、短いキーを使用してください。</string>
+    <string name="domain_hint_dkim_quoted">DKIM レコードに引用符が含まれています。引用符を削除し、値を 1 行で貼り付けてください。</string>
+    <string name="domain_hint_dkim_other_key">DKIM レコードに別のキーが入っています。値をここに表示されているものに置き換えてください。</string>
+    <string name="domain_reason_dkim_missing_or_stale">送信メールが署名されていないため、偽造のように見えます。署名レコードを追加すると信頼されます。</string>
+    <string name="domain_check_generic_failure">このレコードはまだ正しく設定されていません。下のレコードを追加すると解決します。</string>
 </resources>
