@@ -1001,7 +1001,7 @@ fun ComposeScreen(
             } else {
                 val item = thread_state.item
                 val original_html = msg.body_html?.takeIf { it.isNotBlank() }
-                    ?: msg.body_text.replace("\n", "<br>")
+                    ?: org.astermail.android.mail.build_plain_text_html(msg.body_text)
                 original_html to Triple(
                     msg.display_sender_email ?: msg.sender_email,
                     msg.timestamp,
