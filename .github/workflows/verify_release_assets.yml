@@ -62,3 +62,55 @@ jobs:
             echo "Fix the assets on ${TAG}."
             exit 1
           fi
+
+      - name: check signing certificate
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          CERT_SHA: 88b0a8a6fb94ee73a454a0f92732bd408e92e51ec1e9556744e5f00556100977
+          PLAY_CERT_SHA: c20da21dda9d35452675341911b001e53280b5c891ab909b13bf27637740a6af
+        run: |
+          set -u
+          ver="${TAG#v}"
+          colon_fp() { echo "$1" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//'; }
+          cert_colon=$(colon_fp "${CERT_SHA}")
+          play_colon=$(colon_fp "${PLAY_CERT_SHA}")
+          fail=0
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '.body' > body.md
+          if grep -qF "${cert_colon}" < <(tr 'a-f' 'A-F' < body.md); then
+            echo "  OK   release notes carry the signing fingerprint"
+          else
+            echo "  MISS release notes do not carry ${cert_colon}, append scripts/apk_verification.md"
+            fail=1
+          fi
+          for fp in $(grep -oiE '([0-9a-f]{2}:){31}[0-9a-f]{2}' body.md | tr 'a-f' 'A-F' | sort -u || true); do
+            if [ "${fp}" != "${cert_colon}" ] && [ "${fp}" != "${play_colon}" ]; then
+              echo "  BAD  release notes carry an unknown fingerprint ${fp}"
+              fail=1
+            fi
+          done
+          bt=$(ls "${ANDROID_HOME}/build-tools" | sort -V | tail -1)
+          apksigner="${ANDROID_HOME}/build-tools/${bt}/apksigner"
+          mkdir -p apks
+          for apk in "Aster-Mail.apk" "Aster-Mail-${ver}-full.apk" "Aster-Mail-fdroid-${ver}.apk"; do
+            if ! gh release download "${TAG}" --repo "${GITHUB_REPOSITORY}" --pattern "${apk}" --dir apks --clobber; then
+              echo "  MISS ${apk} could not be downloaded"
+              fail=1
+              continue
+            fi
+            digests=$("${apksigner}" verify --print-certs "apks/${apk}" | tr -d '\r' | grep -E '^Signer #[0-9]+ certificate SHA-256 digest:' | awk '{print $NF}' | sort -u || true)
+            if [ "${digests}" = "${CERT_SHA}" ]; then
+              echo "  OK   ${apk} is signed with the release certificate"
+            else
+              echo "  BAD  ${apk} signers: ${digests:-none}, expected ${CERT_SHA}"
+              fail=1
+            fi
+          done
+          if [ "${fail}" != "0" ]; then
+            echo
+            echo "Every APK on a release must be signed with the release certificate, and the"
+            echo "release notes must publish its fingerprint so people can check their download."
+            echo "Fix ${TAG}."
+            exit 1
+          fi
