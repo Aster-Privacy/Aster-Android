@@ -477,6 +477,32 @@ class BillingViewModelPlayTest {
     }
 
     @Test
+    fun `does not reload play config while a redemption is in flight`() = runTest {
+        use_full_catalog()
+        var calls = 0
+        coEvery { billing_api.get_google_play_config() } answers {
+            calls += 1
+            full_config.copy(special_offer_eligible = false)
+        }
+        val gate = CompletableDeferred<GooglePlayVerifyResponse>()
+        coEvery { billing_api.verify_google_play_purchase(any()) } coAnswers { gate.await() }
+        store.owned = listOf(owned_star("purchase_9", acknowledged = false))
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.play_enabled)
+        val before = calls
+
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+        assertEquals(before, calls)
+
+        gate.complete(confirmed)
+        advanceUntilIdle()
+        assertEquals(before + 1, calls)
+    }
+
+    @Test
     fun `resets play state when the active account changes`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns enabled_config
         coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed

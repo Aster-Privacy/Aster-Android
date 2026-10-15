@@ -375,6 +375,42 @@ class SpecialOfferViewModelTest {
     }
 
     @Test
+    fun `stale retry keeps a dismissed offer hidden`() = runTest {
+        var now = 1_000_000_000L
+        vm.now_ms = { now }
+        vm.load()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.auto_show)
+
+        vm.dismiss_forever()
+        advanceUntilIdle()
+        now += 7L * 60L * 60L * 1000L
+        vm.retry_load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { billing_api.get_special_offer() }
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
+    }
+
+    @Test
+    fun `stale retry keeps a redeemed offer hidden`() = runTest {
+        var now = 1_000_000_000L
+        vm.now_ms = { now }
+        vm.load()
+        advanceUntilIdle()
+
+        vm.mark_redeemed()
+        now += 7L * 60L * 60L * 1000L
+        vm.retry_load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { billing_api.get_special_offer() }
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
+    }
+
+    @Test
     fun `fresh cached offer shows while the first load is in flight`() = runTest {
         val now = 1_000_000_000L
         val never = CompletableDeferred<SpecialOfferStatusResponse>()

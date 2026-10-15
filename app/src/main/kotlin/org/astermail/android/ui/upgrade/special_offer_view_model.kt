@@ -117,6 +117,7 @@ class SpecialOfferViewModel @Inject constructor(
     private var auto_show_suppressed = false
     private var preference_fallback = false
     private var quiet_blocked = false
+    private var retired = false
 
     internal var in_quiet_period: () -> Boolean = { within_sign_up_quiet_period(context) }
     internal var now_ms: () -> Long = System::currentTimeMillis
@@ -163,6 +164,7 @@ class SpecialOfferViewModel @Inject constructor(
         auto_show_suppressed = false
         preference_fallback = false
         quiet_blocked = false
+        retired = false
         _state.value = if (id != null) cached_state(id) else SpecialOfferState()
         if (id != null) fetch()
     }
@@ -237,7 +239,7 @@ class SpecialOfferViewModel @Inject constructor(
                 preference_fallback = !preference_loaded
                 if (preference_fallback) auto_show_suppressed = false
                 quiet_blocked = in_quiet_period()
-                val enabled = offers_enabled() && !quiet_blocked
+                val enabled = offers_enabled() && !quiet_blocked && !retired
                 _state.update {
                     it.copy(
                         is_loaded = true,
@@ -358,11 +360,13 @@ class SpecialOfferViewModel @Inject constructor(
     }
 
     fun mark_redeemed() {
+        retired = true
         _state.update { it.copy(available = false, auto_show = false, owns_checkout = false) }
         store_cache()
     }
 
     fun dismiss_forever() {
+        retired = true
         _state.update {
             it.copy(
                 is_open = false,

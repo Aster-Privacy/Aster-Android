@@ -305,7 +305,7 @@ class BillingViewModel @Inject constructor(
 
     fun refresh_play_special_offer() {
         if (!play_install_check()) return
-        if (play_config_job?.isActive == true) return
+        if (play_config_job?.isActive == true || play_redeem_job?.isActive == true) return
         val s = _state.value
         if (s.is_acting || s.play_purchase_request != null) return
         val ready = s.play_enabled &&
