@@ -198,8 +198,14 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun retry_load() {
         if (account_id == null || load_job?.isActive == true) return
-        if (load_succeeded && !(quiet_blocked && !in_quiet_period()) && !load_is_stale()) return
+        val quiet_lifted = quiet_blocked && !in_quiet_period()
+        if (load_succeeded && !quiet_lifted && (!load_is_stale() || offer_in_use())) return
         fetch()
+    }
+
+    private fun offer_in_use(): Boolean {
+        val current = _state.value
+        return current.is_open || current.is_claiming || current.is_accepting || current.owns_checkout
     }
 
     private fun load_is_stale(): Boolean {

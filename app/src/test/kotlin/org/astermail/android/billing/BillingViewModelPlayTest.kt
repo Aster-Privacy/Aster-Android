@@ -438,6 +438,45 @@ class BillingViewModelPlayTest {
     }
 
     @Test
+    fun `redeems owned purchases when the special offer reload brings play online`() = runTest {
+        use_full_catalog()
+        coEvery { billing_api.get_google_play_config() } throws ApiError.NetworkError
+        coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed
+        store.owned = listOf(owned_star("purchase_7", acknowledged = false))
+        advanceUntilIdle()
+        vm.load_play_offers()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.play_enabled)
+
+        coEvery { billing_api.get_google_play_config() } returns full_config.copy(special_offer_eligible = true)
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.play_enabled)
+        coVerify(exactly = 1) { billing_api.verify_google_play_purchase(GooglePlayVerifyRequest("star", "purchase_7")) }
+    }
+
+    @Test
+    fun `does not reload play config while a purchase is waiting`() = runTest {
+        var calls = 0
+        coEvery { billing_api.get_google_play_config() } answers {
+            calls += 1
+            enabled_config
+        }
+        vm.start_checkout("star", "month")
+        advanceUntilIdle()
+        val request = vm.state.value.play_purchase_request
+        assertNotNull(request)
+        val before = calls
+
+        vm.refresh_play_special_offer()
+        advanceUntilIdle()
+
+        assertEquals(before, calls)
+        assertEquals(request, vm.state.value.play_purchase_request)
+    }
+
+    @Test
     fun `resets play state when the active account changes`() = runTest {
         coEvery { billing_api.get_google_play_config() } returns enabled_config
         coEvery { billing_api.verify_google_play_purchase(any()) } returns confirmed

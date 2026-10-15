@@ -346,6 +346,35 @@ class SpecialOfferViewModelTest {
     }
 
     @Test
+    fun `stale retry leaves an open offer alone`() = runTest {
+        var now = 1_000_000_000L
+        vm.now_ms = { now }
+        coEvery { billing_api.get_special_offer() } returns auto_show_offer
+        vm.load()
+        advanceUntilIdle()
+        vm.claim_and_open()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.is_open)
+
+        coEvery { billing_api.get_special_offer() } returns SpecialOfferStatusResponse(available = false)
+        now += 7L * 60L * 60L * 1000L
+        vm.retry_load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.get_special_offer() }
+        assertTrue(vm.state.value.is_open)
+        assertTrue(vm.state.value.available)
+
+        vm.close()
+        vm.retry_load()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { billing_api.get_special_offer() }
+        assertFalse(vm.state.value.available)
+        assertFalse(vm.state.value.auto_show)
+    }
+
+    @Test
     fun `fresh cached offer shows while the first load is in flight`() = runTest {
         val now = 1_000_000_000L
         val never = CompletableDeferred<SpecialOfferStatusResponse>()

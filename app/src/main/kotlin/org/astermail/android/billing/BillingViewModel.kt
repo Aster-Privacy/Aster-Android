@@ -307,11 +307,13 @@ class BillingViewModel @Inject constructor(
         if (!play_install_check()) return
         if (play_config_job?.isActive == true) return
         val s = _state.value
+        if (s.is_acting || s.play_purchase_request != null) return
         val ready = s.play_enabled &&
             s.play_special_offer_eligible &&
             play_special_offer_for(s.play_offers, s.play_special_offer) != null
         if (ready) return
-        play_config_job = viewModelScope.launch { load_play_config(redeem = false) }
+        val redeem = !s.play_enabled
+        play_config_job = viewModelScope.launch { load_play_config(redeem = redeem) }
     }
 
     fun load_play_offers() {
