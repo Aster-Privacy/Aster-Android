@@ -20,6 +20,23 @@ Aster runs on a zero-access architecture located in Germany. This means we store
 
 Go to [astermail.org](https://astermail.org) to create a free account. If you would like to contribute code to Aster, see [CONTRIBUTING.md](https://github.com/Aster-Privacy/.github/blob/main/CONTRIBUTING.md) for instructions.
 
+## Verify your download
+
+Every APK we publish on [GitHub Releases](https://github.com/Aster-Privacy/Aster-Android/releases) and through F-Droid is signed with the Aster release certificate. Before you install an APK you downloaded, check that its signing certificate matches this one.
+
+- **Package name:** `org.astermail.android`
+- **SHA-256 certificate fingerprint:** `88:B0:A8:A6:FB:94:EE:73:A4:54:A0:F9:27:32:BD:40:8E:92:E5:1E:C1:E9:55:67:44:E5:F0:05:56:10:09:77`
+
+To check a downloaded APK on a computer, run this command from the Android SDK build tools:
+
+```
+apksigner verify --print-certs Aster-Mail.apk
+```
+
+The `certificate SHA-256 digest` line must show the fingerprint above, in lowercase and without colons. To check the app on your phone, use a verification app such as AppVerifier with the package name and fingerprint above. After the first install, Android accepts an update only if it's signed with the same certificate.
+
+If you install Aster Mail from Google Play, Google Play signs it with its own key, so that copy has a different fingerprint: `C2:0D:A2:1D:DA:9D:35:45:26:75:34:19:11:B0:01:E5:32:80:B5:C8:91:AB:90:9B:13:BF:27:63:77:40:A6:AF`. Because the certificates differ, you can't install a GitHub APK over a Google Play install, or the reverse, without uninstalling first.
+
 ## Community
 
 Join our [Discord](https://discord.gg/R4XqRUfgWZ) to share feedback, ask questions, and contribute to the privacy community. You can also find us on [X](https://x.com/AsterPrivacy) and [Reddit](https://www.reddit.com/r/AsterPrivacy).
