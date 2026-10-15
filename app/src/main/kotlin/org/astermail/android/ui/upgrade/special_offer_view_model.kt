@@ -110,12 +110,14 @@ class SpecialOfferViewModel @Inject constructor(
     private var account_id: String? = null
     private var generation = 0L
     private var load_succeeded = false
+    private var loaded_at_ms = 0L
     private var last_plan_code: String? = null
     private var load_job: Job? = null
     private var account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
     private var auto_show_suppressed = false
     private var preference_fallback = false
     private var quiet_blocked = false
+    private var retired = false
 
     internal var in_quiet_period: () -> Boolean = { within_sign_up_quiet_period(context) }
     internal var now_ms: () -> Long = System::currentTimeMillis
@@ -157,10 +159,12 @@ class SpecialOfferViewModel @Inject constructor(
         account_job = SupervisorJob(viewModelScope.coroutineContext[Job])
         load_job = null
         load_succeeded = false
+        loaded_at_ms = 0L
         last_plan_code = null
         auto_show_suppressed = false
         preference_fallback = false
         quiet_blocked = false
+        retired = false
         _state.value = if (id != null) cached_state(id) else SpecialOfferState()
         if (id != null) fetch()
     }
@@ -196,8 +200,19 @@ class SpecialOfferViewModel @Inject constructor(
 
     fun retry_load() {
         if (account_id == null || load_job?.isActive == true) return
-        if (load_succeeded && !(quiet_blocked && !in_quiet_period())) return
+        val quiet_lifted = quiet_blocked && !in_quiet_period()
+        if (load_succeeded && !quiet_lifted && (!load_is_stale() || offer_in_use())) return
         fetch()
+    }
+
+    private fun offer_in_use(): Boolean {
+        val current = _state.value
+        return current.is_open || current.is_claiming || current.is_accepting || current.owns_checkout
+    }
+
+    private fun load_is_stale(): Boolean {
+        val age_ms = now_ms() - loaded_at_ms
+        return age_ms < 0L || age_ms > OFFER_REFRESH_MS
     }
 
     fun on_plan_code(plan_code: String?) {
@@ -220,10 +235,11 @@ class SpecialOfferViewModel @Inject constructor(
                 }
                 if (expected != generation) return@launch_for_account
                 load_succeeded = true
+                loaded_at_ms = now_ms()
                 preference_fallback = !preference_loaded
                 if (preference_fallback) auto_show_suppressed = false
                 quiet_blocked = in_quiet_period()
-                val enabled = offers_enabled() && !quiet_blocked
+                val enabled = offers_enabled() && !quiet_blocked && !retired
                 _state.update {
                     it.copy(
                         is_loaded = true,
@@ -344,11 +360,13 @@ class SpecialOfferViewModel @Inject constructor(
     }
 
     fun mark_redeemed() {
+        retired = true
         _state.update { it.copy(available = false, auto_show = false, owns_checkout = false) }
         store_cache()
     }
 
     fun dismiss_forever() {
+        retired = true
         _state.update {
             it.copy(
                 is_open = false,
@@ -380,5 +398,6 @@ class SpecialOfferViewModel @Inject constructor(
 
 private const val OFFER_CACHE_PREFS = "special_offer_cache"
 private const val OFFER_CACHE_TTL_MS = 12L * 60L * 60L * 1000L
+private const val OFFER_REFRESH_MS = 6L * 60L * 60L * 1000L
 private const val DISMISS_ATTEMPTS = 4
 private const val DISMISS_RETRY_MS = 2000L

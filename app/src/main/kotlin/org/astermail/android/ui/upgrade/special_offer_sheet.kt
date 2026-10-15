@@ -137,11 +137,14 @@ import org.astermail.android.ui.settings.detail.switcher_option
 import org.astermail.android.ui.settings.detail.payment_method_crypto
 import org.astermail.android.ui.settings.detail.payment_review_dialog
 import org.astermail.android.ui.settings.detail.review_offer_price
+import kotlinx.coroutines.delay
 
 private const val SPECIAL_OFFER_INTERVAL = "month"
 private const val SPECIAL_OFFER_YEARLY_INTERVAL = "year"
 private const val SPECIAL_OFFER_LIST_CENTS = 899L
 private const val SPECIAL_OFFER_YEARLY_CENTS = 8699L
+private const val SPECIAL_OFFER_PLAY_RETRY_ATTEMPTS = 5
+private const val SPECIAL_OFFER_PLAY_RETRY_MS = 10_000L
 private const val HERO_ASPECT_RATIO = 2.4f
 private const val HERO_ASPECT_RATIO_COMPACT = 3.2f
 private val COMPACT_HEIGHT = 780.dp
@@ -237,7 +240,11 @@ fun SpecialOfferHost() {
 
     DisposableEffect(lifecycle_owner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) offer_vm.retry_load()
+            if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+            offer_vm.retry_load()
+            if (play_install && offer_vm.state.value.auto_show && !special_offer_play_ready(billing_vm.state.value)) {
+                billing_vm.refresh_play_special_offer()
+            }
         }
         lifecycle_owner.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
@@ -265,7 +272,15 @@ fun SpecialOfferHost() {
     val play_ready = special_offer_play_ready(billing_state)
 
     LaunchedEffect(offer_state.auto_show, play_install, play_ready) {
-        if (offer_state.auto_show && (!play_install || play_ready)) offer_vm.claim_and_open()
+        if (!offer_state.auto_show) return@LaunchedEffect
+        if (!play_install || play_ready) {
+            offer_vm.claim_and_open()
+            return@LaunchedEffect
+        }
+        repeat(SPECIAL_OFFER_PLAY_RETRY_ATTEMPTS) { attempt ->
+            delay(SPECIAL_OFFER_PLAY_RETRY_MS * (attempt + 1))
+            billing_vm.refresh_play_special_offer()
+        }
     }
 
     LaunchedEffect(billing_state.subscription?.plan?.code) {
