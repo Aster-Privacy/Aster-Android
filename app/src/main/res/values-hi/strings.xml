@@ -2988,7 +2988,6 @@
     <string name="receipt_card_shipping">शिपिंग</string>
     <string name="receipt_card_tax">कर</string>
     <string name="receipt_card_discount">छूट</string>
-    <string name="receipt_card_unknown_merchant">अज्ञात व्यापारी</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d और आइटम</item>
         <item quantity="other">+%1$d और आइटम</item>

@@ -3114,7 +3114,6 @@
     <string name="receipt_card_shipping">Portes</string>
     <string name="receipt_card_tax">Imposto</string>
     <string name="receipt_card_discount">Desconto</string>
-    <string name="receipt_card_unknown_merchant">Comerciante desconhecido</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d item a mais</item>
         <item quantity="other">+%1$d itens a mais</item>

@@ -3080,7 +3080,6 @@
     <string name="receipt_card_shipping">运费</string>
     <string name="receipt_card_tax">税费</string>
     <string name="receipt_card_discount">折扣</string>
-    <string name="receipt_card_unknown_merchant">未知商户</string>
     <plurals name="receipt_card_more_items">
         <item quantity="other">+%1$d件更多商品</item>
     </plurals>

@@ -3096,7 +3096,6 @@
     <string name="receipt_card_shipping">Kargo</string>
     <string name="receipt_card_tax">Vergi</string>
     <string name="receipt_card_discount">İndirim</string>
-    <string name="receipt_card_unknown_merchant">Bilinmeyen Satıcı</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d ürün daha</item>
         <item quantity="other">+%1$d ürün daha</item>

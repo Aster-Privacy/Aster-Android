@@ -3143,7 +3143,6 @@
     <string name="receipt_card_shipping">Livraison</string>
     <string name="receipt_card_tax">Taxe</string>
     <string name="receipt_card_discount">Remise</string>
-    <string name="receipt_card_unknown_merchant">Marchand inconnu</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d article supplémentaire</item>
         <item quantity="other">+%1$d articles supplémentaires</item>

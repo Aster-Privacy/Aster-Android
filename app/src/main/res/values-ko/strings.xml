@@ -3080,7 +3080,6 @@
     <string name="receipt_card_shipping">배송</string>
     <string name="receipt_card_tax">세금</string>
     <string name="receipt_card_discount">할인</string>
-    <string name="receipt_card_unknown_merchant">알 수 없는 판매자</string>
     <plurals name="receipt_card_more_items">
         <item quantity="other">+%1$d개 더 보기</item>
     </plurals>

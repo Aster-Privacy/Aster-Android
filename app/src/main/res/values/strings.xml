@@ -3184,7 +3184,6 @@
     <string name="receipt_card_shipping">Shipping</string>
     <string name="receipt_card_tax">Tax</string>
     <string name="receipt_card_discount">Discount</string>
-    <string name="receipt_card_unknown_merchant">Unknown Merchant</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d more item</item>
         <item quantity="other">+%1$d more items</item>

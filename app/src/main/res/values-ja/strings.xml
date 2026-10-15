@@ -3082,7 +3082,6 @@
     <string name="receipt_card_shipping">配送</string>
     <string name="receipt_card_tax">税金</string>
     <string name="receipt_card_discount">割引</string>
-    <string name="receipt_card_unknown_merchant">不明な販売者</string>
     <plurals name="receipt_card_more_items">
         <item quantity="other">+%1$d件の商品</item>
     </plurals>

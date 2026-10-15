@@ -3132,7 +3132,6 @@
     <string name="receipt_card_shipping">Доставка</string>
     <string name="receipt_card_tax">Налог</string>
     <string name="receipt_card_discount">Скидка</string>
-    <string name="receipt_card_unknown_merchant">Неизвестный продавец</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d ещё товар</item>
         <item quantity="few">+%1$d ещё товара</item>

@@ -3096,7 +3096,6 @@
     <string name="receipt_card_shipping">Verzending</string>
     <string name="receipt_card_tax">Belasting</string>
     <string name="receipt_card_discount">Korting</string>
-    <string name="receipt_card_unknown_merchant">Onbekende handelaar</string>
     <plurals name="receipt_card_more_items">
         <item quantity="one">+%1$d meer artikel</item>
         <item quantity="other">+%1$d meer artikelen</item>

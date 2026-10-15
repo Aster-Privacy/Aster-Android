@@ -316,6 +316,39 @@ fun AsterGhostButton(
 }
 
 @Composable
+fun AsterCompactGhostButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content_color: Color = Color.Unspecified,
+) {
+    val colors = AsterMaterial.colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale = press_scale(pressed, enabled, "compact_ghost_btn_scale")
+    val resting_color = if (content_color == Color.Unspecified) colors.accent_blue else content_color
+    val resolved_color = if (enabled) resting_color else colors.text_muted
+    Box(
+        modifier = modifier
+            .height(aster_button_compact_height)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(aster_button_shape)
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interaction,
+                indication = ripple(color = resting_color),
+                onClick = onClick,
+            )
+            .padding(horizontal = AsterSpacing.md),
+        contentAlignment = Alignment.Center,
+    ) {
+        aster_button_content(label, false, resolved_color, aster_button_compact_label_size, false)
+    }
+}
+
+@Composable
 fun AsterDestructiveButton(
     label: String,
     onClick: () -> Unit,

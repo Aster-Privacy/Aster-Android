@@ -3168,7 +3168,6 @@
     <string name="receipt_card_shipping">الشحن</string>
     <string name="receipt_card_tax">الضريبة</string>
     <string name="receipt_card_discount">الخصم</string>
-    <string name="receipt_card_unknown_merchant">تاجر غير معروف</string>
     <plurals name="receipt_card_more_items">
         <item quantity="zero">+%1$d عناصر إضافية</item>
         <item quantity="one">+%1$d عنصر إضافي</item>
