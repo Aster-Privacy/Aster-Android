@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">من:</string>
     <string name="compose_quote_header_date">التاريخ:</string>
     <string name="compose_quote_header_subject">الموضوع:</string>
+    <string name="compose_quote_header_to">إلى:</string>
     <string name="schedule_time_in_past">يجب أن يكون وقت الجدولة في المستقبل</string>
     <string name="signature_none">بدون توقيع</string>
     <string name="signature_select">اختيار التوقيع</string>

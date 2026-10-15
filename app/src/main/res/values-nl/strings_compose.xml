@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">Van:</string>
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Onderwerp:</string>
+    <string name="compose_quote_header_to">Aan:</string>
     <string name="schedule_time_in_past">Het geplande tijdstip moet in de toekomst liggen</string>
     <string name="signature_none">Geen handtekening</string>
     <string name="signature_select">Handtekening kiezen</string>

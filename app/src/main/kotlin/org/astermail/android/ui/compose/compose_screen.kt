@@ -1012,7 +1012,50 @@ fun ComposeScreen(
     }
     val quoted_html = quoted_source?.first?.takeIf { it.isNotBlank() }
     val quoted_meta = quoted_source?.second
-    var quoted_expanded by remember { mutableStateOf(false) }
+    val quoted_to = remember(reply_to, thread_state) {
+        (thread_state.messages.firstOrNull { it.id == reply_to } ?: thread_state.messages.lastOrNull())
+            ?.to_addresses.orEmpty()
+    }
+    val is_forward_quote = effective_mode == "forward" && quoted_html != null
+    var quoted_expanded by remember(is_forward_quote) { mutableStateOf(is_forward_quote) }
+    var forward_edited_html by remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
+    val forward_labels = forward_header_labels(
+        forwarded_message = stringResource(R.string.compose_quote_forwarded_message),
+        from = stringResource(R.string.compose_quote_header_from),
+        date = stringResource(R.string.compose_quote_header_date),
+        subject = stringResource(R.string.compose_quote_header_subject),
+        to = stringResource(R.string.compose_quote_header_to),
+    )
+    val forward_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quoted_to, forward_labels) {
+        if (!is_forward_quote || quoted_html == null) {
+            null
+        } else {
+            val (forward_from, forward_ts, forward_subject) = quoted_meta ?: Triple("", "", "")
+            build_forward_inner_html(
+                build_forward_header_html(
+                    forward_labels,
+                    forward_header_values(
+                        from = forward_from,
+                        date = format_quote_timestamp(forward_ts),
+                        subject = forward_subject,
+                        to = quoted_to,
+                    ),
+                ),
+                quoted_html,
+            )
+        }
+    }
+
+    fun forward_block_for_send(): String? {
+        val seed = forward_seed_html ?: return null
+        return wrap_forward_block(forward_edited_html ?: seed)
+    }
+
+    fun draft_body_for_save(): String {
+        val forward_block = forward_block_for_send() ?: return draft_body_with_signature()
+        val base_is_html = get_body_with_formatting() != body || signature_html.isNotBlank()
+        return draft_html_with_forward(draft_body_with_signature(), base_is_html, forward_block)
+    }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
     var discarded by remember { mutableStateOf(false) }
@@ -1386,7 +1429,7 @@ fun ComposeScreen(
             if (sent || is_sending || discarded) return@launch
             val result = mail_vm.save_draft(
                 subject = subject,
-                body_html = draft_body_with_signature(),
+                body_html = draft_body_for_save(),
                 sender_email = from_alias,
                 to = to_chips,
                 cc = cc_chips,
@@ -1529,14 +1572,7 @@ fun ComposeScreen(
     fun apply_link(url: String) {
         val et = body_editor_ref.value ?: return
         val editable = et.text ?: return
-        val normalized = url.trim().let {
-            when {
-                it.startsWith("http://", true) || it.startsWith("https://", true) || it.startsWith("mailto:", true) -> it
-                it.contains('@') && !it.contains(' ') -> "mailto:$it"
-                else -> "https://$it"
-            }
-        }
-        if (normalized.length < 8 || normalized.contains(' ')) return
+        val normalized = normalize_link_url(url) ?: return
         val s = minOf(et.selectionStart, et.selectionEnd).coerceAtLeast(0)
         val e = maxOf(et.selectionStart, et.selectionEnd).coerceAtMost(editable.length)
         if (s >= e) {
@@ -1582,7 +1618,7 @@ fun ComposeScreen(
                     val pause_attachments = attachments
                     mail_vm.save_draft_and_finish(
                         subject = subject,
-                        body_html = draft_body_with_signature(),
+                        body_html = draft_body_for_save(),
                         sender_email = from_alias,
                         to = to_chips,
                         cc = cc_chips,
@@ -1720,7 +1756,7 @@ fun ComposeScreen(
             )
         }
 
-        val quote_block = quoted_html?.let { qh ->
+        val quote_block = forward_block_for_send() ?: quoted_html?.let { qh ->
             val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
             "<br><br><div class=\"aster_quote gmail_quote\">" +
                 "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
@@ -2308,7 +2344,7 @@ fun ComposeScreen(
                         )
                     }
                 } else {
-                    send_fab(enabled = can_send, on_click = { do_send() })
+                    send_fab(active = can_send, enabled = !is_sending, on_click = { do_send() })
                 }
             }
             Spacer(Modifier.width(AsterSpacing.sm))
@@ -2740,7 +2776,22 @@ fun ComposeScreen(
                     ) {
                         val (quoted_from, quoted_ts, quoted_subject) = quoted_meta
                             ?: Triple("", "", "")
-                        Column(
+                        val editable_forward_seed = forward_seed_html
+                        if (editable_forward_seed != null) {
+                            forward_block_editor(
+                                seed_html = editable_forward_seed,
+                                on_html_change = { edited ->
+                                    if (edited != forward_edited_html) {
+                                        forward_edited_html = edited
+                                        schedule_draft_save()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm)
+                                    .clip(quoted_preview_card_shape)
+                                    .testTag("compose_forward_editor"),
+                            )
+                        } else Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm)
@@ -3444,7 +3495,7 @@ fun ComposeScreen(
                         val dialog_attachments = attachments
                         mail_vm.save_draft_and_finish(
                             subject = subject,
-                            body_html = draft_body_with_signature(),
+                            body_html = draft_body_for_save(),
                             sender_email = from_alias,
                             to = to_chips,
                             cc = cc_chips,
@@ -3502,10 +3553,10 @@ private fun format_file_size(bytes: Long): String {
 }
 
 @Composable
-private fun send_fab(enabled: Boolean, on_click: () -> Unit) {
+private fun send_fab(active: Boolean, enabled: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (enabled) colors.accent_blue else colors.bg_hover
-    val tint = if (enabled) colors.on_accent else colors.text_muted
+    val bg = if (active) colors.accent_blue else colors.bg_hover
+    val tint = if (active) colors.on_accent else colors.text_muted
     Box(
         modifier = Modifier
             .size(40.dp)

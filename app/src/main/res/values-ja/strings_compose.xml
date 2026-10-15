@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">差出人：</string>
     <string name="compose_quote_header_date">日付：</string>
     <string name="compose_quote_header_subject">件名：</string>
+    <string name="compose_quote_header_to">宛先：</string>
     <string name="schedule_time_in_past">予約時刻は未来の時刻にしてください</string>
     <string name="signature_none">署名なし</string>
     <string name="signature_select">署名を選択</string>

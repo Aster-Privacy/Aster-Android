@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">发件人：</string>
     <string name="compose_quote_header_date">日期：</string>
     <string name="compose_quote_header_subject">主题：</string>
+    <string name="compose_quote_header_to">收件人：</string>
     <string name="schedule_time_in_past">定时发送的时间必须晚于现在</string>
     <string name="signature_none">不使用签名</string>
     <string name="signature_select">选择签名</string>

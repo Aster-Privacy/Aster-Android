@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">보낸 사람:</string>
     <string name="compose_quote_header_date">날짜:</string>
     <string name="compose_quote_header_subject">제목:</string>
+    <string name="compose_quote_header_to">받는 사람:</string>
     <string name="schedule_time_in_past">예약 시각은 현재 이후여야 합니다</string>
     <string name="signature_none">서명 없음</string>
     <string name="signature_select">서명 선택</string>
