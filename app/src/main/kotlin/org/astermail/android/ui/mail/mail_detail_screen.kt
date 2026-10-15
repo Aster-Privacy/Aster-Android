@@ -406,6 +406,9 @@ internal fun trim_email_runon(address: String): String {
     return address.substring(0, at + 1) + domain.substring(0, dot + 1) + tld
 }
 
+internal fun secure_image_url(url: String): String =
+    if (url.startsWith("http://", ignoreCase = true)) "https://" + url.substring(7) else url
+
 private fun is_proxyable_url(value: String): Boolean {
     val lower = value.trim().lowercase()
     return lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("//")
@@ -419,7 +422,7 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
             .replace("&#38;", "&")
             .replace("&#x26;", "&")
             .trim()
-        val absolute = if (url.startsWith("//")) "https:$url" else url
+        val absolute = secure_image_url(if (url.startsWith("//")) "https:$url" else url)
         if (absolute.startsWith(proxy_base)) return absolute
         if (absolute.startsWith(INLINE_IMAGE_URL_PREFIX)) return absolute
         return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
@@ -6917,7 +6920,7 @@ internal fun email_html_view(
                     return
                 }
                 zoom_active = true
-                content_height_dp = (base_dp * ratio).coerceIn(1f, 24000f).dp
+                content_height_dp = zoomed_body_height_dp(base_dp, ratio, max_body_height_px).dp
             }
 
             override fun onRenderProcessGone(

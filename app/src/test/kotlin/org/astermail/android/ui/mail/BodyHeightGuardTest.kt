@@ -115,6 +115,15 @@ class BodyHeightGuardTest {
     }
 
     @Test
+    fun a_zoomed_body_grows_with_the_zoom_ratio_up_to_the_general_cap() {
+        assertEquals(30000f, zoomed_body_height_dp(15000f, 2f, max_height))
+        assertEquals(60000f, zoomed_body_height_dp(15000f, 4f, max_height))
+        assertEquals(max_height.toFloat(), zoomed_body_height_dp(30000f, 3f, max_height))
+        assertEquals(1f, zoomed_body_height_dp(0f, 2f, max_height))
+        assertEquals(1f, zoomed_body_height_dp(500f, 2f, 0))
+    }
+
+    @Test
     fun a_page_wider_than_the_screen_overflows_sideways() {
         assertTrue(body_overflows_sideways(1727, 1080))
         assertFalse(body_overflows_sideways(1080, 1080))

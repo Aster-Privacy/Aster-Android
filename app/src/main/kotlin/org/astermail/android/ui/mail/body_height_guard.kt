@@ -23,6 +23,9 @@ package org.astermail.android.ui.mail
 
 private const val MIN_MEASURABLE_WIDTH_DP = 120f
 
+internal fun zoomed_body_height_dp(base_dp: Float, ratio: Float, max_dp: Int): Float =
+    (base_dp * ratio).coerceIn(1f, max_dp.coerceAtLeast(1).toFloat())
+
 internal class body_height_guard(private val max_capped_remeasures: Int = 2) {
     private var capped_remeasures = 0
 

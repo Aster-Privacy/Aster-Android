@@ -116,6 +116,37 @@ class ProxyExternalUrlsTest {
     }
 
     @Test
+    fun plain_http_image_sources_are_proxied_over_https() {
+        val out = proxy_external_urls(
+            """<img src="http://cdn.example/hero.png"><table><tr><td background="HTTP://cdn.example/btn.png" style="background:url(http://cdn.example/bg.png)">x</td></tr></table>""",
+            base,
+        )
+        assertTrue(out.contains("src=\"${proxied("https://cdn.example/hero.png")}\""))
+        assertTrue(out.contains("background=\"${proxied("https://cdn.example/btn.png")}\""))
+        assertTrue(out.contains("url(${proxied("https://cdn.example/bg.png")})"))
+        assertFalse(out.contains(java.net.URLEncoder.encode("http://", "UTF-8")))
+    }
+
+    @Test
+    fun plain_http_srcset_entries_are_proxied_over_https() {
+        val out = proxy_external_urls("""<img srcset="http://cdn.example/a.png 1x, https://cdn.example/b.png 2x">""", base)
+        assertEquals(
+            """<img srcset="${proxied("https://cdn.example/a.png")} 1x, ${proxied("https://cdn.example/b.png")} 2x">""",
+            out,
+        )
+    }
+
+    @Test
+    fun rewrite_img_through_proxy_upgrades_plain_http_sources() {
+        val out = EmailHtmlSanitizer.rewrite_img_through_proxy(
+            """<img src="http://cdn.example/hero.png">""",
+            "https://app.astermail.org/api/images/v1/proxy",
+            allow_external = true,
+        )
+        assertTrue(out.contains("proxy?url=${java.net.URLEncoder.encode("https://cdn.example/hero.png", "UTF-8")}"))
+    }
+
+    @Test
     fun does_not_double_proxy_an_already_proxied_url() {
         val already = proxied("https://cdn.example/hero.png")
         val out = proxy_external_urls("""<img src="$already">""", base)
