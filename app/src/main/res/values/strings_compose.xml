@@ -7,6 +7,7 @@
     <string name="compose_quote_header_from">From:</string>
     <string name="compose_quote_header_date">Date:</string>
     <string name="compose_quote_header_subject">Subject:</string>
+    <string name="compose_quote_header_to">To:</string>
     <string name="schedule_time_in_past">Scheduled time must be in the future</string>
     <string name="signature_none">No signature</string>
     <string name="signature_select">Select signature</string>

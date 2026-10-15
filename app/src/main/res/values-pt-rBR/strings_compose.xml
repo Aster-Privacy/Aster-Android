@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">De:</string>
     <string name="compose_quote_header_date">Data:</string>
     <string name="compose_quote_header_subject">Assunto:</string>
+    <string name="compose_quote_header_to">Para:</string>
     <string name="schedule_time_in_past">O horário agendado precisa estar no futuro</string>
     <string name="signature_none">Sem assinatura</string>
     <string name="signature_select">Escolher assinatura</string>

@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">Von:</string>
     <string name="compose_quote_header_date">Datum:</string>
     <string name="compose_quote_header_subject">Betreff:</string>
+    <string name="compose_quote_header_to">An:</string>
     <string name="schedule_time_in_past">Der geplante Zeitpunkt muss in der Zukunft liegen</string>
     <string name="signature_none">Keine Signatur</string>
     <string name="signature_select">Signatur wählen</string>

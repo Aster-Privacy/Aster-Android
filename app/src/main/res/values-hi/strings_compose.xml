@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">प्रेषक:</string>
     <string name="compose_quote_header_date">तारीख:</string>
     <string name="compose_quote_header_subject">विषय:</string>
+    <string name="compose_quote_header_to">प्रति:</string>
     <string name="schedule_time_in_past">शेड्यूल किया गया समय भविष्य में होना चाहिए</string>
     <string name="signature_none">कोई हस्ताक्षर नहीं</string>
     <string name="signature_select">हस्ताक्षर चुनें</string>

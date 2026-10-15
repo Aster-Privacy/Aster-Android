@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">De :</string>
     <string name="compose_quote_header_date">Date :</string>
     <string name="compose_quote_header_subject">Objet :</string>
+    <string name="compose_quote_header_to">À :</string>
     <string name="compose_attachment_read_failed">Impossible de joindre « %1$s ». Votre e-mail n\'a pas été envoyé. Supprimez ou rajoutez le fichier, puis réessayez.</string>
     <string name="schedule_time_in_past">L\'heure programmée doit être dans le futur</string>
     <string name="signature_none">Aucune signature</string>

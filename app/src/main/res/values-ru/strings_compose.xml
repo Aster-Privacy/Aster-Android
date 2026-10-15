@@ -8,6 +8,7 @@
     <string name="compose_quote_header_from">От:</string>
     <string name="compose_quote_header_date">Дата:</string>
     <string name="compose_quote_header_subject">Тема:</string>
+    <string name="compose_quote_header_to">Кому:</string>
     <string name="schedule_time_in_past">Время отправки должно быть в будущем</string>
     <string name="signature_none">Без подписи</string>
     <string name="signature_select">Выбрать подпись</string>
