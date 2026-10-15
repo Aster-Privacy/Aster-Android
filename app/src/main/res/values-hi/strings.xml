@@ -2971,6 +2971,27 @@
     <string name="order_card_view_order">ऑर्डर देखें</string>
     <string name="order_card_collapse">ऑर्डर का विवरण छिपाएं</string>
     <string name="order_card_expand">ऑर्डर का विवरण दिखाएं</string>
+    <string name="receipt_card_privacy">आपके ईमेल से इसी डिवाइस पर निकाला गया, इसलिए हमारे सर्वर पर कुछ नहीं भेजा जाता।</string>
+    <string name="receipt_card_receipt_from">%1$s से रसीद</string>
+    <string name="receipt_card_receipt_number">रसीद #%1$s</string>
+    <string name="receipt_card_looks_right">सही है</string>
+    <string name="receipt_card_not_right">सही नहीं है?</string>
+    <string name="receipt_card_review_title">विवरण सुधारें</string>
+    <string name="receipt_card_hide">यह कार्ड छिपाएँ</string>
+    <string name="receipt_card_review_saved">रसीद का विवरण अपडेट किया गया. इस भेजने वाले की आगे की रसीदों में सही किया गया नाम इस्तेमाल होगा.</string>
+    <string name="receipt_card_review_thanks">आपकी प्रतिक्रिया के लिए धन्यवाद</string>
+    <string name="receipt_card_view_receipt">रसीद देखें</string>
+    <string name="receipt_card_payment">भुगतान</string>
+    <string name="receipt_card_merchant">विक्रेता</string>
+    <string name="receipt_card_card_ending_in">%1$s पर खत्म होने वाला कार्ड</string>
+    <string name="receipt_card_subtotal">उप-योग</string>
+    <string name="receipt_card_shipping">शिपिंग</string>
+    <string name="receipt_card_tax">कर</string>
+    <string name="receipt_card_discount">छूट</string>
+    <plurals name="receipt_card_more_items">
+        <item quantity="one">+%1$d और आइटम</item>
+        <item quantity="other">+%1$d और आइटम</item>
+    </plurals>
     <string name="shipping_status_label_created">लेबल बन गया</string>
     <string name="shipping_status_shipped">भेज दिया गया</string>
     <string name="shipping_status_in_transit">रास्ते में</string>

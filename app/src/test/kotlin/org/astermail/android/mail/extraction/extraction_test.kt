@@ -417,4 +417,305 @@ class extraction_test {
             assertTrue(subject, is_shipping_email(subject, body))
         }
     }
+
+    @Test
+    fun `accepts a stripe receipt link in plain text`() {
+        val url = extract_receipt_url(
+            "Thanks for your payment. View it here: https://pay.stripe.com/receipts/payment/abc123.",
+            null,
+            listOf("receipts@stripe.com"),
+        )
+        assertEquals("https://pay.stripe.com/receipts/payment/abc123", url)
+    }
+
+    @Test
+    fun `accepts a view your receipt anchor on the sender domain`() {
+        val url = extract_receipt_url(
+            "View your receipt",
+            "<p>Thanks.</p><a href=\"https://orders.shop.example.com/r/42\">View your receipt</a>",
+            listOf("hello@shop.example.com"),
+        )
+        assertEquals("https://orders.shop.example.com/r/42", url)
+    }
+
+    @Test
+    fun `rejects a receipt anchor on a third party domain`() {
+        val url = extract_receipt_url(
+            "View your receipt",
+            "<a href=\"https://tracker.example.net/r/42\">View your receipt</a>",
+            listOf("hello@shop.example.com"),
+        )
+        assertNull(url)
+    }
+
+    @Test
+    fun `rejects unsafe receipt links`() {
+        listOf(
+            "http://pay.stripe.com/receipts/payment/abc123",
+            "https://user:pw@pay.stripe.com/receipts/payment/abc123",
+            "javascript:alert(1)",
+            "https://pay.stripe.com/other/abc123",
+            "https://pay.stripe.com.evil.example/receipts/x",
+        ).forEach { href ->
+            val url = extract_receipt_url(
+                "View your receipt",
+                "<a href=\"$href\">View your receipt</a>",
+                listOf("hello@shop.example.com"),
+            )
+            assertNull(href, url)
+        }
+    }
+
+    @Test
+    fun `rejects an overlong receipt link`() {
+        val href = "https://pay.stripe.com/receipts/" + "a".repeat(2100)
+        assertNull(extract_receipt_url("Receipt: $href", null, listOf("receipts@stripe.com")))
+    }
+
+    @Test
+    fun `plain text links are checked against the allowlist only`() {
+        val url = extract_receipt_url(
+            "View your receipt: https://orders.shop.example.com/r/42",
+            null,
+            listOf("hello@shop.example.com"),
+        )
+        assertNull(url)
+    }
+
+    @Test
+    fun `classifies receipts and orders`() {
+        assertEquals(document_kind_receipt, detect_document_kind("Your receipt from Acme", "Amount paid \$10.00"))
+        assertEquals(document_kind_order, detect_document_kind("Order #1234 confirmed", "Thanks for your receipt"))
+        assertEquals(document_kind_order, detect_document_kind("Thanks for shopping", "Your order confirmation is below"))
+    }
+
+    @Test
+    fun `uses the merchant from a payment processor receipt`() {
+        val result = purchase(
+            "Your receipt from Northwind Traders",
+            "Amount paid \$42.00. Date paid: March 3, 2026. Receipt #1234-5678.",
+            "receipts@stripe.com",
+            "Stripe",
+        )
+        assertEquals("Northwind Traders", result.merchant_name)
+        assertEquals("receipts@stripe.com", result.merchant_source)
+        assertEquals(document_kind_receipt, result.document_kind)
+    }
+
+    @Test
+    fun `ignores the display name of a payment processor`() {
+        val result = purchase("Payment received", "Amount paid \$42.00.", "receipts@stripe.com", "Acme Payments via Stripe")
+        assertNull(result.merchant_name)
+    }
+
+    @Test
+    fun `reads the original sender of a forwarded receipt`() {
+        val body = "FYI\n\n---------- Forwarded message ---------\nFrom: Northwind Traders <orders@northwind.example>\n" +
+            "Date: Tue, Mar 3, 2026\nSubject: Your Northwind Traders receipt\nTo: me@example.com\n\n" +
+            "Order #NW-100. Total: \$12.00."
+        val result = purchase("Fwd: Your Northwind Traders receipt", body, "friend@example.com", "Friend")
+        assertEquals("orders@northwind.example", result.merchant_source)
+        assertEquals("Northwind Traders", result.merchant_name)
+        assertTrue(result.raw_signals.contains("forwarded_from:orders@northwind.example"))
+    }
+
+    @Test
+    fun `purchase details carry the receipt url`() {
+        val result = extract_purchase_details(
+            "Your receipt",
+            "Amount paid \$9.00. https://pay.stripe.com/receipts/payment/xyz",
+            "receipts@stripe.com",
+            "Stripe",
+            Locale.US,
+        )
+        assertEquals("https://pay.stripe.com/receipts/payment/xyz", result.receipt_url)
+    }
+
+    private fun details(subject: String, body: String, from_email: String, from_name: String, html: String? = null) =
+        extract_email_details(subject, body, html, from_email, from_name, Locale.US)
+
+    @Test
+    fun `reads a marketplace order confirmation`() {
+        val body = "Hello Sam,\nThank you for your order.\n\nOrder #112-9876543-1234567\nPlaced on March 3, 2026\n\n" +
+            "Noise Cancelling Headphones x 1 \$249.00\nUSB-C Cable (2 m) x 2 \$18.00\n\n" +
+            "Item Subtotal: \$267.00\nShipping & Handling: \$0.00\nEstimated Tax: \$21.36\nOrder Total: \$288.36\n\n" +
+            "Payment method: Visa ending in 4242\n"
+        val result = details("Your Amazon.com order #112-9876543-1234567", body, "auto-confirm@amazon.com", "Amazon.com")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("112-9876543-1234567", purchase?.order_id)
+        assertEquals("Amazon.com", purchase?.merchant_name)
+        assertEquals(document_kind_order, purchase?.document_kind)
+        assertEquals(288.36, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals(267.0, purchase?.subtotal?.value ?: 0.0, 0.001)
+        assertEquals("4242", purchase?.card_last_four)
+        assertEquals(2, purchase?.items?.size)
+        assertEquals(2, purchase?.items?.get(1)?.quantity)
+        assertEquals(18.0, purchase?.items?.get(1)?.total_price?.value ?: 0.0, 0.001)
+        assertNull(purchase?.receipt_url)
+    }
+
+    @Test
+    fun `reads an independent store order sent through a commerce platform`() {
+        val body = "Thank you for your purchase!\n\nHi Sam, we're getting your order ready to be shipped.\n\nOrder #1001\n\n" +
+            "1 x Linen Apron - \$38.00\n2 x Oven Mitt - \$12.00\n\nSubtotal: \$62.00\nShipping: \$6.50\nTaxes: \$5.48\nTotal: \$73.98\n"
+        val result = details("Order #1001 confirmed", body, "hello@maplekitchen.example", "Maple Kitchen")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Maple Kitchen", purchase?.merchant_name)
+        assertEquals("1001", purchase?.order_id)
+        assertEquals(document_kind_order, purchase?.document_kind)
+        assertEquals(73.98, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals(6.5, purchase?.shipping_cost?.value ?: 0.0, 0.001)
+        assertEquals(listOf("Linen Apron", "Oven Mitt"), purchase?.items?.map { it.name })
+        assertEquals(24.0, purchase?.items?.get(1)?.total_price?.value ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun `reads a point of sale receipt and keeps its receipt link`() {
+        val html = "<html><body><p>Receipt from Blue Bottle Coffee</p><p>Total \$9.75</p>" +
+            "<p>Paid with Mastercard ending in 1881</p>" +
+            "<a href=\"https://squareup.com/receipt/preview/abc123\">View full receipt</a></body></html>"
+        val body = "Receipt from Blue Bottle Coffee\nTotal \$9.75\nPaid with Mastercard ending in 1881\nView full receipt"
+        val result = details("Receipt from Blue Bottle Coffee", body, "receipts@messaging.squareup.com", "Square", html)
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Blue Bottle Coffee", purchase?.merchant_name)
+        assertEquals(document_kind_receipt, purchase?.document_kind)
+        assertEquals(9.75, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals("https://squareup.com/receipt/preview/abc123", purchase?.receipt_url)
+    }
+
+    @Test
+    fun `reads a payment service receipt with the payee as merchant`() {
+        val body = "You sent a payment of \$54.20 USD to Riverside Books\n\nTransaction ID: 7XY12345AB678901C\n" +
+            "March 4, 2026\n\nPayment receipt\n\nTotal: \$54.20 USD\n\nhttps://www.paypal.com/activity/payment/7XY12345AB678901C"
+        val result = details("Receipt for your payment to Riverside Books", body, "service@paypal.com", "service@paypal.com")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Riverside Books", purchase?.merchant_name)
+        assertEquals("7XY12345AB678901C", purchase?.transaction_id)
+        assertEquals(document_kind_receipt, purchase?.document_kind)
+        assertEquals(54.2, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals("https://www.paypal.com/activity/payment/7XY12345AB678901C", purchase?.receipt_url)
+    }
+
+    @Test
+    fun `reads a digital store receipt`() {
+        val body = "Receipt\n\nApple ID: sam@example.com\nOrder ID: MLXYZ123AB\nDate: Mar 5, 2026\n\n" +
+            "Procreate\nDigital Illustration\n\$12.99\n\nSubtotal \$12.99\nTax \$1.04\nTotal \$14.03\n"
+        val result = details("Your receipt from Apple.", body, "no_reply@email.apple.com", "Apple")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Apple", purchase?.merchant_name)
+        assertEquals("MLXYZ123AB", purchase?.order_id)
+        assertEquals(document_kind_receipt, purchase?.document_kind)
+        assertEquals(14.03, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals(1.04, purchase?.tax?.value ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun `reads a ride receipt`() {
+        val body = "Thanks for riding, Sam\n\nTotal \$18.42\nMarch 6, 2026\n\nTrip fare \$14.90\nBooking fee \$2.10\n" +
+            "Tolls \$1.42\n\nPayments\nVisa ending 0199 \$18.42\n\nYou paid \$18.42\n"
+        val result = details("Your Friday evening trip with Uber", body, "noreply@uber.com", "Uber Receipts")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Uber", purchase?.merchant_name)
+        assertEquals(document_kind_receipt, purchase?.document_kind)
+        assertEquals(18.42, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals("0199", purchase?.card_last_four)
+    }
+
+    @Test
+    fun `reads a handmade marketplace order`() {
+        val body = "Thanks for your order from WillowWoodworks!\n\nOrder #3214567890\n\n" +
+            "Walnut Serving Board (Qty: 1) \$64.00\n\nItem total: \$64.00\nShipping: \$9.00\nSales tax: \$5.84\nOrder total: \$78.84\n" +
+            "Paid with card ending in 5555\n"
+        val result = details("Your Etsy order from WillowWoodworks", body, "transaction@etsy.com", "Etsy")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("WillowWoodworks", purchase?.merchant_name)
+        assertEquals("3214567890", purchase?.order_id)
+        assertEquals(78.84, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals(64.0, purchase?.subtotal?.value ?: 0.0, 0.001)
+        assertEquals("Walnut Serving Board", purchase?.items?.firstOrNull()?.name)
+    }
+
+    @Test
+    fun `reads an app store order`() {
+        val body = "Thank you for your purchase.\n\nOrder number: GPA.3312-4456-7789-01234\nOrder date: Mar 7, 2026 2:14 PM\n\n" +
+            "Item: Stardew Valley Qty: 1 Price: \$4.99\n\nTotal: \$4.99\nPayment method: Mastercard ending in 7788\n"
+        val result = details("Your Google Play Order Receipt from Mar 7, 2026", body, "googleplay-noreply@google.com", "Google Play")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Google Play", purchase?.merchant_name)
+        assertEquals("GPA.3312-4456-7789-01234", purchase?.order_id)
+        assertEquals(4.99, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals("Stardew Valley", purchase?.items?.firstOrNull()?.name)
+    }
+
+    @Test
+    fun `reads an airline booking receipt`() {
+        val body = "Thank you for your booking.\n\nConfirmation code: QX7T2A\nPassenger: Sam Lee\n" +
+            "Flight: SEA to AMS, Mar 20, 2026\n\nBase fare \$612.00\nTaxes and fees \$98.40\nTotal \$710.40\n" +
+            "Charged to Visa ending in 3030\n"
+        val result = details("Your Northwind Air booking confirmation QX7T2A", body, "noreply@northwindair.example", "Northwind Air")
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Northwind Air", purchase?.merchant_name)
+        assertEquals("QX7T2A", purchase?.confirmation_number)
+        assertEquals(710.4, purchase?.total?.value ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun `reads a software invoice sent through a billing processor and rejects foreign links`() {
+        val html = "<html><body><p>Your receipt from Northwind Cloud</p><p>Invoice #F1A2B3C4-0007</p>" +
+            "<p>Amount paid \$29.00</p><p>Date paid March 8, 2026</p>" +
+            "<a href=\"https://tracking.example.net/click?u=1\">View your receipt</a>" +
+            "<a href=\"https://invoice.stripe.com/i/acct_1/test_abc\">Download invoice</a></body></html>"
+        val body = "Your receipt from Northwind Cloud\nInvoice #F1A2B3C4-0007\nAmount paid \$29.00\nDate paid March 8, 2026"
+        val result = details("Your receipt from Northwind Cloud #F1A2B3C4-0007", body, "receipts@stripe.com", "Northwind Cloud", html)
+        val purchase = result.purchase
+        assertTrue(result.has_purchase_details)
+        assertEquals("Northwind Cloud", purchase?.merchant_name)
+        assertEquals(document_kind_receipt, purchase?.document_kind)
+        assertEquals(29.0, purchase?.total?.value ?: 0.0, 0.001)
+        assertEquals("https://invoice.stripe.com/i/acct_1/test_abc", purchase?.receipt_url)
+    }
+
+    @Test
+    fun `leaves the receipt link empty when only an unrelated link claims to be the receipt`() {
+        val html = "<html><body><p>Thank you for your order.</p><p>Order #55501</p><p>Order total: \$40.00</p>" +
+            "<a href=\"https://links.mailer.example/c/9f8e\">View your receipt</a></body></html>"
+        val result = details("Order #55501", "Thank you for your order. Order #55501. Order total: \$40.00", "orders@shop.example", "Shop", html)
+        assertTrue(result.has_purchase_details)
+        assertNull(result.purchase?.receipt_url)
+    }
+
+    @Test
+    fun `does not treat a newsletter with prices as a purchase`() {
+        val body = "This week's picks\n\nTotal comfort: the new lounge chair, now \$299.00\n" +
+            "Order today and save 20% with code SPRING\n\nUnsubscribe | View in browser"
+        val result = details("Spring arrivals are here", body, "news@furniture.example", "Furniture Co")
+        assertFalse(result.has_purchase_details)
+        assertNull(result.purchase)
+    }
+
+    @Test
+    fun `does not treat a shipping notification as a purchase`() {
+        val body = "Good news, your package is on its way.\n\nTracking number: 1Z999AA10123456784\nCarrier: UPS\n" +
+            "Estimated delivery: Thursday, March 12\n\nTrack your package: https://www.ups.com/track?tracknum=1Z999AA10123456784"
+        val result = details("Your package has shipped", body, "ship-confirm@shop.example", "Shop")
+        assertFalse(result.has_purchase_details)
+        assertNull(result.purchase)
+        assertTrue(result.has_shipping_details)
+    }
+
+    @Test
+    fun `does not list ledger lines as items`() {
+        val body = "Thank you for your order.\nOrder #777\n\nTea Towel x 2 \$16.00\nSubtotal x 1 \$16.00\nTotal x 1 \$18.00\nTotal: \$18.00"
+        val result = purchase("Order #777", body, "orders@shop.example", "Shop")
+        assertEquals(listOf("Tea Towel"), result.items.map { it.name })
+    }
 }

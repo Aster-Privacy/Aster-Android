@@ -96,7 +96,7 @@ internal fun format_amount(value: Double, currency: String, locale: Locale): Str
 }
 
 private const val id_marker = "(?:#|no\\.?|num(?:ber)?|id)"
-private const val id_value = "([A-Za-z0-9][\\w-]{4,29})"
+private const val id_value = "([A-Za-z0-9](?:[\\w-]|\\.(?=[\\w-])){3,29})"
 
 private fun labelled_id(label: String, marker: String = id_marker): Regex =
     Regex("\\b" + label + "\\s*" + marker + "\\s*[:#]?\\s*" + id_value, RegexOption.IGNORE_CASE)
@@ -211,18 +211,31 @@ internal fun extract_date(text: String, patterns: List<Regex>): String? {
     return null
 }
 
+private class item_pattern(val regex: Regex, val price_is_line_total: Boolean)
+
 private val item_patterns = listOf(
-    Regex("(\\d+)\\s*x\\s+(.+?)\\s*[-–]\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE),
-    Regex("(.+?)\\s*\\(Qty:\\s*(\\d+)\\)\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE),
-    Regex("Item:\\s*(.+?)(?:\\s*Qty:\\s*(\\d+))?\\s*Price:\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE),
+    item_pattern(Regex("(\\d+)\\s*x\\s+(.+?)\\s*[-–]\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE), false),
+    item_pattern(Regex("(.+?)\\s*\\(Qty:\\s*(\\d+)\\)\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE), false),
+    item_pattern(
+        Regex("Item:\\s*(.+?)(?:\\s*Qty:\\s*(\\d+))?\\s*Price:\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE),
+        false,
+    ),
+    item_pattern(
+        Regex(
+            "(?:^|\\n)[ \\t]*([^\\n\$€£¥₹]{2,160}?)\\s+[×x]\\s*(\\d{1,3})\\s+([\$€£¥₹]\\s*[\\d,.]+)[ \\t]*(?=\\n|$)",
+            RegexOption.IGNORE_CASE,
+        ),
+        true,
+    ),
 )
 
 private val all_digits_regex = Regex("^\\d+$")
+private val item_summary_word = Regex("\\b(?:sub\\s?total|total|amount|tax|vat|shipping|discount)\\b", RegexOption.IGNORE_CASE)
 
 private fun extract_items_from_body(body: String, fallback_currency: String, locale: Locale): List<ExtractedItem> {
     val items = ArrayList<ExtractedItem>()
     for (pattern in item_patterns) {
-        for (match in pattern.findAll(body)) {
+        for (match in pattern.regex.findAll(body)) {
             val qty_or_name = match.groups[1]?.value.orEmpty()
             val name_or_qty = match.groups[2]?.value.orEmpty()
             val price_str = match.groups[3]?.value.orEmpty()
@@ -233,11 +246,23 @@ private fun extract_items_from_body(body: String, fallback_currency: String, loc
             } else {
                 name_or_qty.trim().toIntOrNull() ?: 1
             }
-            val unit_price = parse_amount(price_str, fallback_currency, locale)
-            if (item_name != null && item_name.length > 2 && item_name.length < 200) {
-                val total_price = unit_price?.let {
-                    val total = it.value * quantity
-                    it.copy(value = total, formatted = format_amount(total, it.currency, locale))
+            val price = parse_amount(price_str, fallback_currency, locale)
+            if (item_name != null && item_name.length > 2 && item_name.length < 200 && !item_summary_word.containsMatchIn(item_name)) {
+                val unit_price = price?.let {
+                    if (!pattern.price_is_line_total || quantity <= 1) {
+                        it
+                    } else {
+                        val unit = it.value / quantity
+                        it.copy(value = unit, formatted = format_amount(unit, it.currency, locale))
+                    }
+                }
+                val total_price = price?.let {
+                    if (pattern.price_is_line_total || quantity <= 1) {
+                        it
+                    } else {
+                        val total = it.value * quantity
+                        it.copy(value = total, formatted = format_amount(total, it.currency, locale))
+                    }
                 }
                 items.add(ExtractedItem(item_name, quantity, unit_price, total_price))
             }
@@ -246,13 +271,109 @@ private fun extract_items_from_body(body: String, fallback_currency: String, loc
     return items
 }
 
-private val merchant_role_suffix_regex =
-    Regex("(?:\\s+(?:order|shipping|notification|update)s?)+\\s*$", RegexOption.IGNORE_CASE)
+private val merchant_role_suffix_regex = Regex(
+    "(?:\\s+(?:order|shipping|notification|update|receipt|billing|payment|team|support)s?)+\\s*$",
+    RegexOption.IGNORE_CASE,
+)
 
-internal fun extract_merchant_name(from_email: String, from_name: String): String? {
-    if (from_name.isNotEmpty() && !from_name.lowercase(Locale.ROOT).contains("noreply")) {
-        val stripped = from_name.replace(merchant_role_suffix_regex, "").trim()
-        return stripped.ifEmpty { from_name.trim() }
+private val payment_processor_domains = setOf(
+    "stripe.com",
+    "paypal.com",
+    "paypal.de",
+    "squareup.com",
+    "square.com",
+    "shopify.com",
+    "shopifyemail.com",
+    "gumroad.com",
+    "paddle.com",
+    "paddle.net",
+    "lemonsqueezy.com",
+    "fastspring.com",
+    "braintreegateway.com",
+    "adyen.com",
+    "mollie.com",
+    "klarna.com",
+    "chargebee.com",
+    "recurly.com",
+    "2checkout.com",
+    "checkout.com",
+)
+
+internal fun is_payment_processor_domain(domain: String): Boolean {
+    val lower = domain.trim().lowercase(Locale.ROOT)
+    if (lower.isEmpty()) return false
+    return payment_processor_domains.any { lower == it || lower.endsWith(".$it") }
+}
+
+private val generic_merchant_words = setOf(
+    "order", "orders", "payment", "purchase", "receipt", "invoice", "subscription", "online", "recent",
+    "latest", "new", "monthly", "annual", "us", "store", "shop", "the", "your",
+)
+
+private const val merchant_tail = "([^\\n#\\[\\(<>@:]{2,60}?)"
+private const val merchant_stop =
+    "(?=\\s*(?:[\\[\\(#:,.!|\\-]|\\bis\\b|\\bhas\\b|\\bfor\\b|\\bon\\b|\\bwas\\b|\\n|\$))"
+
+private val subject_merchant_patterns = listOf(
+    Regex("\\breceipt\\s+from\\s+$merchant_tail$merchant_stop", RegexOption.IGNORE_CASE),
+    Regex(
+        "\\b(?:order|purchase|invoice|payment)\\s+(?:confirmation\\s+|receipt\\s+)?(?:from|with|at|to)\\s+$merchant_tail$merchant_stop",
+        RegexOption.IGNORE_CASE,
+    ),
+    Regex("\\byour\\s+$merchant_tail\\s+(?:receipt|invoice|order\\s+confirmation|order|purchase)\\b", RegexOption.IGNORE_CASE),
+    Regex(
+        "\\bthanks?\\s+(?:you\\s+)?for\\s+(?:your\\s+)?(?:order|purchase|shopping|payment)\\s+(?:from|with|at|to)\\s+$merchant_tail$merchant_stop",
+        RegexOption.IGNORE_CASE,
+    ),
+)
+
+private val body_merchant_patterns = listOf(
+    Regex("\\breceipt\\s+from\\s+$merchant_tail$merchant_stop", RegexOption.IGNORE_CASE),
+    Regex(
+        "\\bthanks?\\s+(?:you\\s+)?for\\s+(?:your\\s+)?(?:order|purchase|shopping|payment)\\s+(?:from|with|at|to)\\s+$merchant_tail$merchant_stop",
+        RegexOption.IGNORE_CASE,
+    ),
+    Regex(
+        "\\b(?:order|purchase|invoice|payment)\\s+(?:confirmation\\s+|receipt\\s+)?(?:from|with|at|to)\\s+$merchant_tail$merchant_stop",
+        RegexOption.IGNORE_CASE,
+    ),
+    Regex("\\bsold\\s+by\\s+$merchant_tail$merchant_stop", RegexOption.IGNORE_CASE),
+    Regex(
+        "\\b(?:payment\\s+of|paid|sent)\\s+(?:\\S+\\s+){1,3}?to\\s+$merchant_tail$merchant_stop",
+        RegexOption.IGNORE_CASE,
+    ),
+)
+
+private val whitespace_run_regex = Regex("\\s+")
+private val merchant_leading_junk = Regex("^[\\s\"'“”*_-]+")
+private val merchant_trailing_junk = Regex("[\\s\"'“”*_.,;:!-]+$")
+private val merchant_rejected_content = Regex("https?:|www\\.|@|[<>]", RegexOption.IGNORE_CASE)
+private val merchant_date_like = Regex(
+    "^(?:\\d|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?\\s+\\d)",
+    RegexOption.IGNORE_CASE,
+)
+
+internal fun tidy_merchant_candidate(raw: String?): String? {
+    if (raw == null) return null
+    val value = raw
+        .replace(whitespace_run_regex, " ")
+        .replace(merchant_leading_junk, "")
+        .replace(merchant_trailing_junk, "")
+    if (value.length < 2 || value.length > 60) return null
+    if (merchant_rejected_content.containsMatchIn(value)) return null
+    if (merchant_date_like.containsMatchIn(value)) return null
+    if (value.none { it.isLetter() }) return null
+    val words = value.lowercase(Locale.ROOT).split(' ')
+    if (words.all { it in generic_merchant_words }) return null
+    return value
+}
+
+internal fun merchant_from_sender(from_email: String, from_name: String): String? {
+    val name = from_name.trim()
+    val lower_name = name.lowercase(Locale.ROOT)
+    if (name.isNotEmpty() && !lower_name.contains("noreply") && !lower_name.contains("no-reply") && !name.contains('@')) {
+        val stripped = name.replace(merchant_role_suffix_regex, "").trim()
+        return stripped.ifEmpty { name }
     }
     val domain = from_email.substringAfter('@', "")
     if (domain.isNotEmpty()) {
@@ -262,7 +383,172 @@ internal fun extract_merchant_name(from_email: String, from_name: String): Strin
             return label.replaceFirstChar { it.uppercaseChar() }
         }
     }
-    return from_name.ifBlank { null }
+    return name.ifBlank { null }
+}
+
+internal fun extract_merchant_name(from_email: String, from_name: String): String? =
+    merchant_from_sender(from_email, from_name)
+
+private val forwarded_from_pattern = Regex(
+    "(?:^|\\n)[ \\t>*]*(?:from|von|de|da|van)\\s*:\\s*\\*{0,2}\\s*([^\\n<]{0,80}?)\\s*<?([\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+)>?",
+    RegexOption.IGNORE_CASE,
+)
+private val forwarded_subject_pattern = Regex(
+    "(?:^|\\n)[ \\t>*]*(?:subject|betreff|objet|asunto|assunto|onderwerp)\\s*:\\s*\\*{0,2}\\s*([^\\n]{1,200})",
+    RegexOption.IGNORE_CASE,
+)
+private val forwarded_marker_pattern = Regex(
+    "(?:^|\\n)[ \\t>*]*(?:sent|date|datum|envoyé|enviado|to|an|à|para|subject|betreff|objet|asunto|assunto)\\s*:",
+    RegexOption.IGNORE_CASE,
+)
+private val reply_prefix_pattern = Regex("^(?:\\s*(?:re|fw|fwd|aw|wg|tr|rv|enc)\\s*:\\s*)+", RegexOption.IGNORE_CASE)
+private val surrounding_quotes_regex = Regex("^[\"'“”]+|[\"'“”]+$")
+
+private const val forwarded_block_length = 600
+
+internal data class ForwardedOrigin(
+    val from_email: String,
+    val from_name: String,
+    val subject: String?,
+)
+
+internal fun strip_reply_prefixes(subject: String): String = subject.replace(reply_prefix_pattern, "").trim()
+
+internal fun detect_forwarded_origin(body: String): ForwardedOrigin? {
+    val from_match = forwarded_from_pattern.find(body) ?: return null
+    val start = from_match.range.first
+    val block = body.substring(start, minOf(body.length, start + forwarded_block_length))
+    val after_from = block.substring(minOf(block.length, from_match.value.length))
+    if (!forwarded_marker_pattern.containsMatchIn(after_from)) return null
+    val from_name = from_match.groupValues[1].trim().replace(surrounding_quotes_regex, "").trim()
+    val from_email = from_match.groupValues[2].lowercase(Locale.ROOT)
+    val subject = forwarded_subject_pattern.find(block)
+        ?.groupValues?.get(1)?.trim()
+        ?.let { strip_reply_prefixes(it) }
+        ?.ifEmpty { null }
+    return ForwardedOrigin(from_email, from_name, subject)
+}
+
+private const val merchant_body_scan_length = 6000
+
+private fun first_merchant_match(text: String, patterns: List<Regex>): String? {
+    for (pattern in patterns) {
+        for (match in pattern.findAll(text)) {
+            tidy_merchant_candidate(match.groupValues[1])?.let { return it }
+        }
+    }
+    return null
+}
+
+internal fun resolve_merchant(
+    subject: String,
+    body: String,
+    from_email: String,
+    from_name: String,
+    forwarded: ForwardedOrigin?,
+): String? {
+    val origin_email = (forwarded?.from_email ?: from_email).lowercase(Locale.ROOT)
+    val origin_name = if (forwarded != null) forwarded.from_name else from_name
+    val subjects = listOfNotNull(strip_reply_prefixes(subject), forwarded?.subject)
+    for (candidate_subject in subjects) {
+        first_merchant_match(candidate_subject, subject_merchant_patterns)?.let { return it }
+    }
+    first_merchant_match(body.take(merchant_body_scan_length), body_merchant_patterns)?.let { return it }
+    val domain = origin_email.substringAfter('@', "")
+    if (is_payment_processor_domain(domain)) return null
+    return merchant_from_sender(origin_email, origin_name)
+}
+
+private val subject_order_kind = Regex("\\border\\s*(?:#|no\\.?|num(?:ber)?|id)\\b", RegexOption.IGNORE_CASE)
+private val subject_receipt_kind = Regex("\\b(?:receipt|invoice|payment|amount\\s+paid)\\b", RegexOption.IGNORE_CASE)
+private val head_order_kind = Regex("\\border\\s*(?:#|no\\.?|num(?:ber)?|id|confirm)", RegexOption.IGNORE_CASE)
+private val head_receipt_kind = Regex(
+    "\\b(?:receipt|invoice|amount\\s+paid|date\\s+paid|you\\s+paid|paid\\s+with|charged\\s+to)\\b",
+    RegexOption.IGNORE_CASE,
+)
+
+private const val document_kind_head_length = 1500
+
+const val document_kind_order = "order"
+const val document_kind_receipt = "receipt"
+
+internal fun detect_document_kind(subject: String, body: String): String {
+    val head = subject + "\n" + body.take(document_kind_head_length)
+    if (subject_order_kind.containsMatchIn(subject)) return document_kind_order
+    if (subject_receipt_kind.containsMatchIn(subject)) return document_kind_receipt
+    if (head_order_kind.containsMatchIn(head)) return document_kind_order
+    if (head_receipt_kind.containsMatchIn(head)) return document_kind_receipt
+    return document_kind_order
+}
+
+private val receipt_link_text = Regex(
+    "^(?:view|download|see|open|print)\\s+(?:your\\s+|the\\s+|my\\s+)?(?:receipt|invoice|order)\\b",
+    RegexOption.IGNORE_CASE,
+)
+private val anchor_pattern = Regex(
+    "<a\\b[^>]*?href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)</a>",
+    RegexOption.IGNORE_CASE,
+)
+private val bare_https_url = Regex("https://[^\\s<>\"']+")
+private val bare_url_trailing_junk = Regex("[),.;'\"\\]]+$")
+private val html_tag_regex = Regex("<[^>]+>")
+
+private const val receipt_url_max_length = 2048
+private const val receipt_markup_scan_length = 200_000
+
+internal fun safe_https_url(raw: String): java.net.URI? {
+    val decoded = decode_basic_entities(raw).trim()
+    if (decoded.isEmpty() || decoded.length > receipt_url_max_length) return null
+    val uri = runCatching { java.net.URI(decoded) }.getOrNull() ?: return null
+    if (!uri.scheme.equals("https", ignoreCase = true)) return null
+    if (uri.host.isNullOrEmpty()) return null
+    if (uri.rawUserInfo != null) return null
+    return uri
+}
+
+internal fun registrable_domain(host: String): String {
+    val parts = host.lowercase(Locale.ROOT).trimEnd('.').split('.')
+    return if (parts.size >= 2) parts.takeLast(2).joinToString(".") else parts.joinToString(".")
+}
+
+private fun host_matches(host: String, domain: String): Boolean = host == domain || host.endsWith(".$domain")
+
+internal fun is_allowlisted_receipt_url(uri: java.net.URI): Boolean {
+    val host = uri.host?.lowercase(Locale.ROOT) ?: return false
+    val path = uri.path.orEmpty()
+    return when {
+        host_matches(host, "pay.stripe.com") -> path.startsWith("/receipts/")
+        host_matches(host, "invoice.stripe.com") -> path.startsWith("/i/")
+        host_matches(host, "squareup.com") -> path.startsWith("/receipt/")
+        host_matches(host, "paypal.com") -> path.startsWith("/activity/") || path.startsWith("/myaccount/transactions/")
+        else -> false
+    }
+}
+
+fun extract_receipt_url(body: String, html: String?, sender_emails: List<String?>): String? {
+    val sender_domains = sender_emails
+        .mapNotNull { it?.substringAfter('@', "")?.trim()?.lowercase(Locale.ROOT)?.ifEmpty { null } }
+        .map { registrable_domain(it) }
+        .toSet()
+    val markup = (html?.takeIf { it.isNotEmpty() } ?: body.takeIf { looks_like_html_body(body) })
+        ?.take(receipt_markup_scan_length)
+    if (markup != null) {
+        for (match in anchor_pattern.findAll(markup)) {
+            val uri = safe_https_url(match.groupValues[1]) ?: continue
+            if (is_allowlisted_receipt_url(uri)) return uri.toString()
+            val text = decode_basic_entities(match.groupValues[2].replace(html_tag_regex, " "))
+                .replace(whitespace_run_regex, " ")
+                .trim()
+            if (!receipt_link_text.containsMatchIn(text)) continue
+            if (registrable_domain(uri.host) in sender_domains) return uri.toString()
+        }
+    }
+    val plain = if (looks_like_html_body(body)) html_to_plain_text(body) else body
+    for (match in bare_https_url.findAll(plain)) {
+        val uri = safe_https_url(match.value.replace(bare_url_trailing_junk, "")) ?: continue
+        if (is_allowlisted_receipt_url(uri)) return uri.toString()
+    }
+    return null
 }
 
 private val total_patterns = listOf(
@@ -302,8 +588,9 @@ private val payment_method_regex =
     Regex("(?:payment\\s+method|paid\\s+with|charged\\s+to)[:\\s]*([^\\n]+)", RegexOption.IGNORE_CASE)
 
 private val order_date_patterns = listOf(
-    Regex("(?:order|purchase)\\s+date[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
+    Regex("(?:order|purchase|payment)\\s+date[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
     Regex("(?:ordered|purchased)\\s+on[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
+    Regex("(?:date\\s+paid|paid\\s+on)[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
     Regex("date[:\\s]*(\\d{1,2}/\\d{1,2}/\\d{2,4})", RegexOption.IGNORE_CASE),
 )
 
@@ -313,11 +600,15 @@ fun extract_purchase_details(
     from_email: String,
     from_name: String,
     locale: Locale = Locale.getDefault(),
+    body_html: String? = null,
 ): ExtractedPurchaseDetails {
     val signals = ArrayList<String>()
     val clean_subject = decode_basic_entities(subject)
-    val clean_body = normalize_email_text(body)
-    val combined = clean_subject + "\n" + clean_body
+    val clean_body = normalize_email_text(body, body_html)
+    val forwarded = detect_forwarded_origin(clean_body)
+    if (forwarded != null) signals.add("forwarded_from:" + forwarded.from_email)
+    val effective_subject = forwarded?.subject ?: strip_reply_prefixes(clean_subject)
+    val combined = effective_subject + "\n" + clean_body
 
     var order_id: String? = null
     for (pattern in order_id_patterns) {
@@ -344,14 +635,23 @@ fun extract_purchase_details(
     val items = extract_items_from_body(clean_body, currency, locale)
     if (items.isNotEmpty()) signals.add("items:" + items.size)
 
-    val merchant_name = clean_text_field(extract_merchant_name(from_email, from_name))
+    val merchant_name = clean_text_field(resolve_merchant(clean_subject, clean_body, from_email, from_name, forwarded))
+    val merchant_source = (forwarded?.from_email ?: from_email).trim().lowercase(Locale.ROOT)
     val confirmation_number = clean_identifier(confirmation_number_pattern.find(combined)?.groupValues?.get(1))
     val transaction_id = clean_identifier(transaction_id_pattern.find(combined)?.groupValues?.get(1))
+    val receipt_url = extract_receipt_url(
+        body = clean_body,
+        html = body_html?.takeIf { it.isNotEmpty() } ?: body.takeIf { looks_like_html_body(body) },
+        sender_emails = listOf(from_email, forwarded?.from_email),
+    )
 
     return ExtractedPurchaseDetails(
         order_id = order_id,
         order_date = order_date,
         merchant_name = merchant_name,
+        document_kind = detect_document_kind(effective_subject, clean_body),
+        merchant_source = merchant_source,
+        receipt_url = receipt_url,
         items = items,
         subtotal = amounts.subtotal,
         tax = amounts.tax,
@@ -470,7 +770,7 @@ fun extract_order_url(body: String, html: String?): String? {
 private val strong_purchase_indicators = listOf(
     Regex("\\border\\s*(?:#|no\\.?|num(?:ber)?|id)\\s*[:#]?\\s*[A-Za-z0-9]*[0-9]", RegexOption.IGNORE_CASE),
     Regex("purchase\\s+(?:confirmation|complete|receipt)", RegexOption.IGNORE_CASE),
-    Regex("thank\\s+you\\s+for\\s+(?:your\\s+)?(?:order|purchase)", RegexOption.IGNORE_CASE),
+    Regex("thanks?\\s+(?:you\\s+)?for\\s+(?:your\\s+)?(?:[A-Za-z.]+\\s+){0,2}(?:order|purchase|booking)\\b", RegexOption.IGNORE_CASE),
     Regex("receipt\\s+(?:for|from)", RegexOption.IGNORE_CASE),
     Regex("payment\\s+(?:receipt|confirmation|successful)", RegexOption.IGNORE_CASE),
     Regex("transaction\\s+(?:receipt|complete)", RegexOption.IGNORE_CASE),
@@ -482,8 +782,10 @@ private val strong_purchase_indicators = listOf(
 private val supporting_purchase_indicators = listOf(
     money_after("\\border\\s+total\\b"),
     money_after("\\bgrand\\s+total\\b"),
-    money_after("\\bamount\\s+(?:paid|charged)\\b"),
+    money_after("\\bamount\\s+(?:paid|charged|due)\\b"),
     money_after("\\bsub\\s?total\\b"),
+    money_after("\\btotals?\\b"),
+    card_last_four_regex,
 )
 
 fun is_purchase_email(subject: String, body: String): Boolean {

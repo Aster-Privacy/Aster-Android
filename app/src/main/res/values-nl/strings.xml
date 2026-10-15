@@ -3079,6 +3079,27 @@
     <string name="order_card_view_order">Bestelling bekijken</string>
     <string name="order_card_collapse">Bestelgegevens samenvouwen</string>
     <string name="order_card_expand">Bestelgegevens uitvouwen</string>
+    <string name="receipt_card_privacy">Lokaal uit je e-mail geëxtraheerd, en er wordt niets naar onze servers verzonden.</string>
+    <string name="receipt_card_receipt_from">Bon van %1$s</string>
+    <string name="receipt_card_receipt_number">Bon nr. %1$s</string>
+    <string name="receipt_card_looks_right">Klopt</string>
+    <string name="receipt_card_not_right">Klopt niet?</string>
+    <string name="receipt_card_review_title">Gegevens corrigeren</string>
+    <string name="receipt_card_hide">Deze kaart verbergen</string>
+    <string name="receipt_card_review_saved">Bongegevens bijgewerkt. Toekomstige bonnen van deze afzender gebruiken de gecorrigeerde naam.</string>
+    <string name="receipt_card_review_thanks">Bedankt voor je feedback</string>
+    <string name="receipt_card_view_receipt">Bon bekijken</string>
+    <string name="receipt_card_payment">Betaling</string>
+    <string name="receipt_card_merchant">Winkel</string>
+    <string name="receipt_card_card_ending_in">Kaart eindigend op %1$s</string>
+    <string name="receipt_card_subtotal">Subtotaal</string>
+    <string name="receipt_card_shipping">Verzending</string>
+    <string name="receipt_card_tax">Belasting</string>
+    <string name="receipt_card_discount">Korting</string>
+    <plurals name="receipt_card_more_items">
+        <item quantity="one">+%1$d meer artikel</item>
+        <item quantity="other">+%1$d meer artikelen</item>
+    </plurals>
     <string name="shipping_status_label_created">Label gemaakt</string>
     <string name="shipping_status_shipped">Verzonden</string>
     <string name="shipping_status_in_transit">Onderweg</string>

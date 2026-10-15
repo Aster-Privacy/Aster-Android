@@ -3126,6 +3126,27 @@
     <string name="order_card_view_order">Voir la commande</string>
     <string name="order_card_collapse">Réduire les détails de la commande</string>
     <string name="order_card_expand">Développer les détails de la commande</string>
+    <string name="receipt_card_privacy">Extrait localement depuis votre e-mail, et rien n\'est envoyé à nos serveurs.</string>
+    <string name="receipt_card_receipt_from">Reçu de %1$s</string>
+    <string name="receipt_card_receipt_number">Reçu n° %1$s</string>
+    <string name="receipt_card_looks_right">C\'est correct</string>
+    <string name="receipt_card_not_right">Incorrect ?</string>
+    <string name="receipt_card_review_title">Corriger les informations</string>
+    <string name="receipt_card_hide">Masquer cette carte</string>
+    <string name="receipt_card_review_saved">Détails du reçu mis à jour. Les prochains reçus de cet expéditeur utiliseront le nom corrigé.</string>
+    <string name="receipt_card_review_thanks">Merci pour votre retour</string>
+    <string name="receipt_card_view_receipt">Afficher le reçu</string>
+    <string name="receipt_card_payment">Paiement</string>
+    <string name="receipt_card_merchant">Marchand</string>
+    <string name="receipt_card_card_ending_in">Carte se terminant par %1$s</string>
+    <string name="receipt_card_subtotal">Sous-total</string>
+    <string name="receipt_card_shipping">Livraison</string>
+    <string name="receipt_card_tax">Taxe</string>
+    <string name="receipt_card_discount">Remise</string>
+    <plurals name="receipt_card_more_items">
+        <item quantity="one">+%1$d article supplémentaire</item>
+        <item quantity="other">+%1$d articles supplémentaires</item>
+    </plurals>
     <string name="shipping_status_label_created">Étiquette créée</string>
     <string name="shipping_status_shipped">Expédié</string>
     <string name="shipping_status_in_transit">En transit</string>
