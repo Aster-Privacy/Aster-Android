@@ -80,7 +80,8 @@ private fun detail_skeleton_card(
             )
             .clip(shape)
             .acrylic_backdrop(colors)
-            .background(card_color),
+            .background(card_color)
+            .background(email_glass_backing(colors, white_page = false)),
         content = content,
     )
 }
