@@ -122,7 +122,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -138,7 +137,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -2450,8 +2448,6 @@ internal fun expanded_message(
     val card_shape = remember(is_first_card, is_last_card) {
         inbox_group_shape(is_first_card, is_last_card)
     }
-    var body_backing by remember(msg.id) { mutableStateOf(Color.Transparent) }
-    var body_backing_top by remember(msg.id) { mutableStateOf(-1f) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2463,7 +2459,7 @@ internal fun expanded_message(
             .clip(card_shape)
             .acrylic_backdrop(colors)
             .background(card_color)
-            .email_glass_backing_below(body_backing_top, body_backing),
+            .background(email_glass_backing(colors, white_page = false)),
     ) {
         Row(
             modifier = Modifier
@@ -2892,10 +2888,8 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                on_glass_backing = { body_backing = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { body_backing_top = it.positionInParent().y }
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
                     .testTag("message_body"),
             )
@@ -3003,10 +2997,8 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
-                on_glass_backing = { body_backing = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { body_backing_top = it.positionInParent().y }
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
                     .testTag("message_body"),
             )
@@ -4757,7 +4749,8 @@ private fun collapsed_message(
             )
             .clip(card_shape)
             .acrylic_backdrop(colors)
-            .background(card_color),
+            .background(card_color)
+            .background(email_glass_backing(colors, white_page = false)),
     ) {
         Row(
             modifier = Modifier
@@ -6232,21 +6225,6 @@ private fun translation_banner(
     }
 }
 
-internal fun Modifier.email_glass_backing_below(
-    top: Float,
-    color: Color,
-): Modifier = if (top < 0f || color.alpha <= 0f) {
-    this
-} else {
-    drawBehind {
-        drawRect(
-            color = color,
-            topLeft = androidx.compose.ui.geometry.Offset(0f, top),
-            size = androidx.compose.ui.geometry.Size(size.width, size.height - top),
-        )
-    }
-}
-
 @Composable
 internal fun email_html_view(
     html: String,
@@ -6258,7 +6236,6 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
-    on_glass_backing: (Color) -> Unit = {},
 ) {
     val webview_usable = org.astermail.android.ui.common.remember_webview_usable()
     LaunchedEffect(webview_usable) {
@@ -7139,8 +7116,6 @@ internal fun email_html_view(
                     .background(androidx.compose.ui.graphics.Color.White),
             )
         }
-        val glass_backing = email_glass_backing(colors, white_page_ref[0] || force_light)
-        androidx.compose.runtime.SideEffect { on_glass_backing(glass_backing) }
         if (renderer_exhausted.value) {
             val fallback_text = remember(html) { org.astermail.android.mail.html_to_plain_text(html) }
             val fallback_color = remember(fg_hex) {
@@ -7367,7 +7342,7 @@ internal fun email_html_view(
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(inbox_card_read_color(colors))
+                    .background(if (colors.is_translucent) Color.Transparent else inbox_card_read_color(colors))
                     .clipToBounds()
                     .align(Alignment.TopStart),
             )
