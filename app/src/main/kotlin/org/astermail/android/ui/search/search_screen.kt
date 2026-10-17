@@ -304,7 +304,7 @@ fun SearchScreen(
     LaunchedEffect(Unit) {
         androidx.compose.runtime.withFrameNanos {}
         if (free_text.isEmpty() && operator_chips.isEmpty()) {
-            focus_requester.requestFocus()
+            runCatching { focus_requester.requestFocus() }
         }
     }
 

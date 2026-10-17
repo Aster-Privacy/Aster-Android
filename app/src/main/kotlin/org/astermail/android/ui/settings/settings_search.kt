@@ -190,7 +190,7 @@ fun settings_search_screen(
     BackHandler { dismiss_and_back() }
     LaunchedEffect(Unit) {
         androidx.compose.runtime.withFrameNanos {}
-        if (query.isEmpty()) focus_requester.requestFocus()
+        if (query.isEmpty()) runCatching { focus_requester.requestFocus() }
     }
 
     Column(

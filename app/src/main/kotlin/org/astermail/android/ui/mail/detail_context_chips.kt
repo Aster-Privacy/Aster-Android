@@ -554,7 +554,7 @@ internal fun Modifier.clear_subject_selection_on_press_outside(
 ): Modifier {
     var origin_in_root by remember { mutableStateOf(Offset.Zero) }
     return this
-        .onGloballyPositioned { origin_in_root = it.positionInRoot() }
+        .onGloballyPositioned { if (it.isAttached) origin_in_root = it.positionInRoot() }
         .pointerInput(state) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -581,7 +581,7 @@ internal fun selectable_subject(
     ) {
         key(state.generation) {
             SelectionContainer(
-                modifier = modifier.onGloballyPositioned { state.bounds_in_root = it.boundsInRoot() },
+                modifier = modifier.onGloballyPositioned { if (it.isAttached) state.bounds_in_root = it.boundsInRoot() },
                 content = content,
             )
         }

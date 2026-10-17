@@ -69,7 +69,7 @@ fun Modifier.acrylic(
     var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.glass_surface(tint).copy(alpha = colors.glass_opacity * acrylic_tint_strength)
     return this
-        .onGloballyPositioned { origin = it.positionInWindow() }
+        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clip(shape)
         .drawBehind {
             with(source) { paint(origin) }
@@ -84,6 +84,6 @@ fun Modifier.acrylic_backdrop(colors: AsterSemanticColors): Modifier {
     val source = local_acrylic.current ?: return this
     var origin by remember { mutableStateOf(Offset.Zero) }
     return this
-        .onGloballyPositioned { origin = it.positionInWindow() }
+        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .drawBehind { with(source) { paint(origin) } }
 }

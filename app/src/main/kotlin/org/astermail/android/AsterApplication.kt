@@ -106,6 +106,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
     override fun onCreate() {
         super.onCreate()
         install_crash_reporting()
+        disable_compose_content_capture()
         runCatching {
             org.astermail.android.settings.app_language.migrate_to_platform(this)
             org.astermail.android.settings.app_language.apply_to_application(this)
@@ -147,6 +148,11 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         runCatching { register_folder_lock_hooks() }
         runCatching { seed_protected_folder_tokens() }
         start_deferred_startup()
+    }
+
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    private fun disable_compose_content_capture() {
+        androidx.compose.ui.contentcapture.ContentCaptureManager.isEnabled = false
     }
 
     private fun start_secure_prefs_warm() {

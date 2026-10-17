@@ -269,17 +269,38 @@ class AuthRepository @Inject constructor(
     }
 
     fun store_current_session_tokens() {
-        val account_id = session_key_store.get_user_id() ?: return
+        store_session_tokens(capture_current_session_tokens())
+    }
+
+    fun capture_current_session_tokens(): CapturedSessionTokens? {
+        val account_id = session_key_store.get_user_id() ?: return null
+        return CapturedSessionTokens(
+            account_id = account_id,
+            access_token = token_store.access_token,
+            refresh_token = token_store.refresh_token,
+            csrf_token = api_client.get_csrf(),
+        )
+    }
+
+    fun store_session_tokens(captured: CapturedSessionTokens?) {
+        if (captured == null) return
         runCatching {
             session_snapshot_store.update_tokens(
-                account_id,
+                captured.account_id,
                 null,
-                token_store.access_token,
-                token_store.refresh_token,
-                api_client.get_csrf(),
+                captured.access_token,
+                captured.refresh_token,
+                captured.csrf_token,
             )
         }
     }
+
+    data class CapturedSessionTokens(
+        val account_id: String,
+        val access_token: String?,
+        val refresh_token: String?,
+        val csrf_token: String?,
+    )
 
     suspend fun refresh_session(): RefreshOutcome = try_refresh_session()
 

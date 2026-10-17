@@ -215,6 +215,7 @@ private class shimmer_node(
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
+        if (!isAttached || !coordinates.isAttached) return
         origin_x = coordinates.positionInWindow().x
     }
 
