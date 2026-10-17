@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Aster Mail responds faster and stops unexpectedly less often.
+- Sign-up takes four pages, and you can choose a plan as you sign up.
+- You get a warning when a sender's name imitates a brand or hides another address.
+- With a filter on, the inbox loads every matching message.
+- PGP and plain-text patch messages show their full body.
+- Muted categories stay silent, and notifications vibrate again.
