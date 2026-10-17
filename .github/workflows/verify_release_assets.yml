@@ -99,7 +99,7 @@ jobs:
               fail=1
               continue
             fi
-            digests=$("${apksigner}" verify --print-certs "apks/${apk}" | tr -d '\r' | grep -E '^Signer #[0-9]+ certificate SHA-256 digest:' | awk '{print $NF}' | sort -u || true)
+            digests=$("${apksigner}" verify --print-certs "apks/${apk}" | tr -d '\r' | grep -E '^(Signer #[0-9]+|V[0-9.]+ Signer):? certificate SHA-256 digest:' | awk '{print $NF}' | sort -u || true)
             if [ "${digests}" = "${CERT_SHA}" ]; then
               echo "  OK   ${apk} is signed with the release certificate"
             else
