@@ -7313,6 +7313,7 @@ internal fun email_html_view(
                     .height(animated_target)
                     .clipToBounds()
                     .onGloballyPositioned { coords ->
+                        if (!coords.isAttached) return@onGloballyPositioned
                         val window_y = coords.positionInWindow().y
                         if (window_y != last_window_y[0]) {
                             last_window_y[0] = window_y

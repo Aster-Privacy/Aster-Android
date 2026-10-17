@@ -72,7 +72,7 @@ fun Modifier.glass_chrome(
     val veil = colors.bg_primary
     val tint = colors.glass_surface(colors.bg_card)
     return this
-        .onGloballyPositioned { origin = it.positionInWindow() }
+        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
         .drawBehind {
             val fade = alpha().coerceIn(0f, 1f)
@@ -125,7 +125,7 @@ fun Modifier.glass_bar(colors: AsterSemanticColors): Modifier {
     val veil = colors.bg_primary
     val tint = colors.glass_surface(colors.bg_card)
     return this
-        .onGloballyPositioned { origin = it.positionInWindow() }
+        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
         .drawBehind {
             drawRect(color = solid)
@@ -145,7 +145,7 @@ fun Modifier.page_punch(colors: AsterSemanticColors): Modifier {
     var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.bg_primary
     return this
-        .onGloballyPositioned { origin = it.positionInWindow() }
+        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
         .drawBehind {
             drawRect(color = veil)
