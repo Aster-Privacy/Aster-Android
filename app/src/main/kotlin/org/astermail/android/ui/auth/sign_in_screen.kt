@@ -531,7 +531,7 @@ internal fun TotpVerifyScreen(
 
     LaunchedEffect(method) {
         code = ""
-        if (method != second_factor_ui_method_passkey) code_focus.requestFocus()
+        if (method != second_factor_ui_method_passkey) runCatching { code_focus.requestFocus() }
     }
 
     Box(
