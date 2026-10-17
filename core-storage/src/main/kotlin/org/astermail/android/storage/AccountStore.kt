@@ -23,6 +23,9 @@ package org.astermail.android.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +51,8 @@ data class AccountsData(
 class AccountStore(context: Context? = null) {
 
     private val lock = Any()
+    private val write_lock = Any()
+    private val persist_pending = AtomicBoolean(false)
     private val prefs: SharedPreferences? = context?.let { SecurePrefs.open(it, prefs_name) }
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -84,23 +89,25 @@ class AccountStore(context: Context? = null) {
         _current_account.value = compute_current()
     }
 
-    fun get_all(): List<StoredAccount> = synchronized(lock) { data.accounts.toList() }
+    fun get_all(): List<StoredAccount> = data.accounts.toList()
 
-    fun get_current_id(): String? = synchronized(lock) { data.current_account_id }
+    fun get_current_id(): String? = data.current_account_id
 
-    fun get_current(): StoredAccount? = synchronized(lock) {
-        val id = data.current_account_id ?: return null
-        data.accounts.firstOrNull { it.id == id }
+    fun get_current(): StoredAccount? {
+        val snapshot = data
+        val id = snapshot.current_account_id ?: return null
+        return snapshot.accounts.firstOrNull { it.id == id }
     }
 
-    fun get_others(): List<StoredAccount> = synchronized(lock) {
-        val id = data.current_account_id
-        data.accounts.filter { it.id != id }
+    fun get_others(): List<StoredAccount> {
+        val snapshot = data
+        val id = snapshot.current_account_id
+        return snapshot.accounts.filter { it.id != id }
     }
 
-    fun count(): Int = synchronized(lock) { data.accounts.size }
+    fun count(): Int = data.accounts.size
 
-    fun get_max_accounts(): Int = synchronized(lock) { plan_max_accounts }
+    fun get_max_accounts(): Int = plan_max_accounts
 
     fun set_max_accounts(max_accounts: Int) {
         synchronized(lock) {
@@ -111,53 +118,53 @@ class AccountStore(context: Context? = null) {
             }
             if (normalized == plan_max_accounts) return
             plan_max_accounts = normalized
-            runCatching { prefs?.edit()?.putInt(key_plan_max_accounts, normalized)?.apply() }
         }
+        schedule_persist()
     }
 
     fun can_add(max_accounts: Int = get_max_accounts()): Boolean =
-        synchronized(lock) {
-            max_accounts == unlimited_accounts || data.accounts.size < max_accounts
-        }
+        max_accounts == unlimited_accounts || data.accounts.size < max_accounts
 
-    fun account_exists(account_id: String): Boolean = synchronized(lock) {
-        data.accounts.any { it.id == account_id }
-    }
+    fun account_exists(account_id: String): Boolean = data.accounts.any { it.id == account_id }
 
     fun add_or_update(account: StoredAccount, max_accounts: Int = get_max_accounts()): AddResult {
         synchronized(lock) {
             val accounts = data.accounts.toMutableList()
             val existing_index = accounts.indexOfFirst { it.id == account.id }
             if (existing_index >= 0) {
-                accounts[existing_index] = account.copy(added_at = accounts[existing_index].added_at)
-                data = AccountsData(accounts, account.id)
-                persist()
+                val merged = account.copy(added_at = accounts[existing_index].added_at)
+                if (merged == accounts[existing_index] && data.current_account_id == account.id) {
+                    return AddResult.Success
+                }
+                accounts[existing_index] = merged
+                data = AccountsData(accounts.toList(), account.id)
                 emit_current()
-                return AddResult.Success
+            } else {
+                if (max_accounts != unlimited_accounts && accounts.size >= max_accounts) {
+                    return AddResult.LimitReached(max_accounts)
+                }
+                accounts.add(account)
+                data = AccountsData(accounts.toList(), account.id)
+                emit_current()
             }
-            if (max_accounts != unlimited_accounts && accounts.size >= max_accounts) {
-                return AddResult.LimitReached(max_accounts)
-            }
-            accounts.add(account)
-            data = AccountsData(accounts, account.id)
-            persist()
-            emit_current()
-            return AddResult.Success
         }
+        schedule_persist()
+        return AddResult.Success
     }
 
     fun set_current(account_id: String): StoredAccount? {
-        synchronized(lock) {
-            val account = data.accounts.firstOrNull { it.id == account_id } ?: return null
+        val account = synchronized(lock) {
+            val found = data.accounts.firstOrNull { it.id == account_id } ?: return null
             data = data.copy(current_account_id = account_id)
-            persist()
             emit_current()
-            return account
+            found
         }
+        schedule_persist()
+        return account
     }
 
     fun remove(account_id: String): RemoveResult {
-        synchronized(lock) {
+        val result = synchronized(lock) {
             val accounts = data.accounts.toMutableList()
             val index = accounts.indexOfFirst { it.id == account_id }
             if (index < 0) return RemoveResult(removed = false, switched_to = null)
@@ -173,25 +180,49 @@ class AccountStore(context: Context? = null) {
             } else {
                 data.current_account_id
             }
-            data = AccountsData(accounts, new_current)
-            persist()
+            data = AccountsData(accounts.toList(), new_current)
             emit_current()
-            return RemoveResult(removed = true, switched_to = switched_to)
+            RemoveResult(removed = true, switched_to = switched_to)
         }
+        schedule_persist()
+        return result
     }
 
     fun clear_all() {
         synchronized(lock) {
             data = AccountsData()
-            runCatching { prefs?.edit()?.remove(key_accounts)?.commit() }
             emit_current()
+        }
+        schedule_persist()
+    }
+
+    private fun schedule_persist() {
+        val target = prefs ?: return
+        if (!persist_pending.compareAndSet(false, true)) return
+        val submitted = runCatching {
+            writer.execute {
+                persist_pending.set(false)
+                synchronized(write_lock) { write_snapshot(target) }
+            }
+        }.isSuccess
+        if (!submitted) {
+            persist_pending.set(false)
+            synchronized(write_lock) { write_snapshot(target) }
         }
     }
 
-    private fun persist() {
+    private fun write_snapshot(target: SharedPreferences) {
         runCatching {
-            val raw = json.encodeToString(AccountsData.serializer(), data)
-            prefs?.edit()?.putString(key_accounts, raw)?.apply()
+            val snapshot = data
+            val max = plan_max_accounts
+            val editor = target.edit()
+            if (snapshot.accounts.isEmpty() && snapshot.current_account_id == null) {
+                editor.remove(key_accounts)
+            } else {
+                editor.putString(key_accounts, json.encodeToString(AccountsData.serializer(), snapshot))
+            }
+            editor.putInt(key_plan_max_accounts, max)
+            editor.commit()
         }
     }
 
@@ -211,5 +242,8 @@ class AccountStore(context: Context? = null) {
         private const val prefs_name = "aster_accounts_v1"
         private const val key_accounts = "accounts_data"
         private const val key_plan_max_accounts = "plan_max_accounts"
+        private val writer: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "aster-account-store").apply { isDaemon = true }
+        }
     }
 }

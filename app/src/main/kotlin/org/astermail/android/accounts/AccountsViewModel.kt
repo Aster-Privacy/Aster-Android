@@ -25,11 +25,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.BuildConfig
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.auth.AuthRepository
@@ -132,7 +134,7 @@ class AccountsViewModel @Inject constructor(
         }
         if (is_switching) return
         is_switching = true
-        auth_repository.store_current_session_tokens()
+        val previous_tokens = auth_repository.capture_current_session_tokens()
         account_store.set_current(account_id)
         org.astermail.android.billing.AttachmentLimits.reset()
         org.astermail.android.billing.AvailablePlansCache.reset()
@@ -142,6 +144,7 @@ class AccountsViewModel @Inject constructor(
         refresh()
         viewModelScope.launch {
             val restored = try {
+                withContext(Dispatchers.IO) { auth_repository.store_session_tokens(previous_tokens) }
                 auth_repository.try_restore_session(account_id)
             } finally {
                 is_switching = false
