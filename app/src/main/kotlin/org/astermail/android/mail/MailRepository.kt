@@ -707,6 +707,37 @@ class MailRepository @Inject constructor(
             parsed.map { thread_message_of(it) }.takeIf { it.isNotEmpty() }
         }
 
+    private class thread_snapshot_ids(val cached_at: Long, val message_ids: Set<String>)
+
+    private val thread_snapshot_id_cache = java.util.concurrent.ConcurrentHashMap<String, thread_snapshot_ids>()
+
+    private suspend fun cached_snapshot_message_ids(thread_tokens: List<String>): Map<String, Set<String>> {
+        if (thread_tokens.isEmpty()) return emptyMap()
+        val stamps = runCatching { thread_snapshot_dao.stamps(thread_tokens) }.getOrNull() ?: return emptyMap()
+        val present = stamps.mapTo(HashSet()) { it.thread_token }
+        thread_tokens.filterNot { it in present }.forEach { thread_snapshot_id_cache.remove(it) }
+        val result = HashMap<String, Set<String>>()
+        for (stamp in stamps) {
+            val known = thread_snapshot_id_cache[stamp.thread_token]
+            val ids = if (known != null && known.cached_at == stamp.cached_at) {
+                known.message_ids
+            } else {
+                load_snapshot_message_ids(stamp.thread_token) ?: continue
+            }
+            result[stamp.thread_token] = ids
+        }
+        return result
+    }
+
+    private suspend fun load_snapshot_message_ids(thread_token: String): Set<String>? {
+        val row = runCatching { thread_snapshot_dao.get(thread_token) }.getOrNull() ?: return null
+        val ids = runCatching {
+            thread_snapshot_json.decodeFromString<List<thread_snapshot_message>>(row.payload).map { it.id }.toSet()
+        }.getOrNull().orEmpty()
+        thread_snapshot_id_cache[thread_token] = thread_snapshot_ids(row.cached_at, ids)
+        return ids
+    }
+
     private val offline_prefetch_mutex = kotlinx.coroutines.sync.Mutex()
 
     suspend fun prefetch_threads_for_offline(items: List<InboxItem>, limit: Int = OFFLINE_PREFETCH_LIMIT) {
@@ -721,9 +752,8 @@ class MailRepository @Inject constructor(
                 .take(limit)
                 .toList()
             val missing = withContext(Dispatchers.IO) {
-                targets.filterNot { item ->
-                    cached_thread_messages(item.thread_token!!)?.any { it.id == item.id } == true
-                }
+                val cached = cached_snapshot_message_ids(targets.map { it.thread_token!! })
+                targets.filterNot { item -> cached[item.thread_token!!]?.contains(item.id) == true }
             }
             if (missing.isEmpty()) return
             val gate = kotlinx.coroutines.sync.Semaphore(OFFLINE_PREFETCH_CONCURRENCY)
@@ -757,19 +787,22 @@ class MailRepository @Inject constructor(
         val payload = runCatching {
             thread_snapshot_json.encodeToString(messages.map { thread_snapshot_of(it) })
         }.getOrNull() ?: return
+        val cached_at = System.currentTimeMillis()
         runCatching {
             thread_snapshot_dao.upsert(
                 ThreadSnapshotEntity(
                     thread_token = thread_token,
                     payload = payload,
-                    cached_at = System.currentTimeMillis(),
+                    cached_at = cached_at,
                 ),
             )
+            thread_snapshot_id_cache[thread_token] = thread_snapshot_ids(cached_at, messages.map { it.id }.toSet())
             thread_snapshot_dao.trim_to(thread_snapshot_cache_limit)
         }
     }
 
     suspend fun clear_cached_message_bodies() {
+        thread_snapshot_id_cache.clear()
         runCatching { message_body_dao.clear_all() }
         runCatching { thread_snapshot_dao.clear_all() }
     }
@@ -1927,6 +1960,7 @@ class MailRepository @Inject constructor(
         draft_versions.clear()
         draft_session_ids.clear()
         ratchet_undecryptable_at.clear()
+        thread_snapshot_id_cache.clear()
         InboundAttachmentKeyStore.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
     }

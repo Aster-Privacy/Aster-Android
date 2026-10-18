@@ -34,6 +34,9 @@ interface ThreadSnapshotDao {
     @Query("SELECT * FROM thread_snapshot_cache WHERE thread_token = :thread_token")
     suspend fun get(thread_token: String): ThreadSnapshotEntity?
 
+    @Query("SELECT thread_token, cached_at FROM thread_snapshot_cache WHERE thread_token IN (:thread_tokens)")
+    suspend fun stamps(thread_tokens: List<String>): List<ThreadSnapshotStamp>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: ThreadSnapshotEntity)
 
