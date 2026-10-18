@@ -3020,4 +3020,129 @@ class MailViewModelTest {
         verify(exactly = 0) { search_index_manager.expire_inbox_sync() }
         assertEquals(1, fetches)
     }
+
+    private fun count_inbox_fetches(): () -> Int {
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(fake_inbox_page(3))
+        }
+        return { fetches }
+    }
+
+    @Test
+    fun `fallback tick skips the refetch while live sync is connected and the list is fresh`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        vm.foreground_check = { true }
+        val fetches = count_inbox_fetches()
+        vm.load_inbox()
+        advanceUntilIdle()
+        val after_load = fetches()
+
+        now += 60_000L
+        vm.foreground_fallback_tick(live_sync_connected = true)
+        advanceUntilIdle()
+
+        assertEquals(after_load, fetches())
+    }
+
+    @Test
+    fun `fallback tick refetches while live sync is connected once the list is older than the bound`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        vm.foreground_check = { true }
+        val fetches = count_inbox_fetches()
+        vm.load_inbox()
+        advanceUntilIdle()
+        val after_load = fetches()
+
+        now += 15 * 60_000L + 1L
+        vm.foreground_fallback_tick(live_sync_connected = true)
+        advanceUntilIdle()
+
+        assertTrue(fetches() > after_load)
+    }
+
+    @Test
+    fun `fallback tick refetches when live sync is not connected`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        vm.foreground_check = { true }
+        val fetches = count_inbox_fetches()
+        vm.load_inbox()
+        advanceUntilIdle()
+        val after_load = fetches()
+
+        now += 60_000L
+        vm.foreground_fallback_tick(live_sync_connected = false)
+        advanceUntilIdle()
+
+        assertTrue(fetches() > after_load)
+    }
+
+    @Test
+    fun `fallback tick refetches after a live event dropped while loading more`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        vm.foreground_check = { true }
+        var fetches = 0
+        val gate = kotlinx.coroutines.CompletableDeferred<Result<InboxPage>>()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            if (secondArg<String?>() == "c1") gate.await() else Result.success(fake_inbox_page(3, has_more = true, next_cursor = "c1"))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.load_more()
+        runCurrent()
+        assertTrue(vm.inbox_state.value.is_loading_more)
+
+        now += 1_000L
+        val before_event = fetches
+        vm.on_live_sync_event(LiveSyncEvent.new_mail)
+        advanceTimeBy(1_000L)
+        runCurrent()
+        assertEquals(before_event, fetches)
+
+        gate.complete(Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 3)))
+        advanceUntilIdle()
+        val after_drop = fetches
+
+        now += 60_000L
+        vm.foreground_fallback_tick(live_sync_connected = true)
+        advanceUntilIdle()
+
+        assertTrue(fetches > after_drop)
+    }
+
+    @Test
+    fun `fallback tick refetches after a live event whose revalidate failed`() = runTest {
+        var now = 1_000_000L
+        vm.override_clock_ms = { now }
+        vm.foreground_check = { true }
+        var fetches = 0
+        var fail = false
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            if (fail) Result.failure(RuntimeException("offline")) else Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        fail = true
+        now += 1_000L
+        val before_event = fetches
+        vm.on_live_sync_event(LiveSyncEvent.new_mail)
+        advanceUntilIdle()
+        assertTrue(fetches > before_event)
+
+        fail = false
+        val after_failure = fetches
+        now += 60_000L
+        vm.foreground_fallback_tick(live_sync_connected = true)
+        advanceUntilIdle()
+
+        assertTrue(fetches > after_failure)
+    }
 }

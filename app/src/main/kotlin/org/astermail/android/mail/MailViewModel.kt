@@ -63,6 +63,7 @@ private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val PENDING_DRAIN_BEFORE_REFRESH_MS = 8_000L
 private const val LIVE_SYNC_DEBOUNCE_MS = 600L
+private const val LIVE_SYNC_FALLBACK_MAX_AGE_MS = 15 * 60_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
 private const val WARM_CACHE_MAX_AGE_MS = 300_000L
@@ -1478,16 +1479,20 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    fun foreground_fallback_tick() {
+    fun foreground_fallback_tick(live_sync_connected: Boolean) {
         if (!foreground_check()) return
         val s = _inbox_state.value
         if (s.is_loading || s.is_loading_more || s.is_refreshing) return
+        if (!fallback_tick_due(live_sync_connected, s.list_loaded_at, last_live_event_at, override_clock_ms())) return
         silent_revalidate(s.current_folder)
     }
 
     private var live_sync_job: Job? = null
 
+    @Volatile private var last_live_event_at = 0L
+
     fun on_live_sync_event(event: LiveSyncEvent) {
+        last_live_event_at = override_clock_ms()
         live_sync_job?.cancel()
         live_sync_job = viewModelScope.launch {
             kotlinx.coroutines.delay(LIVE_SYNC_DEBOUNCE_MS)
@@ -5869,6 +5874,17 @@ private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "
 
 internal fun resume_retry_due(loaded_at: Long?, resumed_at: Long): Boolean =
     loaded_at == null || loaded_at < resumed_at
+
+internal fun fallback_tick_due(
+    live_sync_connected: Boolean,
+    list_loaded_at: Long,
+    last_live_event_at: Long,
+    now: Long,
+): Boolean =
+    !live_sync_connected ||
+        list_loaded_at <= 0L ||
+        last_live_event_at > list_loaded_at ||
+        now - list_loaded_at !in 0L until LIVE_SYNC_FALLBACK_MAX_AGE_MS
 
 internal fun folder_uses_offset_cursor(folder: String): Boolean = when {
     folder == "scheduled" -> true
