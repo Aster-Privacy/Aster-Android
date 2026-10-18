@@ -4456,6 +4456,7 @@ internal fun message_details_panel(
                     value = joined,
                     on_long_click = { copy_address(joined) },
                     modifier = Modifier.testTag("details_$field"),
+                    value_max_height = 180.dp,
                 )
             }
         }
@@ -4655,6 +4656,7 @@ private fun detail_meta_row(
     value_tint: androidx.compose.ui.graphics.Color? = null,
     on_click: (() -> Unit)? = null,
     on_long_click: (() -> Unit)? = null,
+    value_max_height: androidx.compose.ui.unit.Dp? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -4697,7 +4699,17 @@ private fun detail_meta_row(
                 text = value,
                 color = value_tint ?: colors.text_secondary,
                 fontSize = 13.sp,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (value_max_height != null) {
+                            Modifier
+                                .heightIn(max = value_max_height)
+                                .vertical_scroll_with_indicator()
+                        } else {
+                            Modifier
+                        },
+                    ),
             )
         }
         if (on_click != null) {
