@@ -29,7 +29,9 @@ import org.astermail.android.mail.search_folder_item_type
 import org.astermail.android.mail.search_narrow_query
 import org.astermail.android.mail.search_scope_query
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SearchFolderScopeTest {
@@ -129,10 +131,19 @@ class SearchFolderScopeTest {
     }
 
     @Test
-    fun explicit_in_overrides_the_trash_and_spam_scope() {
-        assertEquals(listOf("sent"), search("${search_scope_query("trash")} in:sent report"))
-        assertEquals(listOf("draft"), search("${search_scope_query("spam")} in:drafts report"))
-        assertEquals(all_mail, search("${search_scope_query("trash")} in:all report"))
+    fun several_in_operators_are_any_of() {
+        assertEquals(listOf("trashed", "sent"), search("in:trash in:sent report"))
+        assertEquals(listOf("spam", "draft"), search("in:spam in:drafts report"))
+        assertEquals(
+            listOf("inbox", "indexed", "archived", "starred", "trashed", "sent", "draft"),
+            search("in:trash in:all report"),
+        )
+    }
+
+    @Test
+    fun everywhere_includes_spam_and_trash_and_all_excludes_them() {
+        assertEquals(corpus.map { it.id }, search("in:anywhere report"))
+        assertEquals(all_mail, search("in:all report"))
     }
 
     @Test
@@ -153,87 +164,60 @@ class SearchFolderScopeTest {
     }
 
     @Test
-    fun unscoped_folders_offer_to_narrow_to_themselves() {
-        val expected = mapOf(
-            "inbox" to listOf("inbox", "indexed", "starred"),
-            "sent" to listOf("sent"),
-            "drafts" to listOf("draft"),
-            "archive" to listOf("archived"),
-            "starred" to listOf("starred"),
-        )
-        for ((folder, results) in expected) {
-            val suggestion = scope_suggestion(folder, opened_from(folder))
-            assertEquals(folder, ScopeSuggestion(ScopeSuggestionKind.NARROW, folder), suggestion)
-            val narrowed = apply_scope_suggestion(opened_from(folder), suggestion!!)
-            assertEquals(folder, results, search_ops(narrowed))
-            assertNull(folder, scope_suggestion(folder, narrowed))
-        }
+    fun default_scope_follows_trash_and_spam_only() {
+        assertEquals("trash", default_search_scope("trash"))
+        assertEquals("spam", default_search_scope("spam"))
+        assertEquals("all", default_search_scope("inbox"))
+        assertEquals("all", default_search_scope("folder-token"))
+        assertEquals("all", default_search_scope(null))
+        assertEquals("all", default_search_scope(all_mail_folder_id(include_spam = false, include_trash = false)))
     }
 
     @Test
-    fun removing_the_narrow_chip_widens_back_to_all_mail() {
-        val narrowed = apply_scope_suggestion(emptyList(), ScopeSuggestion(ScopeSuggestionKind.NARROW, "sent"))
-        val widened = narrowed.filterNot { it.key == "in" }
-        assertEquals(all_mail, search_ops(widened))
-        assertEquals(ScopeSuggestion(ScopeSuggestionKind.NARROW, "sent"), scope_suggestion("sent", widened))
+    fun query_scope_reads_a_single_positive_in_operator() {
+        assertEquals(QueryScope("all", true), query_search_scope(emptyList(), "inbox"))
+        assertEquals(QueryScope("trash", true), query_search_scope(opened_from("trash"), "trash"))
+        assertEquals(QueryScope("all", false), query_search_scope(parse_query("in:all").operators, "trash"))
+        assertEquals(QueryScope("sent", false), query_search_scope(parse_query("in:sent").operators, "inbox"))
+        assertEquals(QueryScope("drafts", false), query_search_scope(parse_query("in:draft").operators, null))
+        assertEquals(QueryScope("archive", false), query_search_scope(parse_query("in:archived").operators, null))
+        assertNull(query_search_scope(parse_query("in:trash in:sent").operators, "trash"))
+        assertNull(query_search_scope(parse_query("-in:spam").operators, null))
     }
 
     @Test
-    fun trash_and_spam_offer_to_search_everywhere() {
-        for (folder in listOf("trash", "spam")) {
-            val suggestion = scope_suggestion(folder, opened_from(folder))
-            assertEquals(folder, ScopeSuggestion(ScopeSuggestionKind.WIDEN, folder), suggestion)
-            val widened = apply_scope_suggestion(opened_from(folder), suggestion!!)
-            assertEquals(folder, listOf(SearchOperator(false, "in", "anywhere")), widened)
-            assertEquals(folder, corpus.map { it.id }, search_ops(widened))
-            assertNull(folder, scope_suggestion(folder, widened))
-        }
-    }
-
-    @Test
-    fun trash_offers_to_narrow_again_once_its_scope_is_removed() {
+    fun setting_a_scope_writes_one_in_operator_only_when_needed() {
+        assertEquals(emptyList<SearchOperator>(), set_search_scope(opened_from("trash"), "inbox", "all", true))
+        assertEquals(listOf(SearchOperator(false, "in", "all")), set_search_scope(emptyList(), "inbox", "all", false))
+        assertEquals(listOf(SearchOperator(false, "in", "all")), set_search_scope(emptyList(), "trash", "all", true))
         assertEquals(
-            ScopeSuggestion(ScopeSuggestionKind.NARROW, "trash"),
-            scope_suggestion("trash", emptyList()),
+            listOf(SearchOperator(false, "from", "ann"), SearchOperator(false, "in", "sent")),
+            set_search_scope(parse_query("in:inbox in:trash -in:spam from:ann").operators, null, "sent", false),
         )
-        assertEquals(
-            listOf("trashed"),
-            search_ops(apply_scope_suggestion(emptyList(), ScopeSuggestion(ScopeSuggestionKind.NARROW, "trash"))),
-        )
+        assertEquals(corpus.map { it.id }, search_ops(set_search_scope(opened_from("trash"), "trash", "anywhere", false)))
+        assertEquals(listOf("sent"), search_ops(set_search_scope(emptyList(), "sent", "sent", false)))
+        assertEquals(listOf("trashed"), search_ops(set_search_scope(emptyList(), "inbox", "trash", true)))
     }
 
     @Test
-    fun an_explicit_scope_hides_the_suggestion() {
-        assertNull(scope_suggestion("sent", parse_query("in:archive").operators))
-        assertNull(scope_suggestion("inbox", parse_query("in:anywhere").operators))
-        assertNull(scope_suggestion("trash", parse_query("in:trash in:sent").operators))
+    fun clearing_filters_returns_to_the_default_scope() {
+        assertEquals(emptyList<SearchOperator>(), clear_search_filters("inbox", true))
+        assertEquals(listOf(SearchOperator(false, "in", "all")), clear_search_filters("inbox", false))
+        assertEquals(listOf(SearchOperator(false, "in", "trash")), clear_search_filters("trash", true))
+        assertEquals(listOf(SearchOperator(false, "in", "spam")), clear_search_filters("spam", false))
+        assertEquals(listOf("trashed"), search_ops(clear_search_filters("trash", true)))
     }
 
     @Test
-    fun folders_without_a_scope_offer_nothing() {
-        assertNull(scope_suggestion(null, emptyList()))
-        assertNull(scope_suggestion(all_mail_folder_id(include_spam = false, include_trash = false), emptyList()))
-        assertNull(scope_suggestion("folder-token", emptyList()))
-    }
-
-    @Test
-    fun applying_a_suggestion_keeps_the_other_operators() {
-        val ops = parse_query("in:trash -in:spam from:alice@example.com").operators
-        assertEquals(
-            listOf(
-                SearchOperator(true, "in", "spam"),
-                SearchOperator(false, "from", "alice@example.com"),
-                SearchOperator(false, "in", "anywhere"),
-            ),
-            apply_scope_suggestion(ops, ScopeSuggestion(ScopeSuggestionKind.WIDEN, "trash")),
-        )
-        assertEquals(
-            listOf(SearchOperator(false, "is", "unread"), SearchOperator(false, "is", "starred")),
-            apply_scope_suggestion(
-                parse_query("is:unread is:starred").operators,
-                ScopeSuggestion(ScopeSuggestionKind.NARROW, "starred"),
-            ),
-        )
+    fun active_filters_exclude_the_default_scope() {
+        assertFalse(has_active_filters(emptyList(), "inbox"))
+        assertFalse(has_active_filters(opened_from("trash"), "trash"))
+        assertFalse(has_active_filters(parse_query("in:all").operators, "inbox"))
+        assertTrue(has_active_filters(parse_query("in:all").operators, "trash"))
+        assertTrue(has_active_filters(parse_query("in:anywhere").operators, "trash"))
+        assertTrue(has_active_filters(parse_query("is:unread").operators, "inbox"))
+        assertTrue(has_active_filters(parse_query("-in:spam").operators, "inbox"))
+        assertTrue(scope_chip_active(parse_query("in:trash in:sent").operators, "trash"))
     }
 
     @Test

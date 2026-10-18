@@ -25,7 +25,6 @@ import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,11 +37,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -64,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,12 +77,22 @@ import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.design.acrylic
-import org.astermail.android.design.local_acrylic
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import org.astermail.android.ui.common.sheet_container_color
+import java.time.LocalDate
 
 private val ROW_LABEL_WIDTH = 104.dp
+
+internal fun size_unit_label_res(unit: SizeUnit): Int = when (unit) {
+    SizeUnit.BYTES -> R.string.size_unit_bytes
+    SizeUnit.KB -> R.string.size_unit_kb
+    SizeUnit.MB -> R.string.size_unit_mb
+}
+
+internal fun size_op_label_res(op: SizeOp): Int = when (op) {
+    SizeOp.GREATER -> R.string.advanced_size_larger
+    SizeOp.LESS -> R.string.advanced_size_smaller
+}
 
 @Composable
 private fun advanced_section(title: String, content: @Composable () -> Unit) {
@@ -231,11 +239,156 @@ private fun advanced_toggle_row(label: String, checked: Boolean, on_change: (Boo
     }
 }
 
+@Composable
+private fun inline_menu_value(
+    value: String,
+    expanded: Boolean,
+    on_open: () -> Unit,
+    on_dismiss: () -> Unit,
+    items: @Composable () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(SquircleShape(10.dp))
+                .clickable(onClick = on_open)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                color = colors.text_primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Icon(
+                imageVector = TablerIcons.ChevronDown,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        aster_menu(expanded = expanded, on_dismiss = on_dismiss) { items() }
+    }
+}
+
+@Composable
+private fun advanced_size_row(
+    size_op: SizeOp,
+    size_value: String,
+    size_unit: SizeUnit,
+    on_op_change: (SizeOp) -> Unit,
+    on_value_change: (String) -> Unit,
+    on_unit_change: (SizeUnit) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var op_menu_open by remember { mutableStateOf(false) }
+    var unit_menu_open by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        advanced_row_label(stringResource(R.string.advanced_size))
+        inline_menu_value(
+            value = stringResource(size_op_label_res(size_op)),
+            expanded = op_menu_open,
+            on_open = { op_menu_open = true },
+            on_dismiss = { op_menu_open = false },
+        ) {
+            SizeOp.values().forEach { option ->
+                aster_menu_item(
+                    label = stringResource(size_op_label_res(option)),
+                    selected = size_op == option,
+                    on_click = {
+                        on_op_change(option)
+                        op_menu_open = false
+                    },
+                )
+            }
+        }
+        Box(modifier = Modifier.weight(1f)) {
+            BasicTextField(
+                value = size_value,
+                onValueChange = { typed -> on_value_change(typed.filter { it.isDigit() }) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 15.sp, color = colors.text_primary),
+                cursorBrush = SolidColor(colors.accent_blue),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done,
+                ),
+            )
+            if (size_value.isEmpty()) {
+                Text(
+                    text = "0",
+                    fontSize = 15.sp,
+                    color = colors.text_muted,
+                    maxLines = 1,
+                )
+            }
+        }
+        inline_menu_value(
+            value = stringResource(size_unit_label_res(size_unit)),
+            expanded = unit_menu_open,
+            on_open = { unit_menu_open = true },
+            on_dismiss = { unit_menu_open = false },
+        ) {
+            SizeUnit.values().forEach { option ->
+                aster_menu_item(
+                    label = stringResource(size_unit_label_res(option)),
+                    selected = size_unit == option,
+                    on_click = {
+                        on_unit_change(option)
+                        unit_menu_open = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun advanced_date_label(within_days: Int, date_from: LocalDate?, date_to: LocalDate?): String {
+    val within_res = WITHIN_DAYS_LABELS.firstOrNull { it.first == within_days && within_days > 0 }?.second
+
+    return when {
+        within_res != null -> stringResource(within_res)
+        date_from != null && date_to != null && date_from == date_to -> format_search_date(date_from)
+        date_from != null && date_to != null -> stringResource(
+            R.string.search_date_range,
+            format_search_date(date_from),
+            format_search_date(date_to),
+        )
+        date_from != null -> stringResource(
+            R.string.search_chip_format,
+            stringResource(R.string.search_chip_after),
+            format_search_date(date_from),
+        )
+        date_to != null -> stringResource(
+            R.string.search_chip_format,
+            stringResource(R.string.search_chip_before),
+            format_search_date(date_to),
+        )
+        else -> stringResource(R.string.chip_any_time)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun advanced_search_sheet(
     operators: List<SearchOperator>,
     free_text: String,
+    folder: String?,
     on_apply: (List<SearchOperator>, String) -> Unit,
     on_dismiss: () -> Unit,
 ) {
@@ -243,60 +396,52 @@ internal fun advanced_search_sheet(
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val focus_manager = LocalFocusManager.current
-    val initial = remember { advanced_fields(operators) }
+    val initial = remember { advanced_fields(operators, folder, account_today()) }
 
     var from_text by rememberSaveable { mutableStateOf(initial.from) }
     var to_text by rememberSaveable { mutableStateOf(initial.to) }
     var subject_text by rememberSaveable { mutableStateOf(initial.subject) }
     var words_text by rememberSaveable { mutableStateOf(free_text) }
+    var does_not_have_text by rememberSaveable { mutableStateOf(initial.does_not_have) }
     var attachment_on by rememberSaveable { mutableStateOf(initial.attachment) }
-    var unread_on by rememberSaveable { mutableStateOf(initial.unread) }
     var starred_on by rememberSaveable { mutableStateOf(initial.starred) }
-    var preset by rememberSaveable { mutableStateOf(initial.preset) }
+    var within_days by rememberSaveable { mutableStateOf(initial.within_days) }
+    var date_from by rememberSaveable { mutableStateOf(initial.date_from?.toString().orEmpty()) }
+    var date_to by rememberSaveable { mutableStateOf(initial.date_to?.toString().orEmpty()) }
+    var size_op by rememberSaveable { mutableStateOf(initial.size_op) }
+    var size_value by rememberSaveable { mutableStateOf(initial.size_value) }
+    var size_unit by rememberSaveable { mutableStateOf(initial.size_unit) }
     var scope by rememberSaveable { mutableStateOf(initial.scope) }
-    var cleared by rememberSaveable { mutableStateOf(false) }
     var date_menu_open by remember { mutableStateOf(false) }
     var scope_menu_open by remember { mutableStateOf(false) }
 
-    val preset_labels = listOf(
-        DatePreset.ANY to R.string.chip_any_time,
-        DatePreset.WEEK to R.string.chip_older_than_week,
-        DatePreset.MONTH to R.string.chip_older_than_month,
-        DatePreset.SIX_MONTHS to R.string.chip_older_than_six_months,
-        DatePreset.YEAR to R.string.chip_older_than_year,
-    )
-    val scope_labels = mapOf(
-        "" to R.string.folder_all_mail,
-        "inbox" to R.string.folder_inbox,
-        "sent" to R.string.folder_sent,
-        "drafts" to R.string.folder_drafts,
-        "archive" to R.string.folder_archive,
-        "spam" to R.string.folder_spam,
-        "trash" to R.string.folder_trash,
-        "anywhere" to R.string.search_scope_anywhere,
-    )
-    val custom_label = date_filter_label(operators)
-    val custom_available = initial.preset == DatePreset.CUSTOM && !cleared
-    val preset_label = preset_labels.firstOrNull { it.first == preset }
-        ?.let { stringResource(it.second) }
-        ?: custom_label
+    val date_from_day = date_from.takeIf { it.isNotEmpty() }?.let { LocalDate.parse(it) }
+    val date_to_day = date_to.takeIf { it.isNotEmpty() }?.let { LocalDate.parse(it) }
+
+    val launch_custom_range = remember_date_range_picker { first_day, last_day ->
+        within_days = 0
+        date_from = first_day.toString()
+        date_to = last_day.toString()
+    }
 
     val apply_search = {
         val lifted = lift_operators(words_text, submit = true)
-        val built = build_advanced_operators(
-            operators,
-            AdvancedFields(
-                from = from_text,
-                to = to_text,
-                subject = subject_text,
-                attachment = attachment_on,
-                unread = unread_on,
-                starred = starred_on,
-                preset = preset,
-                scope = scope,
-                cleared = cleared,
-            ),
+        val fields = AdvancedFields(
+            from = from_text,
+            to = to_text,
+            subject = subject_text,
+            does_not_have = does_not_have_text,
+            attachment = attachment_on,
+            starred = starred_on,
+            within_days = within_days,
+            date_from = date_from_day,
+            date_to = date_to_day,
+            size_op = size_op,
+            size_value = size_value,
+            size_unit = size_unit,
+            scope = scope,
         )
+        val built = build_advanced_operators(operators, fields, folder, lifted.text.isNotBlank())
         on_apply(merge_lifted(built, lifted.operators), lifted.text.trim())
     }
 
@@ -307,12 +452,16 @@ internal fun advanced_search_sheet(
         to_text = ""
         subject_text = ""
         words_text = ""
+        does_not_have_text = ""
         attachment_on = false
-        unread_on = false
         starred_on = false
-        preset = DatePreset.ANY
-        scope = ""
-        cleared = true
+        within_days = 0
+        date_from = ""
+        date_to = ""
+        size_op = SizeOp.GREATER
+        size_value = ""
+        size_unit = SizeUnit.MB
+        scope = default_search_scope(folder)
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
@@ -402,8 +551,17 @@ internal fun advanced_search_sheet(
                         label = stringResource(R.string.advanced_has_words),
                         value = words_text,
                         placeholder = "",
-                        ime_action = ImeAction.Search,
+                        ime_action = ImeAction.Next,
                         on_change = { words_text = it },
+                        on_submit = { focus_next() },
+                    )
+                    AsterDivider(modifier = Modifier.padding(start = 16.dp))
+                    advanced_input_row(
+                        label = stringResource(R.string.advanced_does_not_have),
+                        value = does_not_have_text,
+                        placeholder = "",
+                        ime_action = ImeAction.Search,
+                        on_change = { does_not_have_text = it },
                         on_submit = { apply_search() },
                     )
                 }
@@ -411,57 +569,70 @@ internal fun advanced_search_sheet(
                 advanced_section(title = stringResource(R.string.date)) {
                     advanced_value_row(
                         label = stringResource(R.string.advanced_date_within),
-                        value = preset_label,
+                        value = advanced_date_label(within_days, date_from_day, date_to_day),
                         on_click = { date_menu_open = true },
                     ) {
                         aster_menu(
                             expanded = date_menu_open,
                             on_dismiss = { date_menu_open = false },
                         ) {
-                            preset_labels.forEach { (option, label_res) ->
+                            WITHIN_DAYS_LABELS.forEach { (days, label_res) ->
                                 aster_menu_item(
                                     label = stringResource(label_res),
-                                    selected = preset == option,
+                                    selected = within_days == days && date_from_day == null && date_to_day == null,
                                     on_click = {
-                                        preset = option
+                                        within_days = days
+                                        date_from = ""
+                                        date_to = ""
                                         date_menu_open = false
                                     },
                                 )
                             }
-                            if (custom_available) {
-                                aster_menu_item(
-                                    label = custom_label,
-                                    selected = preset == DatePreset.CUSTOM,
-                                    on_click = {
-                                        preset = DatePreset.CUSTOM
-                                        date_menu_open = false
-                                    },
-                                )
-                            }
+                            aster_menu_item(
+                                label = stringResource(R.string.chip_custom_range),
+                                selected = date_from_day != null || date_to_day != null,
+                                on_click = {
+                                    date_menu_open = false
+                                    val seed = if (date_from_day != null && date_to_day != null) {
+                                        date_from_day to date_to_day
+                                    } else {
+                                        null
+                                    }
+                                    launch_custom_range(seed)
+                                },
+                            )
                         }
                     }
+                }
+
+                advanced_section(title = stringResource(R.string.advanced_size)) {
+                    advanced_size_row(
+                        size_op = size_op,
+                        size_value = size_value,
+                        size_unit = size_unit,
+                        on_op_change = { size_op = it },
+                        on_value_change = { size_value = it },
+                        on_unit_change = { size_unit = it },
+                    )
                 }
 
                 advanced_section(title = stringResource(R.string.filters)) {
                     advanced_value_row(
                         label = stringResource(R.string.advanced_search_scope),
-                        value = stringResource(scope_labels[scope] ?: R.string.folder_all_mail),
+                        value = stringResource(scope_label_res(scope)),
                         on_click = { scope_menu_open = true },
                     ) {
                         aster_menu(
                             expanded = scope_menu_open,
                             on_dismiss = { scope_menu_open = false },
                         ) {
-                            ADVANCED_SCOPE_VALUES.forEach { option ->
-                                aster_menu_item(
-                                    label = stringResource(scope_labels[option] ?: R.string.folder_all_mail),
-                                    selected = scope == option,
-                                    on_click = {
-                                        scope = option
-                                        scope_menu_open = false
-                                    },
-                                )
-                            }
+                            scope_menu_items(
+                                current = scope,
+                                on_select = { option ->
+                                    scope = option
+                                    scope_menu_open = false
+                                },
+                            )
                         }
                     }
                     AsterDivider(modifier = Modifier.padding(start = 16.dp))
@@ -469,12 +640,6 @@ internal fun advanced_search_sheet(
                         label = stringResource(R.string.has_attachment),
                         checked = attachment_on,
                         on_change = { attachment_on = it },
-                    )
-                    AsterDivider(modifier = Modifier.padding(start = 16.dp))
-                    advanced_toggle_row(
-                        label = stringResource(R.string.chip_is_unread),
-                        checked = unread_on,
-                        on_change = { unread_on = it },
                     )
                     AsterDivider(modifier = Modifier.padding(start = 16.dp))
                     advanced_toggle_row(
