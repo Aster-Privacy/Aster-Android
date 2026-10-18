@@ -357,6 +357,40 @@ class BillingViewModelTest {
     }
 
     @Test
+    fun `a dismissed checklist is not refetched on resume`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
+        val billing = signed_in_vm()
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        billing.dismiss_onboarding_checklist()
+        advanceUntilIdle()
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        assertNotNull(billing.state.value.onboarding?.dismissed_at)
+        coVerify(exactly = 1) { billing_api.get_onboarding_checklist() }
+    }
+
+    @Test
+    fun `a checklist dismissed by another account is still fetched on resume`() = runTest {
+        coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
+        val store = SessionKeyStore(null).also { it.put_user_id("user1") }
+        val billing = BillingViewModel(application, billing_api, auth_repository, PreferencesCacheStore(null), store)
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+        billing.dismiss_onboarding_checklist()
+        advanceUntilIdle()
+
+        store.put_user_id("user2")
+        billing.load_onboarding_checklist(force = false)
+        advanceUntilIdle()
+
+        assertNull(billing.state.value.onboarding?.dismissed_at)
+        coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
+    }
+
+    @Test
     fun `a failed dismissal restores the checklist`() = runTest {
         coEvery { billing_api.get_onboarding_checklist() } returns open_checklist
         coEvery { billing_api.dismiss_onboarding_checklist() } throws java.io.IOException("offline")

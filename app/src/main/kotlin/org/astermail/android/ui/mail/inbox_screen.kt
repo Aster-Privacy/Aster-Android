@@ -618,7 +618,7 @@ fun InboxScreen(
                 settings_vm.reload_tags_from_sync()
                 settings_vm.load_subscription(force = false)
                 mail_vm.refresh_on_resume(current_folder)
-                billing_vm.load_onboarding_checklist()
+                billing_vm.load_onboarding_checklist(force = false)
             }
         }
         lifecycle_owner.lifecycle.addObserver(observer)

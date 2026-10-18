@@ -1383,6 +1383,7 @@ class BillingViewModel @Inject constructor(
         val previous_finished_for = onboarding_finished_for
         locally_dismissed = true
         locally_dismissed_for = account
+        onboarding_finished_for = account
         _state.update { it.copy(onboarding = current.copy(dismissed_at = local_dismissed_marker)) }
         viewModelScope.launch {
             try {
