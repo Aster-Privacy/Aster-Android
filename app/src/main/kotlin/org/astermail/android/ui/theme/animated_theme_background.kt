@@ -25,6 +25,8 @@ import android.content.Context
 import android.graphics.drawable.AnimatedImageDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.runtime.Composable
@@ -33,11 +35,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -47,6 +48,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
@@ -54,7 +56,35 @@ private const val system_animation_poll_ms = 10_000L
 
 @Stable
 class ThemeAnimation internal constructor(internal val drawable: Drawable) {
-    internal var frame_nanos by mutableLongStateOf(0L)
+    internal var frame by mutableIntStateOf(0)
+    private val handler = Handler(Looper.getMainLooper())
+    internal val callback = ThemeFrameCallback(
+        on_frame = { frame++ },
+        post_at = { what, time -> handler.postAtTime(what, time) },
+        remove = { what -> handler.removeCallbacks(what) },
+    )
+
+    init {
+        drawable.callback = callback
+    }
+}
+
+internal class ThemeFrameCallback(
+    private val on_frame: () -> Unit,
+    private val post_at: (Runnable, Long) -> Unit,
+    private val remove: (Runnable) -> Unit,
+) : Drawable.Callback {
+    override fun invalidateDrawable(who: Drawable) {
+        on_frame()
+    }
+
+    override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
+        post_at(what, `when`)
+    }
+
+    override fun unscheduleDrawable(who: Drawable, what: Runnable) {
+        remove(what)
+    }
 }
 
 object animated_theme_image {
@@ -157,9 +187,7 @@ fun remember_theme_animation(enabled: Boolean): ThemeAnimation? {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                     animated_theme_image.start(current.drawable)
                     try {
-                        while (true) {
-                            withFrameNanos { current.frame_nanos = it }
-                        }
+                        awaitCancellation()
                     } finally {
                         animated_theme_image.stop(current.drawable)
                     }
@@ -176,7 +204,7 @@ fun remember_theme_animation(enabled: Boolean): ThemeAnimation? {
 }
 
 fun DrawScope.draw_theme_animation(animation: ThemeAnimation) {
-    if (animation.frame_nanos < 0L) return
+    if (animation.frame < 0) return
     val drawable = animation.drawable
     val width = drawable.intrinsicWidth
     val height = drawable.intrinsicHeight
