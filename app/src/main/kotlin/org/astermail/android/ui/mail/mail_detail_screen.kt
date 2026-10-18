@@ -2281,7 +2281,8 @@ fun MailDetailScreen(
 
     if (show_label_sheet) {
         val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-        val label_item = thread_state.item?.takeIf { it.id == email_id }
+        val label_item = api_item
+        val label_target_id = label_item?.id ?: email_id
         val applied_tags = remember(label_item, inbox_state_for_folder.items) {
             org.astermail.android.labels.conversation_tag_tokens(
                 label_item?.as_conversation_member(),
@@ -2298,9 +2299,9 @@ fun MailDetailScreen(
             on_pick = { picked ->
                 val display = org.astermail.android.labels.tag_display_name(picked, unknown_label)
                 if (picked.tag_token in applied_tags) {
-                    mail_vm.remove_tag_from_conversation(email_id, picked.tag_token, display)
+                    mail_vm.remove_tag_from_conversation(label_target_id, picked.tag_token, display)
                 } else {
-                    mail_vm.apply_tag_to_conversation(email_id, picked.tag_token, display)
+                    mail_vm.apply_tag_to_conversation(label_target_id, picked.tag_token, display)
                 }
             },
             applied_tokens = applied_tags,
