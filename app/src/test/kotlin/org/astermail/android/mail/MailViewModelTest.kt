@@ -970,6 +970,79 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `delete_permanent_bulk sends a small selection in one bulk request`() = runTest {
+        val page = fake_inbox_page(5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        val bulk_calls = mutableListOf<List<String>>()
+        var single_calls = 0
+        coEvery { repository.bulk_delete_permanent(any()) } answers {
+            bulk_calls.add(firstArg())
+            Result.success(firstArg<List<String>>().size)
+        }
+        coEvery { repository.delete_permanent(any()) } answers {
+            single_calls += 1
+            Result.success(Unit)
+        }
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        val ids = listOf("id_1", "id_2", "id_3")
+        vm.delete_permanent_bulk(ids)
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.items.any { it.id in ids })
+        assertEquals(listOf(ids), bulk_calls)
+        assertEquals(0, single_calls)
+    }
+
+    @Test
+    fun `delete_permanent_bulk splits a large selection at the bulk limit`() = runTest {
+        val bulk_calls = mutableListOf<List<String>>()
+        var single_calls = 0
+        coEvery { repository.bulk_delete_permanent(any()) } answers {
+            bulk_calls.add(firstArg())
+            Result.success(firstArg<List<String>>().size)
+        }
+        coEvery { repository.delete_permanent(any()) } answers {
+            single_calls += 1
+            Result.success(Unit)
+        }
+
+        val ids = (1..250).map { "item_$it" }
+        vm.delete_permanent_bulk(ids)
+        advanceUntilIdle()
+
+        assertEquals(listOf(100, 100, 50), bulk_calls.map { it.size })
+        assertEquals(ids, bulk_calls.flatten())
+        assertEquals(0, single_calls)
+    }
+
+    @Test
+    fun `delete_permanent_bulk restores only the items of a failed chunk`() = runTest {
+        val page = fake_inbox_page(5)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.bulk_delete_permanent(any()) } answers {
+            val chunk = firstArg<List<String>>()
+            if ("id_2" in chunk) Result.failure<Int>(RuntimeException("delete failed")) else Result.success(chunk.size)
+        }
+        coEvery { repository.delete_permanent(any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        val ids = listOf("id_1") + (1..99).map { "gone_$it" } + listOf("id_2", "id_3")
+        vm.delete_permanent_bulk(ids)
+        advanceUntilIdle()
+
+        val remaining = vm.inbox_state.value.items.map { it.id }
+        assertFalse("id_1" in remaining)
+        assertTrue("id_2" in remaining)
+        assertTrue("id_3" in remaining)
+        assertTrue("id_4" in remaining)
+    }
+
+    @Test
     fun `toggle_star flips star state and calls repository`() = runTest {
         val page = fake_inbox_page(2)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

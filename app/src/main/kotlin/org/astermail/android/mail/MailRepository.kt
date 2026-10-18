@@ -172,6 +172,7 @@ private const val SCOPE_ID_MAX_PAGES = 200
 private const val BULK_SCOPE_COMPLETION_DELAY_MS = 750L
 private const val BULK_SCOPE_MAX_ROUNDS = 1_000
 internal const val SNOOZE_BULK_LIMIT = 100
+internal const val PERMANENT_DELETE_BULK_LIMIT = 100
 internal const val BULK_SCOPE_ID_LIMIT = 1_000
 private val cached_custom_categories_json = kotlinx.serialization.json.Json {
     ignoreUnknownKeys = true
@@ -3471,7 +3472,7 @@ class MailRepository @Inject constructor(
 
     private suspend fun bulk_delete_permanent_now(ids: List<String>): Result<Int> = runCatching {
         var deleted = 0
-        ids.filter { it.isNotBlank() }.chunked(100).forEach { chunk ->
+        ids.filter { it.isNotBlank() }.chunked(PERMANENT_DELETE_BULK_LIMIT).forEach { chunk ->
             val response = mail_api.bulk_delete_permanent(
                 org.astermail.android.api.mail.BulkPermanentDeleteRequest(ids = chunk),
             )
