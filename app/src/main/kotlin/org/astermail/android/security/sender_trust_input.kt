@@ -94,6 +94,91 @@ fun sender_trust_input(
     )
 }
 
+internal data class SenderTrustCacheKey(
+    val name: String?,
+    val email: String?,
+    val reply_to: String?,
+    val spf_result: String?,
+    val dkim_result: String?,
+    val dmarc_result: String?,
+    val sender_aligned: Boolean?,
+    val sender_verified: Boolean?,
+    val sender_verified_domain: String?,
+    val is_internal: Boolean,
+)
+
+internal class SenderTrustResultCache(
+    private val max_entries: Int = 512,
+    private val max_key_length: Int = 2048,
+    private val evaluate: (SenderTrustInput) -> SenderTrust = ::evaluate_sender_trust,
+) {
+    private var context: SenderTrustContext? = null
+    private val entries = object : LinkedHashMap<SenderTrustCacheKey, SenderTrust>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<SenderTrustCacheKey, SenderTrust>?): Boolean =
+            size > max_entries
+    }
+
+    private fun key_of(input: SenderTrustInput): SenderTrustCacheKey? {
+        val length = listOf(
+            input.name,
+            input.email,
+            input.reply_to,
+            input.spf_result,
+            input.dkim_result,
+            input.dmarc_result,
+            input.sender_verified_domain,
+        ).sumOf { it?.length ?: 0 }
+        if (length > max_key_length) return null
+        return SenderTrustCacheKey(
+            name = input.name,
+            email = input.email,
+            reply_to = input.reply_to,
+            spf_result = input.spf_result,
+            dkim_result = input.dkim_result,
+            dmarc_result = input.dmarc_result,
+            sender_aligned = input.sender_aligned,
+            sender_verified = input.sender_verified,
+            sender_verified_domain = input.sender_verified_domain,
+            is_internal = input.is_internal,
+        )
+    }
+
+    fun trust_for(input: SenderTrustInput, context: SenderTrustContext): SenderTrust {
+        if (input.own_addresses !== context.own_addresses || input.contacts !== context.contacts) {
+            return evaluate(input)
+        }
+        val key = key_of(input) ?: return evaluate(input)
+        synchronized(this) {
+            if (this.context !== context) {
+                entries.clear()
+                this.context = context
+            }
+            val cached = entries[key]
+            if (cached != null) return cached
+        }
+        val result = evaluate(input)
+        synchronized(this) {
+            if (this.context === context) entries[key] = result
+        }
+        return result
+    }
+
+    @Synchronized
+    fun clear() {
+        entries.clear()
+        context = null
+    }
+}
+
+private val sender_trust_results = SenderTrustResultCache()
+
+private fun cached_sender_trust(input: SenderTrustInput, context: SenderTrustContext): SenderTrust =
+    if (context === SenderTrustStore.context.value) {
+        sender_trust_results.trust_for(input, context)
+    } else {
+        evaluate_sender_trust(input)
+    }
+
 fun sender_trust_for(
     message: SenderTrustMessage?,
     context: SenderTrustContext,
@@ -101,7 +186,7 @@ fun sender_trust_for(
     shown_email: String? = null,
 ): SenderTrust? {
     if (message == null) return null
-    return evaluate_sender_trust(sender_trust_input(message, context, shown_name, shown_email))
+    return cached_sender_trust(sender_trust_input(message, context, shown_name, shown_email), context)
 }
 
 fun trusted_sender_name(trust: SenderTrust?, raw_name: String, placeholder: String): String {
@@ -115,13 +200,14 @@ fun trusted_sender_name(message: SenderTrustMessage?, raw_name: String, placehol
 fun safe_sender_name(name: String?, email: String?): String {
     if (name.isNullOrEmpty()) return ""
     val context = SenderTrustStore.context.value
-    return evaluate_sender_trust(
+    return cached_sender_trust(
         SenderTrustInput(
             name = name,
             email = email ?: "",
             own_addresses = context.own_addresses,
             contacts = context.contacts,
         ),
+        context,
     ).name
 }
 
@@ -181,6 +267,7 @@ object SenderTrustStore {
     @Synchronized
     fun clear_contacts() {
         generation += 1
+        sender_trust_results.clear()
         val current = state.value
         if (current.contacts.isEmpty()) return
         state.value = current.copy(contacts = emptyList())
@@ -189,6 +276,7 @@ object SenderTrustStore {
     @Synchronized
     fun clear() {
         generation += 1
+        sender_trust_results.clear()
         primary_address = null
         extra_addresses.clear()
         if (state.value.own_addresses.isEmpty() && state.value.contacts.isEmpty()) return
