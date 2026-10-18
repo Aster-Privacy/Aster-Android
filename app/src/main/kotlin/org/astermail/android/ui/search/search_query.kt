@@ -40,11 +40,15 @@ internal val RECOGNIZED_OPERATOR_KEYS = setOf(
     "date",
     "label",
     "filename",
+    "larger",
+    "smaller",
 )
 
-internal val ANY_OF_OPERATOR_KEYS = setOf("from", "to", "contact", "has")
+internal const val TEXT_OPERATOR_KEY = "text"
 
-internal val SINGLE_VALUE_OPERATOR_KEYS = setOf("in", "before", "after", "date")
+internal val ANY_OF_OPERATOR_KEYS = setOf("from", "to", "contact", "has", "in")
+
+internal val SINGLE_VALUE_OPERATOR_KEYS = setOf("before", "after", "date")
 
 internal val IS_OPERATOR_VALUES = setOf("unread", "read", "starred", "unstarred", "encrypted")
 
@@ -214,11 +218,24 @@ private fun plain_term(token: String): TokenKind {
     return if (term.isEmpty()) TokenKind.Pending else TokenKind.Term(term)
 }
 
+private fun is_dash_negation(token: String): Boolean =
+    token.length > 1 && token[0] == '-' && token[1] != '-' && !token[1].isWhitespace()
+
+private fun negated_term(raw_value: String): TokenKind {
+    val value = raw_value.replace("\"", "").trim().lowercase()
+    if (value.isEmpty()) return TokenKind.Pending
+    val closed = raw_value.count { it == '"' } % 2 == 0
+    return TokenKind.Operator(SearchOperator(true, TEXT_OPERATOR_KEY, value), closed)
+}
+
 private fun classify_token(token: String): TokenKind {
-    val match = OPERATOR_TOKEN_REGEX.find(token) ?: return plain_term(token)
+    val match = OPERATOR_TOKEN_REGEX.find(token)
+        ?: return if (is_dash_negation(token)) negated_term(token.substring(1)) else plain_term(token)
     val key = match.groupValues[2].lowercase()
 
-    if (!RECOGNIZED_OPERATOR_KEYS.contains(key)) return plain_term(token)
+    if (!RECOGNIZED_OPERATOR_KEYS.contains(key)) {
+        return if (is_dash_negation(token)) negated_term(token.substring(1)) else plain_term(token)
+    }
 
     val raw_value = match.groupValues[3]
     val value = raw_value.replace("\"", "").trim().lowercase()
@@ -237,16 +254,41 @@ internal fun is_evaluable_operator(key: String, value: String): Boolean = when (
     "has" -> HAS_OPERATOR_VALUES.contains(value) || is_attachment_type_value(value)
     "before", "after" -> parse_iso_date(value) != null || parse_relative_days(value) != null
     "date" -> DATE_OPERATOR_VALUES.contains(value) || parse_iso_date(value) != null
-    "from", "to", "contact", "subject", "label", "filename" -> value.isNotBlank()
+    "from", "to", "contact", "subject", "label", "filename", TEXT_OPERATOR_KEY -> value.isNotBlank()
+    "larger", "smaller" -> value.isNotEmpty() && value.all { it in '0'..'9' }
     else -> false
+}
+
+private const val NOT_KEYWORD = "NOT"
+
+private fun classify_tokens(tokens: List<QueryToken>): List<Pair<QueryToken, TokenKind>> {
+    val classified = mutableListOf<Pair<QueryToken, TokenKind>>()
+    var index = 0
+
+    while (index < tokens.size) {
+        val token = tokens[index]
+        val next = tokens.getOrNull(index + 1)
+
+        if (token.text == NOT_KEYWORD && next != null && classify_token(next.text) is TokenKind.Term) {
+            val merged = QueryToken(token.text + " " + next.text, token.start, next.end)
+            classified.add(merged to negated_term(next.text))
+            index += 2
+            continue
+        }
+
+        classified.add(token to classify_token(token.text))
+        index++
+    }
+
+    return classified
 }
 
 internal fun parse_query(raw: String): ParsedQuery {
     val operators = mutableListOf<SearchOperator>()
     val kept = mutableListOf<String>()
 
-    for (token in tokenize_query(raw)) {
-        when (val kind = classify_token(token.text)) {
+    for ((token, kind) in classify_tokens(tokenize_query(raw))) {
+        when (kind) {
             is TokenKind.Operator -> operators.add(kind.operator)
             else -> kept.add(token.text)
         }
@@ -259,7 +301,7 @@ internal fun parse_query(raw: String): ParsedQuery {
 }
 
 internal fun free_text_terms(free_text: String): List<String> =
-    tokenize_query(free_text).mapNotNull { (classify_token(it.text) as? TokenKind.Term)?.term }
+    classify_tokens(tokenize_query(free_text)).mapNotNull { (it.second as? TokenKind.Term)?.term }
 
 internal fun has_search_query(parsed: ParsedQuery): Boolean =
     parsed.operators.isNotEmpty() || parsed.terms.isNotEmpty()
@@ -286,7 +328,11 @@ internal fun quote_operator_value(value: String): String {
 }
 
 internal fun operator_token(op: SearchOperator): String =
-    "${if (op.negated) "-" else ""}${op.key}:${quote_operator_value(op.value)}"
+    if (op.key == TEXT_OPERATOR_KEY) {
+        "${if (op.negated) "-" else ""}${quote_operator_value(op.value)}"
+    } else {
+        "${if (op.negated) "-" else ""}${op.key}:${quote_operator_value(op.value)}"
+    }
 
 fun recipient_search_query(name: String): String = "to:${quote_operator_value(name)}"
 
@@ -300,8 +346,8 @@ internal fun lift_operators(text: String, submit: Boolean): LiftResult {
     val remaining = StringBuilder()
     var cursor = 0
 
-    for (token in tokenize_query(text)) {
-        val kind = classify_token(token.text) as? TokenKind.Operator ?: continue
+    for ((token, classified) in classify_tokens(tokenize_query(text))) {
+        val kind = classified as? TokenKind.Operator ?: continue
         val complete = kind.closed && (submit || token.end < text.length)
         if (!complete) continue
 
@@ -333,11 +379,6 @@ internal fun merge_lifted(
     }
 
     return merged
-}
-
-internal fun effective_operators(ops: List<SearchOperator>): List<SearchOperator> {
-    val last_scope = ops.lastOrNull { !it.negated && it.key == "in" } ?: return ops
-    return ops.filter { it.negated || it.key != "in" || it === last_scope }
 }
 
 internal fun parse_iso_date(value: String): LocalDate? {
@@ -492,8 +533,15 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
     "label" -> matches_label(item, op.value, env.labels)
     "filename" -> item.has_attachments &&
         env.attachments[item.id].orEmpty().any { fold_text(it.filename).contains(fold_text(op.value)) }
+    TEXT_OPERATOR_KEY -> item_haystack(item).contains(fold_text(op.value))
     else -> null
 }
+
+private fun item_haystack(item: InboxItem): String = fold_text(
+    (sender_fields(item) + item.subject + item.preview + recipient_fields(item))
+        .filterNotNull()
+        .joinToString("\n"),
+)
 
 private fun evaluate_operator(item: InboxItem, op: SearchOperator, env: SearchEnv): Boolean {
     val result = operator_result(item, op, env) ?: return true
@@ -501,7 +549,8 @@ private fun evaluate_operator(item: InboxItem, op: SearchOperator, env: SearchEn
 }
 
 private fun is_evaluable(op: SearchOperator): Boolean =
-    RECOGNIZED_OPERATOR_KEYS.contains(op.key) && is_evaluable_operator(op.key, op.value)
+    (RECOGNIZED_OPERATOR_KEYS.contains(op.key) || op.key == TEXT_OPERATOR_KEY) &&
+        is_evaluable_operator(op.key, op.value)
 
 internal fun matches_item(
     item: InboxItem,
@@ -509,7 +558,7 @@ internal fun matches_item(
     apply_scope: Boolean = true,
     env: SearchEnv = current_search_env(),
 ): Boolean {
-    val operators = effective_operators(parsed.operators)
+    val operators = parsed.operators
     if (apply_scope) {
         if (item.is_spam && !scope_includes_spam(operators)) return false
         if (item.is_trashed && !scope_includes_trash(operators)) return false
@@ -530,11 +579,7 @@ internal fun matches_item(
 
     if (parsed.terms.isEmpty()) return true
 
-    val haystack = fold_text(
-        (sender_fields(item) + item.subject + item.preview + recipient_fields(item))
-            .filterNotNull()
-            .joinToString("\n"),
-    )
+    val haystack = item_haystack(item)
 
     return parsed.terms.all { haystack.contains(it) }
 }

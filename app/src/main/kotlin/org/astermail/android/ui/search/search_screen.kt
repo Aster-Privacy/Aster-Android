@@ -343,9 +343,6 @@ fun SearchScreen(
     val shown_operators = remember(operator_chips, free_text) {
         chip_visible_operators(operator_chips, free_text)
     }
-    val suggestion = remember(origin_folder, shown_operators) {
-        scope_suggestion(origin_folder, shown_operators)
-    }
 
     val lock_revision by org.astermail.android.folders.folder_lock_store.revision.collectAsState()
     val visible_corpus = remember(search_state.all_items, lock_revision) {
@@ -473,9 +470,6 @@ fun SearchScreen(
     val people_lists = chip_people_for(visible_corpus, produced_people)
     val chip_people = people_lists.first
     val chip_recipients = people_lists.second
-    val custom_chips = remember(operator_chips) {
-        custom_chip_operators(operator_chips)
-    }
     val visible_results = computed?.results ?: last_results
     val filtered = remember(visible_results, lock_revision) {
         org.astermail.android.folders.filter_locked_items(visible_results)
@@ -620,34 +614,14 @@ fun SearchScreen(
                 operators = shown_operators,
                 people = chip_people,
                 recipient_people = chip_recipients,
+                folder = origin_folder,
+                free_text = free_text,
                 on_operators_change = { apply_chip_operators(it) },
                 on_advanced_click = {
                     submit_typed_operators()
                     advanced_open = true
                 },
             )
-        }
-
-        val shown_suggestion = suggestion?.takeIf { has_query && !select_mode }
-        if (custom_chips.isNotEmpty() || shown_suggestion != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-            ) {
-                custom_chips.forEach { op ->
-                    operator_chip(op) {
-                        operator_chips = operator_chips.filterNot { it === op }
-                    }
-                }
-                if (shown_suggestion != null) {
-                    scope_suggestion_chip(shown_suggestion) {
-                        apply_chip_operators(apply_scope_suggestion(shown_operators, shown_suggestion))
-                    }
-                }
-            }
         }
 
         AsterDivider()
@@ -660,7 +634,7 @@ fun SearchScreen(
                     .clip(SquircleShape(8.dp))
                     .clickable {
                         apply_chip_operators(
-                            without_key(shown_operators, "in") + SearchOperator(false, "in", "anywhere"),
+                            set_search_scope(shown_operators, origin_folder, "anywhere", free_text.isNotBlank()),
                         )
                     }
                     .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm),
@@ -1013,6 +987,7 @@ fun SearchScreen(
         advanced_search_sheet(
             operators = operator_chips,
             free_text = free_text,
+            folder = origin_folder,
             on_apply = { next_operators, next_text ->
                 advanced_open = false
                 operator_chips = next_operators
@@ -1053,7 +1028,7 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
 
 internal fun operator_value_label(op: SearchOperator): Int? = when (op.key) {
     "in" -> when (op.value) {
-        "anywhere" -> R.string.search_scope_anywhere
+        "anywhere" -> R.string.chip_everywhere
         "all" -> R.string.folder_all_mail
         "inbox" -> R.string.folder_inbox
         "sent" -> R.string.folder_sent
@@ -1089,106 +1064,6 @@ private fun filter_toggle_active(ops: List<SearchOperator>, toggle: FilterToggle
 
 private fun apply_filter_toggle(ops: List<SearchOperator>, toggle: FilterToggle): List<SearchOperator> =
     if (toggle.key == "has") toggle_attachment(ops) else toggle_operator(ops, toggle.key, toggle.value)
-
-@Composable
-private fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
-    val colors = AsterMaterial.colors
-    val label_key = when (op.key) {
-        "from" -> stringResource(R.string.search_chip_from)
-        "to" -> stringResource(R.string.search_chip_to)
-        "contact" -> stringResource(R.string.search_chip_contact)
-        "subject" -> stringResource(R.string.search_chip_subject)
-        "has" -> stringResource(R.string.search_chip_has)
-        "is" -> stringResource(R.string.search_chip_is)
-        "in" -> stringResource(R.string.search_chip_in)
-        "before" -> stringResource(R.string.search_chip_before)
-        "after" -> stringResource(R.string.search_chip_after)
-        "date" -> stringResource(R.string.search_chip_date)
-        "label" -> stringResource(R.string.search_chip_label)
-        "filename" -> stringResource(R.string.search_chip_filename)
-        else -> op.key.replaceFirstChar { it.uppercase() }
-    }
-    val value = operator_value_text(op)
-    val chip_label = if (op.negated) {
-        stringResource(
-            R.string.search_chip_format_negated,
-            stringResource(R.string.search_chip_not_prefix),
-            label_key,
-            value,
-        )
-    } else {
-        stringResource(R.string.search_chip_format, label_key, value)
-    }
-    Row(
-        modifier = Modifier
-            .clip(SquircleShape(999.dp))
-            .background(colors.accent_blue.copy(alpha = 0.14f))
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.35f), SquircleShape(999.dp))
-            .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = chip_label,
-            color = colors.accent_blue,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .clickable(role = Role.Button, onClick = on_remove),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.X,
-                contentDescription = stringResource(R.string.remove),
-                tint = colors.accent_blue,
-                modifier = Modifier.size(14.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun scope_suggestion_chip(suggestion: ScopeSuggestion, on_click: () -> Unit) {
-    val colors = AsterMaterial.colors
-    val label = when (suggestion.kind) {
-        ScopeSuggestionKind.NARROW -> stringResource(
-            R.string.search_scope_only_in,
-            org.astermail.android.ui.mail.folder_display_name(suggestion.folder),
-        )
-        ScopeSuggestionKind.WIDEN -> stringResource(R.string.search_scope_everywhere)
-    }
-    Row(
-        modifier = Modifier
-            .clip(SquircleShape(999.dp))
-            .border(1.dp, colors.accent_blue.copy(alpha = 0.35f), SquircleShape(999.dp))
-            .clickable(role = Role.Button, onClick = on_click)
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .height(22.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = if (suggestion.kind == ScopeSuggestionKind.WIDEN) TablerIcons.World else TablerIcons.Folder,
-            contentDescription = null,
-            tint = colors.accent_blue,
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = label,
-            color = colors.accent_blue,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
 
 @Composable
 private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {

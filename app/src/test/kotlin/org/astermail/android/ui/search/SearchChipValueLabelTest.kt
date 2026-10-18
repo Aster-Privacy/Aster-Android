@@ -31,7 +31,7 @@ class SearchChipValueLabelTest {
 
     @Test
     fun scope_values_use_translated_names() {
-        assertEquals(R.string.search_scope_anywhere, operator_value_label(op("in", "anywhere")))
+        assertEquals(R.string.chip_everywhere, operator_value_label(op("in", "anywhere")))
         assertEquals(R.string.folder_all_mail, operator_value_label(op("in", "all")))
         assertEquals(R.string.folder_inbox, operator_value_label(op("in", "inbox")))
         assertEquals(R.string.folder_drafts, operator_value_label(op("in", "draft")))

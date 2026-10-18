@@ -34,6 +34,8 @@ class SearchQueryRulesTest {
 
     private val zone = ZoneId.of("America/New_York")
 
+    private val today = LocalDate.of(2026, 8, 15)
+
     private val env = SearchEnv(
         now = Instant.parse("2026-08-15T16:00:00Z").toEpochMilli(),
         zone = zone,
@@ -285,11 +287,73 @@ class SearchQueryRulesTest {
     @Test
     fun date_presets_are_detected_only_for_their_own_shape() {
         assertEquals(DatePreset.ANY, detect_date_preset(emptyList()))
-        assertEquals(DatePreset.WEEK, detect_date_preset(listOf(op("before", "7d"))))
-        assertEquals(DatePreset.CUSTOM, detect_date_preset(listOf(op("after", "7d"))))
-        assertEquals(DatePreset.CUSTOM, detect_date_preset(listOf(op("before", "9d"))))
-        assertEquals(DatePreset.ANY, detect_date_preset(listOf(op("before", "7d", negated = true))))
+        assertEquals(DatePreset.LAST_7_DAYS, detect_date_preset(listOf(op("after", "7d"))))
+        assertEquals(DatePreset.LAST_30_DAYS, detect_date_preset(listOf(op("after", "30d"))))
+        assertEquals(DatePreset.LAST_6_MONTHS, detect_date_preset(listOf(op("after", "183d"))))
+        assertEquals(DatePreset.LAST_YEAR, detect_date_preset(listOf(op("after", "365d"))))
+        assertEquals(DatePreset.OLDER_THAN_YEAR, detect_date_preset(listOf(op("before", "365d"))))
+        assertEquals(DatePreset.CUSTOM, detect_date_preset(listOf(op("before", "7d"))))
+        assertEquals(DatePreset.CUSTOM, detect_date_preset(listOf(op("after", "9d"))))
+        assertEquals(
+            DatePreset.CUSTOM,
+            detect_date_preset(listOf(op("after", "2026-08-10"), op("before", "2026-08-13"))),
+        )
+        assertEquals(DatePreset.ANY, detect_date_preset(listOf(op("after", "7d", negated = true))))
         assertNull(custom_date_range(listOf(op("after", "7d"))))
+    }
+
+    @Test
+    fun applying_a_date_preset_replaces_every_date_operator() {
+        val ops = listOf(op("is", "unread"), op("after", "2026-08-10"), op("before", "2026-08-13"), op("date", "today"))
+        assertEquals(listOf(op("is", "unread"), op("after", "30d")), apply_date_preset(ops, DatePreset.LAST_30_DAYS))
+        assertEquals(listOf(op("is", "unread"), op("before", "365d")), apply_date_preset(ops, DatePreset.OLDER_THAN_YEAR))
+        assertEquals(listOf(op("is", "unread")), apply_date_preset(ops, DatePreset.ANY))
+        assertEquals(ops, apply_date_preset(ops, DatePreset.CUSTOM))
+        assertEquals(
+            listOf(op("after", "2026-01-01", negated = true), op("after", "7d")),
+            apply_date_preset(listOf(op("after", "2026-01-01", negated = true), op("before", "7d")), DatePreset.LAST_7_DAYS),
+        )
+    }
+
+    @Test
+    fun relative_days_match_newer_and_older_than_n_days_ago() {
+        assertTrue(matches("after:30d", item(timestamp = "2026-07-20T00:00:00Z")))
+        assertFalse(matches("after:30d", item(timestamp = "2026-07-10T00:00:00Z")))
+        assertTrue(matches("after:183d", item(timestamp = "2026-03-01T00:00:00Z")))
+        assertFalse(matches("after:183d", item(timestamp = "2026-02-01T00:00:00Z")))
+        assertTrue(matches("before:365d", item(timestamp = "2025-08-01T00:00:00Z")))
+        assertFalse(matches("before:365d", item(timestamp = "2026-08-01T00:00:00Z")))
+    }
+
+    @Test
+    fun a_bare_dash_word_excludes_that_term() {
+        val parsed = parse_query("report -budget NOT invoice -\"late fee\" 555-1234 -from:")
+        assertEquals(
+            listOf(
+                op(TEXT_OPERATOR_KEY, "budget", negated = true),
+                op(TEXT_OPERATOR_KEY, "invoice", negated = true),
+                op(TEXT_OPERATOR_KEY, "late fee", negated = true),
+            ),
+            parsed.operators,
+        )
+        assertEquals(listOf("report", "555-1234"), parsed.terms)
+        assertTrue(matches("report -budget", item(subject = "Quarterly report")))
+        assertFalse(matches("report -budget", item(subject = "Budget report")))
+        assertFalse(matches("report NOT budget", item(subject = "Budget report")))
+        assertTrue(matches("555-1234", item(preview = "Call 555-1234")))
+        assertEquals("-budget", operator_token(op(TEXT_OPERATOR_KEY, "budget", negated = true)))
+        assertEquals("-\"late fee\"", operator_token(op(TEXT_OPERATOR_KEY, "late fee", negated = true)))
+    }
+
+    @Test
+    fun repeated_in_operators_are_any_of_and_negated_in_stays_all_of() {
+        val trashed = item(is_trashed = true)
+        val starred = item(is_starred = true)
+        assertTrue(matches("in:trash in:starred", trashed))
+        assertTrue(matches("in:trash in:starred", starred))
+        assertFalse(matches("in:trash in:starred", item()))
+        assertFalse(matches("in:all -in:starred", starred))
+        assertTrue(matches("in:all -in:starred", item()))
     }
 
     @Test
@@ -448,10 +512,7 @@ class SearchQueryRulesTest {
     @Test
     fun lifted_operators_merge_into_the_chips() {
         val chips = listOf(op("in", "inbox"), op("from", "ann"), op("in", "spam", negated = true))
-        assertEquals(
-            listOf(op("from", "ann"), op("in", "spam", negated = true), op("in", "sent")),
-            merge_lifted(chips, listOf(op("in", "sent"))),
-        )
+        assertEquals(chips + op("in", "sent"), merge_lifted(chips, listOf(op("in", "sent"))))
         assertEquals(chips + op("from", "bob"), merge_lifted(chips, listOf(op("from", "bob"))))
         assertEquals(chips, merge_lifted(chips, listOf(op("from", "ann"))))
         assertEquals(
@@ -471,18 +532,45 @@ class SearchQueryRulesTest {
 
     @Test
     fun advanced_sheet_reads_the_current_scope_and_fields() {
-        val fields = advanced_fields(parse_query("in:inbox in:trash from:ann is:starred has:attachments before:30d").operators)
+        val fields = advanced_fields(
+            parse_query("in:trash from:ann is:starred has:attachments after:30d -budget -\"late fee\" larger:2097152").operators,
+            "inbox",
+            today,
+        )
         assertEquals("trash", fields.scope)
         assertEquals("ann", fields.from)
         assertTrue(fields.starred)
         assertTrue(fields.attachment)
-        assertFalse(fields.unread)
-        assertEquals(DatePreset.MONTH, fields.preset)
-        assertEquals("drafts", advanced_fields(listOf(op("in", "draft"))).scope)
-        assertEquals("archive", advanced_fields(listOf(op("in", "archived"))).scope)
-        assertEquals("", advanced_fields(listOf(op("in", "all"))).scope)
-        assertEquals("", advanced_fields(listOf(op("in", "spam", negated = true))).scope)
-        assertTrue(advanced_fields(listOf(op("in", "starred"))).starred)
+        assertEquals(30, fields.within_days)
+        assertNull(fields.date_from)
+        assertEquals("budget late fee", fields.does_not_have)
+        assertEquals(SizeOp.GREATER, fields.size_op)
+        assertEquals("2", fields.size_value)
+        assertEquals(SizeUnit.MB, fields.size_unit)
+        assertEquals("drafts", advanced_fields(listOf(op("in", "draft")), null, today).scope)
+        assertEquals("archive", advanced_fields(listOf(op("in", "archived")), null, today).scope)
+        assertEquals("all", advanced_fields(listOf(op("in", "all")), null, today).scope)
+        assertEquals("trash", advanced_fields(emptyList(), "trash", today).scope)
+        assertEquals("all", advanced_fields(listOf(op("in", "spam", negated = true)), null, today).scope)
+        assertEquals("starred", advanced_fields(listOf(op("in", "starred")), null, today).scope)
+    }
+
+    @Test
+    fun advanced_sheet_reads_dates_and_sizes_into_the_form() {
+        val custom = advanced_fields(listOf(op("after", "2026-08-10"), op("before", "2026-08-13")), null, today)
+        assertEquals(0, custom.within_days)
+        assertEquals(LocalDate.of(2026, 8, 10), custom.date_from)
+        assertEquals(LocalDate.of(2026, 8, 12), custom.date_to)
+        val odd = advanced_fields(listOf(op("after", "10d")), null, today)
+        assertEquals(0, odd.within_days)
+        assertEquals(LocalDate.of(2026, 8, 5), odd.date_from)
+        val small = advanced_fields(listOf(op("smaller", "3072")), null, today)
+        assertEquals(SizeOp.LESS, small.size_op)
+        assertEquals("3", small.size_value)
+        assertEquals(SizeUnit.KB, small.size_unit)
+        val bytes = advanced_fields(listOf(op("larger", "1500")), null, today)
+        assertEquals("1500", bytes.size_value)
+        assertEquals(SizeUnit.BYTES, bytes.size_unit)
     }
 
     @Test
@@ -490,26 +578,16 @@ class SearchQueryRulesTest {
         val ops = parse_query(
             "in:inbox in:trash -in:spam label:work from:ann from:bob is:encrypted -is:unread date:today",
         ).operators
-        val built = build_advanced_operators(ops, advanced_fields(ops).copy(scope = "sent", from = "Cy"))
+        val fields = advanced_fields(ops, null, today).copy(scope = "sent", from = "Cy")
         assertEquals(
             listOf(
-                op("in", "spam", negated = true),
                 op("label", "work"),
-                op("from", "bob"),
                 op("is", "encrypted"),
                 op("is", "unread", negated = true),
-                op("date", "today"),
                 op("from", "cy"),
                 op("in", "sent"),
             ),
-            built,
-        )
-        assertEquals(
-            listOf(op("in", "spam", negated = true)),
-            build_advanced_operators(
-                listOf(op("in", "trash"), op("in", "spam", negated = true)),
-                advanced_fields(listOf(op("in", "trash"))).copy(scope = ""),
-            ),
+            build_advanced_operators(ops, fields, null, false),
         )
     }
 
@@ -517,57 +595,68 @@ class SearchQueryRulesTest {
     fun advanced_sheet_applied_unchanged_keeps_the_same_filters() {
         val ops = parse_query(
             "from:ann to:bob subject:plan has:attachment is:unread is:starred after:2026-08-10 before:2026-08-13 " +
-                "in:archive -from:cy contact:dee",
+                "in:archive -from:cy contact:dee -spam larger:1048576",
         ).operators
-        assertEquals(ops.toSet(), build_advanced_operators(ops, advanced_fields(ops)).toSet())
-        assertEquals(DatePreset.CUSTOM, advanced_fields(ops).preset)
+        assertEquals(
+            ops.toSet(),
+            build_advanced_operators(ops, advanced_fields(ops, "inbox", today), "inbox", false).toSet(),
+        )
     }
 
     @Test
-    fun advanced_sheet_date_presets_replace_the_date_bounds() {
+    fun advanced_sheet_within_days_replaces_the_date_bounds() {
         val ops = listOf(op("after", "2026-08-10"), op("before", "2026-08-13"), op("after", "2026-01-01", negated = true))
+        val fields = advanced_fields(ops, "inbox", today).copy(date_from = null, date_to = null)
+        val kept = op("after", "2026-01-01", negated = true)
+        assertEquals(listOf(kept, op("after", "7d")), build_advanced_operators(ops, fields.copy(within_days = 7), "inbox", true))
+        assertEquals(listOf(kept), build_advanced_operators(ops, fields, "inbox", true))
+        assertEquals(listOf(kept), build_advanced_operators(ops, fields, "inbox", false))
+        assertEquals(listOf(op("in", "all")), build_advanced_operators(ops.dropLast(1), fields, "inbox", false))
         assertEquals(
-            listOf(op("after", "2026-01-01", negated = true), op("before", "7d")),
-            build_advanced_operators(ops, advanced_fields(ops).copy(preset = DatePreset.WEEK)),
-        )
-        assertEquals(
-            listOf(op("after", "2026-01-01", negated = true)),
-            build_advanced_operators(ops, advanced_fields(ops).copy(preset = DatePreset.ANY)),
+            listOf(kept, op("after", "2026-08-01"), op("before", "2026-08-03")),
+            build_advanced_operators(
+                ops,
+                fields.copy(date_from = LocalDate.of(2026, 8, 1), date_to = LocalDate.of(2026, 8, 2)),
+                "inbox",
+                true,
+            ),
         )
     }
 
     @Test
-    fun advanced_sheet_clear_drops_every_operator() {
+    fun advanced_sheet_blank_form_clears_every_filter() {
         val ops = parse_query("in:trash -in:spam label:work from:ann after:2026-08-10 before:2026-08-13").operators
-        val blank = AdvancedFields(
-            from = "",
-            to = "",
-            subject = "",
-            attachment = false,
-            unread = false,
-            starred = false,
-            preset = DatePreset.ANY,
-            scope = "",
-            cleared = true,
-        )
-        assertTrue(build_advanced_operators(ops, blank).isEmpty())
+        val blank = AdvancedFields(scope = "trash")
+        assertEquals(listOf(op("label", "work"), op("in", "trash")), build_advanced_operators(ops, blank, "trash", false))
         assertEquals(
-            listOf(op("is", "starred"), op("in", "spam")),
-            build_advanced_operators(ops, blank.copy(starred = true, scope = "spam")),
+            listOf(op("label", "work"), op("is", "starred"), op("in", "spam")),
+            build_advanced_operators(ops, blank.copy(starred = true, scope = "spam"), "trash", false),
+        )
+        assertEquals(
+            listOf(op("has", "attachment"), op("smaller", "5120"), op("in", "sent")),
+            build_advanced_operators(
+                emptyList(),
+                AdvancedFields(attachment = true, size_op = SizeOp.LESS, size_value = "5", size_unit = SizeUnit.KB, scope = "sent"),
+                null,
+                false,
+            ),
         )
     }
 
     @Test
-    fun quick_row_and_custom_chips_cover_every_operator_once() {
-        val ops = parse_query("from:ann from:bob -from:cy is:unread is:starred has:attachment before:7d in:sent").operators
-        val quick = quick_row_operators(ops)
-        val custom = custom_chip_operators(ops)
+    fun extra_chips_show_only_operators_the_fixed_chips_do_not_cover() {
+        val ops = parse_query(
+            "from:ann from:bob -from:cy is:unread is:starred has:attachment has:pdf before:7d in:sent label:work -budget",
+        ).operators
         assertEquals(
-            listOf(op("from", "ann"), op("is", "unread"), op("has", "attachment"), op("before", "7d")),
-            quick,
+            listOf(
+                op("from", "cy", negated = true),
+                op("is", "starred"),
+                op("label", "work"),
+                op(TEXT_OPERATOR_KEY, "budget", negated = true),
+            ),
+            extra_chip_operators(ops),
         )
-        assertEquals(ops.size, quick.size + custom.size)
-        assertEquals(ops.toSet(), (quick + custom).toSet())
     }
 
     @Test
@@ -658,15 +747,15 @@ class SearchQueryRulesTest {
     }
 
     @Test
-    fun advanced_apply_keeps_a_scope_the_sheet_cannot_show() {
+    fun advanced_apply_keeps_an_unread_filter_the_sheet_does_not_own() {
         val ops = listOf(SearchOperator(false, "in", "starred"), SearchOperator(false, "is", "unread"))
-        val fields = advanced_fields(ops)
+        val fields = advanced_fields(ops, null, today)
 
-        assertEquals("", fields.scope)
-        assertTrue(build_advanced_operators(ops, fields).contains(ops[0]))
-        assertFalse(build_advanced_operators(ops, fields.copy(scope = "sent")).contains(ops[0]))
-        assertTrue(
-            build_advanced_operators(ops, fields.copy(scope = "sent")).contains(SearchOperator(false, "in", "sent")),
+        assertEquals("starred", fields.scope)
+        assertEquals(listOf(ops[1], ops[0]), build_advanced_operators(ops, fields, null, false))
+        assertEquals(
+            listOf(ops[1], op("in", "sent")),
+            build_advanced_operators(ops, fields.copy(scope = "sent"), null, false),
         )
     }
 }
