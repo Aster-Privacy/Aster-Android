@@ -41,6 +41,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
+import org.astermail.android.storage.TokenStore
 import org.unifiedpush.android.connector.UnifiedPush
 
 object UnifiedPushState {
@@ -188,7 +189,11 @@ object UnifiedPushState {
         return System.currentTimeMillis() - last > RESUBSCRIBE_INTERVAL_MS
     }
 
+    private fun has_session(context: Context): Boolean =
+        runCatching { TokenStore(context).access_token }.getOrNull() != null
+
     fun sync_registration(context: Context) {
+        if (!has_session(context)) return
         val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_ENDPOINT, null)
         val p256dh = prefs.getString(KEY_PENDING_P256DH, null)
@@ -236,6 +241,7 @@ object UnifiedPushState {
     fun reregister_with_vapid(context: Context) {
         scope.launch {
             runCatching {
+                if (!has_session(context)) return@launch
                 val vapid = get_vapid_public_key(context) ?: return@launch
                 UnifiedPush.register(context, vapid = vapid)
             }
@@ -300,6 +306,7 @@ object UnifiedPushState {
         p256dh: String,
         auth: String,
     ) {
+        if (!has_session(context)) return
         if (cooldown_active(context, KEY_LAST_SUBSCRIBE_ATTEMPT_AT, SUBSCRIBE_COOLDOWN_MS)) return
         val prefs = push_prefs(context)
         val previous_endpoint = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
