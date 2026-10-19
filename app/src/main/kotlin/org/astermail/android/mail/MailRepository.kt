@@ -34,6 +34,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.Dispatchers
@@ -1962,6 +1963,7 @@ class MailRepository @Inject constructor(
         draft_session_ids.clear()
         ratchet_undecryptable_at.clear()
         thread_snapshot_id_cache.clear()
+        clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
     }
@@ -5104,16 +5106,62 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private val key_trust_cache = ExternalKeyTrustCache()
+    private val key_trust_lookups = HashMap<List<String>, kotlinx.coroutines.Deferred<Result<List<RecipientKeyChange>>>>()
+    private var key_trust_generation = 0L
+
+    private fun clear_key_trust_lookups() {
+        synchronized(key_trust_lookups) {
+            key_trust_generation++
+            key_trust_lookups.values.forEach { it.cancel() }
+            key_trust_lookups.clear()
+            key_trust_cache.clear()
+        }
+    }
+
+    private fun key_trust_lookup(
+        external: List<String>,
+    ): kotlinx.coroutines.Deferred<Result<List<RecipientKeyChange>>> = synchronized(key_trust_lookups) {
+        val lookup_key = external.sorted()
+        key_trust_lookups[lookup_key]?.let { return@synchronized it }
+        val generation = key_trust_generation
+        val lookup = app_scope.async(start = kotlinx.coroutines.CoroutineStart.LAZY) {
+            try {
+                val changes = key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
+                synchronized(key_trust_lookups) {
+                    if (generation == key_trust_generation) key_trust_cache.store(external, changes)
+                }
+                Result.success(changes)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(e)
+            }
+        }
+        lookup.invokeOnCompletion {
+            synchronized(key_trust_lookups) { key_trust_lookups.remove(lookup_key, lookup) }
+        }
+        key_trust_lookups[lookup_key] = lookup
+        lookup.start()
+        lookup
+    }
+
+    fun prefetch_external_key_trust(recipients: List<String>) {
+        val external = external_key_trust_candidates(recipients)
+        if (external.isEmpty() || key_trust_cache.fresh_changes(external) != null) return
+        key_trust_lookup(external)
+    }
+
     suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
     ): Result<List<RecipientKeyChange>> {
         val external = external_key_trust_candidates(recipients)
         if (external.isEmpty()) return Result.success(emptyList())
+        key_trust_cache.fresh_changes(external)?.let { return Result.success(it) }
         return try {
-            Result.success(key_changes_from_discovery(keys_api.discover_external_keys_batch(external)))
+            key_trust_lookup(external).await()
         } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
+            currentCoroutineContext().ensureActive()
             Result.failure(e)
         }
     }
@@ -5126,7 +5174,7 @@ class MailRepository @Inject constructor(
             change.prior_fingerprint,
             change.new_fingerprint,
         )
-    }.getOrDefault(false)
+    }.getOrDefault(false).also { key_trust_cache.forget(change.email) }
 
     suspend fun check_post_quantum_coverage(
         recipients: List<String>,

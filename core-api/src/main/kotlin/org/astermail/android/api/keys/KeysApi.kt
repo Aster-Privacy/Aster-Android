@@ -22,6 +22,7 @@
 package org.astermail.android.api.keys
 
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -215,6 +216,8 @@ interface KeysApi {
     suspend fun report_account_data_conversion(request: ConversionProgressRequest): Boolean = false
 }
 
+const val external_key_discovery_timeout_millis = 45_000L
+
 class KeysApiImpl(private val client: ApiClient) : KeysApi {
     private val base = "/api/crypto/v1/keys"
 
@@ -243,6 +246,10 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
     override suspend fun discover_external_keys_batch(emails: List<String>): List<ExternalKeyInfo> {
         if (emails.isEmpty()) return emptyList()
         val response = client.http.post("${client.base_url}$base/external/discover/batch") {
+            timeout {
+                requestTimeoutMillis = external_key_discovery_timeout_millis
+                socketTimeoutMillis = external_key_discovery_timeout_millis
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(DiscoverKeysRequest(emails))

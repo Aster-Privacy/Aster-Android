@@ -1606,6 +1606,11 @@ fun ComposeScreen(
         mail_vm.set_own_addresses(alias_options.filter { it !in external_sender_tokens.keys })
     }
 
+    LaunchedEffect(to_chips, cc_chips, bcc_chips) {
+        kotlinx.coroutines.delay(KEY_TRUST_PREFETCH_DELAY_MS)
+        mail_vm.prefetch_external_key_trust(to_chips + cc_chips + bcc_chips)
+    }
+
     val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -5281,7 +5286,8 @@ private fun toggle_sheet_row(
 }
 
 private const val minimum_schedule_lead_ms = 60_000L
-private const val KEY_TRUST_LOOKUP_TIMEOUT_MS = 8_000L
+private const val KEY_TRUST_LOOKUP_TIMEOUT_MS = 50_000L
+private const val KEY_TRUST_PREFETCH_DELAY_MS = 600L
 
 const val POST_QUANTUM_COVERAGE_TIMEOUT_MS = 15_000L
 private const val max_recipients_per_field = 50
