@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import org.astermail.android.api.keys.ExternalKeyFingerprintChange
 import org.astermail.android.api.keys.ExternalKeyInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -113,5 +114,40 @@ class KeyTrustTest {
             ),
         )
         assertEquals(listOf("one@example.com", "three@example.com"), changes.map { it.email })
+    }
+
+    @Test
+    fun trust_cache_misses_until_every_recipient_is_stored() {
+        val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
+        cache.store(listOf("one@example.com"), emptyList())
+        assertNull(cache.fresh_changes(listOf("one@example.com", "two@example.com")))
+        assertEquals(emptyList<RecipientKeyChange>(), cache.fresh_changes(listOf("one@example.com")))
+    }
+
+    @Test
+    fun trust_cache_returns_stored_changes() {
+        val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
+        val change = RecipientKeyChange("two@example.com", "AAAA", "BBBB")
+        cache.store(listOf("one@example.com", "two@example.com"), listOf(change))
+        assertEquals(listOf(change), cache.fresh_changes(listOf("one@example.com", "two@example.com")))
+    }
+
+    @Test
+    fun trust_cache_expires_after_ttl() {
+        var now = 1_000L
+        val cache = ExternalKeyTrustCache(ttl_ms = 500L, now_ms = { now })
+        cache.store(listOf("one@example.com"), emptyList())
+        now = 1_400L
+        assertEquals(emptyList<RecipientKeyChange>(), cache.fresh_changes(listOf("one@example.com")))
+        now = 1_600L
+        assertNull(cache.fresh_changes(listOf("one@example.com")))
+    }
+
+    @Test
+    fun trust_cache_forgets_an_acknowledged_recipient() {
+        val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
+        cache.store(listOf("one@example.com"), listOf(RecipientKeyChange("one@example.com", "AAAA", "BBBB")))
+        cache.forget(" One@Example.com ")
+        assertNull(cache.fresh_changes(listOf("one@example.com")))
     }
 }

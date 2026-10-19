@@ -30,6 +30,7 @@ import io.mockk.verify
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -3097,6 +3098,45 @@ class MailRepositoryTest {
         assertEquals(PendingSendOutcome.DEFERRED, outcome)
         assertEquals("pending", pending_send_dao.get_by_id("pend_net_max")?.status)
         coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `a slow cold key lookup is reused instead of repeated at send`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        coEvery { keys_api.discover_external_keys_batch(any()) } coAnswers {
+            gate.await()
+            listOf(org.astermail.android.api.keys.ExternalKeyInfo(email = "kontakt@distrust.pl", found = false))
+        }
+
+        repo.prefetch_external_key_trust(listOf("Kontakt@distrust.pl"))
+        val pending = async { repo.verified_external_key_fingerprint_changes(listOf("kontakt@distrust.pl")) }
+        gate.complete(Unit)
+
+        assertEquals(emptyList<RecipientKeyChange>(), pending.await().getOrThrow())
+        assertEquals(
+            emptyList<RecipientKeyChange>(),
+            repo.verified_external_key_fingerprint_changes(listOf("kontakt@distrust.pl")).getOrThrow(),
+        )
+        coVerify(exactly = 1) { keys_api.discover_external_keys_batch(any()) }
+    }
+
+    @Test
+    fun `a failed key lookup is not cached and still blocks the send`() = runTest {
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        assertTrue(repo.verified_external_key_fingerprint_changes(listOf("friend@example.com")).isFailure)
+
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "friend@example.com",
+                found = true,
+                fingerprint_change = org.astermail.android.api.keys.ExternalKeyFingerprintChange("aa", "bb"),
+            ),
+        )
+
+        val changes = repo.verified_external_key_fingerprint_changes(listOf("friend@example.com")).getOrThrow()
+        assertEquals(listOf(RecipientKeyChange("friend@example.com", "aa", "bb")), changes)
+        coVerify(exactly = 2) { keys_api.discover_external_keys_batch(any()) }
     }
 
     @Test

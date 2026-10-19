@@ -5334,6 +5334,9 @@ class MailViewModel @Inject constructor(
         recipients: List<String>,
     ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
 
+    fun prefetch_external_key_trust(recipients: List<String>) =
+        repository.prefetch_external_key_trust(recipients)
+
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,
     ): Boolean = repository.acknowledge_external_key_fingerprint_change(change)

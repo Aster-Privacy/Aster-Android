@@ -22,7 +22,48 @@
 package org.astermail.android.mail
 
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import org.astermail.android.api.keys.ExternalKeyInfo
+
+const val EXTERNAL_KEY_TRUST_CACHE_TTL_MS = 5 * 60_000L
+
+class ExternalKeyTrustCache(
+    private val ttl_ms: Long = EXTERNAL_KEY_TRUST_CACHE_TTL_MS,
+    private val now_ms: () -> Long = System::currentTimeMillis,
+) {
+    private data class Entry(val change: RecipientKeyChange?, val checked_at_ms: Long)
+
+    private val entries = ConcurrentHashMap<String, Entry>()
+
+    fun fresh_changes(emails: List<String>): List<RecipientKeyChange>? {
+        if (emails.isEmpty()) return emptyList()
+        val now = now_ms()
+        val changes = mutableListOf<RecipientKeyChange>()
+        for (email in emails) {
+            val entry = entries[email] ?: return null
+            val age = now - entry.checked_at_ms
+            if (age < 0 || age > ttl_ms) return null
+            entry.change?.let(changes::add)
+        }
+        return changes
+    }
+
+    fun store(emails: List<String>, changes: List<RecipientKeyChange>) {
+        val now = now_ms()
+        val by_email = changes.associateBy { it.email }
+        for (email in emails) {
+            entries[email] = Entry(by_email[email], now)
+        }
+    }
+
+    fun forget(email: String) {
+        entries.remove(email.trim().lowercase(Locale.ROOT))
+    }
+
+    fun clear() {
+        entries.clear()
+    }
+}
 
 data class RecipientKeyChange(
     val email: String,
