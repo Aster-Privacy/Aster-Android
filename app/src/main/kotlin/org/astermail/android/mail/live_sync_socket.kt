@@ -26,6 +26,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
@@ -111,6 +114,9 @@ class LiveSyncSocket @Inject constructor(
 ) {
 
     private enum class SessionEnd { closed, auth_failed, revoked }
+
+    private val _connected = MutableStateFlow(false)
+    val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
     private val client: OkHttpClient by lazy {
         val specs = if (BuildConfig.API_BASE_URL.startsWith("http://")) {
@@ -202,7 +208,10 @@ class LiveSyncSocket @Inject constructor(
         try {
             for (text in frames) {
                 when (parse_live_sync_frame(text)) {
-                    LiveSyncFrame.auth_success -> on_event(LiveSyncEvent.connected)
+                    LiveSyncFrame.auth_success -> {
+                        _connected.value = true
+                        on_event(LiveSyncEvent.connected)
+                    }
                     LiveSyncFrame.auth_error -> return SessionEnd.auth_failed
                     LiveSyncFrame.session_revoked -> return SessionEnd.revoked
                     LiveSyncFrame.ping -> runCatching { socket.send(PONG_FRAME) }
@@ -216,6 +225,7 @@ class LiveSyncSocket @Inject constructor(
             }
             return SessionEnd.closed
         } finally {
+            _connected.value = false
             runCatching { socket.close(NORMAL_CLOSURE, null) }
             runCatching { socket.cancel() }
         }

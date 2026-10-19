@@ -556,15 +556,6 @@ fun InboxScreen(
             },
         )
     }
-    val fallback_tick_owner = LocalLifecycleOwner.current
-    LaunchedEffect(mail_vm, fallback_tick_owner) {
-        fallback_tick_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                kotlinx.coroutines.delay(60_000)
-                mail_vm.foreground_fallback_tick()
-            }
-        }
-    }
     LaunchedEffect(mail_vm) {
         mail_vm.toast_events.collect { evt ->
             org.astermail.android.ui.common.app_toast.show(
@@ -600,6 +591,15 @@ fun InboxScreen(
                     }
                     else -> mail_vm.on_live_sync_event(event)
                 }
+            }
+        }
+    }
+    val fallback_tick_owner = LocalLifecycleOwner.current
+    LaunchedEffect(mail_vm, fallback_tick_owner, live_sync_socket) {
+        fallback_tick_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                kotlinx.coroutines.delay(60_000)
+                mail_vm.foreground_fallback_tick(live_sync_connected = live_sync_socket.connected.value)
             }
         }
     }
