@@ -23,6 +23,9 @@ package org.astermail.android.contacts
 
 import java.security.MessageDigest
 import javax.crypto.Mac
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -78,13 +81,18 @@ class ContactsRepository @Inject constructor(
     private val contacts_api: ContactsApi,
     private val session_key_store: SessionKeyStore,
 ) : ContactPhotoSource {
+    internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
+
     suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> {
         val trust_generation = SenderTrustStore.current_generation()
         return runCatching {
             fetch_all_contacts(group_id)
         }.onSuccess { contacts ->
             if (group_id == null) {
-                ContactPhotoDirectory.offer(contacts.mapNotNull { contact_photo_entry(it) })
+                val photo_entries = withContext(default_dispatcher) {
+                    contacts.mapNotNull { contact_photo_entry(it) }
+                }
+                ContactPhotoDirectory.offer(photo_entries)
                 publish_trust_contacts(contacts, trust_generation)
             }
         }
@@ -109,8 +117,10 @@ class ContactsRepository @Inject constructor(
     }
 
     override suspend fun fetch_contact_photo(contact_id: String): ContactPhotoFetch = try {
-        val contact = decrypt_contact(contacts_api.get_contact(contact_id))
-        val photo = contact?.let { contact_photo_entry(it)?.photo }
+        val item = contacts_api.get_contact(contact_id)
+        val photo = withContext(default_dispatcher) {
+            decrypt_contact(item)?.let { contact_photo_entry(it)?.photo }
+        }
         if (photo != null) ContactPhotoFetch.Found(photo) else ContactPhotoFetch.Missing
     } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
         throw cancelled
@@ -138,12 +148,16 @@ class ContactsRepository @Inject constructor(
             if (!page.has_more || next.isNullOrBlank() || !seen_cursors.add(next)) break
             cursor = next
         }
-        return all.mapNotNull { decrypt_contact(it) }
+        return decrypt_contacts(all)
     }
+
+    private suspend fun decrypt_contacts(items: List<ContactItem>): List<Contact> =
+        withContext(default_dispatcher) { items.mapNotNull { decrypt_contact(it) } }
 
     suspend fun fetch_contact(contact_id: String): Result<Contact> = runCatching {
         val item = contacts_api.get_contact(contact_id)
-        decrypt_contact(item) ?: throw IllegalStateException("failed to decrypt contact")
+        withContext(default_dispatcher) { decrypt_contact(item) }
+            ?: throw IllegalStateException("failed to decrypt contact")
     }
 
     suspend fun get_count(): Result<Int> = runCatching {
@@ -285,7 +299,7 @@ class ContactsRepository @Inject constructor(
             key.fill(0)
         }
         val response = contacts_api.search_contacts(token, field, limit)
-        response.items.mapNotNull { decrypt_contact(it) }
+        decrypt_contacts(response.items)
     }
 
     suspend fun list_contact_groups(): Result<List<ContactGroup>> = runCatching {

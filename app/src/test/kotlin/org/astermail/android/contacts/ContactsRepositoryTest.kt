@@ -29,6 +29,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.contacts.ContactItem
@@ -38,6 +39,7 @@ import org.astermail.android.api.contacts.ContactsCountResponse
 import org.astermail.android.api.contacts.CreateContactResponse
 import org.astermail.android.api.contacts.DeleteContactResponse
 import org.astermail.android.api.contacts.ListContactsResponse
+import org.astermail.android.api.contacts.SearchContactsResponse
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
 import org.junit.After
@@ -47,6 +49,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.security.MessageDigest
+import java.util.Collections
+import java.util.concurrent.Executors
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
@@ -125,6 +129,85 @@ class ContactsRepositoryTest {
             encrypted_data = encrypted_data,
             data_nonce = data_nonce,
         )
+    }
+
+    private fun record_decode_threads(): MutableList<String> {
+        val threads = Collections.synchronizedList(mutableListOf<String>())
+        every { Base64.decode(any<String>(), any()) } answers {
+            threads.add(Thread.currentThread().name)
+            java.util.Base64.getDecoder().decode(firstArg<String>())
+        }
+        return threads
+    }
+
+    private fun decrypt_dispatcher() =
+        Executors.newSingleThreadExecutor { runnable -> Thread(runnable, DECRYPT_THREAD) }.asCoroutineDispatcher()
+
+    @Test
+    fun `fetch_contacts decrypts on the background dispatcher`() = runTest {
+        val items = listOf(
+            fake_encrypted_contact_item("c_1", "Alice", "Smith", "alice@astermail.org"),
+            fake_encrypted_contact_item("c_2", "Bob", "Jones", "bob@astermail.org"),
+        )
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = null) } returns
+            ListContactsResponse(items = items, has_more = false, next_cursor = null)
+        val threads = record_decode_threads()
+
+        decrypt_dispatcher().use { dispatcher ->
+            repo.default_dispatcher = dispatcher
+            val contacts = repo.fetch_contacts().getOrThrow()
+
+            assertEquals(listOf("Alice Smith", "Bob Jones"), contacts.map { it.name })
+            assertEquals(listOf("c_1", "c_2"), contacts.map { it.id })
+        }
+        assertEquals(4, threads.size)
+        assertTrue(threads.all { it == DECRYPT_THREAD })
+    }
+
+    @Test
+    fun `search_contacts decrypts on the background dispatcher`() = runTest {
+        val items = listOf(fake_encrypted_contact_item("c_7", "Carol", "White", "carol@astermail.org"))
+        coEvery { contacts_api.search_contacts(any(), any(), any()) } returns SearchContactsResponse(items = items)
+        val threads = record_decode_threads()
+
+        decrypt_dispatcher().use { dispatcher ->
+            repo.default_dispatcher = dispatcher
+            val contacts = repo.search_contacts("carol").getOrThrow()
+
+            assertEquals(listOf("Carol White"), contacts.map { it.name })
+        }
+        assertEquals(2, threads.size)
+        assertTrue(threads.all { it == DECRYPT_THREAD })
+    }
+
+    @Test
+    fun `fetch_contact decrypts on the background dispatcher`() = runTest {
+        coEvery { contacts_api.get_contact("c_42") } returns
+            fake_encrypted_contact_item("c_42", "Diana", "Prince", "diana@astermail.org")
+        val threads = record_decode_threads()
+
+        decrypt_dispatcher().use { dispatcher ->
+            repo.default_dispatcher = dispatcher
+            val contact = repo.fetch_contact("c_42").getOrThrow()
+
+            assertEquals("Diana Prince", contact.name)
+        }
+        assertEquals(2, threads.size)
+        assertTrue(threads.all { it == DECRYPT_THREAD })
+    }
+
+    @Test
+    fun `fetch_contacts does not decrypt on the calling thread`() = runTest {
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = null) } returns
+            ListContactsResponse(items = listOf(fake_encrypted_contact_item("c_1")), has_more = false, next_cursor = null)
+        val threads = record_decode_threads()
+        val caller = Thread.currentThread().name
+
+        val contacts = repo.fetch_contacts().getOrThrow()
+
+        assertEquals(listOf("Alice Smith"), contacts.map { it.name })
+        assertEquals(2, threads.size)
+        assertFalse(threads.any { it == caller })
     }
 
     @Test
@@ -590,5 +673,9 @@ class ContactsRepositoryTest {
         assertEquals(1L, summary.imported)
         assertEquals(100, summary.failed)
         assertTrue(summary.last_failure is ApiError.NotFoundError)
+    }
+
+    private companion object {
+        const val DECRYPT_THREAD = "contacts-decrypt-test"
     }
 }
