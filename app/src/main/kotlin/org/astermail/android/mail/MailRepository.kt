@@ -178,7 +178,7 @@ private val cached_custom_categories_json = kotlinx.serialization.json.Json {
 }
 
 private val SYSTEM_FOLDER_IDS = setOf("inbox", "sent", "drafts", "starred", "trash", "spam", "archive", "scheduled", "snoozed")
-private const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 32
+internal const val ENVELOPE_KEY_CACHE_MAX_ENTRIES = 512
 private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
 private const val ENVELOPE_HEAL_COOLDOWN_MS = 5L * 60L * 1000L
@@ -3882,8 +3882,12 @@ class MailRepository @Inject constructor(
         val ciphertext = data.sliceArray(28 until data.size)
         val salt_hex = salt.joinToString("") { "%02x".format(it) }
 
-        pbkdf2_key_cache.get(salt_hex)?.let { cached ->
-            runCatching { return aes_gcm_decrypt(ciphertext, cached, iv) }
+        pbkdf2_key_cache.get_copy(salt_hex)?.let { cached ->
+            try {
+                runCatching { return aes_gcm_decrypt(ciphertext, cached, iv) }
+            } finally {
+                cached.fill(0)
+            }
         }
         for (kek in kek_candidates()) {
             runCatching {
@@ -3914,7 +3918,7 @@ class MailRepository @Inject constructor(
         val salt = session_key_store.get_password_salt() ?: return null
         val salt_hex = LEGACY_KEY_MATERIAL_CACHE_PREFIX + salt.joinToString("") { "%02x".format(it) }
 
-        pbkdf2_key_cache.get(salt_hex)?.let { cached ->
+        pbkdf2_key_cache.get_copy(salt_hex)?.let { cached ->
             salt.fill(0)
             return cached
         }
@@ -3934,7 +3938,7 @@ class MailRepository @Inject constructor(
             salt.fill(0)
         }
 
-        if (derived != null) pbkdf2_key_cache.put(salt_hex, derived)
+        if (derived != null) pbkdf2_key_cache.put(salt_hex, derived.copyOf())
 
         return derived
     }
@@ -3947,10 +3951,14 @@ class MailRepository @Inject constructor(
 
         val key = legacy_key_material() ?: return null
 
-        return runCatching {
-            val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
-            aes_gcm_decrypt(ciphertext, key, nonce)
-        }.getOrNull()
+        return try {
+            runCatching {
+                val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+                aes_gcm_decrypt(ciphertext, key, nonce)
+            }.getOrNull()
+        } finally {
+            key.fill(0)
+        }
     }
 
     internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
@@ -3964,7 +3972,11 @@ class MailRepository @Inject constructor(
                     val material = (identity_key + version).toByteArray(Charsets.UTF_8)
                     MessageDigest.getInstance("SHA-256").digest(material)
                 }
-                return aes_gcm_decrypt(ciphertext, key, nonce)
+                try {
+                    return aes_gcm_decrypt(ciphertext, key, nonce)
+                } finally {
+                    key.fill(0)
+                }
             } catch (_: Throwable) {
             }
         }
@@ -3979,7 +3991,11 @@ class MailRepository @Inject constructor(
                             val material = (prev_key + version).toByteArray(Charsets.UTF_8)
                             MessageDigest.getInstance("SHA-256").digest(material)
                         }
-                        return aes_gcm_decrypt(ciphertext, key, nonce)
+                        try {
+                            return aes_gcm_decrypt(ciphertext, key, nonce)
+                        } finally {
+                            key.fill(0)
+                        }
                     } catch (_: Throwable) {
                     }
                 }

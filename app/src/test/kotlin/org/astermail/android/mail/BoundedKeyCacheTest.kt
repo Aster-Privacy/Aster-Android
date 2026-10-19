@@ -91,6 +91,45 @@ class BoundedKeyCacheTest {
     }
 
     @Test
+    fun `a sent page of distinct salts derives each key once across two scans`() {
+        val cache = BoundedKeyCache(ENVELOPE_KEY_CACHE_MAX_ENTRIES)
+        var derivations = 0
+        repeat(2) {
+            for (index in 0 until 50) {
+                val salt = "salt_$index"
+                val key = cache.get_copy(salt) ?: key_of(index).also {
+                    derivations++
+                    cache.put(salt, it.copyOf())
+                }
+                assertArrayEquals(key_of(index), key)
+            }
+        }
+        assertEquals(50, derivations)
+    }
+
+    @Test
+    fun `eviction does not zero a key already handed to a caller`() {
+        val cache = BoundedKeyCache(2)
+        val held = cache.get_or_put("a") { key_of(1) }
+        cache.put("b", key_of(2))
+        cache.put("c", key_of(3))
+        assertNull(cache.get("a"))
+        assertArrayEquals(key_of(1), held)
+    }
+
+    @Test
+    fun `clear zeroes stored keys but not a copy already handed out`() {
+        val cache = BoundedKeyCache(2)
+        val stored = key_of(4)
+        cache.put("a", stored)
+        val copy = cache.get_copy("a")
+        cache.clear()
+        assertEquals(0, cache.size())
+        assertArrayEquals(ByteArray(32), stored)
+        assertArrayEquals(key_of(4), copy)
+    }
+
+    @Test
     fun `hkdf with an empty salt matches rfc 5869 test case 3`() {
         val ikm = ByteArray(22) { 0x0b }
         val okm = RatchetCrypto.hkdf_sha256(ikm, ByteArray(0), ByteArray(0), 42)

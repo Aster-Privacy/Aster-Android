@@ -35,6 +35,9 @@ class BoundedKeyCache(private val max_entries: Int) {
     fun get(key: String): ByteArray? = entries[key]
 
     @Synchronized
+    fun get_copy(key: String): ByteArray? = entries[key]?.copyOf()
+
+    @Synchronized
     fun put(key: String, value: ByteArray) {
         val previous = entries.put(key, value)
         if (previous != null && previous !== value && !previous.contentEquals(value)) {
@@ -44,10 +47,10 @@ class BoundedKeyCache(private val max_entries: Int) {
 
     @Synchronized
     fun get_or_put(key: String, factory: () -> ByteArray): ByteArray {
-        entries[key]?.let { return it }
+        entries[key]?.let { return it.copyOf() }
         val created = factory()
         entries[key] = created
-        return created
+        return created.copyOf()
     }
 
     @Synchronized
