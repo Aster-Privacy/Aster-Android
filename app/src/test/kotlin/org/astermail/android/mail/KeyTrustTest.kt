@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import org.astermail.android.api.keys.ExternalKeyFingerprintChange
 import org.astermail.android.api.keys.ExternalKeyInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -119,7 +120,7 @@ class KeyTrustTest {
     @Test
     fun trust_cache_misses_until_every_recipient_is_stored() {
         val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
-        cache.store(listOf("one@example.com"), emptyList())
+        cache.store(listOf("one@example.com"), emptyList(), emptySet())
         assertNull(cache.fresh_changes(listOf("one@example.com", "two@example.com")))
         assertEquals(emptyList<RecipientKeyChange>(), cache.fresh_changes(listOf("one@example.com")))
     }
@@ -128,7 +129,7 @@ class KeyTrustTest {
     fun trust_cache_returns_stored_changes() {
         val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
         val change = RecipientKeyChange("two@example.com", "AAAA", "BBBB")
-        cache.store(listOf("one@example.com", "two@example.com"), listOf(change))
+        cache.store(listOf("one@example.com", "two@example.com"), listOf(change), setOf("two@example.com"))
         assertEquals(listOf(change), cache.fresh_changes(listOf("one@example.com", "two@example.com")))
     }
 
@@ -136,7 +137,7 @@ class KeyTrustTest {
     fun trust_cache_expires_after_ttl() {
         var now = 1_000L
         val cache = ExternalKeyTrustCache(ttl_ms = 500L, now_ms = { now })
-        cache.store(listOf("one@example.com"), emptyList())
+        cache.store(listOf("one@example.com"), emptyList(), emptySet())
         now = 1_400L
         assertEquals(emptyList<RecipientKeyChange>(), cache.fresh_changes(listOf("one@example.com")))
         now = 1_600L
@@ -146,8 +147,49 @@ class KeyTrustTest {
     @Test
     fun trust_cache_forgets_an_acknowledged_recipient() {
         val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
-        cache.store(listOf("one@example.com"), listOf(RecipientKeyChange("one@example.com", "AAAA", "BBBB")))
+        cache.store(listOf("one@example.com"), listOf(RecipientKeyChange("one@example.com", "AAAA", "BBBB")), setOf("one@example.com"))
         cache.forget(" One@Example.com ")
         assertNull(cache.fresh_changes(listOf("one@example.com")))
+    }
+
+    @Test
+    fun trust_cache_only_skips_the_send_check_for_recipients_without_a_key() {
+        val cache = ExternalKeyTrustCache(now_ms = { 1_000L })
+        cache.store(listOf("keyless@example.com", "keyed@example.com"), emptyList(), setOf("keyed@example.com"))
+        assertTrue(cache.all_fresh_without_key(listOf("keyless@example.com")))
+        assertFalse(cache.all_fresh_without_key(listOf("keyed@example.com")))
+        assertFalse(cache.all_fresh_without_key(listOf("keyless@example.com", "keyed@example.com")))
+        assertFalse(cache.all_fresh_without_key(listOf("keyless@example.com", "unknown@example.com")))
+    }
+
+    @Test
+    fun trust_cache_send_skip_expires_after_ttl() {
+        var now = 1_000L
+        val cache = ExternalKeyTrustCache(ttl_ms = 500L, now_ms = { now })
+        cache.store(listOf("keyless@example.com"), emptyList(), emptySet())
+        now = 1_600L
+        assertFalse(cache.all_fresh_without_key(listOf("keyless@example.com")))
+    }
+
+    @Test
+    fun trust_cache_prunes_expired_entries_on_store() {
+        var now = 1_000L
+        val cache = ExternalKeyTrustCache(ttl_ms = 500L, now_ms = { now })
+        cache.store(listOf("old@example.com"), emptyList(), emptySet())
+        now = 1_600L
+        cache.store(listOf("new@example.com"), emptyList(), emptySet())
+        now = 1_000L
+        assertNull(cache.fresh_changes(listOf("old@example.com")))
+    }
+
+    @Test
+    fun keyed_recipients_lists_only_found_keys() {
+        val keyed = keyed_recipients_from_discovery(
+            listOf(
+                ExternalKeyInfo(email = " Keyed@Example.com ", found = true),
+                ExternalKeyInfo(email = "none@example.com", found = false),
+            ),
+        )
+        assertEquals(setOf("keyed@example.com"), keyed)
     }
 }

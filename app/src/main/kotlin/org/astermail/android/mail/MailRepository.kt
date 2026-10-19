@@ -5127,9 +5127,12 @@ class MailRepository @Inject constructor(
         val generation = key_trust_generation
         val lookup = app_scope.async(start = kotlinx.coroutines.CoroutineStart.LAZY) {
             try {
-                val changes = key_changes_from_discovery(keys_api.discover_external_keys_batch(external))
+                val keys = keys_api.discover_external_keys_batch(external)
+                val changes = key_changes_from_discovery(keys)
                 synchronized(key_trust_lookups) {
-                    if (generation == key_trust_generation) key_trust_cache.store(external, changes)
+                    if (generation == key_trust_generation) {
+                        key_trust_cache.store(external, changes, keyed_recipients_from_discovery(keys) + changes.map { it.email })
+                    }
                 }
                 Result.success(changes)
             } catch (e: CancellationException) {
@@ -5157,7 +5160,7 @@ class MailRepository @Inject constructor(
     ): Result<List<RecipientKeyChange>> {
         val external = external_key_trust_candidates(recipients)
         if (external.isEmpty()) return Result.success(emptyList())
-        key_trust_cache.fresh_changes(external)?.let { return Result.success(it) }
+        if (key_trust_cache.all_fresh_without_key(external)) return Result.success(emptyList())
         return try {
             key_trust_lookup(external).await()
         } catch (e: CancellationException) {

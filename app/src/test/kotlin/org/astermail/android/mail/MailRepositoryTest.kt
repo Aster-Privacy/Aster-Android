@@ -3109,7 +3109,10 @@ class MailRepositoryTest {
         }
 
         repo.prefetch_external_key_trust(listOf("Kontakt@distrust.pl"))
-        val pending = async { repo.verified_external_key_fingerprint_changes(listOf("kontakt@distrust.pl")) }
+        val pending = async(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+            repo.verified_external_key_fingerprint_changes(listOf("kontakt@distrust.pl"))
+        }
+        assertFalse(pending.isCompleted)
         gate.complete(Unit)
 
         assertEquals(emptyList<RecipientKeyChange>(), pending.await().getOrThrow())
@@ -3118,6 +3121,29 @@ class MailRepositoryTest {
             repo.verified_external_key_fingerprint_changes(listOf("kontakt@distrust.pl")).getOrThrow(),
         )
         coVerify(exactly = 1) { keys_api.discover_external_keys_batch(any()) }
+    }
+
+    @Test
+    fun `a recipient with a key is checked again at send even after a recent lookup`() = runTest {
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+        assertEquals(
+            emptyList<RecipientKeyChange>(),
+            repo.verified_external_key_fingerprint_changes(listOf("friend@example.com")).getOrThrow(),
+        )
+
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "friend@example.com",
+                found = true,
+                fingerprint_change = org.astermail.android.api.keys.ExternalKeyFingerprintChange("aa", "bb"),
+            ),
+        )
+
+        val changes = repo.verified_external_key_fingerprint_changes(listOf("friend@example.com")).getOrThrow()
+        assertEquals(listOf(RecipientKeyChange("friend@example.com", "aa", "bb")), changes)
+        coVerify(exactly = 2) { keys_api.discover_external_keys_batch(any()) }
     }
 
     @Test

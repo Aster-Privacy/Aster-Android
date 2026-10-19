@@ -31,9 +31,18 @@ class ExternalKeyTrustCache(
     private val ttl_ms: Long = EXTERNAL_KEY_TRUST_CACHE_TTL_MS,
     private val now_ms: () -> Long = System::currentTimeMillis,
 ) {
-    private data class Entry(val change: RecipientKeyChange?, val checked_at_ms: Long)
+    private data class Entry(
+        val change: RecipientKeyChange?,
+        val has_key: Boolean,
+        val checked_at_ms: Long,
+    )
 
     private val entries = ConcurrentHashMap<String, Entry>()
+
+    private fun is_fresh(entry: Entry, now: Long): Boolean {
+        val age = now - entry.checked_at_ms
+        return age in 0..ttl_ms
+    }
 
     fun fresh_changes(emails: List<String>): List<RecipientKeyChange>? {
         if (emails.isEmpty()) return emptyList()
@@ -41,18 +50,26 @@ class ExternalKeyTrustCache(
         val changes = mutableListOf<RecipientKeyChange>()
         for (email in emails) {
             val entry = entries[email] ?: return null
-            val age = now - entry.checked_at_ms
-            if (age < 0 || age > ttl_ms) return null
+            if (!is_fresh(entry, now)) return null
             entry.change?.let(changes::add)
         }
         return changes
     }
 
-    fun store(emails: List<String>, changes: List<RecipientKeyChange>) {
+    fun all_fresh_without_key(emails: List<String>): Boolean {
         val now = now_ms()
+        return emails.all { email ->
+            val entry = entries[email]
+            entry != null && is_fresh(entry, now) && !entry.has_key && entry.change == null
+        }
+    }
+
+    fun store(emails: List<String>, changes: List<RecipientKeyChange>, keyed: Set<String>) {
+        val now = now_ms()
+        entries.entries.removeIf { !is_fresh(it.value, now) }
         val by_email = changes.associateBy { it.email }
         for (email in emails) {
-            entries[email] = Entry(by_email[email], now)
+            entries[email] = Entry(by_email[email], email in keyed, now)
         }
     }
 
@@ -76,6 +93,9 @@ fun external_key_trust_candidates(recipients: List<String>): List<String> =
         .map { it.trim().lowercase(Locale.ROOT) }
         .filter { it.contains('@') && !is_internal_recipient(it) }
         .distinct()
+
+fun keyed_recipients_from_discovery(keys: List<ExternalKeyInfo>): Set<String> =
+    keys.filter { it.found }.map { it.email.trim().lowercase(Locale.ROOT) }.toSet()
 
 fun key_changes_from_discovery(keys: List<ExternalKeyInfo>): List<RecipientKeyChange> =
     keys.mapNotNull { info ->
