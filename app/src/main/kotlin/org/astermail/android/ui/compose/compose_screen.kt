@@ -1360,23 +1360,23 @@ fun ComposeScreen(
         scope.launch { attach_uris(uris) }
     }
 
-    val has_any_content = to_chips.isNotEmpty() ||
-        to_input.isNotBlank() ||
-        subject.isNotBlank() ||
-        body.isNotBlank() ||
-        attachments.isNotEmpty() ||
-        inline_images.isNotEmpty()
-
-    val has_unsaved_changes = to_chips != initial_to_chips ||
-        cc_chips != initial_cc_chips ||
-        bcc_chips != initial_bcc_chips ||
-        subject != initial_subject ||
-        body != initial_body ||
-        to_input.isNotBlank() ||
-        cc_input.isNotBlank() ||
-        bcc_input.isNotBlank() ||
-        attachments != initial_attachments ||
-        inline_images.isNotEmpty()
+    fun has_unsaved_changes(): Boolean = compose_has_unsaved_changes(
+        to_chips = to_chips,
+        initial_to_chips = initial_to_chips,
+        cc_chips = cc_chips,
+        initial_cc_chips = initial_cc_chips,
+        bcc_chips = bcc_chips,
+        initial_bcc_chips = initial_bcc_chips,
+        subject = subject,
+        initial_subject = initial_subject,
+        body = body,
+        initial_body = initial_body,
+        to_input = to_input,
+        cc_input = cc_input,
+        bcc_input = bcc_input,
+        attachments_changed = attachments != initial_attachments,
+        has_inline_images = inline_images.isNotEmpty(),
+    )
 
     val has_recipient = to_chips.isNotEmpty() || cc_chips.isNotEmpty() || bcc_chips.isNotEmpty() ||
         to_input.isNotBlank() || cc_input.isNotBlank() || bcc_input.isNotBlank()
@@ -1394,7 +1394,7 @@ fun ComposeScreen(
 
     val try_back: () -> Unit = {
         dismiss_keyboard()
-        if (has_unsaved_changes) show_discard_dialog = true else on_back()
+        if (has_unsaved_changes()) show_discard_dialog = true else on_back()
     }
 
     val draft_save_thread_token = if (mode == "draft") {
@@ -2670,8 +2670,9 @@ fun ComposeScreen(
                                 override fun afterTextChanged(s: android.text.Editable?) {
                                     if (suspend_text_watcher) return
                                     val new_text = s?.toString().orEmpty()
-                                    val new_marker_count = new_text.count { it == IMG_MARKER }
-                                    if (new_marker_count < inline_images.size && s != null) {
+                                    if (inline_images.isNotEmpty() && s != null &&
+                                        new_text.count { it == IMG_MARKER } < inline_images.size
+                                    ) {
                                         val survivors = mutableListOf<Uri>()
                                         for (i in new_text.indices) {
                                             if (new_text[i] != IMG_MARKER) continue
@@ -2697,8 +2698,7 @@ fun ComposeScreen(
                     update = { et ->
                         val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null) * et.resources.displayMetrics.density).toInt()
                         if (et.minHeight != target_min) et.minHeight = target_min
-                        val current = et.text?.toString().orEmpty()
-                        if (current != body) {
+                        if (!body.contentEquals(et.text ?: "")) {
                             val sel = et.selectionStart.coerceIn(0, body.length)
                             et.suspend_text_watcher = true
                             et.setText(body)
