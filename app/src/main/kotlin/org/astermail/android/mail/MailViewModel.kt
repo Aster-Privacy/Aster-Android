@@ -4479,12 +4479,12 @@ class MailViewModel @Inject constructor(
         protect_removed(real_ids)
         viewModelScope.launch {
             try {
-                val failed = mutableListOf<String>()
-                for (id in real_ids) {
-                    val outcome = repository.delete_permanent(id)
+                val failed = HashSet<String>()
+                for (chunk in real_ids.chunked(PERMANENT_DELETE_BULK_LIMIT)) {
+                    val outcome = repository.bulk_delete_permanent(chunk)
                     val error = outcome.exceptionOrNull()
                     if (error is kotlinx.coroutines.CancellationException) throw error
-                    if (error != null && error !is org.astermail.android.api.ApiError.NotFoundError) failed.add(id)
+                    if (error != null && error !is org.astermail.android.api.ApiError.NotFoundError) failed.addAll(chunk)
                 }
                 val deleted = real_ids.filter { it !in failed }
                 if (deleted.isNotEmpty()) {
@@ -4492,7 +4492,7 @@ class MailViewModel @Inject constructor(
                 }
                 if (failed.isNotEmpty()) {
                     undo_local_restore(removed_items.filter { it.id in failed })
-                    undo_search_restore(search_removed)
+                    undo_search_restore(search_removed.filter { it.id in failed })
                     emit_toast(context.getString(R.string.failed_to_delete))
                 } else {
                     emit_toast(context.getString(R.string.deleted_permanently))
