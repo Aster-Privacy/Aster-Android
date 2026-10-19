@@ -551,6 +551,21 @@ internal fun inline_image_sources(
         budget -= bytes.size
         val key = InlineImageStore.content_key(used.first(), bytes)
         InlineImageStore.put(key, att.content_type, bytes)
+        val reload_session_key = att.session_key.orEmpty()
+        val reload_mail_item_id = att.mail_item_id
+        val reload_seq_num = att.seq_num
+        InlineImageStore.register_reloader(
+            key,
+            InlineImageReloader(used.first(), att.content_type) {
+                org.astermail.android.mail.MailRepository.decrypt_attachment_bytes(
+                    data,
+                    nonce,
+                    reload_session_key,
+                    reload_mail_item_id,
+                    reload_seq_num,
+                )
+            },
+        )
         val url = InlineImageStore.url_for(key)
         used.forEach { alias -> resolved.putIfAbsent(alias, url) }
     }
@@ -5723,6 +5738,10 @@ private const val height_watch_probe_ms = 64L
 private const val height_watch_exact_stable_ms = 48L
 private const val height_watch_settle_ms = 2000L
 private const val height_watch_budget_ms = 15000L
+private const val vertical_overflow_slack_dp = 8f
+private const val height_late_growth_poll_ms = 500L
+private const val height_late_growth_budget_ms = 60000L
+private const val height_late_growth_slack_dp = 8f
 
 internal object web_view_support {
     @Volatile
@@ -5770,8 +5789,32 @@ internal class mail_body_web_view(
 
     private var pinching: Boolean = false
 
+    private fun vertical_slack_px(): Int =
+        (vertical_overflow_slack_dp * resources.displayMetrics.density).toInt().coerceAtLeast(1)
+
+    fun content_overflows_vertically(): Boolean =
+        body_overflows_vertically(computeVerticalScrollRange(), height, vertical_slack_px())
+
+    fun bottom_edge_visible(): Boolean {
+        if (height <= 0 || !isShown) return false
+        val visible = android.graphics.Rect()
+        if (!getGlobalVisibleRect(visible)) return false
+        val location = IntArray(2)
+        getLocationInWindow(location)
+        return visible.bottom >= location[1] + height - vertical_slack_px()
+    }
+
+    fun keeps_vertical_drag(drag_dy: Float): Boolean =
+        body_keeps_vertical_drag(
+            overflows = content_overflows_vertically(),
+            drag_dy = drag_dy,
+            can_scroll_down = canScrollVertically(1),
+            can_scroll_up = canScrollVertically(-1),
+            bottom_visible = bottom_edge_visible(),
+        )
+
     private fun vertical_scroll_allowed(): Boolean =
-        pinching || height >= max_body_layout_px - remeasure_viewport_slack_px
+        pinching || height >= max_body_layout_px - remeasure_viewport_slack_px || content_overflows_vertically()
 
     override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -6733,6 +6776,34 @@ internal fun email_html_view(
         }
     }
 
+    LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
+        if (prebuilt_html == null) return@LaunchedEffect
+        var elapsed = 0L
+        while (elapsed < height_late_growth_budget_ms) {
+            delay(height_late_growth_poll_ms)
+            elapsed += height_late_growth_poll_ms
+            if (!has_measured || !height_settled || !body_shown) continue
+            if (remeasure_active[0] || measure_probe.value || zoom_active) continue
+            val web = web_ref[0] ?: continue
+            if ((web as? mail_body_web_view)?.selection_active == true) continue
+            val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
+            if (kotlin.math.abs(zoom_scale_ref[0] - natural_scale) >= 0.01f) continue
+            if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
+            val content = web.contentHeight
+            if (content <= 0) continue
+            if (web_height_viewport_filled(web, content)) continue
+            if (body_needs_regrowth(
+                    content_dp = content * scale_ref[0],
+                    shown_dp = content_height_dp.value,
+                    max_dp = max_body_height_px.toFloat(),
+                    slack_dp = height_late_growth_slack_dp,
+                )
+            ) {
+                height_sink.report(content, exact = true)
+            }
+        }
+    }
+
     LaunchedEffect(remeasure_trigger.value) {
         if (remeasure_trigger.value == 0) return@LaunchedEffect
         if (!has_measured || !body_shown || renderer_exhausted.value) return@LaunchedEffect
@@ -7064,17 +7135,36 @@ internal fun email_html_view(
                 val ctx = view?.context ?: return transparent_pixel()
                 val client = email_image_client(ctx)
                 return try {
-                    fun fetch(bearer: String): okhttp3.Response {
+                    fun fetch_once(target: String, bearer: String): okhttp3.Response {
                         val req = okhttp3.Request.Builder()
-                            .url(url)
+                            .url(target)
                             .header("Authorization", "Bearer $bearer")
                             .build()
                         return client.newCall(req).execute()
+                    }
+                    fun fetch(bearer: String): okhttp3.Response {
+                        var target = url
+                        var attempt = fetch_once(target, bearer)
+                        if (attempt.isRedirect) {
+                            val next = proxy_redirect_target(target, attempt.header("Location"))
+                            if (next != null) {
+                                attempt.close()
+                                target = next
+                                attempt = fetch_once(target, bearer)
+                            }
+                        }
+                        if (proxy_status_is_retryable(attempt.code)) {
+                            attempt.close()
+                            Thread.sleep(600L)
+                            attempt = fetch_once(target, bearer)
+                        }
+                        return attempt
                     }
                     var resp = fetch(current_token)
                     if (resp.code == 401) {
                         resp.close()
                         val refreshed = settings_vm.refresh_access_token_blocking(current_token)
+                            ?: settings_vm.get_access_token()?.takeIf { it != current_token }
                         if (refreshed.isNullOrBlank()) return transparent_pixel()
                         resp = fetch(refreshed)
                     }
@@ -7225,6 +7315,8 @@ internal fun email_html_view(
                                         v.canScrollHorizontally(1) || v.canScrollHorizontally(-1)
                                     if (can_scroll_horizontally && dx > dy && dx > 8f) {
                                         v.parent?.requestDisallowInterceptTouchEvent(true)
+                                    } else if (dy >= dx && dy > 8f && body?.keeps_vertical_drag(ev.y - touch_down_y) == true) {
+                                        v.parent?.requestDisallowInterceptTouchEvent(true)
                                     } else {
                                         v.parent?.requestDisallowInterceptTouchEvent(false)
                                     }
@@ -7283,7 +7375,7 @@ internal fun email_html_view(
                 val wants_white_page = built.contains("data-white=\"1\"")
                 web_view.settings.textZoom = text_zoom
                 web_view.settings.loadsImagesAutomatically = true
-                web_view.settings.blockNetworkImage = !allow_external
+                web_view.settings.blockNetworkImage = false
                 web_view.settings.mixedContentMode =
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 if (loaded_built != built || loaded_external != allow_external) {
