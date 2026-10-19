@@ -187,4 +187,16 @@ class PushPollBaselineTest {
         val stale = item("old", "2020-01-01T00:00:00Z")
         assertEquals(stale, MailPollingWorker.pick_notifiable_candidate(context, listOf(stale)))
     }
+
+    @Test
+    fun candidate_selection_returns_every_new_mail_in_order() {
+        val context = fake_context(fake_prefs())
+        val stale = item("old", java.time.Instant.ofEpochMilli(floor_ms - 3 * slack_ms).toString())
+        val first = item("c", java.time.Instant.ofEpochMilli(floor_ms + 2_000L).toString())
+        val second = item("d", java.time.Instant.ofEpochMilli(floor_ms + 1_000L).toString())
+        assertEquals(
+            listOf(first, second),
+            MailPollingWorker.pick_notifiable_candidates(context, listOf(first, stale, second), floor_ms),
+        )
+    }
 }
