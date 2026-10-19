@@ -52,9 +52,6 @@ import org.astermail.android.MainActivity
 import org.astermail.android.R
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
-import org.astermail.android.api.BuildConfig
-import org.astermail.android.api.auth.RefreshOutcome
-import org.astermail.android.api.auth.SessionTokenProvider
 import org.astermail.android.api.billing.BillingApiImpl
 import org.astermail.android.api.mail.MailApiImpl
 import org.astermail.android.mail.MailRepository
@@ -107,36 +104,20 @@ class MailPollingWorker(
             return Result.success()
         }
 
-        lateinit var client: ApiClient
-        val token_provider = SessionTokenProvider(
-            read_access_token = { token_store.access_token },
-            read_refresh_token = { token_store.refresh_token },
-            refresh_session = {
-                runCatching {
-                    dagger.hilt.android.EntryPointAccessors
-                        .fromApplication(applicationContext, PersistentPushService.SessionEntryPoint::class.java)
-                        .session_refresher()
-                }.getOrNull()?.refresh() ?: RefreshOutcome.Transient
-            },
-        )
+        val client = try {
+            shared_api_client(applicationContext)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            return Result.retry()
+        }
+        check_billing_state(prefs, client)
 
-        client = ApiClient(
-            base_url = BuildConfig.API_BASE_URL,
-            token_provider = token_provider,
-            allow_cleartext_for_test = BuildConfig.API_BASE_URL.startsWith("http://"),
-            device_id = org.astermail.android.api.DeviceIdStore.get(context),
-        )
-        try {
-            check_billing_state(prefs, client)
-
-            return try {
-                poll_and_notify(context, prefs, MailApiImpl(client))
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                Result.retry()
-            }
-        } finally {
-            client.close()
+        return try {
+            poll_and_notify(context, prefs, MailApiImpl(client))
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            Result.retry()
         }
     }
 
@@ -430,6 +411,7 @@ class MailPollingWorker(
     interface MailRepositoryEntryPoint {
         fun mail_repository(): MailRepository
         fun app_lock_store(): org.astermail.android.security.AppLockStore
+        fun api_client(): ApiClient
     }
 
     companion object {
@@ -1142,6 +1124,11 @@ class MailPollingWorker(
                 ?: return true
             return item_ms >= floor_ms - slack_ms
         }
+
+        fun shared_api_client(context: Context): ApiClient =
+            EntryPointAccessors
+                .fromApplication(context.applicationContext, MailRepositoryEntryPoint::class.java)
+                .api_client()
 
         fun advance_baseline_for_push(prefs: android.content.SharedPreferences, count: Int = 1) {
             if (!prefs.contains(KEY_CACHED_UNREAD)) return
