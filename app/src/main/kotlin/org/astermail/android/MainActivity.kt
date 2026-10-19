@@ -700,7 +700,7 @@ private fun AsterNavHost() {
     androidx.compose.runtime.LaunchedEffect(auth_gate) {
         auth_gate.forced_account_switch.collect {
             forced_switch_settings_vm.reset_for_account_switch()
-            forced_switch_settings_vm.load_preferences()
+            forced_switch_settings_vm.load_preferences(force = true)
             forced_switch_settings_vm.load_signature()
             nav_controller.navigate(routes.inbox) {
                 popUpTo(0) { inclusive = true }
@@ -899,7 +899,7 @@ private fun AsterNavHost() {
                 on_forgot_password = { nav_controller.navigate(routes.forgot_password) },
                 on_signed_in = {
                     sign_in_settings_vm.reset_for_account_switch()
-                    sign_in_settings_vm.load_preferences()
+                    sign_in_settings_vm.load_preferences(force = true)
                     sign_in_settings_vm.load_signature()
                     nav_controller.navigate(routes.inbox) {
                         popUpTo(0) { inclusive = true }
@@ -924,7 +924,7 @@ private fun AsterNavHost() {
                 },
                 on_registered = { destination ->
                     register_settings_vm.reset_for_account_switch()
-                    register_settings_vm.load_preferences()
+                    register_settings_vm.load_preferences(force = true)
                     register_settings_vm.load_signature()
                     mark_signed_up_now(context)
                     theme_vm.mark_first_run(setup_pending = false)
@@ -2433,7 +2433,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         settings_vm.reset_for_account_switch()
                         accounts_vm.switch_account(account.id) { restored ->
                             if (restored) {
-                                settings_vm.load_preferences()
+                                settings_vm.load_preferences(force = true)
                                 settings_vm.load_signature()
                                 selected_folder = "inbox"
                                 filter_kind = null
@@ -2562,7 +2562,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         if (switched_account) {
                             mail_vm.reset_for_account_switch()
                             settings_vm.reset_for_account_switch()
-                            settings_vm.load_preferences()
+                            settings_vm.load_preferences(force = true)
                             settings_vm.load_signature()
                             selected_folder = "inbox"
                             filter_kind = null
