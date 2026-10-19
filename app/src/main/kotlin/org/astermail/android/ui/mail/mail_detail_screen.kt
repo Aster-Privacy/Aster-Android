@@ -381,6 +381,20 @@ internal fun count_external_content(html: String, report: EmailHtmlSanitizer.Tra
     return ExternalContentCounts(report.image_count, report.pixel_count, fonts, css, items)
 }
 
+internal data class MessageContentAnalysis(
+    val tracker_report: EmailHtmlSanitizer.TrackerReport = EmailHtmlSanitizer.TrackerReport(),
+    val external_counts: ExternalContentCounts = ExternalContentCounts(0, 0, 0, 0),
+)
+
+internal fun analyze_message_content(html: String?): MessageContentAnalysis {
+    val report = EmailHtmlSanitizer.analyze_trackers(html)
+    val counts = if (html != null) count_external_content(html, report) else ExternalContentCounts(0, 0, 0, 0)
+    return MessageContentAnalysis(report, counts)
+}
+
+internal fun needs_cached_translation_source(current: String?, translate_active: Boolean): Boolean =
+    translate_active && current == null
+
 private val PROXY_CSS_URL_PATTERN = Regex(
     """(url\(\s*["']?)((?:https?:)?//[^"')\s]+)(["']?\s*\))""",
     RegexOption.IGNORE_CASE,
@@ -2410,14 +2424,15 @@ internal fun expanded_message(
             },
         )
     }
-    val tracker_report by androidx.compose.runtime.produceState(
-        initialValue = EmailHtmlSanitizer.TrackerReport(),
+    val content_analysis by androidx.compose.runtime.produceState(
+        initialValue = MessageContentAnalysis(),
         msg.body_html,
     ) {
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            EmailHtmlSanitizer.analyze_trackers(msg.body_html)
+            analyze_message_content(msg.body_html)
         }
     }
+    val tracker_report = content_analysis.tracker_report
     var show_tracker_details by remember(msg.id) { mutableStateOf(false) }
     if (show_tracker_details) {
         tracker_details_dialog(report = tracker_report, on_close = { show_tracker_details = false })
@@ -2745,9 +2760,7 @@ internal fun expanded_message(
             )
         }
 
-        val external_counts = remember(msg.body_html, tracker_report) {
-            if (msg.body_html != null) count_external_content(msg.body_html, tracker_report) else ExternalContentCounts(0, 0, 0, 0)
-        }
+        val external_counts = content_analysis.external_counts
 
         if (msg.send_status == "failed" || msg.send_status == "bounced") {
             send_failure_banner(reason = msg.send_error)
@@ -6337,6 +6350,7 @@ internal fun email_html_view(
         arrayOfNulls<org.astermail.android.translation.translation_engine>(1)
     }
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
+    var source_body_version by remember(html) { mutableStateOf(0) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
     val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
     val translation_from_ref = remember { arrayOfNulls<String>(1) }
@@ -6628,10 +6642,11 @@ internal fun email_html_view(
         val cached = html_cache.get(cache_key)
         if (cached != null) {
             prebuilt_html = cached
-            if (source_body_ref[0] == null) {
+            if (needs_cached_translation_source(source_body_ref[0], translate_active)) {
                 source_body_ref[0] = withContext(Dispatchers.Default) {
                     runCatching { proxy_html(EmailHtmlSanitizer.sanitize(html, sanitize_options)) }.getOrNull()
                 }
+                source_body_version++
             }
             return@LaunchedEffect
         }
@@ -6870,7 +6885,7 @@ internal fun email_html_view(
         }
     }
 
-    LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html) {
+    LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html, source_body_version) {
         if (!has_measured || translate_mode == "off") return@LaunchedEffect
         if (translated_body != null) return@LaunchedEffect
         delay(150)
