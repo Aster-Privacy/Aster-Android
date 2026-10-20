@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Wykorzystujesz %1$d%% miejsca. Dodaj więcej miejsca, aby nadal otrzymywać pocztę.</string>
     <string name="billing_addon_supernova_nudge">Supernova obejmuje 5 TB miejsca i najwyższe limity.</string>
     <string name="billing_addon_supernova_action">Zobacz Supernova</string>
+    <string name="billing_status_lifetime">Dożywotni</string>
+    <string name="billing_lifetime_note">Ten plan nigdy się nie odnawia i nie płacisz za niego ponownie. Aby go zmienić, skontaktuj się z pomocą Aster.</string>
+    <string name="billing_lifetime_locked">Masz plan dożywotni, więc nie ma niczego do odnowienia ani opłacenia. Aby go zmienić, skontaktuj się z pomocą Aster.</string>
 </resources>

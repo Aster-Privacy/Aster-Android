@@ -686,6 +686,7 @@ data class SubscriptionInfo(
     val grace_period_end: String? = null,
     val payment_provider: String? = null,
     val has_stripe_subscription: Boolean? = null,
+    val is_lifetime: Boolean = false,
 ) {
     val effective_price_cents: Int
         get() = if (amount > 0) amount else (plan?.price_cents ?: 0)

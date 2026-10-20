@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Depolama alanınızın %%%1$d kadarını kullandınız. E-posta almaya devam etmek için daha fazla alan ekleyin.</string>
     <string name="billing_addon_supernova_nudge">Supernova, 5 TB depolama alanı ve en yüksek limitleri içerir.</string>
     <string name="billing_addon_supernova_action">Supernova\'yı görüntüle</string>
+    <string name="billing_status_lifetime">Ömür boyu</string>
+    <string name="billing_lifetime_note">Bu plan hiçbir zaman yenilenmez ve bunun için bir daha ödeme yapmazsınız. Planı değiştirmek için Aster destek ekibiyle iletişime geçin.</string>
+    <string name="billing_lifetime_locked">Ömür boyu planınız olduğu için yenilenecek veya ödenecek bir şey yok. Planı değiştirmek için Aster destek ekibiyle iletişime geçin.</string>
 </resources>

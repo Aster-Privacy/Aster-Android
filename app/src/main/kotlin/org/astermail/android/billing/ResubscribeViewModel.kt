@@ -51,6 +51,7 @@ internal fun resubscribe_kind(
     history: List<BillingHistoryItem>,
     now: Instant,
 ): ResubscribeKind? {
+    if (subscription.is_lifetime) return null
     if (subscription.cancel_at_period_end && subscription.has_stripe_subscription == true) {
         return ResubscribeKind.Reactivate
     }

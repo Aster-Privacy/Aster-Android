@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">저장 공간의 %1$d%%를 사용했습니다. 메일을 계속 받으려면 공간을 추가하세요.</string>
     <string name="billing_addon_supernova_nudge">Supernova에는 5TB 저장 공간과 가장 높은 한도가 포함됩니다.</string>
     <string name="billing_addon_supernova_action">Supernova 보기</string>
+    <string name="billing_status_lifetime">평생</string>
+    <string name="billing_lifetime_note">이 요금제는 갱신되지 않으며 다시 결제할 필요가 없습니다. 변경하려면 Aster 지원팀에 문의하세요.</string>
+    <string name="billing_lifetime_locked">평생 요금제를 이용 중이므로 갱신하거나 결제할 항목이 없습니다. 변경하려면 Aster 지원팀에 문의하세요.</string>
 </resources>

@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Je hebt %1$d%% van je opslag gebruikt. Voeg meer ruimte toe om e-mail te blijven ontvangen.</string>
     <string name="billing_addon_supernova_nudge">Supernova bevat 5 TB opslag en de hoogste limieten.</string>
     <string name="billing_addon_supernova_action">Supernova bekijken</string>
+    <string name="billing_status_lifetime">Levenslang</string>
+    <string name="billing_lifetime_note">Dit abonnement wordt nooit verlengd en je betaalt er nooit meer voor. Neem contact op met Aster-support om het te wijzigen.</string>
+    <string name="billing_lifetime_locked">Je hebt een levenslang abonnement, dus er valt niets te verlengen of te betalen. Neem contact op met Aster-support om het te wijzigen.</string>
 </resources>

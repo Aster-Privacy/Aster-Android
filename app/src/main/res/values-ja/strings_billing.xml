@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">ストレージの %1$d%% を使用しています。メールを受信し続けるには、容量を追加してください。</string>
     <string name="billing_addon_supernova_nudge">Supernova には 5 TB のストレージと最も高い上限が含まれます。</string>
     <string name="billing_addon_supernova_action">Supernova を見る</string>
+    <string name="billing_status_lifetime">永久</string>
+    <string name="billing_lifetime_note">このプランは更新されず、今後お支払いは発生しません。変更するには、Aster サポートにお問い合わせください。</string>
+    <string name="billing_lifetime_locked">永久プランをご利用中のため、更新やお支払いは必要ありません。変更するには、Aster サポートにお問い合わせください。</string>
 </resources>

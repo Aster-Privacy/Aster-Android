@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">आपने अपने स्टोरेज का %1$d%% इस्तेमाल कर लिया है। ईमेल मिलते रहें, इसके लिए और जगह जोड़ें।</string>
     <string name="billing_addon_supernova_nudge">Supernova में 5 TB स्टोरेज और सबसे ज़्यादा सीमाएं शामिल हैं।</string>
     <string name="billing_addon_supernova_action">Supernova देखें</string>
+    <string name="billing_status_lifetime">आजीवन</string>
+    <string name="billing_lifetime_note">यह प्लान कभी रिन्यू नहीं होता और आपको इसके लिए दोबारा भुगतान नहीं करना पड़ता। इसे बदलने के लिए Aster सहायता से संपर्क करें।</string>
+    <string name="billing_lifetime_locked">आपके पास आजीवन प्लान है, इसलिए रिन्यू करने या भुगतान करने के लिए कुछ नहीं है। इसे बदलने के लिए Aster सहायता से संपर्क करें।</string>
 </resources>

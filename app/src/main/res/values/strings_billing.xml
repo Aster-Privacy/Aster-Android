@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">You\'ve used %1$d%% of your storage. Add more space to keep receiving mail.</string>
     <string name="billing_addon_supernova_nudge">Supernova includes 5 TB of storage and the highest limits.</string>
     <string name="billing_addon_supernova_action">View Supernova</string>
+    <string name="billing_status_lifetime">Lifetime</string>
+    <string name="billing_lifetime_note">This plan never renews, and you never pay for it again. To change it, contact Aster support.</string>
+    <string name="billing_lifetime_locked">You have a lifetime plan, so there is nothing to renew or pay for. To change it, contact Aster support.</string>
 </resources>

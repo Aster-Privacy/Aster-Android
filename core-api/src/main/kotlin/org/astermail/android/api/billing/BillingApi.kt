@@ -73,6 +73,7 @@ data class SubscriptionResponse(
     val has_stripe_subscription: Boolean? = null,
     val paid_until: String? = null,
     val active_discount_description: String? = null,
+    val is_lifetime: Boolean = false,
 )
 
 @Serializable

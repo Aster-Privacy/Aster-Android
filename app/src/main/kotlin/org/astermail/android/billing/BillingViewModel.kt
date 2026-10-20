@@ -459,6 +459,7 @@ class BillingViewModel @Inject constructor(
         prepare_play_purchase(PlayTarget.Plan(plan_code, billing_interval))
 
     private suspend fun prepare_play_purchase(target: PlayTarget) {
+        if (target !is PlayTarget.Addon && blocks_lifetime_plan_change()) return
         val generation = play_generation
         val cancel_seq = play_offer_cancel_seq
         play_config_job?.takeIf { it.isActive }?.join()
@@ -587,6 +588,7 @@ class BillingViewModel @Inject constructor(
 
     fun start_play_special_offer(billing_interval: String = "month") {
         if (!play_install_check()) return
+        if (blocks_lifetime_plan_change()) return
         start_play_target("play_special_offer", PlayTarget.SpecialOffer(billing_interval))
     }
 
@@ -874,6 +876,20 @@ class BillingViewModel @Inject constructor(
         return true
     }
 
+    private fun blocks_lifetime_plan_change(): Boolean {
+        if (_state.value.subscription?.is_lifetime != true) return false
+        _state.update {
+            it.copy(
+                is_acting = false,
+                acting_action = null,
+                error = ctx.getString(R.string.billing_lifetime_locked),
+                info = null,
+                checkout_url = null,
+            )
+        }
+        return true
+    }
+
     private fun blocks_stripe_management(): Boolean {
         if (!play_install_check()) return false
         _state.update { it.copy(is_acting = false, acting_action = null, error = ctx.getString(R.string.billing_play_blocked), info = null) }
@@ -895,7 +911,7 @@ class BillingViewModel @Inject constructor(
     }
 
     private fun subscription_signature(sub: SubscriptionResponse?): String =
-        "${sub?.plan?.code}|${sub?.status}|${sub?.current_period_end}|${sub?.storage?.limit_bytes}|${sub?.cancel_at_period_end}"
+        "${sub?.plan?.code}|${sub?.status}|${sub?.current_period_end}|${sub?.storage?.limit_bytes}|${sub?.cancel_at_period_end}|${sub?.is_lifetime}"
 
     private fun is_active_paid(sub: SubscriptionResponse?): Boolean {
         if (sub == null) return false
@@ -1003,6 +1019,7 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return
         }
+        if (blocks_lifetime_plan_change()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "checkout_$plan_code", error = null, checkout_url = null)
             if (!await_signed_in()) {
@@ -1069,6 +1086,7 @@ class BillingViewModel @Inject constructor(
             _state.value = _state.value.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null)
             return false
         }
+        if (blocks_lifetime_plan_change()) return false
         if (is_play_subscriber()) {
             open_play_subscriptions()
             return true
@@ -1139,6 +1157,7 @@ class BillingViewModel @Inject constructor(
 
     fun switch_billing(billing_interval: String) {
         if (_state.value.is_acting) return
+        if (blocks_lifetime_plan_change()) return
         if (is_play_subscriber()) {
             change_play_subscription(_state.value.subscription?.plan?.code.orEmpty(), billing_interval)
             return
@@ -1181,6 +1200,7 @@ class BillingViewModel @Inject constructor(
 
     fun change_plan(plan_code: String, billing_interval: String) {
         if (_state.value.is_acting) return
+        if (blocks_lifetime_plan_change()) return
         if (is_play_subscriber()) {
             change_play_subscription(plan_code, billing_interval)
             return
@@ -1505,6 +1525,7 @@ class BillingViewModel @Inject constructor(
 
     fun start_crypto_checkout(plan_code: String, term_months: Int, special_offer: Boolean = false) {
         if (_state.value.is_acting) return
+        if (blocks_lifetime_plan_change()) return
         if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(is_acting = true, acting_action = "crypto_$plan_code", error = null, checkout_url = null)
@@ -1596,6 +1617,7 @@ class BillingViewModel @Inject constructor(
 
     fun create_crypto_native_invoice(plan_code: String, term_months: Int, currency: String, chain: String) {
         if (_state.value.is_acting) return
+        if (blocks_lifetime_plan_change()) return
         if (blocks_external_checkout()) return
         viewModelScope.launch {
             _state.value = _state.value.copy(
