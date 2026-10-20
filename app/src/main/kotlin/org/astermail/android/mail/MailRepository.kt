@@ -2545,6 +2545,14 @@ class MailRepository @Inject constructor(
         existing_thread_token: String?,
     ): String? {
         if (!existing_thread_token.isNullOrBlank()) return existing_thread_token
+        val server_thread_token = try {
+            mail_api.get_message(original_email_id).thread_token?.takeIf { it.isNotBlank() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        if (server_thread_token != null) return server_thread_token
         return try {
             val digest = MessageDigest.getInstance("SHA-256")
                 .digest(("astermail-thread:" + original_email_id).toByteArray(Charsets.UTF_8))
