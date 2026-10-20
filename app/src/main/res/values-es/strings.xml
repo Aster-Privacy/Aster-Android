@@ -288,7 +288,8 @@
     <string name="bcc">Cco</string>
     <string name="subject">Asunto</string>
     <string name="sending_in_countdown">Enviando en %d s</string>
-    <string name="view_message">Ver mensaje</string>
+    <string name="reaction_sent">Reacción enviada</string>
+    <string name="undo_send_too_late">Tu mensaje ya se envió</string>
     <string name="undo">Deshacer</string>
     <string name="save_draft">Guardar borrador</string>
     <string name="discard">Descartar</string>

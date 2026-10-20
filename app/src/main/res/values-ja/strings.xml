@@ -287,7 +287,8 @@
     <string name="bcc">Bcc</string>
     <string name="subject">件名</string>
     <string name="sending_in_countdown">%d秒後に送信</string>
-    <string name="view_message">メッセージを表示</string>
+    <string name="reaction_sent">リアクションを送信しました</string>
+    <string name="undo_send_too_late">メッセージはすでに送信されました</string>
     <string name="undo">元に戻す</string>
     <string name="save_draft">下書きを保存</string>
     <string name="discard">破棄</string>

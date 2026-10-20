@@ -34,6 +34,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.mail.BulkLabelRequest
 import org.astermail.android.api.mail.BulkLabelResponse
@@ -118,6 +119,8 @@ class MailRepositoryTest {
             rows[id]?.let { rows[id] = it.copy(status = "failed") }
         }
         override suspend fun delete_by_id(id: String) { rows.remove(id) }
+        override suspend fun delete_if_pending(id: String): Int =
+            if (rows[id]?.status == "pending" && rows.remove(id) != null) 1 else 0
         override suspend fun clear_all() { rows.clear() }
         override suspend fun clear_for_account(account_id: String) {
             rows.values.filter { it.account_id == account_id || it.account_id == null }
@@ -2167,6 +2170,148 @@ class MailRepositoryTest {
 
         assertNull(pending_send_dao.get_by_id("pend_queued"))
         coVerify(exactly = 0) { send_api.send_simple(any()) }
+    }
+
+    private suspend fun schedule_threaded_reply(): String {
+        every { session_key_store.get_user_id() } returns "user_1"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "safety_reply", success = true)
+        val pending_id = repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Re: Hi",
+            body_html = "<p>thanks</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = "Me",
+            thread_token = "thread_1",
+            undo_seconds = 10,
+            draft_id = null,
+            reply_to_id = "msg_1",
+        ).getOrThrow()
+        wait_until(5000L) { runBlocking { pending_send_dao.get_by_id(pending_id)?.draft_id } != null }
+        return pending_id
+    }
+
+    @Test
+    fun `undo send adds the reply to the thread at once for its pending id`() = runTest {
+        val pending_id = schedule_threaded_reply()
+
+        val sends = repo.optimistic_sends.value
+        assertEquals(1, sends.size)
+        val send = sends.single()
+        assertEquals(pending_id, send.pending_id)
+        assertEquals("user_1", send.account_id)
+        assertEquals("thread_1", send.thread_token)
+        assertEquals("msg_1", send.reply_to_id)
+        assertEquals(optimistic_send_message_id(pending_id), send.message.id)
+        assertEquals("thanks", send.message.body_text)
+        assertFalse(send.committed)
+    }
+
+    @Test
+    fun `undo send without a thread adds nothing to any thread`() = runTest {
+        coEvery { mail_api.create_message(any()) } returns CreateMailItemResponse(id = "safety_new", success = true)
+
+        repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Hi",
+            body_html = "<p>hello</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = null,
+            undo_seconds = 10,
+            draft_id = null,
+        )
+
+        assertTrue(repo.optimistic_sends.value.isEmpty())
+    }
+
+    @Test
+    fun `undo removes the optimistic reply and restores the draft`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        val restored = CompletableDeferred<String>()
+        val collector = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            restored.complete(repo.undo_restored_drafts.first())
+        }
+        wait_until { collector.isActive }
+        Thread.sleep(50)
+        val safety_draft = pending_send_dao.get_by_id(pending_id)?.draft_id
+
+        val undone = await_real { repo.undo_pending_send_now(pending_id) }
+
+        assertTrue(undone)
+        assertTrue(repo.optimistic_sends.value.isEmpty())
+        assertNull(pending_send_dao.get_by_id(pending_id))
+        wait_until { restored.isCompleted }
+        val restored_id = restored.await()
+        assertTrue(restored_id.isNotBlank())
+        if (!safety_draft.isNullOrBlank()) assertEquals(safety_draft, restored_id)
+        collector.cancel()
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `undo after the worker claimed the send keeps the reply in the thread`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        assertEquals(1, pending_send_dao.mark_sending(pending_id, System.currentTimeMillis()))
+
+        val undone = await_real { repo.undo_pending_send_now(pending_id) }
+
+        assertFalse(undone)
+        assertEquals(1, repo.optimistic_sends.value.size)
+        assertNotNull(pending_send_dao.get_by_id(pending_id))
+    }
+
+    @Test
+    fun `commit keeps the reply until the server copy arrives and never duplicates it`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "server_sent_1")
+
+        val outcome = await_real { repo.run_pending_send(pending_id) }
+
+        assertEquals(PendingSendOutcome.SENT, outcome)
+        val send = repo.optimistic_sends.value.single()
+        assertTrue(send.committed)
+        assertEquals("server_sent_1", send.mail_item_id)
+        val before = optimistic_sends_for_thread(
+            sends = repo.optimistic_sends.value,
+            account_id = "user_1",
+            thread_token = "thread_1",
+            item_id = "msg_1",
+            server_messages = emptyList(),
+        )
+        assertEquals(listOf(optimistic_send_message_id(pending_id)), before.map { it.id })
+        val server_copy = send.message.copy(
+            id = "server_sent_1",
+            raw_item = send.message.raw_item.copy(id = "server_sent_1", send_status = null),
+        )
+        val after = optimistic_sends_for_thread(
+            sends = repo.optimistic_sends.value,
+            account_id = "user_1",
+            thread_token = "thread_1",
+            item_id = "msg_1",
+            server_messages = listOf(server_copy),
+        )
+        assertTrue(after.isEmpty())
+    }
+
+    @Test
+    fun `a failed send removes the optimistic reply`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        every { session_key_store.has_ratchet_keys() } returns true
+        every { session_key_store.get_user_email() } returns "me@astermail.org"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } throws
+            RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient")
+
+        val outcome = await_real { repo.run_pending_send(pending_id) }
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertTrue(repo.optimistic_sends.value.isEmpty())
     }
 
     @Test

@@ -16,13 +16,9 @@
 
 package org.astermail.android.ui.mail
 
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Mail
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,11 +29,10 @@ import org.astermail.android.ui.common.TopToastState
 import org.astermail.android.ui.common.app_toast
 
 @Composable
-fun undo_send_toast(on_view: () -> Unit, undo_vm: UndoSendViewModel = hiltViewModel()) {
+fun undo_send_toast(undo_vm: UndoSendViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val pending by undo_vm.pending_undo_send.collectAsStateWithLifecycle()
     val dismissed_send_id by undo_vm.dismissed_send_id.collectAsStateWithLifecycle()
-    val view by rememberUpdatedState(on_view)
     val send_id = pending?.started_at_ms
     LaunchedEffect(send_id, dismissed_send_id == send_id) {
         val p = pending ?: return@LaunchedEffect
@@ -57,10 +52,6 @@ fun undo_send_toast(on_view: () -> Unit, undo_vm: UndoSendViewModel = hiltViewMo
                             undo_vm.dismiss(id)
                             p.undo()
                         },
-                        secondary_label = context.getString(R.string.view_message),
-                        secondary_icon = TablerIcons.Mail,
-                        on_secondary = { view() },
-                        on_tap = { view() },
                         show_close = true,
                         on_close = { undo_vm.dismiss(id) },
                         key = id,
@@ -70,6 +61,23 @@ fun undo_send_toast(on_view: () -> Unit, undo_vm: UndoSendViewModel = hiltViewMo
             }
         } finally {
             app_toast.hide_sticky(id)
+        }
+    }
+}
+
+@Composable
+fun undo_send_events(
+    on_restored_draft: (String) -> Unit,
+    undo_vm: UndoSendViewModel = hiltViewModel(),
+) {
+    val context = LocalContext.current
+    val open_draft by androidx.compose.runtime.rememberUpdatedState(on_restored_draft)
+    LaunchedEffect(undo_vm) {
+        undo_vm.undo_restored_drafts.collect { draft_id -> open_draft(draft_id) }
+    }
+    LaunchedEffect(undo_vm) {
+        undo_vm.undo_send_too_late.collect {
+            app_toast.show(context.getString(R.string.undo_send_too_late))
         }
     }
 }

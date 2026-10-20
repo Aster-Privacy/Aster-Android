@@ -1831,6 +1831,8 @@ fun ComposeScreen(
             val display_name = resolve_sender_display_name(snapshot_from)
             val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
                 mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token)
+            } else if (mode == "draft") {
+                draft_save_thread_token
             } else {
                 null
             }
@@ -2162,6 +2164,8 @@ fun ComposeScreen(
             if (undo_send_enabled) {
                 val resolved_thread_token = if (!reply_to.isNullOrBlank() && (mode == "reply" || mode == "reply_all")) {
                     runCatching { mail_vm.get_or_create_thread_token(reply_to, thread_state.item?.thread_token) }.getOrNull()
+                } else if (mode == "draft") {
+                    draft_save_thread_token
                 } else {
                     null
                 }
@@ -2182,6 +2186,7 @@ fun ComposeScreen(
                     undo_seconds = undo_send_seconds,
                     draft_id = mail_vm.settle_draft_session(draft_session_id, current_draft_id),
                     allow_non_post_quantum = allow_non_post_quantum,
+                    reply_to_id = if (mode == "reply" || mode == "reply_all") reply_to?.takeIf { it.isNotBlank() } else null,
                 )
                 is_sending = false
                 send_lock.set(false)

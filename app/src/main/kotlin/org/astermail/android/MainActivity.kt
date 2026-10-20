@@ -778,10 +778,16 @@ private fun AsterNavHost() {
             preferences_sync_vm.load_preferences()
         }
         val undo_route by nav_controller.currentBackStackEntryAsState()
+        val undo_context = androidx.compose.ui.platform.LocalContext.current
+        org.astermail.android.ui.mail.undo_send_events(
+            on_restored_draft = { draft_id ->
+                undo_context.startActivity(
+                    ComposeActivity.intent_for(undo_context, mode = "draft", draft_id = draft_id),
+                )
+            },
+        )
         if (!is_locked && undo_route?.destination?.route != routes.pending_send_preview) {
-            org.astermail.android.ui.mail.undo_send_toast(
-                on_view = { nav_controller.navigate(routes.pending_send_preview) },
-            )
+            org.astermail.android.ui.mail.undo_send_toast()
         }
     }
 

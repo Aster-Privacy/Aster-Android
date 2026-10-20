@@ -287,7 +287,8 @@
     <string name="bcc">Bcc</string>
     <string name="subject">Onderwerp</string>
     <string name="sending_in_countdown">Verzenden over %d s</string>
-    <string name="view_message">Bericht bekijken</string>
+    <string name="reaction_sent">Reactie verzonden</string>
+    <string name="undo_send_too_late">Je bericht is al verzonden</string>
     <string name="undo">Ongedaan maken</string>
     <string name="save_draft">Concept opslaan</string>
     <string name="discard">Verwijderen</string>

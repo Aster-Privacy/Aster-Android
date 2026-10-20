@@ -86,6 +86,8 @@ class DraftAutoSaveInstrumentedTest {
             rows[id]?.let { rows[id] = it.copy(status = "failed") }
         }
         override suspend fun delete_by_id(id: String) { rows.remove(id) }
+        override suspend fun delete_if_pending(id: String): Int =
+            if (rows[id]?.status == "pending" && rows.remove(id) != null) 1 else 0
         override suspend fun clear_all() { rows.clear() }
         override suspend fun clear_for_account(account_id: String) {
             rows.values.filter { it.account_id == account_id || it.account_id == null }

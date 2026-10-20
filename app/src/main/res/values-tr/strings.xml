@@ -287,7 +287,8 @@
     <string name="bcc">Gizli</string>
     <string name="subject">Konu</string>
     <string name="sending_in_countdown">%d sn sonra gönderilecek</string>
-    <string name="view_message">Mesajı görüntüle</string>
+    <string name="reaction_sent">Tepki gönderildi</string>
+    <string name="undo_send_too_late">Mesajınız zaten gönderildi</string>
     <string name="undo">Geri al</string>
     <string name="save_draft">Taslağı kaydet</string>
     <string name="discard">Sil</string>

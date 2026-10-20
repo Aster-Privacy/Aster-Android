@@ -72,6 +72,9 @@ class MoveToCategoryTest {
         every { repository.send_result_events } returns kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.new_mail_events } returns kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.pending_undo_send } returns kotlinx.coroutines.flow.MutableStateFlow(null)
+        every { repository.optimistic_sends } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        every { repository.reaction_holds } returns
+            ReactionHoldQueue(kotlinx.coroutines.CoroutineScope(dispatcher)) { null }
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
         val identity_pins = mockk<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>(relaxed = true)
         every { identity_pins.unacknowledged_changes } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())

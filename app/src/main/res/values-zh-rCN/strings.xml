@@ -287,7 +287,8 @@
     <string name="bcc">密送</string>
     <string name="subject">主题</string>
     <string name="sending_in_countdown">%d 秒后发送</string>
-    <string name="view_message">查看邮件</string>
+    <string name="reaction_sent">已发送回应</string>
+    <string name="undo_send_too_late">你的邮件已发送</string>
     <string name="undo">撤销</string>
     <string name="save_draft">保存草稿</string>
     <string name="discard">丢弃</string>

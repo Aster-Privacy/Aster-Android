@@ -288,7 +288,8 @@
     <string name="bcc">Bcc</string>
     <string name="subject">Betreff</string>
     <string name="sending_in_countdown">Senden in %d s</string>
-    <string name="view_message">Nachricht anzeigen</string>
+    <string name="reaction_sent">Reaktion gesendet</string>
+    <string name="undo_send_too_late">Ihre Nachricht wurde bereits gesendet</string>
     <string name="undo">Rückgängig</string>
     <string name="save_draft">Entwurf speichern</string>
     <string name="discard">Verwerfen</string>

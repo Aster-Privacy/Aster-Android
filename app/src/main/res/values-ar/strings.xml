@@ -287,7 +287,8 @@
     <string name="bcc">نسخة مخفية</string>
     <string name="subject">الموضوع</string>
     <string name="sending_in_countdown">الإرسال خلال %d ث</string>
-    <string name="view_message">عرض الرسالة</string>
+    <string name="reaction_sent">تم إرسال التفاعل</string>
+    <string name="undo_send_too_late">تم إرسال رسالتك بالفعل</string>
     <string name="undo">تراجع</string>
     <string name="save_draft">حفظ المسودة</string>
     <string name="discard">تجاهل</string>

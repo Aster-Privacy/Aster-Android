@@ -287,7 +287,8 @@
     <string name="bcc">UDW</string>
     <string name="subject">Temat</string>
     <string name="sending_in_countdown">Wysyłanie za %d s</string>
-    <string name="view_message">Zobacz wiadomość</string>
+    <string name="reaction_sent">Reakcja wysłana</string>
+    <string name="undo_send_too_late">Twoja wiadomość została już wysłana</string>
     <string name="undo">Cofnij</string>
     <string name="save_draft">Zapisz szkic</string>
     <string name="discard">Odrzuć</string>

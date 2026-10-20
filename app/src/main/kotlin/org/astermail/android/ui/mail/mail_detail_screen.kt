@@ -854,6 +854,17 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
+    val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
+    val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email) {
+        if (!thread_matches_email || optimistic_thread_messages.isEmpty()) {
+            messages
+        } else {
+            val known = messages.mapTo(HashSet()) { it.id }
+            messages + optimistic_thread_messages
+                .filter { it.id !in known }
+                .map { thread_message_to_mock(it) }
+        }
+    }
     val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
     val expected_message_count = remember(
         email_id,
@@ -964,7 +975,33 @@ fun MailDetailScreen(
         org.astermail.android.ui.common.app_toast.show(msg)
     }
 
+    val reaction_hold_seconds = org.astermail.android.mail.resolve_undo_send_seconds(
+        settings_state.preferences?.undo_send_enabled,
+        settings_state.preferences?.undo_send_seconds,
+    )
+
+    fun announce_reaction(held: org.astermail.android.mail.HeldReaction) {
+        if (held.delay_ms <= 0L) {
+            show_toast(context.getString(R.string.reaction_sent))
+            return
+        }
+        app_toast.show(
+            TopToastState(
+                message = context.getString(R.string.reaction_sent),
+                undo_label = context.getString(R.string.undo),
+                on_undo = { held.undo() },
+                duration_ms = held.delay_ms,
+            ),
+        )
+    }
+
     val list_state = rememberLazyListState()
+    val optimistic_tail_id = optimistic_thread_messages.lastOrNull()?.id
+    LaunchedEffect(optimistic_tail_id) {
+        if (optimistic_tail_id == null) return@LaunchedEffect
+        val total = list_state.layoutInfo.totalItemsCount
+        if (total > 0) list_state.animateScrollToItem(total - 1)
+    }
     val pan_signal = remember { horizontal_pan_signal() }
     val show_topbar_subject by remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
@@ -1473,9 +1510,10 @@ fun MailDetailScreen(
                     }
                 }
 
-                val thread_items = if (open_layout == null) emptyList() else messages
+                val thread_items = if (open_layout == null) emptyList() else display_messages
                 items(thread_items.size, key = { thread_items[it].id }, contentType = { "thread_message" }) { idx ->
                     val msg = thread_items[idx]
+                    val is_pending_send = org.astermail.android.mail.is_optimistic_send_id(msg.id)
                     val is_last = idx == thread_items.size - 1
                     val is_expanded = thread_message_is_expanded(
                         message_id = msg.id,
@@ -1654,8 +1692,9 @@ fun MailDetailScreen(
                                 }
                             },
                             on_attachment_options = { att -> options_attachment = att },
-                            reactions = if (reactions_enabled) message_reactions[msg.id].orEmpty() else emptyList(),
+                            reactions = if (reactions_enabled && !is_pending_send) message_reactions[msg.id].orEmpty() else emptyList(),
                             on_react = { emoji ->
+                                if (is_pending_send) return@expanded_message
                                 val blocked = reaction_restriction_for(msg)
                                 if (blocked != null) {
                                     show_toast(
@@ -1673,6 +1712,8 @@ fun MailDetailScreen(
                                     sender_email = identity.email,
                                     sender_alias_hash = identity.alias_hash,
                                     own_addresses = reaction_own_addresses,
+                                    hold_seconds = reaction_hold_seconds,
+                                    on_held = { held -> announce_reaction(held) },
                                 ) { error ->
                                     if (error != null) show_toast(error)
                                 }
@@ -1683,7 +1724,8 @@ fun MailDetailScreen(
                                 }
                             },
                             is_system = is_system_sender,
-                            can_collapse = messages.size > 1,
+                            can_collapse = !is_pending_send && thread_items.size > 1,
+                            is_pending_send = is_pending_send,
                         )
                     } else {
                         collapsed_message(
@@ -1772,6 +1814,8 @@ fun MailDetailScreen(
                                 sender_email = identity.email,
                                 sender_alias_hash = identity.alias_hash,
                                 own_addresses = reaction_own_addresses,
+                                hold_seconds = reaction_hold_seconds,
+                                on_held = { held -> announce_reaction(held) },
                             ) { error ->
                                 if (error != null) show_toast(error)
                             }
@@ -2404,6 +2448,7 @@ internal fun expanded_message(
     identity_changed: Boolean = false,
     sender_unauthenticated: Boolean = false,
     on_acknowledge_identity: () -> Unit = {},
+    is_pending_send: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -2669,7 +2714,7 @@ internal fun expanded_message(
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (show_header_reply) {
+                        if (show_header_reply && !is_pending_send) {
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
@@ -2686,7 +2731,7 @@ internal fun expanded_message(
                             }
                         }
                         val more_coordinates = remember { arrayOfNulls<LayoutCoordinates>(1) }
-                        Box(
+                        if (!is_pending_send) Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .onGloballyPositioned { more_coordinates[0] = it }
@@ -2779,6 +2824,18 @@ internal fun expanded_message(
 
         if (msg.send_status == "failed" || msg.send_status == "bounced") {
             send_failure_banner(reason = msg.send_error)
+        }
+
+        if (is_pending_send) {
+            Text(
+                text = stringResource(R.string.sending),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .padding(horizontal = AsterSpacing.md)
+                    .padding(bottom = AsterSpacing.sm)
+                    .testTag("pending_send_status"),
+            )
         }
 
         val show_external_banner = external_counts.total > 0 && !allow_external
@@ -3055,12 +3112,14 @@ internal fun expanded_message(
             }
         }
 
-        reaction_chip_row(
-            reactions = reactions,
-            my_email = my_email,
-            on_react = on_react,
-            on_unreact = on_unreact,
-        )
+        if (!is_pending_send) {
+            reaction_chip_row(
+                reactions = reactions,
+                my_email = my_email,
+                on_react = on_react,
+                on_unreact = on_unreact,
+            )
+        }
 
         Spacer(Modifier.height(AsterSpacing.md))
     }
