@@ -93,6 +93,10 @@ class MailViewModelTest {
             kotlinx.coroutines.flow.MutableSharedFlow()
         every { repository.pending_undo_send } returns
             kotlinx.coroutines.flow.MutableStateFlow(null)
+        every { repository.optimistic_sends } returns
+            kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        every { repository.reaction_holds } returns
+            ReactionHoldQueue(kotlinx.coroutines.CoroutineScope(dispatcher)) { null }
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
         coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
             Result.success(emptyMap())

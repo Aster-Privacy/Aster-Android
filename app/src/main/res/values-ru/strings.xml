@@ -287,7 +287,8 @@
     <string name="bcc">Скрытая копия</string>
     <string name="subject">Тема</string>
     <string name="sending_in_countdown">Отправка через %d с</string>
-    <string name="view_message">Показать сообщение</string>
+    <string name="reaction_sent">Реакция отправлена</string>
+    <string name="undo_send_too_late">Ваше сообщение уже отправлено</string>
     <string name="undo">Отменить</string>
     <string name="save_draft">Сохранить черновик</string>
     <string name="discard">Удалить</string>

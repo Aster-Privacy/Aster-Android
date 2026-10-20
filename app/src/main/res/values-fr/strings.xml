@@ -307,7 +307,8 @@
     <string name="bcc">Cci</string>
     <string name="subject">Objet</string>
     <string name="sending_in_countdown">Envoi dans %d s</string>
-    <string name="view_message">Voir le message</string>
+    <string name="reaction_sent">Réaction envoyée</string>
+    <string name="undo_send_too_late">Votre message a déjà été envoyé</string>
     <string name="undo">Annuler</string>
     <string name="save_draft">Enregistrer le brouillon</string>
     <string name="discard">Supprimer</string>

@@ -287,7 +287,8 @@
     <string name="bcc">Ccn</string>
     <string name="subject">Oggetto</string>
     <string name="sending_in_countdown">Invio tra %d s</string>
-    <string name="view_message">Visualizza messaggio</string>
+    <string name="reaction_sent">Reazione inviata</string>
+    <string name="undo_send_too_late">Il tuo messaggio è già stato inviato</string>
     <string name="undo">Annulla</string>
     <string name="save_draft">Salva bozza</string>
     <string name="discard">Scarta</string>

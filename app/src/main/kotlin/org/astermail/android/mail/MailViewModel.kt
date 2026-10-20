@@ -41,6 +41,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -192,6 +195,17 @@ class MailViewModel @Inject constructor(
     private val _thread_state = MutableStateFlow(ThreadUiState())
     val thread_state: StateFlow<ThreadUiState> = _thread_state.asStateFlow()
 
+    val thread_optimistic_messages: StateFlow<List<ThreadMessageDecrypted>> =
+        combine(_thread_state, repository.optimistic_sends) { state, sends ->
+            optimistic_sends_for_thread(
+                sends = sends,
+                account_id = repository.current_account_id(),
+                thread_token = state.item?.thread_token,
+                item_id = state.item?.id,
+                server_messages = state.messages,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     val visible_order: StateFlow<List<String>> = repository.visible_order
 
     fun set_visible_order(ids: List<String>) {
@@ -312,6 +326,8 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
         sender_alias_hash: String? = null,
         own_addresses: Set<String> = emptySet(),
+        hold_seconds: Int = 0,
+        on_held: ((HeldReaction) -> Unit)? = null,
         on_result: (String?) -> Unit,
     ) {
         if (!reactions_enabled) return
@@ -361,52 +377,73 @@ class MailViewModel @Inject constructor(
         _message_reactions.update { current ->
             current + (message_id to (current[message_id].orEmpty() + optimistic))
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.send_reaction(
-                target_message_id = message_id,
-                message_group_id = message.raw_item.message_group_id,
-                thread_token = state.item?.thread_token,
-                recipient = recipient,
-                emoji = emoji,
-                sender_email = from_email.ifBlank { null },
-                sender_alias_hash = sender_alias_hash,
-                reply_subject = message.subject,
-                in_reply_to = message.raw_headers
-                    .firstOrNull { it.first.equals("message-id", ignoreCase = true) }
-                    ?.second,
-            )
-            val error = result.exceptionOrNull()
-            if (error != null) {
-                _message_reactions.update { current ->
-                    val bucket = current[message_id].orEmpty()
-                        .filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id }
-                    current + (message_id to bucket)
-                }
-            } else {
-                val confirmed_id = result.getOrNull()
-                if (confirmed_id != null) {
-                    _message_reactions.update { current ->
-                        val bucket = current[message_id].orEmpty()
-                        if (bucket.any { it.reaction_mail_item_id == confirmed_id }) {
-                            current + (message_id to bucket.filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id })
-                        } else {
-                            current + (
-                                message_id to bucket.map {
-                                    if (it.reaction_mail_item_id == optimistic.reaction_mail_item_id) {
-                                        it.copy(reaction_mail_item_id = confirmed_id)
-                                    } else {
-                                        it
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
-                on_result(error?.let { reaction_error_text(it, R.string.reaction_failed) })
+        val in_reply_to = message.raw_headers
+            .firstOrNull { it.first.equals("message-id", ignoreCase = true) }
+            ?.second
+        val drop_optimistic = {
+            _message_reactions.update { current ->
+                val bucket = current[message_id].orEmpty()
+                    .filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id }
+                current + (message_id to bucket)
             }
         }
+        val deliver = { text: String? ->
+            viewModelScope.launch(Dispatchers.Main) { on_result(text) }
+            Unit
+        }
+        val held = repository.reaction_holds.hold(
+            id = optimistic.reaction_mail_item_id,
+            delay_ms = hold_seconds.coerceAtLeast(0) * 1000L,
+            send = {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    repository.send_reaction(
+                        target_message_id = message_id,
+                        message_group_id = message.raw_item.message_group_id,
+                        thread_token = state.item?.thread_token,
+                        recipient = recipient,
+                        emoji = emoji,
+                        sender_email = from_email.ifBlank { null },
+                        sender_alias_hash = sender_alias_hash,
+                        reply_subject = message.subject,
+                        in_reply_to = in_reply_to,
+                    )
+                }
+            },
+        ) { outcome ->
+            when (outcome) {
+                is ReactionHoldOutcome.Sent -> {
+                    val confirmed_id = outcome.confirmed_id
+                    if (confirmed_id != null) {
+                        _message_reactions.update { current ->
+                            val bucket = current[message_id].orEmpty()
+                            if (bucket.any { it.reaction_mail_item_id == confirmed_id }) {
+                                current + (message_id to bucket.filter { it.reaction_mail_item_id != optimistic.reaction_mail_item_id })
+                            } else {
+                                current + (
+                                    message_id to bucket.map {
+                                        if (it.reaction_mail_item_id == optimistic.reaction_mail_item_id) {
+                                            it.copy(reaction_mail_item_id = confirmed_id)
+                                        } else {
+                                            it
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    deliver(null)
+                }
+                is ReactionHoldOutcome.Failed -> {
+                    drop_optimistic()
+                    deliver(reaction_error_text(outcome.error, R.string.reaction_failed))
+                }
+                ReactionHoldOutcome.Canceled, ReactionHoldOutcome.AccountChanged -> {
+                    drop_optimistic()
+                    deliver(null)
+                }
+            }
+        }
+        on_held?.invoke(held)
     }
 
     fun remove_reaction(
@@ -416,7 +453,10 @@ class MailViewModel @Inject constructor(
     ) {
         val target = _message_reactions.value[message_id].orEmpty()
             .firstOrNull { it.emoji == emoji && it.is_own } ?: return
-        if (target.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX)) return
+        if (target.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX)) {
+            repository.reaction_holds.undo(target.reaction_mail_item_id)
+            return
+        }
         _message_reactions.update { current ->
             current + (
                 message_id to current[message_id].orEmpty()
@@ -5515,6 +5555,7 @@ class MailViewModel @Inject constructor(
         undo_seconds: Int,
         draft_id: String? = null,
         allow_non_post_quantum: Boolean = false,
+        reply_to_id: String? = null,
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -5533,6 +5574,7 @@ class MailViewModel @Inject constructor(
             undo_seconds = undo_seconds,
             draft_id = draft_id,
             allow_non_post_quantum = allow_non_post_quantum,
+            reply_to_id = reply_to_id,
         )
     }
 

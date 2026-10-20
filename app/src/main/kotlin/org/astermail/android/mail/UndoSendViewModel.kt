@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -31,6 +32,8 @@ class UndoSendViewModel @Inject constructor(
 
     val pending_undo_send: StateFlow<MailRepository.PendingUndoSend?> = repository.pending_undo_send
     val dismissed_send_id: StateFlow<Long?> = dismissed.asStateFlow()
+    val undo_restored_drafts: SharedFlow<String> = repository.undo_restored_drafts
+    val undo_send_too_late: SharedFlow<Unit> = repository.undo_send_too_late
 
     fun dismiss(send_id: Long) {
         dismissed.value = send_id

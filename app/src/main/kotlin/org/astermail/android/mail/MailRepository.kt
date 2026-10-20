@@ -136,6 +136,7 @@ fun should_wait_for_network(err: Throwable?, is_permanent: Boolean, created_at_m
 private const val DRAIN_PAUSE_WAIT_MS = 15_000L
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
+private const val STATUS_SENDING = "sending"
 private const val SEND_FAILURE_PREFS = "outbox_send_failures"
 private const val SEND_FAILURE_REASON_PREFIX = "reason_"
 private const val SEND_FAILURE_ACKNOWLEDGED_KEY = "acknowledged"
@@ -160,6 +161,7 @@ private const val SENDER_ALIAS_BACKFILL_CHUNK = 200
 private const val SENDER_ALIAS_BACKFILL_MAX_PAGES = 500
 private const val SENDER_ALIAS_BACKFILL_MAX_ATTEMPTS = 3
 private const val UNDO_SAFETY_DRAFT_TIMEOUT_MS = 12_000L
+private const val UNDO_RESTORE_DRAFT_WAIT_MS = 10_000L
 private const val LOCAL_DRAFT_MAP_LIMIT = 500
 private const val METADATA_PATCH_ATTEMPTS = 3
 private const val METADATA_PATCH_RETRY_DELAY_MS = 400L
@@ -949,6 +951,18 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+    private val optimistic_send_store = OptimisticSendStore()
+    val optimistic_sends: kotlinx.coroutines.flow.StateFlow<List<OptimisticSend>> = optimistic_send_store.sends
+    private val _undo_restored_drafts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val undo_restored_drafts: kotlinx.coroutines.flow.SharedFlow<String> = _undo_restored_drafts
+    private val _undo_send_too_late = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 4)
+    val undo_send_too_late: kotlinx.coroutines.flow.SharedFlow<Unit> = _undo_send_too_late
+    val reaction_holds: ReactionHoldQueue = ReactionHoldQueue(app_scope) { session_key_store.get_user_id() }
+    private val late_safety_draft_waiters =
+        java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.CompletableDeferred<String>>()
+    private val undo_fallback_pending_ids = java.util.Collections.newSetFromMap(
+        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+    )
 
     fun <T> durable_async(block: suspend () -> T): kotlinx.coroutines.Deferred<T> =
         app_scope.async { block() }
@@ -981,11 +995,6 @@ class MailRepository @Inject constructor(
     )
     private val undo_canceled_prefs by lazy {
         context.getSharedPreferences("aster_outbox_undo", android.content.Context.MODE_PRIVATE)
-    }
-
-    private fun mark_undo_canceled(pending_id: String) {
-        undo_canceled_ids.add(pending_id)
-        runCatching { undo_canceled_prefs.edit().putBoolean(pending_id, true).commit() }
     }
 
     private fun is_undo_canceled(pending_id: String): Boolean {
@@ -1183,6 +1192,11 @@ class MailRepository @Inject constructor(
     )
 
     private suspend fun adopt_late_safety_draft(pending_id: String, assigned_draft_id: String) {
+        if (undo_fallback_pending_ids.remove(pending_id)) {
+            delete_sent_draft(assigned_draft_id)
+            return
+        }
+        late_safety_draft_waiters[pending_id]?.complete(assigned_draft_id)
         val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull()
         when {
             row != null -> if (row.draft_id.isNullOrBlank()) {
@@ -1242,10 +1256,34 @@ class MailRepository @Inject constructor(
         undo_seconds: Int,
         draft_id: String? = null,
         allow_non_post_quantum: Boolean = false,
+        reply_to_id: String? = null,
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val started_at_ms = System.currentTimeMillis()
+        if (!thread_token.isNullOrBlank()) {
+            optimistic_send_store.add(
+                OptimisticSend(
+                    pending_id = pending_id,
+                    account_id = session_key_store.get_user_id(),
+                    thread_token = thread_token,
+                    reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
+                    started_at_ms = started_at_ms,
+                    message = build_optimistic_send_message(
+                        pending_id = pending_id,
+                        started_at_ms = started_at_ms,
+                        sender_email = sender_email,
+                        sender_display_name = sender_display_name,
+                        to = to,
+                        cc = cc,
+                        bcc = bcc,
+                        subject = subject,
+                        body_html = body_html,
+                        has_attachments = attachments.isNotEmpty(),
+                    ),
+                ),
+            )
+        }
         val persisted = app_scope.async {
             runCatching {
                 persist_and_schedule_undo_send(
@@ -1266,16 +1304,19 @@ class MailRepository @Inject constructor(
                     delay_ms = delay_ms,
                     draft_id = draft_id,
                     allow_non_post_quantum = allow_non_post_quantum,
+                    reply_to_id = reply_to_id,
                 )
             }
         }
         val result = persisted.await()
         if (result.isFailure) {
+            optimistic_send_store.remove(pending_id)
             delete_outbox_attachments(pending_id)
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             return result
         }
         val queued_id = result.getOrThrow()
+        if (queued_id != pending_id) optimistic_send_store.remove(pending_id)
         val pending = PendingUndoSend(
             started_at_ms = started_at_ms,
             duration_ms = delay_ms,
@@ -1318,6 +1359,7 @@ class MailRepository @Inject constructor(
         delay_ms: Long,
         draft_id: String?,
         allow_non_post_quantum: Boolean = false,
+        reply_to_id: String? = null,
     ): String {
         val already_queued = draft_id?.takeIf { it.isNotBlank() }?.let { existing_draft_id ->
             pending_rows_for_current_account()?.firstOrNull { queued ->
@@ -1367,6 +1409,9 @@ class MailRepository @Inject constructor(
                     cc = cc,
                     bcc = bcc,
                     existing_draft_id = null,
+                    draft_type = if (thread_token.isNullOrBlank()) "new" else "reply",
+                    reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
+                    thread_token = thread_token?.takeIf { it.isNotBlank() },
                     attachments = without_inline_images(attachments),
                     on_id_assigned = { assigned ->
                         if (timed_out.get()) app_scope.launch { adopt_late_safety_draft(pending_id, assigned) }
@@ -1389,21 +1434,88 @@ class MailRepository @Inject constructor(
     }
 
     private fun undo_pending_send(pending_id: String) {
-        mark_undo_canceled(pending_id)
         _pending_undo_send.value?.let { _pending_undo_send.compareAndSet(it, null) }
-        app_scope.launch {
+        app_scope.launch { runCatching { undo_pending_send_now(pending_id) } }
+    }
+
+    internal suspend fun undo_pending_send_now(pending_id: String): Boolean {
+        val waiter = kotlinx.coroutines.CompletableDeferred<String>()
+        late_safety_draft_waiters[pending_id] = waiter
+        try {
+            val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull()
+            val deleted = if (row == null) 0 else runCatching { pending_send_dao.delete_if_pending(pending_id) }.getOrDefault(0)
+            if (row == null || deleted == 0) {
+                if (pending_id in completed_pending_ids || row?.status == STATUS_SENDING) _undo_send_too_late.tryEmit(Unit)
+                return false
+            }
             runCatching { UndoSendWorker.cancel(context, pending_id) }
-            runCatching { pending_send_dao.delete_by_id(pending_id) }
+            optimistic_send_store.remove(pending_id)
+            val restored_draft_id = restore_undone_draft(pending_id, row, waiter)
             delete_outbox_attachments(pending_id)
-            clear_undo_canceled(pending_id)
             _draft_changes.tryEmit(Unit)
+            restored_draft_id?.let { _undo_restored_drafts.tryEmit(it) }
+            return true
+        } finally {
+            late_safety_draft_waiters.remove(pending_id, waiter)
         }
+    }
+
+    private suspend fun restore_undone_draft(
+        pending_id: String,
+        row: PendingSendEntity,
+        waiter: kotlinx.coroutines.CompletableDeferred<String>,
+    ): String? {
+        row.draft_id?.takeIf { it.isNotBlank() }?.let { return it }
+        val late = kotlinx.coroutines.withTimeoutOrNull(UNDO_RESTORE_DRAFT_WAIT_MS) { waiter.await() }
+        if (!late.isNullOrBlank()) return late
+        undo_fallback_pending_ids.add(pending_id)
+        val to = runCatching { decode_outbox_recipients(outbox_json, row.to_json, "to") }.getOrDefault(emptyList())
+        val cc = runCatching { decode_outbox_recipients(outbox_json, row.cc_json, "cc") }.getOrDefault(emptyList())
+        val bcc = runCatching { decode_outbox_recipients(outbox_json, row.bcc_json, "bcc") }.getOrDefault(emptyList())
+        val attachments = runCatching { load_outbox_attachments(row.attachments_json) }.getOrDefault(emptyList())
+        val saved = save_draft(
+            subject = row.subject,
+            body_html = row.body_html,
+            sender_email = row.sender_email,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            existing_draft_id = null,
+            draft_type = if (row.thread_token.isNullOrBlank()) "new" else "reply",
+            thread_token = row.thread_token?.takeIf { it.isNotBlank() },
+            attachments = without_inline_images(attachments),
+        ).getOrNull()
+        return saved?.takeIf { it.isNotBlank() }
     }
 
     suspend fun run_pending_send(
         pending_id: String,
         expected_owner: String? = null,
         attempt: Int = 0,
+    ): PendingSendOutcome {
+        val outcome = run_pending_send_inner(pending_id, expected_owner, attempt)
+        when (outcome) {
+            PendingSendOutcome.FAILED -> optimistic_send_store.remove(pending_id)
+            PendingSendOutcome.GONE -> if (optimistic_send_store.get(pending_id)?.committed == false) {
+                optimistic_send_store.remove(pending_id)
+            }
+            else -> Unit
+        }
+        return outcome
+    }
+
+    private fun commit_optimistic_send(pending_id: String, mail_item_id: String?) {
+        if (!optimistic_send_store.mark_committed(pending_id, mail_item_id)) return
+        app_scope.launch {
+            kotlinx.coroutines.delay(OPTIMISTIC_SEND_LINGER_MS)
+            optimistic_send_store.remove(pending_id)
+        }
+    }
+
+    private suspend fun run_pending_send_inner(
+        pending_id: String,
+        expected_owner: String?,
+        attempt: Int,
     ): PendingSendOutcome {
         val row = pending_send_dao.get_by_id(pending_id) ?: run {
             if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id GONE: no row")
@@ -1511,6 +1623,7 @@ class MailRepository @Inject constructor(
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
             completed_pending_ids.add(pending_id)
+            commit_optimistic_send(pending_id, response?.mail_item_id)
             val sent_draft_id = runCatching { pending_send_dao.get_by_id(pending_id)?.draft_id }.getOrNull()
                 ?.takeIf { it.isNotBlank() } ?: row.draft_id
             runCatching { pending_send_dao.delete_by_id(pending_id) }
@@ -2432,6 +2545,14 @@ class MailRepository @Inject constructor(
         existing_thread_token: String?,
     ): String? {
         if (!existing_thread_token.isNullOrBlank()) return existing_thread_token
+        val server_thread_token = try {
+            mail_api.get_message(original_email_id).thread_token?.takeIf { it.isNotBlank() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        if (server_thread_token != null) return server_thread_token
         return try {
             val digest = MessageDigest.getInstance("SHA-256")
                 .digest(("astermail-thread:" + original_email_id).toByteArray(Charsets.UTF_8))

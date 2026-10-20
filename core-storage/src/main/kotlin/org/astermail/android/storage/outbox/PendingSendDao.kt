@@ -56,6 +56,9 @@ interface PendingSendDao {
     @Query("DELETE FROM pending_send_queue WHERE id = :id")
     suspend fun delete_by_id(id: String)
 
+    @Query("DELETE FROM pending_send_queue WHERE id = :id AND status = 'pending'")
+    suspend fun delete_if_pending(id: String): Int
+
     @Query("DELETE FROM pending_send_queue")
     suspend fun clear_all()
 
