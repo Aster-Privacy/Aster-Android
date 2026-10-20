@@ -32,3 +32,17 @@ fun same_address_ignoring_dots(left: String?, right: String?): Boolean {
     if (left.isNullOrBlank() || right.isNullOrBlank()) return false
     return normalize_address_ignoring_dots(left) == normalize_address_ignoring_dots(right)
 }
+
+private val dot_insensitive_domains = setOf("astermail.org", "aster.cx")
+
+fun identity_addresses_for(address: String): List<String> {
+    val trimmed = address.trim()
+    val at = trimmed.lastIndexOf('@')
+    if (at <= 0) return if (trimmed.isEmpty()) emptyList() else listOf(trimmed)
+    val local_part = trimmed.substring(0, at)
+    val domain = trimmed.substring(at + 1)
+    if ('.' !in local_part || domain.lowercase() !in dot_insensitive_domains) return listOf(trimmed)
+    val dotless = local_part.replace(".", "")
+    if (dotless.isEmpty()) return listOf(trimmed)
+    return listOf(trimmed, "$dotless@$domain")
+}

@@ -176,6 +176,8 @@ class AuthRepository @Inject constructor(
     }
     private val pgp_publish_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val pgp_address_heal_attempted =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val recovery_email_backfill_attempted_user_ids =
         java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val system_folder_heal_attempted_user_ids =
@@ -1183,6 +1185,10 @@ class AuthRepository @Inject constructor(
             }.getOrDefault(false)
             if (!uid_updated) uid_update_attempted_for = null
         }
+        val account_email = profile.email?.trim()?.takeIf { profile_matches_session(profile) }
+        if (!account_email.isNullOrBlank()) {
+            runCatching { heal_identity_key_account_addresses(account_email, profile.display_name.orEmpty()) }
+        }
     }
 
     private fun profile_matches_session(
@@ -1853,10 +1859,94 @@ class AuthRepository @Inject constructor(
 
         try {
             val published = published_pgp_key_state()
-            if (published != PublishedPgpKey.Absent) return
+            if (published == PublishedPgpKey.Absent) {
+                val passphrase = passphrase_chars(passphrase_bytes)
+                try {
+                    republish_pgp_key_with_password(identity_key, passphrase, published)
+                } finally {
+                    passphrase.fill(' ')
+                }
+            }
+        } finally {
+            passphrase_bytes.fill(0)
+        }
+
+        val profile = withTimeoutOrNull(8_000L) { auth_api.me() } ?: return
+        if (!profile_matches_session(profile)) return
+        val account_email = profile.email?.trim()?.takeIf { it.isNotBlank() } ?: return
+        heal_identity_key_account_addresses(account_email, profile.display_name.orEmpty())
+    }
+
+    private suspend fun heal_identity_key_account_addresses(
+        account_email: String,
+        display_name: String,
+    ) = withContext(Dispatchers.Default) {
+        if (org.astermail.android.crypto.identity_addresses_for(account_email).size < 2) return@withContext
+        val user_id = session_key_store.get_user_id() ?: return@withContext
+        val attempt_key = "$user_id|${account_email.lowercase(Locale.ROOT)}"
+        if (!pgp_address_heal_attempted.add(attempt_key)) return@withContext
+
+        val healed = try {
+            heal_identity_key_account_addresses_once(account_email, display_name)
+        } catch (cancelled: CancellationException) {
+            pgp_address_heal_attempted.remove(attempt_key)
+            throw cancelled
+        } catch (_: Throwable) {
+            false
+        }
+        if (BuildConfig.DEBUG && !healed) {
+            android.util.Log.w("AuthRepository", "pgp address heal skipped")
+        }
+    }
+
+    private suspend fun heal_identity_key_account_addresses_once(
+        account_email: String,
+        display_name: String,
+    ): Boolean {
+        val identity_key = session_key_store.get_identity_key() ?: return false
+        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return false
+        val local_fingerprint = pgp_key_fingerprint(identity_key) ?: return false
+
+        val info = encryption_api.get_pgp_key_info()
+        if (!info.fingerprint.equals(local_fingerprint, ignoreCase = true)) return false
+        val published = PublishedPgpKey.Present(info.fingerprint)
+
+        val local_missing =
+            org.astermail.android.crypto.account_addresses_missing_from_pgp_key(identity_key, account_email)
+        val published_missing = info.public_key_armored.isNotBlank() &&
+            org.astermail.android.crypto.account_addresses_missing_from_pgp_key(
+                info.public_key_armored,
+                account_email,
+            ).isNotEmpty()
+        if (local_missing.isEmpty() && !published_missing) return true
+
+        val passphrase_bytes = session_key_store.get_passphrase() ?: return false
+        try {
             val passphrase = passphrase_chars(passphrase_bytes)
             try {
-                republish_pgp_key_with_password(identity_key, passphrase, published)
+                if (local_missing.isEmpty()) {
+                    republish_pgp_key_with_password(identity_key, passphrase, published)
+                    return true
+                }
+
+                val updated = org.astermail.android.crypto.add_account_addresses_to_pgp_key(
+                    identity_key,
+                    passphrase,
+                    display_name,
+                    account_email,
+                ) ?: return false
+
+                val stored = withContext(NonCancellable) {
+                    if (!store_identity_key_in_vault(updated, passphrase_bytes)) {
+                        return@withContext false
+                    }
+                    session_key_store.put_identity_key(updated)
+                    true
+                }
+                if (!stored) return false
+
+                republish_pgp_key_with_password(updated, passphrase, published)
+                return true
             } finally {
                 passphrase.fill(' ')
             }

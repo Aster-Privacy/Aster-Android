@@ -40,7 +40,13 @@ import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
 import org.bouncycastle.crypto.params.X25519KeyGenerationParameters
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openpgp.PGPKeyRingGenerator
+import org.bouncycastle.openpgp.PGPPrivateKey
+import org.bouncycastle.openpgp.PGPPublicKey
+import org.bouncycastle.openpgp.PGPPublicKeyRing
+import org.bouncycastle.openpgp.PGPSecretKey
+import org.bouncycastle.openpgp.PGPSecretKeyRing
 import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureGenerator
 import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator
 import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
@@ -122,6 +128,7 @@ object PgpKeyGenerator {
                 ),
             )
             setFeature(false, Features.FEATURE_MODIFICATION_DETECTION)
+            setPrimaryUserID(false, true)
         }
 
         val sub_subpackets = PGPSignatureSubpacketGenerator().apply {
@@ -140,8 +147,12 @@ object PgpKeyGenerator {
         )
         key_ring_gen.addSubKey(sub_pgp, sub_subpackets.generate(), null)
 
-        val secret_ring = key_ring_gen.generateSecretKeyRing()
-        val public_ring = key_ring_gen.generatePublicKeyRing()
+        val secret_ring = with_extra_user_ids(
+            key_ring_gen.generateSecretKeyRing(),
+            master_pgp.privateKey,
+            identity_addresses_for(email).drop(1).map { "$name <$it>" },
+        )
+        val public_ring = PGPPublicKeyRing(secret_ring.publicKeys.asSequence().toList())
 
         val private_out = ByteArrayOutputStream()
         ArmoredOutputStream(private_out).use { secret_ring.encode(it) }
@@ -163,5 +174,35 @@ object PgpKeyGenerator {
             fingerprint = fingerprint,
             key_id = key_id,
         )
+    }
+
+    private fun with_extra_user_ids(
+        ring: PGPSecretKeyRing,
+        private_key: PGPPrivateKey,
+        user_ids: List<String>,
+    ): PGPSecretKeyRing {
+        if (user_ids.isEmpty()) return ring
+
+        val master = ring.secretKey
+        var public_key = master.publicKey
+        user_ids.forEach { user_id ->
+            val generator = PGPSignatureGenerator(
+                BcPGPContentSignerBuilder(public_key.algorithm, HashAlgorithmTags.SHA512),
+                public_key,
+            )
+            generator.init(PGPSignature.POSITIVE_CERTIFICATION, private_key)
+            generator.setHashedSubpackets(
+                PGPSignatureSubpacketGenerator().apply {
+                    setKeyFlags(false, KeyFlags.SIGN_DATA or KeyFlags.CERTIFY_OTHER)
+                }.generate(),
+            )
+            public_key = PGPPublicKey.addCertification(
+                public_key,
+                user_id,
+                generator.generateCertification(user_id, public_key),
+            )
+        }
+
+        return PGPSecretKeyRing.insertSecretKey(ring, PGPSecretKey.replacePublicKey(master, public_key))
     }
 }
