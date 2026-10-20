@@ -161,4 +161,58 @@ class ReactionHoldQueueTest {
         assertEquals(0, rec.sends)
         assertEquals(listOf<ReactionHoldOutcome>(ReactionHoldOutcome.AccountChanged), rec.outcomes)
     }
+
+    @Test
+    fun `flush sends every held reaction at once`() = runTest {
+        val q = queue()
+        val rec = Recorder()
+        val first = q.hold("r1", 10_000L, send = { rec.sends++; Result.success("srv_r1") }) { rec.outcomes += it }
+        q.hold("r2", 10_000L, send = { rec.sends++; Result.success("srv_r2") }) { rec.outcomes += it }
+
+        advanceTimeBy(1_000L)
+        q.flush()
+        runCurrent()
+
+        assertEquals(2, rec.sends)
+        assertFalse(q.is_held("r1"))
+        assertFalse(q.is_held("r2"))
+        assertFalse(first.undo())
+        assertEquals(
+            listOf(ReactionHoldOutcome.Sent("srv_r1"), ReactionHoldOutcome.Sent("srv_r2")),
+            rec.outcomes,
+        )
+    }
+
+    @Test
+    fun `flush all reaches every live queue`() = runTest {
+        val a = queue()
+        val b = queue()
+        val rec = Recorder()
+        a.hold("r1", 10_000L, send = { rec.sends++; Result.success(null) }) { rec.outcomes += it }
+        b.hold("r2", 10_000L, send = { rec.sends++; Result.success(null) }) { rec.outcomes += it }
+
+        ReactionHoldQueue.flush_all()
+        runCurrent()
+
+        assertEquals(2, rec.sends)
+    }
+
+    @Test
+    fun `flush leaves undone and new reactions alone`() = runTest {
+        val q = queue()
+        val rec = Recorder()
+        val undone = q.hold("r1", 10_000L, send = { rec.sends++; Result.success(null) }) { rec.outcomes += it }
+        assertTrue(undone.undo())
+
+        q.flush()
+        runCurrent()
+        q.hold("r2", 10_000L, send = { rec.sends++; Result.success(null) }) { rec.outcomes += it }
+        advanceTimeBy(9_000L)
+        runCurrent()
+
+        assertEquals(0, rec.sends)
+        assertTrue(q.is_held("r2"))
+        settle()
+        assertEquals(1, rec.sends)
+    }
 }

@@ -980,7 +980,7 @@ fun MailDetailScreen(
         settings_state.preferences?.undo_send_seconds,
     )
 
-    fun announce_reaction(held: org.astermail.android.mail.HeldReaction) {
+    fun announce_reaction(held: org.astermail.android.mail.HeldReaction, message_id: String, emoji: String) {
         if (held.delay_ms <= 0L) {
             show_toast(context.getString(R.string.reaction_sent))
             return
@@ -989,7 +989,11 @@ fun MailDetailScreen(
             TopToastState(
                 message = context.getString(R.string.reaction_sent),
                 undo_label = context.getString(R.string.undo),
-                on_undo = { held.undo() },
+                on_undo = {
+                    mail_vm.undo_reaction(held = held, message_id = message_id, emoji = emoji) { error ->
+                        if (error != null) show_toast(error)
+                    }
+                },
                 duration_ms = held.delay_ms,
             ),
         )
@@ -1713,7 +1717,7 @@ fun MailDetailScreen(
                                     sender_alias_hash = identity.alias_hash,
                                     own_addresses = reaction_own_addresses,
                                     hold_seconds = reaction_hold_seconds,
-                                    on_held = { held -> announce_reaction(held) },
+                                    on_held = { held -> announce_reaction(held, msg.id, emoji) },
                                 ) { error ->
                                     if (error != null) show_toast(error)
                                 }
@@ -1815,7 +1819,7 @@ fun MailDetailScreen(
                                 sender_alias_hash = identity.alias_hash,
                                 own_addresses = reaction_own_addresses,
                                 hold_seconds = reaction_hold_seconds,
-                                on_held = { held -> announce_reaction(held) },
+                                on_held = { held -> announce_reaction(held, react_target.id, emoji) },
                             ) { error ->
                                 if (error != null) show_toast(error)
                             }

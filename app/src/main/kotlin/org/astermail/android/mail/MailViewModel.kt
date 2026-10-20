@@ -254,6 +254,10 @@ class MailViewModel @Inject constructor(
 
     private val PENDING_REACTION_PREFIX = "pending_"
 
+    private val late_undo_reaction_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    private val unsettled_reaction_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     fun set_reactions_enabled(enabled: Boolean) {
         if (reactions_enabled == enabled) return
         reactions_enabled = enabled
@@ -391,6 +395,7 @@ class MailViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.Main) { on_result(text) }
             Unit
         }
+        unsettled_reaction_ids.add(optimistic.reaction_mail_item_id)
         val held = repository.reaction_holds.hold(
             id = optimistic.reaction_mail_item_id,
             delay_ms = hold_seconds.coerceAtLeast(0) * 1000L,
@@ -432,18 +437,46 @@ class MailViewModel @Inject constructor(
                         }
                     }
                     deliver(null)
+                    unsettled_reaction_ids.remove(optimistic.reaction_mail_item_id)
+                    if (late_undo_reaction_ids.remove(optimistic.reaction_mail_item_id)) {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (confirmed_id == null) {
+                                on_result(context.getString(R.string.reaction_remove_failed))
+                            } else {
+                                remove_reaction(message_id = message_id, emoji = emoji, on_result = on_result)
+                            }
+                        }
+                    }
                 }
                 is ReactionHoldOutcome.Failed -> {
+                    unsettled_reaction_ids.remove(optimistic.reaction_mail_item_id)
+                    late_undo_reaction_ids.remove(optimistic.reaction_mail_item_id)
                     drop_optimistic()
                     deliver(reaction_error_text(outcome.error, R.string.reaction_failed))
                 }
                 ReactionHoldOutcome.Canceled, ReactionHoldOutcome.AccountChanged -> {
+                    unsettled_reaction_ids.remove(optimistic.reaction_mail_item_id)
+                    late_undo_reaction_ids.remove(optimistic.reaction_mail_item_id)
                     drop_optimistic()
                     deliver(null)
                 }
             }
         }
         on_held?.invoke(held)
+    }
+
+    fun undo_reaction(
+        held: HeldReaction,
+        message_id: String,
+        emoji: String,
+        on_result: (String?) -> Unit,
+    ) {
+        if (held.undo()) return
+        late_undo_reaction_ids.add(held.id)
+        if (held.id in unsettled_reaction_ids) return
+        if (late_undo_reaction_ids.remove(held.id)) {
+            remove_reaction(message_id = message_id, emoji = emoji, on_result = on_result)
+        }
     }
 
     fun remove_reaction(
