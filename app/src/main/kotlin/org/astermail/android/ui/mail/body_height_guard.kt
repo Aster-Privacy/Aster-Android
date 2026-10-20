@@ -55,9 +55,17 @@ internal class body_growth_guard(
 
     fun settle(current: Int, reported: Int): Int {
         if (current <= 0 || reported <= current) return reported
-        if (locked) return anchor
         val ratio = reported.toFloat() / current.toFloat()
-        if (last_ratio > 0f && kotlin.math.abs(ratio - last_ratio) <= ratio_tolerance) {
+        val same_ratio = last_ratio > 0f && kotlin.math.abs(ratio - last_ratio) <= ratio_tolerance
+        if (locked) {
+            if (same_ratio) return anchor
+            locked = false
+            repeats = 0
+            anchor = current
+            last_ratio = ratio
+            return reported
+        }
+        if (same_ratio) {
             repeats++
         } else {
             repeats = 0
@@ -70,6 +78,26 @@ internal class body_growth_guard(
         }
         return reported
     }
+}
+
+internal fun body_overflows_vertically(content_px: Int, view_px: Int, slack_px: Int): Boolean =
+    view_px > 0 && content_px > view_px + slack_px.coerceAtLeast(0)
+
+internal fun body_keeps_vertical_drag(
+    overflows: Boolean,
+    drag_dy: Float,
+    can_scroll_down: Boolean,
+    can_scroll_up: Boolean,
+    bottom_visible: Boolean,
+): Boolean {
+    if (!overflows || !bottom_visible) return false
+    return (drag_dy < 0f && can_scroll_down) || (drag_dy > 0f && can_scroll_up)
+}
+
+internal fun body_needs_regrowth(content_dp: Float, shown_dp: Float, max_dp: Float, slack_dp: Float): Boolean {
+    if (content_dp <= 0f || shown_dp <= 0f) return false
+    if (shown_dp >= max_dp - slack_dp) return false
+    return content_dp.coerceAtMost(max_dp) > shown_dp + slack_dp
 }
 
 internal fun body_overflows_sideways(scroll_range: Int, scroll_extent: Int): Boolean =

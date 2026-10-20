@@ -53,10 +53,10 @@ object EmailHtmlSanitizer {
     )
 
     private val tracking_pixel_url_patterns = listOf(
-        Regex("/track", RegexOption.IGNORE_CASE),
+        Regex("/track(?:ing)?(?:[/?.]|$)", RegexOption.IGNORE_CASE),
         Regex("/open/", RegexOption.IGNORE_CASE),
-        Regex("/pixel", RegexOption.IGNORE_CASE),
-        Regex("/beacon", RegexOption.IGNORE_CASE),
+        Regex("/pixel(?:[/?.]|$)", RegexOption.IGNORE_CASE),
+        Regex("/beacon(?:[/?.]|$)", RegexOption.IGNORE_CASE),
         Regex("/wf/open", RegexOption.IGNORE_CASE),
         Regex("/o\\.gif", RegexOption.IGNORE_CASE),
         Regex("/t\\.gif", RegexOption.IGNORE_CASE),
@@ -64,7 +64,7 @@ object EmailHtmlSanitizer {
         Regex("(?:^|[./])mailchimp\\.com.*/track", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])list-manage\\.com.*/track", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])sendgrid\\.net.*/wf/", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])amazonses\\.com(?:/|$)", RegexOption.IGNORE_CASE),
+        Regex("(?:^|[./])amazonses\\.com/(?:[^?#]*/)?(?:open|track)(?:[/?.]|$)", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])doubleclick\\.net(?:/|$)", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])mailgun\\.org.*/o/", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])sparkpostmail(?:/|$)", RegexOption.IGNORE_CASE),
@@ -74,9 +74,17 @@ object EmailHtmlSanitizer {
     )
 
     private val tracking_pixel_style_patterns = listOf(
-        Regex("width\\s*[:=]\\s*[\"']?[01](?!\\d)", RegexOption.IGNORE_CASE),
-        Regex("height\\s*[:=]\\s*[\"']?[01](?!\\d)", RegexOption.IGNORE_CASE),
+        Regex("(?:^|[;{\\s])width\\s*[:=]\\s*[\"']?[01](?!\\d)\\s*(?:px)?\\s*(?:;|$|[\"'])", RegexOption.IGNORE_CASE),
+        Regex("(?:^|[;{\\s])height\\s*[:=]\\s*[\"']?[01](?!\\d)\\s*(?:px)?\\s*(?:;|$|[\"'])", RegexOption.IGNORE_CASE),
     )
+
+    private const val max_pixel_dimension = 4.0
+
+    private fun style_dimension_regex(prop: String): Regex =
+        Regex("(?:^|[;{\\s])$prop\\s*:\\s*([0-9.]+)(px|%|em|rem)?", RegexOption.IGNORE_CASE)
+
+    private val style_width_regex = style_dimension_regex("width")
+    private val style_height_regex = style_dimension_regex("height")
 
     private fun raw_output_settings(): org.jsoup.nodes.Document.OutputSettings =
         org.jsoup.nodes.Document.OutputSettings().prettyPrint(false)
@@ -245,20 +253,43 @@ object EmailHtmlSanitizer {
         return host.takeIf { it.isNotEmpty() }
     }
 
-    fun is_tracking_pixel(img: Element): Boolean {
-        val width = img.attr("width").ifEmpty { null }
-        val height = img.attr("height").ifEmpty { null }
+    private fun attribute_dimension_is_big(value: String?): Boolean {
+        val number = value?.trim()?.removeSuffix("px")?.trim()?.toDoubleOrNull() ?: return false
+        return number > max_pixel_dimension
+    }
+
+    private fun style_dimension_is_big(style: String, regex: Regex): Boolean {
+        val match = regex.find(style) ?: return false
+        val number = match.groupValues[1].toDoubleOrNull() ?: return false
+        return when (match.groupValues[2].lowercase()) {
+            "%" -> number > 5.0
+            "em", "rem" -> number * 16.0 > max_pixel_dimension
+            else -> number > max_pixel_dimension
+        }
+    }
+
+    private fun looks_like_content_image(img: Element): Boolean {
+        if (img.attr("alt").isNotBlank()) return true
+        if (attribute_dimension_is_big(img.attr("width")) || attribute_dimension_is_big(img.attr("height"))) return true
         val style = img.attr("style")
-        val src = img.attr("src")
-        val alt = img.attr("alt").ifEmpty { null }
-        val css_class = img.attr("class").ifEmpty { null }
-        val tiny = setOf("0", "1")
+        return style_dimension_is_big(style, style_width_regex) || style_dimension_is_big(style, style_height_regex)
+    }
+
+    fun is_tracking_pixel(img: Element): Boolean {
+        val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
+        if (src.isNotBlank() && is_local_image_source(src)) return false
+        val width = img.attr("width").trim().ifEmpty { null }
+        val height = img.attr("height").trim().ifEmpty { null }
+        val style = img.attr("style")
+        val alt_empty = img.attr("alt").isBlank()
+        val tiny = setOf("0", "1", "0px", "1px")
         if (width in tiny && height in tiny) return true
-        if ((width in tiny || height in tiny) && alt == null) return true
+        if ((width in tiny || height in tiny) && alt_empty) return true
         if (tracking_pixel_style_patterns.all { it.containsMatchIn(style) }) return true
-        if (tracking_pixel_style_patterns.any { it.containsMatchIn(style) } && alt == null) return true
-        if (src.isNotEmpty() && tracking_pixel_url_patterns.any { it.containsMatchIn(src) }) return true
-        if (src.isNotEmpty() && width == null && height == null && style.isEmpty() && alt == null && css_class == null) return true
+        if (tracking_pixel_style_patterns.any { it.containsMatchIn(style) } && alt_empty) return true
+        if (src.isNotBlank() && tracking_pixel_url_patterns.any { it.containsMatchIn(src) }) {
+            return !looks_like_content_image(img)
+        }
         return false
     }
 

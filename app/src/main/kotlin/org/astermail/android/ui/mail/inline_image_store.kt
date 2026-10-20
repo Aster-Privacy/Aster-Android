@@ -28,13 +28,40 @@ internal const val INLINE_IMAGE_URL_PREFIX =
 
 internal class InlineImageEntry(val content_type: String, val bytes: ByteArray)
 
+internal class InlineImageReloader(
+    val content_id: String,
+    val content_type: String,
+    val load: () -> ByteArray?,
+)
+
 internal object InlineImageStore {
 
     private const val STORE_MAX_TOTAL_BYTES = 32 * 1024 * 1024
 
     private val entries = object : LinkedHashMap<String, InlineImageEntry>(16, 0.75f, true) {}
 
+    private const val STORE_MAX_RELOADERS = 512
+
+    private val reloaders = object : LinkedHashMap<String, InlineImageReloader>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, InlineImageReloader>?): Boolean =
+            size > STORE_MAX_RELOADERS
+    }
+
     private var total_bytes = 0
+
+    @Synchronized
+    fun register_reloader(key: String, reloader: InlineImageReloader) {
+        reloaders[key] = reloader
+    }
+
+    fun entry_or_reload(key: String): InlineImageEntry? {
+        get(key)?.let { return it }
+        val reloader = synchronized(this) { reloaders[key] } ?: return null
+        val bytes = runCatching { reloader.load() }.getOrNull() ?: return null
+        if (bytes.isEmpty() || content_key(reloader.content_id, bytes) != key) return null
+        put(key, reloader.content_type, bytes)
+        return get(key) ?: InlineImageEntry(reloader.content_type, bytes)
+    }
 
     @Synchronized
     fun put(key: String, content_type: String, bytes: ByteArray) {
@@ -58,6 +85,7 @@ internal object InlineImageStore {
     fun clear() {
         entries.values.forEach { it.bytes.fill(0) }
         entries.clear()
+        reloaders.clear()
         total_bytes = 0
     }
 
@@ -72,7 +100,7 @@ internal object InlineImageStore {
         if (!src.startsWith(INLINE_IMAGE_URL_PREFIX)) return null
         val key = src.removePrefix(INLINE_IMAGE_URL_PREFIX).substringBefore('?').takeIf { it.isNotBlank() }
             ?: return null
-        return get(key)
+        return entry_or_reload(key)
     }
 
     fun content_key(content_id: String, bytes: ByteArray): String {
@@ -85,7 +113,15 @@ internal object InlineImageStore {
 
 internal fun inline_image_response(path: String?): android.webkit.WebResourceResponse? {
     val key = InlineImageStore.key_for_path(path) ?: return null
-    val entry = InlineImageStore.get(key) ?: return null
+    val entry = InlineImageStore.entry_or_reload(key)
+        ?: return android.webkit.WebResourceResponse(
+            "text/plain",
+            null,
+            404,
+            "Not Found",
+            mapOf("Cache-Control" to "no-store"),
+            java.io.ByteArrayInputStream(ByteArray(0)),
+        )
     return android.webkit.WebResourceResponse(
         entry.content_type,
         null,

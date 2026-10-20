@@ -146,7 +146,7 @@ fun email_image_lightbox(
         }
     }
     val local_source = remember(src) {
-        src.startsWith("data:image/", ignoreCase = true) || InlineImageStore.entry_for_source(src) != null
+        src.startsWith("data:image/", ignoreCase = true) || src.startsWith(INLINE_IMAGE_URL_PREFIX)
     }
     val request = remember(src, auth_header) {
         ImageRequest.Builder(context)
