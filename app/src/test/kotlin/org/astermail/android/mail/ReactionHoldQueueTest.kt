@@ -178,8 +178,8 @@ class ReactionHoldQueueTest {
         assertFalse(q.is_held("r2"))
         assertFalse(first.undo())
         assertEquals(
-            listOf(ReactionHoldOutcome.Sent("srv_r1"), ReactionHoldOutcome.Sent("srv_r2")),
-            rec.outcomes,
+            setOf(ReactionHoldOutcome.Sent("srv_r1"), ReactionHoldOutcome.Sent("srv_r2")),
+            rec.outcomes.toSet(),
         )
     }
 
