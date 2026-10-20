@@ -382,6 +382,7 @@ fun SubscriptionsScreen(
         today = java.time.LocalDate.now().toString(),
     )
     val current_code = sub?.plan?.code ?: plan_code_of(sub?.effective_plan_name)
+    val is_lifetime_plan = current_code != "free" && (sub?.is_lifetime == true || billing_sub?.is_lifetime == true)
     LaunchedEffect(current_code) {
         offer_vm.on_plan_code(current_code)
     }
@@ -410,6 +411,7 @@ fun SubscriptionsScreen(
             return@LaunchedEffect
         }
         if (billing_state.checking_payment) return@LaunchedEffect
+        if (is_lifetime_plan) return@LaunchedEffect
         if (resumed_checkout_plan == resume_plan) return@LaunchedEffect
         resumed_checkout_plan = resume_plan
         if (plan_tiers.none { it.code == resume_plan }) return@LaunchedEffect
@@ -423,7 +425,7 @@ fun SubscriptionsScreen(
     val api_monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "month")
     val api_yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, current_code, "year")
     val yearly_savings = org.astermail.android.billing.yearly_savings_percent(api_monthly_cents, api_yearly_cents)
-    val plan_alternatives_allowed = sub != null && org.astermail.android.billing.can_offer_plan_alternatives(
+    val plan_alternatives_allowed = sub != null && !is_lifetime_plan && org.astermail.android.billing.can_offer_plan_alternatives(
         plan_code = current_code,
         status = sub.status,
         payment_failed_at = sub.payment_failed_at,
@@ -515,11 +517,12 @@ fun SubscriptionsScreen(
     val is_paid_plan = sub != null && current_code != "free"
     val current_tier = plan_tiers.firstOrNull { it.code == current_code }
     val can_cancel = sub != null &&
+        !is_lifetime_plan &&
         !sub.cancel_at_period_end &&
         sub.status in setOf("active", "trialing", "past_due") &&
         !is_crypto_sub &&
         (sub.has_stripe_subscription != false || is_play_sub)
-    val ends_at_period_end = sub?.cancel_at_period_end == true
+    val ends_at_period_end = sub?.cancel_at_period_end == true && !is_lifetime_plan
     val free_teaser_tier = plan_tiers.firstOrNull { it.code == recommendation.recommended_plan_code }
         ?: plan_tiers.first { it.code == "nova" }
     val lowest_monthly_cents = plan_tiers
@@ -580,7 +583,7 @@ fun SubscriptionsScreen(
             v_gap(AsterSpacing.md)
         }
         val abandoned_plan = billing_state.checkout_abandoned_plan
-        if (abandoned_plan != null && !billing_state.checking_payment) {
+        if (abandoned_plan != null && !billing_state.checking_payment && !is_lifetime_plan) {
             val abandoned_name = org.astermail.android.billing.plan_display_name(billing_state.available_plans, abandoned_plan)
                 ?: plan_tiers.firstOrNull { it.code == abandoned_plan }?.let { stringResource(it.name_res) }
                 ?: abandoned_plan
@@ -624,7 +627,7 @@ fun SubscriptionsScreen(
             }
             v_gap(AsterSpacing.md)
         }
-        if (crypto_renewal_days != null && !play_install) {
+        if (crypto_renewal_days != null && !play_install && !is_lifetime_plan) {
             val renewal_end = (billing_sub?.paid_until ?: sub?.current_period_end).orEmpty().take(10)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -691,7 +694,7 @@ fun SubscriptionsScreen(
             ?.takeIf { it.isNotBlank() }
             ?.let { stringResource(R.string.billing_member_since_date, it) }
         val period_end_label = absolute_date_label(billing_sub?.paid_until ?: sub?.current_period_end)
-        val price_text = if (sub != null && sub.effective_price_cents > 0) {
+        val price_text = if (sub != null && sub.effective_price_cents > 0 && !is_lifetime_plan) {
             format_price(sub.effective_price_cents, detected_currency)
         } else {
             null
@@ -703,6 +706,7 @@ fun SubscriptionsScreen(
             else -> billing_hero_status.active
         }
         val schedule_text = when {
+            is_paid_plan && is_lifetime_plan -> stringResource(R.string.billing_lifetime_note)
             !is_paid_plan || period_end_label.isBlank() -> null
             is_crypto_sub && !play_install -> stringResource(R.string.billing_crypto_paid_until, period_end_label)
             ends_at_period_end -> stringResource(R.string.ends_date, period_end_label)
@@ -728,7 +732,7 @@ fun SubscriptionsScreen(
             Unit
         }
         val hero_actions = buildList {
-            if (is_paid_plan) {
+            if (is_paid_plan && !is_lifetime_plan) {
                 add(
                     billing_hero_action(
                         label = stringResource(R.string.checkout_change_plan),
@@ -759,7 +763,7 @@ fun SubscriptionsScreen(
                 )
             }
             if (is_paid_plan && !ends_at_period_end) {
-                if (is_crypto_sub && !play_install) {
+                if (is_crypto_sub && !play_install && !is_lifetime_plan) {
                     add(
                         billing_hero_action(
                             label = stringResource(R.string.billing_crypto_renew_link),
@@ -812,7 +816,11 @@ fun SubscriptionsScreen(
                 status = hero_status,
                 status_text = when (hero_status) {
                     billing_hero_status.free -> stringResource(R.string.free)
-                    billing_hero_status.active -> stringResource(R.string.active)
+                    billing_hero_status.active -> if (is_lifetime_plan) {
+                        stringResource(R.string.billing_status_lifetime)
+                    } else {
+                        stringResource(R.string.active)
+                    }
                     billing_hero_status.ending -> stringResource(R.string.billing_status_ending)
                     billing_hero_status.attention -> stringResource(R.string.billing_status_payment_needed)
                 },
@@ -910,7 +918,7 @@ fun SubscriptionsScreen(
                 },
             )
         }
-        if (lapsed != null && !lapsed_dismissed) {
+        if (lapsed != null && !lapsed_dismissed && !is_lifetime_plan) {
             v_gap(AsterSpacing.md)
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
@@ -967,7 +975,7 @@ fun SubscriptionsScreen(
         val pending_invoice = billing_state.pending_crypto_invoices.firstOrNull {
             is_resumable_crypto_invoice(it, System.currentTimeMillis())
         }
-        if (pending_invoice != null && !play_install) {
+        if (pending_invoice != null && !play_install && !is_lifetime_plan) {
             v_gap(AsterSpacing.md)
             crypto_resume_card(
                 invoice = pending_invoice,
@@ -991,143 +999,153 @@ fun SubscriptionsScreen(
                     stringResource(R.string.billing_advantages_title_free, stringResource(advantages_tier.name_res))
                 },
                 rows = billing_advantage_rows(advantages_tier.code, comparison_feed),
-                more_label = stringResource(R.string.billing_see_all_features, stringResource(advantages_tier.name_res)),
+                more_label = if (is_lifetime_plan) {
+                    null
+                } else {
+                    stringResource(R.string.billing_see_all_features, stringResource(advantages_tier.name_res))
+                },
                 show_free_values = !is_paid_plan,
-                on_more = {
-                    show_plans = true
-                    plan_type = "individual"
-                    compare_code = advantages_tier.code
+                on_more = if (is_lifetime_plan) {
+                    null
+                } else {
+                    {
+                        show_plans = true
+                        plan_type = "individual"
+                        compare_code = advantages_tier.code
+                    }
                 },
             )
         }
 
-        v_gap(AsterSpacing.lg)
-        Box(
-            modifier = Modifier.onGloballyPositioned { coords ->
-                plans_section_offset = coords.positionInParent().y
-            },
-        ) { section_label(stringResource(R.string.fix_billing_available_plans)) }
-        if (!show_plans) {
-            AsterCard(modifier = Modifier.fillMaxWidth()) {
-                billing_expander_row(
-                    title = stringResource(R.string.billing_compare_all_plans),
-                    subtitle = stringResource(R.string.billing_compare_all_plans_subtitle),
-                    icon = TablerIcons.LayoutGrid,
-                    expanded = false,
-                    on_toggle = { show_plans = true },
-                )
-            }
-        } else {
-            if (!play_install || play_mode) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    aster_segmented(
-                        value = plan_type,
-                        options = listOf(
-                            switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
-                            switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
-                        ),
-                        on_change = { plan_type = it },
+        if (!is_lifetime_plan) {
+            v_gap(AsterSpacing.lg)
+            Box(
+                modifier = Modifier.onGloballyPositioned { coords ->
+                    plans_section_offset = coords.positionInParent().y
+                },
+            ) { section_label(stringResource(R.string.fix_billing_available_plans)) }
+            if (!show_plans) {
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    billing_expander_row(
+                        title = stringResource(R.string.billing_compare_all_plans),
+                        subtitle = stringResource(R.string.billing_compare_all_plans_subtitle),
+                        icon = TablerIcons.LayoutGrid,
+                        expanded = false,
+                        on_toggle = { show_plans = true },
                     )
                 }
-                v_gap(AsterSpacing.md)
-            }
-            plan_recommendation_banner(
-                recommendation = recommendation,
-                current_plan_name = current_plan_name,
-                recommended_tier_name = recommended_tier_name,
-            )
-            val current_rank = tier_rank(current_code)
-            val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
-            val all_plan_options = plan_tiers.map { tier ->
-                val is_interval_switch = tier.code == current_code && offer_yearly_switch && billing_interval == "year"
-                billing_plan_option(
-                    code = tier.code,
-                    name = stringResource(tier.name_res),
-                    tagline = stringResource(tier.tagline_res),
-                    monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
-                    yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
-                    is_current = tier.code == current_code && !is_interval_switch,
-                    is_recommended = recommendation.recommended_plan_code == tier.code,
-                    is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank,
-                    is_interval_switch = is_interval_switch,
-                )
-            }
-            val individual_plan_options = all_plan_options.filter { it.code !in FAMILY_PLAN_CODES }
-            val family_plan_options = all_plan_options.filter { it.code in FAMILY_PLAN_CODES }
-            val effective_plan_type = if (play_install && !play_mode) "individual" else plan_type
-            val plan_options = if (effective_plan_type == "family") family_plan_options else individual_plan_options
-            var selected_plan_code by remember(effective_plan_type) {
-                mutableStateOf(
-                    plan_options.firstOrNull { it.is_recommended && !it.is_current }?.code
-                        ?: plan_options.firstOrNull { !it.is_current }?.code,
-                )
-            }
-            val see_pricing: () -> Unit = {
-                if (play_install) {
-                    billing_vm.load_plans()
-                } else {
-                    org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
+            } else {
+                if (!play_install || play_mode) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        aster_segmented(
+                            value = plan_type,
+                            options = listOf(
+                                switcher_option(id = "individual", label = stringResource(R.string.billing_plan_type_individual)),
+                                switcher_option(id = "family", label = stringResource(R.string.billing_plan_type_family)),
+                            ),
+                            on_change = { plan_type = it },
+                        )
+                    }
+                    v_gap(AsterSpacing.md)
                 }
-            }
-            val choose_plan: (billing_plan_option) -> Unit = { option ->
-                if (option.is_interval_switch && is_play_sub) {
-                    if (!billing_state.is_acting) billing_vm.switch_billing("year")
-                } else if (option.is_interval_switch) {
-                    show_switch_yearly = true
-                } else if (option.is_downgrade) {
-                    pending_downgrade_code = option.code
-                } else {
-                    pending_plan_code = option.code
-                    pending_addon_id = null
-                    show_payment_picker = true
+                plan_recommendation_banner(
+                    recommendation = recommendation,
+                    current_plan_name = current_plan_name,
+                    recommended_tier_name = recommended_tier_name,
+                )
+                val current_rank = tier_rank(current_code)
+                val paid_stripe_current = current_rank >= 0 && (sub?.effective_price_cents ?: 0) > 0
+                val all_plan_options = plan_tiers.map { tier ->
+                    val is_interval_switch = tier.code == current_code && offer_yearly_switch && billing_interval == "year"
+                    billing_plan_option(
+                        code = tier.code,
+                        name = stringResource(tier.name_res),
+                        tagline = stringResource(tier.tagline_res),
+                        monthly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "month"),
+                        yearly_cents = org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, tier.code, "year"),
+                        is_current = tier.code == current_code && !is_interval_switch,
+                        is_recommended = recommendation.recommended_plan_code == tier.code,
+                        is_downgrade = paid_stripe_current && !play_install && tier_rank(tier.code) < current_rank,
+                        is_interval_switch = is_interval_switch,
+                    )
                 }
-            }
-            billing_plan_picker(
-                options = plan_options,
-                billing_interval = billing_interval,
-                on_interval_change = { billing_interval = it },
-                currency = detected_currency,
-                selected_code = selected_plan_code,
-                on_select = { selected_plan_code = it },
-                busy = billing_state.is_acting,
-                plans_failed = billing_state.plans_failed,
-                on_choose = choose_plan,
-                on_see_pricing = see_pricing,
-                on_compare = { compare_code = it },
-                compare_label = comparison_feed?.let { feed ->
-                    pluralStringResource(R.plurals.billing_compare_all_features, feed.row_count, feed.row_count)
-                } ?: stringResource(R.string.billing_compare_title),
-            )
-            v_gap(AsterSpacing.sm)
-            Text(
-                text = if (detected_currency.equals("usd", ignoreCase = true)) {
-                    stringResource(R.string.settings_prices_usd_note)
-                } else {
-                    stringResource(R.string.settings_prices_currency_note, detected_currency.uppercase())
-                },
-                color = colors.text_tertiary,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            compare_code?.let { code ->
-                billing_compare_view(
-                    feed = comparison_feed,
-                    individual_options = individual_plan_options,
-                    family_options = family_plan_options,
-                    initial_code = code,
-                    current_code = if (sub != null) current_code else null,
-                    currency = detected_currency,
+                val individual_plan_options = all_plan_options.filter { it.code !in FAMILY_PLAN_CODES }
+                val family_plan_options = all_plan_options.filter { it.code in FAMILY_PLAN_CODES }
+                val effective_plan_type = if (play_install && !play_mode) "individual" else plan_type
+                val plan_options = if (effective_plan_type == "family") family_plan_options else individual_plan_options
+                var selected_plan_code by remember(effective_plan_type) {
+                    mutableStateOf(
+                        plan_options.firstOrNull { it.is_recommended && !it.is_current }?.code
+                            ?: plan_options.firstOrNull { !it.is_current }?.code,
+                    )
+                }
+                val see_pricing: () -> Unit = {
+                    if (play_install) {
+                        billing_vm.load_plans()
+                    } else {
+                        org.astermail.android.billing.open_billing_tab(context, org.astermail.android.billing.PRICING_URL)
+                    }
+                }
+                val choose_plan: (billing_plan_option) -> Unit = { option ->
+                    if (option.is_interval_switch && is_play_sub) {
+                        if (!billing_state.is_acting) billing_vm.switch_billing("year")
+                    } else if (option.is_interval_switch) {
+                        show_switch_yearly = true
+                    } else if (option.is_downgrade) {
+                        pending_downgrade_code = option.code
+                    } else {
+                        pending_plan_code = option.code
+                        pending_addon_id = null
+                        show_payment_picker = true
+                    }
+                }
+                billing_plan_picker(
+                    options = plan_options,
                     billing_interval = billing_interval,
                     on_interval_change = { billing_interval = it },
+                    currency = detected_currency,
+                    selected_code = selected_plan_code,
+                    on_select = { selected_plan_code = it },
                     busy = billing_state.is_acting,
-                    on_choose = { option ->
-                        compare_code = null
-                        choose_plan(option)
-                    },
+                    plans_failed = billing_state.plans_failed,
+                    on_choose = choose_plan,
                     on_see_pricing = see_pricing,
-                    on_dismiss = { compare_code = null },
+                    on_compare = { compare_code = it },
+                    compare_label = comparison_feed?.let { feed ->
+                        pluralStringResource(R.plurals.billing_compare_all_features, feed.row_count, feed.row_count)
+                    } ?: stringResource(R.string.billing_compare_title),
                 )
+                v_gap(AsterSpacing.sm)
+                Text(
+                    text = if (detected_currency.equals("usd", ignoreCase = true)) {
+                        stringResource(R.string.settings_prices_usd_note)
+                    } else {
+                        stringResource(R.string.settings_prices_currency_note, detected_currency.uppercase())
+                    },
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                compare_code?.let { code ->
+                    billing_compare_view(
+                        feed = comparison_feed,
+                        individual_options = individual_plan_options,
+                        family_options = family_plan_options,
+                        initial_code = code,
+                        current_code = if (sub != null) current_code else null,
+                        currency = detected_currency,
+                        billing_interval = billing_interval,
+                        on_interval_change = { billing_interval = it },
+                        busy = billing_state.is_acting,
+                        on_choose = { option ->
+                            compare_code = null
+                            choose_plan(option)
+                        },
+                        on_see_pricing = see_pricing,
+                        on_dismiss = { compare_code = null },
+                    )
+                }
             }
         }
 

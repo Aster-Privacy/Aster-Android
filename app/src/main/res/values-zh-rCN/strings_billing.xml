@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">您已使用 %1$d%% 的存储空间。请添加更多空间以继续接收邮件。</string>
     <string name="billing_addon_supernova_nudge">Supernova 包含 5 TB 存储空间和最高限额。</string>
     <string name="billing_addon_supernova_action">查看 Supernova</string>
+    <string name="billing_status_lifetime">终身</string>
+    <string name="billing_lifetime_note">此套餐永不续订，您无需再为其付费。如需更改，请联系 Aster 支持团队。</string>
+    <string name="billing_lifetime_locked">您使用的是终身套餐，无需续订或付费。如需更改，请联系 Aster 支持团队。</string>
 </resources>

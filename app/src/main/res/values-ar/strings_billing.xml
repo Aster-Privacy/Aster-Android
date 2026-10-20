@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">لقد استخدمت %1$d%% من مساحة التخزين. أضف مساحة أكبر لمواصلة تلقي البريد.</string>
     <string name="billing_addon_supernova_nudge">تتضمن خطة Supernova مساحة تخزين 5 تيرابايت وأعلى الحدود.</string>
     <string name="billing_addon_supernova_action">عرض Supernova</string>
+    <string name="billing_status_lifetime">مدى الحياة</string>
+    <string name="billing_lifetime_note">لا تتجدد هذه الخطة أبدًا، ولا تدفع مقابلها مرة أخرى. لتغييرها، تواصل مع دعم Aster.</string>
+    <string name="billing_lifetime_locked">لديك خطة مدى الحياة، فلا يوجد ما يتجدد أو تدفع مقابله. لتغييرها، تواصل مع دعم Aster.</string>
 </resources>

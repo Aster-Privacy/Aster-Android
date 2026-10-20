@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Você usou %1$d%% do seu armazenamento. Adicione mais espaço para continuar recebendo e-mails.</string>
     <string name="billing_addon_supernova_nudge">O Supernova inclui 5 TB de armazenamento e os limites mais altos.</string>
     <string name="billing_addon_supernova_action">Ver Supernova</string>
+    <string name="billing_status_lifetime">Vitalício</string>
+    <string name="billing_lifetime_note">Este plano nunca é renovado e você não paga mais por ele. Para alterá-lo, entre em contato com o suporte da Aster.</string>
+    <string name="billing_lifetime_locked">Você tem um plano vitalício, então não há nada para renovar ou pagar. Para alterá-lo, entre em contato com o suporte da Aster.</string>
 </resources>

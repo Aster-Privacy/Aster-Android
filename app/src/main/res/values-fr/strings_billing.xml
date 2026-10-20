@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Vous avez utilisé %1$d %% de votre stockage. Ajoutez de l\'espace pour continuer à recevoir des e-mails.</string>
     <string name="billing_addon_supernova_nudge">Supernova comprend 5 To de stockage et les limites les plus élevées.</string>
     <string name="billing_addon_supernova_action">Voir Supernova</string>
+    <string name="billing_status_lifetime">À vie</string>
+    <string name="billing_lifetime_note">Ce forfait ne se renouvelle jamais et vous ne le payez plus jamais. Pour le modifier, contactez l\'assistance Aster.</string>
+    <string name="billing_lifetime_locked">Vous avez un forfait à vie, il n\'y a donc rien à renouveler ni à payer. Pour le modifier, contactez l\'assistance Aster.</string>
 </resources>

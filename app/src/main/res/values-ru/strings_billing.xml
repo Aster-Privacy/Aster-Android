@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Вы использовали %1$d%% хранилища. Добавьте место, чтобы продолжать получать почту.</string>
     <string name="billing_addon_supernova_nudge">Supernova включает 5 ТБ хранилища и самые высокие лимиты.</string>
     <string name="billing_addon_supernova_action">Подробнее о Supernova</string>
+    <string name="billing_status_lifetime">Пожизненный</string>
+    <string name="billing_lifetime_note">Этот тариф никогда не продлевается, и вы больше не платите за него. Чтобы изменить его, обратитесь в поддержку Aster.</string>
+    <string name="billing_lifetime_locked">У вас пожизненный тариф, поэтому продлевать или оплачивать ничего не нужно. Чтобы изменить его, обратитесь в поддержку Aster.</string>
 </resources>

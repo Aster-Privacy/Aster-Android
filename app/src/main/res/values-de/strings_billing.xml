@@ -146,4 +146,7 @@
     <string name="billing_addon_usage_nudge">Du hast %1$d%% deines Speichers belegt. Füge mehr Speicher hinzu, um weiterhin E-Mails zu empfangen.</string>
     <string name="billing_addon_supernova_nudge">Supernova umfasst 5 TB Speicher und die höchsten Limits.</string>
     <string name="billing_addon_supernova_action">Supernova ansehen</string>
+    <string name="billing_status_lifetime">Lebenslang</string>
+    <string name="billing_lifetime_note">Dieser Tarif verlängert sich nie, und Sie zahlen nie wieder dafür. Um ihn zu ändern, wenden Sie sich an den Aster-Support.</string>
+    <string name="billing_lifetime_locked">Sie haben einen lebenslangen Tarif, daher gibt es nichts zu verlängern oder zu bezahlen. Um ihn zu ändern, wenden Sie sich an den Aster-Support.</string>
 </resources>

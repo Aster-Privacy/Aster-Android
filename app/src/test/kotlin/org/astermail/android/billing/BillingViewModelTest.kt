@@ -411,4 +411,75 @@ class BillingViewModelTest {
         assertNull(billing.state.value.onboarding?.dismissed_at)
         coVerify(exactly = 2) { billing_api.get_onboarding_checklist() }
     }
+
+    private val lifetime_sub = SubscriptionResponse(
+        plan = PlanInfo(code = "supernova", price_cents = 16080, billing_period = "year"),
+        status = "active",
+        current_period_end = "2126-09-30T00:00:00Z",
+        is_lifetime = true,
+    )
+
+    private fun load_lifetime() {
+        coEvery { billing_api.get_subscription() } returns lifetime_sub
+        vm.load_subscription()
+    }
+
+    @Test
+    fun `a lifetime plan blocks checkout without contacting the server`() = runTest {
+        load_lifetime()
+        advanceUntilIdle()
+
+        vm.start_checkout("supernova", "year")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { billing_api.create_checkout_session(any()) }
+        assertNotNull(vm.state.value.error)
+        assertNull(vm.state.value.checkout_url)
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `a lifetime plan blocks plan changes, interval switches, and cancellation`() = runTest {
+        load_lifetime()
+        advanceUntilIdle()
+
+        vm.change_plan("star", "year")
+        advanceUntilIdle()
+        vm.switch_billing("month")
+        advanceUntilIdle()
+        val cancelled = vm.cancel_subscription("too_expensive", null)
+        advanceUntilIdle()
+
+        assertFalse(cancelled)
+        coVerify(exactly = 0) { billing_api.change_plan(any()) }
+        coVerify(exactly = 0) { billing_api.switch_billing_interval(any()) }
+        coVerify(exactly = 0) { billing_api.cancel_subscription(any()) }
+        assertFalse(vm.state.value.is_acting)
+    }
+
+    @Test
+    fun `a lifetime plan blocks crypto plan checkout and invoices`() = runTest {
+        load_lifetime()
+        advanceUntilIdle()
+
+        vm.start_crypto_checkout("supernova", 12)
+        advanceUntilIdle()
+        vm.create_crypto_native_invoice("supernova", 12, "btc", "bitcoin")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { billing_api.create_crypto_checkout_session(any()) }
+        coVerify(exactly = 0) { billing_api.create_crypto_native_invoice(any()) }
+    }
+
+    @Test
+    fun `a regular yearly plan still reaches checkout`() = runTest {
+        coEvery { billing_api.get_subscription() } returns lifetime_sub.copy(is_lifetime = false)
+        vm.load_subscription()
+        advanceUntilIdle()
+
+        vm.change_plan("star", "year")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { billing_api.change_plan(ChangePlanRequest(plan_code = "star", billing_interval = "year")) }
+    }
 }

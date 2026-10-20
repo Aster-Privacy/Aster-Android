@@ -496,6 +496,17 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `subscription lifetime flag decodes on both models and defaults to false`() {
+        val lifetime_body = """{"plan":{"code":"supernova","price_cents":16080,"billing_period":"year"},"status":"active","current_period_end":"2126-09-30T00:00:00Z","is_lifetime":true}"""
+        val regular_body = """{"plan":{"code":"supernova","price_cents":16080,"billing_period":"year"},"status":"active","current_period_end":"2027-09-30T00:00:00Z"}"""
+
+        assertTrue(json.decodeFromString<SubscriptionInfo>(lifetime_body).is_lifetime)
+        assertFalse(json.decodeFromString<SubscriptionInfo>(regular_body).is_lifetime)
+        assertTrue(json.decodeFromString<org.astermail.android.api.billing.SubscriptionResponse>(lifetime_body).is_lifetime)
+        assertFalse(json.decodeFromString<org.astermail.android.api.billing.SubscriptionResponse>(regular_body).is_lifetime)
+    }
+
+    @Test
     fun `SubscriptionInfo copy`() {
         val original = SubscriptionInfo(plan_name = "Nebula", amount = 499)
         val copied = original.copy(status = "canceled")

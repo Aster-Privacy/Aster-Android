@@ -50,6 +50,12 @@ class ResubscribeKindTest {
     }
 
     @Test
+    fun lifetime_plan_is_never_offered_resubscribe() {
+        val lifetime = subscription("supernova", cancel_at_period_end = true, stripe = true).copy(is_lifetime = true)
+        assertNull(resubscribe_kind(lifetime, listOf(paid("2026-09-20T00:00:00Z")), now))
+    }
+
+    @Test
     fun pending_cancellation_without_stripe_is_hidden() {
         assertNull(resubscribe_kind(subscription("nova", cancel_at_period_end = true, stripe = false), emptyList(), now))
     }
