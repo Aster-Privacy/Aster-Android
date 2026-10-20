@@ -73,6 +73,7 @@ import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.settings.signature_sender_id
 
 @Composable
 fun SignatureScreen(
@@ -222,7 +223,9 @@ fun SignatureScreen(
                         val subtitle = if (sig.alias_id == null) {
                             stringResource(R.string.signature_apply_default)
                         } else {
-                            state.aliases.firstOrNull { it.id == sig.alias_id }?.address.orEmpty()
+                            val sender_id = signature_sender_id(sig.alias_id)
+                            state.aliases.firstOrNull { it.id == sender_id }?.address
+                                ?: state.custom_domain_addresses.firstOrNull { it.id == sender_id }?.address.orEmpty()
                         }
                         detail_row(
                             title = sig.name.ifBlank { stringResource(R.string.signature) },
