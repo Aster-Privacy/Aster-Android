@@ -21,11 +21,12 @@
 package org.astermail.android.mail
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed class ReactionHoldOutcome {
     data class Sent(val confirmed_id: String?) : ReactionHoldOutcome()
@@ -48,10 +49,19 @@ class ReactionHoldQueue(
 ) {
     private val jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
     private val handles = java.util.concurrent.ConcurrentHashMap<String, HeldReaction>()
+    private val releases = java.util.concurrent.ConcurrentHashMap<String, CompletableDeferred<Unit>>()
+
+    init {
+        synchronized(live_queues) { live_queues.add(this) }
+    }
 
     fun is_held(id: String): Boolean = jobs.containsKey(id)
 
     fun undo(id: String): Boolean = handles[id]?.undo() ?: false
+
+    fun flush() {
+        releases.values.forEach { it.complete(Unit) }
+    }
 
     fun hold(
         id: String,
@@ -62,11 +72,13 @@ class ReactionHoldQueue(
         val account = current_account()
         val claimed = java.util.concurrent.atomic.AtomicBoolean(false)
         val wait_ms = delay_ms.coerceAtLeast(0L)
+        val release = CompletableDeferred<Unit>()
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            if (wait_ms > 0) delay(wait_ms)
+            if (wait_ms > 0) withTimeoutOrNull(wait_ms) { release.await() }
             if (!claimed.compareAndSet(false, true)) return@launch
             jobs.remove(id)
             handles.remove(id)
+            releases.remove(id, release)
             if (account != null && current_account() != account) {
                 on_outcome(ReactionHoldOutcome.AccountChanged)
                 return@launch
@@ -92,6 +104,7 @@ class ReactionHoldQueue(
                 job.cancel()
                 jobs.remove(id, job)
                 handles.remove(id)
+                releases.remove(id, release)
                 on_outcome(ReactionHoldOutcome.Canceled)
                 true
             }
@@ -99,8 +112,18 @@ class ReactionHoldQueue(
         if (wait_ms > 0) {
             jobs[id] = job
             handles[id] = handle
+            releases[id] = release
         }
         job.start()
         return handle
+    }
+
+    companion object {
+        private val live_queues: MutableSet<ReactionHoldQueue> =
+            java.util.Collections.newSetFromMap(java.util.WeakHashMap())
+
+        fun flush_all() {
+            synchronized(live_queues) { live_queues.toList() }.forEach { it.flush() }
+        }
     }
 }

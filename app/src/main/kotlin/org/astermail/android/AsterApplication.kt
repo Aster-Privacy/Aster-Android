@@ -207,6 +207,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                     androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
                         if (store.is_store_open()) store.lock()
                         org.astermail.android.ui.common.app_session.mark_backgrounded()
+                        org.astermail.android.mail.ReactionHoldQueue.flush_all()
                     }
                     androidx.lifecycle.Lifecycle.Event.ON_START -> {
                         if (store.is_store_open()) store.check_on_foreground()
