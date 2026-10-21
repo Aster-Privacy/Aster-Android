@@ -71,7 +71,7 @@ fun looks_like_ciphertext(text: String): Boolean =
 fun strip_body_html(html: String): String {
     var text = strip_non_rendered_blocks(html)
     text = text.replace(ANY_TAG_PATTERN, " ")
-    text = decode_html_entities(text)
+    text = decode_html_entities_for_preview(text)
     text = strip_non_rendered_blocks(text)
     text = text.replace(ANY_TAG_PATTERN, " ")
     text = text.replace(INVISIBLE_CHAR_PATTERN, "")
@@ -181,6 +181,19 @@ private val NAMED_ENTITIES = mapOf(
 )
 
 private val NAMED_ENTITY_PATTERN = Regex("&([a-zA-Z][a-zA-Z0-9]{1,31});")
+
+private const val MAX_PREVIEW_ENTITY_DECODE_PASSES = 3
+
+fun decode_html_entities_for_preview(input: String): String {
+    var text = input
+    repeat(MAX_PREVIEW_ENTITY_DECODE_PASSES) {
+        if (!text.contains('&')) return text
+        val decoded = decode_html_entities(text)
+        if (decoded == text) return decoded
+        text = decoded
+    }
+    return text
+}
 
 fun decode_html_entities(input: String): String {
     var text = input

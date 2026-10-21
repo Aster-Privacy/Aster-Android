@@ -33,7 +33,7 @@ private const val PREHEADER_MAX_CHARS = 600
 
 private val FILLER_RE = Regex(
     "[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F" +
-        "\\u00A0\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]",
+        "\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]",
 )
 
 private val HIDDEN_STYLE_PATTERNS = listOf(
@@ -68,7 +68,7 @@ private class HiddenSelectors(
 )
 
 fun strip_preview_filler(value: String): String =
-    FILLER_RE.replace(value, "").replace(Regex("\\s+"), " ").trim()
+    FILLER_RE.replace(value, "").replace('\u00A0', ' ').replace(Regex("\\s+"), " ").trim()
 
 private fun drop_at_rule_groups(css: String): String {
     val result = StringBuilder()
@@ -206,7 +206,7 @@ fun extract_preheader_text(html: String): String {
 
         collect_leading_hidden_text(body, selectors, parts)
 
-        val text = strip_preview_filler(parts.joinToString(" "))
+        val text = strip_preview_filler(decode_html_entities_for_preview(parts.joinToString(" ")))
 
         if (text.length < PREHEADER_MIN_CHARS) return@runCatching ""
         if (!ALPHANUMERIC_RE.containsMatchIn(text)) return@runCatching ""
