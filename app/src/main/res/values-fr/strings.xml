@@ -943,7 +943,7 @@
     <!-- Import/Export/Filters/External -->
     <string name="import_title">Importer</string>
     <string name="mail_import">Importation d\'e-mails</string>
-    <string name="import_description">L\'importation d\'e-mails depuis un autre fournisseur n\'est pas encore disponible sur les clients Aster. Transférez vos anciens e-mails vers votre adresse Aster ou configurez le transfert automatique chez le fournisseur source.</string>
+    <string name="import_description">Importez un fichier .mbox ou .eml depuis votre appareil.</string>
     <string name="filters_description">Les règles de messagerie côté serveur ne sont pas encore disponibles sur les clients Aster. Utilisez les expéditeurs bloqués, le transfert automatique et les abonnements pour des contrôles similaires.</string>
     <string name="external_accounts">Comptes externes</string>
     <string name="connect_external">Connecter des comptes externes</string>

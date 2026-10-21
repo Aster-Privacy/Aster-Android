@@ -892,7 +892,7 @@
 
     <string name="import_title">Importar</string>
     <string name="mail_import">Importación de correo</string>
-    <string name="import_description">La importación de correo desde otro proveedor aún no está disponible en ningún cliente de Aster. Reenvía correos antiguos a tu dirección de Aster o configura el reenvío automático en el proveedor de origen.</string>
+    <string name="import_description">Importa un archivo .mbox o .eml desde tu dispositivo.</string>
     <string name="filters_description">Las reglas de correo del lado del servidor aún no están disponibles en ningún cliente de Aster. Para opciones relacionadas, usa Remitentes bloqueados, Reenvío automático y Suscripciones.</string>
     <string name="external_accounts">Cuentas externas</string>
     <string name="connect_external">Conectar cuentas externas</string>

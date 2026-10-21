@@ -5989,6 +5989,7 @@ class SettingsViewModel @Inject constructor(
                 routing_address_hash = routing_hash,
                 domain = domain,
                 expires_at = response.expires_at,
+                created_at = java.time.Instant.now().toString(),
                 decrypted_address = "$local_part@$domain",
             )
             _state.update { s -> s.copy(ghost_aliases = listOf(new_alias) + s.ghost_aliases) }

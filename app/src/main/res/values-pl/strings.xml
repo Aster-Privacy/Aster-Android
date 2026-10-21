@@ -891,7 +891,7 @@
 
     <string name="import_title">Importuj</string>
     <string name="mail_import">Import poczty</string>
-    <string name="import_description">Importowanie poczty z innego dostawcy nie jest jeszcze dostępne w żadnym kliencie Aster. Przekaż starą pocztę na adres Aster lub skonfiguruj automatyczne przekazywanie u źródła.</string>
+    <string name="import_description">Zaimportuj plik .mbox lub .eml z urządzenia.</string>
     <string name="filters_description">Reguły poczty po stronie serwera nie są jeszcze dostępne w żadnym kliencie Aster. Do podobnych celów użyj sekcji Zablokowani nadawcy, Automatyczne przekazywanie i Subskrypcje.</string>
     <string name="external_accounts">Konta zewnętrzne</string>
     <string name="connect_external">Połącz konta zewnętrzne</string>

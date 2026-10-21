@@ -891,7 +891,7 @@
 
     <string name="import_title">Importeren</string>
     <string name="mail_import">E-mail importeren</string>
-    <string name="import_description">Het importeren van e-mail van een andere provider is nog niet beschikbaar op een Aster-client. Stuur oude e-mail door naar je Aster-adres of stel automatisch doorsturen in bij de bron.</string>
+    <string name="import_description">Importeer een .mbox- of .eml-bestand van je apparaat.</string>
     <string name="filters_description">E-mailregels op de server zijn nog niet beschikbaar op een Aster-client. Gebruik Geblokkeerde afzenders, Automatisch doorsturen en Abonnementen voor vergelijkbare instellingen.</string>
     <string name="external_accounts">Externe accounts</string>
     <string name="connect_external">Externe accounts koppelen</string>

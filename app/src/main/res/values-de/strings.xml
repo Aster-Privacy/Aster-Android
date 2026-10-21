@@ -892,7 +892,7 @@
 
     <string name="import_title">Importieren</string>
     <string name="mail_import">E-Mail-Import</string>
-    <string name="import_description">Der Import von E-Mails aus einem anderen Anbieter ist noch nicht auf einem Aster-Client verfügbar. Leiten Sie alte E-Mails an Ihre Aster-Adresse weiter oder richten Sie eine automatische Weiterleitung beim Quell-Anbieter ein.</string>
+    <string name="import_description">Importieren Sie eine .mbox- oder .eml-Datei von Ihrem Gerät.</string>
     <string name="filters_description">Serverseitige E-Mail-Regeln sind noch auf keinem Aster-Client verfügbar. Verwenden Sie für ähnliche Funktionen blockierte Absender, automatische Weiterleitung und Abonnements.</string>
     <string name="external_accounts">Externe Konten</string>
     <string name="connect_external">Externe Konten verbinden</string>

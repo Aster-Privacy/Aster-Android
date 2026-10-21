@@ -891,7 +891,7 @@
 
     <string name="import_title">导入</string>
     <string name="mail_import">邮件导入</string>
-    <string name="import_description">从其他服务商导入邮件的功能目前在所有 Aster 客户端上均不可用。请将旧邮件转发到您的 Aster 地址，或在原邮箱中设置自动转发。</string>
+    <string name="import_description">从设备导入 .mbox 或 .eml 文件。</string>
     <string name="filters_description">服务器端邮件规则目前在所有 Aster 客户端上均不可用。请使用“已屏蔽的发件人”、“自动转发”和“订阅”进行相关控制。</string>
     <string name="external_accounts">外部账户</string>
     <string name="connect_external">连接外部账户</string>

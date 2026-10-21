@@ -1381,7 +1381,7 @@
     <!-- Import/Export/Filters/External -->
     <string name="import_title">Import</string>
     <string name="mail_import">Mail import</string>
-    <string name="import_description">Importing mail from another provider isn\'t available yet on any Aster client. Forward old mail to your Aster address or set up auto-forward at the source.</string>
+    <string name="import_description">Import an .mbox or .eml file from your device.</string>
     <string name="filters_description">Server-side mail rules aren\'t available yet on any Aster client. Use Blocked senders, Auto-forward, and Subscriptions for related controls.</string>
     <string name="external_accounts">External accounts</string>
     <string name="connect_external">Connect external accounts</string>
@@ -2303,7 +2303,7 @@
     <string name="export_device_decrypt_note">Your data will be decrypted on your device, not on the server.</string>
     <string name="export_warning_title">Your data will be decrypted</string>
     <string name="export_warning_subtitle">Keep the export file secure</string>
-    <string name="export_warning_message">This export creates a ZIP file containing your decrypted emails and/or contacts. Anyone with this file can read your data. Store it somewhere safe and do not share it.</string>
+    <string name="export_warning_message">This export creates a ZIP file containing your decrypted emails, contacts, or both. Anyone with this file can read your data. Store it somewhere safe and do not share it.</string>
     <string name="export_acknowledge">I understand this export contains my decrypted data</string>
     <string name="export_scope_section">What to export</string>
     <string name="export_scope_emails">Emails</string>

@@ -891,7 +891,7 @@
 
     <string name="import_title">İçe Aktar</string>
     <string name="mail_import">E-posta içe aktarma</string>
-    <string name="import_description">Başka bir sağlayıcıdan e-posta içe aktarma henüz hiçbir Aster istemcisinde mevcut değil. Eski e-postaları Aster adresinize yönlendirin veya kaynakta otomatik yönlendirme ayarlayın.</string>
+    <string name="import_description">Aygıtınızdan bir .mbox veya .eml dosyası içe aktarın.</string>
     <string name="filters_description">Sunucu tarafı e-posta kuralları henüz hiçbir Aster istemcisinde mevcut değil. İlgili kontroller için Engellenen gönderenler, Otomatik yönlendirme ve Abonelikler kullanın.</string>
     <string name="external_accounts">Harici hesaplar</string>
     <string name="connect_external">Harici hesapları bağla</string>

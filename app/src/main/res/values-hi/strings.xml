@@ -1217,7 +1217,7 @@
     <string name="feedback_failed">फ़ीडबैक नहीं भेजा जा सका</string>
     <string name="import_title">इंपोर्ट करें</string>
     <string name="mail_import">मेल इंपोर्ट</string>
-    <string name="import_description">दूसरे प्रदाता से मेल इंपोर्ट करना अभी किसी भी Aster क्लाइंट पर उपलब्ध नहीं है। पुरानी मेल अपने Aster पते पर फ़ॉरवर्ड करें, या स्रोत पर ही अपने आप फ़ॉरवर्ड करना सेट करें।</string>
+    <string name="import_description">अपने डिवाइस से कोई .mbox या .eml फ़ाइल इंपोर्ट करें।</string>
     <string name="filters_description">सर्वर पर चलने वाले मेल नियम अभी किसी भी Aster क्लाइंट पर उपलब्ध नहीं हैं। इससे जुड़े नियंत्रण के लिए ब्लॉक किए गए प्रेषक, अपने आप फ़ॉरवर्ड करना और सदस्यताएं इस्तेमाल करें।</string>
     <string name="external_accounts">बाहरी खाते</string>
     <string name="connect_external">बाहरी खाते जोड़ें</string>

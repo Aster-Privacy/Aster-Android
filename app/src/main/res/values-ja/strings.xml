@@ -891,7 +891,7 @@
 
     <string name="import_title">インポート</string>
     <string name="mail_import">メールインポート</string>
-    <string name="import_description">他のプロバイダーからのメールインポートはまだどのAsterクライアントでも利用できません。古いメールをAsterアドレスに転送するか、送信元で自動転送を設定してください。</string>
+    <string name="import_description">デバイスから .mbox または .eml ファイルを読み込みます。</string>
     <string name="filters_description">サーバーサイドのメールルールはまだどのAsterクライアントでも利用できません。関連する操作にはブロックした送信者、自動転送、購読管理を使用してください。</string>
     <string name="external_accounts">外部アカウント</string>
     <string name="connect_external">外部アカウントを接続</string>

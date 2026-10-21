@@ -891,7 +891,7 @@
 
     <string name="import_title">Importa</string>
     <string name="mail_import">Importazione posta</string>
-    <string name="import_description">L\'importazione della posta da un altro provider non è ancora disponibile su nessun client Aster. Inoltra le vecchie email al tuo indirizzo Aster o imposta l\'inoltro automatico presso il provider di origine.</string>
+    <string name="import_description">Importa un file .mbox o .eml dal tuo dispositivo.</string>
     <string name="filters_description">Le regole di posta lato server non sono ancora disponibili su nessun client Aster. Usa Mittenti bloccati, Inoltro automatico e Iscrizioni per controlli correlati.</string>
     <string name="external_accounts">Account esterni</string>
     <string name="connect_external">Collega account esterni</string>

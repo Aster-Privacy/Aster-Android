@@ -355,7 +355,7 @@ fun AliasesScreen(
                         scope = scope,
                         locked = alias_directories_locked,
                         premium_domains_allowed = premium_domains_allowed,
-                        required_plan_name = org.astermail.android.billing.plan_display_name(plan_state.plans, "nova"),
+                        required_plan_name = org.astermail.android.billing.plan_display_name(plan_state.plans, "star"),
                         on_upgrade = { on_open("billing") },
                     )
                 }
@@ -1892,7 +1892,7 @@ private fun directories_tab(
     if (locked) {
         val gate_plan = org.astermail.android.billing.required_plan_name(
             required_plan_name,
-            stringResource(R.string.plan_name_nova),
+            stringResource(R.string.plan_name_star),
         )
         UpgradeGate(
             title = stringResource(R.string.alias_directories),

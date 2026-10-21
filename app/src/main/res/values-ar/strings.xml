@@ -891,7 +891,7 @@
 
     <string name="import_title">استيراد</string>
     <string name="mail_import">استيراد البريد</string>
-    <string name="import_description">استيراد البريد من مزوّد آخر غير متاح بعد على أي عميل Aster. حوّل البريد القديم إلى عنوان Aster أو اضبط التحويل التلقائي من المصدر.</string>
+    <string name="import_description">استورد ملف ‎.mbox أو ‎.eml من جهازك.</string>
     <string name="filters_description">قواعد البريد على الخادم غير متاحة بعد على أي عميل Aster. استخدم المرسلين المحظورين والتحويل التلقائي والاشتراكات للتحكم ذي الصلة.</string>
     <string name="external_accounts">حسابات خارجية</string>
     <string name="connect_external">ربط حسابات خارجية</string>

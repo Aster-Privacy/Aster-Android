@@ -890,7 +890,7 @@
 
     <string name="import_title">Importar</string>
     <string name="mail_import">Importação de e-mail</string>
-    <string name="import_description">A importação de e-mail de outro provedor ainda não está disponível em nenhum cliente Aster. Encaminhe e-mails antigos para seu endereço Aster ou configure encaminhamento automático na origem.</string>
+    <string name="import_description">Importe um arquivo .mbox ou .eml do dispositivo.</string>
     <string name="filters_description">Regras de e-mail no servidor ainda não estão disponíveis em nenhum cliente Aster. Use Remetentes bloqueados, Encaminhamento automático e Inscrições para controles relacionados.</string>
     <string name="external_accounts">Contas externas</string>
     <string name="connect_external">Conectar contas externas</string>

@@ -891,7 +891,7 @@
 
     <string name="import_title">가져오기</string>
     <string name="mail_import">메일 가져오기</string>
-    <string name="import_description">다른 제공업체에서 메일을 가져오는 기능은 아직 어떤 Aster 클라이언트에서도 사용할 수 없습니다. 이전 메일을 Aster 주소로 전달하거나 기존 서비스에서 자동 전달을 설정하세요.</string>
+    <string name="import_description">기기에서 .mbox 또는 .eml 파일을 가져옵니다.</string>
     <string name="filters_description">서버 측 메일 규칙은 아직 어떤 Aster 클라이언트에서도 사용할 수 없습니다. 관련 설정은 차단된 발신자, 자동 전달, 구독을 이용하세요.</string>
     <string name="external_accounts">외부 계정</string>
     <string name="connect_external">외부 계정 연결</string>

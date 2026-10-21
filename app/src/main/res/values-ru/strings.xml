@@ -891,7 +891,7 @@
 
     <string name="import_title">Импорт</string>
     <string name="mail_import">Импорт почты</string>
-    <string name="import_description">Импорт почты из другого провайдера пока недоступен ни в одном клиенте Aster. Перешлите старую почту на ваш адрес Aster или настройте автопересылку у источника.</string>
+    <string name="import_description">Импортируйте файл .mbox или .eml со своего устройства.</string>
     <string name="filters_description">Серверные правила для почты пока недоступны ни в одном клиенте Aster. Для похожих задач используйте разделы «Заблокированные отправители», «Автопересылка» и «Подписки».</string>
     <string name="external_accounts">Внешние аккаунты</string>
     <string name="connect_external">Подключить внешние аккаунты</string>
