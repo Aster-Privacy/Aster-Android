@@ -598,7 +598,7 @@ class MailViewModel @Inject constructor(
     private var account_generation = 0
     private val star_overrides = TimedOverrides(OVERRIDE_TTL_MS)
     private val pin_overrides = TimedOverrides(OVERRIDE_TTL_MS)
-    private val category_overrides = java.util.concurrent.ConcurrentHashMap<String, Pair<String, Long>>()
+    private val category_overrides = java.util.concurrent.ConcurrentHashMap<String, CategoryOverride>()
     private val tag_overrides = TimedOverrides(TAG_OVERRIDE_TTL_MS)
     internal var override_clock_ms: () -> Long = { System.currentTimeMillis() }
     private val read_overrides = TimedOverrides(READ_OVERRIDE_TTL_MS) { override_clock_ms() }
@@ -3098,69 +3098,194 @@ class MailViewModel @Inject constructor(
         if (category_overrides.isEmpty()) return items
         val now = override_clock_ms()
         return items.map { item ->
-            val (category, at) = category_overrides[item.id] ?: return@map item
-            if (now - at >= OVERRIDE_TTL_MS) {
+            val override = category_overrides[item.id] ?: return@map item
+            if (now - override.at >= OVERRIDE_TTL_MS) {
                 category_overrides.remove(item.id)
                 return@map item
             }
-            if (item.category == category) item else with_category(item, category)
+            if (category_state_matches(item, override.display, override.category, override.pinned)) {
+                item
+            } else {
+                with_category_state(item, override.display, override.category, override.pinned)
+            }
         }
     }
 
-    fun move_to_category(item_id: String, category: String) {
-        if (item_id == DEMO_PHISH_ITEM_ID) return
-        val current = _inbox_state.value.items.find { it.id == item_id }
+    private fun find_category_item(item_id: String): InboxItem? =
+        _inbox_state.value.items.find { it.id == item_id }
             ?: _thread_state.value.item?.takeIf { it.id == item_id }
             ?: folder_cache.values.firstNotNullOfOrNull { cached ->
                 cached.items.find { it.id == item_id }
             }
-            ?: return
-        if (current.category == category) return
-        val previous_override = category_overrides[item_id]
-        val replace_item: ((InboxItem) -> InboxItem) -> Unit = { transform ->
-            _inbox_state.update { state ->
-                state.copy(items = state.items.map { if (it.id == item_id) transform(it) else it })
-            }
-            _thread_state.update { thread ->
-                val item = thread.item
-                if (item?.id == item_id) thread.copy(item = transform(item)) else thread
-            }
-            folder_cache.keys.toList().forEach { key ->
-                val cached = folder_cache[key] ?: return@forEach
-                if (cached.items.any { it.id == item_id }) {
-                    folder_cache[key] = cached.copy(items = cached.items.map { if (it.id == item_id) transform(it) else it })
-                }
+
+    private fun replace_category_items(ids: Set<String>, transform: (InboxItem) -> InboxItem) {
+        if (ids.isEmpty()) return
+        _inbox_state.update { state ->
+            state.copy(items = state.items.map { if (it.id in ids) transform(it) else it })
+        }
+        _thread_state.update { thread ->
+            val item = thread.item
+            if (item != null && item.id in ids) thread.copy(item = transform(item)) else thread
+        }
+        folder_cache.keys.toList().forEach { key ->
+            val cached = folder_cache[key] ?: return@forEach
+            if (cached.items.any { it.id in ids }) {
+                folder_cache[key] = cached.copy(items = cached.items.map { if (it.id in ids) transform(it) else it })
             }
         }
-        category_overrides[item_id] = category to override_clock_ms()
-        replace_item { with_category(it, category) }
-        viewModelScope.launch {
-            repository.set_category(item_id, category, current.raw_item).fold(
-                onSuccess = { written ->
-                    replace_item { with_category(it, category, written) }
-                    search_index_manager.on_items_loaded(listOf(with_category(current, category, written)))
-                    emit_toast(context.getString(R.string.moved_to_category))
-                },
-                onFailure = { failure ->
-                    if (previous_override != null) {
-                        category_overrides[item_id] = previous_override
-                    } else {
-                        category_overrides.remove(item_id)
-                    }
-                    replace_item { restore_category(it, current) }
-                    emit_toast(
-                        if (failure is MetadataUndecryptableException) {
-                            context.getString(R.string.metadata_undecryptable_change)
-                        } else {
-                            org.astermail.android.localized_api_error(
-                                context,
-                                failure,
-                                context.getString(R.string.something_went_wrong),
-                            )
-                        },
-                    )
-                },
+    }
+
+    private fun restore_category_override(id: String, previous: CategoryOverride?) {
+        if (previous != null) category_overrides[id] = previous else category_overrides.remove(id)
+    }
+
+    private fun category_failure_message(failures: Collection<Throwable>): String =
+        if (failures.any { it is MetadataUndecryptableException }) {
+            context.getString(R.string.metadata_undecryptable_change)
+        } else {
+            org.astermail.android.localized_api_error(
+                context,
+                failures.first(),
+                context.getString(R.string.something_went_wrong),
             )
+        }
+
+    fun move_to_category(item_id: String, category: String) {
+        move_to_category_bulk(listOf(item_id), category)
+    }
+
+    fun move_to_category_bulk(item_ids: List<String>, category: String) {
+        val anchors = item_ids.distinct()
+            .filter { it != DEMO_PHISH_ITEM_ID }
+            .mapNotNull { find_category_item(it) }
+            .filter { is_category_movable(it) }
+        if (anchors.isEmpty()) return
+        val anchor_ids = anchors.mapTo(HashSet()) { it.id }
+        val thread_tokens = anchors.mapNotNullTo(LinkedHashSet()) { anchor ->
+            anchor.thread_token?.takeIf { it.isNotBlank() }
+        }
+        val mates = _inbox_state.value.items.filter { mate ->
+            mate.id !in anchor_ids &&
+                is_category_movable(mate) &&
+                mate.thread_token?.takeIf { it.isNotBlank() } in thread_tokens
+        }
+        val local = LinkedHashMap<String, InboxItem>()
+        (anchors + mates).forEach { local.putIfAbsent(it.id, it) }
+        if (local.values.all { it.category == category }) return
+        val previous_overrides = HashMap<String, CategoryOverride?>()
+        val started = override_clock_ms()
+        local.keys.forEach { id ->
+            previous_overrides[id] = category_overrides[id]
+            category_overrides[id] = CategoryOverride(category, category, true, started)
+        }
+        replace_category_items(local.keys) { with_category(it, category) }
+        viewModelScope.launch {
+            val targets = LinkedHashMap<String, org.astermail.android.api.mail.MailItem?>()
+            local.values.forEach { targets[it.id] = it.raw_item }
+            thread_tokens.forEach { token ->
+                repository.category_thread_targets(token).getOrNull().orEmpty().forEach { remote ->
+                    if (remote.id !in targets) targets[remote.id] = remote
+                }
+            }
+            val written = LinkedHashMap<String, CategoryWrite>()
+            val failed = LinkedHashMap<String, Throwable>()
+            for ((id, raw) in targets) {
+                repository.write_category(id, category, pinned = true, raw_item = raw).fold(
+                    onSuccess = { written[id] = it },
+                    onFailure = { failed[id] = it },
+                )
+            }
+            written.forEach { (id, write) ->
+                if (id !in local) {
+                    previous_overrides[id] = category_overrides[id]
+                    category_overrides[id] = CategoryOverride(category, category, true, override_clock_ms())
+                }
+                replace_category_items(setOf(id)) { item ->
+                    with_category(
+                        item,
+                        category,
+                        item.raw_item.copy(
+                            encrypted_metadata = write.item.encrypted_metadata,
+                            metadata_nonce = write.item.metadata_nonce,
+                        ),
+                    )
+                }
+            }
+            val indexed = local.values.mapNotNull { before ->
+                val write = written[before.id] ?: return@mapNotNull null
+                with_category(
+                    before,
+                    category,
+                    before.raw_item.copy(
+                        encrypted_metadata = write.item.encrypted_metadata,
+                        metadata_nonce = write.item.metadata_nonce,
+                    ),
+                )
+            }
+            if (indexed.isNotEmpty()) search_index_manager.on_items_loaded(indexed)
+            failed.keys.forEach { id ->
+                val before = local[id] ?: return@forEach
+                restore_category_override(id, previous_overrides[id])
+                replace_category_items(setOf(id)) { restore_category(it, before) }
+            }
+            if (written.isEmpty()) {
+                emit_toast(category_failure_message(failed.values))
+                return@launch
+            }
+            if (failed.isNotEmpty()) emit_toast(category_failure_message(failed.values))
+            emit_toast_undo(
+                context.getString(R.string.moved_to_category),
+                context.getString(R.string.undo),
+            ) { undo_category_move(category, written, local, previous_overrides) }
+        }
+    }
+
+    private fun undo_category_move(
+        category: String,
+        written: Map<String, CategoryWrite>,
+        local: Map<String, InboxItem>,
+        previous_overrides: Map<String, CategoryOverride?>,
+    ) {
+        val started = override_clock_ms()
+        written.forEach { (id, write) ->
+            val before = local[id]
+            if (before == null) {
+                restore_category_override(id, previous_overrides[id])
+                return@forEach
+            }
+            category_overrides[id] = CategoryOverride(before.category, write.prior_category, write.prior_pinned, started)
+            replace_category_items(setOf(id)) {
+                with_category_state(it, before.category, write.prior_category, write.prior_pinned)
+            }
+        }
+        viewModelScope.launch {
+            val failed = ArrayList<Throwable>()
+            for ((id, write) in written) {
+                repository.write_category(id, write.prior_category, write.prior_pinned, write.item).fold(
+                    onSuccess = { undone ->
+                        restore_category_override(id, previous_overrides[id])
+                        val before = local[id] ?: return@fold
+                        replace_category_items(setOf(id)) { item ->
+                            with_category_state(
+                                item,
+                                before.category,
+                                write.prior_category,
+                                write.prior_pinned,
+                                item.raw_item.copy(
+                                    encrypted_metadata = undone.item.encrypted_metadata,
+                                    metadata_nonce = undone.item.metadata_nonce,
+                                ),
+                            )
+                        }
+                    },
+                    onFailure = { failure ->
+                        failed.add(failure)
+                        category_overrides[id] = CategoryOverride(category, category, true, override_clock_ms())
+                        replace_category_items(setOf(id)) { with_category(it, category) }
+                    },
+                )
+            }
+            if (failed.isNotEmpty()) emit_toast(category_failure_message(failed))
         }
     }
 
@@ -5872,15 +5997,43 @@ class MailViewModel @Inject constructor(
     }
 }
 
+internal data class CategoryOverride(
+    val display: String,
+    val category: String?,
+    val pinned: Boolean,
+    val at: Long,
+)
+
+internal fun is_category_movable(item: InboxItem): Boolean {
+    if (item.is_trashed || item.is_spam || item.is_archived) return false
+    val item_type = item.raw_item.item_type
+    return item_type == null || item_type == "received"
+}
+
+internal fun category_state_matches(item: InboxItem, display: String, category: String?, pinned: Boolean): Boolean {
+    val meta = item.raw_item.metadata
+    return item.category == display &&
+        meta?.category == category &&
+        (meta?.category_pinned == true) == (pinned && category != null)
+}
+
+internal fun with_category_state(
+    item: InboxItem,
+    display: String,
+    category: String?,
+    pinned: Boolean,
+    raw: org.astermail.android.api.mail.MailItem = item.raw_item,
+): InboxItem {
+    val meta = (raw.metadata ?: org.astermail.android.api.mail.MailItemMetadata())
+        .copy(category = category, category_pinned = pinned && category != null)
+    return item.copy(category = display, raw_item = raw.copy(metadata = meta))
+}
+
 internal fun with_category(
     item: InboxItem,
     category: String,
     raw: org.astermail.android.api.mail.MailItem = item.raw_item,
-): InboxItem {
-    val meta = (raw.metadata ?: org.astermail.android.api.mail.MailItemMetadata())
-        .copy(category = category, category_pinned = true)
-    return item.copy(category = category, raw_item = raw.copy(metadata = meta))
-}
+): InboxItem = with_category_state(item, category, category, true, raw)
 
 internal fun restore_category(item: InboxItem, before: InboxItem): InboxItem {
     val before_meta = before.raw_item.metadata

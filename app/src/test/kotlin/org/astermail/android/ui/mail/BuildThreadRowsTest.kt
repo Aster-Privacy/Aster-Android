@@ -181,4 +181,25 @@ class BuildThreadRowsTest {
         assertEquals(setOf("here"), result.participants.keys)
         assertTrue("a vanished thread must not keep a participant entry", "gone" !in result.participants)
     }
+
+    @Test
+    fun a_thread_moved_to_primary_leaves_the_deals_tab_whole() {
+        val emails = listOf(
+            threaded("old", "t1", 100).copy(category = "primary", category_pinned = true),
+            threaded("new", "t1", 200).copy(category = "promotions"),
+            threaded("other", "t2", 150).copy(category = "promotions"),
+        )
+
+        val primary = emails_in_category_tab(emails, "primary", CATEGORY_TABS, grouping_enabled = true)
+        assertEquals(setOf("old", "new"), primary.map { it.id }.toSet())
+        val deals = emails_in_category_tab(emails, "promotions", CATEGORY_TABS, grouping_enabled = true)
+        assertEquals(listOf("other"), deals.map { it.id })
+
+        val rows = build(emails, categories_enabled = true, active_category = "primary").rows
+        assertEquals(listOf("t1"), rows.map { it.thread_id })
+        assertEquals(2, rows.single().message_count)
+
+        val flat = emails_in_category_tab(emails, "promotions", CATEGORY_TABS, grouping_enabled = false)
+        assertEquals(setOf("new", "other"), flat.map { it.id }.toSet())
+    }
 }

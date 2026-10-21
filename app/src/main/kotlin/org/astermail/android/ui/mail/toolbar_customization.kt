@@ -54,6 +54,7 @@ val selection_toolbar_action_catalog: List<ToolbarAction> = listOf(
     ToolbarAction("trash", R.string.move_to_trash, TablerIcons.Trash),
     ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
     ToolbarAction("label", R.string.add_label, TablerIcons.Tag),
+    ToolbarAction("category", R.string.move_to_category, TablerIcons.LayoutGrid),
     ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened),
     ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail),
     ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),

@@ -1994,9 +1994,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         inbox_counts_ready,
         active_category_tabs,
         last_inbox_category_unread,
+        prefs?.conversation_grouping,
     ) {
         if (inbox_counts_ready) {
-            org.astermail.android.mail.category_unread_counts(inbox_state.items, active_category_tabs)
+            org.astermail.android.mail.category_unread_counts(
+                inbox_state.items,
+                active_category_tabs,
+                prefs?.conversation_grouping != false,
+            )
         } else {
             last_inbox_category_unread.filterKeys { it in active_category_tabs }
         }

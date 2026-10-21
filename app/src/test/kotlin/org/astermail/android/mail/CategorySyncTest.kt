@@ -29,6 +29,8 @@ import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemMetadata
@@ -40,6 +42,7 @@ import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -54,6 +57,7 @@ class CategorySyncTest {
 
     private lateinit var mail_api: MailApi
     private lateinit var repo: MailRepository
+    private lateinit var session_key_store: SessionKeyStore
 
     @Before
     fun setup() {
@@ -64,7 +68,9 @@ class CategorySyncTest {
         every { android.util.Base64.encodeToString(any(), any()) } answers {
             java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
         }
-        val session_key_store = mockk<SessionKeyStore>(relaxed = true)
+        session_key_store = mockk(relaxed = true)
+        every { session_key_store.get_data_kek() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
         every { session_key_store.get_passphrase() } answers { passphrase.toByteArray(Charsets.UTF_8) }
         every { session_key_store.get_user_email() } returns "me@example.test"
         every { session_key_store.has_ratchet_keys() } returns false
@@ -297,5 +303,103 @@ class CategorySyncTest {
 
         assertTrue(result.exceptionOrNull() is MetadataUndecryptableException)
         io.mockk.coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+    }
+
+    private fun open_raw(encrypted: String, nonce: String): String {
+        val decoder = java.util.Base64.getDecoder()
+        return String(AesGcm.decrypt(metadata_key(), decoder.decode(nonce), decoder.decode(encrypted)), Charsets.UTF_8)
+    }
+
+    @Test
+    fun `moving to a category keeps metadata fields this version does not know`() = runTest {
+        val captured = capture_patch()
+        val future = moved_to_travel_on_web.trimEnd('}') + ",\"future_field\":\"kept\"}"
+        val (encrypted, nonce) = seal_like_web(future)
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        repo.set_category("deal-1", "primary", listed).getOrThrow()
+
+        val raw = open_raw(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val parsed = json.parseToJsonElement(raw).jsonObject
+        assertEquals("kept", parsed["future_field"]!!.jsonPrimitive.content)
+        assertEquals("primary", parsed["category"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `clearing a category unpins it and reports the prior pin`() = runTest {
+        val captured = capture_patch()
+        val listed = server_item(with_server_metadata = false)
+
+        val write = repo.write_category("deal-1", null, pinned = false, raw_item = listed).getOrThrow()
+
+        assertEquals("travel", write.prior_category)
+        assertTrue(write.prior_pinned)
+        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertNull(blob.category)
+        assertFalse(blob.category_pinned)
+    }
+
+    private fun key_from_master(master: ByteArray): ByteArray = hkdf_sha256(
+        master,
+        "aster-metadata-salt-v1".toByteArray(Charsets.UTF_8),
+        "aster-metadata-encryption-v1:mail-item-metadata".toByteArray(Charsets.UTF_8),
+        32,
+    )
+
+    private fun seal_with(key: ByteArray, blob_json: String): Pair<String, String> {
+        val nonce = ByteArray(12) { (it + 3).toByte() }
+        val sealed = AesGcm.encrypt(key, nonce, blob_json.toByteArray(Charsets.UTF_8))
+        val encoder = java.util.Base64.getEncoder()
+        return encoder.encodeToString(sealed) to encoder.encodeToString(nonce)
+    }
+
+    private fun open_with(key: ByteArray, encrypted: String, nonce: String): MailItemMetadata {
+        val decoder = java.util.Base64.getDecoder()
+        val plain = AesGcm.decrypt(key, decoder.decode(nonce), decoder.decode(encrypted))
+        return json.decodeFromString(MailItemMetadata.serializer(), String(plain, Charsets.UTF_8))
+    }
+
+    @Test
+    fun `moving works on an account whose metadata is sealed with the vault data key`() = runTest {
+        val data_kek = ByteArray(32) { (it * 7 + 1).toByte() }
+        every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
+        val data_key = key_from_master(data_kek)
+        val captured = capture_patch()
+        val (encrypted, nonce) = seal_with(data_key, moved_to_travel_on_web)
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        val write = repo.write_category("deal-1", "primary", pinned = true, raw_item = listed).getOrThrow()
+
+        assertEquals("travel", write.prior_category)
+        val blob = open_with(data_key, captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("primary", blob.category)
+        assertTrue(blob.category_pinned)
+        assertEquals(4096L, blob.size_bytes)
+    }
+
+    @Test
+    fun `a blob sealed with the passphrase key is rewritten with the vault data key`() = runTest {
+        val data_kek = ByteArray(32) { (it * 5 + 2).toByte() }
+        every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
+        val captured = capture_patch()
+
+        repo.write_category("deal-1", "primary", pinned = true, raw_item = server_item(with_server_metadata = false)).getOrThrow()
+
+        val blob = open_with(key_from_master(data_kek), captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("primary", blob.category)
+        assertEquals(4096L, blob.size_bytes)
+    }
+
+    @Test
+    fun `a category pinned under an older account key still reaches the list`() = runTest {
+        val legacy = ByteArray(32) { (it + 40).toByte() }
+        every { session_key_store.get_decrypt_keks() } returns listOf(java.util.Base64.getEncoder().encodeToString(legacy))
+        val (encrypted, nonce) = seal_with(key_from_master(legacy), moved_to_travel_on_web)
+        list_returns(server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce))
+
+        val meta = repo.fetch_inbox().getOrThrow().items.single().raw_item.metadata
+
+        assertEquals("travel", meta?.category)
+        assertEquals(true, meta?.category_pinned)
     }
 }
