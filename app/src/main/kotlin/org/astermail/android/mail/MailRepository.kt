@@ -1465,27 +1465,29 @@ class MailRepository @Inject constructor(
         row: PendingSendEntity,
         waiter: kotlinx.coroutines.CompletableDeferred<String>,
     ): String? {
-        row.draft_id?.takeIf { it.isNotBlank() }?.let { return it }
-        val late = kotlinx.coroutines.withTimeoutOrNull(UNDO_RESTORE_DRAFT_WAIT_MS) { waiter.await() }
-        if (!late.isNullOrBlank()) return late
-        undo_fallback_pending_ids.add(pending_id)
         val to = runCatching { decode_outbox_recipients(outbox_json, row.to_json, "to") }.getOrDefault(emptyList())
         val cc = runCatching { decode_outbox_recipients(outbox_json, row.cc_json, "cc") }.getOrDefault(emptyList())
         val bcc = runCatching { decode_outbox_recipients(outbox_json, row.bcc_json, "bcc") }.getOrDefault(emptyList())
         val attachments = runCatching { load_outbox_attachments(row.attachments_json) }.getOrDefault(emptyList())
-        val saved = save_draft(
+        suspend fun save_sent_content(existing_draft_id: String?): String? = save_draft(
             subject = row.subject,
             body_html = row.body_html,
             sender_email = row.sender_email,
             to = to,
             cc = cc,
             bcc = bcc,
-            existing_draft_id = null,
+            existing_draft_id = existing_draft_id,
             draft_type = if (row.thread_token.isNullOrBlank()) "new" else "reply",
             thread_token = row.thread_token?.takeIf { it.isNotBlank() },
             attachments = without_inline_images(attachments),
-        ).getOrNull()
-        return saved?.takeIf { it.isNotBlank() }
+        ).getOrNull()?.takeIf { it.isNotBlank() }
+        row.draft_id?.takeIf { it.isNotBlank() }?.let { existing ->
+            return save_sent_content(existing) ?: existing
+        }
+        val late = kotlinx.coroutines.withTimeoutOrNull(UNDO_RESTORE_DRAFT_WAIT_MS) { waiter.await() }
+        if (!late.isNullOrBlank()) return late
+        undo_fallback_pending_ids.add(pending_id)
+        return save_sent_content(null)
     }
 
     suspend fun run_pending_send(

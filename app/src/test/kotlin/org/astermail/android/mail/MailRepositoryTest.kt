@@ -2253,6 +2253,36 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `undo writes the sent content into the open draft`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.get_draft(draft_uuid) } returns mockk(relaxed = true) {
+            every { version } returns 3
+        }
+        coEvery { mail_api.update_draft(draft_uuid, any()) } returns
+            org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 4)
+        val pending_id = repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Re: Hi",
+            body_html = "<p>final words</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = "Me",
+            thread_token = "thread_1",
+            undo_seconds = 10,
+            draft_id = draft_uuid,
+            reply_to_id = "msg_1",
+        ).getOrThrow()
+
+        val undone = await_real { repo.undo_pending_send_now(pending_id) }
+
+        assertTrue(undone)
+        coVerify(exactly = 1) { mail_api.update_draft(draft_uuid, any()) }
+        coVerify(exactly = 0) { mail_api.create_draft(any()) }
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+    }
+
+    @Test
     fun `undo after the worker claimed the send keeps the reply in the thread`() = runTest {
         val pending_id = schedule_threaded_reply()
         assertEquals(1, pending_send_dao.mark_sending(pending_id, System.currentTimeMillis()))
