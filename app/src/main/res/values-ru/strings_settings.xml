@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">Мгновенное удаление псевдонимов</string>
     <string name="alias_too_new_title">Этот псевдоним слишком новый для удаления</string>
     <string name="alias_too_new_message">Новые псевдонимы остаются активными 30 дней до возможности удаления. Этот можно убрать начиная с %1$s. Перейдите на Supernova, чтобы удалять псевдонимы мгновенно.</string>
+    <string name="ghost_alias_too_new_title">Этот ghost-псевдоним слишком новый для отзыва</string>
+    <string name="ghost_alias_too_new_message">Новые ghost-псевдонимы остаются активными 30 дней до возможности отзыва. Этот можно отозвать начиная с %1$s. Перейдите на Supernova, чтобы отзывать ghost-псевдонимы мгновенно.</string>
+    <string name="ghost_alias_max_extension_toast">Этот ghost-псевдоним уже достиг максимального срока действия в 90 дней и не может быть продлён.</string>
     <string name="settings_feat_folders">Папки</string>
     <string name="settings_feat_labels">Метки</string>
     <string name="settings_feat_smart_folders">Умные папки</string>

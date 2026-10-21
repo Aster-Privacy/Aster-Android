@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">एलियास तुरंत हटाना</string>
     <string name="alias_too_new_title">यह एलियास हटाने के लिए बहुत नया है</string>
     <string name="alias_too_new_message">नए एलियास हटाए जाने से पहले 30 दिन तक चालू रहते हैं। इसे %1$s से हटाया जा सकेगा। एलियास तुरंत हटाने के लिए Supernova पर जाएं।</string>
+    <string name="ghost_alias_too_new_title">यह घोस्ट एलियास खत्म करने के लिए बहुत नया है</string>
+    <string name="ghost_alias_too_new_message">नए घोस्ट एलियास खत्म किए जाने से पहले 30 दिन चालू रहते हैं। इसे %1$s से खत्म किया जा सकेगा। घोस्ट एलियास तुरंत खत्म करने के लिए Supernova लें।</string>
+    <string name="ghost_alias_max_extension_toast">यह घोस्ट एलियास पहले ही अपनी 90 दिन की अधिकतम अवधि पर है और इसे और नहीं बढ़ाया जा सकता।</string>
     <string name="settings_feat_folders">फ़ोल्डर</string>
     <string name="settings_feat_labels">लेबल</string>
     <string name="settings_feat_smart_folders">स्मार्ट फ़ोल्डर</string>

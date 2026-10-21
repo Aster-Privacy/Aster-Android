@@ -6026,25 +6026,36 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { extend_ghost_alias_now(alias_id) }
     }
 
-    suspend fun expire_ghost_alias_now(alias_id: String): Boolean {
+    sealed class GhostExpireOutcome {
+        data object Expired : GhostExpireOutcome()
+        data class Cooldown(val message: String) : GhostExpireOutcome()
+        data class Failed(val message: String) : GhostExpireOutcome()
+    }
+
+    suspend fun expire_ghost_alias_now(alias_id: String): GhostExpireOutcome {
         return try {
             ghost_alias_api.expire_ghost_alias(alias_id)
             load_ghost_aliases()
-            true
+            GhostExpireOutcome.Expired
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            false
+            val message = org.astermail.android.localized_api_error(context, t, context.getString(R.string.ghost_action_failed))
+            if (t is org.astermail.android.api.ApiError.ForbiddenError && t.code == "FORBIDDEN") {
+                GhostExpireOutcome.Cooldown(message)
+            } else {
+                GhostExpireOutcome.Failed(message)
+            }
         }
     }
 
-    suspend fun extend_ghost_alias_now(alias_id: String): Boolean {
+    suspend fun extend_ghost_alias_now(alias_id: String): String? {
         return try {
             ghost_alias_api.extend_ghost_alias(alias_id)
             load_ghost_aliases()
-            true
+            null
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            false
+            org.astermail.android.localized_api_error(context, t, context.getString(R.string.ghost_action_failed))
         }
     }
 

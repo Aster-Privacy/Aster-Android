@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">エイリアスの即時削除</string>
     <string name="alias_too_new_title">このエイリアスは新しすぎて削除できません。</string>
     <string name="alias_too_new_message">新しいエイリアスは、削除できるようになるまで作成後 30 日間そのまま残ります。このエイリアスは %1$s から削除できるようになります。Supernova にアップグレードすると、エイリアスをすぐに削除できます。</string>
+    <string name="ghost_alias_too_new_title">このゴーストエイリアスは新しすぎて期限切れにできません。</string>
+    <string name="ghost_alias_too_new_message">新しいゴーストエイリアスは、期限切れにできるようになるまで作成後 30 日間そのまま残ります。このエイリアスは %1$s から期限切れにできるようになります。Supernova にアップグレードすると、ゴーストエイリアスをすぐに期限切れにできます。</string>
+    <string name="ghost_alias_max_extension_toast">このゴーストエイリアスは最大有効期間の90日に達しているため、これ以上延長できません。</string>
     <string name="settings_feat_folders">フォルダ</string>
     <string name="settings_feat_labels">ラベル</string>
     <string name="settings_feat_smart_folders">スマートフォルダ</string>
