@@ -5149,12 +5149,30 @@ class MailRepository @Inject constructor(
         var pgp_encrypted = envelope.pgp_encrypted
         var pgp_signature = envelope.pgp_signature
 
+        var text_pgp_decrypted = false
         if (body_starts_with(body_text, "-----BEGIN PGP")) {
             if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
             val decrypted = try_pgp_decrypt_result(body_text, sender_verification_key(envelope.from_email))
             if (decrypted?.plaintext != null) {
                 body_text = decrypted.plaintext
                 pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
+                text_pgp_decrypted = true
+            }
+        }
+        val html_armor = body_html
+            ?.takeIf { !body_starts_with(it, "-----BEGIN PGP") }
+            ?.let { inline_pgp_html_armor(it) }
+        if (html_armor != null) {
+            pgp_encrypted = true
+            if (text_pgp_decrypted) {
+                body_html = null
+            } else {
+                val decrypted = try_pgp_decrypt_result(html_armor, sender_verification_key(envelope.from_email))
+                if (decrypted?.plaintext != null) {
+                    body_text = decrypted.plaintext
+                    body_html = null
+                    pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
+                }
             }
         }
         if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
