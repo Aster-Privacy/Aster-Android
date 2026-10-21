@@ -3248,9 +3248,12 @@ class MailViewModel @Inject constructor(
     ) {
         val started = override_clock_ms()
         written.forEach { (id, write) ->
-            val display = local[id]?.category ?: write.prior_category ?: "primary"
-            category_overrides[id] = CategoryOverride(display, write.prior_category, write.prior_pinned, started)
-            val before = local[id] ?: return@forEach
+            val before = local[id]
+            if (before == null) {
+                restore_category_override(id, previous_overrides[id])
+                return@forEach
+            }
+            category_overrides[id] = CategoryOverride(before.category, write.prior_category, write.prior_pinned, started)
             replace_category_items(setOf(id)) {
                 with_category_state(it, before.category, write.prior_category, write.prior_pinned)
             }
