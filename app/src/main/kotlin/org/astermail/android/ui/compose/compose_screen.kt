@@ -1012,6 +1012,16 @@ fun ComposeScreen(
     }
     val quoted_html = quoted_source?.first?.takeIf { it.isNotBlank() }
     val quoted_meta = quoted_source?.second
+    val draft_quote = remember(mode, thread_state.messages) {
+        if (mode != "draft") {
+            null
+        } else {
+            thread_state.messages.firstOrNull()
+                ?.let { it.body_html ?: it.body_text }
+                ?.let { split_draft_quote(it) }
+        }
+    }
+    val has_quote = quoted_html != null || draft_quote != null
     val quoted_to = remember(reply_to, thread_state) {
         (thread_state.messages.firstOrNull { it.id == reply_to } ?: thread_state.messages.lastOrNull())
             ?.to_addresses.orEmpty()
@@ -1051,10 +1061,30 @@ fun ComposeScreen(
         return wrap_forward_block(forward_edited_html ?: seed)
     }
 
+    val quote_header_from = stringResource(R.string.compose_quote_header_from)
+    val quote_header_date = stringResource(R.string.compose_quote_header_date)
+    val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
+
+    fun reply_quote_block(): String? = quoted_html?.let { qh ->
+        val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
+        "<br><br><div class=\"aster_quote gmail_quote\">" +
+            "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
+            "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
+            "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
+            "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
+            "</div>" +
+            "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
+            qh +
+            "</blockquote></div>"
+    }
+
+    fun quote_block_for_send(): String? =
+        forward_block_for_send() ?: reply_quote_block() ?: draft_quote?.quote_block
+
     fun draft_body_for_save(): String {
-        val forward_block = forward_block_for_send() ?: return draft_body_with_signature()
+        val quote_block = quote_block_for_send() ?: return draft_body_with_signature()
         val base_is_html = get_body_with_formatting() != body || signature_html.isNotBlank()
-        return draft_html_with_forward(draft_body_with_signature(), base_is_html, forward_block)
+        return draft_html_with_forward(draft_body_with_signature(), base_is_html, quote_block)
     }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
@@ -1202,7 +1232,8 @@ fun ComposeScreen(
                     subject = item.subject
                     initial_subject = subject
                 }
-                val raw = msg.body_html ?: msg.body_text
+                val stored = msg.body_html ?: msg.body_text
+                val raw = split_draft_quote(stored)?.body_html ?: stored
                 val draft_body = if (raw.contains("<") && raw.contains(">")) {
                     android.text.Html.fromHtml(STYLE_SCRIPT_TAG_RE.replace(raw, ""), android.text.Html.FROM_HTML_MODE_LEGACY)
                         .toString().trimEnd()
@@ -1649,9 +1680,6 @@ fun ComposeScreen(
     val quote_original_label = stringResource(R.string.compose_quote_original_message)
     val quote_show_template = stringResource(R.string.compose_quote_show_label)
     val quote_hide_template = stringResource(R.string.compose_quote_hide_label)
-    val quote_header_from = stringResource(R.string.compose_quote_header_from)
-    val quote_header_date = stringResource(R.string.compose_quote_header_date)
-    val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
 
 
     suspend fun prepare_send_data(): Triple<String, List<org.astermail.android.api.send.ExternalAttachmentPayload>, Boolean> {
@@ -1666,7 +1694,7 @@ fun ComposeScreen(
         val place_signature_below = signature_below_quote(
             active_signature_placement,
             settings_state.preferences?.signature_placement,
-        ) && quoted_html != null
+        ) && has_quote
         val strip_metadata_enabled = settings_state.preferences?.strip_exif_on_compose != false
         val unstripped_names = mutableListOf<String>()
         val dropped_image_names = mutableListOf<String>()
@@ -1761,18 +1789,7 @@ fun ComposeScreen(
             )
         }
 
-        val quote_block = forward_block_for_send() ?: quoted_html?.let { qh ->
-            val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-            "<br><br><div class=\"aster_quote gmail_quote\">" +
-                "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
-                "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
-                "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
-                "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
-                "</div>" +
-                "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
-                qh +
-                "</blockquote></div>"
-        }.orEmpty()
+        val quote_block = quote_block_for_send().orEmpty()
         var body_html = assemble_body_with_signature(
             body = raw_text,
             is_rich = body_is_rich,
@@ -2262,6 +2279,12 @@ fun ComposeScreen(
                             text = when (effective_mode) {
                                 "reply", "reply_all" -> stringResource(R.string.compose_reply)
                                 "forward" -> stringResource(R.string.compose_forward)
+                                "draft" -> when {
+                                    draft_quote?.is_forward == true -> stringResource(R.string.compose_forward)
+                                    draft_quote != null || draft_save_thread_token != null ->
+                                        stringResource(R.string.compose_reply)
+                                    else -> stringResource(R.string.new_message)
+                                }
                                 else -> stringResource(R.string.new_message)
                             },
                             style = MaterialTheme.typography.titleMedium,
@@ -2706,7 +2729,7 @@ fun ComposeScreen(
                         }
                     },
                     update = { et ->
-                        val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null) * et.resources.displayMetrics.density).toInt()
+                        val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), has_quote) * et.resources.displayMetrics.density).toInt()
                         if (et.minHeight != target_min) et.minHeight = target_min
                         if (!body.contentEquals(et.text ?: "")) {
                             val sel = et.selectionStart.coerceIn(0, body.length)
@@ -2719,7 +2742,7 @@ fun ComposeScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = compose_body_min_height_dp(signature_html.isNotBlank(), quoted_html != null).dp),
+                        .defaultMinSize(minHeight = compose_body_min_height_dp(signature_html.isNotBlank(), has_quote).dp),
                 )
 
             }
@@ -2728,8 +2751,8 @@ fun ComposeScreen(
                 signature_preview_card(html = signature_html)
             }
 
-            if (quoted_html != null) {
-                val quote_target_label = if (mode == "forward") {
+            if (has_quote) {
+                val quote_target_label = if (mode == "forward" || draft_quote?.is_forward == true) {
                     quote_forwarded_label
                 } else {
                     quote_original_label
@@ -2809,6 +2832,10 @@ fun ComposeScreen(
                                 .padding(AsterSpacing.md)
                                 .testTag("compose_quote_body"),
                         ) {
+                            if (quoted_html == null) {
+                                quoted_html_preview(html = draft_quote?.preview_html.orEmpty())
+                                return@Column
+                            }
                             Text(
                                 text = "$quote_header_from $quoted_from",
                                 color = colors.text_muted,
