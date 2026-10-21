@@ -308,6 +308,9 @@ data class DecryptedSignature(
     val placement: Int?,
 )
 
+fun signature_sender_id(alias_id: String?): String? =
+    alias_id?.removePrefix("domain-")?.removePrefix("ghost-")
+
 private val cached_preferences_json = kotlinx.serialization.json.Json {
     ignoreUnknownKeys = true
     encodeDefaults = true
@@ -5570,7 +5573,7 @@ class SettingsViewModel @Inject constructor(
     fun signature_for(alias_id: String?): DecryptedSignature? {
         val all = _signatures.value
         if (alias_id != null) {
-            val bound = all.firstOrNull { it.alias_id == alias_id }
+            val bound = all.firstOrNull { signature_sender_id(it.alias_id) == alias_id }
             if (bound != null) return bound
         }
         return all.firstOrNull { it.alias_id == null && it.is_default }
