@@ -117,7 +117,8 @@ class GhostAliasApiImpl(private val client: ApiClient) : GhostAliasApi {
             setBody("{}")
         }
         if (response.status.value !in 200..299) {
-            throw client.map_http_status(response.status.value, "")
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
         }
     }
 
@@ -128,7 +129,8 @@ class GhostAliasApiImpl(private val client: ApiClient) : GhostAliasApi {
             setBody(ExtendGhostAliasRequest())
         }
         if (response.status.value !in 200..299) {
-            throw client.map_http_status(response.status.value, "")
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
         }
     }
 

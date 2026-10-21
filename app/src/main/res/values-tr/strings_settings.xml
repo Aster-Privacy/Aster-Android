@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">Anında rumuz silme</string>
     <string name="alias_too_new_title">Bu takma ad silinemeyecek kadar yeni</string>
     <string name="alias_too_new_message">Yeni takma adlar silinebilmesinden önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren kaldırılabilir. Rumuzları anında silmek için Supernova\'ya geçin.</string>
+    <string name="ghost_alias_too_new_title">Bu ghost takma ad süresini doldurmaya henüz çok yeni</string>
+    <string name="ghost_alias_too_new_message">Yeni ghost takma adlar süresi dolmadan önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren süresi doldurulabilir. Ghost takma adları anında sonlandırmak için Supernova\'ya geçin.</string>
+    <string name="ghost_alias_max_extension_toast">Bu hayalet takma ad zaten 90 günlük azami ömrüne ulaştı ve daha fazla uzatılamaz.</string>
     <string name="settings_feat_folders">Klasörler</string>
     <string name="settings_feat_labels">Etiketler</string>
     <string name="settings_feat_smart_folders">Akıllı klasörler</string>

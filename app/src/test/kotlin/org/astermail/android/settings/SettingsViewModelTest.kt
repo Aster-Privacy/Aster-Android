@@ -1536,6 +1536,39 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `expire_ghost_alias_now reports expired on success`() = runTest {
+        coEvery { ghost_alias_api.list_ghost_aliases() } returns GhostAliasListResponse(emptyList())
+
+        assertEquals(SettingsViewModel.GhostExpireOutcome.Expired, vm.expire_ghost_alias_now("g1"))
+    }
+
+    @Test
+    fun `expire_ghost_alias_now reports the cooldown when the server refuses`() = runTest {
+        val reason = "Ghost aliases can only be expired 30 days after creation."
+        coEvery { ghost_alias_api.expire_ghost_alias(any()) } throws
+            org.astermail.android.api.ApiError.ForbiddenError(reason, "FORBIDDEN")
+
+        assertEquals(SettingsViewModel.GhostExpireOutcome.Cooldown(reason), vm.expire_ghost_alias_now("g1"))
+        coVerify(exactly = 0) { ghost_alias_api.list_ghost_aliases() }
+    }
+
+    @Test
+    fun `expire_ghost_alias_now treats other errors as failures`() = runTest {
+        every { context.getString(org.astermail.android.R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
+        coEvery { ghost_alias_api.expire_ghost_alias(any()) } throws RuntimeException("boom")
+
+        assertEquals(SettingsViewModel.GhostExpireOutcome.Failed("Couldn't update ghost alias"), vm.expire_ghost_alias_now("g1"))
+    }
+
+    @Test
+    fun `extend_ghost_alias_now falls back to the ghost failure text`() = runTest {
+        every { context.getString(org.astermail.android.R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
+        coEvery { ghost_alias_api.extend_ghost_alias(any()) } throws RuntimeException("boom")
+
+        assertEquals("Couldn't update ghost alias", vm.extend_ghost_alias_now("g1"))
+    }
+
+    @Test
     fun `load_forwarding_rules error sets error message`() = runTest {
         coEvery { auto_forward_api.list_rules() } throws org.astermail.android.api.ApiError.UnknownError("rules error")
 

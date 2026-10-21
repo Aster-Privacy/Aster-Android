@@ -369,6 +369,8 @@ fun AliasesScreen(
                             scope = scope,
                             scroll_state = ghost_scroll,
                             on_compose_from = on_compose_from,
+                            instant_expire_locked = instant_alias_delete_locked,
+                            on_upgrade = { on_open("billing") },
                         )
                     }
                 }
@@ -2152,6 +2154,17 @@ internal fun alias_delete_eligible_at(created_at: String): Long? {
     return created + ALIAS_DELETE_COOLDOWN_MILLIS
 }
 
+private const val GHOST_MAX_LIFETIME_MILLIS = 90L * 24L * 60L * 60L * 1000L
+private const val GHOST_MAX_LIFETIME_SLACK_MILLIS = 60L * 1000L
+
+internal fun ghost_expire_eligible_at(created_at: String): Long? = alias_delete_eligible_at(created_at)
+
+internal fun ghost_at_max_lifetime(created_at: String?, expires_at: String?): Boolean {
+    val created = created_at?.let { parse_iso_millis(it) } ?: return false
+    val expires = expires_at?.let { parse_iso_millis(it) } ?: return false
+    return expires >= created + GHOST_MAX_LIFETIME_MILLIS - GHOST_MAX_LIFETIME_SLACK_MILLIS
+}
+
 internal fun format_alias_date(millis: Long): String =
     millis.format_long_date()
 
@@ -2192,6 +2205,8 @@ internal fun ghost_tab(
     scope: kotlinx.coroutines.CoroutineScope,
     scroll_state: androidx.compose.foundation.ScrollState,
     on_compose_from: (String) -> Unit = {},
+    instant_expire_locked: Boolean = false,
+    on_upgrade: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -2203,16 +2218,18 @@ internal fun ghost_tab(
     var measured_ghost_count by remember { mutableStateOf(state.ghost_aliases.size) }
     var pending_extend by remember { mutableStateOf<Pair<String, String>?>(null) }
     var pending_expire by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var ghost_too_new_date by remember { mutableStateOf<String?>(null) }
+    var ghost_notice by remember { mutableStateOf<Pair<Int, String>?>(null) }
     var list_top_px by remember { mutableStateOf(0) }
     var scroll_to_new_ghost by remember { mutableStateOf(false) }
     var expanded_ghost_id by remember { mutableStateOf<String?>(null) }
 
-    val report_action = { ok: Boolean, success_message: Int ->
-        android.widget.Toast.makeText(
-            context,
-            context.getString(if (ok) success_message else R.string.ghost_action_failed),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+    val report_action = { error: String?, title: Int, success_message: Int ->
+        if (error != null) {
+            ghost_notice = title to error
+        } else {
+            android.widget.Toast.makeText(context, context.getString(success_message), android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -2317,12 +2334,25 @@ internal fun ghost_tab(
                         AsterIconButton(
                             icon = TablerIcons.Refresh,
                             content_description = stringResource(R.string.ghost_extend),
-                            onClick = { pending_extend = g.id to ghost_address },
+                            onClick = {
+                                if (ghost_at_max_lifetime(g.created_at, g.expires_at)) {
+                                    ghost_notice = R.string.ghost_extend to context.getString(R.string.ghost_alias_max_extension_toast)
+                                } else {
+                                    pending_extend = g.id to ghost_address
+                                }
+                            },
                         )
                         AsterIconButton(
                             icon = TablerIcons.Ban,
                             content_description = stringResource(R.string.ghost_expire_now),
-                            onClick = { pending_expire = g.id to ghost_address },
+                            onClick = {
+                                val eligible_at = g.created_at?.let { ghost_expire_eligible_at(it) }
+                                if (instant_expire_locked && g.decrypted_address.isNotBlank() && eligible_at != null && System.currentTimeMillis() < eligible_at) {
+                                    ghost_too_new_date = format_alias_date(eligible_at)
+                                } else {
+                                    pending_expire = g.id to ghost_address
+                                }
+                            },
                             tint = colors.danger,
                         )
                     }
@@ -2347,9 +2377,41 @@ internal fun ghost_tab(
                     onClick = {
                         pending_extend = null
                         scope.launch {
-                            report_action(vm.extend_ghost_alias_now(id), R.string.ghost_extended)
+                            report_action(vm.extend_ghost_alias_now(id), R.string.ghost_extend, R.string.ghost_extended)
                         }
                     },
+                )
+            },
+        )
+    }
+
+    ghost_too_new_date?.let { date ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { ghost_too_new_date = null },
+            title = stringResource(R.string.ghost_alias_too_new_title),
+            message = stringResource(R.string.ghost_alias_too_new_message, date),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.close),
+                    onClick = { ghost_too_new_date = null },
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.upgrade),
+                    onClick = { ghost_too_new_date = null; on_upgrade() },
+                )
+            },
+        )
+    }
+
+    ghost_notice?.let { (title, message) ->
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { ghost_notice = null },
+            title = stringResource(title),
+            message = message,
+            footer = {
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.close),
+                    onClick = { ghost_notice = null },
                 )
             },
         )
@@ -2369,8 +2431,20 @@ internal fun ghost_tab(
                     label = stringResource(R.string.ghost_expire_now),
                     onClick = {
                         pending_expire = null
+                        val eligible_at = state.ghost_aliases.firstOrNull { it.id == id }?.created_at?.let { ghost_expire_eligible_at(it) }
                         scope.launch {
-                            report_action(vm.expire_ghost_alias_now(id), R.string.ghost_expired_toast)
+                            when (val outcome = vm.expire_ghost_alias_now(id)) {
+                                SettingsViewModel.GhostExpireOutcome.Expired ->
+                                    report_action(null, R.string.ghost_expire_now, R.string.ghost_expired_toast)
+                                is SettingsViewModel.GhostExpireOutcome.Cooldown ->
+                                    if (eligible_at != null) {
+                                        ghost_too_new_date = format_alias_date(eligible_at)
+                                    } else {
+                                        report_action(outcome.message, R.string.ghost_expire_now, R.string.ghost_expired_toast)
+                                    }
+                                is SettingsViewModel.GhostExpireOutcome.Failed ->
+                                    report_action(outcome.message, R.string.ghost_expire_now, R.string.ghost_expired_toast)
+                            }
                         }
                     },
                 )

@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">Aliassen direct verwijderen</string>
     <string name="alias_too_new_title">Deze alias is te nieuw om te verwijderen</string>
     <string name="alias_too_new_message">Nieuwe aliassen blijven 30 dagen actief voordat ze kunnen worden verwijderd. Deze kan vanaf %1$s worden verwijderd. Stap over op Supernova om aliassen direct te verwijderen.</string>
+    <string name="ghost_alias_too_new_title">Deze ghost-alias is te nieuw om te laten verlopen</string>
+    <string name="ghost_alias_too_new_message">Nieuwe ghost-aliassen blijven 30 dagen actief voordat ze kunnen verlopen. Deze kan vanaf %1$s verlopen. Stap over op Supernova om ghost-aliassen direct te laten verlopen.</string>
+    <string name="ghost_alias_max_extension_toast">Dit tijdelijke alias heeft de maximale levensduur van 90 dagen al bereikt en kan niet verder worden verlengd.</string>
     <string name="settings_feat_folders">Mappen</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Slimme mappen</string>

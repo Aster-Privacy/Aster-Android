@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">Eliminação instantânea de aliases</string>
     <string name="alias_too_new_title">Este alias é demasiado recente para ser eliminado</string>
     <string name="alias_too_new_message">Os aliases novos ficam ativos durante 30 dias antes de poderem ser eliminados. Este pode ser removido a partir de %1$s. Atualize para o Supernova para eliminar aliases de imediato.</string>
+    <string name="ghost_alias_too_new_title">Este alias fantasma é demasiado recente para expirar</string>
+    <string name="ghost_alias_too_new_message">Os aliases fantasma novos ficam ativos durante 30 dias antes de poderem expirar. Este pode expirar a partir de %1$s. Atualize para o Supernova para expirar aliases fantasma de imediato.</string>
+    <string name="ghost_alias_max_extension_toast">Este alias ghost já atingiu a sua vida útil máxima de 90 dias e não pode ser estendido.</string>
     <string name="settings_feat_folders">Pastas</string>
     <string name="settings_feat_labels">Etiquetas</string>
     <string name="settings_feat_smart_folders">Pastas inteligentes</string>

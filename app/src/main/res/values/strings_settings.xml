@@ -28,6 +28,9 @@
     <string name="settings_feat_instant_alias_delete">Instant alias deletion</string>
     <string name="alias_too_new_title">This alias is too new to delete</string>
     <string name="alias_too_new_message">New aliases stay live for 30 days before they can be deleted. This one can be removed starting %1$s. Upgrade to Supernova to delete aliases instantly.</string>
+    <string name="ghost_alias_too_new_title">This ghost alias is too new to expire</string>
+    <string name="ghost_alias_too_new_message">New ghost aliases stay live for 30 days before they can be expired. This one can be expired starting %1$s. Upgrade to Supernova to expire ghost aliases instantly.</string>
+    <string name="ghost_alias_max_extension_toast">This ghost alias is already at its maximum lifetime of 90 days and can\'t be extended further.</string>
     <string name="settings_feat_folders">Folders</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Smart folders</string>

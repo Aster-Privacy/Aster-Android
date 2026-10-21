@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">حذف فوري للأسماء المستعارة</string>
     <string name="alias_too_new_title">هذا الاسم المستعار جديد جدًا ولا يمكن حذفه</string>
     <string name="alias_too_new_message">الأسماء المستعارة الجديدة تبقى نشطة 30 يومًا قبل أن يمكن حذفها. يمكن إزالة هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لحذف الأسماء المستعارة فورًا.</string>
+    <string name="ghost_alias_too_new_title">هذا الاسم الشبحي جديد جدًا ولا يمكن إنهاؤه</string>
+    <string name="ghost_alias_too_new_message">الأسماء الشبحية الجديدة تبقى نشطة 30 يومًا قبل أن يمكن إنهاؤها. يمكن إنهاء هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لإنهاء الأسماء الشبحية فورًا.</string>
+    <string name="ghost_alias_max_extension_toast">وصل هذا الاسم المستعار الشبحي إلى الحد الأقصى لمدة صلاحيته وهو 90 يومًا ولا يمكن تمديده أكثر من ذلك.</string>
     <string name="settings_feat_folders">المجلدات</string>
     <string name="settings_feat_labels">التصنيفات</string>
     <string name="settings_feat_smart_folders">المجلدات الذكية</string>

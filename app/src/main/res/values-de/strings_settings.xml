@@ -26,6 +26,9 @@
     <string name="settings_feat_instant_alias_delete">Sofortiges Löschen von Aliassen</string>
     <string name="alias_too_new_title">Dieses Alias ist zu neu zum Löschen</string>
     <string name="alias_too_new_message">Neue Aliase bleiben 30 Tage aktiv, bevor sie gelöscht werden können. Dieses lässt sich ab %1$s entfernen. Mit Supernova lassen sich Aliase sofort löschen.</string>
+    <string name="ghost_alias_too_new_title">Dieses Ghost-Alias ist zu neu zum Auslaufen</string>
+    <string name="ghost_alias_too_new_message">Neue Ghost-Aliase bleiben 30 Tage aktiv, bevor sie auslaufen können. Dieses lässt sich ab %1$s auslaufen. Mit Supernova lassen sich Ghost-Aliase sofort auslaufen lassen.</string>
+    <string name="ghost_alias_max_extension_toast">Dieser Ghost-Alias hat bereits seine maximale Lebensdauer von 90 Tagen erreicht und kann nicht weiter verlängert werden.</string>
     <string name="settings_feat_folders">Ordner</string>
     <string name="settings_feat_labels">Labels</string>
     <string name="settings_feat_smart_folders">Intelligente Ordner</string>
