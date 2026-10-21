@@ -29,6 +29,8 @@ import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemMetadata
@@ -40,6 +42,7 @@ import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -297,5 +300,39 @@ class CategorySyncTest {
 
         assertTrue(result.exceptionOrNull() is MetadataUndecryptableException)
         io.mockk.coVerify(exactly = 0) { mail_api.patch_metadata(any(), any()) }
+    }
+
+    private fun open_raw(encrypted: String, nonce: String): String {
+        val decoder = java.util.Base64.getDecoder()
+        return String(AesGcm.decrypt(metadata_key(), decoder.decode(nonce), decoder.decode(encrypted)), Charsets.UTF_8)
+    }
+
+    @Test
+    fun `moving to a category keeps metadata fields this version does not know`() = runTest {
+        val captured = capture_patch()
+        val future = moved_to_travel_on_web.trimEnd('}') + ",\"future_field\":\"kept\"}"
+        val (encrypted, nonce) = seal_like_web(future)
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        repo.set_category("deal-1", "primary", listed).getOrThrow()
+
+        val raw = open_raw(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val parsed = json.parseToJsonElement(raw).jsonObject
+        assertEquals("kept", parsed["future_field"]!!.jsonPrimitive.content)
+        assertEquals("primary", parsed["category"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `clearing a category unpins it and reports the prior pin`() = runTest {
+        val captured = capture_patch()
+        val listed = server_item(with_server_metadata = false)
+
+        val write = repo.write_category("deal-1", null, pinned = false, raw_item = listed).getOrThrow()
+
+        assertEquals("travel", write.prior_category)
+        assertTrue(write.prior_pinned)
+        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertNull(blob.category)
+        assertFalse(blob.category_pinned)
     }
 }

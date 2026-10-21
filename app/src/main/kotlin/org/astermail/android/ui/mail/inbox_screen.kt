@@ -194,9 +194,7 @@ fun build_thread_rows(
     count_corrections: Map<String, ThreadCountCorrection> = emptyMap(),
 ): ThreadRowResult {
     val source = if (categories_enabled) {
-        emails.filter {
-            org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
-        }
+        emails_in_category_tab(emails, active_category, active_tabs, grouping_enabled)
     } else {
         emails
     }
@@ -231,6 +229,29 @@ fun build_thread_rows(
         )
     }
     return ThreadRowResult(sorted, resolved)
+}
+
+fun emails_in_category_tab(
+    emails: List<Email>,
+    active_category: String,
+    active_tabs: List<String>,
+    grouping_enabled: Boolean,
+): List<Email> {
+    val by_thread = if (grouping_enabled) {
+        org.astermail.android.mail.thread_categories(
+            emails,
+            thread_key = { it.thread_id },
+            order = compareBy { it.received_at },
+            category = { it.category },
+            pinned = { it.category_pinned },
+        )
+    } else {
+        emptyMap()
+    }
+    return emails.filter {
+        val category = if (grouping_enabled) by_thread[it.thread_id] ?: it.category else it.category
+        org.astermail.android.mail.category_for_tab(category, active_tabs) == active_category
+    }
 }
 
 fun thread_row_covers(email: Email, thread_id: String, grouping_enabled: Boolean): Boolean =
@@ -779,6 +800,7 @@ fun InboxScreen(
     var scheduled_sheet_item by remember { mutableStateOf<org.astermail.android.mail.InboxItem?>(null) }
     var show_bulk_folder_sheet by remember { mutableStateOf(false) }
     var show_bulk_label_sheet by remember { mutableStateOf(false) }
+    var show_bulk_category_sheet by remember { mutableStateOf(false) }
     var show_bulk_snooze_sheet by remember { mutableStateOf(false) }
     var swipe_snooze_ids by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
@@ -1171,9 +1193,7 @@ fun InboxScreen(
             val visible_rows = if (filter_active && threads.isNotEmpty()) {
                 visible_threads.size
             } else if (categories_enabled) {
-                emails.count {
-                    org.astermail.android.mail.category_for_tab(it.category, active_tabs) == active_category
-                }
+                emails_in_category_tab(emails, active_category, active_tabs, grouping_enabled).size
             } else if (emails.isNotEmpty() && threads.isEmpty()) {
                 MIN_FILLED_ROWS
             } else {
@@ -1626,6 +1646,13 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun move_selected_to_category(category: String) {
+        val ids = selected_email_ids()
+        mail_vm.move_to_category_bulk(ids, category)
+        notify_if_scope_incomplete(ids.size)
+        exit_select_mode()
+    }
+
     fun label_selected(tag_token: String, display_name: String) {
         with_selection_ids { ids -> mail_vm.apply_tag_bulk(ids, tag_token, display_name) }
         exit_select_mode()
@@ -1668,6 +1695,7 @@ fun InboxScreen(
                 show_bulk_folder_sheet = true
             }
             "label" -> show_bulk_label_sheet = true
+            "category" -> if (categories_enabled) show_bulk_category_sheet = true
             "star" -> star_selected()
             "snooze" -> show_bulk_snooze_sheet = true
             "unsnooze" -> unsnooze_selected()
@@ -2655,6 +2683,7 @@ fun InboxScreen(
                 current_folder = current_folder,
                 selection_all_starred = selection_all_starred,
                 selection_all_read = selection_all_read,
+                show_category = categories_enabled,
             )
         }
 
@@ -2693,6 +2722,7 @@ fun InboxScreen(
                 show_unsnooze = current_folder == "snoozed",
                 current_folder = current_folder,
                 selection_all_starred = selection_all_starred,
+                show_category = categories_enabled,
                 on_customize = {
                     show_selection_overflow = false
                     on_customize_toolbar()
@@ -2801,6 +2831,16 @@ fun InboxScreen(
                     }
                 },
                 applied_tokens = applied_tags,
+            )
+        }
+
+        if (show_bulk_category_sheet && categories_enabled) {
+            move_to_category_sheet(
+                current_category = active_category,
+                active_tabs = active_tabs,
+                custom_categories = settings_state.preferences?.custom_categories.orEmpty(),
+                on_pick = { picked -> move_selected_to_category(picked) },
+                on_close = { show_bulk_category_sheet = false },
             )
         }
 
@@ -3617,6 +3657,7 @@ internal fun select_mode_bottom_bar(
     current_folder: String,
     selection_all_starred: Boolean = false,
     selection_all_read: Boolean = false,
+    show_category: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -3744,6 +3785,7 @@ internal fun select_mode_bottom_bar(
                     }
                     else -> {
                         custom_actions.forEach { action_id ->
+                            if (action_id == "category" && !show_category) return@forEach
                             val action = selection_toolbar_action_for(
                                 action_id,
                                 selection_all_starred,
@@ -3828,6 +3870,7 @@ internal fun selection_overflow_sheet(
     show_unsnooze: Boolean = false,
     current_folder: String = "inbox",
     selection_all_starred: Boolean = false,
+    show_category: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -3876,6 +3919,9 @@ internal fun selection_overflow_sheet(
             }
             overflow_sheet_row("folder", TablerIcons.Folder, stringResource(R.string.move_to_folder), colors.text_primary) { on_action("folder") }
             overflow_sheet_row("label", TablerIcons.Tag, stringResource(R.string.add_label), colors.text_primary) { on_action("label") }
+            if (show_category) {
+                overflow_sheet_row("category", TablerIcons.LayoutGrid, stringResource(R.string.move_to_category), colors.text_primary) { on_action("category") }
+            }
             AsterDivider()
             if (in_trash) {
                 overflow_sheet_row("delete_permanent", TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), colors.danger) { on_action("delete_permanent") }

@@ -338,21 +338,50 @@ fun category_for_tab(category: String?, active_tabs: List<String> = CATEGORY_TAB
     return if (active_tabs.contains(target)) target else "primary"
 }
 
+fun is_category_pinned(item: InboxItem): Boolean {
+    val meta = item.raw_item.metadata ?: return false
+    return meta.category_pinned && meta.category != null
+}
+
+fun <T> thread_categories(
+    items: Iterable<T>,
+    thread_key: (T) -> String,
+    order: Comparator<T>,
+    category: (T) -> String,
+    pinned: (T) -> Boolean,
+): Map<String, String> {
+    val newest = HashMap<String, T>()
+    val newest_pinned = HashMap<String, T>()
+    for (item in items) {
+        val key = thread_key(item)
+        val current = newest[key]
+        if (current == null || order.compare(item, current) > 0) newest[key] = item
+        if (pinned(item)) {
+            val current_pinned = newest_pinned[key]
+            if (current_pinned == null || order.compare(item, current_pinned) > 0) newest_pinned[key] = item
+        }
+    }
+    return newest.mapValues { (key, item) -> category(newest_pinned[key] ?: item) }
+}
+
 fun category_unread_counts(
     items: List<InboxItem>,
     active_tabs: List<String> = CATEGORY_TABS,
+    grouping_enabled: Boolean = true,
 ): Map<String, Int> {
     val by_thread = LinkedHashMap<String, MutableList<InboxItem>>()
     for (item in items) {
         if (item.is_trashed || item.is_archived || item.is_spam) continue
-        by_thread.getOrPut(item.thread_token ?: item.id) { mutableListOf() }.add(item)
+        val key = if (grouping_enabled) item.thread_token?.takeIf { it.isNotBlank() } ?: item.id else item.id
+        by_thread.getOrPut(key) { mutableListOf() }.add(item)
     }
     val counts = HashMap<String, Int>()
     for (tab in active_tabs) counts[tab] = 0
     for ((_, msgs) in by_thread) {
         if (msgs.none { !it.is_read }) continue
         val newest = msgs.maxByOrNull { it.timestamp } ?: continue
-        val tab = category_for_tab(newest.category, active_tabs)
+        val source = msgs.filter { is_category_pinned(it) }.maxByOrNull { it.timestamp } ?: newest
+        val tab = category_for_tab(source.category, active_tabs)
         counts[tab] = (counts[tab] ?: 0) + 1
     }
     return counts
