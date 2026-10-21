@@ -25,7 +25,9 @@ import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpKeyGenerator
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InlinePgpHtmlTest {
@@ -83,6 +85,27 @@ class InlinePgpHtmlTest {
             "</p></div>"
 
         assertEquals(plaintext, decrypt(inline_pgp_html_armor(html)))
+    }
+
+    @Test
+    fun reply_quoting_armor_in_a_blockquote_is_quoted() {
+        val armor = inline_armor().replace("\r\n", "\n")
+        val text = "I cannot read this.\n\nOn Tue, David wrote:\n" +
+            armor.split("\n").joinToString("\n") { "> $it" }
+        val html = "<div>I cannot read this.</div><blockquote>" +
+            armor.split("\n").joinToString("<br>") + "</blockquote>"
+
+        assertTrue(is_quoted_inline_pgp(text, html))
+        assertTrue(is_quoted_inline_pgp("I cannot read this. On Tue, David wrote:", html))
+    }
+
+    @Test
+    fun unquoted_armor_is_not_quoted() {
+        val armor = inline_armor()
+
+        assertFalse(is_quoted_inline_pgp(armor, mail_parser_text_to_html(armor)))
+        assertFalse(is_quoted_inline_pgp("", "<p>Hello,</p><blockquote>a</blockquote><p>" + armor + "</p>"))
+        assertFalse(is_quoted_inline_pgp("Hello, -----BEGIN PGP MESSAGE----- abc", "<p>Hello,</p><p>" + armor + "</p>"))
     }
 
     @Test

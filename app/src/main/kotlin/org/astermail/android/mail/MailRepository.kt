@@ -5161,6 +5161,7 @@ class MailRepository @Inject constructor(
         }
         val html_armor = body_html
             ?.takeIf { !body_starts_with(it, "-----BEGIN PGP") }
+            ?.takeIf { text_pgp_decrypted || !is_quoted_inline_pgp(body_text, it) }
             ?.let { inline_pgp_html_armor(it) }
         if (html_armor != null) {
             pgp_encrypted = true
