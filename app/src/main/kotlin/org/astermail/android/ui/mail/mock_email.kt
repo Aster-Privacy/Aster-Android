@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
+import org.astermail.android.mail.clamp_subject
 import org.astermail.android.security.EmailAuthVerdict
 import org.astermail.android.security.SenderTrustMessage
 import org.astermail.android.security.summarize_email_authentication
@@ -747,10 +748,12 @@ fun Long.format_long_date(): String {
 
 fun subject_prefix(original: String, mode: String): String {
     val trimmed = original.trim()
-    return when (mode) {
-        "forward" -> if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
-        else -> if (trimmed.startsWith("Re:", ignoreCase = true)) trimmed else "Re: $trimmed"
-    }
+    return clamp_subject(
+        when (mode) {
+            "forward" -> if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
+            else -> if (trimmed.startsWith("Re:", ignoreCase = true)) trimmed else "Re: $trimmed"
+        },
+    )
 }
 
 data class ComposePrefill(

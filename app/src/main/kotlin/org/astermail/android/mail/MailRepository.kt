@@ -5762,7 +5762,7 @@ class MailRepository @Inject constructor(
                 folder_token = sent_folder_token,
                 sender_email = from_addr.ifBlank { null },
                 sender_alias_hash = sender_alias_hash?.takeIf { it.isNotBlank() },
-                reply_subject = if (internal) null else reply_subject?.takeIf { it.isNotBlank() },
+                reply_subject = if (internal) null else reply_subject?.takeIf { it.isNotBlank() }?.let(::clamp_subject),
                 in_reply_to = if (internal) null else in_reply_to?.takeIf { it.isNotBlank() },
             ),
         )

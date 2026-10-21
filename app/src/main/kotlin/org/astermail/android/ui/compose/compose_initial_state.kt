@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.mail.clamp_subject
+
 data class compose_screen_args(
     val reply_to: String? = null,
     val mode: String? = null,
@@ -102,13 +104,15 @@ private fun apply_subject_prefix(
     prefix_reply_subject: Boolean,
 ): String {
     val trimmed = original.trim()
-    return when {
-        mode == "forward" ->
-            if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
-        !prefix_reply_subject -> trimmed
-        trimmed.startsWith("Re:", ignoreCase = true) -> trimmed
-        else -> "Re: $trimmed"
-    }
+    return clamp_subject(
+        when {
+            mode == "forward" ->
+                if (trimmed.startsWith("Fwd:", ignoreCase = true)) trimmed else "Fwd: $trimmed"
+            !prefix_reply_subject -> trimmed
+            trimmed.startsWith("Re:", ignoreCase = true) -> trimmed
+            else -> "Re: $trimmed"
+        },
+    )
 }
 
 fun resolve_thread_ghost_match(
