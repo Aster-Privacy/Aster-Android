@@ -52,7 +52,6 @@ fun undo_send_toast(undo_vm: UndoSendViewModel = hiltViewModel()) {
                             undo_vm.dismiss(id)
                             p.undo()
                         },
-                        show_close = true,
                         on_close = { undo_vm.dismiss(id) },
                         key = id,
                     ),
