@@ -189,6 +189,7 @@ import org.astermail.android.util.meets_min_search_length
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.html_to_plain_text
 import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
@@ -1065,17 +1066,26 @@ fun ComposeScreen(
     val quote_header_date = stringResource(R.string.compose_quote_header_date)
     val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
 
-    fun reply_quote_block(): String? = quoted_html?.let { qh ->
+    val reply_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quote_header_from, quote_header_date, quote_header_subject) {
+        if (is_forward_quote) return@remember null
+        val qh = quoted_html ?: return@remember null
         val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-        "<br><br><div class=\"aster_quote gmail_quote\">" +
-            "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
+        "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
             "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
             "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
             "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
             "</div>" +
             "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
             qh +
-            "</blockquote></div>"
+            "</blockquote>"
+    }
+    var reply_edited_html by remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
+
+    fun reply_quote_block(): String? {
+        val seed = reply_seed_html ?: return null
+        val inner = reply_edited_html ?: seed
+        if (html_to_plain_text(inner).isBlank()) return null
+        return wrap_forward_block(inner)
     }
 
     fun quote_block_for_send(): String? =
@@ -2807,9 +2817,8 @@ fun ComposeScreen(
                         exit = androidx.compose.animation.shrinkVertically(animationSpec = quote_shrink_spec) +
                             fadeOut(animationSpec = quote_fade_out_spec),
                     ) {
-                        val (quoted_from, quoted_ts, quoted_subject) = quoted_meta
-                            ?: Triple("", "", "")
                         val editable_forward_seed = forward_seed_html
+                        val editable_reply_seed = reply_seed_html
                         if (editable_forward_seed != null) {
                             forward_block_editor(
                                 seed_html = editable_forward_seed,
@@ -2824,6 +2833,20 @@ fun ComposeScreen(
                                     .clip(quoted_preview_card_shape)
                                     .testTag("compose_forward_editor"),
                             )
+                        } else if (editable_reply_seed != null) {
+                            forward_block_editor(
+                                seed_html = editable_reply_seed,
+                                on_html_change = { edited ->
+                                    if (edited != reply_edited_html) {
+                                        reply_edited_html = edited
+                                        schedule_draft_save()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(top = AsterSpacing.sm, bottom = AsterSpacing.sm)
+                                    .clip(quoted_preview_card_shape)
+                                    .testTag("compose_reply_quote_editor"),
+                            )
                         } else Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2832,29 +2855,7 @@ fun ComposeScreen(
                                 .padding(AsterSpacing.md)
                                 .testTag("compose_quote_body"),
                         ) {
-                            if (quoted_html == null) {
-                                quoted_html_preview(html = draft_quote?.preview_html.orEmpty())
-                                return@Column
-                            }
-                            Text(
-                                text = "$quote_header_from $quoted_from",
-                                color = colors.text_muted,
-                                fontSize = 12.sp,
-                            )
-                            Text(
-                                text = "$quote_header_date ${format_quote_timestamp(quoted_ts)}",
-                                color = colors.text_muted,
-                                fontSize = 12.sp,
-                            )
-                            if (quoted_subject.isNotBlank()) {
-                                Text(
-                                    text = "$quote_header_subject $quoted_subject",
-                                    color = colors.text_muted,
-                                    fontSize = 12.sp,
-                                )
-                            }
-                            Spacer(Modifier.height(AsterSpacing.sm))
-                            quoted_html_preview(html = quoted_html)
+                            quoted_html_preview(html = draft_quote?.preview_html.orEmpty())
                         }
                     }
                 }
