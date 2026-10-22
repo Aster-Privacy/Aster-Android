@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.jsoup.Jsoup
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -59,5 +60,24 @@ class LongBodyScrollTest {
         assertEquals(241, guard.settle(208, 241))
         assertEquals(179, guard.settle(241, 279))
         assertEquals(900, guard.settle(179, 900))
+    }
+
+    @Test
+    fun a_body_capped_below_its_content_can_scroll_inside_the_page() {
+        val html = build_email_html(
+            body = "<div dir=\"ltr\"><p>Paragraph</p></div>",
+            is_dark = false,
+            fg_hex = "#111111",
+            link_hex = "#3b82f6",
+            forwarded_label = "Forwarded",
+            image_failed_label = "Image could not be loaded",
+            force_dark_emails = false,
+            dyslexia_font = false,
+            translate_mode = "off",
+        )
+        val css = Jsoup.parse(html).select("style").joinToString(" ") { it.data() }
+
+        assertTrue(css.contains("overflow-y:auto"))
+        assertFalse(css.contains("overflow-y:hidden"))
     }
 }

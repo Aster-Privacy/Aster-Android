@@ -586,9 +586,55 @@ private fun declares_background(element: Element): Boolean {
     return false
 }
 
-private fun contains_background(element: Element): Boolean {
-    if (element.selectFirst("[bgcolor],[background]") != null) return true
-    return element.select("[style]").any { it !== element && INLINE_BACKGROUND.containsMatchIn(it.attr("style")) }
+private val IMPORTANT_COLOR_FLAG = Regex("!\\s*important", RegexOption.IGNORE_CASE)
+
+private const val REPAIRED_DARK_INK = "#e8e8e8"
+
+private fun paints_background(element: Element): Boolean =
+    element.hasAttr("bgcolor") || element.hasAttr("background") ||
+        INLINE_BACKGROUND.containsMatchIn(element.attr("style"))
+
+private fun declares_own_color(element: Element): Boolean =
+    INLINE_COLOR.containsMatchIn(element.attr("style")) ||
+        (element.tagName().equals("font", ignoreCase = true) && element.hasAttr("color"))
+
+private fun inherits_ink_from(descendant: Element, owner: Element): Boolean {
+    var node: Element? = descendant.parent()
+    while (node != null && node !== owner) {
+        if (declares_own_color(node)) return false
+        node = node.parent()
+    }
+    return node === owner
+}
+
+private val INLINE_BACKGROUND_COLOR = Regex("(?:^|;)\\s*background(?:-color)?\\s*:\\s*([^;]+)", RegexOption.IGNORE_CASE)
+
+private fun paints_light_or_image(element: Element): Boolean {
+    if (element.hasAttr("background")) return true
+    val style = element.attr("style")
+    if (declares_background_image(style)) return true
+    val bgcolor = element.attr("bgcolor").trim()
+    val declared = INLINE_BACKGROUND_COLOR.find(style)?.groupValues?.get(1)?.let { IMPORTANT_COLOR_FLAG.replace(it, "").trim() }
+    val surface = declared?.takeIf { color_luminance(it) != null } ?: bgcolor.ifEmpty { null } ?: return false
+    val luminance = color_luminance(surface) ?: return false
+    return luminance >= 0.35
+}
+
+private fun keep_ink_on_painted_descendants(owner: Element, ink: String) {
+    for (descendant in owner.select("[style],[bgcolor],[background]")) {
+        if (descendant === owner) continue
+        if (!paints_background(descendant)) continue
+        if (!paints_light_or_image(descendant)) continue
+        if (declares_own_color(descendant)) continue
+        if (!inherits_ink_from(descendant, owner)) continue
+        val style = descendant.attr("style").trim().trimEnd(';')
+        descendant.attr("style", if (style.isEmpty()) "color:$ink" else "$style;color:$ink")
+    }
+}
+
+private fun reads_dark_ink(raw: String): Boolean {
+    val luminance = color_luminance(IMPORTANT_COLOR_FLAG.replace(raw, "")) ?: return false
+    return luminance < 0.35
 }
 
 private fun repair_dark_text_contrast(root: Element) {
@@ -597,10 +643,20 @@ private fun repair_dark_text_contrast(root: Element) {
         val match = INLINE_COLOR.find(style) ?: continue
         if (!element.hasText()) continue
         if (declares_background(element)) continue
-        if (contains_background(element)) continue
-        val luminance = relative_luminance(match.groupValues[2]) ?: continue
-        if (luminance >= 0.35) continue
-        element.attr("style", style.replaceRange(match.range, "${match.groupValues[1]}color:#e8e8e8"))
+        val declared = match.groupValues[2]
+        if (!reads_dark_ink(declared)) continue
+        val ink = IMPORTANT_COLOR_FLAG.replace(declared, "").trim()
+        val important = if (IMPORTANT_COLOR_FLAG.containsMatchIn(declared)) "!important" else ""
+        keep_ink_on_painted_descendants(element, ink)
+        element.attr("style", style.replaceRange(match.range, "${match.groupValues[1]}color:$REPAIRED_DARK_INK$important"))
+    }
+    for (element in root.select("font[color]")) {
+        if (!element.hasText()) continue
+        if (declares_background(element)) continue
+        val ink = element.attr("color").trim()
+        if (!reads_dark_ink(ink)) continue
+        keep_ink_on_painted_descendants(element, ink)
+        element.attr("color", REPAIRED_DARK_INK)
     }
 }
 
