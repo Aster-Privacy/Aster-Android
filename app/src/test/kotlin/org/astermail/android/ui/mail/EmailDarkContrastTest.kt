@@ -384,4 +384,53 @@ class EmailDarkContrastTest {
         assertFalse(content.html().contains("ivory"))
         assert_consistent("named light backgrounds", html)
     }
+
+    private val forwarded_notice =
+        "---------- Forwarded message ---------<br>From: Aster Mail &lt;noreply@astermail.org&gt;<br>" +
+            "Date: Fri, Oct 17, 2026 at 9:00 AM<br>Subject: Your Aster Mail plan is set to end<br><br>" +
+            "<div style=\"font-family:sans-serif;color:#1a1a1a;max-width:560px;margin:0 auto;padding:24px\">" +
+            "<p>Hi,</p><p>Your plan is scheduled to end on November 1.</p>" +
+            "<p><a href=\"https://app.astermail.org/settings/billing\" style=\"display:inline-block;padding:12px 20px;" +
+            "background:#5b4bdb;color:#ffffff;border-radius:8px\">Keep my plan</a></p>" +
+            "<p style=\"font-size:13px;color:#666\">You get this because you have an account.</p></div>"
+
+    @Test
+    fun a_forward_that_starts_with_text_is_rendered_as_html_in_dark() {
+        val body = EmailHtmlSanitizer.sanitize(forwarded_notice)
+        assert_consistent_in_dark("forwarded notice", body)
+        val doc = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
+        val content = doc.getElementById("m")!!
+        assertTrue(dark_ink(content).isEmpty())
+        val button = content.select("a").first { it.text() == "Keep my plan" }
+        assertTrue(button.attr("style").contains("color:#ffffff"))
+        assertTrue(button.attr("style").contains("#5b4bdb"))
+    }
+
+    @Test
+    fun a_forward_that_starts_with_text_keeps_light_theme_ink() {
+        val body = EmailHtmlSanitizer.sanitize(forwarded_notice)
+        val doc = Jsoup.parse(render(body, forced = false, theme_dark = false))
+        assertFalse(doc.selectFirst("html")!!.hasAttr("data-dark"))
+        assertTrue(doc.getElementById("m")!!.html().contains("#1a1a1a"))
+    }
+
+    @Test
+    fun named_important_and_font_dark_ink_is_lightened_on_the_dark_page() {
+        val body = "<div style=\"color:black !important\">Named ink</div>" +
+            "<p style=\"color:#1a1a1aff\">Long hex ink</p>" +
+            "<p style=\"color:hsl(0, 0%, 10%)\">Hsl ink</p>" +
+            "<font color=\"#222222\">Font ink</font>"
+        val doc = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
+        assertTrue(dark_ink(doc.getElementById("m")!!).isEmpty())
+    }
+
+    @Test
+    fun a_dark_child_surface_inherits_the_lightened_ink() {
+        val body = "<div style=\"color:#1a1a1a\">Intro <span style=\"background-color:#2b1f5c\">Tagged</span></div>"
+        val content = Jsoup.parse(render(body, forced = false)).getElementById("m")!!
+        assertTrue(content.select("div").last()!!.attr("style").contains("color:#e8e8e8"))
+        assertEquals("background-color:#2b1f5c", content.selectFirst("span")!!.attr("style"))
+    }
 }

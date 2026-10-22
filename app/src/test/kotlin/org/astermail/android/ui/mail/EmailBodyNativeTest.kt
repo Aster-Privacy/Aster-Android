@@ -112,14 +112,14 @@ class EmailBodyNativeTest {
     }
 
     @Test
-    fun simple_dark_keeps_dark_wrapper_text_around_a_light_box() {
+    fun simple_dark_keeps_dark_ink_inside_a_light_box() {
         val prepared = prepare(
-            "<div style=\"color:#333\"><div style=\"background:#f4f4f4\">hello</div></div>",
+            "<div style=\"color:#333\">outside<div style=\"background:#f4f4f4\">hello</div></div>",
             simple_dark = true,
         )
 
-        assertTrue(prepared.contains("color:#333"))
-        assertFalse(prepared.contains("#e8e8e8"))
+        assertTrue(prepared.contains("<div style=\"color:#e8e8e8\">outside"))
+        assertTrue(prepared.contains("<div style=\"background:#f4f4f4;color:#333\">hello"))
     }
 
     @Test

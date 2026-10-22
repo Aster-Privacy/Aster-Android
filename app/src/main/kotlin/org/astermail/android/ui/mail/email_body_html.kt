@@ -22,6 +22,7 @@
 package org.astermail.android.ui.mail
 
 import org.astermail.android.mail.body_starts_with
+import org.astermail.android.mail.looks_like_html_body
 
 private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""[4-9]\d{2,3}""")
 
@@ -85,11 +86,10 @@ internal fun build_email_html(
     email_font_id: String? = null,
     text_zoom: Int = 100,
     underline_links: Boolean = false,
-    scrollable: Boolean = false,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
-    val is_html_body = body_starts_with(body, "<")
+    val is_html_body = body_starts_with(body, "<") || looks_like_html_body(body)
     val has_table = is_html_body && body.contains(Regex("<table", RegexOption.IGNORE_CASE))
     val has_newsletter_layout = has_table && (
         body.contains(Regex("style\\s*=\\s*[\"'][^\"']*width\\s*:\\s*[456789]\\d{2}px", RegexOption.IGNORE_CASE)) ||
@@ -220,7 +220,7 @@ $viewport_meta
 $color_scheme_meta
 <style>
 html{height:auto!important;min-height:0!important;background-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;overflow-y:${if (scrollable) "auto" else "hidden"}}
+body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;overflow-y:auto}
 *{box-sizing:border-box}
 [height="100%"],[height='100%']{height:auto!important}
 [style*="height:100%"],[style*="height: 100%"],[style*="height:100vh"],[style*="height: 100vh"],[style*="height:100dvh"],[style*="height: 100dvh"]{height:auto!important;min-height:0!important}

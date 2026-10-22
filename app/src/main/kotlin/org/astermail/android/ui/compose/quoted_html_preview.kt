@@ -164,7 +164,6 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                     email_font_id = email_font_id,
                     text_zoom = text_zoom,
                     underline_links = underline_links,
-                    scrollable = true,
                 )
             }.getOrNull()
         }
