@@ -94,3 +94,11 @@ fun compute_routing_address_hash_for(local_part: String, domain: String): String
     val hash = MessageDigest.getInstance("SHA-256").digest(data)
     return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
 }
+
+fun compute_legacy_routing_address_hash_for(local_part: String, domain: String): String? {
+    val lowered = local_part.trim().lowercase(Locale.ROOT)
+    if (!lowered.contains('.')) return null
+    val data = "$lowered@${domain.lowercase(Locale.ROOT)}".toByteArray(Charsets.UTF_8)
+    val hash = MessageDigest.getInstance("SHA-256").digest(data)
+    return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+}
