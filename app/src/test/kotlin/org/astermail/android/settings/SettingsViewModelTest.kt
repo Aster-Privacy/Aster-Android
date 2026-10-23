@@ -833,6 +833,144 @@ class SettingsViewModelTest {
         assertEquals("user@aster.cx", vm.state.value.twin_address?.address)
     }
 
+    private fun sealed_alias(
+        id: String,
+        local_part: String,
+        routing_hash: String,
+        domain: String = "aster.cx",
+        orphaned: Boolean = false,
+        retained: Boolean = false,
+    ): AliasInfo {
+        val (enc, nonce) = encrypt_alias_field_with(session_key_store, local_part)
+        return AliasInfo(
+            id = id,
+            encrypted_local_part = enc,
+            local_part_nonce = nonce,
+            routing_address_hash = routing_hash,
+            orphaned_by_key_rotation = orphaned,
+            is_retained_primary = retained,
+            domain = domain,
+        )
+    }
+
+    @Test
+    fun `legacy routing hash is the dotted address and absent without a dot`() {
+        assertEquals(
+            routing_hash_of("jesper.floymo@aster.cx"),
+            compute_legacy_routing_address_hash_for(" Jesper.Floymo ", "Aster.CX"),
+        )
+        assertEquals(null, compute_legacy_routing_address_hash_for("jesperfloymo", "aster.cx"))
+        assertEquals(
+            routing_hash_of("jesperfloymo@aster.cx"),
+            compute_routing_address_hash_for("jesper.floymo", "aster.cx"),
+        )
+    }
+
+    @Test
+    fun `load_aliases normalizes a dotted alias that still has the legacy routing hash`() = runTest {
+        val legacy = sealed_alias("a1", "jesper.floymo", routing_hash_of("jesper.floymo@aster.cx"))
+        val current = sealed_alias("a2", "jesperfloymo", routing_hash_of("jesperfloymo@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returnsMany listOf(
+            AliasListResponse(listOf(legacy, current)),
+            AliasListResponse(listOf(current)),
+        )
+        coEvery { settings_api.normalize_alias(any(), any()) } returns
+            org.astermail.android.api.settings.NormalizeAliasResponse(status = "merged", alias_id = "a2")
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        val request = io.mockk.slot<org.astermail.android.api.settings.NormalizeAliasRequest>()
+        coVerify(exactly = 1) { settings_api.normalize_alias("a1", capture(request)) }
+        coVerify(exactly = 0) { settings_api.normalize_alias("a2", any()) }
+        assertEquals("jesper.floymo", request.captured.local_part)
+        coVerify(exactly = 2) { settings_api.list_aliases(limit = any(), offset = any()) }
+        assertEquals(listOf("a2"), vm.state.value.aliases.map { it.id })
+    }
+
+    @Test
+    fun `load_aliases skips aliases that cannot or need not be normalized`() = runTest {
+        val aliases = listOf(
+            sealed_alias("a1", "jesper.floymo", routing_hash_of("jesperfloymo@aster.cx")),
+            sealed_alias("a2", "plain", routing_hash_of("plain@aster.cx")),
+            sealed_alias("a3", "old.one", routing_hash_of("old.one@aster.cx"), orphaned = true),
+            sealed_alias("a4", "kept.primary", routing_hash_of("kept.primary@aster.cx"), retained = true),
+            sealed_alias("a5", "no.hash", ""),
+            AliasInfo(
+                id = "a6",
+                encrypted_local_part = java.util.Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
+                local_part_nonce = java.util.Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
+                routing_address_hash = routing_hash_of("x.y@aster.cx"),
+                domain = "aster.cx",
+            ),
+        )
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { settings_api.normalize_alias(any(), any()) }
+        assertEquals(6, vm.state.value.aliases.size)
+    }
+
+    @Test
+    fun `load_aliases normalizes once per session and keeps the list when normalize fails`() = runTest {
+        val legacy = sealed_alias("a1", "jesper.floymo", routing_hash_of("jesper.floymo@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(legacy))
+        coEvery { settings_api.normalize_alias(any(), any()) } throws RuntimeException("offline")
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+        vm.load_aliases(force = true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { settings_api.normalize_alias(any(), any()) }
+        coVerify(exactly = 2) { settings_api.list_aliases(limit = any(), offset = any()) }
+        assertEquals(listOf("a1"), vm.state.value.aliases.map { it.id })
+        assertFalse(vm.state.value.aliases_loading)
+    }
+
+    @Test
+    fun `load_aliases does not reload when normalize reports a conflict`() = runTest {
+        val legacy = sealed_alias("a1", "jesper.floymo", routing_hash_of("jesper.floymo@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(legacy))
+        coEvery { settings_api.normalize_alias(any(), any()) } returns
+            org.astermail.android.api.settings.NormalizeAliasResponse(status = "conflict", alias_id = "a1")
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { settings_api.list_aliases(limit = any(), offset = any()) }
+    }
+
+    @Test
+    fun `create and availability send the legacy routing hash only for dotted addresses`() = runTest {
+        coEvery { settings_api.check_alias_availability(any()) } returns
+            org.astermail.android.api.settings.CheckAliasAvailabilityResponse(available = false)
+        coEvery { settings_api.create_alias(any()) } returns
+            org.astermail.android.api.settings.CreateAliasResponse(id = "new", success = true)
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
+        every { session_key_store.get_identity_key() } returns null
+
+        vm.check_alias_availability("Jesper.Floymo", "aster.cx")
+        vm.check_alias_availability("jesperfloymo", "aster.cx")
+        vm.create_alias_now("Jesper.Floymo", "aster.cx")
+        advanceUntilIdle()
+
+        val checks = mutableListOf<org.astermail.android.api.settings.CheckAliasAvailabilityRequest>()
+        coVerify(exactly = 2) { settings_api.check_alias_availability(capture(checks)) }
+        assertEquals(routing_hash_of("jesper.floymo@aster.cx"), checks[0].legacy_routing_address_hash)
+        assertEquals(routing_hash_of("jesperfloymo@aster.cx"), checks[0].routing_address_hash)
+        assertEquals(null, checks[1].legacy_routing_address_hash)
+        val created = io.mockk.slot<org.astermail.android.api.settings.CreateAliasRequest>()
+        coVerify { settings_api.create_alias(capture(created)) }
+        assertEquals(routing_hash_of("jesper.floymo@aster.cx"), created.captured.legacy_routing_address_hash)
+    }
+
     private fun routing_hash_of(address: String): String =
         java.util.Base64.getEncoder().encodeToString(
             java.security.MessageDigest.getInstance("SHA-256")

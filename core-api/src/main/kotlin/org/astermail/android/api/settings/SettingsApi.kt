@@ -286,6 +286,18 @@ data class CreateAliasResponse(
 data class CheckAliasAvailabilityRequest(
     val alias_address_hash: String,
     val routing_address_hash: String,
+    val legacy_routing_address_hash: String? = null,
+)
+
+@Serializable
+data class NormalizeAliasRequest(
+    val local_part: String,
+)
+
+@Serializable
+data class NormalizeAliasResponse(
+    val status: String = "",
+    val alias_id: String = "",
 )
 
 @Serializable
@@ -440,6 +452,7 @@ data class CreateAliasRequest(
     val local_part_nonce: String,
     val alias_address_hash: String,
     val routing_address_hash: String? = null,
+    val legacy_routing_address_hash: String? = null,
     val domain: String,
     val encrypted_display_name: String? = null,
     val display_name_nonce: String? = null,
@@ -454,6 +467,7 @@ data class BulkCreateAliasItem(
     val local_part_nonce: String,
     val alias_address_hash: String,
     val routing_address_hash: String? = null,
+    val legacy_routing_address_hash: String? = null,
     val domain: String,
     val encrypted_display_name: String? = null,
     val display_name_nonce: String? = null,
@@ -757,6 +771,7 @@ interface SettingsApi {
     suspend fun bulk_create_aliases(request: BulkCreateAliasRequest): BulkCreateAliasResponse
     suspend fun bulk_add_domain_addresses(domain_id: String, request: BulkAddAddressesRequest): BulkAddAddressesResponse
     suspend fun update_alias(alias_id: String, request: UpdateAliasRequest): Boolean
+    suspend fun normalize_alias(alias_id: String, request: NormalizeAliasRequest): NormalizeAliasResponse
     suspend fun toggle_alias_pin(alias_id: String): Boolean
     suspend fun update_alias_delivery_label(alias_id: String, delivery_label_token: String?): Boolean
     suspend fun run_alias_on_existing(alias_id: String): AliasRunStatusResponse
@@ -1004,6 +1019,15 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         request: BulkAddAddressesRequest,
     ): BulkAddAddressesResponse {
         val response = client.http.post("${client.base_url}/api/addresses/v1/domains/$domain_id/bulk-addresses") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun normalize_alias(alias_id: String, request: NormalizeAliasRequest): NormalizeAliasResponse {
+        val response = client.http.post("${client.base_url}/api/addresses/v1/aliases/$alias_id/normalize") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

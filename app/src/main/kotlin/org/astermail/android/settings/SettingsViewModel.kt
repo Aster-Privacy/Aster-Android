@@ -145,6 +145,7 @@ import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
 import org.astermail.android.api.settings.RekeyAliasEntry
 import org.astermail.android.api.settings.RekeyAliasesRequest
 import org.astermail.android.api.settings.CreateAliasRequest
+import org.astermail.android.api.settings.NormalizeAliasRequest
 import org.astermail.android.api.settings.CreateDirectoryRequest
 import org.astermail.android.api.settings.CreateDomainAddressRequest
 import org.astermail.android.api.settings.CustomDomain
@@ -387,6 +388,7 @@ class SettingsViewModel @Inject constructor(
     private var last_product_updates_load_ms = 0L
     private var last_profile_load_ms = 0L
     private var last_aliases_load_ms = 0L
+    private var legacy_routing_heal_done = false
     private var last_mail_rules_load_ms = 0L
     private var last_domain_addresses_load_ms = 0L
     private var last_storage_load_ms = 0L
@@ -1369,6 +1371,7 @@ class SettingsViewModel @Inject constructor(
                     is_loading = false,
                     aliases_loading = false,
                 )
+                if (heal_legacy_routing_hashes(decrypted)) load_aliases(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 last_aliases_load_ms = 0L
@@ -2776,6 +2779,7 @@ class SettingsViewModel @Inject constructor(
                 CheckAliasAvailabilityRequest(
                     alias_address_hash = addr_hash,
                     routing_address_hash = routing_hash,
+                    legacy_routing_address_hash = compute_legacy_routing_address_hash(local_part, domain),
                 )
             )
             if (response.available) AliasAvailability.Available else AliasAvailability.Taken
@@ -3089,6 +3093,7 @@ class SettingsViewModel @Inject constructor(
                     local_part_nonce = local_nonce,
                     alias_address_hash = addr_hash,
                     routing_address_hash = routing_hash,
+                    legacy_routing_address_hash = compute_legacy_routing_address_hash(local_part, domain),
                     domain = domain,
                     encrypted_display_name = name_pair?.first,
                     display_name_nonce = name_pair?.second,
@@ -3156,6 +3161,7 @@ class SettingsViewModel @Inject constructor(
                     local_part_nonce = local_nonce,
                     alias_address_hash = compute_alias_address_hash(normalized, row.domain),
                     routing_address_hash = compute_routing_address_hash(normalized, row.domain),
+                    legacy_routing_address_hash = compute_legacy_routing_address_hash(normalized, row.domain),
                     domain = row.domain,
                     encrypted_display_name = name_pair?.first,
                     display_name_nonce = name_pair?.second,
@@ -6750,6 +6756,32 @@ class SettingsViewModel @Inject constructor(
 
     private fun compute_routing_address_hash(local_part: String, domain: String): String =
         compute_routing_address_hash_for(local_part, domain)
+
+    private fun compute_legacy_routing_address_hash(local_part: String, domain: String): String? =
+        compute_legacy_routing_address_hash_for(local_part, domain)
+
+    private suspend fun heal_legacy_routing_hashes(aliases: List<AliasInfo>): Boolean {
+        if (legacy_routing_heal_done) return false
+        legacy_routing_heal_done = true
+        var changed = false
+        aliases.forEach { alias ->
+            if (alias.decryption_failed || alias.orphaned_by_key_rotation || alias.is_retained_primary) return@forEach
+            if (alias.routing_address_hash.isBlank() || alias.domain.isBlank()) return@forEach
+            val local_part = alias.encrypted_local_part.trim().lowercase(java.util.Locale.ROOT)
+            if (local_part.isBlank() || !local_part.contains('.')) return@forEach
+            if (alias.routing_address_hash == compute_routing_address_hash(local_part, alias.domain)) return@forEach
+            try {
+                val response = settings_api.normalize_alias(alias.id, NormalizeAliasRequest(local_part = local_part))
+                if (response.status == "normalized" || response.status == "merged") changed = true
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "normalize_alias failed", t)
+                }
+            }
+        }
+        return changed
+    }
 
     private fun compute_domain_address_hash(local_part: String, domain: String): String {
         val enc_key = derive_encryption_key()
