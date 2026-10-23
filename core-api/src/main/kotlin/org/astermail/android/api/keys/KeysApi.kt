@@ -151,6 +151,7 @@ data class ExternalKeyInfo(
     val fingerprint: String? = null,
     val source: String? = null,
     val expires_at: String? = null,
+    val will_encrypt: Boolean = false,
     val fingerprint_change: ExternalKeyFingerprintChange? = null,
 )
 

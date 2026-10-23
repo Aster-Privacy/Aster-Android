@@ -314,6 +314,7 @@ class RecoveryViewModel @Inject constructor(
                 val new_password_hash = withContext(compute_dispatcher) {
                     CryptoNative.derive_pbkdf2_hash(password_bytes, new_salt, PBKDF2_ITERATIONS)
                 }
+                val new_password_hash_v2 = LoginProof.derive_v2(new_password_hash)
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_generating_codes))
                 val new_codes = generate_recovery_codes()
@@ -352,6 +353,7 @@ class RecoveryViewModel @Inject constructor(
                     CompleteRecoveryRequest(
                         recovery_token = token,
                         new_password_hash = base64_encode(new_password_hash),
+                        new_password_hash_v2 = base64_encode(new_password_hash_v2),
                         new_password_salt = base64_encode(new_salt),
                         new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
                         new_vault_nonce = base64_encode(new_envelope.vault_nonce),
@@ -364,6 +366,7 @@ class RecoveryViewModel @Inject constructor(
                 )
 
                 new_password_hash.fill(0)
+                new_password_hash_v2.fill(0)
                 new_recovery_key.fill(0)
                 vault_bytes.fill(0)
                 decrypted_vault = null

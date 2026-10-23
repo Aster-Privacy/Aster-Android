@@ -4045,8 +4045,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun export_private_key_now(password: String): String? {
-        val hash = auth_repository.derive_password_hash_b64(password) ?: return null
         return try {
+            val hash = auth_repository.derive_password_hash_b64(password) ?: return null
             val result = encryption_api.export_private_key(
                 org.astermail.android.api.encryption.ExportKeyRequest(
                     include_private = true,

@@ -3451,4 +3451,5 @@
     <string name="domain_hint_dkim_other_key">Tu registro DKIM contiene otra clave. Sustituye su valor por el que se muestra aquí.</string>
     <string name="domain_reason_dkim_missing_or_stale">El correo que envías no va firmado, así que parece falsificado. Añade el registro de firma para que se confíe en tus mensajes.</string>
     <string name="domain_check_generic_failure">Este registro todavía no está bien configurado. Añade el registro siguiente para solucionarlo.</string>
+    <string name="error_auth_salt_collision">El inicio de sesión se detuvo porque el servidor envió un valor no seguro, así que no se desbloqueó nada. Contacta con soporte antes de volver a intentarlo.</string>
 </resources>

@@ -62,6 +62,7 @@ data class SessionListResponse(
 data class ChangePasswordRequest(
     val current_password_hash: String,
     val new_password_hash: String,
+    val new_password_hash_v2: String? = null,
     val new_password_salt: String,
     val new_encrypted_vault: String,
     val new_vault_nonce: String,

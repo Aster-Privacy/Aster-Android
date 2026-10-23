@@ -3431,4 +3431,5 @@
     <string name="domain_hint_dkim_other_key">DKIM kaydınızda farklı bir anahtar var. Değerini burada gösterilenle değiştirin.</string>
     <string name="domain_reason_dkim_missing_or_stale">Giden postanız imzasız olduğu için sahte görünüyor. İmzalama kaydını ekleyin ki postanız güvenilir olsun.</string>
     <string name="domain_check_generic_failure">Bu kayıt henüz doğru ayarlanmadı. Düzeltmek için aşağıdaki kaydı ekleyin.</string>
+    <string name="error_auth_salt_collision">Sunucu güvenli olmayan bir değer gönderdiği için oturum açma durduruldu ve hiçbir şeyin kilidi açılmadı. Yeniden denemeden önce destek ile iletişime geç.</string>
 </resources>
