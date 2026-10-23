@@ -125,6 +125,25 @@ class RatchetDecryptor @Inject constructor(
         }
     }
 
+    fun settle_cached_sender(
+        body: String,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String?,
+    ) {
+        if (message_id.isNullOrBlank()) return
+        if (!plaintext_cache.is_sender_unconfirmed(message_id)) return
+        if (plaintext_cache.is_sender_unauthenticated(message_id)) return
+        val envelope = parse_envelope(body) ?: return
+        val address = our_addresses.firstOrNull { address ->
+            envelope.recipients.keys.any { it.equals(address, ignoreCase = true) }
+        } ?: our_addresses.firstOrNull() ?: return
+        val conversation_id = X3dh.derive_conversation_id(address, sender_email)
+        val continuity = sender_continuity(conversation_id, sender_email, envelope.sender_identity_key)
+        if (continuity != SenderIdentityContinuity.KNOWN) return
+        plaintext_cache.confirm_sender(message_id)
+    }
+
     fun schedule_escrow_upgrade(
         body: String,
         our_addresses: List<String>,
@@ -150,10 +169,11 @@ class RatchetDecryptor @Inject constructor(
         if (!escrow_upgrade_attempted.add(message_id)) return null
         if (!looks_like_ratchet_envelope(body)) return null
         val envelope = parse_envelope(body) ?: return null
-        for (recipient in escrow_candidates(envelope, our_addresses, sender_email)) {
-            val escrowed = fetch_escrow(message_id, recipient) ?: continue
-            cache_plaintext(message_id, escrowed)
-            return escrowed
+        for ((address, recipient) in escrow_candidates(envelope, our_addresses, sender_email)) {
+            val conversation_id = X3dh.derive_conversation_id(address, sender_email)
+            val escrowed = fetch_escrow(message_id, recipient, sender_email, conversation_id) ?: continue
+            cache_plaintext(message_id, escrowed.plaintext, unconfirmed_sender = escrowed.unconfirmed_sender)
+            return escrowed.plaintext
         }
         return null
     }
@@ -162,7 +182,7 @@ class RatchetDecryptor @Inject constructor(
         envelope: RatchetEnvelope,
         our_addresses: List<String>,
         sender_email: String,
-    ): List<RatchetRecipientData> {
+    ): List<Pair<String, RatchetRecipientData>> {
         val owned_lower = our_addresses.map { it.trim().lowercase(java.util.Locale.ROOT) }.filter { it.isNotBlank() }.toSet()
         val sender_lower = sender_email.trim().lowercase(java.util.Locale.ROOT)
         val (owned, others) = envelope.recipients.entries.partition {
@@ -171,13 +191,18 @@ class RatchetDecryptor @Inject constructor(
         val fallback = others
             .filter { it.key.trim().lowercase(java.util.Locale.ROOT) != sender_lower }
             .take(MAX_ALIAS_RECIPIENT_ATTEMPTS)
-        return (owned + fallback).map { it.value }
+        return (owned + fallback).map { it.key to it.value }
     }
 
-    private suspend fun fetch_escrow(message_id: String?, recipient: RatchetRecipientData): String? {
+    private suspend fun fetch_escrow(
+        message_id: String?,
+        recipient: RatchetRecipientData,
+        sender_email: String,
+        conversation_id: String,
+    ): EscrowedPlaintext? {
         if (message_id.isNullOrBlank()) return null
         return try {
-            escrow.fetch(MessageEscrow.dedupe_key(message_id, recipient.header))
+            escrow.fetch_bound(MessageEscrow.dedupe_key(message_id, recipient.header), sender_email, conversation_id)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -185,10 +210,23 @@ class RatchetDecryptor @Inject constructor(
         }
     }
 
-    private fun upload_escrow(message_id: String?, recipient: RatchetRecipientData, plaintext: String) {
+    private fun upload_escrow(
+        message_id: String?,
+        recipient: RatchetRecipientData,
+        plaintext: String,
+        sender_email: String,
+        conversation_id: String,
+        unconfirmed_sender: Boolean,
+    ) {
         if (message_id.isNullOrBlank()) return
         runCatching {
-            escrow.upload_in_background(MessageEscrow.dedupe_key(message_id, recipient.header), plaintext)
+            escrow.upload_bound_in_background(
+                MessageEscrow.dedupe_key(message_id, recipient.header),
+                plaintext,
+                sender_email,
+                conversation_id,
+                unconfirmed_sender,
+            )
         }
     }
 
@@ -256,6 +294,7 @@ class RatchetDecryptor @Inject constructor(
                 identity_pins.is_replayed_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
             }.getOrDefault(false)
             val replayed_bootstrap = is_fresh_bootstrap && state != null && bootstrap_already_accepted
+            val continuity = sender_continuity(conversation_id, sender_email, envelope.sender_identity_key)
             if (state != null && is_fresh_bootstrap && !replayed_bootstrap) {
                 state = null
             }
@@ -329,10 +368,10 @@ class RatchetDecryptor @Inject constructor(
             }
 
             if (plaintext == null) {
-                val escrowed = fetch_escrow(message_id, recipient)
+                val escrowed = fetch_escrow(message_id, recipient, sender_email, conversation_id)
                 if (escrowed != null) {
-                    cache_plaintext(message_id, escrowed)
-                    return@with_lock escrowed
+                    cache_plaintext(message_id, escrowed.plaintext, unconfirmed_sender = escrowed.unconfirmed_sender)
+                    return@with_lock escrowed.plaintext
                 }
                 val recovered = try_recovery_lane(
                     recipient,
@@ -348,8 +387,13 @@ class RatchetDecryptor @Inject constructor(
                     envelope.sender_identity_key,
                 )
                 if (final_recovery != null) {
-                    if (RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted)) {
+                    if (continuity != SenderIdentityContinuity.CHANGED &&
+                        RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted)
+                    ) {
                         record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
+                    }
+                    if (continuity == SenderIdentityContinuity.CHANGED) {
+                        flag_sender_rotation(conversation_id, sender_email, envelope.sender_identity_key)
                     }
                     cache_plaintext(message_id, final_recovery, sender_unauthenticated = true)
                     return@with_lock final_recovery
@@ -359,7 +403,9 @@ class RatchetDecryptor @Inject constructor(
             }
 
             val sighting = if (chained) IdentitySighting.CHAINED else IdentitySighting.BOOTSTRAP
-            if (RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)) {
+            if (continuity != SenderIdentityContinuity.CHANGED &&
+                RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)
+            ) {
                 record_identity_pin(conversation_id, sender_email, envelope.sender_identity_key)
             }
             if (is_fresh_bootstrap || sighting == IdentitySighting.BOOTSTRAP) {
@@ -376,8 +422,14 @@ class RatchetDecryptor @Inject constructor(
 
             val final_state = state ?: return@with_lock null
             val resolved = plaintext ?: return@with_lock null
-            cache_plaintext(message_id, resolved)
-            upload_escrow(message_id, recipient, resolved)
+            val unconfirmed_sender = continuity != SenderIdentityContinuity.KNOWN
+            if (continuity == SenderIdentityContinuity.CHANGED) {
+                flag_sender_rotation(conversation_id, sender_email, envelope.sender_identity_key)
+            } else {
+                remember_sender_identity(sender_email, envelope.sender_identity_key)
+            }
+            cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender)
+            upload_escrow(message_id, recipient, resolved, sender_email, conversation_id, unconfirmed_sender)
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
             resolved
@@ -388,9 +440,57 @@ class RatchetDecryptor @Inject constructor(
         message_id: String?,
         plaintext: String,
         sender_unauthenticated: Boolean = false,
+        unconfirmed_sender: Boolean = false,
     ) {
         if (message_id.isNullOrBlank()) return
-        runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated) }
+        runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated, unconfirmed_sender) }
+    }
+
+    private fun sender_continuity(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key: String,
+    ): SenderIdentityContinuity {
+        if (is_own_identity_key(sender_identity_key)) return SenderIdentityContinuity.KNOWN
+        return runCatching {
+            identity_pins.sender_continuity(conversation_id, sender_email, sender_identity_key)
+        }.getOrNull() ?: SenderIdentityContinuity.NEW
+    }
+
+    private fun is_own_identity_key(sender_identity_key: String): Boolean {
+        val candidate = sender_identity_key.trim()
+        if (candidate.isEmpty()) return false
+        val current = runCatching { session_key_store.get_ratchet_identity_public_b64() }.getOrNull()
+        if (current?.trim() == candidate) return true
+        val previous_json = runCatching { session_key_store.get_ratchet_previous_keys_json() }.getOrNull()
+        if (previous_json.isNullOrBlank()) return false
+        return try {
+            val entries = org.json.JSONArray(previous_json)
+            (0 until entries.length()).any { index ->
+                entries.optJSONObject(index)?.optString("ratchet_identity_public", "")?.trim() == candidate
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private suspend fun remember_sender_identity(sender_email: String, sender_identity_key: String) {
+        runCatching { identity_pins.remember_sender_identity(sender_email, sender_identity_key) }
+    }
+
+    private suspend fun flag_sender_rotation(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key: String,
+    ) {
+        runCatching {
+            identity_pins.flag_sender_rotation(
+                conversation_id = conversation_id,
+                sender_email = sender_email,
+                sender_identity_key_b64 = sender_identity_key,
+                observed_at = System.currentTimeMillis(),
+            )
+        }
     }
 
     private suspend fun consume_pq_prekey(recipient: RatchetRecipientData) {

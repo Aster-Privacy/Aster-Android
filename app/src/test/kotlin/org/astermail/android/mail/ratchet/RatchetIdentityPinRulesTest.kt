@@ -157,4 +157,51 @@ class RatchetIdentityPinRulesTest {
             RatchetIdentityPinRules.decide_owner_key("AA", "AA", PrekeyBindingResult.INVALID),
         )
     }
+
+    @Test
+    fun `a sender key in the stored history is known`() {
+        assertEquals(
+            SenderIdentityContinuity.KNOWN,
+            RatchetIdentityPinRules.continuity(listOf("fp-a", "fp-b"), null, "fp-b"),
+        )
+    }
+
+    @Test
+    fun `a sender key matching the pin is known`() {
+        assertEquals(
+            SenderIdentityContinuity.KNOWN,
+            RatchetIdentityPinRules.continuity(emptyList(), "fp-a", "fp-a"),
+        )
+    }
+
+    @Test
+    fun `a sender key outside the history and pin is changed`() {
+        assertEquals(
+            SenderIdentityContinuity.CHANGED,
+            RatchetIdentityPinRules.continuity(listOf("fp-a"), null, "fp-c"),
+        )
+        assertEquals(
+            SenderIdentityContinuity.CHANGED,
+            RatchetIdentityPinRules.continuity(emptyList(), "fp-a", "fp-c"),
+        )
+    }
+
+    @Test
+    fun `a sender with no history and no pin is new`() {
+        assertEquals(SenderIdentityContinuity.NEW, RatchetIdentityPinRules.continuity(emptyList(), null, "fp-a"))
+        assertEquals(SenderIdentityContinuity.NEW, RatchetIdentityPinRules.continuity(emptyList(), "", "fp-a"))
+        assertEquals(SenderIdentityContinuity.NEW, RatchetIdentityPinRules.continuity(listOf("fp-a"), "fp-a", null))
+    }
+
+    @Test
+    fun `remembered fingerprints are deduplicated and bounded`() {
+        assertEquals(
+            listOf("fp-b", "fp-a"),
+            RatchetIdentityPinRules.remember_fingerprint(listOf("fp-a", "fp-b"), "fp-a", 16),
+        )
+        assertEquals(
+            listOf("fp-b", "fp-c"),
+            RatchetIdentityPinRules.remember_fingerprint(listOf("fp-a", "fp-b"), "fp-c", 2),
+        )
+    }
 }

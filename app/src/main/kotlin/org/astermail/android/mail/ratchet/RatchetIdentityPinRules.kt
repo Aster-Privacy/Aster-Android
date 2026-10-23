@@ -40,6 +40,12 @@ enum class IdentitySighting {
     RECOVERY_LANE,
 }
 
+enum class SenderIdentityContinuity {
+    KNOWN,
+    NEW,
+    CHANGED,
+}
+
 object RatchetIdentityPinRules {
 
     private const val account_prefix = "acct/"
@@ -73,6 +79,25 @@ object RatchetIdentityPinRules {
         binding == PrekeyBindingResult.VERIFIED -> OwnerKeyDecision.ACCEPT
         else -> OwnerKeyDecision.UNTRUSTED
     }
+
+    fun continuity(
+        remembered_fingerprints: List<String>,
+        pinned_fingerprint: String?,
+        current_fingerprint: String?,
+    ): SenderIdentityContinuity {
+        if (current_fingerprint.isNullOrBlank()) return SenderIdentityContinuity.NEW
+        if (current_fingerprint in remembered_fingerprints) return SenderIdentityContinuity.KNOWN
+        val pinned = pinned_fingerprint?.takeIf { it.isNotBlank() }
+        if (pinned == current_fingerprint) return SenderIdentityContinuity.KNOWN
+        return if (remembered_fingerprints.isNotEmpty() || pinned != null) {
+            SenderIdentityContinuity.CHANGED
+        } else {
+            SenderIdentityContinuity.NEW
+        }
+    }
+
+    fun remember_fingerprint(remembered_fingerprints: List<String>, fingerprint: String, limit: Int): List<String> =
+        (remembered_fingerprints.filter { it != fingerprint } + fingerprint).takeLast(limit)
 
     fun pq_prekey_accepts(consumed_by_ephemeral_key: String?, ephemeral_key: String): Boolean =
         consumed_by_ephemeral_key.isNullOrBlank() || consumed_by_ephemeral_key == ephemeral_key

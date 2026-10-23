@@ -21,13 +21,16 @@
 
 package org.astermail.android.mail.ratchet
 
+import android.content.SharedPreferences
 import android.util.Base64
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
@@ -37,6 +40,7 @@ import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
+import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -79,7 +83,67 @@ class RatchetDecryptorTest {
 
     @After
     fun teardown() {
+        unmockkObject(SecurePrefs)
         unmockkStatic(Base64::class)
+    }
+
+    private val pin_values = mutableMapOf<String, Any?>()
+
+    private fun fake_pin_prefs(unreadable_prefix: String? = null): SharedPreferences {
+        val editor = mockk<SharedPreferences.Editor>()
+        every { editor.putString(any(), any()) } answers {
+            pin_values[firstArg()] = secondArg<String?>()
+            editor
+        }
+        every { editor.putBoolean(any(), any()) } answers {
+            pin_values[firstArg()] = secondArg<Boolean>()
+            editor
+        }
+        every { editor.putInt(any(), any()) } answers {
+            pin_values[firstArg()] = secondArg<Int>()
+            editor
+        }
+        every { editor.remove(any()) } answers {
+            pin_values.remove(firstArg<String>())
+            editor
+        }
+        every { editor.clear() } answers {
+            pin_values.clear()
+            editor
+        }
+        every { editor.commit() } returns true
+        every { editor.apply() } returns Unit
+        val prefs = mockk<SharedPreferences>()
+        every { prefs.edit() } returns editor
+        every { prefs.getString(any(), any()) } answers {
+            if (unreadable_prefix != null && firstArg<String>().startsWith(unreadable_prefix)) {
+                throw SecurityException("unreadable")
+            }
+            pin_values[firstArg()] as? String ?: secondArg<String?>()
+        }
+        every { prefs.getBoolean(any(), any()) } answers {
+            pin_values[firstArg()] as? Boolean ?: secondArg<Boolean>()
+        }
+        every { prefs.getInt(any(), any()) } answers {
+            pin_values[firstArg()] as? Int ?: secondArg<Int>()
+        }
+        every { prefs.contains(any()) } answers { pin_values.containsKey(firstArg<String>()) }
+        every { prefs.all } answers { pin_values.toMap() }
+        return prefs
+    }
+
+    private fun real_pin_store(unreadable_prefix: String? = null): RatchetIdentityPinStore {
+        mockkObject(SecurePrefs)
+        every { SecurePrefs.open(any(), any()) } returns fake_pin_prefs(unreadable_prefix)
+        return RatchetIdentityPinStore(mockk(relaxed = true), SessionKeyStore(null))
+    }
+
+    private fun stateful_store(): RatchetStateStore {
+        var saved: RatchetState? = null
+        val state_store = mockk<RatchetStateStore>(relaxed = true)
+        coEvery { state_store.load(any()) } answers { saved?.let { deep_copy(it) } }
+        coEvery { state_store.save(any()) } answers { saved = deep_copy(firstArg()) }
+        return state_store
     }
 
     private fun to_private_jwk(kp: RatchetCrypto.EcKeyPair): String {
@@ -115,7 +179,7 @@ class RatchetDecryptorTest {
         syncer: RatchetStateSyncer,
         auth_repo: AuthRepository,
         plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
-        identity_pins: RatchetIdentityPinStore = mockk(relaxed = true),
+        identity_pins: RatchetIdentityPinStore = pin_store(),
         escrow: MessageEscrow = escrow_returning(null),
     ): RatchetDecryptor = RatchetDecryptor(
         state_store,
@@ -129,14 +193,21 @@ class RatchetDecryptorTest {
         escrow,
     )
 
-    private fun escrow_returning(plaintext: String?): MessageEscrow {
+    private fun escrow_returning(plaintext: String?, unconfirmed_sender: Boolean = false): MessageEscrow {
         val escrow = mockk<MessageEscrow>(relaxed = true)
         coEvery { escrow.fetch(any()) } returns plaintext
+        coEvery { escrow.fetch_bound(any(), any(), any()) } returns plaintext?.let {
+            EscrowedPlaintext(plaintext = it, verified = true, unconfirmed_sender = unconfirmed_sender)
+        }
         return escrow
     }
 
-    private fun pin_store(replayed_bootstrap: Boolean = false): RatchetIdentityPinStore {
+    private fun pin_store(
+        replayed_bootstrap: Boolean = false,
+        continuity: SenderIdentityContinuity = SenderIdentityContinuity.NEW,
+    ): RatchetIdentityPinStore {
         val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
+        every { identity_pins.sender_continuity(any(), any(), any()) } returns continuity
         coEvery { identity_pins.is_replayed_bootstrap(any(), any()) } returns replayed_bootstrap
         coEvery { identity_pins.record(any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
         return identity_pins
@@ -479,9 +550,10 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message from escrow", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", false) }
-        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", false, false) }
+        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), true, any()) }
         verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
+        verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -495,9 +567,12 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
-        coVerify(atLeast = 1) { escrow.fetch(match { it.startsWith("msg_lane:") }) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true, false) }
+        coVerify(atLeast = 1) {
+            escrow.fetch_bound(match { it.startsWith("msg_lane:") }, sender_email, fixture.conversation_id)
+        }
         verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
+        verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -527,7 +602,9 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", result)
         val expected_key = "msg_chain:${enc0.header.dh_public}:${enc0.header.message_number}"
-        verify(exactly = 1) { escrow.upload_in_background(expected_key, "hello kchaos") }
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(expected_key, "hello kchaos", sender_email, fixture.conversation_id, true)
+        }
     }
 
     @Test
@@ -544,8 +621,9 @@ class RatchetDecryptorTest {
 
         assertEquals("third message", first)
         assertNull(second)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false) }
-        coVerify(exactly = 1) { escrow.fetch(any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, false) }
+        coVerify(exactly = 1) { escrow.fetch_bound(any(), sender_email, fixture.conversation_id) }
+        verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -561,6 +639,7 @@ class RatchetDecryptorTest {
 
         assertNull(result)
         coVerify(exactly = 0) { escrow.fetch(any()) }
+        coVerify(exactly = 0) { escrow.fetch_bound(any(), any(), any()) }
     }
 
     @Test
@@ -765,7 +844,7 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", result)
         coVerifyOrder {
-            plaintext_cache.put("msg_1", "hello kchaos")
+            plaintext_cache.put("msg_1", "hello kchaos", any(), any())
             state_store.save(any())
             syncer.sync(any(), any())
         }
@@ -797,7 +876,7 @@ class RatchetDecryptorTest {
         )
         decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_2")
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body") }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body", any(), any()) }
     }
 
     @Test
@@ -968,5 +1047,191 @@ class RatchetDecryptorTest {
             nonce = sealed.nonce,
             rid = sealed.rid,
         )
+    }
+
+    private fun chain_decryptor(
+        fixture: Fixture,
+        state_store: RatchetStateStore,
+        identity_pins: RatchetIdentityPinStore,
+        plaintext_cache: RatchetPlaintextCache,
+        escrow: MessageEscrow,
+        session_key_store: SessionKeyStore = SessionKeyStore(null).also {
+            seed_session_key_store(it, fixture.receiver_keys)
+        },
+    ): RatchetDecryptor {
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        coEvery { syncer.sync(any(), any()) } returns true
+        return new_decryptor(
+            state_store,
+            session_key_store,
+            mockk(relaxed = true),
+            syncer,
+            mockk(relaxed = true),
+            plaintext_cache,
+            identity_pins,
+            escrow,
+        )
+    }
+
+    @Test
+    fun `a known sender key is verified on the second message`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val enc1 = DoubleRatchet.encrypt(fixture.sender_state, "second message")
+        val first_body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val second_body = envelope_json(
+            fixture.sender_identity_raw,
+            recipient_data_for(fixture, enc1).copy(ephemeral_key = null),
+        )
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning(null)
+        val decryptor = chain_decryptor(fixture, stateful_store(), real_pin_store(), plaintext_cache, escrow)
+
+        assertEquals(
+            "first message",
+            decryptor.try_decrypt(first_body, listOf(recipient_email), sender_email, "msg_first"),
+        )
+        assertEquals(
+            "second message",
+            decryptor.try_decrypt(second_body, listOf(recipient_email), sender_email, "msg_second"),
+        )
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_first", "first message", false, true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_second", "second message", false, false) }
+        val first_key = "msg_first:${enc0.header.dh_public}:${enc0.header.message_number}"
+        val second_key = "msg_second:${enc1.header.dh_public}:${enc1.header.message_number}"
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(first_key, "first message", sender_email, fixture.conversation_id, true)
+        }
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(second_key, "second message", sender_email, fixture.conversation_id, false)
+        }
+    }
+
+    @Test
+    fun `a first contact with no stored sender key is unverified`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning(null)
+        val identity_pins = real_pin_store()
+        val decryptor = chain_decryptor(fixture, stateful_store(), identity_pins, plaintext_cache, escrow)
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_new"))
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_new", "hello kchaos", false, true) }
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, true)
+        }
+        assertTrue(identity_pins.unacknowledged_changes.value.isEmpty())
+    }
+
+    @Test
+    fun `a changed sender key is unverified and records a rotation notice`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning(null)
+        val identity_pins = real_pin_store()
+        val earlier_identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+        identity_pins.remember_sender_identity(sender_email, earlier_identity)
+        val decryptor = chain_decryptor(fixture, stateful_store(), identity_pins, plaintext_cache, escrow)
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_changed"))
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_changed", "hello kchaos", false, true) }
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, true)
+        }
+        val change = identity_pins.unacknowledged_changes.value.single()
+        assertEquals(fixture.conversation_id, change.conversation_id)
+        assertEquals(sender_email, change.sender_email)
+        assertTrue(change.previous_fingerprint != change.current_fingerprint)
+        assertEquals(
+            SenderIdentityContinuity.CHANGED,
+            identity_pins.sender_continuity(
+                fixture.conversation_id,
+                sender_email,
+                RatchetCrypto.b64_encode(fixture.sender_identity_raw),
+            ),
+        )
+    }
+
+    @Test
+    fun `the own vault identity key of the account is verified`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "note to self")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning(null)
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, fixture.receiver_keys)
+        val own_previous = org.json.JSONArray().put(
+            org.json.JSONObject().put("ratchet_identity_public", RatchetCrypto.b64_encode(fixture.sender_identity_raw)),
+        )
+        session_key_store.put_ratchet_previous_keys(own_previous.toString())
+        val decryptor = chain_decryptor(
+            fixture,
+            stateful_store(),
+            real_pin_store(),
+            plaintext_cache,
+            escrow,
+            session_key_store,
+        )
+
+        assertEquals("note to self", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_self"))
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_self", "note to self", false, false) }
+        verify(exactly = 1) {
+            escrow.upload_bound_in_background(any(), "note to self", sender_email, fixture.conversation_id, false)
+        }
+    }
+
+    @Test
+    fun `a lane upgrade keeps the escrowed unconfirmed flag and does not upload again`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unauthenticated("msg_lane") } returns true
+        val escrow = escrow_returning("third message", unconfirmed_sender = true)
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val upgraded = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertEquals("third message", upgraded)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, true) }
+        verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
+        verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `an unreadable sender history still consults the pinned key`() = runTest {
+        val identity_pins = real_pin_store(unreadable_prefix = "hist_")
+        val conversation_id = X3dh.derive_conversation_id(recipient_email, sender_email)
+        val pinned_identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+        val other_identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+        identity_pins.pin_if_absent(conversation_id, pinned_identity)
+
+        assertEquals(
+            SenderIdentityContinuity.KNOWN,
+            identity_pins.sender_continuity(conversation_id, sender_email, pinned_identity),
+        )
+        assertEquals(
+            SenderIdentityContinuity.CHANGED,
+            identity_pins.sender_continuity(conversation_id, sender_email, other_identity),
+        )
+    }
+
+    @Test
+    fun `an unreadable sender history is never overwritten`() = runTest {
+        val identity_pins = real_pin_store(unreadable_prefix = "hist_")
+        val identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+
+        identity_pins.remember_sender_identity(sender_email, identity)
+
+        assertTrue(pin_values.keys.none { it.startsWith("hist_") })
     }
 }

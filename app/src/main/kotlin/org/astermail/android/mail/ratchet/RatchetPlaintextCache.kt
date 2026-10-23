@@ -41,12 +41,18 @@ class RatchetPlaintextCache @Inject constructor(
 
     private val prefs = SecurePrefs.open(context, prefs_name)
     private val mutex = Mutex()
-    private val unauthenticated = MutableStateFlow(read_unauthenticated())
+    private val unauthenticated = MutableStateFlow(read_flagged(unauthenticated_key))
+    private val unconfirmed = MutableStateFlow(read_flagged(unconfirmed_key))
 
     val unauthenticated_ids: StateFlow<Set<String>> = unauthenticated.asStateFlow()
 
+    val unconfirmed_sender_ids: StateFlow<Set<String>> = unconfirmed.asStateFlow()
+
     fun is_sender_unauthenticated(message_id: String?): Boolean =
         !message_id.isNullOrBlank() && message_id in unauthenticated.value
+
+    fun is_sender_unconfirmed(message_id: String?): Boolean =
+        !message_id.isNullOrBlank() && message_id in unconfirmed.value
 
     suspend fun get(message_id: String): String? {
         if (message_id.isBlank()) return null
@@ -76,18 +82,26 @@ class RatchetPlaintextCache @Inject constructor(
         }
     }
 
-    suspend fun put(message_id: String, plaintext: String, sender_unauthenticated: Boolean = false) {
+    suspend fun put(
+        message_id: String,
+        plaintext: String,
+        sender_unauthenticated: Boolean = false,
+        unconfirmed_sender: Boolean = false,
+    ) {
         if (message_id.isBlank()) return
         val key = state_store.derive_state_encryption_key()
         if (key == null) {
-            if (sender_unauthenticated) mutex.withLock { flag_unauthenticated(message_id) }
+            mutex.withLock {
+                if (sender_unauthenticated) flag_unauthenticated(message_id)
+                set_flag(unconfirmed, unconfirmed_key, message_id, unconfirmed_sender)
+            }
             return
         }
         try {
             val nonce = RatchetCrypto.random_bytes(12)
             val ciphertext = RatchetCrypto.aes_gcm_encrypt(plaintext.toByteArray(Charsets.UTF_8), key, nonce, null)
             val encoded = RatchetCrypto.b64_encode(nonce) + ":" + RatchetCrypto.b64_encode(ciphertext)
-            mutex.withLock { store_bounded(message_id, encoded, sender_unauthenticated) }
+            mutex.withLock { store_bounded(message_id, encoded, sender_unauthenticated, unconfirmed_sender) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -96,7 +110,12 @@ class RatchetPlaintextCache @Inject constructor(
         }
     }
 
-    private fun store_bounded(message_id: String, encoded: String, sender_unauthenticated: Boolean) {
+    private fun store_bounded(
+        message_id: String,
+        encoded: String,
+        sender_unauthenticated: Boolean,
+        unconfirmed_sender: Boolean,
+    ) {
         val retained = current_index().filter { it != message_id }.toMutableList()
         retained.add(message_id)
         val overflow = retained.size - max_entries
@@ -105,14 +124,18 @@ class RatchetPlaintextCache @Inject constructor(
 
         val flagged = unauthenticated.value - evicted.toSet() - message_id
         val next_flagged = if (sender_unauthenticated) flagged + message_id else flagged
+        val retained_unconfirmed = unconfirmed.value - evicted.toSet() - message_id
+        val next_unconfirmed = if (unconfirmed_sender) retained_unconfirmed + message_id else retained_unconfirmed
 
         val editor = prefs.edit()
         evicted.forEach { editor.remove(key_for(it)) }
         editor.putString(key_for(message_id), encoded)
         editor.putString(index_key, retained.joinToString(index_separator))
         editor.putString(unauthenticated_key, next_flagged.joinToString(index_separator))
+        editor.putString(unconfirmed_key, next_unconfirmed.joinToString(index_separator))
         editor.commit()
         unauthenticated.value = next_flagged
+        unconfirmed.value = next_unconfirmed
     }
 
     private fun flag_unauthenticated(message_id: String) {
@@ -121,12 +144,24 @@ class RatchetPlaintextCache @Inject constructor(
         unauthenticated.value = next_flagged
     }
 
-    private fun read_unauthenticated(): Set<String> =
-        prefs.getString(unauthenticated_key, null)
+    private fun set_flag(flow: MutableStateFlow<Set<String>>, pref_key: String, message_id: String, flagged: Boolean) {
+        val without = flow.value - message_id
+        val next = if (flagged) (without + message_id).toList().takeLast(max_entries).toSet() else without
+        if (next == flow.value) return
+        prefs.edit().putString(pref_key, next.joinToString(index_separator)).commit()
+        flow.value = next
+    }
+
+    private fun read_flagged(pref_key: String): Set<String> =
+        prefs.getString(pref_key, null)
             ?.split(index_separator)
             ?.filter { it.isNotEmpty() }
             ?.toSet()
             .orEmpty()
+
+    fun confirm_sender(message_id: String) {
+        set_flag(unconfirmed, unconfirmed_key, message_id, false)
+    }
 
     private fun current_index(): List<String> {
         val stored = prefs.getString(index_key, null)
@@ -141,6 +176,7 @@ class RatchetPlaintextCache @Inject constructor(
     fun clear() {
         prefs.edit().clear().commit()
         unauthenticated.value = emptySet()
+        unconfirmed.value = emptySet()
     }
 
     private fun key_for(message_id: String): String = entry_prefix + message_id
@@ -150,6 +186,7 @@ class RatchetPlaintextCache @Inject constructor(
         private const val entry_prefix = "ratchet_plaintext_"
         private const val index_key = "aster_plaintext_index_v1"
         private const val unauthenticated_key = "aster_plaintext_unauthenticated_v1"
+        private const val unconfirmed_key = "aster_plaintext_unconfirmed_sender_v1"
         private const val index_separator = "\u001F"
         internal const val max_entries = 2000
     }
