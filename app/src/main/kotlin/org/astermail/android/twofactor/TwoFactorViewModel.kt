@@ -182,8 +182,14 @@ class TwoFactorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _state.value = _state.value.copy(is_busy = true, error = null)
-            val derived = withContext(Dispatchers.Default) {
-                auth_repository.derive_password_hash_b64(s.password_input)
+            val derived = try {
+                withContext(Dispatchers.Default) {
+                    auth_repository.derive_password_hash_b64(s.password_input)
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.value = _state.value.copy(is_busy = false, error = readable(t))
+                return@launch
             }
             if (derived == null) {
                 _state.value = _state.value.copy(

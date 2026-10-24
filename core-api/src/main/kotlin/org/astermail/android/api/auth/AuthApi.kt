@@ -36,6 +36,7 @@ import io.ktor.http.ContentType
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
@@ -147,6 +148,18 @@ data class GetSaltRequest(
 @Serializable
 data class SaltResponse(
     val salt: String,
+    val kdf_version: JsonElement? = null,
+)
+
+@Serializable
+data class EnrollPasswordV2Request(
+    val password_hash: String,
+    val password_hash_v2: String,
+)
+
+@Serializable
+data class EnrollPasswordV2Response(
+    val kdf_version: JsonElement? = null,
 )
 
 @Serializable
@@ -173,6 +186,7 @@ data class RegisterRequest(
     val username: String,
     val user_hash: String,
     val password_hash: String,
+    val password_hash_v2: String? = null,
     val password_salt: String,
     val argon2_params: Argon2Params,
     val identity_key: String,
@@ -271,6 +285,7 @@ interface AuthApi {
     suspend fun get_vault(): VaultResponse
     suspend fun batch_profiles(emails: List<String>): BatchProfilesResponse
     suspend fun delete_account(request: DeleteAccountRequest)
+    suspend fun enroll_password_v2(request: EnrollPasswordV2Request): EnrollPasswordV2Response
 }
 
 class AuthApiImpl(private val client: ApiClient) : AuthApi {
@@ -471,6 +486,15 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
         }
+    }
+
+    override suspend fun enroll_password_v2(request: EnrollPasswordV2Request): EnrollPasswordV2Response {
+        val response = client.http.post("${client.base_url}$base/me/password-v2") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun batch_profiles(emails: List<String>): BatchProfilesResponse {

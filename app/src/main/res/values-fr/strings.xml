@@ -3479,4 +3479,5 @@
     <string name="domain_hint_dkim_other_key">Votre enregistrement DKIM contient une autre clé. Remplacez sa valeur par celle affichée ici.</string>
     <string name="domain_reason_dkim_missing_or_stale">Vos e-mails sortants ne sont pas signés et semblent donc falsifiés. Ajoutez l’enregistrement de signature pour qu’ils soient approuvés.</string>
     <string name="domain_check_generic_failure">Cet enregistrement n’est pas encore correctement configuré. Ajoutez l’enregistrement ci-dessous pour résoudre le problème.</string>
+    <string name="error_auth_salt_collision">La connexion a été interrompue parce que le serveur a envoyé une valeur non sécurisée. Rien n\'a été déverrouillé. Contactez l\'assistance avant de réessayer.</string>
 </resources>

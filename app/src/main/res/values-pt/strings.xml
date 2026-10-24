@@ -3450,4 +3450,5 @@
     <string name="domain_hint_dkim_other_key">O seu registo DKIM contém outra chave. Substitua o valor pelo que é apresentado aqui.</string>
     <string name="domain_reason_dkim_missing_or_stale">Seus e-mails enviados não são assinados, o que os faz parecer falsos. Adicione o registro de assinatura para que sejam confiáveis.</string>
     <string name="domain_check_generic_failure">Este registro ainda não está configurado corretamente. Adicione o registro abaixo para resolver.</string>
+    <string name="error_auth_salt_collision">O início de sessão foi interrompido porque o servidor enviou um valor inseguro, por isso nada foi desbloqueado. Contacte o suporte antes de tentar novamente.</string>
 </resources>

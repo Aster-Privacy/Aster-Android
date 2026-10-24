@@ -3431,4 +3431,5 @@
     <string name="domain_hint_dkim_other_key">Je DKIM-record bevat een andere sleutel. Vervang de waarde door de waarde die hier staat.</string>
     <string name="domain_reason_dkim_missing_or_stale">Je uitgaande mail is niet ondertekend en lijkt daardoor vervalst. Voeg het ondertekeningsrecord toe zodat je mail wordt vertrouwd.</string>
     <string name="domain_check_generic_failure">Dit record is nog niet goed ingesteld. Voeg het onderstaande record toe om dit op te lossen.</string>
+    <string name="error_auth_salt_collision">Het aanmelden is gestopt omdat de server een onveilige waarde heeft gestuurd, dus er is niets ontgrendeld. Neem contact op met support voordat je het opnieuw probeert.</string>
 </resources>

@@ -3413,4 +3413,5 @@
     <string name="domain_hint_dkim_other_key">DKIM 레코드에 다른 키가 들어 있습니다. 값을 여기에 표시된 값으로 바꾸세요.</string>
     <string name="domain_reason_dkim_missing_or_stale">보내는 메일에 서명이 없어 위조처럼 보입니다. 서명 레코드를 추가하면 신뢰받습니다.</string>
     <string name="domain_check_generic_failure">이 레코드가 아직 올바르게 설정되지 않았습니다. 아래 레코드를 추가하면 해결됩니다.</string>
+    <string name="error_auth_salt_collision">서버가 안전하지 않은 값을 보내 로그인이 중단되었으며 아무것도 잠금 해제되지 않았습니다. 다시 시도하기 전에 지원팀에 문의하세요.</string>
 </resources>

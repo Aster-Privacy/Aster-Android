@@ -83,6 +83,7 @@ data class NewEmailRecoveryBackup(
 data class CompleteRecoveryRequest(
     val recovery_token: String,
     val new_password_hash: String,
+    val new_password_hash_v2: String? = null,
     val new_password_salt: String,
     val new_encrypted_vault: String,
     val new_vault_nonce: String,

@@ -3413,4 +3413,5 @@
     <string name="domain_hint_dkim_other_key">你的 DKIM 记录中是另一个密钥。请将其值替换为此处显示的值。</string>
     <string name="domain_reason_dkim_missing_or_stale">你发出的邮件未签名，看起来像伪造邮件。添加签名记录后，邮件才会被信任。</string>
     <string name="domain_check_generic_failure">这条记录尚未正确设置。添加下面的记录即可修复。</string>
+    <string name="error_auth_salt_collision">由于服务器发送了不安全的值，登录已停止，没有解锁任何内容。请先联系支持团队，然后再重试。</string>
 </resources>

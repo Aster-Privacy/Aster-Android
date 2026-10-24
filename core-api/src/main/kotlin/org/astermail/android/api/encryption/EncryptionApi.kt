@@ -33,6 +33,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 
@@ -113,6 +114,7 @@ data class ExportKeyResponse(
 data class EncryptionSaltResponse(
     val salt: String = "",
     val totp_required: Boolean = false,
+    val kdf_version: JsonElement? = null,
 )
 
 @Serializable

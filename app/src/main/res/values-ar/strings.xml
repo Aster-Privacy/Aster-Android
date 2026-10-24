@@ -3511,4 +3511,5 @@
     <string name="domain_hint_dkim_other_key">يحتوي سجل DKIM لديك على مفتاح مختلف. استبدل قيمته بالقيمة المعروضة هنا.</string>
     <string name="domain_reason_dkim_missing_or_stale">بريدك الصادر غير موقَّع، ما يجعله يبدو مزوَّرًا. أضف سجل التوقيع ليصبح بريدك موثوقًا.</string>
     <string name="domain_check_generic_failure">لم يُضبط هذا السجل بشكل صحيح بعد. أضف السجل أدناه لإصلاحه.</string>
+    <string name="error_auth_salt_collision">توقف تسجيل الدخول لأن الخادم أرسل قيمة غير آمنة، لذلك لم يتم فتح أي شيء. تواصل مع الدعم قبل المحاولة مرة أخرى.</string>
 </resources>

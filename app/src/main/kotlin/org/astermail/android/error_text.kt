@@ -31,6 +31,9 @@ const val PENDING_LOGIN_EXPIRED_CODE = "PENDING_LOGIN_EXPIRED"
 const val USERNAME_IN_USE_CODE = "USERNAME_IN_USE"
 
 fun localized_server_code(context: Context, t: Throwable): String? {
+    if (t is org.astermail.android.crypto.AuthSaltCollisionException) {
+        return context.getString(R.string.error_auth_salt_collision)
+    }
     val forbidden = t as? ApiError.ForbiddenError ?: return null
     return when (forbidden.code) {
         FAMILY_2FA_REQUIRED_CODE -> context.getString(R.string.error_family_2fa_required)
