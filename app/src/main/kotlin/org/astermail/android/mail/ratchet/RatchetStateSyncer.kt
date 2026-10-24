@@ -75,7 +75,7 @@ class RatchetStateSyncer @Inject constructor(
     }
 
     private sealed class RemoteFetch {
-        data class Found(val state: RatchetState) : RemoteFetch()
+        data class Found(val state: RatchetState, val versioned: Boolean) : RemoteFetch()
         object Missing : RemoteFetch()
         object Rejected : RemoteFetch()
         object Unreadable : RemoteFetch()
@@ -87,7 +87,7 @@ class RatchetStateSyncer @Inject constructor(
         return (fetch_remote(conversation_id) as? RemoteFetch.Found)?.state
     }
 
-    private suspend fun fetch_remote(conversation_id: String): RemoteFetch {
+    private suspend fun fetch_remote(conversation_id: String, for_merge: Boolean = false): RemoteFetch {
         val keys = state_store.state_encryption_key_candidates()
         if (keys.isEmpty()) return RemoteFetch.Failed
         return try {
@@ -101,6 +101,7 @@ class RatchetStateSyncer @Inject constructor(
             val ciphertext = RatchetCrypto.b64_decode(resp.encrypted_state)
             val nonce = RatchetCrypto.b64_decode(resp.state_nonce)
             val floor = state_store.sync_floor(conversation_id)
+            val established = floor > 0 || state_store.load(conversation_id) != null
             var opened = false
             var accepted: RatchetStateContainerResult.Accepted? = null
             for (candidate in keys) {
@@ -111,6 +112,8 @@ class RatchetStateSyncer @Inject constructor(
                     conversation_id,
                     floor,
                     opened_bound,
+                    established = established,
+                    allow_unversioned = for_merge,
                 )
                 plaintext.fill(0)
                 if (decoded is RatchetStateContainerResult.Accepted) accepted = decoded
@@ -120,7 +123,7 @@ class RatchetStateSyncer @Inject constructor(
             if (accepted == null) return RemoteFetch.Rejected
             accepted.sync_version?.let { state_store.raise_sync_floor(conversation_id, it) }
             known_versions[conversation_id] = resp.state_version
-            RemoteFetch.Found(accepted.state)
+            RemoteFetch.Found(accepted.state, accepted.sync_version != null)
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
         } catch (t: Throwable) {
@@ -163,9 +166,9 @@ class RatchetStateSyncer @Inject constructor(
         conversation_id: String,
         working: RatchetState,
     ): Absorb {
-        return when (val remote = fetch_remote(conversation_id)) {
+        return when (val remote = fetch_remote(conversation_id, for_merge = true)) {
             is RemoteFetch.Found -> {
-                val merged = RatchetStateMerge.merge(working, remote.state)
+                val merged = RatchetStateMerge.merge(working, remote.state, remote.versioned)
                 state_store.save(merged)
                 Absorb.Merged(merged)
             }

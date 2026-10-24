@@ -128,6 +128,7 @@ private class CachedPersonalContext(
 )
 
 private const val sender_trust_data_resource = "sender_trust_data.json"
+private const val sender_trust_confusables_resource = "sender_trust_confusables.json"
 private const val max_address_length = 320
 private const val max_raw_name_length = 2048
 private const val max_trust_domain_length = 253
@@ -159,7 +160,27 @@ private val invisible_ranges = arrayOf(
     0x3164..0x3164,
     0xfeff..0xfeff,
     0xffa0..0xffa0,
-    0xfff9..0xfffb,
+    0xfff0..0xfffb,
+    0x1bca0..0x1bca3,
+    0x1d173..0x1d17a,
+    0xe0000..0xe0fff,
+)
+
+private val ignorable_ranges = arrayOf(
+    0x00ad..0x00ad,
+    0x034f..0x034f,
+    0x061c..0x061c,
+    0x115f..0x1160,
+    0x17b4..0x17b5,
+    0x180b..0x180f,
+    0x200b..0x200f,
+    0x202a..0x202e,
+    0x2060..0x206f,
+    0x3164..0x3164,
+    0xfe00..0xfe0f,
+    0xfeff..0xfeff,
+    0xffa0..0xffa0,
+    0xfff0..0xfff8,
     0x1bca0..0x1bca3,
     0x1d173..0x1d17a,
     0xe0000..0xe0fff,
@@ -228,6 +249,29 @@ private val name_separator_ranges = arrayOf(
     0xa700..0xa71f,
 )
 
+private val display_scripts = setOf(
+    "latin",
+    "greek",
+    "cyrillic",
+    "armenian",
+    "hebrew",
+    "arabic",
+    "devanagari",
+    "thai",
+    "georgian",
+    "east_asian",
+)
+
+private val distinct_latin_letters = setOf("ß", "æ", "ð", "ø", "þ", "đ", "ħ", "ł", "œ")
+
+private val keycap_bases = setOf('#'.code, '*'.code) + ('0'.code..'9'.code)
+
+private val ascii_letter_or_digit = Regex("^[a-z0-9]+$")
+
+private val single_ascii_letter = Regex("^[a-z]$")
+
+private val printable_ascii = Regex("^[!-~]+$")
+
 private val enclosed_letter_starts = intArrayOf(0x1f150, 0x1f170)
 
 private val script_ranges = arrayOf(
@@ -286,10 +330,28 @@ private fun lower(text: String): String = text.lowercase(Locale.ROOT)
 
 private fun trim_spaces(text: String): String = text.trim { it == ' ' }
 
+private fun char_of(code: Int): String = String(Character.toChars(code))
+
+private fun is_ignorable(code: Int): Boolean =
+    code >= 0xad && (in_ranges(code, ignorable_ranges) || Character.getType(code) == Character.FORMAT.toInt())
+
+private fun is_combining(code: Int): Boolean {
+    if (in_ranges(code, mark_ranges)) return true
+    if (code < 0x300) return false
+    val type = Character.getType(code)
+    return type == Character.NON_SPACING_MARK.toInt() || type == Character.ENCLOSING_MARK.toInt()
+}
+
+private fun joins_previous(code: Int, previous: Int): Boolean {
+    if (previous >= 0x80) return true
+    return (code == 0xfe0e || code == 0xfe0f) && previous in keycap_bases
+}
+
 private fun clean_text(text: String, keep_joiners: Boolean): String {
     val result = StringBuilder(text.length)
     var after_joiner = false
     var pending_space = false
+    var previous = 0
     for (code in code_points(text)) {
         if (is_lone_surrogate(code)) continue
         if (in_ranges(code, space_ranges)) {
@@ -299,16 +361,19 @@ private fun clean_text(text: String, keep_joiners: Boolean): String {
         if (in_ranges(code, invisible_ranges)) continue
         if (in_ranges(code, joiner_ranges)) {
             if (!keep_joiners || pending_space || after_joiner || result.isEmpty()) continue
+            if (!joins_previous(code, previous)) continue
             result.appendCodePoint(code)
             after_joiner = true
             continue
         }
+        if (is_ignorable(code)) continue
         if (pending_space) {
             result.append(' ')
             pending_space = false
         }
         result.appendCodePoint(code)
         after_joiner = false
+        previous = code
     }
     return result.toString()
 }
@@ -356,17 +421,28 @@ private fun enclosed_plain(text: String): String {
 
 private fun fold(text: String): String = lower(clean_text(nfkc(text), false))
 
-fun sender_skeleton(text: String): String {
+private fun is_cherokee_small(code: Int): Boolean = code in 0xab70..0xabbf
+
+private fun map_confusables(text: String): String {
     val confusables = sender_trust_data.confusables
     val mapped = StringBuilder(text.length)
-    for (code in code_points(nfkd(text))) {
-        if (in_ranges(code, mark_ranges)) continue
-        val replacement = confusables[code]
+    for (code in code_points(text)) {
+        if (is_combining(code)) continue
+        val replacement = confusables[code] ?: if (is_cherokee_small(code)) {
+            confusables[char_of(code).uppercase(Locale.ROOT).codePointAt(0)]
+        } else {
+            null
+        }
         if (replacement != null) mapped.append(replacement) else mapped.appendCodePoint(code)
     }
+    return mapped.toString()
+}
+
+fun sender_skeleton(text: String): String {
+    val mapped = map_confusables(nfkd(map_confusables(clean_text(text, false))))
     val stripped = StringBuilder(mapped.length)
-    for (code in code_points(nfkd(lower(clean_text(mapped.toString(), false))))) {
-        if (in_ranges(code, mark_ranges)) continue
+    for (code in code_points(nfkd(lower(clean_text(mapped, false))))) {
+        if (is_combining(code)) continue
         stripped.appendCodePoint(code)
     }
     var result = stripped.toString()
@@ -548,23 +624,38 @@ private fun script_of(code: Int): String {
     return "other"
 }
 
+private fun is_accented_latin(char: String): Boolean {
+    if (char in distinct_latin_letters) return true
+    val base = StringBuilder()
+    for (code in code_points(Normalizer.normalize(char, Normalizer.Form.NFD))) {
+        if (!is_combining(code)) base.appendCodePoint(code)
+    }
+    val plain = base.toString()
+    return plain != char && single_ascii_letter.matches(plain)
+}
+
+private fun is_ascii_lookalike(char: String): Boolean =
+    domain_skeletons(char).any { ascii_letter_or_digit.matches(it) }
+
 private fun is_safe_unicode_label(text: String): Boolean {
-    val confusables = sender_trust_data.confusables
     val scripts = HashSet<String>()
     var has_distinct = false
     for (code in code_points(text)) {
         val script = script_of(code)
-        if (script == "other") return false
         if (script == "common") continue
+        if (script !in display_scripts) return false
         scripts.add(script)
         if (code < 0x80) continue
-        if (!confusables.containsKey(code)) {
+        val char = char_of(code)
+        if (script == "latin") {
+            if (!is_accented_latin(char)) return false
             has_distinct = true
-        } else if (script == "latin") {
-            return false
+        } else if (!is_ascii_lookalike(char)) {
+            has_distinct = true
         }
     }
-    return scripts.size == 1 && has_distinct
+    if (scripts.size != 1 || !has_distinct) return false
+    return domain_skeletons(text).none { it in sender_trust_data.brand_label_skeletons }
 }
 
 fun sender_domain_for_display(ascii_domain: String): String =
@@ -629,13 +720,19 @@ private fun mailbox_key(parsed: ParsedAddress): String {
     return "$local@${parsed.ascii_domain}"
 }
 
+private fun is_letter_lookalike(code: Int): Boolean {
+    if (code < 0x80) return false
+    val mapped = sender_trust_data.confusables[code] ?: return false
+    return ascii_letter_or_digit.matches(mapped)
+}
+
 private fun tokenize(text: String): List<String> {
     val tokens = ArrayList<String>()
     val current = StringBuilder()
     val spaced = text.replace(mark_symbols, " ")
     for (code in code_points(clean_text(nfkc(spaced), false))) {
         if (
-            in_ranges(code, separator_ranges) ||
+            (in_ranges(code, separator_ranges) && !is_letter_lookalike(code)) ||
             in_ranges(code, name_separator_ranges) ||
             in_ranges(code, space_ranges)
         ) {
@@ -671,7 +768,12 @@ private fun name_claim(text: String, capitals_aware: Boolean): NameClaim {
     var has_home_generic = false
     var has_company = false
     for (token in tokenize(text)) {
-        val word = lower(token)
+        val lowered = lower(token)
+        val word = if (lowered in sender_trust_data.company_words || lowered in sender_trust_data.generic_words) {
+            lowered
+        } else {
+            sender_skeleton(token)
+        }
         if (word in sender_trust_data.company_words) {
             has_company = true
             continue
@@ -987,15 +1089,34 @@ private fun build_domain_index(domains: List<String>, label_level: Boolean): Dom
     return index
 }
 
+private fun upper_non_ascii(text: String): String {
+    val out = StringBuilder(text.length)
+    for (code in code_points(text)) {
+        val char = char_of(code)
+        val upper = if (code > 0x7f) char.uppercase(Locale.ROOT) else char
+        out.append(if (upper.codePointCount(0, upper.length) == 1) upper else char)
+    }
+    return out.toString()
+}
+
+private fun domain_skeletons(text: String): List<String> {
+    val plain = sender_skeleton(text)
+    val cased = sender_skeleton(upper_non_ascii(text))
+    return if (cased == plain) listOf(plain) else listOf(plain, cased)
+}
+
 private fun lookalike_of(parsed: ParsedAddress, index: DomainIndex): String? {
     if (parsed.registrable in index.registrables) return null
     val unicode = domain_unicode(parsed.registrable)
-    val full = index.by_skeleton[sender_skeleton(unicode)]
-    if (full != null) return full
+    for (key in domain_skeletons(unicode)) {
+        val full = index.by_skeleton[key]
+        if (full != null) return full
+    }
     val label = trust_registrable_label(parsed.registrable)
-    val bucket = index.by_label_skeleton[sender_skeleton(trust_registrable_label(unicode))].orEmpty()
-    for (target in bucket) {
-        if (trust_registrable_label(target) != label) return target
+    for (key in domain_skeletons(trust_registrable_label(unicode))) {
+        for (target in index.by_label_skeleton[key].orEmpty()) {
+            if (trust_registrable_label(target) != label) return target
+        }
     }
     val labels = parsed.ascii_domain.split(".")
     val depth = labels.size - parsed.registrable.split(".").size +
@@ -1004,8 +1125,10 @@ private fun lookalike_of(parsed: ParsedAddress, index: DomainIndex): String? {
         for (size in 2..3) {
             if (start + size > depth) break
             val inner = labels.subList(start, start + size).joinToString(".")
-            val known = index.by_skeleton[sender_skeleton(domain_unicode(inner))]
-            if (known != null) return known
+            for (key in domain_skeletons(domain_unicode(inner))) {
+                val known = index.by_skeleton[key]
+                if (known != null) return known
+            }
         }
     }
     return null
@@ -1041,15 +1164,15 @@ private object sender_trust_data {
     private val lookalike_only_domains: List<String>
 
     init {
-        val stream = checkNotNull(
-            SenderTrustInput::class.java.classLoader?.getResourceAsStream(sender_trust_data_resource),
-        )
-        val root = JSONObject(stream.bufferedReader(Charsets.UTF_8).use { it.readText() })
+        val root = load_json(sender_trust_data_resource)
         max_name_length = root.getInt("max_name_length")
-        val confusable_object = root.getJSONObject("confusables")
-        val confusable_map = HashMap<Int, String>()
-        for (key in confusable_object.keys()) {
-            confusable_map[key.codePointAt(0)] = confusable_object.getString(key)
+        val uts39 = code_point_map(load_json(sender_trust_confusables_resource).getJSONObject("confusables"))
+        val confusable_map = HashMap(uts39)
+        for ((code, target) in code_point_map(root.getJSONObject("confusables"))) {
+            val char = char_of(code)
+            val generated = uts39[code]
+            if (char != lower(char) && generated != null && generated != target) continue
+            confusable_map[code] = target
         }
         confusables = confusable_map
         val digraph_array = root.getJSONArray("digraphs")
@@ -1104,6 +1227,21 @@ private object sender_trust_data {
     val brand_domain_index: DomainIndex by lazy {
         build_domain_index(home_domains + brands.flatMap { it.domains } + lookalike_only_domains, true)
     }
+
+    val brand_label_skeletons: Set<String> by lazy {
+        brand_domain_index.registrables.map { sender_skeleton(domain_unicode(trust_registrable_label(it))) }.toSet()
+    }
+}
+
+private fun load_json(resource: String): JSONObject {
+    val stream = checkNotNull(SenderTrustInput::class.java.classLoader?.getResourceAsStream(resource))
+    return JSONObject(stream.bufferedReader(Charsets.UTF_8).use { it.readText() })
+}
+
+private fun code_point_map(source: JSONObject): Map<Int, String> {
+    val out = HashMap<Int, String>()
+    for (key in source.keys()) out[key.codePointAt(0)] = source.getString(key)
+    return out
 }
 
 private fun contact_name_key(name: String): String = sender_skeleton(tokenize(name).joinToString(" "))
@@ -1180,6 +1318,18 @@ private fun claims_identity(name: String): Boolean {
     return sender_trust_data.brand_names.any { match_brand_name(claim, it) != null }
 }
 
+private fun is_protected_claim(candidate: ParsedAddress, personal: PersonalContext): Boolean {
+    val key = address_key(candidate)
+    if (key in personal.own_keys || key in personal.contact_keys) return true
+    if (is_shared_domain(candidate)) {
+        return fold(candidate.local) in sender_trust_data.reserved_local_parts || is_official_home_address(candidate)
+    }
+    if (candidate.registrable in sender_trust_data.brand_domain_index.registrables) return true
+    if (candidate.registrable in personal.domains.registrables) return true
+    return lookalike_of(candidate, sender_trust_data.brand_domain_index) != null ||
+        lookalike_of(candidate, personal.domains) != null
+}
+
 private fun find_warning(
     name: String,
     parsed: ParsedAddress,
@@ -1199,17 +1349,16 @@ private fun find_warning(
     val relayed = sender_trust_data.relay_domains.any { within_domain(parsed.ascii_domain, it) }
     val from_home = sender_trust_data.home_domains.any { within_domain(parsed.ascii_domain, it) }
     val shared_domain = is_shared_domain(parsed)
-    val in_name = if (relayed) {
-        null
-    } else {
-        find_addresses_in_name(name).firstOrNull { candidate ->
+    val in_name = find_addresses_in_name(name).firstOrNull { candidate ->
+        (
             candidate.registrable != parsed.registrable ||
                 (shared_domain && mailbox_key(candidate) != mailbox_key(parsed))
-        }
+            ) &&
+            (!relayed || is_protected_claim(candidate, personal))
     }
     if (in_name != null) return SenderWarning(SenderWarningKind.address_in_name, in_name.address)
 
-    val named_targets = if (relayed) emptyList() else domains_in_name(name)
+    val named_targets = domains_in_name(name)
     for (target in named_targets) {
         val named_domain = sender_trust_data.brand_domain_index.by_skeleton[target] ?: continue
         if (named_domain == parsed.registrable) continue
@@ -1386,7 +1535,7 @@ fun evaluate_sender_trust(input: SenderTrustInput): SenderTrust {
     if (parsed == null) {
         val cleaned = cap_trust_code_points(clean_text(input.email.orEmpty(), false), max_address_length)
         val has_address = cleaned.isNotEmpty()
-        val fallback = if (cleaned.contains('@') && !cleaned.contains(' ')) cleaned else ""
+        val fallback = if (printable_ascii.matches(cleaned) && cleaned.contains('@')) cleaned else ""
         return SenderTrust(
             name = if (has_address || claims_identity(sanitized)) "" else sanitized,
             address = fallback,

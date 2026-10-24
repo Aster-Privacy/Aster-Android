@@ -39,7 +39,7 @@ import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.api.devices.format_device_code
 import org.astermail.android.api.devices.normalize_device_code
 import org.astermail.android.crypto.DeviceEnvelope
-import org.astermail.android.crypto.DeviceLinkBinding
+import org.astermail.android.crypto.DeviceKeyFingerprint
 import org.astermail.android.crypto.zeroize
 import org.astermail.android.storage.SessionKeyStore
 
@@ -47,7 +47,8 @@ enum class LinkDeviceStep { INPUT, CONFIRM, SUCCESS }
 
 enum class LinkDeviceError {
     INVALID_CODE,
-    BINDING_MISMATCH,
+    INVALID_DEVICE_KEYS,
+    CODES_NOT_CONFIRMED,
     EXPIRED_CODE,
     ALREADY_LINKED,
     UPGRADE_REQUIRED,
@@ -61,6 +62,8 @@ data class LinkDeviceUiState(
     val step: LinkDeviceStep = LinkDeviceStep.INPUT,
     val code_input: String = "",
     val pending_device: PendingDevice? = null,
+    val fingerprint: String = "",
+    val codes_match_confirmed: Boolean = false,
     val linked_device_name: String = "",
     val is_verifying: Boolean = false,
     val is_confirming: Boolean = false,
@@ -99,12 +102,26 @@ class LinkDeviceViewModel @Inject constructor(
             runCatching {
                 withContext(Dispatchers.IO) { device_code_api.verify_code(current.code_input) }
             }.onSuccess { device ->
-                _state.value = _state.value.copy(
-                    step = LinkDeviceStep.CONFIRM,
-                    pending_device = device,
-                    is_verifying = false,
-                    error = null,
+                val fingerprint = DeviceKeyFingerprint.of_encoded(
+                    device.ed25519_pk,
+                    device.mlkem_pk,
+                    device.x25519_pk,
                 )
+                _state.value = if (fingerprint == null) {
+                    _state.value.copy(
+                        is_verifying = false,
+                        error = LinkDeviceError.INVALID_DEVICE_KEYS,
+                    )
+                } else {
+                    _state.value.copy(
+                        step = LinkDeviceStep.CONFIRM,
+                        pending_device = device,
+                        fingerprint = fingerprint,
+                        codes_match_confirmed = false,
+                        is_verifying = false,
+                        error = null,
+                    )
+                }
             }.onFailure { throwable ->
                 if (throwable is kotlinx.coroutines.CancellationException) throw throwable
                 _state.value = _state.value.copy(
@@ -119,11 +136,15 @@ class LinkDeviceViewModel @Inject constructor(
         val current = _state.value
         val device = current.pending_device ?: return
         if (current.is_confirming) return
+        if (!current.codes_match_confirmed || current.fingerprint.isBlank()) {
+            _state.value = current.copy(error = LinkDeviceError.CODES_NOT_CONFIRMED)
+            return
+        }
 
         _state.value = current.copy(is_confirming = true, error = null)
         viewModelScope.launch {
             runCatching {
-                val envelope = withContext(Dispatchers.Default) { seal_for(device, current.code_input) }
+                val envelope = withContext(Dispatchers.Default) { seal_for(device, current.fingerprint) }
                 withContext(Dispatchers.IO) {
                     device_code_api.confirm_code(current.code_input, envelope)
                 }
@@ -144,12 +165,21 @@ class LinkDeviceViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     step = if (restart) LinkDeviceStep.INPUT else LinkDeviceStep.CONFIRM,
                     pending_device = if (restart) null else _state.value.pending_device,
+                    fingerprint = if (restart) "" else _state.value.fingerprint,
+                    codes_match_confirmed = if (restart) false else _state.value.codes_match_confirmed,
                     code_input = if (restart) "" else _state.value.code_input,
                     is_confirming = false,
                     error = error,
                 )
             }
         }
+    }
+
+    fun set_codes_match_confirmed(confirmed: Boolean) {
+        _state.value = _state.value.copy(
+            codes_match_confirmed = confirmed,
+            error = if (confirmed) null else _state.value.error,
+        )
     }
 
     fun cancel_confirm() {
@@ -164,19 +194,23 @@ class LinkDeviceViewModel @Inject constructor(
         _state.value = _state.value.copy(error = null)
     }
 
-    private fun seal_for(device: PendingDevice, code: String): String {
-        verify_binding(device, code)
+    private fun seal_for(device: PendingDevice, confirmed_fingerprint: String): String {
+        val ed25519_pk = DeviceEnvelope.base64url_decode(device.ed25519_pk)
+        val mlkem_pk = DeviceEnvelope.base64url_decode(device.mlkem_pk)
+        val x25519_pk = DeviceEnvelope.base64url_decode(device.x25519_pk)
+
+        if (ed25519_pk.size != DeviceEnvelope.ED25519_PK_BYTES ||
+            mlkem_pk.size != DeviceEnvelope.MLKEM_768_PK_BYTES ||
+            x25519_pk.size != DeviceEnvelope.X25519_PK_BYTES
+        ) {
+            throw DeviceEnvelope.InvalidDeviceKeyException("bad device key size")
+        }
+        if (DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk) != confirmed_fingerprint) {
+            throw DeviceEnvelope.InvalidDeviceKeyException("device keys changed after confirmation")
+        }
+
         val passphrase = session_key_store.get_passphrase() ?: throw SessionExpiredException()
-
         try {
-            val mlkem_pk = DeviceEnvelope.base64url_decode(device.mlkem_pk)
-            val x25519_pk = DeviceEnvelope.base64url_decode(device.x25519_pk)
-            val ed25519_pk = DeviceEnvelope.base64url_decode(device.ed25519_pk)
-
-            if (ed25519_pk.size != DeviceEnvelope.ED25519_PK_BYTES) {
-                throw DeviceEnvelope.InvalidDeviceKeyException("bad ed25519 key")
-            }
-
             return DeviceEnvelope.base64url_encode(
                 DeviceEnvelope.seal_secret_for_device(
                     secret = passphrase,
@@ -189,25 +223,13 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    private fun verify_binding(device: PendingDevice, code: String) {
-        if (device.binding_tag.isBlank()) return
-        DeviceLinkBinding.require_match(
-            code = code,
-            ed25519_pk = device.ed25519_pk,
-            mlkem_pk = device.mlkem_pk,
-            x25519_pk = device.x25519_pk,
-            offered_tag = device.binding_tag,
-        )
-    }
-
     private fun classify(throwable: Throwable): LinkDeviceError = when (throwable) {
         is SessionExpiredException -> LinkDeviceError.SESSION_EXPIRED
-        is DeviceLinkBinding.BindingMismatchException -> LinkDeviceError.BINDING_MISMATCH
         is DeviceLinkError.CodeNotFound -> LinkDeviceError.EXPIRED_CODE
         is DeviceLinkError.AlreadyLinked -> LinkDeviceError.ALREADY_LINKED
         is DeviceLinkError.PlanUpgradeRequired -> LinkDeviceError.UPGRADE_REQUIRED
         is DeviceLinkError.ServiceUnavailable -> LinkDeviceError.UNAVAILABLE
-        is DeviceEnvelope.InvalidDeviceKeyException -> LinkDeviceError.FAILED
+        is DeviceEnvelope.InvalidDeviceKeyException -> LinkDeviceError.INVALID_DEVICE_KEYS
         is ApiError.NotFoundError -> LinkDeviceError.EXPIRED_CODE
         is ApiError.Conflict -> LinkDeviceError.ALREADY_LINKED
         is ApiError.RateLimited -> LinkDeviceError.RATE_LIMITED

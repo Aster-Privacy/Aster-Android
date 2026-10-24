@@ -36,16 +36,18 @@ fun latest_sealed_schedule_ms(now_ms: Long): Long = now_ms + MAX_SEALED_SCHEDULE
 fun exceeds_sealed_schedule_window(scheduled_at_ms: Long, now_ms: Long): Boolean =
     scheduled_at_ms > latest_sealed_schedule_ms(now_ms)
 
+fun has_external_recipient(recipients: List<String>): Boolean =
+    recipients.any { it.isNotBlank() && !is_internal_recipient(it) }
+
 fun scheduled_send_block(
     recipients: List<String>,
     scheduled_at_ms: Long,
     now_ms: Long,
     require_encryption: Boolean,
 ): ScheduledSendBlock? {
-    val addresses = recipients.filter { it.isNotBlank() }
     return when {
         exceeds_sealed_schedule_window(scheduled_at_ms, now_ms) -> ScheduledSendBlock.TOO_FAR_AHEAD
-        require_encryption && addresses.any { !is_internal_recipient(it) } ->
+        require_encryption && has_external_recipient(recipients) ->
             ScheduledSendBlock.REQUIRES_ENCRYPTION
         else -> null
     }

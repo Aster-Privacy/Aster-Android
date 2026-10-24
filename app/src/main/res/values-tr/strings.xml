@@ -3011,7 +3011,11 @@
     <string name="alias_pinned_toast">Rumuz sabitlendi</string>
     <string name="alias_unpinned_toast">Rumuz sabitlemesi kaldırıldı</string>
     <string name="e2e_identity_changed_blocked">Gönderilemedi: bir alıcının şifreleme anahtarı değişti. Değişikliği gelen kutunuzda onaylayın, ardından yeniden gönderin. Mesaj gönderilmedi.</string>
-    <string name="link_device_error_binding_mismatch">Diğer cihaz bu kodla eşleşmeyen anahtarlar gönderdi. O cihazda yeni bir kod alın, ardından yeniden deneyin.</string>
+    <string name="link_device_fingerprint_label">Doğrulama kodu</string>
+    <string name="link_device_fingerprint_hint">Bu kodu diğer cihazınızdaki doğrulama kodu veya cihaz parmak iziyle karşılaştırın. Kodlar farklıysa İptal\'e dokunun.</string>
+    <string name="link_device_codes_match">Kodlar eşleşiyor</string>
+    <string name="link_device_error_invalid_keys">Diğer cihaz kullanılamayan anahtarlar gönderdi. O cihazda yeni bir kod alın ve tekrar deneyin.</string>
+    <string name="link_device_error_codes_not_confirmed">Cihazı bağlamak için kodların eşleştiğini onaylayın.</string>
     <string name="restore">Geri yükle</string>
     <string name="contact_trash_confirm_message">Kişileri çöp kutusundan geri yükleyebilirsiniz.</string>
     <string name="empty_contacts_trash_confirm_message">Çöp kutusundaki tüm kişiler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.</string>

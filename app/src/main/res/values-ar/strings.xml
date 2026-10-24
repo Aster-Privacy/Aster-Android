@@ -3083,7 +3083,11 @@
     <string name="alias_pinned_toast">تم تثبيت الاسم المستعار</string>
     <string name="alias_unpinned_toast">تم إلغاء تثبيت الاسم المستعار</string>
     <string name="e2e_identity_changed_blocked">تعذّر الإرسال: تغيّر مفتاح التشفير لأحد المستلمين. أكّد التغيير في بريدك الوارد، ثم أعد الإرسال. لم تُرسل الرسالة.</string>
-    <string name="link_device_error_binding_mismatch">أرسل الجهاز الآخر مفاتيح لا تطابق هذا الرمز. احصل على رمز جديد على ذلك الجهاز، ثم حاول مرة أخرى.</string>
+    <string name="link_device_fingerprint_label">رمز التحقق</string>
+    <string name="link_device_fingerprint_hint">قارن هذا الرمز برمز التحقق أو بصمة الجهاز على جهازك الآخر. إذا اختلف الرمزان، فانقر على إلغاء.</string>
+    <string name="link_device_codes_match">الرمزان متطابقان</string>
+    <string name="link_device_error_invalid_keys">أرسل الجهاز الآخر مفاتيح لا يمكن استخدامها. احصل على رمز جديد على ذلك الجهاز، ثم حاول مرة أخرى.</string>
+    <string name="link_device_error_codes_not_confirmed">لربط الجهاز، أكّد أن الرمزين متطابقان.</string>
     <string name="restore">استعادة</string>
     <string name="contact_trash_confirm_message">يمكنك استعادة جهات الاتصال من سلة المهملات.</string>
     <string name="empty_contacts_trash_confirm_message">هل تريد حذف جميع جهات الاتصال في سلة المهملات نهائيًا؟ لا يمكن التراجع عن ذلك.</string>

@@ -3029,7 +3029,11 @@
     <string name="alias_pinned_toast">Alias fissato</string>
     <string name="alias_unpinned_toast">Alias sbloccato</string>
     <string name="e2e_identity_changed_blocked">Invio non riuscito: la chiave di crittografia di un destinatario è cambiata. Conferma la modifica nella tua casella di posta, poi invia di nuovo. Il messaggio non è stato inviato.</string>
-    <string name="link_device_error_binding_mismatch">L’altro dispositivo ha inviato chiavi che non corrispondono a questo codice. Richiedi un nuovo codice su quel dispositivo, poi riprova.</string>
+    <string name="link_device_fingerprint_label">Codice di verifica</string>
+    <string name="link_device_fingerprint_hint">Confronta questo codice con il codice di verifica o l\'impronta del dispositivo sull\'altro dispositivo. Se i codici sono diversi, tocca Annulla.</string>
+    <string name="link_device_codes_match">I codici corrispondono</string>
+    <string name="link_device_error_invalid_keys">L\'altro dispositivo ha inviato chiavi non utilizzabili. Ottieni un nuovo codice su quel dispositivo, poi riprova.</string>
+    <string name="link_device_error_codes_not_confirmed">Per collegare il dispositivo, conferma che i codici corrispondono.</string>
     <string name="restore">Ripristina</string>
     <string name="contact_trash_confirm_message">Puoi ripristinare i contatti dal cestino.</string>
     <string name="empty_contacts_trash_confirm_message">Eliminare definitivamente tutti i contatti nel cestino? L’operazione è irreversibile.</string>

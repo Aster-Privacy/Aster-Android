@@ -30,10 +30,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -217,6 +222,60 @@ fun LinkDeviceScreen(
                 }
                 v_gap(AsterSpacing.lg)
 
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AsterSpacing.lg),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.link_device_fingerprint_label),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        v_gap(AsterSpacing.xs)
+                        Text(
+                            text = state.fingerprint,
+                            color = colors.text_primary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                        v_gap(AsterSpacing.sm)
+                        Text(
+                            text = stringResource(R.string.link_device_fingerprint_hint),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+                v_gap(AsterSpacing.md)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(CircleShape)
+                        .clickable(enabled = !state.is_confirming) {
+                            vm.set_codes_match_confirmed(!state.codes_match_confirmed)
+                        }
+                        .padding(vertical = AsterSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = state.codes_match_confirmed,
+                        onCheckedChange = { vm.set_codes_match_confirmed(it) },
+                        enabled = !state.is_confirming,
+                    )
+                    Box(modifier = Modifier.width(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.link_device_codes_match),
+                        color = colors.text_primary,
+                        fontSize = 14.sp,
+                    )
+                }
+                v_gap(AsterSpacing.md)
+
                 Text(
                     text = stringResource(R.string.link_device_confirm_warning),
                     color = colors.text_tertiary,
@@ -227,7 +286,7 @@ fun LinkDeviceScreen(
                 AsterButton(
                     label = stringResource(R.string.link_device_confirm_action),
                     onClick = { vm.confirm_link() },
-                    enabled = !state.is_confirming,
+                    enabled = state.codes_match_confirmed && !state.is_confirming,
                     is_loading = state.is_confirming,
                 )
                 v_gap(AsterSpacing.sm)
@@ -344,7 +403,8 @@ private fun link_device_progress(current: Int) {
 
 private fun link_device_error_res(error: LinkDeviceError): Int = when (error) {
     LinkDeviceError.INVALID_CODE -> R.string.link_device_error_invalid
-    LinkDeviceError.BINDING_MISMATCH -> R.string.link_device_error_binding_mismatch
+    LinkDeviceError.INVALID_DEVICE_KEYS -> R.string.link_device_error_invalid_keys
+    LinkDeviceError.CODES_NOT_CONFIRMED -> R.string.link_device_error_codes_not_confirmed
     LinkDeviceError.EXPIRED_CODE -> R.string.link_device_error_expired
     LinkDeviceError.ALREADY_LINKED -> R.string.link_device_error_already_linked
     LinkDeviceError.UPGRADE_REQUIRED -> R.string.link_device_error_upgrade_required

@@ -8098,12 +8098,25 @@ private fun show_download_notification(
             context, filename.hashCode(), open_intent,
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val public_version = androidx.core.app.NotificationCompat.Builder(context, channel_id)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle(context.getString(R.string.download_complete))
+            .build()
+        val app_lock_configured = runCatching {
+            dagger.hilt.android.EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                org.astermail.android.notifications.MailPollingWorker.MailRepositoryEntryPoint::class.java,
+            ).app_lock_store().is_configured()
+        }.getOrDefault(true)
+        val content_hidden = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured
         val notification = androidx.core.app.NotificationCompat.Builder(context, channel_id)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle(context.getString(R.string.download_complete))
-            .setContentText(filename)
+            .setContentText(if (content_hidden) null else filename)
             .setContentIntent(pending)
             .setAutoCancel(true)
+            .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(public_version)
             .build()
         nm.notify(filename.hashCode(), notification)
     } catch (cancelled: CancellationException) {

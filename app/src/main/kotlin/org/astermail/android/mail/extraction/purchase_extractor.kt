@@ -667,9 +667,7 @@ fun extract_purchase_details(
     )
 }
 
-private val order_url_patterns = listOf(
-    Regex("""https?://[^\s<>"]+(?:order|purchase|invoice|receipt)[^\s<>"]*""", RegexOption.IGNORE_CASE),
-)
+private val order_url_keywords = listOf("order", "purchase", "invoice", "receipt")
 
 private val order_url_trailing_junk = Regex("""['">\]).,]+$""")
 
@@ -736,7 +734,7 @@ internal fun score_order_link(href: String, text: String): Int {
 }
 
 private fun select_order_link_from_html(html: String): String? {
-    val document = runCatching { org.jsoup.Jsoup.parse(html) }.getOrNull() ?: return null
+    val document = runCatching { org.jsoup.Jsoup.parse(html.take(link_scan_max_length)) }.getOrNull() ?: return null
     var best: String? = null
     var best_score = 0
     for (anchor in document.select("a[href]")) {
@@ -757,12 +755,11 @@ fun extract_order_url(body: String, html: String?): String? {
         select_order_link_from_html(markup)?.let { return it }
     }
     val plain = if (body_is_html) html_to_plain_text(body) else body
-    for (pattern in order_url_patterns) {
-        for (match in pattern.findAll(plain)) {
-            val url = match.value.replace(order_url_trailing_junk, "")
-            if (!is_usable_order_url(url)) continue
-            return url
-        }
+    for (token in url_tokens(plain)) {
+        if (order_url_keywords.none { contains_after_scheme(token, it) }) continue
+        val url = token.replace(order_url_trailing_junk, "")
+        if (!is_usable_order_url(url)) continue
+        return url
     }
     return null
 }

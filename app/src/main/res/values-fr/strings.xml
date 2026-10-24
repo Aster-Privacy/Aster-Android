@@ -3058,7 +3058,11 @@
     <string name="alias_pinned_toast">Alias épinglé</string>
     <string name="alias_unpinned_toast">Alias désépinglé</string>
     <string name="e2e_identity_changed_blocked">Envoi impossible : la clé de chiffrement d\'un destinataire a changé. Confirmez le changement dans votre boîte de réception, puis envoyez à nouveau. Le message n\'a pas été envoyé.</string>
-    <string name="link_device_error_binding_mismatch">L\'autre appareil a envoyé des clés qui ne correspondent pas à ce code. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
+    <string name="link_device_fingerprint_label">Code de vérification</string>
+    <string name="link_device_fingerprint_hint">Comparez ce code avec le code de vérification ou l\'empreinte de l\'appareil affiché sur votre autre appareil. Si les codes sont différents, touchez Annuler.</string>
+    <string name="link_device_codes_match">Les codes correspondent</string>
+    <string name="link_device_error_invalid_keys">L\'autre appareil a envoyé des clés inutilisables. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
+    <string name="link_device_error_codes_not_confirmed">Pour associer l\'appareil, confirmez que les codes correspondent.</string>
     <string name="restore">Restaurer</string>
     <string name="contact_trash_confirm_message">Vous pouvez restaurer des contacts depuis la corbeille.</string>
     <string name="empty_contacts_trash_confirm_message">Supprimer définitivement tous les contacts de la corbeille ? Cette action est irréversible.</string>

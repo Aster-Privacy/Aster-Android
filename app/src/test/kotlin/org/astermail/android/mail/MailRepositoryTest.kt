@@ -186,7 +186,100 @@ class MailRepositoryTest {
             thread_snapshot_dao_provider = dagger.Lazy { mockk(relaxed = true) },
             context = context,
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
+            encryption_api_provider = dagger.Lazy { encryption_api },
         )
+    }
+
+    private val encryption_api: org.astermail.android.api.encryption.EncryptionApi = mockk {
+        coEvery { get_encryption_settings() } returns org.astermail.android.api.encryption.EncryptionSettings()
+    }
+
+    private fun require_encryption_repo(
+        settings: suspend () -> org.astermail.android.api.encryption.EncryptionSettings,
+    ): MailRepository {
+        val api = mockk<org.astermail.android.api.encryption.EncryptionApi>()
+        coEvery { api.get_encryption_settings() } coAnswers { settings() }
+        return MailRepository(
+            mail_api = mail_api,
+            send_api = send_api,
+            snooze_api = snooze_api,
+            labels_api = labels_api,
+            keys_api = keys_api,
+            session_key_store = session_key_store,
+            scheduled_api = scheduled_api,
+            ratchet_decryptor = ratchet_decryptor,
+            ratchet_encryptor = ratchet_encryptor,
+            ratchet_plaintext_cache = ratchet_plaintext_cache,
+            system_folder_bootstrap = system_folder_bootstrap,
+            pending_send_dao_provider = dagger.Lazy { pending_send_dao },
+            message_body_dao_provider = dagger.Lazy { mockk(relaxed = true) },
+            thread_snapshot_dao_provider = dagger.Lazy { mockk(relaxed = true) },
+            context = context,
+            auth_repository = dagger.Lazy { mockk(relaxed = true) },
+            encryption_api_provider = dagger.Lazy { api },
+        )
+    }
+
+    @Test
+    fun `require encryption blocks external reactions and scheduled sends`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo {
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = true)
+        }
+        val reaction = guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+        assertTrue(reaction.exceptionOrNull() is EncryptionRequiredException)
+        val scheduled = guarded.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            to = listOf("to@astermail.org"),
+            bcc = listOf("friend@outside.example"),
+            scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString(),
+        )
+        assertTrue(scheduled.exceptionOrNull() is EncryptionRequiredException)
+        coVerify(exactly = 0) { send_api.react(any()) }
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
+    }
+
+    @Test
+    fun `an unreadable encryption setting while offline is a connection failure`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo { throw java.net.UnknownHostException("offline") }
+        val err = guarded.send_email(
+            to = listOf("friend@outside.example"),
+            subject = "Hi",
+            body_html = "<p>hi</p>",
+        ).exceptionOrNull()
+        assertTrue(err is EncryptionSettingUnavailableException)
+        assertFalse(is_permanent_send_failure_cause(err))
+        assertTrue(is_connectivity_failure(err))
+        assertEquals(SendFailureReason.CONNECTION, send_failure_reason_for(err))
+        assertTrue(should_wait_for_network(err, false, 0L, 1L))
+    }
+
+    @Test
+    fun `the cached encryption setting belongs to one account`() = runTest {
+        var account = "user_1"
+        var online = true
+        every { session_key_store.get_user_id() } answers { account }
+        val guarded = require_encryption_repo {
+            if (!online) throw java.net.UnknownHostException("offline")
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = account == "user_1")
+        }
+        assertTrue(
+            guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+                .exceptionOrNull() is EncryptionRequiredException,
+        )
+        online = false
+        assertTrue(
+            guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+                .exceptionOrNull() is EncryptionRequiredException,
+        )
+        account = "user_2"
+        assertTrue(
+            guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+                .exceptionOrNull() is EncryptionSettingUnavailableException,
+        )
+        coVerify(exactly = 0) { send_api.react(any()) }
     }
 
     @After
@@ -2532,6 +2625,8 @@ class MailRepositoryTest {
     fun `the undo safety draft includes the staged attachments`() = runTest {
         val files_dir = java.nio.file.Files.createTempDirectory("outbox_test").toFile()
         every { context.filesDir } returns files_dir
+        val outbox_key = ByteArray(32) { 7 }
+        repo.outbox_file_cipher_override = OutboxFileCipher { outbox_key.copyOf() }
         val captured = slot<org.astermail.android.api.mail.CreateDraftRequestBody>()
         coEvery { mail_api.create_draft(capture(captured)) } returns
             org.astermail.android.api.mail.CreateDraftResponse(id = "safety_att", success = true)
@@ -2560,6 +2655,9 @@ class MailRepositoryTest {
         assertEquals("safety_att", pending_send_dao.get_by_id("pend_att")?.draft_id)
         assertTrue(captured.captured.has_attachments)
         assertEquals(1, captured.captured.attachment_count)
+        val staged = java.io.File(files_dir, "outbox_attachments/pend_att.json").readBytes()
+        assertTrue(OutboxFileCipher.is_sealed(staged))
+        assertFalse(String(staged, Charsets.ISO_8859_1).contains("report"))
         files_dir.deleteRecursively()
     }
 

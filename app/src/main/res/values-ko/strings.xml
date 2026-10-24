@@ -2995,7 +2995,11 @@
     <string name="alias_pinned_toast">별칭이 고정되었습니다</string>
     <string name="alias_unpinned_toast">별칭 고정이 해제되었습니다</string>
     <string name="e2e_identity_changed_blocked">보낼 수 없음: 받는 사람의 암호화 키가 변경되었습니다. 받은편지함에서 변경을 확인한 다음 다시 보내세요. 메시지가 전송되지 않았습니다.</string>
-    <string name="link_device_error_binding_mismatch">다른 기기에서 이 코드와 일치하지 않는 키를 보냈습니다. 해당 기기에서 새 코드를 받은 다음 다시 시도하세요.</string>
+    <string name="link_device_fingerprint_label">확인 코드</string>
+    <string name="link_device_fingerprint_hint">이 코드를 다른 기기에 표시된 확인 코드 또는 기기 지문과 비교하세요. 코드가 다르면 취소를 탭하세요.</string>
+    <string name="link_device_codes_match">코드가 일치합니다</string>
+    <string name="link_device_error_invalid_keys">다른 기기가 사용할 수 없는 키를 보냈습니다. 해당 기기에서 새 코드를 받은 후 다시 시도하세요.</string>
+    <string name="link_device_error_codes_not_confirmed">기기를 연결하려면 코드가 일치하는지 확인하세요.</string>
     <string name="restore">복원</string>
     <string name="contact_trash_confirm_message">휴지통에서 연락처를 복원할 수 있습니다.</string>
     <string name="empty_contacts_trash_confirm_message">휴지통의 모든 연락처를 영구적으로 삭제할까요? 되돌릴 수 없습니다.</string>

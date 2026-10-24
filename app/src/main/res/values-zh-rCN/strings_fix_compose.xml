@@ -3,7 +3,8 @@
     <string name="compose_discard_draft_title">要丢弃此草稿吗？</string>
     <string name="compose_discard_draft_message">丢弃此草稿后，其正文和所有附件都会被删除。此操作无法撤销。</string>
     <string name="scheduled_too_far_ahead">定时邮件最多只能提前 28 天安排。请选择更早的时间。</string>
-    <string name="scheduled_requires_encryption">你已开启强制加密，而发往外部地址的定时邮件不是端到端加密的。请立即发送此邮件，或在设置中关闭强制加密。</string>
+    <string name="send_requires_encryption">“要求加密”已开启，发往 Aster 以外地址的邮件不是端到端加密的，因此此邮件未发送。要发送，请删除这些地址，或在设置中关闭“要求加密”。</string>
+    <string name="send_encryption_setting_unavailable">Aster 无法检查你的加密设置，因此未发送此邮件。请检查网络连接，然后重试。</string>
     <string name="send_key_changed_while_waiting">此邮件等待发送期间，某位收件人的加密密钥发生了变化，因此未发送。</string>
     <string name="outbox_failed_reason_key_changed">某位收件人的加密密钥已更改。请打开草稿并确认新密钥后再发送。</string>
     <string name="message_password_weak_hint">请至少使用 12 个字符，并包含数字、符号，或同时包含大写和小写字母。</string>

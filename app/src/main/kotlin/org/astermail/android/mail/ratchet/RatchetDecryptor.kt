@@ -172,7 +172,13 @@ class RatchetDecryptor @Inject constructor(
         for ((address, recipient) in escrow_candidates(envelope, our_addresses, sender_email)) {
             val conversation_id = X3dh.derive_conversation_id(address, sender_email)
             val escrowed = fetch_escrow(message_id, recipient, sender_email, conversation_id) ?: continue
-            cache_plaintext(message_id, escrowed.plaintext, unconfirmed_sender = escrowed.unconfirmed_sender)
+            if (!escrowed.verified) continue
+            cache_plaintext(
+                message_id,
+                escrowed.plaintext,
+                unconfirmed_sender = escrowed.unconfirmed_sender,
+                binding = PlaintextBinding(sender_email, conversation_id),
+            )
             return escrowed.plaintext
         }
         return null
@@ -281,6 +287,7 @@ class RatchetDecryptor @Inject constructor(
         message_id: String?,
     ): String? {
         val conversation_id = X3dh.derive_conversation_id(matched_address, sender_email)
+        val binding = PlaintextBinding(sender_email, conversation_id)
 
         return conversation_locks.with_lock(conversation_id) {
             val is_fresh_bootstrap = recipient.ephemeral_key != null &&
@@ -370,7 +377,13 @@ class RatchetDecryptor @Inject constructor(
             if (plaintext == null) {
                 val escrowed = fetch_escrow(message_id, recipient, sender_email, conversation_id)
                 if (escrowed != null) {
-                    cache_plaintext(message_id, escrowed.plaintext, unconfirmed_sender = escrowed.unconfirmed_sender)
+                    cache_plaintext(
+                        message_id,
+                        escrowed.plaintext,
+                        sender_unauthenticated = !escrowed.verified,
+                        unconfirmed_sender = escrowed.unconfirmed_sender,
+                        binding = binding,
+                    )
                     return@with_lock escrowed.plaintext
                 }
                 val recovered = try_recovery_lane(
@@ -395,7 +408,7 @@ class RatchetDecryptor @Inject constructor(
                     if (continuity == SenderIdentityContinuity.CHANGED) {
                         flag_sender_rotation(conversation_id, sender_email, envelope.sender_identity_key)
                     }
-                    cache_plaintext(message_id, final_recovery, sender_unauthenticated = true)
+                    cache_plaintext(message_id, final_recovery, sender_unauthenticated = true, binding = binding)
                     return@with_lock final_recovery
                 }
                 decrypt_error?.let { throw it }
@@ -428,7 +441,7 @@ class RatchetDecryptor @Inject constructor(
             } else {
                 remember_sender_identity(sender_email, envelope.sender_identity_key)
             }
-            cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender)
+            cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
             upload_escrow(message_id, recipient, resolved, sender_email, conversation_id, unconfirmed_sender)
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
@@ -441,9 +454,10 @@ class RatchetDecryptor @Inject constructor(
         plaintext: String,
         sender_unauthenticated: Boolean = false,
         unconfirmed_sender: Boolean = false,
+        binding: PlaintextBinding? = null,
     ) {
         if (message_id.isNullOrBlank()) return
-        runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated, unconfirmed_sender) }
+        runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated, unconfirmed_sender, binding) }
     }
 
     private fun sender_continuity(

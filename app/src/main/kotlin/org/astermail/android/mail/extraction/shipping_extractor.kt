@@ -157,19 +157,20 @@ private fun extract_tracking_number(
     return null
 }
 
-private val tracking_url_patterns = listOf(
-    Regex("https?://[^\\s<>\"]+track[^\\s<>\"]*", RegexOption.IGNORE_CASE),
-    Regex("https?://[^\\s<>\"]+shipment[^\\s<>\"]*", RegexOption.IGNORE_CASE),
-    Regex("https?://[^\\s<>\"]+delivery[^\\s<>\"]*", RegexOption.IGNORE_CASE),
-)
+private val tracking_url_keywords = listOf("track", "shipment", "delivery")
 
 private val url_trailing_junk = Regex("['\">\\]]+$")
 
-private fun extract_tracking_url(body: String, html: String?): String? {
-    val content = if (!html.isNullOrEmpty()) html else body
-    for (pattern in tracking_url_patterns) {
-        val match = pattern.find(content) ?: continue
-        return match.value.replace(url_trailing_junk, "")
+internal fun extract_tracking_url(body: String, html: String?): String? {
+    if (!html.isNullOrEmpty()) {
+        val hrefs = anchor_hrefs(html).filterNot { is_image_link(it) }
+        for (keyword in tracking_url_keywords) {
+            hrefs.firstOrNull { contains_after_scheme(it, keyword) }?.let { return it }
+        }
+    }
+    val tokens = url_tokens(body).map { it.replace(url_trailing_junk, "") }.toList()
+    for (keyword in tracking_url_keywords) {
+        tokens.firstOrNull { contains_after_scheme(it, keyword) && !is_image_link(it) }?.let { return it }
     }
     return null
 }

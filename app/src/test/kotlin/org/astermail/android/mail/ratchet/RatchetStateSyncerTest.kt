@@ -27,12 +27,15 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.astermail.android.api.ratchet.PutStateOutcome
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetStateResponse
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -58,6 +61,7 @@ class RatchetStateSyncerTest {
         every { state_store.derive_state_encryption_key() } answers { device_key.copyOf() }
         every { state_store.state_encryption_key_candidates() } answers { listOf(device_key.copyOf()) }
         coEvery { state_store.sync_floor(any()) } returns 0L
+        coEvery { state_store.load(any()) } returns null
     }
 
     @After
@@ -159,5 +163,49 @@ class RatchetStateSyncerTest {
 
         assertFalse(synced)
         coVerify(exactly = 1) { ratchet_api.put_state(any(), any(), any(), any()) }
+    }
+    private fun unversioned_server_state(state: RatchetState): RatchetStateResponse {
+        val nonce = RatchetCrypto.random_bytes(12)
+        val body = Json { encodeDefaults = true }.encodeToString(RatchetState.serializer(), state)
+        val plaintext = """{"state":$body,"conversation_id":"$conversation_id"}""".toByteArray(Charsets.UTF_8)
+        val ciphertext = RatchetCrypto.aes_gcm_encrypt(plaintext, device_key, nonce, null)
+        return RatchetStateResponse(
+            id = "1",
+            conversation_id = RatchetCrypto.b64_encode(conversation_id.toByteArray(Charsets.UTF_8)),
+            encrypted_state = RatchetCrypto.b64_encode(ciphertext),
+            state_nonce = RatchetCrypto.b64_encode(nonce),
+            state_version = 3,
+        )
+    }
+
+    @Test
+    fun `an unversioned server state cannot restore an older state once a version was seen`() = runTest {
+        coEvery { state_store.sync_floor(any()) } returns 50L
+        coEvery { ratchet_api.fetch_state(any()) } returns
+            unversioned_server_state(sample_state(conversation_id, "stale"))
+
+        val restored = RatchetStateSyncer(state_store, ratchet_api).fetch_from_server(conversation_id)
+
+        assertNull(restored)
+        coVerify(exactly = 0) { state_store.raise_sync_floor(any(), any()) }
+    }
+
+    @Test
+    fun `an unversioned server state cannot replace a conversation this device holds`() = runTest {
+        coEvery { state_store.load(conversation_id) } returns sample_state(conversation_id, "local")
+        coEvery { ratchet_api.fetch_state(any()) } returns
+            unversioned_server_state(sample_state(conversation_id, "stale"))
+
+        assertNull(RatchetStateSyncer(state_store, ratchet_api).fetch_from_server(conversation_id))
+    }
+
+    @Test
+    fun `a first device still restores an unversioned state`() = runTest {
+        coEvery { ratchet_api.fetch_state(any()) } returns
+            unversioned_server_state(sample_state(conversation_id, "remote"))
+
+        val restored = RatchetStateSyncer(state_store, ratchet_api).fetch_from_server(conversation_id)
+
+        assertEquals("remote", restored?.root_key)
     }
 }

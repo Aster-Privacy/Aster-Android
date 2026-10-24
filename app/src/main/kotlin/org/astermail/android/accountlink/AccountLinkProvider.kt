@@ -157,8 +157,7 @@ class AccountLinkProvider : ContentProvider() {
     }
 
     private fun verify_binding(pending: PendingDevice, code: String, binding_tag: String) {
-        val offered = binding_tag.ifBlank { pending.binding_tag }
-        if (offered.isBlank()) {
+        if (binding_tag.isBlank()) {
             throw DeviceLinkBinding.BindingMismatchException("device bundle carries no binding tag")
         }
         DeviceLinkBinding.require_match(
@@ -166,7 +165,7 @@ class AccountLinkProvider : ContentProvider() {
             ed25519_pk = pending.ed25519_pk,
             mlkem_pk = pending.mlkem_pk,
             x25519_pk = pending.x25519_pk,
-            offered_tag = offered,
+            offered_tag = binding_tag,
         )
     }
 
@@ -175,6 +174,8 @@ class AccountLinkProvider : ContentProvider() {
         val mlkem_pk = DeviceEnvelope.base64url_decode(pending.mlkem_pk)
         val x25519_pk = DeviceEnvelope.base64url_decode(pending.x25519_pk)
         require(ed25519_pk.size == DeviceEnvelope.ED25519_PK_BYTES) { "bad ed25519 key" }
+        require(mlkem_pk.size == DeviceEnvelope.MLKEM_768_PK_BYTES) { "bad mlkem key" }
+        require(x25519_pk.size == DeviceEnvelope.X25519_PK_BYTES) { "bad x25519 key" }
         val sealed = DeviceEnvelope.seal_secret_for_device(
             secret = passphrase,
             device_mlkem_pk = mlkem_pk,

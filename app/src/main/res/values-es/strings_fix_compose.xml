@@ -3,7 +3,8 @@
     <string name="compose_discard_draft_title">¿Descartar este borrador?</string>
     <string name="compose_discard_draft_message">Si descartas este borrador, se eliminan su texto y los archivos adjuntos. No podrás deshacerlo.</string>
     <string name="scheduled_too_far_ahead">Los correos programados pueden enviarse como máximo con 28 días de antelación. Elige una hora anterior.</string>
-    <string name="scheduled_requires_encryption">Tienes activado el cifrado obligatorio, y los correos programados a direcciones externas no tienen cifrado de extremo a extremo. Envía este mensaje ahora o desactiva el cifrado obligatorio en Ajustes.</string>
+    <string name="send_requires_encryption">La opción «Requerir cifrado» está activada y el correo a direcciones fuera de Aster no tiene cifrado de extremo a extremo, por lo que este mensaje no se envió. Para enviarlo, quita esas direcciones o desactiva «Requerir cifrado» en Configuración.</string>
+    <string name="send_encryption_setting_unavailable">Aster no pudo comprobar tu configuración de cifrado, así que no envió este mensaje. Comprueba tu conexión e inténtalo de nuevo.</string>
     <string name="send_key_changed_while_waiting">La clave de cifrado de un destinatario cambió mientras este mensaje esperaba para enviarse, así que no se envió.</string>
     <string name="outbox_failed_reason_key_changed">La clave de cifrado de un destinatario cambió. Abre el borrador y confirma la nueva clave para enviarlo.</string>
     <string name="message_password_weak_hint">Usa al menos 12 caracteres e incluye un número, un símbolo o letras mayúsculas y minúsculas.</string>

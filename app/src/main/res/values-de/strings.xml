@@ -3012,7 +3012,11 @@
     <string name="alias_pinned_toast">Alias angeheftet</string>
     <string name="alias_unpinned_toast">Alias gelöst</string>
     <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätigen Sie die Änderung in Ihrem Posteingang und senden Sie die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
-    <string name="link_device_error_binding_mismatch">Das andere Gerät hat Schlüssel gesendet, die nicht zu diesem Code passen. Fordern Sie auf diesem Gerät einen neuen Code an und versuchen Sie es erneut.</string>
+    <string name="link_device_fingerprint_label">Prüfcode</string>
+    <string name="link_device_fingerprint_hint">Vergleiche diesen Code mit dem Prüfcode oder Gerätefingerabdruck auf deinem anderen Gerät. Wenn die Codes nicht übereinstimmen, tippe auf Abbrechen.</string>
+    <string name="link_device_codes_match">Die Codes stimmen überein</string>
+    <string name="link_device_error_invalid_keys">Das andere Gerät hat Schlüssel gesendet, die nicht verwendet werden können. Hole dir auf diesem Gerät einen neuen Code und versuche es dann erneut.</string>
+    <string name="link_device_error_codes_not_confirmed">Bestätige, dass die Codes übereinstimmen, um das Gerät zu verknüpfen.</string>
     <string name="restore">Wiederherstellen</string>
     <string name="contact_trash_confirm_message">Sie können Kontakte aus dem Papierkorb wiederherstellen.</string>
     <string name="empty_contacts_trash_confirm_message">Alle Kontakte im Papierkorb endgültig löschen? Das lässt sich nicht rückgängig machen.</string>

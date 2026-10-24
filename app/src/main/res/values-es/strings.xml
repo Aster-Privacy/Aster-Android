@@ -3030,7 +3030,11 @@
     <string name="alias_pinned_toast">Alias fijado</string>
     <string name="alias_unpinned_toast">Alias desfijado</string>
     <string name="e2e_identity_changed_blocked">No se pudo enviar: la clave de cifrado de un destinatario cambió. Confirma el cambio en tu bandeja de entrada y vuelve a enviar el mensaje. El mensaje no se envió.</string>
-    <string name="link_device_error_binding_mismatch">El otro dispositivo envió claves que no coinciden con este código. Obtén un código nuevo en ese dispositivo y vuelve a intentarlo.</string>
+    <string name="link_device_fingerprint_label">Código de verificación</string>
+    <string name="link_device_fingerprint_hint">Compara este código con el código de verificación o la huella del dispositivo en tu otro dispositivo. Si los códigos son distintos, toca Cancelar.</string>
+    <string name="link_device_codes_match">Los códigos coinciden</string>
+    <string name="link_device_error_invalid_keys">El otro dispositivo envió claves que no se pueden usar. Obtén un código nuevo en ese dispositivo y vuelve a intentarlo.</string>
+    <string name="link_device_error_codes_not_confirmed">Para vincular el dispositivo, confirma que los códigos coinciden.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Puedes restaurar contactos desde la papelera.</string>
     <string name="empty_contacts_trash_confirm_message">¿Eliminar de forma permanente todos los contactos de la papelera? Esta acción no se puede deshacer.</string>

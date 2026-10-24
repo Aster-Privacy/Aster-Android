@@ -3,7 +3,8 @@
     <string name="compose_discard_draft_title">Descartar este rascunho?</string>
     <string name="compose_discard_draft_message">Se você descartar este rascunho, o texto e os anexos serão excluídos. Não é possível desfazer.</string>
     <string name="scheduled_too_far_ahead">Os e-mails agendados podem ser enviados com no máximo 28 dias de antecedência. Escolha um horário anterior.</string>
-    <string name="scheduled_requires_encryption">Você ativou a criptografia obrigatória, e os e-mails agendados para endereços externos não têm criptografia de ponta a ponta. Envie esta mensagem agora ou desative a criptografia obrigatória em Ajustes.</string>
+    <string name="send_requires_encryption">A opção \"Exigir criptografia\" está ativada e o e-mail para endereços fora do Aster não tem criptografia de ponta a ponta, então esta mensagem não foi enviada. Para enviá-la, remova esses endereços ou desative \"Exigir criptografia\" em Configurações.</string>
+    <string name="send_encryption_setting_unavailable">O Aster não conseguiu verificar suas configurações de criptografia, então não enviou esta mensagem. Verifique sua conexão e tente novamente.</string>
     <string name="send_key_changed_while_waiting">A chave de criptografia de um destinatário mudou enquanto esta mensagem aguardava o envio, então ela não foi enviada.</string>
     <string name="outbox_failed_reason_key_changed">A chave de criptografia de um destinatário mudou. Abra o rascunho e confirme a nova chave para enviá-lo.</string>
     <string name="message_password_weak_hint">Use pelo menos 12 caracteres e inclua um número, um símbolo ou letras maiúsculas e minúsculas.</string>

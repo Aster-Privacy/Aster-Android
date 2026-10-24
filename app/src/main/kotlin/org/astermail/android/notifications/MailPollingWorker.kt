@@ -1057,6 +1057,7 @@ class MailPollingWorker(
                 builder.addAction(
                     NotificationCompat.Action.Builder(icon, localized(context).getString(label), pending)
                         .setShowsUserInterface(false)
+                        .setAuthenticationRequired(true)
                         .build(),
                 )
             }
