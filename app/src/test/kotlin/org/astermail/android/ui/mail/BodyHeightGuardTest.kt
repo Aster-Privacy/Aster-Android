@@ -24,6 +24,7 @@ package org.astermail.android.ui.mail
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -139,5 +140,25 @@ class BodyHeightGuardTest {
         assertFalse(body_height_viewport_filled(213, 133, 1080, 1080))
         assertFalse(body_height_viewport_filled(0, 133, 1727, 1080))
         assertFalse(body_height_viewport_filled(213, 0, 1727, 1080))
+    }
+
+    @Test
+    fun a_page_that_overflows_sideways_gets_a_viewport_wide_enough_to_hold_it() {
+        assertEquals(492, overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = null))
+        assertEquals(1600, overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 3f, current_fit = null))
+    }
+
+    @Test
+    fun a_page_that_fits_or_barely_overflows_keeps_its_viewport() {
+        assertNull(overflow_fit_width(scroll_range = 1080, scroll_extent = 1080, scale = 3f, current_fit = null))
+        assertNull(overflow_fit_width(scroll_range = 1089, scroll_extent = 1080, scale = 3f, current_fit = null))
+        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 0f, current_fit = null))
+    }
+
+    @Test
+    fun a_fitted_viewport_only_grows() {
+        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = 492))
+        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = 600))
+        assertEquals(602, overflow_fit_width(scroll_range = 1800, scroll_extent = 1080, scale = 3f, current_fit = 492))
     }
 }
