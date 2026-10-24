@@ -312,7 +312,7 @@ class ApiClient(
     }
 
     init {
-        ClientErrorReporter.configure(base_url, release_name)
+        ClientErrorReporter.configure(base_url, release_name, build_user_agent(release_name))
         http.requestPipeline.intercept(io.ktor.client.request.HttpRequestPipeline.Before) {
             apply_low_network_timeout(context)
         }
