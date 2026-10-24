@@ -141,7 +141,7 @@ class RatchetDecryptor @Inject constructor(
         val conversation_id = X3dh.derive_conversation_id(address, sender_email)
         val continuity = sender_continuity(conversation_id, sender_email, envelope.sender_identity_key)
         if (continuity != SenderIdentityContinuity.KNOWN) return
-        plaintext_cache.confirm_sender(message_id)
+        runCatching { plaintext_cache.confirm_sender(message_id) }
     }
 
     fun schedule_escrow_upgrade(
