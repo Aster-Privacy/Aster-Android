@@ -41,6 +41,7 @@ class RatchetPlaintextCache @Inject constructor(
 
     private val prefs = SecurePrefs.open(context, prefs_name)
     private val mutex = Mutex()
+    private val flag_lock = Any()
     private val unauthenticated = MutableStateFlow(read_flagged(unauthenticated_key))
     private val unconfirmed = MutableStateFlow(read_flagged(unconfirmed_key))
 
@@ -115,7 +116,7 @@ class RatchetPlaintextCache @Inject constructor(
         encoded: String,
         sender_unauthenticated: Boolean,
         unconfirmed_sender: Boolean,
-    ) {
+    ) = synchronized(flag_lock) {
         val retained = current_index().filter { it != message_id }.toMutableList()
         retained.add(message_id)
         val overflow = retained.size - max_entries
@@ -138,18 +139,20 @@ class RatchetPlaintextCache @Inject constructor(
         unconfirmed.value = next_unconfirmed
     }
 
-    private fun flag_unauthenticated(message_id: String) {
+    private fun flag_unauthenticated(message_id: String) = synchronized(flag_lock) {
         val next_flagged = (unauthenticated.value - message_id + message_id).toList().takeLast(max_entries).toSet()
         prefs.edit().putString(unauthenticated_key, next_flagged.joinToString(index_separator)).commit()
         unauthenticated.value = next_flagged
     }
 
     private fun set_flag(flow: MutableStateFlow<Set<String>>, pref_key: String, message_id: String, flagged: Boolean) {
-        val without = flow.value - message_id
-        val next = if (flagged) (without + message_id).toList().takeLast(max_entries).toSet() else without
-        if (next == flow.value) return
-        prefs.edit().putString(pref_key, next.joinToString(index_separator)).commit()
-        flow.value = next
+        synchronized(flag_lock) {
+            val without = flow.value - message_id
+            val next = if (flagged) (without + message_id).toList().takeLast(max_entries).toSet() else without
+            if (next == flow.value) return
+            prefs.edit().putString(pref_key, next.joinToString(index_separator)).commit()
+            flow.value = next
+        }
     }
 
     private fun read_flagged(pref_key: String): Set<String> =
@@ -173,7 +176,7 @@ class RatchetPlaintextCache @Inject constructor(
             .map { it.removePrefix(entry_prefix) }
     }
 
-    fun clear() {
+    fun clear() = synchronized(flag_lock) {
         prefs.edit().clear().commit()
         unauthenticated.value = emptySet()
         unconfirmed.value = emptySet()
