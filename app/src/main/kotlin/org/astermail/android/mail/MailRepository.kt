@@ -81,7 +81,9 @@ import org.astermail.android.api.send.SimpleSendResponse
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.astermail.android.crypto.ClientPgpCopies
 import org.astermail.android.crypto.CryptoNative
+import org.astermail.android.crypto.DetachedSignature
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpSigner
@@ -4910,6 +4912,49 @@ class MailRepository @Inject constructor(
             return null
         }
 
+        val mime_bytes = try {
+            build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            report_signing_skipped("signed_mime_build_threw")
+            return null
+        }
+        val signed = sign_mime_bytes(mime_bytes) ?: return null
+        return SignedMimePayload(
+            mime_base64 = android.util.Base64.encodeToString(mime_bytes, android.util.Base64.NO_WRAP),
+            signature = signed.signature,
+            micalg = signed.micalg,
+        )
+    }
+
+    private fun build_protected_mime_bytes(
+        subject: String,
+        body_html: String,
+        from: String,
+        to: List<String>,
+        cc: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+    ): ByteArray = ProtectedMimeBuilder.build(
+        ProtectedMimeInput(
+            subject = subject,
+            body = body_html,
+            is_html = true,
+            from = from,
+            to = to,
+            cc = cc,
+            attachments = attachments.map {
+                ProtectedMimeAttachment(
+                    filename = it.filename,
+                    content_type = it.content_type,
+                    data_base64 = it.data,
+                    content_id = it.content_id,
+                )
+            },
+        ),
+    ).toByteArray(Charsets.UTF_8)
+
+    private suspend fun sign_mime_bytes(mime_bytes: ByteArray): DetachedSignature? {
         val vault_identity_key = session_key_store.get_identity_key()
         if (vault_identity_key == null) {
             report_signing_skipped("vault_identity_key_unavailable")
@@ -4935,37 +4980,9 @@ class MailRepository @Inject constructor(
         passphrase.fill(0)
 
         return try {
-            val mime = ProtectedMimeBuilder.build(
-                ProtectedMimeInput(
-                    subject = subject,
-                    body = body_html,
-                    is_html = true,
-                    from = from,
-                    to = to,
-                    cc = cc,
-                    attachments = attachments.map {
-                        ProtectedMimeAttachment(
-                            filename = it.filename,
-                            content_type = it.content_type,
-                            data_base64 = it.data,
-                            content_id = it.content_id,
-                        )
-                    },
-                ),
-            )
-            val mime_bytes = mime.toByteArray(Charsets.UTF_8)
             val signed = PgpSigner.sign_detached(mime_bytes, identity_key, chars)
-
-            if (signed == null) {
-                report_signing_skipped("detached_signature_failed")
-                return null
-            }
-
-            SignedMimePayload(
-                mime_base64 = android.util.Base64.encodeToString(mime_bytes, android.util.Base64.NO_WRAP),
-                signature = signed.signature,
-                micalg = signed.micalg,
-            )
+            if (signed == null) report_signing_skipped("detached_signature_failed")
+            signed
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -4973,6 +4990,37 @@ class MailRepository @Inject constructor(
             null
         } finally {
             chars.fill('\u0000')
+        }
+    }
+
+    private suspend fun build_client_pgp_copies(
+        subject: String,
+        body_html: String,
+        from: String,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        expires_at: String?,
+        expiry_password: String?,
+    ): Map<String, String>? {
+        if (expires_at != null || !expiry_password.isNullOrEmpty() || from.isBlank()) return null
+        val outside = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
+        if (outside.isEmpty()) return null
+        val attachment_bytes = attachments.sumOf { it.size_bytes }
+        if (attachment_bytes > ClientPgpCopies.MAX_COPY_ATTACHMENT_BYTES) return null
+        return try {
+            val discovered = keys_api.discover_external_keys_batch(outside)
+            val recipient_keys = ClientPgpCopies.recipient_keys(outside, discovered) ?: return null
+            val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
+            val entity = sign_mime_bytes(mime_bytes)
+                ?.let { ClientPgpCopies.build_signed_mime_entity(mime_bytes, it.signature, it.micalg) }
+                ?: mime_bytes
+            ClientPgpCopies.encrypt_copies(entity, recipient_keys, attachment_bytes)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
         }
     }
 
@@ -5481,12 +5529,7 @@ class MailRepository @Inject constructor(
                 wrapped,
                 allow_non_post_quantum,
             )
-            val mixed_attachments = if (attachments.isNotEmpty()) {
-                build_mixed_attachments(shared_internal + hidden_bcc, attachments, from_addr)
-            } else {
-                emptyList()
-            }
-            val signed_payload = build_signed_mime(
+            val client_copies = build_client_pgp_copies(
                 subject = subject,
                 body_html = recipient_body_html,
                 from = from_addr,
@@ -5494,15 +5537,40 @@ class MailRepository @Inject constructor(
                 cc = cc,
                 bcc = bcc,
                 attachments = attachments,
+                expires_at = expires_at,
                 expiry_password = null,
             )
+            val mixed_attachments = if (attachments.isNotEmpty()) {
+                build_mixed_attachments(
+                    shared_internal + hidden_bcc,
+                    attachments,
+                    from_addr,
+                    sealing_recipients = shared_internal.takeIf { client_copies != null },
+                )
+            } else {
+                emptyList()
+            }
+            val signed_payload = if (client_copies != null) {
+                null
+            } else {
+                build_signed_mime(
+                    subject = subject,
+                    body_html = recipient_body_html,
+                    from = from_addr,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    attachments = attachments,
+                    expiry_password = null,
+                )
+            }
             val queued = send_api.queue_email(
                 QueueEmailRequest(
                     to = to,
                     cc = cc,
                     bcc = bcc,
-                    subject = subject,
-                    body = recipient_body_html,
+                    subject = if (client_copies != null) "" else subject,
+                    body = if (client_copies != null) ClientPgpCopies.PLACEHOLDER_BODY else recipient_body_html,
                     delay_seconds = MIXED_SEND_QUEUE_DELAY_SECONDS,
                     is_e2e_encrypted = false,
                     internal_encrypted_body = sealed.first,
@@ -5520,6 +5588,7 @@ class MailRepository @Inject constructor(
                     signed_mime_signature = signed_payload?.signature,
                     signed_mime_micalg = signed_payload?.micalg,
                     client_send_id = client_send_id,
+                    external_pgp_bodies = client_copies,
                 ),
             )
             val mail_item_id = await_queued_send(queued.queue_id)
@@ -5551,21 +5620,43 @@ class MailRepository @Inject constructor(
                 if (bcc.isNotEmpty()) put("bcc", org.json.JSONArray(bcc))
             }.toString()
 
-            val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
-            val encrypted_subject = encrypt_field(subject, derive_nonce(base_nonce, 0x02))
-            val encrypted_body = encrypt_field(recipient_body_html, derive_nonce(base_nonce, 0x03))
-            val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
-            ephemeral_key.fill(0)
-            val signed_payload = build_signed_mime(
+            val from_addr = sender_email ?: session_key_store.get_user_email().orEmpty()
+            val client_copies = build_client_pgp_copies(
                 subject = subject,
                 body_html = recipient_body_html,
-                from = sender_email ?: session_key_store.get_user_email().orEmpty(),
+                from = from_addr,
                 to = to,
                 cc = cc,
                 bcc = bcc,
                 attachments = attachments,
+                expires_at = expires_at,
                 expiry_password = expiry_password,
             )
+            val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
+            val encrypted_subject = encrypt_field(
+                if (client_copies != null) "" else subject,
+                derive_nonce(base_nonce, 0x02),
+            )
+            val encrypted_body = encrypt_field(
+                if (client_copies != null) ClientPgpCopies.PLACEHOLDER_BODY else recipient_body_html,
+                derive_nonce(base_nonce, 0x03),
+            )
+            val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
+            ephemeral_key.fill(0)
+            val signed_payload = if (client_copies != null) {
+                null
+            } else {
+                build_signed_mime(
+                    subject = subject,
+                    body_html = recipient_body_html,
+                    from = from_addr,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    attachments = attachments,
+                    expiry_password = expiry_password,
+                )
+            }
             val result = send_api.send_external(
                 ExternalSendRequest(
                     client_send_id = client_send_id,
@@ -5583,12 +5674,13 @@ class MailRepository @Inject constructor(
                     expires_at = expires_at,
                     expiry_password = expiry_password,
                     acknowledge_server_readable = true,
-                    attachments = attachments,
+                    attachments = if (client_copies != null) emptyList() else attachments,
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
                     signed_mime = signed_payload?.mime_base64,
                     signed_mime_signature = signed_payload?.signature,
                     signed_mime_micalg = signed_payload?.micalg,
+                    external_pgp_bodies = client_copies,
                 ),
             )
             val sent_item_id = result.mail_item_id
@@ -5893,6 +5985,7 @@ class MailRepository @Inject constructor(
         internal_recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String,
+        sealing_recipients: List<String>? = null,
     ): List<SendAttachmentPayload> {
         val seen = HashSet<String>()
         val unique = internal_recipients.filter { seen.add(normalize_own_address(it)) }
@@ -5904,9 +5997,15 @@ class MailRepository @Inject constructor(
                 throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
             }
         }
+        val sealing_keys = sealing_recipients?.let { recipients ->
+            val sealing = recipients.map(::normalize_own_address).toSet()
+            private_keys.filterKeys { normalize_own_address(it) in sealing }.values.flatten()
+                .ifEmpty { listOfNotNull(own_public_key()) }
+                .ifEmpty { throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed)) }
+        } ?: emptyList()
         val own_seal = own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, emptyList(), own_seal, private_keys)
+            return build_attachment_payloads(attachments, sealing_keys, own_seal, private_keys)
         } finally {
             own_seal?.second?.fill(' ')
         }

@@ -54,7 +54,17 @@ object PgpEncryptor {
         java.security.Security.addProvider(BouncyCastleProvider())
     }
 
-    fun encrypt_to_keys(plaintext: String, armored_public_keys: List<String>): String? {
+    fun encrypt_to_keys(plaintext: String, armored_public_keys: List<String>): String? =
+        encrypt_to_keys(plaintext.toByteArray(Charsets.UTF_8), armored_public_keys, PGPLiteralData.UTF8)
+
+    fun encrypt_bytes_to_keys(plaintext: ByteArray, armored_public_keys: List<String>): String? =
+        encrypt_to_keys(plaintext, armored_public_keys, PGPLiteralData.BINARY)
+
+    private fun encrypt_to_keys(
+        plaintext_bytes: ByteArray,
+        armored_public_keys: List<String>,
+        format: Char,
+    ): String? {
         val recipients = armored_public_keys.mapNotNull { select_encryption_key(it) }
         if (recipients.isEmpty()) return null
 
@@ -63,10 +73,9 @@ object PgpEncryptor {
             val compressor = PGPCompressedDataGenerator(CompressionAlgorithmTags.ZIP)
             val compressed_stream = compressor.open(literal)
             val literal_generator = PGPLiteralDataGenerator()
-            val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
             literal_generator.open(
                 compressed_stream,
-                PGPLiteralData.UTF8,
+                format,
                 PGPLiteralData.CONSOLE,
                 plaintext_bytes.size.toLong(),
                 Date(),
