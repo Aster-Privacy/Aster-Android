@@ -151,6 +151,70 @@ class RatchetIdentityPinStore @Inject constructor(
         }
     }
 
+    fun sender_continuity(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key_b64: String,
+    ): SenderIdentityContinuity {
+        if (sender_identity_key_b64.isBlank()) return SenderIdentityContinuity.NEW
+        val current = fingerprint(sender_identity_key_b64) ?: return SenderIdentityContinuity.NEW
+        val scope = refresh_scope()
+        val remembered = normalize_email(sender_email)?.let { read_history(scope, it) }.orEmpty()
+        val pinned = if (conversation_id.isBlank()) {
+            null
+        } else {
+            runCatching { read_string(scope, pin_key(conversation_id)) }.getOrNull()
+        }
+        return RatchetIdentityPinRules.continuity(remembered, pinned, current)
+    }
+
+    suspend fun remember_sender_identity(sender_email: String, sender_identity_key_b64: String): Unit = mutex.withLock {
+        val normalized = normalize_email(sender_email) ?: return@withLock
+        val current = fingerprint(sender_identity_key_b64) ?: return@withLock
+        val scope = refresh_scope()
+        val existing = read_history(scope, normalized) ?: return@withLock
+        if (existing.lastOrNull() == current) return@withLock
+        val updated = RatchetIdentityPinRules.remember_fingerprint(existing, current, max_remembered_identities)
+        prefs.edit().putString(scoped(scope, history_key(normalized)), updated.joinToString(separator)).commit()
+    }
+
+    suspend fun flag_sender_rotation(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key_b64: String,
+        observed_at: Long,
+    ): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val current = fingerprint(sender_identity_key_b64) ?: return@withLock
+        val scope = refresh_scope()
+        val pinned = read_string(scope, pin_key(conversation_id))
+        val remembered = normalize_email(sender_email)?.let { remembered_fingerprints(scope, it) }.orEmpty()
+        val previous = (listOfNotNull(pinned) + remembered.asReversed())
+            .firstOrNull { it.isNotBlank() && it != current }
+            ?: return@withLock
+        synchronized(pending_guard) {
+            val updated = pending.value.filterNot { it.conversation_id == conversation_id } +
+                IdentityChange(
+                    conversation_id = conversation_id,
+                    sender_email = sender_email,
+                    previous_fingerprint = previous,
+                    current_fingerprint = current,
+                    observed_at = observed_at,
+                )
+            prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
+            pending.value = updated
+        }
+    }
+
+    private fun remembered_fingerprints(scope: String, normalized_email: String): List<String> =
+        read_string(scope, history_key(normalized_email))
+            ?.split(separator)
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+
+    private fun read_history(scope: String, normalized_email: String): List<String>? =
+        runCatching { remembered_fingerprints(scope, normalized_email) }.getOrNull()
+
     suspend fun is_replayed_bootstrap(conversation_id: String, ephemeral_key_b64: String): Boolean {
         if (conversation_id.isBlank() || ephemeral_key_b64.isBlank()) return false
         return mutex.withLock {
@@ -431,6 +495,8 @@ class RatchetIdentityPinStore @Inject constructor(
 
     private fun bootstrap_key(conversation_id: String): String = "boot_$conversation_id"
 
+    private fun history_key(normalized_email: String): String = "hist_$normalized_email"
+
     private fun post_quantum_key(conversation_id: String): String = "pq_$conversation_id"
 
     private fun x3dh_key(conversation_id: String): String = "x3dh_$conversation_id"
@@ -450,6 +516,7 @@ class RatchetIdentityPinStore @Inject constructor(
         private const val prefs_name = "aster_ratchet_identity_pins"
         private const val separator = "|"
         private const val max_tracked_bootstraps = 64
+        private const val max_remembered_identities = 16
         private const val pending_key = "pending_identity_changes"
         private const val max_pending_changes = 50
         private const val owner_change_prefix = "owner:"

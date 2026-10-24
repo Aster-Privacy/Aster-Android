@@ -168,4 +168,119 @@ class MessageEscrowTest {
         assertFalse(MessageEscrow(state_store, api).upload(dedupe_key, oversized))
         coVerify(exactly = 0) { api.upload_plaintext_escrow(any()) }
     }
+
+    @Test
+    fun `a confirmed bound header has no unconfirmed field and round trips`() {
+        val bytes = MessageEscrow.encode_bound_payload("Peer@Astermail.org", "conv_1", "body\nline two", false)
+        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\",\"k\":1}\nbody\nline two", String(bytes, Charsets.UTF_8))
+        val decoded = MessageEscrow.decode_bound_payload(bytes)
+        assertEquals(BoundEscrowPayload("peer@astermail.org", "conv_1", "body\nline two", false), decoded)
+    }
+
+    @Test
+    fun `an unconfirmed bound header carries u and round trips`() {
+        val bytes = MessageEscrow.encode_bound_payload("peer@astermail.org", "conv_1", "body", true)
+        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\",\"k\":1,\"u\":1}\nbody", String(bytes, Charsets.UTF_8))
+        val decoded = MessageEscrow.decode_bound_payload(bytes)
+        assertEquals(BoundEscrowPayload("peer@astermail.org", "conv_1", "body", true), decoded)
+    }
+
+    @Test
+    fun `only a numeric u of one marks the sender unconfirmed`() {
+        fun decode(header: String) =
+            MessageEscrow.decode_bound_payload("$header\nbody".toByteArray(Charsets.UTF_8))
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":\"1\"}")?.unconfirmed_sender)
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":0}")?.unconfirmed_sender)
+        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":1}")?.unconfirmed_sender)
+        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\"}")?.unconfirmed_sender)
+        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":\"1\"}")?.unconfirmed_sender)
+        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":2}")?.unconfirmed_sender)
+        assertNull(decode("{\"s\":\"a\"}"))
+        assertNull(MessageEscrow.decode_bound_payload("no header".toByteArray(Charsets.UTF_8)))
+    }
+
+    private fun bound_entry(
+        sender: String,
+        conversation_id: String,
+        body: String,
+        unconfirmed_sender: Boolean,
+    ): PlaintextEscrowEntry {
+        val nonce = ByteArray(12) { 7 }
+        val sealed = org.astermail.android.crypto.ratchet.RatchetCrypto.aes_gcm_encrypt(
+            MessageEscrow.encode_bound_payload(sender, conversation_id, body, unconfirmed_sender),
+            b64(escrow_key_b64),
+            nonce,
+            MessageEscrow.bound_aad_for(dedupe_key),
+        )
+        return PlaintextEscrowEntry(
+            message_id = MessageEscrow.bound_key(dedupe_key),
+            encrypted_plaintext = java.util.Base64.getEncoder().encodeToString(sealed),
+            plaintext_nonce = java.util.Base64.getEncoder().encodeToString(nonce),
+        )
+    }
+
+    @Test
+    fun `fetch_bound returns the copy flag when the binding matches`() = runTest {
+        val state_store = mockk<RatchetStateStore>()
+        every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        val api = mockk<RatchetApi>()
+        coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns
+            bound_entry("peer@astermail.org", "conv_1", "bound body", true)
+
+        val fetched = MessageEscrow(state_store, api).fetch_bound(dedupe_key, "Peer@astermail.org", "conv_1")
+
+        assertEquals(EscrowedPlaintext("bound body", verified = true, unconfirmed_sender = true), fetched)
+    }
+
+    @Test
+    fun `fetch_bound rejects a copy bound to another conversation`() = runTest {
+        val state_store = mockk<RatchetStateStore>()
+        every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        val api = mockk<RatchetApi>()
+        coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns
+            bound_entry("peer@astermail.org", "conv_other", "bound body", false)
+
+        assertNull(MessageEscrow(state_store, api).fetch_bound(dedupe_key, "peer@astermail.org", "conv_1"))
+    }
+
+    @Test
+    fun `fetch_bound falls back to the legacy row as unconfirmed`() = runTest {
+        val state_store = mockk<RatchetStateStore>()
+        every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        val api = mockk<RatchetApi>()
+        coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns null
+        coEvery { api.fetch_plaintext_escrow(dedupe_key) } returns PlaintextEscrowEntry(
+            message_id = dedupe_key,
+            encrypted_plaintext = ciphertext_b64,
+            plaintext_nonce = nonce_b64,
+        )
+
+        val fetched = MessageEscrow(state_store, api).fetch_bound(dedupe_key, "peer@astermail.org", "conv_1")
+
+        assertEquals(EscrowedPlaintext(plaintext, verified = false, unconfirmed_sender = true), fetched)
+    }
+
+    @Test
+    fun `upload_bound writes the bound row with the flag and the legacy row`() = runTest {
+        val state_store = mockk<RatchetStateStore>()
+        every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        val api = mockk<RatchetApi>()
+        val uploaded = mutableListOf<PlaintextEscrowEntry>()
+        coEvery { api.upload_plaintext_escrow(capture(uploaded)) } returns true
+
+        assertTrue(MessageEscrow(state_store, api).upload_bound(dedupe_key, "body", "peer@astermail.org", "conv_1", true))
+
+        assertEquals(listOf(MessageEscrow.bound_key(dedupe_key), dedupe_key), uploaded.map { it.message_id })
+        val bound = uploaded.first()
+        val opened = org.astermail.android.crypto.ratchet.RatchetCrypto.aes_gcm_decrypt(
+            b64(bound.encrypted_plaintext),
+            b64(escrow_key_b64),
+            b64(bound.plaintext_nonce),
+            MessageEscrow.bound_aad_for(dedupe_key),
+        )
+        assertEquals(
+            BoundEscrowPayload("peer@astermail.org", "conv_1", "body", true),
+            MessageEscrow.decode_bound_payload(opened),
+        )
+    }
 }

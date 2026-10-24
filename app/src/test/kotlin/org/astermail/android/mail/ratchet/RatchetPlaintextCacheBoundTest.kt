@@ -192,4 +192,52 @@ class RatchetPlaintextCacheBoundTest {
         cache.clear()
         assertTrue(cache.unauthenticated_ids.value.isEmpty())
     }
+
+    @Test
+    fun `the unconfirmed sender flag persists and defaults to false`() = runTest {
+        cache.put("first", "body", unconfirmed_sender = true)
+        cache.put("second", "body")
+
+        assertTrue(cache.is_sender_unconfirmed("first"))
+        assertFalse(cache.is_sender_unconfirmed("second"))
+        assertFalse(cache.is_sender_unauthenticated("first"))
+
+        val reopened = RatchetPlaintextCache(mockk(relaxed = true), state_store)
+        assertEquals(setOf("first"), reopened.unconfirmed_sender_ids.value)
+
+        cache.put("first", "body")
+        assertFalse(cache.is_sender_unconfirmed("first"))
+    }
+
+    @Test
+    fun `old rows without the unconfirmed key read as confirmed`() = runTest {
+        stored.remove("aster_plaintext_unconfirmed_sender_v1")
+        val reopened = RatchetPlaintextCache(mockk(relaxed = true), state_store)
+        assertTrue(reopened.unconfirmed_sender_ids.value.isEmpty())
+        assertFalse(reopened.is_sender_unconfirmed("anything"))
+    }
+
+    @Test
+    fun `only flagged entries read as unconfirmed and confirming clears the flag`() = runTest {
+        cache.put("older", "body")
+        cache.put("older_flagged", "body", unconfirmed_sender = true)
+
+        val reopened = RatchetPlaintextCache(mockk(relaxed = true), state_store)
+        assertFalse(reopened.is_sender_unconfirmed("older"))
+        assertTrue(reopened.is_sender_unconfirmed("older_flagged"))
+        assertEquals("body", reopened.get("older"))
+
+        reopened.confirm_sender("older_flagged")
+        assertFalse(reopened.is_sender_unconfirmed("older_flagged"))
+        assertFalse(RatchetPlaintextCache(mockk(relaxed = true), state_store).is_sender_unconfirmed("older_flagged"))
+    }
+
+    @Test
+    fun `the unconfirmed flag is kept when the plaintext cannot be stored`() = runTest {
+        every { state_store.derive_state_encryption_key() } returns null
+
+        cache.put("first", "body", unconfirmed_sender = true)
+
+        assertTrue(cache.is_sender_unconfirmed("first"))
+    }
 }

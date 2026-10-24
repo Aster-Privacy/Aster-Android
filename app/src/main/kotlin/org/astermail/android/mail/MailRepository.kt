@@ -211,6 +211,7 @@ data class DecryptedEnvelope(
     val sender_verification: String? = null,
     val is_undecryptable: Boolean = false,
     val is_unauthenticated: Boolean = false,
+    val is_unconfirmed_sender: Boolean = false,
     val pgp_encrypted: Boolean = false,
     val pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
@@ -3837,7 +3838,9 @@ class MailRepository @Inject constructor(
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read) ||
                 (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
             is_starred = item.is_starred ?: meta?.is_starred ?: false,
-            is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
+            is_encrypted = item.encrypted_envelope != null &&
+                envelope?.is_unauthenticated != true &&
+                envelope?.is_unconfirmed_sender != true,
             has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
             is_trashed = (meta?.is_trashed ?: false) || (item.is_trashed ?: false),
             is_archived = (meta?.is_archived ?: false) || (item.is_archived ?: false),
@@ -3915,7 +3918,9 @@ class MailRepository @Inject constructor(
             timestamp = item.message_ts ?: item.created_at ?: "",
             body_text = envelope?.body_text ?: "",
             body_html = envelope?.body_html,
-            is_encrypted = item.encrypted_envelope != null && envelope?.is_unauthenticated != true,
+            is_encrypted = item.encrypted_envelope != null &&
+                envelope?.is_unauthenticated != true &&
+                envelope?.is_unconfirmed_sender != true,
             is_read = resolve_read_state(item.item_type, item.is_read, meta?.is_read),
             raw_item = item,
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
@@ -5081,6 +5086,7 @@ class MailRepository @Inject constructor(
         }
         val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
         if (cached != null) {
+            ratchet_decryptor.settle_cached_sender(candidate, our_addresses, envelope.from_email, message_id)
             ratchet_decryptor.schedule_escrow_upgrade(candidate, our_addresses, envelope.from_email, message_id)
             return cached
         }
@@ -5193,6 +5199,7 @@ class MailRepository @Inject constructor(
         var is_undecryptable = false
         var is_decrypt_pending = false
         var is_unauthenticated = envelope.is_unauthenticated
+        var is_unconfirmed_sender = envelope.is_unconfirmed_sender
         var ratchet_decrypted = false
 
         val ratchet_candidate = ratchet_body_candidate(envelope)
@@ -5214,6 +5221,7 @@ class MailRepository @Inject constructor(
                     is_decrypt_pending = true
                 } else if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
                     is_unauthenticated = ratchet_plaintext_cache.is_sender_unauthenticated(message_id)
+                    is_unconfirmed_sender = ratchet_plaintext_cache.is_sender_unconfirmed(message_id)
                     body_text = decrypted
                     body_html = null
                     ratchet_decrypted = true
@@ -5309,6 +5317,7 @@ class MailRepository @Inject constructor(
             is_undecryptable != envelope.is_undecryptable ||
             is_decrypt_pending != envelope.is_decrypt_pending ||
             is_unauthenticated != envelope.is_unauthenticated ||
+            is_unconfirmed_sender != envelope.is_unconfirmed_sender ||
             pgp_encrypted != envelope.pgp_encrypted ||
             pgp_signature != envelope.pgp_signature
         ) {
@@ -5319,6 +5328,7 @@ class MailRepository @Inject constructor(
                 is_undecryptable = is_undecryptable,
                 is_decrypt_pending = is_decrypt_pending,
                 is_unauthenticated = is_unauthenticated,
+                is_unconfirmed_sender = is_unconfirmed_sender,
                 pgp_encrypted = pgp_encrypted,
                 pgp_signature = pgp_signature,
             )

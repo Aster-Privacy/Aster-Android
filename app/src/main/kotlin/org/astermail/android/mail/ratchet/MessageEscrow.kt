@@ -28,9 +28,28 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.put
 import org.astermail.android.api.ratchet.PlaintextEscrowEntry
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+
+data class EscrowedPlaintext(
+    val plaintext: String,
+    val verified: Boolean,
+    val unconfirmed_sender: Boolean,
+)
+
+data class BoundEscrowPayload(
+    val sender: String,
+    val conversation_id: String,
+    val plaintext: String,
+    val unconfirmed_sender: Boolean,
+)
 
 @Singleton
 class MessageEscrow @Inject constructor(
@@ -45,6 +64,19 @@ class MessageEscrow @Inject constructor(
         background.launch { runCatching { upload(dedupe_key, plaintext) } }
     }
 
+    fun upload_bound_in_background(
+        dedupe_key: String,
+        plaintext: String,
+        sender: String,
+        conversation_id: String,
+        unconfirmed_sender: Boolean,
+    ) {
+        if (dedupe_key.isBlank() || plaintext.isEmpty()) return
+        background.launch {
+            runCatching { upload_bound(dedupe_key, plaintext, sender, conversation_id, unconfirmed_sender) }
+        }
+    }
+
     suspend fun upload(dedupe_key: String, plaintext: String): Boolean {
         if (dedupe_key.isBlank() || plaintext.isEmpty()) return false
         val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
@@ -52,6 +84,25 @@ class MessageEscrow @Inject constructor(
             plaintext_bytes.fill(0)
             return false
         }
+        return post_sealed(dedupe_key, plaintext_bytes, aad_for(dedupe_key))
+    }
+
+    suspend fun upload_bound(
+        dedupe_key: String,
+        plaintext: String,
+        sender: String,
+        conversation_id: String,
+        unconfirmed_sender: Boolean,
+    ): Boolean {
+        if (dedupe_key.isBlank() || plaintext.isEmpty()) return false
+        if (plaintext.toByteArray(Charsets.UTF_8).size > max_plaintext_bytes) return false
+        val payload = encode_bound_payload(sender, conversation_id, plaintext, unconfirmed_sender)
+        val bound = post_sealed(bound_key(dedupe_key), payload, bound_aad_for(dedupe_key))
+        val legacy = upload(dedupe_key, plaintext)
+        return bound && legacy
+    }
+
+    private suspend fun post_sealed(row_key: String, payload: ByteArray, aad: ByteArray): Boolean {
         val bases = state_store.master_key_candidates()
         val escrow_key = try {
             bases.firstOrNull()?.let { derive_escrow_key(it) }
@@ -59,19 +110,19 @@ class MessageEscrow @Inject constructor(
             bases.forEach { it.fill(0) }
         }
         if (escrow_key == null) {
-            plaintext_bytes.fill(0)
+            payload.fill(0)
             return false
         }
         val nonce = RatchetCrypto.random_bytes(nonce_length)
         val sealed = try {
-            seal(plaintext_bytes, escrow_key, nonce, dedupe_key)
+            RatchetCrypto.aes_gcm_encrypt(payload, escrow_key, nonce, aad)
         } finally {
             escrow_key.fill(0)
-            plaintext_bytes.fill(0)
+            payload.fill(0)
         }
         return ratchet_api.upload_plaintext_escrow(
             PlaintextEscrowEntry(
-                message_id = dedupe_key,
+                message_id = row_key,
                 encrypted_plaintext = RatchetCrypto.b64_encode(sealed),
                 plaintext_nonce = RatchetCrypto.b64_encode(nonce),
             ),
@@ -80,8 +131,39 @@ class MessageEscrow @Inject constructor(
 
     suspend fun fetch(dedupe_key: String): String? {
         if (dedupe_key.isBlank()) return null
+        val opened = open_row(dedupe_key, aad_for(dedupe_key)) ?: return null
+        return try {
+            String(opened, Charsets.UTF_8)
+        } finally {
+            opened.fill(0)
+        }
+    }
+
+    suspend fun fetch_bound(dedupe_key: String, sender: String, conversation_id: String): EscrowedPlaintext? {
+        if (dedupe_key.isBlank()) return null
+        val opened = open_row(bound_key(dedupe_key), bound_aad_for(dedupe_key))
+        val bound = opened?.let { bytes ->
+            try {
+                decode_bound_payload(bytes)
+            } finally {
+                bytes.fill(0)
+            }
+        }
+        if (bound != null) {
+            if (!payload_matches_binding(bound, sender, conversation_id)) return null
+            return EscrowedPlaintext(
+                plaintext = bound.plaintext,
+                verified = true,
+                unconfirmed_sender = bound.unconfirmed_sender,
+            )
+        }
+        val legacy = fetch(dedupe_key) ?: return null
+        return EscrowedPlaintext(plaintext = legacy, verified = false, unconfirmed_sender = true)
+    }
+
+    private suspend fun open_row(row_key: String, aad: ByteArray): ByteArray? {
         val entry = try {
-            ratchet_api.fetch_plaintext_escrow(dedupe_key)
+            ratchet_api.fetch_plaintext_escrow(row_key)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -101,7 +183,7 @@ class MessageEscrow @Inject constructor(
             for (base in bases) {
                 val escrow_key = derive_escrow_key(base)
                 val opened = try {
-                    open(ciphertext, escrow_key, nonce, dedupe_key)
+                    open_bytes(ciphertext, escrow_key, nonce, aad)
                 } finally {
                     escrow_key.fill(0)
                 }
@@ -119,9 +201,14 @@ class MessageEscrow @Inject constructor(
         private const val escrow_salt = "Aster_Mail_Plaintext_Escrow"
         private const val escrow_info = "plaintext_escrow_key"
         private const val aad_prefix = "aster.escrow.v2\u0000"
+        private const val bound_aad_prefix = "aster.escrow.v3\u0000"
+        private const val bound_key_prefix = "v3:"
+        private val header_json = Json { ignoreUnknownKeys = true }
 
         fun dedupe_key(message_id: String, header: MessageHeader): String =
             "$message_id:${header.dh_public}:${header.message_number}"
+
+        fun bound_key(dedupe_key: String): String = bound_key_prefix + dedupe_key
 
         fun derive_escrow_key(base: ByteArray): ByteArray =
             RatchetCrypto.hkdf_sha256(
@@ -133,17 +220,65 @@ class MessageEscrow @Inject constructor(
 
         fun aad_for(dedupe_key: String): ByteArray = (aad_prefix + dedupe_key).toByteArray(Charsets.UTF_8)
 
+        fun bound_aad_for(dedupe_key: String): ByteArray =
+            (bound_aad_prefix + dedupe_key).toByteArray(Charsets.UTF_8)
+
+        fun normalize_sender(sender: String): String = sender.trim().lowercase(java.util.Locale.ROOT)
+
+        fun encode_bound_payload(
+            sender: String,
+            conversation_id: String,
+            plaintext: String,
+            unconfirmed_sender: Boolean,
+        ): ByteArray {
+            val header = buildJsonObject {
+                put("s", normalize_sender(sender))
+                put("c", conversation_id)
+                put("k", 1)
+                if (unconfirmed_sender) put("u", 1)
+            }
+            return "$header\n$plaintext".toByteArray(Charsets.UTF_8)
+        }
+
+        fun decode_bound_payload(bytes: ByteArray): BoundEscrowPayload? {
+            val text = String(bytes, Charsets.UTF_8)
+            val split = text.indexOf('\n')
+            if (split < 0) return null
+            val header = try {
+                header_json.parseToJsonElement(text.substring(0, split)) as? JsonObject
+            } catch (_: Throwable) {
+                null
+            } ?: return null
+            val sender = (header["s"] as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null
+            val conversation_id = (header["c"] as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null
+            val flag = (header["u"] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull
+            val marked = (header["k"] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull == 1.0
+            return BoundEscrowPayload(
+                sender = sender,
+                conversation_id = conversation_id,
+                plaintext = text.substring(split + 1),
+                unconfirmed_sender = flag == 1.0 || !marked,
+            )
+        }
+
+        fun payload_matches_binding(payload: BoundEscrowPayload, sender: String, conversation_id: String): Boolean =
+            payload.sender == normalize_sender(sender) && payload.conversation_id == conversation_id
+
         fun seal(plaintext: ByteArray, escrow_key: ByteArray, nonce: ByteArray, dedupe_key: String): ByteArray =
             RatchetCrypto.aes_gcm_encrypt(plaintext, escrow_key, nonce, aad_for(dedupe_key))
 
-        fun open(ciphertext: ByteArray, escrow_key: ByteArray, nonce: ByteArray, dedupe_key: String): String? =
+        fun open(ciphertext: ByteArray, escrow_key: ByteArray, nonce: ByteArray, dedupe_key: String): String? {
+            val plaintext = open_bytes(ciphertext, escrow_key, nonce, aad_for(dedupe_key)) ?: return null
+            return try {
+                String(plaintext, Charsets.UTF_8)
+            } finally {
+                plaintext.fill(0)
+            }
+        }
+
+        private fun open_bytes(ciphertext: ByteArray, escrow_key: ByteArray, nonce: ByteArray, aad: ByteArray): ByteArray? =
             try {
-                val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, escrow_key, nonce, aad_for(dedupe_key))
-                try {
-                    String(plaintext, Charsets.UTF_8)
-                } finally {
-                    plaintext.fill(0)
-                }
+                RatchetCrypto.aes_gcm_decrypt(ciphertext, escrow_key, nonce, aad)
             } catch (_: Throwable) {
                 null
             }
