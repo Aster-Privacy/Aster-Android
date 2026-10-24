@@ -220,4 +220,38 @@ class RatchetStateMergeTest {
         assertEquals(local, RatchetStateMerge.merge(local, other))
         assertNull(RatchetStateMerge.merge(local, other).bootstrap)
     }
+    @Test
+    fun an_unversioned_remote_cannot_rewind_the_receive_chain() {
+        val local = state(chain_key_recv = "recv-chain-2", recv_message_number = 2)
+        val remote = state(chain_key_recv = "recv-chain-9", recv_message_number = 0)
+
+        val merged = RatchetStateMerge.merge(local, remote, remote_versioned = false)
+
+        assertEquals("recv-chain-2", merged.chain_key_recv)
+        assertEquals(2, merged.recv_message_number)
+    }
+
+    @Test
+    fun an_unversioned_remote_cannot_replace_the_epoch_or_add_skipped_keys() {
+        val local = state(root_key = "root-key-epoch-3", epoch = 3, skipped_message_keys = listOf(skipped("a", 1, 10L)))
+        val remote = state(
+            root_key = "root-key-epoch-9",
+            epoch = 9,
+            updated_at = 9_000L,
+            skipped_message_keys = listOf(skipped("old", 1, 5L)),
+        ).apply { created_at = 500L }
+
+        val merged = RatchetStateMerge.merge(local, remote, remote_versioned = false)
+
+        assertEquals("root-key-epoch-3", merged.root_key)
+        assertEquals(listOf("a"), merged.skipped_message_keys.map { it.dh_public })
+    }
+
+    @Test
+    fun a_versioned_remote_still_wins_a_newer_epoch() {
+        val local = state(root_key = "root-key-epoch-3", epoch = 3)
+        val remote = state(root_key = "root-key-epoch-9", epoch = 9)
+
+        assertEquals("root-key-epoch-9", RatchetStateMerge.merge(local, remote, remote_versioned = true).root_key)
+    }
 }

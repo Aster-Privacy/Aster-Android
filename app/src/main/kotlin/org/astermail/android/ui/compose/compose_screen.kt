@@ -1977,6 +1977,8 @@ fun ComposeScreen(
                 }
                 SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE ->
                     send_error = context.getString(R.string.expiring_requires_secure_message)
+                SendBlocker.REQUIRES_ENCRYPTION ->
+                    send_error = context.getString(R.string.send_requires_encryption)
             }
             return
         }
@@ -1996,7 +1998,7 @@ fun ComposeScreen(
                 send_error = context.getString(
                     when (scheduled_block) {
                         org.astermail.android.mail.ScheduledSendBlock.TOO_FAR_AHEAD -> R.string.scheduled_too_far_ahead
-                        org.astermail.android.mail.ScheduledSendBlock.REQUIRES_ENCRYPTION -> R.string.scheduled_requires_encryption
+                        org.astermail.android.mail.ScheduledSendBlock.REQUIRES_ENCRYPTION -> R.string.send_requires_encryption
                     },
                 )
                 return

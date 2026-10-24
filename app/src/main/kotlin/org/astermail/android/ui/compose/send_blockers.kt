@@ -30,6 +30,7 @@ enum class SendBlocker {
     EXPIRY_PASSWORD_LOCKED,
     EXPIRY_PASSWORD_INTERNAL,
     EXPIRY_NEEDS_SECURE_MESSAGE,
+    REQUIRES_ENCRYPTION,
 }
 
 enum class ExpiryPasswordMode { AVAILABLE, LOCKED, HIDDEN }
@@ -55,6 +56,7 @@ internal fun send_blocker_for(
     val internal_only = all_recipients_internal(recipients)
     if (has_expiry_password && internal_only) return SendBlocker.EXPIRY_PASSWORD_INTERNAL
     if (has_expiry && require_encryption && !internal_only) return SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE
+    if (require_encryption && !internal_only) return SendBlocker.REQUIRES_ENCRYPTION
     return null
 }
 

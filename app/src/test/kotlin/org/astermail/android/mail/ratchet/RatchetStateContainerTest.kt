@@ -92,16 +92,65 @@ class RatchetStateContainerTest {
     }
 
     @Test
-    fun `a legacy container without a version is still accepted`() {
+    fun `a legacy container without a version is accepted before the conversation is established`() {
         val wrapped = legacy_container("conv-a", sample_state("conv-a"))
         val flat = json.encodeToString(RatchetState.serializer(), sample_state("conv-a"))
 
-        val from_wrapped = RatchetStateContainer.decode(wrapped, "conv-a", floor = 50L, opened_bound = false)
-        val from_flat = RatchetStateContainer.decode(flat, "conv-a", floor = 50L, opened_bound = false)
+        val from_wrapped = RatchetStateContainer.decode(wrapped, "conv-a", floor = 0L, opened_bound = false)
+        val from_flat = RatchetStateContainer.decode(flat, "conv-a", floor = 0L, opened_bound = false)
 
         assertTrue(from_wrapped is RatchetStateContainerResult.Accepted)
         assertTrue(from_flat is RatchetStateContainerResult.Accepted)
         assertEquals(null, (from_wrapped as RatchetStateContainerResult.Accepted).sync_version)
+    }
+
+    @Test
+    fun `an unversioned state is refused once a version has been seen`() {
+        val wrapped = legacy_container("conv-a", sample_state("conv-a"))
+        val flat = json.encodeToString(RatchetState.serializer(), sample_state("conv-a"))
+
+        assertEquals(
+            RatchetStateContainerResult.Unbound,
+            RatchetStateContainer.decode(wrapped, "conv-a", floor = 50L, opened_bound = false),
+        )
+        assertEquals(
+            RatchetStateContainerResult.Unbound,
+            RatchetStateContainer.decode(flat, "conv-a", floor = 50L, opened_bound = false),
+        )
+    }
+
+    @Test
+    fun `an unversioned state is refused when this device already holds the conversation`() {
+        val wrapped = legacy_container("conv-a", sample_state("conv-a"))
+
+        assertEquals(
+            RatchetStateContainerResult.Unbound,
+            RatchetStateContainer.decode(wrapped, "conv-a", floor = 0L, opened_bound = false, established = true),
+        )
+    }
+
+    @Test
+    fun `a merge may read an unversioned state only for its own conversation`() {
+        val wrapped = legacy_container("conv-a", sample_state("conv-a"))
+        val flat = json.encodeToString(RatchetState.serializer(), sample_state("conv-a"))
+        val other = json.encodeToString(RatchetState.serializer(), sample_state("conv-b"))
+
+        for (text in listOf(wrapped, flat)) {
+            val merged = RatchetStateContainer.decode(
+                text, "conv-a", floor = 50L, opened_bound = false, established = true, allow_unversioned = true,
+            )
+            assertTrue(merged is RatchetStateContainerResult.Accepted)
+            assertEquals(
+                RatchetStateContainerResult.Unbound,
+                RatchetStateContainer.decode(text, "conv-a", floor = 50L, opened_bound = false, established = true),
+            )
+        }
+        assertEquals(
+            RatchetStateContainerResult.WrongConversation,
+            RatchetStateContainer.decode(
+                other, "conv-a", floor = 50L, opened_bound = false, established = true, allow_unversioned = true,
+            ),
+        )
     }
 
     @Test

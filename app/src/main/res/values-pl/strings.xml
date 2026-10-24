@@ -3047,7 +3047,11 @@
     <string name="alias_pinned_toast">Alias przypięty</string>
     <string name="alias_unpinned_toast">Alias odpięty</string>
     <string name="e2e_identity_changed_blocked">Nie można wysłać: klucz szyfrowania odbiorcy uległ zmianie. Potwierdź zmianę w skrzynce odbiorczej, a następnie wyślij ponownie. Wiadomość nie została wysłana.</string>
-    <string name="link_device_error_binding_mismatch">Drugie urządzenie przesłało klucze, które nie pasują do tego kodu. Uzyskaj nowy kod na tym urządzeniu, a następnie spróbuj ponownie.</string>
+    <string name="link_device_fingerprint_label">Kod weryfikacyjny</string>
+    <string name="link_device_fingerprint_hint">Porównaj ten kod z kodem weryfikacyjnym lub odciskiem urządzenia na drugim urządzeniu. Jeśli kody się różnią, kliknij Anuluj.</string>
+    <string name="link_device_codes_match">Kody są zgodne</string>
+    <string name="link_device_error_invalid_keys">Drugie urządzenie wysłało klucze, których nie można użyć. Pobierz nowy kod na tamtym urządzeniu i spróbuj ponownie.</string>
+    <string name="link_device_error_codes_not_confirmed">Aby połączyć urządzenie, potwierdź, że kody są zgodne.</string>
     <string name="restore">Przywróć</string>
     <string name="contact_trash_confirm_message">Kontakty możesz przywrócić z kosza.</string>
     <string name="empty_contacts_trash_confirm_message">Trwale usunąć wszystkie kontakty z kosza? Tej operacji nie można cofnąć.</string>

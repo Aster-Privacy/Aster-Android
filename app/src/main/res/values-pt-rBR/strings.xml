@@ -3028,7 +3028,11 @@
     <string name="alias_pinned_toast">Alias fixado</string>
     <string name="alias_unpinned_toast">Alias desafixado</string>
     <string name="e2e_identity_changed_blocked">Não foi possível enviar: a chave de criptografia de um destinatário mudou. Confirme a alteração na sua caixa de entrada e envie novamente. A mensagem não foi enviada.</string>
-    <string name="link_device_error_binding_mismatch">O outro dispositivo enviou chaves que não correspondem a este código. Obtenha um novo código nesse dispositivo e tente novamente.</string>
+    <string name="link_device_fingerprint_label">Código de verificação</string>
+    <string name="link_device_fingerprint_hint">Compare este código com o código de verificação ou a impressão digital do dispositivo no seu outro dispositivo. Se os códigos forem diferentes, toque em Cancelar.</string>
+    <string name="link_device_codes_match">Os códigos são iguais</string>
+    <string name="link_device_error_invalid_keys">O outro dispositivo enviou chaves que não podem ser usadas. Gere um novo código nesse dispositivo e tente novamente.</string>
+    <string name="link_device_error_codes_not_confirmed">Para vincular o dispositivo, confirme que os códigos são iguais.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Você pode restaurar contatos da lixeira.</string>
     <string name="empty_contacts_trash_confirm_message">Excluir permanentemente todos os contatos da lixeira? Não é possível desfazer.</string>

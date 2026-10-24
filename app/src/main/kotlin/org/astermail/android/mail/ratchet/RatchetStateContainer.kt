@@ -70,6 +70,8 @@ object RatchetStateContainer {
         conversation_id: String,
         floor: Long,
         opened_bound: Boolean,
+        established: Boolean = floor > 0,
+        allow_unversioned: Boolean = false,
     ): RatchetStateContainerResult {
         val parsed = runCatching { json.parseToJsonElement(plaintext_json) }.getOrNull() as? JsonObject
             ?: return RatchetStateContainerResult.Malformed
@@ -95,6 +97,11 @@ object RatchetStateContainer {
         val sync_version = if (wrapped != null) (parsed[version_field] as? JsonPrimitive)?.longOrNull else null
         if (opened_bound && sync_version == null) return RatchetStateContainerResult.Unbound
         if (sync_version != null && sync_version < floor) return RatchetStateContainerResult.RolledBack
+        if ((established || floor > 0) && !allow_unversioned &&
+            (wrapped == null || outer_id == null || sync_version == null)
+        ) {
+            return RatchetStateContainerResult.Unbound
+        }
 
         return RatchetStateContainerResult.Accepted(state, sync_version)
     }

@@ -3047,7 +3047,11 @@
     <string name="alias_pinned_toast">Псевдоним закреплён</string>
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
     <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
-    <string name="link_device_error_binding_mismatch">Другое устройство отправило ключи, которые не соответствуют этому коду. Получите новый код на том устройстве и повторите попытку.</string>
+    <string name="link_device_fingerprint_label">Код проверки</string>
+    <string name="link_device_fingerprint_hint">Сравните этот код с кодом проверки или отпечатком устройства на другом устройстве. Если коды отличаются, нажмите «Отмена».</string>
+    <string name="link_device_codes_match">Коды совпадают</string>
+    <string name="link_device_error_invalid_keys">Другое устройство отправило ключи, которые нельзя использовать. Получите новый код на том устройстве и повторите попытку.</string>
+    <string name="link_device_error_codes_not_confirmed">Чтобы привязать устройство, подтвердите, что коды совпадают.</string>
     <string name="restore">Восстановить</string>
     <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
     <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>

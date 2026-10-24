@@ -25,6 +25,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -35,22 +36,21 @@ import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.devices.DeviceCodeApi
 import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.crypto.DeviceEnvelope
-import org.astermail.android.crypto.DeviceLinkBinding
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LinkDeviceBindingTest {
+class LinkDeviceFingerprintTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val code = "ABCD-2345"
     private val ed25519_pk = DeviceEnvelope.base64url_encode(ByteArray(32) { 1 })
     private val mlkem_pk = DeviceEnvelope.base64url_encode(ByteArray(1184) { 2 })
     private val x25519_pk = DeviceEnvelope.base64url_encode(ByteArray(32) { 3 })
-    private val attacker_mlkem_pk = DeviceEnvelope.base64url_encode(ByteArray(1184) { 9 })
 
     private lateinit var api: DeviceCodeApi
     private lateinit var session_key_store: SessionKeyStore
@@ -68,17 +68,17 @@ class LinkDeviceBindingTest {
         Dispatchers.resetMain()
     }
 
-    private fun pending(mlkem: String, tag: String) = PendingDevice(
-        ed25519_pk = ed25519_pk,
+    private fun pending(
+        ed: String = ed25519_pk,
+        mlkem: String = mlkem_pk,
+        x: String = x25519_pk,
+    ) = PendingDevice(
+        ed25519_pk = ed,
         mlkem_pk = mlkem,
-        x25519_pk = x25519_pk,
+        x25519_pk = x,
         machine_name = "Laptop",
         device_type = "desktop",
-        binding_tag = tag,
     )
-
-    private fun honest_tag(): String =
-        DeviceLinkBinding.compute_tag(code, ed25519_pk, mlkem_pk, x25519_pk)
 
     private suspend fun run_flow(device: PendingDevice): LinkDeviceViewModel {
         coEvery { api.verify_code(any()) } returns device
@@ -95,53 +95,70 @@ class LinkDeviceBindingTest {
     }
 
     @Test
-    fun `substituted bundle keys block the transfer`() = runTest(dispatcher) {
-        val vm = run_flow(pending(attacker_mlkem_pk, honest_tag()))
+    fun `confirm step shows the shared fingerprint of the device keys`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+
         assertEquals(LinkDeviceStep.CONFIRM, vm.state.value.step)
+        assertEquals("9B16 AF79 0A6A E2F2 55D3", vm.state.value.fingerprint)
+        assertFalse(vm.state.value.codes_match_confirmed)
+    }
+
+    @Test
+    fun `linking is refused until the codes are confirmed to match`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
 
         confirm_and_settle(vm)
 
-        assertEquals(LinkDeviceError.BINDING_MISMATCH, vm.state.value.error)
-        assertEquals(LinkDeviceStep.CONFIRM, vm.state.value.step)
+        assertEquals(LinkDeviceError.CODES_NOT_CONFIRMED, vm.state.value.error)
+        verify(exactly = 0) { session_key_store.get_passphrase() }
         coVerify(exactly = 0) { api.confirm_code(any(), any()) }
     }
 
     @Test
-    fun `tag from a different code blocks the transfer`() = runTest(dispatcher) {
-        val other_tag = DeviceLinkBinding.compute_tag("ZZZZ9999", ed25519_pk, mlkem_pk, x25519_pk)
-        val vm = run_flow(pending(mlkem_pk, other_tag))
-
-        confirm_and_settle(vm)
-
-        assertEquals(LinkDeviceError.BINDING_MISMATCH, vm.state.value.error)
-        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
-    }
-
-    @Test
-    fun `bundle bound to the code is accepted`() = runTest(dispatcher) {
-        val vm = run_flow(pending(mlkem_pk, honest_tag()))
+    fun `confirmed codes proceed to sealing`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+        vm.set_codes_match_confirmed(true)
 
         confirm_and_settle(vm)
 
         assertEquals(LinkDeviceError.SESSION_EXPIRED, vm.state.value.error)
-        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+        verify(exactly = 1) { session_key_store.get_passphrase() }
     }
 
     @Test
-    fun `bundle without a tag keeps the legacy path`() = runTest(dispatcher) {
-        val vm = run_flow(pending(mlkem_pk, ""))
+    fun `wrong size post quantum key never reaches the confirm step`() = runTest(dispatcher) {
+        val vm = run_flow(pending(mlkem = DeviceEnvelope.base64url_encode(ByteArray(1183) { 2 })))
 
-        confirm_and_settle(vm)
-
-        assertEquals(LinkDeviceError.SESSION_EXPIRED, vm.state.value.error)
+        assertEquals(LinkDeviceStep.INPUT, vm.state.value.step)
+        assertEquals(LinkDeviceError.INVALID_DEVICE_KEYS, vm.state.value.error)
     }
 
     @Test
-    fun `verification does not read the passphrase before the bundle is checked`() = runTest(dispatcher) {
-        val vm = run_flow(pending(attacker_mlkem_pk, honest_tag()))
+    fun `wrong size classical key never reaches the confirm step`() = runTest(dispatcher) {
+        val vm = run_flow(pending(x = DeviceEnvelope.base64url_encode(ByteArray(16))))
 
-        confirm_and_settle(vm)
+        assertEquals(LinkDeviceStep.INPUT, vm.state.value.step)
+        assertEquals(LinkDeviceError.INVALID_DEVICE_KEYS, vm.state.value.error)
+    }
 
-        io.mockk.verify(exactly = 0) { session_key_store.get_passphrase() }
+    @Test
+    fun `undecodable keys never reach the confirm step`() = runTest(dispatcher) {
+        val vm = run_flow(pending(ed = "not*base64"))
+
+        assertEquals(LinkDeviceStep.INPUT, vm.state.value.step)
+        assertEquals(LinkDeviceError.INVALID_DEVICE_KEYS, vm.state.value.error)
+        verify(exactly = 0) { session_key_store.get_passphrase() }
+    }
+
+    @Test
+    fun `cancel clears the fingerprint and confirmation`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+        vm.set_codes_match_confirmed(true)
+
+        vm.cancel_confirm()
+
+        assertEquals("", vm.state.value.fingerprint)
+        assertFalse(vm.state.value.codes_match_confirmed)
+        assertEquals(LinkDeviceStep.INPUT, vm.state.value.step)
     }
 }

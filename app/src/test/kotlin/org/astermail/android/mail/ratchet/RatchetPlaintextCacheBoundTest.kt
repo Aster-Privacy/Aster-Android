@@ -240,4 +240,60 @@ class RatchetPlaintextCacheBoundTest {
 
         assertTrue(cache.is_sender_unconfirmed("first"))
     }
+
+    private val alice = PlaintextBinding("alice@astermail.org", "conv_a")
+
+    @Test
+    fun `a bound entry round trips and is stored with the bound marker`() = runTest {
+        cache.put("bound", "hello", binding = alice)
+
+        assertTrue(stored["ratchet_plaintext_bound"]!!.startsWith("b1|"))
+        assertEquals("hello", cache.get("bound"))
+        assertEquals("hello", cache.get("bound", "Alice@AsterMail.org"))
+        assertNull(cache.get("bound", "mallory@astermail.org"))
+    }
+
+    @Test
+    fun `a write for another sender never replaces a bound entry`() = runTest {
+        cache.put("bound", "original", binding = alice)
+
+        cache.put("bound", "swapped", binding = PlaintextBinding("mallory@astermail.org", "conv_a"))
+        cache.put("bound", "swapped", binding = PlaintextBinding("alice@astermail.org", "conv_other"))
+        cache.put("bound", "swapped")
+        cache.put("bound", "swapped", sender_unauthenticated = true, binding = alice.copy(conversation_id = "conv_x"))
+
+        assertEquals("original", cache.get("bound"))
+        assertFalse(cache.is_sender_unauthenticated("bound"))
+    }
+
+    @Test
+    fun `a verified write replaces an unverified entry from another sender`() = runTest {
+        cache.put("lane", "from the lane", sender_unauthenticated = true, binding = PlaintextBinding("mallory@astermail.org", "conv_a"))
+
+        cache.put("lane", "verified", binding = alice)
+
+        assertEquals("verified", cache.get("lane", "alice@astermail.org"))
+        assertFalse(cache.is_sender_unauthenticated("lane"))
+    }
+
+    @Test
+    fun `the same sender can upgrade its own unverified entry`() = runTest {
+        cache.put("lane", "from the lane", sender_unauthenticated = true, binding = alice)
+
+        cache.put("lane", "verified", binding = alice)
+
+        assertEquals("verified", cache.get("lane"))
+        assertFalse(cache.is_sender_unauthenticated("lane"))
+    }
+
+    @Test
+    fun `legacy unbound entries stay readable for any sender`() = runTest {
+        cache.put("legacy", "old body")
+
+        assertFalse(stored["ratchet_plaintext_legacy"]!!.startsWith("b1|"))
+        assertEquals("old body", cache.get("legacy", "alice@astermail.org"))
+
+        cache.put("legacy", "new body", binding = alice)
+        assertEquals("new body", cache.get("legacy", "alice@astermail.org"))
+    }
 }

@@ -117,6 +117,10 @@ class QueuedSendFailedException : Exception("queued send did not go out")
 
 class WeakMessagePasswordException(message: String) : Exception(message)
 
+class EncryptionRequiredException(message: String) : Exception(message)
+
+class EncryptionSettingUnavailableException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
 fun has_mixed_recipients(recipients: List<String>): Boolean {
     val addresses = recipients.filter { it.isNotBlank() }
     return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
@@ -154,6 +158,8 @@ private const val SENDER_KEY_FETCH_TIMEOUT_MS = 4_000L
 private const val SENDER_KEY_MISS_TTL_MS = 10L * 60L * 1000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
+private const val OUTBOX_FILE_KEY_PREFS = "aster_outbox_file_key"
+private const val OUTBOX_FILE_KEY = "file_key"
 private const val SENT_FOLDER_TOKEN_ATTEMPTS = 3
 private const val SENT_FOLDER_TOKEN_RETRY_MS = 350L
 private const val SENT_FOLDER_TOKEN_MATERIAL = "folder:sent"
@@ -491,6 +497,7 @@ class MailRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val pending_action_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
+    private val encryption_api_provider: dagger.Lazy<org.astermail.android.api.encryption.EncryptionApi>? = null,
 ) {
     private val pending_action_queue: PendingMailActionQueue?
         get() = pending_action_queue_provider?.get()
@@ -1220,13 +1227,34 @@ class MailRepository @Inject constructor(
         java.io.File(context.filesDir, "outbox_attachments").apply { mkdirs() }
     }
 
+    internal var outbox_file_cipher_override: OutboxFileCipher? = null
+
+    private val outbox_file_cipher: OutboxFileCipher
+        get() = outbox_file_cipher_override ?: default_outbox_file_cipher
+
+    private val default_outbox_file_cipher: OutboxFileCipher by lazy {
+        val prefs by lazy { org.astermail.android.storage.SecurePrefs.open(context, OUTBOX_FILE_KEY_PREFS) }
+        val key_store = OutboxFileKeyStore(
+            read_encoded = { prefs.getString(OUTBOX_FILE_KEY, null) },
+            write_encoded = { encoded -> prefs.edit().putString(OUTBOX_FILE_KEY, encoded).commit() },
+            encode = { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) },
+            decode = { runCatching { android.util.Base64.decode(it, android.util.Base64.NO_WRAP) }.getOrNull() },
+        )
+        OutboxFileCipher { key_store.key() }
+    }
+
     private fun stage_outbox_attachments(
         pending_id: String,
         attachments: List<ExternalAttachmentPayload>,
     ): String {
         if (attachments.isEmpty()) return EMPTY_ATTACHMENTS_JSON
         val file = java.io.File(outbox_attachments_dir, "$pending_id.json")
-        file.writeText(outbox_json.encodeToString(attachments))
+        val plaintext = outbox_json.encodeToString(attachments).toByteArray(Charsets.UTF_8)
+        try {
+            file.writeBytes(outbox_file_cipher.seal(file.name, plaintext))
+        } finally {
+            plaintext.fill(0)
+        }
         return OUTBOX_FILE_REF_PREFIX + file.name
     }
 
@@ -1235,7 +1263,12 @@ class MailRepository @Inject constructor(
             val name = attachments_json.removePrefix(OUTBOX_FILE_REF_PREFIX)
             val file = java.io.File(outbox_attachments_dir, name)
             if (!file.exists()) throw java.io.FileNotFoundException("staged outbox attachments missing: $name")
-            return outbox_json.decodeFromString(file.readText())
+            val plaintext = outbox_file_cipher.open(name, file.readBytes())
+            try {
+                return outbox_json.decodeFromString(String(plaintext, Charsets.UTF_8))
+            } finally {
+                plaintext.fill(0)
+            }
         }
         return outbox_json.decodeFromString(attachments_json)
     }
@@ -5132,7 +5165,7 @@ class MailRepository @Inject constructor(
             session_key_store.get_user_email()?.let { add(it) }
             if (!delivered_to.isNullOrBlank()) add(delivered_to)
         }
-        val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id) else null
+        val cached = if (!message_id.isNullOrBlank()) ratchet_plaintext_cache.get(message_id, envelope.from_email) else null
         if (cached != null) {
             ratchet_decryptor.settle_cached_sender(candidate, our_addresses, envelope.from_email, message_id)
             ratchet_decryptor.schedule_escrow_upgrade(candidate, our_addresses, envelope.from_email, message_id)
@@ -5268,7 +5301,8 @@ class MailRepository @Inject constructor(
                     is_undecryptable = true
                     is_decrypt_pending = true
                 } else if (decrypted != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
-                    is_unauthenticated = ratchet_plaintext_cache.is_sender_unauthenticated(message_id)
+                    is_unauthenticated = envelope.is_unauthenticated ||
+                        ratchet_plaintext_cache.is_sender_unauthenticated(message_id)
                     is_unconfirmed_sender = ratchet_plaintext_cache.is_sender_unconfirmed(message_id)
                     body_text = decrypted
                     body_html = null
@@ -5472,6 +5506,35 @@ class MailRepository @Inject constructor(
         }.getOrDefault(PostQuantumCoverage())
     }
 
+    private val last_known_require_encryption = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    private suspend fun require_encryption_enabled(): Boolean {
+        val account = current_account_id()?.takeIf { it.isNotBlank() }
+        val api = encryption_api_provider?.get()
+        var failure: Throwable? = null
+        val fresh = if (api == null) {
+            null
+        } else {
+            try {
+                api.get_encryption_settings().require_encryption
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                failure = t
+                null
+            }
+        }
+        if (fresh != null) {
+            if (account != null && current_account_id() == account) last_known_require_encryption[account] = fresh
+            return fresh
+        }
+        return account?.let { last_known_require_encryption[it] }
+            ?: throw EncryptionSettingUnavailableException(
+                context.getString(R.string.send_encryption_setting_unavailable),
+                failure,
+            )
+    }
+
     suspend fun send_email(
         to: List<String>,
         cc: List<String> = emptyList(),
@@ -5491,6 +5554,9 @@ class MailRepository @Inject constructor(
     ): Result<SimpleSendResponse> = runCatching {
         val is_mixed = has_mixed_recipients(to + cc + bcc)
         if (is_mixed && !expiry_password.isNullOrEmpty()) throw MixedRecipientsPasswordException()
+        if (has_external_recipient(to + cc + bcc) && require_encryption_enabled()) {
+            throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
+        }
         val envelope = build_envelope_json(
             subject = subject,
             body_html = body_html,
@@ -5807,6 +5873,9 @@ class MailRepository @Inject constructor(
         reply_subject: String? = null,
         in_reply_to: String? = null,
     ): Result<String?> = runCatching {
+        if (has_external_recipient(listOf(recipient)) && require_encryption_enabled()) {
+            throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
+        }
         val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
         val payload = org.json.JSONObject().apply {
             put("aster_reaction", true)
@@ -6515,6 +6584,9 @@ class MailRepository @Inject constructor(
         allow_non_post_quantum: Boolean = false,
     ): Result<String> = runCatching {
         val all_recipients = to + cc + bcc
+        if (has_external_recipient(all_recipients) && require_encryption_enabled()) {
+            throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
+        }
         val is_mixed = has_mixed_recipients(all_recipients)
         val scheduled_at_ms = java.time.Instant.parse(scheduled_at).toEpochMilli()
         if (exceeds_sealed_schedule_window(scheduled_at_ms, System.currentTimeMillis())) {
@@ -7102,6 +7174,7 @@ private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean)
 
 internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
     has_cause(err) { it is WeakMessagePasswordException } -> SendFailureReason.WEAK_PASSWORD
+    has_cause(err) { it is EncryptionRequiredException } -> SendFailureReason.ENCRYPTION
     has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
         SendFailureReason.POST_QUANTUM
     has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
@@ -7123,7 +7196,7 @@ internal fun client_send_id_for(pending_id: String): String? =
     pending_id.takeIf { client_send_id_pattern.matches(it) }
 
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
-    if (has_cause(err) { it is WeakMessagePasswordException }) return true
+    if (has_cause(err) { it is WeakMessagePasswordException || it is EncryptionRequiredException }) return true
     if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false
     var cause = err

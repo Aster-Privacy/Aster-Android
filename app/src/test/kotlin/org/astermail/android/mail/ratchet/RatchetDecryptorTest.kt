@@ -193,11 +193,15 @@ class RatchetDecryptorTest {
         escrow,
     )
 
-    private fun escrow_returning(plaintext: String?, unconfirmed_sender: Boolean = false): MessageEscrow {
+    private fun escrow_returning(
+        plaintext: String?,
+        unconfirmed_sender: Boolean = false,
+        verified: Boolean = true,
+    ): MessageEscrow {
         val escrow = mockk<MessageEscrow>(relaxed = true)
         coEvery { escrow.fetch(any()) } returns plaintext
         coEvery { escrow.fetch_bound(any(), any(), any()) } returns plaintext?.let {
-            EscrowedPlaintext(plaintext = it, verified = true, unconfirmed_sender = unconfirmed_sender)
+            EscrowedPlaintext(plaintext = it, verified = verified, unconfirmed_sender = unconfirmed_sender || !verified)
         }
         return escrow
     }
@@ -550,8 +554,8 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message from escrow", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", false, false) }
-        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), true, any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", false, false, any()) }
+        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), true, any(), any()) }
         verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
         verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }
@@ -567,7 +571,7 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true, false) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true, false, any()) }
         coVerify(atLeast = 1) {
             escrow.fetch_bound(match { it.startsWith("msg_lane:") }, sender_email, fixture.conversation_id)
         }
@@ -608,6 +612,58 @@ class RatchetDecryptorTest {
     }
 
     @Test
+    fun `an escrow entry without a sender binding is shown as unverified`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning("third message from escrow", verified = false)
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertEquals("third message from escrow", result)
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message from escrow", true, true, any()) }
+        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), false, any(), any()) }
+    }
+
+    @Test
+    fun `the escrow is queried and cached with the sender and conversation binding`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val escrow = escrow_returning("third message from escrow")
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        coVerify(atLeast = 1) { escrow.fetch_bound(any(), sender_email, fixture.conversation_id) }
+        coVerify(exactly = 1) {
+            plaintext_cache.put(
+                "msg_lane",
+                "third message from escrow",
+                false,
+                false,
+                PlaintextBinding(sender_email, fixture.conversation_id),
+            )
+        }
+    }
+
+    @Test
+    fun `an unbound escrow entry never upgrades an unverified message`() = runTest {
+        val fixture = build_fixture()
+        val (body, stale_state) = lane_only_body(fixture)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unauthenticated("msg_lane") } returns true
+        val escrow = escrow_returning("swapped text", verified = false)
+
+        val decryptor = lane_decryptor(fixture, stale_state, plaintext_cache, escrow)
+        val result = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
+
+        assertNull(result)
+        coVerify(exactly = 0) { plaintext_cache.put(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `an unauthenticated cache entry is upgraded from the escrow once`() = runTest {
         val fixture = build_fixture()
         val (body, stale_state) = lane_only_body(fixture)
@@ -621,7 +677,7 @@ class RatchetDecryptorTest {
 
         assertEquals("third message", first)
         assertNull(second)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, false) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, false, any()) }
         coVerify(exactly = 1) { escrow.fetch_bound(any(), sender_email, fixture.conversation_id) }
         verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }
@@ -683,7 +739,7 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true, any(), any()) }
     }
 
     @Test
@@ -727,7 +783,7 @@ class RatchetDecryptorTest {
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", result)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", true, any(), any()) }
     }
 
     @Test
@@ -844,7 +900,7 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", result)
         coVerifyOrder {
-            plaintext_cache.put("msg_1", "hello kchaos", any(), any())
+            plaintext_cache.put("msg_1", "hello kchaos", any(), any(), any())
             state_store.save(any())
             syncer.sync(any(), any())
         }
@@ -876,7 +932,7 @@ class RatchetDecryptorTest {
         )
         decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_2")
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body", any(), any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_2", "durable body", any(), any(), any()) }
     }
 
     @Test
@@ -1097,8 +1153,8 @@ class RatchetDecryptorTest {
             decryptor.try_decrypt(second_body, listOf(recipient_email), sender_email, "msg_second"),
         )
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_first", "first message", false, true) }
-        coVerify(exactly = 1) { plaintext_cache.put("msg_second", "second message", false, false) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_first", "first message", false, true, any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_second", "second message", false, false, any()) }
         val first_key = "msg_first:${enc0.header.dh_public}:${enc0.header.message_number}"
         val second_key = "msg_second:${enc1.header.dh_public}:${enc1.header.message_number}"
         verify(exactly = 1) {
@@ -1121,7 +1177,7 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_new"))
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_new", "hello kchaos", false, true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_new", "hello kchaos", false, true, any()) }
         verify(exactly = 1) {
             escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, true)
         }
@@ -1142,7 +1198,7 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_changed"))
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_changed", "hello kchaos", false, true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_changed", "hello kchaos", false, true, any()) }
         verify(exactly = 1) {
             escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, true)
         }
@@ -1184,7 +1240,7 @@ class RatchetDecryptorTest {
 
         assertEquals("note to self", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_self"))
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_self", "note to self", false, false) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_self", "note to self", false, false, any()) }
         verify(exactly = 1) {
             escrow.upload_bound_in_background(any(), "note to self", sender_email, fixture.conversation_id, false)
         }
@@ -1202,7 +1258,7 @@ class RatchetDecryptorTest {
         val upgraded = decryptor.upgrade_from_escrow(body, listOf(recipient_email), sender_email, "msg_lane")
 
         assertEquals("third message", upgraded)
-        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, true) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, true, any()) }
         verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
         verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
     }

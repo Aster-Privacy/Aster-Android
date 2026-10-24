@@ -33,6 +33,10 @@ import kotlinx.coroutines.sync.withLock
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SecurePrefs
 
+data class PlaintextBinding(val sender: String, val conversation_id: String) {
+    val normalized_sender: String get() = MessageEscrow.normalize_sender(sender)
+}
+
 @Singleton
 class RatchetPlaintextCache @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext context: Context,
@@ -55,19 +59,73 @@ class RatchetPlaintextCache @Inject constructor(
     fun is_sender_unconfirmed(message_id: String?): Boolean =
         !message_id.isNullOrBlank() && message_id in unconfirmed.value
 
-    suspend fun get(message_id: String): String? {
+    suspend fun get(message_id: String, sender: String? = null): String? {
         if (message_id.isBlank()) return null
+        val entry = read_entry(message_id) ?: return null
+        if (sender != null && entry.sender != null && entry.sender != MessageEscrow.normalize_sender(sender)) {
+            return null
+        }
+        return entry.plaintext
+    }
+
+    suspend fun put(
+        message_id: String,
+        plaintext: String,
+        sender_unauthenticated: Boolean = false,
+        unconfirmed_sender: Boolean = false,
+        binding: PlaintextBinding? = null,
+    ) {
+        if (message_id.isBlank()) return
+        val existing = read_entry(message_id)
+        if (existing != null && existing.is_foreign(binding) &&
+            (sender_unauthenticated || !is_sender_unauthenticated(message_id) || binding == null)
+        ) {
+            return
+        }
+        val key = state_store.derive_state_encryption_key()
+        if (key == null) {
+            mutex.withLock {
+                if (sender_unauthenticated) flag_unauthenticated(message_id)
+                set_flag(unconfirmed, unconfirmed_key, message_id, unconfirmed_sender)
+            }
+            return
+        }
+        try {
+            val payload = if (binding != null) {
+                MessageEscrow.encode_bound_payload(binding.sender, binding.conversation_id, plaintext, unconfirmed_sender)
+            } else {
+                plaintext.toByteArray(Charsets.UTF_8)
+            }
+            val nonce = RatchetCrypto.random_bytes(12)
+            val ciphertext = try {
+                RatchetCrypto.aes_gcm_encrypt(payload, key, nonce, null)
+            } finally {
+                payload.fill(0)
+            }
+            val prefix = if (binding != null) bound_marker else ""
+            val encoded = prefix + RatchetCrypto.b64_encode(nonce) + ":" + RatchetCrypto.b64_encode(ciphertext)
+            mutex.withLock { store_bounded(message_id, encoded, sender_unauthenticated, unconfirmed_sender) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private suspend fun read_entry(message_id: String): CachedEntry? {
         val stored = mutex.withLock { prefs.getString(key_for(message_id), null) } ?: return null
-        val parts = stored.split(':', limit = 2)
+        val bound = stored.startsWith(bound_marker)
+        val parts = stored.removePrefix(bound_marker).split(':', limit = 2)
         if (parts.size != 2) return null
         val keys = state_store.state_encryption_key_candidates()
         if (keys.isEmpty()) return null
-        return try {
+        val opened = try {
             val nonce = RatchetCrypto.b64_decode(parts[0])
             val ciphertext = RatchetCrypto.b64_decode(parts[1])
             keys.firstNotNullOfOrNull { candidate ->
                 try {
-                    String(RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null), Charsets.UTF_8)
+                    RatchetCrypto.aes_gcm_decrypt(ciphertext, candidate, nonce, null)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Throwable) {
@@ -80,34 +138,23 @@ class RatchetPlaintextCache @Inject constructor(
             null
         } finally {
             keys.forEach { it.fill(0) }
+        } ?: return null
+        return try {
+            if (!bound) {
+                CachedEntry(String(opened, Charsets.UTF_8), null, null)
+            } else {
+                MessageEscrow.decode_bound_payload(opened)?.let { CachedEntry(it.plaintext, it.sender, it.conversation_id) }
+            }
+        } finally {
+            opened.fill(0)
         }
     }
 
-    suspend fun put(
-        message_id: String,
-        plaintext: String,
-        sender_unauthenticated: Boolean = false,
-        unconfirmed_sender: Boolean = false,
-    ) {
-        if (message_id.isBlank()) return
-        val key = state_store.derive_state_encryption_key()
-        if (key == null) {
-            mutex.withLock {
-                if (sender_unauthenticated) flag_unauthenticated(message_id)
-                set_flag(unconfirmed, unconfirmed_key, message_id, unconfirmed_sender)
-            }
-            return
-        }
-        try {
-            val nonce = RatchetCrypto.random_bytes(12)
-            val ciphertext = RatchetCrypto.aes_gcm_encrypt(plaintext.toByteArray(Charsets.UTF_8), key, nonce, null)
-            val encoded = RatchetCrypto.b64_encode(nonce) + ":" + RatchetCrypto.b64_encode(ciphertext)
-            mutex.withLock { store_bounded(message_id, encoded, sender_unauthenticated, unconfirmed_sender) }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Throwable) {
-        } finally {
-            key.fill(0)
+    private class CachedEntry(val plaintext: String, val sender: String?, val conversation_id: String?) {
+        fun is_foreign(binding: PlaintextBinding?): Boolean {
+            if (sender == null) return false
+            if (binding == null || sender != binding.normalized_sender) return true
+            return conversation_id != null && conversation_id != binding.conversation_id
         }
     }
 
@@ -191,6 +238,7 @@ class RatchetPlaintextCache @Inject constructor(
         private const val unauthenticated_key = "aster_plaintext_unauthenticated_v1"
         private const val unconfirmed_key = "aster_plaintext_unconfirmed_sender_v1"
         private const val index_separator = "\u001F"
+        private const val bound_marker = "b1|"
         internal const val max_entries = 2000
     }
 }

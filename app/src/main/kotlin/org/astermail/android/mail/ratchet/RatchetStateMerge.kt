@@ -74,16 +74,25 @@ object RatchetStateMerge {
         else -> if (root_key_tie_break(local) > root_key_tie_break(remote)) local else remote
     }
 
-    fun merge(local: RatchetState, remote: RatchetState): RatchetState {
+    private fun pick_winner(local: RatchetState, remote: RatchetState, remote_versioned: Boolean): RatchetState {
+        if (remote_versioned) return pick_newer_epoch(local, remote)
+        if (remote.created_at <= 0L || local.created_at <= 0L || remote.created_at < local.created_at) return local
+        if (remote.epoch != local.epoch) return if (remote.epoch > local.epoch) remote else local
+        return if (remote.updated_at > local.updated_at) remote else local
+    }
+
+    fun merge(local: RatchetState, remote: RatchetState, remote_versioned: Boolean = true): RatchetState {
         if (local.conversation_id != remote.conversation_id) return local
 
         val skipped = merge_skipped_keys(local.skipped_message_keys, remote.skipped_message_keys)
+        val local_skipped = merge_skipped_keys(local.skipped_message_keys, emptyList())
         val updated_at = maxOf(local.updated_at, remote.updated_at)
 
         if (!same_epoch(local, remote)) {
-            val winner = pick_newer_epoch(local, remote)
+            val winner = pick_winner(local, remote, remote_versioned)
+            val keep_local_skipped = !remote_versioned && winner === local
             return winner.copy(
-                skipped_message_keys = skipped,
+                skipped_message_keys = if (keep_local_skipped) local_skipped else skipped,
                 updated_at = updated_at,
             )
         }
@@ -93,10 +102,11 @@ object RatchetStateMerge {
 
         val recv_behind = when {
             local.chain_key_recv == null -> remote
-            remote.chain_key_recv == null -> local
+            remote.chain_key_recv == null || !remote_versioned -> local
             local.recv_message_number <= remote.recv_message_number -> local
             else -> remote
         }
+        val merged_skipped = if (remote_versioned || local.chain_key_recv == null) skipped else local_skipped
 
         return local.copy(
             chain_key_send = send_ahead.chain_key_send,
@@ -106,7 +116,7 @@ object RatchetStateMerge {
             previous_chain_length = maxOf(local.previous_chain_length, remote.previous_chain_length),
             epoch = maxOf(local.epoch, remote.epoch),
             bootstrap = local.bootstrap ?: remote.bootstrap,
-            skipped_message_keys = skipped,
+            skipped_message_keys = merged_skipped,
             updated_at = updated_at,
         )
     }
