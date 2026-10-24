@@ -30,6 +30,7 @@ import org.astermail.android.crypto.hkdf_sha256
 interface LoginPinSource {
     fun is_pinned(keys: List<String>): Boolean
     fun pin(keys: List<String>)
+    fun unpin(keys: List<String>)
 }
 
 enum class LoginProofChoice { v1, v2 }
@@ -97,6 +98,8 @@ object LoginProof {
         return (entries.filter { it !in fresh } + fresh).takeLast(max_pinned_accounts)
     }
 
+    fun remove_pins(entries: List<String>, keys: List<String>): List<String> = entries.filter { it !in keys }
+
     fun is_pinned(entries: List<String>, keys: List<String>): Boolean = keys.any { it in entries }
 
     fun select_sign_in_proof(
@@ -116,28 +119,18 @@ object LoginProof {
         }
     }
 
-    suspend fun select_step_up_proof(
+    fun select_step_up_proof(
         v1: ByteArray,
         kdf_version: Int,
         pin_keys: List<String>,
         pins: LoginPinSource,
-        enroll: suspend (ByteArray, ByteArray) -> Boolean,
     ): ByteArray {
         return when (choose_proof(kdf_version, pins.is_pinned(pin_keys))) {
             LoginProofChoice.v2 -> {
                 pins.pin(pin_keys)
                 derive_v2(v1)
             }
-            LoginProofChoice.v1 -> {
-                val v2 = derive_v2(v1)
-                if (run_enroll(enroll, v1, v2)) {
-                    pins.pin(pin_keys)
-                    v2
-                } else {
-                    v2.fill(0)
-                    v1.copyOf()
-                }
-            }
+            LoginProofChoice.v1 -> v1.copyOf()
         }
     }
 
@@ -147,20 +140,14 @@ object LoginProof {
         pins: LoginPinSource,
         enroll: suspend (ByteArray, ByteArray) -> Boolean,
     ): Boolean {
-        val enrolled = run_enroll(enroll, enrollment.v1, enrollment.v2)
+        val enrolled = try {
+            enroll(enrollment.v1, enrollment.v2)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            false
+        }
         if (enrolled) pins.pin(pin_keys)
         return enrolled
-    }
-
-    private suspend fun run_enroll(
-        enroll: suspend (ByteArray, ByteArray) -> Boolean,
-        v1: ByteArray,
-        v2: ByteArray,
-    ): Boolean = try {
-        enroll(v1, v2)
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (_: Throwable) {
-        false
     }
 }

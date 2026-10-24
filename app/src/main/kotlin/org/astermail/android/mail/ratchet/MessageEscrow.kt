@@ -234,7 +234,6 @@ class MessageEscrow @Inject constructor(
             val header = buildJsonObject {
                 put("s", normalize_sender(sender))
                 put("c", conversation_id)
-                put("k", 1)
                 if (unconfirmed_sender) put("u", 1)
             }
             return "$header\n$plaintext".toByteArray(Charsets.UTF_8)
@@ -252,12 +251,11 @@ class MessageEscrow @Inject constructor(
             val sender = (header["s"] as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null
             val conversation_id = (header["c"] as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null
             val flag = (header["u"] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull
-            val marked = (header["k"] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull == 1.0
             return BoundEscrowPayload(
                 sender = sender,
                 conversation_id = conversation_id,
                 plaintext = text.substring(split + 1),
-                unconfirmed_sender = flag == 1.0 || !marked,
+                unconfirmed_sender = flag == 1.0,
             )
         }
 

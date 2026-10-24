@@ -435,7 +435,7 @@ class RatchetDecryptor @Inject constructor(
 
             val final_state = state ?: return@with_lock null
             val resolved = plaintext ?: return@with_lock null
-            val unconfirmed_sender = continuity != SenderIdentityContinuity.KNOWN
+            val unconfirmed_sender = continuity == SenderIdentityContinuity.CHANGED
             if (continuity == SenderIdentityContinuity.CHANGED) {
                 flag_sender_rotation(conversation_id, sender_email, envelope.sender_identity_key)
             } else {

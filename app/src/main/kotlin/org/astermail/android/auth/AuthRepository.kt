@@ -694,12 +694,7 @@ class AuthRepository @Inject constructor(
     private suspend fun derive_step_up_proof(password_bytes: ByteArray, step_up: StepUpSalt): ByteArray {
         val v1 = derive_login_hash(password_bytes, step_up.salt)
         try {
-            return LoginProof.select_step_up_proof(
-                v1,
-                step_up.kdf_version,
-                step_up.pin_keys,
-                login_pins,
-            ) { enroll_v1, enroll_v2 -> enroll_login_v2(enroll_v1, enroll_v2) }
+            return LoginProof.select_step_up_proof(v1, step_up.kdf_version, step_up.pin_keys, login_pins)
         } finally {
             v1.fill(0)
         }
@@ -1846,6 +1841,9 @@ class AuthRepository @Inject constructor(
         )
         val current_id = session_key_store.get_user_id()
         val current_email = session_key_store.get_user_email()
+        runCatching {
+            login_pins.unpin(LoginProof.pin_keys(current_id, current_email?.let { CryptoNative.hash_email(it) }))
+        }
         token_store.clear()
         api_client.invalidate_bearer_cache()
         session_key_store.clear()
