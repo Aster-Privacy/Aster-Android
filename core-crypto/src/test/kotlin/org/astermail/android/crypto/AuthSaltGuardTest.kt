@@ -76,7 +76,7 @@ class AuthSaltGuardTest {
     @Test
     fun `a salt shorter than the minimum is refused`() {
         assertThrows(AuthSaltCollisionException::class.java) {
-            AuthSaltGuard.require_usable_auth_salt(ByteArray(4), null)
+            AuthSaltGuard.require_usable_auth_salt(ByteArray(15), null)
         }
     }
 }
