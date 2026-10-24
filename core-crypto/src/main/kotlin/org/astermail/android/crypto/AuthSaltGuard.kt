@@ -25,7 +25,7 @@ class AuthSaltCollisionException(message: String) : SecurityException(message)
 
 object AuthSaltGuard {
     private const val vault_salt_bytes = 16
-    private const val min_auth_salt_bytes = 8
+    private const val min_auth_salt_bytes = 16
 
     fun vault_salt_prefix(encrypted_vault: ByteArray): ByteArray? {
         if (encrypted_vault.size <= vault_salt_bytes) return null
