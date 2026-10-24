@@ -82,8 +82,10 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 runCatching {
                     org.astermail.android.api.errors.ClientErrorReporter.report(
                         feature = "app",
-                        error_code = "uncaught_exception",
+                        error_code = org.astermail.android.api.errors.crash_error_code(error),
                         severity = "error",
+                        route = org.astermail.android.api.errors.crash_route(error),
+                        wait_for_delivery = true,
                     )
                 }
                 previous?.uncaughtException(thread, error)
