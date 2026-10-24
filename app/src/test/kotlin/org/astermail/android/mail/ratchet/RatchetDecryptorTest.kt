@@ -1351,6 +1351,43 @@ class RatchetDecryptorTest {
     }
 
     @Test
+    fun `a cached message without a session sender key stays unconfirmed`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "cached message")
+        val remembered_identity = RatchetCrypto.b64_encode(fixture.sender_identity_raw)
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0).copy(ephemeral_key = null))
+        val saved = mutableListOf(receiver_state_from(fixture))
+        assertNull(saved.single().remote_identity_key)
+        val identity_pins = real_pin_store()
+        identity_pins.remember_sender_identity(sender_email, remembered_identity)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unconfirmed("msg_unbound") } returns true
+        every { plaintext_cache.is_sender_unauthenticated("msg_unbound") } returns false
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), identity_pins, plaintext_cache, escrow_returning(null))
+
+        decryptor.settle_cached_sender(body, listOf(recipient_email), sender_email, "msg_unbound")
+
+        verify(exactly = 0) { plaintext_cache.confirm_sender(any()) }
+    }
+
+    @Test
+    fun `an own identity key on the envelope label alone does not confirm a cached message`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "cached message")
+        val own_identity_raw = RatchetCrypto.b64_decode(fixture.receiver_keys.identity_public_b64)
+        val body = envelope_json(own_identity_raw, recipient_data_for(fixture, enc0).copy(ephemeral_key = null))
+        val saved = mutableListOf(receiver_state_from(fixture))
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unconfirmed("msg_own_label") } returns true
+        every { plaintext_cache.is_sender_unauthenticated("msg_own_label") } returns false
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), plaintext_cache, escrow_returning(null))
+
+        decryptor.settle_cached_sender(body, listOf(recipient_email), sender_email, "msg_own_label")
+
+        verify(exactly = 0) { plaintext_cache.confirm_sender(any()) }
+    }
+
+    @Test
     fun `an unreadable sender history still consults the pinned key`() = runTest {
         val identity_pins = real_pin_store(unreadable_prefix = "hist_")
         val conversation_id = X3dh.derive_conversation_id(recipient_email, sender_email)
