@@ -103,6 +103,26 @@ internal fun body_needs_regrowth(content_dp: Float, shown_dp: Float, max_dp: Flo
 internal fun body_overflows_sideways(scroll_range: Int, scroll_extent: Int): Boolean =
     scroll_extent > 0 && scroll_range > scroll_extent + 1
 
+internal const val OVERFLOW_FIT_SLACK_CSS_PX = 4
+
+internal const val OVERFLOW_FIT_MARGIN_CSS_PX = 2
+
+internal fun overflow_fit_width(
+    scroll_range: Int,
+    scroll_extent: Int,
+    scale: Float,
+    current_fit: Int?,
+    max_width: Int = MAX_FIT_CONTENT_WIDTH,
+): Int? {
+    if (scale <= 0f || !body_overflows_sideways(scroll_range, scroll_extent)) return null
+    val overflow_css = (scroll_range - scroll_extent) / scale
+    if (overflow_css < OVERFLOW_FIT_SLACK_CSS_PX) return null
+    val needed = kotlin.math.ceil(scroll_range / scale).toInt() + OVERFLOW_FIT_MARGIN_CSS_PX
+    val fit = minOf(needed, max_width)
+    if (current_fit != null && fit <= current_fit) return null
+    return fit
+}
+
 internal fun body_height_viewport_filled(
     content_css: Int,
     viewport_css: Int,

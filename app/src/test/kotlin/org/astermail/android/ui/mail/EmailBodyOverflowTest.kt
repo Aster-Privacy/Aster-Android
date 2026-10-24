@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -72,9 +73,64 @@ class EmailBodyOverflowTest {
             css.contains("#m{max-width:100%!important;overflow-x:hidden"),
         )
         assertTrue(
-            "content that still does not fit must stay reachable",
-            css.contains("#m{max-width:100%!important;overflow-x:auto!important"),
+            "overflow must reach the page so the reader can measure and fit it",
+            css.contains("#m{max-width:100%!important;overflow-x:visible!important"),
         )
+        assertTrue(
+            "content that still does not fit must stay reachable",
+            css.contains("body{height:auto!important;min-height:0!important;margin:0;overflow-x:auto;"),
+        )
+    }
+
+    @Test
+    fun a_plain_message_keeps_sideways_overflow_hidden() {
+        val css = style_block(render("<p>Short note</p>"))
+
+        assertTrue(css.contains("body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;"))
+    }
+
+    private val charges_cell = """<td style="font-size:14px;padding:10px;" valign="top"><ul style="margin:0;padding-left:15px">""" +
+        """<li>Number Limit - 3 complimentary transactions per month each for deposits and withdrawals.</li>""" +
+        """<li>Value Limit - Complimentary up to 1 lakh per month, whichever is higher.</li></ul></td>"""
+
+    private val charges_newsletter = """<div class="aster_quote gmail_quote"><div class="aster_forward_body">""" +
+        """<table align="center" class="mobwidth" style="border:1px solid #d9d9d9;" width="602"><tbody><tr><td style="padding:30px 20px;">""" +
+        """<table align="left" cellpadding="0" cellspacing="0" width="100%"><tbody>""" +
+        """<tr><td style="padding:10px;background:#E1530F;">Type of Charge</td><td style="padding:10px;">Existing Charges</td><td style="padding:10px;">Revised Charges</td></tr>""" +
+        """<tr><td style="padding:10px;" valign="top">Cash Transactions (Deposits and withdrawals at Branches)</td>$charges_cell$charges_cell</tr>""" +
+        """</tbody></table></td></tr></tbody></table>""" +
+        """<style>@media (max-width:480px){ .mobwidth{width:100%!important} table{width:100%!important} }</style>""" +
+        """</div></div>"""
+
+    @Test
+    fun a_reflowed_charges_table_starts_at_device_width_and_leaves_fitting_to_the_reader() {
+        val document = render(EmailHtmlSanitizer.sanitize(charges_newsletter))
+
+        assertTrue(document.contains("data-nl=\"1\""))
+        assertNull(fitted_viewport_width(document))
+        assertTrue(document.contains("content=\"width=device-width,initial-scale=1"))
+        assertTrue(document.contains("width=\"100%\""))
+        assertFalse(document.contains("width=\"602\""))
+    }
+
+    @Test
+    fun a_measured_overflow_reloads_the_page_in_a_viewport_that_holds_it() {
+        val document = build_email_html(
+            body = EmailHtmlSanitizer.sanitize(charges_newsletter),
+            is_dark = false,
+            fg_hex = "#111111",
+            link_hex = "#1a73e8",
+            forwarded_label = "Forwarded",
+            image_failed_label = "Image failed",
+            force_dark_emails = false,
+            dyslexia_font = false,
+            translate_mode = "off",
+            fit_width_override = 492,
+        )
+
+        assertEquals(492, fitted_viewport_width(document))
+        assertTrue(document.contains("<meta name=\"viewport\" content=\"width=492,maximum-scale=5,user-scalable=yes\">"))
+        assertFalse(document.contains("width=device-width"))
     }
 
     @Test

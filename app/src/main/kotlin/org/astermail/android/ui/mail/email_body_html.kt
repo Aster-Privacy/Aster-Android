@@ -86,6 +86,7 @@ internal fun build_email_html(
     email_font_id: String? = null,
     text_zoom: Int = 100,
     underline_links: Boolean = false,
+    fit_width_override: Int? = null,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
@@ -167,12 +168,14 @@ html,body{background-color:#ffffff!important}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:auto!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
         "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
     val fit_content_width = declared_content_width(render_body)
-    val viewport_meta = if (fit_content_width != null) {
+    val viewport_meta = if (fit_width_override != null) {
+        "<meta name=\"viewport\" content=\"width=$fit_width_override,maximum-scale=5,user-scalable=yes\">"
+    } else if (fit_content_width != null) {
         "<meta name=\"viewport\" content=\"width=${fit_content_width + BODY_SIDE_PADDING * 2},maximum-scale=5,user-scalable=yes\">"
     } else {
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes\">"
@@ -220,7 +223,7 @@ $viewport_meta
 $color_scheme_meta
 <style>
 html{height:auto!important;min-height:0!important;background-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;overflow-y:auto}
+body{height:auto!important;min-height:0!important;margin:0;overflow-x:${if (has_newsletter_layout) "auto" else "hidden"};overflow-y:auto}
 *{box-sizing:border-box}
 [height="100%"],[height='100%']{height:auto!important}
 [style*="height:100%"],[style*="height: 100%"],[style*="height:100vh"],[style*="height: 100vh"],[style*="height:100dvh"],[style*="height: 100dvh"]{height:auto!important;min-height:0!important}

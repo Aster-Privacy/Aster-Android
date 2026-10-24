@@ -5802,6 +5802,7 @@ private const val height_watch_exact_stable_ms = 48L
 private const val height_watch_settle_ms = 2000L
 private const val height_watch_budget_ms = 15000L
 private const val vertical_overflow_slack_dp = 8f
+private const val max_overflow_fit_attempts = 3
 private const val height_late_growth_poll_ms = 500L
 private const val height_late_growth_budget_ms = 60000L
 private const val height_late_growth_slack_dp = 8f
@@ -6063,6 +6064,15 @@ private object body_height_cache {
     }
     @Synchronized fun get(key: Long): Float? = store[key]
     @Synchronized fun put(key: Long, value: Float) { store[key] = value }
+}
+
+private object body_fit_width_cache {
+    private const val max_entries = 128
+    private val store = object : java.util.LinkedHashMap<Long, Int>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Int>?): Boolean = size > max_entries
+    }
+    @Synchronized fun get(key: Long): Int? = store[key]
+    @Synchronized fun put(key: Long, value: Int) { store[key] = value }
 }
 
 private object body_shown_cache {
@@ -6563,9 +6573,14 @@ internal fun email_html_view(
 
     val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
     val html_hash = remember(html, inline_sig) { html.hashCode() * 31 + inline_sig }
-    val height_cache_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links) {
+    val base_height_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links) {
         ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
             31L + email_font_id.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)
+    }
+    var overflow_fit_width by remember(base_height_key) { mutableStateOf(body_fit_width_cache.get(base_height_key)) }
+    val overflow_fit_attempts = remember(base_height_key) { intArrayOf(0) }
+    val height_cache_key = remember(base_height_key, overflow_fit_width) {
+        base_height_key * 31L + (overflow_fit_width ?: 0).toLong()
     }
     val estimated_height = remember(html_hash, screen_width_dp) { estimated_body_height(html, screen_width_dp) }
     val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
@@ -6627,6 +6642,7 @@ internal fun email_html_view(
         email_font_id = email_font_id,
         text_zoom = text_zoom,
         underline_links = underline_links,
+        fit_width_override = overflow_fit_width,
     )
 
     val translate_active = translate_active_early
@@ -6634,8 +6650,8 @@ internal fun email_html_view(
     translate_active_ref[0] = translate_active
     val allow_external_ref = remember { booleanArrayOf(false) }
     allow_external_ref[0] = allow_external
-    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
+    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, overflow_fit_width) { (((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)) * 31L + (overflow_fit_width ?: 0).toLong() }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, overflow_fit_width) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
     var loaded_built by remember { mutableStateOf("") }
     var loaded_external by remember { mutableStateOf(false) }
     val scale_ref = remember { floatArrayOf(1f) }
@@ -6726,7 +6742,7 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
+    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body, overflow_fit_width) {
         if (html.isEmpty()) {
             prebuilt_html = null
             return@LaunchedEffect
@@ -6778,6 +6794,8 @@ internal fun email_html_view(
         var stable_ms = 0L
         var exact_sent = false
         var probed = false
+        var overflow_checked = false
+        val fit_at_start = overflow_fit_width
         while (elapsed < height_watch_budget_ms) {
             val step = if (elapsed < height_watch_fast_window_ms) height_watch_fast_ms else height_watch_slow_ms
             delay(step)
@@ -6792,6 +6810,19 @@ internal fun email_html_view(
             if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
             val content = web.contentHeight
             if (content <= 0) continue
+            if (!overflow_checked && !zoom_active && loaded_built == prebuilt_html && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
+                @Suppress("DEPRECATION")
+                val fit = (web as? mail_body_web_view)?.let { body ->
+                    overflow_fit_width(body.horizontal_scroll_range(), body.horizontal_scroll_extent(), web.scale, fit_at_start)
+                }
+                if (fit != null) {
+                    overflow_fit_attempts[0]++
+                    body_fit_width_cache.put(base_height_key, fit)
+                    overflow_fit_width = fit
+                    return@LaunchedEffect
+                }
+                if (exact_sent) overflow_checked = true
+            }
             @Suppress("DEPRECATION")
             val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
             val filled = web_height_viewport_filled(web, content)
