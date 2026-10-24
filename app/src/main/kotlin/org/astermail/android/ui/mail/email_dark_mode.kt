@@ -49,6 +49,16 @@ internal const val KEEP_BACKGROUND_ATTRIBUTE = "data-aster-keep-bg"
 
 internal const val BACKGROUND_IMAGE_ATTRIBUTE = "data-aster-bg-image"
 
+internal const val PAPER_ATTRIBUTE = "data-aster-paper"
+
+internal const val PAPER_FILL_VALUE = "fill"
+
+internal const val PAPER_INK = "#1f2937"
+
+internal const val PAPER_LINK = "#1a56db"
+
+internal const val PAPER_FILL = "#f3f4f6"
+
 private val NAMED_COLOR_LUMINANCE: Map<String, Double> = mapOf(
     "black" to 0.0, "navy" to 0.0018, "darkblue" to 0.0043, "midnightblue" to 0.0083,
     "darkgreen" to 0.0356, "darkslategray" to 0.0339, "darkslategrey" to 0.0339,
@@ -242,6 +252,60 @@ private fun clear_light_backgrounds(css: String): String {
     }
 }
 
+private fun declares_text_color(element: org.jsoup.nodes.Element): Boolean {
+    if (element.tagName() == "font" && element.attr("color").isNotBlank()) return true
+    val style = element.attr("style")
+    return style.isNotEmpty() && COLOR_DECLARATION.containsMatchIn(style)
+}
+
+private fun inherits_declared_text_color(element: org.jsoup.nodes.Element): Boolean {
+    var current: org.jsoup.nodes.Element? = element
+    while (current != null && current.tagName() != "body") {
+        if (declares_text_color(current)) return true
+        current = current.parent()
+    }
+    return false
+}
+
+private fun solid_background_token(element: org.jsoup.nodes.Element): String? {
+    val attribute = element.attr("bgcolor").trim()
+    if (attribute.isNotEmpty()) return attribute
+    val style = element.attr("style")
+    if (style.isEmpty()) return null
+    return BACKGROUND_SOURCE.findAll(style).firstNotNullOfOrNull { match ->
+        COLOR_TOKEN.find(match.groupValues[1].ifEmpty { match.groupValues[2] })?.value
+    }
+}
+
+internal fun has_image_background(element: org.jsoup.nodes.Element): Boolean =
+    element.attr("background").isNotBlank() ||
+        element.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE) ||
+        declares_background_image(element.attr("style"))
+
+private fun mark_image_paper(doc: org.jsoup.nodes.Document): Boolean {
+    var changed = false
+    for (element in doc.select("[style],[background],[$BACKGROUND_IMAGE_ATTRIBUTE]")) {
+        if (element.hasAttr(PAPER_ATTRIBUTE) || !has_image_background(element)) continue
+        if (inherits_declared_text_color(element)) continue
+        val solid = solid_background_token(element)
+        val solid_luminance = solid?.let { color_luminance(it) }
+        if (solid_luminance != null && solid_luminance < PAGE_SURFACE_LUMINANCE_LIMIT) continue
+        element.attr(PAPER_ATTRIBUTE, if (solid_luminance == null) PAPER_FILL_VALUE else "1")
+        changed = true
+    }
+    return changed
+}
+
+private fun on_paper(element: org.jsoup.nodes.Element): Boolean =
+    element.closest("[$PAPER_ATTRIBUTE]") != null
+
+internal fun image_paper_css(): String {
+    val plain_link = "[$PAPER_ATTRIBUTE] a:not([style*=\"color\" i]):not([color])"
+    return "[$PAPER_ATTRIBUTE]{color:$PAPER_INK!important}" +
+        "[$PAPER_ATTRIBUTE=\"$PAPER_FILL_VALUE\"]{background-color:$PAPER_FILL!important}" +
+        "$plain_link,$plain_link *{color:$PAPER_LINK!important}"
+}
+
 private fun mark_stylesheet_background_images(doc: org.jsoup.nodes.Document, css: String): Boolean {
     var marked = false
     for (rule in STYLE_RULE.findAll(css)) {
@@ -285,7 +349,13 @@ private fun lighten_style_blocks(
 internal fun lighten_dark_stylesheet_text(body: String): String = try {
     val doc = org.jsoup.Jsoup.parseBodyFragment(body)
     doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
-    if (lighten_style_blocks(doc)) doc.body().html() else body
+    var changed = false
+    for (sheet in doc.select("style")) {
+        if (mark_stylesheet_background_images(doc, sheet.data())) changed = true
+    }
+    if (mark_image_paper(doc)) changed = true
+    if (lighten_style_blocks(doc)) changed = true
+    if (changed) doc.body().html() else body
 } catch (_: Throwable) {
     body
 }
@@ -302,6 +372,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
     for (sheet in doc.select("style")) {
         if (mark_stylesheet_background_images(doc, sheet.data())) changed = true
     }
+    if (mark_image_paper(doc)) changed = true
     for (element in doc.select("[bgcolor],[style]")) {
         val background = declared_background(element) ?: continue
         if (color_luminance(background) == null || is_page_surface(background)) continue
@@ -311,6 +382,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
     }
     for (element in doc.select("[style]")) {
         if (element.hasAttr(KEEP_BACKGROUND_ATTRIBUTE) || element.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE)) continue
+        if (on_paper(element)) continue
         val style = element.attr("style")
         val lightened = clear_light_backgrounds(lighten_color_declarations(style))
         if (lightened != style) {
@@ -320,6 +392,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
     }
     if (lighten_style_blocks(doc) { clear_light_backgrounds(lighten_color_declarations(it)) }) changed = true
     for (element in doc.select("font[color]")) {
+        if (on_paper(element)) continue
         if (reads_too_dark_on_dark(element.attr("color"))) {
             element.attr("color", FORCED_DARK_INK)
             changed = true
@@ -360,5 +433,6 @@ a[style*="background" i] *,[bgcolor] > a *{color:inherit!important}
 img{opacity:0.87}
 hr{border-color:#374151!important;background-color:#374151!important;color:#374151!important}
 blockquote{border-left-color:$quote_border!important;color:$quote_color!important}
+${image_paper_css()}
 """
 }

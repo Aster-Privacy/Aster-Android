@@ -151,6 +151,7 @@ internal fun build_email_html(
         simple_dark -> """
 html{color-scheme:dark}
 $DARK_PAGE_SELECTOR{background:transparent!important;color:#e8e8e8!important}
+${image_paper_css()}
 """
         white_page -> """
 html,body{background-color:#ffffff!important}

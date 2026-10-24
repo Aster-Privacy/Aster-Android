@@ -433,4 +433,62 @@ class EmailDarkContrastTest {
         assertTrue(content.select("div").last()!!.attr("style").contains("color:#e8e8e8"))
         assertEquals("background-color:#2b1f5c", content.selectFirst("span")!!.attr("style"))
     }
+
+    private val stationery = "<table><tr><td style=\"background:url(https://cdn.example.com/paper/b_01.jpg); min-height:550px; padding:100px 55px\">" +
+        "<div>Hello, the sign-up limit has been removed.</div>" +
+        "<p style=\"color:#333333\">Explicit grey paragraph</p>" +
+        "<p style=\"background-color: rgb(18, 18, 18); color: rgb(248, 113, 113)\">Error box</p>" +
+        "<a href=\"https://example.com\">Plain link</a>" +
+        "</td></tr></table>"
+
+    @Test
+    fun image_stationery_gets_dark_ink_and_a_light_fill_in_simple_dark() {
+        val doc = Jsoup.parse(render(stationery, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
+        val cell = doc.selectFirst("td")!!
+        assertEquals(PAPER_FILL_VALUE, cell.attr(PAPER_ATTRIBUTE))
+        assertTrue(doc.html().contains("[$PAPER_ATTRIBUTE]{color:$PAPER_INK!important}"))
+        assertTrue(doc.html().contains("[$PAPER_ATTRIBUTE=\"$PAPER_FILL_VALUE\"]{background-color:$PAPER_FILL!important}"))
+        assertEquals("color:#333333", cell.select("p")[0].attr("style"))
+        assertTrue(cell.select("p")[1].attr("style").contains("rgb(248, 113, 113)"))
+    }
+
+    @Test
+    fun image_stationery_keeps_its_explicit_ink_when_dark_is_forced() {
+        val doc = Jsoup.parse(render(stationery, forced = true))
+        val cell = doc.selectFirst("td")!!
+        assertEquals(PAPER_FILL_VALUE, cell.attr(PAPER_ATTRIBUTE))
+        assertTrue(cell.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE))
+        assertEquals("color:#333333", cell.select("p")[0].attr("style"))
+        assertTrue(cell.select("p")[1].attr("style").contains("rgb(248, 113, 113)"))
+        assertTrue(doc.html().contains("[$PAPER_ATTRIBUTE]{color:$PAPER_INK!important}"))
+    }
+
+    @Test
+    fun a_dark_image_background_with_light_ink_is_not_paper() {
+        val body = "<td style=\"background:#000000 url(https://cdn.example.com/hero.jpg);color:#ffffff\">Hero</td>" +
+            "<div style=\"color:#fafafa\"><span style=\"background-image:url(https://cdn.example.com/x.png)\">Caption</span></div>" +
+            "<div style=\"background:#111 url(https://cdn.example.com/y.png)\">Dark banner</div>"
+        for (forced in listOf(false, true)) {
+            val content = Jsoup.parse(render(body, forced = forced)).getElementById("m")!!
+            assertTrue(content.select("[$PAPER_ATTRIBUTE]").isEmpty())
+        }
+    }
+
+    @Test
+    fun a_light_solid_background_behind_the_image_needs_no_fill() {
+        val body = "<table><tr><td background=\"https://cdn.example.com/paper.jpg\" bgcolor=\"#fdfdfd\">Letter</td></tr></table>"
+        val cell = Jsoup.parse(render(body, forced = true)).selectFirst("td")!!
+        assertEquals("1", cell.attr(PAPER_ATTRIBUTE))
+    }
+
+    @Test
+    fun a_stylesheet_image_background_is_paper_too() {
+        val body = "<style>.paper{background-image:url(https://cdn.example.com/paper.jpg)}</style>" +
+            "<div class=\"paper\"><p>Letter</p></div>"
+        for (forced in listOf(false, true)) {
+            val content = Jsoup.parse(render(body, forced = forced)).getElementById("m")!!
+            assertEquals(PAPER_FILL_VALUE, content.selectFirst(".paper")!!.attr(PAPER_ATTRIBUTE))
+        }
+    }
 }
