@@ -213,6 +213,17 @@ class RatchetStateMergeTest {
     }
 
     @Test
+    fun keeps_a_remote_identity_key_known_to_only_one_device() {
+        val local = state()
+        val remote = state().apply { remote_identity_key = "remote-identity" }
+        val other_epoch = state(root_key = "root-key-epoch-3", epoch = 3).apply { remote_identity_key = "remote-identity" }
+
+        assertEquals("remote-identity", RatchetStateMerge.merge(local, remote).remote_identity_key)
+        assertEquals("remote-identity", RatchetStateMerge.merge(remote, local).remote_identity_key)
+        assertEquals("remote-identity", RatchetStateMerge.merge(local, other_epoch).remote_identity_key)
+    }
+
+    @Test
     fun refuses_to_merge_states_from_different_conversations() {
         val local = state()
         val other = state().copy(conversation_id = "a-different-conversation")
