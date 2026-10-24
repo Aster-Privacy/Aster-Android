@@ -51,6 +51,15 @@ class LoginProofPinStore @Inject constructor(
         }
     }
 
+    override fun unpin(keys: List<String>) {
+        synchronized(lock) {
+            val updated = LoginProof.remove_pins(entries, keys)
+            if (updated == entries) return
+            entries = updated
+            runCatching { prefs?.edit()?.putString(key_entries, LoginProof.serialize_pins(updated))?.commit() }
+        }
+    }
+
     private fun read_entries(): List<String> =
         runCatching { LoginProof.parse_pins(prefs?.getString(key_entries, null)) }.getOrDefault(emptyList())
 

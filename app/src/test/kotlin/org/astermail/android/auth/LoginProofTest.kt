@@ -43,6 +43,9 @@ class LoginProofTest {
         override fun pin(keys: List<String>) {
             entries = LoginProof.add_pins(entries, keys)
         }
+        override fun unpin(keys: List<String>) {
+            entries = LoginProof.remove_pins(entries, keys)
+        }
     }
 
     private fun b64(bytes: ByteArray): String = Base64.getEncoder().encodeToString(bytes)
@@ -173,28 +176,36 @@ class LoginProofTest {
     }
 
     @Test
-    fun step_up_uses_v2_after_inline_enrollment() = runTest {
+    fun step_up_with_kdf_two_uses_v2_and_pins() {
         val pins = FakePins()
         val v1 = sample_v1()
-        val proof = LoginProof.select_step_up_proof(v1, 1, listOf("u:abc"), pins) { _, _ -> true }
+        val proof = LoginProof.select_step_up_proof(v1, 2, listOf("u:abc"), pins)
         assertArrayEquals(LoginProof.derive_v2(v1), proof)
         assertTrue(pins.is_pinned(listOf("u:abc")))
     }
 
     @Test
-    fun step_up_falls_back_to_v1_when_enrollment_fails() = runTest {
+    fun step_up_with_kdf_one_uses_v1_without_pinning() {
         val pins = FakePins()
         val v1 = sample_v1()
-        val proof = LoginProof.select_step_up_proof(v1, 1, listOf("u:abc"), pins) { _, _ ->
-            throw IllegalStateException("rate limited")
-        }
+        val proof = LoginProof.select_step_up_proof(v1, 1, listOf("u:abc"), pins)
         assertArrayEquals(v1, proof)
         assertFalse(pins.is_pinned(listOf("u:abc")))
     }
 
     @Test(expected = AuthSaltCollisionException::class)
-    fun step_up_downgrade_for_pinned_user_is_refused() = runTest {
+    fun step_up_downgrade_for_pinned_user_is_refused() {
         val pins = FakePins(listOf("u:abc"))
-        LoginProof.select_step_up_proof(sample_v1(), 1, listOf("u:abc", "h:hash1"), pins) { _, _ -> true }
+        LoginProof.select_step_up_proof(sample_v1(), 1, listOf("u:abc", "h:hash1"), pins)
+    }
+
+    @Test
+    fun unpinning_removes_only_the_named_keys() {
+        val pins = FakePins(listOf("u:abc", "h:hash1", "u:other"))
+        pins.unpin(LoginProof.pin_keys("abc", "hash1"))
+        assertFalse(pins.is_pinned(listOf("u:abc")))
+        assertFalse(pins.is_pinned(listOf("h:hash1")))
+        assertTrue(pins.is_pinned(listOf("u:other")))
+        assertEquals(listOf("u:other"), LoginProof.remove_pins(listOf("u:other"), emptyList()))
     }
 }

@@ -172,7 +172,7 @@ class MessageEscrowTest {
     @Test
     fun `a confirmed bound header has no unconfirmed field and round trips`() {
         val bytes = MessageEscrow.encode_bound_payload("Peer@Astermail.org", "conv_1", "body\nline two", false)
-        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\",\"k\":1}\nbody\nline two", String(bytes, Charsets.UTF_8))
+        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\"}\nbody\nline two", String(bytes, Charsets.UTF_8))
         val decoded = MessageEscrow.decode_bound_payload(bytes)
         assertEquals(BoundEscrowPayload("peer@astermail.org", "conv_1", "body\nline two", false), decoded)
     }
@@ -180,7 +180,7 @@ class MessageEscrowTest {
     @Test
     fun `an unconfirmed bound header carries u and round trips`() {
         val bytes = MessageEscrow.encode_bound_payload("peer@astermail.org", "conv_1", "body", true)
-        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\",\"k\":1,\"u\":1}\nbody", String(bytes, Charsets.UTF_8))
+        assertEquals("{\"s\":\"peer@astermail.org\",\"c\":\"conv_1\",\"u\":1}\nbody", String(bytes, Charsets.UTF_8))
         val decoded = MessageEscrow.decode_bound_payload(bytes)
         assertEquals(BoundEscrowPayload("peer@astermail.org", "conv_1", "body", true), decoded)
     }
@@ -189,12 +189,12 @@ class MessageEscrowTest {
     fun `only a numeric u of one marks the sender unconfirmed`() {
         fun decode(header: String) =
             MessageEscrow.decode_bound_payload("$header\nbody".toByteArray(Charsets.UTF_8))
-        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":\"1\"}")?.unconfirmed_sender)
-        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":0}")?.unconfirmed_sender)
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"u\":\"1\"}")?.unconfirmed_sender)
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"u\":0}")?.unconfirmed_sender)
+        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"u\":1}")?.unconfirmed_sender)
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\"}")?.unconfirmed_sender)
+        assertEquals(false, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1}")?.unconfirmed_sender)
         assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":1,\"u\":1}")?.unconfirmed_sender)
-        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\"}")?.unconfirmed_sender)
-        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":\"1\"}")?.unconfirmed_sender)
-        assertEquals(true, decode("{\"s\":\"a\",\"c\":\"b\",\"k\":2}")?.unconfirmed_sender)
         assertNull(decode("{\"s\":\"a\"}"))
         assertNull(MessageEscrow.decode_bound_payload("no header".toByteArray(Charsets.UTF_8)))
     }

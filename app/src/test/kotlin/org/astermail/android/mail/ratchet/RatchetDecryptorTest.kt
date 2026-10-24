@@ -607,7 +607,7 @@ class RatchetDecryptorTest {
         assertEquals("hello kchaos", result)
         val expected_key = "msg_chain:${enc0.header.dh_public}:${enc0.header.message_number}"
         verify(exactly = 1) {
-            escrow.upload_bound_in_background(expected_key, "hello kchaos", sender_email, fixture.conversation_id, true)
+            escrow.upload_bound_in_background(expected_key, "hello kchaos", sender_email, fixture.conversation_id, false)
         }
     }
 
@@ -1153,12 +1153,12 @@ class RatchetDecryptorTest {
             decryptor.try_decrypt(second_body, listOf(recipient_email), sender_email, "msg_second"),
         )
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_first", "first message", false, true, any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_first", "first message", false, false, any()) }
         coVerify(exactly = 1) { plaintext_cache.put("msg_second", "second message", false, false, any()) }
         val first_key = "msg_first:${enc0.header.dh_public}:${enc0.header.message_number}"
         val second_key = "msg_second:${enc1.header.dh_public}:${enc1.header.message_number}"
         verify(exactly = 1) {
-            escrow.upload_bound_in_background(first_key, "first message", sender_email, fixture.conversation_id, true)
+            escrow.upload_bound_in_background(first_key, "first message", sender_email, fixture.conversation_id, false)
         }
         verify(exactly = 1) {
             escrow.upload_bound_in_background(second_key, "second message", sender_email, fixture.conversation_id, false)
@@ -1166,7 +1166,7 @@ class RatchetDecryptorTest {
     }
 
     @Test
-    fun `a first contact with no stored sender key is unverified`() = runTest {
+    fun `a first contact with no stored sender key is treated as confirmed`() = runTest {
         val fixture = build_fixture()
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
         val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
@@ -1177,9 +1177,9 @@ class RatchetDecryptorTest {
 
         assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_new"))
 
-        coVerify(exactly = 1) { plaintext_cache.put("msg_new", "hello kchaos", false, true, any()) }
+        coVerify(exactly = 1) { plaintext_cache.put("msg_new", "hello kchaos", false, false, any()) }
         verify(exactly = 1) {
-            escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, true)
+            escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, false)
         }
         assertTrue(identity_pins.unacknowledged_changes.value.isEmpty())
     }
