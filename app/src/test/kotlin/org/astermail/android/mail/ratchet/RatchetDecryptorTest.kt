@@ -138,11 +138,10 @@ class RatchetDecryptorTest {
         return RatchetIdentityPinStore(mockk(relaxed = true), SessionKeyStore(null))
     }
 
-    private fun stateful_store(): RatchetStateStore {
-        var saved: RatchetState? = null
+    private fun stateful_store(saved: MutableList<RatchetState> = mutableListOf()): RatchetStateStore {
         val state_store = mockk<RatchetStateStore>(relaxed = true)
-        coEvery { state_store.load(any()) } answers { saved?.let { deep_copy(it) } }
-        coEvery { state_store.save(any()) } answers { saved = deep_copy(firstArg()) }
+        coEvery { state_store.load(any()) } answers { saved.lastOrNull()?.let { deep_copy(it) } }
+        coEvery { state_store.save(any()) } answers { saved += deep_copy(firstArg()) }
         return state_store
     }
 
@@ -1261,6 +1260,94 @@ class RatchetDecryptorTest {
         coVerify(exactly = 1) { plaintext_cache.put("msg_lane", "third message", false, true, any()) }
         verify(exactly = 0) { escrow.upload_in_background(any(), any()) }
         verify(exactly = 0) { escrow.upload_bound_in_background(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `a bootstrap binds the envelope sender key to the session`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val saved = mutableListOf<RatchetState>()
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), mockk(relaxed = true), escrow_returning(null))
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_bound"))
+
+        assertEquals(RatchetCrypto.b64_encode(fixture.sender_identity_raw), saved.single().remote_identity_key)
+    }
+
+    @Test
+    fun `a chained message uses the session sender key over the envelope label`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first message")
+        val enc1 = DoubleRatchet.encrypt(fixture.sender_state, "second message")
+        val first_body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val other_identity_raw = RatchetCrypto.generate_p256_keypair().public_raw
+        val second_body = envelope_json(
+            other_identity_raw,
+            recipient_data_for(fixture, enc1).copy(ephemeral_key = null),
+        )
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val identity_pins = real_pin_store()
+        val decryptor = chain_decryptor(fixture, stateful_store(), identity_pins, plaintext_cache, escrow_returning(null))
+
+        assertEquals("first message", decryptor.try_decrypt(first_body, listOf(recipient_email), sender_email, "msg_first"))
+        assertEquals("second message", decryptor.try_decrypt(second_body, listOf(recipient_email), sender_email, "msg_second"))
+
+        coVerify(exactly = 1) { plaintext_cache.put("msg_second", "second message", false, false, any()) }
+        assertTrue(identity_pins.unacknowledged_changes.value.isEmpty())
+        assertEquals(
+            SenderIdentityContinuity.KNOWN,
+            identity_pins.sender_continuity(fixture.conversation_id, sender_email, RatchetCrypto.b64_encode(fixture.sender_identity_raw)),
+        )
+    }
+
+    @Test
+    fun `a session without a bound sender key adopts a known envelope key`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "chained message")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0).copy(ephemeral_key = null))
+        val saved = mutableListOf(receiver_state_from(fixture))
+        assertNull(saved.single().remote_identity_key)
+        val identity_pins = real_pin_store()
+        identity_pins.remember_sender_identity(sender_email, RatchetCrypto.b64_encode(fixture.sender_identity_raw))
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), identity_pins, mockk(relaxed = true), escrow_returning(null))
+
+        assertEquals("chained message", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_legacy"))
+
+        assertEquals(RatchetCrypto.b64_encode(fixture.sender_identity_raw), saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `a session without a bound sender key leaves an unknown envelope key unbound`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "chained message")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0).copy(ephemeral_key = null))
+        val saved = mutableListOf(receiver_state_from(fixture))
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), mockk(relaxed = true), escrow_returning(null))
+
+        assertEquals("chained message", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_legacy"))
+
+        assertNull(saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `a cached message settles against the session sender key`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "cached message")
+        val other_identity_raw = RatchetCrypto.generate_p256_keypair().public_raw
+        val body = envelope_json(other_identity_raw, recipient_data_for(fixture, enc0).copy(ephemeral_key = null))
+        val bound_identity = RatchetCrypto.b64_encode(fixture.sender_identity_raw)
+        val saved = mutableListOf(receiver_state_from(fixture).apply { remote_identity_key = bound_identity })
+        val identity_pins = real_pin_store()
+        identity_pins.remember_sender_identity(sender_email, bound_identity)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        every { plaintext_cache.is_sender_unconfirmed("msg_cached") } returns true
+        every { plaintext_cache.is_sender_unauthenticated("msg_cached") } returns false
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), identity_pins, plaintext_cache, escrow_returning(null))
+
+        decryptor.settle_cached_sender(body, listOf(recipient_email), sender_email, "msg_cached")
+
+        verify(exactly = 1) { plaintext_cache.confirm_sender("msg_cached") }
     }
 
     @Test

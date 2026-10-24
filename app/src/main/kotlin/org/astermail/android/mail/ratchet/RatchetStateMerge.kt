@@ -94,6 +94,7 @@ object RatchetStateMerge {
             return winner.copy(
                 skipped_message_keys = if (keep_local_skipped) local_skipped else skipped,
                 updated_at = updated_at,
+                remote_identity_key = local.remote_identity_key ?: remote.remote_identity_key,
             )
         }
 
@@ -116,6 +117,7 @@ object RatchetStateMerge {
             previous_chain_length = maxOf(local.previous_chain_length, remote.previous_chain_length),
             epoch = maxOf(local.epoch, remote.epoch),
             bootstrap = local.bootstrap ?: remote.bootstrap,
+            remote_identity_key = local.remote_identity_key ?: remote.remote_identity_key,
             skipped_message_keys = merged_skipped,
             updated_at = updated_at,
         )

@@ -102,6 +102,7 @@ data class RatchetState(
     var created_at: Long = 0L,
     var updated_at: Long = 0L,
     var bootstrap: BootstrapData? = null,
+    var remote_identity_key: String? = null,
 )
 
 data class RatchetIdentity(
