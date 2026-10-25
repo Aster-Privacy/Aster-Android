@@ -1983,12 +1983,13 @@ fun ComposeScreen(
             return
         }
         if (scheduled_send && external_sender_tokens[from_alias] == null) {
+            val scheduled_block_now_ms = System.currentTimeMillis()
             val scheduled_block = org.astermail.android.mail.scheduled_send_block(
                 recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList(),
                 scheduled_at_ms = scheduled_at_iso
                     ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
-                    ?: System.currentTimeMillis(),
-                now_ms = System.currentTimeMillis(),
+                    ?: (scheduled_block_now_ms + DEFAULT_SCHEDULE_DELAY_MS),
+                now_ms = scheduled_block_now_ms,
                 require_encryption = settings_state.encryption_settings?.require_encryption
                     ?: settings_state.preferences?.require_encryption
                     ?: false,
@@ -1997,6 +1998,7 @@ fun ComposeScreen(
                 send_lock.set(false)
                 send_error = context.getString(
                     when (scheduled_block) {
+                        org.astermail.android.mail.ScheduledSendBlock.PASSED -> R.string.schedule_time_in_past
                         org.astermail.android.mail.ScheduledSendBlock.TOO_FAR_AHEAD -> R.string.scheduled_too_far_ahead
                         org.astermail.android.mail.ScheduledSendBlock.REQUIRES_ENCRYPTION -> R.string.send_requires_encryption
                     },
@@ -2160,7 +2162,14 @@ fun ComposeScreen(
                     send_error = context.getString(R.string.expiring_not_with_schedule)
                     return@launch
                 }
-                val scheduled_at = scheduled_at_iso ?: java.time.Instant.now().plus(java.time.Duration.ofHours(1)).toString()
+                val chosen_scheduled_at = scheduled_at_iso
+                if (chosen_scheduled_at != null && is_scheduled_time_passed(chosen_scheduled_at)) {
+                    is_sending = false
+                    send_lock.set(false)
+                    send_error = context.getString(R.string.schedule_time_in_past)
+                    return@launch
+                }
+                val scheduled_at = chosen_scheduled_at ?: java.time.Instant.now().plus(java.time.Duration.ofMillis(DEFAULT_SCHEDULE_DELAY_MS)).toString()
                 val result = mail_vm.schedule_email(
                     to = snap_to,
                     cc = snap_cc,
@@ -5321,6 +5330,18 @@ private fun toggle_sheet_row(
 }
 
 private const val minimum_schedule_lead_ms = 60_000L
+
+private const val DEFAULT_SCHEDULE_DELAY_MS = 60 * 60 * 1000L
+
+internal fun is_scheduled_time_passed(
+    scheduled_at_iso: String,
+    now_ms: Long = System.currentTimeMillis(),
+): Boolean {
+    val scheduled_at_ms = runCatching { java.time.Instant.parse(scheduled_at_iso).toEpochMilli() }
+        .getOrNull() ?: return false
+    return scheduled_at_ms <= now_ms
+}
+
 private const val KEY_TRUST_LOOKUP_TIMEOUT_MS = 50_000L
 private const val KEY_TRUST_PREFETCH_DELAY_MS = 600L
 
