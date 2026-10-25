@@ -3418,4 +3418,13 @@
     <string name="domain_reason_dkim_missing_or_stale">보내는 메일에 서명이 없어 위조처럼 보입니다. 서명 레코드를 추가하면 신뢰받습니다.</string>
     <string name="domain_check_generic_failure">이 레코드가 아직 올바르게 설정되지 않았습니다. 아래 레코드를 추가하면 해결됩니다.</string>
     <string name="error_auth_salt_collision">서버가 안전하지 않은 값을 보내 로그인이 중단되었으며 아무것도 잠금 해제되지 않았습니다. 다시 시도하기 전에 지원팀에 문의하세요.</string>
+    <string name="storage_nudge_almost_title">저장용량이 거의 찼습니다</string>
+    <string name="storage_nudge_critical_title">저장용량이 거의 남지 않았습니다</string>
+    <string name="storage_nudge_full_title">저장용량이 가득 찼습니다</string>
+    <string name="storage_nudge_offer">월 %2$s에 %1$s 추가</string>
+    <string name="storage_nudge_offer_generic">요금제를 업그레이드하여 저장용량 늘리기</string>
+    <string name="storage_nudge_body">저장용량이 가득 차면 메일을 보내거나 가져올 수 없습니다.</string>
+    <string name="storage_nudge_full_body">공간을 확보할 때까지 메일을 보내거나 가져올 수 없습니다. 기존 메일은 안전합니다.</string>
+    <string name="storage_nudge_free_up">공간 확보</string>
+    <string name="storage_nudge_get_storage">저장용량 추가</string>
 </resources>

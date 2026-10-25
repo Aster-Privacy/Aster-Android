@@ -338,6 +338,8 @@ fun InboxScreen(
     on_open_recovery_email: () -> Unit = {},
     on_open_import: () -> Unit = {},
     on_open_domains: () -> Unit = {},
+    on_open_storage: () -> Unit = {},
+    on_open_storage_addons: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -492,6 +494,52 @@ fun InboxScreen(
         )
     }
     val show_payment_failed_banner = payment_failed_due != null
+    val storage_nudge_used = settings_state.storage?.used_bytes?.takeIf { it > 0L }
+        ?: inbox_state.stats?.storage_used_bytes ?: 0L
+    val storage_nudge_total = settings_state.storage?.total_bytes?.takeIf { it > 0L }
+        ?: inbox_state.stats?.storage_total_bytes ?: 0L
+    val storage_nudge_pct = storage_nudge_percent(storage_nudge_used, storage_nudge_total)
+    val storage_nudge_level = storage_nudge_tier(storage_nudge_pct)
+    val storage_nudge_account = settings_state.user?.user_id
+    val storage_nudge_prefs = remember {
+        context_for_prefs.getSharedPreferences(STORAGE_NUDGE_PREFS, android.content.Context.MODE_PRIVATE)
+    }
+    var storage_nudge_stored by remember(storage_nudge_account) {
+        mutableStateOf(storage_nudge_prefs.getString(storage_nudge_dismiss_key(storage_nudge_account), null))
+    }
+    val show_storage_nudge = storage_nudge_level != null &&
+        storage_nudge_account != null &&
+        !is_storage_nudge_dismissed(storage_nudge_stored, storage_nudge_level, System.currentTimeMillis())
+    val storage_nudge_play = org.astermail.android.billing.remember_play_install()
+    LaunchedEffect(show_storage_nudge) {
+        if (!show_storage_nudge) return@LaunchedEffect
+        if (billing_state.storage_addons == null) billing_vm.load_storage_addons()
+        if (storage_nudge_play) billing_vm.load_play_offers()
+    }
+    val storage_nudge_quotes = if (storage_nudge_play) {
+        org.astermail.android.billing.play_storage_addon_quotes(
+            billing_state.storage_addons?.available_addons.orEmpty(),
+            billing_state.play_offers,
+            billing_state.play_addon_products,
+        )
+    } else {
+        org.astermail.android.billing.card_storage_addon_quotes(billing_state.storage_addons?.available_addons.orEmpty())
+    }
+    val storage_nudge_offer = pick_storage_nudge_offer(storage_nudge_quotes, storage_nudge_used, storage_nudge_total)
+    val storage_nudge_currency = billing_state.play_currency?.takeIf { storage_nudge_play && billing_state.play_enabled }
+        ?: settings_state.subscription?.currency?.takeIf { it.isNotBlank() }
+        ?: billing_state.subscription?.currency?.takeIf { it.isNotBlank() }
+        ?: "usd"
+    val storage_nudge_offer_text = storage_nudge_offer?.let { quote ->
+        val price = quote.monthly_label
+            ?: org.astermail.android.billing.format_money((quote.monthly_cents ?: 0).toLong(), storage_nudge_currency)
+        stringResource(R.string.storage_nudge_offer, quote.name, price)
+    } ?: stringResource(R.string.storage_nudge_offer_generic)
+    val storage_nudge_usage_text = stringResource(
+        R.string.storage_used_of_total,
+        org.astermail.android.ui.settings.detail.format_storage_short(storage_nudge_used),
+        org.astermail.android.ui.settings.detail.format_storage_short(storage_nudge_total),
+    )
     LaunchedEffect(Unit) { billing_vm.load_onboarding_checklist(force = false) }
     val onboarding = billing_state.onboarding
     val onboarding_prefs = remember {
@@ -2217,6 +2265,25 @@ fun InboxScreen(
                             bottom = list_bottom_pad,
                         ),
                     ) {
+                        if (show_storage_nudge && storage_nudge_level != null && !select_mode) {
+                            item(key = "_storage_nudge", contentType = "storage_nudge") {
+                                storage_nudge_banner(
+                                    tier = storage_nudge_level,
+                                    percent = storage_nudge_pct,
+                                    usage_text = storage_nudge_usage_text,
+                                    offer_text = storage_nudge_offer_text,
+                                    on_free_up = on_open_storage,
+                                    on_get_storage = on_open_storage_addons,
+                                    on_dismiss = {
+                                        val value = storage_nudge_dismiss_value(storage_nudge_level, System.currentTimeMillis())
+                                        storage_nudge_prefs.edit()
+                                            .putString(storage_nudge_dismiss_key(storage_nudge_account), value)
+                                            .apply()
+                                        storage_nudge_stored = value
+                                    },
+                                )
+                            }
+                        }
                         if (show_locked_data_banner && !select_mode) {
                             item(key = "_locked_data_banner", contentType = "locked_data_banner") {
                                 locked_data_banner(

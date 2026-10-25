@@ -3476,4 +3476,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Исходящая почта не подписана и выглядит поддельной. Добавьте запись подписи, чтобы письмам доверяли.</string>
     <string name="domain_check_generic_failure">Эта запись ещё настроена неверно. Добавьте запись ниже, чтобы исправить.</string>
     <string name="error_auth_salt_collision">Вход остановлен, потому что сервер отправил небезопасное значение, поэтому ничего не было разблокировано. Свяжитесь с поддержкой, прежде чем повторить попытку.</string>
+    <string name="storage_nudge_almost_title">Хранилище почти заполнено</string>
+    <string name="storage_nudge_critical_title">В хранилище почти не осталось места</string>
+    <string name="storage_nudge_full_title">Хранилище заполнено</string>
+    <string name="storage_nudge_offer">Ещё %1$s за %2$s в месяц</string>
+    <string name="storage_nudge_offer_generic">Перейдите на другой тариф, чтобы получить больше места</string>
+    <string name="storage_nudge_body">Когда хранилище заполнится, вы не сможете отправлять и импортировать письма.</string>
+    <string name="storage_nudge_full_body">Вы не сможете отправлять и импортировать письма, пока не освободите место. Существующие письма в безопасности.</string>
+    <string name="storage_nudge_free_up">Освободить место</string>
+    <string name="storage_nudge_get_storage">Получить место</string>
 </resources>

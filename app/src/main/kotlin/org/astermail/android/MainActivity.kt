@@ -2700,6 +2700,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             on_open_domains = { nav_controller.navigate(routes.settings_detail("domains")) },
+                            on_open_storage = { nav_controller.navigate(routes.settings_detail("storage")) { launchSingleTop = true } },
+                            on_open_storage_addons = {
+                                nav_controller.navigate(routes.settings_detail("billing_addons")) { launchSingleTop = true }
+                            },
                             current_folder = effective_folder,
                             display_title = slot_filter_name,
                             alias_direction = if (slot_filter_kind == org.astermail.android.mail.filter_kind_alias) alias_direction else null,
@@ -2781,6 +2785,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_recovery_email = { nav_controller.navigate(routes.settings_detail("recovery_email")) },
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             on_open_domains = { nav_controller.navigate(routes.settings_detail("domains")) },
+                            on_open_storage = { nav_controller.navigate(routes.settings_detail("storage")) { launchSingleTop = true } },
+                            on_open_storage_addons = {
+                                nav_controller.navigate(routes.settings_detail("billing_addons")) { launchSingleTop = true }
+                            },
                             current_folder = slot_mail_folder,
                             inbox_category = inbox_category,
                             display_title = null,

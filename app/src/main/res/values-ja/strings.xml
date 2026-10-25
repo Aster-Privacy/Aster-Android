@@ -3425,4 +3425,13 @@
     <string name="domain_reason_dkim_missing_or_stale">送信メールが署名されていないため、偽造のように見えます。署名レコードを追加すると信頼されます。</string>
     <string name="domain_check_generic_failure">このレコードはまだ正しく設定されていません。下のレコードを追加すると解決します。</string>
     <string name="error_auth_salt_collision">サーバーが安全でない値を送信したため、サインインを中止しました。何もロック解除されていません。再試行する前にサポートに問い合わせてください。</string>
+    <string name="storage_nudge_almost_title">ストレージの空き容量がわずかです</string>
+    <string name="storage_nudge_critical_title">ストレージがほぼいっぱいです</string>
+    <string name="storage_nudge_full_title">ストレージがいっぱいです</string>
+    <string name="storage_nudge_offer">月額 %2$s で %1$s を追加</string>
+    <string name="storage_nudge_offer_generic">プランをアップグレードしてストレージを増やす</string>
+    <string name="storage_nudge_body">ストレージがいっぱいになると、メールの送信やインポートができなくなります。</string>
+    <string name="storage_nudge_full_body">空き容量を確保するまで、メールの送信やインポートはできません。既存のメールは安全です。</string>
+    <string name="storage_nudge_free_up">空き容量を増やす</string>
+    <string name="storage_nudge_get_storage">ストレージを追加</string>
 </resources>

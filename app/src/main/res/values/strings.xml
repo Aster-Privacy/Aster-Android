@@ -3487,4 +3487,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Your outgoing mail is unsigned, which makes it look forged. Add the signing record so your mail is trusted.</string>
     <string name="domain_check_generic_failure">This record is not set up correctly yet. Add the record below to fix it.</string>
     <string name="error_auth_salt_collision">Sign-in stopped because the server sent an unsafe value, so nothing was unlocked. Contact support before you try again.</string>
+    <string name="storage_nudge_almost_title">Storage is almost full</string>
+    <string name="storage_nudge_critical_title">You\'re almost out of storage</string>
+    <string name="storage_nudge_full_title">Your storage is full</string>
+    <string name="storage_nudge_offer">Get %1$s more for %2$s a month</string>
+    <string name="storage_nudge_offer_generic">Upgrade your plan to get more storage</string>
+    <string name="storage_nudge_body">When your storage fills up, you can\'t send or import mail.</string>
+    <string name="storage_nudge_full_body">You can\'t send or import mail until you free up space. Your existing mail is safe.</string>
+    <string name="storage_nudge_free_up">Free up space</string>
+    <string name="storage_nudge_get_storage">Get storage</string>
 </resources>

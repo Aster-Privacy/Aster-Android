@@ -3436,4 +3436,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Giden postanız imzasız olduğu için sahte görünüyor. İmzalama kaydını ekleyin ki postanız güvenilir olsun.</string>
     <string name="domain_check_generic_failure">Bu kayıt henüz doğru ayarlanmadı. Düzeltmek için aşağıdaki kaydı ekleyin.</string>
     <string name="error_auth_salt_collision">Sunucu güvenli olmayan bir değer gönderdiği için oturum açma durduruldu ve hiçbir şeyin kilidi açılmadı. Yeniden denemeden önce destek ile iletişime geç.</string>
+    <string name="storage_nudge_almost_title">Depolama alanı neredeyse dolu</string>
+    <string name="storage_nudge_critical_title">Depolama alanınız bitmek üzere</string>
+    <string name="storage_nudge_full_title">Depolama alanınız dolu</string>
+    <string name="storage_nudge_offer">Ayda %2$s karşılığında %1$s daha alın</string>
+    <string name="storage_nudge_offer_generic">Daha fazla depolama alanı için planınızı yükseltin</string>
+    <string name="storage_nudge_body">Depolama alanınız dolduğunda e-posta gönderemez veya içe aktaramazsınız.</string>
+    <string name="storage_nudge_full_body">Yer açana kadar e-posta gönderemez veya içe aktaramazsınız. Mevcut e-postalarınız güvende.</string>
+    <string name="storage_nudge_free_up">Yer aç</string>
+    <string name="storage_nudge_get_storage">Depolama al</string>
 </resources>

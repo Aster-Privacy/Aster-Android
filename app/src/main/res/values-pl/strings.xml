@@ -3476,4 +3476,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Wysyłana poczta nie jest podpisana, więc wygląda na sfałszowaną. Dodaj rekord podpisu, aby była zaufana.</string>
     <string name="domain_check_generic_failure">Ten rekord nie jest jeszcze poprawnie skonfigurowany. Dodaj poniższy rekord, aby to naprawić.</string>
     <string name="error_auth_salt_collision">Logowanie zostało przerwane, ponieważ serwer wysłał niebezpieczną wartość, więc nic nie zostało odblokowane. Skontaktuj się z pomocą, zanim spróbujesz ponownie.</string>
+    <string name="storage_nudge_almost_title">Miejsce na dane jest prawie pełne</string>
+    <string name="storage_nudge_critical_title">Prawie skończyło Ci się miejsce</string>
+    <string name="storage_nudge_full_title">Miejsce na dane jest pełne</string>
+    <string name="storage_nudge_offer">Dodaj %1$s za %2$s miesięcznie</string>
+    <string name="storage_nudge_offer_generic">Ulepsz plan, aby zyskać więcej miejsca</string>
+    <string name="storage_nudge_body">Gdy miejsce się zapełni, nie wyślesz ani nie zaimportujesz poczty.</string>
+    <string name="storage_nudge_full_body">Nie możesz wysyłać ani importować poczty, dopóki nie zwolnisz miejsca. Istniejąca poczta jest bezpieczna.</string>
+    <string name="storage_nudge_free_up">Zwolnij miejsce</string>
+    <string name="storage_nudge_get_storage">Dodaj miejsce</string>
 </resources>
