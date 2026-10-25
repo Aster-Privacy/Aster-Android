@@ -48,6 +48,40 @@ class SendGatesTest {
     }
 
     @Test
+    fun `schedule block rejects a time that has already passed`() {
+        assertEquals(
+            ScheduledSendBlock.PASSED,
+            scheduled_send_block(
+                recipients = listOf("a@astermail.org"),
+                scheduled_at_ms = now - 60_000,
+                now_ms = now,
+                require_encryption = false,
+            ),
+        )
+        assertEquals(
+            ScheduledSendBlock.PASSED,
+            scheduled_send_block(
+                recipients = listOf("b@example.com"),
+                scheduled_at_ms = now,
+                now_ms = now,
+                require_encryption = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `schedule block allows a time one millisecond ahead`() {
+        assertNull(
+            scheduled_send_block(
+                recipients = listOf("a@astermail.org"),
+                scheduled_at_ms = now + 1,
+                now_ms = now,
+                require_encryption = false,
+            ),
+        )
+    }
+
+    @Test
     fun `schedule block checks the window first`() {
         val block = scheduled_send_block(
             recipients = listOf("a@astermail.org", "b@example.com"),
