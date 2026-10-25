@@ -38,6 +38,7 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.UpgradeEventBus
 
 @Serializable
 data class PlanInfo(
@@ -732,20 +733,20 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
     override suspend fun get_account_limit(): AccountLimitResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/plans/account-limit"))
 
-    override suspend fun link_account_device(): AccountLimitResponse {
+    override suspend fun link_account_device(): AccountLimitResponse = UpgradeEventBus.without_prompts {
         val response = client.http.post("${client.base_url}$base/plans/account-limit/link") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(emptyMap<String, String>())
         }
-        return decode_or_throw(response)
+        decode_or_throw<AccountLimitResponse>(response)
     }
 
-    override suspend fun unlink_account_device() {
+    override suspend fun unlink_account_device() = UpgradeEventBus.without_prompts {
         val response = client.http.delete("${client.base_url}$base/plans/account-limit/link") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
-        if (!response.status.isSuccess()) throw client.map_http_status(response.status.value, response.bodyAsText())
+        if (!response.status.isSuccess()) throw ApiError.ServerError(response.status.value)
     }
 
     private suspend fun post_special_offer(path: String): SpecialOfferAckResponse {

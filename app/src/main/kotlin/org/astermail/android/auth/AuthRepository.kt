@@ -108,6 +108,7 @@ private const val PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS = 3
 private const val PUBLISHED_PGP_KEY_LOOKUP_BACKOFF_MS = 750L
 private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 private const val ACCOUNT_SLOT_TIMEOUT_MS = 10_000L
+private const val ACCOUNT_SLOT_RELEASE_TIMEOUT_MS = 3_000L
 
 sealed interface LoginOutcome {
     data object Success : LoginOutcome
@@ -656,26 +657,45 @@ class AuthRepository @Inject constructor(
         val client = scoped_session_client(access, refresh, csrf)
         try {
             val billing = org.astermail.android.api.billing.BillingApiImpl(client)
-            val linked = try {
+            val link = try {
                 withTimeoutOrNull(ACCOUNT_SLOT_TIMEOUT_MS) { billing.link_account_device() }
+                    ?.let { AccountSlotLink.Linked(it.max_accounts) }
+                    ?: AccountSlotLink.Unknown
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: ApiError.PlanLimitExceeded) {
-                val max_accounts = runCatching {
+                AccountSlotLink.LimitReached
+            } catch (_: Throwable) {
+                AccountSlotLink.Unknown
+            }
+            if (link is AccountSlotLink.Linked && link.max_accounts != 0) {
+                runCatching { account_store.set_max_accounts(link.max_accounts) }
+            }
+            if (decide_account_slot(link, account_known, account_store.can_add()) == AccountSlotDecision.Allow) return
+            val max_accounts = if (link == AccountSlotLink.LimitReached) {
+                runCatching {
                     withTimeoutOrNull(ACCOUNT_SLOT_TIMEOUT_MS) { billing.get_account_limit().max_accounts }
                 }.getOrNull()
-                reject_new_session(client, previous_user_id)
-                throw AccountLimitReachedException(max_accounts?.takeIf { it > 0 })
-            } catch (_: Throwable) {
-                null
+            } else {
+                account_store.get_max_accounts()
             }
-            if (linked != null) {
-                if (linked.max_accounts != 0) runCatching { account_store.set_max_accounts(linked.max_accounts) }
-                return
-            }
-            if (!account_known && !account_store.can_add()) {
-                reject_new_session(client, previous_user_id)
-                throw AccountLimitReachedException(account_store.get_max_accounts().takeIf { it > 0 })
+            reject_new_session(client, previous_user_id)
+            throw AccountLimitReachedException(max_accounts?.takeIf { it > 0 })
+        } finally {
+            runCatching { client.close() }
+        }
+    }
+
+    private suspend fun release_account_slot_with_current_tokens() {
+        val access = token_store.access_token?.takeIf { it.isNotEmpty() } ?: return
+        val client = runCatching {
+            scoped_session_client(access, token_store.refresh_token, api_client.get_csrf())
+        }.getOrNull() ?: return
+        try {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(ACCOUNT_SLOT_RELEASE_TIMEOUT_MS) {
+                    runCatching { org.astermail.android.api.billing.BillingApiImpl(client).unlink_account_device() }
+                }
             }
         } finally {
             runCatching { client.close() }
@@ -1302,6 +1322,8 @@ class AuthRepository @Inject constructor(
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
             }
+        } else {
+            release_account_slot_with_current_tokens()
         }
         try {
             withTimeoutOrNull(5_000L) {
