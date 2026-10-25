@@ -2780,6 +2780,8 @@
     <string name="error_invalid_backup_code">Bu yedek kod eşleşmedi. Her kod yalnızca bir kez çalışır, bu yüzden listenizdeki bir sonraki kullanılmamış kodu deneyin.</string>
     <string name="error_invalid_recovery_phrase">Bu kurtarma ifadesi eşleşmedi. Kelime sırasını ve yazımı kontrol edip tekrar deneyin.</string>
     <string name="error_plan_limit_reached">Mevcut planınızdaki sınıra ulaştınız. Yükseltmek ya da yer açmak için bazı öğeleri kaldırmak ilerlemenizi sağlar.</string>
+    <string name="error_account_limit_reached_count">Planınızın bu cihazda oturum açık hesap sınırı %1$d. Bu hesapta oturum açmak için bu cihazdaki başka bir hesaptan çıkış yapın veya planınızı yükseltin.</string>
+    <string name="error_account_limit_reached">Planınızın bu cihazdaki oturum açık hesap sınırına ulaştınız. Bu hesapta oturum açmak için bu cihazdaki başka bir hesaptan çıkış yapın veya planınızı yükseltin.</string>
     <string name="error_sign_in_code_invalid">Bu kod artık geçerli değil. Oturum açmayı sürdürmek için yeni bir kod isteyin.</string>
     <string name="error_sign_in_domain_unsupported">Kaydolurken kullandığınız astermail.org ya da aster.cx adresiyle oturum açın. Kendi alan adınızdaki adresler de aynı hesaba ulaşır.</string>
     <string name="error_storage_full">Depolama alanınız dolu. Yer açmak için planınızı yükseltin ya da bir miktar e-postayı kaldırın.</string>

@@ -2792,6 +2792,8 @@
     <string name="error_invalid_backup_code">Esse código de backup não corresponde. Cada código funciona apenas uma vez, então tente o próximo não usado da sua lista.</string>
     <string name="error_invalid_recovery_phrase">Essa frase de recuperação não corresponde. Verifique a ordem das palavras e a grafia e tente novamente.</string>
     <string name="error_plan_limit_reached">Você atingiu o limite do seu plano atual. Fazer upgrade, ou remover alguns itens para abrir espaço, vai deixar você seguir.</string>
+    <string name="error_account_limit_reached_count">O limite de contas conectadas neste dispositivo para o seu plano é %1$d. Para entrar nesta conta, saia de outra conta neste dispositivo ou faça upgrade do seu plano.</string>
+    <string name="error_account_limit_reached">Você atingiu o limite de contas conectadas neste dispositivo para o seu plano. Para entrar nesta conta, saia de outra conta neste dispositivo ou faça upgrade do seu plano.</string>
     <string name="error_sign_in_code_invalid">Esse código não é mais válido. Solicite um novo para continuar a entrar.</string>
     <string name="error_sign_in_domain_unsupported">Entre com o endereço astermail.org ou aster.cx com que você se registrou. Endereços no seu próprio domínio chegam à mesma conta.</string>
     <string name="error_storage_full">Seu armazenamento está cheio. Para abrir espaço, faça upgrade do plano ou remova alguns e-mails.</string>

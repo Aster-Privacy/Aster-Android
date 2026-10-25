@@ -2456,9 +2456,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             }
                         }
                     } else {
-                        mail_vm.reset_for_account_switch()
-                        settings_vm.reset_for_account_switch()
-                        accounts_vm.switch_account(account.id)
                         nav_controller.navigate(routes.sign_in_for(account.email))
                     }
                 },

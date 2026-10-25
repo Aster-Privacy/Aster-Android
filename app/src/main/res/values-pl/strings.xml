@@ -2806,6 +2806,8 @@
     <string name="error_invalid_backup_code">Ten kod zapasowy nie pasuje. Każdy kod działa tylko raz, więc wypróbuj kolejny nieużyty kod z listy.</string>
     <string name="error_invalid_recovery_phrase">Ta fraza odzyskiwania nie pasuje. Sprawdź kolejność słów i pisownię, a potem spróbuj ponownie.</string>
     <string name="error_plan_limit_reached">Osiągnięto limit obecnego planu. Aby kontynuować, przejdź na wyższy plan lub usuń część elementów.</string>
+    <string name="error_account_limit_reached_count">Limit zalogowanych kont na tym urządzeniu w Twoim planie wynosi %1$d. Aby zalogować się na to konto, wyloguj się z innego konta na tym urządzeniu lub przejdź na wyższy plan.</string>
+    <string name="error_account_limit_reached">Osiągnięto limit zalogowanych kont na tym urządzeniu w Twoim planie. Aby zalogować się na to konto, wyloguj się z innego konta na tym urządzeniu lub przejdź na wyższy plan.</string>
     <string name="error_sign_in_code_invalid">Ten kod nie jest już ważny. Poproś o nowy, aby kontynuować logowanie.</string>
     <string name="error_sign_in_domain_unsupported">Zaloguj się adresem astermail.org lub aster.cx, którym się rejestrowałeś. Adresy w Twojej własnej domenie prowadzą do tego samego konta.</string>
     <string name="error_storage_full">Pamięć jest pełna. Aby zrobić miejsce, ulepsz plan lub usuń część wiadomości.</string>

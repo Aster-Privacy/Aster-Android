@@ -2769,6 +2769,8 @@
     <string name="error_invalid_backup_code">이 백업 코드가 일치하지 않습니다. 각 코드는 한 번만 사용할 수 있으므로 목록에서 사용하지 않은 다음 코드를 시도하세요.</string>
     <string name="error_invalid_recovery_phrase">이 복구 문구가 일치하지 않습니다. 단어 순서와 철자를 확인한 후 다시 시도하세요.</string>
     <string name="error_plan_limit_reached">현재 요금제의 한도에 도달했습니다. 업그레이드하거나 일부 항목을 제거해 공간을 만들면 다시 진행됩니다.</string>
+    <string name="error_account_limit_reached_count">현재 요금제에서 이 기기에 로그인할 수 있는 계정 한도는 %1$d개입니다. 이 계정에 로그인하려면 이 기기에서 다른 계정을 로그아웃하거나 요금제를 업그레이드하세요.</string>
+    <string name="error_account_limit_reached">현재 요금제에서 이 기기에 로그인할 수 있는 계정 한도에 도달했습니다. 이 계정에 로그인하려면 이 기기에서 다른 계정을 로그아웃하거나 요금제를 업그레이드하세요.</string>
     <string name="error_sign_in_code_invalid">이 코드는 더 이상 유효하지 않습니다. 로그인을 계속하려면 새 코드를 요청하세요.</string>
     <string name="error_sign_in_domain_unsupported">가입할 때 사용한 astermail.org 또는 aster.cx 주소로 로그인하세요. 직접 보유한 도메인의 주소도 같은 계정으로 연결됩니다.</string>
     <string name="error_storage_full">저장 공간이 가득 찼습니다. 공간을 만들려면 요금제를 업그레이드하거나 이메일을 일부 제거하세요.</string>
