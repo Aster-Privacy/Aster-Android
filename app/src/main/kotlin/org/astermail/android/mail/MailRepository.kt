@@ -2115,6 +2115,7 @@ class MailRepository @Inject constructor(
         cached_metadata_keys?.forEach { it.fill(0) }
         cached_metadata_keys = null
         cached_metadata_source = null
+        observed_write_key = null
         cached_sent_folder_token = null
         runCatching { sent_folder_prefs.edit().remove(sent_folder_prefs_key()).apply() }
         draft_item_cache.clear()
@@ -2762,27 +2763,37 @@ class MailRepository @Inject constructor(
     ): Result<CategoryWrite> =
         runCatching {
             val known = raw_item?.takeIf { !it.encrypted_metadata.isNullOrBlank() && !it.metadata_nonce.isNullOrBlank() }
-            val resolved = known ?: mail_api.get_message(item_id)
-            val enc_meta = resolved.encrypted_metadata
-            val meta_nonce = resolved.metadata_nonce
-            val plaintext = if (!enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
-                decrypt_metadata_plaintext(enc_meta, meta_nonce)
+            val first = known ?: mail_api.get_message(item_id)
+            val first_opened = open_item_metadata(first)
+            val resolved = if (known != null && first_opened == null) {
+                runCatching { mail_api.get_message(item_id) }.getOrNull()
+                    ?.takeIf { !it.encrypted_metadata.isNullOrBlank() && !it.metadata_nonce.isNullOrBlank() }
+                    ?.takeIf { it.encrypted_metadata != first.encrypted_metadata || it.metadata_nonce != first.metadata_nonce }
+                    ?: first
             } else {
-                null
+                first
             }
-            val decrypted = plaintext?.let { decode_metadata_plaintext(it) }
-            if (decrypted == null && !enc_meta.isNullOrBlank() && !meta_nonce.isNullOrBlank()) {
+            val opened = if (resolved === first) first_opened else open_item_metadata(resolved)
+            val has_blob = !resolved.encrypted_metadata.isNullOrBlank() && !resolved.metadata_nonce.isNullOrBlank()
+            if (opened == null && has_blob) {
                 throw MetadataUndecryptableException()
             }
+            val plaintext = opened?.plaintext
+            val decrypted = plaintext?.let { decode_metadata_plaintext(it) }
             val now = java.time.Instant.now().toString()
             val base = decrypted?.let { merge_server_flags(it, resolved) } ?: default_metadata_for(resolved, now)
             val updated = base.copy(category = category, category_pinned = pinned && category != null, updated_at = now)
             val merged_json = merge_metadata_json(metadata_json, plaintext, updated)
-            val (encrypted, nonce) = encrypt_metadata_plaintext(merged_json)
+            val (encrypted, nonce) = encrypt_metadata_plaintext(merged_json, opened?.key ?: metadata_write_key())
                 ?: throw IllegalStateException("metadata key unavailable")
             mail_api.patch_metadata(item_id, PatchMetadataRequest(encrypted_metadata = encrypted, metadata_nonce = nonce))
             CategoryWrite(
-                item = resolved.copy(encrypted_metadata = encrypted, metadata_nonce = nonce, metadata = updated),
+                item = resolved.copy(
+                    encrypted_metadata = encrypted,
+                    metadata_nonce = nonce,
+                    metadata_version = (resolved.metadata_version ?: 0) + 1,
+                    metadata = updated,
+                ),
                 prior_category = decrypted?.category,
                 prior_pinned = decrypted?.category_pinned == true && decrypted.category != null,
             )
@@ -4388,29 +4399,61 @@ class MailRepository @Inject constructor(
 
     private fun metadata_key(): ByteArray? = metadata_keys().firstOrNull()
 
+    private class OpenedMetadata(val plaintext: String, val key: ByteArray)
+
     private fun decrypt_mail_metadata(encrypted_b64: String, nonce_b64: String): MailItemMetadata? =
         decrypt_metadata_plaintext(encrypted_b64, nonce_b64)?.let { decode_metadata_plaintext(it) }
 
-    private fun decrypt_metadata_plaintext(encrypted_b64: String, nonce_b64: String): String? {
+    private fun decrypt_metadata_plaintext(encrypted_b64: String, nonce_b64: String): String? =
+        open_metadata(encrypted_b64, nonce_b64)?.plaintext
+
+    private fun open_item_metadata(item: MailItem): OpenedMetadata? {
+        val enc_meta = item.encrypted_metadata
+        val meta_nonce = item.metadata_nonce
+        if (enc_meta.isNullOrBlank() || meta_nonce.isNullOrBlank()) return null
+        return open_metadata(enc_meta, meta_nonce)
+    }
+
+    private fun open_metadata(encrypted_b64: String, nonce_b64: String): OpenedMetadata? {
         val keys = metadata_keys()
         if (keys.isEmpty()) return null
         val ciphertext = runCatching { android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
         val nonce = runCatching { android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
-        for (key in keys) {
+        for ((index, key) in keys.withIndex()) {
             val plaintext = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull() ?: continue
             val json_str = String(plaintext, Charsets.UTF_8)
             plaintext.fill(0)
-            return json_str
+            observe_metadata_key(keys, index, json_str)
+            return OpenedMetadata(json_str, key)
         }
         return null
     }
 
+    private class ObservedWriteKey(val keys: List<ByteArray>, val key: ByteArray, val updated_at: String)
+
+    @Volatile
+    private var observed_write_key: ObservedWriteKey? = null
+
+    private fun observe_metadata_key(keys: List<ByteArray>, index: Int, json_str: String) {
+        val current = observed_write_key?.takeIf { it.keys === keys }
+        val updated_at = metadata_updated_at(json_str) ?: return
+        if (current != null && updated_at <= current.updated_at) return
+        observed_write_key = ObservedWriteKey(keys, keys[index], updated_at)
+    }
+
+    private fun metadata_updated_at(json_str: String): String? = runCatching {
+        val obj = metadata_json.parseToJsonElement(json_str) as? kotlinx.serialization.json.JsonObject
+        val value = obj?.get("updated_at") as? kotlinx.serialization.json.JsonPrimitive
+        value?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
+    }.getOrNull()
+
+    private fun metadata_write_key(): ByteArray? {
+        val keys = metadata_keys()
+        return observed_write_key?.takeIf { it.keys === keys }?.key ?: keys.firstOrNull()
+    }
+
     private fun decode_metadata_plaintext(json_str: String): MailItemMetadata? =
-        try {
-            metadata_json.decodeFromString<MailItemMetadata>(json_str)
-        } catch (_: Throwable) {
-            null
-        }
+        decode_metadata_tolerant(metadata_json, json_str)
 
     private fun decrypt_blob_metadata(encrypted_b64: String?, nonce_b64: String?): MailItemMetadata? =
         if (!encrypted_b64.isNullOrBlank() && !nonce_b64.isNullOrBlank()) {
@@ -4419,11 +4462,8 @@ class MailRepository @Inject constructor(
             null
         }
 
-    private fun encrypt_mail_metadata(metadata: MailItemMetadata): Pair<String, String>? =
-        encrypt_metadata_plaintext(metadata_json.encodeToString(metadata))
-
-    private fun encrypt_metadata_plaintext(json_str: String): Pair<String, String>? {
-        val key = metadata_key() ?: return null
+    private fun encrypt_metadata_plaintext(json_str: String, key: ByteArray? = metadata_key()): Pair<String, String>? {
+        if (key == null) return null
         return try {
             val plaintext = json_str.toByteArray(Charsets.UTF_8)
             val nonce = ByteArray(12)
@@ -4441,11 +4481,8 @@ class MailRepository @Inject constructor(
     private fun build_metadata_patch(raw_item: MailItem?, updates: Map<String, Any>): PatchMetadataRequest {
         val enc_meta = raw_item?.encrypted_metadata
         val meta_nonce = raw_item?.metadata_nonce
-        val decrypted = if (enc_meta != null && meta_nonce != null) {
-            decrypt_mail_metadata(enc_meta, meta_nonce)
-        } else {
-            null
-        }
+        val opened = if (enc_meta != null && meta_nonce != null) open_metadata(enc_meta, meta_nonce) else null
+        val decrypted = opened?.let { decode_metadata_plaintext(it.plaintext) }
         val is_undecryptable = decrypted == null && enc_meta != null && meta_nonce != null
         val current_metadata = if (decrypted != null && raw_item != null) merge_server_flags(decrypted, raw_item) else null
 
@@ -4459,7 +4496,11 @@ class MailRepository @Inject constructor(
             is_spam = (updates["is_spam"] as? Boolean) ?: base.is_spam,
         )
 
-        val encrypted = if (current_metadata != null && !is_undecryptable) encrypt_mail_metadata(updated) else null
+        val encrypted = if (current_metadata != null && !is_undecryptable && opened != null) {
+            encrypt_metadata_plaintext(merge_metadata_json(metadata_json, opened.plaintext, updated), opened.key)
+        } else {
+            null
+        }
 
         return PatchMetadataRequest(
             encrypted_metadata = encrypted?.first,
