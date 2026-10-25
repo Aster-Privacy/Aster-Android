@@ -31,8 +31,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -88,99 +90,79 @@ fun storage_nudge_banner(
         if (tier == StorageNudgeTier.full) R.string.storage_nudge_full_body else R.string.storage_nudge_body,
     )
     val fraction = (percent / 100.0).coerceIn(0.0, 1.0).toFloat()
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
             .clip(AsterShapes.island)
             .background(island_surface_color(colors))
-            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 14.dp),
+            .padding(start = 16.dp, end = 6.dp, top = 14.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f).padding(top = 2.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.AlertCircle,
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Text(
-                        text = title,
-                        color = colors.text_secondary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = offer_text,
-                    color = colors.text_primary,
-                    fontSize = 16.sp,
-                    lineHeight = 21.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = body,
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                )
-            }
-            if (tier != StorageNudgeTier.full) {
-                val dismiss_label = stringResource(R.string.close)
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .clickable(role = Role.Button, onClick = on_dismiss)
-                        .semantics { contentDescription = dismiss_label },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.X,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-        Column(modifier = Modifier.padding(end = 8.dp)) {
-            Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(colors.bg_tertiary)
-                    .semantics {
-                        contentDescription = usage_text
-                        progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f)
-                    },
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(fraction)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .background(accent),
-                )
-            }
-            Spacer(Modifier.height(6.dp))
+        Icon(
+            imageVector = TablerIcons.AlertCircle,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.padding(top = 1.dp).size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = usage_text,
+                text = title,
                 color = accent,
-                fontSize = 12.sp,
+                fontSize = 12.5.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = offer_text,
+                color = colors.text_primary,
+                fontSize = 16.sp,
+                lineHeight = 21.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = body,
+                color = colors.text_secondary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
             )
             Spacer(Modifier.height(12.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(accent.copy(alpha = 0.2f))
+                        .semantics {
+                            contentDescription = usage_text
+                            progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f)
+                        },
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction)
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .background(accent),
+                    )
+                }
+                Text(
+                    text = usage_text,
+                    color = colors.text_muted,
+                    fontSize = 12.5.sp,
+                    maxLines = 1,
+                )
+            }
+            Spacer(Modifier.height(14.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AsterCompactButton(
@@ -194,6 +176,28 @@ fun storage_nudge_banner(
                     onClick = on_get_storage,
                 )
             }
+        }
+        if (tier != StorageNudgeTier.full) {
+            val dismiss_label = stringResource(R.string.close)
+            Box(
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .offset(y = (-8).dp)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = on_dismiss)
+                    .semantics { contentDescription = dismiss_label },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        } else {
+            Spacer(Modifier.width(10.dp))
         }
     }
 }

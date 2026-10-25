@@ -1907,6 +1907,16 @@ fun InboxScreen(
         list_state.requestScrollToItem(0)
     }
 
+    val storage_nudge_in_list = show_storage_nudge && !select_mode
+    val storage_nudge_was_in_list = remember { booleanArrayOf(false) }
+    SideEffect {
+        val appeared = storage_nudge_in_list && !storage_nudge_was_in_list[0]
+        storage_nudge_was_in_list[0] = storage_nudge_in_list
+        if (!appeared || drag_selecting || list_state.isScrollInProgress || scroll_restore_active) return@SideEffect
+        if (list_state.firstVisibleItemIndex != 0 || list_state.firstVisibleItemScrollOffset != 0) return@SideEffect
+        list_state.requestScrollToItem(0)
+    }
+
     val latest_top_thread_key by rememberUpdatedState(top_thread_key)
     LaunchedEffect(refresh_scroll_pending, is_refreshing) {
         if (!refresh_scroll_pending || is_refreshing) return@LaunchedEffect
