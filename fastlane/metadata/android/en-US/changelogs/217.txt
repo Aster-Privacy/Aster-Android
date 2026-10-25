@@ -1,1 +1,14 @@
-Sent messages appear in the conversation right away, with undo. A banner warns you when storage is nearly full. Replies can edit the quoted text, and mail rules are in one place in Settings. Encrypted copies for recipients outside Aster are built on your device. Fixes for long messages, wide tables, dark mode text, scheduled sends, custom domain signatures, and multi-account sessions, plus faster compose, contacts, and inbox.
+What's new:
+
+- Sent messages appear in the conversation right away, with undo.
+- A banner warns you when storage is nearly full.
+- Replies can edit the quoted text.
+- Mail rules are in one place in Settings.
+
+Fixed:
+
+- Long messages, wide tables, and dark mode text display correctly.
+- Scheduled sends in the past are blocked.
+- Custom domain signatures match.
+- Multiple accounts stay signed in.
+- Faster compose, contacts, and inbox.
