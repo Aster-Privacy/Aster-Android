@@ -349,6 +349,10 @@ class AuthViewModel @Inject constructor(
 
     private fun map_error(t: Throwable): String = when (t) {
         is org.astermail.android.crypto.AuthSaltCollisionException -> ctx.getString(R.string.error_auth_salt_collision)
+        is AccountLimitReachedException -> t.max_accounts?.takeIf { it > 0 }
+            ?.let { ctx.getString(R.string.error_account_limit_reached_count, it) }
+            ?: ctx.getString(R.string.error_account_limit_reached)
+        is ApiError.PlanLimitExceeded -> ctx.getString(R.string.error_plan_limit_reached)
         is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> ctx.getString(R.string.error_invalid_credentials)
         is ApiError.ForbiddenError -> if (t.detail.contains("captcha", ignoreCase = true)) {
             ctx.getString(R.string.error_captcha_failed)

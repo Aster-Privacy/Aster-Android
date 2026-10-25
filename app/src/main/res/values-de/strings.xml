@@ -2781,6 +2781,8 @@
     <string name="error_invalid_backup_code">Dieser Backup-Code stimmt nicht. Jeder Code funktioniert nur einmal. Probieren Sie daher den nächsten unbenutzten Code aus Ihrer Liste.</string>
     <string name="error_invalid_recovery_phrase">Diese Wiederherstellungsphrase stimmt nicht. Prüfen Sie die Reihenfolge der Wörter und die Schreibweise und versuchen Sie es erneut.</string>
     <string name="error_plan_limit_reached">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Eine Erweiterung oder das Entfernen einiger Einträge schafft wieder Raum.</string>
+    <string name="error_account_limit_reached_count">Ihr Tarif erlaubt auf diesem Gerät höchstens %1$d angemeldete Konten. Um sich bei diesem Konto anzumelden, melden Sie sich auf diesem Gerät von einem anderen Konto ab oder erweitern Sie Ihren Tarif.</string>
+    <string name="error_account_limit_reached">Sie haben die Höchstzahl angemeldeter Konten für Ihren Tarif auf diesem Gerät erreicht. Um sich bei diesem Konto anzumelden, melden Sie sich auf diesem Gerät von einem anderen Konto ab oder erweitern Sie Ihren Tarif.</string>
     <string name="error_sign_in_code_invalid">Dieser Code ist nicht mehr gültig. Fordern Sie einen neuen an, um sich weiter anzumelden.</string>
     <string name="error_sign_in_domain_unsupported">Melden Sie sich mit der astermail.org- oder aster.cx-Adresse an, mit der Sie sich registriert haben. Adressen auf Ihrer eigenen Domain führen zum selben Konto.</string>
     <string name="error_storage_full">Ihr Speicher ist voll. Um Platz zu schaffen, erweitern Sie Ihren Tarif oder entfernen Sie einige Mails.</string>

@@ -2832,6 +2832,8 @@
     <string name="error_invalid_backup_code">رمز النسخ الاحتياطي هذا غير مطابق. يعمل كل رمز مرة واحدة فقط، لذا جرّب الرمز التالي غير المستخدم من قائمتك.</string>
     <string name="error_invalid_recovery_phrase">عبارة الاسترداد هذه غير مطابقة. تحقق من ترتيب الكلمات والإملاء ثم حاول مرة أخرى.</string>
     <string name="error_plan_limit_reached">بلغت حد خطتك الحالية. قم بالترقية أو أزل بعض العناصر لإفساح المجال حتى تتمكن من المتابعة.</string>
+    <string name="error_account_limit_reached_count">الحد الأقصى للحسابات المسجّل الدخول إليها على هذا الجهاز في خطتك هو %1$d. لتسجيل الدخول إلى هذا الحساب، سجّل الخروج من حساب آخر على هذا الجهاز أو قم بترقية خطتك.</string>
+    <string name="error_account_limit_reached">لقد بلغت الحد الأقصى للحسابات المسجّل الدخول إليها على هذا الجهاز في خطتك. لتسجيل الدخول إلى هذا الحساب، سجّل الخروج من حساب آخر على هذا الجهاز أو قم بترقية خطتك.</string>
     <string name="error_sign_in_code_invalid">لم يعد هذا الرمز صالحًا. اطلب رمزًا جديدًا لمتابعة تسجيل الدخول.</string>
     <string name="error_sign_in_domain_unsupported">سجل الدخول بعنوان astermail.org أو aster.cx الذي سجلت به. العناوين على نطاقك الخاص تصل إلى الحساب نفسه.</string>
     <string name="error_storage_full">تخزينك ممتلئ. لإفساح المجال، رقِّ خطتك أو أزل بعض الرسائل.</string>

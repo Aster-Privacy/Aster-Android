@@ -2822,6 +2822,8 @@
     <string name="error_invalid_backup_code">Ce code de secours ne correspond pas. Chaque code ne sert qu\'une fois, essayez donc le suivant non utilisé de votre liste.</string>
     <string name="error_invalid_recovery_phrase">Cette phrase de récupération ne correspond pas. Vérifiez l\'ordre des mots et l\'orthographe, puis réessayez.</string>
     <string name="error_plan_limit_reached">Vous avez atteint la limite de votre forfait actuel. Passez à un forfait supérieur ou supprimez quelques éléments pour libérer de la place.</string>
+    <string name="error_account_limit_reached_count">La limite de comptes connectés sur cet appareil pour votre forfait est de %1$d. Pour vous connecter à ce compte, déconnectez-vous d\'un autre compte sur cet appareil ou passez à un forfait supérieur.</string>
+    <string name="error_account_limit_reached">Vous avez atteint la limite de comptes connectés sur cet appareil pour votre forfait. Pour vous connecter à ce compte, déconnectez-vous d\'un autre compte sur cet appareil ou passez à un forfait supérieur.</string>
     <string name="error_sign_in_code_invalid">Ce code n\'est plus valide. Demandez-en un nouveau pour poursuivre la connexion.</string>
     <string name="error_sign_in_domain_unsupported">Connectez-vous avec l\'adresse astermail.org ou aster.cx utilisee lors de votre inscription. Les adresses sur votre propre domaine mènent au même compte.</string>
     <string name="error_storage_full">Votre stockage est plein. Pour faire de la place, passez à une offre supérieure ou retirez quelques messages.</string>

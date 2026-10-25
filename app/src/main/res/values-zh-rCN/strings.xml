@@ -2769,6 +2769,8 @@
     <string name="error_invalid_backup_code">此备份代码不匹配。每个备份代码只能使用一次，请尝试列表中下一个未使用的备份代码。</string>
     <string name="error_invalid_recovery_phrase">此恢复短语不匹配。请检查单词顺序和拼写，然后重试。</string>
     <string name="error_plan_limit_reached">您已达到当前套餐的上限。升级套餐，或移除一些条目腾出空间，就可以继续。</string>
+    <string name="error_account_limit_reached_count">您的套餐在此设备上可登录的账号上限为 %1$d 个。要登录此账号，请在此设备上退出另一个账号，或升级您的套餐。</string>
+    <string name="error_account_limit_reached">您已达到套餐在此设备上可登录的账号上限。要登录此账号，请在此设备上退出另一个账号，或升级您的套餐。</string>
     <string name="error_sign_in_code_invalid">此验证码已失效。请申请新的验证码以继续登录。</string>
     <string name="error_sign_in_domain_unsupported">请使用注册时的 astermail.org 或 aster.cx 地址登录。您自有域名的地址指向同一个账户。</string>
     <string name="error_storage_full">您的存储空间已满。升级方案或移除一些邮件即可腾出空间。</string>

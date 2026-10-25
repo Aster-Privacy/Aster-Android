@@ -107,6 +107,8 @@ private const val SIGNUP_PGP_KEYGEN_ATTEMPTS = 3
 private const val PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS = 3
 private const val PUBLISHED_PGP_KEY_LOOKUP_BACKOFF_MS = 750L
 private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
+private const val ACCOUNT_SLOT_TIMEOUT_MS = 10_000L
+private const val ACCOUNT_SLOT_RELEASE_TIMEOUT_MS = 3_000L
 
 sealed interface LoginOutcome {
     data object Success : LoginOutcome
@@ -173,9 +175,6 @@ class AuthRepository @Inject constructor(
     init {
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
-        }
-        session_refresher.on_refreshed { presented ->
-            sync_refreshed_snapshot(presented)
         }
     }
     private val pgp_publish_attempted_user_ids =
@@ -259,54 +258,39 @@ class AuthRepository @Inject constructor(
         dead_session_mutex.withLock {
             if (!_is_signed_in.value) return
             if (presented != token_store.refresh_token) return
-            withContext(NonCancellable) { force_sign_out() }
+            val owner = resolve_account_id(session_token_owner(presented, null)) ?: session_key_store.get_user_id()
+            withContext(NonCancellable) { force_sign_out(owner) }
         }
     }
 
-    private fun sync_refreshed_snapshot(presented: String?) {
-        if (presented.isNullOrEmpty()) return
-        val account_id = session_key_store.get_user_id() ?: return
+    private fun resolve_account_id(subject: String?): String? {
+        if (subject == null) return null
+        return account_store.get_all().firstOrNull { same_account(it.id, subject) }?.id ?: subject
+    }
+
+    private fun current_tokens_belong_to(account_id: String): Boolean {
+        val owner = session_token_owner(token_store.refresh_token, token_store.access_token) ?: return true
+        return same_account(owner, account_id)
+    }
+
+    private fun persist_current_session_locked(csrf: String?) {
         val access = token_store.access_token
         val refresh = token_store.refresh_token
-        if (refresh == presented) return
-        runCatching {
-            session_snapshot_store.update_tokens(account_id, presented, access, refresh, api_client.get_csrf())
+        if (access.isNullOrEmpty() && refresh.isNullOrEmpty()) return
+        val owner = resolve_account_id(session_token_owner(refresh, access))
+            ?: session_key_store.get_user_id()
+            ?: return
+        runCatching { session_snapshot_store.update_tokens(owner, null, access, refresh, csrf) }
+    }
+
+    private suspend fun install_session_tokens(access: String, refresh: String?, csrf: String?) {
+        SessionRefreshGate.mutex.withLock {
+            persist_current_session_locked(null)
+            token_store.save(access, refresh ?: access)
+            csrf?.let { api_client.set_csrf(it) }
+            api_client.invalidate_bearer_cache()
         }
     }
-
-    fun store_current_session_tokens() {
-        store_session_tokens(capture_current_session_tokens())
-    }
-
-    fun capture_current_session_tokens(): CapturedSessionTokens? {
-        val account_id = session_key_store.get_user_id() ?: return null
-        return CapturedSessionTokens(
-            account_id = account_id,
-            access_token = token_store.access_token,
-            refresh_token = token_store.refresh_token,
-            csrf_token = api_client.get_csrf(),
-        )
-    }
-
-    fun store_session_tokens(captured: CapturedSessionTokens?) {
-        if (captured == null) return
-        runCatching {
-            session_snapshot_store.update_tokens(
-                captured.account_id,
-                null,
-                captured.access_token,
-                captured.refresh_token,
-                captured.csrf_token,
-            )
-        }
-    }
-
-    data class CapturedSessionTokens(
-        val account_id: String,
-        val access_token: String?,
-        val refresh_token: String?,
-        val csrf_token: String?,
-    )
 
     suspend fun refresh_session(): RefreshOutcome = try_refresh_session()
 
@@ -320,7 +304,7 @@ class AuthRepository @Inject constructor(
         if (token_store.refresh_token == null) return RefreshOutcome.AuthFailed
         val outcome = session_refresher.refresh()
         if (outcome == RefreshOutcome.Success) {
-            runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+            runCatching { refresh_session_snapshot() }
             background_scope.launch { runCatching { backfill_server_recovery_email() } }
         }
         return outcome
@@ -540,8 +524,15 @@ class AuthRepository @Inject constructor(
     ) {
         val access = login_resp.access_token ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
+        claim_account_slot(
+            access = access,
+            refresh = login_resp.refresh_token,
+            csrf = api_client.get_csrf(),
+            previous_user_id = previous_user_id,
+            account_known = account_store.account_exists(login_resp.user_id),
+        )
         if (previous_user_id != null && previous_user_id != login_resp.user_id) {
-            store_current_session_tokens()
+            SessionRefreshGate.mutex.withLock { persist_current_session_locked(null) }
             session_key_store.clear()
             if (!clear_decrypted_mail_cache_blocking()) {
                 throw ApiError.UnknownError(context.getString(R.string.auth_previous_account_data_not_cleared))
@@ -558,8 +549,7 @@ class AuthRepository @Inject constructor(
             throw AuthSaltCollisionException("auth salt equals the vault key salt")
         }
         withContext(NonCancellable) {
-            token_store.save(access, login_resp.refresh_token ?: access)
-            api_client.invalidate_bearer_cache()
+            install_session_tokens(access, login_resp.refresh_token, null)
             session_key_store.put(password_hash_bytes)
             session_key_store.put_passphrase(password_bytes)
             session_key_store.put_password_salt(salt_bytes)
@@ -618,6 +608,7 @@ class AuthRepository @Inject constructor(
                     profile_picture = profile?.profile_picture ?: previous_account?.profile_picture,
                     added_at = System.currentTimeMillis(),
                 ),
+                max_accounts = AccountStore.unlimited_accounts,
             )
             runCatching { save_session_snapshot(login_resp.user_id) }
             _active_account_id.value = login_resp.user_id
@@ -637,6 +628,105 @@ class AuthRepository @Inject constructor(
             runCatching { login_pins.pin(session_pin_keys) }
         } else {
             start_login_enrollment(login_resp.user_id, session_pin_keys, login_enrollment)
+        }
+    }
+
+    private fun scoped_session_client(access: String, refresh: String?, csrf: String?): ApiClient {
+        val tokens = io.ktor.client.plugins.auth.providers.BearerTokens(access, refresh ?: access)
+        val provider = object : org.astermail.android.api.TokenProvider {
+            override suspend fun load(): io.ktor.client.plugins.auth.providers.BearerTokens = tokens
+            override suspend fun refresh(): io.ktor.client.plugins.auth.providers.BearerTokens? = null
+            override suspend fun clear() {}
+        }
+        return ApiClient(
+            base_url = org.astermail.android.api.BuildConfig.API_BASE_URL,
+            token_provider = provider,
+            initial_csrf = csrf,
+            allow_cleartext_for_test = org.astermail.android.api.BuildConfig.API_BASE_URL.startsWith("http://"),
+            device_id = org.astermail.android.api.DeviceIdStore.get(context),
+        )
+    }
+
+    private suspend fun claim_account_slot(
+        access: String,
+        refresh: String?,
+        csrf: String?,
+        previous_user_id: String?,
+        account_known: Boolean,
+    ) {
+        val client = scoped_session_client(access, refresh, csrf)
+        try {
+            val billing = org.astermail.android.api.billing.BillingApiImpl(client)
+            val link = try {
+                withTimeoutOrNull(ACCOUNT_SLOT_TIMEOUT_MS) { billing.link_account_device() }
+                    ?.let { AccountSlotLink.Linked(it.max_accounts) }
+                    ?: AccountSlotLink.Unknown
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: ApiError.PlanLimitExceeded) {
+                AccountSlotLink.LimitReached
+            } catch (_: Throwable) {
+                AccountSlotLink.Unknown
+            }
+            if (link is AccountSlotLink.Linked && link.max_accounts != 0) {
+                runCatching { account_store.set_max_accounts(link.max_accounts) }
+            }
+            if (decide_account_slot(link, account_known, account_store.can_add()) == AccountSlotDecision.Allow) return
+            val max_accounts = if (link == AccountSlotLink.LimitReached) {
+                runCatching {
+                    withTimeoutOrNull(ACCOUNT_SLOT_TIMEOUT_MS) { billing.get_account_limit().max_accounts }
+                }.getOrNull()
+            } else {
+                account_store.get_max_accounts()
+            }
+            reject_new_session(client, previous_user_id)
+            throw AccountLimitReachedException(max_accounts?.takeIf { it > 0 })
+        } finally {
+            runCatching { client.close() }
+        }
+    }
+
+    private suspend fun release_account_slot_with_current_tokens() {
+        val access = token_store.access_token?.takeIf { it.isNotEmpty() } ?: return
+        val client = runCatching {
+            scoped_session_client(access, token_store.refresh_token, api_client.get_csrf())
+        }.getOrNull() ?: return
+        try {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(ACCOUNT_SLOT_RELEASE_TIMEOUT_MS) {
+                    runCatching { org.astermail.android.api.billing.BillingApiImpl(client).unlink_account_device() }
+                }
+            }
+        } finally {
+            runCatching { client.close() }
+        }
+    }
+
+    private suspend fun reject_new_session(client: ApiClient, previous_user_id: String?) {
+        withContext(NonCancellable) {
+            runCatching {
+                withTimeoutOrNull(ACCOUNT_SLOT_TIMEOUT_MS) {
+                    org.astermail.android.api.auth.AuthApiImpl(client).logout()
+                }
+            }
+            restore_previous_csrf(previous_user_id)
+        }
+    }
+
+    private suspend fun restore_previous_csrf(previous_user_id: String?) {
+        SessionRefreshGate.mutex.withLock {
+            if (token_store.access_token.isNullOrEmpty() && token_store.refresh_token.isNullOrEmpty()) {
+                api_client.clear_csrf()
+                return@withLock
+            }
+            val owner = resolve_account_id(session_token_owner(token_store.refresh_token, token_store.access_token))
+                ?: previous_user_id
+                ?: return@withLock
+            val snapshot = runCatching { session_snapshot_store.load(owner) }.getOrNull() ?: return@withLock
+            snapshot.passphrase?.fill(0)
+            snapshot.session_key?.fill(0)
+            snapshot.password_salt?.fill(0)
+            snapshot.csrf_token?.let { api_client.set_csrf(it) }
         }
     }
 
@@ -834,7 +924,7 @@ class AuthRepository @Inject constructor(
             ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
         if (previous_user_id != null && previous_user_id != register_resp.user_id) {
-            store_current_session_tokens()
+            SessionRefreshGate.mutex.withLock { persist_current_session_locked(null) }
             session_key_store.clear()
             runCatching {
                 withTimeoutOrNull(3_000L) {
@@ -849,8 +939,7 @@ class AuthRepository @Inject constructor(
             runCatching { org.astermail.android.notifications.MailPollingWorker.reset_new_mail_baseline(context) }
             runCatching { org.astermail.android.notifications.NotificationDedupe.clear(context) }
         }
-        token_store.save(access, register_resp.refresh_token ?: access)
-        api_client.invalidate_bearer_cache()
+        install_session_tokens(access, register_resp.refresh_token, null)
         session_key_store.put(password_hash_bytes)
         session_key_store.put_passphrase(password.toByteArray(Charsets.UTF_8))
         session_key_store.put_password_salt(salt_bytes)
@@ -906,6 +995,7 @@ class AuthRepository @Inject constructor(
                 profile_picture = profile?.profile_picture,
                 added_at = System.currentTimeMillis(),
             ),
+            max_accounts = AccountStore.unlimited_accounts,
         )
         save_session_snapshot(register_resp.user_id)
         _active_account_id.value = register_resp.user_id
@@ -924,6 +1014,8 @@ class AuthRepository @Inject constructor(
     }
 
     private fun save_session_snapshot(account_id: String) {
+        if (!current_tokens_belong_to(account_id)) return
+        if (session_key_store.get_user_id()?.let { same_account(it, account_id) } == false) return
         runCatching {
             session_snapshot_store.save(
                 account_id = account_id,
@@ -956,34 +1048,40 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun restore_session_while_drain_paused(account_id: String): Boolean {
-        SessionRefreshGate.mutex.lock()
-        val snapshot = try {
-            val loaded = session_snapshot_store.load(account_id) ?: return false
-            if (!clear_decrypted_mail_cache_blocking()) return false
-            mail_repository.clear_account_data()
-            cancel_all_notifications()
-            token_store.save(loaded.token_access, loaded.token_refresh)
-            loaded
-        } finally {
-            SessionRefreshGate.mutex.unlock()
+        val restored = withContext(NonCancellable) {
+            SessionRefreshGate.mutex.withLock {
+                if (!account_store.account_exists(account_id)) return@withLock false
+                val snapshot = session_snapshot_store.load(account_id) ?: return@withLock false
+                if (!same_account(session_token_owner(snapshot.token_refresh, snapshot.token_access) ?: account_id, account_id)) {
+                    return@withLock false
+                }
+                persist_current_session_locked(api_client.get_csrf())
+                if (!clear_decrypted_mail_cache_blocking()) return@withLock false
+                mail_repository.clear_account_data()
+                cancel_all_notifications()
+                token_store.save(snapshot.token_access, snapshot.token_refresh)
+                api_client.set_csrf(snapshot.csrf_token)
+                api_client.invalidate_bearer_cache()
+                session_key_store.clear()
+                snapshot.session_key?.let { session_key_store.put(it) }
+                snapshot.passphrase?.let { session_key_store.put_passphrase(it) }
+                snapshot.identity_key?.let { session_key_store.put_identity_key(it) }
+                snapshot.password_salt?.let { session_key_store.put_password_salt(it) }
+                session_key_store.put_user_id(snapshot.user_id ?: account_id)
+                snapshot.user_email?.let { session_key_store.put_user_email(it) }
+                val ev = snapshot.encrypted_vault
+                val vn = snapshot.vault_nonce
+                if (ev != null && vn != null) {
+                    session_key_store.put_encrypted_vault(ev, vn)
+                }
+                snapshot.recovery_codes?.let { session_key_store.put_recovery_codes(it) }
+                snapshot.previous_keys?.let { session_key_store.put_previous_keys(it) }
+                snapshot.legacy_keks?.let { session_key_store.put_legacy_keks(it) }
+                account_store.set_current(account_id)
+                true
+            }
         }
-        api_client.set_csrf(snapshot.csrf_token)
-        api_client.invalidate_bearer_cache()
-        session_key_store.clear()
-        snapshot.session_key?.let { session_key_store.put(it) }
-        snapshot.passphrase?.let { session_key_store.put_passphrase(it) }
-        snapshot.identity_key?.let { session_key_store.put_identity_key(it) }
-        snapshot.password_salt?.let { session_key_store.put_password_salt(it) }
-        snapshot.user_id?.let { session_key_store.put_user_id(it) }
-        snapshot.user_email?.let { session_key_store.put_user_email(it) }
-        val ev = snapshot.encrypted_vault
-        val vn = snapshot.vault_nonce
-        if (ev != null && vn != null) {
-            session_key_store.put_encrypted_vault(ev, vn)
-        }
-        snapshot.recovery_codes?.let { session_key_store.put_recovery_codes(it) }
-        snapshot.previous_keys?.let { session_key_store.put_previous_keys(it) }
-        snapshot.legacy_keks?.let { session_key_store.put_legacy_keks(it) }
+        if (!restored) return false
         runCatching { try_recover_identity_key() }
         runCatching { offer_preferences_store.reset() }
         runCatching {
@@ -1120,9 +1218,12 @@ class AuthRepository @Inject constructor(
                 base64_encode(new_envelope.vault_nonce),
             )
 
-            response.csrf_token?.let { api_client.set_csrf(it) }
-            response.access_token?.let {
-                token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
+            SessionRefreshGate.mutex.withLock {
+                response.csrf_token?.let { api_client.set_csrf(it) }
+                response.access_token?.let {
+                    token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
+                    api_client.invalidate_bearer_cache()
+                }
             }
 
             val pgp_rewrapped = runCatching { rewrap_server_pgp_key(new_password) }.isSuccess
@@ -1181,9 +1282,10 @@ class AuthRepository @Inject constructor(
 
     suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
 
-    suspend fun force_sign_out(): Result<Unit> {
+    suspend fun force_sign_out(expected_account_id: String? = null): Result<Unit> {
         val previous_id = session_key_store.get_user_id()
-        val result = sign_out_internal(remove_account = false)
+        if (expected_account_id != null && !same_account(expected_account_id, previous_id)) return Result.success(Unit)
+        val result = sign_out_internal(remove_account = false, expected_account_id = expected_account_id)
         if (!_is_signed_in.value) {
             _session_expired.value = true
         } else {
@@ -1204,11 +1306,24 @@ class AuthRepository @Inject constructor(
     }
 
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
-    private suspend fun sign_out_internal(remove_account: Boolean): Result<Unit> = runCatching {
+    private suspend fun sign_out_internal(
+        remove_account: Boolean,
+        expected_account_id: String? = null,
+    ): Result<Unit> = runCatching {
         val current_id = session_key_store.get_user_id()
+        if (expected_account_id != null && !same_account(expected_account_id, current_id)) return@runCatching
         val current_email = session_key_store.get_user_email()
         if (remove_account) {
             current_email?.let { runCatching { trusted_device_store.clear(it) } }
+            try {
+                withTimeoutOrNull(5_000L) {
+                    org.astermail.android.api.billing.BillingApiImpl(api_client).unlink_account_device()
+                }
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+            }
+        } else {
+            release_account_slot_with_current_tokens()
         }
         try {
             withTimeoutOrNull(5_000L) {
@@ -1217,10 +1332,16 @@ class AuthRepository @Inject constructor(
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
         }
+        val cleared = SessionRefreshGate.mutex.withLock {
+            if (session_key_store.get_user_id() != current_id) return@withLock false
+            runCatching { token_store.clear() }
+            runCatching { api_client.clear_csrf() }
+            runCatching { api_client.invalidate_bearer_cache() }
+            runCatching { session_key_store.clear() }
+            true
+        }
+        if (!cleared) return@runCatching
         runCatching { org.astermail.android.notifications.PersistentPushService.stop(context) }
-        runCatching { token_store.clear() }
-        runCatching { api_client.invalidate_bearer_cache() }
-        runCatching { session_key_store.clear() }
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         runCatching { mail_repository.clear_account_data() }
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
@@ -1276,13 +1397,12 @@ class AuthRepository @Inject constructor(
                 runCatching { org.astermail.android.ui.drawer.folder_expansion_store.clear(context, current_id) }
             }
         }
-        val next_account = runCatching {
+        val candidates = runCatching {
             account_store.get_all()
-                .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
-        }.getOrNull()
-        if (next_account != null) {
-            runCatching { account_store.set_current(next_account.id) }
-            val restored = runCatching { try_restore_session(next_account.id) }.getOrDefault(false)
+                .filter { it.id != current_id && session_snapshot_store.has(it.id) }
+        }.getOrDefault(emptyList())
+        for (candidate in candidates) {
+            val restored = runCatching { try_restore_session(candidate.id) }.getOrDefault(false)
             if (restored) return@runCatching
         }
         _active_account_id.value = null
@@ -1347,6 +1467,8 @@ class AuthRepository @Inject constructor(
         val server_email = profile.email?.trim()
             ?.takeIf { it.isNotBlank() && profile_matches_session(profile) }
         val email = server_email ?: session_key_store.get_user_email() ?: return
+        if (account_store.get_current_id() != current_id) return
+        if (profile.user_id.isNotBlank() && !same_account(profile.user_id, current_id)) return
         account_store.add_or_update(
             StoredAccount(
                 id = current_id,
@@ -1844,9 +1966,12 @@ class AuthRepository @Inject constructor(
         runCatching {
             login_pins.unpin(LoginProof.pin_keys(current_id, current_email?.let { CryptoNative.hash_email(it) }))
         }
-        token_store.clear()
-        api_client.invalidate_bearer_cache()
-        session_key_store.clear()
+        SessionRefreshGate.mutex.withLock {
+            token_store.clear()
+            api_client.clear_csrf()
+            api_client.invalidate_bearer_cache()
+            session_key_store.clear()
+        }
         org.astermail.android.folders.folder_lock_store.lock_all()
         mail_repository.clear_account_data()
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
@@ -1890,11 +2015,10 @@ class AuthRepository @Inject constructor(
         runCatching {
             wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
         }
-        val next_account = account_store.get_all()
-            .firstOrNull { it.id != current_id && session_snapshot_store.has(it.id) }
-        if (next_account != null) {
-            account_store.set_current(next_account.id)
-            if (try_restore_session(next_account.id)) return@runCatching
+        val candidates = account_store.get_all()
+            .filter { it.id != current_id && session_snapshot_store.has(it.id) }
+        for (candidate in candidates) {
+            if (try_restore_session(candidate.id)) return@runCatching
         }
         _active_account_id.value = null
         _is_signed_in.value = false

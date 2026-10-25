@@ -3014,6 +3014,8 @@
     <string name="error_invalid_backup_code">That backup code didn\'t match. Each code works only once, so try the next unused one from your list.</string>
     <string name="error_invalid_recovery_phrase">That recovery phrase didn\'t match. Check the word order and the spelling, then try again.</string>
     <string name="error_plan_limit_reached">You have hit the limit on your current plan. Upgrading, or removing some items to make room, will get you moving again.</string>
+    <string name="error_account_limit_reached_count">Your plan\'s limit for signed-in accounts on this device is %1$d. To sign in to this account, sign out of another account on this device or upgrade your plan.</string>
+    <string name="error_account_limit_reached">You\'ve reached your plan\'s limit for signed-in accounts on this device. To sign in to this account, sign out of another account on this device or upgrade your plan.</string>
     <string name="error_sign_in_code_invalid">That code is no longer valid. Request a new one to keep signing in.</string>
     <string name="error_sign_in_domain_unsupported">Sign in with the astermail.org or aster.cx address you registered with. Addresses on your own domain reach the same account.</string>
     <string name="error_storage_full">Your storage is full. To make room, upgrade your plan or remove some emails.</string>

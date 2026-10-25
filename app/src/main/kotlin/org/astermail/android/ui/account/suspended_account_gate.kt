@@ -369,7 +369,6 @@ fun SuspendedAccountGate(
                         on_switched(account, restored)
                     }
                 } else {
-                    accounts_view_model.switch_account(account.id)
                     on_switched(account, false)
                 }
             },

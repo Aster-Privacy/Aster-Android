@@ -106,6 +106,13 @@ import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.SubscriptionsApiImpl
 import org.astermail.android.api.user.UserApi
 import org.astermail.android.api.user.UserApiImpl
+import org.astermail.android.auth.AccountBoundRefresh
+import org.astermail.android.auth.RotatedTokens
+import org.astermail.android.auth.SessionRefreshGate
+import org.astermail.android.auth.same_account
+import org.astermail.android.storage.AccountStore
+import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.SessionSnapshotStore
 import org.astermail.android.storage.TokenStore
 
 @Module
@@ -130,24 +137,37 @@ object NetworkModule {
         token_store: TokenStore,
         auth_api: dagger.Lazy<AuthApi>,
         api_client: dagger.Lazy<ApiClient>,
-    ): SessionRefresher = SessionRefresher(
-        read_refresh_token = { token_store.refresh_token },
-        perform_refresh = { current_refresh ->
-            try {
-                val response = auth_api.get().refresh(current_refresh)
-                val rotated = response.refresh_token ?: current_refresh ?: response.access_token
-                token_store.save(response.access_token, rotated)
+        session_snapshot_store: SessionSnapshotStore,
+        account_store: AccountStore,
+        session_key_store: SessionKeyStore,
+    ): SessionRefresher {
+        val account_bound = AccountBoundRefresh(
+            gate = SessionRefreshGate.mutex,
+            read_access_token = { token_store.access_token },
+            read_refresh_token = { token_store.refresh_token },
+            resolve_owner = { subject ->
+                subject?.let { sub -> account_store.get_all().firstOrNull { same_account(it.id, sub) }?.id ?: sub }
+                    ?: session_key_store.get_user_id()
+            },
+            call_refresh = { presented ->
+                val response = auth_api.get().refresh(presented)
+                RotatedTokens(response.access_token, response.refresh_token)
+            },
+            read_csrf = { api_client.get().get_csrf() },
+            restore_csrf = { csrf -> api_client.get().set_csrf(csrf) },
+            save_current = { access, refresh ->
+                token_store.save(access, refresh)
                 api_client.get().invalidate_bearer_cache()
-                RefreshOutcome.Success
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (_: org.astermail.android.api.ApiError.UnauthorizedError) {
-                RefreshOutcome.AuthFailed
-            } catch (_: Throwable) {
-                RefreshOutcome.Transient
-            }
-        },
-    )
+            },
+            save_for_account = { account_id, expected_refresh, access, refresh, csrf ->
+                session_snapshot_store.update_tokens(account_id, expected_refresh, access, refresh, csrf)
+            },
+        )
+        return SessionRefresher(
+            read_refresh_token = { token_store.refresh_token },
+            perform_refresh = { presented -> account_bound.refresh(presented) },
+        )
+    }
 
     @Provides
     @Singleton

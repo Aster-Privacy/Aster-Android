@@ -2771,6 +2771,8 @@
     <string name="error_invalid_backup_code">このバックアップコードは一致しません。各コードは1回だけ使えるため、リストの次の未使用コードをお試しください。</string>
     <string name="error_invalid_recovery_phrase">この復元フレーズは一致しません。単語の順序とつづりを確認して、もう一度お試しください。</string>
     <string name="error_plan_limit_reached">現在のプランの上限に達しました。アップグレードするか、不要なものを削除して空きを作ると、再び操作できるようになります。</string>
+    <string name="error_account_limit_reached_count">ご利用のプランでこのデバイスにサインインできるアカウント数の上限は %1$d です。このアカウントにサインインするには、このデバイスで別のアカウントからサインアウトするか、プランをアップグレードしてください。</string>
+    <string name="error_account_limit_reached">ご利用のプランでこのデバイスにサインインできるアカウント数の上限に達しました。このアカウントにサインインするには、このデバイスで別のアカウントからサインアウトするか、プランをアップグレードしてください。</string>
     <string name="error_sign_in_code_invalid">このコードは有効ではなくなりました。サインインを続けるには、新しいコードをリクエストしてください。</string>
     <string name="error_sign_in_domain_unsupported">登録時の astermail.org または aster.cx のアドレスでサインインしてください。独自ドメインのアドレスも同じアカウントに届きます。</string>
     <string name="error_storage_full">ストレージが満杯です。空きを作るには、プランをアップグレードするか、メールを削除してください。</string>

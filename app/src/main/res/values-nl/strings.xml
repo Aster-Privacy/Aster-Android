@@ -2780,6 +2780,8 @@
     <string name="error_invalid_backup_code">Deze back-upcode komt niet overeen. Elke code werkt maar één keer, dus probeer de volgende ongebruikte code uit je lijst.</string>
     <string name="error_invalid_recovery_phrase">Deze herstelzin komt niet overeen. Controleer de volgorde van de woorden en de spelling en probeer het opnieuw.</string>
     <string name="error_plan_limit_reached">Je hebt de limiet van je huidige abonnement bereikt. Upgrade of verwijder wat items om ruimte te maken, dan kun je weer verder.</string>
+    <string name="error_account_limit_reached_count">De limiet voor aangemelde accounts op dit apparaat voor je abonnement is %1$d. Als je je wilt aanmelden bij dit account, meld je dan op dit apparaat af bij een ander account of upgrade je abonnement.</string>
+    <string name="error_account_limit_reached">Je hebt de limiet voor aangemelde accounts op dit apparaat voor je abonnement bereikt. Als je je wilt aanmelden bij dit account, meld je dan op dit apparaat af bij een ander account of upgrade je abonnement.</string>
     <string name="error_sign_in_code_invalid">Deze code is niet meer geldig. Vraag een nieuwe aan om verder te gaan met inloggen.</string>
     <string name="error_sign_in_domain_unsupported">Meld je aan met het astermail.org- of aster.cx-adres waarmee je je hebt geregistreerd. Adressen op je eigen domein komen op hetzelfde account uit.</string>
     <string name="error_storage_full">Je opslag is vol. Upgrade je abonnement of verwijder wat e-mails om ruimte te maken.</string>
