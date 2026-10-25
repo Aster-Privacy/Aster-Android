@@ -3457,4 +3457,13 @@
     <string name="domain_reason_dkim_missing_or_stale">La tua posta in uscita non è firmata e sembra falsificata. Aggiungi il record di firma perché venga ritenuta affidabile.</string>
     <string name="domain_check_generic_failure">Questo record non è ancora configurato correttamente. Aggiungi il record qui sotto per risolvere.</string>
     <string name="error_auth_salt_collision">L\'accesso è stato interrotto perché il server ha inviato un valore non sicuro, quindi non è stato sbloccato nulla. Contatta l\'assistenza prima di riprovare.</string>
+    <string name="storage_nudge_almost_title">Spazio di archiviazione quasi pieno</string>
+    <string name="storage_nudge_critical_title">Lo spazio di archiviazione sta per esaurirsi</string>
+    <string name="storage_nudge_full_title">Lo spazio di archiviazione è pieno</string>
+    <string name="storage_nudge_offer">Ottieni altri %1$s a %2$s al mese</string>
+    <string name="storage_nudge_offer_generic">Passa a un piano superiore per avere più spazio</string>
+    <string name="storage_nudge_body">Quando lo spazio di archiviazione è pieno, non puoi inviare né importare posta.</string>
+    <string name="storage_nudge_full_body">Non puoi inviare né importare posta finché non liberi spazio. La posta esistente è al sicuro.</string>
+    <string name="storage_nudge_free_up">Libera spazio</string>
+    <string name="storage_nudge_get_storage">Ottieni spazio</string>
 </resources>

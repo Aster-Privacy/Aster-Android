@@ -3486,4 +3486,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Vos e-mails sortants ne sont pas signés et semblent donc falsifiés. Ajoutez l’enregistrement de signature pour qu’ils soient approuvés.</string>
     <string name="domain_check_generic_failure">Cet enregistrement n’est pas encore correctement configuré. Ajoutez l’enregistrement ci-dessous pour résoudre le problème.</string>
     <string name="error_auth_salt_collision">La connexion a été interrompue parce que le serveur a envoyé une valeur non sécurisée. Rien n\'a été déverrouillé. Contactez l\'assistance avant de réessayer.</string>
+    <string name="storage_nudge_almost_title">Stockage presque plein</string>
+    <string name="storage_nudge_critical_title">Vous n\'avez presque plus de stockage</string>
+    <string name="storage_nudge_full_title">Votre stockage est plein</string>
+    <string name="storage_nudge_offer">Obtenez %1$s de plus pour %2$s par mois</string>
+    <string name="storage_nudge_offer_generic">Passez à une offre supérieure pour obtenir plus de stockage</string>
+    <string name="storage_nudge_body">Lorsque votre stockage est plein, vous ne pouvez plus envoyer ni importer d\'e-mails.</string>
+    <string name="storage_nudge_full_body">Vous ne pouvez plus envoyer ni importer d\'e-mails tant que vous n\'avez pas libéré d\'espace. Vos e-mails existants sont en sécurité.</string>
+    <string name="storage_nudge_free_up">Libérer de l\'espace</string>
+    <string name="storage_nudge_get_storage">Obtenir du stockage</string>
 </resources>

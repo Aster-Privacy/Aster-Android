@@ -3457,4 +3457,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Seus e-mails enviados não são assinados, o que os faz parecer falsos. Adicione o registro de assinatura para que sejam confiáveis.</string>
     <string name="domain_check_generic_failure">Este registro ainda não está configurado corretamente. Adicione o registro abaixo para resolver.</string>
     <string name="error_auth_salt_collision">O início de sessão foi interrompido porque o servidor enviou um valor inseguro, por isso nada foi desbloqueado. Contacte o suporte antes de tentar novamente.</string>
+    <string name="storage_nudge_almost_title">O armazenamento está quase cheio</string>
+    <string name="storage_nudge_critical_title">Está quase sem armazenamento</string>
+    <string name="storage_nudge_full_title">O seu armazenamento está cheio</string>
+    <string name="storage_nudge_offer">Obtenha mais %1$s por %2$s por mês</string>
+    <string name="storage_nudge_offer_generic">Atualize o seu plano para obter mais armazenamento</string>
+    <string name="storage_nudge_body">Quando o armazenamento ficar cheio, não consegue enviar nem importar correio.</string>
+    <string name="storage_nudge_full_body">Não pode enviar nem importar correio até libertar espaço. O seu correio existente está seguro.</string>
+    <string name="storage_nudge_free_up">Libertar espaço</string>
+    <string name="storage_nudge_get_storage">Obter armazenamento</string>
 </resources>

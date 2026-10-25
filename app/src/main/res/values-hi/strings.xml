@@ -3330,4 +3330,13 @@
     <string name="domain_reason_dkim_missing_or_stale">आपका बाहर जाने वाला मेल हस्ताक्षरित नहीं है, जिससे वह नकली लगता है। हस्ताक्षर रिकॉर्ड जोड़ें ताकि आपके मेल पर भरोसा किया जाए।</string>
     <string name="domain_check_generic_failure">यह रिकॉर्ड अभी सही तरह से सेट नहीं है। इसे ठीक करने के लिए नीचे दिया रिकॉर्ड जोड़ें।</string>
     <string name="error_auth_salt_collision">सर्वर ने एक असुरक्षित मान भेजा, इसलिए साइन इन रोक दिया गया और कुछ भी अनलॉक नहीं हुआ। दोबारा कोशिश करने से पहले सहायता से संपर्क करें।</string>
+    <string name="storage_nudge_almost_title">स्टोरेज लगभग भर गया है</string>
+    <string name="storage_nudge_critical_title">आपका स्टोरेज लगभग खत्म हो गया है</string>
+    <string name="storage_nudge_full_title">आपका स्टोरेज भर गया है</string>
+    <string name="storage_nudge_offer">%2$s प्रति माह में %1$s और पाएं</string>
+    <string name="storage_nudge_offer_generic">ज़्यादा स्टोरेज के लिए अपना प्लान अपग्रेड करें</string>
+    <string name="storage_nudge_body">स्टोरेज भर जाने पर आप ईमेल भेज या इंपोर्ट नहीं कर पाएंगे।</string>
+    <string name="storage_nudge_full_body">जब तक आप जगह खाली नहीं करते, आप ईमेल भेज या इंपोर्ट नहीं कर सकते। आपके मौजूदा ईमेल सुरक्षित हैं।</string>
+    <string name="storage_nudge_free_up">जगह खाली करें</string>
+    <string name="storage_nudge_get_storage">स्टोरेज पाएं</string>
 </resources>

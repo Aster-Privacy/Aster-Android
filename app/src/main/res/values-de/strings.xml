@@ -3439,4 +3439,13 @@
     <string name="domain_reason_dkim_missing_or_stale">Ihre ausgehende Mail ist unsigniert und wirkt dadurch gefälscht. Fügen Sie den Signatureintrag hinzu, damit Ihrer Mail vertraut wird.</string>
     <string name="domain_check_generic_failure">Dieser Eintrag ist noch nicht korrekt eingerichtet. Fügen Sie den Eintrag unten hinzu.</string>
     <string name="error_auth_salt_collision">Die Anmeldung wurde abgebrochen, weil der Server einen unsicheren Wert gesendet hat. Es wurde nichts entsperrt. Kontaktieren Sie den Support, bevor Sie es erneut versuchen.</string>
+    <string name="storage_nudge_almost_title">Speicher fast voll</string>
+    <string name="storage_nudge_critical_title">Ihr Speicher ist fast aufgebraucht</string>
+    <string name="storage_nudge_full_title">Ihr Speicher ist voll</string>
+    <string name="storage_nudge_offer">%1$s mehr für %2$s pro Monat</string>
+    <string name="storage_nudge_offer_generic">Wechseln Sie zu einem größeren Tarif, um mehr Speicher zu erhalten</string>
+    <string name="storage_nudge_body">Wenn Ihr Speicher voll ist, können Sie keine E-Mails mehr senden oder importieren.</string>
+    <string name="storage_nudge_full_body">Sie können erst wieder E-Mails senden oder importieren, wenn Sie Speicherplatz freigeben. Ihre vorhandenen E-Mails sind sicher.</string>
+    <string name="storage_nudge_free_up">Speicher freigeben</string>
+    <string name="storage_nudge_get_storage">Speicher erweitern</string>
 </resources>

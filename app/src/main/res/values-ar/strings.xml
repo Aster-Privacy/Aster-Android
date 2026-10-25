@@ -3518,4 +3518,13 @@
     <string name="domain_reason_dkim_missing_or_stale">بريدك الصادر غير موقَّع، ما يجعله يبدو مزوَّرًا. أضف سجل التوقيع ليصبح بريدك موثوقًا.</string>
     <string name="domain_check_generic_failure">لم يُضبط هذا السجل بشكل صحيح بعد. أضف السجل أدناه لإصلاحه.</string>
     <string name="error_auth_salt_collision">توقف تسجيل الدخول لأن الخادم أرسل قيمة غير آمنة، لذلك لم يتم فتح أي شيء. تواصل مع الدعم قبل المحاولة مرة أخرى.</string>
+    <string name="storage_nudge_almost_title">مساحة التخزين ممتلئة تقريبًا</string>
+    <string name="storage_nudge_critical_title">مساحة التخزين على وشك النفاد</string>
+    <string name="storage_nudge_full_title">مساحة التخزين ممتلئة</string>
+    <string name="storage_nudge_offer">احصل على %1$s إضافية مقابل %2$s شهريًا</string>
+    <string name="storage_nudge_offer_generic">رقِّ خطتك للحصول على مساحة تخزين أكبر</string>
+    <string name="storage_nudge_body">عندما تمتلئ مساحة التخزين، لن تتمكن من إرسال البريد أو استيراده.</string>
+    <string name="storage_nudge_full_body">لا يمكنك إرسال البريد أو استيراده حتى تُفرغ بعض المساحة. بريدك الحالي آمن.</string>
+    <string name="storage_nudge_free_up">إفراغ مساحة</string>
+    <string name="storage_nudge_get_storage">الحصول على مساحة</string>
 </resources>

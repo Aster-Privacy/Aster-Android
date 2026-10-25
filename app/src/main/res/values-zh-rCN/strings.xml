@@ -3420,4 +3420,13 @@
     <string name="domain_reason_dkim_missing_or_stale">你发出的邮件未签名，看起来像伪造邮件。添加签名记录后，邮件才会被信任。</string>
     <string name="domain_check_generic_failure">这条记录尚未正确设置。添加下面的记录即可修复。</string>
     <string name="error_auth_salt_collision">由于服务器发送了不安全的值，登录已停止，没有解锁任何内容。请先联系支持团队，然后再重试。</string>
+    <string name="storage_nudge_almost_title">存储空间即将用完</string>
+    <string name="storage_nudge_critical_title">存储空间所剩无几</string>
+    <string name="storage_nudge_full_title">存储空间已满</string>
+    <string name="storage_nudge_offer">每月 %2$s 即可增加 %1$s</string>
+    <string name="storage_nudge_offer_generic">升级套餐以获取更多存储空间</string>
+    <string name="storage_nudge_body">存储空间用完后，你将无法发送或导入邮件。</string>
+    <string name="storage_nudge_full_body">在你释放空间之前，你无法发送或导入邮件。现有邮件不受影响。</string>
+    <string name="storage_nudge_free_up">释放空间</string>
+    <string name="storage_nudge_get_storage">获取存储空间</string>
 </resources>
