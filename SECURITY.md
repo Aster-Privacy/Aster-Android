@@ -43,4 +43,6 @@ We follow coordinated disclosure. Give us adequate time to patch a vulnerability
 
 ## Acknowledgments
 
-We thank the researchers who help keep Aster secure. Credited disclosures are listed here as we receive them.
+We thank the researchers who help keep Aster secure.
+
+- [diogovbs](https://github.com/diogovbs) (October 2026): a series of private reports covering the Android app. We fixed every finding in coordination with the reporter.
