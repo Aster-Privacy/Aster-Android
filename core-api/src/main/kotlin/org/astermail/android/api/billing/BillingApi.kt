@@ -22,6 +22,7 @@
 package org.astermail.android.api.billing
 
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -579,6 +580,8 @@ interface BillingApi {
     suspend fun create_crypto_checkout_session(request: CryptoCheckoutRequest): CheckoutSessionResponse
     suspend fun purchase_storage_addon_crypto(request: CryptoAddonCheckoutRequest): PurchaseAddonResponse
     suspend fun get_account_limit(): AccountLimitResponse
+    suspend fun link_account_device(): AccountLimitResponse
+    suspend fun unlink_account_device()
     suspend fun get_crypto_native_coins(): CryptoNativeCoinsResponse
     suspend fun create_crypto_native_invoice(request: CreateCryptoNativeInvoiceRequest): CryptoNativeInvoiceResponse
     suspend fun get_crypto_native_invoice(invoice_id: String): CryptoNativeInvoiceStatus
@@ -728,6 +731,22 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_account_limit(): AccountLimitResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/plans/account-limit"))
+
+    override suspend fun link_account_device(): AccountLimitResponse {
+        val response = client.http.post("${client.base_url}$base/plans/account-limit/link") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(emptyMap<String, String>())
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun unlink_account_device() {
+        val response = client.http.delete("${client.base_url}$base/plans/account-limit/link") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (!response.status.isSuccess()) throw client.map_http_status(response.status.value, response.bodyAsText())
+    }
 
     private suspend fun post_special_offer(path: String): SpecialOfferAckResponse {
         val response = client.http.post("${client.base_url}/api/core/v1/offers/special/$path") {
