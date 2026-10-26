@@ -3310,7 +3310,7 @@
     <string name="address_change_code_too_many">Zu viele falsche Codes. Um einen neuen Code zu erhalten, starten Sie die Änderung erneut.</string>
     <string name="address_change_code_expired">Dieser Code ist abgelaufen. Um einen neuen zu erhalten, starte die Änderung erneut.</string>
     <string name="address_change_taken_now">Diese Adresse wurde bereits vergeben. Wahle eine andere.</string>
-    <string name="address_change_locked_plan">Das Ändern Ihrer Adresse ist eine Supernova-Funktion.</string>
+    <string name="address_change_locked_plan">Das Ändern Ihrer Adresse ist in Supernova und Family enthalten.</string>
     <string name="address_change_locked_cooldown">Sie können Ihre Adresse am %1$s wieder ändern.</string>
     <string name="address_change_password_wrong">Dieses Passwort ist nicht korrekt.</string>
     <string name="address_change_locked_account_kind">Nur persönliche Konten können ihre Adresse ändern.</string>

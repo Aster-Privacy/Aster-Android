@@ -3329,7 +3329,7 @@
     <string name="address_change_code_too_many">Demasiados códigos incorrectos. Para recibir uno nuevo, vuelve a iniciar el cambio.</string>
     <string name="address_change_code_expired">Ese código caducó. Para recibir uno nuevo, vuelve a iniciar el cambio.</string>
     <string name="address_change_taken_now">Alguien reclamo esa direccion antes. Elige otra.</string>
-    <string name="address_change_locked_plan">Cambiar tu dirección es una función de Supernova.</string>
+    <string name="address_change_locked_plan">Cambiar tu dirección es una función de Supernova y Family.</string>
     <string name="address_change_locked_cooldown">Puedes volver a cambiar tu dirección el %1$s.</string>
     <string name="address_change_password_wrong">Esa contraseña no es correcta.</string>
     <string name="address_change_locked_account_kind">Solo las cuentas personales pueden cambiar su dirección.</string>

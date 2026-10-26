@@ -3389,7 +3389,7 @@
     <string name="address_change_code_too_many">أدخلت رموزًا خاطئة كثيرة. للحصول على رمز جديد، ابدأ التغيير من جديد.</string>
     <string name="address_change_code_expired">انتهت صلاحية هذا الرمز. للحصول على رمز جديد، ابدأ التغيير من جديد.</string>
     <string name="address_change_taken_now">هذا العنوان محجوز الآن. اختر عنوانًا آخر.</string>
-    <string name="address_change_locked_plan">تغيير عنوانك ميزة في Supernova.</string>
+    <string name="address_change_locked_plan">تغيير عنوانك ميزة في Supernova وFamily.</string>
     <string name="address_change_locked_cooldown">يمكنك تغيير عنوانك مرة أخرى في %1$s.</string>
     <string name="address_change_password_wrong">كلمة المرور هذه غير صحيحة.</string>
     <string name="address_change_locked_account_kind">الحسابات الشخصية وحدها يمكنها تغيير عنوانها.</string>

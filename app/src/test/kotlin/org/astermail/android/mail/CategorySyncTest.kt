@@ -378,16 +378,118 @@ class CategorySyncTest {
     }
 
     @Test
-    fun `a blob sealed with the passphrase key is rewritten with the vault data key`() = runTest {
+    fun `a blob sealed with the passphrase key stays sealed with the key the other client reads`() = runTest {
         val data_kek = ByteArray(32) { (it * 5 + 2).toByte() }
         every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
         val captured = capture_patch()
 
-        repo.write_category("deal-1", "primary", pinned = true, raw_item = server_item(with_server_metadata = false)).getOrThrow()
+        repo.write_category("deal-1", "newsletters", pinned = true, raw_item = server_item(with_server_metadata = false)).getOrThrow()
 
-        val blob = open_with(key_from_master(data_kek), captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
-        assertEquals("primary", blob.category)
+        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("newsletters", blob.category)
+        assertTrue(blob.category_pinned)
         assertEquals(4096L, blob.size_bytes)
+    }
+
+    private val loose_web_blob = """
+        {"is_read":false,"is_starred":null,"is_pinned":null,"is_trashed":false,
+        "is_archived":false,"is_spam":false,"size_bytes":null,"has_attachments":"false",
+        "attachment_count":"2","message_ts":"2026-09-30T08:00:00.000Z",
+        "updated_at":"2026-10-01T09:30:00.000Z","item_type":"received",
+        "category":"newsletters","category_pinned":true,"label_tokens":["a"]}
+    """.trimIndent()
+
+    @Test
+    fun `a web blob with null or loosely typed fields still moves to travel`() = runTest {
+        val captured = capture_patch()
+        val (encrypted, nonce) = seal_like_web(loose_web_blob)
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        val write = repo.write_category("deal-1", "travel", pinned = true, raw_item = listed).getOrThrow()
+
+        assertEquals("newsletters", write.prior_category)
+        assertTrue(write.prior_pinned)
+        val raw = open_raw(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val parsed = json.parseToJsonElement(raw).jsonObject
+        assertEquals("travel", parsed["category"]!!.jsonPrimitive.content)
+        assertEquals("true", parsed["category_pinned"]!!.jsonPrimitive.content)
+        assertEquals("2", parsed["attachment_count"]!!.jsonPrimitive.content)
+        assertNotNull(parsed["label_tokens"])
+    }
+
+    @Test
+    fun `a web blob with null or loosely typed fields shows its category in the list`() = runTest {
+        val (encrypted, nonce) = seal_like_web(loose_web_blob)
+        list_returns(server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce))
+
+        val meta = repo.fetch_inbox().getOrThrow().items.single().raw_item.metadata
+
+        assertEquals("newsletters", meta?.category)
+        assertEquals(true, meta?.category_pinned)
+        assertEquals(2, meta?.attachment_count)
+    }
+
+    @Test
+    fun `a moved message carries a newer metadata version`() = runTest {
+        capture_patch()
+
+        val write = repo.write_category("deal-1", "travel", pinned = true, raw_item = server_item(with_server_metadata = false)).getOrThrow()
+
+        assertEquals(3, write.item.metadata_version)
+    }
+
+    @Test
+    fun `a stale cached blob is replaced by the server copy before moving`() = runTest {
+        val captured = capture_patch()
+        val stale = server_item(with_server_metadata = false).copy(
+            encrypted_metadata = java.util.Base64.getEncoder().encodeToString(ByteArray(48) { 9 }),
+        )
+        coEvery { mail_api.get_message("deal-1") } returns server_item(with_server_metadata = false)
+
+        repo.set_category("deal-1", "travel", stale).getOrThrow()
+
+        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("travel", blob.category)
+        assertEquals(4096L, blob.size_bytes)
+    }
+
+    @Test
+    fun `new mail without metadata is sealed with the key the other blobs on the account use`() = runTest {
+        val legacy = ByteArray(32) { (it + 60).toByte() }
+        every { session_key_store.get_decrypt_keks() } returns listOf(java.util.Base64.getEncoder().encodeToString(legacy))
+        val legacy_key = key_from_master(legacy)
+        val (encrypted, nonce) = seal_with(legacy_key, moved_to_travel_on_web)
+        list_returns(server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce))
+        repo.fetch_inbox().getOrThrow()
+        val captured = capture_patch()
+        coEvery { mail_api.get_message("fresh-1") } returns MailItem(
+            id = "fresh-1",
+            item_type = "received",
+            message_ts = "2026-10-02T08:00:00Z",
+        )
+
+        repo.set_category("fresh-1", "newsletters", MailItem(id = "fresh-1", item_type = "received")).getOrThrow()
+
+        val blob = open_with(legacy_key, captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        assertEquals("newsletters", blob.category)
+        assertTrue(blob.category_pinned)
+    }
+
+    @Test
+    fun `marking read keeps the key and the fields another client wrote`() = runTest {
+        val data_kek = ByteArray(32) { (it * 3 + 4).toByte() }
+        every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
+        val captured = capture_patch()
+        val (encrypted, nonce) = seal_like_web(loose_web_blob)
+        val listed = server_item(with_server_metadata = false).copy(encrypted_metadata = encrypted, metadata_nonce = nonce)
+
+        repo.mark_read("deal-1", true, listed).getOrThrow()
+
+        val raw = open_raw(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val parsed = json.parseToJsonElement(raw).jsonObject
+        assertEquals("true", parsed["is_read"]!!.jsonPrimitive.content)
+        assertEquals("newsletters", parsed["category"]!!.jsonPrimitive.content)
+        assertNotNull(parsed["label_tokens"])
     }
 
     @Test

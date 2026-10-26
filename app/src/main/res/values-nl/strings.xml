@@ -3309,7 +3309,7 @@
     <string name="address_change_code_too_many">Te veel onjuiste codes. Start de wijziging opnieuw voor een nieuwe code.</string>
     <string name="address_change_code_expired">Die code is verlopen. Start de wijziging opnieuw om een nieuwe te krijgen.</string>
     <string name="address_change_taken_now">Iemand anders heeft dat adres al. Kies een ander adres.</string>
-    <string name="address_change_locked_plan">Je adres wijzigen is een Supernova-functie.</string>
+    <string name="address_change_locked_plan">Je adres wijzigen is een functie van Supernova en Family.</string>
     <string name="address_change_locked_cooldown">Je kunt je adres weer wijzigen op %1$s.</string>
     <string name="address_change_password_wrong">Dat wachtwoord is niet juist.</string>
     <string name="address_change_locked_account_kind">Alleen persoonlijke accounts kunnen hun adres wijzigen.</string>

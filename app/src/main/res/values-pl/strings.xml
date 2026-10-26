@@ -3349,7 +3349,7 @@
     <string name="address_change_code_too_many">Zbyt wiele błędnych kodów. Aby otrzymać nowy kod, rozpocznij zmianę ponownie.</string>
     <string name="address_change_code_expired">Ten kod wygasł. Aby otrzymać nowy, rozpocznij zmianę od nowa.</string>
     <string name="address_change_taken_now">Ten adres zostal wlasnie zajety. Wybierz inny.</string>
-    <string name="address_change_locked_plan">Zmiana adresu to funkcja Supernova.</string>
+    <string name="address_change_locked_plan">Zmiana adresu to funkcja planów Supernova i Family.</string>
     <string name="address_change_locked_cooldown">Adres możesz zmienić ponownie %1$s.</string>
     <string name="address_change_password_wrong">To hasło jest nieprawidłowe.</string>
     <string name="address_change_locked_account_kind">Adres mogą zmienić tylko konta osobiste.</string>
