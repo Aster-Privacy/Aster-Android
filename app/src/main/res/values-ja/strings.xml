@@ -3298,7 +3298,7 @@
     <string name="address_change_code_too_many">誤ったコードの入力が多すぎます。新しいコードを受け取るには、変更を最初からやり直してください。</string>
     <string name="address_change_code_expired">このコードは有効期限が切れています。新しいコードを受け取るには、変更を最初からやり直してください。</string>
     <string name="address_change_taken_now">そのアドレスは既に使われています。別のアドレスを選んでください。</string>
-    <string name="address_change_locked_plan">アドレスの変更は Supernova の機能です。</string>
+    <string name="address_change_locked_plan">アドレスの変更は Supernova と Family の機能です。</string>
     <string name="address_change_locked_cooldown">%1$s にアドレスを再び変更できます。</string>
     <string name="address_change_password_wrong">このパスワードは正しくありません。</string>
     <string name="address_change_locked_account_kind">アドレスを変更できるのは個人アカウントのみです。</string>

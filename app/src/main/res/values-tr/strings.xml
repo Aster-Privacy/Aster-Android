@@ -3309,7 +3309,7 @@
     <string name="address_change_code_too_many">Çok fazla hatalı kod girildi. Yeni bir kod almak için değişikliği yeniden başlatın.</string>
     <string name="address_change_code_expired">Bu kodun süresi doldu. Yenisini almak için değişikliği yeniden başlatın.</string>
     <string name="address_change_taken_now">Bu adresi başka biri aldı. Başka bir adres seçin.</string>
-    <string name="address_change_locked_plan">Adres değiştirmek bir Supernova özelliğidir.</string>
+    <string name="address_change_locked_plan">Adres değiştirmek Supernova ve Family planlarının bir özelliğidir.</string>
     <string name="address_change_locked_cooldown">Adresinizi %1$s tarihinde yeniden değiştirebilirsiniz.</string>
     <string name="address_change_password_wrong">Bu parola doğru değil.</string>
     <string name="address_change_locked_account_kind">Adresi yalnızca kişisel hesaplar değiştirebilir.</string>

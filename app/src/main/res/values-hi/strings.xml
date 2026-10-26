@@ -3201,7 +3201,7 @@
     <string name="address_change_code_too_many">बहुत ज़्यादा गलत कोड डाले गए। नया कोड पाने के लिए, बदलाव फिर से शुरू करें।</string>
     <string name="address_change_code_expired">यह कोड समाप्त हो गया। नया कोड पाने के लिए, बदलाव फिर से शुरू करें।</string>
     <string name="address_change_taken_now">यह पता किसी और ने ले लिया। दूसरा चुनें।</string>
-    <string name="address_change_locked_plan">अपना पता बदलना Supernova की सुविधा है।</string>
+    <string name="address_change_locked_plan">अपना पता बदलना Supernova और Family की सुविधा है।</string>
     <string name="address_change_locked_cooldown">आप %1$s को अपना पता दोबारा बदल सकते हैं।</string>
     <string name="address_change_password_wrong">यह पासवर्ड सही नहीं है.</string>
     <string name="address_change_locked_account_kind">केवल व्यक्तिगत खाते ही अपना पता बदल सकते हैं।</string>

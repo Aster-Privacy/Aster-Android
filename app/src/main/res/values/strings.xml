@@ -3360,7 +3360,7 @@
     <string name="address_change_code_too_many">Too many incorrect codes. To get a new code, start the change again.</string>
     <string name="address_change_code_expired">That code expired. To get a new one, start the change again.</string>
     <string name="address_change_taken_now">Someone claimed that address first. Pick another one.</string>
-    <string name="address_change_locked_plan">Changing your address is a Supernova feature.</string>
+    <string name="address_change_locked_plan">Changing your address is part of Supernova and Family.</string>
     <string name="address_change_locked_cooldown">You can change your address again on %1$s.</string>
     <string name="address_change_password_wrong">That password is not correct.</string>
     <string name="address_change_locked_account_kind">Only personal accounts can change their address.</string>

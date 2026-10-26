@@ -3328,7 +3328,7 @@
     <string name="address_change_code_too_many">Troppi codici errati. Per ricevere un nuovo codice, riavvia la modifica.</string>
     <string name="address_change_code_expired">Il codice è scaduto. Per riceverne uno nuovo, riavvia la modifica.</string>
     <string name="address_change_taken_now">Qualcuno ha gia preso quell\'indirizzo. Scegline un altro.</string>
-    <string name="address_change_locked_plan">Cambiare indirizzo è una funzione di Supernova.</string>
+    <string name="address_change_locked_plan">Cambiare indirizzo è una funzione di Supernova e Family.</string>
     <string name="address_change_locked_cooldown">Puoi cambiare di nuovo indirizzo il %1$s.</string>
     <string name="address_change_password_wrong">Questa password non è corretta.</string>
     <string name="address_change_locked_account_kind">Solo gli account personali possono cambiare il proprio indirizzo.</string>

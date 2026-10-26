@@ -3357,7 +3357,7 @@
     <string name="address_change_code_too_many">Trop de codes incorrects. Pour recevoir un nouveau code, recommencez le changement.</string>
     <string name="address_change_code_expired">Ce code a expiré. Pour en recevoir un nouveau, recommencez le changement.</string>
     <string name="address_change_taken_now">Cette adresse vient d\'etre prise. Choisissez-en une autre.</string>
-    <string name="address_change_locked_plan">Changer d\'adresse est une fonctionnalité Supernova.</string>
+    <string name="address_change_locked_plan">Changer d\'adresse est une fonctionnalité des offres Supernova et Family.</string>
     <string name="address_change_locked_cooldown">Vous pourrez changer d\'adresse à nouveau le %1$s.</string>
     <string name="address_change_password_wrong">Ce mot de passe n\'est pas correct.</string>
     <string name="address_change_locked_account_kind">Seuls les comptes personnels peuvent changer d\'adresse.</string>

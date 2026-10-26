@@ -3349,7 +3349,7 @@
     <string name="address_change_code_too_many">Слишком много неверных кодов. Чтобы получить новый код, начните изменение заново.</string>
     <string name="address_change_code_expired">Срок действия кода истек. Чтобы получить новый, начните изменение заново.</string>
     <string name="address_change_taken_now">Этот адрес уже занят. Выберите другой.</string>
-    <string name="address_change_locked_plan">Изменение адреса доступно в Supernova.</string>
+    <string name="address_change_locked_plan">Изменение адреса доступно в Supernova и Family.</string>
     <string name="address_change_locked_cooldown">Вы сможете снова изменить адрес %1$s.</string>
     <string name="address_change_password_wrong">Этот пароль неверен.</string>
     <string name="address_change_locked_account_kind">Менять адрес могут только личные аккаунты.</string>
