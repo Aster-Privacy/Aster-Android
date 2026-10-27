@@ -264,6 +264,7 @@ data class ThreadMessage(
     val send_status: String? = null,
     val send_error: String? = null,
     val trust_message: SenderTrustMessage? = null,
+    val pending_send_at_ms: Long? = null,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
@@ -473,6 +474,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         send_status = msg.raw_item.send_status,
         send_error = msg.raw_item.send_error,
         trust_message = thread_message_trust_message(msg),
+        pending_send_at_ms = msg.pending_send_at_ms,
     )
 }
 

@@ -476,6 +476,7 @@ data class ThreadMessageDecrypted(
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     val draft_attachments: List<DraftAttachmentFile> = emptyList(),
     val sender_verification: String? = null,
+    val pending_send_at_ms: Long? = null,
 )
 
 @Singleton
@@ -1312,6 +1313,7 @@ class MailRepository @Inject constructor(
                     thread_token = thread_token,
                     reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
                     started_at_ms = started_at_ms,
+                    send_at_ms = started_at_ms + delay_ms,
                     message = build_optimistic_send_message(
                         pending_id = pending_id,
                         started_at_ms = started_at_ms,

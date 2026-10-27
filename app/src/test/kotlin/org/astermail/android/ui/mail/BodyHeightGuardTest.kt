@@ -161,4 +161,37 @@ class BodyHeightGuardTest {
         assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = 600))
         assertEquals(602, overflow_fit_width(scroll_range = 1800, scroll_extent = 1080, scale = 3f, current_fit = 492))
     }
+
+    @Test
+    fun inline_images_are_kept_when_attachments_briefly_disappear() {
+        val current = mapOf("logo" to "data:a", "sig" to "data:b")
+
+        assertTrue(keeps_inline_images(current, emptyMap(), same_html = true))
+        assertTrue(keeps_inline_images(current, mapOf("logo" to "data:a"), same_html = true))
+    }
+
+    @Test
+    fun inline_images_follow_a_new_body_or_new_sources() {
+        val current = mapOf("logo" to "data:a")
+
+        assertFalse(keeps_inline_images(current, emptyMap(), same_html = false))
+        assertFalse(keeps_inline_images(current, mapOf("logo" to "data:a", "sig" to "data:b"), same_html = true))
+        assertFalse(keeps_inline_images(emptyMap(), mapOf("logo" to "data:a"), same_html = true))
+    }
+
+    @Test
+    fun a_pending_send_counts_down_then_sends_then_reports_sent() {
+        assertEquals(pending_send_phase_queued to 10, pending_send_phase(false, 10_000L, 0L))
+        assertEquals(pending_send_phase_queued to 1, pending_send_phase(false, 10_000L, 9_500L))
+        assertEquals(pending_send_phase_sending to 0, pending_send_phase(false, 10_000L, 10_000L))
+        assertEquals(pending_send_phase_sending to 0, pending_send_phase(false, null, 0L))
+        assertEquals(pending_send_phase_sent to 0, pending_send_phase(true, 10_000L, 0L))
+    }
+
+    @Test
+    fun thread_keys_take_an_alias_only_when_it_is_free() {
+        assertEquals(listOf("a", "p1"), thread_item_keys(listOf("a", "srv"), mapOf("srv" to "p1")))
+        assertEquals(listOf("srv", "p1"), thread_item_keys(listOf("srv", "p1"), mapOf("srv" to "p1")))
+        assertEquals(listOf("p1", "b"), thread_item_keys(listOf("a", "b"), mapOf("a" to "p1", "b" to "p1")))
+    }
 }
