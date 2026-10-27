@@ -140,3 +140,30 @@ internal fun body_width_changed(old_width: Int, new_width: Int): Boolean =
 
 internal fun body_width_measurable(width_px: Int, density: Float): Boolean =
     width_px >= MIN_MEASURABLE_WIDTH_DP * density.coerceAtLeast(1f)
+
+internal fun keeps_inline_images(
+    current: Map<String, String>,
+    resolved: Map<String, String>,
+    same_html: Boolean,
+): Boolean =
+    same_html && resolved.size < current.size && current.keys.containsAll(resolved.keys)
+
+internal const val pending_send_phase_queued = 0
+internal const val pending_send_phase_sending = 1
+internal const val pending_send_phase_sent = 2
+
+internal fun pending_send_phase(sent: Boolean, send_at_ms: Long?, now_ms: Long): Pair<Int, Int> = when {
+    sent -> pending_send_phase_sent to 0
+    send_at_ms != null && now_ms < send_at_ms ->
+        pending_send_phase_queued to ((send_at_ms - now_ms + 999L) / 1000L).toInt()
+    else -> pending_send_phase_sending to 0
+}
+
+internal fun thread_item_keys(ids: List<String>, aliases: Map<String, String>): List<String> {
+    if (aliases.isEmpty()) return ids
+    val taken = HashSet<String>(ids)
+    return ids.map { id ->
+        val alias = aliases[id]
+        if (alias != null && taken.add(alias)) alias else id
+    }
+}

@@ -53,3 +53,9 @@ fun mark_all_has_unread(
     filter_active -> false
     else -> (server_unread_count ?: 0) > 0
 }
+
+fun items_matching_read_filter(items: List<InboxItem>, filter: ListReadFilter): List<InboxItem> = when (filter) {
+    ListReadFilter.all -> items
+    ListReadFilter.unread -> items.filter { !it.is_read }
+    ListReadFilter.read -> items.filter { it.is_read }
+}

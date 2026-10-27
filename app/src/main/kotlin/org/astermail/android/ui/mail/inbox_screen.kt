@@ -4759,6 +4759,18 @@ fun emails_fingerprint_of(emails: List<Email>): Int {
         hash = 31 * hash + e.label_colors.hashCode()
         hash = 31 * hash + e.label_icons.hashCode()
         hash = 31 * hash + e.category.hashCode()
+        hash = 31 * hash + e.thread_id.hashCode()
+        hash = 31 * hash + e.subject.hashCode()
+        hash = 31 * hash + e.preview.hashCode()
+        hash = 31 * hash + e.sender_name.hashCode()
+        hash = 31 * hash + e.sender_email.hashCode()
+        hash = 31 * hash + e.display_sender_name.hashCode()
+        hash = 31 * hash + e.display_sender_email.hashCode()
+        hash = 31 * hash + e.received_at.hashCode()
+        hash = 31 * hash + (if (e.has_attachment) 16 else 0)
+        hash = 31 * hash + e.thread_message_count
+        hash = 31 * hash + e.send_status.hashCode()
+        hash = 31 * hash + e.folder_chip.hashCode()
     }
     return hash
 }

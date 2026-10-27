@@ -173,4 +173,49 @@ class OptimisticSendsTest {
         assertFalse(store.remove("p1"))
         assertEquals(listOf("p2"), store.sends.value.map { it.pending_id })
     }
+
+    @Test
+    fun `a server copy stamped slightly before the send by a slow clock still matches`() {
+        val committed = send("p1").copy(committed = true)
+
+        assertTrue(
+            optimistic_send_has_server_copy(
+                committed,
+                listOf(server_message("skewed", "sent", started_at_ms - 5_000L)),
+            ),
+        )
+    }
+
+    @Test
+    fun `the shown send reports its phase and send time`() {
+        val queued = send("p1").copy(send_at_ms = started_at_ms + 10_000L)
+        val committed = send("p2").copy(committed = true)
+
+        val shown = optimistic_sends_for_thread(listOf(queued, committed), "user_1", "thread_1", "msg_1", emptyList())
+
+        assertEquals(listOf(OPTIMISTIC_SEND_STATUS, OPTIMISTIC_SENT_STATUS), shown.map { it.raw_item.send_status })
+        assertEquals(started_at_ms + 10_000L, shown.first().pending_send_at_ms)
+    }
+
+    @Test
+    fun `a committed send lends its key to its server copy`() {
+        val committed = send("p1").copy(committed = true, mail_item_id = "srv_1")
+        val pending = send("p2")
+        val server = listOf(server_message("srv_1", "sent", started_at_ms + 1_000L))
+
+        assertEquals(
+            mapOf("srv_1" to optimistic_send_message_id("p1")),
+            optimistic_send_aliases(listOf(committed, pending), "user_1", server),
+        )
+        assertTrue(optimistic_send_aliases(listOf(committed), "user_2", server).isEmpty())
+    }
+
+    @Test
+    fun `two sends never claim the same server copy`() {
+        val first = send("p1").copy(committed = true)
+        val second = send("p2", started_at = started_at_ms + 1_000L).copy(committed = true)
+        val server = listOf(server_message("srv_1", "sent", started_at_ms + 2_000L))
+
+        assertEquals(1, optimistic_send_aliases(listOf(first, second), "user_1", server).size)
+    }
 }

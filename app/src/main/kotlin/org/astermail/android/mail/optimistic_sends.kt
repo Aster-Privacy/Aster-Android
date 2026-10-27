@@ -28,6 +28,8 @@ import org.astermail.android.api.mail.ThreadMessageItem
 
 const val OPTIMISTIC_SEND_ID_PREFIX = "pending_send_"
 const val OPTIMISTIC_SEND_STATUS = "sending"
+const val OPTIMISTIC_SENT_STATUS = "sent"
+const val OPTIMISTIC_SEND_CLOCK_SKEW_MS = 15_000L
 const val OPTIMISTIC_SEND_LINGER_MS = 30_000L
 
 fun is_optimistic_send_id(id: String): Boolean = id.startsWith(OPTIMISTIC_SEND_ID_PREFIX)
@@ -43,6 +45,7 @@ data class OptimisticSend(
     val message: ThreadMessageDecrypted,
     val committed: Boolean = false,
     val mail_item_id: String? = null,
+    val send_at_ms: Long = started_at_ms,
 )
 
 class OptimisticSendStore {
@@ -155,12 +158,35 @@ private fun iso_to_epoch_ms(value: String?): Long? {
 fun optimistic_send_has_server_copy(send: OptimisticSend, server_messages: List<ThreadMessageDecrypted>): Boolean {
     if (!send.committed) return false
     val real = server_messages.filterNot { is_optimistic_send_id(it.id) }
+    return server_copy_of(send, real) != null
+}
+
+private fun server_copy_of(send: OptimisticSend, real: List<ThreadMessageDecrypted>): ThreadMessageDecrypted? {
     val mail_item_id = send.mail_item_id
-    if (mail_item_id != null && real.any { it.id == mail_item_id }) return true
-    return real.any { message ->
+    if (mail_item_id != null) real.firstOrNull { it.id == mail_item_id }?.let { return it }
+    val floor = send.started_at_ms - OPTIMISTIC_SEND_CLOCK_SKEW_MS
+    return real.lastOrNull { message ->
         message.raw_item.item_type == "sent" &&
-            (iso_to_epoch_ms(message.raw_item.created_at ?: message.timestamp) ?: Long.MIN_VALUE) >= send.started_at_ms
+            (iso_to_epoch_ms(message.raw_item.created_at ?: message.timestamp) ?: Long.MIN_VALUE) >= floor
     }
+}
+
+fun optimistic_send_aliases(
+    sends: List<OptimisticSend>,
+    account_id: String?,
+    server_messages: List<ThreadMessageDecrypted>,
+): Map<String, String> {
+    if (sends.isEmpty()) return emptyMap()
+    val real = server_messages.filterNot { is_optimistic_send_id(it.id) }
+    val aliases = HashMap<String, String>()
+    sends
+        .filter { it.committed && it.account_id == account_id }
+        .sortedBy { it.started_at_ms }
+        .forEach { send ->
+            val copy = server_copy_of(send, real.filter { it.id !in aliases }) ?: return@forEach
+            aliases[copy.id] = send.message.id
+        }
+    return aliases
 }
 
 fun optimistic_sends_for_thread(
@@ -181,5 +207,12 @@ fun optimistic_sends_for_thread(
         }
         .filterNot { send -> optimistic_send_has_server_copy(send, server_messages) }
         .sortedBy { it.started_at_ms }
-        .map { it.message }
+        .map { send ->
+            send.message.copy(
+                pending_send_at_ms = send.send_at_ms,
+                raw_item = send.message.raw_item.copy(
+                    send_status = if (send.committed) OPTIMISTIC_SENT_STATUS else OPTIMISTIC_SEND_STATUS,
+                ),
+            )
+        }
 }

@@ -206,6 +206,15 @@ class MailViewModel @Inject constructor(
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    val thread_send_aliases: StateFlow<Map<String, String>> =
+        combine(_thread_state, repository.optimistic_sends) { state, sends ->
+            optimistic_send_aliases(
+                sends = sends,
+                account_id = repository.current_account_id(),
+                server_messages = state.messages,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
     val visible_order: StateFlow<List<String>> = repository.visible_order
 
     fun set_visible_order(ids: List<String>) {
@@ -1661,9 +1670,11 @@ class MailViewModel @Inject constructor(
         filtered_list_time = 0L
         replace_on_revalidate = false
         val filtered = !read_filter_allows_cache_write(wanted)
+        val kept = items_matching_read_filter(current.items, wanted)
         _inbox_state.value = InboxUiState(
+            items = kept,
             is_loading = filtered,
-            initial = true,
+            initial = kept.isEmpty(),
             current_folder = folder,
             stats = current.stats,
             stats_loaded_at = current.stats_loaded_at,

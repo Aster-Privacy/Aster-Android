@@ -42,6 +42,7 @@ import org.astermail.android.BuildConfig
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -855,6 +856,7 @@ fun MailDetailScreen(
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
     val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
+    val thread_send_aliases by mail_vm.thread_send_aliases.collectAsStateWithLifecycle()
     val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email) {
         if (!thread_matches_email || optimistic_thread_messages.isEmpty()) {
             messages
@@ -1515,7 +1517,8 @@ fun MailDetailScreen(
                 }
 
                 val thread_items = if (open_layout == null) emptyList() else display_messages
-                items(thread_items.size, key = { thread_items[it].id }, contentType = { "thread_message" }) { idx ->
+                val thread_item_keys = thread_item_keys(thread_items.map { it.id }, thread_send_aliases)
+                items(thread_items.size, key = { thread_item_keys[it] }, contentType = { "thread_message" }) { idx ->
                     val msg = thread_items[idx]
                     val is_pending_send = org.astermail.android.mail.is_optimistic_send_id(msg.id)
                     val is_last = idx == thread_items.size - 1
@@ -2831,10 +2834,9 @@ internal fun expanded_message(
         }
 
         if (is_pending_send) {
-            Text(
-                text = stringResource(R.string.sending),
-                color = colors.text_muted,
-                fontSize = 12.sp,
+            pending_send_status(
+                send_status = msg.send_status,
+                send_at_ms = msg.pending_send_at_ms,
                 modifier = Modifier
                     .padding(horizontal = AsterSpacing.md)
                     .padding(bottom = AsterSpacing.sm)
@@ -2908,18 +2910,22 @@ internal fun expanded_message(
             )
         }
 
+        val inline_images_html = remember { arrayOf<String?>(null) }
         val inline_images by produceState(
             initialValue = emptyMap<String, String>(),
             msg.body_html,
             msg.attachments,
             thread_attachments,
         ) {
-            value = withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val html_now = msg.body_html.orEmpty()
+            val resolved = withContext(kotlinx.coroutines.Dispatchers.Default) {
                 inline_image_sources(
-                    msg.body_html.orEmpty(),
+                    html_now,
                     msg.attachments + thread_attachments,
                 )
             }
+            if (!keeps_inline_images(value, resolved, inline_images_html[0] == html_now)) value = resolved
+            inline_images_html[0] = html_now
         }
 
         val body_settings_state by shared_settings_view_model().state.collectAsStateWithLifecycle()
@@ -6594,6 +6600,8 @@ internal fun email_html_view(
         cached_height?.dp ?: if (html.isEmpty()) placeholder_body_height else estimated_height
     }
     val shown_height_ref = remember { floatArrayOf(0f) }
+    var ever_shown by remember { mutableStateOf(body_shown) }
+    val held_recheck = remember(height_cache_key) { booleanArrayOf(false) }
     val page_painted = remember(height_cache_key) { mutableStateOf(false) }
     val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
     val probe_hold_dp = remember(height_cache_key) { mutableStateOf(0.dp) }
@@ -6606,7 +6614,7 @@ internal fun email_html_view(
     }
     val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
     val renderer_gone = remember { mutableStateOf(false) }
-    var web_generation by remember(height_cache_key) { mutableStateOf(0) }
+    var web_generation by remember { mutableStateOf(0) }
     val remeasure_trigger = remember(height_cache_key) { mutableStateOf(0) }
     val layout_density = LocalDensity.current.density
     val max_body_height_px = remember(layout_density) { (max_body_layout_px / layout_density.coerceAtLeast(1f)).toInt() }
@@ -6826,6 +6834,10 @@ internal fun email_html_view(
             @Suppress("DEPRECATION")
             val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
             val filled = web_height_viewport_filled(web, content)
+            if (!probed && !has_measured && !body_shown && ever_shown && (content <= viewport_floor + 2 || filled)) {
+                probed = true
+                held_recheck[0] = true
+            }
             if (!probed && !has_measured && !body_shown && (content <= viewport_floor + 2 || filled)) {
                 probed = true
                 measure_probe.value = true
@@ -7306,22 +7318,27 @@ internal fun email_html_view(
       LaunchedEffect(body_ready_now) {
           if (body_ready_now) {
               body_shown = true
+              ever_shown = true
               body_shown_cache.mark_shown(height_cache_key)
+              if (held_recheck[0]) {
+                  held_recheck[0] = false
+                  height_recheck.value = true
+              }
           }
       }
       val body_reveal by animateFloatAsState(
-          targetValue = if (body_shown) 1f else 0f,
+          targetValue = if (body_shown || ever_shown) 1f else 0f,
           animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
           label = "web_reveal",
       )
       Box(
           modifier = Modifier
               .fillMaxWidth()
-              .then(if (body_shown || renderer_exhausted.value) Modifier else Modifier.height(loading_height))
+              .then(if (body_shown || ever_shown || renderer_exhausted.value) Modifier else Modifier.height(loading_height))
               .clipToBounds(),
           contentAlignment = Alignment.Center,
       ) {
-        if (white_page_ref[0] && body_shown) {
+        if (white_page_ref[0] && (body_shown || ever_shown)) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -7507,14 +7524,14 @@ internal fun email_html_view(
                 val target = when {
                     measure_probe.value -> probe_height_dp.value
                     has_measured && content_height_dp > 0.dp -> content_height_dp
-                    body_shown && shown_height_ref[0] > 0f -> shown_height_ref[0].dp
+                    (body_shown || ever_shown) && shown_height_ref[0] > 0f -> shown_height_ref[0].dp
                     settled_height_ref[0] > 0f -> settled_height_ref[0].dp
                     else -> estimated_height
                 }
                 if (has_measured && content_height_dp > 0.dp) shown_height_ref[0] = content_height_dp.value
                 val animated_target by animateDpAsState(
                     targetValue = target,
-                    animationSpec = if (height_instant || zoom_active || !body_shown || measure_probe.value) {
+                    animationSpec = if (height_instant || zoom_active || !(body_shown || ever_shown) || measure_probe.value) {
                         snap()
                     } else {
                         tween(durationMillis = 220)
@@ -7537,7 +7554,7 @@ internal fun email_html_view(
                     .then(
                         when {
                             body_reveal >= 1f -> Modifier
-                            white_page_ref[0] -> if (body_shown) Modifier else Modifier.alpha(0f)
+                            white_page_ref[0] -> if (body_shown || ever_shown) Modifier else Modifier.alpha(0f)
                             else -> Modifier.alpha(body_reveal)
                         },
                     )
@@ -7553,7 +7570,7 @@ internal fun email_html_view(
         )
         }
         }
-        if (!renderer_exhausted.value && !body_shown) {
+        if (!renderer_exhausted.value && !body_shown && !ever_shown) {
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
@@ -8671,5 +8688,61 @@ private fun sender_unverified_banner(sender: String) {
                 lineHeight = 17.sp,
             )
         }
+    }
+}
+
+@Composable
+private fun pending_send_status(
+    send_status: String?,
+    send_at_ms: Long?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val sent = send_status == org.astermail.android.mail.OPTIMISTIC_SENT_STATUS
+    var now_ms by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(sent, send_at_ms) {
+        while (!sent && send_at_ms != null && now_ms < send_at_ms) {
+            kotlinx.coroutines.delay((send_at_ms - now_ms).rem(1000L).takeIf { it > 0 } ?: 1000L)
+            now_ms = System.currentTimeMillis()
+        }
+    }
+    val phase = pending_send_phase(sent, send_at_ms, now_ms)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.semantics(mergeDescendants = true) {},
+    ) {
+        Box(Modifier.size(14.dp), contentAlignment = Alignment.Center) {
+            Crossfade(targetState = phase.first, label = "pending_send_icon") { state ->
+                when (state) {
+                    pending_send_phase_sent -> Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = colors.accent_blue,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    pending_send_phase_sending -> CircularProgressIndicator(
+                        color = colors.text_muted,
+                        strokeWidth = 1.5.dp,
+                        modifier = Modifier.size(12.dp),
+                    )
+                    else -> Icon(
+                        imageVector = TablerIcons.Clock,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = when (phase.first) {
+                pending_send_phase_sent -> stringResource(R.string.sent)
+                pending_send_phase_sending -> stringResource(R.string.sending)
+                else -> stringResource(R.string.sending_in_countdown, phase.second)
+            },
+            color = if (phase.first == pending_send_phase_sent) colors.accent_blue else colors.text_muted,
+            fontSize = 12.sp,
+        )
     }
 }
