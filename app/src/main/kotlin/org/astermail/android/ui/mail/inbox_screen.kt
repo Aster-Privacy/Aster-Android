@@ -1136,6 +1136,8 @@ fun InboxScreen(
             val key = info.visibleItemsInfo.firstOrNull()?.key
             if (info.totalItemsCount == 0) {
                 null
+            } else if (list_state.firstVisibleItemIndex == 0 && list_state.firstVisibleItemScrollOffset == 0) {
+                ListScrollAnchor("", 0)
             } else if (key is String && !key.startsWith("_")) {
                 ListScrollAnchor(key, list_state.firstVisibleItemScrollOffset)
             } else {
@@ -2406,6 +2408,7 @@ fun InboxScreen(
                                         on_toggle_star = { apply_thread_star(thread) },
                                         is_selected = is_selected,
                                         select_mode = true,
+                                        is_pinned = thread.is_pinned,
                                         haptic_enabled = haptic_enabled,
                                         is_first = row_index == 0,
                                         is_last = row_index == visible_threads.lastIndex,

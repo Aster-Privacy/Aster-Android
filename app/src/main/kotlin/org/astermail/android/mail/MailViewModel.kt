@@ -1279,10 +1279,11 @@ class MailViewModel @Inject constructor(
 
     @Volatile private var replace_on_revalidate = false
 
-    private fun previous_for_merge(items: List<InboxItem>): List<InboxItem> {
-        if (!replace_on_revalidate) return items
+    private fun merge_page(page: InboxPage, prior_items: List<InboxItem>, folder: String): MergeResult {
+        if (!replace_on_revalidate) return merge_with_previous(page, prior_items, folder)
         replace_on_revalidate = false
-        return emptyList()
+        val replaced = merge_with_previous(page, emptyList(), folder)
+        return replaced.copy(items = folder_cache_carry_decrypted(replaced.items, prior_items))
     }
 
     private fun reload_keeping_items(replace_items: Boolean, keep_inflight_load: Boolean = false) {
@@ -1466,7 +1467,7 @@ class MailViewModel @Inject constructor(
                         )
                     }
                     val prior = _inbox_state.value
-                    val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
+                    val merge = merge_page(page, prior.items, folder)
                     val merged_items = apply_demo_overlay(
                         apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                         folder,
@@ -1605,7 +1606,7 @@ class MailViewModel @Inject constructor(
             if (_inbox_state.value.is_refreshing) return@launch
             result.onSuccess { page ->
                 val prior = _inbox_state.value
-                val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
+                val merge = merge_page(page, prior.items, folder)
                 val merged_items = apply_demo_overlay(
                     apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                     folder,
@@ -5483,7 +5484,7 @@ class MailViewModel @Inject constructor(
             result.fold(
                 onSuccess = { page ->
                     val prior = _inbox_state.value
-                    val merge = merge_with_previous(page, previous_for_merge(prior.items), folder)
+                    val merge = merge_page(page, prior.items, folder)
                     val merged_items = apply_demo_overlay(
                         apply_tag_overrides(apply_category_overrides(apply_pin_overrides(apply_star_overrides(apply_read_and_reaction_overrides(merge.items))))),
                         folder,
