@@ -23,8 +23,30 @@ package org.astermail.android.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ContentResolver
+import android.content.Context
+import android.media.AudioAttributes
+import android.net.Uri
+import android.provider.Settings
+import org.astermail.android.R
 
 val ALERT_VIBRATION_PATTERN = longArrayOf(0L, 250L, 200L, 250L)
+
+fun aster_sound_attributes(): AudioAttributes = AudioAttributes.Builder()
+    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+    .build()
+
+fun aster_new_mail_sound_uri(context: Context): Uri =
+    Uri.Builder()
+        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+        .authority(context.packageName)
+        .appendPath("raw")
+        .appendPath(context.resources.getResourceEntryName(R.raw.aster_new_mail))
+        .build()
+
+fun is_user_chosen_sound(sound: Uri?): Boolean =
+    sound != null && sound != Settings.System.DEFAULT_NOTIFICATION_URI
 
 fun create_alert_channel(
     manager: NotificationManager,
@@ -55,7 +77,7 @@ private fun inherit_user_choices(channel: NotificationChannel, previous: Notific
         channel.importance = previous.importance
     }
     val previous_sound = previous.sound
-    if (channel.sound != null && previous_sound != null) {
+    if (channel.sound != null && is_user_chosen_sound(previous_sound)) {
         channel.setSound(previous_sound, previous.audioAttributes)
     }
 }
