@@ -32,7 +32,7 @@ import org.astermail.android.R
 
 val ALERT_VIBRATION_PATTERN = longArrayOf(0L, 250L, 200L, 250L)
 
-val ASTER_SOUND_ATTRIBUTES: AudioAttributes = AudioAttributes.Builder()
+fun aster_sound_attributes(): AudioAttributes = AudioAttributes.Builder()
     .setUsage(AudioAttributes.USAGE_NOTIFICATION)
     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
     .build()

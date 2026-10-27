@@ -586,7 +586,7 @@ class MailPollingWorker(
                 .getString(R.string.notif_channel_new_mail_description)
             channel.setShowBadge(true)
             if (is_sound_enabled(context)) {
-                channel.setSound(aster_new_mail_sound_uri(context), ASTER_SOUND_ATTRIBUTES)
+                channel.setSound(aster_new_mail_sound_uri(context), aster_sound_attributes())
             } else {
                 channel.setSound(null, null)
             }
