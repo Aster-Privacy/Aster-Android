@@ -449,11 +449,15 @@ class MailPollingWorker(
     }
 
     companion object {
-        const val CHANNEL_ID = "aster_new_mail_v2"
-        const val CHANNEL_ID_SOUND_ONLY = "aster_new_mail_sound_only_v2"
-        const val CHANNEL_ID_VIBRATE_ONLY = "aster_new_mail_vibrate_only_v2"
-        const val CHANNEL_ID_SILENT = "aster_new_mail_silent_v2"
+        const val CHANNEL_ID = "aster_new_mail_v3"
+        const val CHANNEL_ID_SOUND_ONLY = "aster_new_mail_sound_only_v3"
+        const val CHANNEL_ID_VIBRATE_ONLY = "aster_new_mail_vibrate_only_v3"
+        const val CHANNEL_ID_SILENT = "aster_new_mail_silent_v3"
         val LEGACY_CHANNEL_IDS = listOf(
+            "aster_new_mail_v2",
+            "aster_new_mail_sound_only_v2",
+            "aster_new_mail_vibrate_only_v2",
+            "aster_new_mail_silent_v2",
             "aster_new_mail",
             "aster_new_mail_sound_only",
             "aster_new_mail_vibrate_only",
@@ -581,7 +585,9 @@ class MailPollingWorker(
             channel.description = localized(context)
                 .getString(R.string.notif_channel_new_mail_description)
             channel.setShowBadge(true)
-            if (!is_sound_enabled(context)) {
+            if (is_sound_enabled(context)) {
+                channel.setSound(aster_new_mail_sound_uri(context), ASTER_SOUND_ATTRIBUTES)
+            } else {
                 channel.setSound(null, null)
             }
             create_alert_channel(

@@ -78,7 +78,7 @@ class NotificationAlertChannelTest {
         for (legacy in MailPollingWorker.LEGACY_CHANNEL_IDS) {
             assertTrue(legacy !in current)
         }
-        assertEquals(4, MailPollingWorker.LEGACY_CHANNEL_IDS.distinct().size)
+        assertEquals(8, MailPollingWorker.LEGACY_CHANNEL_IDS.distinct().size)
     }
 
     @Test
