@@ -45,7 +45,8 @@ fun access_token_needs_refresh(access_token: String?, now_s: Long): Boolean {
     val lifetime = read_token_lifetime(access_token) ?: return false
     val total = lifetime.expires_at_s - lifetime.issued_at_s
     val remaining = lifetime.expires_at_s - now_s
-    return remaining < total / PROACTIVE_REFRESH_DIVISOR
+    val age = now_s - lifetime.issued_at_s
+    return remaining < total / PROACTIVE_REFRESH_DIVISOR || age >= MAX_TOKEN_AGE_BEFORE_REFRESH_S
 }
 
 suspend fun refresh_if_expiring(
@@ -58,3 +59,4 @@ suspend fun refresh_if_expiring(
 }
 
 private const val PROACTIVE_REFRESH_DIVISOR = 3L
+private const val MAX_TOKEN_AGE_BEFORE_REFRESH_S = 86_400L
