@@ -7387,6 +7387,7 @@ internal fun email_html_view(
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false
+                    val tap_slop_px = android.view.ViewConfiguration.get(ctx).scaledTouchSlop.toFloat()
                     setOnTouchListener { v, ev ->
                         val body = v as? mail_body_web_view
                         if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
@@ -7408,11 +7409,15 @@ internal fun email_html_view(
                                 v.parent?.requestDisallowInterceptTouchEvent(true)
                             }
                             android.view.MotionEvent.ACTION_UP -> {
-                                val dx = Math.abs(ev.x - touch_down_x)
-                                val dy = Math.abs(ev.y - touch_down_y)
-                                val quick_tap = ev.eventTime - ev.downTime <
-                                    android.view.ViewConfiguration.getLongPressTimeout()
-                                if (!multi_touch && quick_tap && dx < 16f && dy < 16f && has_toggles_ref[0]) {
+                                val may_toggle = body_tap_may_toggle(
+                                    dx = Math.abs(ev.x - touch_down_x),
+                                    dy = Math.abs(ev.y - touch_down_y),
+                                    touch_slop_px = tap_slop_px,
+                                    duration_ms = ev.eventTime - ev.downTime,
+                                    long_press_ms = android.view.ViewConfiguration.getLongPressTimeout().toLong(),
+                                    multi_touch = multi_touch,
+                                )
+                                if (may_toggle && has_toggles_ref[0]) {
                                     remeasure_trigger.value += 1
                                 }
                             }
@@ -8234,7 +8239,12 @@ private fun attachment_preview_dialog(
                 contentAlignment = Alignment.Center,
             ) {
                 when {
-                    ct.startsWith("image/") -> image_attachment_viewer(bytes, display_filename(attachment.filename))
+                    ct.startsWith("image/") -> image_attachment_viewer(
+                        bytes = bytes,
+                        description = display_filename(attachment.filename),
+                    ) { message ->
+                        attachment_fallback_panel(attachment, ct, bytes, on_download, message)
+                    }
                     is_text_attachment(ct, attachment.filename) -> text_attachment_viewer(bytes)
                     is_pdf_attachment(ct, attachment.filename) -> pdf_attachment_viewer(
                         bytes = bytes,

@@ -80,6 +80,19 @@ internal class body_growth_guard(
     }
 }
 
+internal fun body_tap_may_toggle(
+    dx: Float,
+    dy: Float,
+    touch_slop_px: Float,
+    duration_ms: Long,
+    long_press_ms: Long,
+    multi_touch: Boolean,
+): Boolean {
+    if (multi_touch || duration_ms >= long_press_ms) return false
+    val reach = touch_slop_px.coerceAtLeast(1f) * 2f
+    return dx * dx + dy * dy <= reach * reach
+}
+
 internal fun body_overflows_vertically(content_px: Int, view_px: Int, slack_px: Int): Boolean =
     view_px > 0 && content_px > view_px + slack_px.coerceAtLeast(0)
 
