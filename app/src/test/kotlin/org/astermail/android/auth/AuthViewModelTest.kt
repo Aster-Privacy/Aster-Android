@@ -136,7 +136,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login transitions to loading then success`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns Result.success(LoginOutcome.Success)
+        coEvery { repository.login(any(), any(), any(), any()) } returns Result.success(LoginOutcome.Success)
 
         vm.submit_login("user@astermail.org", "password123!")
         assertEquals(AuthUiState.Loading, vm.ui_state.value)
@@ -144,22 +144,32 @@ class AuthViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AuthUiState.Success, vm.ui_state.value)
-        coVerify { repository.login("user@astermail.org", "password123!", null) }
+        coVerify { repository.login("user@astermail.org", "password123!", null, true) }
+    }
+
+    @Test
+    fun `submit_login passes keep me signed in off through`() = runTest {
+        coEvery { repository.login(any(), any(), any(), any()) } returns Result.success(LoginOutcome.Success)
+
+        vm.submit_login("user@astermail.org", "pass", null, remember_me = false)
+        advanceUntilIdle()
+
+        coVerify { repository.login("user@astermail.org", "pass", null, false) }
     }
 
     @Test
     fun `submit_login with captcha token passes it through`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns Result.success(LoginOutcome.Success)
+        coEvery { repository.login(any(), any(), any(), any()) } returns Result.success(LoginOutcome.Success)
 
         vm.submit_login("user@astermail.org", "pass", "captcha_abc")
         advanceUntilIdle()
 
-        coVerify { repository.login("user@astermail.org", "pass", "captcha_abc") }
+        coVerify { repository.login("user@astermail.org", "pass", "captcha_abc", true) }
     }
 
     @Test
     fun `submit_login unauthorized error maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.UnauthorizedError)
 
         vm.submit_login("user@astermail.org", "wrong")
@@ -172,7 +182,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login network error maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.NetworkError)
 
         vm.submit_login("user@astermail.org", "pass")
@@ -188,7 +198,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login server error maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ServerError(500))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -201,7 +211,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login not found error maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.NotFoundError)
 
         vm.submit_login("user@astermail.org", "pass")
@@ -214,7 +224,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login forbidden captcha error maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ForbiddenError("captcha verification failed"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -230,7 +240,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login forbidden non_captcha error maps to access denied`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ForbiddenError("ip blocked"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -243,7 +253,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login validation error hides field level detail`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ValidationError(listOf("field1 bad", "field2 bad")))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -256,7 +266,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login validation error keeps a readable server message`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ValidationError(listOf("Your account is not ready yet.")))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -269,7 +279,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login unknown host exception maps to connection error`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(java.net.UnknownHostException("no such host"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -285,7 +295,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login connect exception maps to connection error`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(java.net.ConnectException("refused"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -301,7 +311,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login socket timeout maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(java.net.SocketTimeoutException("timed out"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -314,7 +324,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login ssl exception maps correctly`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(javax.net.ssl.SSLException("handshake failed"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -327,7 +337,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login unknown error maps to generic message`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(IllegalStateException("random"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -340,7 +350,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login ignores duplicate call while loading`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } coAnswers {
+        coEvery { repository.login(any(), any(), any(), any()) } coAnswers {
             kotlinx.coroutines.delay(5000)
             Result.success(LoginOutcome.Success)
         }
@@ -353,7 +363,7 @@ class AuthViewModelTest {
         advanceUntilIdle()
 
         clear_dispatcher_records()
-        coVerify(exactly = 1) { repository.login(any(), any(), any()) }
+        coVerify(exactly = 1) { repository.login(any(), any(), any(), any()) }
     }
 
     @Test
@@ -514,7 +524,7 @@ class AuthViewModelTest {
 
     @Test
     fun `reset_state returns to idle`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns Result.success(LoginOutcome.Success)
+        coEvery { repository.login(any(), any(), any(), any()) } returns Result.success(LoginOutcome.Success)
 
         vm.submit_login("user@astermail.org", "pass")
         advanceUntilIdle()
@@ -527,7 +537,7 @@ class AuthViewModelTest {
 
     @Test
     fun `reset_state from error returns to idle`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.UnauthorizedError)
 
         vm.submit_login("user@astermail.org", "pass")
@@ -548,7 +558,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login unknown error shows generic message not raw detail`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.UnknownError("custom detail"))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -564,7 +574,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login empty validation messages gives fallback`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } returns
+        coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.ValidationError(emptyList()))
 
         vm.submit_login("user@astermail.org", "pass")
@@ -577,7 +587,7 @@ class AuthViewModelTest {
 
     @Test
     fun `submit_login timeout maps to the timeout message`() = runTest {
-        coEvery { repository.login(any(), any(), any()) } coAnswers {
+        coEvery { repository.login(any(), any(), any(), any()) } coAnswers {
             kotlinx.coroutines.delay(60_000L)
             Result.success(LoginOutcome.Success)
         }

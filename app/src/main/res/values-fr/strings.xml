@@ -62,6 +62,7 @@
     <string name="confirm_password">Confirmer le mot de passe</string>
     <string name="confirm_password_label">Confirmer le mot de passe</string>
     <string name="keep_me_signed_in">Rester connecté</string>
+    <string name="secure_devices_only">uniquement sur des appareils sécurisés</string>
     <string name="requirement_8_chars">Au moins 12 caractères</string>
     <string name="requirement_uppercase">Une lettre majuscule</string>
     <string name="requirement_lowercase">Une lettre minuscule</string>

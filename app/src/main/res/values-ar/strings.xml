@@ -58,6 +58,7 @@
     <string name="confirm_password">تأكيد كلمة المرور</string>
     <string name="confirm_password_label">تأكيد كلمة المرور</string>
     <string name="keep_me_signed_in">إبقاء تسجيل الدخول</string>
+    <string name="secure_devices_only">على الأجهزة الآمنة فقط</string>
     <string name="requirement_8_chars">12 حرفًا على الأقل</string>
     <string name="requirement_uppercase">حرف كبير واحد</string>
     <string name="requirement_lowercase">حرف صغير واحد</string>

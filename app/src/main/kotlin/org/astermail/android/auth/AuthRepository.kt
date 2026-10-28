@@ -310,7 +310,12 @@ class AuthRepository @Inject constructor(
         return outcome
     }
 
-    suspend fun login(email: String, password: String, captcha_token: String? = null): Result<LoginOutcome> = runCatching {
+    suspend fun login(
+        email: String,
+        password: String,
+        captcha_token: String? = null,
+        remember_me: Boolean = true,
+    ): Result<LoginOutcome> = runCatching {
         val normalized = normalize_email(email)
         val trusted_token = trusted_device_store.get_token(normalized)
         val dotless_hash = CryptoNative.hash_email(normalized)
@@ -343,7 +348,6 @@ class AuthRepository @Inject constructor(
         val login_enrollment = sign_in_proof.enrollment
         val password_hash_b64 = base64_encode(password_hash_bytes)
 
-        val remember_me = true
         val integrity = PlayIntegrityLogin.fetch(context, user_hash)
 
         val login_result = try {

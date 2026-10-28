@@ -58,6 +58,7 @@
     <string name="confirm_password">Wachtwoord bevestigen</string>
     <string name="confirm_password_label">Wachtwoord bevestigen</string>
     <string name="keep_me_signed_in">Ingelogd blijven</string>
+    <string name="secure_devices_only">alleen op beveiligde apparaten</string>
     <string name="requirement_8_chars">Minimaal 12 tekens</string>
     <string name="requirement_uppercase">Eén hoofdletter</string>
     <string name="requirement_lowercase">Eén kleine letter</string>

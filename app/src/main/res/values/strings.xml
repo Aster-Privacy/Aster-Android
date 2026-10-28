@@ -95,6 +95,8 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="confirm_password_label">Confirm password</string>
     <string name="keep_me_signed_in">Keep me signed in</string>
+    <string name="secure_devices_only">only on secure devices</string>
+    <string name="keep_me_signed_in_secure_devices" translatable="false">%1$s - %2$s</string>
     <string name="requirement_8_chars">At least 12 characters</string>
     <string name="requirement_uppercase">One uppercase letter</string>
     <string name="requirement_lowercase">One lowercase letter</string>

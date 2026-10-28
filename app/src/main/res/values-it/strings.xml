@@ -58,6 +58,7 @@
     <string name="confirm_password">Conferma password</string>
     <string name="confirm_password_label">Conferma password</string>
     <string name="keep_me_signed_in">Mantieni l\'accesso</string>
+    <string name="secure_devices_only">solo su dispositivi sicuri</string>
     <string name="requirement_8_chars">Almeno 12 caratteri</string>
     <string name="requirement_uppercase">Una lettera maiuscola</string>
     <string name="requirement_lowercase">Una lettera minuscola</string>

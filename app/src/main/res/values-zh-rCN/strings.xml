@@ -58,6 +58,7 @@
     <string name="confirm_password">确认密码</string>
     <string name="confirm_password_label">确认密码</string>
     <string name="keep_me_signed_in">保持登录状态</string>
+    <string name="secure_devices_only">仅在安全设备上</string>
     <string name="requirement_8_chars">至少12个字符</string>
     <string name="requirement_uppercase">一个大写字母</string>
     <string name="requirement_lowercase">一个小写字母</string>

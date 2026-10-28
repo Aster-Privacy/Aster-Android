@@ -88,6 +88,7 @@
     <string name="confirm_password">पासवर्ड की पुष्टि करें</string>
     <string name="confirm_password_label">पासवर्ड की पुष्टि करें</string>
     <string name="keep_me_signed_in">मुझे साइन इन रखें</string>
+    <string name="secure_devices_only">सिर्फ़ सुरक्षित डिवाइस पर</string>
     <string name="requirement_8_chars">कम से कम 12 अक्षर</string>
     <string name="requirement_uppercase">एक बड़ा अक्षर</string>
     <string name="requirement_lowercase">एक छोटा अक्षर</string>
