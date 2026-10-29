@@ -81,13 +81,18 @@ class RatchetBootstrapService @Inject constructor(
                 return
             }
             reconcile_session_keys_with_vault()
-            val keys = ensure_local_ratchet_keys()
-            if (keys == null) {
+            val ensured_keys = ensure_local_ratchet_keys()
+            if (ensured_keys == null) {
                 debug_log("aborted: ensure_local_ratchet_keys returned null")
                 return
             }
             debug_log("local ratchet keys ready for user $user_id")
-            val pq_identity_generated = persist_ratchet_identity_to_vault_if_needed()
+            val published_keys_changed = persist_ratchet_identity_to_vault_if_needed()
+            val keys = ensured_keys.copy(
+                signed_prekey_public_b64 = session_key_store.get_ratchet_signed_prekey_public_b64()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: ensured_keys.signed_prekey_public_b64,
+            )
 
             val capability = runCatching {
                 capability_reporter.report_if_due(
@@ -112,7 +117,7 @@ class RatchetBootstrapService @Inject constructor(
 
             val stored_generation = uploaded_generation(user_id)
             if (stored_generation >= BUNDLE_UPLOAD_GENERATION &&
-                !pq_identity_generated &&
+                !published_keys_changed &&
                 !identity_unconfirmed
             ) {
                 debug_log("skipped upload: already uploaded for user $user_id")
@@ -126,6 +131,18 @@ class RatchetBootstrapService @Inject constructor(
             }
 
             val uploaded_pq_identity_public = pq_identity_public?.takeIf { it.isNotBlank() }
+            val vault_confirms_keys = cached_vault_json()?.let {
+                vault_holds_ratchet_keys(
+                    it,
+                    keys.identity_public_b64,
+                    keys.signed_prekey_public_b64,
+                    uploaded_pq_identity_public,
+                )
+            } ?: false
+            if (!vault_confirms_keys) {
+                debug_log("deferred upload: the key vault does not hold the keys to publish")
+                return
+            }
             val signature = signed_prekey_signature(
                 identity_public_b64 = keys.identity_public_b64,
                 signed_prekey_public_b64 = keys.signed_prekey_public_b64,
@@ -208,6 +225,12 @@ class RatchetBootstrapService @Inject constructor(
         }.getOrNull() ?: return
         val vault_spk_jwk = vault_state.signed_prekey_jwk
         val vault_spk_public = vault_state.signed_prekey_public_b64
+        retain_local_ratchet_keys(
+            session_key_store,
+            vault_state.identity_jwk,
+            vault_spk_jwk,
+            vault_pq_identity_public(),
+        )
         if (vault_spk_jwk != null && vault_spk_public != null) {
             session_key_store.put_ratchet_keys(
                 identity_jwk = vault_state.identity_jwk,
@@ -228,10 +251,10 @@ class RatchetBootstrapService @Inject constructor(
         debug_log("adopted the vault ratchet identity over stale session keys")
     }
 
-    private fun adopt_vault_pq_identity() {
-        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return
-        val passphrase = session_key_store.get_passphrase() ?: return
-        val vault_json = runCatching {
+    private fun cached_vault_json(): org.json.JSONObject? {
+        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        return runCatching {
             val plain = CryptoNative.decrypt_vault_with_password(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
@@ -240,7 +263,14 @@ class RatchetBootstrapService @Inject constructor(
             val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
             plain.fill(0)
             json
-        }.getOrNull() ?: return
+        }.getOrNull()
+    }
+
+    private fun vault_pq_identity_public(): String? =
+        cached_vault_json()?.optString("ratchet_pq_identity_public", "")?.takeIf { it.isNotBlank() }
+
+    private fun adopt_vault_pq_identity() {
+        val vault_json = cached_vault_json() ?: return
         val pq_secret = vault_json.optString("ratchet_pq_identity_key", "")
             .ifBlank {
                 vault_json.optString("ratchet_pq_identity_seed", "")
@@ -268,23 +298,33 @@ class RatchetBootstrapService @Inject constructor(
             json
         }.getOrNull() ?: return
         if (vault_json.optString("ratchet_identity_key", "") == replaced_identity_jwk) return
-        val previous = vault_json.optJSONArray("ratchet_previous_keys") ?: org.json.JSONArray()
-        for (i in 0 until previous.length()) {
-            val existing = previous.optJSONObject(i)?.optString("ratchet_identity_key", "")
-            if (existing == replaced_identity_jwk) return
-        }
+        val previous = vault_json.optJSONArray("ratchet_previous_keys")
         val entry = org.json.JSONObject().put("ratchet_identity_key", replaced_identity_jwk)
         runCatching { RatchetCrypto.p256_public_raw_from_private_jwk(replaced_identity_jwk) }
             .getOrNull()
             ?.let { entry.put("ratchet_identity_public", base64_encode(it)) }
+        session_key_store.get_ratchet_signed_prekey_jwk()
+            ?.takeIf { it.isNotBlank() && it != vault_json.optString("ratchet_signed_prekey", "") }
+            ?.let { spk ->
+                entry.put("ratchet_signed_prekey", spk)
+                session_key_store.get_ratchet_signed_prekey_public_b64()
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { entry.put("ratchet_signed_prekey_public", it) }
+            }
         val vault_pq_secret = vault_json.optString("ratchet_pq_identity_key", "")
         session_key_store.get_ratchet_pq_identity_secret()
             ?.takeIf { it.isNotBlank() && it != vault_pq_secret }
-            ?.let { entry.put("ratchet_pq_identity_key", it) }
-        val merged = org.json.JSONArray().put(entry)
-        for (i in 0 until minOf(previous.length(), 31)) {
-            merged.put(previous.get(i))
-        }
+            ?.let { pq_secret ->
+                entry.put("ratchet_pq_identity_key", pq_secret)
+                session_key_store.get_ratchet_pq_identity_public()
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { entry.put("ratchet_pq_identity_public", it) }
+            }
+        val merged = merge_retained_ratchet_keys(
+            org.json.JSONArray().put(entry).toString(),
+            previous?.toString(),
+        )?.let { org.json.JSONArray(it) } ?: return
+        if (retained_key_sets_equal(previous, merged)) return
         vault_json.put("ratchet_previous_keys", merged)
 
         val updated_plain = vault_json.toString().toByteArray(Charsets.UTF_8)
@@ -415,8 +455,8 @@ class RatchetBootstrapService @Inject constructor(
 
     private suspend fun persist_ratchet_identity_to_vault_if_needed(): Boolean {
         val identity_jwk = session_key_store.get_ratchet_identity_jwk() ?: return false
-        val spk_jwk = session_key_store.get_ratchet_signed_prekey_jwk() ?: return false
-        val spk_pub = session_key_store.get_ratchet_signed_prekey_public_b64() ?: return false
+        val local_spk_jwk = session_key_store.get_ratchet_signed_prekey_jwk() ?: return false
+        val local_spk_pub = session_key_store.get_ratchet_signed_prekey_public_b64() ?: return false
 
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return false
         val passphrase = session_key_store.get_passphrase() ?: return false
@@ -438,16 +478,31 @@ class RatchetBootstrapService @Inject constructor(
             return false
         }
 
+        val previous_before = vault_json.optJSONArray("ratchet_previous_keys")
+            ?.let { org.json.JSONArray(it.toString()) }
+        val adopted_prekey = vault_signed_prekey_to_adopt(vault_json, session_key_store)
+        if (adopted_prekey != null) {
+            fold_local_ratchet_keys_into_vault(vault_json, session_key_store)
+        }
+        val spk_jwk = adopted_prekey?.jwk ?: local_spk_jwk
+        val spk_pub = adopted_prekey?.public_b64 ?: local_spk_pub
+
         val identity_current = vault_json.optString("ratchet_identity_key", "") == identity_jwk &&
             vault_json.optString("ratchet_signed_prekey", "") == spk_jwk &&
             vault_json.optString("ratchet_signed_prekey_public", "") == spk_pub
 
         val generated = generate_pq_identity_into(vault_json)
+        val previous_changed = !retained_key_sets_equal(
+            previous_before,
+            vault_json.optJSONArray("ratchet_previous_keys"),
+        )
 
-        if (identity_current && generated == null) return false
+        if (identity_current && generated == null && !previous_changed) {
+            return adopted_prekey != null && adopt_vault_signed_prekey(session_key_store, adopted_prekey)
+        }
 
         if (!identity_current) {
-            retain_replaced_ratchet_identity(vault_json, identity_jwk)
+            retain_vault_key_set(vault_json, identity_jwk, spk_jwk)
         }
 
         vault_json.put("ratchet_identity_key", identity_jwk)
@@ -482,36 +537,14 @@ class RatchetBootstrapService @Inject constructor(
 
         session_key_store.put_encrypted_vault(new_ct_b64, new_nonce_b64)
 
-        if (generated == null) return false
+        val prekey_adopted = adopted_prekey != null && adopt_vault_signed_prekey(session_key_store, adopted_prekey)
 
+        if (generated == null) return prekey_adopted
+
+        retain_local_ratchet_keys(session_key_store, null, null, generated.public_b64)
         session_key_store.put_ratchet_pq_identity(generated.secret_b64, generated.public_b64)
         debug_log("generated pq identity for user ${session_key_store.get_user_id()}")
         return true
-    }
-
-    private fun retain_replaced_ratchet_identity(
-        vault_json: org.json.JSONObject,
-        new_identity_jwk: String,
-    ) {
-        val replaced_jwk = vault_json.optString("ratchet_identity_key", "")
-        if (replaced_jwk.isBlank() || replaced_jwk == new_identity_jwk) return
-        val previous = vault_json.optJSONArray("ratchet_previous_keys") ?: org.json.JSONArray()
-        for (i in 0 until previous.length()) {
-            val existing = previous.optJSONObject(i)?.optString("ratchet_identity_key", "")
-            if (existing == replaced_jwk) return
-        }
-        val entry = org.json.JSONObject().put("ratchet_identity_key", replaced_jwk)
-        vault_json.optString("ratchet_pq_identity_key", "")
-            .takeIf { it.isNotBlank() }
-            ?.let { entry.put("ratchet_pq_identity_key", it) }
-        vault_json.optString("ratchet_pq_identity_seed", "")
-            .takeIf { it.isNotBlank() }
-            ?.let { entry.put("ratchet_pq_identity_seed", it) }
-        val merged = org.json.JSONArray().put(entry)
-        for (i in 0 until minOf(previous.length(), 31)) {
-            merged.put(previous.get(i))
-        }
-        vault_json.put("ratchet_previous_keys", merged)
     }
 
     private data class GeneratedPqIdentity(val secret_b64: String, val public_b64: String)
@@ -522,7 +555,11 @@ class RatchetBootstrapService @Inject constructor(
         val existing_secret = vault_json.optString("ratchet_pq_identity_key", "")
             .ifBlank { existing_seed.takeIf { it.isNotBlank() }?.let { expand_pq_identity_secret(it) }.orEmpty() }
         if (existing_secret.isNotBlank() && existing_public.isNotBlank()) {
-            if (session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank()) {
+            if (session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank() ||
+                session_key_store.get_ratchet_pq_identity_public() != existing_public
+            ) {
+                retain_local_pq_identity_in_vault(vault_json, session_key_store)
+                retain_local_ratchet_keys(session_key_store, null, null, existing_public)
                 session_key_store.put_ratchet_pq_identity(existing_secret, existing_public)
             }
             return null
@@ -538,6 +575,8 @@ class RatchetBootstrapService @Inject constructor(
         pair.secret_key.fill(0)
         pair.seed.fill(0)
 
+        retain_vault_pq_identity(vault_json)
+        retain_local_pq_identity_in_vault(vault_json, session_key_store)
         vault_json.put("ratchet_pq_identity_key", secret_b64)
         vault_json.put("ratchet_pq_identity_public", public_b64)
         vault_json.put("ratchet_pq_identity_seed", seed_b64)

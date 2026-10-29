@@ -2951,6 +2951,7 @@
     <string name="error_account_probation">Für Ihr Konto gelten vorübergehende Einschränkungen.</string>
     <string name="error_account_suspended">Ihr Konto wurde wegen eines Verstoßes gegen die Nutzungsbedingungen gesperrt.</string>
     <string name="error_alias_reencryption_incomplete">Einige Aliasse konnten nicht neu verschlüsselt werden, daher wurde nichts geändert. Versuchen Sie es erneut.</string>
+    <string name="error_key_continuity_required">Deine Verschlüsselungsschlüssel wurden auf einem anderen Gerät geändert, daher wurde dein Passwort nicht geändert. Versuche es erneut.</string>
     <string name="error_client_upgrade_required">Diese App-Version kann diese Änderung nicht vornehmen. Aktualisieren Sie auf die neueste Version und versuchen Sie es erneut.</string>
     <string name="error_verification_required">Um dieses Konto weiter zu nutzen, bestätigen Sie Ihre Wiederherstellungs-E-Mail.</string>
     <string name="scheduled_already_sending">Diese E-Mail wird bereits gesendet und kann nicht mehr geändert werden.</string>

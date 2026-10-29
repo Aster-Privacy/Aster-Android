@@ -1685,6 +1685,7 @@
     <string name="error_verification_required">To keep using this account, verify your recovery email.</string>
     <string name="error_client_upgrade_required">This app version can\'t make this change. Update to the latest version, then try again.</string>
     <string name="error_alias_reencryption_incomplete">Some aliases didn\'t finish re-encrypting, so nothing changed. Try again.</string>
+    <string name="error_key_continuity_required">Your encryption keys changed on another device, so your password wasn\'t changed. Try again.</string>
     <string name="error_too_many_attempts">Too many attempts. Please wait a moment and try again.</string>
     <string name="error_username_taken">This username is already taken. Choose another.</string>
 

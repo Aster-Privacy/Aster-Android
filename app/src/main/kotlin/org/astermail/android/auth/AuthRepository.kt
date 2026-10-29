@@ -65,6 +65,7 @@ import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.RegisterRequest
 import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
+import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.recovery.ConsumeInactiveKeySetRequest
 import org.astermail.android.api.recovery.FetchInactiveKeySetRequest
 import org.astermail.android.api.recovery.RecoveryApi
@@ -1143,8 +1144,28 @@ class AuthRepository @Inject constructor(
         }
         val account_on_v2 = login_pins.is_pinned(step_up.pin_keys)
 
-        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault()
-            ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
+        val server_vault = try {
+            keys_api.fetch_current_vault()
+        } catch (cancelled: CancellationException) {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw cancelled
+        } catch (_: Throwable) {
+            CurrentVaultResult.Unavailable
+        }
+        val (encrypted_vault_b64, vault_nonce_b64) = when (server_vault) {
+            is CurrentVaultResult.Available -> server_vault.encrypted_vault to server_vault.vault_nonce
+            CurrentVaultResult.Missing -> session_key_store.get_encrypted_vault()
+            CurrentVaultResult.Unavailable -> null
+        } ?: run {
+            current_password_bytes.fill(0)
+            new_password_bytes.fill(0)
+            throw if (server_vault == CurrentVaultResult.Unavailable) {
+                ApiError.NetworkError
+            } else {
+                ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
+            }
+        }
 
         val vault_plain = try {
             CryptoNative.decrypt_vault_with_password(
@@ -1195,6 +1216,9 @@ class AuthRepository @Inject constructor(
             )
         }
 
+        org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
+        val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
+
         val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
         val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)
         updated_vault_bytes.fill(0)
@@ -1215,6 +1239,7 @@ class AuthRepository @Inject constructor(
                     new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
                     new_vault_nonce = base64_encode(new_envelope.vault_nonce),
                     vault_format = MASTER_KEY_VAULT_FORMAT,
+                    vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
                 ),
             )
 

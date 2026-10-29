@@ -107,6 +107,7 @@ fun server_code_string_res(code: String): Int? = when (code) {
     "VERIFICATION_REQUIRED" -> R.string.error_verification_required
     "CLIENT_UPGRADE_REQUIRED" -> R.string.error_client_upgrade_required
     "ALIAS_REENCRYPTION_INCOMPLETE" -> R.string.error_alias_reencryption_incomplete
+    "IDENTITY_CONTINUITY_REQUIRED" -> R.string.error_key_continuity_required
     "SENDER_NOT_AUTHORIZED" -> R.string.error_sender_address_refused
     USERNAME_IN_USE_CODE -> R.string.error_username_taken
     else -> null

@@ -2980,6 +2980,7 @@
     <string name="error_account_probation">На ваш аккаунт наложены временные ограничения.</string>
     <string name="error_account_suspended">Ваш аккаунт заблокирован за нарушение Условий использования.</string>
     <string name="error_alias_reencryption_incomplete">Некоторые псевдонимы не удалось перешифровать, поэтому ничего не изменилось. Попробуйте снова.</string>
+    <string name="error_key_continuity_required">Ваши ключи шифрования изменились на другом устройстве, поэтому пароль не был изменён. Повторите попытку.</string>
     <string name="error_client_upgrade_required">Эта версия приложения не может внести это изменение. Обновитесь до последней версии и попробуйте снова.</string>
     <string name="error_verification_required">Чтобы продолжить пользоваться этим аккаунтом, подтвердите резервный адрес электронной почты.</string>
     <string name="scheduled_already_sending">Это письмо уже отправляется, изменить его нельзя.</string>

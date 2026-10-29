@@ -2980,6 +2980,7 @@
     <string name="error_account_probation">Twoje konto ma tymczasowe ograniczenia.</string>
     <string name="error_account_suspended">Twoje konto zostało zawieszone za naruszenie Warunków korzystania z usługi.</string>
     <string name="error_alias_reencryption_incomplete">Część aliasów nie została ponownie zaszyfrowana, więc nic się nie zmieniło. Spróbuj ponownie.</string>
+    <string name="error_key_continuity_required">Twoje klucze szyfrowania zmieniły się na innym urządzeniu, więc hasło nie zostało zmienione. Spróbuj ponownie.</string>
     <string name="error_client_upgrade_required">Ta wersja aplikacji nie może wprowadzić tej zmiany. Zaktualizuj aplikację do najnowszej wersji i spróbuj ponownie.</string>
     <string name="error_verification_required">Aby dalej korzystać z tego konta, zweryfikuj adres e-mail do odzyskiwania.</string>
     <string name="scheduled_already_sending">Ta wiadomość jest już wysyłana, więc nie możesz jej zmienić.</string>
