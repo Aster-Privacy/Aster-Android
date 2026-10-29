@@ -3917,27 +3917,6 @@ private class anchored_below_position_provider(
     }
 }
 
-private val pgp_provider_domains = listOf(
-    "protonmail.com",
-    "protonmail.ch",
-    "proton.me",
-    "pm.me",
-    "tutanota.com",
-    "tutanota.de",
-    "tutamail.com",
-    "tuta.io",
-    "mailfence.com",
-    "posteo.net",
-    "posteo.de",
-    "mailbox.org",
-    "disroot.org",
-    "riseup.net",
-    "runbox.com",
-    "kolabnow.com",
-    "ctemplar.com",
-    "hushmail.com",
-)
-
 private fun derive_contact_name(email: String): String {
     val local_part = email.substringBefore('@')
     val derived = local_part.split(".", "_", "-")
@@ -3949,20 +3928,10 @@ private fun derive_contact_name(email: String): String {
 private fun is_internal_email(email: String): Boolean =
     org.astermail.android.mail.is_internal_recipient(email)
 
-private fun email_domain(email: String): String {
-    val at = email.lastIndexOf('@')
-    return if (at >= 0 && at < email.length - 1) email.substring(at + 1).lowercase() else ""
-}
-
 private enum class EncryptionLevel { END_TO_END, IN_TRANSIT }
 
 private fun encryption_level_for(email: String): EncryptionLevel {
     if (is_internal_email(email)) return EncryptionLevel.END_TO_END
-    val domain = email_domain(email)
-    if (domain.isBlank()) return EncryptionLevel.IN_TRANSIT
-    if (pgp_provider_domains.any { it == domain || domain.endsWith(".$it") }) {
-        return EncryptionLevel.END_TO_END
-    }
     return EncryptionLevel.IN_TRANSIT
 }
 
