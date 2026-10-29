@@ -177,4 +177,23 @@ class InactiveKeyRestoreTest {
 
         assertEquals(MAX_RATCHET_PREVIOUS_KEYS, merged.length())
     }
+
+    @Test
+    fun reports_previous_ratchet_keys_that_did_not_fit() {
+        val existing = JSONArray()
+        for (i in 0 until MAX_RATCHET_PREVIOUS_KEYS) {
+            existing.put(JSONObject().put("ratchet_identity_public", "pub_$i"))
+        }
+
+        val merged = merge_previous_ratchet_keys_reporting(
+            existing,
+            listOf(
+                JSONObject().put("ratchet_identity_public", "pub_0"),
+                JSONObject().put("ratchet_identity_public", "extra"),
+            ),
+        )
+
+        assertEquals(MAX_RATCHET_PREVIOUS_KEYS, merged.keys.length())
+        assertEquals(1, merged.dropped)
+    }
 }

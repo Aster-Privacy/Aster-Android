@@ -1608,7 +1608,7 @@ class AuthRepository @Inject constructor(
             )
             if (!committed.written) return 0
 
-            if (committed.dropped_keks == 0) {
+            if (!committed.dropped_any) {
                 unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
                     runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
                 }
@@ -1698,7 +1698,7 @@ class AuthRepository @Inject constructor(
             )
             if (!committed.written) return CodeRestoreResult(restored = 0, incomplete = opened.size)
 
-            val absorbed = if (committed.dropped_keks > 0) {
+            val absorbed = if (committed.dropped_any) {
                 emptyList()
             } else {
                 opened.filterIndexed { index, _ ->
@@ -1744,13 +1744,11 @@ class AuthRepository @Inject constructor(
         vault_obj.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
         vault_obj.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
         vault_obj.put("legacy_keks", merged_keks.keks)
-        vault_obj.put(
-            "ratchet_previous_keys",
-            merge_previous_ratchet_keys(
-                vault_obj.optJSONArray("ratchet_previous_keys"),
-                recovered_ratchet,
-            ),
+        val merged_ratchet = merge_previous_ratchet_keys_reporting(
+            vault_obj.optJSONArray("ratchet_previous_keys"),
+            recovered_ratchet,
         )
+        vault_obj.put("ratchet_previous_keys", merged_ratchet.keys)
 
         val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
         val sealed = runCatching {
@@ -1778,7 +1776,11 @@ class AuthRepository @Inject constructor(
 
         session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
         absorb_previous_keys_and_keks(vault_obj)
-        RecoveredKeyCommitResult(written = true, dropped_keks = merged_keks.dropped)
+        RecoveredKeyCommitResult(
+            written = true,
+            dropped_keks = merged_keks.dropped,
+            dropped_ratchet_keys = merged_ratchet.dropped,
+        )
     }
 
     private fun vault_roundtrip_ok(

@@ -439,7 +439,7 @@ class DeviceRecovery internal constructor(
                 recovered_ratchet = opened.snapshots.flatMap { it.payload.ratchet_keys },
                 base_encrypted_vault = stored.first,
             )
-            if (!committed.written || committed.dropped_keks > 0) return emptySet()
+            if (!committed.written || committed.dropped_any) return emptySet()
 
             return opened.snapshots
                 .filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }

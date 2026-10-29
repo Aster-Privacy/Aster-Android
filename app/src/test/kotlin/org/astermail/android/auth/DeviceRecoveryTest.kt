@@ -272,6 +272,7 @@ class DeviceRecoveryTest {
     private val commits = mutableListOf<CommitCall>()
     private var commit_result = true
     private var commit_dropped = 0
+    private var commit_dropped_ratchet = 0
     private var session_user: String? = user_id
     private var capabilities = AccountKeyCapabilityFlags(
         format_writes = true,
@@ -328,7 +329,11 @@ class DeviceRecoveryTest {
             state_store = state_store,
             commit = DeviceRecoveryCommit { id, pass, vault_obj, identity_keys, keks, ratchet, base_vault ->
                 commits.add(CommitCall(id, pass.copyOf(), vault_obj, identity_keys, keks, ratchet, base_vault))
-                RecoveredKeyCommitResult(written = commit_result, dropped_keks = commit_dropped)
+                RecoveredKeyCommitResult(
+                    written = commit_result,
+                    dropped_keks = commit_dropped,
+                    dropped_ratchet_keys = commit_dropped_ratchet,
+                )
             },
             now_ms = { clock },
             new_snapshot_id = { "snapshot-${++snapshot_counter}" },
@@ -718,6 +723,17 @@ class DeviceRecoveryTest {
 
         assertEquals(0, device_recovery.run(user_id))
         assertEquals(1, commits.size)
+        assertTrue(recovery_api.consumed.isEmpty())
+        assertTrue(snapshot_store.records.any { it.snapshot_id == "snapshot-1" })
+    }
+
+    @Test
+    fun dropped_ratchet_keys_leave_the_archived_set_unconsumed() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_dropped_ratchet = 2
+
+        assertEquals(0, device_recovery.run(user_id))
         assertTrue(recovery_api.consumed.isEmpty())
         assertTrue(snapshot_store.records.any { it.snapshot_id == "snapshot-1" })
     }

@@ -30,7 +30,10 @@ const val MAX_RATCHET_PREVIOUS_KEYS = 32
 data class RecoveredKeyCommitResult(
     val written: Boolean,
     val dropped_keks: Int = 0,
-)
+    val dropped_ratchet_keys: Int = 0,
+) {
+    val dropped_any: Boolean get() = dropped_keks > 0 || dropped_ratchet_keys > 0
+}
 
 val RECOVERED_KEYS_NOT_WRITTEN = RecoveredKeyCommitResult(written = false)
 
@@ -131,14 +134,23 @@ fun retain_previous_ratchet_keys(vault: JSONObject): List<JSONObject> {
     return retained
 }
 
-fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject>): JSONArray {
+class MergedRatchetKeys(val keys: JSONArray, val dropped: Int)
+
+fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject>): JSONArray =
+    merge_previous_ratchet_keys_reporting(existing, recovered).keys
+
+fun merge_previous_ratchet_keys_reporting(
+    existing: JSONArray?,
+    recovered: List<JSONObject>,
+): MergedRatchetKeys {
     val merged = JSONArray()
     val seen = mutableSetOf<String>()
+    var dropped = 0
 
     fun absorb(entry: JSONObject?) {
         val public_key = entry?.optString("ratchet_identity_public", "").orEmpty()
         if (public_key.isBlank() || !seen.add(public_key)) return
-        if (merged.length() < MAX_RATCHET_PREVIOUS_KEYS) merged.put(entry)
+        if (merged.length() < MAX_RATCHET_PREVIOUS_KEYS) merged.put(entry) else dropped += 1
     }
 
     if (existing != null) {
@@ -146,5 +158,5 @@ fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject
     }
     for (entry in recovered) absorb(entry)
 
-    return merged
+    return MergedRatchetKeys(merged, dropped)
 }
