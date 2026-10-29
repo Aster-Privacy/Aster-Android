@@ -63,6 +63,12 @@ fun expand_pq_identity_secret(seed_b64: String): String? = runCatching {
 }.getOrNull()
 
 fun apply_vault_ratchet_keys(keys: VaultRatchetKeys, session_key_store: SessionKeyStore) {
+    retain_local_ratchet_keys(
+        session_key_store,
+        keys.identity_jwk,
+        keys.signed_prekey_jwk,
+        keys.pq_identity_public_b64,
+    )
     if (keys.has_identity) {
         session_key_store.put_ratchet_keys(
             identity_jwk = keys.identity_jwk!!,
@@ -81,7 +87,6 @@ fun apply_vault_ratchet_keys(keys: VaultRatchetKeys, session_key_store: SessionK
             )
         }
     }
-    keys.previous_keys_json
-        ?.takeIf { it.isNotBlank() && it != "[]" }
+    merge_retained_ratchet_keys(session_key_store.get_ratchet_previous_keys_json(), keys.previous_keys_json)
         ?.let { session_key_store.put_ratchet_previous_keys(it) }
 }
