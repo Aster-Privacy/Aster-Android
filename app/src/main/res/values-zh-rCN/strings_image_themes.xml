@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">界面完全不透明，照片留在其后。</string>
     <string name="glass_mode">玻璃</string>
     <string name="glass_mode_subtitle">照片会从表面后面透出。关闭后表面为不透明。</string>
+    <string name="glass_mode_reduced_subtitle">要使用玻璃效果，请在辅助功能设置中关闭“降低透明度”。</string>
     <string name="theme_transparency">透明度</string>
     <string name="image_theme_animation">背景动画</string>
     <string name="image_theme_animation_subtitle">播放您的动画背景。开启省电模式或设备已关闭动画时，它会停止。</string>

@@ -292,6 +292,7 @@ fun AppearanceScreen(
     val font_choice by vm.font_choice.collectAsStateWithLifecycle()
     val background_image by vm.background_image.collectAsStateWithLifecycle()
     val background_opacity by vm.background_opacity.collectAsStateWithLifecycle()
+    val reduce_transparency by vm.reduce_transparency.collectAsStateWithLifecycle()
     val animate_background by vm.animate_background.collectAsStateWithLifecycle()
     val appearance_custom_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -770,12 +771,15 @@ fun AppearanceScreen(
         if (background_image != no_theme_background) {
             v_gap(AsterSpacing.xxl)
             section_label(stringResource(R.string.glass_mode))
-            val glass_on = background_opacity < solid_theme_opacity - 0.01f
+            val glass_on = !reduce_transparency && background_opacity < solid_theme_opacity - 0.01f
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 settings_toggle_row(
                     title = stringResource(R.string.glass_mode),
-                    subtitle = stringResource(R.string.glass_mode_subtitle),
+                    subtitle = stringResource(
+                        if (reduce_transparency) R.string.glass_mode_reduced_subtitle else R.string.glass_mode_subtitle,
+                    ),
                     checked = glass_on,
+                    enabled = !reduce_transparency,
                     test_tag = "glass_mode_toggle",
                     on_change = { on ->
                         vm.set_background_opacity(if (on) default_glass_opacity else solid_theme_opacity)

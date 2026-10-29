@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Powierzchnie są w pełni kryjące, a zdjęcie zostaje za nimi.</string>
     <string name="glass_mode">Szkło</string>
     <string name="glass_mode_subtitle">Twoje zdjęcie prześwituje przez powierzchnie. Wyłącz tę opcję, aby były pełne.</string>
+    <string name="glass_mode_reduced_subtitle">Aby używać Szkła, wyłącz Zmniejsz przezroczystość w ustawieniach Dostępności.</string>
     <string name="theme_transparency">Przezroczystość</string>
     <string name="image_theme_animation">Animuj tło</string>
     <string name="image_theme_animation_subtitle">Odtwarza animowane tło. Zatrzymuje się w trybie oszczędzania baterii i gdy animacje na urządzeniu są wyłączone.</string>

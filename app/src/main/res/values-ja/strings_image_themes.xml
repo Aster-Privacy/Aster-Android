@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">面は完全に不透明になり、写真は背面に残ります。</string>
     <string name="glass_mode">ガラス</string>
     <string name="glass_mode_subtitle">写真が面越しに透けて見えます。不透明にするにはオフにします。</string>
+    <string name="glass_mode_reduced_subtitle">ガラスを使うには、アクセシビリティ設定で「透明度を下げる」をオフにしてください。</string>
     <string name="theme_transparency">透明度</string>
     <string name="image_theme_animation">背景をアニメーションさせる</string>
     <string name="image_theme_animation_subtitle">アニメーション背景を再生します。バッテリーセーバー中や、デバイスでアニメーションをオフにしているときは停止します。</string>

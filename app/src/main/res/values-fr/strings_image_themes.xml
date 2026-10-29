@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Les surfaces sont entièrement opaques et votre photo reste derrière.</string>
     <string name="glass_mode">Verre</string>
     <string name="glass_mode_subtitle">Votre photo transparaît derrière les surfaces. Désactivez cette option pour des surfaces opaques.</string>
+    <string name="glass_mode_reduced_subtitle">Pour utiliser Verre, désactivez Réduire la transparence dans les réglages d\'Accessibilité.</string>
     <string name="theme_transparency">Transparence</string>
     <string name="image_theme_animation">Animer l\'arrière-plan</string>
     <string name="image_theme_animation_subtitle">Lit votre arrière-plan animé. Il s\'arrête en mode Économiseur de batterie et lorsque les animations sont désactivées sur votre appareil.</string>

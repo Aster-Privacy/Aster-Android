@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">As superfícies ficam totalmente sólidas e a sua fotografia fica por trás delas.</string>
     <string name="glass_mode">Vidro</string>
     <string name="glass_mode_subtitle">A sua fotografia aparece através das superfícies. Desative esta opção para ter superfícies sólidas.</string>
+    <string name="glass_mode_reduced_subtitle">Para usar Vidro, desative Reduzir transparência nas definições de Acessibilidade.</string>
     <string name="theme_transparency">Transparência</string>
     <string name="image_theme_animation">Animar a imagem de fundo</string>
     <string name="image_theme_animation_subtitle">Reproduz a sua imagem de fundo animada. Para no modo Poupança de bateria e quando as animações estão desativadas no dispositivo.</string>

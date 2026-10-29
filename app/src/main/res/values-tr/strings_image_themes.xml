@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Yüzeyler tamamen opaktır ve fotoğrafınız arkada kalır.</string>
     <string name="glass_mode">Cam</string>
     <string name="glass_mode_subtitle">Fotoğrafınız yüzeylerin arkasından görünür. Yüzeyleri opak yapmak için bunu kapatın.</string>
+    <string name="glass_mode_reduced_subtitle">Cam\'ı kullanmak için Erişilebilirlik ayarlarında Saydamlığı azalt seçeneğini kapatın.</string>
     <string name="theme_transparency">Saydamlık</string>
     <string name="image_theme_animation">Arka planı canlandır</string>
     <string name="image_theme_animation_subtitle">Hareketli arka planınızı oynatır. Pil tasarrufunda ve cihazınızda animasyonlar kapalıyken durur.</string>

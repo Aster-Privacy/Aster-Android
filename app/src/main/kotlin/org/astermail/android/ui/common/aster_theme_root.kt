@@ -129,7 +129,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     }
     val active_backdrop = remember(background_image, custom_image_meta, manifest_catalog) {
         org.astermail.android.ui.theme.theme_background_for(background_image)
-    }?.takeIf { !reduce_transparency }
+    }
     AsterTheme(
         theme_mode = resolved_mode,
         high_contrast = high_contrast,
@@ -142,7 +142,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         font_choice = font_choice,
         glass = active_backdrop != null,
         glass_tint = active_backdrop?.tint ?: androidx.compose.ui.graphics.Color.Unspecified,
-        glass_opacity = background_opacity,
+        glass_opacity = if (reduce_transparency) 1f else background_opacity,
     ) {
         val base_density = LocalDensity.current
         val compact_factor = if (compact_mode) 0.9f else 1f
@@ -164,7 +164,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             val backdrop = if (colors.is_glass) {
                 remember_active_theme_bitmap()
             } else null
-            val blur = if (colors.is_glass) {
+            val blur = if (colors.is_translucent) {
                 org.astermail.android.ui.theme.remember_active_theme_blur()
             } else null
             val animation = if (backdrop != null) {
