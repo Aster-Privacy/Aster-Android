@@ -533,7 +533,7 @@ private object routes {
     const val forgot_password = "forgot_password"
     const val inbox = "inbox"
 
-    const val mail_detail = "mail_detail/{email_id}"
+    const val mail_detail = "mail_detail/{email_id}?swipe={swipe}"
     const val crypto_invoice = "crypto_invoice/{invoice_id}"
 
     fun crypto_invoice_for(invoice_id: String): String {
@@ -605,7 +605,8 @@ private object routes {
     const val domain_order = "domain_order/{order_id}"
     const val domain_bimi = "settings_domain_bimi/{domain_id}"
 
-    fun mail_detail_for(email_id: String) = "mail_detail/" + android.net.Uri.encode(email_id)
+    fun mail_detail_for(email_id: String, swipe: Int = 0) =
+        "mail_detail/" + android.net.Uri.encode(email_id) + if (swipe != 0) "?swipe=$swipe" else ""
     fun settings_detail(id: String) = "settings_$id"
 
     const val alias_detail = "settings_alias_detail/{alias_id}"
@@ -821,7 +822,7 @@ private fun AsterNavHost() {
             Modifier
         },
         enterTransition = {
-            if (initialState.destination.route?.startsWith("compose") == true) {
+            if (initialState.destination.route?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.EnterTransition.None
             } else {
                 nav_forward_enter(nav_duration)
@@ -829,7 +830,7 @@ private fun AsterNavHost() {
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true) {
+            if (target?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.ExitTransition.None
             } else {
                 nav_forward_exit(nav_duration)
@@ -982,9 +983,16 @@ private fun AsterNavHost() {
         }
         composable(
             route = routes.mail_detail,
-            arguments = listOf(navArgument("email_id") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("email_id") { type = NavType.StringType },
+                navArgument("swipe") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                },
+            ),
         ) { entry ->
             val email_id = entry.arguments?.getString("email_id").orEmpty()
+            val swipe_direction = entry.arguments?.getInt("swipe") ?: 0
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
@@ -1014,10 +1022,16 @@ private fun AsterNavHost() {
                 if (idx < 0) return@neighbor null
                 order.getOrNull(idx + delta)
             }
-            val open_neighbor: (String) -> Unit = { next_id ->
-                nav_controller.navigate(routes.mail_detail_for(next_id)) {
+            val open_neighbor: (String, Int) -> Unit = { next_id, swipe ->
+                nav_controller.navigate(routes.mail_detail_for(next_id, swipe)) {
                     popUpTo(routes.mail_detail) { inclusive = true }
                     launchSingleTop = true
+                }
+            }
+            androidx.compose.runtime.LaunchedEffect(email_id, stable_order.value) {
+                val order = stable_order.value
+                if (inbox_entry != null && order.isNotEmpty() && order.lastOrNull() == email_id) {
+                    shared_mail_vm.load_more()
                 }
             }
             val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
@@ -1058,7 +1072,7 @@ private fun AsterNavHost() {
                     "Go to previous message" -> neighbor_id(-1)
                     else -> null
                 }
-                if (next != null) open_neighbor(next) else pop_once(nav_controller)
+                if (next != null) open_neighbor(next, 0) else pop_once(nav_controller)
             }
             MailDetailScreen(
                 email_id = email_id,
@@ -1077,8 +1091,9 @@ private fun AsterNavHost() {
                 },
                 on_archive = advance_after_action,
                 on_delete = advance_after_action,
-                on_next = neighbor_id(1)?.let { next -> { open_neighbor(next) } },
-                on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev) } },
+                on_next = neighbor_id(1)?.let { next -> { open_neighbor(next, 1) } },
+                on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev, -1) } },
+                swipe_direction = swipe_direction,
                 on_navigate = { path ->
                     val route = when {
                         path.startsWith("settings/") -> routes.settings_detail(path.removePrefix("settings/"))
@@ -3008,6 +3023,9 @@ internal fun looks_encrypted(value: String?): Boolean {
     val base64_chars = value.count { it in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" }
     return base64_chars.toFloat() / value.length > 0.85f
 }
+
+private fun is_detail_swipe(entry: androidx.navigation.NavBackStackEntry): Boolean =
+    entry.destination.route == routes.mail_detail && (entry.arguments?.getInt("swipe") ?: 0) != 0
 
 private fun pop_once(nav_controller: NavHostController) {
     val entry = nav_controller.currentBackStackEntry ?: return
