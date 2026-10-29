@@ -65,10 +65,19 @@ data class DomainSearchResult(
     val renewal_price_cents: Int? = null,
     val currency: String = "usd",
     val availability_unknown: Boolean = false,
+    val whois_privacy: Boolean? = null,
 )
 
 fun DomainSearchResult.is_purchasable(): Boolean =
     available && !availability_unknown && price_cents != null
+
+private val NO_WHOIS_PRIVACY_TLDS = setOf("us", "cx")
+
+fun domain_tld(domain: String): String =
+    domain.lowercase().trimEnd('.').substringAfterLast('.')
+
+fun DomainSearchResult.has_whois_privacy(): Boolean =
+    whois_privacy ?: (domain_tld(domain) !in NO_WHOIS_PRIVACY_TLDS)
 
 @Serializable
 data class DomainSearchResponse(
