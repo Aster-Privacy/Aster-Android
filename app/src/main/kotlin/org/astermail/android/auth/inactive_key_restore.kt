@@ -27,6 +27,13 @@ import org.json.JSONObject
 
 const val MAX_RATCHET_PREVIOUS_KEYS = 32
 
+data class RecoveredKeyCommitResult(
+    val written: Boolean,
+    val dropped_keks: Int = 0,
+)
+
+val RECOVERED_KEYS_NOT_WRITTEN = RecoveredKeyCommitResult(written = false)
+
 fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<String> {
     val harvested = mutableListOf<String>()
 
@@ -47,28 +54,43 @@ fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<
     return harvested
 }
 
-fun merge_legacy_keks(existing: JSONArray?, recovered: List<String>, added_at: String): JSONArray {
-    val ordered = mutableListOf<JSONObject>()
-    val seen = mutableSetOf<String>()
+class MergedLegacyKeks(val keks: JSONArray, val dropped: Int)
 
-    for (kek in recovered) {
-        if (seen.add(kek)) {
-            ordered.add(JSONObject().put("k", kek).put("added_at", added_at))
-        }
-    }
+fun merge_legacy_keks(existing: JSONArray?, recovered: List<String>, added_at: String): JSONArray =
+    merge_legacy_keks_reporting(existing, recovered, added_at).keks
+
+fun merge_legacy_keks_reporting(
+    existing: JSONArray?,
+    recovered: List<String>,
+    added_at: String,
+): MergedLegacyKeks {
+    val merged = JSONArray()
+    val seen = mutableSetOf<String>()
+    var dropped = 0
 
     if (existing != null) {
         for (i in 0 until existing.length()) {
             val entry = existing.optJSONObject(i) ?: continue
             val kek = entry.optString("k", "")
-            if (kek.isNotBlank() && seen.add(kek)) ordered.add(entry)
+            if (kek.isBlank() || !seen.add(kek)) continue
+            if (merged.length() >= MAX_LEGACY_KEKS) {
+                dropped += 1
+                continue
+            }
+            merged.put(entry)
         }
     }
 
-    val merged = JSONArray()
-    for (entry in ordered.take(MAX_LEGACY_KEKS)) merged.put(entry)
+    for (kek in recovered) {
+        if (kek.isBlank() || !seen.add(kek)) continue
+        if (merged.length() >= MAX_LEGACY_KEKS) {
+            dropped += 1
+            continue
+        }
+        merged.put(JSONObject().put("k", kek).put("added_at", added_at))
+    }
 
-    return merged
+    return MergedLegacyKeks(merged, dropped)
 }
 
 fun retain_previous_ratchet_keys(vault: JSONObject): List<JSONObject> {

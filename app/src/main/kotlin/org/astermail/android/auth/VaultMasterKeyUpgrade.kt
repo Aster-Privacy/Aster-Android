@@ -31,7 +31,7 @@ fun stored_vault_format(vault_obj: JSONObject): Int = maxOf(
     vault_obj.optInt("vault_format", 1),
     if (vault_obj.optString("data_kek", "").isNotBlank()) MASTER_KEY_VAULT_FORMAT else 1,
 )
-const val MAX_LEGACY_KEKS = 16
+const val MAX_LEGACY_KEKS = 64
 const val SUPPORTED_STORAGE_KDF_VERSION = 1
 
 class UnsupportedVaultKdfException(val kdf_version: Int) : Exception(

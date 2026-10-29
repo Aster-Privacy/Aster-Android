@@ -1604,11 +1604,14 @@ class AuthRepository @Inject constructor(
                 identity_keys = identity_keys,
                 recovered_keks = recovered_keks,
                 recovered_ratchet = recovered_ratchet,
+                base_encrypted_vault = stored_vault.first,
             )
-            if (!committed) return 0
+            if (!committed.written) return 0
 
-            unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
-                runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
+            if (committed.dropped_keks == 0) {
+                unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
+                    runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
+                }
             }
 
             return unlocked.size
@@ -1691,11 +1694,16 @@ class AuthRepository @Inject constructor(
                 identity_keys = identity_keys,
                 recovered_keks = recovered_keks,
                 recovered_ratchet = recovered_ratchet,
+                base_encrypted_vault = stored_vault.first,
             )
-            if (!committed) return CodeRestoreResult(restored = 0, incomplete = opened.size)
+            if (!committed.written) return CodeRestoreResult(restored = 0, incomplete = opened.size)
 
-            val absorbed = opened.filterIndexed { index, _ ->
-                identity_keys.absorbed.getOrElse(index) { false } && !password_bound[index]
+            val absorbed = if (committed.dropped_keks > 0) {
+                emptyList()
+            } else {
+                opened.filterIndexed { index, _ ->
+                    identity_keys.absorbed.getOrElse(index) { false } && !password_bound[index]
+                }
             }
             absorbed.forEach { id ->
                 runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
@@ -1714,17 +1722,28 @@ class AuthRepository @Inject constructor(
         identity_keys: RecoveredIdentityKeys,
         recovered_keks: List<String>,
         recovered_ratchet: List<org.json.JSONObject>,
-    ): Boolean = vault_commit_mutex.withLock {
+        base_encrypted_vault: String,
+    ): RecoveredKeyCommitResult = vault_commit_mutex.withLock {
+        if (session_key_store.get_user_id() != user_id) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        val local_vault = session_key_store.get_encrypted_vault()
+        if (local_vault == null || !same_vault_ciphertext(local_vault.first, base_encrypted_vault)) {
+            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        }
+        val server_vault = runCatching { keys_api.fetch_current_vault() }
+            .getOrDefault(CurrentVaultResult.Unavailable)
+        if (server_vault !is CurrentVaultResult.Available) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        if (!same_vault_ciphertext(server_vault.encrypted_vault, base_encrypted_vault)) {
+            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        }
+
+        val merged_keks = merge_legacy_keks_reporting(
+            vault_obj.optJSONArray("legacy_keks"),
+            recovered_keks,
+            java.time.Instant.now().toString(),
+        )
         vault_obj.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
         vault_obj.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
-        vault_obj.put(
-            "legacy_keks",
-            merge_legacy_keks(
-                vault_obj.optJSONArray("legacy_keks"),
-                recovered_keks,
-                java.time.Instant.now().toString(),
-            ),
-        )
+        vault_obj.put("legacy_keks", merged_keks.keks)
         vault_obj.put(
             "ratchet_previous_keys",
             merge_previous_ratchet_keys(
@@ -1738,12 +1757,12 @@ class AuthRepository @Inject constructor(
             CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
         }.getOrNull()
         updated_plain.fill(0)
-        if (sealed == null) return@withLock false
+        if (sealed == null) return@withLock RECOVERED_KEYS_NOT_WRITTEN
 
         val encrypted_vault = base64_encode(sealed.encrypted_vault)
         val vault_nonce = base64_encode(sealed.vault_nonce)
         if (!vault_roundtrip_ok(encrypted_vault, vault_nonce, passphrase, vault_identity_key(vault_obj))) {
-            return@withLock false
+            return@withLock RECOVERED_KEYS_NOT_WRITTEN
         }
 
         val pushed = runCatching {
@@ -1755,11 +1774,11 @@ class AuthRepository @Inject constructor(
                 stored_vault_format(vault_obj),
             )
         }.getOrDefault(false)
-        if (!pushed) return@withLock false
+        if (!pushed) return@withLock RECOVERED_KEYS_NOT_WRITTEN
 
         session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
         absorb_previous_keys_and_keks(vault_obj)
-        true
+        RecoveredKeyCommitResult(written = true, dropped_keks = merged_keks.dropped)
     }
 
     private fun vault_roundtrip_ok(
@@ -2038,6 +2057,7 @@ class AuthRepository @Inject constructor(
         database.thread_snapshot_dao().clear_all()
         current_email?.let { trusted_device_store.clear(it) }
         if (current_id != null) {
+            runCatching { forget_deleted_account_device_recovery(context, current_id) }
             runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
             runCatching { mail_repository.clear_pending_actions(current_id) }
             val outbox_ids = runCatching {
