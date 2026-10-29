@@ -166,6 +166,12 @@ object NetworkModule {
         return SessionRefresher(
             read_refresh_token = { token_store.refresh_token },
             perform_refresh = { presented -> account_bound.refresh(presented) },
+            access_token_valid = {
+                org.astermail.android.api.auth.access_token_still_valid(
+                    token_store.access_token,
+                    System.currentTimeMillis() / 1000L,
+                )
+            },
         )
     }
 

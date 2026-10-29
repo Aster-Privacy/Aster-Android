@@ -296,7 +296,12 @@ class AuthRepository @Inject constructor(
 
     suspend fun refresh_session_if_expiring() {
         if (!_is_signed_in.value) return
-        if (!org.astermail.android.api.auth.access_token_needs_refresh(token_store.access_token, System.currentTimeMillis() / 1000L)) return
+        val needs_refresh = org.astermail.android.api.auth.access_token_needs_refresh(
+            token_store.access_token,
+            System.currentTimeMillis() / 1000L,
+            org.astermail.android.api.auth.RefreshTrigger.Foreground,
+        )
+        if (!needs_refresh) return
         try_refresh_session()
     }
 
@@ -310,7 +315,12 @@ class AuthRepository @Inject constructor(
         return outcome
     }
 
-    suspend fun login(email: String, password: String, captcha_token: String? = null): Result<LoginOutcome> = runCatching {
+    suspend fun login(
+        email: String,
+        password: String,
+        captcha_token: String? = null,
+        remember_me: Boolean = true,
+    ): Result<LoginOutcome> = runCatching {
         val normalized = normalize_email(email)
         val trusted_token = trusted_device_store.get_token(normalized)
         val dotless_hash = CryptoNative.hash_email(normalized)
@@ -343,7 +353,6 @@ class AuthRepository @Inject constructor(
         val login_enrollment = sign_in_proof.enrollment
         val password_hash_b64 = base64_encode(password_hash_bytes)
 
-        val remember_me = true
         val integrity = PlayIntegrityLogin.fetch(context, user_hash)
 
         val login_result = try {

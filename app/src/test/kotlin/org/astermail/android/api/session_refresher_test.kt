@@ -155,6 +155,87 @@ class session_refresher_test {
     }
 
     @Test
+    fun a_rejection_while_access_is_valid_is_retried_within_grace() = runBlocking {
+        var now = 0L
+        val calls = AtomicInteger(0)
+        val notifications = AtomicInteger(0)
+        var stored: String? = "rotated_elsewhere"
+        var next = RefreshOutcome.AuthFailed
+        val refresher = SessionRefresher(
+            read_refresh_token = { stored },
+            perform_refresh = {
+                calls.incrementAndGet()
+                if (next == RefreshOutcome.Success) stored = "refresh_1"
+                next
+            },
+            notify_scope = inline_scope,
+            now_ms = { now },
+            access_token_valid = { true },
+        )
+        refresher.on_auth_failure { notifications.incrementAndGet() }
+
+        assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        assertEquals(1, notifications.get())
+        repeat(20) { assertEquals(RefreshOutcome.Transient, refresher.refresh()) }
+        assertEquals(1, calls.get())
+
+        now += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+        next = RefreshOutcome.Success
+        assertEquals(RefreshOutcome.Success, refresher.refresh())
+        assertEquals(2, calls.get())
+        assertEquals("refresh_1", stored)
+    }
+
+    @Test
+    fun a_rejection_becomes_final_after_the_grace_window() = runBlocking {
+        var now = 0L
+        val calls = AtomicInteger(0)
+        val refresher = SessionRefresher(
+            read_refresh_token = { "rotated_elsewhere" },
+            perform_refresh = {
+                calls.incrementAndGet()
+                RefreshOutcome.AuthFailed
+            },
+            notify_scope = inline_scope,
+            now_ms = { now },
+            access_token_valid = { true },
+        )
+
+        while (now < SessionRefresher.REJECTED_RETRY_WINDOW_MS) {
+            assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+            now += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+        }
+        val attempts = calls.get()
+        assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        assertEquals(attempts + 1, calls.get())
+
+        now += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+        repeat(50) { assertEquals(RefreshOutcome.AuthFailed, refresher.refresh()) }
+        assertEquals(attempts + 1, calls.get())
+    }
+
+    @Test
+    fun a_rejection_with_an_expired_access_token_is_final() = runBlocking {
+        var now = 0L
+        val calls = AtomicInteger(0)
+        val refresher = SessionRefresher(
+            read_refresh_token = { "revoked" },
+            perform_refresh = {
+                calls.incrementAndGet()
+                RefreshOutcome.AuthFailed
+            },
+            notify_scope = inline_scope,
+            now_ms = { now },
+            access_token_valid = { false },
+        )
+
+        assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        now += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+        assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        assertEquals(1, calls.get())
+    }
+
+    @Test
     fun a_missing_token_fails_without_a_request() = runBlocking {
         val calls = AtomicInteger(0)
         val notifications = AtomicInteger(0)

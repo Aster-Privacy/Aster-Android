@@ -86,7 +86,12 @@ class AuthViewModel @Inject constructor(
 
     val is_signed_in: StateFlow<Boolean> = repository.is_signed_in
 
-    fun submit_login(email: String, password: String, captcha_token: String? = null) {
+    fun submit_login(
+        email: String,
+        password: String,
+        captcha_token: String? = null,
+        remember_me: Boolean = true,
+    ) {
         if (_ui_state.value == AuthUiState.Loading) return
         if (!is_supported_sign_in_domain(email)) {
             _ui_state.value = AuthUiState.Error(
@@ -98,7 +103,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 kotlinx.coroutines.withTimeout(25_000L) {
-                    repository.login(email, password, captcha_token).getOrThrow()
+                    repository.login(email, password, captcha_token, remember_me).getOrThrow()
                 }
             }
             _ui_state.value = result.fold(

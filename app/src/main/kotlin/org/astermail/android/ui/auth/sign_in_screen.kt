@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,6 +82,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
@@ -123,6 +125,7 @@ fun SignInScreen(
     var email_domain by rememberSaveable { mutableStateOf("astermail.org") }
     var password by remember { mutableStateOf("") }
     var password_visible by remember { mutableStateOf(false) }
+    var remember_me by rememberSaveable { mutableStateOf(true) }
     val email_focus = remember { FocusRequester() }
     val password_focus = remember { FocusRequester() }
     val keyboard_controller = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
@@ -159,7 +162,7 @@ fun SignInScreen(
             keyboard_controller?.hide()
             val trimmed = email.trim()
             val full_email = if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
-            view_model.submit_login(full_email, password, captcha_token)
+            view_model.submit_login(full_email, password, captcha_token, remember_me)
         }
     }
 
@@ -203,6 +206,7 @@ fun SignInScreen(
         captcha_failed = captcha_failed,
         captcha_pending = captcha_required && !captcha_failed && captcha_token.isNullOrBlank(),
         captcha_reset_trigger = captcha_reset_trigger,
+        remember_me = remember_me,
     )
     val callbacks = SignInCallbacks(
         on_email_change = { raw ->
@@ -230,6 +234,7 @@ fun SignInScreen(
             if (state is AuthUiState.Error) view_model.reset_state()
         },
         on_toggle_password_visible = { password_visible = !password_visible },
+        on_toggle_remember_me = { remember_me = !remember_me },
         on_domain_select = { email_domain = it },
         on_submit = submit,
         on_captcha_token = {
@@ -292,12 +297,14 @@ private data class SignInFieldState(
     val captcha_failed: Boolean,
     val captcha_pending: Boolean,
     val captcha_reset_trigger: Int,
+    val remember_me: Boolean,
 )
 
 private class SignInCallbacks(
     val on_email_change: (String) -> Unit,
     val on_password_change: (String) -> Unit,
     val on_toggle_password_visible: () -> Unit,
+    val on_toggle_remember_me: () -> Unit,
     val on_domain_select: (String) -> Unit,
     val on_submit: () -> Unit,
     val on_forgot_password: () -> Unit,
@@ -427,6 +434,12 @@ private fun aster_variant_body(
                 enabled = !fields.is_loading,
             )
         }
+
+        keep_signed_in_row(
+            checked = fields.remember_me,
+            enabled = !fields.is_loading,
+            on_toggle = cb.on_toggle_remember_me,
+        )
 
         Spacer(Modifier.height(AsterSpacing.md))
 
@@ -772,3 +785,41 @@ internal fun error_banner(message: String) {
     }
 }
 
+@Composable
+private fun keep_signed_in_row(
+    checked: Boolean,
+    enabled: Boolean,
+    on_toggle: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { on_toggle() },
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled,
+            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                checkedColor = colors.accent_blue,
+                uncheckedColor = colors.text_muted,
+            ),
+        )
+        Text(
+            text = stringResource(
+                R.string.keep_me_signed_in_secure_devices,
+                stringResource(R.string.keep_me_signed_in),
+                stringResource(R.string.secure_devices_only),
+            ),
+            color = colors.text_secondary,
+            fontSize = 14.sp,
+        )
+    }
+}

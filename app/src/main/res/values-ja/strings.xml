@@ -58,6 +58,8 @@
     <string name="confirm_password">パスワードの確認</string>
     <string name="confirm_password_label">パスワードの確認</string>
     <string name="keep_me_signed_in">サインイン状態を維持</string>
+    <string name="keep_me_signed_in_secure_devices">%1$s - %2$s</string>
+    <string name="secure_devices_only">安全なデバイスでのみ</string>
     <string name="requirement_8_chars">12文字以上</string>
     <string name="requirement_uppercase">大文字1文字</string>
     <string name="requirement_lowercase">小文字1文字</string>

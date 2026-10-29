@@ -58,6 +58,8 @@
     <string name="confirm_password">Confirmar palavra-passe</string>
     <string name="confirm_password_label">Confirmar palavra-passe</string>
     <string name="keep_me_signed_in">Manter sessão iniciada</string>
+    <string name="keep_me_signed_in_secure_devices">%1$s - %2$s</string>
+    <string name="secure_devices_only">apenas em dispositivos seguros</string>
     <string name="requirement_8_chars">Pelo menos 12 caracteres</string>
     <string name="requirement_uppercase">Uma letra maiúscula</string>
     <string name="requirement_lowercase">Uma letra minúscula</string>
