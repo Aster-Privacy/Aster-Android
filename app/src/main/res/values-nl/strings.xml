@@ -237,7 +237,9 @@
     <string name="forward">Doorsturen</string>
     <string name="e2e_encrypted_message">End-to-end versleuteld bericht</string>
     <string name="decrypt_failed_title">Bericht kon niet worden ontsleuteld</string>
-    <string name="decrypt_failed_body">Dit bericht is versleuteld met een sleutel die dit apparaat momenteel niet heeft. Probeer het opnieuw of open het in de Aster-webapp.</string>
+    <string name="decrypt_failed_body">Dit apparaat kan dit bericht nu niet ontsleutelen. Probeer het zo opnieuw.</string>
+    <string name="decrypt_locked_by_reset_title">Vergrendeld door een wachtwoordreset</string>
+    <string name="decrypt_locked_by_reset_body">Dit bericht is versleuteld met sleutels van vóór je wachtwoordreset. Voer je vorige wachtwoord of een herstelcode in die je vóór de reset hebt opgeslagen om het te ontgrendelen.</string>
     <string name="e2e_encryption_failed">Verzenden mislukt: end-to-end-versleuteling mislukt. Het bericht is niet verzonden.</string>
     <string name="attachment_prepare_failed">Verzenden mislukt: "%1$s" kon niet worden voorbereid. Het bericht is niet verzonden.</string>
     <string name="e2e_keys_not_ready">Verzenden mislukt: versleutelingssleutels zijn nog niet gereed. Het bericht is niet verzonden.</string>

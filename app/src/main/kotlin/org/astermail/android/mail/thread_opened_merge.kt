@@ -55,6 +55,7 @@ internal fun include_opened_message(
             body_text = opened.body_text,
             body_html = opened.body_html,
             is_undecryptable = false,
+            is_sealed_to_missing_keys = false,
             is_body_pending = false,
         )
     }

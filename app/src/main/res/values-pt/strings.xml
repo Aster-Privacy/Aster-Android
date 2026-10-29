@@ -237,7 +237,9 @@
     <string name="forward">Encaminhar</string>
     <string name="e2e_encrypted_message">Mensagem encriptada ponto a ponto</string>
     <string name="decrypt_failed_title">Não foi possível desencriptar a mensagem</string>
-    <string name="decrypt_failed_body">Esta mensagem foi encriptada com uma chave que este dispositivo não tem neste momento. Tente novamente ou abra-a na aplicação web do Aster.</string>
+    <string name="decrypt_failed_body">Este dispositivo não consegue desencriptar esta mensagem neste momento. Tente novamente daqui a pouco.</string>
+    <string name="decrypt_locked_by_reset_title">Bloqueada por uma reposição da palavra-passe</string>
+    <string name="decrypt_locked_by_reset_body">Esta mensagem está encriptada com chaves anteriores à reposição da palavra-passe. Para a desbloquear, introduza a palavra-passe anterior ou um código de recuperação que guardou antes da reposição.</string>
     <string name="e2e_encryption_failed">Não foi possível enviar: a encriptação ponto a ponto falhou. A mensagem não foi enviada.</string>
     <string name="attachment_prepare_failed">Não foi possível enviar: não foi possível preparar "%1$s". A mensagem não foi enviada.</string>
     <string name="e2e_keys_not_ready">Não foi possível enviar: as chaves de encriptação ainda não estão prontas. A mensagem não foi enviada.</string>

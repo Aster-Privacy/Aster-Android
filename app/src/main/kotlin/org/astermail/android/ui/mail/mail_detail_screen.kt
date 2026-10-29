@@ -613,6 +613,12 @@ fun MailDetailScreen(
     val show_encryption_indicators = settings_state.preferences?.show_encryption_indicators != false
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
+    val locked_data_vm: org.astermail.android.mail.LockedDataViewModel = hiltViewModel()
+    val locked_data_state by locked_data_vm.state.collectAsStateWithLifecycle()
+    var show_recover_data_dialog by remember { mutableStateOf(false) }
+    val has_message_sealed_to_missing_keys = thread_state.messages.any {
+        it.is_undecryptable && it.is_sealed_to_missing_keys
+    }
     val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
     val unauthenticated_message_ids by mail_vm.unauthenticated_message_ids.collectAsStateWithLifecycle()
     val identity_changed_senders = remember(identity_changes) {
@@ -627,6 +633,38 @@ fun MailDetailScreen(
 
     LaunchedEffect(email_id) {
         mail_vm.load_thread(email_id)
+    }
+
+    LaunchedEffect(has_message_sealed_to_missing_keys) {
+        if (has_message_sealed_to_missing_keys) locked_data_vm.refresh()
+    }
+
+    LaunchedEffect(locked_data_vm) {
+        locked_data_vm.outcomes.collect { outcome ->
+            val unlocked_some = outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS ||
+                outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.PARTIAL
+            if (unlocked_some) mail_vm.retry_decrypt_thread()
+            if (outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS) {
+                show_recover_data_dialog = false
+                org.astermail.android.ui.common.app_toast.show(
+                    context.getString(R.string.recover_data_success),
+                )
+            }
+        }
+    }
+
+    if (show_recover_data_dialog) {
+        recover_data_dialog(
+            is_recovering = locked_data_state.recovering,
+            outcome = locked_data_state.last_outcome,
+            on_recover = { password -> locked_data_vm.recover(password) },
+            on_recover_with_code = { code -> locked_data_vm.recover_with_code(code) },
+            on_clear_outcome = { locked_data_vm.clear_outcome() },
+            on_dismiss = {
+                show_recover_data_dialog = false
+                locked_data_vm.clear_outcome()
+            },
+        )
     }
 
     failed_send_dialog(mail_vm)
@@ -1566,6 +1604,16 @@ fun MailDetailScreen(
                             show_raw_headers = settings_state.preferences?.show_raw_headers == true,
                             on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
                             retry_in_progress = decrypt_retry_active,
+                            on_recover_data = if (
+                                org.astermail.android.mail.message_locked_by_reset(
+                                    msg.is_undecryptable && msg.is_sealed_to_missing_keys,
+                                    locked_data_state.status,
+                                )
+                            ) {
+                                { show_recover_data_dialog = true }
+                            } else {
+                                null
+                            },
                             attachments_failed = msg.id in attachment_failure_ids,
                             on_retry_attachments = { mail_vm.retry_thread_attachments() },
                             identity_changed = identity_changed_senders.contains(
@@ -2429,6 +2477,7 @@ internal fun expanded_message(
     on_body_ready: () -> Unit = {},
     on_retry_decrypt: () -> Unit = {},
     retry_in_progress: Boolean = false,
+    on_recover_data: (() -> Unit)? = null,
     on_track: (String, String, String?) -> Unit = { _, _, _ -> },
     access_token: String? = null,
     on_link_click: (String) -> Unit = {},
@@ -3007,7 +3056,9 @@ internal fun expanded_message(
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
-                    text = stringResource(R.string.decrypt_failed_title),
+                    text = stringResource(
+                        if (on_recover_data != null) R.string.decrypt_locked_by_reset_title else R.string.decrypt_failed_title,
+                    ),
                     color = colors.text_primary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -3015,17 +3066,53 @@ internal fun expanded_message(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = stringResource(R.string.decrypt_failed_body),
+                    text = stringResource(
+                        if (on_recover_data != null) R.string.decrypt_locked_by_reset_body else R.string.decrypt_failed_body,
+                    ),
                     color = colors.text_muted,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(AsterSpacing.lg))
+                if (on_recover_data != null) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(colors.accent_blue)
+                            .clickable(onClick = on_recover_data)
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                            .testTag("recover_data_from_message"),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.LockOpen,
+                            contentDescription = null,
+                            tint = colors.on_accent,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.recover_data_title),
+                            color = colors.on_accent,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                }
+                val retry_is_secondary = on_recover_data != null
+                val retry_content_color = if (retry_is_secondary) colors.accent_blue else colors.on_accent
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(colors.accent_blue.copy(alpha = if (retry_in_progress) 0.5f else 1f))
+                        .background(
+                            if (retry_is_secondary) {
+                                Color.Transparent
+                            } else {
+                                colors.accent_blue.copy(alpha = if (retry_in_progress) 0.5f else 1f)
+                            },
+                        )
                         .clickable(enabled = !retry_in_progress, onClick = on_retry_decrypt)
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                         .testTag("retry_decrypt"),
@@ -3034,7 +3121,7 @@ internal fun expanded_message(
                     Icon(
                         imageVector = TablerIcons.Refresh,
                         contentDescription = null,
-                        tint = colors.on_accent,
+                        tint = retry_content_color,
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -3042,14 +3129,14 @@ internal fun expanded_message(
                         text = stringResource(
                             if (retry_in_progress) R.string.decrypt_retrying else R.string.retry,
                         ),
-                        color = colors.on_accent,
+                        color = retry_content_color,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     if (retry_in_progress) {
                         Spacer(Modifier.width(8.dp))
                         CircularProgressIndicator(
-                            color = colors.on_accent,
+                            color = retry_content_color,
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(16.dp),
                         )

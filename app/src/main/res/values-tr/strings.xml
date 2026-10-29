@@ -237,7 +237,9 @@
     <string name="forward">İlet</string>
     <string name="e2e_encrypted_message">Uçtan uca şifreli mesaj</string>
     <string name="decrypt_failed_title">Mesajın şifresi çözülemedi</string>
-    <string name="decrypt_failed_body">Bu mesaj, bu cihazda şu anda bulunmayan bir anahtarla şifrelendi. Tekrar deneyin veya Aster web uygulamasında açın.</string>
+    <string name="decrypt_failed_body">Bu cihaz bu mesajın şifresini şu anda çözemiyor. Biraz sonra tekrar deneyin.</string>
+    <string name="decrypt_locked_by_reset_title">Parola sıfırlaması nedeniyle kilitli</string>
+    <string name="decrypt_locked_by_reset_body">Bu mesaj, parola sıfırlamanızdan önceki anahtarlarla şifrelenmiş. Kilidini açmak için önceki parolanızı veya sıfırlamadan önce kaydettiğiniz bir kurtarma kodunu girin.</string>
     <string name="e2e_encryption_failed">Gönderilemedi: uçtan uca şifreleme başarısız oldu. Mesaj gönderilmedi.</string>
     <string name="attachment_prepare_failed">Gönderilemedi: "%1$s" hazırlanamadı. İleti gönderilmedi.</string>
     <string name="e2e_keys_not_ready">Gönderilemedi: şifreleme anahtarları henüz hazır değil. Mesaj gönderilmedi.</string>

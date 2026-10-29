@@ -111,6 +111,9 @@ fun locked_data_status(inactive_key_set_ids: List<String>, locked_sent_mail: Int
 fun has_locked_data(status: LockedDataStatus?): Boolean =
     status != null && (status.inactive_key_sets > 0 || status.locked_sent_mail > 0)
 
+fun message_locked_by_reset(sealed_to_missing_keys: Boolean, status: LockedDataStatus?): Boolean =
+    sealed_to_missing_keys && status != null && status.inactive_key_sets > 0
+
 fun should_show_locked_data_banner(
     status: LockedDataStatus?,
     vault_unlocked: Boolean,

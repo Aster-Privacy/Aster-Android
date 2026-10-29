@@ -237,7 +237,9 @@
     <string name="forward">تحويل</string>
     <string name="e2e_encrypted_message">رسالة مشفرة من طرف إلى طرف</string>
     <string name="decrypt_failed_title">تعذر فك تشفير الرسالة</string>
-    <string name="decrypt_failed_body">تم تشفير هذه الرسالة بمفتاح لا يملكه هذا الجهاز حاليًا. حاول مرة أخرى أو افتحها في تطبيق Aster على الويب.</string>
+    <string name="decrypt_failed_body">لا يمكن لهذا الجهاز فك تشفير هذه الرسالة الآن. حاول مرة أخرى بعد قليل.</string>
+    <string name="decrypt_locked_by_reset_title">مقفلة بسبب إعادة تعيين كلمة المرور</string>
+    <string name="decrypt_locked_by_reset_body">هذه الرسالة مشفرة بمفاتيح من قبل إعادة تعيين كلمة المرور. لفتحها، أدخل كلمة المرور السابقة أو رمز استرداد حفظته قبل إعادة التعيين.</string>
     <string name="e2e_encryption_failed">تعذّر الإرسال: فشل التشفير من طرف إلى طرف. لم تُرسَل الرسالة.</string>
     <string name="attachment_prepare_failed">تعذر الإرسال: تعذر تجهيز "%1$s". لم يتم إرسال الرسالة.</string>
     <string name="e2e_keys_not_ready">تعذّر الإرسال: مفاتيح التشفير ليست جاهزة بعد. لم تُرسَل الرسالة.</string>

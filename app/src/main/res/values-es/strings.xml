@@ -238,7 +238,9 @@
     <string name="forward">Reenviar</string>
     <string name="e2e_encrypted_message">Mensaje cifrado de extremo a extremo</string>
     <string name="decrypt_failed_title">No se pudo descifrar el mensaje</string>
-    <string name="decrypt_failed_body">Este mensaje se cifró con una clave que este dispositivo no tiene ahora mismo. Inténtalo de nuevo o ábrelo en la app web de Aster.</string>
+    <string name="decrypt_failed_body">Este dispositivo no puede descifrar este mensaje ahora mismo. Inténtalo de nuevo en un momento.</string>
+    <string name="decrypt_locked_by_reset_title">Bloqueado por un restablecimiento de contraseña</string>
+    <string name="decrypt_locked_by_reset_body">Este mensaje está cifrado con claves de antes del restablecimiento de tu contraseña. Para desbloquearlo, introduce tu contraseña anterior o un código de recuperación que guardaste antes del restablecimiento.</string>
     <string name="e2e_encryption_failed">No se pudo enviar: falló el cifrado de extremo a extremo. El mensaje no se envió.</string>
     <string name="attachment_prepare_failed">No se pudo enviar: no se pudo preparar "%1$s". El mensaje no se envió.</string>
     <string name="e2e_keys_not_ready">No se pudo enviar: las claves de cifrado aún no están listas. El mensaje no se envió.</string>

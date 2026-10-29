@@ -247,7 +247,9 @@
     <string name="forward">Transférer</string>
     <string name="e2e_encrypted_message">Message chiffré de bout en bout</string>
     <string name="decrypt_failed_title">Impossible de déchiffrer le message</string>
-    <string name="decrypt_failed_body">Ce message a été chiffré avec une clé que cet appareil ne possède pas actuellement. Réessayez ou ouvrez-le dans l\'application web Aster.</string>
+    <string name="decrypt_failed_body">Cet appareil ne peut pas déchiffrer ce message pour le moment. Réessayez dans un instant.</string>
+    <string name="decrypt_locked_by_reset_title">Verrouillé par une réinitialisation du mot de passe</string>
+    <string name="decrypt_locked_by_reset_body">Ce message est chiffré avec des clés antérieures à la réinitialisation de votre mot de passe. Pour le déverrouiller, saisissez votre ancien mot de passe ou un code de récupération enregistré avant la réinitialisation.</string>
     <string name="e2e_encryption_failed">Envoi impossible : échec du chiffrement de bout en bout. Le message n\'a pas été envoyé.</string>
     <string name="attachment_prepare_failed">Envoi impossible : %1$s n\'a pas pu être préparé. Le message n\'a pas été envoyé.</string>
     <string name="e2e_keys_not_ready">Envoi impossible : les clés de chiffrement ne sont pas encore prêtes. Le message n\'a pas été envoyé.</string>

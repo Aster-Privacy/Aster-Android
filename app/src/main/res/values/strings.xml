@@ -395,7 +395,9 @@
     <string name="links_cleaned">LINKS CLEANED</string>
     <string name="e2e_encrypted_message">End-to-end encrypted message</string>
     <string name="decrypt_failed_title">Message couldn\'t be decrypted</string>
-    <string name="decrypt_failed_body">This message was encrypted with a key this device does not currently hold. Try again, or open it on the Aster web app.</string>
+    <string name="decrypt_failed_body">This device can\'t decrypt this message right now. Try again in a moment.</string>
+    <string name="decrypt_locked_by_reset_title">Locked by a password reset</string>
+    <string name="decrypt_locked_by_reset_body">This message is encrypted with keys from before your password reset. To unlock it, enter your previous password or a recovery code you saved before the reset.</string>
     <string name="decrypt_retrying">Retrying</string>
     <string name="decrypt_retry_failed">Still couldn\'t decrypt this message</string>
     <string name="e2e_no_key_description">This message is encrypted with a key this device does not yet hold. Open it on the Aster web app to read.</string>
