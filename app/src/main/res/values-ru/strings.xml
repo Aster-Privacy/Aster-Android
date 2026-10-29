@@ -3492,4 +3492,19 @@
     <string name="storage_nudge_full_body">Вы не сможете отправлять и импортировать письма, пока не освободите место. Существующие письма в безопасности.</string>
     <string name="storage_nudge_free_up">Освободить место</string>
     <string name="storage_nudge_get_storage">Получить место</string>
+    <string name="ext_health_banner_reauth">Аккаунт %1$s перестал синхронизироваться. Войдите снова, чтобы продолжить.</string>
+    <string name="ext_health_banner_failing">Аккаунт %1$s не синхронизировался больше суток.</string>
+    <string name="ext_health_banner_multiple">Некоторые внешние аккаунты перестали синхронизироваться.</string>
+    <string name="ext_health_banner_action">Проверить</string>
+    <string name="ext_health_banner_dismiss">Скрыть</string>
+    <string name="ext_health_summary">Состояние синхронизации</string>
+    <string name="ext_health_ok">Работают</string>
+    <string name="ext_health_failing">Ошибки</string>
+    <string name="ext_health_reauth">Нужен вход</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d внешний аккаунт</item>
+        <item quantity="few">%1$d внешних аккаунта</item>
+        <item quantity="many">%1$d внешних аккаунтов</item>
+        <item quantity="other">%1$d внешних аккаунта</item>
+    </plurals>
 </resources>

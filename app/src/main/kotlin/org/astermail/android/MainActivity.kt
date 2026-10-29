@@ -2698,6 +2698,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             on_open_domains = { nav_controller.navigate(routes.settings_detail("domains")) },
                             on_open_storage = { nav_controller.navigate(routes.settings_detail("storage")) { launchSingleTop = true } },
+                            on_open_external_accounts = { nav_controller.navigate(routes.settings_detail("external_accounts")) { launchSingleTop = true } },
                             on_open_storage_addons = {
                                 nav_controller.navigate(routes.settings_detail("billing_addons")) { launchSingleTop = true }
                             },
@@ -2783,6 +2784,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_import = { nav_controller.navigate(routes.settings_detail("import")) },
                             on_open_domains = { nav_controller.navigate(routes.settings_detail("domains")) },
                             on_open_storage = { nav_controller.navigate(routes.settings_detail("storage")) { launchSingleTop = true } },
+                            on_open_external_accounts = { nav_controller.navigate(routes.settings_detail("external_accounts")) { launchSingleTop = true } },
                             on_open_storage_addons = {
                                 nav_controller.navigate(routes.settings_detail("billing_addons")) { launchSingleTop = true }
                             },

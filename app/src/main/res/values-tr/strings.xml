@@ -3452,4 +3452,17 @@
     <string name="storage_nudge_full_body">Yer açana kadar e-posta gönderemez veya içe aktaramazsınız. Mevcut e-postalarınız güvende.</string>
     <string name="storage_nudge_free_up">Yer aç</string>
     <string name="storage_nudge_get_storage">Depolama al</string>
+    <string name="ext_health_banner_reauth">%1$s eşitlenmeyi durdurdu. Devam etmek için yeniden oturum açın.</string>
+    <string name="ext_health_banner_failing">%1$s bir günden uzun süredir eşitlenmedi.</string>
+    <string name="ext_health_banner_multiple">Bazı harici hesapların eşitlenmesi durdu.</string>
+    <string name="ext_health_banner_action">İncele</string>
+    <string name="ext_health_banner_dismiss">Kapat</string>
+    <string name="ext_health_summary">Eşitleme durumu</string>
+    <string name="ext_health_ok">Sorunsuz</string>
+    <string name="ext_health_failing">Hatalı</string>
+    <string name="ext_health_reauth">Oturum açılmalı</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d harici hesap</item>
+        <item quantity="other">%1$d harici hesap</item>
+    </plurals>
 </resources>

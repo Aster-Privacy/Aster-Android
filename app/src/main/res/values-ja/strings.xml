@@ -3441,4 +3441,16 @@
     <string name="storage_nudge_full_body">空き容量を確保するまで、メールの送信やインポートはできません。既存のメールは安全です。</string>
     <string name="storage_nudge_free_up">空き容量を増やす</string>
     <string name="storage_nudge_get_storage">ストレージを追加</string>
+    <string name="ext_health_banner_reauth">%1$s の同期が停止しました。再開するには再度サインインしてください。</string>
+    <string name="ext_health_banner_failing">%1$s は 1 日以上同期されていません。</string>
+    <string name="ext_health_banner_multiple">一部の外部アカウントの同期が停止しています。</string>
+    <string name="ext_health_banner_action">確認</string>
+    <string name="ext_health_banner_dismiss">閉じる</string>
+    <string name="ext_health_summary">同期の状態</string>
+    <string name="ext_health_ok">正常</string>
+    <string name="ext_health_failing">エラー</string>
+    <string name="ext_health_reauth">サインインが必要</string>
+    <plurals name="ext_account_count">
+        <item quantity="other">%1$d 件の外部アカウント</item>
+    </plurals>
 </resources>

@@ -3471,4 +3471,17 @@
     <string name="storage_nudge_full_body">Non puoi inviare né importare posta finché non liberi spazio. La posta esistente è al sicuro.</string>
     <string name="storage_nudge_free_up">Libera spazio</string>
     <string name="storage_nudge_get_storage">Ottieni spazio</string>
+    <string name="ext_health_banner_reauth">%1$s non si sincronizza più. Accedi di nuovo per riprendere.</string>
+    <string name="ext_health_banner_failing">%1$s non si sincronizza da più di un giorno.</string>
+    <string name="ext_health_banner_multiple">Alcuni account esterni non si sincronizzano più.</string>
+    <string name="ext_health_banner_action">Controlla</string>
+    <string name="ext_health_banner_dismiss">Ignora</string>
+    <string name="ext_health_summary">Stato della sincronizzazione</string>
+    <string name="ext_health_ok">Funzionanti</string>
+    <string name="ext_health_failing">Con errori</string>
+    <string name="ext_health_reauth">Accesso richiesto</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d account esterno</item>
+        <item quantity="other">%1$d account esterni</item>
+    </plurals>
 </resources>

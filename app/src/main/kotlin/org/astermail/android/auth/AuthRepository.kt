@@ -1391,6 +1391,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
+        runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)
@@ -2018,6 +2019,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
+        runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)

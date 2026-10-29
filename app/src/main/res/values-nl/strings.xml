@@ -3452,4 +3452,17 @@
     <string name="storage_nudge_full_body">Je kunt geen e-mail versturen of importeren tot je ruimte vrijmaakt. Je bestaande e-mail is veilig.</string>
     <string name="storage_nudge_free_up">Ruimte vrijmaken</string>
     <string name="storage_nudge_get_storage">Opslag kopen</string>
+    <string name="ext_health_banner_reauth">%1$s synchroniseert niet meer. Log opnieuw in om verder te gaan.</string>
+    <string name="ext_health_banner_failing">%1$s is al meer dan een dag niet gesynchroniseerd.</string>
+    <string name="ext_health_banner_multiple">Sommige externe accounts synchroniseren niet meer.</string>
+    <string name="ext_health_banner_action">Bekijken</string>
+    <string name="ext_health_banner_dismiss">Sluiten</string>
+    <string name="ext_health_summary">Synchronisatiestatus</string>
+    <string name="ext_health_ok">In orde</string>
+    <string name="ext_health_failing">Mislukt</string>
+    <string name="ext_health_reauth">Inloggen vereist</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d extern account</item>
+        <item quantity="other">%1$d externe accounts</item>
+    </plurals>
 </resources>
