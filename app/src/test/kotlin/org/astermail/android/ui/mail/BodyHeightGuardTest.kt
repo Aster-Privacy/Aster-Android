@@ -194,4 +194,22 @@ class BodyHeightGuardTest {
         assertEquals(listOf("srv", "p1"), thread_item_keys(listOf("srv", "p1"), mapOf("srv" to "p1")))
         assertEquals(listOf("p1", "b"), thread_item_keys(listOf("a", "b"), mapOf("a" to "p1", "b" to "p1")))
     }
+
+    @Test
+    fun a_finger_tap_that_drifts_past_sixteen_pixels_still_remeasures() {
+        assertTrue(body_tap_may_toggle(dx = 20f, dy = 6f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = false))
+        assertTrue(body_tap_may_toggle(dx = 30f, dy = 24f, touch_slop_px = 24f, duration_ms = 120, long_press_ms = 400, multi_touch = false))
+    }
+
+    @Test
+    fun a_still_tap_remeasures() {
+        assertTrue(body_tap_may_toggle(dx = 0f, dy = 0f, touch_slop_px = 21f, duration_ms = 60, long_press_ms = 400, multi_touch = false))
+    }
+
+    @Test
+    fun a_drag_long_press_or_pinch_does_not_remeasure() {
+        assertFalse(body_tap_may_toggle(dx = 0f, dy = 120f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = false))
+        assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 400, long_press_ms = 400, multi_touch = false))
+        assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = true))
+    }
 }

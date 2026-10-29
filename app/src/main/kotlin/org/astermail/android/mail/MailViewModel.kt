@@ -2421,13 +2421,12 @@ class MailViewModel @Inject constructor(
                 )
             }
             if (metas.isEmpty()) return@launch
-            val results = metas.keys.map { id ->
-                async { id to repository.fetch_attachments_for_message(id) }
-            }.awaitAll()
-                .mapNotNull { (id, outcome) ->
-                    outcome.getOrNull()?.takeIf { it.isNotEmpty() }?.let { id to it }
-                }
-                .toMap()
+            val results = prefetch_thread_attachments(
+                plan = plan_attachment_prefetch(metas),
+                metas = metas,
+                fetch_message = { id -> repository.fetch_attachments_for_message(id) },
+                fetch_attachment = { id -> repository.fetch_attachment(id) },
+            )
             if (results.isEmpty()) return@launch
             _thread_state.update { state ->
                 if (state.messages.none { it.id in expected_ids }) return@update state
@@ -2448,8 +2447,8 @@ class MailViewModel @Inject constructor(
         on_result: (Result<Pair<MessageAttachment, ByteArray>>) -> Unit,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = runCatching {
-                if (!attachment.encrypted_data.isNullOrBlank() && !attachment.data_nonce.isNullOrBlank()) {
+            val inline = if (!attachment.encrypted_data.isNullOrBlank() && !attachment.data_nonce.isNullOrBlank()) {
+                runCatching {
                     val bytes = repository.decrypt_attachment_data(
                         attachment.encrypted_data,
                         attachment.data_nonce,
@@ -2458,10 +2457,12 @@ class MailViewModel @Inject constructor(
                         attachment.seq_num,
                     )
                     Pair(attachment, bytes)
-                } else {
-                    repository.download_attachment(attachment.id).getOrThrow()
-                }
+                }.onFailure { if (it is kotlin.coroutines.cancellation.CancellationException) throw it }
+            } else {
+                null
             }
+            val result = inline?.takeIf { it.isSuccess }
+                ?: repository.download_attachment(attachment.id)
             kotlinx.coroutines.withContext(Dispatchers.Main) {
                 on_result(result)
             }

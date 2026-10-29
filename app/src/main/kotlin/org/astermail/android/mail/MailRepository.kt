@@ -4744,29 +4744,61 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun download_attachment(
-        attachment_id: String,
-    ): Result<Pair<org.astermail.android.ui.mail.MessageAttachment, ByteArray>> {
-        return try {
-            val att = mail_api.get_attachment(attachment_id)
-            var meta = decrypt_attachment_meta(
+    private suspend fun resolve_single_attachment_meta(
+        att: org.astermail.android.api.mail.AttachmentResponse,
+    ) = decrypt_attachment_meta(
+        att.encrypted_meta,
+        att.meta_nonce,
+        att.mail_item_id,
+        att.seq_num,
+        att.size_bytes,
+    ).let { meta ->
+        if (attachment_meta_needs_heal(meta) && heal_attachment_keys_for_message(att.mail_item_id)) {
+            decrypt_attachment_meta(
                 att.encrypted_meta,
                 att.meta_nonce,
                 att.mail_item_id,
                 att.seq_num,
                 att.size_bytes,
             )
-            if (attachment_meta_needs_heal(meta) &&
-                heal_attachment_keys_for_message(att.mail_item_id)
-            ) {
-                meta = decrypt_attachment_meta(
-                    att.encrypted_meta,
-                    att.meta_nonce,
-                    att.mail_item_id,
-                    att.seq_num,
-                    att.size_bytes,
-                )
-            }
+        } else {
+            meta
+        }
+    }
+
+    suspend fun fetch_attachment(
+        attachment_id: String,
+    ): Result<org.astermail.android.ui.mail.MessageAttachment> {
+        return try {
+            val att = mail_api.get_attachment(attachment_id)
+            val meta = resolve_single_attachment_meta(att)
+            Result.success(
+                org.astermail.android.ui.mail.MessageAttachment(
+                    id = att.id,
+                    filename = meta.filename,
+                    content_type = meta.content_type,
+                    size_bytes = meta.size_bytes ?: att.size_bytes,
+                    encrypted_data = att.encrypted_data,
+                    data_nonce = att.data_nonce,
+                    session_key = meta.session_key,
+                    content_id = meta.content_id,
+                    mail_item_id = att.mail_item_id,
+                    seq_num = att.seq_num,
+                ),
+            )
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            Result.failure(t)
+        }
+    }
+
+    suspend fun download_attachment(
+        attachment_id: String,
+    ): Result<Pair<org.astermail.android.ui.mail.MessageAttachment, ByteArray>> {
+        return try {
+            val att = mail_api.get_attachment(attachment_id)
+            val meta = resolve_single_attachment_meta(att)
             val data = decrypt_attachment_data(
                 att.encrypted_data,
                 att.data_nonce,

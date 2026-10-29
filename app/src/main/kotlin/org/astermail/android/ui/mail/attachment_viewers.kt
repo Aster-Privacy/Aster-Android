@@ -148,7 +148,11 @@ private sealed interface image_decode_state {
 }
 
 @Composable
-internal fun image_attachment_viewer(bytes: ByteArray, description: String) {
+internal fun image_attachment_viewer(
+    bytes: ByteArray,
+    description: String,
+    fallback: @Composable (message: String) -> Unit,
+) {
     val decoded by produceState<image_decode_state>(initialValue = image_decode_state.loading, bytes) {
         value = withContext(Dispatchers.Default) {
             runCatching {
@@ -167,10 +171,7 @@ internal fun image_attachment_viewer(bytes: ByteArray, description: String) {
             color = Color.White,
             modifier = Modifier.size(36.dp),
         )
-        image_decode_state.failed -> Text(
-            text = stringResource(R.string.cannot_decode_image),
-            color = Color.White.copy(alpha = 0.7f),
-        )
+        image_decode_state.failed -> fallback(stringResource(R.string.cannot_decode_image))
         is image_decode_state.ready -> {
             val bitmap = current.bitmap
             DisposableEffect(bitmap) {
