@@ -235,7 +235,9 @@
     <string name="forward">Przekaż</string>
     <string name="e2e_encrypted_message">Wiadomość zaszyfrowana end-to-end</string>
     <string name="decrypt_failed_title">Nie udało się odszyfrować wiadomości</string>
-    <string name="decrypt_failed_body">Ta wiadomość została zaszyfrowana kluczem, którego to urządzenie obecnie nie ma. Spróbuj ponownie lub otwórz ją w aplikacji internetowej Aster.</string>
+    <string name="decrypt_failed_body">To urządzenie nie może teraz odszyfrować tej wiadomości. Spróbuj ponownie za chwilę.</string>
+    <string name="decrypt_locked_by_reset_title">Zablokowane przez reset hasła</string>
+    <string name="decrypt_locked_by_reset_body">Ta wiadomość jest zaszyfrowana kluczami sprzed resetu hasła. Aby ją odblokować, wpisz poprzednie hasło lub kod odzyskiwania zapisany przed resetem.</string>
     <string name="e2e_encryption_failed">Nie można wysłać: szyfrowanie end-to-end nie powiodło się. Wiadomość nie została wysłana.</string>
     <string name="attachment_prepare_failed">Nie można wysłać: nie udało się przygotować "%1$s". Wiadomość nie została wysłana.</string>
     <string name="e2e_keys_not_ready">Nie można wysłać: klucze szyfrowania nie są jeszcze gotowe. Wiadomość nie została wysłana.</string>

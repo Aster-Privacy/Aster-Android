@@ -235,7 +235,9 @@
     <string name="forward">Encaminhar</string>
     <string name="e2e_encrypted_message">Mensagem com criptografia de ponta a ponta</string>
     <string name="decrypt_failed_title">Não foi possível descriptografar a mensagem</string>
-    <string name="decrypt_failed_body">Esta mensagem foi criptografada com uma chave que este dispositivo não possui no momento. Tente novamente ou abra-a no app web do Aster.</string>
+    <string name="decrypt_failed_body">Este dispositivo não consegue descriptografar esta mensagem agora. Tente novamente em instantes.</string>
+    <string name="decrypt_locked_by_reset_title">Bloqueada por uma redefinição de senha</string>
+    <string name="decrypt_locked_by_reset_body">Esta mensagem está criptografada com chaves de antes da redefinição da sua senha. Para desbloqueá-la, digite sua senha anterior ou um código de recuperação salvo antes da redefinição.</string>
     <string name="e2e_encryption_failed">Não foi possível enviar: falha na criptografia de ponta a ponta. A mensagem não foi enviada.</string>
     <string name="attachment_prepare_failed">Não foi possível enviar: não foi possível preparar "%1$s". A mensagem não foi enviada.</string>
     <string name="e2e_keys_not_ready">Não foi possível enviar: as chaves de criptografia ainda não estão prontas. A mensagem não foi enviada.</string>

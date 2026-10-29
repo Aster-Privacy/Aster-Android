@@ -235,7 +235,9 @@
     <string name="forward">Inoltra</string>
     <string name="e2e_encrypted_message">Messaggio crittografato end-to-end</string>
     <string name="decrypt_failed_title">Impossibile decifrare il messaggio</string>
-    <string name="decrypt_failed_body">Questo messaggio è stato crittografato con una chiave che questo dispositivo al momento non possiede. Riprova o aprilo nell\'app web di Aster.</string>
+    <string name="decrypt_failed_body">Questo dispositivo al momento non riesce a decifrare il messaggio. Riprova tra poco.</string>
+    <string name="decrypt_locked_by_reset_title">Bloccato da una reimpostazione della password</string>
+    <string name="decrypt_locked_by_reset_body">Questo messaggio è crittografato con chiavi precedenti alla reimpostazione della password. Per sbloccarlo, inserisci la password precedente o un codice di recupero salvato prima della reimpostazione.</string>
     <string name="e2e_encryption_failed">Invio non riuscito: crittografia end-to-end non riuscita. Il messaggio non è stato inviato.</string>
     <string name="attachment_prepare_failed">Invio non riuscito: impossibile preparare "%1$s". Il messaggio non è stato inviato.</string>
     <string name="e2e_keys_not_ready">Invio non riuscito: le chiavi di crittografia non sono ancora pronte. Il messaggio non è stato inviato.</string>

@@ -235,7 +235,9 @@
     <string name="forward">転送</string>
     <string name="e2e_encrypted_message">エンドツーエンド暗号化メッセージ</string>
     <string name="decrypt_failed_title">メッセージを復号できませんでした</string>
-    <string name="decrypt_failed_body">このメッセージは、この端末が現在保持していない鍵で暗号化されています。もう一度試すか、Aster のウェブアプリで開いてください。</string>
+    <string name="decrypt_failed_body">この端末では現在このメッセージを復号できません。しばらくしてからもう一度お試しください。</string>
+    <string name="decrypt_locked_by_reset_title">パスワードのリセットによりロックされています</string>
+    <string name="decrypt_locked_by_reset_body">このメッセージは、パスワードをリセットする前の鍵で暗号化されています。ロックを解除するには、以前のパスワードか、リセット前に保存した復旧コードを入力してください。</string>
     <string name="e2e_encryption_failed">送信できませんでした。エンドツーエンド暗号化に失敗しました。メッセージは送信されていません。</string>
     <string name="attachment_prepare_failed">送信できませんでした。「%1$s」を準備できませんでした。メッセージは送信されていません。</string>
     <string name="e2e_keys_not_ready">送信できませんでした。暗号化キーの準備がまだできていません。メッセージは送信されていません。</string>

@@ -427,6 +427,8 @@ data class InboxItem(
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
 
+private class EnvelopeKeysMissingException : IllegalStateException("all envelope keys failed")
+
 data class CategoryWrite(
     val item: MailItem,
     val prior_category: String?,
@@ -467,6 +469,7 @@ data class ThreadMessageDecrypted(
     val has_attachments: Boolean = false,
     val raw_headers: List<Pair<String, String>> = emptyList(),
     val is_undecryptable: Boolean = false,
+    val is_sealed_to_missing_keys: Boolean = false,
     val subject: String = "",
     val display_sender_name: String? = null,
     val display_sender_email: String? = null,
@@ -3951,7 +3954,13 @@ class MailRepository @Inject constructor(
 
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
         get_user_email()
-        val envelope = try_decrypt_envelope(item.encrypted_envelope, item.envelope_nonce, item.id)
+        var keys_missing = false
+        val envelope = try_decrypt_envelope(
+            item.encrypted_envelope,
+            item.envelope_nonce,
+            item.id,
+            on_keys_missing = { keys_missing = true },
+        )
         val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
@@ -3977,6 +3986,7 @@ class MailRepository @Inject constructor(
             has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
             raw_headers = envelope?.raw_headers ?: emptyList(),
             is_undecryptable = envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank(),
+            is_sealed_to_missing_keys = envelope == null && keys_missing,
             subject = envelope?.subject ?: "",
             display_sender_name = forwarding?.display_sender_name,
             display_sender_email = forwarding?.display_sender_email,
@@ -4022,6 +4032,7 @@ class MailRepository @Inject constructor(
         key_sets: Lazy<List<InboundRatchetKeySet>>? = null,
         base_envelope: DecryptedEnvelope? = null,
         base_sink: MutableMap<String, DecryptedEnvelope>? = null,
+        on_keys_missing: (() -> Unit)? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -4083,7 +4094,7 @@ class MailRepository @Inject constructor(
                             decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
                         }.getOrNull()
                         ?: decrypt_envelope_legacy_key_material(encrypted_envelope, nonce_bytes)
-                        ?: throw IllegalStateException("all envelope keys failed")
+                        ?: throw EnvelopeKeysMissingException()
                 }
             }
 
@@ -4116,6 +4127,7 @@ class MailRepository @Inject constructor(
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("MailRepository", "envelope decrypt failed: ${t.javaClass.simpleName}")
             }
+            if (t is EnvelopeKeysMissingException) on_keys_missing?.invoke()
             null
         }
     }

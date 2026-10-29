@@ -322,7 +322,9 @@
     <string name="links_cleaned">लिंक साफ़ किए गए</string>
     <string name="e2e_encrypted_message">एंड-टू-एंड एन्क्रिप्टेड संदेश</string>
     <string name="decrypt_failed_title">संदेश डिक्रिप्ट नहीं हो सका</string>
-    <string name="decrypt_failed_body">यह संदेश ऐसी कुंजी से एन्क्रिप्ट हुआ था जो अभी इस डिवाइस के पास नहीं है। फिर से कोशिश करें, या इसे Aster वेब ऐप में खोलें।</string>
+    <string name="decrypt_failed_body">यह डिवाइस अभी इस संदेश को डिक्रिप्ट नहीं कर सकता। थोड़ी देर में फिर से कोशिश करें।</string>
+    <string name="decrypt_locked_by_reset_title">पासवर्ड रीसेट के कारण लॉक है</string>
+    <string name="decrypt_locked_by_reset_body">यह संदेश आपके पासवर्ड रीसेट से पहले की कुंजियों से एन्क्रिप्ट है। इसे अनलॉक करने के लिए, अपना पिछला पासवर्ड या रीसेट से पहले सहेजा गया रिकवरी कोड डालें।</string>
     <string name="decrypt_retrying">फिर कोशिश हो रही है</string>
     <string name="decrypt_retry_failed">यह संदेश अब भी डिक्रिप्ट नहीं हो सका</string>
     <string name="e2e_no_key_description">यह संदेश ऐसी कुंजी से एन्क्रिप्ट है जो अभी इस डिवाइस के पास नहीं है। पढ़ने के लिए इसे Aster वेब ऐप में खोलें।</string>

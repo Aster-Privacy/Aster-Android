@@ -236,7 +236,9 @@
     <string name="forward">Weiterleiten</string>
     <string name="e2e_encrypted_message">Ende-zu-Ende-verschlüsselte Nachricht</string>
     <string name="decrypt_failed_title">Nachricht konnte nicht entschlüsselt werden</string>
-    <string name="decrypt_failed_body">Diese Nachricht wurde mit einem Schlüssel verschlüsselt, den dieses Gerät derzeit nicht hat. Versuchen Sie es erneut oder öffnen Sie sie in der Aster-Web-App.</string>
+    <string name="decrypt_failed_body">Dieses Gerät kann diese Nachricht gerade nicht entschlüsseln. Versuchen Sie es in Kürze erneut.</string>
+    <string name="decrypt_locked_by_reset_title">Durch Zurücksetzen des Passworts gesperrt</string>
+    <string name="decrypt_locked_by_reset_body">Diese Nachricht ist mit Schlüsseln aus der Zeit vor dem Zurücksetzen Ihres Passworts verschlüsselt. Um sie zu entsperren, geben Sie Ihr vorheriges Passwort oder einen Wiederherstellungscode ein, den Sie vor dem Zurücksetzen gespeichert haben.</string>
     <string name="e2e_encryption_failed">Senden fehlgeschlagen: Ende-zu-Ende-Verschlüsselung fehlgeschlagen. Die Nachricht wurde nicht gesendet.</string>
     <string name="attachment_prepare_failed">Senden fehlgeschlagen: "%1$s" konnte nicht vorbereitet werden. Die Nachricht wurde nicht gesendet.</string>
     <string name="e2e_keys_not_ready">Senden fehlgeschlagen: Verschlüsselungsschlüssel sind noch nicht bereit. Die Nachricht wurde nicht gesendet.</string>

@@ -346,4 +346,13 @@ class LockedDataTest {
             locked_data_recovery_outcome(LockedDataRecovery(restored_key_sets = 1, failed = true, incomplete = 2)),
         )
     }
+
+    @Test
+    fun message_is_locked_by_reset_only_when_sealed_to_missing_keys_and_archived_keys_exist() {
+        val archived = locked_data_status(listOf("set_1"), 0)
+        assertTrue(message_locked_by_reset(true, archived))
+        assertFalse(message_locked_by_reset(false, archived))
+        assertFalse(message_locked_by_reset(true, locked_data_status(emptyList(), 3)))
+        assertFalse(message_locked_by_reset(true, null))
+    }
 }

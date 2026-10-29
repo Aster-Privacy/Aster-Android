@@ -235,7 +235,9 @@
     <string name="forward">Переслать</string>
     <string name="e2e_encrypted_message">Сообщение со сквозным шифрованием</string>
     <string name="decrypt_failed_title">Не удалось расшифровать сообщение</string>
-    <string name="decrypt_failed_body">Это сообщение зашифровано ключом, которого сейчас нет на этом устройстве. Повторите попытку или откройте его в веб-приложении Aster.</string>
+    <string name="decrypt_failed_body">Это устройство сейчас не может расшифровать сообщение. Повторите попытку чуть позже.</string>
+    <string name="decrypt_locked_by_reset_title">Заблокировано после сброса пароля</string>
+    <string name="decrypt_locked_by_reset_body">Это сообщение зашифровано ключами, которые использовались до сброса пароля. Чтобы разблокировать его, введите прежний пароль или код восстановления, сохранённый до сброса.</string>
     <string name="e2e_encryption_failed">Не удалось отправить: сбой сквозного шифрования. Сообщение не отправлено.</string>
     <string name="attachment_prepare_failed">Не удалось отправить: не удалось подготовить "%1$s". Сообщение не отправлено.</string>
     <string name="e2e_keys_not_ready">Не удалось отправить: ключи шифрования ещё не готовы. Сообщение не отправлено.</string>

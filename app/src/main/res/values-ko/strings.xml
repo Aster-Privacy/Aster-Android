@@ -235,7 +235,9 @@
     <string name="forward">전달</string>
     <string name="e2e_encrypted_message">종단간 암호화 메시지</string>
     <string name="decrypt_failed_title">메시지를 복호화할 수 없습니다</string>
-    <string name="decrypt_failed_body">이 메시지는 이 기기에 현재 없는 키로 암호화되었습니다. 다시 시도하거나 Aster 웹 앱에서 열어보세요.</string>
+    <string name="decrypt_failed_body">이 기기에서 지금은 이 메시지를 복호화할 수 없습니다. 잠시 후 다시 시도하세요.</string>
+    <string name="decrypt_locked_by_reset_title">비밀번호 재설정으로 잠겼습니다</string>
+    <string name="decrypt_locked_by_reset_body">이 메시지는 비밀번호 재설정 이전의 키로 암호화되어 있습니다. 잠금을 해제하려면 이전 비밀번호나 재설정 전에 저장한 복구 코드를 입력하세요.</string>
     <string name="e2e_encryption_failed">보낼 수 없음: 종단간 암호화에 실패했습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="attachment_prepare_failed">보낼 수 없음: "%1$s"을(를) 준비하지 못했습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="e2e_keys_not_ready">보낼 수 없음: 암호화 키가 아직 준비되지 않았습니다. 메시지가 전송되지 않았습니다.</string>
