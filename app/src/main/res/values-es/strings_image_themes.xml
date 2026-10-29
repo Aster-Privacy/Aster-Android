@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Las superficies son totalmente sólidas y tu foto queda detrás.</string>
     <string name="glass_mode">Cristal</string>
     <string name="glass_mode_subtitle">Tu foto se ve a través de las superficies. Desactiva esta opción para superficies sólidas.</string>
+    <string name="glass_mode_reduced_subtitle">Para usar Cristal, desactiva Reducir transparencia en los ajustes de Accesibilidad.</string>
     <string name="theme_transparency">Transparencia</string>
     <string name="image_theme_animation">Animar el fondo</string>
     <string name="image_theme_animation_subtitle">Reproduce tu fondo animado. Se detiene en el modo de ahorro de batería y cuando las animaciones están desactivadas en tu dispositivo.</string>

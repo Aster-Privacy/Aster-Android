@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">الأسطح معتمة بالكامل وتبقى صورتك خلفها.</string>
     <string name="glass_mode">زجاج</string>
     <string name="glass_mode_subtitle">تظهر صورتك خلف الأسطح. أوقف هذا الخيار لأسطح مصمتة.</string>
+    <string name="glass_mode_reduced_subtitle">لاستخدام الزجاج، أوقف تقليل الشفافية في إعدادات إمكانية الوصول.</string>
     <string name="theme_transparency">الشفافية</string>
     <string name="image_theme_animation">تحريك الخلفية</string>
     <string name="image_theme_animation_subtitle">يشغّل خلفيتك المتحركة. يتوقف في وضع توفير البطارية وعند إيقاف الحركات على جهازك.</string>

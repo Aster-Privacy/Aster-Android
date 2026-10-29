@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">सतहें पूरी तरह ठोस हैं और आपकी फ़ोटो उनके पीछे रहती है।</string>
     <string name="glass_mode">ग्लास</string>
     <string name="glass_mode_subtitle">आपकी फ़ोटो सतहों के पीछे दिखती है। ठोस सतहों के लिए इसे बंद करें।</string>
+    <string name="glass_mode_reduced_subtitle">ग्लास इस्तेमाल करने के लिए, सुलभता सेटिंग में पारदर्शिता घटाएं बंद करें।</string>
     <string name="theme_transparency">पारदर्शिता</string>
     <string name="image_theme_animation">बैकग्राउंड एनिमेट करें</string>
     <string name="image_theme_animation_subtitle">आपका एनिमेटेड बैकग्राउंड चलाता है। यह बैटरी सेवर में और डिवाइस पर एनिमेशन बंद होने पर रुक जाता है।</string>

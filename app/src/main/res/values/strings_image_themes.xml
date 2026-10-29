@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Surfaces are fully solid and your photo stays behind them.</string>
     <string name="glass_mode">Glass</string>
     <string name="glass_mode_subtitle">Surfaces let your photo show through. Turn this off for solid surfaces.</string>
+    <string name="glass_mode_reduced_subtitle">To use glass, turn off Reduce transparency in Accessibility settings.</string>
     <string name="theme_transparency">Transparency</string>
     <string name="image_theme_animation">Animate background</string>
     <string name="image_theme_animation_subtitle">Plays your animated background. It stops in Battery Saver and when your device has animations turned off.</string>

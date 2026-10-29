@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Flächen sind vollständig deckend und Ihr Foto bleibt dahinter.</string>
     <string name="glass_mode">Glas</string>
     <string name="glass_mode_subtitle">Ihr Foto scheint durch die Flächen. Schalten Sie dies aus, um sie deckend zu machen.</string>
+    <string name="glass_mode_reduced_subtitle">Um Glas zu verwenden, deaktiviere Transparenz reduzieren in den Einstellungen für Barrierefreiheit.</string>
     <string name="theme_transparency">Transparenz</string>
     <string name="image_theme_animation">Hintergrund animieren</string>
     <string name="image_theme_animation_subtitle">Spielt Ihren animierten Hintergrund ab. Er stoppt im Energiesparmodus und wenn Animationen auf Ihrem Gerät deaktiviert sind.</string>

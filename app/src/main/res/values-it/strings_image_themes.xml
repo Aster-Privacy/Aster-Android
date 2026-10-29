@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Le superfici sono completamente piene e la tua foto resta dietro.</string>
     <string name="glass_mode">Vetro</string>
     <string name="glass_mode_subtitle">La tua foto traspare dalle superfici. Disattiva questa opzione per superfici piene.</string>
+    <string name="glass_mode_reduced_subtitle">Per usare Vetro, disattiva Riduci trasparenza nelle impostazioni di Accessibilità.</string>
     <string name="theme_transparency">Trasparenza</string>
     <string name="image_theme_animation">Anima lo sfondo</string>
     <string name="image_theme_animation_subtitle">Riproduce il tuo sfondo animato. Si ferma in Risparmio energetico e quando le animazioni sono disattivate sul dispositivo.</string>

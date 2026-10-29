@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">Поверхности полностью непрозрачные, фото остаётся за ними.</string>
     <string name="glass_mode">Стекло</string>
     <string name="glass_mode_subtitle">Фото просвечивает сквозь поверхности. Отключите, чтобы сделать их непрозрачными.</string>
+    <string name="glass_mode_reduced_subtitle">Чтобы использовать Стекло, выключите Уменьшить прозрачность в настройках Доступности.</string>
     <string name="theme_transparency">Прозрачность</string>
     <string name="image_theme_animation">Анимация фона</string>
     <string name="image_theme_animation_subtitle">Воспроизводит анимированный фон. Анимация останавливается в режиме энергосбережения и когда анимации на устройстве отключены.</string>

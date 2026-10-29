@@ -50,6 +50,7 @@
     <string name="theme_opacity_solid_subtitle">표면이 완전히 불투명해지고 사진은 뒤에 남습니다.</string>
     <string name="glass_mode">글래스</string>
     <string name="glass_mode_subtitle">사진이 표면 뒤로 비칩니다. 불투명하게 하려면 끄세요.</string>
+    <string name="glass_mode_reduced_subtitle">글래스를 사용하려면 접근성 설정에서 투명도 줄이기를 끄세요.</string>
     <string name="theme_transparency">투명도</string>
     <string name="image_theme_animation">배경 애니메이션</string>
     <string name="image_theme_animation_subtitle">애니메이션 배경을 재생합니다. 배터리 절약 모드이거나 기기에서 애니메이션을 꺼두었을 때 멈춥니다.</string>
