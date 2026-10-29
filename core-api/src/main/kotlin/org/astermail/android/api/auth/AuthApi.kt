@@ -201,6 +201,10 @@ data class RegisterRequest(
     val captcha_token: String? = null,
     val referral_code: String? = null,
     val pgp_key: ClientPgpKeyData? = null,
+    val encrypted_vault_backup: String? = null,
+    val vault_backup_nonce: String? = null,
+    val recovery_key_salt: String? = null,
+    val recovery_shares: List<org.astermail.android.api.recovery.RecoveryShareData>? = null,
     @EncodeDefault val client_platform: String = "android",
 )
 

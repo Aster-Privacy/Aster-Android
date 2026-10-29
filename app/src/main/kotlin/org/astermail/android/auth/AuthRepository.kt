@@ -909,6 +909,15 @@ class AuthRepository @Inject constructor(
             }.getOrNull()
         }
 
+        val vault_for_backup = backup_vault_bytes(
+            org.json.JSONObject(vault_json),
+            password.toByteArray(Charsets.UTF_8),
+        )
+        val vault_backup = encrypt_vault_backup(vault_for_backup, recovery_key)
+        vault_for_backup.fill(0)
+        val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
+        recovery_key.fill(0)
+
         val register_resp = auth_api.register(
             RegisterRequest(
                 username = username,
@@ -927,6 +936,10 @@ class AuthRepository @Inject constructor(
                 remember_me = remember_me,
                 captcha_token = captcha_token,
                 pgp_key = client_pgp_key,
+                encrypted_vault_backup = vault_backup.encrypted_data,
+                vault_backup_nonce = vault_backup.nonce,
+                recovery_key_salt = vault_backup.salt,
+                recovery_shares = recovery_shares,
             ),
         )
 
@@ -976,23 +989,6 @@ class AuthRepository @Inject constructor(
         password_hash_bytes.fill(0)
         password_hash_v2_bytes.fill(0)
 
-        val vault_for_backup = backup_vault_bytes(
-            org.json.JSONObject(vault_json),
-            password.toByteArray(Charsets.UTF_8),
-        )
-        val vault_backup = encrypt_vault_backup(vault_for_backup, recovery_key)
-        vault_for_backup.fill(0)
-        val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
-        recovery_key.fill(0)
-
-        val backup_request = SaveRecoveryBackupRequest(
-            recovery_shares = recovery_shares,
-            encrypted_vault_backup = vault_backup.encrypted_data,
-            vault_backup_nonce = vault_backup.nonce,
-            recovery_key_salt = vault_backup.salt,
-        )
-        val recovery_backup_saved = upload_recovery_backup(backup_request)
-
         session_key_store.put_recovery_codes(recovery_codes)
 
         val profile = runCatching { auth_api.me() }.getOrNull()
@@ -1016,7 +1012,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         load_account_keks()
-        RegisterSuccess(recovery_codes = recovery_codes, recovery_backup_saved = recovery_backup_saved)
+        RegisterSuccess(recovery_codes = recovery_codes)
     }
 
     fun refresh_session_snapshot() {

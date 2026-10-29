@@ -30,11 +30,16 @@ import org.astermail.android.api.auth.RegisterRequest
 import org.astermail.android.api.auth.RegisterResponse
 import org.astermail.android.api.auth.SaltResponse
 import org.astermail.android.api.auth.UserInfo
+import org.astermail.android.api.recovery.RecoveryShareData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class AuthModelsTest {
 
@@ -253,6 +258,48 @@ class AuthModelsTest {
         assertEquals("Bobby", copied.display_name)
         assertEquals("astermail.org", copied.email_domain)
         assertEquals("bob", copied.username)
+    }
+
+    @Test
+    fun `RegisterRequest carries the recovery backup so it is stored with the account`() {
+        val json = Json { explicitNulls = false; encodeDefaults = true }
+        val share = RecoveryShareData(
+            code_hash = "ch",
+            code_salt = "cs",
+            encrypted_recovery_key = "erk",
+            recovery_key_nonce = "rkn",
+        )
+        val request = RegisterRequest(
+            username = "bob", user_hash = "u", password_hash = "p",
+            password_salt = "s", argon2_params = Argon2Params(),
+            identity_key = "ik", signed_prekey = "spk",
+            signed_prekey_signature = "spks", encrypted_vault = "ev",
+            vault_nonce = "vn",
+            encrypted_vault_backup = "evb",
+            vault_backup_nonce = "vbn",
+            recovery_key_salt = "rks",
+            recovery_shares = listOf(share),
+        )
+        val encoded = json.parseToJsonElement(json.encodeToString(RegisterRequest.serializer(), request)).jsonObject
+        assertEquals("evb", encoded["encrypted_vault_backup"]?.jsonPrimitive?.content)
+        assertEquals("vbn", encoded["vault_backup_nonce"]?.jsonPrimitive?.content)
+        assertEquals("rks", encoded["recovery_key_salt"]?.jsonPrimitive?.content)
+        val encoded_share = encoded["recovery_shares"]!!.jsonArray.single().jsonObject
+        assertEquals("ch", encoded_share["code_hash"]?.jsonPrimitive?.content)
+        assertEquals("cs", encoded_share["code_salt"]?.jsonPrimitive?.content)
+        assertEquals("erk", encoded_share["encrypted_recovery_key"]?.jsonPrimitive?.content)
+        assertEquals("rkn", encoded_share["recovery_key_nonce"]?.jsonPrimitive?.content)
+
+        val without_backup = json.parseToJsonElement(
+            json.encodeToString(RegisterRequest.serializer(), request.copy(
+                encrypted_vault_backup = null,
+                vault_backup_nonce = null,
+                recovery_key_salt = null,
+                recovery_shares = null,
+            )),
+        ).jsonObject
+        assertFalse(without_backup.containsKey("encrypted_vault_backup"))
+        assertFalse(without_backup.containsKey("recovery_shares"))
     }
 
     @Test
