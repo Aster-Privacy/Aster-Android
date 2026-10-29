@@ -25,7 +25,7 @@ import org.astermail.android.storage.SessionKeyStore
 import org.json.JSONArray
 import org.json.JSONObject
 
-const val max_retained_ratchet_key_sets = 64
+const val max_retained_ratchet_key_sets = 32
 
 private val retained_key_fields = listOf(
     "ratchet_identity_key",
@@ -39,31 +39,49 @@ private val retained_key_fields = listOf(
 
 private fun JSONObject.text(name: String): String = optString(name, "").trim()
 
-private fun retained_set_tag(entry: JSONObject): String? {
-    val identity = entry.text("ratchet_identity_key")
-    val pq = entry.text("ratchet_pq_identity_key").ifBlank { entry.text("ratchet_pq_identity_seed") }
-    if (identity.isBlank() && pq.isBlank()) return null
-    return "$identity|$pq"
+private fun pq_secret_of(entry: JSONObject): String =
+    entry.text("ratchet_pq_identity_key").ifBlank { entry.text("ratchet_pq_identity_seed") }
+
+private fun holds_retained_keys(entry: JSONObject): Boolean =
+    entry.text("ratchet_identity_key").isNotBlank() || pq_secret_of(entry).isNotBlank()
+
+private fun same_signed_prekey(a: JSONObject, b: JSONObject): Boolean {
+    val a_public = a.text("ratchet_signed_prekey_public")
+    val b_public = b.text("ratchet_signed_prekey_public")
+    val a_jwk = a.text("ratchet_signed_prekey")
+    val b_jwk = b.text("ratchet_signed_prekey")
+    if ((a_public.isBlank() && a_jwk.isBlank()) || (b_public.isBlank() && b_jwk.isBlank())) return true
+    if (a_public.isNotBlank() && b_public.isNotBlank()) return a_public == b_public
+    return a_jwk.isNotBlank() && a_jwk == b_jwk
 }
+
+private fun same_retained_set(a: JSONObject, b: JSONObject): Boolean =
+    a.text("ratchet_identity_key") == b.text("ratchet_identity_key") &&
+        pq_secret_of(a) == pq_secret_of(b) &&
+        same_signed_prekey(a, b)
+
+fun receiver_key_set_tag(
+    identity_public_b64: String,
+    identity_jwk: String,
+    signed_prekey_public_b64: String,
+): String = "${identity_public_b64.ifBlank { identity_jwk }}|$signed_prekey_public_b64"
 
 fun merge_retained_ratchet_keys(vararg sources: String?): String? {
     val merged = mutableListOf<JSONObject>()
-    val tags = mutableSetOf<String>()
     for (source in sources) {
         if (source.isNullOrBlank()) continue
         val entries = runCatching { JSONArray(source) }.getOrNull() ?: continue
         for (index in 0 until entries.length()) {
             val entry = entries.optJSONObject(index) ?: continue
-            val tag = retained_set_tag(entry) ?: continue
-            if (tags.add(tag)) {
+            if (!holds_retained_keys(entry)) continue
+            val existing = merged.firstOrNull { same_retained_set(it, entry) }
+            if (existing == null) {
                 merged.add(JSONObject(entry.toString()))
                 continue
             }
-            merged.firstOrNull { retained_set_tag(it) == tag }?.let { existing ->
-                for (field in retained_key_fields) {
-                    if (existing.text(field).isBlank() && entry.text(field).isNotBlank()) {
-                        existing.put(field, entry.text(field))
-                    }
+            for (field in retained_key_fields) {
+                if (existing.text(field).isBlank() && entry.text(field).isNotBlank()) {
+                    existing.put(field, entry.text(field))
                 }
             }
         }
@@ -72,6 +90,30 @@ fun merge_retained_ratchet_keys(vararg sources: String?): String? {
     val result = JSONArray()
     merged.take(max_retained_ratchet_key_sets).forEach { result.put(it) }
     return result.toString()
+}
+
+fun retained_key_sets_equal(a: JSONArray?, b: JSONArray?): Boolean {
+    val left = a ?: JSONArray()
+    val right = b ?: JSONArray()
+    if (left.length() != right.length()) return false
+    for (index in 0 until left.length()) {
+        val x = left.optJSONObject(index)
+        val y = right.optJSONObject(index)
+        if (x == null || y == null) {
+            if (x != null || y != null) return false
+            continue
+        }
+        if (retained_key_fields.any { x.text(it) != y.text(it) }) return false
+    }
+    return true
+}
+
+private fun merge_into_vault_previous_keys(vault_json: JSONObject, newest: JSONObject) {
+    val merged = merge_retained_ratchet_keys(
+        JSONArray().put(newest).toString(),
+        vault_json.optJSONArray("ratchet_previous_keys")?.toString(),
+    ) ?: return
+    vault_json.put("ratchet_previous_keys", JSONArray(merged))
 }
 
 private fun local_ratchet_key_entry(session_key_store: SessionKeyStore): JSONObject? {
@@ -112,8 +154,8 @@ fun fold_local_ratchet_keys_into_vault(vault_json: JSONObject, session_key_store
                 local.text("ratchet_pq_identity_public") != vault_json.text("ratchet_pq_identity_public"))
         )
     val merged = merge_retained_ratchet_keys(
-        vault_json.optJSONArray("ratchet_previous_keys")?.toString(),
         if (local_differs) JSONArray().put(local).toString() else null,
+        vault_json.optJSONArray("ratchet_previous_keys")?.toString(),
         session_key_store.get_ratchet_previous_keys_json(),
     ) ?: return
     vault_json.put("ratchet_previous_keys", JSONArray(merged))
@@ -145,6 +187,68 @@ fun retain_local_ratchet_keys(
         session_key_store.get_ratchet_previous_keys_json(),
     )
     session_key_store.put_ratchet_previous_keys(merged)
+}
+
+data class VaultSignedPrekey(val jwk: String, val public_b64: String)
+
+private fun public_b64_from_private_jwk(jwk: String): String? = runCatching {
+    RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(jwk))
+}.getOrNull()
+
+fun vault_signed_prekey_to_adopt(vault_json: JSONObject, session_key_store: SessionKeyStore): VaultSignedPrekey? {
+    val local_identity = session_key_store.get_ratchet_identity_jwk()?.trim()?.takeIf { it.isNotBlank() }
+        ?: return null
+    if (vault_json.text("ratchet_identity_key") != local_identity) return null
+    val vault_spk = vault_json.text("ratchet_signed_prekey").takeIf { it.isNotBlank() } ?: return null
+    val vault_spk_public = vault_json.text("ratchet_signed_prekey_public").takeIf { it.isNotBlank() }
+        ?: public_b64_from_private_jwk(vault_spk)
+        ?: return null
+    val local_spk = session_key_store.get_ratchet_signed_prekey_jwk()?.trim()
+    val local_spk_public = session_key_store.get_ratchet_signed_prekey_public_b64()?.trim()
+    if (vault_spk == local_spk && vault_spk_public == local_spk_public) return null
+    return VaultSignedPrekey(vault_spk, vault_spk_public)
+}
+
+fun adopt_vault_signed_prekey(session_key_store: SessionKeyStore, prekey: VaultSignedPrekey): Boolean {
+    val identity = session_key_store.get_ratchet_identity_jwk()?.takeIf { it.isNotBlank() } ?: return false
+    val identity_public = session_key_store.get_ratchet_identity_public_b64()?.takeIf { it.isNotBlank() }
+        ?: public_b64_from_private_jwk(identity)
+        ?: return false
+    retain_local_ratchet_keys(session_key_store, identity, prekey.jwk, null)
+    session_key_store.put_ratchet_keys(identity, identity_public, prekey.jwk, prekey.public_b64)
+    return true
+}
+
+fun retain_vault_key_set(vault_json: JSONObject, new_identity_jwk: String, new_signed_prekey_jwk: String) {
+    val identity = vault_json.text("ratchet_identity_key")
+    if (identity.isBlank()) return
+    val spk = vault_json.text("ratchet_signed_prekey")
+    if (identity == new_identity_jwk.trim() && (spk.isBlank() || spk == new_signed_prekey_jwk.trim())) return
+    val entry = JSONObject()
+    for (field in retained_key_fields) {
+        vault_json.text(field).takeIf { it.isNotBlank() }?.let { entry.put(field, it) }
+    }
+    merge_into_vault_previous_keys(vault_json, entry)
+}
+
+fun retain_vault_pq_identity(vault_json: JSONObject) {
+    val entry = JSONObject()
+    for (field in listOf("ratchet_pq_identity_key", "ratchet_pq_identity_public", "ratchet_pq_identity_seed")) {
+        vault_json.text(field).takeIf { it.isNotBlank() }?.let { entry.put(field, it) }
+    }
+    if (!holds_retained_keys(entry)) return
+    merge_into_vault_previous_keys(vault_json, entry)
+}
+
+fun retain_local_pq_identity_in_vault(vault_json: JSONObject, session_key_store: SessionKeyStore) {
+    val secret = session_key_store.get_ratchet_pq_identity_secret()?.trim()?.takeIf { it.isNotBlank() } ?: return
+    if (secret == vault_json.text("ratchet_pq_identity_key")) return
+    val entry = JSONObject().put("ratchet_pq_identity_key", secret)
+    session_key_store.get_ratchet_pq_identity_public()
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?.let { entry.put("ratchet_pq_identity_public", it) }
+    merge_into_vault_previous_keys(vault_json, entry)
 }
 
 fun vault_holds_ratchet_keys(

@@ -266,4 +266,184 @@ class RatchetKeyRetentionTest {
         fold_local_ratchet_keys_into_vault(vault, store)
         assertFalse(vault.has("ratchet_previous_keys"))
     }
+
+    private fun real_store(identity: RatchetCrypto.EcKeyPair, spk: RatchetCrypto.EcKeyPair): SessionKeyStore {
+        val store = SessionKeyStore(null)
+        store.put_ratchet_keys(
+            jwk_of(identity),
+            RatchetCrypto.b64_encode(identity.public_raw),
+            jwk_of(spk),
+            RatchetCrypto.b64_encode(spk.public_raw),
+        )
+        return store
+    }
+
+    private fun entries_of(array: JSONArray?): List<JSONObject> =
+        (0 until (array?.length() ?: 0)).map { array!!.getJSONObject(it) }
+
+    @Test
+    fun `a vault signed prekey for the same identity is adopted and the local one is kept`() {
+        val identity = RatchetCrypto.generate_p256_keypair()
+        val local_spk = RatchetCrypto.generate_p256_keypair()
+        val vault_spk = RatchetCrypto.generate_p256_keypair()
+        val store = real_store(identity, local_spk)
+        val vault = vault_for(identity, vault_spk)
+
+        val adopted = vault_signed_prekey_to_adopt(vault, store)
+        assertEquals(jwk_of(vault_spk), adopted?.jwk)
+        assertEquals(RatchetCrypto.b64_encode(vault_spk.public_raw), adopted?.public_b64)
+
+        fold_local_ratchet_keys_into_vault(vault, store)
+        assertTrue(adopt_vault_signed_prekey(store, adopted!!))
+
+        assertEquals(jwk_of(vault_spk), vault.getString("ratchet_signed_prekey"))
+        assertTrue(entries_of(vault.optJSONArray("ratchet_previous_keys")).any {
+            it.optString("ratchet_signed_prekey") == jwk_of(local_spk)
+        })
+        assertEquals(jwk_of(vault_spk), store.get_ratchet_signed_prekey_jwk())
+        assertEquals(RatchetCrypto.b64_encode(vault_spk.public_raw), store.get_ratchet_signed_prekey_public_b64())
+        assertEquals(jwk_of(identity), store.get_ratchet_identity_jwk())
+        assertEquals(jwk_of(local_spk), previous(store).getJSONObject(0).getString("ratchet_signed_prekey"))
+        assertTrue(holds(vault, identity, vault_spk))
+    }
+
+    @Test
+    fun `a vault signed prekey without its public key is derived before adoption`() {
+        val identity = RatchetCrypto.generate_p256_keypair()
+        val vault_spk = RatchetCrypto.generate_p256_keypair()
+        val store = real_store(identity, RatchetCrypto.generate_p256_keypair())
+        val vault = vault_for(identity, vault_spk)
+        vault.remove("ratchet_signed_prekey_public")
+        assertEquals(
+            RatchetCrypto.b64_encode(vault_spk.public_raw),
+            vault_signed_prekey_to_adopt(vault, store)?.public_b64,
+        )
+    }
+
+    @Test
+    fun `a matching vault signed prekey is not adopted`() {
+        val identity = RatchetCrypto.generate_p256_keypair()
+        val spk = RatchetCrypto.generate_p256_keypair()
+        assertNull(vault_signed_prekey_to_adopt(vault_for(identity, spk), real_store(identity, spk)))
+    }
+
+    @Test
+    fun `a vault signed prekey for another identity is not adopted`() {
+        val store = real_store(RatchetCrypto.generate_p256_keypair(), RatchetCrypto.generate_p256_keypair())
+        val vault = vault_for(RatchetCrypto.generate_p256_keypair(), RatchetCrypto.generate_p256_keypair())
+        assertNull(vault_signed_prekey_to_adopt(vault, store))
+    }
+
+    @Test
+    fun `merge keeps every signed prekey of one identity`() {
+        val merged = merge_retained_ratchet_keys(
+            "[{\"ratchet_identity_key\":\"id_a\",\"ratchet_signed_prekey\":\"spk_a\",\"ratchet_signed_prekey_public\":\"spk_a_public\"}]",
+            "[{\"ratchet_identity_key\":\"id_a\",\"ratchet_signed_prekey\":\"spk_b\",\"ratchet_signed_prekey_public\":\"spk_b_public\"}]",
+        )
+        val prekeys = entries_of(JSONArray(merged)).map { it.getString("ratchet_signed_prekey") }
+        assertEquals(listOf("spk_a", "spk_b"), prekeys)
+    }
+
+    @Test
+    fun `retaining a replaced signed prekey for one identity keeps every earlier one`() {
+        val store = store_with("id_a", "spk_a")
+        retain_local_ratchet_keys(store, "id_a", "spk_b", null)
+        store.put_ratchet_keys("id_a", "id_a_public", "spk_b", "spk_b_public")
+        retain_local_ratchet_keys(store, "id_a", "spk_c", null)
+        val prekeys = entries_of(previous(store)).map { it.getString("ratchet_signed_prekey") }
+        assertEquals(listOf("spk_b", "spk_a"), prekeys)
+    }
+
+    @Test
+    fun `receiver key set tags tell signed prekeys of one identity apart`() {
+        val first = receiver_key_set_tag("id_public", "id_jwk", "spk_a_public")
+        val second = receiver_key_set_tag("id_public", "id_jwk", "spk_b_public")
+        assertFalse(first == second)
+        assertEquals(first, receiver_key_set_tag("id_public", "other_jwk", "spk_a_public"))
+        assertEquals(receiver_key_set_tag("", "id_jwk", "spk"), receiver_key_set_tag("", "id_jwk", "spk"))
+    }
+
+    @Test
+    fun `replacing the vault signed prekey for the same identity keeps the old one in the vault`() {
+        val vault = JSONObject()
+            .put("ratchet_identity_key", "id_a")
+            .put("ratchet_signed_prekey", "spk_a")
+            .put("ratchet_signed_prekey_public", "spk_a_public")
+            .put("ratchet_previous_keys", JSONArray().put(
+                JSONObject().put("ratchet_identity_key", "id_a")
+                    .put("ratchet_signed_prekey", "spk_old")
+                    .put("ratchet_signed_prekey_public", "spk_old_public"),
+            ))
+        retain_vault_key_set(vault, "id_a", "spk_b")
+        val prekeys = entries_of(vault.getJSONArray("ratchet_previous_keys")).map { it.getString("ratchet_signed_prekey") }
+        assertEquals(listOf("spk_a", "spk_old"), prekeys)
+    }
+
+    @Test
+    fun `an unchanged vault key set is not retained`() {
+        val vault = JSONObject()
+            .put("ratchet_identity_key", "id_a")
+            .put("ratchet_signed_prekey", "spk_a")
+        retain_vault_key_set(vault, "id_a", "spk_a")
+        assertFalse(vault.has("ratchet_previous_keys"))
+    }
+
+    @Test
+    fun `a local pq pair is kept in the vault before a fresh pair replaces it`() {
+        val store = store_with("id_a", "spk_a", "pq_a")
+        val vault = JSONObject()
+            .put("ratchet_identity_key", "id_a")
+            .put("ratchet_pq_identity_seed", "seed_vault")
+        retain_vault_pq_identity(vault)
+        retain_local_pq_identity_in_vault(vault, store)
+        val kept = entries_of(vault.getJSONArray("ratchet_previous_keys"))
+        assertTrue(kept.any { it.optString("ratchet_pq_identity_seed") == "seed_vault" })
+        assertTrue(
+            kept.any {
+                it.optString("ratchet_pq_identity_key") == "pq_a" &&
+                    it.optString("ratchet_pq_identity_public") == "pq_a_public"
+            },
+        )
+    }
+
+    @Test
+    fun `a local pq secret without its public key is kept before a fresh pair replaces it`() {
+        val store = store_with("id_a", "spk_a")
+        store.put_ratchet_pq_identity("pq_a", null)
+        val vault = JSONObject().put("ratchet_identity_key", "id_a")
+        retain_local_pq_identity_in_vault(vault, store)
+        val kept = entries_of(vault.getJSONArray("ratchet_previous_keys"))
+        assertEquals(listOf("pq_a"), kept.map { it.getString("ratchet_pq_identity_key") })
+    }
+
+    @Test
+    fun `the retention cap matches the other clients`() {
+        assertEquals(32, max_retained_ratchet_key_sets)
+    }
+
+    @Test
+    fun `a password change keeps the local set first when the vault list is full`() {
+        val store = store_with("id_local", "spk_local", "pq_local")
+        val full = JSONArray()
+        repeat(max_retained_ratchet_key_sets) { full.put(JSONObject().put("ratchet_identity_key", "id_vault_$it")) }
+        val vault = JSONObject()
+            .put("ratchet_identity_key", "id_vault")
+            .put("ratchet_previous_keys", full)
+        fold_local_ratchet_keys_into_vault(vault, store)
+        val kept = vault.getJSONArray("ratchet_previous_keys")
+        assertEquals(max_retained_ratchet_key_sets, kept.length())
+        assertEquals("id_local", kept.getJSONObject(0).getString("ratchet_identity_key"))
+    }
+
+    @Test
+    fun `retained key set comparison sees a new entry`() {
+        val before = JSONArray().put(JSONObject().put("ratchet_identity_key", "id_a"))
+        assertTrue(retained_key_sets_equal(before, JSONArray(before.toString())))
+        assertTrue(retained_key_sets_equal(null, JSONArray()))
+        val after = JSONArray(merge_retained_ratchet_keys(
+            "[{\"ratchet_identity_key\":\"id_b\"}]",
+            before.toString(),
+        ))
+        assertFalse(retained_key_sets_equal(before, after))
+    }
 }

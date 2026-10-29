@@ -734,7 +734,7 @@ class RatchetDecryptor @Inject constructor(
             android.util.Log.i("AsterRatchet", "bootstrap over ${key_sets.size} receiver key sets")
         }
         for (keys in key_sets) {
-            val tag = keys.identity_public_b64.ifBlank { keys.identity_jwk }
+            val tag = receiver_key_set_tag(keys.identity_public_b64, keys.identity_jwk, keys.signed_prekey_public_b64)
             if (!tried.add(tag)) continue
             val candidates = try {
                 bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
