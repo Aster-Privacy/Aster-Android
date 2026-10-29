@@ -21,6 +21,9 @@
 
 package org.astermail.android.mail
 
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -60,6 +63,18 @@ class OutboxFileKeyStore(
         }
         cached = key
         key.copyOf()
+    }
+}
+
+fun reseal_outbox_file(file: File, cipher: OutboxFileCipher, plaintext: ByteArray): Boolean {
+    val tmp = File(file.parentFile, "${file.name}.${System.nanoTime()}.tmp")
+    return try {
+        tmp.writeBytes(cipher.seal(file.name, plaintext))
+        Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        true
+    } catch (_: Exception) {
+        tmp.delete()
+        false
     }
 }
 

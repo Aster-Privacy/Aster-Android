@@ -1267,9 +1267,15 @@ class MailRepository @Inject constructor(
             val name = attachments_json.removePrefix(OUTBOX_FILE_REF_PREFIX)
             val file = java.io.File(outbox_attachments_dir, name)
             if (!file.exists()) throw java.io.FileNotFoundException("staged outbox attachments missing: $name")
-            val plaintext = outbox_file_cipher.open(name, file.readBytes())
+            val stored = file.readBytes()
+            val plaintext = outbox_file_cipher.open(name, stored)
             try {
-                return outbox_json.decodeFromString(String(plaintext, Charsets.UTF_8))
+                val decoded: List<ExternalAttachmentPayload> =
+                    outbox_json.decodeFromString(String(plaintext, Charsets.UTF_8))
+                if (!OutboxFileCipher.is_sealed(stored)) {
+                    reseal_outbox_file(file, outbox_file_cipher, plaintext)
+                }
+                return decoded
             } finally {
                 plaintext.fill(0)
             }
