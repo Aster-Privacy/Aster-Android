@@ -27,11 +27,13 @@ import org.astermail.android.util.EXPORTS_CACHE_DIR_NAME
 
 const val OUTBOX_ATTACHMENTS_DIR_NAME = "outbox_attachments"
 
+const val EMAIL_IMAGE_CACHE_DIR_NAME = "email_img_cache"
+
 val DECRYPTED_CACHE_DIR_NAMES: List<String> = listOf(
     "shared_attachments",
     OPENED_ATTACHMENTS_DIR_NAME,
     "draft_attachments",
-    "email_img_cache",
+    EMAIL_IMAGE_CACHE_DIR_NAME,
     EXPORTS_CACHE_DIR_NAME,
 )
 
@@ -43,6 +45,9 @@ private fun delete_children(dir: File): Int {
     }
     return removed
 }
+
+fun remove_email_image_disk_cache(cache_dir: File): Boolean =
+    File(cache_dir, EMAIL_IMAGE_CACHE_DIR_NAME).deleteRecursively()
 
 fun wipe_decrypted_caches(cache_dir: File): Int =
     DECRYPTED_CACHE_DIR_NAMES.sumOf { delete_children(File(cache_dir, it)) }
