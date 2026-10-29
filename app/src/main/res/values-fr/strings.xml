@@ -3500,4 +3500,17 @@
     <string name="storage_nudge_full_body">Vous ne pouvez plus envoyer ni importer d\'e-mails tant que vous n\'avez pas libéré d\'espace. Vos e-mails existants sont en sécurité.</string>
     <string name="storage_nudge_free_up">Libérer de l\'espace</string>
     <string name="storage_nudge_get_storage">Obtenir du stockage</string>
+    <string name="ext_health_banner_reauth">%1$s ne se synchronise plus. Reconnectez-vous pour reprendre.</string>
+    <string name="ext_health_banner_failing">%1$s ne s\'est pas synchronisé depuis plus d\'un jour.</string>
+    <string name="ext_health_banner_multiple">Certains comptes externes ne se synchronisent plus.</string>
+    <string name="ext_health_banner_action">Vérifier</string>
+    <string name="ext_health_banner_dismiss">Ignorer</string>
+    <string name="ext_health_summary">État de la synchronisation</string>
+    <string name="ext_health_ok">Opérationnels</string>
+    <string name="ext_health_failing">En échec</string>
+    <string name="ext_health_reauth">Connexion requise</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d compte externe</item>
+        <item quantity="other">%1$d comptes externes</item>
+    </plurals>
 </resources>

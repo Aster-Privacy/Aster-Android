@@ -3344,4 +3344,17 @@
     <string name="storage_nudge_full_body">जब तक आप जगह खाली नहीं करते, आप ईमेल भेज या इंपोर्ट नहीं कर सकते। आपके मौजूदा ईमेल सुरक्षित हैं।</string>
     <string name="storage_nudge_free_up">जगह खाली करें</string>
     <string name="storage_nudge_get_storage">स्टोरेज पाएं</string>
+    <string name="ext_health_banner_reauth">%1$s का सिंक रुक गया है। फिर से शुरू करने के लिए दोबारा साइन इन करें।</string>
+    <string name="ext_health_banner_failing">%1$s एक दिन से ज़्यादा समय से सिंक नहीं हुआ है।</string>
+    <string name="ext_health_banner_multiple">कुछ बाहरी खातों का सिंक रुक गया है।</string>
+    <string name="ext_health_banner_action">देखें</string>
+    <string name="ext_health_banner_dismiss">खारिज करें</string>
+    <string name="ext_health_summary">सिंक स्थिति</string>
+    <string name="ext_health_ok">ठीक</string>
+    <string name="ext_health_failing">विफल</string>
+    <string name="ext_health_reauth">साइन इन ज़रूरी</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d बाहरी खाता</item>
+        <item quantity="other">%1$d बाहरी खाते</item>
+    </plurals>
 </resources>

@@ -340,6 +340,7 @@ fun InboxScreen(
     on_open_domains: () -> Unit = {},
     on_open_storage: () -> Unit = {},
     on_open_storage_addons: () -> Unit = {},
+    on_open_external_accounts: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
     inbox_category: String = "primary",
@@ -380,6 +381,56 @@ fun InboxScreen(
         preferences_loaded = locked_data_preferences_loaded,
         dismissed_signature = settings_state.preferences?.locked_data_banner_dismissed.orEmpty(),
     ) && locked_data_state.dismissed_signature != locked_data_state.status?.signature
+    val external_accounts_vm: org.astermail.android.imports.ExternalAccountsViewModel = hiltViewModel()
+    val external_accounts_state by external_accounts_vm.state.collectAsStateWithLifecycle()
+    var external_account_banner_hidden by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(locked_data_preferences_loaded) {
+        if (locked_data_preferences_loaded) external_accounts_vm.load()
+    }
+    val external_account_alerts = remember(
+        external_accounts_state.health_loaded,
+        external_accounts_state.accounts,
+        external_accounts_state.decrypted,
+        external_accounts_state.problem_since,
+    ) {
+        if (!external_accounts_state.health_loaded) {
+            emptyList()
+        } else {
+            org.astermail.android.imports.external_account_alerts(
+                records = org.astermail.android.imports.external_account_health_records(
+                    accounts = external_accounts_state.accounts,
+                    emails = external_accounts_state.decrypted.mapValues { it.value.email },
+                    problem_since = external_accounts_state.problem_since,
+                ),
+                now = System.currentTimeMillis(),
+            )
+        }
+    }
+    val external_account_banner_dismissed =
+        settings_state.preferences?.external_account_health_banner_dismissed.orEmpty()
+    val show_external_account_banner = locked_data_preferences_loaded &&
+        org.astermail.android.imports.should_show_external_account_banner(
+            alerts = external_account_alerts,
+            dismissed_signature = external_account_banner_dismissed,
+        ) &&
+        external_account_banner_hidden != org.astermail.android.imports.external_account_alert_signature(external_account_alerts)
+    val external_account_problems_resolved = external_accounts_state.health_loaded &&
+        external_accounts_state.accounts.none { it.id in external_accounts_state.problem_since }
+    LaunchedEffect(
+        external_account_problems_resolved,
+        external_account_banner_dismissed,
+        settings_state.preferences_authoritative,
+    ) {
+        val prefs = settings_state.preferences
+        if (
+            external_account_problems_resolved &&
+            external_account_banner_dismissed.isNotEmpty() &&
+            settings_state.preferences_authoritative &&
+            prefs != null
+        ) {
+            settings_vm.save_preferences(prefs.copy(external_account_health_banner_dismissed = ""))
+        }
+    }
     val sender_alias_backfill_status by mail_vm.sender_alias_backfill_status.collectAsStateWithLifecycle()
     val alias_sent_visible = alias_direction != null &&
         alias_direction != org.astermail.android.mail.alias_direction_received
@@ -2308,6 +2359,24 @@ fun InboxScreen(
                                             if (prefs != null) {
                                                 settings_vm.save_preferences(prefs.copy(locked_data_banner_dismissed = signature))
                                             }
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                        if (show_external_account_banner && !select_mode) {
+                            item(key = "_external_account_banner", contentType = "external_account_banner") {
+                                external_account_health_banner(
+                                    alerts = external_account_alerts,
+                                    on_review = on_open_external_accounts,
+                                    on_dismiss = {
+                                        val signature = org.astermail.android.imports
+                                            .external_account_alert_signature(external_account_alerts)
+                                        external_account_banner_hidden = signature
+                                        settings_state.preferences?.let { prefs ->
+                                            settings_vm.save_preferences(
+                                                prefs.copy(external_account_health_banner_dismissed = signature),
+                                            )
                                         }
                                     },
                                 )

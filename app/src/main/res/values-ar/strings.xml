@@ -3532,4 +3532,20 @@
     <string name="storage_nudge_full_body">لا يمكنك إرسال البريد أو استيراده حتى تُفرغ بعض المساحة. بريدك الحالي آمن.</string>
     <string name="storage_nudge_free_up">إفراغ مساحة</string>
     <string name="storage_nudge_get_storage">الحصول على مساحة</string>
+    <string name="ext_health_banner_reauth">توقفت مزامنة %1$s. سجّل الدخول مجددًا للاستئناف.</string>
+    <string name="ext_health_banner_failing">لم تتم مزامنة %1$s منذ أكثر من يوم.</string>
+    <string name="ext_health_banner_multiple">توقفت مزامنة بعض الحسابات الخارجية.</string>
+    <string name="ext_health_banner_action">مراجعة</string>
+    <string name="ext_health_banner_dismiss">تجاهل</string>
+    <string name="ext_health_summary">حالة المزامنة</string>
+    <string name="ext_health_ok">سليمة</string>
+    <string name="ext_health_failing">متعثرة</string>
+    <string name="ext_health_reauth">يلزم تسجيل الدخول</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d حساب خارجي</item>
+        <item quantity="two">%1$d حسابات خارجية</item>
+        <item quantity="few">%1$d حسابات خارجية</item>
+        <item quantity="many">%1$d حسابات خارجية</item>
+        <item quantity="other">%1$d حسابات خارجية</item>
+    </plurals>
 </resources>

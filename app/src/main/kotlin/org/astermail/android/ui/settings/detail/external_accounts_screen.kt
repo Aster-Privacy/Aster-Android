@@ -86,6 +86,8 @@ import compose.icons.tablericons.EyeOff
 import compose.icons.tablericons.Pencil
 import compose.icons.tablericons.Refresh
 import compose.icons.tablericons.Trash
+import compose.icons.tablericons.Clock
+import compose.icons.tablericons.PlayerPause
 import org.astermail.android.R
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
@@ -101,7 +103,9 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
+import org.astermail.android.imports.ExternalAccountHealthState
 import org.astermail.android.imports.ExternalAccountsError
+import org.astermail.android.imports.external_account_state
 import org.astermail.android.imports.ExternalAccountsViewModel
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copied_toast
@@ -525,6 +529,13 @@ fun ExternalAccountsScreen(
                         fontSize = 13.sp,
                     )
                 } else {
+                    external_account_health_header(
+                        accounts = state.accounts,
+                        emails = state.accounts.associate { acct ->
+                            acct.account_token to (acct.oauth_email ?: state.decrypted[acct.account_token]?.email.orEmpty())
+                        },
+                    )
+                    v_gap(AsterSpacing.md)
                     for ((index, acct) in state.accounts.withIndex()) {
                         val decrypted_email = state.decrypted[acct.account_token]?.email
                         val account_email = acct.oauth_email ?: decrypted_email
@@ -569,51 +580,40 @@ fun ExternalAccountsScreen(
                                 .padding(vertical = AsterSpacing.xs),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Image(
-                                    painter = painterResource(
-                                        provider_icon_res(
-                                            oauth_provider = acct.oauth_provider,
-                                            email = account_email,
-                                            protocol = acct.protocol,
-                                        ),
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
+                                org.astermail.android.ui.mail.SenderAvatar(
+                                    email = account_email.orEmpty(),
+                                    name = state.decrypted[acct.account_token]?.display_name.orEmpty()
+                                        .ifBlank { account_email.orEmpty() },
+                                    size = 36.dp,
+                                    use_peer_profile_color = false,
+                                    use_contact_photo = false,
                                 )
-                                Spacer(Modifier.width(AsterSpacing.sm))
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(SquircleShape(4.dp))
-                                        .background(
-                                            sync_health_color(
-                                                needs_reauth = acct.needs_reauth,
-                                                has_error = has_error,
-                                                has_synced = !acct.last_sync_at.isNullOrBlank(),
+                                Spacer(Modifier.width(AsterSpacing.md))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = display_label,
+                                        color = colors.text_primary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    v_gap(4.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    ) {
+                                        protocol_label(acct.protocol)?.let { protocol ->
+                                            account_badge(label = protocol, muted = true)
+                                        }
+                                        account_badge(
+                                            label = stringResource(
+                                                if (acct.is_enabled) R.string.active else R.string.ext_status_paused,
                                             ),
-                                        ),
-                                )
-                                Spacer(Modifier.width(AsterSpacing.sm))
-                                Text(
-                                    text = display_label,
-                                    color = colors.text_primary,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
-                                protocol_label(acct.protocol)?.let { protocol ->
-                                    Spacer(Modifier.width(AsterSpacing.sm))
-                                    account_badge(label = protocol, tone = colors.text_muted)
+                                            muted = !acct.is_enabled,
+                                        )
+                                    }
                                 }
-                                Spacer(Modifier.width(AsterSpacing.sm))
-                                account_badge(
-                                    label = stringResource(
-                                        if (acct.is_enabled) R.string.active else R.string.ext_status_paused,
-                                    ),
-                                    tone = if (acct.is_enabled) colors.success else colors.text_muted,
-                                )
                             }
                             v_gap(AsterSpacing.xs)
                             val sync_summary = when {
@@ -1075,34 +1075,152 @@ fun ExternalAccountsScreen(
     }
 }
 
-@Composable
-private fun sync_health_color(
-    needs_reauth: Boolean,
-    has_error: Boolean,
-    has_synced: Boolean,
-) = when {
-    needs_reauth -> AsterMaterial.colors.warning
-    has_error -> AsterMaterial.colors.danger
-    has_synced -> AsterMaterial.colors.success
-    else -> AsterMaterial.colors.text_muted
+private enum class HealthBucket { REAUTH, FAILING, NEVER_SYNCED, PAUSED, HEALTHY }
+
+private fun health_bucket(state: ExternalAccountHealthState): HealthBucket = when (state) {
+    ExternalAccountHealthState.NEEDS_REAUTH -> HealthBucket.REAUTH
+    ExternalAccountHealthState.FAILING -> HealthBucket.FAILING
+    ExternalAccountHealthState.NEVER_SYNCED -> HealthBucket.NEVER_SYNCED
+    ExternalAccountHealthState.PAUSED -> HealthBucket.PAUSED
+    ExternalAccountHealthState.SYNCING, ExternalAccountHealthState.HEALTHY -> HealthBucket.HEALTHY
 }
 
 @Composable
-private fun account_badge(label: String, tone: androidx.compose.ui.graphics.Color) {
-    val shape = SquircleShape(7.dp)
+private fun health_bucket_icon(bucket: HealthBucket) = when (bucket) {
+    HealthBucket.REAUTH -> TablerIcons.AlertTriangle
+    HealthBucket.FAILING -> TablerIcons.CircleX
+    HealthBucket.NEVER_SYNCED -> TablerIcons.Clock
+    HealthBucket.PAUSED -> TablerIcons.PlayerPause
+    HealthBucket.HEALTHY -> TablerIcons.CircleCheck
+}
+
+@Composable
+private fun health_bucket_tint(bucket: HealthBucket) = when (bucket) {
+    HealthBucket.REAUTH -> AsterMaterial.colors.warning
+    HealthBucket.FAILING -> AsterMaterial.colors.danger
+    HealthBucket.NEVER_SYNCED, HealthBucket.PAUSED -> AsterMaterial.colors.text_muted
+    HealthBucket.HEALTHY -> AsterMaterial.colors.success
+}
+
+@Composable
+private fun health_bucket_label(bucket: HealthBucket) = stringResource(
+    when (bucket) {
+        HealthBucket.REAUTH -> R.string.ext_health_reauth
+        HealthBucket.FAILING -> R.string.ext_health_failing
+        HealthBucket.NEVER_SYNCED -> R.string.ext_never_synced
+        HealthBucket.PAUSED -> R.string.ext_status_paused
+        HealthBucket.HEALTHY -> R.string.ext_health_ok
+    },
+)
+
+@Composable
+private fun external_account_health_header(
+    accounts: List<org.astermail.android.api.external_accounts.ExternalAccount>,
+    emails: Map<String, String>,
+) {
     val colors = AsterMaterial.colors
-    val tone_background = org.astermail.android.ui.mail.chip_background(tone, colors.bg_primary, colors.is_dark)
+    var menu_open by remember { mutableStateOf(false) }
+    val buckets = remember(accounts, emails) {
+        accounts
+            .groupBy { health_bucket(external_account_state(it)) }
+            .toSortedMap()
+            .mapValues { (_, list) ->
+                list.mapNotNull { emails[it.account_token]?.takeIf { email -> email.isNotBlank() } } to list.size
+            }
+    }
+    val worst = buckets.keys.firstOrNull() ?: HealthBucket.HEALTHY
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = pluralStringResource(R.plurals.ext_account_count, accounts.size, accounts.size),
+            color = colors.text_secondary,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Box {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .clip(SquircleShape(8.dp))
+                    .background(colors.text_primary.copy(alpha = 0.06f))
+                    .clickable { menu_open = true }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Icon(
+                    imageVector = health_bucket_icon(worst),
+                    contentDescription = null,
+                    tint = health_bucket_tint(worst),
+                    modifier = Modifier.size(15.dp),
+                )
+                Text(
+                    text = stringResource(R.string.ext_health_summary),
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Icon(
+                    imageVector = TablerIcons.ChevronDown,
+                    contentDescription = null,
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            org.astermail.android.design.components.aster_menu(
+                expanded = menu_open,
+                on_dismiss = { menu_open = false },
+                min_width = 240.dp,
+            ) {
+                for ((bucket, entry) in buckets) {
+                    val (bucket_emails, count) = entry
+                    org.astermail.android.design.components.aster_menu_item(
+                        label = health_bucket_label(bucket),
+                        on_click = { menu_open = false },
+                        icon = health_bucket_icon(bucket),
+                        icon_tint = health_bucket_tint(bucket),
+                        count = count,
+                    )
+                    for (email in bucket_emails) {
+                        Text(
+                            text = email,
+                            color = colors.text_muted,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 42.dp, end = 12.dp, bottom = 6.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun account_badge(label: String, muted: Boolean) {
+    val shape = SquircleShape(5.dp)
+    val colors = AsterMaterial.colors
+    val background = if (muted) {
+        colors.text_primary.copy(alpha = 0.10f)
+    } else {
+        androidx.compose.ui.graphics.lerp(colors.bg_card, colors.accent_blue, 0.72f)
+    }
+    val ring = if (muted) colors.text_primary.copy(alpha = 0.16f) else colors.accent_blue
     Text(
         text = label,
-        color = org.astermail.android.ui.mail.chip_content(tone, tone_background, colors.is_dark),
-        fontSize = 10.sp,
-        fontWeight = FontWeight.SemiBold,
+        color = if (muted) colors.text_muted else androidx.compose.ui.graphics.Color.White.copy(alpha = 0.95f),
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = if (muted) 0.4.sp else 0.sp,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(shape)
-            .background(tone_background)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .background(background)
+            .border(1.dp, ring, shape)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
     )
 }
 

@@ -377,6 +377,21 @@ class PreferencesMergeTest {
     }
 
     @Test
+    fun external_account_health_dismissal_round_trips_and_defaults_to_empty() {
+        val server_blob = """{"theme":"dark"}"""
+        val prefs = merge_decrypted_preferences(json, server_blob, null)
+        assertEquals("", prefs.external_account_health_banner_dismissed)
+
+        val encoded = encode_preferences_preserving_unknown(
+            json,
+            prefs.copy(external_account_health_banner_dismissed = "a:failing|b:needs_reauth"),
+            server_blob,
+        )
+        val reread = merge_decrypted_preferences(json, encoded, null)
+        assertEquals("a:failing|b:needs_reauth", reread.external_account_health_banner_dismissed)
+    }
+
+    @Test
     fun keeps_the_last_known_dismissal_when_a_stale_client_dropped_the_key() {
         val previous = UserPreferences(locked_data_banner_dismissed = "set_a|sent")
 

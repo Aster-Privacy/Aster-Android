@@ -3453,4 +3453,17 @@
     <string name="storage_nudge_full_body">Sie können erst wieder E-Mails senden oder importieren, wenn Sie Speicherplatz freigeben. Ihre vorhandenen E-Mails sind sicher.</string>
     <string name="storage_nudge_free_up">Speicher freigeben</string>
     <string name="storage_nudge_get_storage">Speicher erweitern</string>
+    <string name="ext_health_banner_reauth">%1$s wird nicht mehr synchronisiert. Melden Sie sich erneut an, um fortzufahren.</string>
+    <string name="ext_health_banner_failing">%1$s wurde seit über einem Tag nicht synchronisiert.</string>
+    <string name="ext_health_banner_multiple">Einige externe Konten werden nicht mehr synchronisiert.</string>
+    <string name="ext_health_banner_action">Prüfen</string>
+    <string name="ext_health_banner_dismiss">Schließen</string>
+    <string name="ext_health_summary">Synchronisierungsstatus</string>
+    <string name="ext_health_ok">In Ordnung</string>
+    <string name="ext_health_failing">Fehlerhaft</string>
+    <string name="ext_health_reauth">Anmeldung nötig</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d externes Konto</item>
+        <item quantity="other">%1$d externe Konten</item>
+    </plurals>
 </resources>

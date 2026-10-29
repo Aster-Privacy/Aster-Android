@@ -21,9 +21,11 @@
 
 package org.astermail.android.imports
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +74,8 @@ data class ExternalAccountsUiState(
     val toggling_tokens: Set<String> = emptySet(),
     val updating_token: String? = null,
     val connection_settings: Map<String, ConnectionSettings> = emptyMap(),
+    val problem_since: Map<String, Long> = emptyMap(),
+    val health_loaded: Boolean = false,
 )
 
 private const val sync_watch_timeout_ms = 120_000L
@@ -80,6 +84,7 @@ private const val sync_poll_interval_ms = 3_000L
 
 @HiltViewModel
 class ExternalAccountsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val api: ExternalAccountsApi,
     private val session_keys: SessionKeyStore,
 ) : ViewModel() {
@@ -88,7 +93,16 @@ class ExternalAccountsViewModel @Inject constructor(
     private val sync_watchers = mutableMapOf<String, Job>()
     val state: StateFlow<ExternalAccountsUiState> = _state.asStateFlow()
 
+    private suspend fun track_health(accounts: List<ExternalAccount>, generation: Int) {
+        val tracked = withContext(Dispatchers.IO) {
+            runCatching { ExternalAccountHealthStore.track(context, accounts, generation) }.getOrNull()
+        } ?: return
+        if (_state.value.accounts !== accounts) return
+        _state.value = _state.value.copy(problem_since = tracked, health_loaded = true)
+    }
+
     fun load() {
+        val generation = ExternalAccountHealthStore.generation()
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, error = null)
             runCatching { withContext(Dispatchers.IO) { api.list_accounts() } }
@@ -109,6 +123,7 @@ class ExternalAccountsViewModel @Inject constructor(
                         emptyMap()
                     }
                     _state.value = _state.value.copy(accounts = res.accounts, decrypted = decrypted, loading = false)
+                    track_health(res.accounts, generation)
                 }
                 .onFailure {
                     _state.value = _state.value.copy(loading = false, error = ExternalAccountsError.LOAD_FAILED)
@@ -180,6 +195,7 @@ class ExternalAccountsViewModel @Inject constructor(
                             accounts = res.accounts,
                             connecting_provider = null,
                         )
+                        track_health(res.accounts, ExternalAccountHealthStore.generation())
                         trigger_sync(new_one.account_token)
                         return@launch
                     }
@@ -318,6 +334,7 @@ class ExternalAccountsViewModel @Inject constructor(
                     withContext(Dispatchers.IO) { api.list_accounts() }
                 }.getOrNull() ?: continue
                 _state.value = _state.value.copy(accounts = listed.accounts)
+                track_health(listed.accounts, ExternalAccountHealthStore.generation())
                 val current = listed.accounts.firstOrNull { it.account_token == account_token }
                 settled = current == null || sync_has_settled(previous, current)
             }

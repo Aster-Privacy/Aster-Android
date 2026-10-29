@@ -3434,4 +3434,16 @@
     <string name="storage_nudge_full_body">在你释放空间之前，你无法发送或导入邮件。现有邮件不受影响。</string>
     <string name="storage_nudge_free_up">释放空间</string>
     <string name="storage_nudge_get_storage">获取存储空间</string>
+    <string name="ext_health_banner_reauth">%1$s 已停止同步。请重新登录以恢复。</string>
+    <string name="ext_health_banner_failing">%1$s 已超过一天未同步。</string>
+    <string name="ext_health_banner_multiple">部分外部账户已停止同步。</string>
+    <string name="ext_health_banner_action">查看</string>
+    <string name="ext_health_banner_dismiss">关闭</string>
+    <string name="ext_health_summary">同步状态</string>
+    <string name="ext_health_ok">正常</string>
+    <string name="ext_health_failing">失败</string>
+    <string name="ext_health_reauth">需要登录</string>
+    <plurals name="ext_account_count">
+        <item quantity="other">%1$d 个外部账户</item>
+    </plurals>
 </resources>

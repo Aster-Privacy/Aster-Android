@@ -3472,4 +3472,17 @@
     <string name="storage_nudge_full_body">No puedes enviar ni importar correo hasta que liberes espacio. Tu correo actual está a salvo.</string>
     <string name="storage_nudge_free_up">Liberar espacio</string>
     <string name="storage_nudge_get_storage">Conseguir almacenamiento</string>
+    <string name="ext_health_banner_reauth">%1$s dejó de sincronizarse. Vuelve a iniciar sesión para reanudarla.</string>
+    <string name="ext_health_banner_failing">%1$s lleva más de un día sin sincronizarse.</string>
+    <string name="ext_health_banner_multiple">Algunas cuentas externas han dejado de sincronizarse.</string>
+    <string name="ext_health_banner_action">Revisar</string>
+    <string name="ext_health_banner_dismiss">Descartar</string>
+    <string name="ext_health_summary">Estado de sincronización</string>
+    <string name="ext_health_ok">Correctas</string>
+    <string name="ext_health_failing">Con errores</string>
+    <string name="ext_health_reauth">Inicio de sesión necesario</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d cuenta externa</item>
+        <item quantity="other">%1$d cuentas externas</item>
+    </plurals>
 </resources>

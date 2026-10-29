@@ -3503,4 +3503,17 @@
     <string name="storage_nudge_full_body">You can\'t send or import mail until you free up space. Your existing mail is safe.</string>
     <string name="storage_nudge_free_up">Free up space</string>
     <string name="storage_nudge_get_storage">Get storage</string>
+    <string name="ext_health_banner_reauth">%1$s stopped syncing. Sign in again to resume.</string>
+    <string name="ext_health_banner_failing">%1$s has not synced for over a day.</string>
+    <string name="ext_health_banner_multiple">Some external accounts have stopped syncing.</string>
+    <string name="ext_health_banner_action">Review</string>
+    <string name="ext_health_banner_dismiss">Dismiss</string>
+    <string name="ext_health_summary">Sync health</string>
+    <string name="ext_health_ok">Healthy</string>
+    <string name="ext_health_failing">Failing</string>
+    <string name="ext_health_reauth">Sign-in needed</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d external account</item>
+        <item quantity="other">%1$d external accounts</item>
+    </plurals>
 </resources>

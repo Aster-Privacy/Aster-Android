@@ -3434,4 +3434,16 @@
     <string name="storage_nudge_full_body">공간을 확보할 때까지 메일을 보내거나 가져올 수 없습니다. 기존 메일은 안전합니다.</string>
     <string name="storage_nudge_free_up">공간 확보</string>
     <string name="storage_nudge_get_storage">저장용량 추가</string>
+    <string name="ext_health_banner_reauth">%1$s 동기화가 중단되었습니다. 다시 로그인하면 재개됩니다.</string>
+    <string name="ext_health_banner_failing">%1$s이(가) 하루 넘게 동기화되지 않았습니다.</string>
+    <string name="ext_health_banner_multiple">일부 외부 계정의 동기화가 중단되었습니다.</string>
+    <string name="ext_health_banner_action">확인</string>
+    <string name="ext_health_banner_dismiss">닫기</string>
+    <string name="ext_health_summary">동기화 상태</string>
+    <string name="ext_health_ok">정상</string>
+    <string name="ext_health_failing">오류</string>
+    <string name="ext_health_reauth">로그인 필요</string>
+    <plurals name="ext_account_count">
+        <item quantity="other">외부 계정 %1$d개</item>
+    </plurals>
 </resources>

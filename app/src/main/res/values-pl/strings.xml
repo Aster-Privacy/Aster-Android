@@ -3492,4 +3492,19 @@
     <string name="storage_nudge_full_body">Nie możesz wysyłać ani importować poczty, dopóki nie zwolnisz miejsca. Istniejąca poczta jest bezpieczna.</string>
     <string name="storage_nudge_free_up">Zwolnij miejsce</string>
     <string name="storage_nudge_get_storage">Dodaj miejsce</string>
+    <string name="ext_health_banner_reauth">Konto %1$s przestało się synchronizować. Zaloguj się ponownie, aby wznowić.</string>
+    <string name="ext_health_banner_failing">Konto %1$s nie synchronizuje się od ponad doby.</string>
+    <string name="ext_health_banner_multiple">Niektóre konta zewnętrzne przestały się synchronizować.</string>
+    <string name="ext_health_banner_action">Sprawdź</string>
+    <string name="ext_health_banner_dismiss">Zamknij</string>
+    <string name="ext_health_summary">Stan synchronizacji</string>
+    <string name="ext_health_ok">Sprawne</string>
+    <string name="ext_health_failing">Błędy</string>
+    <string name="ext_health_reauth">Wymagane logowanie</string>
+    <plurals name="ext_account_count">
+        <item quantity="one">%1$d konto zewnętrzne</item>
+        <item quantity="few">%1$d konta zewnętrzne</item>
+        <item quantity="many">%1$d kont zewnętrznych</item>
+        <item quantity="other">%1$d konta zewnętrzne</item>
+    </plurals>
 </resources>
