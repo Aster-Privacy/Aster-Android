@@ -4286,6 +4286,18 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun spam_thread_tokens(item_ids: Collection<String>): List<String> {
+        if (item_ids.isEmpty() || !repository.is_conversation_grouping_enabled) return emptyList()
+        val ids = item_ids.toHashSet()
+        val known = _inbox_state.value.items +
+            folder_cache.values.flatMap { it.items } +
+            _search_state.value.all_items
+        return known
+            .filter { it.id in ids && it.thread_message_count > 1 }
+            .mapNotNull { it.thread_token?.takeIf { token -> token.isNotBlank() } }
+            .distinct()
+    }
+
     fun mark_spam(item_ids: List<String>, thread_count: Int = 1, sender_emails_hint: List<String> = emptyList()) {
         val had_demo = DEMO_PHISH_ITEM_ID in item_ids
         @Suppress("NAME_SHADOWING") val item_ids = handle_demo_in(item_ids)
@@ -4296,6 +4308,7 @@ class MailViewModel @Inject constructor(
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
+        val thread_tokens = spam_thread_tokens(item_ids)
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
@@ -4307,7 +4320,7 @@ class MailViewModel @Inject constructor(
             try {
                 val sender_emails =
                     removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
-                repository.mark_spam(item_ids, raw_items).fold(
+                repository.mark_spam(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_spam(item_ids) }
                         val report_job =
@@ -4321,7 +4334,7 @@ class MailViewModel @Inject constructor(
                                 search_removed = search_removed,
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_unspam(it) },
-                                restore = { repository.unmark_spam(it) },
+                                restore = { repository.unmark_spam(it, thread_tokens) },
                             )
                             viewModelScope.launch {
                                 report_job.join()
@@ -4346,6 +4359,7 @@ class MailViewModel @Inject constructor(
         if (item_ids.isEmpty()) return
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
+        val thread_tokens = spam_thread_tokens(item_ids)
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
@@ -4356,7 +4370,7 @@ class MailViewModel @Inject constructor(
             try {
                 val sender_emails =
                     removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
-                repository.unmark_spam(item_ids).fold(
+                repository.unmark_spam(item_ids, thread_tokens).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_unspam(item_ids) }
                         val remove_job =
@@ -4370,7 +4384,7 @@ class MailViewModel @Inject constructor(
                                 search_removed = emptyList(),
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_spam(it) },
-                                restore = { repository.mark_spam(it, lookup_raw_items(it)) },
+                                restore = { repository.mark_spam(it, lookup_raw_items(it), thread_tokens) },
                             )
                             viewModelScope.launch {
                                 remove_job.join()

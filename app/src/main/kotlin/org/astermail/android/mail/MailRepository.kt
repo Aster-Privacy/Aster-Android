@@ -636,8 +636,8 @@ class MailRepository @Inject constructor(
             PendingActionKind.unarchive -> unarchive_now(ids)
             PendingActionKind.trash -> trash_now(ids, emptyList(), payload.threads, payload.covered.toSet())
             PendingActionKind.restore_trash -> restore_trash_now(ids)
-            PendingActionKind.mark_spam -> mark_spam_now(ids)
-            PendingActionKind.unmark_spam -> unmark_spam_now(ids)
+            PendingActionKind.mark_spam -> mark_spam_now(ids, emptyList(), payload.threads)
+            PendingActionKind.unmark_spam -> unmark_spam_now(ids, payload.threads)
             PendingActionKind.mark_read,
             PendingActionKind.mark_unread -> {
                 val read = action.kind == PendingActionKind.mark_read
@@ -3284,43 +3284,69 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun mark_spam(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> =
-        run_or_queue(PendingActionKind.mark_spam, PendingActionPayload(ids = item_ids), Unit) {
-            mark_spam_now(item_ids, raw_items)
+    suspend fun mark_spam(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> =
+        run_or_queue(PendingActionKind.mark_spam, PendingActionPayload(ids = item_ids, threads = thread_tokens), Unit) {
+            mark_spam_now(item_ids, raw_items, thread_tokens)
         }
 
-    private suspend fun mark_spam_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
+    private suspend fun mark_spam_now(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> = runCatching {
         bulk_action_by_ids("mark_spam", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            raw_items,
-            mapOf(
-                "is_spam" to true,
-                "is_trashed" to false,
-                "is_archived" to false,
-            ),
-            require_patch = false,
+        val thread_ids = spam_threads(thread_tokens, true).filter { it !in item_ids }
+        val spam_patch = mapOf(
+            "is_spam" to true,
+            "is_trashed" to false,
+            "is_archived" to false,
         )
+        patch_metadata_for_items(item_ids, raw_items, spam_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), spam_patch, require_patch = false)
         Unit
     }
 
-    suspend fun unmark_spam(item_ids: List<String>): Result<BulkScopeResponse> =
-        run_or_queue(PendingActionKind.unmark_spam, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
-            unmark_spam_now(item_ids)
+    suspend fun unmark_spam(
+        item_ids: List<String>,
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.unmark_spam,
+            PendingActionPayload(ids = item_ids, threads = thread_tokens),
+            queued_scope_response(item_ids.size),
+        ) {
+            unmark_spam_now(item_ids, thread_tokens)
         }
 
-    private suspend fun unmark_spam_now(item_ids: List<String>): Result<BulkScopeResponse> = runCatching {
+    private suspend fun unmark_spam_now(
+        item_ids: List<String>,
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> = runCatching {
         val response = bulk_action_by_ids("unmark_spam", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            emptyList(),
-            mapOf(
-                "is_spam" to false,
-                "is_trashed" to false,
-            ),
-            require_patch = false,
+        val thread_ids = spam_threads(thread_tokens, false).filter { it !in item_ids }
+        val unspam_patch = mapOf(
+            "is_spam" to false,
+            "is_trashed" to false,
         )
+        patch_metadata_for_items(item_ids, emptyList(), unspam_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), unspam_patch, require_patch = false)
         response
+    }
+
+    private suspend fun spam_threads(thread_tokens: List<String>, is_spam: Boolean): List<String> {
+        val targets = thread_tokens.filter { it.isNotBlank() }.distinct()
+        if (targets.isEmpty()) return emptyList()
+        val ids = LinkedHashSet<String>()
+        targets.forEach { token ->
+            runCatching { mail_api.spam_thread(token, is_spam) }
+                .onSuccess { ids.addAll(it.ids) }
+                .onFailure { rethrow_if_transient(it) }
+        }
+        return ids.toList()
     }
 
     suspend fun report_spam_senders(sender_emails: List<String>) {

@@ -89,6 +89,8 @@ interface MailApi {
 
     suspend fun trash_thread(thread_token: String, is_trashed: Boolean)
 
+    suspend fun spam_thread(thread_token: String, is_spam: Boolean): SpamThreadResponse
+
     suspend fun patch_metadata(item_id: String, request: PatchMetadataRequest): PatchMetadataResponse
 
     suspend fun bulk_action(request: BulkScopeRequest): BulkScopeResponse
@@ -372,6 +374,17 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             setBody(mapOf("is_trashed" to is_trashed))
         }
         throw_if_error(response)
+    }
+
+    override suspend fun spam_thread(thread_token: String, is_spam: Boolean): SpamThreadResponse {
+        val response = client.http.put(
+            "${client.base_url}$base/messages/threads/${url_encode_path(thread_token)}/spam",
+        ) {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(mapOf("is_spam" to is_spam))
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun patch_metadata(
