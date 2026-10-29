@@ -58,6 +58,7 @@
     <string name="confirm_password">비밀번호 확인</string>
     <string name="confirm_password_label">비밀번호 확인</string>
     <string name="keep_me_signed_in">로그인 상태 유지</string>
+    <string name="keep_me_signed_in_secure_devices">%1$s - %2$s</string>
     <string name="secure_devices_only">보안 기기에서만</string>
     <string name="requirement_8_chars">12자 이상</string>
     <string name="requirement_uppercase">대문자 하나</string>

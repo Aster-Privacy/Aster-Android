@@ -58,6 +58,7 @@
     <string name="confirm_password">Подтвердите пароль</string>
     <string name="confirm_password_label">Подтвердите пароль</string>
     <string name="keep_me_signed_in">Оставаться в системе</string>
+    <string name="keep_me_signed_in_secure_devices">%1$s - %2$s</string>
     <string name="secure_devices_only">только на безопасных устройствах</string>
     <string name="requirement_8_chars">Не менее 12 символов</string>
     <string name="requirement_uppercase">Одна заглавная буква</string>

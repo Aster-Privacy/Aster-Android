@@ -59,6 +59,7 @@
     <string name="confirm_password">Passwort bestätigen</string>
     <string name="confirm_password_label">Passwort bestätigen</string>
     <string name="keep_me_signed_in">Angemeldet bleiben</string>
+    <string name="keep_me_signed_in_secure_devices">%1$s - %2$s</string>
     <string name="secure_devices_only">nur auf sicheren Geräten</string>
     <string name="requirement_8_chars">Mindestens 12 Zeichen</string>
     <string name="requirement_uppercase">Ein Großbuchstabe</string>
