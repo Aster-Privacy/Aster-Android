@@ -2421,9 +2421,12 @@ class MailViewModel @Inject constructor(
                 )
             }
             if (metas.isEmpty()) return@launch
-            val results = prefetch_thread_attachments(select_attachment_prefetch(metas)) { id ->
-                repository.fetch_attachments_for_message(id)
-            }
+            val results = prefetch_thread_attachments(
+                plan = plan_attachment_prefetch(metas),
+                metas = metas,
+                fetch_message = { id -> repository.fetch_attachments_for_message(id) },
+                fetch_attachment = { id -> repository.fetch_attachment(id) },
+            )
             if (results.isEmpty()) return@launch
             _thread_state.update { state ->
                 if (state.messages.none { it.id in expected_ids }) return@update state

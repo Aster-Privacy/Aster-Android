@@ -42,18 +42,75 @@ fun select_attachment_prefetch(
         attachments.sumOf { it.size_bytes } <= max_message_bytes
 }.keys.toList()
 
+data class AttachmentPrefetchPlan(
+    val full_message_ids: List<String>,
+    val inline_attachment_ids: Map<String, List<String>>,
+)
+
+fun plan_attachment_prefetch(
+    metas: Map<String, List<MessageAttachment>>,
+    max_attachment_bytes: Long = THREAD_PREFETCH_MAX_ATTACHMENT_BYTES,
+    max_message_bytes: Long = THREAD_PREFETCH_MAX_MESSAGE_BYTES,
+): AttachmentPrefetchPlan {
+    val full = select_attachment_prefetch(metas, max_attachment_bytes, max_message_bytes)
+    val full_set = full.toSet()
+    val inline = metas.filterKeys { it !in full_set }.mapValues { (_, attachments) ->
+        attachments.filter { a ->
+            !a.content_id.isNullOrBlank() && a.encrypted_data.isNullOrBlank() &&
+                a.size_bytes in 0..max_attachment_bytes
+        }.map { it.id }
+    }.filterValues { it.isNotEmpty() }
+    return AttachmentPrefetchPlan(full, inline)
+}
+
 suspend fun prefetch_thread_attachments(
     message_ids: List<String>,
     concurrency: Int = THREAD_PREFETCH_CONCURRENCY,
     fetch: suspend (String) -> Result<List<MessageAttachment>>,
+): Map<String, List<MessageAttachment>> = prefetch_thread_attachments(
+    plan = AttachmentPrefetchPlan(message_ids, emptyMap()),
+    metas = emptyMap(),
+    concurrency = concurrency,
+    fetch_message = fetch,
+    fetch_attachment = { Result.failure(IllegalStateException()) },
+)
+
+suspend fun prefetch_thread_attachments(
+    plan: AttachmentPrefetchPlan,
+    metas: Map<String, List<MessageAttachment>>,
+    concurrency: Int = THREAD_PREFETCH_CONCURRENCY,
+    fetch_message: suspend (String) -> Result<List<MessageAttachment>>,
+    fetch_attachment: suspend (String) -> Result<MessageAttachment>,
 ): Map<String, List<MessageAttachment>> {
-    if (message_ids.isEmpty()) return emptyMap()
+    if (plan.full_message_ids.isEmpty() && plan.inline_attachment_ids.isEmpty()) return emptyMap()
     val permits = Semaphore(concurrency.coerceAtLeast(1))
     return coroutineScope {
-        message_ids.map { id ->
-            async { permits.withPermit { id to fetch(id) } }
-        }.awaitAll()
-    }.mapNotNull { (id, outcome) ->
-        outcome.getOrNull()?.takeIf { it.isNotEmpty() }?.let { id to it }
-    }.toMap()
+        val full_jobs = plan.full_message_ids.map { id ->
+            async { permits.withPermit { id to fetch_message(id) } }
+        }
+        val inline_jobs = plan.inline_attachment_ids.flatMap { (message_id, attachment_ids) ->
+            attachment_ids.map { attachment_id ->
+                async { permits.withPermit { message_id to fetch_attachment(attachment_id) } }
+            }
+        }
+        val full = full_jobs.awaitAll().mapNotNull { (id, outcome) ->
+            outcome.getOrNull()?.takeIf { it.isNotEmpty() }?.let { id to it }
+        }.toMap()
+        val inline = inline_jobs.awaitAll()
+            .mapNotNull { (message_id, outcome) -> outcome.getOrNull()?.let { message_id to it } }
+            .groupBy({ it.first }, { it.second })
+            .mapNotNull { (message_id, fetched) ->
+                val base = metas[message_id] ?: return@mapNotNull null
+                val by_id = fetched.associateBy { it.id }
+                message_id to base.map { meta ->
+                    val loaded = by_id[meta.id] ?: return@map meta
+                    meta.copy(
+                        encrypted_data = loaded.encrypted_data,
+                        data_nonce = loaded.data_nonce,
+                        session_key = loaded.session_key ?: meta.session_key,
+                    )
+                }
+            }.toMap()
+        full + inline
+    }
 }

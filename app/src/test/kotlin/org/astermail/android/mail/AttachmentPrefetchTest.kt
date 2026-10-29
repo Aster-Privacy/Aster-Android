@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.astermail.android.ui.mail.MessageAttachment
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -71,5 +72,51 @@ class AttachmentPrefetchTest {
         assertTrue(peak.get() <= 2)
         assertEquals(11, results.size)
         assertTrue("msg_3" !in results)
+    }
+
+    @Test
+    fun loads_inline_images_from_messages_over_the_caps() = runBlocking {
+        val logo = att("logo", 40 * 1024).copy(content_id = "<logo@mail>", content_type = "image/png")
+        val pdf = att("pdf", 50 * mb).copy(content_type = "application/pdf")
+        val metas = mapOf(
+            "big" to listOf(pdf, logo),
+            "small" to listOf(att("s", mb)),
+        )
+        val plan = plan_attachment_prefetch(metas)
+        assertEquals(listOf("small"), plan.full_message_ids)
+        assertEquals(mapOf("big" to listOf("logo")), plan.inline_attachment_ids)
+
+        val in_flight = AtomicInteger(0)
+        val peak = AtomicInteger(0)
+        val fetched_attachments = mutableListOf<String>()
+        val results = prefetch_thread_attachments(
+            plan = plan,
+            metas = metas,
+            concurrency = 2,
+            fetch_message = { id ->
+                val now = in_flight.incrementAndGet()
+                peak.updateAndGet { maxOf(it, now) }
+                delay(10)
+                in_flight.decrementAndGet()
+                Result.success(listOf(att("s", mb).copy(encrypted_data = "s_data", data_nonce = "n")))
+            },
+            fetch_attachment = { id ->
+                val now = in_flight.incrementAndGet()
+                peak.updateAndGet { maxOf(it, now) }
+                synchronized(fetched_attachments) { fetched_attachments += id }
+                delay(10)
+                in_flight.decrementAndGet()
+                Result.success(logo.copy(encrypted_data = "logo_data", data_nonce = "logo_nonce", session_key = "k"))
+            },
+        )
+        assertTrue(peak.get() <= 2)
+        assertEquals(listOf("logo"), fetched_attachments)
+        val big = results.getValue("big")
+        assertEquals(listOf("pdf", "logo"), big.map { it.id })
+        assertNull(big[0].encrypted_data)
+        assertEquals("logo_data", big[1].encrypted_data)
+        assertEquals("logo_nonce", big[1].data_nonce)
+        assertEquals("<logo@mail>", big[1].content_id)
+        assertEquals("s_data", results.getValue("small").single().encrypted_data)
     }
 }
