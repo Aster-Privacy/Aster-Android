@@ -296,7 +296,12 @@ class AuthRepository @Inject constructor(
 
     suspend fun refresh_session_if_expiring() {
         if (!_is_signed_in.value) return
-        if (!org.astermail.android.api.auth.access_token_needs_refresh(token_store.access_token, System.currentTimeMillis() / 1000L)) return
+        val needs_refresh = org.astermail.android.api.auth.access_token_needs_refresh(
+            token_store.access_token,
+            System.currentTimeMillis() / 1000L,
+            org.astermail.android.api.auth.RefreshTrigger.Foreground,
+        )
+        if (!needs_refresh) return
         try_refresh_session()
     }
 

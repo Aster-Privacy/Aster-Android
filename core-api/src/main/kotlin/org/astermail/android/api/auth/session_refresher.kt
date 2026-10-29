@@ -52,6 +52,7 @@ class SessionRefresher(
     private val perform_refresh: suspend (String?) -> RefreshOutcome,
     private val notify_scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val now_ms: () -> Long = { System.nanoTime() / 1_000_000L },
+    private val access_token_valid: () -> Boolean = { false },
 ) {
 
     private val mutex = Mutex()
@@ -63,6 +64,9 @@ class SessionRefresher(
     private var transient_token: String? = null
     private var transient_failures = 0
     private var retry_after_ms = 0L
+    private var rejected_token: String? = null
+    private var rejected_since_ms = 0L
+    private var rejected_retry_after_ms = 0L
 
     fun on_auth_failure(listener: suspend (String?) -> Unit) {
         auth_failure_listeners.add(listener)
@@ -83,6 +87,7 @@ class SessionRefresher(
                 current != observed -> RefreshOutcome.Success
                 current == dead_token -> RefreshOutcome.AuthFailed
                 current == transient_token && now_ms() < retry_after_ms -> RefreshOutcome.Transient
+                current == rejected_token && now_ms() < rejected_retry_after_ms -> RefreshOutcome.Transient
                 else -> {
                     presented = current
                     fresh_outcome = true
@@ -114,12 +119,18 @@ class SessionRefresher(
                 transient_token = null
                 transient_failures = 0
                 retry_after_ms = 0L
+                clear_rejection()
             }
             RefreshOutcome.AuthFailed -> {
-                dead_token = presented
                 transient_token = null
                 transient_failures = 0
                 retry_after_ms = 0L
+                if (rejection_may_be_transient(presented)) {
+                    rejected_retry_after_ms = now_ms() + REJECTED_RETRY_INTERVAL_MS
+                } else {
+                    dead_token = presented
+                    clear_rejection()
+                }
             }
             RefreshOutcome.Transient -> {
                 if (transient_token != presented) {
@@ -134,8 +145,27 @@ class SessionRefresher(
         }
     }
 
+    private fun rejection_may_be_transient(presented: String): Boolean {
+        if (!runCatching { access_token_valid() }.getOrDefault(false)) return false
+        val now = now_ms()
+        if (rejected_token != presented) {
+            rejected_token = presented
+            rejected_since_ms = now
+            return true
+        }
+        return now - rejected_since_ms < REJECTED_RETRY_WINDOW_MS
+    }
+
+    private fun clear_rejection() {
+        rejected_token = null
+        rejected_since_ms = 0L
+        rejected_retry_after_ms = 0L
+    }
+
     companion object {
         const val TRANSIENT_BACKOFF_BASE_MS = 1_000L
         const val TRANSIENT_BACKOFF_MAX_MS = 15_000L
+        const val REJECTED_RETRY_INTERVAL_MS = 60_000L
+        const val REJECTED_RETRY_WINDOW_MS = 15 * 60_000L
     }
 }

@@ -41,20 +41,33 @@ fun read_token_lifetime(token: String?): TokenLifetime? {
     }.getOrNull()
 }
 
-fun access_token_needs_refresh(access_token: String?, now_s: Long): Boolean {
+enum class RefreshTrigger { Foreground, Background }
+
+fun access_token_needs_refresh(
+    access_token: String?,
+    now_s: Long,
+    trigger: RefreshTrigger = RefreshTrigger.Background,
+): Boolean {
     val lifetime = read_token_lifetime(access_token) ?: return false
     val total = lifetime.expires_at_s - lifetime.issued_at_s
     val remaining = lifetime.expires_at_s - now_s
-    val age = now_s - lifetime.issued_at_s
-    return remaining < total / PROACTIVE_REFRESH_DIVISOR || age >= MAX_TOKEN_AGE_BEFORE_REFRESH_S
+    if (remaining < total / PROACTIVE_REFRESH_DIVISOR) return true
+    if (trigger != RefreshTrigger.Foreground) return false
+    return now_s - lifetime.issued_at_s >= MAX_TOKEN_AGE_BEFORE_REFRESH_S
+}
+
+fun access_token_still_valid(access_token: String?, now_s: Long): Boolean {
+    val lifetime = read_token_lifetime(access_token) ?: return false
+    return now_s < lifetime.expires_at_s
 }
 
 suspend fun refresh_if_expiring(
     access_token: String?,
     refresher: SessionRefresher,
     now_s: Long = System.currentTimeMillis() / 1000L,
+    trigger: RefreshTrigger = RefreshTrigger.Background,
 ): RefreshOutcome? {
-    if (!access_token_needs_refresh(access_token, now_s)) return null
+    if (!access_token_needs_refresh(access_token, now_s, trigger)) return null
     return refresher.refresh()
 }
 

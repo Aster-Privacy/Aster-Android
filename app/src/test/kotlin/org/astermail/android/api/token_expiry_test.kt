@@ -25,8 +25,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.astermail.android.api.auth.RefreshOutcome
+import org.astermail.android.api.auth.RefreshTrigger
 import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.auth.access_token_needs_refresh
+import org.astermail.android.api.auth.access_token_still_valid
 import org.astermail.android.api.auth.read_token_lifetime
 import org.astermail.android.api.auth.refresh_if_expiring
 import org.junit.Assert.assertEquals
@@ -69,14 +71,34 @@ class token_expiry_test {
     }
 
     @Test
-    fun long_lived_token_refreshes_once_it_is_a_day_old() {
+    fun long_lived_token_refreshes_in_the_foreground_once_it_is_a_day_old() {
         val access = token(issued_s, issued_s + 23 * day_s)
-        assertFalse(access_token_needs_refresh(access, issued_s))
-        assertFalse(access_token_needs_refresh(access, issued_s + day_s - 1))
-        assertTrue(access_token_needs_refresh(access, issued_s + day_s))
-        assertTrue(access_token_needs_refresh(access, issued_s + 2 * day_s))
-        assertTrue(access_token_needs_refresh(access, issued_s + 19 * day_s))
-        assertTrue(access_token_needs_refresh(access, issued_s + 24 * day_s))
+        val fg = RefreshTrigger.Foreground
+        assertFalse(access_token_needs_refresh(access, issued_s, fg))
+        assertFalse(access_token_needs_refresh(access, issued_s + day_s - 1, fg))
+        assertTrue(access_token_needs_refresh(access, issued_s + day_s, fg))
+        assertTrue(access_token_needs_refresh(access, issued_s + 2 * day_s, fg))
+        assertTrue(access_token_needs_refresh(access, issued_s + 19 * day_s, fg))
+        assertTrue(access_token_needs_refresh(access, issued_s + 24 * day_s, fg))
+    }
+
+    @Test
+    fun background_work_only_refreshes_in_the_last_third() {
+        val access = token(issued_s, issued_s + 30 * day_s)
+        assertFalse(access_token_needs_refresh(access, issued_s + day_s))
+        assertFalse(access_token_needs_refresh(access, issued_s + 19 * day_s))
+        assertTrue(access_token_needs_refresh(access, issued_s + 21 * day_s))
+        assertFalse(access_token_needs_refresh(access, issued_s + 2 * day_s, RefreshTrigger.Background))
+        assertTrue(access_token_needs_refresh(access, issued_s + 2 * day_s, RefreshTrigger.Foreground))
+    }
+
+    @Test
+    fun access_validity_follows_the_expiry_claim() {
+        val access = token(issued_s, issued_s + day_s)
+        assertTrue(access_token_still_valid(access, issued_s + day_s - 1))
+        assertFalse(access_token_still_valid(access, issued_s + day_s))
+        assertFalse(access_token_still_valid(null, issued_s))
+        assertFalse(access_token_still_valid("opaque", issued_s))
     }
 
     @Test
@@ -99,7 +121,7 @@ class token_expiry_test {
                 now_s += gap_days * day_s
                 assertTrue("signed out with a $gap_days day gap", now_s < refresh_expires_s)
                 val access = token(access_issued_s, access_issued_s + access_lifetime_s)
-                if (access_token_needs_refresh(access, now_s)) {
+                if (access_token_needs_refresh(access, now_s, RefreshTrigger.Foreground)) {
                     access_issued_s = now_s
                     refresh_expires_s = now_s + refresh_lifetime_s
                 }
@@ -129,7 +151,16 @@ class token_expiry_test {
         assertNull(refresh_if_expiring(access, refresher, now_s = issued_s + 2 * 3_600L))
         assertEquals(0, calls.get())
 
-        assertEquals(RefreshOutcome.Success, refresh_if_expiring(access, refresher, now_s = issued_s + 2 * day_s))
+        assertNull(refresh_if_expiring(access, refresher, now_s = issued_s + 2 * day_s))
+        assertEquals(0, calls.get())
+
+        assertEquals(
+            RefreshOutcome.Success,
+            refresh_if_expiring(access, refresher, now_s = issued_s + 2 * day_s, trigger = RefreshTrigger.Foreground),
+        )
         assertEquals(1, calls.get())
+
+        assertEquals(RefreshOutcome.Success, refresh_if_expiring(access, refresher, now_s = issued_s + 21 * day_s))
+        assertEquals(2, calls.get())
     }
 }
