@@ -93,6 +93,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.api.domains.DomainSearchResult
+import org.astermail.android.api.domains.domain_tld
+import org.astermail.android.api.domains.has_whois_privacy
 import org.astermail.android.api.domains.is_purchasable
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
@@ -799,7 +801,7 @@ private fun purchase_confirm_content(vm: DomainPurchaseViewModel, state: DomainP
     }
     v_gap(AsterSpacing.xl)
 
-    included_grid()
+    included_grid(selected)
     v_gap(AsterSpacing.xl)
 
     settings_row_gap()
@@ -833,10 +835,14 @@ private fun checkout_error_box(message: String) {
 }
 
 @Composable
-private fun included_grid() {
+private fun included_grid(selected: DomainSearchResult) {
     val colors = AsterMaterial.colors
+    val private_whois = selected.has_whois_privacy()
     val titles = listOf(
-        stringResource(R.string.domain_purchase_detail_privacy),
+        stringResource(
+            if (private_whois) R.string.domain_purchase_detail_privacy
+            else R.string.domain_purchase_detail_public_whois,
+        ),
         stringResource(R.string.domain_purchase_detail_setup),
         stringResource(R.string.domain_purchase_detail_instant),
         stringResource(R.string.domain_purchase_detail_ownership),
@@ -875,6 +881,14 @@ private fun included_grid() {
                 }
             }
         }
+    }
+    if (!private_whois) {
+        v_gap(AsterSpacing.md)
+        Text(
+            text = stringResource(R.string.domain_purchase_whois_public_notice, domain_tld(selected.domain)),
+            color = colors.text_muted,
+            fontSize = 12.sp,
+        )
     }
 }
 
@@ -954,7 +968,10 @@ private fun purchase_summary_card(
             )
             summary_line(
                 label = stringResource(R.string.domain_purchase_summary_whois),
-                value = stringResource(R.string.domain_purchase_summary_included),
+                value = stringResource(
+                    if (selected.has_whois_privacy()) R.string.domain_purchase_summary_included
+                    else R.string.domain_purchase_summary_not_available,
+                ),
                 value_emphasized = false,
             )
             summary_line(

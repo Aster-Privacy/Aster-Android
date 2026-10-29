@@ -73,4 +73,23 @@ class domain_search_result_test {
         assertFalse(DomainSearchResult(domain = "free.com", available = true).is_purchasable())
         assertTrue(DomainSearchResult(domain = "free.com", available = true, price_cents = 900).is_purchasable())
     }
+
+    @Test
+    fun server_whois_flag_wins_over_the_ending() {
+        val reply = json.decodeFromString<DomainSearchResponse>(
+            """{"results":[{"domain":"a.com","available":true,"whois_privacy":false},{"domain":"a.us","available":true,"whois_privacy":true}]}""",
+        )
+        assertFalse(reply.results[0].has_whois_privacy())
+        assertTrue(reply.results[1].has_whois_privacy())
+    }
+
+    @Test
+    fun missing_whois_flag_falls_back_to_registry_rules() {
+        assertFalse(DomainSearchResult(domain = "lopezova.us").has_whois_privacy())
+        assertFalse(DomainSearchResult(domain = "ssin.CX").has_whois_privacy())
+        assertTrue(DomainSearchResult(domain = "example.com").has_whois_privacy())
+        assertTrue(DomainSearchResult(domain = "example.us.com").has_whois_privacy())
+        assertEquals("us", domain_tld("Lopezova.US"))
+        assertEquals("xyz", domain_tld("a.b.xyz."))
+    }
 }

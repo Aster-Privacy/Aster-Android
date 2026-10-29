@@ -2571,6 +2571,7 @@
     <string name="domain_purchase_summary_whois">Prywatność WHOIS</string>
     <string name="domain_purchase_summary_dns">Automatyczna konfiguracja DNS</string>
     <string name="domain_purchase_summary_included">W zestawie</string>
+    <string name="domain_purchase_summary_not_available">Niedostępne</string>
     <string name="domain_purchase_total_today">Razem dzisiaj</string>
     <string name="domain_purchase_included_heading">Wszystko, co otrzymujesz razem z domeną</string>
     <string name="domain_purchase_renew">Odnów</string>
@@ -2585,6 +2586,8 @@
     <string name="domain_purchase_terms_registrar">Regulamin NameSilo</string>
     <string name="domain_purchase_terms_icann">Prawa i obowiązki abonenta ICANN</string>
     <string name="domain_purchase_detail_privacy">Domyślnie prywatna</string>
+    <string name="domain_purchase_detail_public_whois">Publiczne dane WHOIS</string>
+    <string name="domain_purchase_whois_public_notice">Rejestr domen .%1$s nie pozwala na prywatność WHOIS. Aster rejestruje domenę z danymi kontaktowymi firmy, więc Twoje dane osobowe nie są publikowane.</string>
     <string name="domain_purchase_detail_setup">Zero konfiguracji</string>
     <string name="domain_purchase_detail_instant">Gotowa w kilka sekund</string>
     <string name="domain_purchase_detail_ownership">Należy do Ciebie</string>
