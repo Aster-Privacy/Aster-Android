@@ -3010,6 +3010,7 @@
     <string name="error_account_probation">تُفرض على حسابك قيود مؤقتة.</string>
     <string name="error_account_suspended">حسابك موقوف بسبب مخالفة شروط الخدمة.</string>
     <string name="error_alias_reencryption_incomplete">لم تكتمل إعادة تشفير بعض الأسماء المستعارة، لذلك لم يتغير شيء. حاول مرة أخرى.</string>
+    <string name="error_key_continuity_required">تغيّرت مفاتيح التشفير على جهاز آخر، لذلك لم تتغير كلمة المرور. حاول مرة أخرى.</string>
     <string name="error_client_upgrade_required">لا يمكن لهذا الإصدار من التطبيق إجراء هذا التغيير. حدّث إلى أحدث إصدار ثم حاول مرة أخرى.</string>
     <string name="error_verification_required">لمواصلة استخدام هذا الحساب، تحقق من بريد الاسترداد.</string>
     <string name="scheduled_already_sending">هذا البريد قيد الإرسال بالفعل، لذلك لم يعد بإمكانك تغييره.</string>

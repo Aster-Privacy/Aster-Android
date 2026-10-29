@@ -74,6 +74,51 @@ fun merge_retained_ratchet_keys(vararg sources: String?): String? {
     return result.toString()
 }
 
+private fun local_ratchet_key_entry(session_key_store: SessionKeyStore): JSONObject? {
+    val local_identity = session_key_store.get_ratchet_identity_jwk()?.takeIf { it.isNotBlank() }
+    val local_spk = session_key_store.get_ratchet_signed_prekey_jwk()?.takeIf { it.isNotBlank() }
+    val local_pq_secret = session_key_store.get_ratchet_pq_identity_secret()?.takeIf { it.isNotBlank() }
+    val local_pq_public = session_key_store.get_ratchet_pq_identity_public()?.takeIf { it.isNotBlank() }
+    if (local_identity == null && local_pq_secret == null) return null
+
+    val entry = JSONObject()
+    if (local_identity != null) {
+        entry.put("ratchet_identity_key", local_identity)
+        val identity_public = session_key_store.get_ratchet_identity_public_b64()?.takeIf { it.isNotBlank() }
+            ?: runCatching { RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(local_identity)) }
+                .getOrNull()
+        identity_public?.let { entry.put("ratchet_identity_public", it) }
+    }
+    if (local_spk != null) {
+        entry.put("ratchet_signed_prekey", local_spk)
+        session_key_store.get_ratchet_signed_prekey_public_b64()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { entry.put("ratchet_signed_prekey_public", it) }
+    }
+    local_pq_secret?.let { entry.put("ratchet_pq_identity_key", it) }
+    local_pq_public?.let { entry.put("ratchet_pq_identity_public", it) }
+    return entry
+}
+
+fun fold_local_ratchet_keys_into_vault(vault_json: JSONObject, session_key_store: SessionKeyStore) {
+    val local = local_ratchet_key_entry(session_key_store)
+    val vault_identity_public = runCatching {
+        RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(vault_json.text("ratchet_identity_key")))
+    }.getOrDefault("")
+    val local_differs = local != null && (
+        local.text("ratchet_identity_public") != vault_identity_public ||
+            local.text("ratchet_signed_prekey_public") != vault_json.text("ratchet_signed_prekey_public") ||
+            (local.text("ratchet_pq_identity_public").isNotBlank() &&
+                local.text("ratchet_pq_identity_public") != vault_json.text("ratchet_pq_identity_public"))
+        )
+    val merged = merge_retained_ratchet_keys(
+        vault_json.optJSONArray("ratchet_previous_keys")?.toString(),
+        if (local_differs) JSONArray().put(local).toString() else null,
+        session_key_store.get_ratchet_previous_keys_json(),
+    ) ?: return
+    vault_json.put("ratchet_previous_keys", JSONArray(merged))
+}
+
 fun retain_local_ratchet_keys(
     session_key_store: SessionKeyStore,
     incoming_identity_jwk: String?,
@@ -93,22 +138,7 @@ fun retain_local_ratchet_keys(
         !incoming_pq_identity_public_b64.isNullOrBlank() && incoming_pq_identity_public_b64 != local_pq_public
     if (!identity_replaced && !spk_replaced && !pq_replaced) return
 
-    val entry = JSONObject()
-    if (local_identity != null) {
-        entry.put("ratchet_identity_key", local_identity)
-        val identity_public = session_key_store.get_ratchet_identity_public_b64()?.takeIf { it.isNotBlank() }
-            ?: runCatching { RatchetCrypto.b64_encode(RatchetCrypto.p256_public_raw_from_private_jwk(local_identity)) }
-                .getOrNull()
-        identity_public?.let { entry.put("ratchet_identity_public", it) }
-    }
-    if (local_spk != null) {
-        entry.put("ratchet_signed_prekey", local_spk)
-        session_key_store.get_ratchet_signed_prekey_public_b64()
-            ?.takeIf { it.isNotBlank() }
-            ?.let { entry.put("ratchet_signed_prekey_public", it) }
-    }
-    local_pq_secret?.let { entry.put("ratchet_pq_identity_key", it) }
-    local_pq_public?.let { entry.put("ratchet_pq_identity_public", it) }
+    val entry = local_ratchet_key_entry(session_key_store) ?: return
 
     val merged = merge_retained_ratchet_keys(
         JSONArray().put(entry).toString(),

@@ -2966,6 +2966,7 @@
     <string name="error_account_probation">Tu cuenta tiene restricciones temporales.</string>
     <string name="error_account_suspended">Tu cuenta está suspendida por incumplir los Términos del servicio.</string>
     <string name="error_alias_reencryption_incomplete">Algunos alias no terminaron de volver a cifrarse, así que no se cambió nada. Inténtalo de nuevo.</string>
+    <string name="error_key_continuity_required">Tus claves de cifrado cambiaron en otro dispositivo, así que tu contraseña no se cambió. Inténtalo de nuevo.</string>
     <string name="error_client_upgrade_required">Esta versión de la app no puede hacer este cambio. Actualiza a la última versión y vuelve a intentarlo.</string>
     <string name="error_verification_required">Para seguir usando esta cuenta, verifica tu correo de recuperación.</string>
     <string name="scheduled_already_sending">Este correo ya se está enviando, así que ya no puedes cambiarlo.</string>

@@ -2994,6 +2994,7 @@
     <string name="error_account_probation">Votre compte fait l\'objet de restrictions temporaires.</string>
     <string name="error_account_suspended">Votre compte est suspendu pour non-respect des conditions d\'utilisation.</string>
     <string name="error_alias_reencryption_incomplete">Certains alias n\'ont pas fini d\'être rechiffrés, donc rien n\'a changé. Réessayez.</string>
+    <string name="error_key_continuity_required">Vos clés de chiffrement ont changé sur un autre appareil, votre mot de passe n\'a donc pas été modifié. Réessayez.</string>
     <string name="error_client_upgrade_required">Cette version de l\'app ne peut pas effectuer cette modification. Installez la dernière version, puis réessayez.</string>
     <string name="error_verification_required">Pour continuer à utiliser ce compte, vérifiez votre adresse de récupération.</string>
     <string name="scheduled_already_sending">Cet e-mail est déjà en cours d\'envoi, vous ne pouvez donc plus le modifier.</string>

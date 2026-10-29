@@ -2950,6 +2950,7 @@
     <string name="error_account_probation">Voor je account gelden tijdelijke beperkingen.</string>
     <string name="error_account_suspended">Je account is opgeschort wegens schending van de servicevoorwaarden.</string>
     <string name="error_alias_reencryption_incomplete">Sommige aliassen zijn niet volledig opnieuw versleuteld, dus er is niets gewijzigd. Probeer het opnieuw.</string>
+    <string name="error_key_continuity_required">Je versleutelingssleutels zijn op een ander apparaat gewijzigd, dus je wachtwoord is niet gewijzigd. Probeer het opnieuw.</string>
     <string name="error_client_upgrade_required">Deze versie van de app kan deze wijziging niet doorvoeren. Werk de app bij naar de nieuwste versie en probeer het opnieuw.</string>
     <string name="error_verification_required">Verifieer je herstel-e-mailadres om dit account te blijven gebruiken.</string>
     <string name="scheduled_already_sending">Deze e-mail wordt al verzonden, dus je kunt hem niet meer wijzigen.</string>

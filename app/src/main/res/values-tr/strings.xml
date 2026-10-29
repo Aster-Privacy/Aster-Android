@@ -2950,6 +2950,7 @@
     <string name="error_account_probation">Hesabınızda geçici kısıtlamalar var.</string>
     <string name="error_account_suspended">Hizmet Şartları\'nı ihlal ettiği için hesabınız askıya alındı.</string>
     <string name="error_alias_reencryption_incomplete">Bazı takma adların yeniden şifrelenmesi tamamlanmadı, bu yüzden hiçbir şey değişmedi. Tekrar deneyin.</string>
+    <string name="error_key_continuity_required">Şifreleme anahtarlarınız başka bir cihazda değişti, bu yüzden şifreniz değiştirilmedi. Tekrar deneyin.</string>
     <string name="error_client_upgrade_required">Uygulamanın bu sürümü bu değişikliği yapamıyor. En son sürüme güncelleyip tekrar deneyin.</string>
     <string name="error_verification_required">Bu hesabı kullanmaya devam etmek için kurtarma e-postanızı doğrulayın.</string>
     <string name="scheduled_already_sending">Bu e-posta zaten gönderiliyor, artık değiştiremezsiniz.</string>

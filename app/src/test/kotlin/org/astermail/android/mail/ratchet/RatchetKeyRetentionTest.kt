@@ -230,4 +230,40 @@ class RatchetKeyRetentionTest {
         assertEquals("id_b", store.get_ratchet_identity_jwk())
         assertEquals(setOf("id_a", "id_old", "id_vault_old"), identity_tags(store).toSet())
     }
+    private fun vault_identity_tags(vault: JSONObject): Set<String> {
+        val entries = vault.optJSONArray("ratchet_previous_keys") ?: JSONArray()
+        return (0 until entries.length()).map { entries.getJSONObject(it).getString("ratchet_identity_key") }.toSet()
+    }
+
+    @Test
+    fun `a password change keeps device keys the vault does not hold`() {
+        val store = store_with("id_local", "spk_local", "pq_local")
+        store.put_ratchet_previous_keys("[{\"ratchet_identity_key\":\"id_local_old\"}]")
+        val vault = JSONObject()
+            .put("ratchet_identity_key", "id_vault")
+            .put("ratchet_previous_keys", JSONArray().put(JSONObject().put("ratchet_identity_key", "id_vault_old")))
+        fold_local_ratchet_keys_into_vault(vault, store)
+        assertEquals(setOf("id_vault_old", "id_local", "id_local_old"), vault_identity_tags(vault))
+        val local_entry = (0 until vault.getJSONArray("ratchet_previous_keys").length())
+            .map { vault.getJSONArray("ratchet_previous_keys").getJSONObject(it) }
+            .first { it.getString("ratchet_identity_key") == "id_local" }
+        assertEquals("spk_local", local_entry.getString("ratchet_signed_prekey"))
+        assertEquals("pq_local", local_entry.getString("ratchet_pq_identity_key"))
+    }
+
+    @Test
+    fun `a password change does not copy the current vault keys into previous keys`() {
+        val identity = RatchetCrypto.generate_p256_keypair()
+        val spk = RatchetCrypto.generate_p256_keypair()
+        val store = SessionKeyStore(null)
+        store.put_ratchet_keys(
+            jwk_of(identity),
+            RatchetCrypto.b64_encode(identity.public_raw),
+            jwk_of(spk),
+            RatchetCrypto.b64_encode(spk.public_raw),
+        )
+        val vault = vault_for(identity, spk)
+        fold_local_ratchet_keys_into_vault(vault, store)
+        assertFalse(vault.has("ratchet_previous_keys"))
+    }
 }

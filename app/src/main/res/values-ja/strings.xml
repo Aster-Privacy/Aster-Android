@@ -2939,6 +2939,7 @@
     <string name="error_account_probation">アカウントに一時的な制限がかかっています。</string>
     <string name="error_account_suspended">利用規約違反のため、アカウントが停止されています。</string>
     <string name="error_alias_reencryption_incomplete">一部のエイリアスの再暗号化が完了しなかったため、変更は適用されていません。やり直してください。</string>
+    <string name="error_key_continuity_required">別のデバイスで暗号化キーが変更されたため、パスワードは変更されませんでした。もう一度お試しください。</string>
     <string name="error_client_upgrade_required">このバージョンのアプリではこの変更を行えません。最新バージョンにアップデートしてからやり直してください。</string>
     <string name="error_verification_required">このアカウントを引き続き使用するには、復旧用メールアドレスを確認してください。</string>
     <string name="scheduled_already_sending">このメールは送信中のため、変更できません。</string>
