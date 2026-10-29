@@ -384,6 +384,12 @@ data class BulkScopeResponse(
 )
 
 @Serializable
+data class SpamThreadResponse(
+    val updated: Long = 0,
+    val ids: List<String> = emptyList(),
+)
+
+@Serializable
 data class CreateMailItemRequest(
     val item_type: String,
     val encrypted_envelope: String,
