@@ -27,6 +27,7 @@ import io.mockk.mockk
 import java.security.SecureRandom
 import java.util.Base64
 import kotlinx.coroutines.test.runTest
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.keys.AccountKeyCapabilityFlags
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.recovery.CodesStatusResponse
@@ -83,19 +84,41 @@ private class SoftwareDeviceRecoveryKey(private val key: ByteArray) : DeviceReco
 }
 
 private class FakeKeyProvider(var key: DeviceRecoveryKey?) : DeviceRecoveryKeyProvider {
-    var created_next = false
-    var deleted = false
+    var unavailable = false
+    var generated = 0
 
-    override fun load(create: Boolean): LoadedDeviceRecoveryKey? {
-        val existing = key ?: return null
-        val created = created_next
-        created_next = false
-        return LoadedDeviceRecoveryKey(existing, created)
+    override fun load(create: Boolean): DeviceRecoveryKeyLoad {
+        if (unavailable) return DeviceRecoveryKeyLoad.Unavailable
+        val existing = key
+        if (existing != null) return DeviceRecoveryKeyLoad.Ready(existing, created = false)
+        if (!create) return DeviceRecoveryKeyLoad.Missing
+        generated += 1
+        val fresh = SoftwareDeviceRecoveryKey(ByteArray(32) { (40 + generated).toByte() })
+        key = fresh
+        return DeviceRecoveryKeyLoad.Ready(fresh, created = true)
+    }
+}
+
+private class InMemoryStateStore : DeviceRecoveryStateStore {
+    val attempts = mutableMapOf<String, Map<String, DeviceRecoveryAttempt>>()
+    val not_before = mutableMapOf<String, Long>()
+
+    override fun attempts(user_id: String): Map<String, DeviceRecoveryAttempt> =
+        decode_device_recovery_attempts(attempts[user_id]?.let { encode_device_recovery_attempts(it) })
+
+    override fun put_attempts(user_id: String, attempts: Map<String, DeviceRecoveryAttempt>) {
+        if (attempts.isEmpty()) this.attempts.remove(user_id) else this.attempts[user_id] = attempts.toMap()
     }
 
-    override fun delete() {
-        deleted = true
-        key = null
+    override fun refresh_not_before(user_id: String): Long = not_before[user_id] ?: 0L
+
+    override fun put_refresh_not_before(user_id: String, at_ms: Long) {
+        if (at_ms <= 0L) not_before.remove(user_id) else not_before[user_id] = at_ms
+    }
+
+    override fun forget_user(user_id: String) {
+        attempts.remove(user_id)
+        not_before.remove(user_id)
     }
 }
 
@@ -105,6 +128,8 @@ private class InMemorySnapshotStore : DeviceSnapshotStore {
 
     override fun list(user_id: String): List<DeviceSnapshotRecord> =
         records.filter { it.user_id == user_id }.sortedByDescending { it.created_at }
+
+    override fun list_all(): List<DeviceSnapshotRecord> = records.sortedByDescending { it.created_at }
 
     override fun save(record: DeviceSnapshotRecord): Boolean {
         if (save_fails) return false
@@ -135,6 +160,7 @@ private class CommitCall(
     val identity_keys: RecoveredIdentityKeys,
     val recovered_keks: List<String>,
     val recovered_ratchet: List<JSONObject>,
+    val base_encrypted_vault: String,
 )
 
 private class FakeRecoveryApi : RecoveryApi {
@@ -147,10 +173,12 @@ private class FakeRecoveryApi : RecoveryApi {
     var inactive_sets: List<InactiveKeySetInfo> = emptyList()
     var inactive_vaults = mutableMapOf<String, String>()
     var put_succeeds = true
+    var put_rate_limited = false
     var list_fails = false
 
     override suspend fun put_device_recovery_secret(request: PutDeviceSecretRequest): PutDeviceSecretResponse {
         calls.add("put")
+        if (put_rate_limited) throw ApiError.RateLimited()
         if (!put_succeeds) throw IllegalStateException("refused")
         puts.add(request)
         secrets[request.snapshot_id] = request.secret
@@ -238,10 +266,15 @@ class DeviceRecoveryTest {
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var snapshot_store: InMemorySnapshotStore
     private lateinit var key_provider: FakeKeyProvider
+    private lateinit var state_store: InMemoryStateStore
     private lateinit var device_recovery: DeviceRecovery
 
     private val commits = mutableListOf<CommitCall>()
     private var commit_result = true
+    private var commit_roundtrip_failed = false
+    private var commit_dropped = 0
+    private var commit_dropped_ratchet = 0
+    private var session_user: String? = user_id
     private var capabilities = AccountKeyCapabilityFlags(
         format_writes = true,
         data_conversion = true,
@@ -276,13 +309,14 @@ class DeviceRecoveryTest {
         recovery_api = FakeRecoveryApi()
         snapshot_store = InMemorySnapshotStore()
         key_provider = FakeKeyProvider(SoftwareDeviceRecoveryKey(ByteArray(32) { 5 }))
+        state_store = InMemoryStateStore()
         vault_json = vault(current_key.armored_private_key)
 
         keys_api = mockk(relaxed = true)
         coEvery { keys_api.get_account_key_capabilities() } answers { capabilities }
 
         session_key_store = mockk(relaxed = true)
-        every { session_key_store.get_user_id() } answers { user_id }
+        every { session_key_store.get_user_id() } answers { session_user }
         every { session_key_store.get_encrypted_vault() } answers { encoded_vault() to "bm9uY2U=" }
         every { session_key_store.get_passphrase() } answers { passphrase.toByteArray(Charsets.UTF_8) }
 
@@ -293,9 +327,15 @@ class DeviceRecoveryTest {
             snapshot_store = snapshot_store,
             key_provider = key_provider,
             vault_codec = FakeVaultCodec(),
-            commit = DeviceRecoveryCommit { id, pass, vault_obj, identity_keys, keks, ratchet ->
-                commits.add(CommitCall(id, pass.copyOf(), vault_obj, identity_keys, keks, ratchet))
-                commit_result
+            state_store = state_store,
+            commit = DeviceRecoveryCommit { id, pass, vault_obj, identity_keys, keks, ratchet, base_vault ->
+                commits.add(CommitCall(id, pass.copyOf(), vault_obj, identity_keys, keks, ratchet, base_vault))
+                RecoveredKeyCommitResult(
+                    written = commit_result && !commit_roundtrip_failed,
+                    roundtrip_failed = commit_roundtrip_failed,
+                    dropped_keks = commit_dropped,
+                    dropped_ratchet_keys = commit_dropped_ratchet,
+                )
             },
             now_ms = { clock },
             new_snapshot_id = { "snapshot-${++snapshot_counter}" },
@@ -451,16 +491,41 @@ class DeviceRecoveryTest {
     }
 
     @Test
-    fun a_missing_device_key_throws_the_snapshots_away() = runTest {
-        assertTrue(device_recovery.refresh_snapshot(user_id))
+    fun a_missing_device_key_drops_only_the_local_snapshots() = runTest {
+        snapshot_the_old_vault()
         arm_reset()
         key_provider.key = null
 
         assertEquals(0, device_recovery.run(user_id))
         assertTrue(commits.isEmpty())
         assertTrue(recovery_api.consumed.isEmpty())
-        assertTrue(snapshot_store.records.isEmpty())
-        assertTrue(recovery_api.deletes.any { "snapshot-1" in it })
+        assertTrue(snapshot_store.records.none { it.snapshot_id == "snapshot-1" })
+        assertTrue(recovery_api.deletes.none { "snapshot-1" in it })
+        assertEquals(1, key_provider.generated)
+    }
+
+    @Test
+    fun an_unavailable_device_key_wipes_nothing() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        key_provider.unavailable = true
+
+        assertEquals(0, device_recovery.run(user_id))
+        assertTrue(commits.isEmpty())
+        assertTrue(recovery_api.consumed.isEmpty())
+        assertEquals(listOf("snapshot-1"), snapshot_store.records.map { it.snapshot_id })
+        assertTrue(recovery_api.deletes.isEmpty())
+        assertEquals(0, key_provider.generated)
+    }
+
+    @Test
+    fun an_existing_device_key_is_never_replaced() = runTest {
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        vault_json = vault(current_key.armored_private_key, listOf("next"))
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+
+        assertEquals(0, key_provider.generated)
+        assertEquals(2, snapshot_store.records.size)
     }
 
     private fun arm_reset() {
@@ -554,6 +619,262 @@ class DeviceRecoveryTest {
         assertEquals(3, kept.size)
         assertTrue(recovery_api.deletes.flatten().isNotEmpty())
         assertTrue(recovery_api.deletes.flatten().none { it == archived_snapshot.snapshot_id })
+    }
+
+    @Test
+    fun expired_snapshots_leave_the_device_and_only_the_signed_in_secrets_leave_the_server() = runTest {
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        snapshot_store.records.add(
+            DeviceSnapshotRecord(
+                snapshot_id = "other-1",
+                user_id = "user-2",
+                source_hash = "hash-other",
+                created_at = clock,
+                iv = ByteArray(12),
+                sealed = ByteArray(32),
+            ),
+        )
+        clock += DEVICE_RECOVERY_SNAPSHOT_TTL_MS + 1
+        vault_json = vault(current_key.armored_private_key, listOf("later"))
+
+        device_recovery.run(user_id)
+
+        assertTrue(snapshot_store.records.none { it.snapshot_id == "snapshot-1" })
+        assertTrue(snapshot_store.records.none { it.snapshot_id == "other-1" })
+        assertTrue(recovery_api.deletes.any { "snapshot-1" in it })
+        assertTrue(recovery_api.deletes.none { "other-1" in it })
+    }
+
+    @Test
+    fun expiry_runs_even_when_the_feature_is_off() = runTest {
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        capabilities = AccountKeyCapabilityFlags(
+            format_writes = true,
+            data_conversion = true,
+            device_recovery = false,
+        )
+        clock += DEVICE_RECOVERY_SNAPSHOT_TTL_MS + 1
+
+        assertEquals(0, device_recovery.run(user_id))
+        assertTrue(snapshot_store.records.isEmpty())
+    }
+
+    @Test
+    fun secrets_are_fetched_in_batches_of_sixteen() = runTest {
+        val archived_vault = Base64.getEncoder().encodeToString("archived".toByteArray(Charsets.UTF_8))
+        val archived_hash = vault_ciphertext_hash(archived_vault)
+        recovery_api.inactive_sets = listOf(InactiveKeySetInfo(id = "set-1"))
+        recovery_api.inactive_vaults["set-1"] = archived_vault
+        repeat(20) { index ->
+            val id = "batch-$index"
+            snapshot_store.records.add(
+                DeviceSnapshotRecord(
+                    snapshot_id = id,
+                    user_id = user_id,
+                    source_hash = archived_hash,
+                    created_at = clock - index,
+                    iv = ByteArray(12),
+                    sealed = ByteArray(48),
+                ),
+            )
+            recovery_api.secrets[id] = Base64.getEncoder().encodeToString(ByteArray(32) { 3 })
+        }
+
+        assertEquals(0, device_recovery.run(user_id))
+
+        assertEquals(listOf(16, 4), recovery_api.fetched_secret_ids.map { it.size })
+        assertEquals(20, recovery_api.fetched_secret_ids.flatten().toSet().size)
+        assertEquals(20, state_store.attempts(user_id).size)
+    }
+
+    @Test
+    fun a_snapshot_is_tried_once_a_day_and_at_most_three_times() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_roundtrip_failed = true
+
+        device_recovery.run(user_id)
+        device_recovery.run(user_id)
+        assertEquals(1, commits.size)
+
+        repeat(4) {
+            clock += DEVICE_RECOVERY_ATTEMPT_SPACING_MS
+            device_recovery.run(user_id)
+        }
+
+        assertEquals(DEVICE_RECOVERY_MAX_ATTEMPTS, commits.size)
+        assertEquals(DEVICE_RECOVERY_MAX_ATTEMPTS, state_store.attempts(user_id)["snapshot-1"]?.count)
+        assertTrue(recovery_api.consumed.isEmpty())
+        assertTrue(snapshot_store.records.any { it.snapshot_id == "snapshot-1" })
+    }
+
+    @Test
+    fun a_consumed_snapshot_forgets_its_attempts() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+
+        assertEquals(1, device_recovery.run(user_id))
+        assertTrue(state_store.attempts(user_id).isEmpty())
+    }
+
+    @Test
+    fun dropped_keks_leave_the_archived_set_unconsumed() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_dropped = 1
+
+        assertEquals(0, device_recovery.run(user_id))
+        assertEquals(1, commits.size)
+        assertTrue(recovery_api.consumed.isEmpty())
+        assertTrue(snapshot_store.records.any { it.snapshot_id == "snapshot-1" })
+    }
+
+    @Test
+    fun dropped_ratchet_keys_leave_the_archived_set_unconsumed() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_dropped_ratchet = 2
+
+        assertEquals(0, device_recovery.run(user_id))
+        assertTrue(recovery_api.consumed.isEmpty())
+        assertTrue(snapshot_store.records.any { it.snapshot_id == "snapshot-1" })
+    }
+
+    @Test
+    fun the_commit_carries_the_vault_the_merge_started_from() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+
+        device_recovery.run(user_id)
+
+        assertEquals(encoded_vault(), commits.single().base_encrypted_vault)
+    }
+
+    @Test
+    fun the_periodic_refresh_prunes_with_the_last_archived_hashes() = runTest {
+        device_recovery.tick(user_id)
+        repeat(3) { index ->
+            clock += 1_000
+            vault_json = vault(current_key.armored_private_key, listOf("tick-$index"))
+            device_recovery.tick(user_id)
+        }
+
+        assertEquals(4, recovery_api.calls.count { it == "list_inactive" })
+        assertEquals(DEVICE_RECOVERY_SNAPSHOTS_KEPT, snapshot_store.records.size)
+        assertTrue(recovery_api.deletes.flatten().containsAll(listOf("snapshot-1", "snapshot-2")))
+    }
+
+    @Test
+    fun an_unchanged_vault_is_not_listed_again_on_the_periodic_tick() = runTest {
+        device_recovery.tick(user_id)
+        clock += 1_000
+        device_recovery.tick(user_id)
+
+        assertEquals(1, recovery_api.calls.count { it == "list_inactive" })
+    }
+
+    @Test
+    fun signing_out_and_back_in_gets_a_full_run() = runTest {
+        device_recovery.tick(user_id)
+        session_user = null
+        device_recovery.tick("")
+        session_user = user_id
+        device_recovery.tick(user_id)
+
+        assertEquals(2, recovery_api.calls.count { it == "list_inactive" })
+    }
+
+    @Test
+    fun a_vault_failure_that_may_pass_later_spends_no_attempt() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_result = false
+
+        repeat(5) { device_recovery.run(user_id) }
+
+        assertEquals(5, commits.size)
+        assertTrue(state_store.attempts(user_id).isEmpty())
+
+        commit_result = true
+        assertEquals(1, device_recovery.run(user_id))
+        assertEquals(listOf("set-1"), recovery_api.consumed)
+    }
+
+    @Test
+    fun an_unchanged_vault_gets_a_fresh_snapshot_every_week() = runTest {
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        clock += DEVICE_RECOVERY_SNAPSHOT_REFRESH_MS - 1
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        clock += 2
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+
+        assertEquals(listOf("snapshot-2"), snapshot_store.records.map { it.snapshot_id })
+        assertTrue(recovery_api.deletes.flatten().contains("snapshot-1"))
+    }
+
+    @Test
+    fun a_new_account_on_the_device_gets_a_full_run() = runTest {
+        device_recovery.tick(user_id)
+        session_user = "user-2"
+        device_recovery.tick("user-2")
+
+        assertEquals(2, recovery_api.calls.count { it == "list_inactive" })
+    }
+
+    @Test
+    fun a_failed_secret_upload_waits_an_hour() = runTest {
+        recovery_api.put_succeeds = false
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        assertEquals(1, recovery_api.calls.count { it == "put" })
+
+        recovery_api.put_succeeds = true
+        clock += DEVICE_RECOVERY_PUT_BACKOFF_MS
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        assertEquals(0L, state_store.refresh_not_before(user_id))
+    }
+
+    @Test
+    fun a_rate_limited_secret_upload_waits_six_hours() = runTest {
+        recovery_api.put_rate_limited = true
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+
+        recovery_api.put_rate_limited = false
+        clock += DEVICE_RECOVERY_PUT_BACKOFF_MS
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        assertEquals(1, recovery_api.calls.count { it == "put" })
+
+        clock += DEVICE_RECOVERY_PUT_RATE_LIMITED_BACKOFF_MS - DEVICE_RECOVERY_PUT_BACKOFF_MS
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+    }
+
+    @Test
+    fun another_signed_in_account_is_never_snapshotted_or_recovered() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        session_user = "user-2"
+
+        assertEquals(0, device_recovery.run(user_id))
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        assertTrue(commits.isEmpty())
+        assertTrue(recovery_api.consumed.isEmpty())
+    }
+
+    @Test
+    fun attempts_round_trip_through_their_stored_form() {
+        val encoded = encode_device_recovery_attempts(mapOf("snapshot-1" to DeviceRecoveryAttempt(2, 1234L)))
+        val decoded = decode_device_recovery_attempts(encoded)
+
+        assertEquals(2, decoded["snapshot-1"]?.count)
+        assertEquals(1234L, decoded["snapshot-1"]?.last_at)
+        assertTrue(decode_device_recovery_attempts("not json").isEmpty())
+        assertTrue(device_recovery_attempt_allowed(null, 0L))
+        assertFalse(
+            device_recovery_attempt_allowed(DeviceRecoveryAttempt(1, 0L), DEVICE_RECOVERY_ATTEMPT_SPACING_MS - 1),
+        )
+        assertFalse(
+            device_recovery_attempt_allowed(DeviceRecoveryAttempt(DEVICE_RECOVERY_MAX_ATTEMPTS, 0L), Long.MAX_VALUE),
+        )
     }
 
     @Test

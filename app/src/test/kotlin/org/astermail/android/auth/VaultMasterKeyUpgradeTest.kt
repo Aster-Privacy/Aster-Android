@@ -92,7 +92,7 @@ class VaultMasterKeyUpgradeTest {
         val vault_obj = JSONObject()
         var previous = upgrade(vault_obj, ByteArray(32) { 1 })
 
-        for (generation in 2..20) {
+        for (generation in 2..(MAX_LEGACY_KEKS + 5)) {
             vault_obj.remove("data_kek")
             previous = upgrade(vault_obj, ByteArray(32) { generation.toByte() })
         }

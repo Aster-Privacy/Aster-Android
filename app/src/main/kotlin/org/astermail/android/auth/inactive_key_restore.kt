@@ -25,7 +25,19 @@ package org.astermail.android.auth
 import org.json.JSONArray
 import org.json.JSONObject
 
-const val MAX_RATCHET_PREVIOUS_KEYS = 32
+
+data class RecoveredKeyCommitResult(
+    val written: Boolean,
+    val dropped_keks: Int = 0,
+    val dropped_ratchet_keys: Int = 0,
+    val roundtrip_failed: Boolean = false,
+) {
+    val dropped_any: Boolean get() = dropped_keks > 0 || dropped_ratchet_keys > 0
+}
+
+val RECOVERED_KEYS_NOT_WRITTEN = RecoveredKeyCommitResult(written = false)
+
+val RECOVERED_KEYS_ROUNDTRIP_FAILED = RecoveredKeyCommitResult(written = false, roundtrip_failed = true)
 
 fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<String> {
     val harvested = mutableListOf<String>()
@@ -47,28 +59,43 @@ fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<
     return harvested
 }
 
-fun merge_legacy_keks(existing: JSONArray?, recovered: List<String>, added_at: String): JSONArray {
-    val ordered = mutableListOf<JSONObject>()
-    val seen = mutableSetOf<String>()
+class MergedLegacyKeks(val keks: JSONArray, val dropped: Int)
 
-    for (kek in recovered) {
-        if (seen.add(kek)) {
-            ordered.add(JSONObject().put("k", kek).put("added_at", added_at))
-        }
-    }
+fun merge_legacy_keks(existing: JSONArray?, recovered: List<String>, added_at: String): JSONArray =
+    merge_legacy_keks_reporting(existing, recovered, added_at).keks
+
+fun merge_legacy_keks_reporting(
+    existing: JSONArray?,
+    recovered: List<String>,
+    added_at: String,
+): MergedLegacyKeks {
+    val merged = JSONArray()
+    val seen = mutableSetOf<String>()
+    var dropped = 0
 
     if (existing != null) {
         for (i in 0 until existing.length()) {
             val entry = existing.optJSONObject(i) ?: continue
             val kek = entry.optString("k", "")
-            if (kek.isNotBlank() && seen.add(kek)) ordered.add(entry)
+            if (kek.isBlank() || !seen.add(kek)) continue
+            if (merged.length() >= MAX_LEGACY_KEKS) {
+                dropped += 1
+                continue
+            }
+            merged.put(entry)
         }
     }
 
-    val merged = JSONArray()
-    for (entry in ordered.take(MAX_LEGACY_KEKS)) merged.put(entry)
+    for (kek in recovered) {
+        if (kek.isBlank() || !seen.add(kek)) continue
+        if (merged.length() >= MAX_LEGACY_KEKS) {
+            dropped += 1
+            continue
+        }
+        merged.put(JSONObject().put("k", kek).put("added_at", added_at))
+    }
 
-    return merged
+    return MergedLegacyKeks(merged, dropped)
 }
 
 fun retain_previous_ratchet_keys(vault: JSONObject): List<JSONObject> {
@@ -109,14 +136,31 @@ fun retain_previous_ratchet_keys(vault: JSONObject): List<JSONObject> {
     return retained
 }
 
-fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject>): JSONArray {
+class MergedRatchetKeys(val keys: JSONArray, val dropped: Int)
+
+fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject>): JSONArray =
+    merge_previous_ratchet_keys_reporting(existing, recovered).keys
+
+private fun ratchet_entry_identity(entry: JSONObject): String? {
+    fun text(name: String) = entry.optString(name, "").trim()
+    val identity = text("ratchet_identity_public").ifBlank { text("ratchet_identity_key") }
+    val pq = text("ratchet_pq_identity_public")
+        .ifBlank { text("ratchet_pq_identity_key") }
+        .ifBlank { text("ratchet_pq_identity_seed") }
+    if (identity.isBlank() && pq.isBlank()) return null
+    return listOf(identity, text("ratchet_signed_prekey_public"), pq).joinToString("|")
+}
+
+fun merge_previous_ratchet_keys_reporting(
+    existing: JSONArray?,
+    recovered: List<JSONObject>,
+): MergedRatchetKeys {
     val merged = JSONArray()
     val seen = mutableSetOf<String>()
 
     fun absorb(entry: JSONObject?) {
-        val public_key = entry?.optString("ratchet_identity_public", "").orEmpty()
-        if (public_key.isBlank() || !seen.add(public_key)) return
-        if (merged.length() < MAX_RATCHET_PREVIOUS_KEYS) merged.put(entry)
+        val identity = entry?.let(::ratchet_entry_identity) ?: return
+        if (seen.add(identity)) merged.put(entry)
     }
 
     if (existing != null) {
@@ -124,5 +168,5 @@ fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject
     }
     for (entry in recovered) absorb(entry)
 
-    return merged
+    return MergedRatchetKeys(merged, 0)
 }

@@ -81,12 +81,13 @@ class InactiveKeyRestoreTest {
     }
 
     @Test
-    fun merges_recovered_keks_ahead_of_the_ones_the_vault_held() {
+    fun merges_recovered_keks_after_the_ones_the_vault_held() {
         val existing = JSONArray().put(JSONObject().put("k", "held").put("added_at", added_at))
 
-        val merged = merge_legacy_keks(existing, listOf("recovered"), added_at)
+        val merged = merge_legacy_keks_reporting(existing, listOf("recovered"), added_at)
 
-        assertEquals(listOf("recovered", "held"), keks(merged))
+        assertEquals(listOf("held", "recovered"), keks(merged.keks))
+        assertEquals(0, merged.dropped)
     }
 
     @Test
@@ -99,16 +100,23 @@ class InactiveKeyRestoreTest {
     }
 
     @Test
-    fun caps_the_merged_kek_list() {
+    fun caps_the_merged_kek_list_and_reports_what_it_dropped() {
         val existing = JSONArray()
         for (i in 0 until MAX_LEGACY_KEKS) {
             existing.put(JSONObject().put("k", "held_$i").put("added_at", added_at))
         }
 
-        val merged = merge_legacy_keks(existing, listOf("recovered"), added_at)
+        val merged = merge_legacy_keks_reporting(existing, listOf("recovered", "held_0"), added_at)
 
-        assertEquals(MAX_LEGACY_KEKS, merged.length())
-        assertEquals("recovered", merged.getJSONObject(0).getString("k"))
+        assertEquals(MAX_LEGACY_KEKS, merged.keks.length())
+        assertEquals("held_0", merged.keks.getJSONObject(0).getString("k"))
+        assertTrue(keks(merged.keks).none { it == "recovered" })
+        assertEquals(1, merged.dropped)
+    }
+
+    @Test
+    fun the_kek_cap_is_at_least_the_web_cap() {
+        assertTrue(MAX_LEGACY_KEKS >= 64)
     }
 
     @Test
@@ -155,17 +163,46 @@ class InactiveKeyRestoreTest {
     }
 
     @Test
-    fun caps_the_merged_previous_ratchet_key_list() {
+    fun keeps_every_recovered_ratchet_key_past_the_rotation_cap() {
         val existing = JSONArray()
-        for (i in 0 until MAX_RATCHET_PREVIOUS_KEYS) {
+        for (i in 0 until 32) {
             existing.put(JSONObject().put("ratchet_identity_public", "pub_$i"))
         }
 
-        val merged = merge_previous_ratchet_keys(
+        val merged = merge_previous_ratchet_keys_reporting(
             existing,
-            listOf(JSONObject().put("ratchet_identity_public", "extra")),
+            listOf(
+                JSONObject().put("ratchet_identity_public", "pub_0"),
+                JSONObject().put("ratchet_identity_public", "extra"),
+            ),
         )
 
-        assertEquals(MAX_RATCHET_PREVIOUS_KEYS, merged.length())
+        assertEquals(33, merged.keys.length())
+        assertEquals("extra", merged.keys.getJSONObject(32).getString("ratchet_identity_public"))
+        assertEquals(0, merged.dropped)
+    }
+
+    @Test
+    fun keeps_post_quantum_entries_that_carry_no_identity_key() {
+        val merged = merge_previous_ratchet_keys(
+            JSONArray().put(JSONObject().put("ratchet_identity_public", "a")),
+            listOf(
+                JSONObject().put("ratchet_pq_identity_key", "pq_secret").put("ratchet_pq_identity_public", "pq_pub"),
+                JSONObject().put("ratchet_pq_identity_public", "pq_pub"),
+            ),
+        )
+
+        assertEquals(2, merged.length())
+        assertEquals("pq_secret", merged.getJSONObject(1).getString("ratchet_pq_identity_key"))
+    }
+
+    @Test
+    fun keeps_a_rotated_signed_prekey_under_the_same_identity() {
+        val merged = merge_previous_ratchet_keys(
+            JSONArray().put(JSONObject().put("ratchet_identity_public", "a").put("ratchet_signed_prekey_public", "spk1")),
+            listOf(JSONObject().put("ratchet_identity_public", "a").put("ratchet_signed_prekey_public", "spk2")),
+        )
+
+        assertEquals(2, merged.length())
     }
 }

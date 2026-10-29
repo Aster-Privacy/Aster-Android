@@ -66,6 +66,9 @@ fun vault_ciphertext_hash(encrypted_vault: String): String {
     return digest.joinToString("") { "%02x".format(it) }
 }
 
+fun same_vault_ciphertext(a: String, b: String): Boolean =
+    runCatching { vault_ciphertext_hash(a) == vault_ciphertext_hash(b) }.getOrDefault(false)
+
 fun random_device_secret(random: SecureRandom = SecureRandom()): ByteArray {
     val secret = ByteArray(DEVICE_RECOVERY_SECRET_BYTES)
     do {

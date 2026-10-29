@@ -39,6 +39,9 @@ private const val DEVICE_RECOVERY_DIR = "device_recovery"
 private const val DEVICE_RECOVERY_KEY_ALIAS = "aster_device_recovery_v1"
 private const val ANDROID_KEY_STORE = "AndroidKeyStore"
 private const val KEY_TRANSFORMATION = "AES/GCM/NoPadding"
+private const val DEVICE_RECOVERY_STATE_PREFS = "device_recovery_state"
+private const val ATTEMPTS_KEY_PREFIX = "astermail_device_recovery_attempts_"
+private const val REFRESH_NOT_BEFORE_KEY_PREFIX = "astermail_device_recovery_refresh_not_before_"
 
 class DeviceSnapshotRecord(
     val snapshot_id: String,
@@ -51,15 +54,104 @@ class DeviceSnapshotRecord(
 
 interface DeviceSnapshotStore {
     fun list(user_id: String): List<DeviceSnapshotRecord>
+    fun list_all(): List<DeviceSnapshotRecord>
     fun save(record: DeviceSnapshotRecord): Boolean
     fun delete(user_id: String, snapshot_ids: List<String>)
 }
 
-class LoadedDeviceRecoveryKey(val key: DeviceRecoveryKey, val created: Boolean)
+sealed class DeviceRecoveryKeyLoad {
+    class Ready(val key: DeviceRecoveryKey, val created: Boolean) : DeviceRecoveryKeyLoad()
+    object Missing : DeviceRecoveryKeyLoad()
+    object Unavailable : DeviceRecoveryKeyLoad()
+}
 
 interface DeviceRecoveryKeyProvider {
-    fun load(create: Boolean): LoadedDeviceRecoveryKey?
-    fun delete()
+    fun load(create: Boolean): DeviceRecoveryKeyLoad
+}
+
+class DeviceRecoveryAttempt(val count: Int, val last_at: Long)
+
+interface DeviceRecoveryStateStore {
+    fun attempts(user_id: String): Map<String, DeviceRecoveryAttempt>
+    fun put_attempts(user_id: String, attempts: Map<String, DeviceRecoveryAttempt>)
+    fun refresh_not_before(user_id: String): Long
+    fun put_refresh_not_before(user_id: String, at_ms: Long)
+    fun forget_user(user_id: String)
+}
+
+fun encode_device_recovery_attempts(attempts: Map<String, DeviceRecoveryAttempt>): String {
+    val json = JSONObject()
+    for ((snapshot_id, attempt) in attempts) {
+        json.put(snapshot_id, JSONObject().put("count", attempt.count).put("last_at", attempt.last_at))
+    }
+    return json.toString()
+}
+
+fun decode_device_recovery_attempts(raw: String?): Map<String, DeviceRecoveryAttempt> {
+    if (raw.isNullOrEmpty()) return emptyMap()
+    val json = runCatching { JSONObject(raw) }.getOrNull() ?: return emptyMap()
+    val attempts = mutableMapOf<String, DeviceRecoveryAttempt>()
+    for (snapshot_id in json.keys()) {
+        val entry = json.optJSONObject(snapshot_id) ?: continue
+        val count = entry.optInt("count", 0)
+        if (snapshot_id.isEmpty() || count <= 0) continue
+        attempts[snapshot_id] = DeviceRecoveryAttempt(count, entry.optLong("last_at", 0L))
+    }
+    return attempts
+}
+
+class PrefsDeviceRecoveryStateStore(context: Context) : DeviceRecoveryStateStore {
+    private val app_context = context.applicationContext
+
+    private val prefs by lazy {
+        app_context.getSharedPreferences(DEVICE_RECOVERY_STATE_PREFS, Context.MODE_PRIVATE)
+    }
+
+    override fun attempts(user_id: String): Map<String, DeviceRecoveryAttempt> =
+        runCatching { decode_device_recovery_attempts(prefs.getString(ATTEMPTS_KEY_PREFIX + user_id, null)) }
+            .getOrDefault(emptyMap())
+
+    override fun put_attempts(user_id: String, attempts: Map<String, DeviceRecoveryAttempt>) {
+        runCatching {
+            val editor = prefs.edit()
+            if (attempts.isEmpty()) {
+                editor.remove(ATTEMPTS_KEY_PREFIX + user_id)
+            } else {
+                editor.putString(ATTEMPTS_KEY_PREFIX + user_id, encode_device_recovery_attempts(attempts))
+            }
+            editor.commit()
+        }
+    }
+
+    override fun refresh_not_before(user_id: String): Long =
+        runCatching { prefs.getLong(REFRESH_NOT_BEFORE_KEY_PREFIX + user_id, 0L) }.getOrDefault(0L)
+
+    override fun put_refresh_not_before(user_id: String, at_ms: Long) {
+        runCatching {
+            val editor = prefs.edit()
+            if (at_ms <= 0L) {
+                editor.remove(REFRESH_NOT_BEFORE_KEY_PREFIX + user_id)
+            } else {
+                editor.putLong(REFRESH_NOT_BEFORE_KEY_PREFIX + user_id, at_ms)
+            }
+            editor.apply()
+        }
+    }
+
+    override fun forget_user(user_id: String) {
+        runCatching {
+            prefs.edit()
+                .remove(ATTEMPTS_KEY_PREFIX + user_id)
+                .remove(REFRESH_NOT_BEFORE_KEY_PREFIX + user_id)
+                .commit()
+        }
+    }
+}
+
+fun forget_deleted_account_device_recovery(context: Context, user_id: String) {
+    if (user_id.isEmpty()) return
+    FileDeviceSnapshotStore(context).delete_user(user_id)
+    PrefsDeviceRecoveryStateStore(context).forget_user(user_id)
 }
 
 class FileDeviceSnapshotStore(context: Context) : DeviceSnapshotStore {
@@ -76,6 +168,19 @@ class FileDeviceSnapshotStore(context: Context) : DeviceSnapshotStore {
             .mapNotNull { file -> runCatching { read_record(file) }.getOrNull() }
             .filter { it.user_id == user_id }
             .sortedByDescending { it.created_at }
+    }
+
+    override fun list_all(): List<DeviceSnapshotRecord> {
+        val dirs = runCatching { root.listFiles() }.getOrNull() ?: return emptyList()
+        return dirs
+            .filter { it.isDirectory }
+            .flatMap { dir -> runCatching { dir.listFiles()?.toList() }.getOrNull().orEmpty() }
+            .mapNotNull { file -> runCatching { read_record(file) }.getOrNull() }
+            .sortedByDescending { it.created_at }
+    }
+
+    fun delete_user(user_id: String) {
+        runCatching { account_dir(user_id).deleteRecursively() }
     }
 
     override fun save(record: DeviceSnapshotRecord): Boolean = runCatching {
@@ -142,33 +247,29 @@ class KeystoreDeviceRecoveryKey(private val key: SecretKey) : DeviceRecoveryKey 
 }
 
 class KeystoreDeviceRecoveryKeyProvider : DeviceRecoveryKeyProvider {
-    override fun load(create: Boolean): LoadedDeviceRecoveryKey? {
-        val usable = usable_key()
-        if (usable != null) return LoadedDeviceRecoveryKey(KeystoreDeviceRecoveryKey(usable), false)
-        if (!create) return null
-        delete()
-        val generated = runCatching { generate_key() }.getOrNull() ?: return null
-        return LoadedDeviceRecoveryKey(KeystoreDeviceRecoveryKey(generated), true)
-    }
+    @Synchronized
+    override fun load(create: Boolean): DeviceRecoveryKeyLoad {
+        val store = runCatching { keystore() }.getOrNull() ?: return DeviceRecoveryKeyLoad.Unavailable
+        val present = runCatching { store.containsAlias(DEVICE_RECOVERY_KEY_ALIAS) }.getOrNull()
+            ?: return DeviceRecoveryKeyLoad.Unavailable
 
-    override fun delete() {
-        runCatching { keystore().deleteEntry(DEVICE_RECOVERY_KEY_ALIAS) }
+        if (present) {
+            val key = runCatching { store.getKey(DEVICE_RECOVERY_KEY_ALIAS, null) as? SecretKey }.getOrNull()
+                ?: return DeviceRecoveryKeyLoad.Unavailable
+            val works = runCatching {
+                Cipher.getInstance(KEY_TRANSFORMATION).init(Cipher.ENCRYPT_MODE, key)
+                true
+            }.getOrDefault(false)
+            if (!works) return DeviceRecoveryKeyLoad.Unavailable
+            return DeviceRecoveryKeyLoad.Ready(KeystoreDeviceRecoveryKey(key), created = false)
+        }
+
+        if (!create) return DeviceRecoveryKeyLoad.Missing
+        val generated = runCatching { generate_key() }.getOrNull() ?: return DeviceRecoveryKeyLoad.Unavailable
+        return DeviceRecoveryKeyLoad.Ready(KeystoreDeviceRecoveryKey(generated), created = true)
     }
 
     private fun keystore(): KeyStore = KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
-
-    private fun usable_key(): SecretKey? {
-        val key = runCatching {
-            val store = keystore()
-            if (!store.containsAlias(DEVICE_RECOVERY_KEY_ALIAS)) null
-            else store.getKey(DEVICE_RECOVERY_KEY_ALIAS, null) as? SecretKey
-        }.getOrNull() ?: return null
-        val works = runCatching {
-            Cipher.getInstance(KEY_TRANSFORMATION).init(Cipher.ENCRYPT_MODE, key)
-            true
-        }.getOrDefault(false)
-        return if (works) key else null
-    }
 
     private fun generate_key(): SecretKey {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE)
