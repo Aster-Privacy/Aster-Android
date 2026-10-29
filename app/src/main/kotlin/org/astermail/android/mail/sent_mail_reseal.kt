@@ -157,7 +157,9 @@ class SentMailResealer @Inject constructor(
 
     private suspend fun reseal_item(item: MailItem, old_passphrase: ByteArray, new_passphrase: ByteArray): Outcome {
         val sealed = item.encrypted_envelope
-        if (sealed.isNullOrBlank() || !SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)) return Outcome.SKIPPED
+        if (sealed.isNullOrBlank() || !SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)) {
+            return reseal_converted_item_meta(item, old_passphrase, new_passphrase)
+        }
         val plaintext = SentMailResealCrypto.open(sealed, old_passphrase)
         if (plaintext == null) {
             return if (SentMailResealCrypto.opens_with(sealed, new_passphrase)) Outcome.SKIPPED else Outcome.UNREADABLE
@@ -180,20 +182,42 @@ class SentMailResealer @Inject constructor(
         } catch (_: Throwable) {
             return Outcome.FAILED
         }
-        val has_attachments = item.has_attachments == true || (item.attachment_count ?: 0) > 0
-        if (!has_attachments) return Outcome.REWRITTEN
-        return if (reseal_attachment_meta(item.id, old_passphrase, new_passphrase)) Outcome.REWRITTEN else Outcome.FAILED
+        if (!may_have_attachments(item)) return Outcome.REWRITTEN
+        val meta = reseal_attachment_meta(item.id, old_passphrase, new_passphrase, legacy_only = false)
+        return if (meta != null) Outcome.REWRITTEN else Outcome.FAILED
     }
 
-    private suspend fun reseal_attachment_meta(item_id: String, old_passphrase: ByteArray, new_passphrase: ByteArray): Boolean {
+    private fun may_have_attachments(item: MailItem): Boolean =
+        item.has_attachments == true || (item.attachment_count ?: 0) > 0
+
+    private suspend fun reseal_converted_item_meta(
+        item: MailItem,
+        old_passphrase: ByteArray,
+        new_passphrase: ByteArray,
+    ): Outcome {
+        if (!may_have_attachments(item)) return Outcome.SKIPPED
+        val resealed = reseal_attachment_meta(item.id, old_passphrase, new_passphrase, legacy_only = true)
+            ?: return Outcome.FAILED
+        return if (resealed > 0) Outcome.REWRITTEN else Outcome.SKIPPED
+    }
+
+    private suspend fun reseal_attachment_meta(
+        item_id: String,
+        old_passphrase: ByteArray,
+        new_passphrase: ByteArray,
+        legacy_only: Boolean,
+    ): Int? {
         return try {
             val attachments = mail_api.list_attachments(item_id).attachments
+            var resealed_count = 0
             for (attachment in attachments) {
+                if (attachment.encrypted_meta.isEmpty()) continue
                 if (SentMailResealCrypto.is_pgp_armored_b64(attachment.encrypted_meta)) continue
+                if (legacy_only && !AccountDataConversion.is_legacy_meta_nonce(attachment.meta_nonce)) continue
                 val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase)
                 if (plaintext == null) {
                     if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase)) continue
-                    return false
+                    return null
                 }
                 val resealed = try {
                     SentMailResealCrypto.seal(plaintext, new_passphrase)
@@ -207,12 +231,13 @@ class SentMailResealer @Inject constructor(
                         meta_nonce = SentMailResealCrypto.placeholder_meta_nonce_b64(attachment.meta_nonce),
                     ),
                 )
+                resealed_count += 1
             }
-            true
+            resealed_count
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
-            false
+            null
         }
     }
 

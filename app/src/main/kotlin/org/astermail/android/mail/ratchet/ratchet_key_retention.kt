@@ -66,7 +66,7 @@ fun receiver_key_set_tag(
     signed_prekey_public_b64: String,
 ): String = "${identity_public_b64.ifBlank { identity_jwk }}|$signed_prekey_public_b64"
 
-fun merge_retained_ratchet_keys(vararg sources: String?): String? {
+fun merge_retained_ratchet_keys(vararg sources: String?, limit: Int = max_retained_ratchet_key_sets): String? {
     val merged = mutableListOf<JSONObject>()
     for (source in sources) {
         if (source.isNullOrBlank()) continue
@@ -88,7 +88,7 @@ fun merge_retained_ratchet_keys(vararg sources: String?): String? {
     }
     if (merged.isEmpty()) return null
     val result = JSONArray()
-    merged.take(max_retained_ratchet_key_sets).forEach { result.put(it) }
+    merged.take(limit).forEach { result.put(it) }
     return result.toString()
 }
 

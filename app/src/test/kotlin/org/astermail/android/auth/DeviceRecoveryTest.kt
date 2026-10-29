@@ -271,6 +271,7 @@ class DeviceRecoveryTest {
 
     private val commits = mutableListOf<CommitCall>()
     private var commit_result = true
+    private var commit_roundtrip_failed = false
     private var commit_dropped = 0
     private var commit_dropped_ratchet = 0
     private var session_user: String? = user_id
@@ -330,7 +331,8 @@ class DeviceRecoveryTest {
             commit = DeviceRecoveryCommit { id, pass, vault_obj, identity_keys, keks, ratchet, base_vault ->
                 commits.add(CommitCall(id, pass.copyOf(), vault_obj, identity_keys, keks, ratchet, base_vault))
                 RecoveredKeyCommitResult(
-                    written = commit_result,
+                    written = commit_result && !commit_roundtrip_failed,
+                    roundtrip_failed = commit_roundtrip_failed,
                     dropped_keks = commit_dropped,
                     dropped_ratchet_keys = commit_dropped_ratchet,
                 )
@@ -689,7 +691,7 @@ class DeviceRecoveryTest {
     fun a_snapshot_is_tried_once_a_day_and_at_most_three_times() = runTest {
         snapshot_the_old_vault()
         arm_reset()
-        commit_result = false
+        commit_roundtrip_failed = true
 
         device_recovery.run(user_id)
         device_recovery.run(user_id)
@@ -757,9 +759,57 @@ class DeviceRecoveryTest {
             device_recovery.tick(user_id)
         }
 
-        assertEquals(1, recovery_api.calls.count { it == "list_inactive" })
+        assertEquals(4, recovery_api.calls.count { it == "list_inactive" })
         assertEquals(DEVICE_RECOVERY_SNAPSHOTS_KEPT, snapshot_store.records.size)
         assertTrue(recovery_api.deletes.flatten().containsAll(listOf("snapshot-1", "snapshot-2")))
+    }
+
+    @Test
+    fun an_unchanged_vault_is_not_listed_again_on_the_periodic_tick() = runTest {
+        device_recovery.tick(user_id)
+        clock += 1_000
+        device_recovery.tick(user_id)
+
+        assertEquals(1, recovery_api.calls.count { it == "list_inactive" })
+    }
+
+    @Test
+    fun signing_out_and_back_in_gets_a_full_run() = runTest {
+        device_recovery.tick(user_id)
+        session_user = null
+        device_recovery.tick("")
+        session_user = user_id
+        device_recovery.tick(user_id)
+
+        assertEquals(2, recovery_api.calls.count { it == "list_inactive" })
+    }
+
+    @Test
+    fun a_vault_failure_that_may_pass_later_spends_no_attempt() = runTest {
+        snapshot_the_old_vault()
+        arm_reset()
+        commit_result = false
+
+        repeat(5) { device_recovery.run(user_id) }
+
+        assertEquals(5, commits.size)
+        assertTrue(state_store.attempts(user_id).isEmpty())
+
+        commit_result = true
+        assertEquals(1, device_recovery.run(user_id))
+        assertEquals(listOf("set-1"), recovery_api.consumed)
+    }
+
+    @Test
+    fun an_unchanged_vault_gets_a_fresh_snapshot_every_week() = runTest {
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+        clock += DEVICE_RECOVERY_SNAPSHOT_REFRESH_MS - 1
+        assertFalse(device_recovery.refresh_snapshot(user_id))
+        clock += 2
+        assertTrue(device_recovery.refresh_snapshot(user_id))
+
+        assertEquals(listOf("snapshot-2"), snapshot_store.records.map { it.snapshot_id })
+        assertTrue(recovery_api.deletes.flatten().contains("snapshot-1"))
     }
 
     @Test

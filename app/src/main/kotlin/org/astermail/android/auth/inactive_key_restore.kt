@@ -25,17 +25,19 @@ package org.astermail.android.auth
 import org.json.JSONArray
 import org.json.JSONObject
 
-const val MAX_RATCHET_PREVIOUS_KEYS = 32
 
 data class RecoveredKeyCommitResult(
     val written: Boolean,
     val dropped_keks: Int = 0,
     val dropped_ratchet_keys: Int = 0,
+    val roundtrip_failed: Boolean = false,
 ) {
     val dropped_any: Boolean get() = dropped_keks > 0 || dropped_ratchet_keys > 0
 }
 
 val RECOVERED_KEYS_NOT_WRITTEN = RecoveredKeyCommitResult(written = false)
+
+val RECOVERED_KEYS_ROUNDTRIP_FAILED = RecoveredKeyCommitResult(written = false, roundtrip_failed = true)
 
 fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<String> {
     val harvested = mutableListOf<String>()
@@ -139,18 +141,26 @@ class MergedRatchetKeys(val keys: JSONArray, val dropped: Int)
 fun merge_previous_ratchet_keys(existing: JSONArray?, recovered: List<JSONObject>): JSONArray =
     merge_previous_ratchet_keys_reporting(existing, recovered).keys
 
+private fun ratchet_entry_identity(entry: JSONObject): String? {
+    fun text(name: String) = entry.optString(name, "").trim()
+    val identity = text("ratchet_identity_public").ifBlank { text("ratchet_identity_key") }
+    val pq = text("ratchet_pq_identity_public")
+        .ifBlank { text("ratchet_pq_identity_key") }
+        .ifBlank { text("ratchet_pq_identity_seed") }
+    if (identity.isBlank() && pq.isBlank()) return null
+    return listOf(identity, text("ratchet_signed_prekey_public"), pq).joinToString("|")
+}
+
 fun merge_previous_ratchet_keys_reporting(
     existing: JSONArray?,
     recovered: List<JSONObject>,
 ): MergedRatchetKeys {
     val merged = JSONArray()
     val seen = mutableSetOf<String>()
-    var dropped = 0
 
     fun absorb(entry: JSONObject?) {
-        val public_key = entry?.optString("ratchet_identity_public", "").orEmpty()
-        if (public_key.isBlank() || !seen.add(public_key)) return
-        if (merged.length() < MAX_RATCHET_PREVIOUS_KEYS) merged.put(entry) else dropped += 1
+        val identity = entry?.let(::ratchet_entry_identity) ?: return
+        if (seen.add(identity)) merged.put(entry)
     }
 
     if (existing != null) {
@@ -158,5 +168,5 @@ fun merge_previous_ratchet_keys_reporting(
     }
     for (entry in recovered) absorb(entry)
 
-    return MergedRatchetKeys(merged, dropped)
+    return MergedRatchetKeys(merged, 0)
 }

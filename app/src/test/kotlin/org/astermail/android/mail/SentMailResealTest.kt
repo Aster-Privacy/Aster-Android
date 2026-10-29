@@ -182,6 +182,52 @@ class SentMailResealTest {
         coVerify(exactly = 0) { api.update_attachment_meta(any(), any()) }
     }
 
+    @Test
+    fun reseals_password_sealed_attachment_meta_on_a_converted_item() = runTest {
+        val api = mockk<MailApi>()
+        val converted = MailItem(
+            id = "a",
+            item_type = "sent",
+            encrypted_envelope = "pgp",
+            envelope_nonce = "",
+            has_attachments = true,
+        )
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(converted), has_more = false)
+        val legacy_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 7 })
+        coEvery { api.list_attachments("a") } returns AttachmentListResponse(
+            attachments = listOf(
+                attachment("att-old", SentMailResealCrypto.seal("old".toByteArray(), old_pass)).copy(meta_nonce = legacy_nonce),
+                attachment("att-account", "account-sealed"),
+            ),
+        )
+        val meta = slot<UpdateAttachmentMetaRequest>()
+        coEvery { api.update_attachment_meta("att-old", capture(meta)) } returns Unit
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 1, rewritten = 1), summary)
+        assertEquals(legacy_nonce, meta.captured.meta_nonce)
+        assertArrayEquals("old".toByteArray(), SentMailResealCrypto.open(meta.captured.encrypted_meta, new_pass))
+        coVerify(exactly = 0) { api.update_envelope(any(), any()) }
+        coVerify(exactly = 1) { api.update_attachment_meta(any(), any()) }
+    }
+
+    @Test
+    fun skips_a_converted_item_without_attachments() = runTest {
+        val api = mockk<MailApi>()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(
+                items = listOf(MailItem(id = "a", item_type = "sent", encrypted_envelope = "pgp", envelope_nonce = "")),
+                has_more = false,
+            )
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 1), summary)
+        coVerify(exactly = 0) { api.list_attachments(any()) }
+    }
+
     private fun attachment(id: String, encrypted_meta: String) = AttachmentResponse(
         id = id,
         mail_item_id = "a",

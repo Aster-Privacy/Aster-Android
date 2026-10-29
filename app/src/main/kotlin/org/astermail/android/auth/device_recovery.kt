@@ -54,6 +54,7 @@ const val DEVICE_RECOVERY_START_DELAY_MS = 30_000L
 const val DEVICE_RECOVERY_REFRESH_INTERVAL_MS = 10 * 60 * 1000L
 const val DEVICE_RECOVERY_SNAPSHOTS_KEPT = 2
 const val DEVICE_RECOVERY_SNAPSHOT_TTL_MS = 30L * 24 * 60 * 60 * 1000
+const val DEVICE_RECOVERY_SNAPSHOT_REFRESH_MS = 7L * 24 * 60 * 60 * 1000
 const val DEVICE_RECOVERY_ATTEMPT_SPACING_MS = 24L * 60 * 60 * 1000
 const val DEVICE_RECOVERY_MAX_ATTEMPTS = 3
 const val DEVICE_RECOVERY_PUT_BACKOFF_MS = 60L * 60 * 1000
@@ -153,6 +154,7 @@ class DeviceRecovery internal constructor(
     private val lock = Mutex()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var last_run_user: String? = null
+    private var last_run_vault: String? = null
     private val archived_hashes = mutableMapOf<String, Set<String>>()
 
     internal var foreground_check: () -> Boolean = {
@@ -193,11 +195,16 @@ class DeviceRecovery internal constructor(
 
     internal suspend fun tick(user_id: String) {
         if (user_id.isEmpty()) {
+            last_run_user = null
+            last_run_vault = null
+            archived_hashes.clear()
             expire_snapshots("")
             return
         }
-        if (user_id != last_run_user || archived_hashes[user_id] == null) {
+        val vault = session_key_store.get_encrypted_vault()?.first
+        if (user_id != last_run_user || vault != last_run_vault || archived_hashes[user_id] == null) {
             last_run_user = user_id
+            last_run_vault = vault
             run(user_id)
             return
         }
@@ -265,7 +272,8 @@ class DeviceRecovery internal constructor(
             if (session_key_store.get_encrypted_vault()?.first != stored.first) return false
 
             val source_hash = runCatching { vault_ciphertext_hash(stored.first) }.getOrNull() ?: return false
-            if (snapshot_store.list(user_id).any { it.source_hash == source_hash }) return false
+            val superseded = snapshot_store.list(user_id).filter { it.source_hash == source_hash }
+            if (superseded.any { now_ms() - it.created_at < DEVICE_RECOVERY_SNAPSHOT_REFRESH_MS }) return false
             if (now_ms() < state_store.refresh_not_before(user_id)) return false
 
             val key = when (val loaded = key_provider.load(true)) {
@@ -330,6 +338,7 @@ class DeviceRecovery internal constructor(
                     return false
                 }
 
+                forget_snapshots(user_id, superseded.map { it.snapshot_id })
                 return true
             } finally {
                 secret.fill(0)
@@ -399,7 +408,8 @@ class DeviceRecovery internal constructor(
         if (matching.isEmpty()) return emptySet()
 
         val opened = open_snapshots(matching)
-        record_attempts(user_id, opened.attempted, started_at)
+        val opened_ids = opened.snapshots.map { it.record.snapshot_id }
+        record_attempts(user_id, opened.attempted - opened_ids.toSet(), started_at)
         if (opened.snapshots.isEmpty()) return emptySet()
         if (session_key_store.get_user_id() != user_id) return emptySet()
 
@@ -425,6 +435,11 @@ class DeviceRecovery internal constructor(
                     val unlocked_armored = unlocked[armored] ?: error("device recovery snapshot has no key")
                     lock_unlocked_pgp_key(unlocked_armored, chars)
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                record_attempts(user_id, opened_ids, started_at)
+                return emptySet()
             } finally {
                 chars.fill('\u0000')
                 unlocked.clear()
@@ -439,12 +454,16 @@ class DeviceRecovery internal constructor(
                 recovered_ratchet = opened.snapshots.flatMap { it.payload.ratchet_keys },
                 base_encrypted_vault = stored.first,
             )
-            if (!committed.written || committed.dropped_any) return emptySet()
+            if (committed.roundtrip_failed || (committed.written && committed.dropped_any)) {
+                record_attempts(user_id, opened_ids, started_at)
+                return emptySet()
+            }
+            if (!committed.written) return emptySet()
 
-            return opened.snapshots
+            val absorbed = opened.snapshots
                 .filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }
-                .map { it.record.source_hash }
-                .toSet()
+            record_attempts(user_id, opened_ids - absorbed.map { it.record.snapshot_id }.toSet(), started_at)
+            return absorbed.map { it.record.source_hash }.toSet()
         } finally {
             passphrase.fill(0)
         }

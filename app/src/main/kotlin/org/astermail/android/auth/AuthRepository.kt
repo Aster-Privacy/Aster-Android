@@ -1606,15 +1606,14 @@ class AuthRepository @Inject constructor(
                 recovered_ratchet = recovered_ratchet,
                 base_encrypted_vault = stored_vault.first,
             )
-            if (!committed.written) return 0
+            if (!committed.written || committed.dropped_any) return 0
 
-            if (!committed.dropped_any) {
-                unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }.forEach { id ->
-                    runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
-                }
+            val absorbed = unlocked.filterIndexed { index, _ -> identity_keys.absorbed.getOrElse(index) { false } }
+            absorbed.forEach { id ->
+                runCatching { recovery_api.consume_inactive_key_set(ConsumeInactiveKeySetRequest(id)) }
             }
 
-            return unlocked.size
+            return absorbed.size
         } finally {
             passphrase.fill(0)
         }
@@ -1755,12 +1754,12 @@ class AuthRepository @Inject constructor(
             CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
         }.getOrNull()
         updated_plain.fill(0)
-        if (sealed == null) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        if (sealed == null) return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
 
         val encrypted_vault = base64_encode(sealed.encrypted_vault)
         val vault_nonce = base64_encode(sealed.vault_nonce)
         if (!vault_roundtrip_ok(encrypted_vault, vault_nonce, passphrase, vault_identity_key(vault_obj))) {
-            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+            return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
         }
 
         val pushed = runCatching {
@@ -1776,6 +1775,7 @@ class AuthRepository @Inject constructor(
 
         session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
         absorb_previous_keys_and_keks(vault_obj)
+        absorb_recovered_ratchet_keys(merged_ratchet.keys)
         RecoveredKeyCommitResult(
             written = true,
             dropped_keks = merged_keks.dropped,
@@ -1801,6 +1801,14 @@ class AuthRepository @Inject constructor(
         }.getOrDefault(false)
         plain.fill(0)
         return matches
+    }
+
+    private fun absorb_recovered_ratchet_keys(vault_ratchet_keys: org.json.JSONArray) {
+        org.astermail.android.mail.ratchet.merge_retained_ratchet_keys(
+            session_key_store.get_ratchet_previous_keys_json(),
+            vault_ratchet_keys.toString(),
+            limit = Int.MAX_VALUE,
+        )?.let { session_key_store.put_ratchet_previous_keys(it) }
     }
 
     private fun absorb_previous_keys_and_keks(vault_obj: org.json.JSONObject) {
