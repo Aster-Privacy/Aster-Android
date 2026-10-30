@@ -237,6 +237,14 @@ function restore_entities(masked, entities) {
   return { text, missing: entities.length - seen.size };
 }
 
+function digit_signature(text) {
+  return (String(text).match(/\p{Nd}+/gu) || []).sort().join(" ");
+}
+
+function preserves_digits(original, translated) {
+  return digit_signature(original) === digit_signature(translated);
+}
+
 function get_sentence_segmenter(locale) {
   if (typeof Intl === "undefined" || typeof Intl.Segmenter !== "function") return null;
   try {
@@ -431,7 +439,7 @@ async function run(from, to) {
 
     const per_node = per_node_masked.map((masked, index) => {
       const restored = restore_entities(masked, protections[index].entities);
-      return restored.missing > 0 ? originals[index] : restored.text;
+      return restored.missing > 0 || !preserves_digits(originals[index], restored.text) ? originals[index] : restored.text;
     });
 
     const swapped = apply_translations(nodes, per_node);
@@ -506,7 +514,7 @@ async function translate_texts(payload_json, from, to) {
 
     const per_node = per_node_masked.map((masked, index) => {
       const restored = restore_entities(masked, protections[index].entities);
-      return restored.missing > 0 ? String(originals[index]) : restored.text;
+      return restored.missing > 0 || !preserves_digits(originals[index], restored.text) ? String(originals[index]) : restored.text;
     });
 
     post_result({ segments: per_node, from: normalized_from, to: normalized_to });
