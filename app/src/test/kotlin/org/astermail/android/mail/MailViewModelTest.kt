@@ -28,6 +28,8 @@ import io.mockk.every
 import io.mockk.verify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -3221,5 +3223,71 @@ class MailViewModelTest {
         advanceUntilIdle()
 
         assertTrue(fetches > after_failure)
+    }
+
+    private fun defer_durable_work() {
+        every { repository.durable_async<Any?>(any()) } answers {
+            val block = firstArg<suspend () -> Any?>()
+            kotlinx.coroutines.CoroutineScope(dispatcher).async { block() }
+        }
+    }
+
+    private fun record_draft_deletes(): MutableList<String> {
+        val deleted = java.util.Collections.synchronizedList(mutableListOf<String>())
+        coEvery { repository.delete_draft(any()) } answers {
+            deleted.add(firstArg())
+            Result.success(Unit)
+        }
+        return deleted
+    }
+
+    @Test
+    fun `undoing a draft discard keeps the draft on the server`() = runTest {
+        defer_durable_work()
+        val deleted = record_draft_deletes()
+        coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
+        vm.load_inbox("drafts", force = true)
+        advanceUntilIdle()
+        val toasts = mutableListOf<MailViewModel.ToastEvent>()
+        backgroundScope.launch { vm.toast_events.collect { toasts.add(it) } }
+        runCurrent()
+
+        vm.trash(listOf("id_1"))
+        runCurrent()
+        assertEquals(1, vm.inbox_state.value.items.size)
+        val toast = toasts.single()
+        assertNotNull(toast.on_undo)
+        toast.on_undo!!.invoke()
+        toast.on_timeout?.invoke()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<String>(), deleted)
+        assertEquals(2, vm.inbox_state.value.items.size)
+    }
+
+    @Test
+    fun `a draft discard deletes once the undo window closes`() = runTest {
+        defer_durable_work()
+        val deleted = record_draft_deletes()
+        coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
+        vm.load_inbox("drafts", force = true)
+        advanceUntilIdle()
+        val toasts = mutableListOf<MailViewModel.ToastEvent>()
+        backgroundScope.launch { vm.toast_events.collect { toasts.add(it) } }
+        runCurrent()
+
+        vm.trash(listOf("id_1"))
+        runCurrent()
+        val toast = toasts.single()
+        assertEquals(emptyList<String>(), deleted)
+        assertNotNull(toast.on_timeout)
+        toast.on_timeout!!.invoke()
+        advanceUntilIdle()
+        assertEquals(listOf("id_1"), deleted)
+        toast.on_undo?.invoke()
+        advanceUntilIdle()
+
+        assertEquals(listOf("id_1"), deleted)
+        assertEquals(1, vm.inbox_state.value.items.size)
     }
 }

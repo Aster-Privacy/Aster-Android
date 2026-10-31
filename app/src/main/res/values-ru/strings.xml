@@ -1596,6 +1596,7 @@
     <string name="message_location">Расположение</string>
     <string name="lock_message">Заблокировать сообщение</string>
     <string name="delete_draft">Удалить черновик</string>
+    <string name="discard_draft">Удалить черновик</string>
     <string name="delete_draft_question">Удалить черновик?</string>
     <string name="delete_draft_confirm_description">Этот черновик удаляется навсегда, и восстановить его нельзя.</string>
     <string name="to_label_prefix">кому %s</string>

@@ -1938,7 +1938,7 @@ fun MailDetailScreen(
                                             on_delete()
                                         }
                                     } else {
-                                        bottom_action(TablerIcons.Trash, stringResource(R.string.move_to_trash), test_tag = "delete") {
+                                        bottom_action(TablerIcons.Trash, stringResource(if (inbox_state_for_folder.current_folder == "drafts") R.string.discard_draft else R.string.move_to_trash), test_tag = "delete") {
                                             mail_vm.trash(listOf(email_id))
                                             on_delete()
                                         }
@@ -2019,6 +2019,7 @@ fun MailDetailScreen(
         val item_target = action_target_id ?: email_id
         val message_scope = action_target_id != null
         action_menu_sheet(
+            is_draft = inbox_state_for_folder.current_folder == "drafts",
             expanded = show_action_sheet,
             on_close = { show_action_sheet = false },
             on_reply = { show_action_sheet = false; on_reply(target, thread_ghost_email) },
@@ -5158,6 +5159,7 @@ internal fun action_menu_sheet(
     on_label: () -> Unit = {},
     on_customize_toolbar: () -> Unit = {},
     anchor: IntRect? = null,
+    is_draft: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val parent_view = LocalView.current
@@ -5251,7 +5253,7 @@ internal fun action_menu_sheet(
                             )
                         }
                         aster_menu_item(
-                            stringResource(R.string.move_to_trash),
+                            stringResource(if (is_draft) R.string.discard_draft else R.string.move_to_trash),
                             on_trash,
                             icon = TablerIcons.Trash,
                             destructive = true,

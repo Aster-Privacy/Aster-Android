@@ -99,6 +99,8 @@ internal const val PENDING_ACTION_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
 
 internal const val PENDING_ACTION_MAX_SERVER_ATTEMPTS = 8
 
+internal const val PENDING_ACTION_MAX_STALLED_ATTEMPTS = 24
+
 const val PENDING_PATCH_MODE = "patch"
 
 const val QUEUED_BATCH_ID = "queued"
@@ -180,8 +182,16 @@ fun is_server_side_failure(error: Throwable?): Boolean {
     return false
 }
 
-internal fun pending_action_exhausted(action: PendingMailAction, error: Throwable?): Boolean =
-    is_server_side_failure(error) && action.attempts + 1 >= PENDING_ACTION_MAX_SERVER_ATTEMPTS
+internal fun pending_action_exhausted(action: PendingMailAction, error: Throwable?): Boolean {
+    val attempts = action.attempts + 1
+    if (is_server_side_failure(error)) return attempts >= PENDING_ACTION_MAX_SERVER_ATTEMPTS
+    if (action.kind == PendingActionKind.save_draft) return false
+    if (!is_transient_failure(error) || is_connectivity_failure(error)) return false
+    return attempts >= PENDING_ACTION_MAX_STALLED_ATTEMPTS
+}
+
+internal fun pending_action_counts_attempt(error: Throwable?): Boolean =
+    is_transient_failure(error) && !is_connectivity_failure(error)
 
 private class OverlayState(var item: InboxItem) {
     var gone = false
@@ -313,4 +323,31 @@ fun apply_pending_actions(
         out.add(patched)
     }
     return out
+}
+
+private val remote_removal_effects = mapOf(
+    "trash" to "trash",
+    "archive" to "archive",
+    "mark_spam" to "mark_spam",
+    "spam" to "mark_spam",
+)
+
+fun is_remote_removal_action(action: String): Boolean =
+    action == "delete" || action in remote_removal_effects
+
+fun remove_remote_mutation_rows(
+    folder: String,
+    items: List<InboxItem>,
+    action: String,
+    item_ids: Set<String>,
+): List<InboxItem> {
+    if (item_ids.isEmpty() || items.isEmpty()) return items
+    if (action == "delete") return items.filter { it.id !in item_ids }
+    val effect = remote_removal_effects[action] ?: return items
+    return items.filter { original ->
+        if (original.id !in item_ids) return@filter true
+        val state = OverlayState(original)
+        apply_bulk_effect(state, effect)
+        folder_matches_item(folder, state.item)
+    }
 }

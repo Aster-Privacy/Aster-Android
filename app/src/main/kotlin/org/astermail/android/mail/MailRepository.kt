@@ -601,7 +601,7 @@ class MailRepository @Inject constructor(
                 queue.complete(next.id)
                 continue
             }
-            if (is_server_side_failure(error)) queue.record_attempt(next.id)
+            if (pending_action_counts_attempt(error)) queue.record_attempt(next.id)
             return PendingDrainOutcome.Retry
         }
     }
@@ -3254,6 +3254,7 @@ class MailRepository @Inject constructor(
         val failed = mutableSetOf<String>()
         targets.forEach { token ->
             val error = runCatching { mail_api.trash_thread(token, true) }.exceptionOrNull() ?: return@forEach
+            if (error is ApiError.NotFoundError) return@forEach
             rethrow_if_transient(error)
             failed.add(token)
         }
@@ -3277,11 +3278,22 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun ids_not_trashed(item_ids: List<String>): List<String> {
-        val resolved = resolve_raw_items(item_ids, emptyList())
-        return item_ids.filterIndexed { index, _ ->
-            val item = resolved.getOrNull(index)
-            (item?.is_trashed ?: item?.metadata?.is_trashed) != true
+        val covered = mutableSetOf<String>()
+        item_ids.chunked(METADATA_RESOLVE_CONCURRENCY).forEach { chunk ->
+            coroutineScope {
+                chunk.map { id -> async(Dispatchers.IO) { id to item_trashed_or_gone(id) } }.awaitAll()
+            }.forEach { (id, done) -> if (done) covered.add(id) }
         }
+        return item_ids.filter { it !in covered }
+    }
+
+    private suspend fun item_trashed_or_gone(item_id: String): Boolean {
+        val result = runCatching { mail_api.get_message(item_id) }
+        val error = result.exceptionOrNull()
+        if (error is ApiError.NotFoundError) return true
+        rethrow_if_transient(error)
+        val item = result.getOrNull() ?: return false
+        return (item.is_trashed ?: item.metadata?.is_trashed) == true
     }
 
     suspend fun mark_spam(
@@ -3715,7 +3727,8 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun delete_draft_now(draft_id: String): Result<Unit> = runCatching {
-        mail_api.delete_draft(draft_id)
+        val error = runCatching { mail_api.delete_draft(draft_id) }.exceptionOrNull()
+        if (error != null && error !is ApiError.NotFoundError) throw error
         forget_draft(draft_id)
         _draft_changes.tryEmit(Unit)
         Unit
@@ -3733,7 +3746,8 @@ class MailRepository @Inject constructor(
         }
 
     private suspend fun delete_permanent_now(item_id: String): Result<Unit> = runCatching {
-        mail_api.delete_permanent(item_id)
+        val error = runCatching { mail_api.delete_permanent(item_id) }.exceptionOrNull()
+        if (error != null && error !is ApiError.NotFoundError) throw error
         Unit
     }
 

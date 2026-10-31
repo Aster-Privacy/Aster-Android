@@ -1593,6 +1593,7 @@
     <string name="message_location">Ubicación</string>
     <string name="lock_message">Bloquear mensaje</string>
     <string name="delete_draft">Eliminar borrador</string>
+    <string name="discard_draft">Descartar borrador</string>
     <string name="delete_draft_question">¿Eliminar el borrador?</string>
     <string name="delete_draft_confirm_description">Este borrador se elimina de forma permanente y no puedes recuperarlo.</string>
     <string name="to_label_prefix">para %s</string>

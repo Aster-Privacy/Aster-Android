@@ -369,6 +369,7 @@
     <string name="message_location">स्थान</string>
     <string name="lock_message">संदेश लॉक करें</string>
     <string name="delete_draft">ड्राफ़्ट हटाएं</string>
+    <string name="discard_draft">ड्राफ़्ट छोड़ें</string>
     <string name="delete_draft_question">ड्राफ़्ट हटाएं?</string>
     <string name="delete_draft_confirm_description">यह ड्राफ़्ट स्थायी रूप से हट जाता है और आप इसे वापस नहीं पा सकते।</string>
     <string name="archived">आर्काइव किया गया</string>

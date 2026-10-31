@@ -1591,6 +1591,7 @@
     <string name="message_location">Local</string>
     <string name="lock_message">Bloquear mensagem</string>
     <string name="delete_draft">Excluir rascunho</string>
+    <string name="discard_draft">Descartar rascunho</string>
     <string name="delete_draft_question">Excluir rascunho?</string>
     <string name="delete_draft_confirm_description">Este rascunho é excluído permanentemente e você não pode recuperá-lo.</string>
     <string name="to_label_prefix">para %s</string>

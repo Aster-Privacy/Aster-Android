@@ -1589,6 +1589,7 @@
     <string name="message_location">Ort</string>
     <string name="lock_message">Nachricht sperren</string>
     <string name="delete_draft">Entwurf löschen</string>
+    <string name="discard_draft">Entwurf verwerfen</string>
     <string name="delete_draft_question">Entwurf löschen?</string>
     <string name="delete_draft_confirm_description">Dieser Entwurf wird endgültig gelöscht und kann nicht wiederhergestellt werden.</string>
     <string name="to_label_prefix">an %s</string>

@@ -1588,6 +1588,7 @@
     <string name="message_location">Konum</string>
     <string name="lock_message">Mesajı kilitle</string>
     <string name="delete_draft">Taslağı sil</string>
+    <string name="discard_draft">Taslağı at</string>
     <string name="delete_draft_question">Taslak silinsin mi?</string>
     <string name="delete_draft_confirm_description">Bu taslak kalıcı olarak silinir ve geri alınamaz.</string>
     <string name="to_label_prefix">alıcı: %s</string>

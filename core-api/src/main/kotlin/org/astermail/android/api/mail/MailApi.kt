@@ -195,6 +195,15 @@ data class CreateAttachmentRequestBody(
     val seq_num: Int? = null,
 )
 
+private const val DRAFT_UPLOAD_BASE_TIMEOUT_MS = 60_000L
+private const val DRAFT_UPLOAD_MIN_BYTES_PER_SECOND = 32_768L
+private const val DRAFT_UPLOAD_MAX_TIMEOUT_MS = 30 * 60_000L
+private const val DRAFT_UPLOAD_SOCKET_TIMEOUT_MS = 120_000L
+
+internal fun draft_upload_timeout_ms(payload_chars: Int): Long =
+    (DRAFT_UPLOAD_BASE_TIMEOUT_MS + payload_chars.coerceAtLeast(0).toLong() * 1000 / DRAFT_UPLOAD_MIN_BYTES_PER_SECOND)
+        .coerceAtMost(DRAFT_UPLOAD_MAX_TIMEOUT_MS)
+
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
     private val large_payload_timeout_ms = 60_000L
@@ -280,6 +289,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse {
         val response = client.http.post("${client.base_url}$base/drafts") {
+            timeout {
+                requestTimeoutMillis = draft_upload_timeout_ms(request.encrypted_content.length)
+                socketTimeoutMillis = DRAFT_UPLOAD_SOCKET_TIMEOUT_MS
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
@@ -294,6 +307,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         val response = client.http.put(
             "${client.base_url}$base/drafts/${url_encode_path(draft_id)}",
         ) {
+            timeout {
+                requestTimeoutMillis = draft_upload_timeout_ms(request.encrypted_content.length)
+                socketTimeoutMillis = DRAFT_UPLOAD_SOCKET_TIMEOUT_MS
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

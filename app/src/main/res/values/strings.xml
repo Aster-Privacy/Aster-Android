@@ -441,6 +441,7 @@
     <string name="message_location">Location</string>
     <string name="lock_message">Lock message</string>
     <string name="delete_draft">Delete draft</string>
+    <string name="discard_draft">Discard draft</string>
     <string name="delete_draft_question">Delete draft?</string>
     <string name="delete_draft_confirm_description">This draft is deleted permanently and you cannot recover it.</string>
     <string name="archived">Archived</string>

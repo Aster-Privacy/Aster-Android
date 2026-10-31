@@ -1592,6 +1592,7 @@
     <string name="message_location">Posizione</string>
     <string name="lock_message">Blocca messaggio</string>
     <string name="delete_draft">Elimina bozza</string>
+    <string name="discard_draft">Scarta bozza</string>
     <string name="delete_draft_question">Eliminare la bozza?</string>
     <string name="delete_draft_confirm_description">Questa bozza viene eliminata definitivamente e non puoi recuperarla.</string>
     <string name="to_label_prefix">a %s</string>

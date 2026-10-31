@@ -103,4 +103,24 @@ class LiveSyncFrameTest {
         assertNull(parse_live_sync_frame("not json"))
         assertNull(parse_live_sync_frame("{\"type\":\"mail_mutation\",\"pad\":\"" + "x".repeat(70_000) + "\"}"))
     }
+
+    @Test
+    fun parses_the_action_and_ids_of_a_mail_mutation() {
+        val frame = parse_mail_mutation_frame(
+            """{"type":"mail_mutation","action":"delete","item_ids":["a","","b","a"],"origin_device":"s"}""",
+        )
+
+        assertEquals("delete", frame?.action)
+        assertEquals(listOf("a", "b"), frame?.item_ids)
+    }
+
+    @Test
+    fun a_mail_mutation_without_ids_parses_with_an_empty_list() {
+        val frame = parse_mail_mutation_frame("""{"type":"mail_mutation","action":"undo","item_ids":[]}""")
+
+        assertEquals("undo", frame?.action)
+        assertEquals(emptyList<String>(), frame?.item_ids)
+        assertNull(parse_mail_mutation_frame("""{"type":"new_mail","action":"delete","item_ids":["a"]}"""))
+        assertNull(parse_mail_mutation_frame("not json"))
+    }
 }

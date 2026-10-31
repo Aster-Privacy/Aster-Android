@@ -117,6 +117,20 @@ class PendingMailActionsTest {
     }
 
     @Test
+    fun stalled_requests_stop_blocking_the_queue_after_their_cap() {
+        val fresh = PendingMailAction(1, "account", PendingActionKind.trash, PendingActionPayload(ids = listOf("a")), 0L, 0)
+        val stalled = fresh.copy(attempts = PENDING_ACTION_MAX_STALLED_ATTEMPTS - 1)
+        val timeout = java.net.SocketTimeoutException("slow")
+        assertTrue(pending_action_counts_attempt(timeout))
+        assertFalse(pending_action_counts_attempt(java.net.UnknownHostException("offline")))
+        assertFalse(pending_action_counts_attempt(ApiError.NotFoundError))
+        assertFalse(pending_action_exhausted(fresh, timeout))
+        assertTrue(pending_action_exhausted(stalled, timeout))
+        assertFalse(pending_action_exhausted(stalled, java.net.UnknownHostException("offline")))
+        assertFalse(pending_action_exhausted(stalled.copy(kind = PendingActionKind.save_draft), timeout))
+    }
+
+    @Test
     fun payload_survives_a_round_trip_through_storage() {
         val payload = PendingActionPayload(
             ids = listOf("a", "b"),
@@ -279,5 +293,33 @@ class PendingMailActionsTest {
             listOf(action(PendingActionKind.archive, PendingActionPayload(ids = listOf("z")))),
         )
         assertTrue(result.first() === items.first())
+    }
+
+    @Test
+    fun a_remote_delete_removes_the_rows_from_every_folder() {
+        val items = listOf(item("a"), item("b", is_trashed = true), item("c"))
+        assertEquals(listOf("c"), remove_remote_mutation_rows("inbox", items, "delete", setOf("a", "b")).map { it.id })
+        assertEquals(listOf("c"), remove_remote_mutation_rows("trash", items, "delete", setOf("a", "b")).map { it.id })
+    }
+
+    @Test
+    fun a_remote_trash_only_removes_rows_that_leave_the_folder() {
+        val inbox = listOf(item("a"), item("b"))
+        assertEquals(listOf("b"), remove_remote_mutation_rows("inbox", inbox, "trash", setOf("a")).map { it.id })
+        val trash = listOf(item("a", is_trashed = true))
+        assertEquals(listOf("a"), remove_remote_mutation_rows("trash", trash, "trash", setOf("a")).map { it.id })
+        val archive = listOf(item("a", is_archived = true))
+        assertEquals(listOf("a"), remove_remote_mutation_rows("archive", archive, "archive", setOf("a")).map { it.id })
+        assertTrue(remove_remote_mutation_rows("inbox", inbox, "spam", setOf("a", "b")).isEmpty())
+    }
+
+    @Test
+    fun other_remote_mutations_leave_rows_alone() {
+        val inbox = listOf(item("a"))
+        assertTrue(remove_remote_mutation_rows("inbox", inbox, "update_metadata", setOf("a")) === inbox)
+        assertTrue(remove_remote_mutation_rows("inbox", inbox, "move", setOf("a")) === inbox)
+        assertTrue(is_remote_removal_action("delete"))
+        assertTrue(is_remote_removal_action("mark_spam"))
+        assertFalse(is_remote_removal_action("restore"))
     }
 }

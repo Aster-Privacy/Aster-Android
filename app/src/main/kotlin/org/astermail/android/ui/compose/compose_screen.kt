@@ -2685,28 +2685,7 @@ fun ComposeScreen(
                                 android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                             imeOptions = EditorInfo.IME_ACTION_NONE or EditorInfo.IME_FLAG_NO_FULLSCREEN
                             minHeight = (200 * resources.displayMetrics.density).toInt()
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                                try {
-                                    val cursor_drawable = android.graphics.drawable.GradientDrawable().apply {
-                                        setSize((2 * resources.displayMetrics.density).toInt(), 0)
-                                        setColor(cursor_color_argb)
-                                    }
-                                    textCursorDrawable = cursor_drawable
-                                } catch (_: Throwable) {}
-                            }
-                            highlightColor = (cursor_color_argb and 0x00FFFFFF) or 0x55000000.toInt()
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                                try {
-                                    val handle_drawable = android.graphics.drawable.GradientDrawable().apply {
-                                        setColor(cursor_color_argb)
-                                        cornerRadius = 8f * resources.displayMetrics.density
-                                        setSize((20 * resources.displayMetrics.density).toInt(), (20 * resources.displayMetrics.density).toInt())
-                                    }
-                                    setTextSelectHandle(handle_drawable)
-                                    setTextSelectHandleLeft(handle_drawable)
-                                    setTextSelectHandleRight(handle_drawable)
-                                } catch (_: Throwable) {}
-                            }
+                            apply_body_accent(this, cursor_color_argb)
                             on_image_received = { uri ->
                                 if (insert_image_inline(uri)) {
                                     schedule_draft_save()
@@ -2752,6 +2731,9 @@ fun ComposeScreen(
                     update = { et ->
                         val target_min = (compose_body_min_height_dp(signature_html.isNotBlank(), has_quote) * et.resources.displayMetrics.density).toInt()
                         if (et.minHeight != target_min) et.minHeight = target_min
+                        if (et.currentTextColor != text_color_argb) et.setTextColor(text_color_argb)
+                        if (et.currentHintTextColor != muted_color_argb) et.setHintTextColor(muted_color_argb)
+                        if (et.highlightColor != body_highlight_color(cursor_color_argb)) apply_body_accent(et, cursor_color_argb)
                         if (!body.contentEquals(et.text ?: "")) {
                             val sel = et.selectionStart.coerceIn(0, body.length)
                             et.suspend_text_watcher = true
@@ -4695,6 +4677,34 @@ internal fun signature_preview_card(html: String) {
         signature_web_card(html)
     } else {
         signature_native_block(html)
+    }
+}
+
+private fun body_highlight_color(accent_argb: Int): Int = (accent_argb and 0x00FFFFFF) or 0x55000000.toInt()
+
+private fun apply_body_accent(editor: android.widget.EditText, accent_argb: Int) {
+    val density = editor.resources.displayMetrics.density
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        try {
+            val cursor_drawable = android.graphics.drawable.GradientDrawable().apply {
+                setSize((2 * density).toInt(), 0)
+                setColor(accent_argb)
+            }
+            editor.textCursorDrawable = cursor_drawable
+        } catch (_: Throwable) {}
+    }
+    editor.highlightColor = body_highlight_color(accent_argb)
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        try {
+            val handle_drawable = android.graphics.drawable.GradientDrawable().apply {
+                setColor(accent_argb)
+                cornerRadius = 8f * density
+                setSize((20 * density).toInt(), (20 * density).toInt())
+            }
+            editor.setTextSelectHandle(handle_drawable)
+            editor.setTextSelectHandleLeft(handle_drawable)
+            editor.setTextSelectHandleRight(handle_drawable)
+        } catch (_: Throwable) {}
     }
 }
 
