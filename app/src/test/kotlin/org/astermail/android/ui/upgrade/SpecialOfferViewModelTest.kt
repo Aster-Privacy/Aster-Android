@@ -38,6 +38,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.astermail.android.BuildConfig
 import org.astermail.android.api.billing.BillingApi
 import org.astermail.android.api.billing.OfferPreferences
 import org.astermail.android.api.billing.SpecialOfferClaimResponse
@@ -46,6 +47,7 @@ import org.astermail.android.auth.AuthRepository
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -105,6 +107,7 @@ class SpecialOfferViewModelTest {
 
     @Before
     fun setup() {
+        assumeTrue(BuildConfig.SPECIAL_OFFER)
         Dispatchers.setMain(dispatcher)
         billing_api = mockk(relaxed = true)
         coEvery { billing_api.get_special_offer() } returns auto_show_offer
