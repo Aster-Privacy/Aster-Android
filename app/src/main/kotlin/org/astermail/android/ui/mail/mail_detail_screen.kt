@@ -65,7 +65,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -586,6 +585,7 @@ fun MailDetailScreen(
     on_delete: () -> Unit,
     on_next: (() -> Unit)? = null,
     on_previous: (() -> Unit)? = null,
+    swipe_direction: Int = 0,
     on_navigate: ((String) -> Unit)? = null,
     mail_vm: MailViewModel = hiltViewModel(),
     settings_vm: SettingsViewModel = shared_settings_view_model(),
@@ -596,7 +596,7 @@ fun MailDetailScreen(
     val context = LocalContext.current
     val request_storage_access = org.astermail.android.util.remember_downloads_permission_gate()
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val swipe_threshold_px = with(density) { 200.dp.toPx() }
+    val detail_swipe = remember_detail_swipe_state(email_id, swipe_direction)
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val remote_images_always = settings_state.preferences?.load_remote_images == "always" ||
         settings_state.preferences?.block_external_content == false
@@ -1403,11 +1403,14 @@ fun MailDetailScreen(
             val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
 
             if (email == null && !thread_state.is_loading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.fillMaxSize().detail_swipe_navigation(detail_swipe, on_next, on_previous),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(horizontal = AsterSpacing.lg),
+                        modifier = Modifier.detail_swipe_offset(detail_swipe).padding(horizontal = AsterSpacing.lg),
                     ) {
                         Text(
                             text = thread_state.error
@@ -1429,8 +1432,10 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .weight(1f)
                     .chrome_surface(colors)
-                    .clipToBounds(),
+                    .clipToBounds()
+                    .detail_swipe_navigation(detail_swipe, on_next, on_previous),
             ) {
+            Box(modifier = Modifier.fillMaxSize().detail_swipe_offset(detail_swipe)) {
             CompositionLocalProvider(local_horizontal_pan_signal provides pan_signal) {
             if (email != null) LazyColumn(
                 state = list_state,
@@ -1439,31 +1444,6 @@ fun MailDetailScreen(
                     .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, detail_phase)
                     .clipToBounds()
-                    .pointerInput(on_next, on_previous) {
-                        var cumulative_drag = 0f
-                        var crossed_threshold = false
-                        detectHorizontalDragGestures(
-                            onDragStart = { cumulative_drag = 0f; crossed_threshold = false },
-                            onHorizontalDrag = { _, drag_amount ->
-                                cumulative_drag += drag_amount
-                                if (!crossed_threshold) {
-                                    val crossed_prev = cumulative_drag > swipe_threshold_px && on_previous != null
-                                    val crossed_next = cumulative_drag < -swipe_threshold_px && on_next != null
-                                    if (crossed_prev || crossed_next) {
-                                        crossed_threshold = true
-                                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                    }
-                                }
-                            },
-                            onDragEnd = {
-                                if (cumulative_drag > swipe_threshold_px && on_previous != null) {
-                                    on_previous()
-                                } else if (cumulative_drag < -swipe_threshold_px && on_next != null) {
-                                    on_next()
-                                }
-                            },
-                        )
-                    },
             ) {
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
@@ -1810,6 +1790,7 @@ fun MailDetailScreen(
                 phase = detail_phase,
                 message_count = expected_message_count,
             )
+            }
 
             }
         }
@@ -7476,6 +7457,7 @@ internal fun email_html_view(
                     var touch_down_x = 0f
                     var touch_down_y = 0f
                     var multi_touch = false
+                    var pan_claimed = false
                     val tap_slop_px = android.view.ViewConfiguration.get(ctx).scaledTouchSlop.toFloat()
                     setOnTouchListener { v, ev ->
                         val body = v as? mail_body_web_view
@@ -7491,6 +7473,7 @@ internal fun email_html_view(
                                 touch_down_x = ev.x
                                 touch_down_y = ev.y
                                 multi_touch = false
+                                pan_claimed = false
                                 v.parent?.requestDisallowInterceptTouchEvent(false)
                             }
                             android.view.MotionEvent.ACTION_POINTER_DOWN -> {
@@ -7516,9 +7499,14 @@ internal fun email_html_view(
                                 } else {
                                     val dx = Math.abs(ev.x - touch_down_x)
                                     val dy = Math.abs(ev.y - touch_down_y)
-                                    val can_scroll_horizontally =
-                                        v.canScrollHorizontally(1) || v.canScrollHorizontally(-1)
-                                    if (can_scroll_horizontally && dx > dy && dx > 8f) {
+                                    if (!pan_claimed && dx > dy && dx > 8f) {
+                                        pan_claimed = body_claims_horizontal_pan(
+                                            drag_dx = ev.x - touch_down_x,
+                                            can_scroll_forward = v.canScrollHorizontally(1),
+                                            can_scroll_back = v.canScrollHorizontally(-1),
+                                        )
+                                    }
+                                    if (pan_claimed) {
                                         v.parent?.requestDisallowInterceptTouchEvent(true)
                                     } else if (dy >= dx && dy > 8f && body?.keeps_vertical_drag(ev.y - touch_down_y) == true) {
                                         v.parent?.requestDisallowInterceptTouchEvent(true)

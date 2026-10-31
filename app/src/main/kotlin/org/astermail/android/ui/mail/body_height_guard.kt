@@ -107,6 +107,9 @@ internal fun body_keeps_vertical_drag(
     return (drag_dy < 0f && can_scroll_down) || (drag_dy > 0f && can_scroll_up)
 }
 
+internal fun body_claims_horizontal_pan(drag_dx: Float, can_scroll_forward: Boolean, can_scroll_back: Boolean): Boolean =
+    (drag_dx < 0f && can_scroll_forward) || (drag_dx > 0f && can_scroll_back)
+
 internal fun body_needs_regrowth(content_dp: Float, shown_dp: Float, max_dp: Float, slack_dp: Float): Boolean {
     if (content_dp <= 0f || shown_dp <= 0f) return false
     if (shown_dp >= max_dp - slack_dp) return false
