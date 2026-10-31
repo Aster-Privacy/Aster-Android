@@ -117,6 +117,20 @@ class PendingMailActionsTest {
     }
 
     @Test
+    fun stalled_requests_stop_blocking_the_queue_after_their_cap() {
+        val fresh = PendingMailAction(1, "account", PendingActionKind.trash, PendingActionPayload(ids = listOf("a")), 0L, 0)
+        val stalled = fresh.copy(attempts = PENDING_ACTION_MAX_STALLED_ATTEMPTS - 1)
+        val timeout = java.net.SocketTimeoutException("slow")
+        assertTrue(pending_action_counts_attempt(timeout))
+        assertFalse(pending_action_counts_attempt(java.net.UnknownHostException("offline")))
+        assertFalse(pending_action_counts_attempt(ApiError.NotFoundError))
+        assertFalse(pending_action_exhausted(fresh, timeout))
+        assertTrue(pending_action_exhausted(stalled, timeout))
+        assertFalse(pending_action_exhausted(stalled, java.net.UnknownHostException("offline")))
+        assertFalse(pending_action_exhausted(stalled.copy(kind = PendingActionKind.save_draft), timeout))
+    }
+
+    @Test
     fun payload_survives_a_round_trip_through_storage() {
         val payload = PendingActionPayload(
             ids = listOf("a", "b"),

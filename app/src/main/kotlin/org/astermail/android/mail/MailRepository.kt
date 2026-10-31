@@ -601,7 +601,7 @@ class MailRepository @Inject constructor(
                 queue.complete(next.id)
                 continue
             }
-            if (is_server_side_failure(error)) queue.record_attempt(next.id)
+            if (pending_action_counts_attempt(error)) queue.record_attempt(next.id)
             return PendingDrainOutcome.Retry
         }
     }

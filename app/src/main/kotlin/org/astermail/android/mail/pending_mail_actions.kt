@@ -99,6 +99,8 @@ internal const val PENDING_ACTION_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
 
 internal const val PENDING_ACTION_MAX_SERVER_ATTEMPTS = 8
 
+internal const val PENDING_ACTION_MAX_STALLED_ATTEMPTS = 24
+
 const val PENDING_PATCH_MODE = "patch"
 
 const val QUEUED_BATCH_ID = "queued"
@@ -180,8 +182,16 @@ fun is_server_side_failure(error: Throwable?): Boolean {
     return false
 }
 
-internal fun pending_action_exhausted(action: PendingMailAction, error: Throwable?): Boolean =
-    is_server_side_failure(error) && action.attempts + 1 >= PENDING_ACTION_MAX_SERVER_ATTEMPTS
+internal fun pending_action_exhausted(action: PendingMailAction, error: Throwable?): Boolean {
+    val attempts = action.attempts + 1
+    if (is_server_side_failure(error)) return attempts >= PENDING_ACTION_MAX_SERVER_ATTEMPTS
+    if (action.kind == PendingActionKind.save_draft) return false
+    if (!is_transient_failure(error) || is_connectivity_failure(error)) return false
+    return attempts >= PENDING_ACTION_MAX_STALLED_ATTEMPTS
+}
+
+internal fun pending_action_counts_attempt(error: Throwable?): Boolean =
+    is_transient_failure(error) && !is_connectivity_failure(error)
 
 private class OverlayState(var item: InboxItem) {
     var gone = false
