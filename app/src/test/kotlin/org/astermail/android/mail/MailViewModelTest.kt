@@ -3232,9 +3232,19 @@ class MailViewModelTest {
         }
     }
 
+    private fun record_draft_deletes(): MutableList<String> {
+        val deleted = java.util.Collections.synchronizedList(mutableListOf<String>())
+        coEvery { repository.delete_draft(any()) } answers {
+            deleted.add(firstArg())
+            Result.success(Unit)
+        }
+        return deleted
+    }
+
     @Test
     fun `undoing a draft discard keeps the draft on the server`() = runTest {
         defer_durable_work()
+        val deleted = record_draft_deletes()
         coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
         vm.load_inbox("drafts", force = true)
         advanceUntilIdle()
@@ -3251,15 +3261,15 @@ class MailViewModelTest {
         toast.on_timeout?.invoke()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { repository.delete_draft(any()) }
+        assertEquals(emptyList<String>(), deleted)
         assertEquals(2, vm.inbox_state.value.items.size)
     }
 
     @Test
     fun `a draft discard deletes once the undo window closes`() = runTest {
         defer_durable_work()
+        val deleted = record_draft_deletes()
         coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
-        coEvery { repository.delete_draft(any()) } returns Result.success(Unit)
         vm.load_inbox("drafts", force = true)
         advanceUntilIdle()
         val toasts = mutableListOf<MailViewModel.ToastEvent>()
@@ -3269,15 +3279,15 @@ class MailViewModelTest {
         vm.trash(listOf("id_1"))
         runCurrent()
         val toast = toasts.single()
-        coVerify(exactly = 0) { repository.delete_draft(any()) }
+        assertEquals(emptyList<String>(), deleted)
         assertNotNull(toast.on_timeout)
         toast.on_timeout!!.invoke()
         advanceUntilIdle()
-        coVerify(exactly = 1) { repository.delete_draft("id_1") }
+        assertEquals(listOf("id_1"), deleted)
         toast.on_undo?.invoke()
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.delete_draft("id_1") }
+        assertEquals(listOf("id_1"), deleted)
         assertEquals(1, vm.inbox_state.value.items.size)
     }
 }
