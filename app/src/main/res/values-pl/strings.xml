@@ -1596,6 +1596,7 @@
     <string name="message_location">Lokalizacja</string>
     <string name="lock_message">Zablokuj wiadomość</string>
     <string name="delete_draft">Usuń wersję roboczą</string>
+    <string name="discard_draft">Odrzuć wersję roboczą</string>
     <string name="delete_draft_question">Usunąć wersję roboczą?</string>
     <string name="delete_draft_confirm_description">Ta wersja robocza zostanie trwale usunięta i nie można jej odzyskać.</string>
     <string name="to_label_prefix">do %s</string>

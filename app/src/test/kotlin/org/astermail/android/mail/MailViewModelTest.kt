@@ -28,6 +28,8 @@ import io.mockk.every
 import io.mockk.verify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -3221,5 +3223,61 @@ class MailViewModelTest {
         advanceUntilIdle()
 
         assertTrue(fetches > after_failure)
+    }
+
+    private fun defer_durable_work() {
+        every { repository.durable_async<Any?>(any()) } answers {
+            val block = firstArg<suspend () -> Any?>()
+            kotlinx.coroutines.CoroutineScope(dispatcher).async { block() }
+        }
+    }
+
+    @Test
+    fun `undoing a draft discard keeps the draft on the server`() = runTest {
+        defer_durable_work()
+        coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
+        vm.load_inbox("drafts", force = true)
+        advanceUntilIdle()
+        val toasts = mutableListOf<MailViewModel.ToastEvent>()
+        backgroundScope.launch { vm.toast_events.collect { toasts.add(it) } }
+        runCurrent()
+
+        vm.trash(listOf("id_1"))
+        runCurrent()
+        assertEquals(1, vm.inbox_state.value.items.size)
+        val toast = toasts.single()
+        assertNotNull(toast.on_undo)
+        toast.on_undo!!.invoke()
+        toast.on_timeout?.invoke()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.delete_draft(any()) }
+        assertEquals(2, vm.inbox_state.value.items.size)
+    }
+
+    @Test
+    fun `a draft discard deletes once the undo window closes`() = runTest {
+        defer_durable_work()
+        coEvery { repository.fetch_drafts(any(), any()) } returns Result.success(fake_inbox_page(2))
+        coEvery { repository.delete_draft(any()) } returns Result.success(Unit)
+        vm.load_inbox("drafts", force = true)
+        advanceUntilIdle()
+        val toasts = mutableListOf<MailViewModel.ToastEvent>()
+        backgroundScope.launch { vm.toast_events.collect { toasts.add(it) } }
+        runCurrent()
+
+        vm.trash(listOf("id_1"))
+        runCurrent()
+        val toast = toasts.single()
+        coVerify(exactly = 0) { repository.delete_draft(any()) }
+        assertNotNull(toast.on_timeout)
+        toast.on_timeout!!.invoke()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { repository.delete_draft("id_1") }
+        toast.on_undo?.invoke()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { repository.delete_draft("id_1") }
+        assertEquals(1, vm.inbox_state.value.items.size)
     }
 }

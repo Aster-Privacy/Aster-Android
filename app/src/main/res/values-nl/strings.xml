@@ -1588,6 +1588,7 @@
     <string name="message_location">Locatie</string>
     <string name="lock_message">Bericht vergrendelen</string>
     <string name="delete_draft">Concept verwijderen</string>
+    <string name="discard_draft">Concept weggooien</string>
     <string name="delete_draft_question">Concept verwijderen?</string>
     <string name="delete_draft_confirm_description">Dit concept wordt definitief verwijderd en je kunt het niet herstellen.</string>
     <string name="to_label_prefix">aan %s</string>

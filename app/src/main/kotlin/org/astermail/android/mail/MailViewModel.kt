@@ -66,6 +66,10 @@ private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val PENDING_DRAIN_BEFORE_REFRESH_MS = 8_000L
 private const val LIVE_SYNC_DEBOUNCE_MS = 600L
+private const val DRAFT_DISCARD_MAX_WAIT_MS = 10_000L
+private const val DRAFT_DISCARD_PENDING = 0
+private const val DRAFT_DISCARD_UNDONE = 1
+private const val DRAFT_DISCARD_STARTED = 2
 private const val LIVE_SYNC_FALLBACK_MAX_AGE_MS = 15 * 60_000L
 private const val WARM_CACHE_MIN_ITEMS = 8
 private const val WARM_CACHE_WINDOW = 200
@@ -4292,17 +4296,35 @@ class MailViewModel @Inject constructor(
         )
         pending_removed_ids.addAll(id_set)
         protect_removed(id_set)
+        val phase = java.util.concurrent.atomic.AtomicInteger(DRAFT_DISCARD_PENDING)
+        val go = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val deletion = repository.durable_async {
+            kotlinx.coroutines.withTimeoutOrNull(DRAFT_DISCARD_MAX_WAIT_MS) { go.await() }
+            if (!phase.compareAndSet(DRAFT_DISCARD_PENDING, DRAFT_DISCARD_STARTED)) return@durable_async null
+            item_ids.map { id -> repository.delete_draft(id).isSuccess }.all { it }
+        }
+        _toast_events.tryEmit(
+            ToastEvent(
+                message = context.resources.getQuantityString(R.plurals.draft_deleted, item_ids.size, item_ids.size),
+                undo_label = context.getString(R.string.undo),
+                on_undo = {
+                    if (phase.compareAndSet(DRAFT_DISCARD_PENDING, DRAFT_DISCARD_UNDONE)) {
+                        go.complete(Unit)
+                        undo_local_restore(removed_items)
+                    }
+                },
+                on_timeout = { go.complete(Unit) },
+            ),
+        )
         viewModelScope.launch {
             try {
-                val all_succeeded = item_ids.map { id ->
-                    repository.delete_draft(id).isSuccess
-                }.all { it }
-                if (all_succeeded) {
-                    load_stats()
-                    emit_toast(context.resources.getQuantityString(R.plurals.draft_deleted, item_ids.size, item_ids.size))
-                } else {
-                    undo_local_restore(removed_items)
-                    emit_toast(context.getString(R.string.failed_to_delete_draft))
+                when (deletion.await()) {
+                    true -> load_stats()
+                    false -> {
+                        undo_local_restore(removed_items)
+                        emit_toast(context.getString(R.string.failed_to_delete_draft))
+                    }
+                    null -> Unit
                 }
             } finally {
                 pending_removed_ids.removeAll(id_set)

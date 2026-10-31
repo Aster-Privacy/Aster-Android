@@ -1584,6 +1584,7 @@
     <string name="message_location">位置</string>
     <string name="lock_message">锁定邮件</string>
     <string name="delete_draft">删除草稿</string>
+    <string name="discard_draft">丢弃草稿</string>
     <string name="delete_draft_question">要删除草稿吗？</string>
     <string name="delete_draft_confirm_description">此草稿将被永久删除，无法恢复。</string>
     <string name="to_label_prefix">发给 %s</string>

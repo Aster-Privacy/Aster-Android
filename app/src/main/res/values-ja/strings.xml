@@ -1584,6 +1584,7 @@
     <string name="message_location">場所</string>
     <string name="lock_message">メッセージをロック</string>
     <string name="delete_draft">下書きを削除</string>
+    <string name="discard_draft">下書きを破棄</string>
     <string name="delete_draft_question">下書きを削除しますか？</string>
     <string name="delete_draft_confirm_description">この下書きは完全に削除され、元に戻すことはできません。</string>
     <string name="to_label_prefix">宛先 %s</string>

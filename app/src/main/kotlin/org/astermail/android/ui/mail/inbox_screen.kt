@@ -2216,10 +2216,12 @@ fun InboxScreen(
                     val delete_label_outer = stringResource(R.string.swipe_delete)
                     val delete_forever_label_outer = stringResource(R.string.swipe_delete_forever)
                     val not_spam_label_outer = stringResource(R.string.swipe_not_spam)
+                    val discard_draft_label_outer = stringResource(R.string.discard_draft)
                     val hoisted_swipe_config = remember(
                         current_folder, right_action_outer, left_action_outer,
                         right_label_outer, left_label_outer, restore_label_outer,
                         delete_label_outer, delete_forever_label_outer, not_spam_label_outer,
+                        discard_draft_label_outer,
                     ) {
                         when (current_folder) {
                             "archive" -> SwipeConfig(
@@ -2243,8 +2245,8 @@ fun InboxScreen(
                                 start_action = "unmark_spam", end_action = "delete",
                             )
                             else -> SwipeConfig(
-                                start_label = right_label_outer,
-                                end_label = left_label_outer,
+                                start_label = drafts_swipe_label(current_folder, right_action_outer, right_label_outer, discard_draft_label_outer),
+                                end_label = drafts_swipe_label(current_folder, left_action_outer, left_label_outer, discard_draft_label_outer),
                                 start_icon = swipe_action_icon(right_action_outer),
                                 end_icon = swipe_action_icon(left_action_outer),
                                 start_action = right_action_outer,
@@ -3888,7 +3890,7 @@ internal fun select_mode_bottom_bar(
                         )
                         bottom_select_action(
                             icon = TablerIcons.Trash,
-                            label = stringResource(R.string.delete_action),
+                            label = stringResource(if (current_folder == "drafts") R.string.discard_draft else R.string.delete_action),
                             enabled = enabled,
                             onClick = { on_action("trash") },
                             tint = colors.danger,
@@ -4349,6 +4351,9 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
     "star" -> colors.warning
     else -> colors.accent_blue
 }
+
+private fun drafts_swipe_label(folder: String, action: String, label: String, discard_label: String): String =
+    if (folder == "drafts" && (action == "delete" || action == "trash")) discard_label else label
 
 @Composable
 private fun swipe_action_label(action: String): String = when (action) {

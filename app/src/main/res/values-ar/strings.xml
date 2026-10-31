@@ -1604,6 +1604,7 @@
     <string name="message_location">الموقع</string>
     <string name="lock_message">قفل الرسالة</string>
     <string name="delete_draft">حذف المسودة</string>
+    <string name="discard_draft">تجاهل المسودة</string>
     <string name="delete_draft_question">حذف المسودة؟</string>
     <string name="delete_draft_confirm_description">تُحذف هذه المسودة نهائيًا ولا يمكنك استعادتها.</string>
     <string name="to_label_prefix">إلى %s</string>

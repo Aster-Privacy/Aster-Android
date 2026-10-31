@@ -1724,6 +1724,7 @@
     <string name="delete_account_warning_title">Cette action est irréversible</string>
     <string name="delete_alias_confirm_message">Supprimer définitivement %1$s ? Les e-mails envoyés à cet alias seront rejetés.</string>
     <string name="delete_draft">Supprimer le brouillon</string>
+    <string name="discard_draft">Supprimer le brouillon</string>
     <string name="delete_draft_question">Supprimer le brouillon ?</string>
     <string name="delete_draft_confirm_description">Ce brouillon est supprimé définitivement et vous ne pouvez pas le récupérer.</string>
     <string name="delete_signature">Supprimer la signature</string>
