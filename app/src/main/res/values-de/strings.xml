@@ -244,6 +244,7 @@
     <string name="e2e_encryption_failed">Senden fehlgeschlagen: Ende-zu-Ende-Verschlüsselung fehlgeschlagen. Die Nachricht wurde nicht gesendet.</string>
     <string name="attachment_prepare_failed">Senden fehlgeschlagen: "%1$s" konnte nicht vorbereitet werden. Die Nachricht wurde nicht gesendet.</string>
     <string name="e2e_keys_not_ready">Senden fehlgeschlagen: Verschlüsselungsschlüssel sind noch nicht bereit. Die Nachricht wurde nicht gesendet.</string>
+    <string name="e2e_recipient_key_missing">Senden fehlgeschlagen: Für einen Empfänger gibt es keinen Verschlüsselungsschlüssel. Die Nachricht wurde nicht gesendet.</string>
     <string name="e2e_no_key_description">Diese Nachricht ist mit einem Schlüssel verschlüsselt, den dieses Gerät noch nicht besitzt. Öffnen Sie sie in der Aster-Web-App, um sie zu lesen.</string>
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachment_unnamed">Anhang</string>

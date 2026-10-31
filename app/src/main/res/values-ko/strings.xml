@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">보낼 수 없음: 종단간 암호화에 실패했습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="attachment_prepare_failed">보낼 수 없음: "%1$s"을(를) 준비하지 못했습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="e2e_keys_not_ready">보낼 수 없음: 암호화 키가 아직 준비되지 않았습니다. 메시지가 전송되지 않았습니다.</string>
+    <string name="e2e_recipient_key_missing">보낼 수 없음: 수신자에게 암호화 키가 없습니다. 메시지가 전송되지 않았습니다.</string>
     <string name="e2e_no_key_description">이 메시지는 이 기기에 아직 없는 키로 암호화되어 있습니다. Aster 웹 앱에서 열어 읽으세요.</string>
     <string name="no_body">(본문 없음)</string>
     <string name="attachment_unnamed">첨부 파일</string>

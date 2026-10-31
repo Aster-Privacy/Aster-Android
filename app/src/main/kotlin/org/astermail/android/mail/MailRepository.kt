@@ -5964,16 +5964,78 @@ class MailRepository @Inject constructor(
         allow_non_post_quantum: Boolean,
     ): String {
         val encrypted = try {
-            ratchet_encryptor.encrypt_envelope(from_addr, recipients, wrapped, allow_non_post_quantum)
+            org.astermail.android.mail.ratchet.seal_internal_body(
+                recipients = recipients,
+                allow_non_post_quantum = allow_non_post_quantum,
+                seal_ratchet = {
+                    ratchet_encryptor.encrypt_envelope(from_addr, recipients, wrapped, allow_non_post_quantum)
+                },
+                seal_pgp = { seal_internal_body_with_pgp(from_addr, recipients, wrapped) },
+            )
         } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
             throw t
         } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
             throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
+        } catch (t: org.astermail.android.mail.ratchet.RecipientPublicKeyMissingException) {
+            throw E2eEncryptionException(context.getString(R.string.e2e_recipient_key_missing), t)
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
             throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
         }
         return encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+    }
+
+    private suspend fun seal_internal_body_with_pgp(
+        from_addr: String,
+        recipients: List<String>,
+        wrapped: String,
+    ): String {
+        val identity_key = session_key_store.get_identity_key()
+            ?.takeIf { it.contains("-----BEGIN PGP") }
+            ?: throw org.astermail.android.mail.ratchet.PgpFallbackSealException("sender signing key unavailable")
+        val own_key = own_public_key()
+        return org.astermail.android.mail.ratchet.seal_pgp_for_recipients(
+            recipients = recipients,
+            own_public_key = own_key,
+            fetch_public_key = { recipient -> pgp_fallback_recipient_key(recipient, from_addr, own_key) },
+            is_owner_key_trusted = { recipient, key -> ratchet_encryptor.owner_key_matches_pin(recipient, key) },
+            can_encrypt_to = { key -> PgpEncryptor.can_encrypt_to(key) },
+            encrypt_and_sign = { keys ->
+                val passphrase = session_key_store.get_passphrase()
+                    ?: throw org.astermail.android.mail.ratchet.PgpFallbackSealException("passphrase unavailable")
+                var chars: CharArray? = null
+                try {
+                    val decoded = org.astermail.android.util.passphrase_chars(passphrase)
+                    chars = decoded
+                    PgpEncryptor.encrypt_and_sign(wrapped, keys, identity_key, decoded)
+                } finally {
+                    passphrase.fill(0)
+                    chars?.fill(' ')
+                }
+            },
+        )
+    }
+
+    private suspend fun pgp_fallback_recipient_key(
+        recipient: String,
+        from_addr: String,
+        own_key: String?,
+    ): String? {
+        val own = is_own_address(recipient, from_addr)
+        val username = recipient.substringBefore('@').trim()
+        val server_key = if (username.isEmpty()) {
+            null
+        } else {
+            try {
+                keys_api.get_recipient_public_key(username, recipient).public_key
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiError) {
+                if (e !is ApiError.NotFoundError && !own) throw e
+                null
+            }
+        }
+        return server_key?.takeIf { it.isNotBlank() } ?: if (own) own_key else null
     }
 
     private suspend fun seal_with_private_bcc(

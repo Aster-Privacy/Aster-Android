@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">Nie można wysłać: szyfrowanie end-to-end nie powiodło się. Wiadomość nie została wysłana.</string>
     <string name="attachment_prepare_failed">Nie można wysłać: nie udało się przygotować "%1$s". Wiadomość nie została wysłana.</string>
     <string name="e2e_keys_not_ready">Nie można wysłać: klucze szyfrowania nie są jeszcze gotowe. Wiadomość nie została wysłana.</string>
+    <string name="e2e_recipient_key_missing">Nie można wysłać: odbiorca nie ma klucza szyfrowania. Wiadomość nie została wysłana.</string>
     <string name="e2e_no_key_description">Ta wiadomość jest zaszyfrowana kluczem, którego to urządzenie jeszcze nie ma. Otwórz ją w aplikacji internetowej Aster, aby ją przeczytać.</string>
     <string name="no_body">(brak treści)</string>
     <string name="attachment_unnamed">Załącznik</string>

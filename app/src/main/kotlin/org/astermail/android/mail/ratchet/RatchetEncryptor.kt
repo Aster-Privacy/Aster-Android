@@ -113,6 +113,14 @@ class RatchetEncryptor @Inject constructor(
         explicitNulls = false
     }
 
+    internal var require_verified_prekey_bundle: Boolean = PrekeyBundlePolicy.require_verified_prekey_bundle
+
+    fun owner_key_matches_pin(recipient_email: String, armored_public_key: String): Boolean =
+        owner_key_trusted(
+            identity_pins.owner_key_pin(recipient_email),
+            PrekeyBindingVerifier.owner_fingerprint(armored_public_key),
+        )
+
     suspend fun check_post_quantum_coverage(
         sender_email: String,
         recipients: List<String>,
@@ -212,6 +220,15 @@ class RatchetEncryptor @Inject constructor(
         val signature = bundle.signed_prekey_signature
         val signed = PrekeyBindingVerifier.is_pgp_signature(signature)
         if (!signed && pinned_owner == null) {
+            if (prekey_bundle_needs_pgp_fallback(
+                    require_verified_prekey_bundle,
+                    PrekeyBindingResult.UNSIGNED_LEGACY,
+                    null,
+                    null,
+                )
+            ) {
+                throw UnverifiedPrekeyBundleException(recipient_email)
+            }
             if (BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "prekey bundle carries a legacy unsigned binding")
             }
@@ -232,6 +249,10 @@ class RatchetEncryptor @Inject constructor(
         }
         val result = verdict.result
         val served_owner = PrekeyBindingVerifier.owner_fingerprint(verifying_key)
+
+        if (prekey_bundle_needs_pgp_fallback(require_verified_prekey_bundle, result, pinned_owner, served_owner)) {
+            throw UnverifiedPrekeyBundleException(recipient_email)
+        }
 
         when (RatchetIdentityPinRules.decide_owner_key(pinned_owner, served_owner, result)) {
             OwnerKeyDecision.ACCEPT -> {

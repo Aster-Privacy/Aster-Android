@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">Не удалось отправить: сбой сквозного шифрования. Сообщение не отправлено.</string>
     <string name="attachment_prepare_failed">Не удалось отправить: не удалось подготовить "%1$s". Сообщение не отправлено.</string>
     <string name="e2e_keys_not_ready">Не удалось отправить: ключи шифрования ещё не готовы. Сообщение не отправлено.</string>
+    <string name="e2e_recipient_key_missing">Не удалось отправить: у получателя нет ключа шифрования. Сообщение не отправлено.</string>
     <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого нет на этом устройстве. Откройте его в веб-приложении Aster, чтобы прочитать.</string>
     <string name="no_body">(нет текста)</string>
     <string name="attachment_unnamed">Вложение</string>

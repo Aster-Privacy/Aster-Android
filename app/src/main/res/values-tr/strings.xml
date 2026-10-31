@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">Gönderilemedi: uçtan uca şifreleme başarısız oldu. Mesaj gönderilmedi.</string>
     <string name="attachment_prepare_failed">Gönderilemedi: "%1$s" hazırlanamadı. İleti gönderilmedi.</string>
     <string name="e2e_keys_not_ready">Gönderilemedi: şifreleme anahtarları henüz hazır değil. Mesaj gönderilmedi.</string>
+    <string name="e2e_recipient_key_missing">Gönderilemedi: bir alıcının şifreleme anahtarı yok. Mesaj gönderilmedi.</string>
     <string name="e2e_no_key_description">Bu mesaj, bu cihazın henüz sahip olmadığı bir anahtarla şifrelenmiş. Okumak için Aster web uygulamasında açın.</string>
     <string name="no_body">(içerik yok)</string>
     <string name="attachment_unnamed">Ek</string>

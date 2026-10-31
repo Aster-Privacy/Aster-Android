@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">Invio non riuscito: crittografia end-to-end non riuscita. Il messaggio non è stato inviato.</string>
     <string name="attachment_prepare_failed">Invio non riuscito: impossibile preparare "%1$s". Il messaggio non è stato inviato.</string>
     <string name="e2e_keys_not_ready">Invio non riuscito: le chiavi di crittografia non sono ancora pronte. Il messaggio non è stato inviato.</string>
+    <string name="e2e_recipient_key_missing">Invio non riuscito: un destinatario non ha una chiave di crittografia. Il messaggio non è stato inviato.</string>
     <string name="e2e_no_key_description">Questo messaggio è crittografato con una chiave che questo dispositivo non possiede ancora. Aprilo nell\'app web Aster per leggerlo.</string>
     <string name="no_body">(nessun contenuto)</string>
     <string name="attachment_unnamed">Allegato</string>

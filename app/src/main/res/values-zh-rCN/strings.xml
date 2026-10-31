@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">无法发送：端到端加密失败。邮件未发送。</string>
     <string name="attachment_prepare_failed">无法发送：无法准备“%1$s”。邮件未发送。</string>
     <string name="e2e_keys_not_ready">无法发送：加密密钥尚未就绪。邮件未发送。</string>
+    <string name="e2e_recipient_key_missing">无法发送：收件人没有加密密钥。邮件未发送。</string>
     <string name="e2e_no_key_description">此邮件使用本设备尚未拥有的密钥加密。请在 Aster 网页版中打开阅读。</string>
     <string name="no_body">（无正文）</string>
     <string name="attachment_unnamed">附件</string>

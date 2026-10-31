@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">Não foi possível enviar: falha na criptografia de ponta a ponta. A mensagem não foi enviada.</string>
     <string name="attachment_prepare_failed">Não foi possível enviar: não foi possível preparar "%1$s". A mensagem não foi enviada.</string>
     <string name="e2e_keys_not_ready">Não foi possível enviar: as chaves de criptografia ainda não estão prontas. A mensagem não foi enviada.</string>
+    <string name="e2e_recipient_key_missing">Não foi possível enviar: um destinatário não tem chave de criptografia. A mensagem não foi enviada.</string>
     <string name="e2e_no_key_description">Esta mensagem está criptografada com uma chave que este dispositivo ainda não possui. Abra-a no app web do Aster para ler.</string>
     <string name="no_body">(sem corpo)</string>
     <string name="attachment_unnamed">Anexo</string>

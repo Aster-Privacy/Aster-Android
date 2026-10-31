@@ -244,6 +244,7 @@
     <string name="e2e_encryption_failed">No se pudo enviar: falló el cifrado de extremo a extremo. El mensaje no se envió.</string>
     <string name="attachment_prepare_failed">No se pudo enviar: no se pudo preparar "%1$s". El mensaje no se envió.</string>
     <string name="e2e_keys_not_ready">No se pudo enviar: las claves de cifrado aún no están listas. El mensaje no se envió.</string>
+    <string name="e2e_recipient_key_missing">No se pudo enviar: un destinatario no tiene clave de cifrado. El mensaje no se envió.</string>
     <string name="e2e_no_key_description">Este mensaje está cifrado con una clave que este dispositivo aún no posee. Ábrelo en la aplicación web de Aster para leerlo.</string>
     <string name="no_body">(sin contenido)</string>
     <string name="attachment_unnamed">Archivo adjunto</string>

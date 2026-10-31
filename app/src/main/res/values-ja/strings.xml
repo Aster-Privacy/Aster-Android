@@ -243,6 +243,7 @@
     <string name="e2e_encryption_failed">送信できませんでした。エンドツーエンド暗号化に失敗しました。メッセージは送信されていません。</string>
     <string name="attachment_prepare_failed">送信できませんでした。「%1$s」を準備できませんでした。メッセージは送信されていません。</string>
     <string name="e2e_keys_not_ready">送信できませんでした。暗号化キーの準備がまだできていません。メッセージは送信されていません。</string>
+    <string name="e2e_recipient_key_missing">送信できませんでした。受信者の暗号化キーがありません。メッセージは送信されていません。</string>
     <string name="e2e_no_key_description">このメッセージはこのデバイスがまだ持っていないキーで暗号化されています。Asterウェブアプリで開いて読んでください。</string>
     <string name="no_body">(本文なし)</string>
     <string name="attachment_unnamed">添付ファイル</string>

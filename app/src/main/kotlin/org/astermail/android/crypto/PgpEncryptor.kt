@@ -106,6 +106,8 @@ object PgpEncryptor {
         }
     }
 
+    fun can_encrypt_to(armored_public_key: String): Boolean = select_encryption_key(armored_public_key) != null
+
     fun encrypt_and_sign(
         plaintext: String,
         armored_public_keys: List<String>,

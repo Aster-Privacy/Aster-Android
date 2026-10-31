@@ -405,6 +405,7 @@
     <string name="e2e_identity_changed_blocked">Could not send: the encryption key for a recipient changed. Confirm the change in your inbox, then send again. The message was not sent.</string>
     <string name="attachment_prepare_failed">Could not send: "%1$s" could not be prepared. The message was not sent.</string>
     <string name="e2e_keys_not_ready">Could not send: encryption keys aren\'t ready yet. The message was not sent.</string>
+    <string name="e2e_recipient_key_missing">Could not send: a recipient has no encryption key. The message was not sent.</string>
     <string name="no_body">(no body)</string>
     <string name="attachment_unnamed">Attachment</string>
     <string name="attachment_locked">This attachment can\'t be opened because its encryption key isn\'t available on this device.</string>
