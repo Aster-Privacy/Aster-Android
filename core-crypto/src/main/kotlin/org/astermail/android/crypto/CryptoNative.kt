@@ -24,9 +24,11 @@ package org.astermail.android.crypto
 import android.util.Base64
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator
+import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import org.bouncycastle.crypto.params.HKDFParameters
+import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.signers.Ed25519Signer
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -144,6 +146,45 @@ object CryptoNative {
         salt.fill(0)
         return out
     }
+
+    const val legacy_storage_kdf_version = 1
+    const val stretched_storage_kdf_version = 2
+    private const val stretched_storage_key_info = "aster-storage-encryption-key-v2"
+    private const val stretched_storage_stretch_salt = "aster-storage-stretch-salt-v2"
+    private const val stretched_storage_expansion_salt = "aster-storage-expansion-salt-v2"
+    private const val stretched_storage_iterations = 600000
+
+    fun derive_stretched_storage_key(passphrase: ByteArray): ByteArray {
+        val generator = PKCS5S2ParametersGenerator(SHA256Digest())
+        generator.init(
+            passphrase,
+            stretched_storage_stretch_salt.toByteArray(Charsets.UTF_8),
+            stretched_storage_iterations,
+        )
+        val stretched = (generator.generateDerivedParameters(storage_key_bytes * 8) as KeyParameter).key
+        try {
+            val out = ByteArray(storage_key_bytes)
+            val hkdf = HKDFBytesGenerator(SHA256Digest())
+            hkdf.init(
+                HKDFParameters(
+                    stretched,
+                    stretched_storage_expansion_salt.toByteArray(Charsets.UTF_8),
+                    stretched_storage_key_info.toByteArray(Charsets.UTF_8),
+                ),
+            )
+            hkdf.generateBytes(out, 0, storage_key_bytes)
+            return out
+        } finally {
+            stretched.fill(0)
+        }
+    }
+
+    fun derive_storage_key_for_version(passphrase: ByteArray, kdf_version: Int): ByteArray =
+        if (kdf_version == stretched_storage_kdf_version) {
+            derive_stretched_storage_key(passphrase)
+        } else {
+            derive_storage_key(passphrase)
+        }
 
     data class EncryptedField(val ciphertext: ByteArray, val nonce: ByteArray)
 

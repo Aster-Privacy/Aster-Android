@@ -39,6 +39,7 @@ import org.astermail.android.api.templates.CreateTemplateRequest
 import org.astermail.android.api.templates.TemplateItem
 import org.astermail.android.api.templates.TemplatesApi
 import org.astermail.android.api.templates.UpdateTemplateRequest
+import org.astermail.android.auth.open_with_storage_key_candidates
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.storage.SessionKeyStore
 
@@ -114,8 +115,27 @@ class TemplatesViewModel @Inject constructor(
         }
     }
 
-    private fun decrypt_all(items: List<TemplateItem>, key: ByteArray): TemplateLoadOutcome =
-        template_load_outcome(items.map { decrypt(it, key) })
+    private fun decrypt_all(items: List<TemplateItem>, key: ByteArray): TemplateLoadOutcome {
+        var fallback_keys: List<ByteArray>? = null
+        try {
+            return template_load_outcome(
+                items.map { item ->
+                    decrypt(item, key) ?: run {
+                        val keys = fallback_keys ?: fallback_template_keys(key).also { fallback_keys = it }
+                        open_with_storage_key_candidates(keys) { candidate -> decrypt(item, candidate) }
+                    }
+                },
+            )
+        } finally {
+            fallback_keys?.forEach { it.fill(0) }
+        }
+    }
+
+    private fun fallback_template_keys(primary: ByteArray): List<ByteArray> =
+        session_key_store.get_decrypt_keks().mapNotNull { kek_b64 ->
+            runCatching { Base64.decode(kek_b64, Base64.DEFAULT) }.getOrNull()
+                ?.takeIf { it.size == 32 && !it.contentEquals(primary) }
+        }
 
     fun start_new() {
         _state.value = _state.value.copy(

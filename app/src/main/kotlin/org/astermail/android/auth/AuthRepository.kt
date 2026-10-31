@@ -593,6 +593,7 @@ class AuthRepository @Inject constructor(
                 absorb_previous_keys_and_keks(vault_obj)
                 absorb_data_kek(vault_obj)
                 extract_ratchet_keys(vault_obj)
+                absorb_stretched_storage_keys(vault_obj, password_bytes)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
@@ -1843,6 +1844,26 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    private suspend fun absorb_stretched_storage_keys(vault_obj: org.json.JSONObject, passphrase: ByteArray) {
+        if (read_storage_kdf_version(vault_obj) != CryptoNative.stretched_storage_kdf_version) return
+        val passphrase_copy = passphrase.copyOf()
+        val extra = try {
+            withContext(Dispatchers.Default) {
+                stretched_storage_keks_to_absorb(vault_obj, passphrase_copy, ::base64_encode)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            emptyList()
+        } finally {
+            passphrase_copy.fill(0)
+        }
+        if (extra.isEmpty()) return
+        val current = session_key_store.get_legacy_keks().orEmpty()
+        val merged = append_storage_keks(current, extra)
+        if (merged != current) session_key_store.put_legacy_keks(merged)
+    }
+
     suspend fun add_address_to_identity_key(new_address: String, display_name: String): Boolean =
         withContext(Dispatchers.Default) {
             add_address_to_identity_key_blocking(new_address, display_name)
@@ -1999,6 +2020,7 @@ class AuthRepository @Inject constructor(
                 absorb_previous_keys_and_keks(vault_obj)
                 absorb_data_kek(vault_obj)
                 extract_ratchet_keys(vault_obj)
+                absorb_stretched_storage_keys(vault_obj, passphrase)
                 vault_keys_changed(before, vault_key_snapshot(session_key_store))
             } finally {
                 passphrase.fill(0)
