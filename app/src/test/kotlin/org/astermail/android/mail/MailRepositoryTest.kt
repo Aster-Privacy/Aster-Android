@@ -1913,6 +1913,46 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `delete_permanent treats an already deleted item as done`() = runTest {
+        coEvery { mail_api.delete_permanent(any()) } throws org.astermail.android.api.ApiError.NotFoundError
+
+        val result = repo.delete_permanent("item_1")
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `delete_draft treats an already deleted draft as done`() = runTest {
+        coEvery { mail_api.delete_draft(any()) } throws org.astermail.android.api.ApiError.NotFoundError
+
+        val result = repo.delete_draft("5b0c7c3e-2a41-4f6e-9d7a-1c2b3d4e5f60")
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `trash treats items and conversations that are already gone as done`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 1)
+        coEvery { mail_api.get_message("gone") } throws org.astermail.android.api.ApiError.NotFoundError
+        coEvery { mail_api.get_message("kept") } returns fake_mail_item("kept").copy(is_trashed = true)
+        coEvery { mail_api.trash_thread("thread_gone", true) } throws org.astermail.android.api.ApiError.NotFoundError
+
+        val result = repo.trash(listOf("kept", "gone"), thread_tokens = listOf("thread_gone"))
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `trash still fails when an item exists but was not trashed`() = runTest {
+        coEvery { mail_api.bulk_action(any()) } returns BulkScopeResponse(affected_count = 0)
+        coEvery { mail_api.get_message("kept") } returns fake_mail_item("kept").copy(is_trashed = false)
+
+        val result = repo.trash(listOf("kept"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `fetch_inbox has_more and next_cursor are preserved`() = runTest {
         val items = listOf(fake_mail_item("i1"))
         coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
