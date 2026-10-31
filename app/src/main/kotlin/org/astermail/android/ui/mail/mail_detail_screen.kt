@@ -6263,12 +6263,6 @@ private fun email_image_client(context: android.content.Context): okhttp3.OkHttp
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .followRedirects(false)
-            .cache(
-                okhttp3.Cache(
-                    java.io.File(context.applicationContext.cacheDir, "email_img_cache"),
-                    64L * 1024 * 1024,
-                ),
-            )
             .build()
             .apply {
                 dispatcher.maxRequests = 64

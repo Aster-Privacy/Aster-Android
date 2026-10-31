@@ -21,13 +21,20 @@
 
 package org.astermail.android.mail
 
+import java.io.File
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 class OutboxFileCipherTest {
+
+    @get:Rule
+    val temp = TemporaryFolder()
 
     private val key = ByteArray(32) { 7 }
     private val cipher = OutboxFileCipher { key.copyOf() }
@@ -50,6 +57,31 @@ class OutboxFileCipherTest {
     @Test
     fun `a legacy plaintext file is still readable`() {
         assertArrayEquals(payload, cipher.open("send-1.json", payload))
+    }
+
+    @Test
+    fun `a legacy plaintext file is sealed in place`() {
+        val dir = temp.newFolder("outbox_attachments")
+        val file = File(dir, "send-1.json").apply { writeBytes(payload) }
+
+        assertTrue(reseal_outbox_file(file, cipher, payload))
+
+        val stored = file.readBytes()
+        assertTrue(OutboxFileCipher.is_sealed(stored))
+        assertFalse(String(stored, Charsets.ISO_8859_1).contains("secret.pdf"))
+        assertArrayEquals(payload, cipher.open("send-1.json", stored))
+        assertEquals(listOf("send-1.json"), dir.list()!!.toList())
+    }
+
+    @Test
+    fun `a legacy file stays readable when it cannot be sealed`() {
+        val dir = temp.newFolder("outbox_attachments")
+        val file = File(dir, "send-1.json").apply { writeBytes(payload) }
+
+        assertFalse(reseal_outbox_file(file, OutboxFileCipher { null }, payload))
+
+        assertArrayEquals(payload, file.readBytes())
+        assertEquals(listOf("send-1.json"), dir.list()!!.toList())
     }
 
     @Test

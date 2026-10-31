@@ -66,6 +66,20 @@ class DecryptedFileWipeTest {
     }
 
     @Test
+    fun startup_removes_the_remote_image_disk_cache() {
+        val cache = temp.newFolder("cache")
+        val journal = put(cache, "email_img_cache/journal")
+        val entry = put(cache, "email_img_cache/0a1b.1")
+        val other = put(cache, "image_cache/avatar.png")
+        assertTrue(remove_email_image_disk_cache(cache))
+        assertFalse(journal.exists())
+        assertFalse(entry.exists())
+        assertFalse(File(cache, "email_img_cache").exists())
+        assertTrue(other.exists())
+        assertTrue(remove_email_image_disk_cache(cache))
+    }
+
+    @Test
     fun sign_out_wipe_tolerates_missing_directories() {
         assertEquals(0, wipe_decrypted_caches(temp.newFolder("empty")))
     }
