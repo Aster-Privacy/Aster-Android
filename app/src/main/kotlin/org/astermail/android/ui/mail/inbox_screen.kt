@@ -700,7 +700,9 @@ fun InboxScreen(
     }
     LaunchedEffect(mail_vm, lifecycle_owner, live_sync_socket) {
         lifecycle_owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            live_sync_socket.run { event ->
+            live_sync_socket.run(
+                on_mutation = { mutation -> mail_vm.on_live_mail_mutation(mutation.action, mutation.item_ids) },
+            ) { event ->
                 when (event) {
                     LiveSyncEvent.folders_changed -> settings_vm.reload_labels_from_sync()
                     LiveSyncEvent.tags_changed -> settings_vm.reload_tags_from_sync()

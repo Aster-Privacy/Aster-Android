@@ -105,6 +105,25 @@ fun parse_reaction_frame(text: String): ReactionFrame? {
     )
 }
 
+data class MailMutationFrame(val action: String, val item_ids: List<String>)
+
+fun parse_mail_mutation_frame(text: String): MailMutationFrame? {
+    if (text.length > LIVE_SYNC_MAX_FRAME_CHARS) return null
+    val frame = runCatching { JSONObject(text) }.getOrNull() ?: return null
+    if (frame.optString("type") != "mail_mutation") return null
+    val action = optional_frame_field(frame, "action") ?: return null
+    val ids = frame.optJSONArray("item_ids")
+    val item_ids = buildList {
+        if (ids != null) {
+            for (index in 0 until ids.length()) {
+                val id = ids.optString(index)
+                if (id.isNotBlank()) add(id)
+            }
+        }
+    }.distinct()
+    return MailMutationFrame(action, item_ids)
+}
+
 private const val LIVE_SYNC_MAX_FRAME_CHARS = 65_536
 
 @Singleton
@@ -142,14 +161,17 @@ class LiveSyncSocket @Inject constructor(
         }
     }
 
-    suspend fun run(on_event: (LiveSyncEvent) -> Unit) {
+    suspend fun run(
+        on_mutation: (MailMutationFrame) -> Unit = {},
+        on_event: (LiveSyncEvent) -> Unit,
+    ) {
         var attempt = 0
         var last_refresh_ms = 0L
         while (currentCoroutineContext().isActive) {
             val token = runCatching { TokenStore(context).access_token }.getOrNull()
             if (token.isNullOrBlank()) return
             var authenticated = false
-            val end = session(token) { event ->
+            val end = session(token, on_mutation) { event ->
                 if (event == LiveSyncEvent.connected) authenticated = true
                 on_event(event)
             }
@@ -175,7 +197,11 @@ class LiveSyncSocket @Inject constructor(
         }
     }
 
-    private suspend fun session(token: String, on_event: (LiveSyncEvent) -> Unit): SessionEnd {
+    private suspend fun session(
+        token: String,
+        on_mutation: (MailMutationFrame) -> Unit,
+        on_event: (LiveSyncEvent) -> Unit,
+    ): SessionEnd {
         val frames = Channel<String>(Channel.BUFFERED)
         val request = Request.Builder().url(websocket_url_for(BuildConfig.API_BASE_URL)).build()
         val socket = runCatching {
@@ -215,7 +241,10 @@ class LiveSyncSocket @Inject constructor(
                     LiveSyncFrame.auth_error -> return SessionEnd.auth_failed
                     LiveSyncFrame.session_revoked -> return SessionEnd.revoked
                     LiveSyncFrame.ping -> runCatching { socket.send(PONG_FRAME) }
-                    LiveSyncFrame.mail_mutation -> on_event(LiveSyncEvent.mail_changed)
+                    LiveSyncFrame.mail_mutation -> {
+                        parse_mail_mutation_frame(text)?.takeIf { it.item_ids.isNotEmpty() }?.let(on_mutation)
+                        on_event(LiveSyncEvent.mail_changed)
+                    }
                     LiveSyncFrame.new_mail -> on_event(LiveSyncEvent.new_mail)
                     LiveSyncFrame.contacts_changed -> request_contact_sync()
                     LiveSyncFrame.folders_changed -> on_event(LiveSyncEvent.folders_changed)

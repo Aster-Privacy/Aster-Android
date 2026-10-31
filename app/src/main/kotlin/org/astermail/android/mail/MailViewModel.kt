@@ -1586,6 +1586,30 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun on_live_mail_mutation(action: String, item_ids: List<String>) {
+        if (item_ids.isEmpty() || !is_remote_removal_action(action)) return
+        val now = System.currentTimeMillis()
+        val ids = item_ids.filter { !restore_protected(it, now) }.toSet()
+        if (ids.isEmpty()) return
+        val current = _inbox_state.value
+        val kept = remove_remote_mutation_rows(current.current_folder, current.items, action, ids)
+        if (kept.size != current.items.size) _inbox_state.value = current.copy(items = kept)
+        folder_cache.keys.toList().forEach { folder ->
+            val cached = folder_cache[folder] ?: return@forEach
+            val rows = remove_remote_mutation_rows(folder, cached.items, action, ids)
+            if (rows.size != cached.items.size) folder_cache[folder] = cached.copy(items = rows)
+        }
+        disk_rows.keys.toList().forEach { folder ->
+            val rows = disk_rows[folder] ?: return@forEach
+            val left = remove_remote_mutation_rows(folder, rows, action, ids)
+            if (left.size != rows.size) disk_rows[folder] = left
+        }
+        if (action == "delete") {
+            remove_search_items(ids.toList())
+            viewModelScope.launch { runCatching { search_index_manager.remove_items(ids.toList()) } }
+        }
+    }
+
     private fun silent_revalidate(folder: String) {
         if (_inbox_state.value.is_refreshing) return
         silent_revalidate_job?.cancel()

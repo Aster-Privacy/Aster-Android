@@ -324,3 +324,30 @@ fun apply_pending_actions(
     }
     return out
 }
+
+private val remote_removal_effects = mapOf(
+    "trash" to "trash",
+    "archive" to "archive",
+    "mark_spam" to "mark_spam",
+    "spam" to "mark_spam",
+)
+
+fun is_remote_removal_action(action: String): Boolean =
+    action == "delete" || action in remote_removal_effects
+
+fun remove_remote_mutation_rows(
+    folder: String,
+    items: List<InboxItem>,
+    action: String,
+    item_ids: Set<String>,
+): List<InboxItem> {
+    if (item_ids.isEmpty() || items.isEmpty()) return items
+    if (action == "delete") return items.filter { it.id !in item_ids }
+    val effect = remote_removal_effects[action] ?: return items
+    return items.filter { original ->
+        if (original.id !in item_ids) return@filter true
+        val state = OverlayState(original)
+        apply_bulk_effect(state, effect)
+        folder_matches_item(folder, state.item)
+    }
+}
