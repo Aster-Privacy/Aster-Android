@@ -173,6 +173,13 @@ aab="app/build/outputs/bundle/fullRelease/app-full-release.aab"
 [ -f "$full_apk" ] || die "full APK not produced at $full_apk"
 [ "$skip_fdroid" = "1" ] || [ -f "$fdroid_unsigned" ] || die "fdroid APK not produced at $fdroid_unsigned"
 [ -f "$aab" ] || die "AAB not produced at $aab"
+mapping_archive="$work/mappings/$ver"
+mkdir -p "$mapping_archive"
+for m in app/build/outputs/mapping/fullRelease/mapping.prt app/build/outputs/mapping/fullRelease/mapping.txt; do
+  [ -f "$m" ] && cp "$m" "$mapping_archive/"
+done
+ls "$mapping_archive"/mapping.* >/dev/null 2>&1 || die "R8 mapping not produced under app/build/outputs/mapping/fullRelease"
+echo "mapping archived to $mapping_archive"
 
 rm -rf "$out_dir"
 mkdir -p "$out_dir"
