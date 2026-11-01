@@ -120,7 +120,7 @@ cp "$repo_root/app/google-services.json" app/google-services.json
 if [ -f "$repo_root/local.properties" ]; then
   cp "$repo_root/local.properties" local.properties
 else
-  printf 'sdk.dir=%s\n' "$(echo "$sdk" | sed 's|/|\\\\|g; s|^\([A-Za-z]\):|\1\\:|')" > local.properties
+  printf 'sdk.dir=%s\n' "$(printf '%s' "$sdk" | tr '\\\\' '/' | sed 's|/|\\\\|g; s|^\([A-Za-z]\):|\1\\:|')" > local.properties
 fi
 mkdir -p keystore
 cp "$repo_root/keystore/aster-mail-upload-v3.jks" keystore/
