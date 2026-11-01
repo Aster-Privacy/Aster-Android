@@ -52,7 +52,7 @@ object compose_seed_store {
     }
 
     private fun prefs(context: Context): SharedPreferences? =
-        runCatching { SecurePrefs.open(context.applicationContext, prefs_name) }.getOrNull()
+        runCatching { SecurePrefs.open_off_main(context.applicationContext, prefs_name) }.getOrNull()
 
     fun read_identity(
         context: Context,
@@ -79,9 +79,8 @@ object compose_seed_store {
         val merged = merge_identity(read_identity(context), snapshot)
         if (identity_memo == merged) return
         identity_memo = merged
-        runCatching {
-            prefs(context)?.edit()?.putString(identity_key, encode_identity(merged))?.apply()
-        }
+        val encoded = runCatching { encode_identity(merged) }.getOrNull() ?: return
+        SecurePrefs.edit_off_main(context, prefs_name) { it.putString(identity_key, encoded) }
     }
 
     private fun merge_identity(
@@ -127,7 +126,7 @@ object compose_seed_store {
     fun clear(context: Context) {
         identity_memo = null
         synchronized(thread_memo) { thread_memo.clear() }
-        runCatching { prefs(context)?.edit()?.clear()?.apply() }
+        SecurePrefs.edit_off_main(context, prefs_name) { it.clear() }
     }
 
     private fun encode_identity(snapshot: compose_identity_snapshot): String {

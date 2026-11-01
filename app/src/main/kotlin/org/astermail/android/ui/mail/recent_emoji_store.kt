@@ -32,7 +32,7 @@ private const val recent_emoji_limit = 24
 object RecentEmojiStore {
     fun load(context: Context): List<String> {
         val raw = runCatching {
-            SecurePrefs.open(context, recent_emoji_prefs).getString(recent_emoji_key, null)
+            SecurePrefs.open_off_main(context, recent_emoji_prefs)?.getString(recent_emoji_key, null)
         }.getOrNull() ?: return emptyList()
         return raw.split(recent_emoji_separator).filter { it.isNotBlank() }.take(recent_emoji_limit)
     }
@@ -40,11 +40,13 @@ object RecentEmojiStore {
     fun record(context: Context, glyph: String): List<String> {
         if (glyph.isBlank() || glyph.contains(recent_emoji_separator)) return load(context)
         val updated = (listOf(glyph) + load(context).filter { it != glyph }).take(recent_emoji_limit)
-        runCatching {
-            SecurePrefs.open(context, recent_emoji_prefs)
-                .edit()
-                .putString(recent_emoji_key, updated.joinToString(recent_emoji_separator))
-                .apply()
+        SecurePrefs.with_off_main(context, recent_emoji_prefs) { prefs ->
+            val stored = prefs.getString(recent_emoji_key, null)
+                ?.split(recent_emoji_separator)
+                ?.filter { it.isNotBlank() }
+                .orEmpty()
+            val merged = (listOf(glyph) + stored.filter { it != glyph }).take(recent_emoji_limit)
+            prefs.edit().putString(recent_emoji_key, merged.joinToString(recent_emoji_separator)).apply()
         }
         return updated
     }

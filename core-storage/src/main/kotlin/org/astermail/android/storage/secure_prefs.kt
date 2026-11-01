@@ -67,6 +67,45 @@ object SecurePrefs {
         return opened.computeIfAbsent(name) { open_uncached(app, it) }
     }
 
+    private val background_opens: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+    private val background_io = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "aster-prefs-io").apply { isDaemon = true }
+    }
+
+    fun open_off_main(context: Context, name: String): SharedPreferences? {
+        opened[name]?.let { return it }
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) return open(context, name)
+        val app = context.applicationContext
+        if (background_opens.add(name)) {
+            runCatching {
+                background_io.execute {
+                    try {
+                        runCatching { open(app, name) }
+                    } finally {
+                        background_opens.remove(name)
+                    }
+                }
+            }.onFailure { background_opens.remove(name) }
+        }
+        return null
+    }
+
+    fun with_off_main(context: Context, name: String, block: (SharedPreferences) -> Unit) {
+        val app = context.applicationContext
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runCatching { block(open(app, name)) }
+            return
+        }
+        runCatching {
+            background_io.execute { runCatching { block(open(app, name)) } }
+        }
+    }
+
+    fun edit_off_main(context: Context, name: String, change: (SharedPreferences.Editor) -> Unit) {
+        with_off_main(context, name) { prefs -> prefs.edit().also(change).apply() }
+    }
+
     fun warm(context: Context, names: Collection<String>) {
         val app = context.applicationContext
         try {
