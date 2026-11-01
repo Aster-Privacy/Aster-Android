@@ -92,6 +92,71 @@ fun crash_route(error: Throwable): String {
     return if (site.isEmpty()) "/app" else "/app/$site"
 }
 
+private const val TRACE_ROUTE_PREFIX = "/app/t"
+private const val MAX_ROUTE_LENGTH = 96
+private const val MAX_TRACE_FRAMES = 12
+
+private fun frame_fragment(frame: StackTraceElement): String {
+    val cls = frame.className.substringAfterLast('.')
+    val raw = "$cls.${frame.methodName}" + if (frame.lineNumber >= 0) ":${frame.lineNumber}" else ""
+    return raw.lowercase()
+        .filter { it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '.' || it == ':' || it == '-' }
+        .take(40)
+}
+
+fun trace_route_of(frames: List<StackTraceElement>): String? {
+    val route = StringBuilder(TRACE_ROUTE_PREFIX)
+    frames.asSequence()
+        .take(MAX_TRACE_FRAMES)
+        .map { frame_fragment(it) }
+        .filter { it.isNotEmpty() }
+        .forEach { fragment ->
+            if (route.length + 1 + fragment.length > MAX_ROUTE_LENGTH) return@forEach
+            route.append('/').append(fragment)
+        }
+    return if (route.length == TRACE_ROUTE_PREFIX.length) null else route.toString()
+}
+
+fun crash_trace_route(error: Throwable): String {
+    val root = generateSequence(error) { it.cause.takeIf { cause -> cause !== it } }
+        .take(MAX_FRAME_DEPTH)
+        .last()
+    return trace_route_of(root.stackTrace.toList()) ?: crash_route(error)
+}
+
+private val ANR_FRAME = Regex("^\\s+at ([^(\\s]+)\\.([^.(\\s]+)\\(([^)]*)\\)")
+private val RUNTIME_PREFIXES = listOf("java.", "jdk.", "sun.", "dalvik.", "libcore.", "kotlin.")
+
+fun anr_main_thread_frames(trace: String): List<StackTraceElement> {
+    val lines = trace.lineSequence().iterator()
+    while (lines.hasNext()) {
+        if (lines.next().startsWith("\"main\"")) break
+    }
+    val frames = mutableListOf<StackTraceElement>()
+    while (lines.hasNext()) {
+        val line = lines.next()
+        if (line.isBlank()) break
+        val match = ANR_FRAME.find(line) ?: continue
+        val (cls, method, location) = match.destructured
+        if (RUNTIME_PREFIXES.any { cls.startsWith(it) }) continue
+        val line_number = location.substringAfterLast(':', "").toIntOrNull() ?: -1
+        frames += StackTraceElement(cls, method, "SourceFile", line_number)
+        if (frames.size >= MAX_TRACE_FRAMES) break
+    }
+    return frames
+}
+
+fun anr_error_code(description: String?): String {
+    val text = description.orEmpty().lowercase()
+    return when {
+        "input dispatching" in text -> "anr_input"
+        "broadcast" in text -> "anr_broadcast"
+        "service" in text -> "anr_service"
+        "content provider" in text -> "anr_provider"
+        else -> "anr"
+    }
+}
+
 object ClientErrorReporter {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val sent = AtomicInteger(0)
@@ -113,6 +178,8 @@ object ClientErrorReporter {
     }
 
     fun is_report_path(path: String): Boolean = path.endsWith(REPORT_PATH)
+
+    fun is_configured(): Boolean = base_url != null
 
     fun report(
         feature: String,

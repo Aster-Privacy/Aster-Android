@@ -55,6 +55,10 @@ private val secure_prefs_namespaces = listOf(
     "aster_ratchet_plaintext_v1",
     "aster_unifiedpush_secure",
     "aster_app_lock_biometric",
+    "aster_compose_seed",
+    "aster_recent_emoji_v1",
+    "aster_unsubscribed_sender_keys",
+    "aster_outbox_file_key",
 )
 
 @HiltAndroidApp
@@ -70,8 +74,63 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
             org.astermail.android.api.errors.ClientErrorReporter.report(
                 feature = "app",
                 error_code = "work_initialization_failed",
-                severity = "warning",
+                severity = "warn",
             )
+        }
+    }
+
+    private fun report_previous_exits() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return
+        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) {
+            runCatching { EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java).labels_api() }
+        }
+        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) return
+        val activity_manager = getSystemService(android.app.ActivityManager::class.java) ?: return
+        val prefs = getSharedPreferences("aster_exit_reports", MODE_PRIVATE)
+        val last_seen = prefs.getLong("last_exit_timestamp", 0L)
+        val installed_at = runCatching { packageManager.getPackageInfo(packageName, 0).lastUpdateTime }
+            .getOrDefault(0L)
+        val exits = activity_manager.getHistoricalProcessExitReasons(packageName, 0, 16)
+        val newest = exits.maxOfOrNull { it.timestamp } ?: return
+        if (newest <= last_seen) return
+        prefs.edit().putLong("last_exit_timestamp", newest).apply()
+        if (last_seen == 0L) return
+        exits
+            .filter { it.timestamp > last_seen && it.timestamp > installed_at }
+            .sortedBy { it.timestamp }
+            .take(4)
+            .forEach { info -> report_exit(info) }
+    }
+
+    @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.R)
+    private fun report_exit(info: android.app.ApplicationExitInfo) {
+        when (info.reason) {
+            android.app.ApplicationExitInfo.REASON_ANR -> {
+                val trace = runCatching {
+                    info.traceInputStream?.use { stream ->
+                        stream.bufferedReader().readText().take(512 * 1024)
+                    }
+                }.getOrNull().orEmpty()
+                val frames = org.astermail.android.api.errors.anr_main_thread_frames(trace)
+                org.astermail.android.api.errors.ClientErrorReporter.report(
+                    feature = "app",
+                    error_code = org.astermail.android.api.errors.anr_error_code(info.description),
+                    severity = "error",
+                    route = org.astermail.android.api.errors.trace_route_of(frames) ?: "/app",
+                )
+            }
+            android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> {
+                org.astermail.android.api.errors.ClientErrorReporter.report(
+                    feature = "app",
+                    error_code = "native_crash",
+                    severity = "error",
+                    route = if (info.importance <= android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        "/app/foreground"
+                    } else {
+                        "/app/background"
+                    },
+                )
+            }
         }
     }
 
@@ -84,7 +143,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                         feature = "app",
                         error_code = org.astermail.android.api.errors.crash_error_code(error),
                         severity = "error",
-                        route = org.astermail.android.api.errors.crash_route(error),
+                        route = org.astermail.android.api.errors.crash_trace_route(error),
                         wait_for_delivery = true,
                     )
                 }
@@ -169,6 +228,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { prime_profile_resolver() }
+            runCatching { report_previous_exits() }
             runCatching { org.astermail.android.util.purge_sensitive_export_files(this) }
             runCatching { org.astermail.android.share.clear_opened_attachments(cacheDir) }
             runCatching { org.astermail.android.auth.remove_email_image_disk_cache(cacheDir) }

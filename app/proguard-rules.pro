@@ -1,4 +1,6 @@
 -keepattributes *Annotation*, InnerClasses, Signature, Exceptions
+-keepattributes SourceFile, LineNumberTable
+-renamesourcefileattribute SourceFile
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
 -assumenosideeffects class android.util.Log {
