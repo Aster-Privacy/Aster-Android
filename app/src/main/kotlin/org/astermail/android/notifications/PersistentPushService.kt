@@ -145,6 +145,10 @@ class PersistentPushService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val in_foreground = runCatching { enter_foreground() }.isSuccess
+        if (consume_start()) {
+            stop_cleanly()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             set_enabled(this, false)
             stop_cleanly()
@@ -497,6 +501,19 @@ class PersistentPushService : Service() {
         var socket_live = false
             private set
 
+        private val start_lock = Any()
+
+        private var pending_starts = 0
+
+        private var stop_requested = false
+
+        private fun consume_start(): Boolean = synchronized(start_lock) {
+            if (pending_starts > 0) pending_starts -= 1
+            val stop_now = stop_requested
+            if (pending_starts == 0) stop_requested = false
+            stop_now
+        }
+
         fun websocket_url(): String = websocket_url_for(BuildConfig.API_BASE_URL)
 
         fun is_enabled(context: Context): Boolean =
@@ -517,16 +534,28 @@ class PersistentPushService : Service() {
 
         fun start(context: Context) {
             val intent = Intent(context.applicationContext, PersistentPushService::class.java)
-            runCatching {
-                androidx.core.content.ContextCompat.startForegroundService(
-                    context.applicationContext,
-                    intent,
-                )
+            synchronized(start_lock) {
+                val started = runCatching {
+                    androidx.core.content.ContextCompat.startForegroundService(
+                        context.applicationContext,
+                        intent,
+                    )
+                }.isSuccess
+                if (started) {
+                    pending_starts += 1
+                    stop_requested = false
+                }
             }
         }
 
         fun stop(context: Context) {
             val intent = Intent(context.applicationContext, PersistentPushService::class.java)
+            synchronized(start_lock) {
+                if (pending_starts > 0) {
+                    stop_requested = true
+                    return
+                }
+            }
             runCatching { context.applicationContext.stopService(intent) }
         }
 
