@@ -118,7 +118,7 @@ internal fun format_domain_price(cents: Int, currency: String): String =
 
 internal fun open_url(context: android.content.Context, url: String) {
     try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: Throwable) {
         android.widget.Toast.makeText(
             context,

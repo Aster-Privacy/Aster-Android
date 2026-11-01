@@ -28,7 +28,7 @@ fun open_external_url(context: Context, url: String): Boolean {
 
 fun start_external_intent(context: Context, intent: Intent): Boolean {
     return try {
-        context.startActivity(intent)
+        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
     } catch (_: Throwable) {
         Toast.makeText(

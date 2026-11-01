@@ -459,7 +459,7 @@ fun ContactDetailScreen(
                     val uri = Uri.parse(url)
                     if (uri.scheme?.lowercase() !in setOf("http", "https")) return
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Throwable) {
