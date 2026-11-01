@@ -2,12 +2,14 @@ What's new:
 
 - A Keep me signed in option when you sign in.
 - A new sound for incoming mail.
+- Swipe between messages while you read.
+- Sync status for connected external accounts.
 
 Fixed:
 
-- You stay signed in for 30 days instead of being signed out early.
-- Mail locked by a password reset offers a way to unlock it.
-- Older mail stays readable after a password change.
-- Quoted text, inline images, and attachments open reliably.
-- Image themes stay on with Reduce transparency.
+- You stay signed in for 30 days.
+- Older mail stays readable after a password change or reset.
+- Quoted text, images, attachments, and links open reliably.
+- Mail deleted on another device disappears here too.
+- You can undo discarding a draft.
 - Messages no longer reload while you read them.
