@@ -1671,7 +1671,8 @@ fun MailDetailScreen(
                                             on_undo = {
                                                 try {
                                                     context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, Uri.parse(manual_url)),
+                                                        Intent(Intent.ACTION_VIEW, Uri.parse(manual_url))
+                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                                                     )
                                                     record_unsubscribed()
                                                 } catch (cancelled: CancellationException) {
@@ -2182,7 +2183,9 @@ fun MailDetailScreen(
                 show_toast(context.getString(R.string.could_not_open_link))
             } else {
                 try {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Throwable) {

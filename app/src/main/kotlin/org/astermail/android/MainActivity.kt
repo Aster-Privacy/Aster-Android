@@ -950,7 +950,10 @@ private fun AsterNavHost() {
                 },
                 on_terms_click = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/terms")))
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/terms"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
                     } catch (_: Throwable) {
                         android.widget.Toast.makeText(
                             context,
@@ -961,7 +964,10 @@ private fun AsterNavHost() {
                 },
                 on_privacy_click = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy")))
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://astermail.org/privacy"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
                     } catch (_: Throwable) {
                         android.widget.Toast.makeText(
                             context,
