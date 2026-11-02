@@ -495,7 +495,7 @@ fun SpecialOfferHost() {
                         if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                text = stringResource(R.string.special_offer_black_friday_body, months),
+                                text = stringResource(R.string.special_offer_black_friday_body, percent_off, months),
                                 color = colors.text_secondary,
                                 fontSize = 14.sp,
                                 lineHeight = 19.sp,

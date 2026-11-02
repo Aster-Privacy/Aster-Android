@@ -121,4 +121,11 @@ class OfferRouteTest {
         assertEquals(listOf("nova"), offer_selectable_plan_codes(offer, play_billing, true, codes))
         assertEquals(codes, offer_selectable_plan_codes(offer, BillingUiState(), false, codes))
     }
+
+    @Test
+    fun missing_or_zero_list_price_shows_list_price() {
+        assertNull(offer_discounted_label(offer, BillingUiState(), false, "nova", "year", 0L, "USD"))
+        assertNull(offer_discounted_label(offer, BillingUiState(), false, "nova", "year", null, "USD"))
+        assertNull(offer_discounted_label(offer, play_billing, true, "nova", "year", 0L, "USD"))
+    }
 }
