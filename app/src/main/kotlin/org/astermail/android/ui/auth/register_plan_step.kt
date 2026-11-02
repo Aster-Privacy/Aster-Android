@@ -32,7 +32,9 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Circle
 import compose.icons.tablericons.CircleCheck
 import org.astermail.android.billing.billing_interval_per_label
+import org.astermail.android.ui.upgrade.offer_checkout_route
 import org.astermail.android.ui.upgrade.offer_discounted_label
+import org.astermail.android.ui.upgrade.start_routed_checkout
 import org.astermail.android.ui.upgrade.special_offer_view_model
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
@@ -63,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -410,7 +413,12 @@ fun RegisterPlanStep(
                         label = stringResource(R.string.upgrade_get_plan, upgrade_plan_display_name(active_plan)),
                         onClick = {
                             billing_vm.clear_messages()
-                            billing_vm.start_checkout(active_plan.code, effective_interval, currency)
+                            billing_vm.start_routed_checkout(
+                                offer_checkout_route(offer_state, state, active_plan.code, effective_interval, play_install),
+                                active_plan.code,
+                                effective_interval,
+                                currency,
+                            )
                         },
                         is_loading = state.is_acting,
                     )
@@ -513,7 +521,7 @@ private fun signup_plan_row(
                     color = colors.text_tertiary,
                     fontSize = 12.sp,
                     maxLines = 1,
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                    textDecoration = TextDecoration.LineThrough,
                 )
             }
             Text(

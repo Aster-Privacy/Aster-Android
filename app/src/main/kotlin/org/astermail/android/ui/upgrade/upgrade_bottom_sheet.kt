@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -481,7 +482,12 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                     ),
                     onClick = {
                         billing_vm.clear_messages()
-                        billing_vm.start_checkout(active_plan.code, effective_interval, currency)
+                        billing_vm.start_routed_checkout(
+                            offer_checkout_route(offer_state, billing_state, active_plan.code, effective_interval, play_install),
+                            active_plan.code,
+                            effective_interval,
+                            currency,
+                        )
                     },
                     is_loading = billing_state.is_acting,
                 )
@@ -579,7 +585,7 @@ internal fun UpgradePlanCard(
                         text = list_text,
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
-                        textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                        textDecoration = TextDecoration.LineThrough,
                     )
                 }
             }

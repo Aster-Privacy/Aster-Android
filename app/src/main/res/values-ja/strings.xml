@@ -3059,10 +3059,14 @@
     <string name="special_offer_why_body">Aster は小さなチームで運営する独立した企業で、皆さまのご支援は私たちにとって大きな意味があります。サブスクリプションはサービスの運営を支え、Aster を毎日丁寧に開発し続けることを可能にしています。このオファーで、より気軽に始めていただけます。</string>
     <string name="special_offer_entry">特別オファー</string>
     <string name="special_offer_black_friday_title">ブラックフライデー:%2$dか月間%1$d%%オフ</string>
-    <string name="special_offer_black_friday_body">年間プラン、またはStar以外の月間プランを、最初の%1$dか月間半額でご利用いただけます。</string>
+    <string name="special_offer_black_friday_body">年間プラン、またはStar以外の月間プランを、最初の%2$dか月間%1$d%%オフでご利用いただけます。</string>
     <string name="special_offer_ends_in">終了まであと%1$s</string>
     <string name="special_offer_not_on_star_monthly">Starの月間プランは対象外です</string>
-    <string name="special_offer_renews_at">%2$dか月後は%1$sで更新されます</string>
+    <string name="special_offer_renews_at">%2$dか月後は月額%1$sで更新されます</string>
+    <string name="special_offer_switch_to_yearly">年払いに切り替える</string>
+    <string name="special_offer_countdown_days_hours">%1$d日%2$d時間</string>
+    <string name="special_offer_countdown_hours_minutes">%1$d時間%2$d分</string>
+    <string name="special_offer_countdown_minutes">%1$d分</string>
     <string name="special_offer_cta_claim">%1$d%%オフで始める</string>
     <string name="special_offer_crypto_one_payment">%1$d%%オフはこのお支払いにのみ適用され、以降の暗号資産でのお支払いは通常価格になります。1年間割引を受けるには、12か月を選択してください。</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>

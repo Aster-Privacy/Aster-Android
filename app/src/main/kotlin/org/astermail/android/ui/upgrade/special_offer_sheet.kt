@@ -121,9 +121,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
-import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.billing.BillingViewModel
-import org.astermail.android.billing.play_base_plan_id
 import org.astermail.android.billing.play_offer_for
 import org.astermail.android.billing.plan_display_name
 import org.astermail.android.billing.PlayOffer
@@ -257,7 +255,9 @@ fun SpecialOfferHost() {
         if (play_install) billing_vm.load_play_offers()
     }
 
-    val plan_codes = special_offer_plan_codes(offer_state.eligible_terms).ifEmpty { listOfNotNull(offer_state.plan_code) }
+    val all_plan_codes = special_offer_plan_codes(offer_state.eligible_terms).ifEmpty { listOfNotNull(offer_state.plan_code) }
+    val plan_codes = offer_selectable_plan_codes(offer_state, billing_state, play_install, all_plan_codes)
+        .ifEmpty { all_plan_codes }
     var selected_plan_code by rememberSaveable { mutableStateOf("") }
     var interval by rememberSaveable { mutableStateOf(SPECIAL_OFFER_YEARLY_INTERVAL) }
     val plan_code = selected_plan_code.takeIf { it in plan_codes }
@@ -267,17 +267,15 @@ fun SpecialOfferHost() {
     val checkout_interval = interval
     val is_yearly = checkout_interval == SPECIAL_OFFER_YEARLY_INTERVAL
     val covered = offer_state.covers(plan_code, checkout_interval)
-    val play_config = GooglePlayConfigResponse(
-        special_offer = billing_state.play_special_offer,
-        special_offer_yearly = billing_state.play_special_offer_yearly,
-        special_offers = billing_state.play_special_offers,
-    )
     val play_target = if (play_install) {
-        play_special_target_for(play_config, billing_state.play_offers, billing_state.play_products, plan_code, checkout_interval)
+        play_special_target_for(offer_play_config(billing_state), billing_state.play_offers, billing_state.play_products, plan_code, checkout_interval)
     } else {
         null
     }
     val play_offer = if (covered) play_target?.offer else null
+    val route = offer_checkout_route(offer_state, billing_state, plan_code, checkout_interval, play_install)
+    val yearly_route = offer_checkout_route(offer_state, billing_state, plan_code, SPECIAL_OFFER_YEARLY_INTERVAL, play_install)
+    val can_switch_to_yearly = !is_yearly && yearly_route != OfferRoute.None
     val list_cents = special_offer_list_cents(
         plan_code,
         checkout_interval,
@@ -377,7 +375,7 @@ fun SpecialOfferHost() {
     val monthly_cents = special_offer_list_cents(plan_code, SPECIAL_OFFER_INTERVAL, false, emptyList(), emptyList(), billing_state.available_plans)
     val yearly_cents = special_offer_list_cents(plan_code, SPECIAL_OFFER_YEARLY_INTERVAL, false, emptyList(), emptyList(), billing_state.available_plans)
     val card_price = offer_card_price_for(offer_state, plan_code, checkout_interval, list_cents)
-    val is_discounted = card_price != null && (!play_install || play_offer != null)
+    val is_discounted = card_price != null && route != OfferRoute.None
     val play_list_offer = if (play_install) {
         play_offer_for(billing_state.play_offers, billing_state.play_products, plan_code, checkout_interval)
     } else {
@@ -662,23 +660,21 @@ fun SpecialOfferHost() {
                         label = if (offer_state.offer_expired) {
                             stringResource(R.string.close)
                         } else if (!is_discounted) {
-                            stringResource(R.string.settings_billing_yearly)
+                            stringResource(R.string.special_offer_switch_to_yearly)
                         } else {
                             stringResource(R.string.special_offer_cta_claim, percent_off)
                         },
                         is_loading = is_busy || (play_install && !play_ready && !offer_state.offer_expired),
+                        enabled = offer_state.offer_expired || is_discounted || can_switch_to_yearly,
                         onClick = {
                             if (offer_state.offer_expired) {
                                 offer_vm.close()
                             } else if (!is_discounted) {
-                                interval = SPECIAL_OFFER_YEARLY_INTERVAL
-                            } else if (play_install) {
+                                if (can_switch_to_yearly) interval = SPECIAL_OFFER_YEARLY_INTERVAL
+                            } else if (route is OfferRoute.Play) {
                                 billing_vm.clear_messages()
                                 play_cta_pressed = true
-                                billing_vm.start_play_special_offer(
-                                    play_target?.product_id.orEmpty(),
-                                    play_target?.base_plan_id ?: play_base_plan_id(checkout_interval),
-                                )
+                                billing_vm.start_play_special_offer(route.product_id, route.base_plan_id)
                             } else {
                                 billing_vm.clear_messages()
                                 offer_vm.release_checkout()
@@ -708,7 +704,7 @@ fun SpecialOfferHost() {
                         modifier = Modifier.fillMaxWidth().alpha(if (prices_pending || !is_discounted) 0f else 1f),
                     )
 
-                    if (is_discounted) {
+                    if (is_discounted && !is_yearly) {
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.special_offer_renews_at, list_label, months),
@@ -1010,7 +1006,7 @@ private fun SpecialOfferSuccess(plan_label: String, benefits: List<Pair<String, 
 }
 
 @Composable
-private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, onClick: () -> Unit) {
+private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
     val accent = AsterMaterial.colors.accent_blue
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -1038,10 +1034,11 @@ private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, onClick:
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer { scaleX = scale; scaleY = scale }
+            .alpha(if (enabled) 1f else 0.5f)
             .clip(CTA_SHAPE)
             .background(base)
             .clickable(
-                enabled = !is_loading,
+                enabled = !is_loading && enabled,
                 interactionSource = interaction,
                 indication = null,
                 onClick = onClick,

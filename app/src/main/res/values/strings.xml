@@ -1981,10 +1981,14 @@
     <string name="special_offer_why_body">Aster is an independent company run by a small team, and your support means a lot to us. Subscriptions keep the service running and let us keep building Aster with care every day. This offer makes it easier to get started.</string>
     <string name="special_offer_entry">Special offer</string>
     <string name="special_offer_black_friday_title">Black Friday: %1$d%% off for %2$d months</string>
-    <string name="special_offer_black_friday_body">Get any yearly plan, or any monthly plan except Star, at half price for your first %1$d months.</string>
+    <string name="special_offer_black_friday_body">Get %1$d%% off any yearly plan, or any monthly plan except Star, for your first %2$d months.</string>
     <string name="special_offer_ends_in">Ends in %1$s</string>
     <string name="special_offer_not_on_star_monthly">Not available on Star monthly</string>
-    <string name="special_offer_renews_at">Renews at %1$s after %2$d months</string>
+    <string name="special_offer_renews_at">Renews at %1$s per month after %2$d months</string>
+    <string name="special_offer_switch_to_yearly">Switch to yearly</string>
+    <string name="special_offer_countdown_days_hours">%1$dd %2$dh</string>
+    <string name="special_offer_countdown_hours_minutes">%1$dh %2$dm</string>
+    <string name="special_offer_countdown_minutes">%1$dm</string>
     <string name="special_offer_cta_claim">Claim %1$d%% off</string>
     <string name="special_offer_crypto_one_payment">The %1$d%% discount covers this payment only, and later crypto payments are at the regular price. To get the discount for a full year, choose 12 months.</string>
     <string name="special_offer_benefit_aliases_title">Unlimited aliases</string>

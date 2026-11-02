@@ -3073,10 +3073,14 @@
     <string name="special_offer_why_body">Aster is een onafhankelijk bedrijf met een klein team, en je steun betekent veel voor ons. Abonnementen houden de dienst draaiende en stellen ons in staat Aster elke dag met zorg verder te ontwikkelen. Met deze aanbieding is beginnen makkelijker.</string>
     <string name="special_offer_entry">Speciale aanbieding</string>
     <string name="special_offer_black_friday_title">Black Friday: %1$d%% korting gedurende %2$d maanden</string>
-    <string name="special_offer_black_friday_body">Krijg elk jaarabonnement, of elk maandabonnement behalve Star, voor je eerste %1$d maanden voor de halve prijs.</string>
+    <string name="special_offer_black_friday_body">Krijg %1$d%% korting op elk jaarabonnement, of op elk maandabonnement behalve Star, voor je eerste %2$d maanden.</string>
     <string name="special_offer_ends_in">Eindigt over %1$s</string>
     <string name="special_offer_not_on_star_monthly">Niet beschikbaar voor Star maandelijks</string>
-    <string name="special_offer_renews_at">Wordt na %2$d maanden verlengd voor %1$s</string>
+    <string name="special_offer_renews_at">Wordt na %2$d maanden verlengd voor %1$s per maand</string>
+    <string name="special_offer_switch_to_yearly">Overstappen naar jaarlijks</string>
+    <string name="special_offer_countdown_days_hours">%1$d d %2$d u</string>
+    <string name="special_offer_countdown_hours_minutes">%1$d u %2$d min</string>
+    <string name="special_offer_countdown_minutes">%1$d min</string>
     <string name="special_offer_cta_claim">Claim %1$d%% korting</string>
     <string name="special_offer_crypto_one_payment">De korting van %1$d%% geldt alleen voor deze betaling. Latere cryptobetalingen zijn tegen de normale prijs. Kies 12 maanden om de korting een heel jaar te krijgen.</string>
     <string name="special_offer_benefit_aliases_title">Onbeperkte aliassen</string>

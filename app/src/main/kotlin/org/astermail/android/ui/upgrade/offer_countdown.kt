@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -41,15 +42,24 @@ private const val MINUTE_MS = 60_000L
 private const val HOUR_MS = 60L * MINUTE_MS
 private const val DAY_MS = 24L * HOUR_MS
 
-internal fun offer_countdown_text(remaining_ms: Long): String {
+internal data class offer_countdown_formats(
+    val days_hours: (Int, Int) -> String = { d, h -> "${d}d ${h}h" },
+    val hours_minutes: (Int, Int) -> String = { h, m -> "${h}h ${m}m" },
+    val minutes: (Int) -> String = { m -> "${m}m" },
+)
+
+internal fun offer_countdown_text(
+    remaining_ms: Long,
+    formats: offer_countdown_formats = offer_countdown_formats(),
+): String {
     if (remaining_ms <= 0L) return ""
     val days = remaining_ms / DAY_MS
     val hours = (remaining_ms % DAY_MS) / HOUR_MS
     val minutes = (remaining_ms % HOUR_MS) / MINUTE_MS
     return when {
-        days > 0L -> "${days}d ${hours}h"
-        hours > 0L -> "${hours}h ${minutes}m"
-        else -> "${minutes.coerceAtLeast(1L)}m"
+        days > 0L -> formats.days_hours(days.toInt(), hours.toInt())
+        hours > 0L -> formats.hours_minutes(hours.toInt(), minutes.toInt())
+        else -> formats.minutes(minutes.coerceAtLeast(1L).toInt())
     }
 }
 
@@ -66,7 +76,15 @@ fun offer_countdown(ends_at: Instant, modifier: Modifier = Modifier) {
             delay(MINUTE_MS)
         }
     }
-    val text = offer_countdown_text(ends_at.toEpochMilli() - now_ms)
+    val resources = LocalContext.current.resources
+    val formats = remember(resources) {
+        offer_countdown_formats(
+            days_hours = { d, h -> resources.getString(R.string.special_offer_countdown_days_hours, d, h) },
+            hours_minutes = { h, m -> resources.getString(R.string.special_offer_countdown_hours_minutes, h, m) },
+            minutes = { m -> resources.getString(R.string.special_offer_countdown_minutes, m) },
+        )
+    }
+    val text = offer_countdown_text(ends_at.toEpochMilli() - now_ms, formats)
     if (text.isEmpty()) return
     Text(
         text = stringResource(R.string.special_offer_ends_in, text),

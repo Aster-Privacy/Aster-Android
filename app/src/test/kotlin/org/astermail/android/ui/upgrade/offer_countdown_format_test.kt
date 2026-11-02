@@ -48,4 +48,15 @@ class OfferCountdownFormatTest {
         assertEquals("", offer_countdown_text(0L))
         assertEquals("", offer_countdown_text(-5L))
     }
+
+    @Test
+    fun uses_the_supplied_unit_formats() {
+        val formats = offer_countdown_formats(
+            days_hours = { d, h -> "$d j $h h" },
+            hours_minutes = { h, m -> "$h h $m min" },
+            minutes = { m -> "$m min" },
+        )
+        assertEquals("2 j 5 h", offer_countdown_text(53 * hour, formats))
+        assertEquals("45 min", offer_countdown_text(45 * 60_000L, formats))
+    }
 }

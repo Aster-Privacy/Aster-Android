@@ -61,6 +61,11 @@ import org.astermail.android.auth.AuthRepository
 import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
 
+private val FAMILY_OFFER_PLAN_CODES = setOf("duo", "family")
+
+internal fun offer_checkout_uses_family_endpoint(plan_code: String, special_offer: Boolean): Boolean =
+    special_offer && plan_code.lowercase() in FAMILY_OFFER_PLAN_CODES
+
 data class BillingUiState(
     val subscription: SubscriptionResponse? = null,
     val available_plans: List<AvailablePlan> = emptyList(),
@@ -1052,7 +1057,7 @@ class BillingViewModel @Inject constructor(
                 return@launch
             }
             try {
-                val checkout_url = if (special_offer && plan_code.lowercase() in FAMILY_OFFER_PLAN_CODES) {
+                val checkout_url = if (offer_checkout_uses_family_endpoint(plan_code, special_offer)) {
                     billing_api.create_family_checkout(
                         org.astermail.android.api.billing.FamilyCheckoutRequest(
                             plan_code = plan_code,
@@ -1897,5 +1902,3 @@ internal fun is_retryable_play_error(t: Throwable): Boolean = when (t) {
     is java.io.IOException -> true
     else -> false
 }
-
-private val FAMILY_OFFER_PLAN_CODES = setOf("duo", "family")

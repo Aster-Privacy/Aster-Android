@@ -3109,10 +3109,14 @@
     <string name="special_offer_why_body">Aster to niezależna firma z małym zespołem, a Twoje wsparcie wiele dla nas znaczy. Subskrypcje utrzymują działanie usługi i pozwalają nam każdego dnia starannie rozwijać Aster. Dzięki tej ofercie łatwiej zacząć.</string>
     <string name="special_offer_entry">Oferta specjalna</string>
     <string name="special_offer_black_friday_title">Black Friday: %1$d%% zniżki przez %2$d miesięcy</string>
-    <string name="special_offer_black_friday_body">Wybierz dowolny plan roczny lub dowolny plan miesięczny poza Star i zapłać połowę ceny przez pierwsze %1$d miesięcy.</string>
+    <string name="special_offer_black_friday_body">Wybierz dowolny plan roczny lub dowolny plan miesięczny poza Star i zapłać o %1$d%% mniej przez pierwsze %2$d miesięcy.</string>
     <string name="special_offer_ends_in">Kończy się za %1$s</string>
     <string name="special_offer_not_on_star_monthly">Niedostępne w planie Star miesięcznym</string>
-    <string name="special_offer_renews_at">Po %2$d miesiącach odnawia się w cenie %1$s</string>
+    <string name="special_offer_renews_at">Po %2$d miesiącach odnawia się w cenie %1$s miesięcznie</string>
+    <string name="special_offer_switch_to_yearly">Przełącz na roczny</string>
+    <string name="special_offer_countdown_days_hours">%1$d d %2$d godz.</string>
+    <string name="special_offer_countdown_hours_minutes">%1$d godz. %2$d min</string>
+    <string name="special_offer_countdown_minutes">%1$d min</string>
     <string name="special_offer_cta_claim">Odbierz %1$d%% zniżki</string>
     <string name="special_offer_crypto_one_payment">Rabat %1$d%% obejmuje tylko tę płatność. Kolejne płatności kryptowalutą są w normalnej cenie. Aby mieć rabat przez cały rok, wybierz 12 miesięcy.</string>
     <string name="special_offer_benefit_aliases_title">Nieograniczone aliasy</string>

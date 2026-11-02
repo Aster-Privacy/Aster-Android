@@ -3145,10 +3145,14 @@
     <string name="special_offer_why_body">Aster شركة مستقلة يديرها فريق صغير، ودعمك يعني لنا الكثير. تحافظ الاشتراكات على استمرار الخدمة وتتيح لنا مواصلة تطوير Aster بعناية كل يوم. يسهّل عليك هذا العرض البدء.</string>
     <string name="special_offer_entry">عرض خاص</string>
     <string name="special_offer_black_friday_title">الجمعة السوداء: خصم %1$d%% لمدة %2$d شهرًا</string>
-    <string name="special_offer_black_friday_body">احصل على أي خطة سنوية، أو أي خطة شهرية باستثناء Star، بنصف السعر خلال أول %1$d شهرًا.</string>
+    <string name="special_offer_black_friday_body">احصل على خصم %1$d%% على أي خطة سنوية، أو أي خطة شهرية باستثناء Star، خلال أول %2$d شهرًا.</string>
     <string name="special_offer_ends_in">ينتهي خلال %1$s</string>
     <string name="special_offer_not_on_star_monthly">غير متاح لخطة Star الشهرية</string>
-    <string name="special_offer_renews_at">يتجدد بسعر %1$s بعد %2$d شهرًا</string>
+    <string name="special_offer_renews_at">يتجدد بسعر %1$s شهريًا بعد %2$d شهرًا</string>
+    <string name="special_offer_switch_to_yearly">التبديل إلى السنوي</string>
+    <string name="special_offer_countdown_days_hours">%1$d ي %2$d س</string>
+    <string name="special_offer_countdown_hours_minutes">%1$d س %2$d د</string>
+    <string name="special_offer_countdown_minutes">%1$d د</string>
     <string name="special_offer_cta_claim">احصل على خصم %1$d%%</string>
     <string name="special_offer_crypto_one_payment">ينطبق خصم %1$d%% على هذه الدفعة فقط، وتُحتسب دفعات العملات المشفرة اللاحقة بالسعر العادي. للحصول على الخصم لمدة عام كامل، اختر 12 شهرًا.</string>
     <string name="special_offer_benefit_aliases_title">أسماء مستعارة غير محدودة</string>
