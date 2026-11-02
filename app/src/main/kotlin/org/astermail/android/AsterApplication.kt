@@ -81,20 +81,21 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
 
     private fun report_previous_exits() {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return
-        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) {
-            runCatching { EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java).labels_api() }
-        }
-        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) return
         val activity_manager = getSystemService(android.app.ActivityManager::class.java) ?: return
         val prefs = getSharedPreferences("aster_exit_reports", MODE_PRIVATE)
         val last_seen = prefs.getLong("last_exit_timestamp", 0L)
-        val installed_at = runCatching { packageManager.getPackageInfo(packageName, 0).lastUpdateTime }
-            .getOrDefault(0L)
         val exits = activity_manager.getHistoricalProcessExitReasons(packageName, 0, 16)
         val newest = exits.maxOfOrNull { it.timestamp } ?: return
         if (newest <= last_seen) return
         prefs.edit().putLong("last_exit_timestamp", newest).apply()
         if (last_seen == 0L) return
+        if (!org.astermail.android.api.errors.ClientErrorReporter.is_enabled()) return
+        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) {
+            runCatching { EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java).labels_api() }
+        }
+        if (!org.astermail.android.api.errors.ClientErrorReporter.is_configured()) return
+        val installed_at = runCatching { packageManager.getPackageInfo(packageName, 0).lastUpdateTime }
+            .getOrDefault(0L)
         exits
             .filter { it.timestamp > last_seen && it.timestamp > installed_at }
             .sortedBy { it.timestamp }
@@ -166,6 +167,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
 
     override fun onCreate() {
         super.onCreate()
+        runCatching { org.astermail.android.settings.crash_reports.start(this) }
         install_crash_reporting()
         disable_compose_content_capture()
         runCatching {

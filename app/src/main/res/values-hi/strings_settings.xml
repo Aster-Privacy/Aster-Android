@@ -136,6 +136,9 @@
     <string name="settings_diagnostics_secure_storage">सुरक्षित स्टोरेज</string>
     <string name="settings_diagnostics_storage_ok">ठीक</string>
     <string name="settings_diagnostics_storage_degraded">कमज़ोर, साइन आउट करके दोबारा साइन इन करें</string>
+    <string name="settings_crash_reports_title">क्रैश रिपोर्ट भेजें</string>
+    <string name="settings_crash_reports_subtitle">जब तक आप इसे चालू नहीं करते, यह बंद रहता है। रिपोर्ट में कभी भी आपका खाता, संदेश या संपर्क शामिल नहीं होते।</string>
+    <string name="settings_crash_reports_info">यह सेटिंग चालू होने पर, अगर ऐप क्रैश हो जाता है, प्रतिक्रिया देना बंद कर देता है या किसी सुविधा तक नहीं पहुंच पाता, तो Aster Mail, Aster को एक गुमनाम रिपोर्ट भेजता है। रिपोर्ट में त्रुटि का प्रकार, ऐप का संस्करण और ऐप के कोड में वह जगह होती है जहां त्रुटि हुई। इसमें कभी भी आपका पता, आपके संदेश, आपके संपर्क या आपके खाते की पहचान करने वाली कोई जानकारी नहीं होती। यह सेटिंग बंद होने पर, Aster Mail कोई रिपोर्ट नहीं भेजता।</string>
     <string name="revoke_session_confirm_message">इस डिवाइस को अपने खाते से साइन आउट करें?</string>
     <string name="sign_out_all_other_confirm_message">इस डिवाइस को छोड़कर हर डिवाइस साइन आउट करें?</string>
     <string name="alias_forward_limit_reached">आप अपने प्लान के लिए सक्रिय एलियास की अधिकतम संख्या तक पहुंच गए हैं</string>

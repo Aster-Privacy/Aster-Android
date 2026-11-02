@@ -1,11 +1,11 @@
 Aster Mail is a private, encrypted email app for astermail.org accounts.
 
-Your messages are encrypted on your device before they leave it. The server stores ciphertext and nothing else, so nobody at Aster can read your mail, scan it, or sell what is in it. There are no ads, no trackers, and no analytics anywhere in the app.
+Your messages are encrypted on your device before they leave it. The server stores ciphertext and nothing else, so nobody at Aster can read your mail, scan it, or sell what is in it. There are no ads, no trackers, and no analytics anywhere in the app, and crash reports stay off unless you turn them on.
 
 Private by design
 - End-to-end encryption between Aster users, using a post-quantum ratchet protocol
 - Zero-access architecture: the server holds only encrypted content
-- No ads, no tracking, no telemetry, no profiling
+- No ads, no tracking, and no profiling, with crash reports sent only if you turn them on
 - Open source under AGPL-3.0, so anyone can audit what the app does
 
 Email aliases

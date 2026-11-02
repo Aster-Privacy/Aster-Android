@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">セキュアストレージ</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
     <string name="settings_diagnostics_storage_degraded">劣化しています。サインアウトしてからサインインし直してください</string>
+    <string name="settings_crash_reports_title">クラッシュレポートを送信</string>
+    <string name="settings_crash_reports_subtitle">オンにしない限りオフのままです。レポートにアカウント、メッセージ、連絡先が含まれることはありません。</string>
+    <string name="settings_crash_reports_info">この設定がオンの場合、アプリがクラッシュしたとき、応答しなくなったとき、または機能に接続できなかったときに、Aster Mail は匿名のレポートを Aster に送信します。レポートには、エラーの種類、アプリのバージョン、エラーが発生したアプリのコード内の場所が含まれます。アドレス、メッセージ、連絡先、アカウントを特定できる情報が含まれることはありません。この設定がオフの場合、Aster Mail はレポートを送信しません。</string>
     <string name="revoke_session_confirm_message">この端末をアカウントからサインアウトしますか？</string>
     <string name="sign_out_all_other_confirm_message">この端末以外をすべてサインアウトしますか？</string>
     <string name="alias_forward_limit_reached">現在のプランで使えるエイリアスの上限に達しました</string>

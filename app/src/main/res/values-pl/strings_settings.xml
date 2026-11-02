@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Bezpieczne przechowywanie</string>
     <string name="settings_diagnostics_storage_ok">Sprawne</string>
     <string name="settings_diagnostics_storage_degraded">Uszkodzone, wyloguj się i zaloguj ponownie</string>
+    <string name="settings_crash_reports_title">Wysyłaj raporty o awariach</string>
+    <string name="settings_crash_reports_subtitle">Wyłączone, dopóki tego nie włączysz. Raporty nigdy nie zawierają Twojego konta, wiadomości ani kontaktów.</string>
+    <string name="settings_crash_reports_info">Gdy to ustawienie jest włączone, Aster Mail wysyła do Aster anonimowy raport, jeśli aplikacja ulegnie awarii, przestanie odpowiadać lub nie może połączyć się z funkcją. Raport zawiera typ błędu, wersję aplikacji i miejsce w kodzie aplikacji, w którym wystąpił błąd. Nigdy nie zawiera Twojego adresu, wiadomości, kontaktów ani niczego, co identyfikuje Twoje konto. Gdy to ustawienie jest wyłączone, Aster Mail nie wysyła żadnych raportów.</string>
     <string name="revoke_session_confirm_message">Wylogować to urządzenie z Twojego konta?</string>
     <string name="sign_out_all_other_confirm_message">Wylogować wszystkie urządzenia oprócz tego?</string>
     <string name="alias_forward_limit_reached">Osiągnięto maksymalną liczbę aktywnych aliasów w Twoim planie</string>

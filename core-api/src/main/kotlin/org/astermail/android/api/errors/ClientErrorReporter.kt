@@ -171,6 +171,15 @@ object ClientErrorReporter {
     @Volatile
     private var user_agent: String = "AsterMail-Android/unknown"
 
+    @Volatile
+    private var enabled: Boolean = false
+
+    fun set_enabled(value: Boolean) {
+        enabled = value
+    }
+
+    fun is_enabled(): Boolean = enabled
+
     fun configure(base_url: String, release: String, user_agent: String? = null) {
         this.base_url = base_url.trimEnd('/')
         this.release = if (SLUG.matches(release)) release else "unknown"
@@ -190,6 +199,7 @@ object ClientErrorReporter {
         wait_for_delivery: Boolean = false,
     ) {
         runCatching {
+            if (!enabled) return
             val target = base_url ?: return
             if (!SLUG.matches(feature) || !SLUG.matches(error_code)) return
             if (severity != "warn" && severity != "error") return
@@ -224,6 +234,7 @@ object ClientErrorReporter {
 
     private fun deliver(target: String, body: String) {
         runCatching {
+            if (!enabled) return
             val connection = URL("$target$REPORT_PATH").openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.connectTimeout = 2_000

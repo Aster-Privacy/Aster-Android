@@ -148,6 +148,9 @@
     <string name="settings_diagnostics_secure_storage">Stockage sécurisé</string>
     <string name="settings_diagnostics_storage_ok">Sain</string>
     <string name="settings_diagnostics_storage_degraded">Dégradé, déconnectez-vous puis reconnectez-vous</string>
+    <string name="settings_crash_reports_title">Envoyer les rapports de plantage</string>
+    <string name="settings_crash_reports_subtitle">Désactivé sauf si vous l\'activez. Les rapports n\'incluent jamais votre compte, vos messages ni vos contacts.</string>
+    <string name="settings_crash_reports_info">Lorsque ce réglage est activé, Aster Mail envoie à Aster un rapport anonyme si l\'app plante, ne répond plus ou ne parvient pas à accéder à une fonctionnalité. Un rapport contient le type d\'erreur, la version de l\'app et l\'endroit du code de l\'app où l\'erreur s\'est produite. Il ne contient jamais votre adresse, vos messages, vos contacts ni rien qui identifie votre compte. Lorsque ce réglage est désactivé, Aster Mail n\'envoie aucun rapport.</string>
 
     <string name="revoke_session_confirm_message">Déconnecter cet appareil de votre compte ?</string>
     <string name="sign_out_all_other_confirm_message">Déconnecter tous les appareils sauf celui-ci ?</string>

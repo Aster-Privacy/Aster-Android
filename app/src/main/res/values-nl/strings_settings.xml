@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Beveiligde opslag</string>
     <string name="settings_diagnostics_storage_ok">In orde</string>
     <string name="settings_diagnostics_storage_degraded">Verminderd, log uit en weer in</string>
+    <string name="settings_crash_reports_title">Crashrapporten versturen</string>
+    <string name="settings_crash_reports_subtitle">Uit, tenzij je het aanzet. Rapporten bevatten nooit je account, berichten of contacten.</string>
+    <string name="settings_crash_reports_info">Als deze instelling aan staat, stuurt Aster Mail een anoniem rapport naar Aster wanneer de app crasht, niet meer reageert of een functie niet kan bereiken. Een rapport bevat het type fout, de app-versie en de plek in de code van de app waar de fout optrad. Het bevat nooit je adres, je berichten, je contacten of iets anders waarmee je account te herkennen is. Als deze instelling uit staat, stuurt Aster Mail geen rapporten.</string>
     <string name="revoke_session_confirm_message">Dit apparaat uitloggen uit je account?</string>
     <string name="sign_out_all_other_confirm_message">Op alle apparaten behalve dit apparaat uitloggen?</string>
     <string name="alias_forward_limit_reached">Je hebt het maximum aantal actieve aliassen van je abonnement bereikt</string>

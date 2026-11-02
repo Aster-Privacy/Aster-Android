@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Archiviazione sicura</string>
     <string name="settings_diagnostics_storage_ok">Integra</string>
     <string name="settings_diagnostics_storage_degraded">Degradata, esci e accedi di nuovo</string>
+    <string name="settings_crash_reports_title">Invia segnalazioni di arresto anomalo</string>
+    <string name="settings_crash_reports_subtitle">Disattivato finché non lo attivi. Le segnalazioni non includono mai il tuo account, i tuoi messaggi o i tuoi contatti.</string>
+    <string name="settings_crash_reports_info">Quando questa impostazione è attiva, Aster Mail invia ad Aster una segnalazione anonima se l\'app si arresta in modo anomalo, smette di rispondere o non riesce a raggiungere una funzione. Una segnalazione contiene il tipo di errore, la versione dell\'app e il punto del codice dell\'app in cui si è verificato l\'errore. Non contiene mai il tuo indirizzo, i tuoi messaggi, i tuoi contatti o qualsiasi elemento che identifichi il tuo account. Quando questa impostazione è disattivata, Aster Mail non invia alcuna segnalazione.</string>
     <string name="revoke_session_confirm_message">Vuoi disconnettere questo dispositivo dal tuo account?</string>
     <string name="sign_out_all_other_confirm_message">Vuoi disconnettere tutti i dispositivi tranne questo?</string>
     <string name="alias_forward_limit_reached">Hai raggiunto il numero massimo di alias attivi previsto dal tuo piano</string>

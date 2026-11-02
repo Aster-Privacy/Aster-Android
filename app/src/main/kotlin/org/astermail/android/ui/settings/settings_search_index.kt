@@ -471,6 +471,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("diagnostics", R.string.diagnostics, R.string.device, false),
     settings_index_entry("diagnostics", R.string.diagnostics, R.string.android, false),
     settings_index_entry("diagnostics", R.string.diagnostics, R.string.copy_diagnostics, false),
+    settings_index_entry("diagnostics", R.string.diagnostics, R.string.settings_crash_reports_title, false),
     settings_index_entry("accessibility", R.string.settings_accessibility, R.string.settings_accessibility, true),
     settings_index_entry("accessibility", R.string.settings_accessibility, R.string.font_size, false),
     settings_index_entry("accessibility", R.string.settings_accessibility, R.string.font_small, false),

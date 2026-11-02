@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Защищённое хранилище</string>
     <string name="settings_diagnostics_storage_ok">Исправно</string>
     <string name="settings_diagnostics_storage_degraded">Работает с ошибками. Выйдите и войдите снова.</string>
+    <string name="settings_crash_reports_title">Отправлять отчеты о сбоях</string>
+    <string name="settings_crash_reports_subtitle">Выключено, пока вы не включите. Отчеты никогда не содержат ваш аккаунт, сообщения или контакты.</string>
+    <string name="settings_crash_reports_info">Когда этот параметр включен, Aster Mail отправляет в Aster анонимный отчет, если приложение аварийно завершается, перестает отвечать или не может обратиться к функции. Отчет содержит тип ошибки, версию приложения и место в коде приложения, где произошла ошибка. Он никогда не содержит ваш адрес, ваши сообщения, ваши контакты или что-либо, что позволяет определить ваш аккаунт. Когда этот параметр выключен, Aster Mail не отправляет отчеты.</string>
     <string name="revoke_session_confirm_message">Отключить это устройство от вашего аккаунта?</string>
     <string name="sign_out_all_other_confirm_message">Выйти на всех устройствах, кроме этого?</string>
     <string name="alias_forward_limit_reached">Достигнут лимит активных псевдонимов в вашем тарифе</string>

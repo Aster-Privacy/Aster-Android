@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Armazenamento seguro</string>
     <string name="settings_diagnostics_storage_ok">Saudável</string>
     <string name="settings_diagnostics_storage_degraded">Degradado; termine sessão e inicie sessão novamente</string>
+    <string name="settings_crash_reports_title">Enviar relatórios de falhas</string>
+    <string name="settings_crash_reports_subtitle">Desativado, a menos que o ative. Os relatórios nunca incluem a sua conta, mensagens ou contactos.</string>
+    <string name="settings_crash_reports_info">Quando esta definição está ativada, o Aster Mail envia à Aster um relatório anónimo se a app falhar, deixar de responder ou não conseguir aceder a uma funcionalidade. Um relatório contém o tipo de erro, a versão da app e o local no código da app onde o erro ocorreu. Nunca contém o seu endereço, as suas mensagens, os seus contactos nem nada que identifique a sua conta. Quando esta definição está desativada, o Aster Mail não envia relatórios.</string>
     <string name="revoke_session_confirm_message">Terminar a sessão deste dispositivo na sua conta?</string>
     <string name="sign_out_all_other_confirm_message">Terminar sessão em todos os dispositivos exceto este?</string>
     <string name="alias_forward_limit_reached">Atingiu o número máximo de aliases ativos do seu plano</string>

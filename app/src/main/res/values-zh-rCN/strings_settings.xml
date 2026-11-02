@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">安全存储</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
     <string name="settings_diagnostics_storage_degraded">异常，请退出登录后重新登录</string>
+    <string name="settings_crash_reports_title">发送崩溃报告</string>
+    <string name="settings_crash_reports_subtitle">除非你开启，否则保持关闭。报告绝不包含你的账户、邮件或联系人。</string>
+    <string name="settings_crash_reports_info">开启此设置后，如果应用崩溃、停止响应或无法访问某项功能，Aster Mail 会向 Aster 发送一份匿名报告。报告包含错误类型、应用版本以及应用代码中发生错误的位置。报告绝不包含你的地址、邮件、联系人或任何可识别你账户的信息。关闭此设置后，Aster Mail 不会发送任何报告。</string>
     <string name="revoke_session_confirm_message">要让此设备退出您的账户吗？</string>
     <string name="sign_out_all_other_confirm_message">要在除此设备外的所有设备上退出登录吗？</string>
     <string name="alias_forward_limit_reached">您的套餐可用的启用别名数量已达上限</string>

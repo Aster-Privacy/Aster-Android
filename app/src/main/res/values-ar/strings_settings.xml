@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">التخزين الآمن</string>
     <string name="settings_diagnostics_storage_ok">سليم</string>
     <string name="settings_diagnostics_storage_degraded">متدهور، سجّل الخروج ثم سجّل الدخول مرة أخرى</string>
+    <string name="settings_crash_reports_title">إرسال تقارير الأعطال</string>
+    <string name="settings_crash_reports_subtitle">متوقف ما لم تشغّله. لا تتضمن التقارير حسابك أو رسائلك أو جهات اتصالك أبدًا.</string>
+    <string name="settings_crash_reports_info">عند تشغيل هذا الإعداد، يرسل Aster Mail إلى Aster تقريرًا مجهول الهوية إذا تعطل التطبيق أو توقف عن الاستجابة أو تعذر عليه الوصول إلى ميزة. يحتوي التقرير على نوع الخطأ وإصدار التطبيق والموضع في شيفرة التطبيق الذي حدث فيه الخطأ. ولا يحتوي أبدًا على عنوانك أو رسائلك أو جهات اتصالك أو أي شيء يحدد حسابك. عند إيقاف هذا الإعداد، لا يرسل Aster Mail أي تقارير.</string>
     <string name="revoke_session_confirm_message">هل تريد تسجيل خروج هذا الجهاز من حسابك؟</string>
     <string name="sign_out_all_other_confirm_message">هل تريد تسجيل الخروج من كل الأجهزة عدا هذا الجهاز؟</string>
     <string name="alias_forward_limit_reached">لقد بلغت الحد الأقصى للأسماء المستعارة النشطة في خطتك.</string>

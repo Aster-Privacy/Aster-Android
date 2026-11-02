@@ -31,6 +31,10 @@ import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -39,6 +43,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.settings.crash_reports
 
 @Composable
 fun DiagnosticsScreen(
@@ -46,6 +51,7 @@ fun DiagnosticsScreen(
     on_open: (id: String) -> Unit = {},
 ) {
     val context = LocalContext.current
+    var crash_reports_on by remember { mutableStateOf(crash_reports.read(context)) }
     val storage_healthy = org.astermail.android.storage.StorageHealth.is_healthy() &&
         !org.astermail.android.storage.SecurePrefs.was_key_material_lost(context)
     val storage_status = if (storage_healthy) {
@@ -75,6 +81,21 @@ fun DiagnosticsScreen(
             detail_row(title = stringResource(R.string.android), subtitle = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
             settings_row_gap()
             detail_row(title = stringResource(R.string.settings_diagnostics_secure_storage), subtitle = storage_status)
+        }
+        v_gap(AsterSpacing.lg)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            settings_toggle_row(
+                title = stringResource(R.string.settings_crash_reports_title),
+                subtitle = stringResource(R.string.settings_crash_reports_subtitle),
+                checked = crash_reports_on,
+                info_title = stringResource(R.string.settings_crash_reports_title),
+                info_description = stringResource(R.string.settings_crash_reports_info),
+                test_tag = "crash_reports_toggle",
+                on_change = { on ->
+                    crash_reports_on = on
+                    crash_reports.set(context, on)
+                },
+            )
         }
         v_gap(AsterSpacing.lg)
         AsterSecondaryButton(

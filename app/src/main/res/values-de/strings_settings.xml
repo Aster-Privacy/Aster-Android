@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Sicherer Speicher</string>
     <string name="settings_diagnostics_storage_ok">Fehlerfrei</string>
     <string name="settings_diagnostics_storage_degraded">Beeinträchtigt, melden Sie sich ab und wieder an</string>
+    <string name="settings_crash_reports_title">Absturzberichte senden</string>
+    <string name="settings_crash_reports_subtitle">Aus, solange Sie es nicht einschalten. Berichte enthalten nie Ihr Konto, Ihre Nachrichten oder Ihre Kontakte.</string>
+    <string name="settings_crash_reports_info">Wenn diese Einstellung aktiviert ist, sendet Aster Mail einen anonymen Bericht an Aster, falls die App abstürzt, nicht mehr reagiert oder eine Funktion nicht erreicht. Ein Bericht enthält die Fehlerart, die App-Version und die Stelle im Code der App, an der der Fehler aufgetreten ist. Er enthält nie Ihre Adresse, Ihre Nachrichten, Ihre Kontakte oder etwas, das Ihr Konto identifiziert. Wenn diese Einstellung deaktiviert ist, sendet Aster Mail keine Berichte.</string>
     <string name="revoke_session_confirm_message">Dieses Gerät von Ihrem Konto abmelden?</string>
     <string name="sign_out_all_other_confirm_message">Alle Geräte außer diesem abmelden?</string>
     <string name="alias_forward_limit_reached">Sie haben die Höchstzahl aktiver Aliase für Ihren Tarif erreicht</string>

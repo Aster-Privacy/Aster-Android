@@ -1,0 +1,7 @@
+What's new:
+
+- A Send crash reports setting in Settings > About > Diagnostics. It stays off unless you turn it on.
+
+Fixed:
+
+- While crash reports are off, the app sends no error reports at all.

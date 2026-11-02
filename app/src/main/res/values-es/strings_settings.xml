@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Almacenamiento seguro</string>
     <string name="settings_diagnostics_storage_ok">Correcto</string>
     <string name="settings_diagnostics_storage_degraded">Degradado, cierra sesión y vuelve a iniciarla</string>
+    <string name="settings_crash_reports_title">Enviar informes de errores</string>
+    <string name="settings_crash_reports_subtitle">Desactivado salvo que lo actives. Los informes nunca incluyen tu cuenta, tus mensajes ni tus contactos.</string>
+    <string name="settings_crash_reports_info">Cuando este ajuste está activado, Aster Mail envía a Aster un informe anónimo si la app se cierra inesperadamente, deja de responder o no puede acceder a una función. El informe contiene el tipo de error, la versión de la app y el punto del código de la app donde se produjo el error. Nunca contiene tu dirección, tus mensajes, tus contactos ni nada que identifique tu cuenta. Cuando este ajuste está desactivado, Aster Mail no envía ningún informe.</string>
     <string name="revoke_session_confirm_message">¿Cerrar la sesión de este dispositivo en tu cuenta?</string>
     <string name="sign_out_all_other_confirm_message">¿Cerrar sesión en todos los dispositivos menos este?</string>
     <string name="alias_forward_limit_reached">Has llegado al máximo de alias activos de tu plan</string>

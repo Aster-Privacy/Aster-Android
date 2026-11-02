@@ -148,6 +148,9 @@
     <string name="settings_diagnostics_secure_storage">Secure storage</string>
     <string name="settings_diagnostics_storage_ok">Healthy</string>
     <string name="settings_diagnostics_storage_degraded">Degraded, sign out and sign back in</string>
+    <string name="settings_crash_reports_title">Send crash reports</string>
+    <string name="settings_crash_reports_subtitle">Off unless you turn it on. Reports never include your account, messages, or contacts.</string>
+    <string name="settings_crash_reports_info">When this setting is on, Aster Mail sends Aster an anonymous report if the app crashes, stops responding, or can\'t reach a feature. A report contains the type of error, the app version, and the place in the app\'s code where the error happened. It never contains your address, your messages, your contacts, or anything that identifies your account. When this setting is off, Aster Mail sends no reports.</string>
 
     <string name="revoke_session_confirm_message">Sign this device out of your account?</string>
     <string name="sign_out_all_other_confirm_message">Sign out every device except this one?</string>

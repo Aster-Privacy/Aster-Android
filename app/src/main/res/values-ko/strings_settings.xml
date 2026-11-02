@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">보안 저장소</string>
     <string name="settings_diagnostics_storage_ok">정상</string>
     <string name="settings_diagnostics_storage_degraded">성능 저하됨, 로그아웃한 후 다시 로그인하세요</string>
+    <string name="settings_crash_reports_title">충돌 보고서 보내기</string>
+    <string name="settings_crash_reports_subtitle">직접 켜지 않으면 꺼져 있습니다. 보고서에는 계정, 메시지, 연락처가 절대 포함되지 않습니다.</string>
+    <string name="settings_crash_reports_info">이 설정을 켜면 앱이 충돌하거나, 응답하지 않거나, 기능에 연결하지 못할 때 Aster Mail이 Aster에 익명 보고서를 보냅니다. 보고서에는 오류 유형, 앱 버전, 오류가 발생한 앱 코드의 위치가 포함됩니다. 주소, 메시지, 연락처 또는 계정을 식별할 수 있는 정보는 절대 포함되지 않습니다. 이 설정을 끄면 Aster Mail은 보고서를 보내지 않습니다.</string>
     <string name="revoke_session_confirm_message">이 기기를 계정에서 로그아웃할까요?</string>
     <string name="sign_out_all_other_confirm_message">이 기기만 남기고 모두 로그아웃할까요?</string>
     <string name="alias_forward_limit_reached">현재 요금제의 활성 별칭 최대 개수에 도달했습니다</string>

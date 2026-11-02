@@ -88,6 +88,9 @@
     <string name="settings_diagnostics_secure_storage">Armazenamento seguro</string>
     <string name="settings_diagnostics_storage_ok">Saudável</string>
     <string name="settings_diagnostics_storage_degraded">Degradado. Saia e entre novamente</string>
+    <string name="settings_crash_reports_title">Enviar relatórios de falhas</string>
+    <string name="settings_crash_reports_subtitle">Desativado, a menos que você ative. Os relatórios nunca incluem sua conta, suas mensagens ou seus contatos.</string>
+    <string name="settings_crash_reports_info">Quando esta configuração está ativada, o Aster Mail envia à Aster um relatório anônimo se o app falhar, parar de responder ou não conseguir acessar um recurso. O relatório contém o tipo de erro, a versão do app e o local no código do app onde o erro ocorreu. Ele nunca contém seu endereço, suas mensagens, seus contatos nem nada que identifique sua conta. Quando esta configuração está desativada, o Aster Mail não envia relatórios.</string>
     <string name="revoke_session_confirm_message">Desconectar este aparelho da sua conta?</string>
     <string name="sign_out_all_other_confirm_message">Sair de todos os aparelhos menos deste?</string>
     <string name="alias_forward_limit_reached">Você atingiu o número máximo de aliases ativos do seu plano</string>
