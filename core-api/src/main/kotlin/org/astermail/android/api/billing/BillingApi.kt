@@ -121,6 +121,9 @@ data class SpecialOfferStatusResponse(
     val plan_code: String = "nova",
     val percent_off: Int = 0,
     val duration_months: Int = 0,
+    val ends_at: String? = null,
+    val eligible_terms: List<String> = listOf("nova:month", "nova:year"),
+    val theme: String? = null,
 )
 
 @Serializable
@@ -633,6 +636,7 @@ data class GooglePlayConfigResponse(
     val special_offer_eligible: Boolean = false,
     val special_offer: GooglePlaySpecialOffer? = null,
     val special_offer_yearly: GooglePlaySpecialOffer? = null,
+    val special_offers: List<GooglePlaySpecialOffer> = emptyList(),
     val active_google_play_plan: String? = null,
     val active_google_play_addons: List<GooglePlayActiveAddon> = emptyList(),
 )

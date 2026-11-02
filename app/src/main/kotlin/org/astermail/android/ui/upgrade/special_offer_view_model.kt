@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.astermail.android.BuildConfig
 import org.astermail.android.api.billing.BillingApi
+import org.astermail.android.api.billing.SpecialOfferStatusResponse
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.ui.auth.within_sign_up_quiet_period
 
@@ -51,6 +52,7 @@ internal const val SPECIAL_OFFER_DEFAULT_DURATION_MONTHS = 12
 internal const val SPECIAL_OFFER_CURRENCY = "usd"
 private const val SPECIAL_OFFER_MIN_CENTS = 50L
 
+internal val SPECIAL_OFFER_DEFAULT_TERMS = listOf("nova:month", "nova:year")
 internal val SPECIAL_OFFER_CRYPTO_TERMS = listOf(1, 3, 6, 12)
 
 internal fun special_offer_price_cents(list_cents: Long, percent_off: Int): Long {
@@ -65,6 +67,14 @@ internal fun special_offer_crypto_term_cents(monthly_cents: Long?, yearly_cents:
         else -> null
     }
 
+fun offer_covers(status: SpecialOfferStatusResponse, plan_code: String, interval: String): Boolean =
+    status.available && offer_terms_cover(status.eligible_terms, plan_code, interval)
+
+internal fun offer_terms_cover(eligible_terms: List<String>, plan_code: String, interval: String): Boolean {
+    val term = "${plan_code.lowercase()}:${interval.lowercase()}"
+    return eligible_terms.any { it.equals(term, ignoreCase = true) }
+}
+
 enum class SpecialOfferStep { offer, payment_method, crypto_term }
 
 data class SpecialOfferState(
@@ -74,6 +84,9 @@ data class SpecialOfferState(
     val percent_off: Int = 0,
     val duration_months: Int = 0,
     val plan_code: String = SPECIAL_OFFER_DEFAULT_PLAN_CODE,
+    val ends_at: String? = null,
+    val eligible_terms: List<String> = SPECIAL_OFFER_DEFAULT_TERMS,
+    val theme: String? = null,
     val is_open: Boolean = false,
     val is_claiming: Boolean = false,
     val is_accepting: Boolean = false,
@@ -90,7 +103,10 @@ data class SpecialOfferState(
         get() = if (duration_months > 0) duration_months else SPECIAL_OFFER_DEFAULT_DURATION_MONTHS
 
     fun applies_to(plan_code: String?): Boolean =
-        available && plan_code != null && plan_code.equals(this.plan_code, ignoreCase = true)
+        available && plan_code != null && eligible_terms.any { it.substringBefore(':').equals(plan_code, ignoreCase = true) }
+
+    fun covers(plan_code: String, interval: String): Boolean =
+        available && offer_terms_cover(eligible_terms, plan_code, interval)
 
     fun applies_to_crypto_term(plan_code: String?, term_months: Int): Boolean =
         applies_to(plan_code) && term_months in SPECIAL_OFFER_CRYPTO_TERMS
@@ -180,6 +196,11 @@ class SpecialOfferViewModel @Inject constructor(
             percent_off = offer_cache.getInt("$id.percent_off", 0),
             duration_months = offer_cache.getInt("$id.duration_months", 0),
             plan_code = offer_cache.getString("$id.plan_code", null) ?: SPECIAL_OFFER_DEFAULT_PLAN_CODE,
+            ends_at = offer_cache.getString("$id.ends_at", null),
+            eligible_terms = offer_cache.getString("$id.eligible_terms", null)
+                ?.split(',')?.filter { it.isNotBlank() }
+                ?: SPECIAL_OFFER_DEFAULT_TERMS,
+            theme = offer_cache.getString("$id.theme", null),
         )
     }
 
@@ -191,6 +212,9 @@ class SpecialOfferViewModel @Inject constructor(
             .putInt("$id.percent_off", current.percent_off)
             .putInt("$id.duration_months", current.duration_months)
             .putString("$id.plan_code", current.plan_code)
+            .putString("$id.ends_at", current.ends_at)
+            .putString("$id.eligible_terms", current.eligible_terms.joinToString(","))
+            .putString("$id.theme", current.theme)
             .putLong("$id.cached_at", now_ms())
             .apply()
     }
@@ -248,6 +272,9 @@ class SpecialOfferViewModel @Inject constructor(
                         percent_off = status.percent_off,
                         duration_months = status.duration_months,
                         plan_code = status.plan_code.ifBlank { SPECIAL_OFFER_DEFAULT_PLAN_CODE },
+                        ends_at = status.ends_at,
+                        eligible_terms = status.eligible_terms,
+                        theme = status.theme,
                     )
                 }
                 store_cache()

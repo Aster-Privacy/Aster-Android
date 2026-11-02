@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.api.billing.GooglePlaySpecialOffer
 import org.astermail.android.api.billing.StorageAddonItem
 
@@ -198,6 +199,18 @@ fun play_special_offer_for(offers: List<PlayOffer>, special: GooglePlaySpecialOf
             it.base_plan_id == special.base_plan_id &&
             it.offer_id == special.offer_id
     }
+}
+
+fun play_special_offer_for(
+    config: GooglePlayConfigResponse,
+    product_id: String,
+    base_plan_id: String,
+): GooglePlaySpecialOffer? {
+    val matches = { offer: GooglePlaySpecialOffer ->
+        offer.product_id == product_id && offer.base_plan_id == base_plan_id
+    }
+    config.special_offers.firstOrNull(matches)?.let { return it }
+    return listOfNotNull(config.special_offer, config.special_offer_yearly).firstOrNull(matches)
 }
 
 fun play_addon_product_for(addon_products: List<GooglePlayAddonProduct>, storage_bytes: Long): GooglePlayAddonProduct? =

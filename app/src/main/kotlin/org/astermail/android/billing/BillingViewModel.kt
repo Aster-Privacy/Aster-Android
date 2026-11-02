@@ -48,6 +48,7 @@ import org.astermail.android.api.billing.DetachPaymentMethodRequest
 import org.astermail.android.api.billing.GooglePlayActiveAddon
 import org.astermail.android.api.billing.GooglePlayAddonProduct
 import org.astermail.android.api.billing.GooglePlayProduct
+import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.api.billing.GooglePlaySpecialOffer
 import org.astermail.android.api.billing.GooglePlayVerifyRequest
 import org.astermail.android.api.billing.PaymentMethodItem
@@ -110,6 +111,7 @@ data class BillingUiState(
     val play_addon_products: List<GooglePlayAddonProduct> = emptyList(),
     val play_special_offer: GooglePlaySpecialOffer? = null,
     val play_special_offer_yearly: GooglePlaySpecialOffer? = null,
+    val play_special_offers: List<GooglePlaySpecialOffer> = emptyList(),
     val play_special_offer_eligible: Boolean = false,
     val play_active_plan: String? = null,
     val play_active_addons: List<GooglePlayActiveAddon> = emptyList(),
@@ -118,7 +120,7 @@ data class BillingUiState(
 internal sealed interface PlayTarget {
     data class Plan(val plan_code: String, val billing_interval: String) : PlayTarget
     data class Addon(val storage_bytes: Long, val billing_interval: String = "month") : PlayTarget
-    data class SpecialOffer(val billing_interval: String = "month") : PlayTarget
+    data class SpecialOffer(val product_id: String, val base_plan_id: String) : PlayTarget
 }
 
 object AvailablePlansCache {
@@ -288,6 +290,7 @@ class BillingViewModel @Inject constructor(
                 play_addon_products = emptyList(),
                 play_special_offer = null,
                 play_special_offer_yearly = null,
+                play_special_offers = emptyList(),
                 play_special_offer_eligible = false,
                 play_active_plan = null,
                 play_active_addons = emptyList(),
@@ -310,7 +313,7 @@ class BillingViewModel @Inject constructor(
         if (s.is_acting || s.play_purchase_request != null) return
         val ready = s.play_enabled &&
             s.play_special_offer_eligible &&
-            play_special_offer_for(s.play_offers, s.play_special_offer) != null
+            play_special_offer_candidates(s).any { play_special_offer_for(s.play_offers, it) != null }
         if (ready) return
         val redeem = !s.play_enabled
         play_config_job = viewModelScope.launch { load_play_config(redeem = redeem) }
@@ -348,6 +351,7 @@ class BillingViewModel @Inject constructor(
                     play_addon_products = emptyList(),
                     play_special_offer = null,
                     play_special_offer_yearly = null,
+                    play_special_offers = emptyList(),
                     play_special_offer_eligible = false,
                     play_active_plan = null,
                     play_active_addons = emptyList(),
@@ -371,7 +375,9 @@ class BillingViewModel @Inject constructor(
                 play_addon_products = config.addon_products,
                 play_special_offer = config.special_offer,
                 play_special_offer_yearly = config.special_offer_yearly,
-                play_special_offer_eligible = config.special_offer_eligible && config.special_offer != null,
+                play_special_offers = config.special_offers,
+                play_special_offer_eligible = config.special_offer_eligible &&
+                    (config.special_offer != null || config.special_offers.isNotEmpty()),
                 play_active_plan = config.active_google_play_plan,
                 play_active_addons = config.active_google_play_addons,
             )
@@ -559,6 +565,15 @@ class BillingViewModel @Inject constructor(
         }
     }
 
+    private fun play_special_config(s: BillingUiState) = GooglePlayConfigResponse(
+        special_offer = s.play_special_offer,
+        special_offer_yearly = s.play_special_offer_yearly,
+        special_offers = s.play_special_offers,
+    )
+
+    private fun play_special_offer_candidates(s: BillingUiState): List<GooglePlaySpecialOffer> =
+        s.play_special_offers + listOfNotNull(s.play_special_offer, s.play_special_offer_yearly)
+
     private fun play_offer_for_target(target: PlayTarget): PlayOffer? {
         val s = _state.value
         return when (target) {
@@ -566,7 +581,7 @@ class BillingViewModel @Inject constructor(
             is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes, target.billing_interval)
             is PlayTarget.SpecialOffer -> play_special_offer_for(
                 s.play_offers,
-                if (target.billing_interval == "year") s.play_special_offer_yearly else s.play_special_offer,
+                play_special_offer_for(play_special_config(s), target.product_id, target.base_plan_id),
             )
         }
     }
@@ -587,9 +602,15 @@ class BillingViewModel @Inject constructor(
     }
 
     fun start_play_special_offer(billing_interval: String = "month") {
+        val s = _state.value
+        val legacy = if (billing_interval == "year") s.play_special_offer_yearly else s.play_special_offer
+        start_play_special_offer(legacy?.product_id.orEmpty(), play_base_plan_id(billing_interval))
+    }
+
+    fun start_play_special_offer(product_id: String, base_plan_id: String) {
         if (!play_install_check()) return
         if (blocks_lifetime_plan_change()) return
-        start_play_target("play_special_offer", PlayTarget.SpecialOffer(billing_interval))
+        start_play_target("play_special_offer", PlayTarget.SpecialOffer(product_id, base_plan_id))
     }
 
     fun cancel_play_special_offer() {
