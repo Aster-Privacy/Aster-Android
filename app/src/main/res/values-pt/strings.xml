@@ -3085,11 +3085,16 @@
     <string name="special_offer_price_period_year">por ano</string>
     <string name="special_offer_fine_print_year">Paga %1$s pelo primeiro ano. Depois, o seu plano é renovado a %2$s por ano até o cancelar em Definições.</string>
     <string name="special_offer_dismiss">Não mostrar esta oferta novamente</string>
-    <string name="special_offer_success_title">Obrigado. Já tem o Nova.</string>
+    <string name="special_offer_success_title">Obrigado. Já tem o %1$s.</string>
     <string name="special_offer_success_body">Obrigado pela sua subscrição. O seu apoio significa muito para nós.</string>
     <string name="special_offer_why_label">Porquê esta oferta?</string>
     <string name="special_offer_why_body">O Aster é uma empresa independente com uma equipa pequena, e o seu apoio significa muito para nós. As subscrições mantêm o serviço a funcionar e permitem-nos continuar a desenvolver o Aster com cuidado todos os dias. Esta oferta torna mais fácil começar.</string>
     <string name="special_offer_entry">Oferta especial</string>
+    <string name="special_offer_black_friday_title">Black Friday: %1$d%% de desconto durante %2$d meses</string>
+    <string name="special_offer_black_friday_body">Escolha qualquer plano anual, ou qualquer plano mensal exceto o Star, a metade do preço nos seus primeiros %1$d meses.</string>
+    <string name="special_offer_ends_in">Termina em %1$s</string>
+    <string name="special_offer_not_on_star_monthly">Não disponível no Star mensal</string>
+    <string name="special_offer_renews_at">Renova por %1$s após %2$d meses</string>
     <string name="special_offer_cta_claim">Obter %1$d%% de desconto</string>
     <string name="special_offer_crypto_one_payment">O desconto de %1$d%% aplica-se apenas a este pagamento. Os pagamentos seguintes em cripto são cobrados ao preço normal. Para ter o desconto durante um ano inteiro, escolha 12 meses.</string>
     <string name="special_offer_benefit_aliases_title">Aliases ilimitados</string>

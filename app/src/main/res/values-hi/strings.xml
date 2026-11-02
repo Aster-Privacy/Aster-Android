@@ -2959,11 +2959,16 @@
     <string name="special_offer_price_period_year">प्रति वर्ष</string>
     <string name="special_offer_fine_print_year">पहले वर्ष के लिए आप %1$s चुकाते हैं। इसके बाद आपका प्लान %2$s प्रति वर्ष पर नवीनीकृत होता रहेगा, जब तक आप इसे सेटिंग में रद्द नहीं करते।</string>
     <string name="special_offer_dismiss">यह ऑफ़र दोबारा न दिखाएँ</string>
-    <string name="special_offer_success_title">धन्यवाद। अब आप Nova पर हैं।</string>
+    <string name="special_offer_success_title">धन्यवाद। अब आप %1$s पर हैं।</string>
     <string name="special_offer_success_body">सदस्यता लेने के लिए धन्यवाद। आपका समर्थन हमारे लिए बहुत मायने रखता है।</string>
     <string name="special_offer_why_label">यह ऑफ़र क्यों?</string>
     <string name="special_offer_why_body">Aster एक छोटी टीम वाली स्वतंत्र कंपनी है, और आपका समर्थन हमारे लिए बहुत मायने रखता है। सदस्यताएँ सेवा को चालू रखती हैं और हमें हर दिन ध्यान से Aster को बेहतर बनाते रहने में मदद करती हैं। यह ऑफ़र शुरुआत करना आसान बनाता है।</string>
     <string name="special_offer_entry">विशेष ऑफ़र</string>
+    <string name="special_offer_black_friday_title">ब्लैक फ्राइडे: %2$d महीने के लिए %1$d%% की छूट</string>
+    <string name="special_offer_black_friday_body">कोई भी वार्षिक प्लान, या Star को छोड़कर कोई भी मासिक प्लान, अपने पहले %1$d महीनों के लिए आधी कीमत पर पाएँ।</string>
+    <string name="special_offer_ends_in">%1$s में समाप्त</string>
+    <string name="special_offer_not_on_star_monthly">Star मासिक पर उपलब्ध नहीं है</string>
+    <string name="special_offer_renews_at">%2$d महीने के बाद %1$s पर नवीनीकृत होता है</string>
     <string name="special_offer_cta_claim">%1$d%% छूट पाएं</string>
     <string name="special_offer_crypto_one_payment">%1$d%% की छूट सिर्फ़ इस भुगतान पर लागू होती है। बाद के क्रिप्टो भुगतान सामान्य कीमत पर होंगे। पूरे साल छूट पाने के लिए 12 महीने चुनें।</string>
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>

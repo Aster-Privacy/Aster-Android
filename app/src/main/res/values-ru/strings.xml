@@ -3103,11 +3103,16 @@
     <string name="special_offer_price_period_year">в год</string>
     <string name="special_offer_fine_print_year">За первый год вы платите %1$s. Затем тариф продлевается за %2$s в год, пока вы не отмените его в Настройках.</string>
     <string name="special_offer_dismiss">Больше не показывать это предложение</string>
-    <string name="special_offer_success_title">Спасибо. Теперь у вас Nova.</string>
+    <string name="special_offer_success_title">Спасибо. Теперь у вас %1$s.</string>
     <string name="special_offer_success_body">Спасибо за подписку. Ваша поддержка очень много для нас значит.</string>
     <string name="special_offer_why_label">Почему это предложение?</string>
     <string name="special_offer_why_body">Aster является независимой компанией с небольшой командой, и ваша поддержка очень много для нас значит. Подписки поддерживают работу сервиса и позволяют нам каждый день бережно развивать Aster, а с этим предложением начать проще.</string>
     <string name="special_offer_entry">Специальное предложение</string>
+    <string name="special_offer_black_friday_title">Чёрная пятница: скидка %1$d%% на %2$d месяцев</string>
+    <string name="special_offer_black_friday_body">Выберите любой годовой тариф или любой месячный тариф, кроме Star, и платите половину цены первые %1$d месяцев.</string>
+    <string name="special_offer_ends_in">Заканчивается через %1$s</string>
+    <string name="special_offer_not_on_star_monthly">Недоступно для месячного тарифа Star</string>
+    <string name="special_offer_renews_at">Продлевается по цене %1$s через %2$d месяцев</string>
     <string name="special_offer_cta_claim">Получить скидку %1$d%%</string>
     <string name="special_offer_crypto_one_payment">Скидка %1$d%% действует только для этого платежа. Последующие оплаты криптовалютой проходят по обычной цене. Чтобы получить скидку на целый год, выберите 12 месяцев.</string>
     <string name="special_offer_benefit_aliases_title">Неограниченные псевдонимы</string>

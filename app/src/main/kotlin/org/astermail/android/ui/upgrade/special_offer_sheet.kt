@@ -121,7 +121,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
+import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.billing.BillingViewModel
+import org.astermail.android.billing.play_base_plan_id
+import org.astermail.android.billing.play_offer_for
+import org.astermail.android.billing.plan_display_name
 import org.astermail.android.billing.PlayOffer
 import org.astermail.android.billing.play_price_cents
 import org.astermail.android.billing.api_plan_price_cents
@@ -141,8 +145,7 @@ import kotlinx.coroutines.delay
 
 private const val SPECIAL_OFFER_INTERVAL = "month"
 private const val SPECIAL_OFFER_YEARLY_INTERVAL = "year"
-private const val SPECIAL_OFFER_LIST_CENTS = 899L
-private const val SPECIAL_OFFER_YEARLY_CENTS = 8699L
+private const val SPECIAL_OFFER_BLACK_FRIDAY_THEME = "black_friday"
 private const val SPECIAL_OFFER_PLAY_RETRY_ATTEMPTS = 5
 private const val SPECIAL_OFFER_PLAY_RETRY_MS = 10_000L
 private const val HERO_ASPECT_RATIO = 2.4f
@@ -254,21 +257,36 @@ fun SpecialOfferHost() {
         if (play_install) billing_vm.load_play_offers()
     }
 
-    var interval by rememberSaveable { mutableStateOf(SPECIAL_OFFER_INTERVAL) }
-    val play_yearly_offer = if (play_install) {
-        org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer_yearly)
+    val plan_codes = special_offer_plan_codes(offer_state.eligible_terms).ifEmpty { listOfNotNull(offer_state.plan_code) }
+    var selected_plan_code by rememberSaveable { mutableStateOf("") }
+    var interval by rememberSaveable { mutableStateOf(SPECIAL_OFFER_YEARLY_INTERVAL) }
+    val plan_code = selected_plan_code.takeIf { it in plan_codes }
+        ?: plan_codes.firstOrNull { it == "nova" }
+        ?: plan_codes.firstOrNull()
+        ?: SPECIAL_OFFER_DEFAULT_PLAN_CODE
+    val checkout_interval = interval
+    val is_yearly = checkout_interval == SPECIAL_OFFER_YEARLY_INTERVAL
+    val covered = offer_state.covers(plan_code, checkout_interval)
+    val play_config = GooglePlayConfigResponse(
+        special_offer = billing_state.play_special_offer,
+        special_offer_yearly = billing_state.play_special_offer_yearly,
+        special_offers = billing_state.play_special_offers,
+    )
+    val play_target = if (play_install) {
+        play_special_target_for(play_config, billing_state.play_offers, billing_state.play_products, plan_code, checkout_interval)
     } else {
         null
     }
-    val yearly_available = !play_install || play_yearly_offer != null
-    val is_yearly = interval == SPECIAL_OFFER_YEARLY_INTERVAL && yearly_available
-    val play_offer = when {
-        !play_install -> null
-        is_yearly -> play_yearly_offer
-        else -> org.astermail.android.billing.play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer)
-    }
-    val checkout_interval = if (is_yearly) SPECIAL_OFFER_YEARLY_INTERVAL else SPECIAL_OFFER_INTERVAL
-    val prices_pending = play_install && play_offer == null
+    val play_offer = if (covered) play_target?.offer else null
+    val list_cents = special_offer_list_cents(
+        plan_code,
+        checkout_interval,
+        play_install,
+        billing_state.play_offers,
+        billing_state.play_products,
+        billing_state.available_plans,
+    )
+    val prices_pending = list_cents == null
     val play_ready = special_offer_play_ready(billing_state)
 
     LaunchedEffect(offer_state.auto_show, play_install, play_ready) {
@@ -353,21 +371,32 @@ fun SpecialOfferHost() {
         if (billing_state.available_plans.isEmpty()) billing_vm.load_plans()
     }
 
-    val play_special = billing_state.play_special_offer.takeIf { play_install }
+    val play_special = play_target?.special
     val percent_off = play_special?.percent_off?.takeIf { it > 0 } ?: offer_state.effective_percent_off
     val months = play_special?.duration_months?.takeIf { it > 0 } ?: offer_state.effective_duration_months
-    val plan_code = offer_state.plan_code
-    val monthly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_INTERVAL)
-        ?.toLong()
-        ?: SPECIAL_OFFER_LIST_CENTS
-    val yearly_cents = api_plan_price_cents(billing_state.available_plans, plan_code, SPECIAL_OFFER_YEARLY_INTERVAL)
-        ?.toLong()
-        ?: SPECIAL_OFFER_YEARLY_CENTS
-    val list_cents = if (is_yearly) yearly_cents else monthly_cents
-    val offer_cents = special_offer_price_cents(list_cents, percent_off)
+    val monthly_cents = special_offer_list_cents(plan_code, SPECIAL_OFFER_INTERVAL, false, emptyList(), emptyList(), billing_state.available_plans)
+    val yearly_cents = special_offer_list_cents(plan_code, SPECIAL_OFFER_YEARLY_INTERVAL, false, emptyList(), emptyList(), billing_state.available_plans)
+    val card_price = offer_card_price_for(offer_state, plan_code, checkout_interval, list_cents)
+    val is_discounted = card_price != null && (!play_install || play_offer != null)
+    val play_list_offer = if (play_install) {
+        play_offer_for(billing_state.play_offers, billing_state.play_products, plan_code, checkout_interval)
+    } else {
+        null
+    }
     val play_labels = special_offer_play_labels(play_offer, percent_off)
-    val offer_label = if (play_install) play_labels?.discounted.orEmpty() else format_money(offer_cents, SPECIAL_OFFER_CURRENCY)
-    val list_label = if (play_install) play_labels?.original.orEmpty() else format_money(list_cents, SPECIAL_OFFER_CURRENCY)
+    val list_label = if (play_install) {
+        play_list_offer?.formatted_price?.takeIf { it.isNotBlank() }
+            ?: list_cents?.let { format_money(it, play_list_offer?.currency_code ?: SPECIAL_OFFER_CURRENCY) }.orEmpty()
+    } else {
+        list_cents?.let { format_money(it, SPECIAL_OFFER_CURRENCY) }.orEmpty()
+    }
+    val offer_label = when {
+        !is_discounted -> list_label
+        play_install -> play_labels?.discounted.orEmpty()
+        else -> format_money(card_price!!.offer_cents, SPECIAL_OFFER_CURRENCY)
+    }
+    val plan_label = plan_display_name(billing_state.available_plans, plan_code)
+        ?: plan_code.replaceFirstChar { it.uppercase() }
     val save_badge = stringResource(R.string.save_percent, percent_off)
     val term_prices = special_offer_term_prices(offer_state, plan_code, monthly_cents, yearly_cents, save_badge)
     val is_busy = offer_state.is_accepting || billing_state.is_acting || billing_state.play_purchase_request != null
@@ -433,7 +462,7 @@ fun SpecialOfferHost() {
                 .acrylic(colors, CARD_SHAPE, colors.bg_card),
         ) {
             if (offer_success) {
-                SpecialOfferSuccess(benefits = benefits, onDone = { offer_vm.close() })
+                SpecialOfferSuccess(plan_label = plan_label, benefits = benefits, onDone = { offer_vm.close() })
             } else Column {
                 Column(modifier = Modifier.weight(1f, fill = false).vertical_scroll_with_indicator()) {
                     SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
@@ -453,7 +482,11 @@ fun SpecialOfferHost() {
                         Spacer(Modifier.height(10.dp))
 
                         Text(
-                            text = stringResource(R.string.special_offer_title),
+                            text = if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
+                                stringResource(R.string.special_offer_black_friday_title, percent_off, months)
+                            } else {
+                                stringResource(R.string.special_offer_title)
+                            },
                             color = colors.text_primary,
                             fontSize = 22.sp,
                             lineHeight = 27.sp,
@@ -461,8 +494,37 @@ fun SpecialOfferHost() {
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        if (yearly_available && !offer_state.offer_expired) {
+                        if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = stringResource(R.string.special_offer_black_friday_body, months),
+                                color = colors.text_secondary,
+                                fontSize = 14.sp,
+                                lineHeight = 19.sp,
+                            )
+                            parse_offer_end(offer_state.ends_at)?.let { ends ->
+                                Spacer(Modifier.height(6.dp))
+                                offer_countdown(ends_at = ends)
+                            }
+                        }
+
+                        if (!offer_state.offer_expired) {
                             Spacer(Modifier.height(12.dp))
+
+                            if (plan_codes.size > 1) {
+                                aster_segmented(
+                                    value = plan_code,
+                                    options = plan_codes.map { code ->
+                                        switcher_option(
+                                            code,
+                                            plan_display_name(billing_state.available_plans, code)
+                                                ?: code.replaceFirstChar { it.uppercase() },
+                                        )
+                                    },
+                                    on_change = { next -> if (!is_busy) selected_plan_code = next },
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
 
                             aster_segmented(
                                 value = checkout_interval,
@@ -501,13 +563,25 @@ fun SpecialOfferHost() {
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.alignByBaseline(),
                             )
+                            if (is_discounted) {
+                                Text(
+                                    text = list_label,
+                                    color = colors.text_tertiary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.LineThrough,
+                                    modifier = Modifier.alignByBaseline(),
+                                )
+                            }
+                        }
+
+                        if (!covered && !prices_pending) {
+                            Spacer(Modifier.height(4.dp))
                             Text(
-                                text = list_label,
-                                color = colors.text_tertiary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                textDecoration = TextDecoration.LineThrough,
-                                modifier = Modifier.alignByBaseline(),
+                                text = stringResource(R.string.special_offer_not_on_star_monthly),
+                                color = colors.text_secondary,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
                             )
                         }
 
@@ -587,6 +661,8 @@ fun SpecialOfferHost() {
                     SpecialOfferDepthButton(
                         label = if (offer_state.offer_expired) {
                             stringResource(R.string.close)
+                        } else if (!is_discounted) {
+                            stringResource(R.string.settings_billing_yearly)
                         } else {
                             stringResource(R.string.special_offer_cta_claim, percent_off)
                         },
@@ -594,10 +670,15 @@ fun SpecialOfferHost() {
                         onClick = {
                             if (offer_state.offer_expired) {
                                 offer_vm.close()
+                            } else if (!is_discounted) {
+                                interval = SPECIAL_OFFER_YEARLY_INTERVAL
                             } else if (play_install) {
                                 billing_vm.clear_messages()
                                 play_cta_pressed = true
-                                billing_vm.start_play_special_offer(checkout_interval)
+                                billing_vm.start_play_special_offer(
+                                    play_target?.product_id.orEmpty(),
+                                    play_target?.base_plan_id ?: play_base_plan_id(checkout_interval),
+                                )
                             } else {
                                 billing_vm.clear_messages()
                                 offer_vm.release_checkout()
@@ -624,8 +705,20 @@ fun SpecialOfferHost() {
                         fontSize = 12.sp,
                         lineHeight = 17.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().alpha(if (prices_pending) 0f else 1f),
+                        modifier = Modifier.fillMaxWidth().alpha(if (prices_pending || !is_discounted) 0f else 1f),
                     )
+
+                    if (is_discounted) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.special_offer_renews_at, list_label, months),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
 
                 Text(
@@ -676,7 +769,7 @@ fun SpecialOfferHost() {
     when (offer_state.step) {
         SpecialOfferStep.payment_method -> payment_review_dialog(
             title = stringResource(R.string.checkout_review_title),
-            plan_name = stringResource(R.string.plan_name_nova),
+            plan_name = plan_label,
             interval_label = billing_interval_per_label(context, checkout_interval),
             amount_text = offer_label,
             subtotal_text = null,
@@ -684,7 +777,7 @@ fun SpecialOfferHost() {
             is_best_value = false,
             features = emptyList(),
             is_busy = is_busy,
-            offer = review_offer_price(original = list_label, discounted = offer_label, badge = save_badge),
+            offer = if (is_discounted) review_offer_price(original = list_label, discounted = offer_label, badge = save_badge) else null,
             on_dismiss = { offer_vm.show_step(SpecialOfferStep.offer) },
             on_confirm = { method ->
                 if (method == payment_method_crypto) {
@@ -867,7 +960,7 @@ private fun SpecialOfferBenefits(benefits: List<Pair<String, String>>, show_deta
 }
 
 @Composable
-private fun SpecialOfferSuccess(benefits: List<Pair<String, String>>, onDone: () -> Unit) {
+private fun SpecialOfferSuccess(plan_label: String, benefits: List<Pair<String, String>>, onDone: () -> Unit) {
     val colors = AsterMaterial.colors
     val pop = remember { Animatable(0.6f) }
     LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 420f)) }
@@ -887,7 +980,7 @@ private fun SpecialOfferSuccess(benefits: List<Pair<String, String>>, onDone: ()
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = stringResource(R.string.special_offer_success_title),
+            text = stringResource(R.string.special_offer_success_title, plan_label),
             color = colors.text_primary,
             fontSize = 22.sp,
             lineHeight = 27.sp,

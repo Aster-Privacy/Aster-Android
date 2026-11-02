@@ -3053,11 +3053,16 @@
     <string name="special_offer_price_period_year">年額</string>
     <string name="special_offer_fine_print_year">最初の1年間は%1$sです。その後は、設定で解約するまで年額%2$sで更新されます。</string>
     <string name="special_offer_dismiss">このオファーを今後表示しない</string>
-    <string name="special_offer_success_title">ありがとうございます。Nova をご利用いただけます。</string>
+    <string name="special_offer_success_title">ありがとうございます。%1$s をご利用いただけます。</string>
     <string name="special_offer_success_body">ご登録ありがとうございます。皆さまのご支援が私たちの大きな励みです。</string>
     <string name="special_offer_why_label">このオファーを提供する理由</string>
     <string name="special_offer_why_body">Aster は小さなチームで運営する独立した企業で、皆さまのご支援は私たちにとって大きな意味があります。サブスクリプションはサービスの運営を支え、Aster を毎日丁寧に開発し続けることを可能にしています。このオファーで、より気軽に始めていただけます。</string>
     <string name="special_offer_entry">特別オファー</string>
+    <string name="special_offer_black_friday_title">ブラックフライデー:%2$dか月間%1$d%%オフ</string>
+    <string name="special_offer_black_friday_body">年間プラン、またはStar以外の月間プランを、最初の%1$dか月間半額でご利用いただけます。</string>
+    <string name="special_offer_ends_in">終了まであと%1$s</string>
+    <string name="special_offer_not_on_star_monthly">Starの月間プランは対象外です</string>
+    <string name="special_offer_renews_at">%2$dか月後は%1$sで更新されます</string>
     <string name="special_offer_cta_claim">%1$d%%オフで始める</string>
     <string name="special_offer_crypto_one_payment">%1$d%%オフはこのお支払いにのみ適用され、以降の暗号資産でのお支払いは通常価格になります。1年間割引を受けるには、12か月を選択してください。</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>

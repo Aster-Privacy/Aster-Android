@@ -67,6 +67,12 @@ internal fun special_offer_crypto_term_cents(monthly_cents: Long?, yearly_cents:
         else -> null
     }
 
+internal fun crypto_term_interval(term_months: Int): String? = when (term_months) {
+    12 -> "year"
+    in 1..11 -> "month"
+    else -> null
+}
+
 fun offer_covers(status: SpecialOfferStatusResponse, plan_code: String, interval: String): Boolean =
     status.available && offer_terms_cover(status.eligible_terms, plan_code, interval)
 
@@ -108,8 +114,10 @@ data class SpecialOfferState(
     fun covers(plan_code: String, interval: String): Boolean =
         available && offer_terms_cover(eligible_terms, plan_code, interval)
 
-    fun applies_to_crypto_term(plan_code: String?, term_months: Int): Boolean =
-        applies_to(plan_code) && term_months in SPECIAL_OFFER_CRYPTO_TERMS
+    fun applies_to_crypto_term(plan_code: String?, term_months: Int): Boolean {
+        val interval = crypto_term_interval(term_months) ?: return false
+        return plan_code != null && term_months in SPECIAL_OFFER_CRYPTO_TERMS && covers(plan_code, interval)
+    }
 }
 
 @HiltViewModel

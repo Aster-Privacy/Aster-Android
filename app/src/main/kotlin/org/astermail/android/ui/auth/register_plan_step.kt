@@ -32,6 +32,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Circle
 import compose.icons.tablericons.CircleCheck
 import org.astermail.android.billing.billing_interval_per_label
+import org.astermail.android.ui.upgrade.offer_discounted_label
+import org.astermail.android.ui.upgrade.special_offer_view_model
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.ui.settings.detail.format_bytes
@@ -238,6 +240,7 @@ fun RegisterPlanStep(
     } else {
         options.isEmpty() && !play_settled
     }
+    val offer_state by special_offer_view_model().state.collectAsStateWithLifecycle()
     val save_percent = active_plan?.let { signup_plan_save_percent(plans, it.code) }
     val active_price = active_plan?.let { plan ->
         play_price_label(state.play_offers, state.play_products, plan.code, effective_interval)
@@ -353,6 +356,15 @@ fun RegisterPlanStep(
                         price = play_price_label(state.play_offers, state.play_products, plan.code, effective_interval)
                             ?.takeIf { play_install }
                             ?: format_money(signup_plan_price_cents(plan, effective_interval).toLong(), currency),
+                        offer_price = offer_discounted_label(
+                            offer_state,
+                            state,
+                            play_install,
+                            plan.code,
+                            effective_interval,
+                            signup_plan_price_cents(plan, effective_interval).toLong(),
+                            currency,
+                        ),
                         on_select = {
                             selected_code = plan.code
                             billing_vm.clear_messages()
@@ -420,6 +432,7 @@ private fun signup_plan_row(
     is_recommended: Boolean,
     billing_interval: String,
     price: String,
+    offer_price: String? = null,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -494,8 +507,17 @@ private fun signup_plan_row(
         }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(horizontalAlignment = Alignment.End) {
+            if (offer_price != null) {
+                Text(
+                    text = price,
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                )
+            }
             Text(
-                text = price,
+                text = offer_price ?: price,
                 color = colors.text_primary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,

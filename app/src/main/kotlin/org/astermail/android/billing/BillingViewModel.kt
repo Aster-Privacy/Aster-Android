@@ -1052,20 +1052,32 @@ class BillingViewModel @Inject constructor(
                 return@launch
             }
             try {
-                val response = billing_api.create_checkout_session(
-                    CheckoutSessionRequest(
-                        plan_code = plan_code,
-                        billing_interval = billing_interval,
-                        currency = currency,
-                        test_mode = org.astermail.android.BuildConfig.DEBUG,
-                        success_url = BILLING_RETURN_SUCCESS,
-                        cancel_url = BILLING_RETURN_CANCELLED,
-                        special_offer = special_offer,
-                    ),
-                )
+                val checkout_url = if (special_offer && plan_code.lowercase() in FAMILY_OFFER_PLAN_CODES) {
+                    billing_api.create_family_checkout(
+                        org.astermail.android.api.billing.FamilyCheckoutRequest(
+                            plan_code = plan_code,
+                            billing_interval = billing_interval,
+                            success_url = BILLING_RETURN_SUCCESS,
+                            cancel_url = BILLING_RETURN_CANCELLED,
+                            special_offer = true,
+                        ),
+                    ).checkout_url
+                } else {
+                    billing_api.create_checkout_session(
+                        CheckoutSessionRequest(
+                            plan_code = plan_code,
+                            billing_interval = billing_interval,
+                            currency = currency,
+                            test_mode = org.astermail.android.BuildConfig.DEBUG,
+                            success_url = BILLING_RETURN_SUCCESS,
+                            cancel_url = BILLING_RETURN_CANCELLED,
+                            special_offer = special_offer,
+                        ),
+                    ).url
+                }
                 pending_checkout_plan = plan_code
                 pending_checkout_interval = billing_interval
-                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = response.url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
+                _state.value = _state.value.copy(is_acting = false, acting_action = null, checkout_url = checkout_url, checkout_abandoned_plan = null, checkout_abandoned_interval = null)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
@@ -1885,3 +1897,5 @@ internal fun is_retryable_play_error(t: Throwable): Boolean = when (t) {
     is java.io.IOException -> true
     else -> false
 }
+
+private val FAMILY_OFFER_PLAN_CODES = setOf("duo", "family")

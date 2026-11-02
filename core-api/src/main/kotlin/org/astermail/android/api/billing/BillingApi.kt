@@ -142,6 +142,21 @@ data class OfferPreferences(
 )
 
 @Serializable
+data class FamilyCheckoutRequest(
+    val plan_code: String,
+    val billing_interval: String = "month",
+    val success_url: String? = null,
+    val cancel_url: String? = null,
+    val special_offer: Boolean = false,
+)
+
+@Serializable
+data class FamilyCheckoutResponse(
+    val session_id: String = "",
+    val checkout_url: String = "",
+)
+
+@Serializable
 data class CheckoutSessionResponse(
     val session_id: String = "",
     val url: String = "",
@@ -563,6 +578,7 @@ interface BillingApi {
     suspend fun get_available_plans(): AvailablePlansResponse
     suspend fun get_plan_limits(): PlanLimitsResponse
     suspend fun create_checkout_session(request: CheckoutSessionRequest): CheckoutSessionResponse
+    suspend fun create_family_checkout(request: FamilyCheckoutRequest): FamilyCheckoutResponse
     suspend fun get_special_offer(): SpecialOfferStatusResponse
     suspend fun claim_special_offer(): SpecialOfferClaimResponse
     suspend fun accept_special_offer(): SpecialOfferAckResponse
@@ -783,6 +799,15 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun set_offer_preferences(request: OfferPreferences): OfferPreferences {
         val response = client.http.put("${client.base_url}/api/core/v1/offers/preferences") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun create_family_checkout(request: FamilyCheckoutRequest): FamilyCheckoutResponse {
+        val response = client.http.post("${client.base_url}/api/payments/v1/family") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

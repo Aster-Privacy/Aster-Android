@@ -3067,11 +3067,16 @@
     <string name="special_offer_price_period_year">yıllık</string>
     <string name="special_offer_fine_print_year">İlk yıl için %1$s ödersiniz. Ardından planınız, Ayarlar bölümünden iptal edene kadar yıllık %2$s olarak yenilenir.</string>
     <string name="special_offer_dismiss">Bu teklifi bir daha gösterme</string>
-    <string name="special_offer_success_title">Teşekkürler. Artık Nova kullanıyorsunuz.</string>
+    <string name="special_offer_success_title">Teşekkürler. Artık %1$s kullanıyorsunuz.</string>
     <string name="special_offer_success_body">Abone olduğunuz için teşekkürler. Desteğiniz bizim için çok değerli.</string>
     <string name="special_offer_why_label">Neden bu teklif?</string>
     <string name="special_offer_why_body">Aster, küçük bir ekibe sahip bağımsız bir şirkettir ve desteğiniz bizim için çok değerlidir. Abonelikler hizmetin çalışmasını sağlar ve Aster\'ı her gün özenle geliştirmeye devam etmemize olanak tanır. Bu teklif başlamanızı kolaylaştırır.</string>
     <string name="special_offer_entry">Özel teklif</string>
+    <string name="special_offer_black_friday_title">Black Friday: %2$d ay boyunca %%%1$d indirim</string>
+    <string name="special_offer_black_friday_body">Herhangi bir yıllık planı veya Star dışındaki herhangi bir aylık planı ilk %1$d ay boyunca yarı fiyatına alın.</string>
+    <string name="special_offer_ends_in">%1$s sonra sona erer</string>
+    <string name="special_offer_not_on_star_monthly">Star aylık planında geçerli değildir</string>
+    <string name="special_offer_renews_at">%2$d ay sonra %1$s fiyatıyla yenilenir</string>
     <string name="special_offer_cta_claim">%%%1$d indirimi alın</string>
     <string name="special_offer_crypto_one_payment">%%%1$d indirim yalnızca bu ödeme için geçerlidir. Sonraki kripto ödemeleri normal fiyattan alınır. İndirimi bir yıl boyunca almak için 12 ay seçin.</string>
     <string name="special_offer_benefit_aliases_title">Sınırsız takma ad</string>

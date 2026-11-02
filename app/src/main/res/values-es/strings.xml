@@ -3086,11 +3086,16 @@
     <string name="special_offer_price_period_year">al año</string>
     <string name="special_offer_fine_print_year">Pagas %1$s por el primer año. Después, tu plan se renueva por %2$s al año hasta que lo canceles en Ajustes.</string>
     <string name="special_offer_dismiss">No volver a mostrar esta oferta</string>
-    <string name="special_offer_success_title">Gracias. Ya tienes Nova.</string>
+    <string name="special_offer_success_title">Gracias. Ya tienes %1$s.</string>
     <string name="special_offer_success_body">Gracias por suscribirte. Tu apoyo significa mucho para nosotros.</string>
     <string name="special_offer_why_label">¿Por qué esta oferta?</string>
     <string name="special_offer_why_body">Aster es una empresa independiente con un equipo pequeño, y tu apoyo significa mucho para nosotros. Las suscripciones mantienen el servicio en funcionamiento y nos permiten seguir desarrollando Aster con cuidado cada día. Esta oferta te facilita empezar.</string>
     <string name="special_offer_entry">Oferta especial</string>
+    <string name="special_offer_black_friday_title">Black Friday: %1$d %% de descuento durante %2$d meses</string>
+    <string name="special_offer_black_friday_body">Consigue cualquier plan anual, o cualquier plan mensual excepto Star, a mitad de precio durante tus primeros %1$d meses.</string>
+    <string name="special_offer_ends_in">Termina en %1$s</string>
+    <string name="special_offer_not_on_star_monthly">No disponible en Star mensual</string>
+    <string name="special_offer_renews_at">Se renueva a %1$s después de %2$d meses</string>
     <string name="special_offer_cta_claim">Obtener un %1$d %% de descuento</string>
     <string name="special_offer_crypto_one_payment">El descuento del %1$d %% solo se aplica a este pago. Los pagos posteriores con criptomonedas tienen el precio normal. Para obtenerlo durante un año completo, elige 12 meses.</string>
     <string name="special_offer_benefit_aliases_title">Alias ilimitados</string>

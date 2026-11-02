@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Discount2
 import org.astermail.android.R
+import org.astermail.android.api.billing.GooglePlayConfigResponse
 import org.astermail.android.billing.BillingUiState
 import org.astermail.android.billing.billing_view_model
 import org.astermail.android.billing.play_special_offer_for
@@ -40,7 +41,13 @@ import org.astermail.android.design.AsterMaterial
 internal fun special_offer_play_ready(billing_state: BillingUiState): Boolean =
     billing_state.play_enabled &&
         billing_state.play_special_offer_eligible &&
-        play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer) != null
+        (
+            play_special_offer_for(billing_state.play_offers, billing_state.play_special_offer) != null ||
+                play_offer_list_has_special(
+                    GooglePlayConfigResponse(special_offers = billing_state.play_special_offers),
+                    billing_state.play_offers,
+                )
+            )
 
 @Composable
 fun special_offer_entry_visible(offer_state: SpecialOfferState): Boolean {
