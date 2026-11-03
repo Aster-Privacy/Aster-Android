@@ -57,6 +57,10 @@ fun html_signature_with_separator(html: String, preference: Boolean?): String =
 
 const val SIGNATURE_GAP_HTML = "<div><br></div>"
 
+const val BIDI_LINES_OPEN = "<div dir=\"auto\" style=\"unicode-bidi:plaintext\">"
+
+const val BIDI_QUOTE_OPEN = "<blockquote dir=\"auto\" style=\"unicode-bidi:plaintext\">"
+
 const val IMG_TOKEN_PATTERN = """\[\[ASTER_IMG_\d+]]"""
 
 private val HTML_TAG_RE = Regex("<[^>]*>")
@@ -66,7 +70,7 @@ private fun escape_body_text(text: String): String =
 
 fun plain_lines_html(text: String): String =
     text.split("\n").joinToString("") { line ->
-        if (line.isEmpty()) SIGNATURE_GAP_HTML else "<div>" + escape_body_text(line) + "</div>"
+        if (line.isEmpty()) SIGNATURE_GAP_HTML else "<div dir=\"auto\">" + escape_body_text(line) + "</div>"
     }
 
 fun plain_signature_html(signature: String): String =
@@ -76,7 +80,7 @@ fun signature_div_html(signature_id: String?, inner_html: String): String {
     val id_attr = signature_id?.takeIf { it.isNotBlank() }
         ?.let { " data-aster-signature-id=\"" + escape_body_text(it) + "\"" }
         .orEmpty()
-    return "<div data-aster-signature=\"1\"$id_attr>$inner_html</div>"
+    return "<div data-aster-signature=\"1\"$id_attr dir=\"auto\" style=\"unicode-bidi:plaintext\">$inner_html</div>"
 }
 
 fun trim_trailing_breaks(html: String): String {
@@ -105,7 +109,7 @@ private fun lines_before_signature_html(before: String, is_rich: Boolean, drop_g
     if (before.isEmpty()) return ""
     if (is_rich) {
         val kept = if (drop_gap && before.endsWith("<br><br>")) before.removeSuffix("<br>") else before
-        return "<div>$kept</div>"
+        return BIDI_LINES_OPEN + kept + "</div>"
     }
     val lines = before.removeSuffix("\n").split("\n")
     val kept = if (drop_gap && lines.size >= 2 && lines.last().isEmpty()) lines.dropLast(1) else lines
@@ -128,7 +132,7 @@ fun assemble_body_with_signature(
         else -> {
             val core = if (is_rich) body else body.trimEnd('\n', ' ')
             val core_html = when {
-                is_rich -> core
+                is_rich -> if (core.isEmpty()) "" else BIDI_LINES_OPEN + core + "</div>"
                 core.isEmpty() -> ""
                 else -> plain_lines_html(core)
             }

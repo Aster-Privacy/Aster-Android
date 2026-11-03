@@ -282,7 +282,7 @@ private fun strip_markup(raw: String): String {
 
 private fun plain_text_fallback_body(raw: String): String {
     val text = strip_markup(raw).trim()
-    return "<pre style=\"white-space:pre-wrap;word-wrap:break-word;font-family:inherit\">" +
+    return "<pre dir=\"auto\" style=\"white-space:pre-wrap;word-wrap:break-word;font-family:inherit;unicode-bidi:plaintext\">" +
         escape_body_text(text) + "</pre>"
 }
 

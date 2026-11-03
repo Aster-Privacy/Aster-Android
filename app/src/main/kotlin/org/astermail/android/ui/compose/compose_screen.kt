@@ -5456,14 +5456,14 @@ private fun render_spanned_html(editable: android.text.Editable): String {
                 val (s, e) = line_bounds[index]
                 val pe = if (e > s) e else minOf(s + 1, editable.length)
                 if (s >= pe || editable.getSpans(s, pe, android.text.style.BulletSpan::class.java).isEmpty()) break
-                out.append("<li>").append(render_inline_html(editable, s, e)).append("</li>")
+                out.append("<li dir=\"auto\">").append(render_inline_html(editable, s, e)).append("</li>")
                 index++
             }
             out.append("</ul>")
             continue
         }
         if (is_quote) {
-            out.append("<blockquote>")
+            out.append(BIDI_QUOTE_OPEN)
             var first = true
             while (index < line_bounds.size) {
                 val (s, e) = line_bounds[index]

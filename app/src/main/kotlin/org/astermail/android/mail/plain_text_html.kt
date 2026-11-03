@@ -33,7 +33,7 @@ fun build_plain_text_html(body: String): String {
         val href = segment.href
         if (href == null) text else "<a href=\"${escape_plain_text(href)}\">$text</a>"
     }
-    return "<div style=\"white-space:pre-wrap;overflow-wrap:break-word\">" +
+    return "<div style=\"white-space:pre-wrap;overflow-wrap:break-word;unicode-bidi:plaintext\" dir=\"auto\">" +
         linked.replace("\n", "<br>") +
         "</div>"
 }

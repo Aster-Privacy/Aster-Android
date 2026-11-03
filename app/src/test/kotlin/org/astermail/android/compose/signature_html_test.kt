@@ -20,6 +20,7 @@
 //
 package org.astermail.android.compose
 
+import org.astermail.android.ui.compose.BIDI_LINES_OPEN
 import org.astermail.android.ui.compose.SIGNATURE_GAP_HTML
 import org.astermail.android.ui.compose.assemble_body_with_signature
 import org.astermail.android.ui.compose.draft_html_with_signature
@@ -33,7 +34,7 @@ import org.junit.Test
 class signature_html_test {
     private val signature = plain_signature_with_separator("Adam\nAster", true)
     private val signature_div =
-        "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\">--<br>Adam<br>Aster</div>"
+        "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\" dir=\"auto\" style=\"unicode-bidi:plaintext\">--<br>Adam<br>Aster</div>"
     private val quote = "<br><br><div class=\"aster_quote\">quoted</div>"
 
     private fun plain(
@@ -74,7 +75,7 @@ class signature_html_test {
     @Test
     fun `typed text keeps exactly one blank line above the signature`() {
         assertEquals(
-            "<div>Hello</div><div><br></div>" + signature_div,
+            "<div dir=\"auto\">Hello</div><div><br></div>" + signature_div,
             plain("Hello\n\n$signature"),
         )
     }
@@ -82,7 +83,7 @@ class signature_html_test {
     @Test
     fun `each typed line becomes its own block`() {
         assertEquals(
-            "<div>Hi</div><div>there</div><div><br></div>" + signature_div,
+            "<div dir=\"auto\">Hi</div><div dir=\"auto\">there</div><div><br></div>" + signature_div,
             plain("Hi\nthere\n\n$signature"),
         )
     }
@@ -90,7 +91,7 @@ class signature_html_test {
     @Test
     fun `typed text is escaped`() {
         assertEquals(
-            "<div>a &lt; b &amp; c</div><div><br></div>" + signature_div,
+            "<div dir=\"auto\">a &lt; b &amp; c</div><div><br></div>" + signature_div,
             plain("a < b & c\n\n$signature"),
         )
     }
@@ -98,7 +99,7 @@ class signature_html_test {
     @Test
     fun `trailing blank lines after the signature are dropped`() {
         assertEquals(
-            "<div>Hello</div><div><br></div>" + signature_div,
+            "<div dir=\"auto\">Hello</div><div><br></div>" + signature_div,
             plain("Hello\n\n$signature\n\n"),
         )
     }
@@ -106,16 +107,16 @@ class signature_html_test {
     @Test
     fun `inline image tokens stay in place`() {
         assertEquals(
-            "<div>[[ASTER_IMG_0]]</div><div><br></div>" + signature_div,
+            "<div dir=\"auto\">[[ASTER_IMG_0]]</div><div><br></div>" + signature_div,
             plain("[[ASTER_IMG_0]]\n\n$signature"),
         )
     }
 
     @Test
     fun `body without a signature adds no blank lines`() {
-        assertEquals("<div>Hello</div><div>World</div>", plain("Hello\nWorld", plain_signature = ""))
+        assertEquals("<div dir=\"auto\">Hello</div><div dir=\"auto\">World</div>", plain("Hello\nWorld", plain_signature = ""))
         assertEquals("", plain("", plain_signature = ""))
-        assertEquals("<div>Hello</div>", plain("Hello\n\n", plain_signature = ""))
+        assertEquals("<div dir=\"auto\">Hello</div>", plain("Hello\n\n", plain_signature = ""))
     }
 
     @Test
@@ -123,7 +124,7 @@ class signature_html_test {
         val bare = plain_signature_with_separator("Adam", false)
         assertEquals(
             "<div><br></div><div><br></div>" +
-                "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\">Adam</div>",
+                "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\" dir=\"auto\" style=\"unicode-bidi:plaintext\">Adam</div>",
             plain("\n\n$bare", plain_signature = bare),
         )
     }
@@ -131,20 +132,20 @@ class signature_html_test {
     @Test
     fun `html signature gets the same spacing and a single separator`() {
         val html = html_signature_with_separator("<b>Adam</b>", true)
-        val expected_div = "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\">--<br><b>Adam</b></div>"
+        val expected_div = "<div data-aster-signature=\"1\" data-aster-signature-id=\"sig_1\" dir=\"auto\" style=\"unicode-bidi:plaintext\">--<br><b>Adam</b></div>"
         assertEquals(
             "<div><br></div><div><br></div>" + expected_div,
             plain("", plain_signature = "", html_signature = html),
         )
         val typed = plain("Hello", plain_signature = "", html_signature = html)
-        assertEquals("<div>Hello</div><div><br></div>" + expected_div, typed)
+        assertEquals("<div dir=\"auto\">Hello</div><div><br></div>" + expected_div, typed)
         assertEquals(1, Regex("--<br>").findAll(typed).count())
     }
 
     @Test
     fun `reply keeps the signature above the quote`() {
         assertEquals(
-            "<div>Hello</div><div><br></div>" + signature_div + quote,
+            "<div dir=\"auto\">Hello</div><div><br></div>" + signature_div + quote,
             plain("Hello\n\n$signature", quote_html = quote),
         )
     }
@@ -152,7 +153,7 @@ class signature_html_test {
     @Test
     fun `signature moved below the quote keeps one blank line`() {
         assertEquals(
-            "<div>Hello</div>" + quote + SIGNATURE_GAP_HTML + signature_div,
+            "<div dir=\"auto\">Hello</div>" + quote + SIGNATURE_GAP_HTML + signature_div,
             plain("Hello\n\n$signature", quote_html = quote, place_below = true),
         )
     }
@@ -168,18 +169,18 @@ class signature_html_test {
     @Test
     fun `formatted body wraps the lines above the signature in one block`() {
         assertEquals(
-            "<div>Hello<br><br></div>" + signature_div,
+            BIDI_LINES_OPEN + "Hello<br><br></div>" + signature_div,
             rich("Hello<br><br>--<br>Adam<br>Aster"),
         )
         assertEquals(
-            "<div><b>Hi</b><br><br></div>" + signature_div,
+            BIDI_LINES_OPEN + "<b>Hi</b><br><br></div>" + signature_div,
             rich("<b>Hi</b><br><br>--<br>Adam<br>Aster<br><br>"),
         )
     }
 
     @Test
     fun `signature block omits a missing id`() {
-        assertEquals("<div data-aster-signature=\"1\">x</div>", signature_div_html(null, "x"))
+        assertEquals("<div data-aster-signature=\"1\" dir=\"auto\" style=\"unicode-bidi:plaintext\">x</div>", signature_div_html(null, "x"))
     }
 
     @Test
