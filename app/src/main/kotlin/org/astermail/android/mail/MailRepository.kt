@@ -126,6 +126,16 @@ fun has_mixed_recipients(recipients: List<String>): Boolean {
     return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
 }
 
+internal fun split_display_address(raw: String): Pair<String, String>? {
+    val trimmed = raw.trim()
+    val angle = trimmed.indexOf('<')
+    val close = if (angle >= 0) trimmed.indexOf('>', angle + 1) else -1
+    if (angle < 0 || close <= angle) return null
+    val name = trimmed.substring(0, angle).trim().trim('"')
+    val email = trimmed.substring(angle + 1, close).trim()
+    return name to email
+}
+
 class SentCopyAttachmentException(val failed_count: Int) :
     Exception("sent copy attachments not stored")
 
@@ -4958,15 +4968,7 @@ class MailRepository @Inject constructor(
         for (i in 0 until arr.length()) {
             val raw = arr.optString(i, "").trim()
             if (raw.isEmpty()) continue
-            val angle = raw.indexOf('<')
-            val close = if (angle >= 0) raw.indexOf('>', angle + 1) else -1
-            if (angle > 0 && close > angle) {
-                val name = raw.substring(0, angle).trim().trim('"')
-                val email = raw.substring(angle + 1, close).trim()
-                result.add(name to email)
-            } else {
-                result.add("" to raw)
-            }
+            result.add(split_display_address(raw) ?: ("" to raw))
         }
         return result
     }
@@ -5015,13 +5017,7 @@ class MailRepository @Inject constructor(
         }
         val from_str = obj.optString("from", "")
         if (from_str.isBlank()) return "" to ""
-        val angle = from_str.indexOf('<')
-        val close = if (angle >= 0) from_str.indexOf('>', angle + 1) else -1
-        if (angle > 0 && close > angle) {
-            val name = from_str.substring(0, angle).trim().trim('"')
-            val email = from_str.substring(angle + 1, close).trim()
-            return name to email
-        }
+        split_display_address(from_str)?.let { return it }
         if (from_str.contains('@')) return "" to from_str.trim()
         return from_str.trim() to ""
     }
@@ -5035,16 +5031,7 @@ class MailRepository @Inject constructor(
                 result.add(item.optString("name", "") to item.optString("email", ""))
             } else {
                 val s = item.toString()
-                val angle = s.indexOf('<')
-                val close = if (angle >= 0) s.indexOf('>', angle + 1) else -1
-                if (angle > 0 && close > angle) {
-                    result.add(
-                        s.substring(0, angle).trim().trim('"') to
-                            s.substring(angle + 1, close).trim(),
-                    )
-                } else {
-                    result.add("" to s.trim())
-                }
+                result.add(split_display_address(s) ?: ("" to s.trim()))
             }
         }
         return result
