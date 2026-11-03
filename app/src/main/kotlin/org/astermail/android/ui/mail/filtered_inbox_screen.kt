@@ -144,7 +144,9 @@ fun FilteredInboxScreen(
     }
 
     val email_label_context = androidx.compose.ui.platform.LocalContext.current
-    val filtered_emails = remember(inbox_state.items, filter_type, filter_value, settings_state.tags) {
+    val requested_items_loaded = inbox_state.current_folder == requested_folder
+    val filtered_emails = remember(inbox_state.items, requested_items_loaded, filter_type, filter_value, settings_state.tags) {
+        if (!requested_items_loaded) return@remember emptyList()
         inbox_state.items.map { inbox_item_to_email(it, settings_state.tags, context = email_label_context) }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
@@ -212,7 +214,7 @@ fun FilteredInboxScreen(
                 (inbox_state.is_loading || !showing_requested)
             val skeleton_phase by remember_skeleton_phase(
                 wanted = skeleton_now,
-                rows_imminent = false,
+                rows_imminent = !showing_requested,
             )
             val awaiting_disk_rows = showing_requested && inbox_state.cache_pending && threads.isEmpty()
             val handoff = Modifier.skeleton_handoff(skeleton_phase)

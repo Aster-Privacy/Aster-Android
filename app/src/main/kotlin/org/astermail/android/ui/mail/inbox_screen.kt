@@ -1000,6 +1000,8 @@ fun InboxScreen(
     var threads by remember { mutableStateOf(initial_threads) }
     var threads_pending by remember { mutableStateOf(initial_threads.isEmpty()) }
     var threads_folder by remember { mutableStateOf(current_folder) }
+    var threads_source_ids by remember { mutableStateOf(email_ids_signature(emails)) }
+    val loaded_ids_signature = remember(api_emails) { api_emails?.let { email_ids_signature(it) } }
     val thread_gate = remember { InboxThreadGate() }
     LaunchedEffect(
         current_folder,
@@ -1019,6 +1021,7 @@ fun InboxScreen(
             threads_folder = current_folder
         }
         val snapshot = emails.toList()
+        val snapshot_ids = email_ids_signature(snapshot)
         val sticky_snapshot = HashMap(sticky_participants)
         val computed = withContext(Dispatchers.Default) {
             build_thread_rows(
@@ -1036,6 +1039,7 @@ fun InboxScreen(
         sticky_participants.keys.retainAll(computed.participants.keys)
         sticky_participants.putAll(computed.participants)
         threads = computed.rows
+        threads_source_ids = snapshot_ids
         threads_pending = false
     }
 
@@ -2033,7 +2037,18 @@ fun InboxScreen(
                             .padding(top = header_height_dp),
                     )
                 }
-                val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
+                val folder_items_loaded = state_matches_folder && inbox_state.items.isNotEmpty()
+                val rows_deriving = inbox_rows_deriving(
+                    has_rows = threads.isNotEmpty(),
+                    folder_items_loaded = folder_items_loaded,
+                    derivation_pending = threads_pending,
+                    derived_from_loaded_items = threads_source_ids == loaded_ids_signature,
+                )
+                val hidden_by_category = inbox_hidden_by_category(
+                    has_rows = threads.isNotEmpty(),
+                    folder_items_loaded = folder_items_loaded,
+                    rows_deriving = rows_deriving,
+                )
                 val category_drain_active = categories_enabled &&
                     inbox_state.has_more &&
                     (inbox_state.is_loading_more || inbox_state.items.size < CATEGORY_DRAIN_MAX_ITEMS)
@@ -2067,6 +2082,7 @@ fun InboxScreen(
                         )
                 val empty_target = threads.isEmpty() &&
                     !threads_pending &&
+                    !rows_deriving &&
                     !inbox_state.is_loading &&
                     !inbox_state.initial
                 var empty_settled by remember { mutableStateOf(false) }
@@ -2136,21 +2152,28 @@ fun InboxScreen(
                     }
                     removal_quiet = false
                 }
-                val skeleton_now = (
-                    cache_pending ||
-                        skeleton_target ||
-                        (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
-                    ) && !(is_refreshing && empty_state_seen) && !emptied_by_action
+                val skeleton_showing = remember { booleanArrayOf(false) }
+                val skeleton_now = inbox_skeleton_wanted(
+                    rows_deriving = rows_deriving,
+                    skeleton_showing = skeleton_showing[0],
+                    cache_pending = cache_pending,
+                    loading_without_rows = skeleton_target,
+                    waiting_for_rows = category_skeleton || empty_skeleton,
+                    showing_error = inbox_error_now || contradicts_unread,
+                    refreshing_known_empty = is_refreshing && empty_state_seen,
+                    emptied_by_action = emptied_by_action,
+                )
                 val rows_imminent = threads.isEmpty() &&
-                    (cache_pending || (threads_pending && inbox_state.items.isNotEmpty()))
+                    (cache_pending || !state_matches_folder || (threads_pending && inbox_state.items.isNotEmpty()))
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,
                     rows_imminent = rows_imminent,
                 )
+                skeleton_showing[0] = skeleton_phase == SkeletonPhase.skeleton
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
-                if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
+                if (skeleton_now || rows_deriving || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
                     Box(Modifier.padding(top = header_height_dp).then(handoff)) {
