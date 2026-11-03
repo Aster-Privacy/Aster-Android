@@ -427,6 +427,8 @@ data class InboxItem(
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
 
+class DraftSessionClosedException : IllegalStateException("draft session closed")
+
 private class EnvelopeKeysMissingException : IllegalStateException("all envelope keys failed")
 
 data class CategoryWrite(
@@ -1222,6 +1224,7 @@ class MailRepository @Inject constructor(
         when {
             row != null -> if (row.draft_id.isNullOrBlank()) {
                 runCatching { pending_send_dao.update_draft_id(pending_id, assigned_draft_id) }
+                if (pending_id in completed_pending_ids) delete_sent_draft(assigned_draft_id)
             }
             pending_id in completed_pending_ids -> delete_sent_draft(assigned_draft_id)
         }
@@ -6484,7 +6487,7 @@ class MailRepository @Inject constructor(
         draft_save_mutex.withLock {
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
                 if (session_id != null && session_id in closed_draft_sessions) {
-                    throw IllegalStateException("draft session closed")
+                    throw DraftSessionClosedException()
                 }
                 val requested_id = session_id?.let { draft_session_ids[it] }
                     ?: existing_draft_id?.takeIf { it.isNotBlank() }
@@ -6705,10 +6708,17 @@ class MailRepository @Inject constructor(
         draft_session_ids.remove(session_id)
     }
 
-    suspend fun settle_draft_session(session_id: String?, fallback_draft_id: String?): String? =
+    suspend fun claim_draft_session_for_send(session_id: String?, fallback_draft_id: String?): String? =
         draft_save_mutex.withLock {
-            session_id?.let { draft_session_ids[it] } ?: fallback_draft_id?.takeIf { it.isNotBlank() }
+            val resolved = session_id?.let { draft_session_ids[it] } ?: fallback_draft_id?.takeIf { it.isNotBlank() }
+            session_id?.let { closed_draft_sessions.add(it) }
+            resolved
         }
+
+    fun reopen_draft_session(session_id: String, draft_id: String?) {
+        closed_draft_sessions.remove(session_id)
+        draft_id?.takeIf { it.isNotBlank() }?.let { draft_session_ids.putIfAbsent(session_id, it) }
+    }
 
     fun discard_sent_draft(draft_id: String?, session_id: String?): kotlinx.coroutines.Deferred<Boolean> =
         app_scope.async {

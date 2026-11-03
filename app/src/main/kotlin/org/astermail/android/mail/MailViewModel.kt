@@ -4260,8 +4260,12 @@ class MailViewModel @Inject constructor(
         repository.end_draft_session(session_id)
     }
 
-    suspend fun settle_draft_session(session_id: String, fallback_draft_id: String): String? =
-        repository.settle_draft_session(session_id, fallback_draft_id)
+    suspend fun claim_draft_session_for_send(session_id: String, fallback_draft_id: String): String? =
+        repository.claim_draft_session_for_send(session_id, fallback_draft_id)
+
+    fun reopen_draft_session(session_id: String, draft_id: String?) {
+        repository.reopen_draft_session(session_id, draft_id)
+    }
 
     fun discard_sent_draft(draft_id: String, session_id: String? = null) {
         val pending = repository.discard_sent_draft(draft_id, session_id)
@@ -5891,7 +5895,7 @@ class MailViewModel @Inject constructor(
                 runCatching {
                     emit_toast(context.getString(R.string.email_saved_as_draft))
                 }
-            } else {
+            } else if (result.exceptionOrNull() !is DraftSessionClosedException) {
                 runCatching {
                     emit_toast(context.getString(R.string.failed_to_save_draft))
                 }

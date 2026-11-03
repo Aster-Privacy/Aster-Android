@@ -1676,6 +1676,68 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `autosave that lands after send starts cannot create a second draft`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+
+        val claimed = repo.claim_draft_session_for_send("compose_send_5", "")
+        val late = repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_5")
+
+        assertNull(claimed)
+        assertTrue(late.exceptionOrNull() is DraftSessionClosedException)
+        coVerify(exactly = 0) { mail_api.create_draft(any()) }
+    }
+
+    @Test
+    fun `send claims the draft that an in flight autosave just created`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_6")
+        val claimed = repo.claim_draft_session_for_send("compose_send_6", "")
+
+        assertEquals(draft_uuid, claimed)
+    }
+
+    @Test
+    fun `failed send reopens the session on the same draft`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        coEvery { mail_api.update_draft(draft_uuid, any()) } returns
+            org.astermail.android.api.mail.UpdateDraftResponse(success = true, version = 2)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_7")
+        val claimed = repo.claim_draft_session_for_send("compose_send_7", "")
+        repo.reopen_draft_session("compose_send_7", claimed)
+        val resumed = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_send_7")
+
+        assertEquals(draft_uuid, resumed.getOrThrow())
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+        coVerify(exactly = 1) { mail_api.update_draft(draft_uuid, any()) }
+    }
+
+    @Test
+    fun `claimed draft is deleted after the send and stays closed`() = runTest {
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = draft_uuid, version = 1)
+        coEvery { mail_api.delete_draft(draft_uuid) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        repo.save_draft(subject = "Hello", body_html = "<p>1</p>", session_id = "compose_send_8")
+        val claimed = repo.claim_draft_session_for_send("compose_send_8", "")
+        val deleted = await_real { repo.discard_sent_draft(claimed, "compose_send_8").await() }
+        val late = repo.save_draft(subject = "Hello", body_html = "<p>12</p>", session_id = "compose_send_8")
+
+        assertTrue(deleted)
+        assertTrue(late.isFailure)
+        coVerify(exactly = 1) { mail_api.delete_draft(draft_uuid) }
+        coVerify(exactly = 1) { mail_api.create_draft(any()) }
+    }
+
+    @Test
     fun `thread draft is hidden while its undo send is queued`() = runTest {
         stub_thread_draft("thread_b")
 

@@ -1451,9 +1451,20 @@ fun ComposeScreen(
         else -> "new"
     }
 
+    fun draft_has_content(): Boolean =
+        subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty() || attachments.isNotEmpty()
+
+    fun autosave_allowed(): Boolean = draft_autosave_allowed(
+        auto_save_enabled = settings_state.preferences?.auto_save_drafts != false,
+        is_sending = is_sending,
+        sent = sent,
+        discarded = discarded,
+        has_content = draft_has_content(),
+    )
+
     fun schedule_draft_save() {
         draft_save_job?.cancel()
-        if (discarded) return
+        if (discarded || sent || is_sending) return
         if (settings_state.preferences?.auto_save_drafts == false) return
         if (mode == "draft" && !draft_id.isNullOrBlank() && !draft_loaded) return
         draft_save_job = scope.launch {
@@ -1462,12 +1473,11 @@ fun ComposeScreen(
                     org.astermail.android.api.network.low_network_state.active(),
                 ),
             )
-            if (sent || is_sending) return@launch
-            if (subject.isBlank() && body.isBlank() && to_chips.isEmpty() && attachments.isEmpty()) return@launch
+            if (!autosave_allowed()) return@launch
             if (is_empty_new_draft()) return@launch
             draft_status = context.getString(R.string.saving)
             val draft_payloads = draft_attachment_payloads(context, attachments, draft_attachment_cache)
-            if (sent || is_sending || discarded) return@launch
+            if (!autosave_allowed()) return@launch
             val result = mail_vm.save_draft(
                 subject = subject,
                 body_html = draft_body_for_save(),
@@ -1656,10 +1666,7 @@ fun ComposeScreen(
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
-                val auto_save_enabled = settings_state.preferences?.auto_save_drafts != false
-                if (auto_save_enabled && !sent && !discarded && !is_sending && !is_empty_new_draft() &&
-                    (subject.isNotBlank() || body.isNotBlank() || to_chips.isNotEmpty() || attachments.isNotEmpty())
-                ) {
+                if (autosave_allowed() && !is_empty_new_draft()) {
                     draft_save_job?.cancel()
                     val pause_attachments = attachments
                     mail_vm.save_draft_and_finish(
@@ -1819,6 +1826,15 @@ fun ComposeScreen(
     }
 
     val send_lock = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+    suspend fun claim_draft_for_send() {
+        val claimed = mail_vm.claim_draft_session_for_send(draft_session_id, current_draft_id)
+        if (!claimed.isNullOrBlank()) current_draft_id = claimed
+    }
+    fun reopen_draft_after_failed_send() {
+        if (sent) return
+        mail_vm.reopen_draft_session(draft_session_id, current_draft_id)
+        schedule_draft_save()
+    }
     fun launch_send(block: suspend () -> Unit) {
         scope.launch {
             try {
@@ -1828,6 +1844,7 @@ fun ComposeScreen(
             } catch (t: Throwable) {
                 is_sending = false
                 send_lock.set(false)
+                reopen_draft_after_failed_send()
                 send_error = org.astermail.android.localized_api_error(
                     context,
                     t,
@@ -1863,6 +1880,7 @@ fun ComposeScreen(
             } else {
                 null
             }
+            claim_draft_for_send()
             val result = mail_vm.send_email(
                 to = snapshot_to,
                 cc = snapshot_cc,
@@ -1894,11 +1912,13 @@ fun ComposeScreen(
                     } else {
                         send_error = resp.message ?: context.getString(R.string.send_problem_failed_message)
                         send_error_upgrade = false
+                        reopen_draft_after_failed_send()
                     }
                 },
                 onFailure = { t ->
                     is_sending = false
                     send_lock.set(false)
+                    reopen_draft_after_failed_send()
                     send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.send_problem_failed_message))
                     send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                 },
@@ -2078,6 +2098,7 @@ fun ComposeScreen(
                     send_error = context.getString(R.string.scheduled_send_connected_account)
                     return@launch
                 }
+                claim_draft_for_send()
                 val result = external_accounts_vm.send_via_account(
                     account_token = external_token,
                     to = snap_to,
@@ -2105,6 +2126,7 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
+                        reopen_draft_after_failed_send()
                         send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.send_problem_failed_message))
                     },
                 )
@@ -2170,6 +2192,7 @@ fun ComposeScreen(
                     return@launch
                 }
                 val scheduled_at = chosen_scheduled_at ?: java.time.Instant.now().plus(java.time.Duration.ofMillis(DEFAULT_SCHEDULE_DELAY_MS)).toString()
+                claim_draft_for_send()
                 val result = mail_vm.schedule_email(
                     to = snap_to,
                     cc = snap_cc,
@@ -2192,6 +2215,7 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
+                        reopen_draft_after_failed_send()
                         send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.send_problem_failed_message))
                         send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                     },
@@ -2207,6 +2231,7 @@ fun ComposeScreen(
                 } else {
                     null
                 }
+                claim_draft_for_send()
                 val result = mail_vm.schedule_send_with_undo(
                     to = snap_to,
                     cc = snap_cc,
@@ -2222,7 +2247,7 @@ fun ComposeScreen(
                     sender_alias_hash = if (snap_from != user_email) alias_hash_map[snap_from]?.takeIf { it.isNotBlank() } else null,
                     suppress_branding = suppress_branding,
                     undo_seconds = undo_send_seconds,
-                    draft_id = mail_vm.settle_draft_session(draft_session_id, current_draft_id),
+                    draft_id = current_draft_id.takeIf { it.isNotBlank() },
                     allow_non_post_quantum = allow_non_post_quantum,
                     reply_to_id = if (mode == "reply" || mode == "reply_all") reply_to?.takeIf { it.isNotBlank() } else null,
                 )
@@ -2235,6 +2260,7 @@ fun ComposeScreen(
                         on_sent()
                     },
                     onFailure = { t ->
+                        reopen_draft_after_failed_send()
                         send_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.send_problem_failed_message))
                         send_error_upgrade = org.astermail.android.billing.is_upgrade_error(t, plan_state.limits?.plan_code)
                     },
