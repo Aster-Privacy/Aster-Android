@@ -586,6 +586,7 @@ fun MailDetailScreen(
     on_next: (() -> Unit)? = null,
     on_previous: (() -> Unit)? = null,
     swipe_direction: Int = 0,
+    chained: Boolean = false,
     on_navigate: ((String) -> Unit)? = null,
     mail_vm: MailViewModel = hiltViewModel(),
     settings_vm: SettingsViewModel = shared_settings_view_model(),
@@ -1127,8 +1128,11 @@ fun MailDetailScreen(
                     onClick = on_back,
                     modifier = Modifier.align(Alignment.CenterStart).testTag("back"),
                 ) { tint, icon_modifier ->
-                    val morph = remember { androidx.compose.animation.core.Animatable(0f) }
+                    val morph = remember {
+                        androidx.compose.animation.core.Animatable(detail_back_icon_start_progress(swipe_direction, chained))
+                    }
                     LaunchedEffect(Unit) {
+                        if (morph.value >= 1f) return@LaunchedEffect
                         morph.animateTo(
                             targetValue = 1f,
                             animationSpec = androidx.compose.animation.core.tween(
