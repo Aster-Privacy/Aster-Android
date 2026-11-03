@@ -83,10 +83,83 @@ class EmailBodyOverflowTest {
     }
 
     @Test
-    fun a_plain_message_keeps_sideways_overflow_hidden() {
+    fun a_plain_message_never_hides_what_does_not_fit() {
         val css = style_block(render("<p>Short note</p>"))
 
-        assertTrue(css.contains("body{height:auto!important;min-height:0!important;margin:0;overflow-x:hidden;"))
+        assertTrue(css.contains("body{height:auto!important;min-height:0!important;margin:0;overflow-x:auto;"))
+        assertFalse(css.contains("overflow-x:hidden"))
+    }
+
+    private val order_note = "Thanks for your order. Your package ships within two business days."
+
+    @Test
+    fun a_fixed_width_column_reflows_at_device_width_instead_of_shrinking() {
+        val document = render("<div style=\"width:640px;margin:0 auto\"><h2>Order confirmed</h2><p>$order_note</p></div>")
+
+        assertNull(fitted_viewport_width(document))
+        assertTrue(document.contains("content=\"width=device-width,initial-scale=1"))
+        assertTrue(document.contains("width:640px;width:min(640px,100%)"))
+    }
+
+    @Test
+    fun wide_fixed_headings_and_inline_blocks_are_capped_to_the_screen() {
+        val document = render(
+            "<h1 style=\"width:700px\">Welcome</h1>" +
+                "<span style=\"display:inline-block;width:720px\">$order_note</span>",
+        )
+
+        assertNull(fitted_viewport_width(document))
+        assertTrue(document.contains("width:700px;width:min(700px,100%)"))
+        assertTrue(document.contains("width:720px;width:min(720px,100%)"))
+    }
+
+    @Test
+    fun a_wide_min_width_can_no_longer_push_text_off_the_screen() {
+        val document = render("<div style=\"min-width:700px\">$order_note</div>")
+
+        assertTrue(document.contains("min-width:700px;min-width:min(700px,100%)"))
+    }
+
+    @Test
+    fun an_important_fixed_width_stays_important_once_capped() {
+        assertEquals(
+            "<div style=\"width:800px!important;width:min(800px,100%)!important\">a</div>",
+            fluid_wide_fixed_widths("<div style=\"width: 800px !important\">a</div>"),
+        )
+    }
+
+    @Test
+    fun table_cells_narrow_widths_and_max_widths_keep_their_declared_size() {
+        val cells = "<table><tbody><tr><td style=\"width:700px\">a</td><td style=\"width:20px\">b</td></tr></tbody></table>"
+        val narrow = "<span style=\"width:120px\">a</span><div style=\"max-width:900px\">b</div>"
+
+        assertEquals(cells, fluid_wide_fixed_widths(cells))
+        assertEquals(narrow, fluid_wide_fixed_widths(narrow))
+    }
+
+    @Test
+    fun a_newsletter_min_width_is_capped_once() {
+        val document = render(newsletter.replace("<h1>", "<h1 style=\"min-width:640px\">"))
+
+        assertTrue(document.contains("min-width:640px;min-width:min(640px,100%)\""))
+        assertFalse(document.contains("min(640px,100%);min-width:min(640px,100%)"))
+    }
+
+    @Test
+    fun a_newsletter_block_wider_than_a_thousand_pixels_is_capped_to_the_screen() {
+        val document = render("<table bgcolor=\"#ffffff\"><tr><td><div style=\"width:1100px\">$order_note</div></td></tr></table>")
+
+        assertTrue(document.contains("data-nl=\"1\""))
+        assertNull(fitted_viewport_width(document))
+        assertTrue(document.contains("width:1100px;width:min(1100px,100%)"))
+    }
+
+    @Test
+    fun a_newsletter_table_with_a_wide_width_attribute_starts_at_device_width() {
+        val document = render("<table width=\"1200\" bgcolor=\"#ffffff\"><tr><td><p>$order_note</p></td></tr></table>")
+
+        assertNull(fitted_viewport_width(document))
+        assertTrue(document.contains("content=\"width=device-width,initial-scale=1"))
     }
 
     private val charges_cell = """<td style="font-size:14px;padding:10px;" valign="top"><ul style="margin:0;padding-left:15px">""" +
@@ -218,10 +291,12 @@ class EmailBodyOverflowTest {
     }
 
     @Test
-    fun a_plain_html_message_does_not_get_the_newsletter_wrapping_rules() {
+    fun a_plain_html_message_lets_nowrap_text_wrap_without_the_newsletter_rules() {
         val css = style_block(render("<p style=\"white-space:nowrap\">Short note</p>"))
 
-        assertFalse(css.contains("#m [style*=\"nowrap\" i]"))
+        assertTrue(css.contains("#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}"))
+        assertTrue(css.contains("#m a.aster-email-button{white-space:nowrap!important"))
+        assertFalse(css.contains("#m,#m *{word-break:normal!important"))
     }
 
     private val long_link = "https://accounts.example.com/oauth/authorize?client_id=abc123&state=eyJ" + "aB3xYz9QwErTy".repeat(45)

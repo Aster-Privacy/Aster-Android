@@ -169,44 +169,6 @@ class EmailBodyNativeTest {
     fun an_unsafe_background_value_is_refused() {
         assertNull(detect_body_background("<div style=\"background-color:url(javascript:alert(1))\">a</div>"))
     }
-    @Test
-    fun a_fixed_width_layout_reports_the_width_the_viewport_must_fit() {
-        val body = "<div style=\"width:900px\"><p style=\"width:900px\">Your statement is ready.</p></div>"
-
-        assertEquals(900, declared_content_width(body))
-    }
-
-    @Test
-    fun an_ordinary_email_asks_for_no_fitting() {
-        assertNull(declared_content_width("<p>Are we still on for Thursday?</p>"))
-    }
-
-    @Test
-    fun a_wide_image_alone_does_not_shrink_the_page() {
-        assertNull(declared_content_width("<p>Photo</p><img src=\"https://example.org/a.png\" width=\"1200\">"))
-    }
-
-    @Test
-    fun an_absurd_width_is_capped() {
-        assertEquals(MAX_FIT_CONTENT_WIDTH, declared_content_width("<div style=\"width:9000px\">wide</div>"))
-    }
-
-    @Test
-    fun a_max_width_declaration_is_not_a_fixed_width() {
-        assertNull(declared_content_width("<div style=\"max-width:900px\">fluid</div>"))
-    }
-
-    @Test
-    fun a_newsletter_table_width_attribute_is_read() {
-        assertEquals(640, declared_content_width("<table width=\"640\"><tr><td>Hello</td></tr></table>"))
-    }
-
-    @Test
-    fun a_fixed_width_capped_by_a_fluid_max_width_is_already_responsive() {
-        val body = "<div style=\"width:100%\"><div style=\"width:640px;max-width:100%;margin:0 auto\"><p>Welcome</p></div></div>"
-
-        assertNull(declared_content_width(body))
-    }
 
 
     @Test

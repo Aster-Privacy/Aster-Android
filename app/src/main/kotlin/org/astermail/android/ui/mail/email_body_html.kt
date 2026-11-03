@@ -26,8 +26,6 @@ import org.astermail.android.mail.looks_like_html_body
 
 private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""[4-9]\d{2,3}""")
 
-internal const val BODY_SIDE_PADDING = 16
-
 internal fun fit_wide_width_attributes(body: String): String {
     if (!body.contains("width", ignoreCase = true)) return body
     return try {
@@ -73,6 +71,39 @@ internal fun fluid_narrow_fixed_tables(body: String): String {
     }
 }
 
+private val FLUID_WIDTH_SKIP_TAGS = setOf("table", "thead", "tbody", "tfoot", "tr", "td", "th", "col", "colgroup")
+
+private val WIDE_FIXED_STYLE_WIDTH = Regex(
+    """(?<![a-z-])(min-width|width)\s*:\s*((?:[3-9]\d{2}|[1-9]\d{3})(?:\.\d+)?)px(\s*!important)?(?!\s*;\s*(?:min-)?width\s*:\s*min\()""",
+    RegexOption.IGNORE_CASE,
+)
+
+internal fun fluid_wide_fixed_widths(body: String): String {
+    if (!body.contains("width", ignoreCase = true)) return body
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        var changed = false
+        for (element in doc.select("[style]")) {
+            if (element.tagName().lowercase() in FLUID_WIDTH_SKIP_TAGS) continue
+            val style = element.attr("style")
+            val fluid = WIDE_FIXED_STYLE_WIDTH.replace(style) { match ->
+                val property = match.groupValues[1].lowercase()
+                val value = match.groupValues[2]
+                val important = match.groupValues[3].trim()
+                "$property:${value}px$important;$property:min(${value}px,100%)$important"
+            }
+            if (fluid != style) {
+                element.attr("style", fluid)
+                changed = true
+            }
+        }
+        if (changed) doc.body().html() else body
+    } catch (_: Throwable) {
+        body
+    }
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -103,6 +134,9 @@ internal fun build_email_html(
             .replace(Regex("""(?<!\(\s{0,8})(?<![a-z-])width\s*:\s*[4-9]\d{2,3}px""", RegexOption.IGNORE_CASE), "width:100%")
             .let { fit_wide_width_attributes(it) }
             .let { fluid_narrow_fixed_tables(it) }
+            .let { fluid_wide_fixed_widths(it) }
+    } else if (is_html_body) {
+        fluid_wide_fixed_widths(body)
     } else {
         body
     }
@@ -171,13 +205,10 @@ html,body{background-color:#ffffff!important}
     val table_css = if (has_newsletter_layout) {
         "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
-        "table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
+        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
-    val fit_content_width = declared_content_width(render_body)
     val viewport_meta = if (fit_width_override != null) {
         "<meta name=\"viewport\" content=\"width=$fit_width_override,maximum-scale=5,user-scalable=yes\">"
-    } else if (fit_content_width != null) {
-        "<meta name=\"viewport\" content=\"width=${fit_content_width + BODY_SIDE_PADDING * 2},maximum-scale=5,user-scalable=yes\">"
     } else {
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes\">"
     }
@@ -224,7 +255,7 @@ $viewport_meta
 $color_scheme_meta
 <style>
 html{height:auto!important;min-height:0!important;background-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{height:auto!important;min-height:0!important;margin:0;overflow-x:${if (has_newsletter_layout) "auto" else "hidden"};overflow-y:auto}
+body{height:auto!important;min-height:0!important;margin:0;overflow-x:auto;overflow-y:auto}
 *{box-sizing:border-box}
 [height="100%"],[height='100%']{height:auto!important}
 [style*="height:100%"],[style*="height: 100%"],[style*="height:100vh"],[style*="height: 100vh"],[style*="height:100dvh"],[style*="height: 100dvh"]{height:auto!important;min-height:0!important}

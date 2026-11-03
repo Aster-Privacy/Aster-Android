@@ -100,40 +100,7 @@ private val HEX_COLOR = Regex("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 private val RGB_COLOR = Regex("^rgba?\\(([^)]+)\\)$", RegexOption.IGNORE_CASE)
 
-internal const val MIN_FIT_CONTENT_WIDTH = 600
-
 internal const val MAX_FIT_CONTENT_WIDTH = 1600
-
-private val STYLE_PIXEL_WIDTH =
-    Regex("""(?<![a-z-])width\s*:\s*(\d{3,4})(?:\.\d+)?px""", RegexOption.IGNORE_CASE)
-
-private val PIXEL_WIDTH_ATTRIBUTE = Regex("""^(\d{3,4})(?:px)?$""", RegexOption.IGNORE_CASE)
-
-private val UNSIZED_FIT_TAGS = setOf("img", "video", "iframe", "hr", "canvas")
-
-private val STYLE_FLUID_MAX_WIDTH =
-    Regex("""(?<![a-z-])max-width\s*:\s*(?:\d{1,3}(?:\.\d+)?%|\d{1,3}(?:\.\d+)?vw)""", RegexOption.IGNORE_CASE)
-
-internal fun declared_content_width(body: String): Int? = try {
-    val doc = Jsoup.parseBodyFragment(body).apply { outputSettings(raw_body_output_settings()) }
-    var widest = 0
-    for (element in doc.body().select("*")) {
-        if (element.tagName().lowercase() in UNSIZED_FIT_TAGS) continue
-        val style = element.attr("style")
-        val from_style = if (STYLE_FLUID_MAX_WIDTH.containsMatchIn(style)) {
-            0
-        } else {
-            STYLE_PIXEL_WIDTH.find(style)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        }
-        val from_attribute =
-            PIXEL_WIDTH_ATTRIBUTE.find(element.attr("width").trim())?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        val declared = maxOf(from_style, from_attribute)
-        if (declared > widest) widest = declared
-    }
-    if (widest < MIN_FIT_CONTENT_WIDTH) null else minOf(widest, MAX_FIT_CONTENT_WIDTH)
-} catch (_: Throwable) {
-    null
-}
 
 private val TRANSLATION_SKIP_TAGS =
     setOf("script", "style", "noscript", "textarea", "pre", "code", "kbd", "samp", "var", "tt")
