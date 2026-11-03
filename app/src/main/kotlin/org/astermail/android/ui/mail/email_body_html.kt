@@ -104,6 +104,73 @@ internal fun fluid_wide_fixed_widths(body: String): String {
     }
 }
 
+private val SIDE_MARGIN_LENGTH = Regex("""^(?:\d+(?:\.\d+)?|\.\d+)(?:px|em|rem|pt|%)$""", RegexOption.IGNORE_CASE)
+
+private val ZERO_LENGTH = Regex("""^0*(?:\.0*)?(?:px|em|rem|pt|%)?$""", RegexOption.IGNORE_CASE)
+
+private fun side_margin_length(value: String?): String? {
+    val token = value?.trim()?.lowercase() ?: return null
+    if (ZERO_LENGTH.matches(token) || !SIDE_MARGIN_LENGTH.matches(token)) return null
+    return token
+}
+
+private fun style_declarations(style: String): List<Pair<String, String>> =
+    style.split(';').mapNotNull { declaration ->
+        val colon = declaration.indexOf(':')
+        if (colon <= 0) return@mapNotNull null
+        val property = declaration.substring(0, colon).trim().lowercase()
+        val value = declaration.substring(colon + 1).replace(Regex("""!\s*important""", RegexOption.IGNORE_CASE), "").trim()
+        if (property.isEmpty()) null else property to value
+    }
+
+private fun horizontal_margins(declarations: List<Pair<String, String>>): Pair<String?, String?> {
+    var left: String? = null
+    var right: String? = null
+    for ((property, value) in declarations) {
+        when (property) {
+            "margin" -> {
+                val parts = value.split(Regex("""\s+""")).filter { it.isNotEmpty() }
+                when (parts.size) {
+                    1 -> { left = parts[0]; right = parts[0] }
+                    2, 3 -> { left = parts[1]; right = parts[1] }
+                    4 -> { left = parts[3]; right = parts[1] }
+                }
+            }
+            "margin-left" -> left = value
+            "margin-right" -> right = value
+        }
+    }
+    return side_margin_length(left) to side_margin_length(right)
+}
+
+private fun is_full_width(value: String): Boolean = value.trim().replace(" ", "") == "100%"
+
+internal fun fit_full_width_margins(body: String): String {
+    if (!body.contains("margin", ignoreCase = true)) return body
+    return try {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        var changed = false
+        for (element in doc.select("[style*=margin]")) {
+            val style = element.attr("style")
+            val declarations = style_declarations(style)
+            val style_width = declarations.lastOrNull { it.first == "width" }?.second
+            val full_width = if (style_width != null) is_full_width(style_width) else is_full_width(element.attr("width"))
+            if (!full_width) continue
+            val (left, right) = horizontal_margins(declarations)
+            val margins = listOfNotNull(left, right)
+            if (margins.isEmpty()) continue
+            val separator = if (style.isBlank() || style.trimEnd().endsWith(";")) "" else ";"
+            val width = margins.joinToString(separator = " - ", prefix = "calc(100% - ", postfix = ")")
+            element.attr("style", "$style${separator}width:$width!important")
+            changed = true
+        }
+        if (changed) doc.body().html() else body
+    } catch (_: Throwable) {
+        body
+    }
+}
+
 internal fun build_email_html(
     body: String,
     is_dark: Boolean,
@@ -135,6 +202,7 @@ internal fun build_email_html(
             .let { fit_wide_width_attributes(it) }
             .let { fluid_narrow_fixed_tables(it) }
             .let { fluid_wide_fixed_widths(it) }
+            .let { fit_full_width_margins(it) }
     } else if (is_html_body) {
         fluid_wide_fixed_widths(body)
     } else {
