@@ -48,6 +48,7 @@ import org.astermail.android.api.external_accounts.PurgeMailRequest
 import org.astermail.android.api.external_accounts.ToggleAccountRequest
 import org.astermail.android.api.external_accounts.TriggerSyncRequest
 import org.astermail.android.api.external_accounts.UpdateAccountRequest
+import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.storage.SessionKeyStore
 
 enum class ExternalAccountsError {
@@ -101,31 +102,56 @@ class ExternalAccountsViewModel @Inject constructor(
         _state.value = _state.value.copy(problem_since = tracked, health_loaded = true)
     }
 
+    private fun storage_key(): ByteArray? = external_account_master_key(
+        session_keys.get_data_kek(),
+        session_keys::get_passphrase,
+    ) { passphrase ->
+        val version = external_account_kdf_version(
+            session_keys.get_storage_kdf_version(),
+            session_keys.get_encrypted_vault(),
+            passphrase,
+        )
+        version?.let {
+            session_keys.put_storage_kdf_version(it)
+            CryptoNative.derive_storage_key_for_version(passphrase, it)
+        }
+    }
+
+    private fun read_keys(): List<ByteArray> = buildList {
+        storage_key()?.let { add(it) }
+        session_keys.get_decrypt_keks().forEach { encoded ->
+            val key = runCatching { android.util.Base64.decode(encoded, android.util.Base64.DEFAULT) }.getOrNull()
+            if (key?.size == 32) add(key) else key?.fill(0)
+        }
+        session_keys.get()?.let { add(it) }
+    }
+
     fun load() {
         val generation = ExternalAccountHealthStore.generation()
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true, error = null)
             runCatching { withContext(Dispatchers.IO) { api.list_accounts() } }
                 .onSuccess { res ->
-                    val master = session_keys.get() ?: session_keys.get_passphrase()
-                    val decrypted = if (master != null) {
-                        res.accounts.mapNotNull { acct ->
-                            runCatching {
-                                decrypt_account_data(
+                    val decrypted = withContext(Dispatchers.Default) {
+                        val keys = read_keys()
+                        try {
+                            res.accounts.mapNotNull { acct ->
+                                decrypt_account_data_with_keys(
                                     encrypted_account_data = acct.encrypted_account_data,
                                     account_data_nonce = acct.account_data_nonce,
-                                    master_key = master,
                                     integrity_hash = acct.integrity_hash,
-                                )
-                            }.getOrNull()?.let { acct.account_token to it }
-                        }.toMap()
-                    } else {
-                        emptyMap()
+                                    keys = keys,
+                                )?.let { acct.account_token to it }
+                            }.toMap()
+                        } finally {
+                            keys.forEach { it.fill(0) }
+                        }
                     }
                     _state.value = _state.value.copy(accounts = res.accounts, decrypted = decrypted, loading = false)
                     track_health(res.accounts, generation)
                 }
                 .onFailure {
+                    if (it is CancellationException) throw it
                     _state.value = _state.value.copy(loading = false, error = ExternalAccountsError.LOAD_FAILED)
                 }
         }
@@ -135,7 +161,7 @@ class ExternalAccountsViewModel @Inject constructor(
         if (_state.value.connecting_provider != null) return
         viewModelScope.launch {
             _state.value = _state.value.copy(connecting_provider = provider, authorize_url = null, error = null)
-            val master = session_keys.get() ?: session_keys.get_passphrase()
+            val master = withContext(Dispatchers.Default) { storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.NO_SESSION_KEY)
                 return@launch
@@ -163,6 +189,8 @@ class ExternalAccountsViewModel @Inject constructor(
                 throw c
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.OAUTH_FAILED)
+            } finally {
+                master.fill(0)
             }
         }
     }
@@ -222,7 +250,7 @@ class ExternalAccountsViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(manual_submitting = true, error = null, manual_success = false)
-            val master = session_keys.get() ?: session_keys.get_passphrase()
+            val master = withContext(Dispatchers.Default) { storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.NO_SESSION_KEY)
                 return@launch
@@ -261,6 +289,8 @@ class ExternalAccountsViewModel @Inject constructor(
                 throw cancelled
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.MANUAL_FAILED)
+            } finally {
+                master.fill(0)
             }
         }
     }
@@ -422,7 +452,7 @@ class ExternalAccountsViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(updating_token = account_token, error = null)
-            val master = session_keys.get() ?: session_keys.get_passphrase()
+            val master = withContext(Dispatchers.Default) { storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(updating_token = null, error = ExternalAccountsError.NO_SESSION_KEY)
                 on_result?.invoke(false)
@@ -470,6 +500,8 @@ class ExternalAccountsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(updating_token = null, error = ExternalAccountsError.UPDATE_FAILED)
                 on_result?.invoke(false)
+            } finally {
+                master.fill(0)
             }
         }
     }

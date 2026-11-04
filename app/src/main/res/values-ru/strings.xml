@@ -318,6 +318,7 @@
     <string name="send_from">Отправлять с</string>
     <string name="primary_account">Основной аккаунт</string>
     <string name="alias">Псевдоним</string>
+    <string name="external_account">Внешний аккаунт</string>
     <string name="custom_domain">Пользовательский домен</string>
     <string name="schedule_send">Запланировать отправку</string>
     <string name="expiring_email">Исчезающее письмо</string>

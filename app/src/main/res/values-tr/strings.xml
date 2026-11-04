@@ -318,6 +318,7 @@
     <string name="send_from">Gönderen</string>
     <string name="primary_account">Ana hesap</string>
     <string name="alias">Takma ad</string>
+    <string name="external_account">Harici hesap</string>
     <string name="custom_domain">Özel alan adı</string>
     <string name="schedule_send">Göndermeyi zamanla</string>
     <string name="expiring_email">Süresi dolan e-posta</string>

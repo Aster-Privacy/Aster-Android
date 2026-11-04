@@ -318,6 +318,7 @@
     <string name="send_from">发件地址</string>
     <string name="primary_account">主账户</string>
     <string name="alias">别名</string>
+    <string name="external_account">外部账户</string>
     <string name="custom_domain">自定义域名</string>
     <string name="schedule_send">定时发送</string>
     <string name="expiring_email">限时邮件</string>

@@ -318,6 +318,7 @@
     <string name="send_from">보내는 주소</string>
     <string name="primary_account">기본 계정</string>
     <string name="alias">별칭</string>
+    <string name="external_account">외부 계정</string>
     <string name="custom_domain">사용자 지정 도메인</string>
     <string name="schedule_send">예약 전송</string>
     <string name="expiring_email">만료되는 이메일</string>

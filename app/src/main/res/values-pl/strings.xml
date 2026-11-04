@@ -318,6 +318,7 @@
     <string name="send_from">Wyślij z</string>
     <string name="primary_account">Konto główne</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Konto zewnętrzne</string>
     <string name="custom_domain">Własna domena</string>
     <string name="schedule_send">Zaplanuj wysłanie</string>
     <string name="expiring_email">Wiadomość z datą wygaśnięcia</string>

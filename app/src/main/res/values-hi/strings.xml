@@ -536,6 +536,7 @@
     <string name="send_from">इससे भेजें</string>
     <string name="primary_account">मुख्य खाता</string>
     <string name="alias">एलियास</string>
+    <string name="external_account">बाहरी खाता</string>
     <string name="custom_domain">कस्टम डोमेन</string>
     <string name="schedule_send">भेजना शेड्यूल करें</string>
     <string name="expiring_email">समय-सीमा वाली ईमेल</string>
