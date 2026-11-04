@@ -123,7 +123,6 @@ class ExternalAccountsViewModel @Inject constructor(
             val key = runCatching { android.util.Base64.decode(encoded, android.util.Base64.DEFAULT) }.getOrNull()
             if (key?.size == 32) add(key) else key?.fill(0)
         }
-        // Older Android versions wrote these blobs with the login hash instead of the storage key.
         session_keys.get()?.let { add(it) }
     }
 

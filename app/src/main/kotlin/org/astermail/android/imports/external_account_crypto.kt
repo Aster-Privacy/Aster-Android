@@ -89,7 +89,6 @@ private fun generate_integrity_hash(
     return Base64.getEncoder().encodeToString(signed)
 }
 
-// Matches web's derived_encryption_key: data KEK for master-key vaults, else passphrase-derived storage key.
 fun external_account_master_key(
     data_kek: ByteArray?,
     passphrase: () -> ByteArray?,
