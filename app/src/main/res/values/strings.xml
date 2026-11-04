@@ -618,6 +618,7 @@
     <string name="send_from">Send from</string>
     <string name="primary_account">Primary account</string>
     <string name="alias">Alias</string>
+    <string name="external_account">External account</string>
     <string name="custom_domain">Custom domain</string>
     <string name="schedule_send">Schedule send</string>
     <string name="expiring_email">Expiring email</string>

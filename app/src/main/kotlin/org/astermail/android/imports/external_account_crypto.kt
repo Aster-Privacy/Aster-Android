@@ -21,15 +21,19 @@
 
 package org.astermail.android.imports
 
-import android.util.Base64
+import java.util.Base64
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Mac
 import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.CryptoNative
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
 
 private const val HMAC_INFO = "external-accounts-hmac-v1"
 private const val INTEGRITY_SUFFIX = "external-accounts-v1"
@@ -70,7 +74,7 @@ fun generate_account_token(email: String, master_key: ByteArray): String {
     val mac = Mac.getInstance("HmacSHA256").apply { init(hmac_key) }
     val normalized = email.lowercase(java.util.Locale.ROOT).trim().toByteArray(Charsets.UTF_8)
     val signed = mac.doFinal(normalized)
-    return Base64.encodeToString(signed, Base64.NO_WRAP)
+    return Base64.getEncoder().encodeToString(signed)
 }
 
 private fun generate_integrity_hash(
@@ -82,7 +86,67 @@ private fun generate_integrity_hash(
     val mac = Mac.getInstance("HmacSHA256").apply { init(hmac_key) }
     val combined = "$encrypted_data:$nonce:$INTEGRITY_SUFFIX".toByteArray(Charsets.UTF_8)
     val signed = mac.doFinal(combined)
-    return Base64.encodeToString(signed, Base64.NO_WRAP)
+    return Base64.getEncoder().encodeToString(signed)
+}
+
+// Matches web's derived_encryption_key: data KEK for master-key vaults, else passphrase-derived storage key.
+fun external_account_master_key(
+    data_kek: ByteArray?,
+    passphrase: () -> ByteArray?,
+    derive_storage_key: (ByteArray) -> ByteArray?,
+): ByteArray? {
+    if (data_kek != null && data_kek.size == 32) return data_kek
+    data_kek?.fill(0)
+    val password = passphrase() ?: return null
+    return try {
+        derive_storage_key(password)
+    } finally {
+        password.fill(0)
+    }
+}
+
+fun external_account_kdf_version(
+    cached_version: Int?,
+    encrypted_vault: Pair<String, String>?,
+    passphrase: ByteArray,
+): Int? {
+    if (cached_version != null) return cached_version
+    val (encrypted, nonce) = encrypted_vault ?: return null
+    val plaintext = try {
+        CryptoNative.decrypt_vault_with_password(
+            Base64.getDecoder().decode(encrypted),
+            Base64.getDecoder().decode(nonce),
+            passphrase,
+        )
+    } catch (cancelled: java.util.concurrent.CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        return null
+    }
+    return try {
+        val version = Json.parseToJsonElement(String(plaintext, Charsets.UTF_8))
+            .jsonObject["kdf_version"] as? JsonPrimitive
+        if (version != null && !version.isString && version.intOrNull == 2) 2 else 1
+    } catch (_: Exception) {
+        null
+    } finally {
+        plaintext.fill(0)
+    }
+}
+
+fun decrypt_account_data_with_keys(
+    encrypted_account_data: String,
+    account_data_nonce: String,
+    integrity_hash: String?,
+    keys: List<ByteArray>,
+): ExternalAccountData? = keys.firstNotNullOfOrNull { key ->
+    try {
+        decrypt_account_data(encrypted_account_data, account_data_nonce, key, integrity_hash)
+    } catch (cancelled: java.util.concurrent.CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        null
+    }
 }
 
 class ExternalAccountDecryptException(message: String) : Exception(message)
@@ -100,8 +164,8 @@ fun decrypt_account_data(
         }
     }
 
-    val ciphertext = Base64.decode(encrypted_account_data, Base64.NO_WRAP)
-    val nonce = Base64.decode(account_data_nonce, Base64.NO_WRAP)
+    val ciphertext = Base64.getDecoder().decode(encrypted_account_data)
+    val nonce = Base64.getDecoder().decode(account_data_nonce)
     val plaintext = try {
         AesGcm.decrypt(master_key, nonce, ciphertext)
     } catch (t: Throwable) {
@@ -125,8 +189,8 @@ fun encrypt_account_data(
     val ciphertext = AesGcm.encrypt(master_key, nonce, plaintext)
     plaintext.fill(0)
 
-    val encrypted_b64 = Base64.encodeToString(ciphertext, Base64.NO_WRAP)
-    val nonce_b64 = Base64.encodeToString(nonce, Base64.NO_WRAP)
+    val encrypted_b64 = Base64.getEncoder().encodeToString(ciphertext)
+    val nonce_b64 = Base64.getEncoder().encodeToString(nonce)
     val integrity_hash = generate_integrity_hash(encrypted_b64, nonce_b64, master_key)
 
     return EncryptedAccountPayload(

@@ -98,6 +98,7 @@ class SessionKeyStore(context: Context? = null) {
 
     @Volatile
     private var data_kek: ByteArray? = null
+    private var storage_kdf_version: Int? = null
 
     @Volatile
     private var pending_reseal_passphrase: ByteArray? = null
@@ -161,6 +162,7 @@ class SessionKeyStore(context: Context? = null) {
                     account_keks = saved_account_keks.split("\n").filter { it.isNotBlank() }
                 }
                 data_kek = decode_b64_field(p, key_data_kek)
+                storage_kdf_version = if (p.contains(key_storage_kdf_version)) p.getInt(key_storage_kdf_version, 1) else null
                 pending_reseal_passphrase = decode_b64_field(p, key_pending_reseal_pass)
                 ratchet_identity_jwk = p.getString(key_ratchet_identity_jwk, null)
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
@@ -495,6 +497,15 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun put_storage_kdf_version(version: Int) {
+        synchronized(lock) {
+            storage_kdf_version = version
+            prefs?.edit()?.putInt(key_storage_kdf_version, version)?.commit()
+        }
+    }
+
+    fun get_storage_kdf_version(): Int? = synchronized(lock) { storage_kdf_version }
+
     fun get_data_kek(): ByteArray? {
         synchronized(lock) {
             return data_kek?.copyOf()
@@ -580,6 +591,7 @@ class SessionKeyStore(context: Context? = null) {
             account_load_pending.value = false
             data_kek?.fill(0)
             data_kek = null
+            storage_kdf_version = null
             pending_reseal_passphrase?.fill(0)
             pending_reseal_passphrase = null
             ratchet_identity_jwk = null
@@ -620,6 +632,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_legacy_keks = "legacy_keks"
         private const val key_account_keks = "account_keks"
         private const val key_data_kek = "data_kek"
+        private const val key_storage_kdf_version = "storage_kdf_version"
         private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"

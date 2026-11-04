@@ -1832,6 +1832,7 @@ class AuthRepository @Inject constructor(
         )
 
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
+        session_key_store.put_storage_kdf_version(read_storage_kdf_version(vault_obj))
         val data_kek = vault_obj.optString("data_kek", "")
         if (data_kek.isBlank()) return
         runCatching {

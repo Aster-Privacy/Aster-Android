@@ -318,6 +318,7 @@
     <string name="send_from">送信元</string>
     <string name="primary_account">メインアカウント</string>
     <string name="alias">エイリアス</string>
+    <string name="external_account">外部アカウント</string>
     <string name="custom_domain">カスタムドメイン</string>
     <string name="schedule_send">送信を予約</string>
     <string name="expiring_email">有効期限付きメール</string>

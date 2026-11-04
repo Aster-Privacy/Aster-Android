@@ -319,6 +319,7 @@
     <string name="send_from">Senden von</string>
     <string name="primary_account">Hauptkonto</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Externes Konto</string>
     <string name="custom_domain">Eigene Domain</string>
     <string name="schedule_send">Senden planen</string>
     <string name="expiring_email">Ablaufende E-Mail</string>

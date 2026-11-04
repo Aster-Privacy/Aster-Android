@@ -318,6 +318,7 @@
     <string name="send_from">الإرسال من</string>
     <string name="primary_account">الحساب الأساسي</string>
     <string name="alias">اسم مستعار</string>
+    <string name="external_account">حساب خارجي</string>
     <string name="custom_domain">نطاق مخصص</string>
     <string name="schedule_send">جدولة الإرسال</string>
     <string name="expiring_email">بريد تنتهي صلاحيته</string>

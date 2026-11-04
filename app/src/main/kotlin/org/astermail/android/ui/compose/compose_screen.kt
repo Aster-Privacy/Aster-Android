@@ -3064,6 +3064,7 @@ fun ComposeScreen(
             options = alias_options,
             custom_domain_set = settings_state.custom_domain_addresses.map { it.address }.toSet(),
             catch_all_set = alias_options.toSet() - base_alias_options.toSet(),
+            external_set = external_sender_tokens.keys.toSet(),
             on_close = { show_from_sheet = false },
             on_select = { selected ->
                 from_alias = selected
@@ -4324,6 +4325,7 @@ private fun FromAliasSheet(
     options: List<String>,
     custom_domain_set: Set<String> = emptySet(),
     catch_all_set: Set<String> = emptySet(),
+    external_set: Set<String> = emptySet(),
     on_close: () -> Unit,
     on_select: (String) -> Unit,
     on_set_primary: (String) -> Unit,
@@ -4336,7 +4338,7 @@ private fun FromAliasSheet(
     var query by remember { mutableStateOf("") }
     val normalized_query = org.astermail.android.ui.search.fold_text(query.trim())
     val first_option = options.firstOrNull()
-    val visible_options = remember(options, primary, normalized_query) {
+    val visible_options = remember(options, primary, normalized_query, external_set) {
         val filtered = if (normalized_query.isEmpty()) {
             options
         } else {
@@ -4348,8 +4350,9 @@ private fun FromAliasSheet(
             }
         }
         val (pinned, rest) = filtered.partition { it.equals(primary, ignoreCase = true) }
-        pinned + rest
+        (pinned + rest).sortedBy { it in external_set }
     }
+    val first_external_option = visible_options.firstOrNull { it in external_set }
     ModalBottomSheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         onDismissRequest = on_close,
@@ -4413,9 +4416,20 @@ private fun FromAliasSheet(
                     .background(island_surface_color(colors)),
             ) {
                 items(visible_options, key = { it }) { opt ->
+                    if (opt == first_external_option) {
+                        Text(
+                            text = stringResource(R.string.external_accounts),
+                            color = colors.text_muted,
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier
+                                .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.sm)
+                                .testTag("from_sheet_external_accounts"),
+                        )
+                    }
                     val label = when {
                         opt == first_option -> stringResource(R.string.primary_account)
                         catch_all_set.contains(opt) -> stringResource(R.string.catch_all)
+                        external_set.contains(opt) -> stringResource(R.string.external_account)
                         custom_domain_set.contains(opt) -> stringResource(R.string.custom_domain)
                         else -> stringResource(R.string.alias)
                     }

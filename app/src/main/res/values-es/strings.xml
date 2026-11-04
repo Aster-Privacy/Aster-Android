@@ -319,6 +319,7 @@
     <string name="send_from">Enviar desde</string>
     <string name="primary_account">Cuenta principal</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Cuenta externa</string>
     <string name="custom_domain">Dominio personalizado</string>
     <string name="schedule_send">Programar envío</string>
     <string name="expiring_email">Correo con caducidad</string>

@@ -318,6 +318,7 @@
     <string name="send_from">Verzenden vanaf</string>
     <string name="primary_account">Primair account</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Externe account</string>
     <string name="custom_domain">Eigen domein</string>
     <string name="schedule_send">Verzenden plannen</string>
     <string name="expiring_email">Verlopende e-mail</string>
