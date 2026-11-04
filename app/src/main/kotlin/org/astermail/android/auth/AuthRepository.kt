@@ -930,6 +930,19 @@ class AuthRepository @Inject constructor(
 
     private fun session_record_keys(): List<String> = login_record_keys(null, session_key_store.get_user_email())
 
+    private fun seed_login_salt_record_from_session() {
+        runCatching {
+            val keys = session_record_keys()
+            if (keys.isEmpty() || login_salt_records.find(keys) != null) return@runCatching
+            val salt = session_key_store.get_password_salt() ?: return@runCatching
+            try {
+                login_salt_records.put(keys, salt)
+            } finally {
+                salt.fill(0)
+            }
+        }
+    }
+
     private fun account_seen_before(dotless_hash: String, dotted_hash: String): Boolean {
         val emails = runCatching { account_store.get_all().map { it.email } }.getOrDefault(emptyList()) +
             listOfNotNull(runCatching { session_key_store.get_user_email() }.getOrNull())
@@ -978,6 +991,7 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun derive_step_up_proof(password_bytes: ByteArray, step_up: StepUpSalt): ByteArray {
+        seed_login_salt_record_from_session()
         LoginSaltRule.require_v1_proof_allowed(
             step_up.salt,
             step_up.kdf_version,
@@ -1269,6 +1283,7 @@ class AuthRepository @Inject constructor(
                 snapshot.password_salt?.let { session_key_store.put_password_salt(it) }
                 session_key_store.put_user_id(snapshot.user_id ?: account_id)
                 snapshot.user_email?.let { session_key_store.put_user_email(it) }
+                seed_login_salt_record_from_session()
                 val ev = snapshot.encrypted_vault
                 val vn = snapshot.vault_nonce
                 if (ev != null && vn != null) {
@@ -1559,6 +1574,7 @@ class AuthRepository @Inject constructor(
         }
         val cleared = SessionRefreshGate.mutex.withLock {
             if (session_key_store.get_user_id() != current_id) return@withLock false
+            seed_login_salt_record_from_session()
             runCatching { token_store.clear() }
             runCatching { api_client.clear_csrf() }
             runCatching { api_client.invalidate_bearer_cache() }
