@@ -70,9 +70,9 @@ import org.astermail.android.mail.folder_keeps_archived
 
 const val swipe_claim_slop_multiplier = 1f
 const val swipe_dominance_ratio = 1.2f
-const val swipe_commit_fraction = 0.4f
-const val swipe_fling_velocity = 900f
-const val swipe_fling_min_fraction = 0.08f
+const val swipe_commit_fraction = 0.25f
+const val swipe_fling_velocity = 600f
+const val swipe_fling_min_fraction = 0.06f
 
 enum class SwipeAxis { undecided, horizontal, vertical }
 
