@@ -1394,7 +1394,7 @@ class SettingsViewModel @Inject constructor(
                 val decrypted = response.addresses.map { addr ->
                     if (addr.encrypted_local_part.isBlank()) return@map addr
                     val local_part = try {
-                        decrypt_alias_field(addr.encrypted_local_part, addr.local_part_nonce)
+                        decrypt_custom_domain_address_local_part(addr, ::decrypt_alias_field)
                     } catch (t: Throwable) {
                         if (t is kotlinx.coroutines.CancellationException) throw t
                         return@map addr.copy(encrypted_local_part = "", decryption_failed = true)

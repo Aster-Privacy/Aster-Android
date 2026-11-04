@@ -854,6 +854,44 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `load_custom_domain_addresses recovers directory records without modifying server records`() = runTest {
+        val encoder = java.util.Base64.getEncoder()
+        val local_part = "merchant.finance"
+        val bytes = local_part.toByteArray(Charsets.UTF_8)
+        val directory_address = org.astermail.android.api.settings.CustomDomainAddressInfo(
+            id = "directory-address",
+            domain_name = "custom.example",
+            encrypted_local_part = encoder.encodeToString(bytes),
+            local_part_hash = encoder.encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(bytes)),
+        )
+        val encrypted_alias = sealed_alias("encrypted", "regular", "", domain = "custom.example")
+        val encrypted_address = directory_address.copy(
+            id = "encrypted-address",
+            encrypted_local_part = encrypted_alias.encrypted_local_part,
+            local_part_nonce = encrypted_alias.local_part_nonce,
+            local_part_hash = "unrelated-keyed-hash",
+        )
+        val invalid_address = directory_address.copy(id = "invalid-address", local_part_hash = "")
+        coEvery { settings_api.list_all_domain_addresses() } returns
+            org.astermail.android.api.settings.AllDomainAddressesResponse(listOf(directory_address, encrypted_address, invalid_address))
+
+        vm.load_custom_domain_addresses(force = true)
+        advanceUntilIdle()
+
+        val addresses = vm.state.value.custom_domain_addresses
+        assertEquals(listOf("directory-address", "encrypted-address", "invalid-address"), addresses.map { it.id })
+        assertEquals("merchant.finance@custom.example", addresses[0].address)
+        assertFalse(addresses[0].decryption_failed)
+        assertEquals("regular@custom.example", addresses[1].address)
+        assertFalse(addresses[1].decryption_failed)
+        assertTrue(addresses[2].decryption_failed)
+        coVerify(exactly = 0) { settings_api.create_domain_address(any(), any()) }
+        coVerify(exactly = 0) { settings_api.update_domain_address(any(), any(), any()) }
+        coVerify(exactly = 0) { settings_api.delete_domain_address(any(), any()) }
+        coVerify(exactly = 0) { settings_api.normalize_alias(any(), any()) }
+    }
+
+    @Test
     fun `legacy routing hash is the dotted address and absent without a dot`() {
         assertEquals(
             routing_hash_of("jesper.floymo@aster.cx"),
