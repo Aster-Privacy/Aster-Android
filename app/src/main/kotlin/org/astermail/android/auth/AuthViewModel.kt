@@ -353,6 +353,8 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun map_error(t: Throwable): String = when (t) {
+        is LegacyLoginSaltException -> org.astermail.android.legacy_login_salt_text(ctx, t)
+            ?: ctx.getString(R.string.error_legacy_login_salt_new_device)
         is org.astermail.android.crypto.AuthSaltCollisionException -> ctx.getString(R.string.error_auth_salt_collision)
         is AccountLimitReachedException -> t.max_accounts?.takeIf { it > 0 }
             ?.let { ctx.getString(R.string.error_account_limit_reached_count, it) }

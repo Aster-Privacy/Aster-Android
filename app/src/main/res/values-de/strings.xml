@@ -3450,6 +3450,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Ihre ausgehende Mail ist unsigniert und wirkt dadurch gefälscht. Fügen Sie den Signatureintrag hinzu, damit Ihrer Mail vertraut wird.</string>
     <string name="domain_check_generic_failure">Dieser Eintrag ist noch nicht korrekt eingerichtet. Fügen Sie den Eintrag unten hinzu.</string>
     <string name="error_auth_salt_collision">Die Anmeldung wurde abgebrochen, weil der Server einen unsicheren Wert gesendet hat. Es wurde nichts entsperrt. Kontaktieren Sie den Support, bevor Sie es erneut versuchen.</string>
+    <string name="error_legacy_login_salt_new_device">Um ein Sicherheitsupdate für Ihr Konto abzuschließen, melden Sie sich auf einem Gerät an, das Sie bereits mit Aster verwendet haben. Falls das nicht möglich ist, setzen Sie Ihr Passwort mit Ihrem Wiederherstellungsschlüssel zurück.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Um ein Sicherheitsupdate für Ihr Konto abzuschließen, melden Sie sich ab und erneut an.</string>
     <string name="storage_nudge_almost_title">Speicher fast voll</string>
     <string name="storage_nudge_critical_title">Ihr Speicher ist fast aufgebraucht</string>
     <string name="storage_nudge_full_title">Ihr Speicher ist voll</string>

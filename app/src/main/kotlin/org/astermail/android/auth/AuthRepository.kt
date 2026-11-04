@@ -63,6 +63,7 @@ import org.astermail.android.api.auth.LoginResponse
 import org.astermail.android.api.auth.LoginResult
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.RegisterRequest
+import org.astermail.android.api.auth.RotateLoginSaltRequest
 import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
 import org.astermail.android.api.keys.CurrentVaultResult
@@ -145,6 +146,9 @@ class AuthRepository @Inject constructor(
 
     private val database: org.astermail.android.storage.search.AsterDatabase
         get() = database_provider.get()
+
+    private val login_salt_records: LoginSaltRecordSource
+        get() = login_pins
 
     private val _is_signed_in = MutableStateFlow(token_store.access_token != null)
     val is_signed_in: StateFlow<Boolean> = _is_signed_in.asStateFlow()
@@ -335,6 +339,13 @@ class AuthRepository @Inject constructor(
         val kdf_version = LoginProof.read_kdf_version(salt_resp.kdf_version)
         val salt_bytes = base64_decode(salt_resp.salt)
         require_usable_auth_salt(salt_bytes)
+        LoginSaltRule.require_v1_proof_allowed(
+            salt_bytes,
+            kdf_version,
+            login_salt_records.find(LoginSaltRule.record_keys(user_hash, dotless_hash, dotted_hash)),
+            LoginSaltCheck.sign_in,
+            account_seen_before(dotless_hash, dotted_hash),
+        )
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val v1_bytes = derive_login_hash(password_bytes, salt_bytes)
         val sign_in_proof = try {
@@ -532,6 +543,47 @@ class AuthRepository @Inject constructor(
         user_hash: String,
         login_enrollment: PendingLoginEnrollment?,
     ) {
+        var rotation_password: ByteArray? = null
+        try {
+            finish_login_session(
+                login_resp,
+                password_bytes,
+                password_hash_bytes,
+                salt_bytes,
+                user_hash,
+                login_enrollment,
+            ) { kept -> rotation_password = kept }
+        } catch (failed: Throwable) {
+            rotation_password?.fill(0)
+            throw failed
+        }
+        val password_for_rotation = rotation_password
+        val session_pin_keys = LoginProof.pin_keys(login_resp.user_id, user_hash)
+        when {
+            login_enrollment == null -> {
+                password_for_rotation?.fill(0)
+                runCatching { login_pins.pin(session_pin_keys) }
+            }
+            password_for_rotation != null -> start_login_salt_rotation(
+                login_resp.user_id,
+                login_record_keys(user_hash, login_resp.email),
+                session_pin_keys,
+                login_enrollment,
+                password_for_rotation,
+            )
+            else -> start_login_enrollment(login_resp.user_id, session_pin_keys, login_enrollment)
+        }
+    }
+
+    private suspend fun finish_login_session(
+        login_resp: LoginResponse,
+        password_bytes: ByteArray,
+        password_hash_bytes: ByteArray,
+        salt_bytes: ByteArray,
+        user_hash: String,
+        login_enrollment: PendingLoginEnrollment?,
+        keep_for_rotation: (ByteArray) -> Unit,
+    ) {
         val access = login_resp.access_token ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))
         val previous_user_id = session_key_store.get_user_id()
         claim_account_slot(
@@ -563,6 +615,7 @@ class AuthRepository @Inject constructor(
             session_key_store.put(password_hash_bytes)
             session_key_store.put_passphrase(password_bytes)
             session_key_store.put_password_salt(salt_bytes)
+            runCatching { login_salt_records.put(login_record_keys(user_hash, login_resp.email), salt_bytes) }
             session_key_store.put_user_id(login_resp.user_id)
             session_key_store.put_user_email(login_resp.email)
             session_key_store.put_encrypted_vault(login_resp.encrypted_vault, login_resp.vault_nonce)
@@ -594,6 +647,9 @@ class AuthRepository @Inject constructor(
                 absorb_data_kek(vault_obj)
                 extract_ratchet_keys(vault_obj)
                 absorb_stretched_storage_keys(vault_obj, password_bytes)
+                if (login_enrollment != null && LoginSaltRule.needs_rotation(1, salt_bytes)) {
+                    keep_for_rotation(password_bytes.copyOf())
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
@@ -634,12 +690,6 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
         background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
         load_account_keks()
-        val session_pin_keys = LoginProof.pin_keys(login_resp.user_id, user_hash)
-        if (login_enrollment == null) {
-            runCatching { login_pins.pin(session_pin_keys) }
-        } else {
-            start_login_enrollment(login_resp.user_id, session_pin_keys, login_enrollment)
-        }
     }
 
     private fun scoped_session_client(access: String, refresh: String?, csrf: String?): ApiClient {
@@ -748,19 +798,117 @@ class AuthRepository @Inject constructor(
     ) {
         background_scope.launch {
             try {
-                val enrolled = LoginProof.flush_enrollment(enrollment, pin_keys, login_pins) { v1, v2 ->
-                    enroll_login_v2(v1, v2)
-                }
-                if (enrolled && session_key_store.get_user_id() == user_id) {
-                    session_key_store.put(enrollment.v2)
-                    runCatching { save_session_snapshot(user_id) }
-                }
+                flush_login_enrollment(user_id, pin_keys, enrollment)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Throwable) {
             } finally {
                 enrollment.wipe()
             }
+        }
+    }
+
+    private suspend fun flush_login_enrollment(
+        user_id: String,
+        pin_keys: List<String>,
+        enrollment: PendingLoginEnrollment,
+    ) {
+        val enrolled = LoginProof.flush_enrollment(enrollment, pin_keys, login_pins) { v1, v2 ->
+            enroll_login_v2(v1, v2)
+        }
+        if (enrolled && session_key_store.get_user_id() == user_id) {
+            session_key_store.put(enrollment.v2)
+            runCatching { save_session_snapshot(user_id) }
+        }
+    }
+
+    private fun start_login_salt_rotation(
+        user_id: String,
+        record_keys: List<String>,
+        pin_keys: List<String>,
+        enrollment: PendingLoginEnrollment,
+        password_bytes: ByteArray,
+    ) {
+        background_scope.launch {
+            try {
+                val rotated = try {
+                    rotate_login_salt(user_id, record_keys, pin_keys, enrollment.v1, password_bytes)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Throwable) {
+                    false
+                }
+                if (!rotated) flush_login_enrollment(user_id, pin_keys, enrollment)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            } finally {
+                password_bytes.fill(0)
+                enrollment.wipe()
+            }
+        }
+    }
+
+    private suspend fun rotate_login_salt(
+        user_id: String,
+        record_keys: List<String>,
+        pin_keys: List<String>,
+        current_v1: ByteArray,
+        password_bytes: ByteArray,
+    ): Boolean {
+        val new_salt = ByteArray(LoginSaltRule.min_v1_login_salt_bytes).also { SecureRandom().nextBytes(it) }
+        val new_v1 = withContext(Dispatchers.Default) {
+            CryptoNative.derive_pbkdf2_hash(password_bytes, new_salt, pbkdf2_iterations)
+        }
+        val new_v2 = LoginProof.derive_v2(new_v1)
+        try {
+            ensure_csrf_ready()
+            val response = auth_api.rotate_login_salt(
+                RotateLoginSaltRequest(
+                    password_hash = base64_encode(current_v1),
+                    new_password_salt = base64_encode(new_salt),
+                    new_password_hash = base64_encode(new_v1),
+                    new_password_hash_v2 = base64_encode(new_v2),
+                ),
+            )
+            if (LoginProof.read_kdf_version(response.kdf_version) != 2) return false
+            withContext(NonCancellable) {
+                runCatching { login_pins.pin(pin_keys) }
+                runCatching { login_salt_records.put(record_keys, new_salt) }
+                if (session_key_store.get_user_id() == user_id) {
+                    session_key_store.put(new_v2)
+                    session_key_store.put_password_salt(new_salt)
+                    runCatching { save_session_snapshot(user_id) }
+                }
+            }
+            return true
+        } finally {
+            new_v1.fill(0)
+            new_v2.fill(0)
+        }
+    }
+
+    private fun login_record_keys(user_hash: String?, account_email: String?): List<String> {
+        val email = account_email?.takeIf { it.isNotBlank() }?.let(::normalize_email)
+        return LoginSaltRule.record_keys(
+            user_hash,
+            email?.let { runCatching { CryptoNative.hash_email(it) }.getOrNull() },
+            email?.let { runCatching { CryptoNative.hash_email_keeping_dots(it) }.getOrNull() },
+        )
+    }
+
+    private fun session_record_keys(): List<String> = login_record_keys(null, session_key_store.get_user_email())
+
+    private fun account_seen_before(dotless_hash: String, dotted_hash: String): Boolean {
+        val emails = runCatching { account_store.get_all().map { it.email } }.getOrDefault(emptyList()) +
+            listOfNotNull(runCatching { session_key_store.get_user_email() }.getOrNull())
+        return emails.any { stored ->
+            if (stored.isBlank()) return@any false
+            val email = normalize_email(stored)
+            runCatching {
+                CryptoNative.hash_email(email) == dotless_hash ||
+                    CryptoNative.hash_email_keeping_dots(email) == dotted_hash
+            }.getOrDefault(false)
         }
     }
 
@@ -775,24 +923,37 @@ class AuthRepository @Inject constructor(
         return LoginProof.read_kdf_version(response.kdf_version) == 2
     }
 
-    private class StepUpSalt(val salt: ByteArray, val kdf_version: Int, val pin_keys: List<String>)
+    private class StepUpSalt(
+        val salt: ByteArray,
+        val kdf_version: Int,
+        val pin_keys: List<String>,
+        val record_keys: List<String>,
+    )
 
     private suspend fun step_up_salt(): StepUpSalt? {
         val user_hash = session_key_store.get_user_email()?.let { CryptoNative.hash_email(it) }
         val pin_keys = LoginProof.pin_keys(session_key_store.get_user_id(), user_hash)
+        val record_keys = (LoginSaltRule.record_keys(user_hash) + session_record_keys()).distinct()
         val served = user_hash?.let { hash ->
             runCatching {
                 val response = auth_api.get_user_salt(hash)
                 base64_decode(response.salt) to LoginProof.read_kdf_version(response.kdf_version)
             }.getOrNull()
         }
-        if (served != null) return StepUpSalt(served.first, served.second, pin_keys)
+        if (served != null) return StepUpSalt(served.first, served.second, pin_keys, record_keys)
         val stored = session_key_store.get_password_salt() ?: return null
         val kdf_version = if (login_pins.is_pinned(pin_keys)) 2 else 1
-        return StepUpSalt(stored, kdf_version, pin_keys)
+        return StepUpSalt(stored, kdf_version, pin_keys, record_keys)
     }
 
     private suspend fun derive_step_up_proof(password_bytes: ByteArray, step_up: StepUpSalt): ByteArray {
+        LoginSaltRule.require_v1_proof_allowed(
+            step_up.salt,
+            step_up.kdf_version,
+            login_salt_records.find(step_up.record_keys),
+            LoginSaltCheck.step_up,
+            account_seen_before = false,
+        )
         val v1 = derive_login_hash(password_bytes, step_up.salt)
         try {
             return LoginProof.select_step_up_proof(v1, step_up.kdf_version, step_up.pin_keys, login_pins)
@@ -978,6 +1139,7 @@ class AuthRepository @Inject constructor(
 
         runCatching { system_folder_bootstrap.ensure_system_folders() }
 
+        runCatching { login_salt_records.put(login_record_keys(user_hash, canonical_email), salt_bytes) }
         start_login_enrollment(
             register_resp.user_id,
             LoginProof.pin_keys(register_resp.user_id, user_hash),
@@ -1244,6 +1406,7 @@ class AuthRepository @Inject constructor(
             session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
             session_key_store.put_passphrase(new_password_bytes)
             session_key_store.put_password_salt(new_salt)
+            runCatching { login_salt_records.put(step_up.record_keys, new_salt) }
             session_key_store.put_encrypted_vault(
                 base64_encode(new_envelope.encrypted_vault),
                 base64_encode(new_envelope.vault_nonce),
@@ -2049,6 +2212,7 @@ class AuthRepository @Inject constructor(
         runCatching {
             login_pins.unpin(LoginProof.pin_keys(current_id, current_email?.let { CryptoNative.hash_email(it) }))
         }
+        runCatching { login_salt_records.remove(login_record_keys(null, current_email)) }
         SessionRefreshGate.mutex.withLock {
             token_store.clear()
             api_client.clear_csrf()

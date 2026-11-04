@@ -3529,6 +3529,8 @@
     <string name="domain_reason_dkim_missing_or_stale">بريدك الصادر غير موقَّع، ما يجعله يبدو مزوَّرًا. أضف سجل التوقيع ليصبح بريدك موثوقًا.</string>
     <string name="domain_check_generic_failure">لم يُضبط هذا السجل بشكل صحيح بعد. أضف السجل أدناه لإصلاحه.</string>
     <string name="error_auth_salt_collision">توقف تسجيل الدخول لأن الخادم أرسل قيمة غير آمنة، لذلك لم يتم فتح أي شيء. تواصل مع الدعم قبل المحاولة مرة أخرى.</string>
+    <string name="error_legacy_login_salt_new_device">لإكمال تحديث أمني لحسابك، سجّل الدخول على جهاز استخدمته مع Aster من قبل. إذا تعذّر عليك ذلك، فأعد تعيين كلمة المرور باستخدام مفتاح الاسترداد.</string>
+    <string name="error_legacy_login_salt_sign_in_again">لإكمال تحديث أمني لحسابك، سجّل الخروج ثم سجّل الدخول مرة أخرى.</string>
     <string name="storage_nudge_almost_title">مساحة التخزين ممتلئة تقريبًا</string>
     <string name="storage_nudge_critical_title">مساحة التخزين على وشك النفاد</string>
     <string name="storage_nudge_full_title">مساحة التخزين ممتلئة</string>

@@ -3469,6 +3469,8 @@
     <string name="domain_reason_dkim_missing_or_stale">El correo que envías no va firmado, así que parece falsificado. Añade el registro de firma para que se confíe en tus mensajes.</string>
     <string name="domain_check_generic_failure">Este registro todavía no está bien configurado. Añade el registro siguiente para solucionarlo.</string>
     <string name="error_auth_salt_collision">El inicio de sesión se detuvo porque el servidor envió un valor no seguro, así que no se desbloqueó nada. Contacta con soporte antes de volver a intentarlo.</string>
+    <string name="error_legacy_login_salt_new_device">Para completar una actualización de seguridad de tu cuenta, inicia sesión en un dispositivo que ya hayas usado con Aster. Si no puedes, restablece tu contraseña con tu clave de recuperación.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Para completar una actualización de seguridad de tu cuenta, cierra sesión y vuelve a iniciarla.</string>
     <string name="storage_nudge_almost_title">El almacenamiento está casi lleno</string>
     <string name="storage_nudge_critical_title">Te queda muy poco almacenamiento</string>
     <string name="storage_nudge_full_title">Tu almacenamiento está lleno</string>

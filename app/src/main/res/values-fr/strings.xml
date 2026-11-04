@@ -3497,6 +3497,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Vos e-mails sortants ne sont pas signés et semblent donc falsifiés. Ajoutez l’enregistrement de signature pour qu’ils soient approuvés.</string>
     <string name="domain_check_generic_failure">Cet enregistrement n’est pas encore correctement configuré. Ajoutez l’enregistrement ci-dessous pour résoudre le problème.</string>
     <string name="error_auth_salt_collision">La connexion a été interrompue parce que le serveur a envoyé une valeur non sécurisée. Rien n\'a été déverrouillé. Contactez l\'assistance avant de réessayer.</string>
+    <string name="error_legacy_login_salt_new_device">Pour terminer une mise à jour de sécurité de votre compte, connectez-vous sur un appareil que vous avez déjà utilisé avec Aster. Si ce n\'est pas possible, réinitialisez votre mot de passe avec votre clé de récupération.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Pour terminer une mise à jour de sécurité de votre compte, déconnectez-vous puis reconnectez-vous.</string>
     <string name="storage_nudge_almost_title">Stockage presque plein</string>
     <string name="storage_nudge_critical_title">Vous n\'avez presque plus de stockage</string>
     <string name="storage_nudge_full_title">Votre stockage est plein</string>

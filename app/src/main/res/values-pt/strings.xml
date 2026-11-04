@@ -3468,6 +3468,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Seus e-mails enviados não são assinados, o que os faz parecer falsos. Adicione o registro de assinatura para que sejam confiáveis.</string>
     <string name="domain_check_generic_failure">Este registro ainda não está configurado corretamente. Adicione o registro abaixo para resolver.</string>
     <string name="error_auth_salt_collision">O início de sessão foi interrompido porque o servidor enviou um valor inseguro, por isso nada foi desbloqueado. Contacte o suporte antes de tentar novamente.</string>
+    <string name="error_legacy_login_salt_new_device">Para concluir uma atualização de segurança da sua conta, inicie sessão num dispositivo que já tenha utilizado com o Aster. Se não for possível, reponha a palavra-passe com a sua chave de recuperação.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Para concluir uma atualização de segurança da sua conta, termine sessão e inicie sessão novamente.</string>
     <string name="storage_nudge_almost_title">O armazenamento está quase cheio</string>
     <string name="storage_nudge_critical_title">Está quase sem armazenamento</string>
     <string name="storage_nudge_full_title">O seu armazenamento está cheio</string>

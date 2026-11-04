@@ -82,6 +82,7 @@ data class RecoveryUiState(
 class RecoveryViewModel @Inject constructor(
     application: Application,
     private val recovery_api: RecoveryApi,
+    private val login_salt_records: LoginProofPinStore,
 ) : AndroidViewModel(application) {
 
     private val ctx get() = getApplication<Application>()
@@ -365,6 +366,7 @@ class RecoveryViewModel @Inject constructor(
                     ),
                 )
 
+                remember_login_salt(new_salt)
                 new_password_hash.fill(0)
                 new_password_hash_v2.fill(0)
                 new_recovery_key.fill(0)
@@ -555,6 +557,17 @@ class RecoveryViewModel @Inject constructor(
             encrypted_recovery_key = base64_encode(encrypted),
             recovery_key_nonce = base64_encode(nonce),
         )
+    }
+
+    private fun remember_login_salt(salt: ByteArray) {
+        runCatching {
+            val email = user_email.takeIf { it.isNotBlank() } ?: return
+            val keys = LoginSaltRule.record_keys(
+                runCatching { CryptoNative.hash_email(email) }.getOrNull(),
+                runCatching { CryptoNative.hash_email_keeping_dots(email) }.getOrNull(),
+            )
+            login_salt_records.put(keys, salt)
+        }
     }
 
     private fun base64_encode(bytes: ByteArray): String =

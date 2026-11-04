@@ -21,7 +21,7 @@
 
 package org.astermail.android.crypto
 
-class AuthSaltCollisionException(message: String) : SecurityException(message)
+open class AuthSaltCollisionException(message: String) : SecurityException(message)
 
 object AuthSaltGuard {
     private const val vault_salt_bytes = 16

@@ -3438,6 +3438,8 @@
     <string name="domain_reason_dkim_missing_or_stale">送信メールが署名されていないため、偽造のように見えます。署名レコードを追加すると信頼されます。</string>
     <string name="domain_check_generic_failure">このレコードはまだ正しく設定されていません。下のレコードを追加すると解決します。</string>
     <string name="error_auth_salt_collision">サーバーが安全でない値を送信したため、サインインを中止しました。何もロック解除されていません。再試行する前にサポートに問い合わせてください。</string>
+    <string name="error_legacy_login_salt_new_device">アカウントのセキュリティ更新を完了するには、以前 Aster で使用したデバイスでサインインしてください。それができない場合は、リカバリーキーを使ってパスワードをリセットしてください。</string>
+    <string name="error_legacy_login_salt_sign_in_again">アカウントのセキュリティ更新を完了するには、サインアウトしてからもう一度サインインしてください。</string>
     <string name="storage_nudge_almost_title">ストレージの空き容量がわずかです</string>
     <string name="storage_nudge_critical_title">ストレージがほぼいっぱいです</string>
     <string name="storage_nudge_full_title">ストレージがいっぱいです</string>
