@@ -44,6 +44,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -120,28 +121,38 @@ private fun inbox_leading_slot(
     show_pictures: Boolean,
     is_selected: Boolean,
     avatar_size: androidx.compose.ui.unit.Dp,
+    on_avatar_click: (() -> Unit)? = null,
     avatar: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    if (is_selected) {
-        Box(
-            modifier = Modifier
-                .size(if (show_pictures) avatar_size else 24.dp)
-                .clip(CircleShape)
-                .background(colors.accent_blue),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = stringResource(R.string.selected),
-                tint = colors.on_accent,
-                modifier = Modifier.size(if (show_pictures) 20.dp else 16.dp),
-            )
-        }
-    } else if (show_pictures) {
-        avatar()
+    if (!is_selected && !show_pictures) return
+    val toggle_label = stringResource(if (is_selected) R.string.deselect else R.string.select)
+    val tap_modifier = if (on_avatar_click != null) {
+        Modifier
+            .clip(CircleShape)
+            .clickable(onClickLabel = toggle_label, onClick = on_avatar_click)
     } else {
-        return
+        Modifier
+    }
+    Box(modifier = tap_modifier) {
+        if (is_selected) {
+            Box(
+                modifier = Modifier
+                    .size(if (show_pictures) avatar_size else 24.dp)
+                    .clip(CircleShape)
+                    .background(colors.accent_blue),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = stringResource(R.string.selected),
+                    tint = colors.on_accent,
+                    modifier = Modifier.size(if (show_pictures) 20.dp else 16.dp),
+                )
+            }
+        } else {
+            avatar()
+        }
     }
     Spacer(Modifier.width(AsterSpacing.md))
 }
@@ -489,6 +500,7 @@ fun ThreadInboxRow(
     cached_geometry: SkeletonGeometry? = null,
     refresh_engaged: () -> Boolean = { false },
     accessibility_actions: List<CustomAccessibilityAction> = emptyList(),
+    on_avatar_click: (() -> Unit)? = null,
 ) {
     val email = thread.newest
     val colors = AsterMaterial.colors
@@ -610,6 +622,7 @@ fun ThreadInboxRow(
             show_avatar,
             is_selected,
             metrics.avatar_size,
+            on_avatar_click,
         ) {
             val authenticated_system_email = androidx.compose.runtime.remember(
                 email.sender_email, email.display_sender_email, email.is_external, email.system_origin,

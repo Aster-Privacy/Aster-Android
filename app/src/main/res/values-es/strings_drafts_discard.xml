@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Deseleccionar</string>
+    <string name="discard_drafts_confirm_message">No puedes recuperar los borradores descartados.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">¿Descartar %d borrador?</item>
+        <item quantity="other">¿Descartar %d borradores?</item>
+    </plurals>
+</resources>

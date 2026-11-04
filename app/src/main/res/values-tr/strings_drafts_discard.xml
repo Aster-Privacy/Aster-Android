@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Seçimi kaldır</string>
+    <string name="discard_drafts_confirm_message">Silinen taslakları geri yükleyemezsiniz.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">%d taslak silinsin mi?</item>
+        <item quantity="other">%d taslak silinsin mi?</item>
+    </plurals>
+</resources>

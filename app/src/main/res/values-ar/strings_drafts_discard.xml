@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">إلغاء التحديد</string>
+    <string name="discard_drafts_confirm_message">لا يمكنك استعادة المسودات المحذوفة.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="zero">تجاهل %d مسودة؟</item>
+        <item quantity="one">تجاهل مسودة واحدة؟</item>
+        <item quantity="two">تجاهل مسودتين؟</item>
+        <item quantity="few">تجاهل %d مسودات؟</item>
+        <item quantity="many">تجاهل %d مسودة؟</item>
+        <item quantity="other">تجاهل %d مسودة؟</item>
+    </plurals>
+</resources>

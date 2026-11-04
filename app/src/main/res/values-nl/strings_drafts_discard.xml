@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Deselecteren</string>
+    <string name="discard_drafts_confirm_message">Je kunt verwijderde concepten niet herstellen.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">%d concept verwijderen?</item>
+        <item quantity="other">%d concepten verwijderen?</item>
+    </plurals>
+</resources>

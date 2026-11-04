@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Odznacz</string>
+    <string name="discard_drafts_confirm_message">Odrzuconych szkiców nie można przywrócić.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Odrzucić %d szkic?</item>
+        <item quantity="few">Odrzucić %d szkice?</item>
+        <item quantity="many">Odrzucić %d szkiców?</item>
+        <item quantity="other">Odrzucić %d szkicu?</item>
+    </plurals>
+</resources>
