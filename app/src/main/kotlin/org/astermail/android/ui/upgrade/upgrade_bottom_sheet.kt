@@ -65,7 +65,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -180,7 +179,6 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
     var billing_interval by remember { mutableStateOf(if (has_yearly) "year" else "month") }
     val effective_interval = if (billing_interval == "year" && has_yearly) "year" else "month"
     val plan_options = upgrade_plan_options(plans, effective_interval)
-    val offer_state by special_offer_view_model().state.collectAsStateWithLifecycle()
     val currency = billing_state.play_currency?.takeIf { billing_state.play_enabled }
         ?: billing_state.subscription?.currency?.takeIf { it.isNotBlank() }
         ?: "usd"
@@ -410,15 +408,6 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                         is_recommended = plan.code == recommended_code,
                         billing_interval = effective_interval,
                         currency = currency,
-                        offer_label = offer_discounted_label(
-                            offer_state,
-                            billing_state,
-                            play_install,
-                            plan.code,
-                            effective_interval,
-                            (if (effective_interval == "year" && plan.yearly_price_cents > 0) plan.yearly_price_cents else plan.price_cents).toLong(),
-                            currency,
-                        ),
                         price_label = if (play_install) {
                             org.astermail.android.billing.play_price_label(
                                 billing_state.play_offers,
@@ -482,12 +471,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                     ),
                     onClick = {
                         billing_vm.clear_messages()
-                        billing_vm.start_routed_checkout(
-                            offer_checkout_route(offer_state, billing_state, active_plan.code, effective_interval, play_install),
-                            active_plan.code,
-                            effective_interval,
-                            currency,
-                        )
+                        billing_vm.start_checkout(active_plan.code, effective_interval, currency)
                     },
                     is_loading = billing_state.is_acting,
                 )
@@ -536,7 +520,6 @@ internal fun UpgradePlanCard(
     billing_interval: String,
     currency: String,
     price_label: String? = null,
-    offer_label: String? = null,
     on_select: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -568,27 +551,15 @@ internal fun UpgradePlanCard(
             val amount_cents = if (yearly_selected) plan.yearly_price_cents else plan.price_cents
             val price_interval = if (yearly_selected) "year" else plan.billing_period ?: billing_interval
             val interval_text = org.astermail.android.billing.billing_interval_label(context, price_interval)
-            val list_text = price_label ?: org.astermail.android.billing.format_money(amount_cents.toLong(), currency)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(
-                        R.string.settings_price_per_interval,
-                        offer_label ?: list_text,
-                        interval_text,
-                    ),
-                    color = if (offer_label != null) colors.text_primary else colors.text_secondary,
-                    fontSize = 15.sp,
-                    fontWeight = if (offer_label != null) FontWeight.SemiBold else null,
-                )
-                if (offer_label != null) {
-                    Text(
-                        text = list_text,
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                        textDecoration = TextDecoration.LineThrough,
-                    )
-                }
-            }
+            Text(
+                text = stringResource(
+                    R.string.settings_price_per_interval,
+                    price_label ?: org.astermail.android.billing.format_money(amount_cents.toLong(), currency),
+                    interval_text,
+                ),
+                color = colors.text_secondary,
+                fontSize = 15.sp,
+            )
 
             Spacer(Modifier.height(AsterSpacing.sm))
 

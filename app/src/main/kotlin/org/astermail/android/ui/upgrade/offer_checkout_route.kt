@@ -72,15 +72,3 @@ internal fun offer_selectable_plan_codes(
     }
 }
 
-internal fun BillingViewModel.start_routed_checkout(
-    route: OfferRoute,
-    plan_code: String,
-    interval: String,
-    currency: String,
-) {
-    when (route) {
-        is OfferRoute.Play -> start_play_special_offer(route.product_id, route.base_plan_id)
-        is OfferRoute.Stripe -> start_checkout(plan_code, interval, currency, special_offer = true)
-        OfferRoute.None -> start_checkout(plan_code, interval, currency)
-    }
-}

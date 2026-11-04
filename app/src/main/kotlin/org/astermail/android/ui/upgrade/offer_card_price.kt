@@ -108,19 +108,3 @@ internal fun play_offer_list_has_special(
     return candidates.any { play_special_offer_for(play_offers, it) != null }
 }
 
-internal fun offer_discounted_label(
-    offer: SpecialOfferState,
-    billing: BillingUiState,
-    play_install: Boolean,
-    plan_code: String,
-    interval: String,
-    list_cents: Long?,
-    currency: String,
-): String? {
-    if (offer_checkout_route(offer, billing, plan_code, interval, play_install) == OfferRoute.None) return null
-    val card = offer_card_price_for(offer, plan_code, interval, list_cents) ?: return null
-    if (!play_install) return format_money(card.offer_cents, currency)
-    val target = play_special_target_for(offer_play_config(billing), billing.play_offers, billing.play_products, plan_code, interval)
-    val percent = target.special?.percent_off?.takeIf { it > 0 } ?: offer.effective_percent_off
-    return special_offer_play_labels(target.offer, percent)?.discounted
-}

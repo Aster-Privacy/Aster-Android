@@ -25,11 +25,9 @@ import org.astermail.android.api.billing.GooglePlayProduct
 import org.astermail.android.api.billing.GooglePlaySpecialOffer
 import org.astermail.android.billing.BillingUiState
 import org.astermail.android.billing.PlayOffer
-import org.astermail.android.billing.format_money
 import org.astermail.android.billing.offer_checkout_uses_family_endpoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -82,20 +80,17 @@ class OfferRouteTest {
     fun play_covered_term_with_offer_routes_to_special_offer() {
         val route = offer_checkout_route(offer, play_billing, "nova", "year", true)
         assertEquals(OfferRoute.Play("nova_product", "yearly"), route)
-        assertEquals("$43.495", offer_discounted_label(offer, play_billing, true, "nova", "year", 8699L, "USD"))
     }
 
     @Test
-    fun play_covered_term_without_offer_shows_list_price() {
+    fun play_covered_term_without_offer_routes_to_list_price() {
         assertEquals(OfferRoute.None, offer_checkout_route(offer, play_billing, "nova", "month", true))
-        assertNull(offer_discounted_label(offer, play_billing, true, "nova", "month", 899L, "USD"))
     }
 
     @Test
     fun star_monthly_never_routes_to_the_offer() {
         assertEquals(OfferRoute.None, offer_checkout_route(offer, play_billing, "star", "month", true))
         assertEquals(OfferRoute.None, offer_checkout_route(offer, BillingUiState(), "star", "month", false))
-        assertNull(offer_discounted_label(offer, BillingUiState(), false, "star", "month", 299L, "USD"))
     }
 
     @Test
@@ -109,23 +104,9 @@ class OfferRouteTest {
     }
 
     @Test
-    fun stripe_label_matches_the_routed_discount() {
-        assertEquals(format_money(4349L, "USD"), offer_discounted_label(offer, BillingUiState(), false, "nova", "year", 8699L, "USD"))
-        assertNull(offer_discounted_label(offer.copy(available = false), BillingUiState(), false, "nova", "year", 8699L, "USD"))
-        assertNull(offer_discounted_label(offer, BillingUiState(), false, "nova", "year", null, "USD"))
-    }
-
-    @Test
     fun play_switcher_lists_only_plans_with_a_play_offer() {
         val codes = listOf("star", "nova", "duo")
         assertEquals(listOf("nova"), offer_selectable_plan_codes(offer, play_billing, true, codes))
         assertEquals(codes, offer_selectable_plan_codes(offer, BillingUiState(), false, codes))
-    }
-
-    @Test
-    fun missing_or_zero_list_price_shows_list_price() {
-        assertNull(offer_discounted_label(offer, BillingUiState(), false, "nova", "year", 0L, "USD"))
-        assertNull(offer_discounted_label(offer, BillingUiState(), false, "nova", "year", null, "USD"))
-        assertNull(offer_discounted_label(offer, play_billing, true, "nova", "year", 0L, "USD"))
     }
 }
