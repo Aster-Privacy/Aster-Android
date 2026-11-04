@@ -839,7 +839,7 @@ private fun aliases_tab(
                 }
                 itemsIndexed(
                     items = visible_domain_addresses,
-                    key = { _, addr -> "cda_${addr.address}" },
+                    key = { _, addr -> "cda_${addr.id}" },
                 ) { idx, addr ->
                     custom_domain_address_row(
                         addr = addr,
