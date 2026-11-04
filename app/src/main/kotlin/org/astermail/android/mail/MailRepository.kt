@@ -4248,20 +4248,31 @@ class MailRepository @Inject constructor(
         return plaintext
     }
 
-    private fun legacy_key_material(): ByteArray? {
-        val salt = session_key_store.get_password_salt() ?: return null
+    private fun legacy_key_salts(): List<ByteArray> {
+        val current = session_key_store.get_password_salt()
+        val retired = session_key_store.get_retired_password_salts()
+            .take(org.astermail.android.storage.RetiredLoginSalts.max_per_user)
+        val seen = HashSet<String>()
+        val salts = ArrayList<ByteArray>()
+        for (salt in listOfNotNull(current) + retired) {
+            val hex = salt.joinToString("") { "%02x".format(it) }
+            if (salt.isEmpty() || !seen.add(hex)) {
+                salt.fill(0)
+            } else {
+                salts.add(salt)
+            }
+        }
+        return salts
+    }
+
+    private fun legacy_key_material(salt: ByteArray): ByteArray? {
         val salt_hex = LEGACY_KEY_MATERIAL_CACHE_PREFIX + salt.joinToString("") { "%02x".format(it) }
 
         pbkdf2_key_cache.get_copy(salt_hex)?.let { cached ->
-            salt.fill(0)
             return cached
         }
 
-        val passphrase = session_key_store.get_passphrase()
-        if (passphrase == null) {
-            salt.fill(0)
-            return null
-        }
+        val passphrase = session_key_store.get_passphrase() ?: return null
 
         val derived = try {
             CryptoNative.derive_pbkdf2_hash(passphrase, salt, PBKDF2_ITERATIONS)
@@ -4269,7 +4280,6 @@ class MailRepository @Inject constructor(
             null
         } finally {
             passphrase.fill(0)
-            salt.fill(0)
         }
 
         if (derived != null) pbkdf2_key_cache.put(salt_hex, derived.copyOf())
@@ -4283,15 +4293,23 @@ class MailRepository @Inject constructor(
     ): ByteArray? {
         if (nonce.size != LEGACY_KEY_MATERIAL_NONCE_LENGTH) return null
 
-        val key = legacy_key_material() ?: return null
+        val ciphertext = runCatching {
+            android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+        val salts = legacy_key_salts()
 
-        return try {
-            runCatching {
-                val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
-                aes_gcm_decrypt(ciphertext, key, nonce)
-            }.getOrNull()
+        try {
+            for (salt in salts) {
+                val key = legacy_key_material(salt) ?: continue
+                try {
+                    runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()?.let { return it }
+                } finally {
+                    key.fill(0)
+                }
+            }
+            return null
         } finally {
-            key.fill(0)
+            salts.forEach { it.fill(0) }
         }
     }
 

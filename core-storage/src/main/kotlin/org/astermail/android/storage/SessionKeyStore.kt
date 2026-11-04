@@ -47,6 +47,12 @@ class SessionKeyStore(context: Context? = null) {
     @Volatile
     private var remembered_vault_salts: List<String> = emptyList()
 
+    private val retired_login_salt_prefs: SharedPreferences? =
+        context?.getSharedPreferences(retired_login_salts_prefs_name, Context.MODE_PRIVATE)
+
+    @Volatile
+    private var retired_login_salts: List<String> = emptyList()
+
     @Volatile
     private var key_material: ByteArray? = null
 
@@ -127,6 +133,11 @@ class SessionKeyStore(context: Context? = null) {
     init {
         runCatching {
             remembered_vault_salts = VaultSaltMemory.parse(vault_salt_prefs?.getString(key_vault_salts, null))
+        }
+        runCatching {
+            retired_login_salts = RetiredLoginSalts.parse(
+                retired_login_salt_prefs?.getString(key_retired_login_salts, null),
+            )
         }
         prefs?.let { p ->
             runCatching {
@@ -342,6 +353,24 @@ class SessionKeyStore(context: Context? = null) {
         if (updated == remembered_vault_salts) return
         remembered_vault_salts = updated
         vault_salt_prefs?.edit()?.putString(key_vault_salts, VaultSaltMemory.serialize(updated))?.commit()
+    }
+
+    fun retire_password_salts(owner_id: String, salts: List<ByteArray>) {
+        synchronized(lock) {
+            val updated = RetiredLoginSalts.remember_all(retired_login_salts, owner_id, salts)
+            if (updated == retired_login_salts) return
+            retired_login_salts = updated
+            retired_login_salt_prefs?.edit()
+                ?.putString(key_retired_login_salts, RetiredLoginSalts.serialize(updated))
+                ?.commit()
+        }
+    }
+
+    fun get_retired_password_salts(): List<ByteArray> {
+        synchronized(lock) {
+            val owner_id = user_id ?: return emptyList()
+            return RetiredLoginSalts.salts_for(retired_login_salts, owner_id)
+        }
     }
 
     fun put_password_salt(salt: ByteArray) {
@@ -619,6 +648,8 @@ class SessionKeyStore(context: Context? = null) {
         private const val prefs_name = "aster_session_keys_v1"
         private const val vault_salts_prefs_name = "aster_vault_salts_v1"
         private const val key_vault_salts = "vault_salts"
+        private const val retired_login_salts_prefs_name = "aster_retired_login_salts_v1"
+        private const val key_retired_login_salts = "retired_login_salts"
         private const val key_session_key = "session_key"
         private const val key_passphrase = "passphrase"
         private const val key_identity = "identity_key"

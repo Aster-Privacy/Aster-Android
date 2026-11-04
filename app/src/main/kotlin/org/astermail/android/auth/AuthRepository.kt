@@ -559,6 +559,7 @@ class AuthRepository @Inject constructor(
         }
         val password_for_rotation = rotation_password
         val session_pin_keys = LoginProof.pin_keys(login_resp.user_id, user_hash)
+        start_retired_login_salt_refresh(login_resp.user_id)
         when {
             login_enrollment == null -> {
                 password_for_rotation?.fill(0)
@@ -822,6 +823,27 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    private fun start_retired_login_salt_refresh(user_id: String) {
+        background_scope.launch {
+            try {
+                refresh_retired_login_salts(user_id)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
+    private suspend fun refresh_retired_login_salts(user_id: String) {
+        val encoded = auth_api.get_retired_login_salts().retired_salts
+        val salts = org.astermail.android.storage.RetiredLoginSalts.decode_base64(encoded)
+        try {
+            if (salts.isNotEmpty()) session_key_store.retire_password_salts(user_id, salts)
+        } finally {
+            salts.forEach { it.fill(0) }
+        }
+    }
+
     private fun start_login_salt_rotation(
         user_id: String,
         record_keys: List<String>,
@@ -876,6 +898,15 @@ class AuthRepository @Inject constructor(
                 runCatching { login_pins.pin(pin_keys) }
                 runCatching { login_salt_records.put(record_keys, new_salt) }
                 if (session_key_store.get_user_id() == user_id) {
+                    session_key_store.get_password_salt()?.let { previous ->
+                        try {
+                            if (!previous.contentEquals(new_salt)) {
+                                session_key_store.retire_password_salts(user_id, listOf(previous))
+                            }
+                        } finally {
+                            previous.fill(0)
+                        }
+                    }
                     session_key_store.put(new_v2)
                     session_key_store.put_password_salt(new_salt)
                     runCatching { save_session_snapshot(user_id) }
