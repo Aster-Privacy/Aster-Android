@@ -70,6 +70,21 @@ fun vault_identity_key_materials(vault: JSONObject): List<String> =
             json_strings(vault.optJSONArray("legacy_identity_keys")),
     )
 
+fun vault_older_identity_keys(vault: JSONObject): List<String> {
+    val current = vault_identity_key(vault)
+    return vault_identity_key_materials(vault).filter { it != current }
+}
+
+fun replace_vault_identity_key(vault: JSONObject, identity_key: String) {
+    val old_identity_key = vault_identity_key(vault)
+    if (old_identity_key.isNotEmpty() && old_identity_key != identity_key) {
+        val retained = listOf(old_identity_key) +
+            json_strings(vault.optJSONArray("legacy_identity_keys")).filter { it != old_identity_key }
+        vault.put("legacy_identity_keys", JSONArray(unique_non_empty(retained).take(MAX_LEGACY_IDENTITY_KEYS)))
+    }
+    vault.put("identity_key", identity_key)
+}
+
 private fun read_secret_ring(armored: String): PGPSecretKeyRing =
     PGPSecretKeyRing(
         PGPUtil.getDecoderStream(ByteArrayInputStream(armored.toByteArray(Charsets.UTF_8))),
