@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">最早优先</string>
     <string name="alias_sort_az">地址 A–Z</string>
     <string name="alias_sort_za">地址 Z–A</string>
+    <string name="alias_sort_recent">最近收到</string>
+    <string name="alias_last_received">最近收到：%1$s</string>
+    <string name="alias_last_received_just_now">最近接收 刚刚</string>
+    <string name="alias_never_received">尚未收到邮件</string>
     <string name="alias_import_file_hint">选择要导入的 CSV 或 JSON 文件</string>
     <string name="alias_import_change_file">更换文件</string>
     <string name="alias_import_remove_file">移除文件</string>

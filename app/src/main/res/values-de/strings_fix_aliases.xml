@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">Älteste zuerst</string>
     <string name="alias_sort_az">Adresse A–Z</string>
     <string name="alias_sort_za">Adresse Z–A</string>
+    <string name="alias_sort_recent">Zuletzt empfangen</string>
+    <string name="alias_last_received">Zuletzt empfangen %1$s</string>
+    <string name="alias_last_received_just_now">Zuletzt empfangen gerade eben</string>
+    <string name="alias_never_received">Noch keine E-Mails empfangen</string>
     <string name="alias_import_file_hint">Wählen Sie eine CSV- oder JSON-Datei zum Importieren aus</string>
     <string name="alias_import_change_file">Datei ändern</string>
     <string name="alias_import_remove_file">Datei entfernen</string>

@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">सबसे पुराने पहले</string>
     <string name="alias_sort_az">पता A–Z</string>
     <string name="alias_sort_za">पता Z–A</string>
+    <string name="alias_sort_recent">अंतिम प्राप्ति</string>
+    <string name="alias_last_received">अंतिम प्राप्ति %1$s</string>
+    <string name="alias_last_received_just_now">अंतिम बार अभी प्राप्त हुआ</string>
+    <string name="alias_never_received">अभी तक कोई मेल प्राप्त नहीं हुआ</string>
     <string name="alias_import_file_hint">इंपोर्ट करने के लिए CSV या JSON फ़ाइल चुनें</string>
     <string name="alias_import_change_file">फ़ाइल बदलें</string>
     <string name="alias_import_remove_file">फ़ाइल निकालें</string>

@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">Oudste eerst</string>
     <string name="alias_sort_az">Adres A–Z</string>
     <string name="alias_sort_za">Adres Z–A</string>
+    <string name="alias_sort_recent">Laatst ontvangen</string>
+    <string name="alias_last_received">Laatst ontvangen %1$s</string>
+    <string name="alias_last_received_just_now">Laatst ontvangen zojuist</string>
+    <string name="alias_never_received">Nog geen e-mail ontvangen</string>
     <string name="alias_import_file_hint">Kies een CSV- of JSON-bestand om te importeren</string>
     <string name="alias_import_change_file">Bestand wijzigen</string>
     <string name="alias_import_remove_file">Bestand verwijderen</string>

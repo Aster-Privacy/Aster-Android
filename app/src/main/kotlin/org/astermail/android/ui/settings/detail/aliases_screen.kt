@@ -537,6 +537,7 @@ private fun aliases_tab(
                 address = { it.address },
                 created_at = { it.created_at },
                 pinned = { it.is_pinned },
+                last_received_at = { it.last_received_at },
             )
         }
     }
@@ -678,6 +679,7 @@ private fun aliases_tab(
                     val sort_labels = listOf(
                         org.astermail.android.settings.AliasSort.Newest to stringResource(R.string.alias_sort_newest),
                         org.astermail.android.settings.AliasSort.Oldest to stringResource(R.string.alias_sort_oldest),
+                        org.astermail.android.settings.AliasSort.LastReceived to stringResource(R.string.alias_sort_recent),
                         org.astermail.android.settings.AliasSort.AddressAz to stringResource(R.string.alias_sort_az),
                         org.astermail.android.settings.AliasSort.AddressZa to stringResource(R.string.alias_sort_za),
                     )
@@ -1125,6 +1127,16 @@ private fun alias_meta_row(
 }
 
 @Composable
+internal fun alias_last_received_text(received_at: String?): String {
+    if (received_at.isNullOrBlank()) return stringResource(R.string.alias_never_received)
+    val millis = org.astermail.android.settings.alias_received_millis(received_at)
+    if (millis >= 0 && System.currentTimeMillis() - millis < 60_000L) {
+        return stringResource(R.string.alias_last_received_just_now)
+    }
+    return stringResource(R.string.alias_last_received, relative_time_label(received_at))
+}
+
+@Composable
 internal fun alias_list_row(
     alias: org.astermail.android.api.settings.AliasInfo,
     idx: Int,
@@ -1238,6 +1250,16 @@ internal fun alias_list_row(
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                    )
+                    val received_at = alias.last_received_at
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = alias_last_received_text(received_at),
+                        color = colors.text_tertiary,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag("alias_last_received_${alias.id}"),
                     )
                     if (grace_ends != null) {
                         Spacer(Modifier.height(2.dp))

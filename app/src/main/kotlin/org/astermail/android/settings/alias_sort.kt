@@ -27,6 +27,7 @@ import java.util.Locale
 enum class AliasSort(val key: String) {
     Newest("newest"),
     Oldest("oldest"),
+    LastReceived("recent"),
     AddressAz("az"),
     AddressZa("za");
 
@@ -68,7 +69,20 @@ internal fun alias_address_comparator(locale: Locale): Comparator<String> {
     }
 }
 
-private class SortKey<T>(val item: T, val pinned: Boolean, val created: Long, val address: String)
+internal fun alias_received_millis(value: String?): Long {
+    if (value.isNullOrBlank()) return -1L
+    return runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull()
+        ?: runCatching { java.time.Instant.parse(value).toEpochMilli() }.getOrNull()
+        ?: -1L
+}
+
+private class SortKey<T>(
+    val item: T,
+    val pinned: Boolean,
+    val created: Long,
+    val address: String,
+    val received: Long,
+)
 
 fun <T> sort_aliases(
     items: List<T>,
@@ -77,6 +91,7 @@ fun <T> sort_aliases(
     address: (T) -> String,
     created_at: (T) -> String,
     pinned: (T) -> Boolean = { false },
+    last_received_at: (T) -> String? = { null },
 ): List<T> {
     if (items.size < 2) return items
     val addresses = alias_address_comparator(locale)
@@ -85,11 +100,20 @@ fun <T> sort_aliases(
     val order = when (sort) {
         AliasSort.Newest -> newest.then(by_address)
         AliasSort.Oldest -> compareBy<SortKey<T>> { it.created }.then(by_address)
+        AliasSort.LastReceived -> compareByDescending<SortKey<T>> { it.received }.then(newest).then(by_address)
         AliasSort.AddressAz -> by_address.then(newest)
         AliasSort.AddressZa -> by_address.reversed().then(newest)
     }
     return items
-        .map { SortKey(it, pinned(it), alias_created_millis(created_at(it)), address(it)) }
+        .map {
+            SortKey(
+                it,
+                pinned(it),
+                alias_created_millis(created_at(it)),
+                address(it),
+                alias_received_millis(last_received_at(it)),
+            )
+        }
         .sortedWith(compareByDescending<SortKey<T>> { it.pinned }.then(order))
         .map { it.item }
 }
