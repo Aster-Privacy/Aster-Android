@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">Oldest first</string>
     <string name="alias_sort_az">Address A–Z</string>
     <string name="alias_sort_za">Address Z–A</string>
+    <string name="alias_sort_recent">Last received</string>
+    <string name="alias_last_received">Last received %1$s</string>
+    <string name="alias_last_received_just_now">Last received just now</string>
+    <string name="alias_never_received">No mail received yet</string>
     <string name="alias_import_file_hint">Choose a CSV or JSON file to import</string>
     <string name="alias_import_change_file">Change file</string>
     <string name="alias_import_remove_file">Remove file</string>

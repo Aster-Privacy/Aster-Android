@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">古い順</string>
     <string name="alias_sort_az">アドレス A–Z</string>
     <string name="alias_sort_za">アドレス Z–A</string>
+    <string name="alias_sort_recent">最終受信</string>
+    <string name="alias_last_received">最終受信 %1$s</string>
+    <string name="alias_last_received_just_now">最終受信 たった今</string>
+    <string name="alias_never_received">まだメールを受信していません</string>
     <string name="alias_import_file_hint">インポートする CSV または JSON ファイルを選択します</string>
     <string name="alias_import_change_file">ファイルを変更</string>
     <string name="alias_import_remove_file">ファイルを削除</string>

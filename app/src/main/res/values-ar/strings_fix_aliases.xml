@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">الأقدم أولاً</string>
     <string name="alias_sort_az">العنوان A–Z</string>
     <string name="alias_sort_za">العنوان Z–A</string>
+    <string name="alias_sort_recent">آخر استلام</string>
+    <string name="alias_last_received">آخر استلام %1$s</string>
+    <string name="alias_last_received_just_now">آخر استلام الآن</string>
+    <string name="alias_never_received">لم يصل أي بريد بعد</string>
     <string name="alias_import_file_hint">اختر ملف CSV أو JSON للاستيراد</string>
     <string name="alias_import_change_file">تغيير الملف</string>
     <string name="alias_import_remove_file">إزالة الملف</string>

@@ -70,6 +70,27 @@ class AliasSortTest {
     }
 
     @Test
+    fun last_received_lists_the_most_recently_used_alias_first() {
+        val items = listOf(
+            alias("quiet", "2026-06-01T00:00:00Z"),
+            alias("busy", "2026-01-01T00:00:00Z").copy(last_received_at = "2026-11-04T09:00:00Z"),
+            alias("older", "2026-02-01T00:00:00Z").copy(last_received_at = "2026-10-01T09:00:00+00:00"),
+            alias("never", "2026-03-01T00:00:00Z"),
+            alias("broken", "2026-04-01T00:00:00Z").copy(last_received_at = "not a date"),
+        )
+        val sorted = sort_aliases(
+            items,
+            AliasSort.LastReceived,
+            Locale.ENGLISH,
+            { it.address },
+            { it.created_at },
+            { it.is_pinned },
+            { it.last_received_at },
+        ).map { it.encrypted_local_part }
+        assertEquals(listOf("busy", "older", "quiet", "broken", "never"), sorted)
+    }
+
+    @Test
     fun pinned_aliases_stay_on_top_in_every_order() {
         val pinned = aliases.map { if (it.id == "shop") it.copy(is_pinned = true) else it }
         AliasSort.entries.forEach { sort ->

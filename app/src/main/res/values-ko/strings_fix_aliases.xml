@@ -9,6 +9,10 @@
     <string name="alias_sort_oldest">오래된순</string>
     <string name="alias_sort_az">주소 A–Z</string>
     <string name="alias_sort_za">주소 Z–A</string>
+    <string name="alias_sort_recent">최근 수신</string>
+    <string name="alias_last_received">최근 수신 %1$s</string>
+    <string name="alias_last_received_just_now">마지막 수신 방금</string>
+    <string name="alias_never_received">아직 받은 메일이 없습니다</string>
     <string name="alias_import_file_hint">가져올 CSV 또는 JSON 파일을 선택하세요</string>
     <string name="alias_import_change_file">파일 변경</string>
     <string name="alias_import_remove_file">파일 제거</string>

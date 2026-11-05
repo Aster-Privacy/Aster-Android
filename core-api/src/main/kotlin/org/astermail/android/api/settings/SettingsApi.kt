@@ -189,6 +189,7 @@ data class AliasInfo(
     val created_at: String = "",
     val updated_at: String = "",
     val downgrade_grace_expires_at: String? = null,
+    val last_received_at: String? = null,
     val decryption_failed: Boolean = false,
     val is_retained_primary: Boolean = false,
     val retained_local_part: String? = null,
