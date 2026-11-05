@@ -1,0 +1,10 @@
+What's new:
+
+- Special offers now show every plan they apply to, with the discounted price next to the regular one.
+- A countdown in the offer sheet shows how long the offer lasts.
+- Monthly plans in an offer show what they renew at after the discount ends.
+- A quick switch to yearly from the offer sheet.
+
+Fixed:
+
+- Offer checkout always charges the price shown in the offer sheet.
