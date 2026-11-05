@@ -3120,7 +3120,9 @@
     <string name="special_offer_crypto_one_payment">Скидка %1$d%% действует только для этого платежа. Последующие оплаты криптовалютой проходят по обычной цене. Чтобы получить скидку на целый год, выберите 12 месяцев.</string>
     <string name="special_offer_benefit_aliases_title">Неограниченные псевдонимы</string>
     <string name="special_offer_benefit_storage_title">500 ГБ зашифрованного хранилища</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s зашифрованного хранилища</string>
     <string name="special_offer_benefit_domains_title">До 30 собственных доменов</string>
+    <string name="special_offer_benefit_domains_count_title">До %1$d собственных доменов</string>
     <string name="special_offer_benefit_vanguard_title">Усиленная защита с Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Отдельный адрес для каждого сайта.</string>
     <string name="special_offer_benefit_storage_body">Места хватит на годы писем и файлов.</string>

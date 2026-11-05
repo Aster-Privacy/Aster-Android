@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.upgrade
 
+import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import androidx.compose.animation.AnimatedVisibility
@@ -305,6 +306,7 @@ fun SpecialOfferHost() {
 
     var play_cta_pressed by remember { mutableStateOf(false) }
     var offer_success by remember { mutableStateOf(false) }
+    var purchased_plan_code by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(billing_state.play_confirmed_product, billing_state.play_confirmed_special_offer) {
         if (billing_state.play_confirmed_product == null) return@LaunchedEffect
         val special_offer = billing_state.play_confirmed_special_offer
@@ -360,6 +362,7 @@ fun SpecialOfferHost() {
             appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = LinearOutSlowInEasing))
             mounted = false
             offer_success = false
+            purchased_plan_code = ""
         }
     }
 
@@ -407,12 +410,11 @@ fun SpecialOfferHost() {
     val info_text = billing_state.info
         ?.takeIf { error_text == null && play_cta_pressed && !billing_state.is_acting && it.isNotBlank() }
 
-    val benefits = listOf(
-        stringResource(R.string.special_offer_benefit_aliases_title) to stringResource(R.string.special_offer_benefit_aliases_body),
-        stringResource(R.string.special_offer_benefit_storage_title) to stringResource(R.string.special_offer_benefit_storage_body),
-        stringResource(R.string.special_offer_benefit_domains_title) to stringResource(R.string.special_offer_benefit_domains_body),
-        stringResource(R.string.special_offer_benefit_vanguard_title) to stringResource(R.string.special_offer_benefit_vanguard_body),
-    )
+    val benefits = special_offer_benefit_rows(plan_code, billing_state.available_plans)
+    val success_plan_code = purchased_plan_code.ifEmpty { plan_code }
+    val success_plan_label = plan_display_name(billing_state.available_plans, success_plan_code)
+        ?: success_plan_code.replaceFirstChar { it.uppercase() }
+    val success_benefits = special_offer_benefit_rows(success_plan_code, billing_state.available_plans)
 
     val interactive = offer_state.is_open
     val close_offer = {
@@ -460,7 +462,7 @@ fun SpecialOfferHost() {
                 .acrylic(colors, CARD_SHAPE, colors.bg_card),
         ) {
             if (offer_success) {
-                SpecialOfferSuccess(plan_label = plan_label, benefits = benefits, onDone = { offer_vm.close() })
+                SpecialOfferSuccess(plan_label = success_plan_label, benefits = success_benefits, onDone = { offer_vm.close() })
             } else Column {
                 Column(modifier = Modifier.weight(1f, fill = false).vertical_scroll_with_indicator()) {
                     SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
@@ -674,6 +676,7 @@ fun SpecialOfferHost() {
                             } else if (route is OfferRoute.Play) {
                                 billing_vm.clear_messages()
                                 play_cta_pressed = true
+                                purchased_plan_code = plan_code
                                 billing_vm.start_play_special_offer(route.product_id, route.base_plan_id)
                             } else {
                                 billing_vm.clear_messages()
@@ -914,6 +917,30 @@ private fun SpecialOfferBadge() {
         horizontal_padding = 9.dp,
         vertical_padding = 3.dp,
     )
+}
+
+@Composable
+private fun special_offer_benefit_rows(plan_code: String, plans: List<AvailablePlan>): List<Pair<String, String>> {
+    val plan = plans.firstOrNull { it.code.equals(plan_code, ignoreCase = true) }
+    return special_offer_benefits_for(plan_code, plan).map { benefit ->
+        when (benefit) {
+            special_offer_benefit.unlimited_aliases ->
+                stringResource(R.string.special_offer_benefit_aliases_title) to stringResource(R.string.special_offer_benefit_aliases_body)
+            is special_offer_benefit.aliases ->
+                pluralStringResource(R.plurals.aliases_count_plural, benefit.count, benefit.count) to
+                    stringResource(R.string.special_offer_benefit_aliases_body)
+            is special_offer_benefit.storage ->
+                stringResource(R.string.special_offer_benefit_storage_amount_title, benefit.label) to
+                    stringResource(R.string.special_offer_benefit_storage_body)
+            special_offer_benefit.unlimited_domains ->
+                stringResource(R.string.unlimited_domains) to stringResource(R.string.special_offer_benefit_domains_body)
+            is special_offer_benefit.domains ->
+                stringResource(R.string.special_offer_benefit_domains_count_title, benefit.count) to
+                    stringResource(R.string.special_offer_benefit_domains_body)
+            special_offer_benefit.vanguard ->
+                stringResource(R.string.special_offer_benefit_vanguard_title) to stringResource(R.string.special_offer_benefit_vanguard_body)
+        }
+    }
 }
 
 @Composable

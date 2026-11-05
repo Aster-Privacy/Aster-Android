@@ -3070,7 +3070,9 @@
     <string name="special_offer_crypto_one_payment">%1$d%%オフはこのお支払いにのみ適用され、以降の暗号資産でのお支払いは通常価格になります。1年間割引を受けるには、12か月を選択してください。</string>
     <string name="special_offer_benefit_aliases_title">エイリアス無制限</string>
     <string name="special_offer_benefit_storage_title">500 GBの暗号化ストレージ</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$sの暗号化ストレージ</string>
     <string name="special_offer_benefit_domains_title">カスタムドメイン最大30個</string>
+    <string name="special_offer_benefit_domains_count_title">カスタムドメイン最大%1$d個</string>
     <string name="special_offer_benefit_vanguard_title">Vanguardで強化されたセキュリティ</string>
     <string name="special_offer_benefit_aliases_body">サイトごとに専用のアドレスを使えます。</string>
     <string name="special_offer_benefit_storage_body">何年分ものメールとファイルを保存できます。</string>

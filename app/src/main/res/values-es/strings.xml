@@ -3103,7 +3103,9 @@
     <string name="special_offer_crypto_one_payment">El descuento del %1$d %% solo se aplica a este pago. Los pagos posteriores con criptomonedas tienen el precio normal. Para obtenerlo durante un año completo, elige 12 meses.</string>
     <string name="special_offer_benefit_aliases_title">Alias ilimitados</string>
     <string name="special_offer_benefit_storage_title">500 GB de almacenamiento cifrado</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s de almacenamiento cifrado</string>
     <string name="special_offer_benefit_domains_title">Hasta 30 dominios personalizados</string>
+    <string name="special_offer_benefit_domains_count_title">Hasta %1$d dominios personalizados</string>
     <string name="special_offer_benefit_vanguard_title">Seguridad avanzada con Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Da a cada sitio su propia dirección.</string>
     <string name="special_offer_benefit_storage_body">Espacio para años de correo y archivos.</string>
