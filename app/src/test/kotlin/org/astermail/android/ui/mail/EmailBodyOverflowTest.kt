@@ -352,4 +352,43 @@ class EmailBodyOverflowTest {
         assertTrue(marked_tokens(document).isEmpty())
         assertFalse(style_block(document).contains("[data-aster-long-token]"))
     }
+
+    private val image_post = """<table width="100%"><tr><td align="center">""" +
+        """<table class="post" style="width:1200px;" width="1280"><tr><td class="content" width="1456" style="width:1456px;">""" +
+        """<img src="https://example.com/photo.png" width="1456" height="971"></td></tr>""" +
+        """<tr><td><p>A long paragraph of newsletter text that has to wrap at the width of the phone.</p></td></tr></table>""" +
+        """</td></tr></table>"""
+
+    @Test
+    fun widths_from_one_thousand_to_four_thousand_pixels_reflow_like_narrower_ones() {
+        val document = render(EmailHtmlSanitizer.sanitize(image_post))
+
+        assertTrue(document.contains("data-nl=\"1\""))
+        for (width in listOf("1200", "1280", "1456")) {
+            assertFalse("width $width must not survive", document.contains("width=\"$width\""))
+            assertFalse("width ${width}px must not survive", document.contains("width:${width}px"))
+        }
+        assertTrue(document.contains("content=\"width=device-width,initial-scale=1"))
+    }
+
+    @Test
+    fun media_query_breakpoints_and_max_widths_stay_as_written() {
+        val body = """<table width="600"><tr><td style="max-width:1200px;">Text</td></tr></table>""" +
+            """<style>@media (min-width:1024px){.wide{max-width:1300px}}</style>"""
+        val document = render(body)
+
+        assertTrue(document.contains("max-width:1200px"))
+        assertTrue(document.contains("(min-width:1024px)"))
+        assertTrue(document.contains("max-width:1300px"))
+    }
+
+    @Test
+    fun a_newsletter_keeps_preformatted_text_and_embeds_inside_the_screen() {
+        val css = style_block(render(newsletter))
+
+        assertTrue(css.contains("#m pre{white-space:pre-wrap!important}"))
+        for (tag in listOf("pre", "iframe", "video", "figure", "input", "button")) {
+            assertTrue("$tag must be capped", css.contains("#m $tag,") || css.contains("#m $tag{"))
+        }
+    }
 }
