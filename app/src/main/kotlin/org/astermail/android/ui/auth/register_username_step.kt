@@ -68,6 +68,7 @@ fun RegisterUsernameStep(
     state: RegisterFlowState,
     error_message: String?,
     on_next: () -> Unit,
+    is_checking: Boolean = false,
     on_sign_in: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -159,7 +160,7 @@ fun RegisterUsernameStep(
             ),
             keyboard_actions = KeyboardActions(
                 onDone = {
-                    if (state.username.value.replace(".", "").length in 3..40) on_next()
+                    if (!is_checking && state.username.value.replace(".", "").length in 3..40) on_next()
                 },
             ),
             modifier = Modifier.focusRequester(display_name_focus),
@@ -168,9 +169,10 @@ fun RegisterUsernameStep(
         Spacer(Modifier.height(AsterSpacing.xl))
 
         AsterButton(
-            label = stringResource(R.string.next),
+            label = stringResource(if (is_checking) R.string.checking_availability else R.string.next),
             onClick = on_next,
-            enabled = state.username.value.replace(".", "").length in 3..40,
+            enabled = !is_checking && state.username.value.replace(".", "").length in 3..40,
+            is_loading = is_checking,
         )
 
         Spacer(Modifier.height(AsterSpacing.lg))

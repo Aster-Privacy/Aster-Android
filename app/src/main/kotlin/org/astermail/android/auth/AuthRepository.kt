@@ -1031,6 +1031,9 @@ class AuthRepository @Inject constructor(
         return upload_recovery_backup(pending)
     }
 
+    suspend fun check_username_availability(username: String, domain: String): Result<Boolean> =
+        runCatching { auth_api.check_username_availability(username, domain) }
+
     suspend fun register(
         email: String,
         password: String,

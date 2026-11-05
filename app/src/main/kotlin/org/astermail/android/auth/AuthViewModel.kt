@@ -62,6 +62,9 @@ class AuthViewModel @Inject constructor(
     private val _ui_state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val ui_state: StateFlow<AuthUiState> = _ui_state.asStateFlow()
 
+    private val _is_checking_username = MutableStateFlow(false)
+    val is_checking_username: StateFlow<Boolean> = _is_checking_username.asStateFlow()
+
     private val _login_captcha_required = MutableStateFlow(false)
     val login_captcha_required: StateFlow<Boolean> = _login_captcha_required.asStateFlow()
 
@@ -219,6 +222,30 @@ class AuthViewModel @Inject constructor(
             return AuthUiState.AccountSuspended
         }
         return AuthUiState.Error(map_error(cause))
+    }
+
+    fun check_username_availability(username: String, domain: String, on_available: () -> Unit) {
+        if (_is_checking_username.value) return
+        _is_checking_username.value = true
+        _ui_state.value = AuthUiState.Idle
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.check_username_availability(username.trim().trim('.'), domain)
+            val failure = result.exceptionOrNull()
+            val taken = result.getOrNull() == false ||
+                (failure != null && org.astermail.android.is_username_taken(failure))
+            _is_checking_username.value = false
+            when {
+                taken -> _ui_state.value = AuthUiState.Error(
+                    message = ctx.getString(R.string.error_username_taken),
+                    username_taken = true,
+                )
+                failure is ApiError.RateLimited -> _ui_state.value = AuthUiState.Error(
+                    message = map_error(failure),
+                    username_taken = true,
+                )
+                else -> withContext(Dispatchers.Main) { on_available() }
+            }
+        }
     }
 
     fun submit_register(

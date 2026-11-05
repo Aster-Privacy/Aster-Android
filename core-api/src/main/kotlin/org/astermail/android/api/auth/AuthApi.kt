@@ -200,6 +200,17 @@ data class ClientPgpKeyData(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class UsernameAvailabilityRequest(
+    val username: String,
+    val domain: String,
+)
+
+@Serializable
+data class UsernameAvailabilityResponse(
+    val available: Boolean,
+)
+
+@Serializable
 data class RegisterRequest(
     val username: String,
     val user_hash: String,
@@ -301,6 +312,7 @@ interface AuthApi {
     suspend fun initiate_webauthn_assertion(request: WebAuthnAssertionInitiateRequest): WebAuthnAssertionOptions
     suspend fun verify_webauthn_assertion(request: WebAuthnAssertionVerifyRequest): TotpVerifyOutcome
     suspend fun register(request: RegisterRequest): RegisterResponse
+    suspend fun check_username_availability(username: String, domain: String): Boolean
     suspend fun refresh(refresh_token: String?): RefreshResponse
     suspend fun logout()
     suspend fun me(): UserInfo
@@ -462,6 +474,15 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
         val refresh = body.refresh_token
             ?: parse_refresh_cookie(response.headers.getAll(HttpHeaders.SetCookie))
         return body.copy(refresh_token = refresh)
+    }
+
+    override suspend fun check_username_availability(username: String, domain: String): Boolean {
+        val response = client.http.post("${client.base_url}$base/register/availability") {
+            contentType(ContentType.Application.Json)
+            setBody(UsernameAvailabilityRequest(username, domain))
+        }
+        val body: UsernameAvailabilityResponse = decode_or_throw(response)
+        return body.available
     }
 
     override suspend fun refresh(refresh_token: String?): RefreshResponse {

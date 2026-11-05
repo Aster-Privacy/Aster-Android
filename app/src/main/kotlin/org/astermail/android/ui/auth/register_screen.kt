@@ -78,6 +78,7 @@ fun RegisterScreen(
     val recovery_codes by view_model.recovery_codes.collectAsStateWithLifecycle()
     val recovery_backup_failed by view_model.recovery_backup_failed.collectAsStateWithLifecycle()
     val is_retrying_recovery_backup by view_model.is_retrying_recovery_backup.collectAsStateWithLifecycle()
+    val is_checking_username by view_model.is_checking_username.collectAsStateWithLifecycle()
 
     LaunchedEffect(recovery_codes) {
         if (recovery_codes != null && state.step.value == RegisterStep.generating) {
@@ -157,9 +158,14 @@ fun RegisterScreen(
                     RegisterStep.email -> RegisterUsernameStep(
                         state = state,
                         error_message = username_error_message,
+                        is_checking = is_checking_username,
                         on_next = {
-                            view_model.reset_state()
-                            state.step.value = RegisterStep.password
+                            view_model.check_username_availability(
+                                state.username.value,
+                                state.email_domain.value,
+                            ) {
+                                state.step.value = RegisterStep.password
+                            }
                         },
                         on_sign_in = on_sign_in,
                     )
