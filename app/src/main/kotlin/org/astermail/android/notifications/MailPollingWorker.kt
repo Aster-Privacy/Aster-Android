@@ -70,8 +70,11 @@ class MailPollingWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit().putLong(KEY_LAST_WORK_START_MS, System.currentTimeMillis()).apply()
+        val reconcile_only = inputData.getBoolean(KEY_RECONCILE_ONLY, false)
+        if (!reconcile_only) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putLong(KEY_LAST_WORK_START_MS, System.currentTimeMillis()).apply()
+        }
         if (org.astermail.android.BuildConfig.DEBUG) {
             val test_count = inputData.getInt(KEY_TEST_COUNT, 0)
             if (test_count > 0) {
@@ -98,9 +101,15 @@ class MailPollingWorker(
             UnifiedPushState.refresh_backend_subscription(context)
         }
 
+        if (reconcile_only) {
+            reconcile_active_notifications()
+            return Result.success()
+        }
+
         if (inputData.getBoolean(KEY_FORCE_NOTIFY, false)) {
             notify_for_new_mail(1, fetch_limit = FORCED_FETCH_LIMIT)
             if (posted_this_run) advance_baseline_for_push(prefs)
+            reconcile_active_notifications()
             return Result.success()
         }
 
@@ -113,12 +122,54 @@ class MailPollingWorker(
         }
         check_billing_state(prefs, client)
 
-        return try {
+        val result = try {
             poll_and_notify(context, prefs, MailApiImpl(client))
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             Result.retry()
         }
+        reconcile_active_notifications()
+        return result
+    }
+
+    private suspend fun reconcile_active_notifications() {
+        val shown = active_message_item_ids(context)
+        if (shown.isEmpty()) return
+        val account_at_start = current_account_tag(context)
+        val mail_api = try {
+            MailApiImpl(shared_api_client(applicationContext))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            return
+        }
+        val stale = mutableSetOf<Int>()
+        for ((item_id, notification_id) in shown.entries.take(RECONCILE_MAX_ITEMS)) {
+            val handled = try {
+                val item = kotlinx.coroutines.withTimeout(RECONCILE_FETCH_TIMEOUT_MS) {
+                    mail_api.get_message(item_id)
+                }
+                is_notification_handled_elsewhere(
+                    is_read = item.is_read,
+                    is_trashed = item.is_trashed,
+                    is_spam = item.is_spam,
+                    is_archived = item.is_archived,
+                )
+            } catch (_: ApiError.NotFoundError) {
+                true
+            } catch (_: ApiError.UnauthorizedError) {
+                return
+            } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
+                false
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                false
+            }
+            if (handled) stale.add(notification_id)
+        }
+        if (stale.isEmpty() || current_account_tag(context) != account_at_start) return
+        cancel_notification_ids(context, stale)
     }
 
     private suspend fun check_billing_state(
@@ -163,6 +214,7 @@ class MailPollingWorker(
         }
         val new_unread = stats.unread
         val new_notifiable = stats.notifiable ?: stats.inbox
+        if (new_unread == 0) cancel_notification_ids(context, setOf(NOTIFICATION_ID))
 
         val has_baseline = prefs.contains(KEY_CACHED_UNREAD)
         val cached_unread = prefs.getInt(KEY_CACHED_UNREAD, new_unread)
@@ -446,6 +498,7 @@ class MailPollingWorker(
         fun mail_repository(): MailRepository
         fun app_lock_store(): org.astermail.android.security.AppLockStore
         fun api_client(): ApiClient
+        fun account_store(): org.astermail.android.storage.AccountStore
     }
 
     companion object {
@@ -471,6 +524,23 @@ class MailPollingWorker(
         const val WORK_NAME_IMMEDIATE = "mail_polling_immediate"
         const val KEY_TEST_COUNT = "test_count"
         const val KEY_FORCE_NOTIFY = "force_notify"
+        const val KEY_RECONCILE_ONLY = "reconcile_only"
+        const val WORK_NAME_RECONCILE = "mail_notification_reconcile"
+        const val EXTRA_NOTIFIED_ITEM_ID = "org.astermail.android.notified_item_id"
+        const val EXTRA_NOTIFIED_ACCOUNT = "org.astermail.android.notified_account"
+        const val RECONCILE_MAX_ITEMS = 20
+        private const val RECONCILE_FETCH_TIMEOUT_MS = 10_000L
+        private const val RECONCILE_DEBOUNCE_MS = 1_500L
+        private val RECONCILE_ACTIONS = setOf(
+            "update_metadata",
+            "mark_read",
+            "trash",
+            "delete",
+            "archive",
+            "mark_spam",
+            "move",
+            "bulk",
+        )
         private const val PREFS_NAME = "mail_polling_prefs"
         private const val KEY_CACHED_UNREAD = "cached_unread_count"
         private const val KEY_CACHED_NOTIFIABLE = "cached_notifiable_count"
@@ -898,6 +968,7 @@ class MailPollingWorker(
                 WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
                 WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_CHAIN)
                 WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_IMMEDIATE)
+                WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_RECONCILE)
             }
         }
 
@@ -994,6 +1065,10 @@ class MailPollingWorker(
                     ),
                 )
                 add_message_actions(context, builder, item_id, message_id)
+                if (is_valid_notified_item_id(item_id)) {
+                    builder.extras.putString(EXTRA_NOTIFIED_ITEM_ID, item_id)
+                    builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
+                }
             }
             if (one_line_preview.isNotBlank() && one_line_preview != one_line_subject) {
                 builder.setStyle(
@@ -1115,15 +1190,26 @@ class MailPollingWorker(
                 context, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
+            val summary_title = localized(context).getString(R.string.notif_group_summary_new_mail)
+            val public_summary = NotificationCompat.Builder(context, active_channel_id(context))
+                .setSmallIcon(R.drawable.ic_notification)
+                .setColor(0xFF3B82F6.toInt())
+                .setContentTitle(localized(context).getString(R.string.app_name))
+                .setContentText(summary_title)
+                .setGroup(GROUP_KEY_NEW_MAIL)
+                .setGroupSummary(true)
+                .setCategory(NotificationCompat.CATEGORY_EMAIL)
+                .build()
             val summary = NotificationCompat.Builder(context, active_channel_id(context))
                 .setSmallIcon(R.drawable.ic_notification)
                 .setLargeIcon(app_large_icon(context))
                 .setColor(0xFF3B82F6.toInt())
-                .setContentTitle(localized(context).getString(R.string.notif_group_summary_new_mail))
+                .setContentTitle(summary_title)
                 .setGroup(GROUP_KEY_NEW_MAIL)
                 .setGroupSummary(true)
                 .setCategory(NotificationCompat.CATEGORY_EMAIL)
-                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                .setVisibility(GROUP_SUMMARY_VISIBILITY)
+                .setPublicVersion(public_summary)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setContentIntent(pending)
@@ -1384,6 +1470,96 @@ class MailPollingWorker(
             val cancelled = item_ids.map { message_notification_id(it.hashCode()) }.toSet()
             cancelled.forEach { manager.cancel(it) }
             clear_summary_if_empty(manager, cancelled)
+        }
+
+        fun cancel_notification_ids(context: Context, notification_ids: Set<Int>) {
+            if (notification_ids.isEmpty()) return
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            notification_ids.forEach { manager.cancel(it) }
+            clear_summary_if_empty(manager, notification_ids)
+        }
+
+        const val GROUP_SUMMARY_VISIBILITY = NotificationCompat.VISIBILITY_PRIVATE
+
+        private val NOTIFIED_ITEM_ID_PATTERN = Regex("^[A-Za-z0-9_-]{1,128}$")
+
+        fun is_valid_notified_item_id(item_id: String): Boolean =
+            NOTIFIED_ITEM_ID_PATTERN.matches(item_id)
+
+        fun is_notification_handled_elsewhere(
+            is_read: Boolean?,
+            is_trashed: Boolean?,
+            is_spam: Boolean?,
+            is_archived: Boolean?,
+        ): Boolean = is_read == true || is_trashed == true || is_spam == true || is_archived == true
+
+        fun should_reconcile_for_mutation(
+            action: String,
+            item_ids: Collection<String>,
+            shown_item_ids: Set<String>,
+        ): Boolean {
+            if (shown_item_ids.isEmpty()) return false
+            if (action !in RECONCILE_ACTIONS) return false
+            if (action == "bulk" || item_ids.isEmpty()) return true
+            return item_ids.any { it in shown_item_ids }
+        }
+
+        fun account_tag(account_id: String?): String {
+            if (account_id.isNullOrBlank()) return ""
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+                .digest(account_id.toByteArray(Charsets.UTF_8))
+            return digest.take(12).joinToString("") { "%02x".format(it) }
+        }
+
+        internal fun current_account_tag(context: Context): String = runCatching {
+            account_tag(
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    MailRepositoryEntryPoint::class.java,
+                ).account_store().get_current_id(),
+            )
+        }.getOrDefault("")
+
+        fun active_message_item_ids(context: Context): Map<String, Int> {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return emptyMap()
+            val account = current_account_tag(context)
+            return runCatching {
+                manager.activeNotifications
+                    .asSequence()
+                    .filter { it.id >= MESSAGE_ID_BASE && it.packageName == context.packageName }
+                    .mapNotNull { active ->
+                        val extras = active.notification.extras
+                        val item_id = extras?.getString(EXTRA_NOTIFIED_ITEM_ID)
+                        if (item_id != null && is_valid_notified_item_id(item_id) &&
+                            extras.getString(EXTRA_NOTIFIED_ACCOUNT) == account &&
+                            active.id == message_notification_id(item_id.hashCode())
+                        ) {
+                            item_id to active.id
+                        } else {
+                            null
+                        }
+                    }
+                    .toMap()
+            }.getOrDefault(emptyMap())
+        }
+
+        fun enqueue_reconcile(context: Context) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            if (!prefs.getBoolean(KEY_PUSH_ENABLED, true)) return
+            if (active_message_item_ids(context).isEmpty()) return
+            val request = OneTimeWorkRequestBuilder<MailPollingWorker>()
+                .setConstraints(
+                    Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build(),
+                )
+                .setInitialDelay(RECONCILE_DEBOUNCE_MS, TimeUnit.MILLISECONDS)
+                .setInputData(Data.Builder().putBoolean(KEY_RECONCILE_ONLY, true).build())
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                WORK_NAME_RECONCILE,
+                ExistingWorkPolicy.REPLACE,
+                request,
+            )
         }
 
         fun clear_all_mail_notifications(context: Context) {
