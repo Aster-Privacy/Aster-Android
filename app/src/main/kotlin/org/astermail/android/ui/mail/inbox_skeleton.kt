@@ -164,7 +164,6 @@ private const val skeleton_first_row_height_key = "first_row_height_px"
 
 internal const val skeleton_row_sample_count = 4
 
-internal val skeleton_three_line_min = 84.dp
 
 internal fun modal_row_height(samples: Collection<Int>): Int {
     val usable = samples.filter { it > 0 }
@@ -174,8 +173,15 @@ internal fun modal_row_height(samples: Collection<Int>): Int {
         .first().key
 }
 
-internal fun skeleton_row_shows_preview(show_preview: Boolean, row_height: Dp): Boolean =
-    show_preview && (row_height <= 0.dp || row_height >= skeleton_three_line_min)
+internal fun skeleton_row_shows_preview(
+    show_preview: Boolean,
+    row_height: Dp,
+    metrics: InboxRowMetrics = inbox_row_metrics(null),
+): Boolean = show_preview &&
+    (row_height <= 0.dp || row_height >= skeleton_three_line_threshold(metrics))
+
+internal fun skeleton_three_line_threshold(metrics: InboxRowMetrics): Dp =
+    metrics.min_height + (metrics.three_line_min_height - metrics.min_height) / 2
 
 internal fun read_skeleton_row_height(context: android.content.Context): Int {
     val store = skeleton_geometry_store(context) ?: return 0
@@ -404,9 +410,10 @@ fun inbox_skeleton_row(
     row_height: Dp = 0.dp,
 ) {
     val colors = AsterMaterial.colors
-    val metrics = remember(list_density) { inbox_row_metrics(list_density) }
+    val compact_rows = org.astermail.android.ui.theme.local_accessibility.current.compact_mode
+    val metrics = remember(list_density, compact_rows) { inbox_row_metrics(list_density, compact_rows) }
     val content_height = if (row_height > 0.dp && !is_last) row_height - inbox_group_split else row_height
-    val draw_preview = skeleton_row_shows_preview(show_preview, content_height)
+    val draw_preview = skeleton_row_shows_preview(show_preview, content_height, metrics)
     val shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     val card_color = remember(colors) { inbox_card_read_color(colors) }
     val sender_style = inbox_sender_text_style()
@@ -434,7 +441,7 @@ fun inbox_skeleton_row(
                     if (content_height > 0.dp) {
                         Modifier.height(content_height)
                     } else {
-                        Modifier.defaultMinSize(minHeight = metrics.min_height)
+                        Modifier.defaultMinSize(minHeight = metrics.min_height_for(draw_preview))
                     },
                 )
                 .padding(
@@ -443,7 +450,7 @@ fun inbox_skeleton_row(
                     top = metrics.vertical_padding,
                     bottom = metrics.vertical_padding,
                 ),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (show_avatar) {
                 Box(
@@ -480,7 +487,7 @@ fun inbox_skeleton_row(
                         )
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
-                    Box(modifier = Modifier.size(inbox_star_slot_size))
+                    Box(modifier = Modifier.inbox_line_neutral_height().size(inbox_star_slot_size))
                 }
             }
         }

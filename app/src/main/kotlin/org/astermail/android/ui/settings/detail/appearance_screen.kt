@@ -483,6 +483,13 @@ fun AppearanceScreen(
         }
     }
 
+    fun apply_preview_lines(show_preview: Boolean) {
+        val base = prefs ?: return
+        if ((base.show_email_preview != false) != show_preview) {
+            settings_vm.save_preferences(base.copy(show_email_preview = show_preview))
+        }
+    }
+
     val compose_font_size = effective_compose_font_size(prefs)
     val compose_font_color = effective_compose_font_color(prefs)
 
@@ -848,6 +855,22 @@ fun AppearanceScreen(
                 stringResource(R.string.density_comfortable_subtitle),
                 is_comfortable_density(prefs?.mail_list_density),
             ) { apply_density("comfortable") }
+        }
+
+        v_gap(AsterSpacing.xxl)
+        section_label(stringResource(R.string.mail_list_lines))
+        AsterCard(modifier = Modifier.fillMaxWidth().testTag("mail_list_lines")) {
+            theme_option_row(
+                stringResource(R.string.mail_list_lines_two),
+                stringResource(R.string.mail_list_lines_two_subtitle),
+                prefs?.show_email_preview == false,
+            ) { apply_preview_lines(false) }
+            settings_row_gap(modifier = Modifier)
+            theme_option_row(
+                stringResource(R.string.mail_list_lines_three),
+                stringResource(R.string.mail_list_lines_three_subtitle),
+                prefs?.show_email_preview != false,
+            ) { apply_preview_lines(true) }
         }
 
         v_gap(AsterSpacing.xxl)

@@ -1920,9 +1920,9 @@
     <string name="reduce_motion_subtitle">تعطيل الانتقالات والحركات</string>
     <string name="reduce_motion_info_title">تقليل الحركة</string>
     <string name="reduce_motion_info_desc">يعطّل انتقالات التنقل وتأثيرات الحركة الأخرى. مفيد لمن يعانون من دوار الحركة أو اضطرابات التوازن.</string>
-    <string name="compact_mode_subtitle">تقليل التباعد لعرض محتوى أكثر على الشاشة</string>
+    <string name="compact_mode_subtitle">تقليل المسافات وعرض المزيد من الرسائل في البريد الوارد</string>
     <string name="compact_mode_info_title">الوضع المضغوط</string>
-    <string name="compact_mode_info_desc">يقلّل الحشو والتباعد في التطبيق بأكمله لعرض محتوى أكثر على الشاشة دفعة واحدة.</string>
+    <string name="compact_mode_info_desc">يقلل الحشو والمسافات في التطبيق بالكامل ويستخدم صفوفًا أقصر في البريد الوارد ليظهر محتوى أكثر على الشاشة في وقت واحد.</string>
     <string name="network">الشبكة</string>
     <string name="low_network_mode">وضع الشبكة الضعيفة</string>
     <string name="low_network_mode_subtitle">تقليل استهلاك البيانات على الاتصالات البطيئة</string>
@@ -3565,4 +3565,9 @@
         <item quantity="many">%1$d حسابات خارجية</item>
         <item quantity="other">%1$d حسابات خارجية</item>
     </plurals>
+    <string name="mail_list_lines">عدد الأسطر لكل رسالة</string>
+    <string name="mail_list_lines_two">سطران</string>
+    <string name="mail_list_lines_two_subtitle">عرض المرسل والموضوع</string>
+    <string name="mail_list_lines_three">3 أسطر</string>
+    <string name="mail_list_lines_three_subtitle">عرض المرسل والموضوع وسطر من نص الرسالة</string>
 </resources>

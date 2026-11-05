@@ -1905,9 +1905,9 @@
     <string name="reduce_motion_subtitle">Übergänge und Animationen abschalten</string>
     <string name="reduce_motion_info_title">Bewegung reduzieren</string>
     <string name="reduce_motion_info_desc">Schaltet Navigationsübergänge und andere Bewegungseffekte ab. Hilfreich bei Reiseübelkeit oder Gleichgewichtsstörungen.</string>
-    <string name="compact_mode_subtitle">Abstände verkleinern, um mehr auf den Bildschirm zu bringen</string>
+    <string name="compact_mode_subtitle">Abstände verkleinern und mehr Nachrichten im Posteingang anzeigen</string>
     <string name="compact_mode_info_title">Kompaktmodus</string>
-    <string name="compact_mode_info_desc">Verkleinert Innen- und Außenabstände in der ganzen App, damit mehr Inhalt gleichzeitig sichtbar ist.</string>
+    <string name="compact_mode_info_desc">Verkleinert Innen- und Außenabstände in der ganzen App und verwendet kürzere Zeilen im Posteingang, damit mehr Inhalt gleichzeitig sichtbar ist.</string>
     <string name="network">Netzwerk</string>
     <string name="low_network_mode">Sparmodus für schwache Netze</string>
     <string name="low_network_mode_subtitle">Datenverbrauch bei langsamen Verbindungen senken</string>
@@ -3483,4 +3483,9 @@
         <item quantity="one">%1$d externes Konto</item>
         <item quantity="other">%1$d externe Konten</item>
     </plurals>
+    <string name="mail_list_lines">Zeilen pro Nachricht</string>
+    <string name="mail_list_lines_two">2 Zeilen</string>
+    <string name="mail_list_lines_two_subtitle">Absender und Betreff anzeigen</string>
+    <string name="mail_list_lines_three">3 Zeilen</string>
+    <string name="mail_list_lines_three_subtitle">Absender, Betreff und eine Zeile Nachrichtentext anzeigen</string>
 </resources>

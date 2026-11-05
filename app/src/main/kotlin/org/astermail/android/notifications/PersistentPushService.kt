@@ -426,12 +426,35 @@ class PersistentPushService : Service() {
                 "ping" -> runCatching { webSocket.send(PONG_FRAME) }
                 "new_mail" -> deliver_new_mail()
                 "new_reaction" -> deliver_reaction(text)
+                "mail_mutation" -> handle_mail_mutation(text)
                 "contacts_changed" -> runCatching {
                     org.astermail.android.contacts.sync.ContactSyncAccounts.notify_remote_updated()
                     org.astermail.android.contacts.sync.ContactSyncAccounts
                         .request_sync_current_async(this@PersistentPushService)
                 }
                 else -> Unit
+            }
+        }
+
+        private fun handle_mail_mutation(text: String) {
+            runCatching {
+                val context = this@PersistentPushService
+                val frame = JSONObject(text)
+                val action = frame.optString("action")
+                val raw_ids = frame.optJSONArray("item_ids")
+                val ids = buildSet {
+                    if (raw_ids != null) {
+                        val limit = minOf(raw_ids.length(), MAX_MUTATION_ITEM_IDS)
+                        for (index in 0 until limit) {
+                            val id = raw_ids.optString(index)
+                            if (MailPollingWorker.is_valid_notified_item_id(id)) add(id)
+                        }
+                    }
+                }
+                val shown = MailPollingWorker.active_message_item_ids(context).keys
+                if (MailPollingWorker.should_reconcile_for_mutation(action, ids, shown)) {
+                    MailPollingWorker.enqueue_reconcile(context)
+                }
             }
         }
 
@@ -493,6 +516,7 @@ class PersistentPushService : Service() {
         private const val REFRESH_COOLDOWN_MS = 60_000L
         private const val SOCKET_PING_SECONDS = 45L
         private const val MAX_INBOUND_MESSAGE_CHARS = 65_536
+        private const val MAX_MUTATION_ITEM_IDS = 500
         private const val WAKE_PAYLOAD = "{\"type\":\"wake\"}"
         private const val PING_FRAME = "{\"type\":\"ping\"}"
         private const val PONG_FRAME = "{\"type\":\"pong\"}"

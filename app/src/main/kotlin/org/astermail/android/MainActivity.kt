@@ -428,6 +428,9 @@ class MainActivity :
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),
         )
+        runCatching {
+            org.astermail.android.notifications.MailPollingWorker.enqueue_reconcile(applicationContext)
+        }
     }
 
     override fun onPause() {
@@ -1109,7 +1112,9 @@ private fun AsterNavHost() {
                 on_archive = advance_after_action,
                 on_delete = advance_after_action,
                 on_next = neighbor_id(1)?.let { next -> { open_neighbor(next, 1) } },
-                on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev, -1) } },
+                on_previous = org.astermail.android.ui.mail.previous_or_exit(
+                    neighbor_id(-1)?.let { prev -> { open_neighbor(prev, -1) } },
+                ) { pop_entry(nav_controller, entry) },
                 swipe_direction = swipe_direction,
                 chained = chained,
                 on_navigate = { path ->

@@ -1904,9 +1904,9 @@
     <string name="reduce_motion_subtitle">Overgangen en animaties uitzetten</string>
     <string name="reduce_motion_info_title">Beweging verminderen</string>
     <string name="reduce_motion_info_desc">Zet navigatieovergangen en andere bewegingseffecten uit. Handig bij bewegingsziekte of evenwichtsklachten.</string>
-    <string name="compact_mode_subtitle">Minder ruimte, meer inhoud op het scherm</string>
+    <string name="compact_mode_subtitle">Minder witruimte en meer berichten in de inbox</string>
     <string name="compact_mode_info_title">Compacte modus</string>
-    <string name="compact_mode_info_desc">Verkleint de marges en tussenruimte in de hele app, zodat er meer inhoud tegelijk op het scherm past.</string>
+    <string name="compact_mode_info_desc">Verkleint de marges en afstanden in de hele app en gebruikt lagere rijen in de inbox, zodat er meer tegelijk op het scherm past.</string>
     <string name="network">Netwerk</string>
     <string name="low_network_mode">Zuinige netwerkmodus</string>
     <string name="low_network_mode_subtitle">Minder dataverbruik op trage verbindingen</string>
@@ -3482,4 +3482,9 @@
         <item quantity="one">%1$d extern account</item>
         <item quantity="other">%1$d externe accounts</item>
     </plurals>
+    <string name="mail_list_lines">Regels per bericht</string>
+    <string name="mail_list_lines_two">2 regels</string>
+    <string name="mail_list_lines_two_subtitle">Afzender en onderwerp weergeven</string>
+    <string name="mail_list_lines_three">3 regels</string>
+    <string name="mail_list_lines_three_subtitle">Afzender, onderwerp en een regel berichttekst weergeven</string>
 </resources>

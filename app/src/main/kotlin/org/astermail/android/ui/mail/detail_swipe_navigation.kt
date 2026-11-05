@@ -126,6 +126,9 @@ internal fun detail_swipe_enter_side(to_next: Boolean, rtl: Boolean): Int =
 internal fun detail_back_icon_start_progress(swipe_direction: Int, chained: Boolean): Float =
     if (swipe_direction != 0 || chained) 1f else 0f
 
+internal fun previous_or_exit(on_previous: (() -> Unit)?, on_exit: () -> Unit): () -> Unit =
+    on_previous ?: on_exit
+
 internal fun detail_swipe_starts_in_system_zone(x_px: Float, width_px: Float, left_px: Float, right_px: Float): Boolean =
     x_px < left_px || x_px > width_px - right_px
 

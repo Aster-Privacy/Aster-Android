@@ -1907,9 +1907,9 @@
     <string name="reduce_motion_subtitle">Desativar transições e animações</string>
     <string name="reduce_motion_info_title">Reduzir o movimento</string>
     <string name="reduce_motion_info_desc">Desativa as transições de navegação e outros efeitos de movimento. Útil para quem sente enjoo ou tem distúrbios vestibulares.</string>
-    <string name="compact_mode_subtitle">Reduzir espaçamentos para caber mais na tela</string>
+    <string name="compact_mode_subtitle">Reduzir o espaçamento e mostrar mais mensagens na caixa de entrada</string>
     <string name="compact_mode_info_title">Modo compacto</string>
-    <string name="compact_mode_info_desc">Reduz as margens e os espaçamentos do app para caber mais conteúdo na tela de uma vez.</string>
+    <string name="compact_mode_info_desc">Reduz as margens e o espaçamento em todo o app e usa linhas mais baixas na caixa de entrada, para caber mais conteúdo na tela de uma vez.</string>
     <string name="network">Rede</string>
     <string name="low_network_mode">Modo de rede fraca</string>
     <string name="low_network_mode_subtitle">Reduz o uso de dados em conexões lentas</string>
@@ -3501,4 +3501,9 @@
         <item quantity="one">%1$d conta externa</item>
         <item quantity="other">%1$d contas externas</item>
     </plurals>
+    <string name="mail_list_lines">Linhas por mensagem</string>
+    <string name="mail_list_lines_two">2 linhas</string>
+    <string name="mail_list_lines_two_subtitle">Mostrar o remetente e o assunto</string>
+    <string name="mail_list_lines_three">3 linhas</string>
+    <string name="mail_list_lines_three_subtitle">Mostrar o remetente, o assunto e uma linha do texto da mensagem</string>
 </resources>

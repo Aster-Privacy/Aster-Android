@@ -1912,9 +1912,9 @@
     <string name="reduce_motion_subtitle">Отключить переходы и анимации</string>
     <string name="reduce_motion_info_title">Меньше движения</string>
     <string name="reduce_motion_info_desc">Отключает переходы между экранами и другие эффекты движения. Полезно при укачивании и вестибулярных нарушениях.</string>
-    <string name="compact_mode_subtitle">Уменьшить отступы, чтобы вместить больше</string>
+    <string name="compact_mode_subtitle">Уменьшить отступы и показывать больше писем во входящих</string>
     <string name="compact_mode_info_title">Компактный режим</string>
-    <string name="compact_mode_info_desc">Уменьшает поля и отступы во всём приложении, чтобы на экране помещалось больше содержимого.</string>
+    <string name="compact_mode_info_desc">Уменьшает поля и отступы во всем приложении и делает строки во входящих ниже, чтобы на экране помещалось больше содержимого.</string>
     <string name="network">Сеть</string>
     <string name="low_network_mode">Режим слабой сети</string>
     <string name="low_network_mode_subtitle">Меньше трафика на медленных соединениях</string>
@@ -3524,4 +3524,9 @@
         <item quantity="many">%1$d внешних аккаунтов</item>
         <item quantity="other">%1$d внешних аккаунта</item>
     </plurals>
+    <string name="mail_list_lines">Строк на сообщение</string>
+    <string name="mail_list_lines_two">2 строки</string>
+    <string name="mail_list_lines_two_subtitle">Показывать отправителя и тему</string>
+    <string name="mail_list_lines_three">3 строки</string>
+    <string name="mail_list_lines_three_subtitle">Показывать отправителя, тему и строку текста сообщения</string>
 </resources>

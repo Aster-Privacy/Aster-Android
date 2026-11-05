@@ -1900,9 +1900,9 @@
     <string name="reduce_motion_subtitle">关闭过渡和动画</string>
     <string name="reduce_motion_info_title">减少动画</string>
     <string name="reduce_motion_info_desc">关闭页面过渡等动效。适合容易晕动或有前庭功能问题的用户。</string>
-    <string name="compact_mode_subtitle">缩小间距，一屏显示更多内容</string>
+    <string name="compact_mode_subtitle">减少间距，在收件箱中显示更多邮件</string>
     <string name="compact_mode_info_title">紧凑模式</string>
-    <string name="compact_mode_info_desc">缩小整个应用的留白和间距，让一屏能显示更多内容。</string>
+    <string name="compact_mode_info_desc">减少整个应用中的内边距和间距，并缩短收件箱中的行高，让屏幕一次显示更多内容。</string>
     <string name="network">网络</string>
     <string name="low_network_mode">弱网模式</string>
     <string name="low_network_mode_subtitle">在网速较慢时减少流量消耗</string>
@@ -3463,4 +3463,9 @@
     <plurals name="ext_account_count">
         <item quantity="other">%1$d 个外部账户</item>
     </plurals>
+    <string name="mail_list_lines">每封邮件的行数</string>
+    <string name="mail_list_lines_two">2 行</string>
+    <string name="mail_list_lines_two_subtitle">显示发件人和主题</string>
+    <string name="mail_list_lines_three">3 行</string>
+    <string name="mail_list_lines_three_subtitle">显示发件人、主题和一行邮件正文</string>
 </resources>
