@@ -1904,9 +1904,9 @@
     <string name="reduce_motion_subtitle">Geçişleri ve animasyonları kapat</string>
     <string name="reduce_motion_info_title">Hareketi azalt</string>
     <string name="reduce_motion_info_desc">Ekran geçişlerini ve diğer hareket efektlerini kapatır. Taşıt tutması veya denge sorunu yaşayanlar için yararlıdır.</string>
-    <string name="compact_mode_subtitle">Ekrana daha çok içerik sığdırmak için boşlukları azalt</string>
+    <string name="compact_mode_subtitle">Boşlukları azalt ve gelen kutusunda daha fazla ileti göster</string>
     <string name="compact_mode_info_title">Sıkışık görünüm</string>
-    <string name="compact_mode_info_desc">Uygulama genelinde boşlukları azaltarak ekranda aynı anda daha çok içerik gösterir.</string>
+    <string name="compact_mode_info_desc">Uygulama genelinde iç ve dış boşlukları azaltır, gelen kutusunda daha kısa satırlar kullanır ve ekrana aynı anda daha fazla içerik sığdırır.</string>
     <string name="network">Ağ</string>
     <string name="low_network_mode">Düşük bağlantı modu</string>
     <string name="low_network_mode_subtitle">Yavaş bağlantılarda veri kullanımını azaltır</string>
@@ -3482,4 +3482,9 @@
         <item quantity="one">%1$d harici hesap</item>
         <item quantity="other">%1$d harici hesap</item>
     </plurals>
+    <string name="mail_list_lines">İleti başına satır</string>
+    <string name="mail_list_lines_two">2 satır</string>
+    <string name="mail_list_lines_two_subtitle">Göndereni ve konuyu göster</string>
+    <string name="mail_list_lines_three">3 satır</string>
+    <string name="mail_list_lines_three_subtitle">Göndereni, konuyu ve ileti metninden bir satırı göster</string>
 </resources>

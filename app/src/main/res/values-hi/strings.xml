@@ -1800,9 +1800,9 @@
     <string name="reduce_motion_subtitle">बदलाव और एनिमेशन बंद करें</string>
     <string name="reduce_motion_info_title">गति कम करें</string>
     <string name="reduce_motion_info_desc">नेविगेशन के बदलाव और गति के दूसरे असर बंद कर देता है। यह उन लोगों के काम आता है जिन्हें गति से मितली या संतुलन की दिक्कत होती है।</string>
-    <string name="compact_mode_subtitle">स्क्रीन पर ज़्यादा सामग्री लाने के लिए अंतर घटाएं</string>
+    <string name="compact_mode_subtitle">स्पेसिंग कम करें और इनबॉक्स में ज़्यादा संदेश दिखाएँ</string>
     <string name="compact_mode_info_title">सघन मोड</string>
-    <string name="compact_mode_info_desc">पूरे ऐप में जगह और अंतर घटा देता है, ताकि स्क्रीन पर एक साथ ज़्यादा सामग्री आ सके।</string>
+    <string name="compact_mode_info_desc">पूरे ऐप में पैडिंग और स्पेसिंग कम करता है और इनबॉक्स में छोटी पंक्तियाँ इस्तेमाल करता है, ताकि स्क्रीन पर एक साथ ज़्यादा सामग्री दिखे।</string>
     <string name="network">नेटवर्क</string>
     <string name="low_network_mode">कम नेटवर्क मोड</string>
     <string name="low_network_mode_subtitle">धीमे कनेक्शन पर डेटा की खपत घटाएं</string>
@@ -3374,4 +3374,9 @@
         <item quantity="one">%1$d बाहरी खाता</item>
         <item quantity="other">%1$d बाहरी खाते</item>
     </plurals>
+    <string name="mail_list_lines">प्रति संदेश पंक्तियाँ</string>
+    <string name="mail_list_lines_two">2 पंक्तियाँ</string>
+    <string name="mail_list_lines_two_subtitle">प्रेषक और विषय दिखाएँ</string>
+    <string name="mail_list_lines_three">3 पंक्तियाँ</string>
+    <string name="mail_list_lines_three_subtitle">प्रेषक, विषय और संदेश के टेक्स्ट की एक पंक्ति दिखाएँ</string>
 </resources>

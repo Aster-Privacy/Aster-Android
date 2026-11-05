@@ -1900,9 +1900,9 @@
     <string name="reduce_motion_subtitle">전환 효과와 애니메이션 끄기</string>
     <string name="reduce_motion_info_title">동작 줄이기</string>
     <string name="reduce_motion_info_desc">화면 전환을 비롯한 움직임 효과를 끕니다. 멀미나 전정기관 질환이 있는 분에게 유용합니다.</string>
-    <string name="compact_mode_subtitle">여백을 줄여 화면에 더 많이 담기</string>
+    <string name="compact_mode_subtitle">간격을 줄이고 받은편지함에 더 많은 메시지 표시</string>
     <string name="compact_mode_info_title">간결 모드</string>
-    <string name="compact_mode_info_desc">앱 전체의 여백과 간격을 줄여 한 화면에 더 많은 내용을 담습니다.</string>
+    <string name="compact_mode_info_desc">앱 전체의 여백과 간격을 줄이고 받은편지함의 행을 더 낮게 표시해 화면에 한 번에 더 많은 내용을 보여 줍니다.</string>
     <string name="network">네트워크</string>
     <string name="low_network_mode">저속 네트워크 모드</string>
     <string name="low_network_mode_subtitle">느린 연결에서 데이터 사용량을 줄입니다</string>
@@ -3463,4 +3463,9 @@
     <plurals name="ext_account_count">
         <item quantity="other">외부 계정 %1$d개</item>
     </plurals>
+    <string name="mail_list_lines">메시지당 줄 수</string>
+    <string name="mail_list_lines_two">2줄</string>
+    <string name="mail_list_lines_two_subtitle">보낸 사람과 제목 표시</string>
+    <string name="mail_list_lines_three">3줄</string>
+    <string name="mail_list_lines_three_subtitle">보낸 사람, 제목, 메시지 본문 한 줄 표시</string>
 </resources>

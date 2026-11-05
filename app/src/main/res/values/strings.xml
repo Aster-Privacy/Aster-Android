@@ -2062,9 +2062,9 @@
     <string name="reduce_motion_subtitle">Disable transitions and animations</string>
     <string name="reduce_motion_info_title">Reduce Motion</string>
     <string name="reduce_motion_info_desc">Disables navigation transitions and other motion effects. Useful for people who experience motion sickness or vestibular disorders.</string>
-    <string name="compact_mode_subtitle">Reduce spacing to fit more content on screen</string>
+    <string name="compact_mode_subtitle">Reduce spacing and show more messages in the inbox</string>
     <string name="compact_mode_info_title">Compact Mode</string>
-    <string name="compact_mode_info_desc">Reduces padding and spacing throughout the app to fit more content on screen at once.</string>
+    <string name="compact_mode_info_desc">Reduces padding and spacing throughout the app and uses shorter inbox rows, so more fits on the screen at once.</string>
     <string name="network">Network</string>
     <string name="low_network_mode">Low network mode</string>
     <string name="low_network_mode_subtitle">Reduce data usage on slow connections</string>
@@ -3533,4 +3533,9 @@
         <item quantity="one">%1$d external account</item>
         <item quantity="other">%1$d external accounts</item>
     </plurals>
+    <string name="mail_list_lines">Lines per message</string>
+    <string name="mail_list_lines_two">2 lines</string>
+    <string name="mail_list_lines_two_subtitle">Show the sender and the subject</string>
+    <string name="mail_list_lines_three">3 lines</string>
+    <string name="mail_list_lines_three_subtitle">Show the sender, the subject, and a line of message text</string>
 </resources>

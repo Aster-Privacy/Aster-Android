@@ -76,6 +76,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.astermail.android.ui.theme.local_accessibility
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawBehind
@@ -179,7 +181,8 @@ fun EmailRow(
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val tap_guard = remember { row_tap_guard() }
-    val metrics = remember(list_density) { inbox_row_metrics(list_density) }
+    val compact_rows = local_accessibility.current.compact_mode
+    val metrics = remember(list_density, compact_rows) { inbox_row_metrics(list_density, compact_rows) }
     val is_unread = !email.is_read
     val trust = remember_sender_trust(email.trust_message)
     val shown_sender_name = trusted_sender_name(
@@ -247,14 +250,14 @@ fun EmailRow(
                         )
                 },
             )
-            .defaultMinSize(minHeight = metrics.min_height)
+            .defaultMinSize(minHeight = metrics.min_height_for(show_email_preview && email.preview.isNotBlank()))
             .padding(
                 start = inbox_card_content_padding,
                 end = inbox_card_content_padding,
                 top = metrics.vertical_padding,
                 bottom = metrics.vertical_padding,
             ),
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         inbox_leading_slot(show_sender_pictures, is_selected, metrics.avatar_size) {
             SenderAvatar(
@@ -327,6 +330,7 @@ fun EmailRow(
                 ) {
                     star_button(
                         is_starred = email.is_starred,
+                        modifier = Modifier.inbox_line_neutral_height(),
                         interactive = !select_mode,
                         on_toggle = {
                             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -517,7 +521,8 @@ fun ThreadInboxRow(
     } else {
         cached_geometry?.show_preview != false
     }
-    val metrics = remember(row_density) { inbox_row_metrics(row_density) }
+    val compact_rows = local_accessibility.current.compact_mode
+    val metrics = remember(row_density, compact_rows) { inbox_row_metrics(row_density, compact_rows) }
     val is_unread = thread.has_unread
     val trust = remember_sender_trust(email.trust_message)
     val newest_sender_name = trusted_sender_name(
@@ -609,14 +614,14 @@ fun ThreadInboxRow(
                         )
                 },
             )
-            .defaultMinSize(minHeight = metrics.min_height)
+            .defaultMinSize(minHeight = metrics.min_height_for(show_preview && email.preview.isNotBlank()))
             .padding(
                 start = inbox_card_content_padding,
                 end = inbox_card_content_padding,
                 top = metrics.vertical_padding,
                 bottom = metrics.vertical_padding,
             ),
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         inbox_leading_slot(
             show_avatar,
@@ -729,6 +734,7 @@ fun ThreadInboxRow(
                 Spacer(Modifier.width(AsterSpacing.sm))
                 star_button(
                     is_starred = thread.is_starred,
+                    modifier = Modifier.inbox_line_neutral_height(),
                     interactive = !select_mode,
                     on_toggle = {
                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -857,18 +863,40 @@ internal data class InboxRowMetrics(
     val vertical_padding: androidx.compose.ui.unit.Dp,
     val avatar_size: androidx.compose.ui.unit.Dp,
     val line_gap: androidx.compose.ui.unit.Dp,
+    val three_line_min_height: androidx.compose.ui.unit.Dp,
 )
+
+internal fun InboxRowMetrics.min_height_for(has_preview_line: Boolean): androidx.compose.ui.unit.Dp =
+    if (has_preview_line) three_line_min_height else min_height
+
+internal fun Modifier.inbox_line_neutral_height(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(
+        constraints.copy(minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity),
+    )
+    layout(placeable.width, 0) {
+        placeable.place(0, -placeable.height / 2)
+    }
+}
 
 internal fun is_comfortable_density(density: String?): Boolean =
     density == "comfortable" || density == "spacious"
 
-internal fun inbox_row_metrics(density: String?): InboxRowMetrics =
-    if (is_comfortable_density(density)) {
+internal fun inbox_row_metrics(density: String?, compact_rows: Boolean = false): InboxRowMetrics =
+    if (compact_rows) {
+        InboxRowMetrics(
+            min_height = 60.dp,
+            vertical_padding = AsterSpacing.xs,
+            avatar_size = 36.dp,
+            line_gap = 1.dp,
+            three_line_min_height = 72.dp,
+        )
+    } else if (is_comfortable_density(density)) {
         InboxRowMetrics(
             min_height = 88.dp,
             vertical_padding = AsterSpacing.md,
             avatar_size = 44.dp,
             line_gap = 3.dp,
+            three_line_min_height = 96.dp,
         )
     } else {
         InboxRowMetrics(
@@ -876,6 +904,7 @@ internal fun inbox_row_metrics(density: String?): InboxRowMetrics =
             vertical_padding = AsterSpacing.sm,
             avatar_size = 40.dp,
             line_gap = 2.dp,
+            three_line_min_height = 84.dp,
         )
     }
 

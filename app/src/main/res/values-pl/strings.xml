@@ -1912,9 +1912,9 @@
     <string name="reduce_motion_subtitle">Wyłącz przejścia i animacje</string>
     <string name="reduce_motion_info_title">Ogranicz ruch</string>
     <string name="reduce_motion_info_desc">Wyłącza przejścia nawigacyjne i inne efekty ruchu. Przydatne przy chorobie lokomocyjnej i zaburzeniach błędnika.</string>
-    <string name="compact_mode_subtitle">Zmniejsz odstępy, aby zmieścić więcej treści</string>
+    <string name="compact_mode_subtitle">Zmniejsz odstępy i pokazuj więcej wiadomości w skrzynce odbiorczej</string>
     <string name="compact_mode_info_title">Tryb kompaktowy</string>
-    <string name="compact_mode_info_desc">Zmniejsza marginesy i odstępy w całej aplikacji, aby na ekranie mieściło się więcej treści.</string>
+    <string name="compact_mode_info_desc">Zmniejsza marginesy i odstępy w całej aplikacji oraz używa niższych wierszy w skrzynce odbiorczej, aby na ekranie mieściło się więcej treści naraz.</string>
     <string name="network">Sieć</string>
     <string name="low_network_mode">Tryb słabej sieci</string>
     <string name="low_network_mode_subtitle">Ogranicz zużycie danych na wolnych łączach</string>
@@ -3524,4 +3524,9 @@
         <item quantity="many">%1$d kont zewnętrznych</item>
         <item quantity="other">%1$d konta zewnętrzne</item>
     </plurals>
+    <string name="mail_list_lines">Wiersze na wiadomość</string>
+    <string name="mail_list_lines_two">2 wiersze</string>
+    <string name="mail_list_lines_two_subtitle">Pokazuj nadawcę i temat</string>
+    <string name="mail_list_lines_three">3 wiersze</string>
+    <string name="mail_list_lines_three_subtitle">Pokazuj nadawcę, temat i jeden wiersz treści wiadomości</string>
 </resources>

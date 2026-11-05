@@ -1348,9 +1348,9 @@
     <string name="reduce_motion_subtitle">Désactiver les transitions et animations</string>
     <string name="reduce_motion_info_title">Réduire les animations</string>
     <string name="reduce_motion_info_desc">Désactive les transitions de navigation et autres effets de mouvement. Utile pour les personnes sujettes au mal des transports ou aux troubles vestibulaires.</string>
-    <string name="compact_mode_subtitle">Réduire l\'espacement pour afficher plus de contenu à l\'écran</string>
+    <string name="compact_mode_subtitle">Réduire l’espacement et afficher plus de messages dans la boîte de réception</string>
     <string name="compact_mode_info_title">Mode compact</string>
-    <string name="compact_mode_info_desc">Réduit les marges et l\'espacement dans toute l\'application pour afficher plus de contenu à l\'écran.</string>
+    <string name="compact_mode_info_desc">Réduit les marges et l’espacement dans toute l’app et utilise des lignes plus courtes dans la boîte de réception pour afficher plus de contenu à la fois.</string>
     <string name="network">Réseau</string>
     <string name="low_network_mode">Mode réseau bas débit</string>
     <string name="low_network_mode_subtitle">Réduire l\'utilisation des données sur les connexions lentes</string>
@@ -3530,4 +3530,9 @@
         <item quantity="one">%1$d compte externe</item>
         <item quantity="other">%1$d comptes externes</item>
     </plurals>
+    <string name="mail_list_lines">Lignes par message</string>
+    <string name="mail_list_lines_two">2 lignes</string>
+    <string name="mail_list_lines_two_subtitle">Afficher l’expéditeur et l’objet</string>
+    <string name="mail_list_lines_three">3 lignes</string>
+    <string name="mail_list_lines_three_subtitle">Afficher l’expéditeur, l’objet et une ligne du texte du message</string>
 </resources>

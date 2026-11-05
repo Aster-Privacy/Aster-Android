@@ -1900,9 +1900,9 @@
     <string name="reduce_motion_subtitle">画面遷移とアニメーションを止める</string>
     <string name="reduce_motion_info_title">動きを減らす</string>
     <string name="reduce_motion_info_desc">画面遷移などの動きの効果を止めます。乗り物酔いや平衡感覚の不調がある方に役立ちます。</string>
-    <string name="compact_mode_subtitle">余白を詰めて表示量を増やす</string>
+    <string name="compact_mode_subtitle">余白を減らして受信トレイにより多くのメッセージを表示</string>
     <string name="compact_mode_info_title">コンパクト表示</string>
-    <string name="compact_mode_info_desc">アプリ全体の余白と間隔を詰め、一度に表示できる内容を増やします。</string>
+    <string name="compact_mode_info_desc">アプリ全体の余白と間隔を減らし、受信トレイの行を短くして、画面に一度により多くの内容を表示します。</string>
     <string name="network">ネットワーク</string>
     <string name="low_network_mode">低速回線モード</string>
     <string name="low_network_mode_subtitle">遅い回線でのデータ使用量を抑えます</string>
@@ -3470,4 +3470,9 @@
     <plurals name="ext_account_count">
         <item quantity="other">%1$d 件の外部アカウント</item>
     </plurals>
+    <string name="mail_list_lines">メッセージごとの行数</string>
+    <string name="mail_list_lines_two">2 行</string>
+    <string name="mail_list_lines_two_subtitle">差出人と件名を表示</string>
+    <string name="mail_list_lines_three">3 行</string>
+    <string name="mail_list_lines_three_subtitle">差出人、件名、本文の 1 行を表示</string>
 </resources>
