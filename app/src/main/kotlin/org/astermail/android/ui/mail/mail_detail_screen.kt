@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
@@ -98,7 +99,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.LocalTextStyle
@@ -5345,13 +5345,12 @@ internal fun snooze_sheet(
             next_month_label,
         )
     }
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -5437,13 +5436,12 @@ internal fun label_picker_sheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -5540,13 +5538,12 @@ internal fun tag_picker_sheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -7688,13 +7685,12 @@ private fun link_options_sheet(
     val shown = address ?: url
     val copied_label = stringResource(if (address != null) R.string.email_copied else R.string.link_copied)
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -8119,13 +8115,12 @@ private fun attachment_options_sheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

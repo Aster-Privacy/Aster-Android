@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -76,6 +75,7 @@ import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.security.SenderAuthState
 import org.astermail.android.security.SenderTrust
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.contacts.Contact
 
@@ -129,13 +129,12 @@ fun sender_profile_sheet(
         contacts_vm.load_contacts()
     }
 
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

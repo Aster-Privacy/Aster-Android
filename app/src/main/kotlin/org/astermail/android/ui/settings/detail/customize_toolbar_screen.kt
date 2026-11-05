@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -40,7 +41,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -199,12 +199,12 @@ fun CustomizeToolbarScreen(
     if (active != null) {
         val catalog = if (active.kind == "reading") toolbar_action_catalog else selection_toolbar_action_catalog
         val slots = if (active.kind == "reading") reading_slots else selection_slots
-        ModalBottomSheet(
+        aster_modal_sheet(
             shape = org.astermail.android.ui.common.aster_sheet_shape,
-            onDismissRequest = { editing = null },
-            sheetState = sheet_state,
-            containerColor = sheet_container_color(colors),
-            dragHandle = { AsterDragHandle() },
+            on_dismiss_request = { editing = null },
+            sheet_state = sheet_state,
+            container_color = sheet_container_color(colors),
+            drag_handle = { AsterDragHandle() },
         ) {
             Column(
                 modifier = Modifier

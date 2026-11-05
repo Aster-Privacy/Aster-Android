@@ -81,6 +81,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
@@ -813,13 +814,11 @@ private fun keep_signed_in_row(
             ),
         )
         Text(
-            text = stringResource(
-                R.string.keep_me_signed_in_secure_devices,
-                stringResource(R.string.keep_me_signed_in),
-                stringResource(R.string.secure_devices_only),
-            ),
+            text = stringResource(R.string.keep_me_signed_in),
             color = colors.text_secondary,
             fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

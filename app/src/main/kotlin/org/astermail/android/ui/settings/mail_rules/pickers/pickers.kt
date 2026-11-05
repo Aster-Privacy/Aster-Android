@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.mail_rules.pickers
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -58,7 +59,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -122,12 +122,12 @@ fun base_sheet(
 ) {
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
-        containerColor = sheet_container_color(colors),
-        dragHandle = null,
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
+        container_color = sheet_container_color(colors),
+        drag_handle = null,
         modifier = Modifier.testTag("mr_sheet"),
     ) {
         Column(

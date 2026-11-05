@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -4089,13 +4090,12 @@ internal fun selection_overflow_sheet(
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    androidx.compose.material3.ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { org.astermail.android.design.components.AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4203,13 +4203,12 @@ internal fun scheduled_actions_sheet(
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    androidx.compose.material3.ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { org.astermail.android.design.components.AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { org.astermail.android.design.components.AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

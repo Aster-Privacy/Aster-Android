@@ -18,6 +18,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import android.content.ClipData
 import androidx.compose.foundation.clickable
@@ -37,7 +38,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDragHandle
@@ -465,13 +465,12 @@ internal fun billing_credits_sheet(
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selected_id by remember { mutableStateOf<String?>(null) }
     val selected = packages.firstOrNull { it.id == selected_id }
-    ModalBottomSheet(
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
+    aster_modal_sheet(
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

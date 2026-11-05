@@ -45,7 +45,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import org.astermail.android.design.local_acrylic
 import org.astermail.android.design.acrylic
 import androidx.compose.material3.Text
@@ -83,6 +82,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDragHandle
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.sheet_container_color
 
 @Immutable
@@ -177,13 +177,12 @@ fun reaction_picker_sheet(
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
-        onDismissRequest = on_close,
-        sheetState = sheet_state,
+    aster_modal_sheet(
+        on_dismiss_request = on_close,
+        sheet_state = sheet_state,
         shape = sheet_shape,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
