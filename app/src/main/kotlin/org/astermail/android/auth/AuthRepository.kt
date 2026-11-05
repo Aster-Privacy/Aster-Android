@@ -2022,8 +2022,8 @@ class AuthRepository @Inject constructor(
     }
 
     private fun absorb_previous_keys_and_keks(vault_obj: org.json.JSONObject) {
-        vault_obj.optJSONArray("previous_keys")?.let { array ->
-            session_key_store.put_previous_keys((0 until array.length()).map { array.getString(it) })
+        if (vault_obj.has("previous_keys") || vault_obj.has("legacy_identity_keys")) {
+            session_key_store.put_previous_keys(vault_older_identity_keys(vault_obj))
         }
         vault_obj.optJSONArray("legacy_keks")?.let { array ->
             val keks = (0 until array.length()).mapNotNull { i ->
@@ -2153,7 +2153,7 @@ class AuthRepository @Inject constructor(
         } finally {
             vault_plain.fill(0)
         }
-        vault_obj.put("identity_key", identity_key)
+        replace_vault_identity_key(vault_obj, identity_key)
 
         val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
         val sealed = try {

@@ -196,4 +196,52 @@ class IdentityKeyMaterialsTest {
 
         assertEquals("archived", vault_identity_key(legacy_vault))
     }
+
+    @Test
+    fun replacing_the_identity_key_keeps_the_old_one_first_in_legacy_identity_keys() {
+        val live = vault("key_a", listOf("prev_1"), listOf("older", "key_a"))
+
+        replace_vault_identity_key(live, "key_b")
+
+        assertEquals("key_b", vault_identity_key(live))
+        assertEquals(listOf("key_a", "older"), json_strings(live.optJSONArray("legacy_identity_keys")))
+        assertEquals(listOf("prev_1"), json_strings(live.optJSONArray("previous_keys")))
+    }
+
+    @Test
+    fun replacing_the_identity_key_creates_legacy_identity_keys_when_missing() {
+        val live = JSONObject().put("identity_key", "key_a")
+
+        replace_vault_identity_key(live, "key_b")
+
+        assertEquals(listOf("key_a"), json_strings(live.optJSONArray("legacy_identity_keys")))
+    }
+
+    @Test
+    fun replacing_the_identity_key_caps_legacy_identity_keys() {
+        val existing = (1..MAX_LEGACY_IDENTITY_KEYS).map { "legacy_$it" }
+        val live = vault("key_a", legacy = existing)
+
+        replace_vault_identity_key(live, "key_b")
+
+        val legacy = json_strings(live.optJSONArray("legacy_identity_keys"))
+        assertEquals(MAX_LEGACY_IDENTITY_KEYS, legacy.size)
+        assertEquals(listOf("key_a") + existing.dropLast(1), legacy)
+    }
+
+    @Test
+    fun storing_the_same_identity_key_leaves_legacy_identity_keys_alone() {
+        val live = vault("key_a", legacy = listOf("older"))
+
+        replace_vault_identity_key(live, "key_a")
+
+        assertEquals(listOf("older"), json_strings(live.optJSONArray("legacy_identity_keys")))
+    }
+
+    @Test
+    fun older_identity_keys_merge_previous_and_legacy_without_the_current_key() {
+        val live = vault("key_b", listOf("prev_1", "key_a"), listOf("key_a", "key_b", "older"))
+
+        assertEquals(listOf("prev_1", "key_a", "older"), vault_older_identity_keys(live))
+    }
 }

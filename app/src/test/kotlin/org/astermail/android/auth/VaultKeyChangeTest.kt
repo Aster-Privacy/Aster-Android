@@ -98,6 +98,24 @@ class VaultKeyChangeTest {
     }
 
     @Test
+    fun `older identity key appearing reports change`() {
+        val store = store_with_keys()
+        store.put_previous_keys(listOf("prev_1"))
+        val before = vault_key_snapshot(store)
+        store.put_previous_keys(listOf("prev_1", "legacy_identity"))
+        assertTrue(vault_keys_changed(before, vault_key_snapshot(store)))
+    }
+
+    @Test
+    fun `same older identity keys report no change`() {
+        val store = store_with_keys()
+        store.put_previous_keys(listOf("prev_1", "legacy_identity"))
+        val before = vault_key_snapshot(store)
+        store.put_previous_keys(listOf("legacy_identity", "prev_1"))
+        assertFalse(vault_keys_changed(before, vault_key_snapshot(store)))
+    }
+
+    @Test
     fun `identity key rotation reports change`() {
         val store = store_with_keys()
         val before = vault_key_snapshot(store)

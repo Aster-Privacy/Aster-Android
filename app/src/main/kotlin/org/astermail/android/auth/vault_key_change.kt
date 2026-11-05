@@ -29,6 +29,7 @@ data class VaultKeySnapshot(
     val ratchet_previous_keys: String?,
     val ratchet_pq_secret: String?,
     val ratchet_pq_public: String?,
+    val previous_keys: List<String>?,
 )
 
 fun vault_key_snapshot(session_key_store: SessionKeyStore): VaultKeySnapshot = VaultKeySnapshot(
@@ -37,6 +38,7 @@ fun vault_key_snapshot(session_key_store: SessionKeyStore): VaultKeySnapshot = V
     ratchet_previous_keys = session_key_store.get_ratchet_previous_keys_json(),
     ratchet_pq_secret = session_key_store.get_ratchet_pq_identity_secret(),
     ratchet_pq_public = session_key_store.get_ratchet_pq_identity_public(),
+    previous_keys = session_key_store.get_previous_keys(),
 )
 
 fun vault_keys_changed(before: VaultKeySnapshot, after: VaultKeySnapshot): Boolean {
@@ -46,5 +48,11 @@ fun vault_keys_changed(before: VaultKeySnapshot, after: VaultKeySnapshot): Boole
         field_changed(before.ratchet_identity_public, after.ratchet_identity_public) ||
         field_changed(before.ratchet_previous_keys, after.ratchet_previous_keys) ||
         field_changed(before.ratchet_pq_secret, after.ratchet_pq_secret) ||
-        field_changed(before.ratchet_pq_public, after.ratchet_pq_public)
+        field_changed(before.ratchet_pq_public, after.ratchet_pq_public) ||
+        gained_previous_keys(before.previous_keys, after.previous_keys)
+}
+
+private fun gained_previous_keys(old_keys: List<String>?, new_keys: List<String>?): Boolean {
+    val known = old_keys.orEmpty().toSet()
+    return new_keys.orEmpty().any { it.isNotBlank() && it !in known }
 }
