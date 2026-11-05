@@ -3084,7 +3084,9 @@
     <string name="special_offer_crypto_one_payment">De korting van %1$d%% geldt alleen voor deze betaling. Latere cryptobetalingen zijn tegen de normale prijs. Kies 12 maanden om de korting een heel jaar te krijgen.</string>
     <string name="special_offer_benefit_aliases_title">Onbeperkte aliassen</string>
     <string name="special_offer_benefit_storage_title">500 GB versleutelde opslag</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s versleutelde opslag</string>
     <string name="special_offer_benefit_domains_title">Tot 30 eigen domeinen</string>
+    <string name="special_offer_benefit_domains_count_title">Tot %1$d eigen domeinen</string>
     <string name="special_offer_benefit_vanguard_title">Extra beveiliging met Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Geef elke site een eigen adres.</string>
     <string name="special_offer_benefit_storage_body">Ruimte voor jaren aan mail en bestanden.</string>

@@ -1992,7 +1992,9 @@
     <string name="special_offer_crypto_one_payment">The %1$d%% discount covers this payment only, and later crypto payments are at the regular price. To get the discount for a full year, choose 12 months.</string>
     <string name="special_offer_benefit_aliases_title">Unlimited aliases</string>
     <string name="special_offer_benefit_storage_title">500 GB of encrypted storage</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s of encrypted storage</string>
     <string name="special_offer_benefit_domains_title">Up to 30 custom domains</string>
+    <string name="special_offer_benefit_domains_count_title">Up to %1$d custom domains</string>
     <string name="special_offer_benefit_vanguard_title">Advanced security with Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Give each site its own address.</string>
     <string name="special_offer_benefit_storage_body">Room for years of mail and files.</string>

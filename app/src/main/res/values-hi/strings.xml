@@ -2976,7 +2976,9 @@
     <string name="special_offer_crypto_one_payment">%1$d%% की छूट सिर्फ़ इस भुगतान पर लागू होती है। बाद के क्रिप्टो भुगतान सामान्य कीमत पर होंगे। पूरे साल छूट पाने के लिए 12 महीने चुनें।</string>
     <string name="special_offer_benefit_aliases_title">असीमित उपनाम</string>
     <string name="special_offer_benefit_storage_title">500 GB एन्क्रिप्टेड स्टोरेज</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s एन्क्रिप्टेड स्टोरेज</string>
     <string name="special_offer_benefit_domains_title">30 तक कस्टम डोमेन</string>
+    <string name="special_offer_benefit_domains_count_title">%1$d तक कस्टम डोमेन</string>
     <string name="special_offer_benefit_vanguard_title">Vanguard के साथ उन्नत सुरक्षा</string>
     <string name="special_offer_benefit_aliases_body">हर साइट को उसका अपना पता दें।</string>
     <string name="special_offer_benefit_storage_body">सालों के मेल और फ़ाइलों के लिए जगह।</string>

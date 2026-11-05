@@ -3085,7 +3085,9 @@
     <string name="special_offer_crypto_one_payment">Der Rabatt von %1$d %% gilt nur für diese Zahlung. Spätere Krypto-Zahlungen erfolgen zum regulären Preis. Wählen Sie 12 Monate, um den Rabatt ein ganzes Jahr lang zu erhalten.</string>
     <string name="special_offer_benefit_aliases_title">Unbegrenzte Aliasse</string>
     <string name="special_offer_benefit_storage_title">500 GB verschlüsselter Speicher</string>
+    <string name="special_offer_benefit_storage_amount_title">%1$s verschlüsselter Speicher</string>
     <string name="special_offer_benefit_domains_title">Bis zu 30 eigene Domains</string>
+    <string name="special_offer_benefit_domains_count_title">Bis zu %1$d eigene Domains</string>
     <string name="special_offer_benefit_vanguard_title">Erweiterte Sicherheit mit Vanguard</string>
     <string name="special_offer_benefit_aliases_body">Geben Sie jeder Website eine eigene Adresse.</string>
     <string name="special_offer_benefit_storage_body">Platz für E-Mails und Dateien aus vielen Jahren.</string>
