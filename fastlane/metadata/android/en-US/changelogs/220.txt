@@ -1,0 +1,13 @@
+What's new:
+
+- Inbox swipe actions commit on a shorter swipe.
+- Discarding several drafts asks you to confirm.
+- Sender logos for addresses without a display name.
+
+Fixed:
+
+- Wide emails fit the screen without clipping.
+- External account sender identities are back in compose.
+- Right-to-left text keeps its order when sent.
+- Sent messages no longer leave a copy in Drafts.
+- Steadier swiping between messages.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Снять выбор</string>
+    <string name="discard_drafts_confirm_message">Удалённые черновики нельзя восстановить.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Удалить %d черновик?</item>
+        <item quantity="few">Удалить %d черновика?</item>
+        <item quantity="many">Удалить %d черновиков?</item>
+        <item quantity="other">Удалить %d черновика?</item>
+    </plurals>
+</resources>

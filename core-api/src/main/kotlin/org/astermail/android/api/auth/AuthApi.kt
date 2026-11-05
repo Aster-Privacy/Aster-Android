@@ -163,6 +163,24 @@ data class EnrollPasswordV2Response(
 )
 
 @Serializable
+data class RotateLoginSaltRequest(
+    val password_hash: String,
+    val new_password_salt: String,
+    val new_password_hash: String,
+    val new_password_hash_v2: String,
+)
+
+@Serializable
+data class RotateLoginSaltResponse(
+    val kdf_version: JsonElement? = null,
+)
+
+@Serializable
+data class RetiredLoginSaltsResponse(
+    val retired_salts: List<String> = emptyList(),
+)
+
+@Serializable
 data class Argon2Params(
     val memory: Int = 65536,
     val iterations: Int = 3,
@@ -290,6 +308,8 @@ interface AuthApi {
     suspend fun batch_profiles(emails: List<String>): BatchProfilesResponse
     suspend fun delete_account(request: DeleteAccountRequest)
     suspend fun enroll_password_v2(request: EnrollPasswordV2Request): EnrollPasswordV2Response
+    suspend fun rotate_login_salt(request: RotateLoginSaltRequest): RotateLoginSaltResponse
+    suspend fun get_retired_login_salts(): RetiredLoginSaltsResponse = RetiredLoginSaltsResponse()
 }
 
 class AuthApiImpl(private val client: ApiClient) : AuthApi {
@@ -498,6 +518,20 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun rotate_login_salt(request: RotateLoginSaltRequest): RotateLoginSaltResponse {
+        val response = client.http.post("${client.base_url}$base/me/login-salt") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_retired_login_salts(): RetiredLoginSaltsResponse {
+        val response = client.http.get("${client.base_url}$base/me/login-salt")
         return decode_or_throw(response)
     }
 

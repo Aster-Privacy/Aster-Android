@@ -318,6 +318,7 @@
     <string name="send_from">Отправлять с</string>
     <string name="primary_account">Основной аккаунт</string>
     <string name="alias">Псевдоним</string>
+    <string name="external_account">Внешний аккаунт</string>
     <string name="custom_domain">Пользовательский домен</string>
     <string name="schedule_send">Запланировать отправку</string>
     <string name="expiring_email">Исчезающее письмо</string>
@@ -3497,6 +3498,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Исходящая почта не подписана и выглядит поддельной. Добавьте запись подписи, чтобы письмам доверяли.</string>
     <string name="domain_check_generic_failure">Эта запись ещё настроена неверно. Добавьте запись ниже, чтобы исправить.</string>
     <string name="error_auth_salt_collision">Вход остановлен, потому что сервер отправил небезопасное значение, поэтому ничего не было разблокировано. Свяжитесь с поддержкой, прежде чем повторить попытку.</string>
+    <string name="error_legacy_login_salt_new_device">Чтобы завершить обновление безопасности аккаунта, войдите на устройстве, которое вы уже использовали с Aster. Если это невозможно, сбросьте пароль с помощью ключа восстановления.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Чтобы завершить обновление безопасности аккаунта, выйдите и войдите снова.</string>
     <string name="storage_nudge_almost_title">Хранилище почти заполнено</string>
     <string name="storage_nudge_critical_title">В хранилище почти не осталось места</string>
     <string name="storage_nudge_full_title">Хранилище заполнено</string>

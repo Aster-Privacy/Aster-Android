@@ -318,6 +318,7 @@
     <string name="send_from">Gönderen</string>
     <string name="primary_account">Ana hesap</string>
     <string name="alias">Takma ad</string>
+    <string name="external_account">Harici hesap</string>
     <string name="custom_domain">Özel alan adı</string>
     <string name="schedule_send">Göndermeyi zamanla</string>
     <string name="expiring_email">Süresi dolan e-posta</string>
@@ -3457,6 +3458,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Giden postanız imzasız olduğu için sahte görünüyor. İmzalama kaydını ekleyin ki postanız güvenilir olsun.</string>
     <string name="domain_check_generic_failure">Bu kayıt henüz doğru ayarlanmadı. Düzeltmek için aşağıdaki kaydı ekleyin.</string>
     <string name="error_auth_salt_collision">Sunucu güvenli olmayan bir değer gönderdiği için oturum açma durduruldu ve hiçbir şeyin kilidi açılmadı. Yeniden denemeden önce destek ile iletişime geç.</string>
+    <string name="error_legacy_login_salt_new_device">Hesabının güvenlik güncellemesini tamamlamak için daha önce Aster ile kullandığın bir cihazda oturum aç. Bunu yapamıyorsan şifreni kurtarma anahtarınla sıfırla.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Hesabının güvenlik güncellemesini tamamlamak için oturumu kapatıp yeniden oturum aç.</string>
     <string name="storage_nudge_almost_title">Depolama alanı neredeyse dolu</string>
     <string name="storage_nudge_critical_title">Depolama alanınız bitmek üzere</string>
     <string name="storage_nudge_full_title">Depolama alanınız dolu</string>

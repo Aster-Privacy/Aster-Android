@@ -24,7 +24,7 @@ import kotlin.math.abs
 
 class DetailSwipeNavigationTest {
     private val width = 1080f
-    private val fling = 1300f
+    private val fling = 1500f
 
     private fun outcome(
         offset: Float,
@@ -36,8 +36,8 @@ class DetailSwipeNavigationTest {
 
     @Test
     fun clearly_horizontal_drag_claims() {
-        assertEquals(DetailSwipeClaim.claim, detail_swipe_claim(40f, 5f, 20f))
-        assertEquals(DetailSwipeClaim.claim, detail_swipe_claim(-40f, -10f, 20f))
+        assertEquals(DetailSwipeClaim.claim, detail_swipe_claim(60f, 5f, 20f))
+        assertEquals(DetailSwipeClaim.claim, detail_swipe_claim(-60f, -20f, 20f))
     }
 
     @Test
@@ -47,39 +47,100 @@ class DetailSwipeNavigationTest {
     }
 
     @Test
-    fun diagonal_or_small_moves_wait() {
+    fun diagonal_drag_goes_to_the_list() {
+        assertEquals(DetailSwipeClaim.release, detail_swipe_claim(30f, 22f, 20f))
+        assertEquals(DetailSwipeClaim.release, detail_swipe_claim(50f, 25f, 20f))
+        assertEquals(DetailSwipeClaim.release, detail_swipe_claim(-100f, 45f, 20f))
+    }
+
+    @Test
+    fun small_horizontal_moves_wait() {
         assertEquals(DetailSwipeClaim.pending, detail_swipe_claim(8f, 2f, 20f))
-        assertEquals(DetailSwipeClaim.pending, detail_swipe_claim(30f, 22f, 20f))
+        assertEquals(DetailSwipeClaim.pending, detail_swipe_claim(40f, 5f, 20f))
+        assertEquals(DetailSwipeClaim.pending, detail_swipe_claim(-49f, 0f, 20f))
     }
 
     @Test
     fun long_drag_left_opens_next_and_right_opens_previous() {
-        assertEquals(DetailSwipeOutcome.next, outcome(-400f))
-        assertEquals(DetailSwipeOutcome.previous, outcome(400f))
+        assertEquals(DetailSwipeOutcome.next, outcome(-480f))
+        assertEquals(DetailSwipeOutcome.previous, outcome(480f))
     }
 
     @Test
     fun rtl_mirrors_direction() {
-        assertEquals(DetailSwipeOutcome.next, outcome(400f, rtl = true))
-        assertEquals(DetailSwipeOutcome.previous, outcome(-400f, rtl = true))
+        assertEquals(DetailSwipeOutcome.next, outcome(480f, rtl = true))
+        assertEquals(DetailSwipeOutcome.previous, outcome(-480f, rtl = true))
     }
 
     @Test
     fun short_drag_without_fling_settles() {
         assertEquals(DetailSwipeOutcome.settle, outcome(-200f))
+        assertEquals(DetailSwipeOutcome.settle, outcome(-400f))
         assertEquals(DetailSwipeOutcome.settle, outcome(0f, velocity = -5000f))
     }
 
     @Test
-    fun quick_fling_commits_a_short_drag() {
-        assertEquals(DetailSwipeOutcome.next, outcome(-100f, velocity = -2000f))
-        assertEquals(DetailSwipeOutcome.settle, outcome(-30f, velocity = -2000f))
+    fun quick_fling_commits_only_a_real_drag() {
+        assertEquals(DetailSwipeOutcome.next, outcome(-250f, velocity = -2000f))
+        assertEquals(DetailSwipeOutcome.settle, outcome(-100f, velocity = -2000f))
+        assertEquals(DetailSwipeOutcome.settle, outcome(-30f, velocity = -5000f))
+    }
+
+    @Test
+    fun slow_fling_does_not_commit_a_short_drag() {
+        assertEquals(DetailSwipeOutcome.settle, outcome(-250f, velocity = -1000f))
+        assertEquals(DetailSwipeOutcome.settle, outcome(-250f, velocity = -600f))
     }
 
     @Test
     fun fling_back_cancels_a_long_drag() {
         assertEquals(DetailSwipeOutcome.settle, outcome(-500f, velocity = 2000f))
         assertEquals(DetailSwipeOutcome.next, outcome(-500f, velocity = 400f))
+    }
+
+    @Test
+    fun drag_that_drifts_vertically_settles() {
+        val diagonal = detail_swipe_outcome(
+            offset_px = -600f,
+            velocity_px_s = -2500f,
+            width_px = width,
+            fling_px_s = fling,
+            has_next = true,
+            has_previous = true,
+            rtl = false,
+            drag_x_px = -600f,
+            drag_y_px = 320f,
+        )
+        assertEquals(DetailSwipeOutcome.settle, diagonal)
+        val steady = detail_swipe_outcome(
+            offset_px = -600f,
+            velocity_px_s = 0f,
+            width_px = width,
+            fling_px_s = fling,
+            has_next = true,
+            has_previous = true,
+            rtl = false,
+            drag_x_px = -600f,
+            drag_y_px = 120f,
+        )
+        assertEquals(DetailSwipeOutcome.next, steady)
+    }
+
+    @Test
+    fun mostly_vertical_fling_does_not_count_as_a_fling() {
+        val result = detail_swipe_outcome(
+            offset_px = -250f,
+            velocity_px_s = -2000f,
+            width_px = width,
+            fling_px_s = fling,
+            has_next = true,
+            has_previous = true,
+            rtl = false,
+            drag_x_px = -250f,
+            drag_y_px = 40f,
+            velocity_y_px_s = 3000f,
+        )
+        assertEquals(DetailSwipeOutcome.settle, result)
     }
 
     @Test
@@ -104,6 +165,19 @@ class DetailSwipeNavigationTest {
         assertEquals(1, detail_swipe_enter_side(to_next = true, rtl = false))
         assertEquals(-1, detail_swipe_enter_side(to_next = false, rtl = false))
         assertEquals(-1, detail_swipe_enter_side(to_next = true, rtl = true))
+    }
+
+    @Test
+    fun back_arrow_stays_an_arrow_when_one_message_replaces_another() {
+        assertEquals(1f, detail_back_icon_start_progress(swipe_direction = 1, chained = true), 0f)
+        assertEquals(1f, detail_back_icon_start_progress(swipe_direction = -1, chained = true), 0f)
+        assertEquals(1f, detail_back_icon_start_progress(swipe_direction = 0, chained = true), 0f)
+        assertEquals(1f, detail_back_icon_start_progress(swipe_direction = 1, chained = false), 0f)
+    }
+
+    @Test
+    fun opening_from_the_list_morphs_from_the_menu_icon() {
+        assertEquals(0f, detail_back_icon_start_progress(swipe_direction = 0, chained = false), 0f)
     }
 
     @Test

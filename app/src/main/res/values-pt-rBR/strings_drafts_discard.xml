@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Desmarcar</string>
+    <string name="discard_drafts_confirm_message">Você não pode recuperar rascunhos descartados.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Descartar %d rascunho?</item>
+        <item quantity="other">Descartar %d rascunhos?</item>
+    </plurals>
+</resources>

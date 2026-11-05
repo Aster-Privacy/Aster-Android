@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">선택 해제</string>
+    <string name="discard_drafts_confirm_message">삭제한 임시 저장은 복구할 수 없습니다.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="other">임시 저장 %d개를 삭제할까요?</item>
+    </plurals>
+</resources>

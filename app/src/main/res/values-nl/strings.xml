@@ -318,6 +318,7 @@
     <string name="send_from">Verzenden vanaf</string>
     <string name="primary_account">Primair account</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Externe account</string>
     <string name="custom_domain">Eigen domein</string>
     <string name="schedule_send">Verzenden plannen</string>
     <string name="expiring_email">Verlopende e-mail</string>
@@ -3457,6 +3458,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Je uitgaande mail is niet ondertekend en lijkt daardoor vervalst. Voeg het ondertekeningsrecord toe zodat je mail wordt vertrouwd.</string>
     <string name="domain_check_generic_failure">Dit record is nog niet goed ingesteld. Voeg het onderstaande record toe om dit op te lossen.</string>
     <string name="error_auth_salt_collision">Het aanmelden is gestopt omdat de server een onveilige waarde heeft gestuurd, dus er is niets ontgrendeld. Neem contact op met support voordat je het opnieuw probeert.</string>
+    <string name="error_legacy_login_salt_new_device">Meld je aan op een apparaat dat je eerder met Aster hebt gebruikt om een beveiligingsupdate van je account te voltooien. Lukt dat niet, stel dan je wachtwoord opnieuw in met je herstelsleutel.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Meld je af en weer aan om een beveiligingsupdate van je account te voltooien.</string>
     <string name="storage_nudge_almost_title">Opslag is bijna vol</string>
     <string name="storage_nudge_critical_title">Je opslag is bijna op</string>
     <string name="storage_nudge_full_title">Je opslag is vol</string>

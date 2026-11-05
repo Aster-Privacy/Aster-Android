@@ -116,7 +116,7 @@ private fun http_status_of(error: Throwable?): Int? =
     (error as? coil.network.HttpException)?.response?.code
 
 internal fun is_definitive_favicon_miss(error: Throwable?): Boolean =
-    http_status_of(error).let { it == 404 || it == 410 }
+    http_status_of(error).let { it == 400 || it == 404 || it == 410 }
 
 internal fun is_cancelled_favicon_load(error: Throwable?): Boolean =
     error is java.util.concurrent.CancellationException
@@ -561,8 +561,15 @@ internal fun matches_authenticated_system(email: String, authenticated_system_em
     return email.trim().lowercase() == authenticated_system_email.trim().lowercase()
 }
 
-private fun extract_domain(email: String): String {
-    val at_idx = email.indexOf('@')
+private val FAVICON_DOMAIN_PATTERN =
+    Regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\\.[a-z]{2,}$")
+
+internal fun is_valid_favicon_domain(domain: String): Boolean =
+    domain.length <= 253 && FAVICON_DOMAIN_PATTERN.matches(domain)
+
+internal fun extract_domain(email: String): String {
+    val at_idx = email.lastIndexOf('@')
     if (at_idx < 0 || at_idx == email.length - 1) return ""
-    return email.substring(at_idx + 1).trim().lowercase()
+    val domain = email.substring(at_idx + 1).trim().trimEnd('>', '"', '\'', ' ').trim().lowercase()
+    return if (is_valid_favicon_domain(domain)) domain else ""
 }

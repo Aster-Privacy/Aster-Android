@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Deseleziona</string>
+    <string name="discard_drafts_confirm_message">Non puoi recuperare le bozze eliminate.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Eliminare %d bozza?</item>
+        <item quantity="other">Eliminare %d bozze?</item>
+    </plurals>
+</resources>

@@ -58,22 +58,29 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.sign
 
-internal const val DETAIL_SWIPE_COMMIT_FRACTION = 0.3f
-internal const val DETAIL_SWIPE_FLING_MIN_FRACTION = 0.05f
+internal const val DETAIL_SWIPE_COMMIT_FRACTION = 0.4f
+internal const val DETAIL_SWIPE_FLING_MIN_FRACTION = 0.2f
 internal const val DETAIL_SWIPE_EDGE_STRETCH_FRACTION = 0.1f
-internal const val DETAIL_SWIPE_HORIZONTAL_DOMINANCE = 1.5f
+internal const val DETAIL_SWIPE_HORIZONTAL_DOMINANCE = 2.5f
+internal const val DETAIL_SWIPE_RELEASE_DOMINANCE = 2f
+internal const val DETAIL_SWIPE_CLAIM_SLOP_FACTOR = 2.5f
 private const val DETAIL_SWIPE_ENTER_MS = 260
 private const val DETAIL_SWIPE_STUCK_RECOVERY_MS = 600L
-private val detail_swipe_fling_velocity = 500.dp
+private val detail_swipe_fling_velocity = 1200.dp
 
 internal enum class DetailSwipeClaim { pending, claim, release }
 
 internal enum class DetailSwipeOutcome { next, previous, settle }
 
-internal fun detail_swipe_claim(dx_px: Float, dy_px: Float, slop_px: Float): DetailSwipeClaim = when {
-    abs(dy_px) > slop_px && abs(dy_px) >= abs(dx_px) -> DetailSwipeClaim.release
-    abs(dx_px) > slop_px && abs(dx_px) > abs(dy_px) * DETAIL_SWIPE_HORIZONTAL_DOMINANCE -> DetailSwipeClaim.claim
-    else -> DetailSwipeClaim.pending
+internal fun detail_swipe_claim(dx_px: Float, dy_px: Float, slop_px: Float): DetailSwipeClaim {
+    val horizontal = abs(dx_px)
+    val vertical = abs(dy_px)
+    return when {
+        vertical > slop_px && horizontal < vertical * DETAIL_SWIPE_HORIZONTAL_DOMINANCE -> DetailSwipeClaim.release
+        horizontal > slop_px * DETAIL_SWIPE_CLAIM_SLOP_FACTOR &&
+            horizontal >= vertical * DETAIL_SWIPE_HORIZONTAL_DOMINANCE -> DetailSwipeClaim.claim
+        else -> DetailSwipeClaim.pending
+    }
 }
 
 internal fun detail_swipe_points_to_next(offset_px: Float, rtl: Boolean): Boolean =
@@ -93,15 +100,20 @@ internal fun detail_swipe_outcome(
     has_next: Boolean,
     has_previous: Boolean,
     rtl: Boolean,
+    drag_x_px: Float = offset_px,
+    drag_y_px: Float = 0f,
+    velocity_y_px_s: Float = 0f,
 ): DetailSwipeOutcome {
     if (width_px <= 0f || offset_px == 0f) return DetailSwipeOutcome.settle
+    if (abs(drag_y_px) * DETAIL_SWIPE_RELEASE_DOMINANCE > abs(drag_x_px)) return DetailSwipeOutcome.settle
     val toward_next = detail_swipe_points_to_next(offset_px, rtl)
     if (toward_next && !has_next) return DetailSwipeOutcome.settle
     if (!toward_next && !has_previous) return DetailSwipeOutcome.settle
     val fraction = abs(offset_px) / width_px
     val same_way = sign(velocity_px_s) == sign(offset_px)
-    val flung = abs(velocity_px_s) >= fling_px_s
-    if (flung && !same_way) return DetailSwipeOutcome.settle
+    val fast = abs(velocity_px_s) >= fling_px_s
+    if (fast && !same_way) return DetailSwipeOutcome.settle
+    val flung = fast && abs(velocity_px_s) >= abs(velocity_y_px_s) * DETAIL_SWIPE_HORIZONTAL_DOMINANCE
     val commits = fraction >= DETAIL_SWIPE_COMMIT_FRACTION ||
         (flung && fraction >= DETAIL_SWIPE_FLING_MIN_FRACTION)
     if (!commits) return DetailSwipeOutcome.settle
@@ -110,6 +122,9 @@ internal fun detail_swipe_outcome(
 
 internal fun detail_swipe_enter_side(to_next: Boolean, rtl: Boolean): Int =
     if (to_next != rtl) 1 else -1
+
+internal fun detail_back_icon_start_progress(swipe_direction: Int, chained: Boolean): Float =
+    if (swipe_direction != 0 || chained) 1f else 0f
 
 internal fun detail_swipe_starts_in_system_zone(x_px: Float, width_px: Float, left_px: Float, right_px: Float): Boolean =
     x_px < left_px || x_px > width_px - right_px
@@ -213,6 +228,8 @@ internal fun Modifier.detail_swipe_navigation(
             state.motion?.cancel()
             val base_px = state.offset * width
             var raw = 0f
+            var drag_x = dx
+            var drag_y = dy
             var armed = false
             fun can_go(offset_px: Float): Boolean =
                 if (detail_swipe_points_to_next(offset_px, rtl)) live_next != null else live_previous != null
@@ -232,7 +249,10 @@ internal fun Modifier.detail_swipe_navigation(
                     break
                 }
                 tracker.addPointerInputChange(change)
-                raw += change.positionChange().x
+                val step = change.positionChange()
+                raw += step.x
+                drag_x += step.x
+                drag_y += step.y
                 event.changes.forEach { it.consume() }
                 val now = visual()
                 state.offset = now / width
@@ -240,7 +260,8 @@ internal fun Modifier.detail_swipe_navigation(
                 if (would_commit && !armed) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
                 armed = would_commit
             }
-            val velocity = if (released) tracker.calculateVelocity().x else 0f
+            val release_velocity = if (released) tracker.calculateVelocity() else null
+            val velocity = release_velocity?.x ?: 0f
             val offset_px = state.offset * width
             val outcome = if (released) {
                 detail_swipe_outcome(
@@ -251,6 +272,9 @@ internal fun Modifier.detail_swipe_navigation(
                     has_next = live_next != null,
                     has_previous = live_previous != null,
                     rtl = rtl,
+                    drag_x_px = drag_x,
+                    drag_y_px = drag_y,
+                    velocity_y_px_s = release_velocity?.y ?: 0f,
                 )
             } else {
                 DetailSwipeOutcome.settle

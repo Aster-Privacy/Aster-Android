@@ -318,6 +318,7 @@
     <string name="send_from">보내는 주소</string>
     <string name="primary_account">기본 계정</string>
     <string name="alias">별칭</string>
+    <string name="external_account">외부 계정</string>
     <string name="custom_domain">사용자 지정 도메인</string>
     <string name="schedule_send">예약 전송</string>
     <string name="expiring_email">만료되는 이메일</string>
@@ -3439,6 +3440,8 @@
     <string name="domain_reason_dkim_missing_or_stale">보내는 메일에 서명이 없어 위조처럼 보입니다. 서명 레코드를 추가하면 신뢰받습니다.</string>
     <string name="domain_check_generic_failure">이 레코드가 아직 올바르게 설정되지 않았습니다. 아래 레코드를 추가하면 해결됩니다.</string>
     <string name="error_auth_salt_collision">서버가 안전하지 않은 값을 보내 로그인이 중단되었으며 아무것도 잠금 해제되지 않았습니다. 다시 시도하기 전에 지원팀에 문의하세요.</string>
+    <string name="error_legacy_login_salt_new_device">계정의 보안 업데이트를 완료하려면 이전에 Aster를 사용한 기기에서 로그인하세요. 그럴 수 없다면 복구 키로 비밀번호를 재설정하세요.</string>
+    <string name="error_legacy_login_salt_sign_in_again">계정의 보안 업데이트를 완료하려면 로그아웃한 후 다시 로그인하세요.</string>
     <string name="storage_nudge_almost_title">저장용량이 거의 찼습니다</string>
     <string name="storage_nudge_critical_title">저장용량이 거의 남지 않았습니다</string>
     <string name="storage_nudge_full_title">저장용량이 가득 찼습니다</string>

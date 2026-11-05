@@ -126,6 +126,16 @@ fun has_mixed_recipients(recipients: List<String>): Boolean {
     return addresses.any { is_internal_recipient(it) } && addresses.any { !is_internal_recipient(it) }
 }
 
+internal fun split_display_address(raw: String): Pair<String, String>? {
+    val trimmed = raw.trim()
+    val angle = trimmed.indexOf('<')
+    val close = if (angle >= 0) trimmed.indexOf('>', angle + 1) else -1
+    if (angle < 0 || close <= angle) return null
+    val name = trimmed.substring(0, angle).trim().trim('"')
+    val email = trimmed.substring(angle + 1, close).trim()
+    return name to email
+}
+
 class SentCopyAttachmentException(val failed_count: Int) :
     Exception("sent copy attachments not stored")
 
@@ -426,6 +436,8 @@ data class InboxItem(
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
+
+class DraftSessionClosedException : IllegalStateException("draft session closed")
 
 private class EnvelopeKeysMissingException : IllegalStateException("all envelope keys failed")
 
@@ -1222,6 +1234,7 @@ class MailRepository @Inject constructor(
         when {
             row != null -> if (row.draft_id.isNullOrBlank()) {
                 runCatching { pending_send_dao.update_draft_id(pending_id, assigned_draft_id) }
+                if (pending_id in completed_pending_ids) delete_sent_draft(assigned_draft_id)
             }
             pending_id in completed_pending_ids -> delete_sent_draft(assigned_draft_id)
         }
@@ -4235,20 +4248,31 @@ class MailRepository @Inject constructor(
         return plaintext
     }
 
-    private fun legacy_key_material(): ByteArray? {
-        val salt = session_key_store.get_password_salt() ?: return null
+    private fun legacy_key_salts(): List<ByteArray> {
+        val current = session_key_store.get_password_salt()
+        val retired = session_key_store.get_retired_password_salts()
+            .take(org.astermail.android.storage.RetiredLoginSalts.max_per_user)
+        val seen = HashSet<String>()
+        val salts = ArrayList<ByteArray>()
+        for (salt in listOfNotNull(current) + retired) {
+            val hex = salt.joinToString("") { "%02x".format(it) }
+            if (salt.isEmpty() || !seen.add(hex)) {
+                salt.fill(0)
+            } else {
+                salts.add(salt)
+            }
+        }
+        return salts
+    }
+
+    private fun legacy_key_material(salt: ByteArray): ByteArray? {
         val salt_hex = LEGACY_KEY_MATERIAL_CACHE_PREFIX + salt.joinToString("") { "%02x".format(it) }
 
         pbkdf2_key_cache.get_copy(salt_hex)?.let { cached ->
-            salt.fill(0)
             return cached
         }
 
-        val passphrase = session_key_store.get_passphrase()
-        if (passphrase == null) {
-            salt.fill(0)
-            return null
-        }
+        val passphrase = session_key_store.get_passphrase() ?: return null
 
         val derived = try {
             CryptoNative.derive_pbkdf2_hash(passphrase, salt, PBKDF2_ITERATIONS)
@@ -4256,7 +4280,6 @@ class MailRepository @Inject constructor(
             null
         } finally {
             passphrase.fill(0)
-            salt.fill(0)
         }
 
         if (derived != null) pbkdf2_key_cache.put(salt_hex, derived.copyOf())
@@ -4270,15 +4293,23 @@ class MailRepository @Inject constructor(
     ): ByteArray? {
         if (nonce.size != LEGACY_KEY_MATERIAL_NONCE_LENGTH) return null
 
-        val key = legacy_key_material() ?: return null
+        val ciphertext = runCatching {
+            android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+        }.getOrNull() ?: return null
+        val salts = legacy_key_salts()
 
-        return try {
-            runCatching {
-                val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
-                aes_gcm_decrypt(ciphertext, key, nonce)
-            }.getOrNull()
+        try {
+            for (salt in salts) {
+                val key = legacy_key_material(salt) ?: continue
+                try {
+                    runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()?.let { return it }
+                } finally {
+                    key.fill(0)
+                }
+            }
+            return null
         } finally {
-            key.fill(0)
+            salts.forEach { it.fill(0) }
         }
     }
 
@@ -4955,15 +4986,7 @@ class MailRepository @Inject constructor(
         for (i in 0 until arr.length()) {
             val raw = arr.optString(i, "").trim()
             if (raw.isEmpty()) continue
-            val angle = raw.indexOf('<')
-            val close = if (angle >= 0) raw.indexOf('>', angle + 1) else -1
-            if (angle > 0 && close > angle) {
-                val name = raw.substring(0, angle).trim().trim('"')
-                val email = raw.substring(angle + 1, close).trim()
-                result.add(name to email)
-            } else {
-                result.add("" to raw)
-            }
+            result.add(split_display_address(raw) ?: ("" to raw))
         }
         return result
     }
@@ -5012,13 +5035,7 @@ class MailRepository @Inject constructor(
         }
         val from_str = obj.optString("from", "")
         if (from_str.isBlank()) return "" to ""
-        val angle = from_str.indexOf('<')
-        val close = if (angle >= 0) from_str.indexOf('>', angle + 1) else -1
-        if (angle > 0 && close > angle) {
-            val name = from_str.substring(0, angle).trim().trim('"')
-            val email = from_str.substring(angle + 1, close).trim()
-            return name to email
-        }
+        split_display_address(from_str)?.let { return it }
         if (from_str.contains('@')) return "" to from_str.trim()
         return from_str.trim() to ""
     }
@@ -5032,16 +5049,7 @@ class MailRepository @Inject constructor(
                 result.add(item.optString("name", "") to item.optString("email", ""))
             } else {
                 val s = item.toString()
-                val angle = s.indexOf('<')
-                val close = if (angle >= 0) s.indexOf('>', angle + 1) else -1
-                if (angle > 0 && close > angle) {
-                    result.add(
-                        s.substring(0, angle).trim().trim('"') to
-                            s.substring(angle + 1, close).trim(),
-                    )
-                } else {
-                    result.add("" to s.trim())
-                }
+                result.add(split_display_address(s) ?: ("" to s.trim()))
             }
         }
         return result
@@ -6484,7 +6492,7 @@ class MailRepository @Inject constructor(
         draft_save_mutex.withLock {
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
                 if (session_id != null && session_id in closed_draft_sessions) {
-                    throw IllegalStateException("draft session closed")
+                    throw DraftSessionClosedException()
                 }
                 val requested_id = session_id?.let { draft_session_ids[it] }
                     ?: existing_draft_id?.takeIf { it.isNotBlank() }
@@ -6705,10 +6713,17 @@ class MailRepository @Inject constructor(
         draft_session_ids.remove(session_id)
     }
 
-    suspend fun settle_draft_session(session_id: String?, fallback_draft_id: String?): String? =
+    suspend fun claim_draft_session_for_send(session_id: String?, fallback_draft_id: String?): String? =
         draft_save_mutex.withLock {
-            session_id?.let { draft_session_ids[it] } ?: fallback_draft_id?.takeIf { it.isNotBlank() }
+            val resolved = session_id?.let { draft_session_ids[it] } ?: fallback_draft_id?.takeIf { it.isNotBlank() }
+            session_id?.let { closed_draft_sessions.add(it) }
+            resolved
         }
+
+    fun reopen_draft_session(session_id: String, draft_id: String?) {
+        closed_draft_sessions.remove(session_id)
+        draft_id?.takeIf { it.isNotBlank() }?.let { draft_session_ids.putIfAbsent(session_id, it) }
+    }
 
     fun discard_sent_draft(draft_id: String?, session_id: String?): kotlinx.coroutines.Deferred<Boolean> =
         app_scope.async {

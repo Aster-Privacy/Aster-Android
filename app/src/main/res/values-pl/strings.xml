@@ -318,6 +318,7 @@
     <string name="send_from">Wyślij z</string>
     <string name="primary_account">Konto główne</string>
     <string name="alias">Alias</string>
+    <string name="external_account">Konto zewnętrzne</string>
     <string name="custom_domain">Własna domena</string>
     <string name="schedule_send">Zaplanuj wysłanie</string>
     <string name="expiring_email">Wiadomość z datą wygaśnięcia</string>
@@ -3497,6 +3498,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Wysyłana poczta nie jest podpisana, więc wygląda na sfałszowaną. Dodaj rekord podpisu, aby była zaufana.</string>
     <string name="domain_check_generic_failure">Ten rekord nie jest jeszcze poprawnie skonfigurowany. Dodaj poniższy rekord, aby to naprawić.</string>
     <string name="error_auth_salt_collision">Logowanie zostało przerwane, ponieważ serwer wysłał niebezpieczną wartość, więc nic nie zostało odblokowane. Skontaktuj się z pomocą, zanim spróbujesz ponownie.</string>
+    <string name="error_legacy_login_salt_new_device">Aby dokończyć aktualizację zabezpieczeń konta, zaloguj się na urządzeniu, którego już używałeś z Aster. Jeśli nie możesz, zresetuj hasło za pomocą klucza odzyskiwania.</string>
+    <string name="error_legacy_login_salt_sign_in_again">Aby dokończyć aktualizację zabezpieczeń konta, wyloguj się i zaloguj ponownie.</string>
     <string name="storage_nudge_almost_title">Miejsce na dane jest prawie pełne</string>
     <string name="storage_nudge_critical_title">Prawie skończyło Ci się miejsce</string>
     <string name="storage_nudge_full_title">Miejsce na dane jest pełne</string>

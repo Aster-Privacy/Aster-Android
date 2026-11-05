@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">取消选择</string>
+    <string name="discard_drafts_confirm_message">已舍弃的草稿无法恢复。</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="other">舍弃 %d 份草稿？</item>
+    </plurals>
+</resources>

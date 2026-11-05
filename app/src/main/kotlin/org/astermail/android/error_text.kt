@@ -25,12 +25,23 @@ import android.content.Context
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.server_supplied_detail
+import org.astermail.android.auth.LegacyLoginSaltException
+import org.astermail.android.auth.LoginSaltCheck
 
 const val FAMILY_2FA_REQUIRED_CODE = "FAMILY_2FA_REQUIRED"
 const val PENDING_LOGIN_EXPIRED_CODE = "PENDING_LOGIN_EXPIRED"
 const val USERNAME_IN_USE_CODE = "USERNAME_IN_USE"
 
+fun legacy_login_salt_text(context: Context, t: Throwable): String? {
+    val refused = t as? LegacyLoginSaltException ?: return null
+    return when (refused.check) {
+        LoginSaltCheck.sign_in -> context.getString(R.string.error_legacy_login_salt_new_device)
+        LoginSaltCheck.step_up -> context.getString(R.string.error_legacy_login_salt_sign_in_again)
+    }
+}
+
 fun localized_server_code(context: Context, t: Throwable): String? {
+    legacy_login_salt_text(context, t)?.let { return it }
     if (t is org.astermail.android.crypto.AuthSaltCollisionException) {
         return context.getString(R.string.error_auth_salt_collision)
     }

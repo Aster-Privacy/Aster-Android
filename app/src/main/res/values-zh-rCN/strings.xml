@@ -318,6 +318,7 @@
     <string name="send_from">发件地址</string>
     <string name="primary_account">主账户</string>
     <string name="alias">别名</string>
+    <string name="external_account">外部账户</string>
     <string name="custom_domain">自定义域名</string>
     <string name="schedule_send">定时发送</string>
     <string name="expiring_email">限时邮件</string>
@@ -3439,6 +3440,8 @@
     <string name="domain_reason_dkim_missing_or_stale">你发出的邮件未签名，看起来像伪造邮件。添加签名记录后，邮件才会被信任。</string>
     <string name="domain_check_generic_failure">这条记录尚未正确设置。添加下面的记录即可修复。</string>
     <string name="error_auth_salt_collision">由于服务器发送了不安全的值，登录已停止，没有解锁任何内容。请先联系支持团队，然后再重试。</string>
+    <string name="error_legacy_login_salt_new_device">要完成账户的安全更新，请在你以前用过 Aster 的设备上登录。如果无法做到，请使用恢复密钥重置密码。</string>
+    <string name="error_legacy_login_salt_sign_in_again">要完成账户的安全更新，请退出登录后重新登录。</string>
     <string name="storage_nudge_almost_title">存储空间即将用完</string>
     <string name="storage_nudge_critical_title">存储空间所剩无几</string>
     <string name="storage_nudge_full_title">存储空间已满</string>

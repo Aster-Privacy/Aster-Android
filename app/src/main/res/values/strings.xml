@@ -618,6 +618,7 @@
     <string name="send_from">Send from</string>
     <string name="primary_account">Primary account</string>
     <string name="alias">Alias</string>
+    <string name="external_account">External account</string>
     <string name="custom_domain">Custom domain</string>
     <string name="schedule_send">Schedule send</string>
     <string name="expiring_email">Expiring email</string>
@@ -3508,6 +3509,8 @@
     <string name="domain_reason_dkim_missing_or_stale">Your outgoing mail is unsigned, which makes it look forged. Add the signing record so your mail is trusted.</string>
     <string name="domain_check_generic_failure">This record is not set up correctly yet. Add the record below to fix it.</string>
     <string name="error_auth_salt_collision">Sign-in stopped because the server sent an unsafe value, so nothing was unlocked. Contact support before you try again.</string>
+    <string name="error_legacy_login_salt_new_device">To finish a security update to your account, sign in on a device you\'ve used with Aster before. If you can\'t, reset your password with your recovery key.</string>
+    <string name="error_legacy_login_salt_sign_in_again">To finish a security update to your account, sign out and sign in again.</string>
     <string name="storage_nudge_almost_title">Storage is almost full</string>
     <string name="storage_nudge_critical_title">You\'re almost out of storage</string>
     <string name="storage_nudge_full_title">Your storage is full</string>

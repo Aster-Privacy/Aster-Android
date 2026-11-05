@@ -65,6 +65,17 @@ class SwipeGestureTest {
     }
 
     @Test
+    fun a_short_drag_past_a_quarter_commits_without_velocity() {
+        assertTrue(swipe_commits(travelled = 260f, velocity = 0f, limit = limit))
+        assertFalse(swipe_commits(travelled = 240f, velocity = 0f, limit = limit))
+    }
+
+    @Test
+    fun a_quick_flick_commits_a_short_drag() {
+        assertTrue(swipe_commits(travelled = 80f, velocity = 700f, limit = limit))
+    }
+
+    @Test
     fun a_fast_fling_commits_a_short_drag() {
         assertTrue(swipe_commits(travelled = 150f, velocity = 1800f, limit = limit))
     }

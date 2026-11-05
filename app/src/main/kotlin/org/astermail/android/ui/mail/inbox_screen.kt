@@ -894,6 +894,7 @@ fun InboxScreen(
     var scope_selection_confirmed by remember { mutableStateOf(false) }
     val selected_ids = remember { mutableStateListOf<String>() }
     var show_empty_trash_dialog by remember { mutableStateOf(false) }
+    var show_discard_drafts_dialog by remember { mutableStateOf(false) }
     var quick_delete_old_pending by remember { mutableStateOf<quick_delete_target?>(null) }
     var show_bulk_delete_permanent_dialog by remember { mutableStateOf(false) }
     var bulk_delete_permanent_is_scope by remember { mutableStateOf(false) }
@@ -1000,6 +1001,8 @@ fun InboxScreen(
     var threads by remember { mutableStateOf(initial_threads) }
     var threads_pending by remember { mutableStateOf(initial_threads.isEmpty()) }
     var threads_folder by remember { mutableStateOf(current_folder) }
+    var threads_source_ids by remember { mutableStateOf(email_ids_signature(emails)) }
+    val loaded_ids_signature = remember(api_emails) { api_emails?.let { email_ids_signature(it) } }
     val thread_gate = remember { InboxThreadGate() }
     LaunchedEffect(
         current_folder,
@@ -1019,6 +1022,7 @@ fun InboxScreen(
             threads_folder = current_folder
         }
         val snapshot = emails.toList()
+        val snapshot_ids = email_ids_signature(snapshot)
         val sticky_snapshot = HashMap(sticky_participants)
         val computed = withContext(Dispatchers.Default) {
             build_thread_rows(
@@ -1036,6 +1040,7 @@ fun InboxScreen(
         sticky_participants.keys.retainAll(computed.participants.keys)
         sticky_participants.putAll(computed.participants)
         threads = computed.rows
+        threads_source_ids = snapshot_ids
         threads_pending = false
     }
 
@@ -1806,7 +1811,7 @@ fun InboxScreen(
         }
     }
 
-    fun run_selection_action(action_id: String) {
+    fun perform_selection_action(action_id: String) {
         if (action_id == "delete_permanent") {
             bulk_delete_permanent_is_scope = scope_selection && current_folder == "trash"
             show_bulk_delete_permanent_dialog = true
@@ -1826,6 +1831,14 @@ fun InboxScreen(
             return
         }
         apply_selection_action(action_id)
+    }
+
+    fun run_selection_action(action_id: String) {
+        if (current_folder == "drafts" && action_id == "trash") {
+            show_discard_drafts_dialog = true
+            return
+        }
+        perform_selection_action(action_id)
     }
 
     LaunchedEffect(current_folder) {
@@ -2033,7 +2046,18 @@ fun InboxScreen(
                             .padding(top = header_height_dp),
                     )
                 }
-                val hidden_by_category = threads.isEmpty() && !threads_pending && inbox_state.items.isNotEmpty()
+                val folder_items_loaded = state_matches_folder && inbox_state.items.isNotEmpty()
+                val rows_deriving = inbox_rows_deriving(
+                    has_rows = threads.isNotEmpty(),
+                    folder_items_loaded = folder_items_loaded,
+                    derivation_pending = threads_pending,
+                    derived_from_loaded_items = threads_source_ids == loaded_ids_signature,
+                )
+                val hidden_by_category = inbox_hidden_by_category(
+                    has_rows = threads.isNotEmpty(),
+                    folder_items_loaded = folder_items_loaded,
+                    rows_deriving = rows_deriving,
+                )
                 val category_drain_active = categories_enabled &&
                     inbox_state.has_more &&
                     (inbox_state.is_loading_more || inbox_state.items.size < CATEGORY_DRAIN_MAX_ITEMS)
@@ -2067,6 +2091,7 @@ fun InboxScreen(
                         )
                 val empty_target = threads.isEmpty() &&
                     !threads_pending &&
+                    !rows_deriving &&
                     !inbox_state.is_loading &&
                     !inbox_state.initial
                 var empty_settled by remember { mutableStateOf(false) }
@@ -2136,21 +2161,28 @@ fun InboxScreen(
                     }
                     removal_quiet = false
                 }
-                val skeleton_now = (
-                    cache_pending ||
-                        skeleton_target ||
-                        (!inbox_error_now && !contradicts_unread && (category_skeleton || empty_skeleton))
-                    ) && !(is_refreshing && empty_state_seen) && !emptied_by_action
+                val skeleton_showing = remember { booleanArrayOf(false) }
+                val skeleton_now = inbox_skeleton_wanted(
+                    rows_deriving = rows_deriving,
+                    skeleton_showing = skeleton_showing[0],
+                    cache_pending = cache_pending,
+                    loading_without_rows = skeleton_target,
+                    waiting_for_rows = category_skeleton || empty_skeleton,
+                    showing_error = inbox_error_now || contradicts_unread,
+                    refreshing_known_empty = is_refreshing && empty_state_seen,
+                    emptied_by_action = emptied_by_action,
+                )
                 val rows_imminent = threads.isEmpty() &&
-                    (cache_pending || (threads_pending && inbox_state.items.isNotEmpty()))
+                    (cache_pending || !state_matches_folder || (threads_pending && inbox_state.items.isNotEmpty()))
                 val skeleton_phase by remember_skeleton_phase(
                     wanted = skeleton_now,
                     rows_imminent = rows_imminent,
                 )
+                skeleton_showing[0] = skeleton_phase == SkeletonPhase.skeleton
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
-                if (skeleton_now || skeleton_phase != SkeletonPhase.content) {
+                if (skeleton_now || rows_deriving || skeleton_phase != SkeletonPhase.content) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
                     Box(Modifier.padding(top = header_height_dp).then(handoff)) {
@@ -2478,6 +2510,7 @@ fun InboxScreen(
                                         thread = thread,
                                         on_click = { toggle_selection(thread.thread_id) },
                                         on_long_click = { toggle_selection(thread.thread_id) },
+                                        on_avatar_click = { toggle_selection(thread.thread_id) },
                                         on_toggle_star = { apply_thread_star(thread) },
                                         is_selected = is_selected,
                                         select_mode = true,
@@ -2510,6 +2543,15 @@ fun InboxScreen(
                                     },
                                     on_long_click = {
                                         if (current_folder != "scheduled") {
+                                            select_mode = true
+                                            selected_ids.clear()
+                                            selected_ids.add(thread.thread_id)
+                                        }
+                                    },
+                                    on_avatar_click = if (current_folder == "scheduled") {
+                                        null
+                                    } else {
+                                        {
                                             select_mode = true
                                             selected_ids.clear()
                                             selected_ids.add(thread.thread_id)
@@ -3069,6 +3111,25 @@ fun InboxScreen(
                     emails.removeAll {
                         thread_row_covers(it, pending_delete_old.thread_ids, grouping_enabled)
                     }
+                },
+            )
+        }
+
+        if (show_discard_drafts_dialog) {
+            org.astermail.android.design.components.AsterAlertDialog(
+                on_dismiss = { show_discard_drafts_dialog = false },
+                title = pluralStringResource(
+                    R.plurals.discard_drafts_confirm_title,
+                    selection_count,
+                    selection_count,
+                ),
+                message = stringResource(R.string.discard_drafts_confirm_message),
+                confirm_label = stringResource(R.string.discard),
+                cancel_label = stringResource(R.string.cancel),
+                confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+                on_confirm = {
+                    show_discard_drafts_dialog = false
+                    if (select_mode && current_folder == "drafts") perform_selection_action("trash")
                 },
             )
         }
@@ -3944,9 +4005,10 @@ internal fun select_mode_bottom_bar(
                                 selection_all_starred,
                                 selection_all_read,
                             ) ?: return@forEach
+                            val discards_draft = current_folder == "drafts" && action.id == "trash"
                             bottom_select_action(
                                 icon = action.icon,
-                                label = stringResource(action.label_res),
+                                label = stringResource(if (discards_draft) R.string.discard else action.label_res),
                                 enabled = enabled,
                                 onClick = { on_action(action.id) },
                                 tint = if (action_id == "trash" || action_id == "spam") colors.danger else colors.text_primary,
@@ -4079,7 +4141,12 @@ internal fun selection_overflow_sheet(
             if (in_trash) {
                 overflow_sheet_row("delete_permanent", TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), colors.danger) { on_action("delete_permanent") }
             } else {
-                overflow_sheet_row("trash", TablerIcons.Trash, stringResource(R.string.delete_action), colors.danger) { on_action("trash") }
+                overflow_sheet_row(
+                    "trash",
+                    TablerIcons.Trash,
+                    stringResource(if (current_folder == "drafts") R.string.discard else R.string.delete_action),
+                    colors.danger,
+                ) { on_action("trash") }
             }
             if (!in_spam) {
                 overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
@@ -4295,6 +4362,7 @@ private fun swipeable_thread_row(
     swipe_reset_token: Int = 0,
     swipe_removes_row: (String) -> Boolean = ::is_removing_swipe_action,
     refresh_engaged: () -> Boolean = { false },
+    on_avatar_click: (() -> Unit)? = null,
 ) {
     swipe_action_row(
         start_action = swipe_start_action,
@@ -4331,6 +4399,7 @@ private fun swipeable_thread_row(
             user_prefs = user_prefs,
             cached_geometry = cached_geometry,
             refresh_engaged = refresh_engaged,
+            on_avatar_click = on_avatar_click,
             accessibility_actions = swipe_accessibility_actions(
                 start_action = swipe_start_action,
                 end_action = swipe_end_action,

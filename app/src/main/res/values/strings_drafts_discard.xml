@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Deselect</string>
+    <string name="discard_drafts_confirm_message">You can’t recover discarded drafts.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Discard %d draft?</item>
+        <item quantity="other">Discard %d drafts?</item>
+    </plurals>
+</resources>

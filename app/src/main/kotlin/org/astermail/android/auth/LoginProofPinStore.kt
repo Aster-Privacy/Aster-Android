@@ -30,7 +30,7 @@ import javax.inject.Singleton
 @Singleton
 class LoginProofPinStore @Inject constructor(
     @ApplicationContext context: Context,
-) : LoginPinSource {
+) : LoginPinSource, LoginSaltRecordSource {
 
     private val lock = Any()
 
@@ -39,6 +39,9 @@ class LoginProofPinStore @Inject constructor(
 
     @Volatile
     private var entries: List<String> = read_entries()
+
+    @Volatile
+    private var salt_records: List<LoginSaltRecord> = read_salt_records()
 
     override fun is_pinned(keys: List<String>): Boolean = LoginProof.is_pinned(entries, keys)
 
@@ -60,11 +63,35 @@ class LoginProofPinStore @Inject constructor(
         }
     }
 
+    override fun find(keys: List<String>): ByteArray? = LoginSaltRule.find_record(salt_records, keys)
+
+    override fun put(keys: List<String>, salt: ByteArray) {
+        synchronized(lock) {
+            val updated = LoginSaltRule.put_records(salt_records, keys, salt)
+            if (updated == salt_records) return
+            salt_records = updated
+            runCatching { prefs?.edit()?.putString(key_salt_records, LoginSaltRule.serialize_records(updated))?.commit() }
+        }
+    }
+
+    override fun remove(keys: List<String>) {
+        synchronized(lock) {
+            val updated = LoginSaltRule.remove_records(salt_records, keys)
+            if (updated.size == salt_records.size) return
+            salt_records = updated
+            runCatching { prefs?.edit()?.putString(key_salt_records, LoginSaltRule.serialize_records(updated))?.commit() }
+        }
+    }
+
+    private fun read_salt_records(): List<LoginSaltRecord> =
+        runCatching { LoginSaltRule.parse_records(prefs?.getString(key_salt_records, null)) }.getOrDefault(emptyList())
+
     private fun read_entries(): List<String> =
         runCatching { LoginProof.parse_pins(prefs?.getString(key_entries, null)) }.getOrDefault(emptyList())
 
     companion object {
         private const val prefs_name = "aster_login_proof_pins_v1"
         private const val key_entries = "pinned_accounts"
+        private const val key_salt_records = "login_salt_records"
     }
 }

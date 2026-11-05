@@ -83,7 +83,7 @@ class RecoveryViewModelTest {
         every { Base64.decode(any<String>(), any()) } answers {
             java.util.Base64.getDecoder().decode(firstArg<String>())
         }
-        vm = RecoveryViewModel(application, recovery_api)
+        vm = RecoveryViewModel(application, recovery_api, mockk(relaxed = true))
         vm.compute_dispatcher = dispatcher
     }
 

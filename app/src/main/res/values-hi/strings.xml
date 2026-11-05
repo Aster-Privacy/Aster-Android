@@ -536,6 +536,7 @@
     <string name="send_from">इससे भेजें</string>
     <string name="primary_account">मुख्य खाता</string>
     <string name="alias">एलियास</string>
+    <string name="external_account">बाहरी खाता</string>
     <string name="custom_domain">कस्टम डोमेन</string>
     <string name="schedule_send">भेजना शेड्यूल करें</string>
     <string name="expiring_email">समय-सीमा वाली ईमेल</string>
@@ -3349,6 +3350,8 @@
     <string name="domain_reason_dkim_missing_or_stale">आपका बाहर जाने वाला मेल हस्ताक्षरित नहीं है, जिससे वह नकली लगता है। हस्ताक्षर रिकॉर्ड जोड़ें ताकि आपके मेल पर भरोसा किया जाए।</string>
     <string name="domain_check_generic_failure">यह रिकॉर्ड अभी सही तरह से सेट नहीं है। इसे ठीक करने के लिए नीचे दिया रिकॉर्ड जोड़ें।</string>
     <string name="error_auth_salt_collision">सर्वर ने एक असुरक्षित मान भेजा, इसलिए साइन इन रोक दिया गया और कुछ भी अनलॉक नहीं हुआ। दोबारा कोशिश करने से पहले सहायता से संपर्क करें।</string>
+    <string name="error_legacy_login_salt_new_device">अपने खाते का सुरक्षा अपडेट पूरा करने के लिए, किसी ऐसे डिवाइस पर साइन इन करें जिस पर आपने पहले Aster का उपयोग किया है। अगर ऐसा नहीं कर सकते, तो अपनी रिकवरी कुंजी से अपना पासवर्ड रीसेट करें।</string>
+    <string name="error_legacy_login_salt_sign_in_again">अपने खाते का सुरक्षा अपडेट पूरा करने के लिए, साइन आउट करें और फिर से साइन इन करें।</string>
     <string name="storage_nudge_almost_title">स्टोरेज लगभग भर गया है</string>
     <string name="storage_nudge_critical_title">आपका स्टोरेज लगभग खत्म हो गया है</string>
     <string name="storage_nudge_full_title">आपका स्टोरेज भर गया है</string>

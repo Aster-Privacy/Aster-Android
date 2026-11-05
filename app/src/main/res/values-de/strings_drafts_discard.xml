@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Auswahl aufheben</string>
+    <string name="discard_drafts_confirm_message">Verworfene Entwürfe können nicht wiederhergestellt werden.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">%d Entwurf verwerfen?</item>
+        <item quantity="other">%d Entwürfe verwerfen?</item>
+    </plurals>
+</resources>

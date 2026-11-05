@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">Désélectionner</string>
+    <string name="discard_drafts_confirm_message">Vous ne pourrez pas récupérer les brouillons supprimés.</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">Supprimer %d brouillon ?</item>
+        <item quantity="other">Supprimer %d brouillons ?</item>
+    </plurals>
+</resources>

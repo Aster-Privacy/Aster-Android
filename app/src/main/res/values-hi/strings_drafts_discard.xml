@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="deselect">चयन हटाएं</string>
+    <string name="discard_drafts_confirm_message">छोड़े गए ड्राफ़्ट वापस नहीं लाए जा सकते।</string>
+    <plurals name="discard_drafts_confirm_title">
+        <item quantity="one">%d ड्राफ़्ट छोड़ें?</item>
+        <item quantity="other">%d ड्राफ़्ट छोड़ें?</item>
+    </plurals>
+</resources>

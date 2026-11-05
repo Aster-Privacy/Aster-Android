@@ -533,7 +533,7 @@ private object routes {
     const val forgot_password = "forgot_password"
     const val inbox = "inbox"
 
-    const val mail_detail = "mail_detail/{email_id}?swipe={swipe}"
+    const val mail_detail = "mail_detail/{email_id}?swipe={swipe}&chain={chain}"
     const val crypto_invoice = "crypto_invoice/{invoice_id}"
 
     fun crypto_invoice_for(invoice_id: String): String {
@@ -605,8 +605,14 @@ private object routes {
     const val domain_order = "domain_order/{order_id}"
     const val domain_bimi = "settings_domain_bimi/{domain_id}"
 
-    fun mail_detail_for(email_id: String, swipe: Int = 0) =
-        "mail_detail/" + android.net.Uri.encode(email_id) + if (swipe != 0) "?swipe=$swipe" else ""
+    fun mail_detail_for(email_id: String, swipe: Int = 0, chain: Boolean = false): String {
+        val query = listOfNotNull(
+            if (swipe != 0) "swipe=$swipe" else null,
+            if (chain) "chain=true" else null,
+        )
+        val base = "mail_detail/" + android.net.Uri.encode(email_id)
+        return if (query.isEmpty()) base else base + "?" + query.joinToString("&")
+    }
     fun settings_detail(id: String) = "settings_$id"
 
     const val alias_detail = "settings_alias_detail/{alias_id}"
@@ -995,10 +1001,15 @@ private fun AsterNavHost() {
                     type = NavType.IntType
                     defaultValue = 0
                 },
+                navArgument("chain") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
             ),
         ) { entry ->
             val email_id = entry.arguments?.getString("email_id").orEmpty()
             val swipe_direction = entry.arguments?.getInt("swipe") ?: 0
+            val chained = entry.arguments?.getBoolean("chain") ?: false
             val inbox_entry = remember(entry) {
                 try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
             }
@@ -1029,7 +1040,7 @@ private fun AsterNavHost() {
                 order.getOrNull(idx + delta)
             }
             val open_neighbor: (String, Int) -> Unit = { next_id, swipe ->
-                nav_controller.navigate(routes.mail_detail_for(next_id, swipe)) {
+                nav_controller.navigate(routes.mail_detail_for(next_id, swipe, chain = true)) {
                     popUpTo(routes.mail_detail) { inclusive = true }
                     launchSingleTop = true
                 }
@@ -1100,6 +1111,7 @@ private fun AsterNavHost() {
                 on_next = neighbor_id(1)?.let { next -> { open_neighbor(next, 1) } },
                 on_previous = neighbor_id(-1)?.let { prev -> { open_neighbor(prev, -1) } },
                 swipe_direction = swipe_direction,
+                chained = chained,
                 on_navigate = { path ->
                     val route = when {
                         path.startsWith("settings/") -> routes.settings_detail(path.removePrefix("settings/"))
