@@ -24,7 +24,7 @@ package org.astermail.android.ui.mail
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.mail.looks_like_html_body
 
-private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""[4-9]\d{2,3}""")
+private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""(?:[4-9]\d{2}|[1-9]\d{3})(?:\.\d+)?(?:px)?""", RegexOption.IGNORE_CASE)
 
 internal fun fit_wide_width_attributes(body: String): String {
     if (!body.contains("width", ignoreCase = true)) return body
@@ -78,6 +78,8 @@ private val WIDE_FIXED_STYLE_WIDTH = Regex(
     RegexOption.IGNORE_CASE,
 )
 
+private val WIDE_TABLE_STYLE_WIDTH = Regex("""(?<![a-z-])width\s*:\s*[1-9]\d{3}(?:\.\d+)?px""", RegexOption.IGNORE_CASE)
+
 internal fun fluid_wide_fixed_widths(body: String): String {
     if (!body.contains("width", ignoreCase = true)) return body
     return try {
@@ -85,8 +87,15 @@ internal fun fluid_wide_fixed_widths(body: String): String {
         doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
         var changed = false
         for (element in doc.select("[style]")) {
-            if (element.tagName().lowercase() in FLUID_WIDTH_SKIP_TAGS) continue
             val style = element.attr("style")
+            if (element.tagName().lowercase() in FLUID_WIDTH_SKIP_TAGS) {
+                val full = WIDE_TABLE_STYLE_WIDTH.replace(style, "width:100%")
+                if (full != style) {
+                    element.attr("style", full)
+                    changed = true
+                }
+                continue
+            }
             val fluid = WIDE_FIXED_STYLE_WIDTH.replace(style) { match ->
                 val property = match.groupValues[1].lowercase()
                 val value = match.groupValues[2]
@@ -271,7 +280,7 @@ html,body{background-color:#ffffff!important}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article{box-sizing:border-box!important;max-width:100%!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
         "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }

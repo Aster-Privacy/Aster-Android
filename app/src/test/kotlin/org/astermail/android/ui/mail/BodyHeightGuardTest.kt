@@ -212,4 +212,24 @@ class BodyHeightGuardTest {
         assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 400, long_press_ms = 400, multi_touch = false))
         assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = true))
     }
+
+    @Test
+    fun a_fitted_viewport_never_shrinks_text_below_half_size() {
+        assertEquals(824, readable_fit_width(412))
+        assertEquals(720, readable_fit_width(360))
+        assertEquals(1600, readable_fit_width(900))
+        assertEquals(1600, readable_fit_width(0))
+        assertEquals(824, overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 2.625f, current_fit = null, max_width = readable_fit_width(412)))
+        assertEquals(602, overflow_fit_width(scroll_range = 1575, scroll_extent = 1080, scale = 2.625f, current_fit = null, max_width = readable_fit_width(412)))
+        assertNull(overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 1.31f, current_fit = 824, max_width = readable_fit_width(412)))
+    }
+
+    @Test
+    fun content_that_grows_with_the_viewport_is_not_chased() {
+        assertTrue(overflow_tracks_viewport(411.4f, 427.4f, 429.4f, 445.4f))
+        assertTrue(overflow_tracks_viewport(411.4f, 617f, 619f, 928f))
+        assertFalse(overflow_tracks_viewport(411.4f, 600f, 602f, 602f))
+        assertFalse(overflow_tracks_viewport(411.4f, 560f, 562f, 602f))
+        assertFalse(overflow_tracks_viewport(411.4f, 560f, 411.4f, 600f))
+    }
 }

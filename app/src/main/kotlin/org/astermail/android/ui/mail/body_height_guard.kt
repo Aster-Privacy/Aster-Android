@@ -123,6 +123,25 @@ internal const val OVERFLOW_FIT_SLACK_CSS_PX = 4
 
 internal const val OVERFLOW_FIT_MARGIN_CSS_PX = 2
 
+internal const val READABLE_FIT_SCREEN_MULTIPLE = 2
+
+internal fun readable_fit_width(screen_width_dp: Int): Int =
+    if (screen_width_dp <= 0) MAX_FIT_CONTENT_WIDTH
+    else (screen_width_dp * READABLE_FIT_SCREEN_MULTIPLE).coerceAtMost(MAX_FIT_CONTENT_WIDTH)
+
+internal const val VIEWPORT_TRACKING_RATIO = 0.9f
+
+internal fun overflow_tracks_viewport(
+    previous_viewport_css: Float,
+    previous_needed_css: Float,
+    viewport_css: Float,
+    needed_css: Float,
+): Boolean {
+    val widened = viewport_css - previous_viewport_css
+    if (widened < OVERFLOW_FIT_SLACK_CSS_PX) return false
+    return needed_css - previous_needed_css >= widened * VIEWPORT_TRACKING_RATIO
+}
+
 internal fun overflow_fit_width(
     scroll_range: Int,
     scroll_extent: Int,

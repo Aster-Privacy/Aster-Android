@@ -6146,13 +6146,20 @@ private object body_height_cache {
     @Synchronized fun put(key: Long, value: Float) { store[key] = value }
 }
 
+private class body_fit_record(
+    val width: Int?,
+    val attempts: Int,
+    val viewport_css: Float,
+    val needed_css: Float,
+)
+
 private object body_fit_width_cache {
     private const val max_entries = 128
-    private val store = object : java.util.LinkedHashMap<Long, Int>(max_entries, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Int>?): Boolean = size > max_entries
+    private val store = object : java.util.LinkedHashMap<Long, body_fit_record>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, body_fit_record>?): Boolean = size > max_entries
     }
-    @Synchronized fun get(key: Long): Int? = store[key]
-    @Synchronized fun put(key: Long, value: Int) { store[key] = value }
+    @Synchronized fun get(key: Long): body_fit_record? = store[key]
+    @Synchronized fun put(key: Long, value: body_fit_record) { store[key] = value }
 }
 
 private object body_shown_cache {
@@ -6651,8 +6658,8 @@ internal fun email_html_view(
         ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
             31L + email_font_id.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)
     }
-    var overflow_fit_width by remember(base_height_key) { mutableStateOf(body_fit_width_cache.get(base_height_key)) }
-    val overflow_fit_attempts = remember(base_height_key) { intArrayOf(0) }
+    var overflow_fit_width by remember(base_height_key) { mutableStateOf(body_fit_width_cache.get(base_height_key)?.width) }
+    val overflow_fit_attempts = remember(base_height_key) { intArrayOf(body_fit_width_cache.get(base_height_key)?.attempts ?: 0) }
     val height_cache_key = remember(base_height_key, overflow_fit_width) {
         base_height_key * 31L + (overflow_fit_width ?: 0).toLong()
     }
@@ -6887,14 +6894,22 @@ internal fun email_html_view(
             val content = web.contentHeight
             if (content <= 0) continue
             if (!overflow_checked && !zoom_active && loaded_built == prebuilt_html && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
+                val body = web as? mail_body_web_view
                 @Suppress("DEPRECATION")
-                val fit = (web as? mail_body_web_view)?.let { body ->
-                    overflow_fit_width(body.horizontal_scroll_range(), body.horizontal_scroll_extent(), web.scale, fit_at_start)
-                }
+                val scale = web.scale
+                val range = body?.horizontal_scroll_range() ?: 0
+                val extent = body?.horizontal_scroll_extent() ?: 0
+                val fit = body?.let { overflow_fit_width(range, extent, scale, fit_at_start, readable_fit_width(screen_width_dp)) }
                 if (fit != null) {
-                    overflow_fit_attempts[0]++
-                    body_fit_width_cache.put(base_height_key, fit)
-                    overflow_fit_width = fit
+                    val viewport_css = extent / scale
+                    val needed_css = range / scale
+                    val previous = body_fit_width_cache.get(base_height_key)
+                    val chasing = fit_at_start != null && previous != null &&
+                        overflow_tracks_viewport(previous.viewport_css, previous.needed_css, viewport_css, needed_css)
+                    overflow_fit_attempts[0] = if (chasing) max_overflow_fit_attempts else overflow_fit_attempts[0] + 1
+                    val next_fit = if (chasing) null else fit
+                    body_fit_width_cache.put(base_height_key, body_fit_record(next_fit, overflow_fit_attempts[0], viewport_css, needed_css))
+                    overflow_fit_width = next_fit
                     return@LaunchedEffect
                 }
                 if (exact_sent) overflow_checked = true
