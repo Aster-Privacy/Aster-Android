@@ -2530,7 +2530,6 @@
     <string name="domain_purchase_one_year">1 Jahr</string>
     <string name="domain_purchase_pay_with">Bezahlen mit</string>
     <string name="domain_purchase_pay_card">Karte</string>
-    <string name="domain_purchase_pay_crypto">Krypto</string>
     <string name="domain_purchase_buy">Für %1$s kaufen</string>
     <string name="domain_purchase_error">Kauf fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
     <string name="domain_purchase_error_taken">Diese Domain wurde gerade vergeben. Bitte wählen Sie eine andere.</string>

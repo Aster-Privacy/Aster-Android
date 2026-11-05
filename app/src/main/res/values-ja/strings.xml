@@ -2522,7 +2522,6 @@
     <string name="domain_purchase_one_year">1年</string>
     <string name="domain_purchase_pay_with">支払い方法</string>
     <string name="domain_purchase_pay_card">カード</string>
-    <string name="domain_purchase_pay_crypto">暗号資産</string>
     <string name="domain_purchase_buy">%1$sで購入</string>
     <string name="domain_purchase_error">購入に失敗しました。もう一度お試しください。</string>
     <string name="domain_purchase_error_taken">このドメインはたった今取得されました。別のドメインを選んでください。</string>

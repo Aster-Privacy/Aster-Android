@@ -2493,7 +2493,6 @@
     <string name="domain_purchase_one_year">1 साल</string>
     <string name="domain_purchase_pay_with">इससे भुगतान करें</string>
     <string name="domain_purchase_pay_card">कार्ड</string>
-    <string name="domain_purchase_pay_crypto">क्रिप्टो</string>
     <string name="domain_purchase_buy">%1$s में खरीदें</string>
     <string name="domain_purchase_error">खरीद विफल रही। फिर से कोशिश करें।</string>
     <string name="domain_purchase_error_taken">वह डोमेन अभी-अभी ले लिया गया। कोई दूसरा चुनें।</string>

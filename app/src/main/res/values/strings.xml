@@ -2791,7 +2791,6 @@
     <string name="domain_purchase_one_year">1 year</string>
     <string name="domain_purchase_pay_with">Pay with</string>
     <string name="domain_purchase_pay_card">Card</string>
-    <string name="domain_purchase_pay_crypto">Crypto</string>
     <string name="domain_purchase_buy">Buy for %1$s</string>
     <string name="domain_purchase_error">Purchase failed. Please try again.</string>
     <string name="domain_purchase_error_taken">That domain was just taken. Pick another one.</string>

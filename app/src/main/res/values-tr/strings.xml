@@ -2529,7 +2529,6 @@
     <string name="domain_purchase_one_year">1 yıl</string>
     <string name="domain_purchase_pay_with">Ödeme yöntemi</string>
     <string name="domain_purchase_pay_card">Kart</string>
-    <string name="domain_purchase_pay_crypto">Kripto</string>
     <string name="domain_purchase_buy">%1$s karşılığında satın al</string>
     <string name="domain_purchase_error">Satın alma başarısız oldu. Lütfen tekrar deneyin.</string>
     <string name="domain_purchase_error_taken">Bu alan adı az önce alındı. Lütfen başka bir tane seçin.</string>

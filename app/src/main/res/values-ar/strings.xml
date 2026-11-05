@@ -2561,7 +2561,6 @@
     <string name="domain_purchase_one_year">سنة واحدة</string>
     <string name="domain_purchase_pay_with">الدفع بواسطة</string>
     <string name="domain_purchase_pay_card">بطاقة</string>
-    <string name="domain_purchase_pay_crypto">عملات رقمية</string>
     <string name="domain_purchase_buy">اشترِ مقابل %1$s</string>
     <string name="domain_purchase_error">فشل الشراء. حاول مرة أخرى.</string>
     <string name="domain_purchase_error_taken">تم حجز هذا النطاق للتو. اختر نطاقًا آخر.</string>

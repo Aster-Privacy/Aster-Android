@@ -2536,7 +2536,6 @@
     <string name="domain_purchase_one_year">1 ano</string>
     <string name="domain_purchase_pay_with">Pagar com</string>
     <string name="domain_purchase_pay_card">Cartão</string>
-    <string name="domain_purchase_pay_crypto">Cripto</string>
     <string name="domain_purchase_buy">Comprar por %1$s</string>
     <string name="domain_purchase_error">A compra falhou. Tente novamente.</string>
     <string name="domain_purchase_error_taken">Esse domínio acabou de ser registrado. Escolha outro.</string>
