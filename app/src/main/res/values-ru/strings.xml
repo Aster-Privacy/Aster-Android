@@ -2545,7 +2545,6 @@
     <string name="domain_purchase_one_year">1 год</string>
     <string name="domain_purchase_pay_with">Оплатить</string>
     <string name="domain_purchase_pay_card">Картой</string>
-    <string name="domain_purchase_pay_crypto">Криптовалютой</string>
     <string name="domain_purchase_buy">Купить за %1$s</string>
     <string name="domain_purchase_error">Покупка не удалась. Попробуйте ещё раз.</string>
     <string name="domain_purchase_error_taken">Этот домен только что заняли. Выберите другой.</string>

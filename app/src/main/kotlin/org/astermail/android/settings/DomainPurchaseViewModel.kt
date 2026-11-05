@@ -86,7 +86,6 @@ data class DomainPurchaseUiState(
     val more_suggestions_rate_limited: Boolean = false,
     val selected: DomainSearchResult? = null,
     val years: Int = 1,
-    val payment_method: String = "stripe",
     val buying: Boolean = false,
     val checkout_error: DomainPurchaseErrorKind? = null,
     val checkout_url: String? = null,
@@ -286,10 +285,6 @@ class DomainPurchaseViewModel @Inject constructor(
         _state.update { it.copy(years = years.coerceIn(1, 3)) }
     }
 
-    fun set_payment_method(method: String) {
-        _state.update { it.copy(payment_method = method) }
-    }
-
     fun start_checkout(captcha_token: String?) {
         val current = _state.value
         val selected = current.selected ?: return
@@ -301,7 +296,7 @@ class DomainPurchaseViewModel @Inject constructor(
                     DomainCheckoutRequest(
                         domain = selected.domain,
                         years = current.years,
-                        payment_method = current.payment_method,
+                        payment_method = "stripe",
                         captcha_token = captcha_token,
                     ),
                 )

@@ -2529,7 +2529,6 @@
     <string name="domain_purchase_one_year">1 jaar</string>
     <string name="domain_purchase_pay_with">Betalen met</string>
     <string name="domain_purchase_pay_card">Kaart</string>
-    <string name="domain_purchase_pay_crypto">Cryptovaluta</string>
     <string name="domain_purchase_buy">Kopen voor %1$s</string>
     <string name="domain_purchase_error">Aankoop mislukt. Probeer het opnieuw.</string>
     <string name="domain_purchase_error_taken">Dit domein is zojuist geregistreerd. Kies een ander domein.</string>

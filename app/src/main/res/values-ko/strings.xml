@@ -2522,7 +2522,6 @@
     <string name="domain_purchase_one_year">1년</string>
     <string name="domain_purchase_pay_with">결제 수단</string>
     <string name="domain_purchase_pay_card">카드</string>
-    <string name="domain_purchase_pay_crypto">암호화폐</string>
     <string name="domain_purchase_buy">%1$s에 구매</string>
     <string name="domain_purchase_error">구매에 실패했습니다. 다시 시도해 주세요.</string>
     <string name="domain_purchase_error_taken">방금 다른 사용자가 이 도메인을 등록했습니다. 다른 도메인을 선택해 주세요.</string>

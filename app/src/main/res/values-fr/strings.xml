@@ -2566,7 +2566,6 @@
     <string name="domain_purchase_one_year">1 an</string>
     <string name="domain_purchase_pay_with">Payer avec</string>
     <string name="domain_purchase_pay_card">Carte</string>
-    <string name="domain_purchase_pay_crypto">Cryptomonnaie</string>
     <string name="domain_purchase_buy">Acheter pour %1$s</string>
     <string name="domain_purchase_error">L\'achat a échoué. Veuillez réessayer.</string>
     <string name="domain_purchase_error_taken">Ce domaine vient d\'être pris. Veuillez en choisir un autre.</string>

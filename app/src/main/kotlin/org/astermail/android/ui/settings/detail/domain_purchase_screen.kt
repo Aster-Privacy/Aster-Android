@@ -26,7 +26,6 @@ import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.Clock
 import compose.icons.tablericons.CreditCard
-import compose.icons.tablericons.CurrencyDollar
 import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Refresh
 import compose.icons.tablericons.Search
@@ -671,7 +670,7 @@ private fun domain_result_row(result: DomainSearchResult, primary: Boolean, on_s
 private fun choice_pill(
     label: String,
     selected: Boolean,
-    on_click: () -> Unit,
+    on_click: (() -> Unit)?,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
 ) {
@@ -688,7 +687,7 @@ private fun choice_pill(
                     Modifier.border(1.dp, colors.border_secondary, CircleShape)
                 },
             )
-            .clickable(onClick = on_click)
+            .then(if (on_click != null) Modifier.clickable(onClick = on_click) else Modifier)
             .padding(horizontal = AsterSpacing.sm),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
@@ -749,25 +748,13 @@ private fun purchase_confirm_content(vm: DomainPurchaseViewModel, state: DomainP
     v_gap(AsterSpacing.lg)
 
     picker_label(stringResource(R.string.domain_purchase_pay_with))
-    Row(
+    choice_pill(
+        label = stringResource(R.string.domain_purchase_pay_card),
+        selected = true,
+        on_click = null,
+        icon = TablerIcons.CreditCard,
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-    ) {
-        choice_pill(
-            label = stringResource(R.string.domain_purchase_pay_card),
-            selected = state.payment_method == "stripe",
-            on_click = { vm.set_payment_method("stripe") },
-            icon = TablerIcons.CreditCard,
-            modifier = Modifier.weight(1f),
-        )
-        choice_pill(
-            label = stringResource(R.string.domain_purchase_pay_crypto),
-            selected = state.payment_method == "crypto",
-            on_click = { vm.set_payment_method("crypto") },
-            icon = TablerIcons.CurrencyDollar,
-            modifier = Modifier.weight(1f),
-        )
-    }
+    )
 
     state.checkout_error?.let {
         v_gap(AsterSpacing.lg)

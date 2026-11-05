@@ -2522,7 +2522,6 @@
     <string name="domain_purchase_one_year">1 年</string>
     <string name="domain_purchase_pay_with">支付方式</string>
     <string name="domain_purchase_pay_card">银行卡</string>
-    <string name="domain_purchase_pay_crypto">加密货币</string>
     <string name="domain_purchase_buy">以 %1$s 购买</string>
     <string name="domain_purchase_error">购买失败,请重试。</string>
     <string name="domain_purchase_error_taken">该域名刚刚被注册,请选择其他域名。</string>
