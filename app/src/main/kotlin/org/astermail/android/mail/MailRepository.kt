@@ -136,6 +136,32 @@ internal fun split_display_address(raw: String): Pair<String, String>? {
     return name to email
 }
 
+internal fun parse_envelope_from_field(obj: org.json.JSONObject): Pair<String, String> {
+    val (name, email) = parse_envelope_from_value(obj)
+    val flat_email = envelope_text(obj, "from_email")
+    val flat_name = envelope_text(obj, "from_name")
+    val resolved_email = email.ifBlank { flat_email }
+    val resolved_name = name.ifBlank {
+        if (flat_name.equals(resolved_email, ignoreCase = true)) "" else flat_name
+    }
+    return resolved_name to resolved_email
+}
+
+private fun envelope_text(obj: org.json.JSONObject, key: String): String =
+    if (obj.isNull(key)) "" else obj.optString(key, "").trim()
+
+private fun parse_envelope_from_value(obj: org.json.JSONObject): Pair<String, String> {
+    val from_obj = obj.optJSONObject("from")
+    if (from_obj != null) {
+        return envelope_text(from_obj, "name") to envelope_text(from_obj, "email")
+    }
+    val from_str = envelope_text(obj, "from")
+    if (from_str.isBlank()) return "" to ""
+    split_display_address(from_str)?.let { return it }
+    if (from_str.contains('@')) return "" to from_str
+    return from_str to ""
+}
+
 class SentCopyAttachmentException(val failed_count: Int) :
     Exception("sent copy attachments not stored")
 
@@ -5028,17 +5054,8 @@ class MailRepository @Inject constructor(
         return body_text to html
     }
 
-    private fun parse_from_field(obj: org.json.JSONObject): Pair<String, String> {
-        val from_obj = obj.optJSONObject("from")
-        if (from_obj != null) {
-            return from_obj.optString("name", "") to from_obj.optString("email", "")
-        }
-        val from_str = obj.optString("from", "")
-        if (from_str.isBlank()) return "" to ""
-        split_display_address(from_str)?.let { return it }
-        if (from_str.contains('@')) return "" to from_str.trim()
-        return from_str.trim() to ""
-    }
+    private fun parse_from_field(obj: org.json.JSONObject): Pair<String, String> =
+        parse_envelope_from_field(obj)
 
     private fun parse_address_list(arr: org.json.JSONArray?): List<Pair<String, String>> {
         if (arr == null) return emptyList()
