@@ -584,11 +584,15 @@ class BillingViewModel @Inject constructor(
         return when (target) {
             is PlayTarget.Plan -> play_offer_for(s.play_offers, s.play_products, target.plan_code, target.billing_interval)
             is PlayTarget.Addon -> play_addon_offer_for(s.play_offers, s.play_addon_products, target.storage_bytes, target.billing_interval)
-            is PlayTarget.SpecialOffer -> play_special_offer_for(
-                s.play_offers,
-                play_special_offer_for(play_special_config(s), target.product_id, target.base_plan_id),
-            )
+            is PlayTarget.SpecialOffer -> play_special_offer_for(s.play_offers, play_special_target_offer(s, target))
         }
+    }
+
+    private fun play_special_target_offer(s: BillingUiState, target: PlayTarget.SpecialOffer): GooglePlaySpecialOffer? {
+        if (target.product_id.isNotBlank()) {
+            return play_special_offer_for(play_special_config(s), target.product_id, target.base_plan_id)
+        }
+        return if (target.base_plan_id == PLAY_YEARLY_BASE_PLAN) s.play_special_offer_yearly else s.play_special_offer
     }
 
     private fun start_play_target(action: String, target: PlayTarget) {
@@ -607,9 +611,7 @@ class BillingViewModel @Inject constructor(
     }
 
     fun start_play_special_offer(billing_interval: String = "month") {
-        val s = _state.value
-        val legacy = if (billing_interval == "year") s.play_special_offer_yearly else s.play_special_offer
-        start_play_special_offer(legacy?.product_id.orEmpty(), play_base_plan_id(billing_interval))
+        start_play_special_offer("", play_base_plan_id(billing_interval))
     }
 
     fun start_play_special_offer(product_id: String, base_plan_id: String) {
