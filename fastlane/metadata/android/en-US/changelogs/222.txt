@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- After you buy an offer, the confirmation shows the plan you chose.
+- Sort aliases by the last mail they received.
+- The app checks username availability before the password step.
+- Imported mail from older accounts opens again.
+- Notifications stack on the lock screen and clear when read elsewhere.
