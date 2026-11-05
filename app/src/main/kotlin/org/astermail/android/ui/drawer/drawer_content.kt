@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.drawer
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -78,7 +79,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -2305,13 +2305,12 @@ internal fun workspace_switcher_sheet(
         profile_menu_greeting_res(java.time.LocalTime.now().hour),
     ) + stringResource(R.string.profile_menu_greeting_comma)
 
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
-        containerColor = surface,
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
+        container_color = surface,
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

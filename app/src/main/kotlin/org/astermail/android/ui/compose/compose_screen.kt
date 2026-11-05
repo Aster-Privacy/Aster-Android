@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.graphics.RectangleShape
 import compose.icons.TablerIcons
@@ -100,7 +101,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -4237,13 +4237,12 @@ private fun ScheduleSheet(
     val labels = remember(now.toLocalDate(), now.zone, label_by_id) {
         org.astermail.android.mail.schedule_target_labels(now).mapNotNull { label_by_id[it] }
     }
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4286,13 +4285,12 @@ private fun AttachSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4353,13 +4351,12 @@ private fun FromAliasSheet(
         (pinned + rest).sortedBy { it in external_set }
     }
     val first_external_option = visible_options.firstOrNull { it in external_set }
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4536,13 +4533,12 @@ private fun OverflowSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4599,13 +4595,12 @@ private fun TemplatePickerSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -4893,13 +4888,12 @@ private fun SignaturePickerSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -5005,13 +4999,12 @@ private fun GhostAliasSheet(
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -5131,13 +5124,12 @@ internal fun ExpiringSheet(
             on_pick(custom, format_custom_label(custom), password_arg)
         }
     }
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = commit_or_close,
-        sheetState = state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        on_dismiss_request = commit_or_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

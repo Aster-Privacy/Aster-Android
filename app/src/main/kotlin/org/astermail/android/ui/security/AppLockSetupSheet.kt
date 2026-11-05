@@ -47,7 +47,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -89,6 +88,7 @@ import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.security.AppLockStore
 import kotlin.math.roundToInt
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.sheet_container_color
 
 private enum class SetupStep {
@@ -227,11 +227,11 @@ fun AppLockSetupSheet(
         SetupStep.confirm_text -> stringResource(R.string.app_lock_confirm_passphrase)
     }
 
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
-        containerColor = sheet_container_color(colors),
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
+        container_color = sheet_container_color(colors),
     ) {
         Column(
             modifier = Modifier
@@ -458,11 +458,11 @@ fun AppLockVerifySheet(
         }
     }
 
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
-        containerColor = sheet_container_color(colors),
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
+        container_color = sheet_container_color(colors),
     ) {
         Column(
             modifier = Modifier

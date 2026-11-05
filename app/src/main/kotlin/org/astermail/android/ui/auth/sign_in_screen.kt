@@ -42,6 +42,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -81,6 +82,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.sp
@@ -441,7 +443,7 @@ private fun aster_variant_body(
             on_toggle = cb.on_toggle_remember_me,
         )
 
-        Spacer(Modifier.height(AsterSpacing.md))
+        Spacer(Modifier.height(AsterSpacing.lg))
 
         if (fields.captcha_required) {
             TurnstileWidget(
@@ -795,6 +797,7 @@ private fun keep_signed_in_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -812,14 +815,13 @@ private fun keep_signed_in_row(
                 uncheckedColor = colors.text_muted,
             ),
         )
+        Spacer(Modifier.width(AsterSpacing.sm))
         Text(
-            text = stringResource(
-                R.string.keep_me_signed_in_secure_devices,
-                stringResource(R.string.keep_me_signed_in),
-                stringResource(R.string.secure_devices_only),
-            ),
+            text = stringResource(R.string.keep_me_signed_in),
             color = colors.text_secondary,
             fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

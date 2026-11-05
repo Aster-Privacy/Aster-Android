@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.search
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
@@ -42,7 +43,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -465,13 +465,12 @@ internal fun advanced_search_sheet(
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
+    aster_modal_sheet(
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
         shape = sheet_shape,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

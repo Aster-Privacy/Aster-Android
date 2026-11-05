@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -286,6 +287,7 @@ private fun keep_signed_in_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = on_toggle),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -297,6 +299,7 @@ private fun keep_signed_in_row(
                 uncheckedColor = colors.text_muted,
             ),
         )
+        Spacer(Modifier.width(AsterSpacing.sm))
         Text(
             text = stringResource(R.string.keep_me_signed_in),
             color = colors.text_secondary,

@@ -46,7 +46,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -75,6 +74,7 @@ import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.ui.mail.SenderAvatar
@@ -349,13 +349,12 @@ internal fun person_picker_sheet(
     }
 
     val sheet_shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
-        onDismissRequest = on_dismiss,
-        sheetState = sheet_state,
+    aster_modal_sheet(
+        on_dismiss_request = on_dismiss,
+        sheet_state = sheet_state,
         shape = sheet_shape,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
-        dragHandle = { AsterDragHandle() },
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
     ) {
         Column(
             modifier = Modifier

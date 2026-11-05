@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.upgrade
 
+import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -46,7 +47,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -193,12 +193,11 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
         ?: recommended_code
     val active_plan = plan_options.firstOrNull { it.code == active_code }
 
-    ModalBottomSheet(
+    aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
-        onDismissRequest = { UpgradeStore.close() },
-        sheetState = sheet_state,
-        containerColor = sheet_container_color(colors),
-        tonalElevation = 0.dp,
+        on_dismiss_request = { UpgradeStore.close() },
+        sheet_state = sheet_state,
+        container_color = sheet_container_color(colors),
     ) {
         Column(
             modifier = Modifier
