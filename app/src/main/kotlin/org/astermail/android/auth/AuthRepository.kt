@@ -1093,11 +1093,13 @@ class AuthRepository @Inject constructor(
         val recovery_codes = generate_recovery_codes()
         val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
 
+        val signup_data_kek = org.astermail.android.crypto.StorageWriteKey.random_data_kek()
         val vault_json = build_vault_json(
             identity_private_b64 = base64_encode(identity.private_key),
             prekey_private_b64 = base64_encode(prekey.private_key),
             recovery_codes = recovery_codes,
             pgp_private_key = pgp_keys.armored_private_key,
+            data_kek_b64 = base64_encode(signup_data_kek),
         )
         val vault_plaintext = vault_json.toByteArray(Charsets.UTF_8)
         val raw_password_bytes = password.toByteArray(Charsets.UTF_8)
@@ -1150,6 +1152,7 @@ class AuthRepository @Inject constructor(
                 vault_backup_nonce = vault_backup.nonce,
                 recovery_key_salt = vault_backup.salt,
                 recovery_shares = recovery_shares,
+                vault_format = MASTER_KEY_VAULT_FORMAT,
             ),
         )
 
@@ -1184,6 +1187,8 @@ class AuthRepository @Inject constructor(
             base64_encode(vault_envelope.encrypted_vault),
             base64_encode(vault_envelope.vault_nonce),
         )
+        absorb_data_kek(org.json.JSONObject(vault_json))
+        signup_data_kek.fill(0)
 
         runCatching { system_folder_bootstrap.ensure_system_folders() }
 
@@ -1452,6 +1457,9 @@ class AuthRepository @Inject constructor(
             )
 
             session_key_store.put_data_kek(preserved_data_kek)
+            session_key_store.put_legacy_keks(
+                append_storage_keks(session_key_store.get_legacy_keks().orEmpty(), vault_legacy_kek_values(vault_obj)),
+            )
             session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
             session_key_store.put_passphrase(new_password_bytes)
             session_key_store.put_password_salt(new_salt)
@@ -2042,6 +2050,7 @@ class AuthRepository @Inject constructor(
             derive_storage_key = { CryptoNative.derive_storage_key(current_password_bytes) },
             encode = ::base64_encode,
             decode = ::base64_decode,
+            generate = { org.astermail.android.crypto.StorageWriteKey.random_data_kek() },
         )
 
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
@@ -2059,7 +2068,7 @@ class AuthRepository @Inject constructor(
     }
 
     private suspend fun absorb_stretched_storage_keys(vault_obj: org.json.JSONObject, passphrase: ByteArray) {
-        if (read_storage_kdf_version(vault_obj) != CryptoNative.stretched_storage_kdf_version) return
+        if (!is_stretched_or_unrecognized(read_storage_kdf_version(vault_obj))) return
         val passphrase_copy = passphrase.copyOf()
         val extra = try {
             withContext(Dispatchers.Default) {
@@ -2385,9 +2394,11 @@ class AuthRepository @Inject constructor(
         prekey_private_b64: String,
         recovery_codes: List<String>? = null,
         pgp_private_key: String? = null,
+        data_kek_b64: String? = null,
     ): String {
         val obj = org.json.JSONObject()
         obj.put("version", 1)
+        if (data_kek_b64 != null) install_signup_data_kek(obj, data_kek_b64)
         obj.put("identity_private_key", identity_private_b64)
         obj.put("signed_prekey_private", prekey_private_b64)
         obj.put("created_at", System.currentTimeMillis() / 1000L)

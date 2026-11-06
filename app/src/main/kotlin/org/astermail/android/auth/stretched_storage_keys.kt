@@ -25,16 +25,23 @@ import org.astermail.android.crypto.CryptoNative
 import org.json.JSONObject
 
 private const val storage_key_length = 32
+const val UNRECOGNIZED_STORAGE_KDF_VERSION = -1
 
 fun read_storage_kdf_version(vault_obj: JSONObject): Int {
-    val raw = vault_obj.opt("kdf_version")
-    val stretched = CryptoNative.stretched_storage_kdf_version
-    return if (raw is Number && raw.toDouble() == stretched.toDouble()) {
-        stretched
-    } else {
-        CryptoNative.legacy_storage_kdf_version
+    if (!vault_obj.has("kdf_version") || vault_obj.isNull("kdf_version")) {
+        return CryptoNative.legacy_storage_kdf_version
     }
+    val raw = vault_obj.opt("kdf_version")
+    if (raw !is Number) return UNRECOGNIZED_STORAGE_KDF_VERSION
+    val value = raw.toDouble()
+    if (value != Math.floor(value) || value < Int.MIN_VALUE || value > Int.MAX_VALUE) {
+        return UNRECOGNIZED_STORAGE_KDF_VERSION
+    }
+    return value.toInt()
 }
+
+fun is_stretched_or_unrecognized(kdf_version: Int): Boolean =
+    kdf_version != CryptoNative.legacy_storage_kdf_version
 
 fun storage_key_candidates(
     passphrase: ByteArray,
@@ -42,7 +49,7 @@ fun storage_key_candidates(
     derive: (ByteArray, Int) -> ByteArray = CryptoNative::derive_storage_key_for_version,
 ): List<ByteArray> {
     val legacy = CryptoNative.legacy_storage_kdf_version
-    if (kdf_version != CryptoNative.stretched_storage_kdf_version) {
+    if (!is_stretched_or_unrecognized(kdf_version)) {
         return listOf(derive(passphrase, legacy))
     }
     val stretched_key = derive(passphrase, CryptoNative.stretched_storage_kdf_version)
@@ -62,7 +69,7 @@ fun stretched_storage_keks_to_absorb(
     derive: (ByteArray, Int) -> ByteArray = CryptoNative::derive_storage_key_for_version,
 ): List<String> {
     val kdf_version = read_storage_kdf_version(vault_obj)
-    if (kdf_version != CryptoNative.stretched_storage_kdf_version) return emptyList()
+    if (!is_stretched_or_unrecognized(kdf_version)) return emptyList()
     val keys = storage_key_candidates(passphrase, kdf_version, derive)
     return try {
         keys.filter { it.size == storage_key_length }.map(encode).distinct()

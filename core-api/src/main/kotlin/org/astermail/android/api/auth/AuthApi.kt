@@ -235,6 +235,7 @@ data class RegisterRequest(
     val recovery_key_salt: String? = null,
     val recovery_shares: List<org.astermail.android.api.recovery.RecoveryShareData>? = null,
     @EncodeDefault val client_platform: String = "android",
+    val vault_format: Int? = null,
 )
 
 @Serializable
