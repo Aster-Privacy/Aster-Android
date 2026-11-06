@@ -21,6 +21,7 @@
 
 package org.astermail.android
 
+import androidx.lifecycle.repeatOnLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -780,8 +781,13 @@ private fun AsterNavHost() {
             }
         }
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            auth_gate.auth_repository.trigger_ratchet_bootstrap()
             auth_gate.auth_repository.trigger_system_folder_bootstrap()
+        }
+        val ratchet_lifecycle_owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        androidx.compose.runtime.LaunchedEffect(ratchet_lifecycle_owner) {
+            ratchet_lifecycle_owner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                auth_gate.auth_repository.trigger_ratchet_bootstrap()
+            }
         }
         val preferences_sync_vm: org.astermail.android.settings.SettingsViewModel = org.astermail.android.settings.shared_settings_view_model()
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {

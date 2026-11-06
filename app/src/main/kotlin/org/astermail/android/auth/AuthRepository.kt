@@ -210,11 +210,22 @@ class AuthRepository @Inject constructor(
         if (!_is_signed_in.value) return
         load_account_keks()
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
-        background_scope.launch {
-            runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
-                .onFailure { if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "bootstrap_if_needed threw: ${it.javaClass.simpleName}: ${it.message}") }
-        }
+        schedule_ratchet_bootstrap(bypass_debounce = false)
     }
+
+    private fun schedule_ratchet_bootstrap(bypass_debounce: Boolean) {
+        ratchet_bootstrap_service.schedule_until_published(
+            scope = background_scope,
+            is_foreground = ::app_in_foreground,
+            bypass_debounce = bypass_debounce,
+        )
+    }
+
+    private fun app_in_foreground(): Boolean = runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get()
+            .lifecycle.currentState
+            .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    }.getOrDefault(true)
 
     suspend fun handle_unauthorized_signal(force: Boolean = false) {
         if (!_is_signed_in.value) return
@@ -691,7 +702,7 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
     }
 
@@ -1223,7 +1234,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         RegisterSuccess(recovery_codes = recovery_codes)
     }
@@ -1314,7 +1325,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { refresh_session_if_expiring() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         return true
