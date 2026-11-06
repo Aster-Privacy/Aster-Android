@@ -104,7 +104,14 @@ sealed class ApiError(message: String) : Exception(message) {
     ) : ApiError(detail)
     data class UnknownError(val detail: String) : ApiError(detail)
     data class StepUpRequired(val detail: String = "step up required") : ApiError(detail)
+    data class UpgradeRequired(
+        val detail: String = "upgrade required",
+        val code: String? = null,
+    ) : ApiError(detail)
 }
+
+const val VAULT_LEVEL_HEADER = "X-Aster-Vault-Level"
+const val VAULT_LEVEL = "1"
 
 const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
@@ -297,6 +304,7 @@ class ApiClient(
             header(HttpHeaders.UserAgent, build_user_agent(release_name))
             header(HttpHeaders.Referrer, "${base_url.trimEnd('/')}/")
             device_id?.let { header(DEVICE_ID_HEADER, it) }
+            header(VAULT_LEVEL_HEADER, VAULT_LEVEL)
         }
 
         HttpResponseValidator {
@@ -547,6 +555,7 @@ class ApiClient(
                 parse_error_details(body),
             )
             409 -> ApiError.Conflict(detail.ifBlank { "conflict" }, server_code)
+            426 -> ApiError.UpgradeRequired(detail.ifBlank { "upgrade required" }, server_code)
             429 -> ApiError.RateLimited(
                 detail = detail,
                 resets_at = parse_error_resets_at(body),

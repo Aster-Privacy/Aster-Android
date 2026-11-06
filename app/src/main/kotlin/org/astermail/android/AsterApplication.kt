@@ -417,6 +417,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
             val token = token_store.access_token ?: return@Interceptor chain.proceed(request)
             val authed = request.newBuilder()
                 .header("Authorization", "Bearer $token")
+                .header(org.astermail.android.api.VAULT_LEVEL_HEADER, org.astermail.android.api.VAULT_LEVEL)
                 .build()
             chain.proceed(authed) as Response
         }

@@ -107,9 +107,13 @@ private fun send_refusal_message(
 
 private fun server_code_of(t: Throwable): String? = when (t) {
     is ApiError.ForbiddenError -> t.code
-    is ApiError.Conflict -> t.code
+    is ApiError.Conflict -> t.code.takeUnless { it == VAULT_CHANGED_CODE }
+    is ApiError.UpgradeRequired -> CLIENT_UPGRADE_REQUIRED_CODE
     else -> null
 }
+
+private const val VAULT_CHANGED_CODE = "VAULT_CHANGED"
+private const val CLIENT_UPGRADE_REQUIRED_CODE = "CLIENT_UPGRADE_REQUIRED"
 
 fun server_code_string_res(code: String): Int? = when (code) {
     "ACCOUNT_SUSPENDED" -> R.string.error_account_suspended

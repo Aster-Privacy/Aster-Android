@@ -47,6 +47,7 @@ fun localized_api_error(context: Context, t: Throwable, fallback: String): Strin
         is ApiError.ServerError -> context.getString(R.string.error_server)
         is ApiError.RateLimited -> context.getString(R.string.error_rate_limited)
         is ApiError.Conflict -> context.getString(R.string.error_conflict)
+        is ApiError.UpgradeRequired -> context.getString(R.string.error_client_upgrade_required)
         is ApiError.ValidationError -> fallback
         is ApiError.UnknownError -> fallback
         else -> fallback

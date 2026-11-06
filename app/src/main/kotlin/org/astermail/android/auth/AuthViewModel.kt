@@ -399,6 +399,7 @@ class AuthViewModel @Inject constructor(
         is ApiError.ValidationError ->
             org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_invalid_request))
         is ApiError.RateLimited -> ctx.getString(R.string.error_too_many_attempts)
+        is ApiError.UpgradeRequired -> ctx.getString(R.string.error_client_upgrade_required)
         is ApiError.Conflict ->
             org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_generic))
         is ApiError.UnknownError -> ctx.getString(R.string.error_generic)

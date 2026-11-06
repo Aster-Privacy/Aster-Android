@@ -71,7 +71,8 @@ fun server_supplied_detail(t: Throwable): String? {
     val error = t as? ApiError ?: return null
     return when (error) {
         is ApiError.ForbiddenError -> detail_unless_default(error.detail, "forbidden")
-        is ApiError.Conflict -> detail_unless_default(error.detail, "conflict")
+        is ApiError.Conflict ->
+            if (error.code == "VAULT_CHANGED") null else detail_unless_default(error.detail, "conflict")
         is ApiError.RateLimited ->
             if (error.resets_at == null) null
             else detail_unless_default(error.detail, "rate limited")
@@ -83,6 +84,7 @@ fun server_supplied_detail(t: Throwable): String? {
         is ApiError.StepUpRequired -> detail_unless_default(error.detail, "step up required")
         is ApiError.PlanLimitExceeded,
         is ApiError.StorageQuotaExceeded,
+        is ApiError.UpgradeRequired,
         ApiError.InvalidCredentials,
         ApiError.NetworkError,
         ApiError.UnauthorizedError,

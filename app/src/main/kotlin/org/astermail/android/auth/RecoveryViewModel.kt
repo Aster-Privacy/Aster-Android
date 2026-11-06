@@ -409,7 +409,16 @@ class RecoveryViewModel @Inject constructor(
         }
     }
 
-    private fun recovery_restart_message(t: Throwable): String? = when (t) {
+    private fun recovery_restart_message(t: Throwable): String? = when {
+        is_client_upgrade_error(t) -> null
+        t is ApiError.Conflict && t.code == "VAULT_CHANGED" -> null
+        else -> recovery_restart_reason(t)
+    }
+
+    private fun is_client_upgrade_error(t: Throwable): Boolean =
+        t is ApiError.UpgradeRequired || (t is ApiError.Conflict && t.code == "CLIENT_UPGRADE_REQUIRED")
+
+    private fun recovery_restart_reason(t: Throwable): String? = when (t) {
         is ApiError.Conflict -> ctx.getString(R.string.error_recovery_code_used)
         is ApiError.UnauthorizedError, is ApiError.InvalidCredentials ->
             ctx.getString(R.string.error_recovery_session_expired)
@@ -472,6 +481,10 @@ class RecoveryViewModel @Inject constructor(
     }
 
     private fun map_error(t: Throwable, fallback: Int): String = when (t) {
+        is ApiError.UpgradeRequired -> ctx.getString(R.string.error_client_upgrade_required)
+        is ApiError.Conflict ->
+            if (t.code == "CLIENT_UPGRADE_REQUIRED") ctx.getString(R.string.error_client_upgrade_required)
+            else ctx.getString(fallback)
         is ApiError.ValidationError ->
             org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.error_invalid_request))
         is ApiError.RateLimited -> lockout_message(t)

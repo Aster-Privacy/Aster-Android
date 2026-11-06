@@ -46,6 +46,21 @@ class HttpStatusMappingTest {
     }
 
     @Test
+    fun `upgrade required keeps its code and never surfaces the server text`() {
+        val err = client.map_http_status(426, """{"code":"CLIENT_UPGRADE_REQUIRED","error":"old client"}""")
+        assertTrue(err is ApiError.UpgradeRequired)
+        assertEquals("CLIENT_UPGRADE_REQUIRED", (err as ApiError.UpgradeRequired).code)
+        assertEquals(null, server_supplied_detail(err))
+    }
+
+    @Test
+    fun `a vault conflict never surfaces the server text`() {
+        val err = client.map_http_status(409, """{"code":"VAULT_CHANGED","error":"vault changed"}""")
+        assertTrue(err is ApiError.Conflict)
+        assertEquals(null, server_supplied_detail(err))
+    }
+
+    @Test
     fun `payment required maps to its own error instead of an unknown status`() {
         val err = client.map_http_status(402, """{"error":"card declined"}""")
         assertTrue(err is ApiError.PaymentRequired)
