@@ -45,6 +45,17 @@ fun storage_rekey_retry_delay(attempt: Int): Long? =
 fun should_retry_storage_rekey(result: ResealRunResult): Boolean =
     result.status == ResealRunStatus.INTERRUPTED || result.status == ResealRunStatus.FAILED
 
+data class StorageRekeyNextRun(val attempt: Int, val delay_secs: Long)
+
+fun storage_rekey_next_run(result: ResealRunResult, attempt: Int): StorageRekeyNextRun? {
+    if (result.status == ResealRunStatus.DEFERRED) {
+        val wait = (result.retry_after_secs ?: REKEY_NOT_ADMITTED_WAIT_SECS).coerceAtLeast(REKEY_RETRY_AFTER_MIN_SECS)
+        return StorageRekeyNextRun(0, wait)
+    }
+    if (!should_retry_storage_rekey(result)) return null
+    return storage_rekey_retry_delay(attempt)?.let { StorageRekeyNextRun(attempt + 1, it) }
+}
+
 class StorageRekeyWorker(
     private val context: Context,
     params: WorkerParameters,
@@ -69,9 +80,9 @@ class StorageRekeyWorker(
         } catch (_: Throwable) {
             ResealRunResult(ResealRunStatus.FAILED, StepCounts(), "error")
         }
-        if (should_retry_storage_rekey(result) && !isStopped) {
-            storage_rekey_retry_delay(attempt)?.let { delay ->
-                schedule(context, attempt + 1, delay, ExistingWorkPolicy.APPEND_OR_REPLACE)
+        if (!isStopped) {
+            storage_rekey_next_run(result, attempt)?.let { next ->
+                schedule(context, next.attempt, next.delay_secs, ExistingWorkPolicy.APPEND_OR_REPLACE)
             }
         }
         return Result.success()

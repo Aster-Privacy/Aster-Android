@@ -27,9 +27,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiClient
+import org.astermail.android.auth.vault_identity_key
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
@@ -45,6 +47,7 @@ private const val PROGRESS_PREFS_NAME = "storage_rekey_progress"
 private const val PROGRESS_KEY_PREFIX = "progress_"
 private const val KEY_MATERIAL_ITERATIONS = 310000
 private const val MAX_KEY_MATERIAL_SALTS = 4
+private const val BACKUP_REFRESH_KEY_PREFIX = "backup_refresh_"
 
 class PrefsProgressStore(
     private val prefs: SharedPreferences?,
@@ -208,6 +211,68 @@ class StorageRekeyService @Inject constructor(
         runCatching { SecurePrefs.open(context, PROGRESS_PREFS_NAME) }.getOrNull()
     }
 
+    private val healed_users = java.util.Collections.synchronizedSet(HashSet<String>())
+    private val side_copied = java.util.Collections.synchronizedSet(HashSet<String>())
+
+    companion object {
+        @Volatile private var backup_builder: RecoveryBackupBuilder? = null
+
+        fun install_backup_builder(builder: RecoveryBackupBuilder?) {
+            backup_builder = builder
+        }
+    }
+
+    fun forget_session() {
+        healed_users.clear()
+        side_copied.clear()
+    }
+
+    private fun wrap_crypto(): StorageKeyWrapCrypto =
+        PgpStorageKeyWrapCrypto { session_key_store.get_passphrase() }
+
+    private suspend fun heal_once(api: ResealApi, force: Boolean) {
+        val user_id = session_key_store.get_user_id() ?: return
+        if (!force && user_id in healed_users) return
+        val result = heal_storage_key_from_side_copy(api, session_vault_updater(api, session_key_store), wrap_crypto())
+        if (result !is StorageKeyHeal.Skipped) healed_users.add(user_id)
+    }
+
+    private suspend fun keep_side_copy(api: ResealApi, vault: JSONObject) {
+        val user_id = session_key_store.get_user_id() ?: return
+        val key = vault_random_storage_key(vault) ?: return
+        val marker = user_id + ":" + wrap_key_id(key) + ":" + vault_identity_key(vault).hashCode()
+        key.fill(0)
+        if (marker in side_copied) return
+        val wraps = runCatching { list_storage_key_wraps(api) }.getOrNull() ?: return
+        val stored = runCatching { store_side_copy(api, wrap_crypto(), vault, wraps) }.getOrNull()
+        if (stored == SideCopyStore.STORED || stored == SideCopyStore.CURRENT) side_copied.add(marker)
+    }
+
+    private suspend fun refresh_backup_for(api: ResealApi, vault: JSONObject) {
+        val builder = backup_builder ?: return
+        if (!needs_storage_reseal(VaultKeyView.of(vault))) return
+        val user_id = session_key_store.get_user_id() ?: return
+        val key = vault_random_storage_key(vault) ?: return
+        val key_id = wrap_key_id(key)
+        key.fill(0)
+        val marker_key = BACKUP_REFRESH_KEY_PREFIX + user_id
+        if (prefs?.getString(marker_key, null) == key_id) return
+        val updater = session_vault_updater(api, session_key_store)
+        val result = runCatching { refresh_recovery_backup(api, { updater.latest() }, builder) }.getOrNull()
+        when (result) {
+            BackupRefresh.REFRESHED, BackupRefresh.NO_CODES, BackupRefresh.CODES_CHANGED ->
+                prefs?.edit()?.putString(marker_key, key_id)?.apply()
+            else -> Unit
+        }
+    }
+
+    private fun outcome_vault(outcome: StorageVaultOutcome): JSONObject? = when (outcome) {
+        is StorageVaultOutcome.Rotated -> outcome.vault
+        is StorageVaultOutcome.Adopted -> outcome.vault
+        is StorageVaultOutcome.Current -> outcome.vault
+        is StorageVaultOutcome.Skipped -> null
+    }
+
     private fun rotator(api: ResealApi): StorageVaultRotator = StorageVaultRotator(
         api = api,
         codec = SessionVaultCodec(session_key_store),
@@ -225,7 +290,11 @@ class StorageRekeyService @Inject constructor(
 
     suspend fun ensure_random_storage_key(): StorageVaultOutcome = withContext(Dispatchers.Default) {
         if (!is_unlocked()) return@withContext StorageVaultOutcome.Skipped("locked")
-        rotator(KtorResealApi(api_client)).ensure_random_storage_key()
+        val api = KtorResealApi(api_client)
+        runCatching { heal_once(api, force = false) }
+        val outcome = rotator(api).ensure_random_storage_key()
+        outcome_vault(outcome)?.let { vault -> runCatching { keep_side_copy(api, vault) } }
+        outcome
     }
 
     suspend fun run(is_cancelled: () -> Boolean = { false }): ResealRunResult = withContext(Dispatchers.Default) {
@@ -234,14 +303,18 @@ class StorageRekeyService @Inject constructor(
             return@withContext ResealRunResult(ResealRunStatus.NOT_NEEDED, StepCounts(), "locked")
         }
         val api = KtorResealApi(api_client)
+        runCatching { heal_once(api, force = true) }
         val vault_rotator = rotator(api)
-        val view = when (val outcome = vault_rotator.ensure_random_storage_key()) {
-            is StorageVaultOutcome.Rotated -> VaultKeyView.of(outcome.vault)
-            is StorageVaultOutcome.Adopted -> VaultKeyView.of(outcome.vault)
-            is StorageVaultOutcome.Current -> VaultKeyView.of(outcome.vault)
-            is StorageVaultOutcome.Skipped ->
-                return@withContext ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts(), outcome.reason)
-        }
+        val outcome = vault_rotator.ensure_random_storage_key()
+        val vault = outcome_vault(outcome)
+            ?: return@withContext ResealRunResult(
+                ResealRunStatus.INTERRUPTED,
+                StepCounts(),
+                (outcome as? StorageVaultOutcome.Skipped)?.reason,
+            )
+        runCatching { keep_side_copy(api, vault) }
+        runCatching { refresh_backup_for(api, vault) }
+        val view = VaultKeyView.of(vault)
         val extra_old = session_key_store.get_legacy_keks().orEmpty().mapNotNull { encoded ->
             decode_b64(encoded)?.takeIf { it.size == RESEAL_KEY_LENGTH }
         }
@@ -249,12 +322,13 @@ class StorageRekeyService @Inject constructor(
         try {
             run_storage_reseal(
                 view = view,
-                api = api,
+                api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),
                 store = PrefsProgressStore(prefs, user_id),
                 finish = { data_kek -> vault_rotator.mark_storage_rekey_done(data_kek) },
                 still_current = { vault_rotator.server_storage_key_matches(expected) },
                 is_cancelled = is_cancelled,
                 extra_old_keys = extra_old,
+                gate = { check_rekey_gate(api) },
             )
         } finally {
             extra_old.forEach { it.fill(0) }

@@ -194,6 +194,42 @@ class AuthRepository @Inject constructor(
             key?.fill(0)
             key != null
         }
+        org.astermail.android.crypto.storage_rotation.StorageRekeyService.install_backup_builder(
+            org.astermail.android.crypto.storage_rotation.RecoveryBackupBuilder { vault -> build_refresh_backup(vault) },
+        )
+    }
+
+    private fun build_refresh_backup(vault: org.json.JSONObject): kotlinx.serialization.json.JsonObject? {
+        val codes = org.astermail.android.crypto.storage_rotation.vault_recovery_codes(vault)
+        if (codes.isEmpty()) return null
+        val passphrase = session_key_store.get_passphrase() ?: return null
+        val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+        try {
+            val backup_plain = backup_vault_bytes(vault, passphrase.copyOf())
+            val vault_backup = try {
+                encrypt_vault_backup(backup_plain, recovery_key)
+            } finally {
+                backup_plain.fill(0)
+            }
+            val shares = codes.map { generate_recovery_share(it, recovery_key) }
+            val request = SaveRecoveryBackupRequest(
+                recovery_shares = shares,
+                encrypted_vault_backup = vault_backup.encrypted_data,
+                vault_backup_nonce = vault_backup.nonce,
+                recovery_key_salt = vault_backup.salt,
+                refresh_only = true,
+            )
+            return refresh_backup_json.encodeToJsonElement(SaveRecoveryBackupRequest.serializer(), request)
+                as? kotlinx.serialization.json.JsonObject
+        } finally {
+            recovery_key.fill(0)
+            passphrase.fill(0)
+        }
+    }
+
+    private val refresh_backup_json = kotlinx.serialization.json.Json {
+        explicitNulls = false
+        encodeDefaults = true
     }
 
     private suspend fun run_vault_step_inline() {
@@ -1636,6 +1672,7 @@ class AuthRepository @Inject constructor(
             runCatching { api_client.clear_csrf() }
             runCatching { api_client.invalidate_bearer_cache() }
             runCatching { session_key_store.clear() }
+            runCatching { storage_rekey_service.forget_session() }
             true
         }
         if (!cleared) return@runCatching

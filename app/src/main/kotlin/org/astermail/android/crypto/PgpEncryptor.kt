@@ -60,6 +60,40 @@ object PgpEncryptor {
     fun encrypt_bytes_to_keys(plaintext: ByteArray, armored_public_keys: List<String>): String? =
         encrypt_to_keys(plaintext, armored_public_keys, PGPLiteralData.BINARY)
 
+    fun encrypt_bytes_binary(plaintext: ByteArray, armored_public_keys: List<String>): ByteArray? {
+        val recipients = armored_public_keys.mapNotNull { select_encryption_key(it) }
+        if (recipients.isEmpty()) return null
+        return try {
+            val literal = ByteArrayOutputStream()
+            PGPLiteralDataGenerator().open(
+                literal,
+                PGPLiteralData.BINARY,
+                PGPLiteralData.CONSOLE,
+                plaintext.size.toLong(),
+                Date(0),
+            ).use { it.write(plaintext) }
+            val encrypted_generator = PGPEncryptedDataGenerator(
+                JcePGPDataEncryptorBuilder(SymmetricKeyAlgorithmTags.AES_256)
+                    .setWithIntegrityPacket(true)
+                    .setSecureRandom(SecureRandom())
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+            )
+            for (key in recipients) {
+                encrypted_generator.addMethod(
+                    JcePublicKeyKeyEncryptionMethodGenerator(key)
+                        .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+                )
+            }
+            val payload = literal.toByteArray()
+            val output = ByteArrayOutputStream()
+            encrypted_generator.open(output, payload.size.toLong()).use { it.write(payload) }
+            payload.fill(0)
+            output.toByteArray()
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     private fun encrypt_to_keys(
         plaintext_bytes: ByteArray,
         armored_public_keys: List<String>,

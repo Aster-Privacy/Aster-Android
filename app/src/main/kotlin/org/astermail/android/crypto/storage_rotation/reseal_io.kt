@@ -110,7 +110,9 @@ class StepCounts {
             "rejected=$rejected deleted=$deleted skipped=$skipped"
 }
 
-class ResealInterrupted(message: String) : Exception(message)
+open class ResealInterrupted(message: String) : Exception(message)
+
+class ResealDeferred(val reason: String, val retry_after_secs: Long) : ResealInterrupted(reason)
 
 enum class StepResult { DONE, INTERRUPTED, INCOMPLETE }
 
@@ -166,7 +168,8 @@ fun require_ok(reply: ApiReply, what: String): JsonElement {
     return data
 }
 
-fun is_conflict_reply(reply: ApiReply): Boolean = reply.status == 409 || reply.code == "CONFLICT"
+fun is_conflict_reply(reply: ApiReply): Boolean =
+    (reply.status == 409 && reply.code != STORAGE_REKEY_OLD_CLIENT_CODE) || reply.code == "CONFLICT"
 
 fun step_progress(ctx: ResealContext, name: String): StepProgress =
     ctx.progress.steps.getOrPut(name) { StepProgress() }

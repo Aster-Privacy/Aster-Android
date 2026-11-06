@@ -52,13 +52,14 @@ val DEFAULT_RESEAL_STEPS: List<ResealStep> by lazy {
     )
 }
 
-enum class ResealRunStatus { NOT_NEEDED, DONE, INTERRUPTED, SUPERSEDED, FAILED }
+enum class ResealRunStatus { NOT_NEEDED, DONE, INTERRUPTED, DEFERRED, SUPERSEDED, FAILED }
 
 data class ResealRunResult(
     val status: ResealRunStatus,
     val counts: StepCounts,
     val reason: String? = null,
     val incomplete: List<String> = emptyList(),
+    val retry_after_secs: Long? = null,
 )
 
 fun needs_storage_reseal(view: VaultKeyView?): Boolean =
@@ -74,11 +75,20 @@ suspend fun run_storage_reseal(
     is_cancelled: () -> Boolean = { false },
     steps: List<ResealStep> = DEFAULT_RESEAL_STEPS,
     extra_old_keys: List<ByteArray> = emptyList(),
+    gate: (suspend () -> RekeyGateDecision)? = null,
 ): ResealRunResult {
     val counts = StepCounts()
     val data_kek = view.data_kek
     if (!needs_storage_reseal(view) || data_kek.isNullOrEmpty()) {
         return ResealRunResult(ResealRunStatus.NOT_NEEDED, counts)
+    }
+    if (gate != null) {
+        val decision = runCatching { gate() }.getOrElse {
+            RekeyGateDecision.Wait("status_unavailable", REKEY_RATE_LIMIT_WAIT_SECS)
+        }
+        if (decision is RekeyGateDecision.Wait) {
+            return ResealRunResult(ResealRunStatus.DEFERRED, counts, decision.reason, retry_after_secs = decision.retry_after_secs)
+        }
     }
     val keys = build_reseal_keys(view, extra_old_keys)
         ?: return ResealRunResult(ResealRunStatus.FAILED, counts, "keys_unavailable")
@@ -120,6 +130,8 @@ suspend fun run_storage_reseal(
         store.clear()
         val status = if (finished == StorageRekeyFinish.SUPERSEDED) ResealRunStatus.SUPERSEDED else ResealRunStatus.DONE
         return ResealRunResult(status, counts)
+    } catch (deferred: ResealDeferred) {
+        return ResealRunResult(ResealRunStatus.DEFERRED, counts, deferred.reason, retry_after_secs = deferred.retry_after_secs)
     } catch (interrupted: ResealInterrupted) {
         return ResealRunResult(ResealRunStatus.INTERRUPTED, counts, interrupted.message)
     } catch (cancelled: CancellationException) {
