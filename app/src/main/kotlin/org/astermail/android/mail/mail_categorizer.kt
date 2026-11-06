@@ -138,6 +138,12 @@ private fun match_custom_category(
     return null
 }
 
+private fun is_account_access_mail(subject: String, headers: Map<String, String>): Boolean {
+    if (matches_any(subject, PROMOTIONS_SUBJECT_PATTERNS)) return false
+    if (ACCOUNT_ACCESS_HEADER_NAMES.any { headers.containsKey(it) }) return true
+    return matches_any(subject, ACCOUNT_ACCESS_SUBJECT_PATTERNS)
+}
+
 private fun resolve_rule_category(
     rule_category: String?,
     custom_categories: List<CustomCategoryRule>,
@@ -195,6 +201,10 @@ fun classify(
     if (matches_any(subject, PERSON_TO_PERSON_PAYMENT_SUBJECT_PATTERNS) &&
         !matches_any(subject, PROMOTIONS_SUBJECT_PATTERNS)
     ) {
+        return "primary"
+    }
+
+    if (is_account_access_mail(subject, headers)) {
         return "primary"
     }
 

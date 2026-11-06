@@ -1309,3 +1309,35 @@ val PERSON_TO_PERSON_PAYMENT_SUBJECT_PATTERNS: List<Regex> = listOf(
     Regex("""\brequest(?:ed|ing|s)?\s+(?:money|funds|\p{Sc}[\d.,]+|a\s+payment)\s+from\s+you\b""", RegexOption.IGNORE_CASE),
     Regex("""\bvous\s+a\s+envoy""", RegexOption.IGNORE_CASE),
 )
+
+val ACCOUNT_ACCESS_SUBJECT_PATTERNS: List<Regex> = listOf(
+    Regex("""\b(?:verification|verify|security|confirmation|confirm|login|log[\s-]?in|sign[\s-]?in|one[\s-]?time|access|authentication|auth|activation|passcode)\s+(?:code|pin|link)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bone[\s-]?time\s+(?:password|passcode)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\botp\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:your\s+)?code\s+is\s*:?\s*\d{4,8}\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b\d{4,8}\s+is\s+your\b""", RegexOption.IGNORE_CASE),
+    Regex("""\buse\s+\d{4,8}\s+to\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:confirm|verify|activate)\s+(?:your\s+|this\s+)?(?:new\s+)?(?:email|e-mail|account|address|email\s+address|sign[\s-]?in|log[\s-]?in|login|identity|device)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:reset|recover)\s+your\s+password\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bpassword\s+(?:reset|recovery)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:magic|sign[\s-]?in|log[\s-]?in|login)\s+link\b""", RegexOption.IGNORE_CASE),
+    Regex("""验证码|驗證碼|校验码|校驗碼|动态码|動態碼|确认码|確認碼|安全码|安全碼|登录码|登入碼"""),
+    Regex("""(?:验证|驗證|确认|確認|激活|啟用)(?:您|你)的(?:帐户|账户|帐号|账号|帳戶|帳號|电子邮件|電子郵件|邮箱|郵箱|邮件地址|郵件地址|登录|登入)"""),
+    Regex("""验证此次登录|驗證此次登入|验证登录|驗證登入|确认登录|確認登入|登录验证|登入驗證|重置密码|重設密碼|密码重置|密碼重設"""),
+    Regex("""認証コード|確認コード|ワンタイムパスワード|パスワードの再設定|パスワードをリセット|メールアドレスの確認"""),
+    Regex("""인증\s*(?:코드|번호)|확인\s*코드|비밀번호\s*재설정"""),
+    Regex("""\bc[oó]digo\s+de\s+(?:verificaci[oó]n|verifica[cç][aã]o|seguridad|seguran[cç]a|acceso|acesso|confirmaci[oó]n|confirma[cç][aã]o|inicio\s+de\s+sesi[oó]n)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:restablecer|recuperar)\s+(?:tu\s+|su\s+)?contrase[nñ]a\b|\bredefinir\s+(?:a\s+|sua\s+)?senha\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bcode\s+de\s+(?:v[ée]rification|s[ée]curit[ée]|confirmation|connexion)""", RegexOption.IGNORE_CASE),
+    Regex("""\br[ée]initialis(?:er|ation)\s+(?:de\s+)?(?:votre\s+)?mot\s+de\s+passe\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:best[äa]tigungs|verifizierungs|sicherheits|anmelde)code\b|\bpasswort\s+zur[üu]cksetzen\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bcodice\s+di\s+(?:verifica|sicurezza|accesso|conferma)\b""", RegexOption.IGNORE_CASE),
+    Regex("""код\s+(?:подтверждения|проверки|безопасности|доступа|для\s+входа)|сброс\s+пароля|подтвердите\s+(?:ваш|свой|вашу|свою|адрес)""", RegexOption.IGNORE_CASE),
+)
+
+val ACCOUNT_ACCESS_HEADER_NAMES: Set<String> = setOf(
+    "x-verify-code",
+    "x-verify-short-code",
+    "x-signin-verify-code",
+    "x-unblock-code",
+)
