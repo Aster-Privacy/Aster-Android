@@ -2808,7 +2808,10 @@
     <string name="error_folder_password_not_set">Ten folder nie ma hasła.</string>
     <string name="error_image_too_large">Ten obraz jest za duży. Wybierz mniejsze zdjęcie.</string>
     <string name="error_invalid_2fa_code">Ten kod jest nieprawidłowy. Sprawdź aplikację uwierzytelniającą i spróbuj ponownie.</string>
-    <string name="error_passkey_unavailable">Na tym urządzeniu nie ma klucza dostępu dla tego konta. Użyj aplikacji uwierzytelniającej albo najpierw dodaj klucz dostępu w przeglądarce.</string>
+    <string name="error_passkey_unavailable">Nie znaleziono klucza dostępu dla tego konta. Sprawdź, czy menedżer haseł, w którym jest Twój klucz dostępu, jest włączony dla kluczy dostępu w ustawieniach Androida, albo użyj aplikacji uwierzytelniającej.</string>
+    <string name="error_passkey_no_provider">Klucze dostępu nie są skonfigurowane na tym urządzeniu. Włącz menedżer haseł dla kluczy dostępu w ustawieniach Androida albo użyj aplikacji uwierzytelniającej.</string>
+    <string name="passkey_open_settings">Ustawienia kluczy dostępu</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Kod błędu: %2$s</string>
     <string name="error_passkey_failed">Nie udało się zweryfikować klucza dostępu. Spróbuj ponownie lub użyj innej metody logowania.</string>
     <string name="error_invalid_backup_code">Ten kod zapasowy nie pasuje. Każdy kod działa tylko raz, więc wypróbuj kolejny nieużyty kod z listy.</string>
     <string name="error_invalid_recovery_phrase">Ta fraza odzyskiwania nie pasuje. Sprawdź kolejność słów i pisownię, a potem spróbuj ponownie.</string>
@@ -3395,7 +3398,7 @@
     <string name="passkey_added_sessions_revoked">Dodano klucz dostępu. Wylogowano Cię na innych urządzeniach.</string>
     <string name="passkey_added_second_step_only">Dodano klucz dostępu. Używaj go jako drugiego kroku podczas logowania hasłem.</string>
     <string name="passkey_already_registered">Ten klucz dostępu jest już zapisany na Twoim koncie.</string>
-    <string name="passkey_create_unavailable">To urządzenie nie może zapisywać kluczy dostępu. Sprawdź, czy blokada ekranu jest włączona i czy skonfigurowano menedżer haseł.</string>
+    <string name="passkey_create_unavailable">To urządzenie nie może teraz zapisywać kluczy dostępu. Włącz blokadę ekranu i wybierz menedżer haseł dla kluczy dostępu w ustawieniach Androida.</string>
     <string name="passkey_create_failed">Nie udało się dodać klucza dostępu. Spróbuj ponownie.</string>
     <string name="error_passkey_timed_out">Żądanie klucza dostępu wygasło. Spróbuj ponownie.</string>
     <string name="billing_play_unavailable">Zakupy w Google Play są teraz niedostępne. Spróbuj ponownie później.</string>

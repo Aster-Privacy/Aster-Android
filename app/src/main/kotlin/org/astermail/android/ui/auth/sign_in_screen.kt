@@ -91,6 +91,7 @@ import org.astermail.android.R
 import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
+import org.astermail.android.auth.open_passkey_settings
 import org.astermail.android.auth.request_passkey_assertion
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
@@ -581,6 +582,14 @@ internal fun TotpVerifyScreen(
 
                 if (error_message != null) {
                     error_banner(error_message)
+                    if (use_passkey && (state as? AuthUiState.Error)?.passkey_settings == true) {
+                        second_factor_method_switch(
+                            label = stringResource(R.string.passkey_open_settings),
+                            visible = true,
+                            enabled = !is_loading,
+                            on_click = { open_passkey_settings(context.host_activity() ?: context) },
+                        )
+                    }
                     Spacer(Modifier.height(AsterSpacing.md))
                 }
 

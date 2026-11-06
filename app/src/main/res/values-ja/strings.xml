@@ -2773,7 +2773,10 @@
     <string name="error_folder_password_not_set">このフォルダにはパスワードが設定されていません。</string>
     <string name="error_image_too_large">この画像はサイズが大きすぎます。もっと小さい写真を選んでください。</string>
     <string name="error_invalid_2fa_code">このコードは正しくありません。認証アプリを確認して、もう一度お試しください。</string>
-    <string name="error_passkey_unavailable">この端末にこのアカウントのパスキーがありません。認証アプリを使うか、先にブラウザからパスキーを追加してください。</string>
+    <string name="error_passkey_unavailable">このアカウントのパスキーが見つかりません。パスキーを保存しているパスワード マネージャーが Android の設定でパスキー用に有効になっていることを確認するか、認証アプリを使用してください。</string>
+    <string name="error_passkey_no_provider">この端末ではパスキーが設定されていません。Android の設定でパスキー用のパスワード マネージャーを有効にするか、認証アプリを使用してください。</string>
+    <string name="passkey_open_settings">パスキーの設定</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s エラーコード: %2$s</string>
     <string name="error_passkey_failed">パスキーを確認できませんでした。もう一度試すか、別の方法でサインインしてください。</string>
     <string name="error_invalid_backup_code">このバックアップコードは一致しません。各コードは1回だけ使えるため、リストの次の未使用コードをお試しください。</string>
     <string name="error_invalid_recovery_phrase">この復元フレーズは一致しません。単語の順序とつづりを確認して、もう一度お試しください。</string>
@@ -3344,7 +3347,7 @@
     <string name="passkey_added_sessions_revoked">パスキーを追加しました。ほかのデバイスからサインアウトしました。</string>
     <string name="passkey_added_second_step_only">パスキーを追加しました。パスワードでサインインするときの 2 段階目として使用できます。</string>
     <string name="passkey_already_registered">このパスキーはすでにアカウントに保存されています。</string>
-    <string name="passkey_create_unavailable">このデバイスではパスキーを保存できません。画面ロックがオンで、パスワード マネージャーが設定されていることを確認してください。</string>
+    <string name="passkey_create_unavailable">現在このデバイスではパスキーを保存できません。画面ロックをオンにして、Android の設定でパスキー用のパスワード マネージャーを選択してください。</string>
     <string name="passkey_create_failed">パスキーを追加できませんでした。もう一度お試しください。</string>
     <string name="error_passkey_timed_out">パスキーのリクエストがタイムアウトしました。もう一度お試しください。</string>
     <string name="billing_play_unavailable">現在 Google Play での購入はご利用いただけません。しばらくしてからもう一度お試しください。</string>
