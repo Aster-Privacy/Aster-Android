@@ -202,6 +202,9 @@ class ExternalPgpKeyStore @Inject constructor(
     @Volatile
     private var failed_blob_digest: String? = null
 
+    @Volatile
+    private var generation = 0L
+
     private val _info = MutableStateFlow(read_cached_info())
     val info: StateFlow<ExternalPgpKeyInfo?> = _info.asStateFlow()
 
@@ -210,6 +213,7 @@ class ExternalPgpKeyStore @Inject constructor(
     }
 
     suspend fun load() {
+        val started = session_snapshot()
         val fetched = try {
             encryption_api.get().get_external_pgp_key()
         } catch (t: CancellationException) {
@@ -219,10 +223,11 @@ class ExternalPgpKeyStore @Inject constructor(
             ensure_unlocked()
             return
         }
-        remember(fetched)
+        remember(fetched, started)
     }
 
     suspend fun stop_publishing(): Boolean {
+        val started = session_snapshot()
         val updated = try {
             encryption_api.get().set_external_pgp_key_published(false)
         } catch (t: CancellationException) {
@@ -231,8 +236,10 @@ class ExternalPgpKeyStore @Inject constructor(
             return false
         }
         val previous_wrapped = _info.value?.wrapped_private_key.orEmpty()
-        remember(updated.copy(wrapped_private_key = updated.wrapped_private_key.ifBlank { previous_wrapped }, published = false))
-        return true
+        return remember(
+            updated.copy(wrapped_private_key = updated.wrapped_private_key.ifBlank { previous_wrapped }, published = false),
+            started,
+        )
     }
 
     fun decryption_keys(): Map<Long, PGPPrivateKey> = ensure_unlocked()?.decryption_keys.orEmpty()
@@ -246,14 +253,19 @@ class ExternalPgpKeyStore @Inject constructor(
 
     fun forget() {
         synchronized(lock) {
+            generation += 1
             unlocked = null
             failed_blob_digest = null
             _info.value = null
         }
     }
 
-    private fun remember(fetched: ExternalPgpKeyInfo?) {
+    private fun session_snapshot(): Pair<Long, String?> =
+        synchronized(lock) { generation to session_key_store.get_user_id() }
+
+    private fun remember(fetched: ExternalPgpKeyInfo?, started: Pair<Long, String?>): Boolean {
         synchronized(lock) {
+            if (session_snapshot() != started) return false
             val previous = _info.value
             if (previous == null || fetched == null ||
                 previous.wrapped_private_key != fetched.wrapped_private_key ||
@@ -268,6 +280,7 @@ class ExternalPgpKeyStore @Inject constructor(
             )
         }
         ensure_unlocked()
+        return true
     }
 
     private fun ensure_unlocked(): UnlockedExternalPgpKey? {

@@ -183,4 +183,38 @@ class ExternalPgpKeyStoreTest {
         assertFalse(store.stop_publishing())
         assertEquals(true, store.info.value?.published)
     }
+
+    @Test
+    fun a_fetch_that_finishes_after_an_account_switch_is_dropped() = runTest {
+        val store = store()
+        coEvery { api.get_external_pgp_key() } answers {
+            session.clear()
+            session.put_user_id("00000000-0000-0000-0000-00000000beef")
+            row(published = true)
+        }
+
+        store.load()
+
+        assertNull(store.info.value)
+        assertNull(store.signing_key_if_ready())
+        assertTrue(store.decryption_keys().isEmpty())
+        assertNull(session.get_external_pgp_blob())
+    }
+
+    @Test
+    fun stop_publishing_that_finishes_after_an_account_switch_changes_nothing() = runTest {
+        coEvery { api.get_external_pgp_key() } returns row(published = true)
+        val store = store()
+        store.load()
+        coEvery { api.set_external_pgp_key_published(false) } answers {
+            session.clear()
+            session.put_user_id("00000000-0000-0000-0000-00000000beef")
+            row(published = false)
+        }
+
+        assertFalse(store.stop_publishing())
+
+        assertNull(store.info.value)
+        assertNull(session.get_external_pgp_blob())
+    }
 }
