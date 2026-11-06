@@ -59,6 +59,15 @@ interface DecryptedMailDao {
     )
     suspend fun inbox_window_rows_newer_than(min_timestamp: String): List<InboxWindowRow>
 
+    @Query(
+        "SELECT id, thread_token FROM decrypted_mail_cache WHERE is_archived = 0 AND is_spam = 0 " +
+            "AND is_trashed = 0 AND TRIM(labels) = '' AND (item_type IS NULL OR item_type = 'received')",
+    )
+    suspend fun unlabeled_inbox_rows(): List<InboxWindowRow>
+
+    @Query("SELECT id FROM decrypted_mail_cache WHERE TRIM(labels) = ''")
+    suspend fun unlabeled_ids(): List<String>
+
     @Query("SELECT COUNT(*) FROM decrypted_mail_cache")
     suspend fun count(): Int
 

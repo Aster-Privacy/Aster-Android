@@ -173,6 +173,9 @@ fun folder_cache_should_persist(
     has_error: Boolean,
 ): Boolean = if (!items_empty) true else !is_loading && !initial && !has_error
 
+fun folder_cache_should_warm(items_empty: Boolean, whole_scope: Boolean): Boolean =
+    !items_empty || whole_scope
+
 fun folder_cache_layout_signature(
     grouping: Boolean,
     list_order: String?,

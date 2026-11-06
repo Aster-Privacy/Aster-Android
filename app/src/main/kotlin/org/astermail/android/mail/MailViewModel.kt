@@ -1238,9 +1238,9 @@ class MailViewModel @Inject constructor(
                 if (gen != account_generation) return@withContext null
                 if (_inbox_state.value.current_folder == folder) return@withContext false
                 offline_warmed_at[folder] = System.currentTimeMillis()
-                if (items.isEmpty()) return@withContext false
+                if (!folder_cache_should_warm(items.isEmpty(), whole_scope = !page.has_more)) return@withContext false
                 persist_folder_rows(folder, items)
-                true
+                items.isNotEmpty()
             } ?: return
             if (!persisted) continue
             if (folder != "drafts" && gen == account_generation) {
@@ -1809,20 +1809,32 @@ class MailViewModel @Inject constructor(
     }
 
     private suspend fun reconcile_cache_window(folder: String, page: InboxPage) {
-        if (folder != "inbox" || page.items.isEmpty()) return
-        schedule_offline_prefetch(page.items)
+        if (folder != "inbox") return
+        if (page.items.isEmpty() && page.has_more) return
+        if (page.items.isNotEmpty()) schedule_offline_prefetch(page.items)
         if (list_order != null) return
-        val min_timestamp = page.items.minOf { it.timestamp }
+        val whole_scope = !page.has_more
+        val min_timestamp = page.items.minOfOrNull { it.timestamp }.orEmpty()
         val returned_ids = page.items.mapTo(HashSet()) { it.id }
         returned_ids.addAll(page.raw_ids)
         val returned_thread_tokens = page.items.mapNotNullTo(HashSet()) { it.thread_token }
+        val protected_ids = if (whole_scope) index_protected_ids() else emptySet()
         runCatching {
             search_index_manager.reconcile_inbox_window(
                 returned_ids,
                 returned_thread_tokens,
                 min_timestamp,
+                whole_scope = whole_scope,
+                protected_ids = protected_ids,
             )
         }
+    }
+
+    private fun index_protected_ids(): Set<String> {
+        val now = System.currentTimeMillis()
+        val protected_ids = restore_protected_until.keys.filterTo(HashSet()) { restore_protected(it, now) }
+        repository.pending_actions_for_current_account().forEach { protected_ids.addAll(it.id_set) }
+        return protected_ids
     }
 
     fun load_more() {

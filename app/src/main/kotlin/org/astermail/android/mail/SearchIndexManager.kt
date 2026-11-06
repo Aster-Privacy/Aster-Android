@@ -41,10 +41,32 @@ import org.astermail.android.api.mail.MailItem
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
+import org.astermail.android.storage.search.InboxWindowRow
 
 private const val armored_prefix = "-----BEGIN PGP MESSAGE"
 private const val snoozed_page_size = 200
 private const val max_snoozed_pages = 50
+private const val index_removal_chunk = 500
+
+fun index_rows_missing_from_page(
+    rows: List<InboxWindowRow>,
+    returned_ids: Set<String>,
+    returned_thread_tokens: Set<String>,
+    protected_ids: Set<String> = emptySet(),
+): List<String> = rows.asSequence()
+    .filterNot { it.id in returned_ids || it.id in protected_ids }
+    .filterNot { it.thread_token != null && it.thread_token in returned_thread_tokens }
+    .map { it.id }
+    .toList()
+
+fun index_ids_missing_from_server(
+    candidate_ids: Collection<String>,
+    server_ids: Set<String>,
+    walked_ids: Set<String>,
+): List<String> {
+    if (!server_ids.containsAll(walked_ids)) return emptyList()
+    return candidate_ids.filterNot { it in server_ids }
+}
 
 data class IndexProgress(
     val indexed: Int,
@@ -241,18 +263,66 @@ class SearchIndexManager @Inject constructor(
         returned_ids: Set<String>,
         returned_thread_tokens: Set<String>,
         min_timestamp: String,
+        whole_scope: Boolean = false,
+        protected_ids: Set<String> = emptySet(),
     ) {
-        if (returned_ids.isEmpty() || min_timestamp.isBlank()) return
+        if (!whole_scope && (returned_ids.isEmpty() || min_timestamp.isBlank())) return
         clear_window_absences(returned_ids)
-        val stale = dao.inbox_window_rows_newer_than(min_timestamp)
-            .filterNot { it.id in returned_ids }
-            .filterNot { it.thread_token != null && it.thread_token in returned_thread_tokens }
-            .map { it.id }
+        val rows = if (whole_scope) {
+            dao.unlabeled_inbox_rows()
+        } else {
+            dao.inbox_window_rows_newer_than(min_timestamp)
+        }
+        val stale = index_rows_missing_from_page(rows, returned_ids, returned_thread_tokens, protected_ids)
         if (stale.isEmpty()) return
         val snoozed_ids = runCatching { collect_snoozed_ids() }.getOrNull() ?: return
         val candidates = stale.filterNot { it in snoozed_ids }
         val removable = record_window_absences(candidates)
-        if (removable.isNotEmpty()) dao.remove_items(removable)
+        remove_index_rows(removable)
+    }
+
+    private suspend fun remove_index_rows(ids: List<String>) {
+        ids.chunked(index_removal_chunk).forEach { dao.remove_items(it) }
+    }
+
+    private suspend fun collect_server_ids(started_at: Long, budget_ms: Long): Set<String>? {
+        val ids = HashSet<String>()
+        var cursor: String? = null
+        var pages = 0
+        while (pages < MAX_SERVER_ID_PAGES) {
+            if (System.currentTimeMillis() - started_at > budget_ms) return null
+            val response = mail_api.list_messages(
+                limit = SERVER_ID_PAGE_SIZE,
+                cursor = cursor,
+                item_type = "all",
+                include_spam = true,
+                include_trash = true,
+                group_by_thread = false,
+                skip_total = true,
+                include_envelope = false,
+            )
+            response.items.forEach { ids.add(it.id) }
+            pages++
+            if (!response.has_more) return ids
+            cursor = response.next_cursor ?: return null
+        }
+        return null
+    }
+
+    private suspend fun purge_ids_missing_from_server(
+        start_ids: Set<String>,
+        walked_ids: Set<String>,
+        my_epoch: Int,
+        started_at: Long,
+        budget_ms: Long,
+    ) {
+        if (start_ids.isEmpty()) return
+        val server_ids = collect_server_ids(started_at, budget_ms) ?: return
+        if (epoch.get() != my_epoch) return
+        val candidates = dao.unlabeled_ids().filter { it in start_ids }
+        val missing = index_ids_missing_from_server(candidates, server_ids, walked_ids)
+        if (missing.isEmpty() || epoch.get() != my_epoch) return
+        remove_index_rows(missing)
     }
 
     private suspend fun collect_snoozed_ids(): HashSet<String> {
@@ -405,6 +475,8 @@ class SearchIndexManager @Inject constructor(
         try {
             purge_bundle_poisoned()
             val existing_ids = dao.get_all_ids().toHashSet()
+            val start_ids = HashSet(existing_ids)
+            val walked_ids = HashSet<String>()
             val incremental = has_fresh_full_build()
             val poisoned_ids = load_poisoned_ids()
             val poisoned_before = poisoned_ids.size
@@ -435,6 +507,7 @@ class SearchIndexManager @Inject constructor(
                     if (page == 0 && response.total >= 0) {
                         total_target += minOf(response.total, max_pages * page_size)
                     }
+                    response.items.mapTo(walked_ids) { it.id }
                     val new_items = response.items.filter { it.id !in existing_ids && it.id !in poisoned_ids }
                     val known_ids = response.items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {
@@ -495,6 +568,11 @@ class SearchIndexManager @Inject constructor(
             }
             enrich_attachment_flags(my_epoch, if (incremental) added_ids else null)
             if (epoch.get() == my_epoch && walk_complete) {
+                runCatching {
+                    purge_ids_missing_from_server(start_ids, walked_ids, my_epoch, started_at, build_budget_ms)
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            if (epoch.get() == my_epoch && walk_complete) {
                 _index_ready.value = true
                 mark_full_build()
             }
@@ -525,6 +603,8 @@ class SearchIndexManager @Inject constructor(
         const val STARTUP_BUILD_DELAY_MS = 4000L
         const val MAX_TRACKED_ABSENCES = 500
         const val WINDOW_ABSENCES_BEFORE_REMOVAL = 2
+        const val SERVER_ID_PAGE_SIZE = 200
+        const val MAX_SERVER_ID_PAGES = 500
     }
 
     data class AttachmentProbeResult(
