@@ -118,6 +118,7 @@ private fun open_current_session(
         keys.put_data_kek(kek)
         kek.fill(0)
     }
+    app_keys.get_storage_kdf_version()?.let { keys.put_storage_kdf_version(it) }
     val still_current = {
         account_store.get_current_id() == account_id && app_keys.get_user_id() == account_id
     }

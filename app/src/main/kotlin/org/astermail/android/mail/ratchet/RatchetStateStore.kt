@@ -106,32 +106,9 @@ class RatchetStateStore @Inject constructor(
             }
             candidates.add(key)
         }
-        offer(session_key_store.get_data_kek())
-        offer(derive_storage_master_key())
-        session_key_store.get_legacy_keks()?.forEach { encoded ->
-            offer(runCatching { RatchetCrypto.b64_decode(encoded) }.getOrNull())
-        }
+        offer(org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store))
+        org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store).forEach { offer(it) }
         return candidates
-    }
-
-    private fun derive_storage_master_key(): ByteArray? {
-        val passphrase = session_key_store.get_passphrase() ?: return null
-        return try {
-            val prefix = "aster-hkdf-salt-v1:".toByteArray(Charsets.UTF_8)
-            val combined = ByteArray(prefix.size + passphrase.size)
-            System.arraycopy(prefix, 0, combined, 0, prefix.size)
-            System.arraycopy(passphrase, 0, combined, prefix.size, passphrase.size)
-            val salt = RatchetCrypto.sha256(combined)
-            combined.fill(0)
-            RatchetCrypto.hkdf_sha256(
-                ikm = passphrase,
-                salt = salt,
-                info = "aster-storage-encryption-key-v1".toByteArray(Charsets.UTF_8),
-                length = 32,
-            )
-        } finally {
-            passphrase.fill(0)
-        }
     }
 
     private fun key_for(conversation_id: String): String = "ratchet_state_$conversation_id"

@@ -41,6 +41,7 @@ import org.astermail.android.api.templates.TemplatesApi
 import org.astermail.android.api.templates.UpdateTemplateRequest
 import org.astermail.android.auth.open_with_storage_key_candidates
 import org.astermail.android.crypto.CryptoNative
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.storage.SessionKeyStore
 
 data class DecryptedTemplate(
@@ -88,7 +89,7 @@ class TemplatesViewModel @Inject constructor(
             val result = runCatching {
                 val response = api.list()
                 withContext(Dispatchers.Default) {
-                    val key = derive_key() ?: error("session expired")
+                    val key = derive_key() ?: first_read_key() ?: error("session expired")
                     try {
                         decrypt_all(response.templates, key)
                     } finally {
@@ -132,9 +133,10 @@ class TemplatesViewModel @Inject constructor(
     }
 
     private fun fallback_template_keys(primary: ByteArray): List<ByteArray> =
-        session_key_store.get_decrypt_keks().mapNotNull { kek_b64 ->
-            runCatching { Base64.decode(kek_b64, Base64.DEFAULT) }.getOrNull()
-                ?.takeIf { it.size == 32 && !it.contentEquals(primary) }
+        StorageWriteKey.read_keys(session_key_store).filter { candidate ->
+            val keep = !candidate.contentEquals(primary)
+            if (!keep) candidate.fill(0)
+            keep
         }
 
     fun start_new() {
@@ -253,17 +255,12 @@ class TemplatesViewModel @Inject constructor(
         }
     }
 
-    private fun derive_key(): ByteArray? {
-        session_key_store.get_data_kek()?.let { kek ->
-            if (kek.size == 32) return kek
-            kek.fill(0)
-        }
-        val passphrase = session_key_store.get_passphrase() ?: return null
-        return try {
-            CryptoNative.derive_storage_key(passphrase)
-        } finally {
-            passphrase.fill(0)
-        }
+    private fun derive_key(): ByteArray? = StorageWriteKey.write_key(session_key_store)
+
+    private fun first_read_key(): ByteArray? {
+        val keys = StorageWriteKey.read_keys(session_key_store)
+        keys.drop(1).forEach { it.fill(0) }
+        return keys.firstOrNull()
     }
 
     private fun decrypt(item: TemplateItem, key: ByteArray): DecryptedTemplate? = runCatching {

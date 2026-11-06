@@ -48,7 +48,7 @@ import org.astermail.android.api.external_accounts.PurgeMailRequest
 import org.astermail.android.api.external_accounts.ToggleAccountRequest
 import org.astermail.android.api.external_accounts.TriggerSyncRequest
 import org.astermail.android.api.external_accounts.UpdateAccountRequest
-import org.astermail.android.crypto.CryptoNative
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.storage.SessionKeyStore
 
 enum class ExternalAccountsError {
@@ -113,17 +113,18 @@ class ExternalAccountsViewModel @Inject constructor(
         )
         version?.let {
             session_keys.put_storage_kdf_version(it)
-            CryptoNative.derive_storage_key_for_version(passphrase, it)
+            StorageWriteKey.write_key(session_keys)
         }
     }
 
-    private fun read_keys(): List<ByteArray> = buildList {
-        storage_key()?.let { add(it) }
-        session_keys.get_decrypt_keks().forEach { encoded ->
-            val key = runCatching { android.util.Base64.decode(encoded, android.util.Base64.DEFAULT) }.getOrNull()
-            if (key?.size == 32) add(key) else key?.fill(0)
+    private fun read_keys(): List<ByteArray> {
+        val keys = listOfNotNull(storage_key()) + StorageWriteKey.read_keys(session_keys)
+        val seen = mutableSetOf<String>()
+        return keys.filter { key ->
+            val fresh = key.size == 32 && seen.add(StorageWriteKey.encode_key(key))
+            if (!fresh) key.fill(0)
+            fresh
         }
-        session_keys.get()?.let { add(it) }
     }
 
     fun load() {

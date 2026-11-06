@@ -27,35 +27,16 @@ import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.AesGcm
-import org.astermail.android.crypto.hkdf_sha256
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.storage.SessionKeyStore
 
-private const val alias_salt_prefix = "aster-hkdf-salt-v1:"
-private const val alias_derived_key_info = "aster-storage-encryption-key-v1"
 private const val alias_hmac_info = "astermail-alias-hmac-v1"
 
 fun normalize_alias_local_part(local_part: String): String =
     local_part.lowercase(Locale.ROOT).replace(".", "")
 
-fun derive_alias_encryption_key(session_key_store: SessionKeyStore): ByteArray {
-    session_key_store.get_data_kek()?.let { kek ->
-        if (kek.size == 32) return kek
-        kek.fill(0)
-    }
-    val passphrase = session_key_store.get_passphrase()
-        ?: throw IllegalStateException("no passphrase")
-    try {
-        val prefix = alias_salt_prefix.toByteArray(Charsets.UTF_8)
-        val salt_input = ByteArray(prefix.size + passphrase.size)
-        System.arraycopy(prefix, 0, salt_input, 0, prefix.size)
-        System.arraycopy(passphrase, 0, salt_input, prefix.size, passphrase.size)
-        val salt = MessageDigest.getInstance("SHA-256").digest(salt_input)
-        salt_input.fill(0)
-        return hkdf_sha256(passphrase, salt, alias_derived_key_info.toByteArray(Charsets.UTF_8), 32)
-    } finally {
-        passphrase.fill(0)
-    }
-}
+fun derive_alias_encryption_key(session_key_store: SessionKeyStore): ByteArray =
+    StorageWriteKey.write_key(session_key_store) ?: throw IllegalStateException("no storage key")
 
 fun encrypt_alias_field_with(session_key_store: SessionKeyStore, plaintext: String): Pair<String, String> {
     val key = derive_alias_encryption_key(session_key_store)

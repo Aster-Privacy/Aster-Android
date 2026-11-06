@@ -33,7 +33,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.crypto.AesGcm
-import org.astermail.android.crypto.hkdf_sha256
+import org.astermail.android.crypto.StorageWriteKey
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -165,7 +165,7 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun create_contact(contact: Contact): Result<CreateContactResponse> = runCatching {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         try {
             val request = build_create_request(contact, key)
             contacts_api.create_contact(request)
@@ -184,7 +184,7 @@ class ContactsRepository @Inject constructor(
         var failed = 0
         var limit_reached = false
         var last_failure: Throwable? = null
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         var processed = 0
         on_progress(0, contacts.size)
         try {
@@ -262,7 +262,7 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun update_contact(contact_id: String, contact: Contact): Result<Unit> = runCatching {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         try {
             val request = build_update_request(contact, key)
             contacts_api.update_contact(contact_id, request)
@@ -292,14 +292,18 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun search_contacts(query: String, field: String = "all", limit: Int? = null): Result<List<Contact>> = runCatching {
-        val key = derive_contacts_key()
-        val token = try {
-            generate_search_token(query, key)
+        val keys = StorageWriteKey.lookup_keys(session_key_store)
+        val tokens = try {
+            keys.map { generate_search_token(query, it) }.distinct()
         } finally {
-            key.fill(0)
+            keys.forEach { it.fill(0) }
         }
-        val response = contacts_api.search_contacts(token, field, limit)
-        decrypt_contacts(response.items)
+        if (tokens.isEmpty()) throw IllegalStateException("no storage key")
+        val seen = mutableSetOf<String>()
+        val items = tokens.flatMap { token -> contacts_api.search_contacts(token, field, limit).items }
+            .filter { seen.add(it.id) }
+        val merged = decrypt_contacts(items)
+        if (limit != null) merged.take(limit) else merged
     }
 
     suspend fun list_contact_groups(): Result<List<ContactGroup>> = runCatching {
@@ -312,7 +316,7 @@ class ContactsRepository @Inject constructor(
         color: String,
         icon: String? = null,
     ): Result<CreateContactGroupResponse> = runCatching {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         try {
             val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
             val payload = build_group_payload(name, color, icon)
@@ -336,7 +340,7 @@ class ContactsRepository @Inject constructor(
         color: String,
         icon: String? = null,
     ): Result<SuccessResponse> = runCatching {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         try {
             val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
             val payload = build_group_payload(name, color, icon)
@@ -393,7 +397,7 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun create_raw_contact(json: String, unique_token: Boolean): CreateContactResponse {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         return try {
             val contact = parse_contact_json("", json) ?: throw IllegalArgumentException("invalid contact json")
             val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
@@ -420,7 +424,7 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun update_raw_contact(contact_id: String, json: String, expected_revision: Long?): UpdateContactResponse {
-        val key = derive_contacts_key()
+        val key = write_contacts_key()
         return try {
             val contact = parse_contact_json(contact_id, json) ?: throw IllegalArgumentException("invalid contact json")
             val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
@@ -504,19 +508,8 @@ class ContactsRepository @Inject constructor(
         return try {
             val ciphertext = android.util.Base64.decode(encrypted_data, android.util.Base64.DEFAULT)
             val nonce = android.util.Base64.decode(data_nonce, android.util.Base64.DEFAULT)
-            val key = derive_contacts_key()
-            val decrypted = try {
-                val ih = item.integrity_hash
-                val dv = item.data_version
-                if (ih != null && dv != null) {
-                    if (!verify_integrity_hash(encrypted_data, data_nonce, ih, dv, key)) {
-                        throw IllegalStateException("integrity check failed")
-                    }
-                }
-                aes_gcm_decrypt(ciphertext, key, nonce)
-            } finally {
-                key.fill(0)
-            }
+            val decrypted = decrypt_with_storage_keys(item, encrypted_data, data_nonce, ciphertext, nonce)
+                ?: throw IllegalStateException("no storage key opened the contact")
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
             parse_contact_json(item.id, json_str)
@@ -526,6 +519,28 @@ class ContactsRepository @Inject constructor(
             } catch (_: Throwable) {
                 null
             }
+        }
+    }
+
+    private fun decrypt_with_storage_keys(
+        item: ContactItem,
+        encrypted_data: String,
+        data_nonce: String,
+        ciphertext: ByteArray,
+        nonce: ByteArray,
+    ): ByteArray? {
+        val keys = StorageWriteKey.read_keys(session_key_store)
+        try {
+            val ih = item.integrity_hash
+            val dv = item.data_version
+            for (key in keys) {
+                if (ih != null && dv != null && !verify_integrity_hash(encrypted_data, data_nonce, ih, dv, key)) continue
+                val opened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
+                if (opened != null) return opened
+            }
+            return null
+        } finally {
+            keys.forEach { it.fill(0) }
         }
     }
 
@@ -565,13 +580,7 @@ class ContactsRepository @Inject constructor(
                 yield(digest)
             }
         }
-        session_key_store.get_data_kek()?.let { if (it.size == 32) yield(it) }
-        session_key_store.get_decrypt_keks().forEach { kek_b64 ->
-            val raw = runCatching {
-                android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
-            }.getOrNull()
-            if (raw != null && raw.size == 32) yield(raw)
-        }
+        StorageWriteKey.read_keys(session_key_store).forEach { yield(it) }
     }
 
     private data class GroupPayload(
@@ -612,16 +621,7 @@ class ContactsRepository @Inject constructor(
         return try {
             val ciphertext = android.util.Base64.decode(group.encrypted_name, android.util.Base64.DEFAULT)
             val nonce = android.util.Base64.decode(group.name_nonce, android.util.Base64.DEFAULT)
-            val name_bytes = try {
-                val key = derive_contacts_key()
-                try {
-                    aes_gcm_decrypt(ciphertext, key, nonce)
-                } finally {
-                    key.fill(0)
-                }
-            } catch (_: Throwable) {
-                decrypt_with_candidates(ciphertext, nonce) ?: return null
-            }
+            val name_bytes = decrypt_with_candidates(ciphertext, nonce) ?: return null
             val payload = parse_group_payload(String(name_bytes, Charsets.UTF_8))
             name_bytes.fill(0)
             ContactGroup(
@@ -637,23 +637,8 @@ class ContactsRepository @Inject constructor(
         }
     }
 
-    private fun derive_contacts_key(): ByteArray {
-        val passphrase = session_key_store.get_passphrase()
-            ?: throw IllegalStateException("no passphrase")
-        try {
-            val prefix = SALT_PREFIX.toByteArray(Charsets.UTF_8)
-            val salt_input = ByteArray(prefix.size + passphrase.size)
-            System.arraycopy(prefix, 0, salt_input, 0, prefix.size)
-            System.arraycopy(passphrase, 0, salt_input, prefix.size, passphrase.size)
-            val salt = MessageDigest.getInstance("SHA-256").digest(salt_input)
-            salt_input.fill(0)
-
-            val info = DERIVED_KEY_INFO.toByteArray(Charsets.UTF_8)
-            return hkdf_sha256(passphrase, salt, info, 32)
-        } finally {
-            passphrase.fill(0)
-        }
-    }
+    private fun write_contacts_key(): ByteArray =
+        StorageWriteKey.write_key(session_key_store) ?: throw IllegalStateException("no storage key")
 
     private fun derive_subkey(raw_key: ByteArray, info: String): ByteArray {
         val info_bytes = info.toByteArray(Charsets.UTF_8)
@@ -1058,8 +1043,6 @@ class ContactsRepository @Inject constructor(
     companion object {
         private const val IMPORT_CHUNK_SIZE = 100
         private const val IMPORT_MAX_RETRIES = 3
-        private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
-        private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val HMAC_INFO = "contacts-hmac-v2"
         private const val SEARCH_INFO = "contacts-search-v2"
         private val TYPED_FIELDS = listOf(

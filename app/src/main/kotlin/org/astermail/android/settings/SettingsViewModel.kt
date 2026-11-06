@@ -34,7 +34,6 @@ import java.security.SecureRandom
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.AesGcm
-import org.astermail.android.crypto.hkdf_sha256
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -1042,10 +1041,29 @@ class SettingsViewModel @Inject constructor(
     private fun blocked_senders_hmac_key(): ByteArray {
         val raw = derive_encryption_key()
         try {
-            val info = BLOCKED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8)
-            return MessageDigest.getInstance("SHA-256").digest(raw + info)
+            return blocked_senders_hmac_key_for(raw)
         } finally {
             raw.fill(0)
+        }
+    }
+
+    private fun blocked_senders_hmac_key_for(raw: ByteArray): ByteArray =
+        MessageDigest.getInstance("SHA-256").digest(raw + BLOCKED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8))
+
+    private fun blocked_sender_integrity_matches(item: BlockedSenderInfo): Boolean {
+        if (item.integrity_hash.isBlank()) return true
+        val keys = storage_lookup_keys()
+        try {
+            return keys.any { raw ->
+                val hmac_key = blocked_senders_hmac_key_for(raw)
+                try {
+                    blocked_sender_integrity_hash(hmac_key, item.encrypted_sender_data, item.sender_data_nonce) == item.integrity_hash
+                } finally {
+                    hmac_key.fill(0)
+                }
+            }
+        } finally {
+            keys.forEach { it.fill(0) }
         }
     }
 
@@ -1061,19 +1079,7 @@ class SettingsViewModel @Inject constructor(
     private fun decrypt_blocked_sender_address(item: BlockedSenderInfo): String? {
         if (item.encrypted_sender_data.isBlank() || item.sender_data_nonce.isBlank()) return null
         return try {
-            val hmac_key = blocked_senders_hmac_key()
-            try {
-                if (item.integrity_hash.isNotBlank()) {
-                    val expected = blocked_sender_integrity_hash(
-                        hmac_key,
-                        item.encrypted_sender_data,
-                        item.sender_data_nonce,
-                    )
-                    if (expected != item.integrity_hash) return null
-                }
-            } finally {
-                hmac_key.fill(0)
-            }
+            if (!blocked_sender_integrity_matches(item)) return null
             val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
             val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
             parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
@@ -1130,10 +1136,29 @@ class SettingsViewModel @Inject constructor(
     private fun allowed_senders_hmac_key(): ByteArray {
         val raw = derive_encryption_key()
         try {
-            val info = ALLOWED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8)
-            return MessageDigest.getInstance("SHA-256").digest(raw + info)
+            return allowed_senders_hmac_key_for(raw)
         } finally {
             raw.fill(0)
+        }
+    }
+
+    private fun allowed_senders_hmac_key_for(raw: ByteArray): ByteArray =
+        MessageDigest.getInstance("SHA-256").digest(raw + ALLOWED_SENDERS_HMAC_INFO.toByteArray(Charsets.UTF_8))
+
+    private fun allowed_sender_integrity_matches(item: AllowedSenderInfo): Boolean {
+        if (item.integrity_hash.isBlank()) return true
+        val keys = storage_lookup_keys()
+        try {
+            return keys.any { raw ->
+                val hmac_key = allowed_senders_hmac_key_for(raw)
+                try {
+                    allowed_sender_integrity_hash(hmac_key, item.encrypted_sender_data, item.sender_data_nonce) == item.integrity_hash
+                } finally {
+                    hmac_key.fill(0)
+                }
+            }
+        } finally {
+            keys.forEach { it.fill(0) }
         }
     }
 
@@ -1143,19 +1168,7 @@ class SettingsViewModel @Inject constructor(
     private fun decrypt_allowed_sender_address(item: AllowedSenderInfo): String? {
         if (item.encrypted_sender_data.isBlank() || item.sender_data_nonce.isBlank()) return null
         return try {
-            val hmac_key = allowed_senders_hmac_key()
-            try {
-                if (item.integrity_hash.isNotBlank()) {
-                    val expected = allowed_sender_integrity_hash(
-                        hmac_key,
-                        item.encrypted_sender_data,
-                        item.sender_data_nonce,
-                    )
-                    if (expected != item.integrity_hash) return null
-                }
-            } finally {
-                hmac_key.fill(0)
-            }
+            if (!allowed_sender_integrity_matches(item)) return null
             val json = decrypt_alias_field(item.encrypted_sender_data, item.sender_data_nonce)
             val parsed = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
             parsed["email"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
@@ -5762,20 +5775,9 @@ class SettingsViewModel @Inject constructor(
         if (ciphertext_b64.isBlank() || nonce_b64.isBlank()) return ""
         val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
-        val key = derive_encryption_key()
-        try {
-            return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            val fallback = derive_passphrase_key()
-            try {
-                return String(aes_gcm_decrypt(ciphertext, fallback, nonce), Charsets.UTF_8)
-            } finally {
-                fallback.fill(0)
-            }
-        } finally {
-            key.fill(0)
-        }
+        val opened = open_with_storage_keys(ciphertext, nonce)
+            ?: throw IllegalStateException("signature decryption failed")
+        return String(opened, Charsets.UTF_8)
     }
 
     private fun encrypt_signature_field(plaintext: String): EncryptedField {
@@ -6691,27 +6693,7 @@ class SettingsViewModel @Inject constructor(
         val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
 
-        try {
-            val key = derive_encryption_key()
-            try {
-                return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
-            } finally {
-                key.fill(0)
-            }
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-        }
-
-        try {
-            val key = derive_passphrase_key()
-            try {
-                return String(aes_gcm_decrypt(ciphertext, key, nonce), Charsets.UTF_8)
-            } finally {
-                key.fill(0)
-            }
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-        }
+        open_with_storage_keys(ciphertext, nonce)?.let { return String(it, Charsets.UTF_8) }
 
         val identity_key = session_key_store.get_identity_key()
         if (identity_key != null) {
@@ -6726,21 +6708,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
-        val legacy_keks = session_key_store.get_decrypt_keks()
-        for (kek_b64 in legacy_keks) {
-            try {
-                val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
-                if (raw_key.size == 32) {
-                    try {
-                        return String(aes_gcm_decrypt(ciphertext, raw_key, nonce), Charsets.UTF_8)
-                    } finally {
-                        raw_key.fill(0)
-                    }
-                }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-            }
-        }
         throw IllegalStateException("alias decryption failed")
     }
 
@@ -6846,29 +6813,26 @@ class SettingsViewModel @Inject constructor(
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         AesGcm.decrypt(key, iv, ciphertext)
 
-    private fun derive_encryption_key(): ByteArray {
-        session_key_store.get_data_kek()?.let { kek ->
-            if (kek.size == 32) return kek
-            kek.fill(0)
-        }
-        return derive_passphrase_key()
-    }
+    private fun derive_encryption_key(): ByteArray =
+        org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+            ?: throw IllegalStateException("no storage key")
 
-    private fun derive_passphrase_key(): ByteArray {
-        val passphrase = session_key_store.get_passphrase()
-            ?: throw IllegalStateException("no passphrase")
+    private fun storage_read_keys(): List<ByteArray> =
+        org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store)
+
+    private fun storage_lookup_keys(): List<ByteArray> =
+        org.astermail.android.crypto.StorageWriteKey.lookup_keys(session_key_store)
+
+    private fun open_with_storage_keys(ciphertext: ByteArray, nonce: ByteArray): ByteArray? {
+        val keys = storage_read_keys()
         try {
-            val prefix = SALT_PREFIX.toByteArray(Charsets.UTF_8)
-            val salt_input = ByteArray(prefix.size + passphrase.size)
-            System.arraycopy(prefix, 0, salt_input, 0, prefix.size)
-            System.arraycopy(passphrase, 0, salt_input, prefix.size, passphrase.size)
-            val salt = MessageDigest.getInstance("SHA-256").digest(salt_input)
-            salt_input.fill(0)
-
-            val info = DERIVED_KEY_INFO.toByteArray(Charsets.UTF_8)
-            return hkdf_sha256(passphrase, salt, info, 32)
+            for (key in keys) {
+                val opened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
+                if (opened != null) return opened
+            }
+            return null
         } finally {
-            passphrase.fill(0)
+            keys.forEach { it.fill(0) }
         }
     }
 
@@ -7069,8 +7033,6 @@ class SettingsViewModel @Inject constructor(
         private const val BLOCKED_SENDERS_INTEGRITY_INFO = "blocked-senders-v1"
         private const val ALLOWED_SENDERS_HMAC_INFO = "allowed-senders-hmac-v1"
         private const val ALLOWED_SENDERS_INTEGRITY_INFO = "allowed-senders-v1"
-        private const val SALT_PREFIX = "aster-hkdf-salt-v1:"
-        private const val DERIVED_KEY_INFO = "aster-storage-encryption-key-v1"
         private const val TAG_VERSION_CURRENT = "astermail-tags-v1"
         private const val FOLDER_VERSION_CURRENT = "astermail-labels-v1"
         private const val PREFERENCES_KEY_SUFFIX = "astermail-preferences-v1"

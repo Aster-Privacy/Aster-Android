@@ -125,7 +125,11 @@ fun external_account_kdf_version(
     return try {
         val version = Json.parseToJsonElement(String(plaintext, Charsets.UTF_8))
             .jsonObject["kdf_version"] as? JsonPrimitive
-        if (version != null && !version.isString && version.intOrNull == 2) 2 else 1
+        when {
+            version == null || version is kotlinx.serialization.json.JsonNull -> 1
+            version.isString -> -1
+            else -> version.intOrNull ?: -1
+        }
     } catch (_: Exception) {
         null
     } finally {

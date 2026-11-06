@@ -2165,7 +2165,6 @@ class MailRepository @Inject constructor(
         cached_metadata_keys?.forEach { it.fill(0) }
         cached_metadata_keys = null
         cached_metadata_source = null
-        observed_write_key = null
         cached_sent_folder_token = null
         runCatching { sent_folder_prefs.edit().remove(sent_folder_prefs_key()).apply() }
         draft_item_cache.clear()
@@ -2829,7 +2828,7 @@ class MailRepository @Inject constructor(
             val base = decrypted?.let { merge_server_flags(it, resolved) } ?: default_metadata_for(resolved, now)
             val updated = base.copy(category = category, category_pinned = pinned && category != null, updated_at = now)
             val merged_json = merge_metadata_json(metadata_json, plaintext, updated)
-            val (encrypted, nonce) = encrypt_metadata_plaintext(merged_json, opened?.key ?: metadata_write_key())
+            val (encrypted, nonce) = encrypt_metadata_plaintext(merged_json, metadata_write_key())
                 ?: throw IllegalStateException("metadata key unavailable")
             mail_api.patch_metadata(item_id, PatchMetadataRequest(encrypted_metadata = encrypted, metadata_nonce = nonce))
             CategoryWrite(
@@ -4456,25 +4455,6 @@ class MailRepository @Inject constructor(
     private fun aes_gcm_encrypt(plaintext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         AesGcm.encrypt(key, iv, plaintext)
 
-    private fun derive_encryption_key(): ByteArray? {
-        val passphrase = session_key_store.get_passphrase() ?: return null
-        try {
-            val prefix = "aster-hkdf-salt-v1:".toByteArray(Charsets.UTF_8)
-            val combined = ByteArray(prefix.size + passphrase.size)
-            System.arraycopy(prefix, 0, combined, 0, prefix.size)
-            System.arraycopy(passphrase, 0, combined, prefix.size, passphrase.size)
-            val salt = MessageDigest.getInstance("SHA-256").digest(combined)
-            combined.fill(0)
-
-            val info = "aster-storage-encryption-key-v1".toByteArray(Charsets.UTF_8)
-            val key = org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(passphrase, salt, info, 32)
-            salt.fill(0)
-            return key
-        } finally {
-            passphrase.fill(0)
-        }
-    }
-
     private fun derive_metadata_key(master: ByteArray): ByteArray {
         val salt = "aster-metadata-salt-v1".toByteArray(Charsets.UTF_8)
         val info = "aster-metadata-encryption-v1:mail-item-metadata".toByteArray(Charsets.UTF_8)
@@ -4487,16 +4467,18 @@ class MailRepository @Inject constructor(
         val data_kek = session_key_store.get_data_kek()
         val encoded = data_kek?.let { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) }.orEmpty()
         data_kek?.fill(0)
-        return encoded + "|" + session_key_store.get_decrypt_keks().joinToString(",")
+        return encoded + "|" + session_key_store.get_storage_kdf_version() + "|" +
+            session_key_store.get_decrypt_keks().joinToString(",")
     }
 
     private fun metadata_keys(): List<ByteArray> {
         val source = metadata_key_source()
         val cached = cached_metadata_keys
         if (cached != null && cached_metadata_source == source) return cached
+        val write_master = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
         val masters = ArrayList<ByteArray>()
-        session_key_store.get_data_kek()?.let { if (it.size == 32) masters.add(it) else it.fill(0) }
-        derive_encryption_key()?.let { masters.add(it) }
+        write_master?.let { masters.add(it) }
+        masters.addAll(org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store))
         kek_candidates().filter { it.size == 32 }.forEach { masters.add(it.copyOf()) }
         val keys = ArrayList<ByteArray>()
         for (master in masters) {
@@ -4506,10 +4488,13 @@ class MailRepository @Inject constructor(
         }
         cached_metadata_keys = keys
         cached_metadata_source = source
+        cached_metadata_has_write_key = write_master != null
         return keys
     }
 
-    private fun metadata_key(): ByteArray? = metadata_keys().firstOrNull()
+    @Volatile private var cached_metadata_has_write_key: Boolean = false
+
+    private fun metadata_key(): ByteArray? = metadata_write_key()
 
     private class OpenedMetadata(val plaintext: String, val key: ByteArray)
 
@@ -4531,37 +4516,18 @@ class MailRepository @Inject constructor(
         if (keys.isEmpty()) return null
         val ciphertext = runCatching { android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
         val nonce = runCatching { android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
-        for ((index, key) in keys.withIndex()) {
+        for (key in keys) {
             val plaintext = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull() ?: continue
             val json_str = String(plaintext, Charsets.UTF_8)
             plaintext.fill(0)
-            observe_metadata_key(keys, index, json_str)
             return OpenedMetadata(json_str, key)
         }
         return null
     }
 
-    private class ObservedWriteKey(val keys: List<ByteArray>, val key: ByteArray, val updated_at: String)
-
-    @Volatile
-    private var observed_write_key: ObservedWriteKey? = null
-
-    private fun observe_metadata_key(keys: List<ByteArray>, index: Int, json_str: String) {
-        val current = observed_write_key?.takeIf { it.keys === keys }
-        val updated_at = metadata_updated_at(json_str) ?: return
-        if (current != null && updated_at <= current.updated_at) return
-        observed_write_key = ObservedWriteKey(keys, keys[index], updated_at)
-    }
-
-    private fun metadata_updated_at(json_str: String): String? = runCatching {
-        val obj = metadata_json.parseToJsonElement(json_str) as? kotlinx.serialization.json.JsonObject
-        val value = obj?.get("updated_at") as? kotlinx.serialization.json.JsonPrimitive
-        value?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
-    }.getOrNull()
-
     private fun metadata_write_key(): ByteArray? {
         val keys = metadata_keys()
-        return observed_write_key?.takeIf { it.keys === keys }?.key ?: keys.firstOrNull()
+        return if (cached_metadata_has_write_key) keys.firstOrNull() else null
     }
 
     private fun decode_metadata_plaintext(json_str: String): MailItemMetadata? =
@@ -4609,7 +4575,7 @@ class MailRepository @Inject constructor(
         )
 
         val encrypted = if (current_metadata != null && !is_undecryptable && opened != null) {
-            encrypt_metadata_plaintext(merge_metadata_json(metadata_json, opened.plaintext, updated), opened.key)
+            encrypt_metadata_plaintext(merge_metadata_json(metadata_json, opened.plaintext, updated), metadata_write_key())
         } else {
             null
         }
