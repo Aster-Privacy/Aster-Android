@@ -97,7 +97,13 @@ private const val FAVICON_RETRY_BASE_DELAY_MS = 700L
 
 private val favicon_blocked_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
-private fun favicon_recently_missed(root_domain: String): Boolean {
+internal fun note_favicon_hit(root_domain: String) = clear_favicon_miss(root_domain)
+
+internal fun note_favicon_definitive_miss(root_domain: String) = mark_favicon_missed(root_domain, FAVICON_MISS_TTL_MS)
+
+internal fun note_favicon_transient_miss(root_domain: String) = mark_favicon_missed(root_domain, FAVICON_TRANSIENT_TTL_MS)
+
+internal fun favicon_recently_missed(root_domain: String): Boolean {
     val blocked_until = favicon_blocked_until[root_domain] ?: return false
     if (System.currentTimeMillis() < blocked_until) return true
     favicon_blocked_until.remove(root_domain)

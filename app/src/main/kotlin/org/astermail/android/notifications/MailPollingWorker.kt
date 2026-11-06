@@ -390,6 +390,11 @@ class MailPollingWorker(
             fresh.preview
         }
         val message_id = message_notification_id(fresh.id.hashCode())
+        val avatar_settings = notification_avatar_settings(
+            context,
+            runCatching { repo.cached_avatar_preferences() }.getOrNull(),
+        )
+        val avatar_budget = NotificationAvatarBudget()
         val posted = post_message_notification(
             item_id = fresh.id,
             sender = resolved_sender,
@@ -397,14 +402,34 @@ class MailPollingWorker(
             preview = preview,
             message_id = message_id,
             silent = silent,
+            large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget),
         )
-        if (posted) post_also_arrived(also_arrived, ::resolve_sender)
+        if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget)
         return posted
+    }
+
+    private suspend fun sender_large_icon(
+        item: org.astermail.android.mail.InboxItem,
+        shown_name: String,
+        settings: NotificationAvatarSettings,
+        budget: NotificationAvatarBudget,
+    ): android.graphics.Bitmap? {
+        try {
+            val plan = inbox_item_avatar_plan(item, shown_name, settings, content_hidden = false)
+            return NotificationAvatars.large_icon(context, plan, budget)
+        } catch (cancelled: CancellationException) {
+            release_item_notification(context, item.id)
+            throw cancelled
+        } catch (_: Throwable) {
+            return null
+        }
     }
 
     private suspend fun post_also_arrived(
         items: List<org.astermail.android.mail.InboxItem>,
         resolve_sender: (org.astermail.android.mail.InboxItem) -> String,
+        avatar_settings: NotificationAvatarSettings,
+        avatar_budget: NotificationAvatarBudget,
     ) {
         val strings = localized(context)
         for (item in items) {
@@ -426,6 +451,7 @@ class MailPollingWorker(
                 },
                 message_id = message_notification_id(item.id.hashCode()),
                 silent = true,
+                large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget),
             )
         }
     }
@@ -472,6 +498,7 @@ class MailPollingWorker(
         preview: String,
         message_id: Int,
         silent: Boolean = false,
+        large_icon: android.graphics.Bitmap? = null,
     ): Boolean {
         return notify_lock.withLock {
             val quiet = silent || message_notified_recently(context)
@@ -484,6 +511,7 @@ class MailPollingWorker(
                     message_id = message_id,
                     item_id = item_id,
                     silent = quiet,
+                    large_icon = large_icon,
                 )
             }.isSuccess
             if (!posted) release_item_notification(context, item_id)
@@ -984,10 +1012,10 @@ class MailPollingWorker(
 
         data class LockScreenPolicy(val visibility: Int, val redacted_public_version: Boolean)
 
-        fun message_lock_screen_policy(private_mode: Boolean): LockScreenPolicy {
+        fun message_lock_screen_policy(private_mode: Boolean, has_sender_avatar: Boolean = false): LockScreenPolicy {
             return LockScreenPolicy(
                 visibility = NotificationCompat.VISIBILITY_PRIVATE,
-                redacted_public_version = private_mode,
+                redacted_public_version = private_mode || has_sender_avatar,
             )
         }
 
@@ -1035,6 +1063,7 @@ class MailPollingWorker(
             message_id: Int,
             item_id: String = "",
             silent: Boolean = false,
+            large_icon: android.graphics.Bitmap? = null,
         ) {
             if (!can_post(context)) return
             val private_mode = is_private_notifications(context)
@@ -1050,6 +1079,7 @@ class MailPollingWorker(
                 .setContentTitle(safe_sender)
                 .setContentText(one_line_subject)
                 .setDeleteIntent(dismiss_intent(context, message_id))
+            if (large_icon != null) builder.setLargeIcon(large_icon)
             if (item_id.isNotBlank()) {
                 val open_intent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -1077,7 +1107,7 @@ class MailPollingWorker(
                         .addLine(one_line_preview),
                 )
             }
-            val lock_screen = message_lock_screen_policy(private_mode)
+            val lock_screen = message_lock_screen_policy(private_mode, has_sender_avatar = large_icon != null)
             builder.setVisibility(lock_screen.visibility)
             if (lock_screen.redacted_public_version) {
                 builder.setPublicVersion(

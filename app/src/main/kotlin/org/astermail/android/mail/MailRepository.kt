@@ -923,6 +923,20 @@ class MailRepository @Inject constructor(
         set_custom_categories(cached.custom_categories.orEmpty())
     }
 
+    fun cached_avatar_preferences(): Pair<Boolean, Boolean>? {
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            org.astermail.android.storage.PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        val cached = runCatching {
+            cached_custom_categories_json.decodeFromString(
+                org.astermail.android.api.preferences.UserPreferences.serializer(),
+                raw,
+            )
+        }.getOrNull() ?: return null
+        return cached.show_profile_pictures to cached.low_network_mode
+    }
+
     val custom_categories_fingerprint: Int
         get() = custom_categories.toString().hashCode()
 
