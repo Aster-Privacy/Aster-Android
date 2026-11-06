@@ -2171,6 +2171,8 @@ class MailViewModelTest {
                 setOf("id_1", "id_2", "id_3"),
                 any(),
                 "2026-04-26T10:01:00Z",
+                true,
+                any(),
             )
         }
     }
@@ -2182,7 +2184,7 @@ class MailViewModelTest {
 
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
         coEvery {
-            search_index_manager.reconcile_inbox_window(any(), any(), capture(reconciled))
+            search_index_manager.reconcile_inbox_window(any(), any(), capture(reconciled), any(), any())
         } returns Unit
 
         vm.load_inbox()
