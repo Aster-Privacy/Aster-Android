@@ -2654,13 +2654,8 @@ class MailRepository @Inject constructor(
             val digest = MessageDigest.getInstance("SHA-256")
                 .digest(("astermail-thread:" + original_email_id).toByteArray(Charsets.UTF_8))
             val thread_token = android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
-            val meta_json = org.json.JSONObject().apply {
-                put("created_from", original_email_id)
-                put("created_at", java.time.Instant.now().toString())
-            }.toString()
-            val (encrypted_meta, meta_nonce) = encrypt_envelope(meta_json)
             try {
-                mail_api.create_thread(thread_token, encrypted_meta, meta_nonce)
+                mail_api.create_thread(thread_token, "", "")
             } catch (conflict: org.astermail.android.api.ApiError.Conflict) {
                 Unit
             } catch (e: org.astermail.android.api.ApiError.UnknownError) {
