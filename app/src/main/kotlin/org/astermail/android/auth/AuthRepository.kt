@@ -175,7 +175,7 @@ class AuthRepository @Inject constructor(
     )
 
     private val dead_session_mutex = kotlinx.coroutines.sync.Mutex()
-    private val vault_commit_mutex = kotlinx.coroutines.sync.Mutex()
+    private val vault_commit_mutex = org.astermail.android.crypto.storage_rotation.VaultWriteLock.mutex
 
     init {
         session_refresher.on_auth_failure { presented ->
@@ -648,6 +648,7 @@ class AuthRepository @Inject constructor(
                 absorb_data_kek(vault_obj)
                 extract_ratchet_keys(vault_obj)
                 absorb_stretched_storage_keys(vault_obj, password_bytes)
+                schedule_storage_rekey()
                 if (login_enrollment != null && LoginSaltRule.needs_rotation(1, salt_bytes)) {
                     keep_for_rotation(password_bytes.copyOf())
                 }
@@ -1468,6 +1469,7 @@ class AuthRepository @Inject constructor(
                 base64_encode(new_envelope.encrypted_vault),
                 base64_encode(new_envelope.vault_nonce),
             )
+            schedule_storage_rekey()
 
             SessionRefreshGate.mutex.withLock {
                 response.csrf_token?.let { api_client.set_csrf(it) }
@@ -2051,7 +2053,20 @@ class AuthRepository @Inject constructor(
             encode = ::base64_encode,
             decode = ::base64_decode,
             generate = { org.astermail.android.crypto.StorageWriteKey.random_data_kek() },
+            extra_password_keys = {
+                val salts = listOfNotNull(session_key_store.get_password_salt()) +
+                    session_key_store.get_retired_password_salts()
+                try {
+                    org.astermail.android.crypto.storage_rotation.storage_password_keys(current_password_bytes, salts)
+                } finally {
+                    salts.forEach { it.fill(0) }
+                }
+            },
         )
+
+    private fun schedule_storage_rekey() {
+        runCatching { org.astermail.android.crypto.storage_rotation.StorageRekeyWorker.enqueue(context) }
+    }
 
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
         session_key_store.put_storage_kdf_version(read_storage_kdf_version(vault_obj))
@@ -2211,6 +2226,7 @@ class AuthRepository @Inject constructor(
             }
             absorb_data_kek(vault_obj)
             extract_ratchet_keys(vault_obj)
+            schedule_storage_rekey()
             identity_already_present || identity_key.isNotBlank()
         } catch (t: Throwable) {
             if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "identity recovery failed: ${t.javaClass.simpleName}")
