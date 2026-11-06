@@ -69,6 +69,13 @@ object ExternalPgpKeyCodec {
         java.security.Security.addProvider(BouncyCastleProvider())
     }
 
+    fun is_primary_sender(from: String, primary_email: String?): Boolean {
+        val primary = primary_email?.trim()?.lowercase().orEmpty()
+        if (primary.isEmpty()) return false
+        val address = from.substringAfterLast('<', from).substringBefore('>').trim().lowercase()
+        return address == primary
+    }
+
     fun normalize_fingerprint(fingerprint: String): String =
         fingerprint.filterNot { it.isWhitespace() || it == ':' }.lowercase()
 

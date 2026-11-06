@@ -233,4 +233,14 @@ class ExternalPgpKeyCodecTest {
         assertNotNull(value)
         return value!!
     }
+
+    @Test
+    fun only_the_primary_address_counts_as_the_imported_key_sender() {
+        assertTrue(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", "alice@astermail.org"))
+        assertTrue(ExternalPgpKeyCodec.is_primary_sender("Alice <Alice@AsterMail.org>", " alice@astermail.org "))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alias@astermail.org", "alice@astermail.org"))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@example.com", "alice@astermail.org"))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", null))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("", ""))
+    }
 }

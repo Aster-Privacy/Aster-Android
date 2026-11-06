@@ -84,6 +84,7 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.crypto.ClientPgpCopies
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.DetachedSignature
+import org.astermail.android.crypto.ExternalPgpKeyCodec
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpSigner
@@ -5115,7 +5116,7 @@ class MailRepository @Inject constructor(
             report_signing_skipped("signed_mime_build_threw")
             return null
         }
-        val signed = sign_mime_bytes(mime_bytes) ?: return null
+        val signed = sign_mime_bytes(mime_bytes, from) ?: return null
         return SignedMimePayload(
             mime_base64 = android.util.Base64.encodeToString(mime_bytes, android.util.Base64.NO_WRAP),
             signature = signed.signature,
@@ -5149,8 +5150,12 @@ class MailRepository @Inject constructor(
         ),
     ).toByteArray(Charsets.UTF_8)
 
-    private suspend fun sign_mime_bytes(mime_bytes: ByteArray): DetachedSignature? {
-        val external_signer = runCatching { external_pgp_key_store?.signing_key_if_ready() }.getOrNull()
+    private suspend fun sign_mime_bytes(mime_bytes: ByteArray, from: String): DetachedSignature? {
+        val external_signer = if (ExternalPgpKeyCodec.is_primary_sender(from, session_key_store.get_user_email())) {
+            runCatching { external_pgp_key_store?.signing_key_if_ready() }.getOrNull()
+        } else {
+            null
+        }
         if (external_signer != null) {
             PgpSigner.sign_detached_unlocked(mime_bytes, external_signer)?.let { return it }
         }
@@ -5212,7 +5217,7 @@ class MailRepository @Inject constructor(
             val discovered = keys_api.discover_external_keys_batch(outside)
             val recipient_keys = ClientPgpCopies.recipient_keys(outside, discovered) ?: return null
             val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
-            val entity = sign_mime_bytes(mime_bytes)
+            val entity = sign_mime_bytes(mime_bytes, from)
                 ?.let { ClientPgpCopies.build_signed_mime_entity(mime_bytes, it.signature, it.micalg) }
                 ?: mime_bytes
             ClientPgpCopies.encrypt_copies(entity, recipient_keys, attachment_bytes)
