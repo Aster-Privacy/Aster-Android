@@ -540,7 +540,11 @@ class MailRepository @Inject constructor(
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val pending_action_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
     private val encryption_api_provider: dagger.Lazy<org.astermail.android.api.encryption.EncryptionApi>? = null,
+    private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
 ) {
+    private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
+        get() = external_pgp_key_store_provider?.get()
+
     private val pending_action_queue: PendingMailActionQueue?
         get() = pending_action_queue_provider?.get()
 
@@ -5146,6 +5150,10 @@ class MailRepository @Inject constructor(
     ).toByteArray(Charsets.UTF_8)
 
     private suspend fun sign_mime_bytes(mime_bytes: ByteArray): DetachedSignature? {
+        val external_signer = runCatching { external_pgp_key_store?.signing_key_if_ready() }.getOrNull()
+        if (external_signer != null) {
+            PgpSigner.sign_detached_unlocked(mime_bytes, external_signer)?.let { return it }
+        }
         val vault_identity_key = session_key_store.get_identity_key()
         if (vault_identity_key == null) {
             report_signing_skipped("vault_identity_key_unavailable")
@@ -5221,6 +5229,24 @@ class MailRepository @Inject constructor(
     private fun try_pgp_decrypt_result(
         ciphertext: String,
         sender_public_key: String? = null,
+    ): org.astermail.android.crypto.PgpDecryptionResult? =
+        try_pgp_decrypt_account_result(ciphertext, sender_public_key)
+            ?: try_external_pgp_decrypt(ciphertext, sender_public_key)
+
+    private fun try_external_pgp_decrypt(
+        ciphertext: String,
+        sender_public_key: String?,
+    ): org.astermail.android.crypto.PgpDecryptionResult? {
+        val keys = runCatching { external_pgp_key_store?.decryption_keys() }.getOrNull().orEmpty()
+        if (keys.isEmpty()) return null
+        return runCatching { PgpDecryptor.decrypt_with_unlocked_keys(ciphertext, keys, sender_public_key) }
+            .getOrNull()
+            ?.takeIf { it.plaintext != null }
+    }
+
+    private fun try_pgp_decrypt_account_result(
+        ciphertext: String,
+        sender_public_key: String?,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
         if (!identity_key.contains("-----BEGIN PGP")) return null
@@ -5253,6 +5279,11 @@ class MailRepository @Inject constructor(
     }
 
     private fun try_pgp_decrypt_own_result(
+        ciphertext: String,
+    ): org.astermail.android.crypto.PgpDecryptionResult? =
+        try_pgp_decrypt_own_account_result(ciphertext) ?: try_external_pgp_decrypt(ciphertext, null)
+
+    private fun try_pgp_decrypt_own_account_result(
         ciphertext: String,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
