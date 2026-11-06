@@ -48,6 +48,31 @@ data class PgpKeyInfo(
     val public_key_armored: String = "",
     val decrypt_count: Int = 0,
     val last_used_decrypt_at: String? = null,
+    val role: String? = null,
+)
+
+@Serializable
+data class ExternalPgpKeyInfo(
+    val fingerprint: String = "",
+    val key_id: String = "",
+    val algorithm: String = "",
+    val key_size: Int = 0,
+    val public_key_armored: String = "",
+    val wrapped_private_key: String = "",
+    val created_at: String = "",
+    val expires_at: String? = null,
+    val published: Boolean = false,
+    val uid_mismatch: Boolean = false,
+)
+
+@Serializable
+data class ExternalPgpKeyResponse(
+    val key: ExternalPgpKeyInfo? = null,
+)
+
+@Serializable
+data class PublishExternalPgpKeyRequest(
+    val publish: Boolean,
 )
 
 @Serializable
@@ -148,6 +173,10 @@ interface EncryptionApi {
     suspend fun unpublish_from_wkd(): PublishKeyResponse
     suspend fun publish_to_keyserver(): PublishKeyResponse
     suspend fun republish_pgp_key(request: RepublishPgpKeyRequest): RepublishPgpKeyResponse
+    suspend fun get_external_pgp_key(): ExternalPgpKeyInfo? = null
+    suspend fun set_external_pgp_key_published(publish: Boolean): ExternalPgpKeyInfo =
+        throw ApiError.UnknownError("unsupported")
+    suspend fun delete_external_pgp_key(purge: Boolean): Boolean = false
 }
 
 class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
@@ -233,6 +262,32 @@ class EncryptionApiImpl(private val client: ApiClient) : EncryptionApi {
             setBody(request)
         }
         return decode_or_throw(response)
+    }
+
+    override suspend fun get_external_pgp_key(): ExternalPgpKeyInfo? =
+        decode_or_throw<ExternalPgpKeyResponse>(
+            client.http.get("${client.base_url}$crypto_base/keys/pgp/external"),
+        ).key
+
+    override suspend fun set_external_pgp_key_published(publish: Boolean): ExternalPgpKeyInfo {
+        val response = client.http.post("${client.base_url}$crypto_base/keys/pgp/external/publish") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(PublishExternalPgpKeyRequest(publish))
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun delete_external_pgp_key(purge: Boolean): Boolean {
+        val response = client.http.delete("${client.base_url}$crypto_base/keys/pgp/external") {
+            parameter("purge", purge.toString())
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        return true
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {
