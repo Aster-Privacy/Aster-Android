@@ -681,6 +681,18 @@ fun sender_registrable_domain(ascii_domain: String): String {
     return labels.takeLast(take).joinToString(".")
 }
 
+fun sender_logo_domain(raw_domain: String): String? {
+    val ascii = sender_domain_to_ascii(raw_domain)
+    if (ascii.isEmpty()) return null
+    val registrable = sender_registrable_domain(ascii)
+    return if (is_tenant_host(registrable)) null else registrable
+}
+
+fun is_shared_tenant_sender_domain(raw_domain: String): Boolean {
+    val ascii = sender_domain_to_ascii(raw_domain)
+    return ascii.isNotEmpty() && is_tenant_host(sender_registrable_domain(ascii))
+}
+
 private fun trust_registrable_label(registrable: String): String = registrable.split(".")[0]
 
 private fun within_domain(ascii_domain: String, parent: String): Boolean =

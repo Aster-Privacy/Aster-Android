@@ -67,6 +67,7 @@ import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.mail.ratchet.PostQuantumCoverage
+import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
 import org.astermail.android.api.scheduled.ScheduledDetailResponse
@@ -91,6 +92,7 @@ import org.astermail.android.crypto.ProtectedMimeAttachment
 import org.astermail.android.crypto.ProtectedMimeBuilder
 import org.astermail.android.crypto.ProtectedMimeInput
 import org.astermail.android.notifications.UndoSendWorker
+import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
@@ -911,16 +913,30 @@ class MailRepository @Inject constructor(
         if (custom_categories_set) return
         val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return
         val raw = runCatching {
-            org.astermail.android.storage.PreferencesCacheStore(context).read(account_key)
+            PreferencesCacheStore(context).read(account_key)
         }.getOrNull() ?: return
         val cached = runCatching {
             cached_custom_categories_json.decodeFromString(
-                org.astermail.android.api.preferences.UserPreferences.serializer(),
+                UserPreferences.serializer(),
                 raw,
             )
         }.getOrNull() ?: return
         if (custom_categories_set) return
         set_custom_categories(cached.custom_categories.orEmpty())
+    }
+
+    fun cached_avatar_preferences(): Pair<Boolean, Boolean>? {
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        val cached = runCatching {
+            cached_custom_categories_json.decodeFromString(
+                UserPreferences.serializer(),
+                raw,
+            )
+        }.getOrNull() ?: return null
+        return cached.show_profile_pictures to cached.low_network_mode
     }
 
     val custom_categories_fingerprint: Int
