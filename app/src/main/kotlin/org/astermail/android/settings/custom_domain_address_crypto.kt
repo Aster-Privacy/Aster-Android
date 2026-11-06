@@ -25,6 +25,19 @@ import java.security.MessageDigest
 import java.util.Base64
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 
+private const val MAX_DIRECTORY_LOCAL_PART_LENGTH = 64
+private const val MAX_DIRECTORY_LOCAL_PART_BASE64_LENGTH = 88
+private val DIRECTORY_LOCAL_PART_PATTERN = Regex("^[a-z0-9._+/#-]+$")
+private val DIRECTORY_SEPARATORS = charArrayOf('.', '+', '/', '#')
+
+internal fun is_valid_directory_local_part(local_part: String): Boolean {
+    if (local_part.isEmpty() || local_part.length > MAX_DIRECTORY_LOCAL_PART_LENGTH) return false
+    if (!DIRECTORY_LOCAL_PART_PATTERN.matches(local_part)) return false
+    if (local_part.first() in DIRECTORY_SEPARATORS || local_part.last() in DIRECTORY_SEPARATORS) return false
+    if (local_part.first() == '-' || local_part.last() == '-') return false
+    return local_part.zipWithNext().none { (a, b) -> a in DIRECTORY_SEPARATORS && b in DIRECTORY_SEPARATORS }
+}
+
 internal fun decrypt_custom_domain_address_local_part(
     address: CustomDomainAddressInfo,
     decrypt_field: (String, String) -> String,
@@ -33,12 +46,11 @@ internal fun decrypt_custom_domain_address_local_part(
         return decrypt_field(address.encrypted_local_part, address.local_part_nonce)
     }
 
-    // Nonce-less directory records carry Base64 text and its SHA-256 hash.
-    require(address.encrypted_local_part.length <= 88) { "Invalid directory address" }
+    require(address.encrypted_local_part.length <= MAX_DIRECTORY_LOCAL_PART_BASE64_LENGTH) { "Invalid directory address" }
     val decoder = Base64.getDecoder()
     val local_part_bytes = decoder.decode(address.encrypted_local_part)
     val local_part = local_part_bytes.toString(Charsets.UTF_8)
-    require(is_valid_import_local_part(local_part, is_system_domain = false)) { "Invalid directory address" }
+    require(is_valid_directory_local_part(local_part)) { "Invalid directory address" }
     val expected_hash = decoder.decode(address.local_part_hash)
     val actual_hash = MessageDigest.getInstance("SHA-256").digest(local_part_bytes)
     require(MessageDigest.isEqual(expected_hash, actual_hash)) { "Directory address hash mismatch" }

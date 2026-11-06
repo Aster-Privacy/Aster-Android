@@ -126,6 +126,21 @@ class CustomDomainAddressCryptoTest {
     }
 
     @Test
+    fun every_directory_separator_the_server_accepts_is_recovered() {
+        val local_parts = listOf("booking+shop", "shop/finance", "shop#finance", "hotel.desk9.travel", "a-b_c.key")
+        val recovered = local_parts.map { runCatching { decrypt(directory_address(it)) }.getOrNull() }
+        assertEquals(local_parts, recovered)
+    }
+
+    @Test
+    fun adjacent_or_edge_separators_are_rejected() {
+        val invalid = listOf("+shop", "shop+", "shop+.key", "shop/#key", "#key", "key/", "-key", "key-", "Shop.Key")
+        invalid.forEach { local_part ->
+            assertTrue("Invalid local part accepted: $local_part", runCatching { decrypt(directory_address(local_part)) }.isFailure)
+        }
+    }
+
+    @Test
     fun matching_hash_does_not_allow_invalid_local_parts() {
         val invalid = listOf("", ".merchant", "merchant.", "merchant..finance", "merchant@custom.example",
             "merchant finance", "merchant\nfinance", "mérchant.finance", "a".repeat(65))
