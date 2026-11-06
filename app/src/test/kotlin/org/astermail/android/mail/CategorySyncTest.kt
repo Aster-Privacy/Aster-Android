@@ -70,6 +70,7 @@ class CategorySyncTest {
         }
         session_key_store = mockk(relaxed = true)
         every { session_key_store.get_data_kek() } returns null
+        every { session_key_store.get_storage_kdf_version() } returns null
         every { session_key_store.get_decrypt_keks() } returns emptyList()
         every { session_key_store.get_passphrase() } answers { passphrase.toByteArray(Charsets.UTF_8) }
         every { session_key_store.get_user_email() } returns "me@example.test"
@@ -378,14 +379,17 @@ class CategorySyncTest {
     }
 
     @Test
-    fun `a blob sealed with the passphrase key stays sealed with the key the other client reads`() = runTest {
+    fun `a blob sealed with the passphrase key is rewritten with the data key`() = runTest {
         val data_kek = ByteArray(32) { (it * 5 + 2).toByte() }
         every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
         val captured = capture_patch()
 
         repo.write_category("deal-1", "newsletters", pinned = true, raw_item = server_item(with_server_metadata = false)).getOrThrow()
 
-        val blob = open_blob(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val encrypted = captured.captured.encrypted_metadata!!
+        val nonce = captured.captured.metadata_nonce!!
+        assertTrue(runCatching { open_blob(encrypted, nonce) }.isFailure)
+        val blob = open_with(key_from_master(data_kek), encrypted, nonce)
         assertEquals("newsletters", blob.category)
         assertTrue(blob.category_pinned)
         assertEquals(4096L, blob.size_bytes)
@@ -454,7 +458,7 @@ class CategorySyncTest {
     }
 
     @Test
-    fun `new mail without metadata is sealed with the key the other blobs on the account use`() = runTest {
+    fun `new mail without metadata is sealed with the write key even when older blobs use a legacy key`() = runTest {
         val legacy = ByteArray(32) { (it + 60).toByte() }
         every { session_key_store.get_decrypt_keks() } returns listOf(java.util.Base64.getEncoder().encodeToString(legacy))
         val legacy_key = key_from_master(legacy)
@@ -470,13 +474,16 @@ class CategorySyncTest {
 
         repo.set_category("fresh-1", "newsletters", MailItem(id = "fresh-1", item_type = "received")).getOrThrow()
 
-        val blob = open_with(legacy_key, captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val encrypted_new = captured.captured.encrypted_metadata!!
+        val nonce_new = captured.captured.metadata_nonce!!
+        assertTrue(runCatching { open_with(legacy_key, encrypted_new, nonce_new) }.isFailure)
+        val blob = open_blob(encrypted_new, nonce_new)
         assertEquals("newsletters", blob.category)
         assertTrue(blob.category_pinned)
     }
 
     @Test
-    fun `marking read keeps the key and the fields another client wrote`() = runTest {
+    fun `marking read keeps the fields another client wrote and seals with the data key`() = runTest {
         val data_kek = ByteArray(32) { (it * 3 + 4).toByte() }
         every { session_key_store.get_data_kek() } answers { data_kek.copyOf() }
         val captured = capture_patch()
@@ -485,7 +492,15 @@ class CategorySyncTest {
 
         repo.mark_read("deal-1", true, listed).getOrThrow()
 
-        val raw = open_raw(captured.captured.encrypted_metadata!!, captured.captured.metadata_nonce!!)
+        val decoder = java.util.Base64.getDecoder()
+        val raw = String(
+            AesGcm.decrypt(
+                key_from_master(data_kek),
+                decoder.decode(captured.captured.metadata_nonce!!),
+                decoder.decode(captured.captured.encrypted_metadata!!),
+            ),
+            Charsets.UTF_8,
+        )
         val parsed = json.parseToJsonElement(raw).jsonObject
         assertEquals("true", parsed["is_read"]!!.jsonPrimitive.content)
         assertEquals("newsletters", parsed["category"]!!.jsonPrimitive.content)

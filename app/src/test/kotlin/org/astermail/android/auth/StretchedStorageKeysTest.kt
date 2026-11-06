@@ -47,17 +47,26 @@ class StretchedStorageKeysTest {
     }
 
     @Test
-    fun `only a numeric version of exactly two selects the stretched key`() {
+    fun `kdf version reads numbers as is and anything malformed as unrecognized`() {
         assertEquals(1, read_storage_kdf_version(vault(null)))
+        assertEquals(1, read_storage_kdf_version(JSONObject().put("kdf_version", JSONObject.NULL)))
         assertEquals(1, read_storage_kdf_version(vault(1)))
         assertEquals(2, read_storage_kdf_version(vault(2)))
         assertEquals(2, read_storage_kdf_version(vault(2L)))
         assertEquals(2, read_storage_kdf_version(vault(2.0)))
         assertEquals(2, read_storage_kdf_version(JSONObject("{\"kdf_version\":2}")))
-        assertEquals(1, read_storage_kdf_version(vault("2")))
-        assertEquals(1, read_storage_kdf_version(vault(2.5)))
-        assertEquals(1, read_storage_kdf_version(vault(3)))
-        assertEquals(1, read_storage_kdf_version(vault(0)))
+        assertEquals(UNRECOGNIZED_STORAGE_KDF_VERSION, read_storage_kdf_version(vault("2")))
+        assertEquals(UNRECOGNIZED_STORAGE_KDF_VERSION, read_storage_kdf_version(vault(2.5)))
+        assertEquals(UNRECOGNIZED_STORAGE_KDF_VERSION, read_storage_kdf_version(vault(true)))
+        assertEquals(3, read_storage_kdf_version(vault(3)))
+        assertEquals(0, read_storage_kdf_version(vault(0)))
+    }
+
+    @Test
+    fun `an unrecognized vault absorbs both password keys so readers keep working`() {
+        val expected = listOf(encode(unhex(stretched_hex)), encode(unhex(legacy_hex)))
+        assertEquals(expected, stretched_storage_keks_to_absorb(vault(3), passphrase, ::encode))
+        assertEquals(expected, stretched_storage_keks_to_absorb(vault("2"), passphrase, ::encode))
     }
 
     @Test
@@ -71,7 +80,6 @@ class StretchedStorageKeysTest {
         assertEquals(0, derived)
 
         assertTrue(stretched_storage_keks_to_absorb(vault(null), passphrase, ::encode).isEmpty())
-        assertTrue(stretched_storage_keks_to_absorb(vault(3), passphrase, ::encode).isEmpty())
     }
 
     @Test

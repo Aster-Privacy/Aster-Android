@@ -3799,4 +3799,22 @@ class MailRepositoryTest {
 
         assertTrue(repo.bulk_scope_action("inbox", "archive").isFailure)
     }
+
+    @Test
+    fun `a new thread is created with empty metadata`() = runTest {
+        coEvery { mail_api.get_message("original_1") } returns fake_mail_item(id = "original_1", thread_token = null)
+
+        val token = repo.get_or_create_thread_token("original_1", null)
+
+        assertNotNull(token)
+        coVerify(exactly = 1) { mail_api.create_thread(token!!, "", "") }
+        coVerify(exactly = 1) { mail_api.link_mail_to_thread("original_1", token!!) }
+    }
+
+    @Test
+    fun `an existing thread token skips thread creation`() = runTest {
+        assertEquals("known", repo.get_or_create_thread_token("original_1", "known"))
+
+        coVerify(exactly = 0) { mail_api.create_thread(any(), any(), any()) }
+    }
 }

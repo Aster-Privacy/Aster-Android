@@ -76,6 +76,9 @@ class ContactsRepositoryTest {
             java.util.Base64.getDecoder().decode(firstArg<String>())
         }
         every { session_key_store.get_passphrase() } answers { test_passphrase.copyOf() }
+        every { session_key_store.get_storage_kdf_version() } returns null
+        every { session_key_store.get_data_kek() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
         every { session_key_store.get_identity_key() } returns null
         repo = ContactsRepository(contacts_api, session_key_store)
     }
