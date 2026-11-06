@@ -3486,4 +3486,14 @@
     <string name="mail_list_lines_two_subtitle">Göndereni ve konuyu göster</string>
     <string name="mail_list_lines_three">3 satır</string>
     <string name="mail_list_lines_three_subtitle">Göndereni, konuyu ve ileti metninden bir satırı göster</string>
+    <string name="external_pgp_key_title">İçe aktarılan OpenPGP anahtarı</string>
+    <string name="external_pgp_key_expires">Son geçerlilik: %1$s</string>
+    <string name="external_pgp_key_no_expiry">Süresi dolmaz</string>
+    <string name="external_pgp_key_published">Yayımlandı. Aster Mail dışındaki kişiler bu anahtarı bulabilir ve size şifreli e-posta gönderebilir.</string>
+    <string name="external_pgp_key_not_published">Yayımlanmadı. Aster Mail dışındaki kişiler bu anahtarı bulamaz.</string>
+    <string name="external_pgp_key_fingerprint">Parmak izi</string>
+    <string name="external_pgp_key_stop_publishing">Yayımlamayı durdur</string>
+    <string name="external_pgp_key_manage_note">Bu anahtarı içe aktarmak, değiştirmek veya kaldırmak için web üzerinde Aster Mail\'i ya da masaüstü uygulamasını kullanın.</string>
+    <string name="external_pgp_key_unpublished">İçe aktarılan anahtarınız artık yayımlanmıyor.</string>
+    <string name="external_pgp_key_unpublish_failed">Anahtarınızın yayımlanması durdurulamadı. Tekrar deneyin.</string>
 </resources>

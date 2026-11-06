@@ -3486,4 +3486,14 @@
     <string name="mail_list_lines_two_subtitle">Afzender en onderwerp weergeven</string>
     <string name="mail_list_lines_three">3 regels</string>
     <string name="mail_list_lines_three_subtitle">Afzender, onderwerp en een regel berichttekst weergeven</string>
+    <string name="external_pgp_key_title">Geïmporteerde OpenPGP-sleutel</string>
+    <string name="external_pgp_key_expires">Verloopt op %1$s</string>
+    <string name="external_pgp_key_no_expiry">Verloopt niet</string>
+    <string name="external_pgp_key_published">Gepubliceerd. Mensen buiten Aster Mail kunnen deze sleutel vinden en je versleutelde e-mail sturen.</string>
+    <string name="external_pgp_key_not_published">Niet gepubliceerd. Mensen buiten Aster Mail kunnen deze sleutel niet vinden.</string>
+    <string name="external_pgp_key_fingerprint">Vingerafdruk</string>
+    <string name="external_pgp_key_stop_publishing">Publiceren stoppen</string>
+    <string name="external_pgp_key_manage_note">Gebruik Aster Mail op het web of de desktop-app om deze sleutel te importeren, te vervangen of te verwijderen.</string>
+    <string name="external_pgp_key_unpublished">Je geïmporteerde sleutel is niet meer gepubliceerd.</string>
+    <string name="external_pgp_key_unpublish_failed">Kan het publiceren van je sleutel niet stoppen. Probeer het opnieuw.</string>
 </resources>

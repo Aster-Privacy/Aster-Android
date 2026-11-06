@@ -3487,4 +3487,14 @@
     <string name="mail_list_lines_two_subtitle">Absender und Betreff anzeigen</string>
     <string name="mail_list_lines_three">3 Zeilen</string>
     <string name="mail_list_lines_three_subtitle">Absender, Betreff und eine Zeile Nachrichtentext anzeigen</string>
+    <string name="external_pgp_key_title">Importierter OpenPGP-Schlüssel</string>
+    <string name="external_pgp_key_expires">Läuft am %1$s ab</string>
+    <string name="external_pgp_key_no_expiry">Läuft nicht ab</string>
+    <string name="external_pgp_key_published">Veröffentlicht. Personen außerhalb von Aster Mail können diesen Schlüssel finden und Ihnen verschlüsselte E-Mails senden.</string>
+    <string name="external_pgp_key_not_published">Nicht veröffentlicht. Personen außerhalb von Aster Mail können diesen Schlüssel nicht finden.</string>
+    <string name="external_pgp_key_fingerprint">Fingerabdruck</string>
+    <string name="external_pgp_key_stop_publishing">Nicht mehr veröffentlichen</string>
+    <string name="external_pgp_key_manage_note">Um diesen Schlüssel zu importieren, zu ersetzen oder zu entfernen, verwenden Sie Aster Mail im Web oder die Desktop-App.</string>
+    <string name="external_pgp_key_unpublished">Ihr importierter Schlüssel ist nicht mehr veröffentlicht.</string>
+    <string name="external_pgp_key_unpublish_failed">Die Veröffentlichung Ihres Schlüssels konnte nicht beendet werden. Versuchen Sie es erneut.</string>
 </resources>

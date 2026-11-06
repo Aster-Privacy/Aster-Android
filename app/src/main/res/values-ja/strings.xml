@@ -3474,4 +3474,14 @@
     <string name="mail_list_lines_two_subtitle">差出人と件名を表示</string>
     <string name="mail_list_lines_three">3 行</string>
     <string name="mail_list_lines_three_subtitle">差出人、件名、本文の 1 行を表示</string>
+    <string name="external_pgp_key_title">インポートした OpenPGP キー</string>
+    <string name="external_pgp_key_expires">有効期限: %1$s</string>
+    <string name="external_pgp_key_no_expiry">有効期限なし</string>
+    <string name="external_pgp_key_published">公開中。Aster Mail 以外のユーザーがこのキーを見つけて、暗号化したメールを送信できます。</string>
+    <string name="external_pgp_key_not_published">非公開。Aster Mail 以外のユーザーはこのキーを見つけられません。</string>
+    <string name="external_pgp_key_fingerprint">フィンガープリント</string>
+    <string name="external_pgp_key_stop_publishing">公開を停止</string>
+    <string name="external_pgp_key_manage_note">このキーのインポート、置き換え、削除は、ウェブ版の Aster Mail またはデスクトップアプリで行ってください。</string>
+    <string name="external_pgp_key_unpublished">インポートしたキーの公開を停止しました。</string>
+    <string name="external_pgp_key_unpublish_failed">キーの公開を停止できませんでした。もう一度お試しください。</string>
 </resources>

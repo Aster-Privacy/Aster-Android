@@ -3528,4 +3528,14 @@
     <string name="mail_list_lines_two_subtitle">Pokazuj nadawcę i temat</string>
     <string name="mail_list_lines_three">3 wiersze</string>
     <string name="mail_list_lines_three_subtitle">Pokazuj nadawcę, temat i jeden wiersz treści wiadomości</string>
+    <string name="external_pgp_key_title">Zaimportowany klucz OpenPGP</string>
+    <string name="external_pgp_key_expires">Wygasa %1$s</string>
+    <string name="external_pgp_key_no_expiry">Nie wygasa</string>
+    <string name="external_pgp_key_published">Opublikowany. Osoby spoza Aster Mail mogą znaleźć ten klucz i wysyłać Ci zaszyfrowane wiadomości.</string>
+    <string name="external_pgp_key_not_published">Nieopublikowany. Osoby spoza Aster Mail nie mogą znaleźć tego klucza.</string>
+    <string name="external_pgp_key_fingerprint">Odcisk palca</string>
+    <string name="external_pgp_key_stop_publishing">Zatrzymaj publikowanie</string>
+    <string name="external_pgp_key_manage_note">Aby zaimportować, zastąpić lub usunąć ten klucz, użyj Aster Mail w przeglądarce lub aplikacji na komputer.</string>
+    <string name="external_pgp_key_unpublished">Twój zaimportowany klucz nie jest już opublikowany.</string>
+    <string name="external_pgp_key_unpublish_failed">Nie udało się zatrzymać publikowania klucza. Spróbuj ponownie.</string>
 </resources>

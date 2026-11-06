@@ -3569,4 +3569,14 @@
     <string name="mail_list_lines_two_subtitle">عرض المرسل والموضوع</string>
     <string name="mail_list_lines_three">3 أسطر</string>
     <string name="mail_list_lines_three_subtitle">عرض المرسل والموضوع وسطر من نص الرسالة</string>
+    <string name="external_pgp_key_title">مفتاح OpenPGP المستورد</string>
+    <string name="external_pgp_key_expires">تنتهي صلاحيته في %1$s</string>
+    <string name="external_pgp_key_no_expiry">لا تنتهي صلاحيته</string>
+    <string name="external_pgp_key_published">منشور. يمكن للأشخاص خارج Aster Mail العثور على هذا المفتاح وإرسال بريد مشفّر إليك.</string>
+    <string name="external_pgp_key_not_published">غير منشور. لا يمكن للأشخاص خارج Aster Mail العثور على هذا المفتاح.</string>
+    <string name="external_pgp_key_fingerprint">البصمة</string>
+    <string name="external_pgp_key_stop_publishing">إيقاف النشر</string>
+    <string name="external_pgp_key_manage_note">لاستيراد هذا المفتاح أو استبداله أو إزالته، استخدم Aster Mail على الويب أو تطبيق سطح المكتب.</string>
+    <string name="external_pgp_key_unpublished">لم يعد مفتاحك المستورد منشورًا.</string>
+    <string name="external_pgp_key_unpublish_failed">تعذّر إيقاف نشر مفتاحك. حاول مرة أخرى.</string>
 </resources>

@@ -3505,4 +3505,14 @@
     <string name="mail_list_lines_two_subtitle">Mostrar o remetente e o assunto</string>
     <string name="mail_list_lines_three">3 linhas</string>
     <string name="mail_list_lines_three_subtitle">Mostrar o remetente, o assunto e uma linha do texto da mensagem</string>
+    <string name="external_pgp_key_title">Chave OpenPGP importada</string>
+    <string name="external_pgp_key_expires">Expira em %1$s</string>
+    <string name="external_pgp_key_no_expiry">Não expira</string>
+    <string name="external_pgp_key_published">Publicada. Pessoas fora do Aster Mail podem encontrar esta chave e enviar e-mails criptografados para você.</string>
+    <string name="external_pgp_key_not_published">Não publicada. Pessoas fora do Aster Mail não conseguem encontrar esta chave.</string>
+    <string name="external_pgp_key_fingerprint">Impressão digital</string>
+    <string name="external_pgp_key_stop_publishing">Parar de publicar</string>
+    <string name="external_pgp_key_manage_note">Para importar, substituir ou remover esta chave, use o Aster Mail na web ou o app para computador.</string>
+    <string name="external_pgp_key_unpublished">Sua chave importada não está mais publicada.</string>
+    <string name="external_pgp_key_unpublish_failed">Não foi possível parar de publicar sua chave. Tente novamente.</string>
 </resources>
