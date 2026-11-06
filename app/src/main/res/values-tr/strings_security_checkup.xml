@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">Tüm korumalar açık.</string>
     <string name="action_recommended">İşlem önerilir</string>
     <string name="two_step_verification_recommendation">Şifreniz çalınsa bile hesabınızı güvende tutmak için iki adımlı doğrulamayı açın.</string>
+    <string name="two_factor_on_with_security_key">Güvenlik anahtarıyla açık</string>
+    <string name="two_factor_on_with_app_and_key">Kimlik doğrulama uygulaması ve güvenlik anahtarıyla açık</string>
     <string name="no_passkeys_recommendation">Cihazınızın biyometrisini veya PIN\'ini kullanarak daha hızlı ve güvenli giriş için bir geçiş anahtarı ekleyin.</string>
     <string name="login_alerts_off_recommendation">Hesabınıza yeni bir cihazdan giriş yapıldığında bildirim almak için giriş uyarılarını açın.</string>
     <string name="billing_usage_title">Kullanım Genel Bakışı</string>

@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">すべての保護が有効です。</string>
     <string name="action_recommended">対応をおすすめします</string>
     <string name="two_step_verification_recommendation">パスワードが盗まれてもアカウントを安全に保つため、二段階認証を有効にしてください。</string>
+    <string name="two_factor_on_with_security_key">セキュリティキーで有効</string>
+    <string name="two_factor_on_with_app_and_key">認証アプリとセキュリティキーで有効</string>
     <string name="no_passkeys_recommendation">デバイスの生体認証やPINを使ったより速く安全なサインインのために、パスキーを追加してください。</string>
     <string name="login_alerts_off_recommendation">新しいデバイスでアカウントにサインインした際に通知を受け取るには、ログインアラートをオンにしてください。</string>
     <string name="billing_usage_title">使用状況の概要</string>

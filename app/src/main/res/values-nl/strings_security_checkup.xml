@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">Alle beveiligingen zijn ingeschakeld.</string>
     <string name="action_recommended">Actie aanbevolen</string>
     <string name="two_step_verification_recommendation">Schakel tweestapsverificatie in om je account veilig te houden, zelfs als je wachtwoord wordt gestolen.</string>
+    <string name="two_factor_on_with_security_key">Aan, met een beveiligingssleutel</string>
+    <string name="two_factor_on_with_app_and_key">Aan, met een authenticator-app en een beveiligingssleutel</string>
     <string name="no_passkeys_recommendation">Voeg een passkey toe voor sneller en veiliger inloggen met de biometrie of pincode van je apparaat.</string>
     <string name="login_alerts_off_recommendation">Schakel inlogmeldingen in om een melding te krijgen wanneer een nieuw apparaat inlogt op je account.</string>
     <string name="billing_usage_title">Gebruiksoverzicht</string>
