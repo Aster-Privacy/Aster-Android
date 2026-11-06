@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">新しい鍵を信頼</string>
     <string name="send_key_check_failed">Aster は受信者の暗号鍵を確認できなかったため、このメッセージを送信しませんでした。接続を確認してから、もう一度お試しください。</string>
     <string name="outbox_failed_reason_identity_unverified">Aster は受信者の暗号鍵を検証できなかったため、このメッセージを送信しませんでした。後でもう一度試すか、破棄できます。</string>
+    <string name="send_requires_encryption_missing_key">「暗号化を必須にする」がオンになっていますが、%1$s の公開鍵が見つからなかったため、このメッセージは送信されませんでした。送信するには、それらのアドレスを削除するか、設定で「暗号化を必須にする」をオフにしてください。</string>
 </resources>

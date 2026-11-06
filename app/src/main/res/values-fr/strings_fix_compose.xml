@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">Faire confiance à la nouvelle clé</string>
     <string name="send_key_check_failed">Aster n\'a pas pu vérifier les clés de chiffrement des destinataires et n\'a donc pas envoyé ce message. Vérifiez votre connexion, puis réessayez.</string>
     <string name="outbox_failed_reason_identity_unverified">Aster n\'a pas pu vérifier la clé de chiffrement d\'un destinataire et n\'a donc pas envoyé ce message. Vous pouvez réessayer plus tard ou le supprimer.</string>
+    <string name="send_requires_encryption_missing_key">L\'option « Chiffrement obligatoire » est activée et Aster n\'a trouvé aucune clé publique pour %1$s. Ce message n\'a donc pas été envoyé. Pour l\'envoyer, supprimez ces adresses ou désactivez « Chiffrement obligatoire » dans les paramètres.</string>
 </resources>

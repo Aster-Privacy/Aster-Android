@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">Zaufaj nowemu kluczowi</string>
     <string name="send_key_check_failed">Aster nie mógł sprawdzić kluczy szyfrowania odbiorców, więc nie wysłał tej wiadomości. Sprawdź połączenie i spróbuj ponownie.</string>
     <string name="outbox_failed_reason_identity_unverified">Aster nie mógł zweryfikować klucza szyfrowania odbiorcy, więc nie wysłał tej wiadomości. Możesz spróbować ponownie później albo ją odrzucić.</string>
+    <string name="send_requires_encryption_missing_key">Opcja „Wymagaj szyfrowania” jest włączona, a Aster nie znalazł klucza publicznego dla %1$s, więc ta wiadomość nie została wysłana. Aby ją wysłać, usuń te adresy lub wyłącz opcję „Wymagaj szyfrowania” w Ustawieniach.</string>
 </resources>
