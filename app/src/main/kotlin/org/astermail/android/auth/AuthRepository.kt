@@ -141,6 +141,7 @@ class AuthRepository @Inject constructor(
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     private val offer_preferences_store: org.astermail.android.ui.upgrade.OfferPreferencesStore,
     private val login_pins: LoginProofPinStore,
+    private val external_pgp_key_store: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -204,6 +205,14 @@ class AuthRepository @Inject constructor(
 
     private fun load_account_keks() {
         background_scope.launch { runCatching { account_key_loader.load() } }
+        background_scope.launch {
+            try {
+                external_pgp_key_store.get().load()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            }
+        }
     }
 
     fun trigger_ratchet_bootstrap() {
@@ -2462,6 +2471,7 @@ class AuthRepository @Inject constructor(
         val local_fingerprint = pgp_key_fingerprint(identity_key) ?: return false
 
         val info = encryption_api.get_pgp_key_info()
+        if (!pgp_key_role_is_internal(info.role)) return false
         if (!info.fingerprint.equals(local_fingerprint, ignoreCase = true)) return false
         val published = PublishedPgpKey.Present(info.fingerprint)
 
@@ -2514,7 +2524,7 @@ class AuthRepository @Inject constructor(
         if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return null
 
         val published_fingerprint = try {
-            encryption_api.get_pgp_key_info().fingerprint
+            encryption_api.get_pgp_key_info().let { internal_pgp_fingerprint_or_blank(it.fingerprint, it.role) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -2535,7 +2545,8 @@ class AuthRepository @Inject constructor(
     private suspend fun published_pgp_key_state(): PublishedPgpKey {
         repeat(PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS) { attempt ->
             try {
-                return PublishedPgpKey.Present(encryption_api.get_pgp_key_info().fingerprint)
+                val info = encryption_api.get_pgp_key_info()
+                return published_pgp_key_from_info(info.fingerprint, info.role)
             } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
                 return PublishedPgpKey.Absent
             } catch (cancelled: CancellationException) {

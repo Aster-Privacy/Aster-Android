@@ -74,6 +74,17 @@ fun armored_pgp_key_is_non_standard(armored_key: String): Boolean = try {
     false
 }
 
+const val PGP_KEY_ROLE_INTERNAL = "internal"
+
+fun pgp_key_role_is_internal(role: String?): Boolean =
+    role.isNullOrBlank() || role.trim().equals(PGP_KEY_ROLE_INTERNAL, ignoreCase = true)
+
+fun published_pgp_key_from_info(fingerprint: String, role: String?): PublishedPgpKey =
+    if (pgp_key_role_is_internal(role)) PublishedPgpKey.Present(fingerprint) else PublishedPgpKey.Unknown
+
+fun internal_pgp_fingerprint_or_blank(fingerprint: String, role: String?): String =
+    if (pgp_key_role_is_internal(role)) fingerprint else ""
+
 fun published_pgp_key_lookup_is_transient(error: Throwable): Boolean = when (error) {
     is ApiError.NetworkError,
     is ApiError.ServerError,
