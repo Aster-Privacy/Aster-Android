@@ -841,7 +841,7 @@ class SettingsViewModelTest {
         orphaned: Boolean = false,
         retained: Boolean = false,
     ): AliasInfo {
-        val (enc, nonce) = encrypt_alias_field_with(session_key_store, local_part)
+        val (enc, nonce) = kotlinx.coroutines.runBlocking { encrypt_alias_field_with(session_key_store, local_part) }
         return AliasInfo(
             id = id,
             encrypted_local_part = enc,

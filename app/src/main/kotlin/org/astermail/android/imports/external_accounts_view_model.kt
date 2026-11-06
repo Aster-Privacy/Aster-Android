@@ -104,6 +104,13 @@ class ExternalAccountsViewModel @Inject constructor(
 
     private fun storage_key(): ByteArray? = StorageWriteKey.write_key(session_keys)
 
+    private suspend fun write_storage_key(): ByteArray? =
+        try {
+            org.astermail.android.crypto.StorageKeyGate.await_write_key(session_keys)
+        } catch (_: org.astermail.android.crypto.StorageKeyUnavailableException) {
+            null
+        }
+
     private fun read_keys(): List<ByteArray> {
         val keys = listOfNotNull(storage_key()) + StorageWriteKey.read_keys(session_keys)
         val seen = mutableSetOf<String>()
@@ -149,7 +156,7 @@ class ExternalAccountsViewModel @Inject constructor(
         if (_state.value.connecting_provider != null) return
         viewModelScope.launch {
             _state.value = _state.value.copy(connecting_provider = provider, authorize_url = null, error = null)
-            val master = withContext(Dispatchers.Default) { storage_key() }
+            val master = withContext(Dispatchers.Default) { write_storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.NO_SESSION_KEY)
                 return@launch
@@ -238,7 +245,7 @@ class ExternalAccountsViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(manual_submitting = true, error = null, manual_success = false)
-            val master = withContext(Dispatchers.Default) { storage_key() }
+            val master = withContext(Dispatchers.Default) { write_storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.NO_SESSION_KEY)
                 return@launch
@@ -448,7 +455,7 @@ class ExternalAccountsViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(updating_token = account_token, error = null)
-            val master = withContext(Dispatchers.Default) { storage_key() }
+            val master = withContext(Dispatchers.Default) { write_storage_key() }
             if (master == null) {
                 _state.value = _state.value.copy(updating_token = null, error = ExternalAccountsError.NO_SESSION_KEY)
                 on_result?.invoke(false)

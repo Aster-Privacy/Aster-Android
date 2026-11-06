@@ -637,8 +637,8 @@ class ContactsRepository @Inject constructor(
         }
     }
 
-    private fun write_contacts_key(): ByteArray =
-        StorageWriteKey.write_key(session_key_store) ?: throw IllegalStateException("no storage key")
+    private suspend fun write_contacts_key(): ByteArray =
+        org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
 
     private fun derive_subkey(raw_key: ByteArray, info: String): ByteArray {
         val info_bytes = info.toByteArray(Charsets.UTF_8)

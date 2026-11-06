@@ -1038,7 +1038,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun blocked_senders_hmac_key(): ByteArray {
+    private suspend fun blocked_senders_hmac_key(): ByteArray {
         val raw = derive_encryption_key()
         try {
             return blocked_senders_hmac_key_for(raw)
@@ -1089,7 +1089,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun build_block_sender_request(normalized: String, is_domain: Boolean): BlockSenderRequest {
+    private suspend fun build_block_sender_request(normalized: String, is_domain: Boolean): BlockSenderRequest {
         val hmac_key = blocked_senders_hmac_key()
         try {
             val prefix = if (is_domain) "domain:" else ""
@@ -1133,7 +1133,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun allowed_senders_hmac_key(): ByteArray {
+    private suspend fun allowed_senders_hmac_key(): ByteArray {
         val raw = derive_encryption_key()
         try {
             return allowed_senders_hmac_key_for(raw)
@@ -1178,7 +1178,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun build_allow_sender_request(normalized: String, is_domain: Boolean): AllowSenderRequest {
+    private suspend fun build_allow_sender_request(normalized: String, is_domain: Boolean): AllowSenderRequest {
         val hmac_key = allowed_senders_hmac_key()
         try {
             val prefix = if (is_domain) "domain:" else "email:"
@@ -5780,7 +5780,7 @@ class SettingsViewModel @Inject constructor(
         return String(opened, Charsets.UTF_8)
     }
 
-    private fun encrypt_signature_field(plaintext: String): EncryptedField {
+    private suspend fun encrypt_signature_field(plaintext: String): EncryptedField {
         val data = plaintext.toByteArray(Charsets.UTF_8)
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val key = derive_encryption_key()
@@ -6711,14 +6711,14 @@ class SettingsViewModel @Inject constructor(
         throw IllegalStateException("alias decryption failed")
     }
 
-    private fun encrypt_alias_field(plaintext: String): Pair<String, String> =
+    private suspend fun encrypt_alias_field(plaintext: String): Pair<String, String> =
         encrypt_alias_field_with(session_key_store, plaintext)
 
     private fun normalize_alias_local_part(local_part: String): String {
         return local_part.lowercase(java.util.Locale.ROOT).replace(".", "")
     }
 
-    private fun compute_alias_address_hash(local_part: String, domain: String): String =
+    private suspend fun compute_alias_address_hash(local_part: String, domain: String): String =
         compute_alias_address_hash_with(session_key_store, local_part, domain)
 
     private fun compute_routing_address_hash(local_part: String, domain: String): String =
@@ -6750,7 +6750,7 @@ class SettingsViewModel @Inject constructor(
         return changed
     }
 
-    private fun compute_domain_address_hash(local_part: String, domain: String): String {
+    private suspend fun compute_domain_address_hash(local_part: String, domain: String): String {
         val enc_key = derive_encryption_key()
         try {
             val info = "astermail-domain-address-hmac-v1".toByteArray(Charsets.UTF_8)
@@ -6813,9 +6813,8 @@ class SettingsViewModel @Inject constructor(
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         AesGcm.decrypt(key, iv, ciphertext)
 
-    private fun derive_encryption_key(): ByteArray =
-        org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
-            ?: throw IllegalStateException("no storage key")
+    private suspend fun derive_encryption_key(): ByteArray =
+        org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
 
     private fun storage_read_keys(): List<ByteArray> =
         org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store)

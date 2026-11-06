@@ -187,7 +187,7 @@ class TemplatesViewModel @Inject constructor(
             _state.value = _state.value.copy(is_saving = true, error = null)
             val outcome = runCatching {
                 withContext(Dispatchers.Default) {
-                    val key = derive_key() ?: error("session expired")
+                    val key = org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
                     try {
                     val name_field = encrypt_to_b64(draft.name, key)
                     val category_field = encrypt_to_b64(draft.category, key)

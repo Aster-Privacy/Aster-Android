@@ -35,10 +35,10 @@ private const val alias_hmac_info = "astermail-alias-hmac-v1"
 fun normalize_alias_local_part(local_part: String): String =
     local_part.lowercase(Locale.ROOT).replace(".", "")
 
-fun derive_alias_encryption_key(session_key_store: SessionKeyStore): ByteArray =
-    StorageWriteKey.write_key(session_key_store) ?: throw IllegalStateException("no storage key")
+suspend fun derive_alias_encryption_key(session_key_store: SessionKeyStore): ByteArray =
+    org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
 
-fun encrypt_alias_field_with(session_key_store: SessionKeyStore, plaintext: String): Pair<String, String> {
+suspend fun encrypt_alias_field_with(session_key_store: SessionKeyStore, plaintext: String): Pair<String, String> {
     val key = derive_alias_encryption_key(session_key_store)
     try {
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
@@ -50,7 +50,7 @@ fun encrypt_alias_field_with(session_key_store: SessionKeyStore, plaintext: Stri
     }
 }
 
-fun compute_alias_address_hash_with(
+suspend fun compute_alias_address_hash_with(
     session_key_store: SessionKeyStore,
     local_part: String,
     domain: String,

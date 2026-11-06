@@ -1142,6 +1142,20 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun refreshed_sender_alias_hash(stored: String?, sender_email: String?): String? {
+        if (stored.isNullOrBlank()) return stored
+        val write = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+        val reads = runCatching { org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store) }.getOrDefault(emptyList())
+        return try {
+            runCatching {
+                org.astermail.android.crypto.storage_rotation.current_sender_alias_hash(stored, sender_email, write, reads)
+            }.getOrDefault(stored)
+        } finally {
+            write?.fill(0)
+            reads.forEach { it.fill(0) }
+        }
+    }
+
     private fun mark_sender_alias_backfill_done(user_key: String) {
         sender_alias_backfill_prefs.edit()
             .putBoolean(user_key, true)
@@ -1710,7 +1724,7 @@ class MailRepository @Inject constructor(
             expires_at = row.expires_at,
             expiry_password = row.expiry_password,
             attachments = attachments,
-            sender_alias_hash = row.sender_alias_hash,
+            sender_alias_hash = refreshed_sender_alias_hash(row.sender_alias_hash, row.sender_email),
             suppress_branding = row.suppress_branding,
             allow_non_post_quantum = row.allow_non_post_quantum,
             client_send_id = client_send_id_for(pending_id),
@@ -2826,6 +2840,7 @@ class MailRepository @Inject constructor(
             val base = decrypted?.let { merge_server_flags(it, resolved) } ?: default_metadata_for(resolved, now)
             val updated = base.copy(category = category, category_pinned = pinned && category != null, updated_at = now)
             val merged_json = merge_metadata_json(metadata_json, plaintext, updated)
+            org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store).fill(0)
             val (encrypted, nonce) = encrypt_metadata_plaintext(merged_json, metadata_write_key())
                 ?: throw IllegalStateException("metadata key unavailable")
             mail_api.patch_metadata(item_id, PatchMetadataRequest(encrypted_metadata = encrypted, metadata_nonce = nonce))
