@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">सभी सुरक्षाएँ चालू हैं।</string>
     <string name="action_recommended">कार्रवाई की सलाह दी जाती है</string>
     <string name="two_step_verification_recommendation">पासवर्ड चोरी होने पर भी खाता सुरक्षित रखने के लिए दो-चरणीय सत्यापन चालू करें।</string>
+    <string name="two_factor_on_with_security_key">सुरक्षा कुंजी के साथ चालू है</string>
+    <string name="two_factor_on_with_app_and_key">ऑथेंटिकेटर ऐप और सुरक्षा कुंजी के साथ चालू है</string>
     <string name="no_passkeys_recommendation">अपने डिवाइस के बायोमेट्रिक या PIN से तेज़ और ज़्यादा सुरक्षित साइन इन के लिए पासकी जोड़ें।</string>
     <string name="login_alerts_off_recommendation">जब भी कोई नया डिवाइस आपके खाते में साइन इन करे, सूचना पाने के लिए लॉगिन चेतावनियां चालू करें।</string>
     <string name="billing_usage_title">इस्तेमाल का ब्योरा</string>

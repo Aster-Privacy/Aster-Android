@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">Todas as proteções estão ativadas.</string>
     <string name="action_recommended">Ação recomendada</string>
     <string name="two_step_verification_recommendation">Ative a verificação em duas etapas para manter a sua conta segura mesmo se a sua palavra-passe for roubada.</string>
+    <string name="two_factor_on_with_security_key">Ativada com uma chave de segurança</string>
+    <string name="two_factor_on_with_app_and_key">Ativada com uma app de autenticação e uma chave de segurança</string>
     <string name="no_passkeys_recommendation">Adicione uma chave de acesso para iniciar sessão de forma mais rápida e segura com a biometria ou o PIN do seu dispositivo.</string>
     <string name="login_alerts_off_recommendation">Ative os alertas de início de sessão para ser notificado sempre que um novo dispositivo iniciar sessão na sua conta.</string>
     <string name="billing_usage_title">Visão geral da utilização</string>

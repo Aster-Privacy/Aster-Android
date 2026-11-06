@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">Alle Schutzfunktionen sind aktiviert.</string>
     <string name="action_recommended">Aktion empfohlen</string>
     <string name="two_step_verification_recommendation">Aktivieren Sie die zweistufige Verifizierung, damit Ihr Konto auch bei gestohlenem Passwort sicher bleibt.</string>
+    <string name="two_factor_on_with_security_key">Aktiviert mit einem Sicherheitsschlüssel</string>
+    <string name="two_factor_on_with_app_and_key">Aktiviert mit einer Authentifizierungs-App und einem Sicherheitsschlüssel</string>
     <string name="no_passkeys_recommendation">Fügen Sie einen Passkey hinzu, um sich schneller und sicherer mit Biometrie oder PIN Ihres Geräts anzumelden.</string>
     <string name="login_alerts_off_recommendation">Aktivieren Sie Anmeldebenachrichtigungen, um informiert zu werden, wenn sich ein neues Gerät bei Ihrem Konto anmeldet.</string>
     <string name="billing_usage_title">Nutzungsübersicht</string>

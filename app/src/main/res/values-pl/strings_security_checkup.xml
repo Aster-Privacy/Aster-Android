@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">Wszystkie zabezpieczenia są włączone.</string>
     <string name="action_recommended">Zalecana czynność</string>
     <string name="two_step_verification_recommendation">Włącz weryfikację dwuetapową, aby chronić konto nawet w razie kradzieży hasła.</string>
+    <string name="two_factor_on_with_security_key">Włączona przy użyciu klucza bezpieczeństwa</string>
+    <string name="two_factor_on_with_app_and_key">Włączona przy użyciu aplikacji uwierzytelniającej i klucza bezpieczeństwa</string>
     <string name="no_passkeys_recommendation">Dodaj klucz dostępu, aby logować się szybciej i bezpieczniej za pomocą biometrii lub kodu PIN urządzenia.</string>
     <string name="login_alerts_off_recommendation">Włącz alerty logowania, aby otrzymywać powiadomienia, gdy nowe urządzenie zaloguje się na Twoje konto.</string>
     <string name="billing_usage_title">Przegląd użycia</string>

@@ -120,7 +120,6 @@ private const val activity_preview_count = 5
 private const val trusted_preview_count = 3
 private const val security_settle_delay_ms = 90L
 private const val security_load_timeout_ms = 5000L
-private const val security_score_max = 7
 private const val anchor_highlight_ms = 1600L
 private const val anchor_highlight_fade_ms = 350
 private const val anchor_highlight_alpha = 0.14f
@@ -254,17 +253,22 @@ fun SecurityScreen(
 
     val score_loaded = content_ready && sec != null && prefs != null && state.login_alerts_enabled != null
 
-    val score = if (!score_loaded) null else run {
-        var s = 0
-        if (sec?.totp_enabled == true) s++
-        if (hardware_keys_count > 0) s++
-        if (recovery_email_verified) s++
-        if (state.login_alerts_enabled == true) s++
-        if (prefs?.block_tracking_pixels == true) s++
-        if (prefs?.block_external_images == true) s++
-        if (prefs?.strip_exif_on_compose == true) s++
-        s
-    }
+    val two_factor_method = second_factor_method_for(
+        totp_enabled = sec?.totp_enabled == true,
+        security_key_count = hardware_keys_count,
+    )
+
+    val score = if (!score_loaded) null else security_score(
+        security_score_input(
+            totp_enabled = sec?.totp_enabled == true,
+            security_key_count = hardware_keys_count,
+            recovery_email_verified = recovery_email_verified,
+            login_alerts_enabled = state.login_alerts_enabled == true,
+            block_tracking_pixels = prefs?.block_tracking_pixels == true,
+            block_remote_images = prefs?.block_external_images == true,
+            strip_exif_on_compose = prefs?.strip_exif_on_compose == true,
+        ),
+    )
 
     val score_color = when (score) {
         null -> colors.text_muted
@@ -341,8 +345,12 @@ fun SecurityScreen(
 
     val totp_sub = when {
         sec == null -> stringResource(R.string.two_factor_subtitle_add)
-        sec.totp_enabled -> stringResource(R.string.enabled)
-        else -> stringResource(R.string.disabled)
+        else -> when (two_factor_method) {
+            second_factor_method.both -> stringResource(R.string.two_factor_on_with_app_and_key)
+            second_factor_method.security_key -> stringResource(R.string.two_factor_on_with_security_key)
+            second_factor_method.authenticator -> stringResource(R.string.enabled)
+            second_factor_method.none -> stringResource(R.string.disabled)
+        }
     }
     val codes_status = state.recovery_codes_status
     val recovery_codes_sub = if (codes_status != null && codes_status.total_codes > 0) {
@@ -389,7 +397,7 @@ fun SecurityScreen(
         val protection_items = listOf(
             protection_item(
                 label = stringResource(R.string.two_factor_auth),
-                done = sec?.totp_enabled == true,
+                done = two_factor_method != second_factor_method.none,
                 test_tag = "protection_item_two_factor",
                 on_open = { open_check(security_check.two_factor) },
             ),
@@ -465,7 +473,7 @@ fun SecurityScreen(
                 subtitle = totp_sub,
                 icon = TablerIcons.ShieldCheck,
                 on_click = { on_open("two_factor") },
-                recommendation = if (sec != null && !sec.totp_enabled) {
+                recommendation = if (sec != null && two_factor_method == second_factor_method.none) {
                     stringResource(R.string.two_step_verification_recommendation)
                 } else {
                     null
