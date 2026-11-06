@@ -103,11 +103,11 @@ class MessageEscrow @Inject constructor(
     }
 
     private suspend fun post_sealed(row_key: String, payload: ByteArray, aad: ByteArray): Boolean {
-        val bases = state_store.master_key_candidates()
+        val base = state_store.write_master_key()
         val escrow_key = try {
-            bases.firstOrNull()?.let { derive_escrow_key(it) }
+            base?.let { derive_escrow_key(it) }
         } finally {
-            bases.forEach { it.fill(0) }
+            base?.fill(0)
         }
         if (escrow_key == null) {
             payload.fill(0)

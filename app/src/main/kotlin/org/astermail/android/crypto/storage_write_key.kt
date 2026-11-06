@@ -51,49 +51,13 @@ object StorageWriteKey {
         }
     }
 
-    fun select_write_key(
-        data_kek: ByteArray?,
-        kdf_version: Int?,
-        passphrase: () -> ByteArray?,
-        derive: (ByteArray, Int?) -> ByteArray? = ::password_storage_key,
-    ): ByteArray? {
+    fun select_write_key(data_kek: ByteArray?): ByteArray? {
         if (data_kek != null && data_kek.size == KEY_LENGTH) return data_kek
         data_kek?.fill(0)
-        if (!is_known_kdf_version(kdf_version)) return null
-        val password = passphrase() ?: return null
-        return try {
-            derive(password, kdf_version)?.takeIf { it.size == KEY_LENGTH }
-        } finally {
-            password.fill(0)
-        }
+        return null
     }
 
-    fun write_key(store: SessionKeyStore): ByteArray? =
-        select_write_key(store.get_data_kek(), store.get_storage_kdf_version(), store::get_passphrase, ::remembered_password_key)
-
-    private val memo_lock = Any()
-    private var memo_fingerprint: String? = null
-    private var memo_key: ByteArray? = null
-
-    private fun remembered_password_key(passphrase: ByteArray, kdf_version: Int?): ByteArray? {
-        if ((kdf_version ?: CryptoNative.legacy_storage_kdf_version) == CryptoNative.legacy_storage_kdf_version) {
-            return password_storage_key(passphrase, kdf_version)
-        }
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        digest.update(passphrase)
-        digest.update(kdf_version.toString().toByteArray(Charsets.UTF_8))
-        val fingerprint = encode_key(digest.digest())
-        synchronized(memo_lock) {
-            if (memo_fingerprint == fingerprint) memo_key?.let { return it.copyOf() }
-        }
-        val derived = password_storage_key(passphrase, kdf_version) ?: return null
-        synchronized(memo_lock) {
-            memo_key?.fill(0)
-            memo_key = derived.copyOf()
-            memo_fingerprint = fingerprint
-        }
-        return derived
-    }
+    fun write_key(store: SessionKeyStore): ByteArray? = select_write_key(store.get_data_kek())
 
     fun password_read_keys(
         passphrase: ByteArray?,

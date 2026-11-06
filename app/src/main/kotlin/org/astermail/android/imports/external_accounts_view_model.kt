@@ -102,20 +102,7 @@ class ExternalAccountsViewModel @Inject constructor(
         _state.value = _state.value.copy(problem_since = tracked, health_loaded = true)
     }
 
-    private fun storage_key(): ByteArray? = external_account_master_key(
-        session_keys.get_data_kek(),
-        session_keys::get_passphrase,
-    ) { passphrase ->
-        val version = external_account_kdf_version(
-            session_keys.get_storage_kdf_version(),
-            session_keys.get_encrypted_vault(),
-            passphrase,
-        )
-        version?.let {
-            session_keys.put_storage_kdf_version(it)
-            StorageWriteKey.write_key(session_keys)
-        }
-    }
+    private fun storage_key(): ByteArray? = StorageWriteKey.write_key(session_keys)
 
     private fun read_keys(): List<ByteArray> {
         val keys = listOfNotNull(storage_key()) + StorageWriteKey.read_keys(session_keys)
@@ -257,6 +244,14 @@ class ExternalAccountsViewModel @Inject constructor(
                 return@launch
             }
             try {
+                val existing_tokens = _state.value.accounts.map { it.account_token }.toSet()
+                val already_added = withContext(Dispatchers.Default) {
+                    account_token_exists(email, read_keys(), existing_tokens)
+                }
+                if (already_added) {
+                    _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.MANUAL_FAILED)
+                    return@launch
+                }
                 val token = generate_account_token(email, master)
                 val data = ExternalAccountData(
                     email = email,

@@ -118,12 +118,12 @@ class VaultMasterKeyUpgradeTest {
     }
 
     @Test
-    fun `legacy key list keeps earlier entries and stays bounded`() {
+    fun `legacy key list keeps every earlier entry`() {
         val vault_obj = JSONObject()
         var retired = ByteArray(32) { 1 }
         upgrade(vault_obj, retired, ByteArray(32) { 101 })
 
-        for (generation in 2..(MAX_LEGACY_KEKS + 5)) {
+        for (generation in 2..80) {
             vault_obj.remove("data_kek")
             retired = ByteArray(32) { generation.toByte() }
             upgrade(vault_obj, retired, ByteArray(32) { (generation + 100).toByte() })
@@ -131,7 +131,7 @@ class VaultMasterKeyUpgradeTest {
 
         val list = legacy_values(vault_obj)
 
-        assertEquals(MAX_LEGACY_KEKS, list.size)
+        assertTrue(list.size >= 80)
         assertEquals(encode(retired), list[0])
         assertEquals(list.size, list.toSet().size)
     }
@@ -168,11 +168,24 @@ class VaultMasterKeyUpgradeTest {
         assertEquals("2026-01-01T00:00:00Z", vault_obj.getString("mk_created_at"))
     }
 
-    @Test(expected = UnsupportedVaultKdfException::class)
-    fun `a vault on an unsupported storage kdf refuses to fabricate a data key`() {
+    @Test
+    fun `a stretched vault without a data key rotates and keeps both password keys`() {
+        val stretched = ByteArray(32) { 55 }
         val vault_obj = JSONObject().put("kdf_version", 2)
 
-        upgrade(vault_obj)
+        val data_kek = ensure_master_key_vault(
+            vault_obj = vault_obj,
+            derive_storage_key = { old_storage_key.copyOf() },
+            encode = ::encode,
+            decode = ::decode,
+            now = { "2026-08-21T00:00:00Z" },
+            generate = { random_key.copyOf() },
+            extra_password_keys = { listOf(stretched.copyOf()) },
+        )
+
+        assertArrayEquals(random_key, data_kek)
+        assertEquals(listOf(encode(stretched), encode(old_storage_key)), legacy_values(vault_obj))
+        assertEquals("pending", vault_obj.getJSONObject("storage_rekey").getString("state"))
     }
 
     @Test(expected = UnsupportedVaultKdfException::class)
@@ -184,7 +197,7 @@ class VaultMasterKeyUpgradeTest {
 
     @Test
     fun `an unsupported storage kdf is left untouched when it refuses`() {
-        val vault_obj = JSONObject().put("kdf_version", 2)
+        val vault_obj = JSONObject().put("kdf_version", 7)
 
         runCatching { upgrade(vault_obj) }
 

@@ -77,7 +77,7 @@ class ContactsRepositoryTest {
         }
         every { session_key_store.get_passphrase() } answers { test_passphrase.copyOf() }
         every { session_key_store.get_storage_kdf_version() } returns null
-        every { session_key_store.get_data_kek() } returns null
+        every { session_key_store.get_data_kek() } answers { derive_test_key() }
         every { session_key_store.get_decrypt_keks() } returns emptyList()
         every { session_key_store.get_identity_key() } returns null
         repo = ContactsRepository(contacts_api, session_key_store)
@@ -400,8 +400,9 @@ class ContactsRepositoryTest {
     }
 
     @Test
-    fun `create_contact fails without passphrase`() = runTest {
+    fun `create_contact fails without a storage key`() = runTest {
         every { session_key_store.get_passphrase() } returns null
+        every { session_key_store.get_data_kek() } returns null
         coEvery { contacts_api.create_contact(any()) } returns
             CreateContactResponse(id = "c_new", success = true)
 

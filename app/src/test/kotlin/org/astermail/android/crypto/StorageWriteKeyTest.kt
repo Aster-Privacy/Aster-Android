@@ -89,21 +89,11 @@ class StorageWriteKeyTest {
     }
 
     @Test
-    fun `without a data key a v1 account keeps writing with the v1 key`() {
-        assertArrayEquals(v1(), StorageWriteKey.write_key(store(with_data_kek = false)))
-        assertArrayEquals(v1(), StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 1)))
-    }
-
-    @Test
-    fun `without a data key a stretched account writes with the stretched key`() {
-        assertArrayEquals(v2(), StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 2)))
-    }
-
-    @Test
-    fun `an unknown kdf version never produces a write key`() {
+    fun `without a data key no password key is used for writes`() {
+        assertNull(StorageWriteKey.write_key(store(with_data_kek = false)))
+        assertNull(StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 1)))
+        assertNull(StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 2)))
         assertNull(StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 3)))
-        assertNull(StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = 0)))
-        assertNull(StorageWriteKey.write_key(store(with_data_kek = false, kdf_version = -1)))
         assertFalse(StorageWriteKey.is_known_kdf_version(-1))
         assertTrue(StorageWriteKey.is_known_kdf_version(null))
     }
@@ -118,14 +108,13 @@ class StorageWriteKeyTest {
     }
 
     @Test
-    fun `a data key of the wrong length falls back instead of being used`() {
-        val key = StorageWriteKey.select_write_key(ByteArray(16) { 1 }, 1, { passphrase.copyOf() })
-        assertArrayEquals(v1(), key)
+    fun `a data key of the wrong length gives no write key`() {
+        assertNull(StorageWriteKey.select_write_key(ByteArray(16) { 1 }))
     }
 
     @Test
-    fun `no passphrase and no data key gives no write key`() {
-        assertNull(StorageWriteKey.select_write_key(null, 1, { null }))
+    fun `no data key gives no write key`() {
+        assertNull(StorageWriteKey.select_write_key(null))
     }
 
     @Test

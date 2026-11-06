@@ -77,6 +77,15 @@ fun generate_account_token(email: String, master_key: ByteArray): String {
     return Base64.getEncoder().encodeToString(signed)
 }
 
+fun account_token_exists(email: String, keys: List<ByteArray>, existing_tokens: Set<String>): Boolean {
+    try {
+        if (existing_tokens.isEmpty()) return false
+        return keys.any { generate_account_token(email, it) in existing_tokens }
+    } finally {
+        keys.forEach { it.fill(0) }
+    }
+}
+
 private fun generate_integrity_hash(
     encrypted_data: String,
     nonce: String,

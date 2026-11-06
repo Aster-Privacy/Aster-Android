@@ -78,22 +78,34 @@ class RatchetStateStore @Inject constructor(
         }
     }
 
-    fun derive_state_encryption_key(): ByteArray? =
-        state_encryption_key_candidates().firstOrNull()
+    fun derive_state_encryption_key(): ByteArray? {
+        val master = write_master_key() ?: return null
+        return try {
+            derive_state_key(master)
+        } finally {
+            master.fill(0)
+        }
+    }
+
+    fun write_master_key(): ByteArray? =
+        org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
 
     fun state_encryption_key_candidates(): List<ByteArray> =
         master_key_candidates().map { master ->
             try {
-                RatchetCrypto.hkdf_sha256(
-                    ikm = master,
-                    salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
-                    info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
-                    length = 32,
-                )
+                derive_state_key(master)
             } finally {
                 master.fill(0)
             }
         }
+
+    private fun derive_state_key(master: ByteArray): ByteArray =
+        RatchetCrypto.hkdf_sha256(
+            ikm = master,
+            salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+            info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+            length = 32,
+        )
 
     fun master_key_candidates(): List<ByteArray> {
         val candidates = mutableListOf<ByteArray>()

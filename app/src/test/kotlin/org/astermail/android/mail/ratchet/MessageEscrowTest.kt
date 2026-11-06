@@ -128,6 +128,7 @@ class MessageEscrowTest {
     fun `fetch returns null when the server has no entry`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         coEvery { api.fetch_plaintext_escrow(any()) } returns null
 
@@ -140,6 +141,7 @@ class MessageEscrowTest {
         every { state_store.master_key_candidates() } answers {
             listOf(b64(base_key_b64), ByteArray(32) { 9 })
         }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         val uploaded = slot<PlaintextEscrowEntry>()
         coEvery { api.upload_plaintext_escrow(capture(uploaded)) } returns true
@@ -161,6 +163,7 @@ class MessageEscrowTest {
     fun `upload skips plaintext above the size limit`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         coEvery { api.upload_plaintext_escrow(any()) } returns true
 
@@ -223,6 +226,7 @@ class MessageEscrowTest {
     fun `fetch_bound returns the copy flag when the binding matches`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns
             bound_entry("peer@astermail.org", "conv_1", "bound body", true)
@@ -236,6 +240,7 @@ class MessageEscrowTest {
     fun `fetch_bound rejects a copy bound to another conversation`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns
             bound_entry("peer@astermail.org", "conv_other", "bound body", false)
@@ -247,6 +252,7 @@ class MessageEscrowTest {
     fun `fetch_bound falls back to the legacy row as unconfirmed`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         coEvery { api.fetch_plaintext_escrow(MessageEscrow.bound_key(dedupe_key)) } returns null
         coEvery { api.fetch_plaintext_escrow(dedupe_key) } returns PlaintextEscrowEntry(
@@ -264,6 +270,7 @@ class MessageEscrowTest {
     fun `upload_bound writes the bound row with the flag and the legacy row`() = runTest {
         val state_store = mockk<RatchetStateStore>()
         every { state_store.master_key_candidates() } answers { listOf(b64(base_key_b64)) }
+        every { state_store.write_master_key() } answers { b64(base_key_b64) }
         val api = mockk<RatchetApi>()
         val uploaded = mutableListOf<PlaintextEscrowEntry>()
         coEvery { api.upload_plaintext_escrow(capture(uploaded)) } returns true

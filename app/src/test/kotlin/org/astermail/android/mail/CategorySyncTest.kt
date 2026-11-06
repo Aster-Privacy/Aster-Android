@@ -69,7 +69,7 @@ class CategorySyncTest {
             java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
         }
         session_key_store = mockk(relaxed = true)
-        every { session_key_store.get_data_kek() } returns null
+        every { session_key_store.get_data_kek() } answers { password_master() }
         every { session_key_store.get_storage_kdf_version() } returns null
         every { session_key_store.get_decrypt_keks() } returns emptyList()
         every { session_key_store.get_passphrase() } answers { passphrase.toByteArray(Charsets.UTF_8) }
@@ -101,11 +101,15 @@ class CategorySyncTest {
         unmockkAll()
     }
 
-    private fun metadata_key(): ByteArray {
+    private fun password_master(): ByteArray {
         val secret = passphrase.toByteArray(Charsets.UTF_8)
         val salt = MessageDigest.getInstance("SHA-256")
             .digest("aster-hkdf-salt-v1:".toByteArray(Charsets.UTF_8) + secret)
-        val master = hkdf_sha256(secret, salt, "aster-storage-encryption-key-v1".toByteArray(Charsets.UTF_8), 32)
+        return hkdf_sha256(secret, salt, "aster-storage-encryption-key-v1".toByteArray(Charsets.UTF_8), 32)
+    }
+
+    private fun metadata_key(): ByteArray {
+        val master = password_master()
         return hkdf_sha256(
             master,
             "aster-metadata-salt-v1".toByteArray(Charsets.UTF_8),

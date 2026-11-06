@@ -71,27 +71,19 @@ fun merge_legacy_keks_reporting(
 ): MergedLegacyKeks {
     val merged = JSONArray()
     val seen = mutableSetOf<String>()
-    var dropped = 0
+    val dropped = 0
 
     if (existing != null) {
         for (i in 0 until existing.length()) {
             val entry = existing.optJSONObject(i) ?: continue
             val kek = entry.optString("k", "")
             if (kek.isBlank() || !seen.add(kek)) continue
-            if (merged.length() >= MAX_LEGACY_KEKS) {
-                dropped += 1
-                continue
-            }
             merged.put(entry)
         }
     }
 
     for (kek in recovered) {
         if (kek.isBlank() || !seen.add(kek)) continue
-        if (merged.length() >= MAX_LEGACY_KEKS) {
-            dropped += 1
-            continue
-        }
         merged.put(JSONObject().put("k", kek).put("added_at", added_at))
     }
 

@@ -954,8 +954,8 @@ class MailRepository @Inject constructor(
     @Volatile private var forced_envelope_heal_until = 0L
     @Volatile private var cached_kek_candidates: List<ByteArray>? = null
     @Volatile private var cached_kek_source: List<String>? = null
-    @Volatile private var cached_metadata_keys: List<ByteArray>? = null
-    @Volatile private var cached_metadata_source: String? = null
+    private class MetadataKeySet(val source: String, val keys: List<ByteArray>, val has_write_key: Boolean)
+    @Volatile private var cached_metadata: MetadataKeySet? = null
     @Volatile private var cached_sent_folder_token: String? = null
     private val draft_item_cache =
         java.util.Collections.synchronizedMap(
@@ -2162,9 +2162,7 @@ class MailRepository @Inject constructor(
         cached_kek_candidates?.forEach { it.fill(0) }
         cached_kek_candidates = null
         cached_kek_source = null
-        cached_metadata_keys?.forEach { it.fill(0) }
-        cached_metadata_keys = null
-        cached_metadata_source = null
+        cached_metadata = null
         cached_sent_folder_token = null
         runCatching { sent_folder_prefs.edit().remove(sent_folder_prefs_key()).apply() }
         draft_item_cache.clear()
@@ -4471,10 +4469,12 @@ class MailRepository @Inject constructor(
             session_key_store.get_decrypt_keks().joinToString(",")
     }
 
-    private fun metadata_keys(): List<ByteArray> {
+    private fun metadata_keys(): List<ByteArray> = metadata_key_set().keys
+
+    private fun metadata_key_set(): MetadataKeySet {
         val source = metadata_key_source()
-        val cached = cached_metadata_keys
-        if (cached != null && cached_metadata_source == source) return cached
+        val cached = cached_metadata
+        if (cached != null && cached.source == source) return cached
         val write_master = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
         val masters = ArrayList<ByteArray>()
         write_master?.let { masters.add(it) }
@@ -4486,13 +4486,10 @@ class MailRepository @Inject constructor(
             master.fill(0)
             if (keys.none { it.contentEquals(derived) }) keys.add(derived) else derived.fill(0)
         }
-        cached_metadata_keys = keys
-        cached_metadata_source = source
-        cached_metadata_has_write_key = write_master != null
-        return keys
+        val built = MetadataKeySet(source, keys, write_master != null)
+        cached_metadata = built
+        return built
     }
-
-    @Volatile private var cached_metadata_has_write_key: Boolean = false
 
     private fun metadata_key(): ByteArray? = metadata_write_key()
 
@@ -4526,8 +4523,8 @@ class MailRepository @Inject constructor(
     }
 
     private fun metadata_write_key(): ByteArray? {
-        val keys = metadata_keys()
-        return if (cached_metadata_has_write_key) keys.firstOrNull() else null
+        val set = metadata_key_set()
+        return if (set.has_write_key) set.keys.firstOrNull() else null
     }
 
     private fun decode_metadata_plaintext(json_str: String): MailItemMetadata? =

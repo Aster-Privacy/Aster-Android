@@ -100,23 +100,18 @@ class InactiveKeyRestoreTest {
     }
 
     @Test
-    fun caps_the_merged_kek_list_and_reports_what_it_dropped() {
+    fun keeps_every_merged_kek_without_dropping_any() {
         val existing = JSONArray()
-        for (i in 0 until MAX_LEGACY_KEKS) {
+        for (i in 0 until 80) {
             existing.put(JSONObject().put("k", "held_$i").put("added_at", added_at))
         }
 
         val merged = merge_legacy_keks_reporting(existing, listOf("recovered", "held_0"), added_at)
 
-        assertEquals(MAX_LEGACY_KEKS, merged.keks.length())
+        assertEquals(81, merged.keks.length())
         assertEquals("held_0", merged.keks.getJSONObject(0).getString("k"))
-        assertTrue(keks(merged.keks).none { it == "recovered" })
-        assertEquals(1, merged.dropped)
-    }
-
-    @Test
-    fun the_kek_cap_is_at_least_the_web_cap() {
-        assertTrue(MAX_LEGACY_KEKS >= 64)
+        assertEquals("recovered", merged.keks.getJSONObject(80).getString("k"))
+        assertEquals(0, merged.dropped)
     }
 
     @Test
