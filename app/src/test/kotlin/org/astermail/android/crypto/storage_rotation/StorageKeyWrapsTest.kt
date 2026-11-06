@@ -21,6 +21,9 @@
 package org.astermail.android.crypto.storage_rotation
 
 import java.security.MessageDigest
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import java.util.Base64
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -31,14 +34,20 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.crypto.AccountKey
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpKeyGenerator
+import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
+import org.astermail.android.mail.ratchet.vault_identity_fingerprint
+import org.astermail.android.mail.ratchet.vault_key_fingerprint
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class StorageKeyWrapsTest {
@@ -48,6 +57,30 @@ class StorageKeyWrapsTest {
     private val stale_kek = ByteArray(32) { 22 }
     private val derived_kek = ByteArray(32) { 23 }
     private val later_kek = ByteArray(32) { 24 }
+
+    @Before
+    fun mock_android_base64() {
+        mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            Base64.getEncoder().encodeToString(firstArg())
+        }
+        every { android.util.Base64.decode(any<String>(), any()) } answers {
+            Base64.getDecoder().decode(firstArg<String>())
+        }
+    }
+
+    @After
+    fun unmock_android_base64() {
+        unmockkStatic(android.util.Base64::class)
+    }
+
+    private fun ratchet_public(identity: String): ByteArray {
+        val digest = MessageDigest.getInstance("SHA-256").digest(identity.toByteArray())
+        return ByteArray(65) { if (it == 0) 4 else digest[(it - 1) % digest.size] }
+    }
+
+    private fun identity_fingerprint(identity: String): String =
+        vault_identity_fingerprint(JSONObject().put("ratchet_identity_public", encode_b64(ratchet_public(identity))))!!
 
     private class Codec : StorageVaultCodec {
         override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? =
@@ -68,10 +101,6 @@ class StorageKeyWrapsTest {
             if (owner !in private_keys) return null
             return decode_b64(payload)
         }
-
-        override fun fingerprint(identity_private_key: String): String =
-            MessageDigest.getInstance("SHA-1").digest(identity_private_key.toByteArray())
-                .joinToString("") { "%02x".format(it) }
     }
 
     private class Server(initial: JSONObject) : ResealApi {
@@ -130,7 +159,7 @@ class StorageKeyWrapsTest {
         json_object(
             "key_id" to wrap_key_id(kek),
             "wrap" to encode_b64(crypto.seal(kek, identity)!!),
-            "identity_fingerprint" to wrap_identity_fingerprint(crypto.fingerprint(identity)!!),
+            "identity_fingerprint" to identity_fingerprint(identity),
             "created_at" to now,
         )
 
@@ -141,6 +170,7 @@ class StorageKeyWrapsTest {
 
     private fun random_vault(kek: ByteArray, identity: String = "id-current"): JSONObject = JSONObject()
         .put("identity_key", identity)
+        .put("ratchet_identity_public", encode_b64(ratchet_public(identity)))
         .put("data_kek", encode_b64(kek))
         .put("data_kek_random", true)
 
@@ -153,11 +183,102 @@ class StorageKeyWrapsTest {
     }
 
     @Test
-    fun the_wrap_fingerprint_is_thirty_two_bytes_of_base64() {
-        val encoded = wrap_identity_fingerprint("51318F173A068CE9344B2CCEE62EBCF9B25BB033")!!
-        assertEquals(32, Base64.getDecoder().decode(encoded).size)
-        assertEquals(encoded, wrap_identity_fingerprint("51318f173a068ce9344b2ccee62ebcf9b25bb033"))
-        assertNull(wrap_identity_fingerprint("not hex"))
+    fun the_wrap_fingerprint_is_the_vault_key_fingerprint_of_the_identity() = runBlocking {
+        val vault = random_vault(newest_kek)
+        val server = Server(vault)
+        store_side_copy(server, FakeCrypto(), vault, emptyList())
+        val sent = server.posted.single().str("identity_fingerprint")
+        val identity_public = ratchet_public("id-current")
+        val expected = Base64.getEncoder()
+            .encodeToString(MessageDigest.getInstance("SHA-256").digest(identity_public))
+        assertEquals(expected, sent)
+        assertEquals(vault_key_fingerprint(identity_public), sent)
+        assertEquals(collect_vault_key_fingerprints(vault).first(), sent)
+        assertEquals(32, Base64.getDecoder().decode(sent).size)
+    }
+
+    @Test
+    fun the_wrap_fingerprint_is_not_derived_from_the_openpgp_fingerprint() = runBlocking {
+        val vault = random_vault(newest_kek, WEB_PRIVATE_KEY)
+        val server = Server(vault)
+        store_side_copy(server, FakeCrypto(), vault, emptyList())
+        val sent = server.posted.single().str("identity_fingerprint")
+        val pgp_hash = Base64.getEncoder().encodeToString(
+            MessageDigest.getInstance("SHA-256").digest(
+                WEB_FINGERPRINT.chunked(2).map { it.toInt(16).toByte() }.toByteArray(),
+            ),
+        )
+        assertNotEquals(pgp_hash, sent)
+        assertEquals(collect_vault_key_fingerprints(vault).first(), sent)
+    }
+
+    @Test
+    fun no_side_copy_is_sent_without_a_vault_key_fingerprint() = runBlocking {
+        val vault = random_vault(newest_kek).apply { remove("ratchet_identity_public") }
+        val server = Server(vault)
+        assertEquals(SideCopyStore.SKIPPED, store_side_copy(server, FakeCrypto(), vault, emptyList()))
+        assertTrue(server.posted.isEmpty())
+    }
+
+    @Test
+    fun rotating_the_identity_uploads_a_fresh_side_copy_at_once() = runBlocking {
+        val server = Server(random_vault(newest_kek))
+        server.wraps.add(wrap_entry(newest_kek, "id-current"))
+        val crypto = FakeCrypto()
+
+        val outcome = update_identity_with_side_copy(updater(server), server, crypto) { draft ->
+            draft.vault.put("identity_key", "id-rotated")
+            draft.vault.put("ratchet_identity_public", encode_b64(ratchet_public("id-rotated")))
+            VaultEdit.CHANGED
+        }
+
+        assertTrue(outcome is VaultUpdateOutcome.Written)
+        assertEquals(1, server.vault_puts)
+        val body = server.posted.single()
+        assertEquals(wrap_key_id(newest_kek), body.str("key_id"))
+        assertEquals(identity_fingerprint("id-rotated"), body.str("identity_fingerprint"))
+        assertEquals(collect_vault_key_fingerprints(server.vault).first(), body.str("identity_fingerprint"))
+        assertArrayEquals(newest_kek, crypto.open(decode_b64(body.str("wrap"))!!, listOf("id-rotated")))
+    }
+
+    @Test
+    fun a_new_identity_key_with_the_same_ratchet_key_still_gets_a_fresh_copy() = runBlocking {
+        val server = Server(random_vault(newest_kek))
+        server.wraps.add(wrap_entry(newest_kek, "id-current"))
+        val crypto = FakeCrypto()
+
+        update_identity_with_side_copy(updater(server), server, crypto) { draft ->
+            draft.vault.put("identity_key", "id-current-with-new-address")
+            VaultEdit.CHANGED
+        }
+
+        val body = server.posted.single()
+        assertArrayEquals(
+            newest_kek,
+            crypto.open(decode_b64(body.str("wrap"))!!, listOf("id-current-with-new-address")),
+        )
+    }
+
+    @Test
+    fun a_vault_write_that_keeps_the_identity_uploads_nothing() = runBlocking {
+        val server = Server(random_vault(newest_kek))
+        val outcome = update_identity_with_side_copy(updater(server), server, FakeCrypto()) { draft ->
+            draft.vault.put("note", "unrelated")
+            VaultEdit.CHANGED
+        }
+        assertTrue(outcome is VaultUpdateOutcome.Written)
+        assertTrue(server.posted.isEmpty())
+    }
+
+    @Test
+    fun an_aborted_identity_write_uploads_nothing() = runBlocking {
+        val server = Server(random_vault(newest_kek))
+        val outcome = update_identity_with_side_copy(updater(server), server, FakeCrypto()) { draft ->
+            draft.vault.put("identity_key", "id-rotated")
+            VaultEdit.ABORT
+        }
+        assertFalse(outcome is VaultUpdateOutcome.Written)
+        assertTrue(server.posted.isEmpty())
     }
 
     @Test
@@ -331,7 +452,10 @@ class StorageKeyWrapsTest {
 
     @Test
     fun no_side_copy_is_made_for_a_derived_storage_key() = runBlocking {
-        val vault = JSONObject().put("identity_key", "id-current").put("data_kek", encode_b64(derived_kek))
+        val vault = JSONObject()
+            .put("identity_key", "id-current")
+            .put("ratchet_identity_public", encode_b64(ratchet_public("id-current")))
+            .put("data_kek", encode_b64(derived_kek))
         val server = Server(vault)
         assertEquals(SideCopyStore.CURRENT, store_side_copy(server, FakeCrypto(), vault, emptyList()))
         assertTrue(server.posted.isEmpty())

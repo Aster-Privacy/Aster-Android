@@ -31,6 +31,7 @@ import org.astermail.android.auth.vault_identity_key_materials
 import org.astermail.android.crypto.AccountKey
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
+import org.astermail.android.mail.ratchet.vault_identity_fingerprint
 import org.astermail.android.util.passphrase_chars
 import org.json.JSONArray
 import org.json.JSONObject
@@ -48,7 +49,6 @@ data class StorageKeyWrap(
 interface StorageKeyWrapCrypto {
     fun seal(data_kek: ByteArray, identity_private_key: String): ByteArray?
     fun open(wrap: ByteArray, private_keys: List<String>): ByteArray?
-    fun fingerprint(identity_private_key: String): String?
 }
 
 class PgpStorageKeyWrapCrypto(private val passphrase_source: () -> ByteArray?) : StorageKeyWrapCrypto {
@@ -68,21 +68,12 @@ class PgpStorageKeyWrapCrypto(private val passphrase_source: () -> ByteArray?) :
             chars.fill('\u0000')
         }
     }
-
-    override fun fingerprint(identity_private_key: String): String? = AccountKey.primary_fingerprint(identity_private_key)
 }
 
 fun wrap_key_id(data_kek: ByteArray): String =
     MessageDigest.getInstance("SHA-256").digest(data_kek)
         .copyOf(STORAGE_KEY_ID_BYTES)
         .joinToString("") { "%02x".format(it) }
-
-fun wrap_identity_fingerprint(fingerprint_hex: String): String? {
-    val clean = fingerprint_hex.trim().lowercase()
-    if (clean.isEmpty() || clean.length % 2 != 0 || clean.any { it !in "0123456789abcdef" }) return null
-    val raw = ByteArray(clean.length / 2) { clean.substring(it * 2, it * 2 + 2).toInt(16).toByte() }
-    return encode_b64(MessageDigest.getInstance("SHA-256").digest(raw))
-}
 
 fun parse_storage_key_wraps(data: JsonElement?): List<StorageKeyWrap>? {
     val obj = data.as_object() ?: return null
@@ -191,12 +182,11 @@ suspend fun store_side_copy(
     crypto: StorageKeyWrapCrypto,
     vault: JSONObject,
     wraps: List<StorageKeyWrap>,
+    force: Boolean = false,
 ): SideCopyStore {
     val identity = vault_identity_key(vault).takeIf { it.isNotBlank() } ?: return SideCopyStore.SKIPPED
-    val fingerprint = runCatching { crypto.fingerprint(identity) }.getOrNull()
-        ?.let(::wrap_identity_fingerprint)
-        ?: return SideCopyStore.SKIPPED
-    if (!needs_side_copy(wraps, vault, fingerprint)) return SideCopyStore.CURRENT
+    val fingerprint = runCatching { vault_identity_fingerprint(vault) }.getOrNull() ?: return SideCopyStore.SKIPPED
+    if (!force && !needs_side_copy(wraps, vault, fingerprint)) return SideCopyStore.CURRENT
     val key = vault_random_storage_key(vault) ?: return SideCopyStore.SKIPPED
     val key_id = wrap_key_id(key)
     val sealed = try {
@@ -210,4 +200,29 @@ suspend fun store_side_copy(
         json_object("key_id" to key_id, "wrap" to encode_b64(sealed), "identity_fingerprint" to fingerprint),
     )
     return if (reply.error) SideCopyStore.FAILED else SideCopyStore.STORED
+}
+
+fun vault_identity_marker(vault: JSONObject): String =
+    vault_identity_key(vault) + "|" + runCatching { vault_identity_fingerprint(vault) }.getOrNull().orEmpty()
+
+suspend fun refresh_side_copy(api: ResealApi, crypto: StorageKeyWrapCrypto, vault: JSONObject): SideCopyStore {
+    val wraps = runCatching { list_storage_key_wraps(api) }.getOrNull() ?: return SideCopyStore.FAILED
+    return runCatching { store_side_copy(api, crypto, vault, wraps, force = true) }.getOrDefault(SideCopyStore.FAILED)
+}
+
+suspend fun update_identity_with_side_copy(
+    updater: VaultUpdater,
+    api: ResealApi,
+    crypto: StorageKeyWrapCrypto,
+    edit: suspend (VaultDraft) -> VaultEdit,
+): VaultUpdateOutcome {
+    var before: String? = null
+    val outcome = updater.update { draft ->
+        before = vault_identity_marker(draft.vault)
+        edit(draft)
+    }
+    if (outcome is VaultUpdateOutcome.Written && vault_identity_marker(outcome.vault) != before) {
+        refresh_side_copy(api, crypto, outcome.vault)
+    }
+    return outcome
 }

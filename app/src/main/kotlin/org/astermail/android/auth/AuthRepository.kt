@@ -2217,7 +2217,7 @@ class AuthRepository @Inject constructor(
         identity_key: String,
         passphrase: ByteArray,
     ): Boolean {
-        val outcome = vault_updates.with_passphrase(passphrase).update { draft ->
+        val outcome = vault_updates.update_identity(vault_updates.with_passphrase(passphrase)) { draft ->
             replace_vault_identity_key(draft.vault, identity_key)
             org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
         }

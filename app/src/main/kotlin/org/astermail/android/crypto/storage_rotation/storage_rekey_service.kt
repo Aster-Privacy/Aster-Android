@@ -31,7 +31,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiClient
-import org.astermail.android.auth.vault_identity_key
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
@@ -199,6 +198,16 @@ class VaultUpdates @Inject constructor(
 
     fun with_passphrase(passphrase: ByteArray): VaultUpdater =
         session_vault_updater(KtorResealApi(api_client), session_key_store) { passphrase.copyOf() }
+
+    suspend fun update_identity(
+        updater: VaultUpdater,
+        edit: suspend (VaultDraft) -> VaultEdit,
+    ): VaultUpdateOutcome = update_identity_with_side_copy(
+        updater,
+        KtorResealApi(api_client),
+        PgpStorageKeyWrapCrypto { session_key_store.get_passphrase() },
+        edit,
+    )
 }
 
 @Singleton
@@ -240,7 +249,7 @@ class StorageRekeyService @Inject constructor(
     private suspend fun keep_side_copy(api: ResealApi, vault: JSONObject) {
         val user_id = session_key_store.get_user_id() ?: return
         val key = vault_random_storage_key(vault) ?: return
-        val marker = user_id + ":" + wrap_key_id(key) + ":" + vault_identity_key(vault).hashCode()
+        val marker = user_id + ":" + wrap_key_id(key) + ":" + vault_identity_marker(vault).hashCode()
         key.fill(0)
         if (marker in side_copied) return
         val wraps = runCatching { list_storage_key_wraps(api) }.getOrNull() ?: return

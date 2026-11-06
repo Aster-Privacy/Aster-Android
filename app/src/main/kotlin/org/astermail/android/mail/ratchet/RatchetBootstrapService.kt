@@ -444,14 +444,14 @@ class RatchetBootstrapService @Inject constructor(
 
         var adopted_prekey: VaultSignedPrekey? = null
         var generated: GeneratedPqIdentity? = null
-        val outcome = vault_updates.session().update { draft ->
+        val outcome = vault_updates.update_identity(vault_updates.session()) { draft ->
             val vault_json = draft.vault
             adopted_prekey = null
             generated = null
             val vault_identity_jwk = vault_json.optString("ratchet_identity_key", "")
             if (vault_identity_jwk.isNotBlank() && vault_identity_jwk != identity_jwk) {
                 debug_log("skipped vault write: the vault holds a different ratchet identity")
-                return@update VaultEdit.ABORT
+                return@update_identity VaultEdit.ABORT
             }
 
             val previous_before = vault_json.optJSONArray("ratchet_previous_keys")
@@ -476,7 +476,7 @@ class RatchetBootstrapService @Inject constructor(
             )
 
             if (identity_current && fresh_pq == null && !previous_changed) {
-                return@update VaultEdit.UNCHANGED
+                return@update_identity VaultEdit.UNCHANGED
             }
 
             if (!identity_current) {

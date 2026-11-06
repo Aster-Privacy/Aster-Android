@@ -55,12 +55,18 @@ fun collect_vault_key_fingerprints(vault_json: JSONObject): List<String> {
     val fingerprints = mutableListOf<String>()
     for (public_key in public_keys) {
         if (fingerprints.size >= max_vault_key_fingerprints) break
-        val value = Base64.encodeToString(RatchetCrypto.sha256(public_key), Base64.NO_WRAP)
+        val value = vault_key_fingerprint(public_key)
         if (!fingerprints.contains(value)) fingerprints.add(value)
     }
 
     return fingerprints
 }
+
+fun vault_key_fingerprint(public_key: ByteArray): String =
+    Base64.encodeToString(RatchetCrypto.sha256(public_key), Base64.NO_WRAP)
+
+fun vault_identity_fingerprint(vault_json: JSONObject): String? =
+    identity_public_raw(vault_json)?.let(::vault_key_fingerprint)
 
 private fun identity_public_raw(source: JSONObject): ByteArray? {
     decode_public(source.optString("ratchet_identity_public", ""))?.let { return it }
