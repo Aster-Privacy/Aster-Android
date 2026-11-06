@@ -24,7 +24,13 @@ package org.astermail.android.auth
 import java.nio.ByteBuffer
 import java.util.Base64
 import java.util.UUID
+import androidx.credentials.exceptions.CreateCredentialNoCreateOptionException
+import androidx.credentials.exceptions.CreateCredentialUnknownException
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialProviderConfigurationException
+import androidx.credentials.exceptions.NoCredentialException
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.auth.WebAuthnAssertionOptions
 import org.astermail.android.api.security.PasskeyCredentialDescriptor
 import org.astermail.android.api.security.PasskeyRegistrationOptions
 import org.astermail.android.api.security.PasskeyRegistrationParam
@@ -35,6 +41,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -83,11 +90,11 @@ class PasskeyWireFormatTest {
     }
 
     @Test
-    fun registration_request_asks_for_discoverable_platform_passkey_with_prf() {
+    fun registration_request_asks_for_discoverable_passkey_from_any_provider_with_prf() {
         val json = JSONObject(registration_request_json(registration_options))
         assertEquals("app.astermail.org", json.getJSONObject("rp").getString("id"))
         val selection = json.getJSONObject("authenticatorSelection")
-        assertEquals("platform", selection.getString("authenticatorAttachment"))
+        assertFalse(selection.has("authenticatorAttachment"))
         assertEquals("required", selection.getString("residentKey"))
         assertEquals("required", selection.getString("userVerification"))
         assertEquals(
@@ -164,5 +171,132 @@ class PasskeyWireFormatTest {
         assertTrue(is_passkey_challenge_expired(ApiError.ValidationError(listOf("Challenge expired"))))
         assertFalse(is_passkey_challenge_expired(ApiError.ValidationError(listOf("Validation failed"))))
         assertFalse(is_passkey_challenge_expired(IllegalStateException("Challenge expired")))
+    }
+
+    @Test
+    fun compat_registration_request_drops_prf_and_keeps_user_verification() {
+        val json = JSONObject(registration_request_json(registration_options, compat = true))
+        val selection = json.getJSONObject("authenticatorSelection")
+        assertFalse(selection.has("authenticatorAttachment"))
+        assertEquals("required", selection.getString("residentKey"))
+        assertEquals("required", selection.getString("userVerification"))
+        assertFalse(json.has("extensions"))
+        assertEquals("app.astermail.org", json.getJSONObject("rp").getString("id"))
+    }
+
+    @Test
+    fun padded_registration_id_is_stored_without_padding() {
+        val url = Base64.getUrlEncoder()
+        val response = JSONObject()
+            .put("id", "Y3JlZC1pZA==")
+            .put("rawId", "Y3JlZC1pZA==")
+            .put(
+                "response",
+                JSONObject()
+                    .put("attestationObject", url.encodeToString(byteArrayOf(1, 2, 3, 4)))
+                    .put("clientDataJSON", url.encodeToString("{}".toByteArray())),
+            )
+            .toString()
+        val registration = registration_complete_request(response, registration_options, "Passkey")
+        assertEquals("Y3JlZC1pZA", registration.request.raw_id)
+        assertEquals("Y3JlZC1pZA", registration.credential_id)
+        assertFalse(registration.prf_enabled)
+        assertNull(registration.prf_output)
+    }
+
+    private val assertion_options = WebAuthnAssertionOptions(
+        challenge = "Y2hhbGxlbmdl",
+        challenge_token = "assert-token",
+        rpId = "app.astermail.org",
+    )
+
+    private val totp_challenge = TotpChallenge(
+        pending_login_token = "pending",
+        available_methods = listOf("webauthn"),
+        password_hash_bytes = ByteArray(0),
+        password_bytes = ByteArray(0),
+        salt_bytes = ByteArray(0),
+        email = "brightpine2026@astermail.org",
+        remember_me = true,
+    )
+
+    private fun assertion_response(encoder: Base64.Encoder, id: ByteArray): String = JSONObject()
+        .put("id", encoder.encodeToString(id))
+        .put("rawId", encoder.encodeToString(id))
+        .put(
+            "response",
+            JSONObject()
+                .put("authenticatorData", encoder.encodeToString(byteArrayOf(-1, -2, 0, 5)))
+                .put("clientDataJSON", encoder.encodeToString("{\"type\":\"webauthn.get\"}".toByteArray()))
+                .put("signature", encoder.encodeToString(byteArrayOf(-3, 62, 63)))
+                .put("userHandle", encoder.encodeToString("user".toByteArray())),
+        )
+        .toString()
+
+    @Test
+    fun assertion_fields_are_sent_as_unpadded_base64url_whatever_the_provider_returns() {
+        val id = byteArrayOf(-5, -1, 0, 1, 2)
+        val expected = assertion_verify_request(
+            assertion_response(Base64.getUrlEncoder().withoutPadding(), id),
+            assertion_options, totp_challenge, trust_device = false, device_label = null,
+        )
+        for (encoder in listOf(Base64.getUrlEncoder(), Base64.getEncoder(), Base64.getEncoder().withoutPadding())) {
+            val request = assertion_verify_request(
+                assertion_response(encoder, id),
+                assertion_options, totp_challenge, trust_device = false, device_label = null,
+            )
+            assertEquals(expected, request)
+            listOf(request.id, request.raw_id, request.response.authenticator_data, request.response.client_data_json, request.response.signature)
+                .forEach { assertTrue(it, it.none { c -> c == '=' || c == '+' || c == '/' }) }
+        }
+        assertEquals("assert-token", expected.challenge_token)
+        assertEquals("pending", expected.pending_login_token)
+    }
+
+    @Test(expected = PasskeyFailedException::class)
+    fun assertion_with_garbage_signature_fails_cleanly() {
+        val response = JSONObject(assertion_response(Base64.getUrlEncoder().withoutPadding(), byteArrayOf(1, 2, 3)))
+        response.getJSONObject("response").put("signature", "not*base64")
+        assertion_verify_request(response.toString(), assertion_options, totp_challenge, false, null)
+    }
+
+    @Test
+    fun missing_passkey_is_not_reported_as_missing_provider() {
+        val mapped = map_get_credential_failure(NoCredentialException("none"))
+        assertTrue(mapped is PasskeyUnavailableException)
+        assertFalse((mapped as PasskeyUnavailableException).no_provider)
+        assertEquals("NO_CREDENTIAL", passkey_error_code(mapped))
+    }
+
+    @Test
+    fun provider_configuration_failures_are_reported_as_missing_provider() {
+        val get = map_get_credential_failure(GetCredentialProviderConfigurationException("none"))
+        assertTrue((get as PasskeyUnavailableException).no_provider)
+        val create = map_create_credential_failure(CreateCredentialNoCreateOptionException("none"))
+        assertTrue((create as PasskeyUnavailableException).no_provider)
+        assertNotNull(passkey_error_code(get))
+        assertNotNull(passkey_error_code(create))
+    }
+
+    @Test
+    fun cancelled_sign_in_stays_silent() {
+        assertTrue(map_get_credential_failure(GetCredentialCancellationException("x")) is PasskeyCancelledException)
+    }
+
+    @Test
+    fun unknown_create_failure_carries_a_readable_code() {
+        val mapped = map_create_credential_failure(CreateCredentialUnknownException("boom"))
+        assertTrue(mapped is PasskeyFailedException)
+        val code = passkey_error_code(mapped)
+        assertNotNull(code)
+        assertFalse(code!!.contains('.'))
+        assertFalse(code.contains('/'))
+        assertFalse(code.startsWith("TYPE_"))
+    }
+
+    @Test
+    fun error_code_is_absent_without_an_underlying_failure() {
+        assertNull(passkey_error_code(PasskeyFailedException()))
+        assertNull(passkey_error_code(null))
     }
 }

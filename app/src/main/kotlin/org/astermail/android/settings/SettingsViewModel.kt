@@ -3520,7 +3520,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val options = security_api.initiate_passkey_registration()
-                val response_json = create_credential(org.astermail.android.auth.registration_request_json(options))
+                val response_json = try {
+                    create_credential(org.astermail.android.auth.registration_request_json(options))
+                } catch (first: org.astermail.android.auth.PasskeyFailedException) {
+                    create_credential(org.astermail.android.auth.registration_request_json(options, compat = true))
+                }
                 val registration = org.astermail.android.auth.registration_complete_request(
                     response_json = response_json,
                     options = options,
@@ -3549,9 +3553,9 @@ class SettingsViewModel @Inject constructor(
                     is org.astermail.android.auth.PasskeyAlreadyRegisteredException ->
                         context.getString(R.string.passkey_already_registered)
                     is org.astermail.android.auth.PasskeyUnavailableException ->
-                        context.getString(R.string.passkey_create_unavailable)
+                        passkey_message(R.string.passkey_create_unavailable, t)
                     is org.astermail.android.auth.PasskeyFailedException ->
-                        context.getString(R.string.passkey_create_failed)
+                        passkey_message(R.string.passkey_create_failed, t)
                     else ->
                         if (org.astermail.android.auth.is_passkey_challenge_expired(t)) {
                             context.getString(R.string.error_passkey_timed_out)
@@ -3562,6 +3566,12 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(is_adding_passkey = false, action_result = message ?: it.action_result) }
             }
         }
+    }
+
+    private fun passkey_message(message_res: Int, cause: Throwable): String {
+        val message = context.getString(message_res)
+        val code = org.astermail.android.auth.passkey_error_code(cause) ?: return message
+        return context.getString(R.string.passkey_error_with_code, message, code)
     }
 
     private suspend fun save_passkey_prf(

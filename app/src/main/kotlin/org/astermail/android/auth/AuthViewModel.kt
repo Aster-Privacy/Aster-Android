@@ -45,6 +45,7 @@ sealed interface AuthUiState {
         val message: String,
         val restart_login: Boolean = false,
         val username_taken: Boolean = false,
+        val passkey_settings: Boolean = false,
     ) : AuthUiState
     data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
@@ -178,9 +179,15 @@ class AuthViewModel @Inject constructor(
                     when (cause) {
                         is PasskeyCancelledException -> AuthUiState.Idle
                         is PasskeyUnavailableException ->
-                            AuthUiState.Error(ctx.getString(R.string.error_passkey_unavailable))
+                            AuthUiState.Error(
+                                passkey_message(
+                                    if (cause.no_provider) R.string.error_passkey_no_provider else R.string.error_passkey_unavailable,
+                                    cause,
+                                ),
+                                passkey_settings = org.astermail.android.auth.passkey_settings_supported(),
+                            )
                         is PasskeyFailedException ->
-                            AuthUiState.Error(ctx.getString(R.string.error_passkey_failed))
+                            AuthUiState.Error(passkey_message(R.string.error_passkey_failed, cause))
                         else ->
                             if (is_passkey_challenge_expired(cause)) {
                                 AuthUiState.Error(ctx.getString(R.string.error_passkey_timed_out))
@@ -191,6 +198,12 @@ class AuthViewModel @Inject constructor(
                 },
             )
         }
+    }
+
+    private fun passkey_message(message_res: Int, cause: Throwable): String {
+        val message = ctx.getString(message_res)
+        val code = org.astermail.android.auth.passkey_error_code(cause) ?: return message
+        return ctx.getString(R.string.passkey_error_with_code, message, code)
     }
 
     private fun second_factor_failure_state(

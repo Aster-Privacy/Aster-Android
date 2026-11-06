@@ -59,7 +59,7 @@ import org.json.JSONObject
 
 class PasskeyCancelledException : Exception()
 
-class PasskeyUnavailableException(cause: Throwable? = null) : Exception(cause)
+class PasskeyUnavailableException(cause: Throwable? = null, val no_provider: Boolean = false) : Exception(cause)
 
 class PasskeyFailedException(cause: Throwable? = null) : Exception(cause)
 
@@ -78,6 +78,22 @@ private fun b64url_to_bytes(value: String): ByteArray =
     b64url_decoder.decode(value.trim().trimEnd('=').replace('+', '-').replace('/', '_'))
 
 private fun b64url_to_standard(value: String): String = b64_encoder.encodeToString(b64url_to_bytes(value))
+
+private fun normalize_b64url(value: String): String =
+    if (value.isBlank()) value else b64url_encoder.encodeToString(b64url_to_bytes(value))
+
+fun passkey_error_code(failure: Throwable?): String? {
+    val source = when (failure) {
+        is PasskeyUnavailableException, is PasskeyFailedException, is PasskeyAlreadyRegisteredException -> failure.cause
+        else -> failure
+    } ?: return null
+    val type = when (source) {
+        is GetCredentialException -> source.type
+        is CreateCredentialException -> source.type
+        else -> source.javaClass.simpleName
+    }
+    return type.substringAfterLast('/').substringAfterLast('.').removePrefix("TYPE_").ifBlank { null }
+}
 
 fun prf_eval_input(): String =
     b64url_encoder.encodeToString(
@@ -163,11 +179,20 @@ fun assertion_verify_request(
     val parsed = JSONObject(response_json)
     val inner = parsed.optJSONObject("response")
         ?: throw PasskeyFailedException()
-    val raw_id = parsed.optString("rawId").ifBlank { parsed.optString("id") }
-    val credential_id = parsed.optString("id").ifBlank { raw_id }
-    val authenticator_data = inner.optString("authenticatorData")
-    val client_data_json = inner.optString("clientDataJSON")
-    val signature = inner.optString("signature")
+    val raw_id: String
+    val credential_id: String
+    val authenticator_data: String
+    val client_data_json: String
+    val signature: String
+    try {
+        raw_id = normalize_b64url(parsed.optString("rawId").ifBlank { parsed.optString("id") })
+        credential_id = normalize_b64url(parsed.optString("id").ifBlank { raw_id })
+        authenticator_data = normalize_b64url(inner.optString("authenticatorData"))
+        client_data_json = normalize_b64url(inner.optString("clientDataJSON"))
+        signature = normalize_b64url(inner.optString("signature"))
+    } catch (failure: IllegalArgumentException) {
+        throw PasskeyFailedException(failure)
+    }
     if (raw_id.isBlank() || authenticator_data.isBlank() || client_data_json.isBlank() || signature.isBlank()) {
         throw PasskeyFailedException()
     }
@@ -200,13 +225,17 @@ fun prf_assertion_request_json(rp_id: String, credential_id: String): String =
         .put("extensions", prf_extension())
         .toString()
 
-fun registration_request_json(options: PasskeyRegistrationOptions): String {
+fun registration_request_json(options: PasskeyRegistrationOptions, compat: Boolean = false): String {
     val params = JSONArray()
     options.pubKeyCredParams
         .ifEmpty { listOf(PasskeyRegistrationParam(alg = -7), PasskeyRegistrationParam(alg = -257)) }
         .forEach { param -> params.put(JSONObject().put("type", param.type).put("alg", param.alg)) }
     val user_handle = b64url_encoder.encodeToString(options.user.id.toByteArray(Charsets.US_ASCII))
-    return JSONObject()
+    val selection = JSONObject()
+        .put("residentKey", "required")
+        .put("requireResidentKey", true)
+        .put("userVerification", "required")
+    val request = JSONObject()
         .put("challenge", options.challenge)
         .put("rp", JSONObject().put("name", options.rp.name.ifBlank { "AsterMail" }).put("id", options.rp.id))
         .put(
@@ -220,16 +249,9 @@ fun registration_request_json(options: PasskeyRegistrationOptions): String {
         .put("timeout", options.timeout)
         .put("attestation", "none")
         .put("excludeCredentials", exclude_credentials_json(options))
-        .put(
-            "authenticatorSelection",
-            JSONObject()
-                .put("authenticatorAttachment", "platform")
-                .put("residentKey", "required")
-                .put("requireResidentKey", true)
-                .put("userVerification", "required"),
-        )
-        .put("extensions", prf_extension())
-        .toString()
+        .put("authenticatorSelection", selection)
+    if (!compat) request.put("extensions", prf_extension())
+    return request.toString()
 }
 
 fun exclude_credentials_json(options: PasskeyRegistrationOptions): JSONArray {
@@ -255,7 +277,11 @@ fun registration_complete_request(
     val parsed = JSONObject(response_json)
     val inner = parsed.optJSONObject("response")
         ?: throw PasskeyFailedException()
-    val raw_id = parsed.optString("rawId").ifBlank { parsed.optString("id") }
+    val raw_id = try {
+        normalize_b64url(parsed.optString("rawId").ifBlank { parsed.optString("id") })
+    } catch (failure: IllegalArgumentException) {
+        throw PasskeyFailedException(failure)
+    }
     val attestation_object = inner.optString("attestationObject")
     val client_data_json = inner.optString("clientDataJSON")
     if (raw_id.isBlank() || attestation_object.isBlank() || client_data_json.isBlank()) {
@@ -287,13 +313,13 @@ fun registration_complete_request(
 fun map_get_credential_failure(failure: Throwable): Exception = when (failure) {
     is GetCredentialCancellationException -> PasskeyCancelledException()
     is NoCredentialException -> PasskeyUnavailableException(failure)
-    is GetCredentialProviderConfigurationException -> PasskeyUnavailableException(failure)
-    is GetCredentialUnsupportedException -> PasskeyUnavailableException(failure)
+    is GetCredentialProviderConfigurationException -> PasskeyUnavailableException(failure, no_provider = true)
+    is GetCredentialUnsupportedException -> PasskeyUnavailableException(failure, no_provider = true)
     is GetPublicKeyCredentialDomException -> when (failure.domError) {
         is NotAllowedError -> PasskeyCancelledException()
         else -> PasskeyFailedException(failure)
     }
-    is NoClassDefFoundError -> PasskeyUnavailableException(failure)
+    is NoClassDefFoundError -> PasskeyUnavailableException(failure, no_provider = true)
     else -> PasskeyFailedException(failure)
 }
 
@@ -315,16 +341,29 @@ suspend fun request_passkey_json(context: Context, request_json: String): String
 
 fun map_create_credential_failure(failure: Throwable): Exception = when (failure) {
     is CreateCredentialCancellationException -> PasskeyCancelledException()
-    is CreateCredentialNoCreateOptionException -> PasskeyUnavailableException(failure)
-    is CreateCredentialProviderConfigurationException -> PasskeyUnavailableException(failure)
-    is CreateCredentialUnsupportedException -> PasskeyUnavailableException(failure)
+    is CreateCredentialNoCreateOptionException -> PasskeyUnavailableException(failure, no_provider = true)
+    is CreateCredentialProviderConfigurationException -> PasskeyUnavailableException(failure, no_provider = true)
+    is CreateCredentialUnsupportedException -> PasskeyUnavailableException(failure, no_provider = true)
     is CreatePublicKeyCredentialDomException -> when (failure.domError) {
         is InvalidStateError -> PasskeyAlreadyRegisteredException(failure)
         is NotAllowedError -> PasskeyCancelledException()
         else -> PasskeyFailedException(failure)
     }
-    is NoClassDefFoundError -> PasskeyUnavailableException(failure)
+    is NoClassDefFoundError -> PasskeyUnavailableException(failure, no_provider = true)
     else -> PasskeyFailedException(failure)
+}
+
+fun passkey_settings_supported(): Boolean =
+    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+
+fun open_passkey_settings(context: Context): Boolean {
+    if (!passkey_settings_supported()) return false
+    return try {
+        CredentialManager.create(context).createSettingsPendingIntent().send()
+        true
+    } catch (_: Exception) {
+        false
+    }
 }
 
 suspend fun create_passkey_json(context: Context, request_json: String): String {

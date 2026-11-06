@@ -2795,7 +2795,10 @@
     <string name="error_folder_password_not_set">Questa cartella non ha una password.</string>
     <string name="error_image_too_large">Questa immagine è troppo grande. Scegli una foto più piccola.</string>
     <string name="error_invalid_2fa_code">Questo codice non è corretto. Controlla l\'app di autenticazione e riprova.</string>
-    <string name="error_passkey_unavailable">Su questo dispositivo non c’è una passkey per questo account. Usa la tua app di autenticazione o aggiungi prima una passkey da un browser.</string>
+    <string name="error_passkey_unavailable">Nessuna passkey trovata per questo account. Verifica che il gestore di password che contiene la tua passkey sia attivo per le passkey nelle impostazioni di Android, oppure usa la tua app di autenticazione.</string>
+    <string name="error_passkey_no_provider">Le passkey non sono configurate su questo dispositivo. Attiva un gestore di password per le passkey nelle impostazioni di Android, oppure usa la tua app di autenticazione.</string>
+    <string name="passkey_open_settings">Impostazioni passkey</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Codice errore: %2$s</string>
     <string name="error_passkey_failed">Non è stato possibile verificare la passkey. Riprova o usa un altro metodo di accesso.</string>
     <string name="error_invalid_backup_code">Questo codice di backup non corrisponde. Ogni codice vale una sola volta, quindi prova il successivo non utilizzato del tuo elenco.</string>
     <string name="error_invalid_recovery_phrase">Questa frase di recupero non corrisponde. Controlla l\'ordine delle parole e l\'ortografia, poi riprova.</string>
@@ -3374,7 +3377,7 @@
     <string name="passkey_added_sessions_revoked">Passkey aggiunta. Sei stato disconnesso dagli altri dispositivi.</string>
     <string name="passkey_added_second_step_only">Passkey aggiunta. Usala come secondo passaggio quando accedi con la password.</string>
     <string name="passkey_already_registered">Questa passkey è già salvata nel tuo account.</string>
-    <string name="passkey_create_unavailable">Questo dispositivo non può salvare passkey. Verifica che il blocco schermo sia attivo e che sia configurato un gestore di password.</string>
+    <string name="passkey_create_unavailable">Al momento questo dispositivo non può salvare passkey. Attiva il blocco schermo e scegli un gestore di password per le passkey nelle impostazioni di Android.</string>
     <string name="passkey_create_failed">Impossibile aggiungere la passkey. Riprova.</string>
     <string name="error_passkey_timed_out">La richiesta della passkey è scaduta. Riprova.</string>
     <string name="billing_play_unavailable">Gli acquisti con Google Play non sono disponibili al momento. Riprova più tardi.</string>
