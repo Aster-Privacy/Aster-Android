@@ -402,9 +402,9 @@ class MailPollingWorker(
             preview = preview,
             message_id = message_id,
             silent = silent,
-            large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget),
+            large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget, content_hidden),
         )
-        if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget)
+        if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget, content_hidden)
         return posted
     }
 
@@ -413,23 +413,20 @@ class MailPollingWorker(
         shown_name: String,
         settings: NotificationAvatarSettings,
         budget: NotificationAvatarBudget,
-    ): android.graphics.Bitmap? {
-        try {
-            val plan = inbox_item_avatar_plan(item, shown_name, settings, content_hidden = false)
-            return NotificationAvatars.large_icon(context, plan, budget)
-        } catch (cancelled: CancellationException) {
-            release_item_notification(context, item.id)
-            throw cancelled
-        } catch (_: Throwable) {
-            return null
-        }
-    }
+        content_hidden: Boolean,
+    ): android.graphics.Bitmap? = guarded_avatar_icon(
+        content_hidden = content_hidden,
+        plan = { inbox_item_avatar_plan(item, shown_name, settings, content_hidden) },
+        render = { plan -> NotificationAvatars.large_icon(context, plan, budget) },
+        release_claim = { release_item_notification(context, item.id) },
+    )
 
     private suspend fun post_also_arrived(
         items: List<org.astermail.android.mail.InboxItem>,
         resolve_sender: (org.astermail.android.mail.InboxItem) -> String,
         avatar_settings: NotificationAvatarSettings,
         avatar_budget: NotificationAvatarBudget,
+        content_hidden: Boolean,
     ) {
         val strings = localized(context)
         for (item in items) {
@@ -451,7 +448,7 @@ class MailPollingWorker(
                 },
                 message_id = message_notification_id(item.id.hashCode()),
                 silent = true,
-                large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget),
+                large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget, content_hidden),
             )
         }
     }

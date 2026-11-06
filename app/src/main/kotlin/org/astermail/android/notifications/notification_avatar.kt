@@ -52,12 +52,16 @@ import org.astermail.android.mail.AsterProfileResolverHolder
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.OwnAddressAvatars
 import org.astermail.android.mail.is_aster_domain
+import org.astermail.android.network.low_network_monitor
 import org.astermail.android.security.SenderAuthState
 import org.astermail.android.security.SenderTrustContext
 import org.astermail.android.security.SenderTrustMessage
 import org.astermail.android.security.SenderTrustStore
+import org.astermail.android.security.is_shared_tenant_sender_domain
+import org.astermail.android.security.sender_logo_domain
 import org.astermail.android.security.sender_trust_for
 import org.astermail.android.ui.mail.LogoTone
+import org.astermail.android.ui.mail.aster_system_avatar_backdrop
 import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_key_for
 import org.astermail.android.ui.mail.classify_logo_pixels
@@ -75,9 +79,10 @@ import org.astermail.android.ui.mail.logo_backdrop_inset
 import org.astermail.android.ui.mail.logo_contrast_backdrop
 import org.astermail.android.ui.mail.note_favicon_hit
 import org.astermail.android.ui.mail.note_favicon_definitive_miss
-import org.astermail.android.ui.mail.note_favicon_transient_miss
+import org.astermail.android.ui.mail.read_skeleton_geometry
 import org.astermail.android.ui.mail.sender_logo_backdrop
 import java.text.BreakIterator
+import java.util.concurrent.ConcurrentHashMap
 import java.util.Locale
 
 internal const val NOTIFICATION_LOGO_MAX_BYTES = 512 * 1024
@@ -92,6 +97,9 @@ private const val NOTIFICATION_AVATAR_MAX_PX = 192
 private const val SYSTEM_LOGO_SCALE = 0.78f
 private const val INITIAL_TEXT_SCALE = 0.4f
 private const val LOGO_TONE_SAMPLE_PX = 16
+internal const val NOTIFICATION_LOGO_REJECTED_TTL_MS = 30L * 60L * 1000L
+internal const val NOTIFICATION_LOGO_RETRY_TTL_MS = 60L * 1000L
+private const val NOTIFICATION_LOGO_MISS_ENTRIES = 256
 
 data class NotificationAvatarSettings(
     val show_pictures: Boolean,
@@ -109,6 +117,7 @@ data class NotificationAvatarFacts(
     val has_warning: Boolean,
     val auth_state: SenderAuthState?,
     val system_sender: Boolean,
+    val trust_context_ready: Boolean,
 )
 
 sealed interface NotificationAvatarPlan {
@@ -164,14 +173,16 @@ fun plan_notification_avatar(facts: NotificationAvatarFacts): NotificationAvatar
     if (aster_domain && facts.system_sender && is_system_local_part(email)) {
         return NotificationAvatarPlan.SystemLogo(initials)
     }
+    if (!facts.trust_context_ready) return initials
     if (email.isEmpty() || !email.contains('@')) return initials
-    val can_fetch_logo = root_domain.isNotBlank() && !aster_domain
+    if (domain.isNotBlank() && is_shared_tenant_sender_domain(domain)) return initials
+    val logo_domain = if (domain.isBlank() || aster_domain) null else sender_logo_domain(domain)
     return NotificationAvatarPlan.Picture(
         email = email,
-        root_domain = root_domain.takeIf { can_fetch_logo },
+        root_domain = logo_domain,
         aster_domain = aster_domain,
         allow_profile_picture = !facts.settings.low_network,
-        allow_network = can_fetch_logo && !facts.settings.low_network,
+        allow_network = logo_domain != null && !facts.settings.low_network,
         fallback = initials,
     )
 }
@@ -185,6 +196,7 @@ fun notification_avatar_facts(
     settings: NotificationAvatarSettings,
     content_hidden: Boolean,
     trust_context: SenderTrustContext,
+    trust_context_ready: Boolean,
 ): NotificationAvatarFacts {
     val trust = if (undecryptable) null else runCatching { sender_trust_for(message, trust_context) }.getOrNull()
     return NotificationAvatarFacts(
@@ -198,6 +210,7 @@ fun notification_avatar_facts(
         has_warning = trust?.warning != null,
         auth_state = trust?.auth_state,
         system_sender = system_sender,
+        trust_context_ready = trust_context_ready,
     )
 }
 
@@ -214,6 +227,7 @@ fun inbox_item_avatar_plan(
     settings: NotificationAvatarSettings,
     content_hidden: Boolean,
     trust_context: SenderTrustContext = SenderTrustStore.context.value,
+    trust_context_ready: Boolean = SenderTrustStore.contacts_ready(),
 ): NotificationAvatarPlan = runCatching {
     plan_notification_avatar(
         notification_avatar_facts(
@@ -225,6 +239,7 @@ fun inbox_item_avatar_plan(
             settings = settings,
             content_hidden = content_hidden,
             trust_context = trust_context,
+            trust_context_ready = trust_context_ready,
         ),
     )
 }.getOrElse { NotificationAvatarPlan.AppIcon }
@@ -246,6 +261,7 @@ fun push_avatar_plan(
             has_warning = false,
             auth_state = null,
             system_sender = false,
+            trust_context_ready = false,
         ),
     )
 }.getOrElse { NotificationAvatarPlan.AppIcon }
@@ -266,12 +282,8 @@ fun merge_avatar_settings(
 fun notification_avatar_settings(context: Context, cached: Pair<Boolean, Boolean>?): NotificationAvatarSettings =
     merge_avatar_settings(
         cached = cached,
-        skeleton_show_avatar = runCatching {
-            org.astermail.android.ui.mail.read_skeleton_geometry(context).show_avatar
-        }.getOrNull(),
-        monitor_low_network = runCatching {
-            org.astermail.android.network.low_network_monitor.is_active(context)
-        }.getOrNull(),
+        skeleton_show_avatar = runCatching { read_skeleton_geometry(context).show_avatar }.getOrNull(),
+        monitor_low_network = runCatching { low_network_monitor.is_active(context) }.getOrNull(),
     )
 
 class NotificationAvatarBudget(
@@ -355,10 +367,72 @@ private fun notification_logo_decoder(target_px: Int) = Decoder.Factory { result
     }
 }
 
+class NotificationLogoMisses(
+    private val max_entries: Int = NOTIFICATION_LOGO_MISS_ENTRIES,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+    private val blocked_until = ConcurrentHashMap<String, Long>()
+
+    fun is_blocked(root_domain: String): Boolean {
+        val until = blocked_until[root_domain] ?: return false
+        if (clock() < until) return true
+        blocked_until.remove(root_domain)
+        return false
+    }
+
+    fun note(root_domain: String, ttl_ms: Long) {
+        if (blocked_until.size >= max_entries) blocked_until.clear()
+        blocked_until[root_domain] = clock() + ttl_ms
+    }
+
+    fun forget(root_domain: String) {
+        blocked_until.remove(root_domain)
+    }
+
+    fun clear() = blocked_until.clear()
+}
+
+internal fun record_notification_logo_miss(
+    misses: NotificationLogoMisses,
+    root_domain: String,
+    error: Throwable?,
+    shared_definitive_miss: (String) -> Unit = ::note_favicon_definitive_miss,
+) {
+    when {
+        is_definitive_favicon_miss(error) -> {
+            shared_definitive_miss(root_domain)
+            misses.note(root_domain, NOTIFICATION_LOGO_REJECTED_TTL_MS)
+        }
+        error is NotificationLogoRejected -> misses.note(root_domain, NOTIFICATION_LOGO_REJECTED_TTL_MS)
+        else -> misses.note(root_domain, NOTIFICATION_LOGO_RETRY_TTL_MS)
+    }
+}
+
+internal suspend fun <T> guarded_avatar_icon(
+    content_hidden: Boolean,
+    plan: () -> NotificationAvatarPlan,
+    render: suspend (NotificationAvatarPlan) -> T?,
+    release_claim: () -> Unit,
+): T? {
+    if (content_hidden) return null
+    return try {
+        render(plan())
+    } catch (cancelled: CancellationException) {
+        release_claim()
+        throw cancelled
+    } catch (_: Throwable) {
+        null
+    }
+}
+
 object NotificationAvatars {
     private val rendered = NotificationAvatarLru<Bitmap>()
+    private val logo_misses = NotificationLogoMisses()
 
-    fun clear() = rendered.clear()
+    fun clear() {
+        rendered.clear()
+        logo_misses.clear()
+    }
 
     suspend fun large_icon(context: Context, plan: NotificationAvatarPlan, budget: NotificationAvatarBudget): Bitmap? =
         try {
@@ -441,7 +515,7 @@ object NotificationAvatars {
         val dark = is_dark(context)
         val cache_key = "logo:$root_domain:$dark"
         rendered.get(cache_key)?.let { return it }
-        if (favicon_recently_missed(root_domain)) return null
+        if (favicon_recently_missed(root_domain) || logo_misses.is_blocked(root_domain)) return null
         val allowance = budget.allowance()
         if (allowance <= 0L) return null
         val request = ImageRequest.Builder(context)
@@ -464,22 +538,17 @@ object NotificationAvatars {
             is SuccessResult -> {
                 val source = (result.drawable as? BitmapDrawable)?.bitmap ?: return null
                 note_favicon_hit(root_domain)
+                logo_misses.forget(root_domain)
                 val circle = toned_circle(context, source) ?: return null
                 rendered.put(cache_key, circle)
                 return circle
             }
             is ErrorResult -> {
-                if (allow_network) {
-                    if (is_definitive_favicon_miss(result.throwable) || result.throwable is NotificationLogoRejected) {
-                        note_favicon_definitive_miss(root_domain)
-                    } else {
-                        note_favicon_transient_miss(root_domain)
-                    }
-                }
+                if (allow_network) record_notification_logo_miss(logo_misses, root_domain, result.throwable)
                 return null
             }
             else -> {
-                if (allow_network) note_favicon_transient_miss(root_domain)
+                if (allow_network) record_notification_logo_miss(logo_misses, root_domain, null)
                 return null
             }
         }
@@ -509,7 +578,7 @@ object NotificationAvatars {
         val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        paint.color = android.graphics.Color.WHITE
+        paint.color = aster_system_avatar_backdrop.toArgb()
         canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
         val offset = (size - logo_px) / 2
         canvas.drawBitmap(logo, null, Rect(offset, offset, offset + logo_px, offset + logo_px), paint)

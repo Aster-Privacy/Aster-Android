@@ -48,6 +48,7 @@ class NotificationAvatarPlanTest {
         has_warning: Boolean = false,
         auth_state: SenderAuthState? = SenderAuthState.authenticated,
         system_sender: Boolean = false,
+        trust_context_ready: Boolean = true,
     ) = NotificationAvatarFacts(
         content_hidden = content_hidden,
         settings = settings,
@@ -59,6 +60,7 @@ class NotificationAvatarPlanTest {
         has_warning = has_warning,
         auth_state = auth_state,
         system_sender = system_sender,
+        trust_context_ready = trust_context_ready,
     )
 
     private fun authenticated_external(email: String, name: String) = SenderTrustMessage(
@@ -91,9 +93,51 @@ class NotificationAvatarPlanTest {
     }
 
     @Test
-    fun subdomain_resolves_to_the_root_domain() {
-        val plan = plan_notification_avatar(facts(email = "alerts@mail.shop.co.uk")) as NotificationAvatarPlan.Picture
-        assertEquals("shop.co.uk", plan.root_domain)
+    fun brand_subdomain_resolves_to_the_registrable_domain() {
+        val github = plan_notification_avatar(facts(email = "noreply@mail.github.com")) as NotificationAvatarPlan.Picture
+        assertEquals("github.com", github.root_domain)
+        assertTrue(github.allow_network)
+        val shop = plan_notification_avatar(facts(email = "alerts@mail.shop.co.uk")) as NotificationAvatarPlan.Picture
+        assertEquals("shop.co.uk", shop.root_domain)
+    }
+
+    @Test
+    fun shared_tenant_subdomains_never_get_the_platform_logo() {
+        for (
+            email in listOf(
+                "orders@acme.myshopify.com",
+                "help@acme.zendesk.com",
+                "it@contoso.onmicrosoft.com",
+                "files@contoso.sharepoint.com",
+                "app@demo.firebaseapp.com",
+                "app@demo.web.app",
+                "posts@diary.blogspot.com",
+                "posts@diary.wordpress.com",
+                "pages@someone.github.io",
+                "x@login.acme.zendesk.com",
+            )
+        ) {
+            assertTrue(email, plan_notification_avatar(facts(email = email)) is NotificationAvatarPlan.Initials)
+        }
+    }
+
+    @Test
+    fun the_platform_itself_still_gets_its_logo() {
+        val plan = plan_notification_avatar(facts(email = "support@zendesk.com")) as NotificationAvatarPlan.Picture
+        assertEquals("zendesk.com", plan.root_domain)
+    }
+
+    @Test
+    fun an_unloaded_trust_context_never_shows_a_picture() {
+        assertTrue(plan_notification_avatar(facts(trust_context_ready = false)) is NotificationAvatarPlan.Initials)
+        val system = facts(
+            email = "noreply@astermail.org",
+            name = "Aster",
+            auth_state = SenderAuthState.internal,
+            system_sender = true,
+            trust_context_ready = false,
+        )
+        assertTrue(plan_notification_avatar(system) is NotificationAvatarPlan.SystemLogo)
     }
 
     @Test
@@ -139,6 +183,7 @@ class NotificationAvatarPlanTest {
                 settings = on,
                 content_hidden = false,
                 trust_context = trust_context,
+                trust_context_ready = true,
             ),
         )
         assertTrue(plan is NotificationAvatarPlan.Initials)
@@ -148,7 +193,7 @@ class NotificationAvatarPlanTest {
     fun unauthenticated_sender_with_no_results_gets_initials() {
         val unknown = SenderTrustMessage(sender_name = "Shop", sender_email = "hi@shop.example", is_external = true)
         val plan = plan_notification_avatar(
-            notification_avatar_facts(unknown, "hi@shop.example", "Shop", false, false, on, false, trust_context),
+            notification_avatar_facts(unknown, "hi@shop.example", "Shop", false, false, on, false, trust_context, true),
         )
         assertTrue(plan is NotificationAvatarPlan.Initials)
     }
@@ -165,6 +210,7 @@ class NotificationAvatarPlanTest {
                 on,
                 false,
                 trust_context,
+                true,
             ),
         )
         assertEquals("shop.example", (plan as NotificationAvatarPlan.Picture).root_domain)
@@ -173,7 +219,7 @@ class NotificationAvatarPlanTest {
     @Test
     fun missing_trust_message_gets_initials() {
         val plan = plan_notification_avatar(
-            notification_avatar_facts(null, "hi@shop.example", "Shop", false, false, on, false, trust_context),
+            notification_avatar_facts(null, "hi@shop.example", "Shop", false, false, on, false, trust_context, true),
         )
         assertTrue(plan is NotificationAvatarPlan.Initials)
     }
