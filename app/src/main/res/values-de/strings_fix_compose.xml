@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">Neuem Schlüssel vertrauen</string>
     <string name="send_key_check_failed">Aster konnte die Verschlüsselungsschlüssel der Empfänger nicht prüfen und hat diese Nachricht daher nicht gesendet. Prüfen Sie Ihre Verbindung und versuchen Sie es dann erneut.</string>
     <string name="outbox_failed_reason_identity_unverified">Aster konnte den Verschlüsselungsschlüssel eines Empfängers nicht bestätigen und hat diese Nachricht daher nicht gesendet. Sie können es später erneut versuchen oder die Nachricht verwerfen.</string>
+    <string name="send_requires_encryption_missing_key">„Verschlüsselung erzwingen“ ist aktiviert, und Aster hat keinen öffentlichen Schlüssel für %1$s gefunden. Deshalb wurde diese Nachricht nicht gesendet. Um sie zu senden, entfernen Sie diese Adressen oder deaktivieren Sie „Verschlüsselung erzwingen“ in den Einstellungen.</string>
 </resources>

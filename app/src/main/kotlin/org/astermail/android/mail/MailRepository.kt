@@ -5666,6 +5666,20 @@ class MailRepository @Inject constructor(
 
     private val last_known_require_encryption = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
+    private suspend fun require_outside_recipient_keys(recipients: List<String>) {
+        val outside = ClientPgpCopies.outside_recipients(recipients, ::is_internal_recipient)
+        if (outside.isEmpty()) return
+        val missing = ClientPgpCopies.recipients_without_keys(
+            outside,
+            keys_api.discover_external_keys_batch(outside),
+        )
+        if (missing.isNotEmpty()) {
+            throw EncryptionRequiredException(
+                context.getString(R.string.send_requires_encryption_missing_key, missing.joinToString(", ")),
+            )
+        }
+    }
+
     private suspend fun require_encryption_enabled(): Boolean {
         val account = current_account_id()?.takeIf { it.isNotBlank() }
         val api = encryption_api_provider?.get()
@@ -5713,7 +5727,10 @@ class MailRepository @Inject constructor(
         val is_mixed = has_mixed_recipients(to + cc + bcc)
         if (is_mixed && !expiry_password.isNullOrEmpty()) throw MixedRecipientsPasswordException()
         if (has_external_recipient(to + cc + bcc) && require_encryption_enabled()) {
-            throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
+            if (expires_at != null || !expiry_password.isNullOrEmpty()) {
+                throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
+            }
+            require_outside_recipient_keys(to + cc + bcc)
         }
         val envelope = build_envelope_json(
             subject = subject,

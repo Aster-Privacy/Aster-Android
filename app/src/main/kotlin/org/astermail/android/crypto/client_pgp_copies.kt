@@ -43,6 +43,14 @@ object ClientPgpCopies {
             .filter { it.isNotEmpty() && !is_internal(it) && seen.add(it.lowercase()) }
     }
 
+    fun recipients_without_keys(
+        recipients: List<String>,
+        discovered: List<ExternalKeyInfo>,
+    ): List<String> {
+        val by_address = discovered.associateBy { it.email.trim().lowercase() }
+        return recipients.filterNot { encrypts_for(by_address[it.trim().lowercase()]) }
+    }
+
     fun recipient_keys(
         recipients: List<String>,
         discovered: List<ExternalKeyInfo>,

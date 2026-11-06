@@ -138,15 +138,9 @@ class SendBlockersTest {
     }
 
     @Test
-    fun `required encryption blocks every send with an outside address`() {
-        assertEquals(
-            SendBlocker.REQUIRES_ENCRYPTION,
-            blocker(listOf("someone@example.com"), require_encryption = true),
-        )
-        assertEquals(
-            SendBlocker.REQUIRES_ENCRYPTION,
-            blocker(listOf("friend@astermail.org", "someone@example.com"), require_encryption = true),
-        )
+    fun `required encryption leaves the key check to the send`() {
+        assertNull(blocker(listOf("someone@example.com"), require_encryption = true))
+        assertNull(blocker(listOf("friend@astermail.org", "someone@example.com"), require_encryption = true))
         assertNull(blocker(listOf("friend@astermail.org", "pal@aster.cx"), require_encryption = true))
         assertNull(blocker(listOf("someone@example.com"), require_encryption = false))
     }

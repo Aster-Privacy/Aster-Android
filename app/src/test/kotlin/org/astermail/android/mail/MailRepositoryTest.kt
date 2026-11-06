@@ -282,6 +282,116 @@ class MailRepositoryTest {
         coVerify(exactly = 0) { send_api.react(any()) }
     }
 
+    private fun required_encryption_send_repo(): MailRepository {
+        every { session_key_store.get_user_id() } returns "user_1"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+        return require_encryption_repo {
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = true)
+        }
+    }
+
+    @Test
+    fun `required encryption sends outside mail encrypted to every discovered key`() = runTest {
+        val passphrase = "key check passphrase".toCharArray()
+        val curve = org.astermail.android.crypto.PgpKeyGenerator.generate("Wkd", "wkd@outside.example", passphrase)
+        val rsa = org.astermail.android.crypto.TestRsaKeys.generate("Keyserver <rsa@outside.example>", passphrase)
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "wkd@outside.example",
+                found = true,
+                public_key = curve.armored_public_key,
+                source = "wkd",
+                will_encrypt = true,
+            ),
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "rsa@outside.example",
+                found = true,
+                public_key = rsa.armored_public_key,
+                source = "keyserver",
+                will_encrypt = true,
+            ),
+        )
+        val guarded = required_encryption_send_repo()
+
+        val result = guarded.send_email(
+            to = listOf("wkd@outside.example"),
+            cc = listOf("rsa@outside.example"),
+            subject = "Key check",
+            body_html = "<p>Hello over PGP</p>",
+            sender_email = "me@astermail.org",
+        )
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        val copies = request.captured.external_pgp_bodies
+        assertEquals(setOf("wkd@outside.example", "rsa@outside.example"), copies?.keys)
+        val curve_plain = org.astermail.android.crypto.PgpDecryptor.decrypt(
+            copies!!.getValue("wkd@outside.example"),
+            curve.armored_private_key,
+            passphrase,
+        )
+        val rsa_plain = org.astermail.android.crypto.PgpDecryptor.decrypt(
+            copies.getValue("rsa@outside.example"),
+            rsa.armored_private_key,
+            passphrase,
+        )
+        assertTrue(curve_plain.orEmpty().contains("Key check"))
+        assertTrue(rsa_plain.orEmpty().contains("Key check"))
+        assertTrue(request.captured.attachments.isEmpty())
+    }
+
+    @Test
+    fun `required encryption refuses outside mail when a recipient has no key`() = runTest {
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "keyed@outside.example",
+                found = true,
+                public_key = "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+                will_encrypt = true,
+            ),
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "bare@outside.example", found = false),
+        )
+        val guarded = required_encryption_send_repo()
+
+        val outside_only = guarded.send_email(
+            to = listOf("keyed@outside.example", "bare@outside.example"),
+            subject = "Hi",
+            body_html = "<p>hi</p>",
+        )
+        val mixed = guarded.send_email(
+            to = listOf("friend@astermail.org"),
+            bcc = listOf("bare@outside.example"),
+            subject = "Hi",
+            body_html = "<p>hi</p>",
+        )
+
+        assertTrue(outside_only.exceptionOrNull() is EncryptionRequiredException)
+        assertTrue(mixed.exceptionOrNull() is EncryptionRequiredException)
+        verify { context.getString(org.astermail.android.R.string.send_requires_encryption_missing_key, "bare@outside.example") }
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+        coVerify(exactly = 0) { send_api.queue_email(any()) }
+    }
+
+    @Test
+    fun `required encryption still refuses an expiring outside message`() = runTest {
+        val guarded = required_encryption_send_repo()
+
+        val result = guarded.send_email(
+            to = listOf("friend@outside.example"),
+            subject = "Hi",
+            body_html = "<p>hi</p>",
+            expires_at = "2030-01-01T00:00:00Z",
+        )
+
+        assertTrue(result.exceptionOrNull() is EncryptionRequiredException)
+        coVerify(exactly = 0) { keys_api.discover_external_keys_batch(any()) }
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
     @After
     fun teardown() {
         unmockkStatic(Base64::class)

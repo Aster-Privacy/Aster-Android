@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">Nieuwe sleutel vertrouwen</string>
     <string name="send_key_check_failed">Aster kon de versleutelingssleutels van de ontvangers niet controleren en heeft dit bericht daarom niet verstuurd. Controleer je verbinding en probeer het opnieuw.</string>
     <string name="outbox_failed_reason_identity_unverified">Aster kon de versleutelingssleutel van een ontvanger niet verifiëren en heeft dit bericht daarom niet verstuurd. Je kunt het later opnieuw proberen of het bericht verwijderen.</string>
+    <string name="send_requires_encryption_missing_key">\'Versleuteling vereisen\' staat aan en Aster heeft geen openbare sleutel gevonden voor %1$s, dus dit bericht is niet verzonden. Verwijder die adressen of zet \'Versleuteling vereisen\' uit in Instellingen om het te verzenden.</string>
 </resources>

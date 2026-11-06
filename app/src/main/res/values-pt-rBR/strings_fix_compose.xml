@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">Confiar na nova chave</string>
     <string name="send_key_check_failed">O Aster não conseguiu verificar as chaves de criptografia dos destinatários, então não enviou esta mensagem. Verifique sua conexão e tente novamente.</string>
     <string name="outbox_failed_reason_identity_unverified">O Aster não conseguiu verificar a chave de criptografia de um destinatário, então não enviou esta mensagem. Você pode tentar novamente mais tarde ou descartá-la.</string>
+    <string name="send_requires_encryption_missing_key">A opção \"Exigir criptografia\" está ativada e o Aster não encontrou uma chave pública para %1$s, então esta mensagem não foi enviada. Para enviá-la, remova esses endereços ou desative \"Exigir criptografia\" em Configurações.</string>
 </resources>

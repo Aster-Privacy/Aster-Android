@@ -1997,8 +1997,6 @@ fun ComposeScreen(
                 }
                 SendBlocker.EXPIRY_NEEDS_SECURE_MESSAGE ->
                     send_error = context.getString(R.string.expiring_requires_secure_message)
-                SendBlocker.REQUIRES_ENCRYPTION ->
-                    send_error = context.getString(R.string.send_requires_encryption)
             }
             return
         }

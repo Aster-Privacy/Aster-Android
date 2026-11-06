@@ -12,4 +12,5 @@
     <string name="identity_trust_new_key">الوثوق بالمفتاح الجديد</string>
     <string name="send_key_check_failed">تعذّر على Aster التحقق من مفاتيح التشفير الخاصة بالمستلمين، لذلك لم يُرسل هذه الرسالة. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
     <string name="outbox_failed_reason_identity_unverified">تعذّر على Aster التحقق من مفتاح التشفير لأحد المستلمين، لذلك لم يُرسل هذه الرسالة. يمكنك المحاولة مرة أخرى لاحقًا أو تجاهلها.</string>
+    <string name="send_requires_encryption_missing_key">خيار «اشتراط التشفير» مفعّل، ولم يعثر Aster على مفتاح عام للعنوان %1$s، لذلك لم تُرسل هذه الرسالة. لإرسالها، أزل تلك العناوين أو أوقف «اشتراط التشفير» في الإعدادات.</string>
 </resources>
