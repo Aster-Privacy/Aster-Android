@@ -114,9 +114,19 @@ fun absorb_rotated_vault(store: SessionKeyStore, vault: JSONObject, sealed: Seal
     if (merged != current) store.put_legacy_keks(merged)
 }
 
-class SessionVaultCodec(private val store: SessionKeyStore) : StorageVaultCodec {
+fun local_storage_keys(store: SessionKeyStore): LocalStorageKeys {
+    val data_kek = store.get_data_kek()
+    val encoded = data_kek?.takeIf { it.size == RESEAL_KEY_LENGTH }?.let(::encode_b64)
+    data_kek?.fill(0)
+    return LocalStorageKeys(encoded, store.get_legacy_keks().orEmpty())
+}
 
-    private fun passphrase(): ByteArray = store.get_passphrase() ?: throw IllegalStateException("locked")
+class SessionVaultCodec(
+    private val store: SessionKeyStore,
+    private val passphrase_source: () -> ByteArray? = { store.get_passphrase() },
+) : StorageVaultCodec {
+
+    private fun passphrase(): ByteArray = passphrase_source() ?: throw IllegalStateException("locked")
 
     override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? {
         val pass = passphrase()
@@ -164,6 +174,30 @@ class SessionVaultCodec(private val store: SessionKeyStore) : StorageVaultCodec 
     override fun fingerprints(vault: JSONObject): List<String> = collect_vault_key_fingerprints(vault)
 }
 
+fun session_vault_updater(
+    api: ResealApi,
+    store: SessionKeyStore,
+    passphrase_source: () -> ByteArray? = { store.get_passphrase() },
+): VaultUpdater = VaultUpdater(
+    api = api,
+    codec = SessionVaultCodec(store, passphrase_source),
+    user_id = { store.get_user_id() },
+    lock = VaultWriteLock.mutex,
+    on_vault_changed = { vault, sealed -> absorb_rotated_vault(store, vault, sealed) },
+    local_keys = { local_storage_keys(store) },
+)
+
+@Singleton
+class VaultUpdates @Inject constructor(
+    private val api_client: ApiClient,
+    private val session_key_store: SessionKeyStore,
+) {
+    fun session(): VaultUpdater = session_vault_updater(KtorResealApi(api_client), session_key_store)
+
+    fun with_passphrase(passphrase: ByteArray): VaultUpdater =
+        session_vault_updater(KtorResealApi(api_client), session_key_store) { passphrase.copyOf() }
+}
+
 @Singleton
 class StorageRekeyService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -180,6 +214,7 @@ class StorageRekeyService @Inject constructor(
         user_id = { session_key_store.get_user_id() },
         lock = VaultWriteLock.mutex,
         on_vault_changed = { vault, sealed -> absorb_rotated_vault(session_key_store, vault, sealed) },
+        local_keys = { local_storage_keys(session_key_store) },
     )
 
     fun is_unlocked(): Boolean {

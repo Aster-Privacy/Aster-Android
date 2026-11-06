@@ -119,6 +119,7 @@ data class SaveRecoveryBackupRequest(
     val encrypted_vault: String? = null,
     val vault_nonce: String? = null,
     val vault_format: Int? = null,
+    val expected_vault_sha256: String? = null,
 )
 
 @Serializable

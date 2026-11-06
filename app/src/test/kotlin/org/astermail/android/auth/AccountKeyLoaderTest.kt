@@ -481,14 +481,6 @@ class AccountKeyLoaderTest {
             new_fingerprint: String,
         ): Boolean = throw UnsupportedOperationException()
 
-        override suspend fun update_vault(
-            encrypted_vault: String,
-            vault_nonce: String,
-            expected_user_id: String?,
-            vault_key_fingerprints: List<String>?,
-            vault_format: Int?,
-        ): Boolean = throw UnsupportedOperationException()
-
         override suspend fun fetch_current_vault(): CurrentVaultResult = throw UnsupportedOperationException()
     }
 }

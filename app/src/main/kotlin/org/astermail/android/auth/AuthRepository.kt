@@ -104,6 +104,7 @@ data class TotpChallenge(
 )
 
 private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
+private const val VAULT_STEP_INLINE_TIMEOUT_MS = 15_000L
 private const val RECOVERY_BACKUP_ATTEMPTS = 3
 private const val SIGNUP_PGP_KEYGEN_ATTEMPTS = 3
 private const val PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS = 3
@@ -176,10 +177,31 @@ class AuthRepository @Inject constructor(
 
     private val dead_session_mutex = kotlinx.coroutines.sync.Mutex()
     private val vault_commit_mutex = org.astermail.android.crypto.storage_rotation.VaultWriteLock.mutex
+    private val vault_updates by lazy {
+        org.astermail.android.crypto.storage_rotation.VaultUpdates(api_client, session_key_store)
+    }
+    private val storage_rekey_service by lazy {
+        org.astermail.android.crypto.storage_rotation.StorageRekeyService(context, api_client, session_key_store)
+    }
 
     init {
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
+        }
+        org.astermail.android.crypto.StorageKeyGate.install {
+            storage_rekey_service.ensure_random_storage_key()
+            val key = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+            key?.fill(0)
+            key != null
+        }
+    }
+
+    private suspend fun run_vault_step_inline() {
+        try {
+            withTimeoutOrNull(VAULT_STEP_INLINE_TIMEOUT_MS) { storage_rekey_service.ensure_random_storage_key() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
         }
     }
     private val pgp_publish_attempted_user_ids =
@@ -679,6 +701,7 @@ class AuthRepository @Inject constructor(
                 ),
                 max_accounts = AccountStore.unlimited_accounts,
             )
+            run_vault_step_inline()
             runCatching { save_session_snapshot(login_resp.user_id) }
             _active_account_id.value = login_resp.user_id
             _is_signed_in.value = true
@@ -1307,6 +1330,7 @@ class AuthRepository @Inject constructor(
         }
         if (!restored) return false
         runCatching { try_recover_identity_key() }
+        run_vault_step_inline()
         runCatching { offer_preferences_store.reset() }
         runCatching {
             val loader = coil.Coil.imageLoader(context)
@@ -1358,153 +1382,173 @@ class AuthRepository @Inject constructor(
         }
         val account_on_v2 = login_pins.is_pinned(step_up.pin_keys)
 
-        val server_vault = try {
-            keys_api.fetch_current_vault()
-        } catch (cancelled: CancellationException) {
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            throw cancelled
-        } catch (_: Throwable) {
-            CurrentVaultResult.Unavailable
-        }
-        val (encrypted_vault_b64, vault_nonce_b64) = when (server_vault) {
-            is CurrentVaultResult.Available -> server_vault.encrypted_vault to server_vault.vault_nonce
-            CurrentVaultResult.Missing -> session_key_store.get_encrypted_vault()
-            CurrentVaultResult.Unavailable -> null
-        } ?: run {
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            throw if (server_vault == CurrentVaultResult.Unavailable) {
-                ApiError.NetworkError
-            } else {
-                ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
+        vault_commit_mutex.lock()
+        var vault_lock_held = true
+        val release_vault_lock = {
+            if (vault_lock_held) {
+                vault_lock_held = false
+                vault_commit_mutex.unlock()
             }
         }
-
-        val vault_plain = try {
-            CryptoNative.decrypt_vault_with_password(
-                base64_decode(encrypted_vault_b64),
-                base64_decode(vault_nonce_b64),
-                current_password_bytes,
-            )
-        } catch (cancelled: CancellationException) {
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            throw cancelled
-        } catch (_: Throwable) {
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            throw ApiError.ValidationError(
-                listOf(context.getString(R.string.current_password_incorrect)),
-                "CLIENT_MESSAGE",
-            )
-        }
-
-        val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
-        vault_plain.fill(0)
-
-        val sent_mail_conversion = password_change_sent_mail.convert_before_change(
-            vault_obj.optString("identity_key", "").ifBlank { vault_obj.optString("identity_private_key", "") },
-            current_password_bytes,
-        )
-
-        val current_identity = vault_obj.optString("identity_private_key", "")
-        if (current_identity.isNotBlank()) {
-            val previous = vault_obj.optJSONArray("previous_keys") ?: org.json.JSONArray()
-            val rotated = org.json.JSONArray().put(current_identity)
-            for (i in 0 until previous.length()) {
-                if (rotated.length() >= 10) break
-                rotated.put(previous.getString(i))
+        try {
+            val server_vault = try {
+                keys_api.fetch_current_vault()
+            } catch (cancelled: CancellationException) {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw cancelled
+            } catch (_: Throwable) {
+                CurrentVaultResult.Unavailable
             }
-            vault_obj.put("previous_keys", rotated)
-        }
-
-        val preserved_data_kek = try {
-            ensure_master_key_vault(vault_obj, current_password_bytes)
-        } catch (_: UnsupportedVaultKdfException) {
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            throw ApiError.ValidationError(
-                listOf(context.getString(R.string.password_change_web_required)),
-                "CLIENT_MESSAGE",
-            )
-        }
-
-        org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
-        val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
-
-        val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
-        val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)
-        updated_vault_bytes.fill(0)
-
-        val new_salt = ByteArray(32).also { SecureRandom().nextBytes(it) }
-        val new_password_hash = CryptoNative.derive_pbkdf2_hash(
-            new_password_bytes, new_salt, pbkdf2_iterations,
-        )
-        val new_password_hash_v2 = LoginProof.derive_v2(new_password_hash)
-
-        withContext(NonCancellable) {
-            val response = settings_api.change_password(
-                ChangePasswordRequest(
-                    current_password_hash = base64_encode(current_password_hash),
-                    new_password_hash = base64_encode(new_password_hash),
-                    new_password_hash_v2 = base64_encode(new_password_hash_v2),
-                    new_password_salt = base64_encode(new_salt),
-                    new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
-                    new_vault_nonce = base64_encode(new_envelope.vault_nonce),
-                    vault_format = MASTER_KEY_VAULT_FORMAT,
-                    vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
-                ),
-            )
-
-            session_key_store.put_data_kek(preserved_data_kek)
-            session_key_store.put_legacy_keks(
-                append_storage_keks(session_key_store.get_legacy_keks().orEmpty(), vault_legacy_kek_values(vault_obj)),
-            )
-            session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
-            session_key_store.put_passphrase(new_password_bytes)
-            session_key_store.put_password_salt(new_salt)
-            runCatching { login_salt_records.put(step_up.record_keys, new_salt) }
-            session_key_store.put_encrypted_vault(
-                base64_encode(new_envelope.encrypted_vault),
-                base64_encode(new_envelope.vault_nonce),
-            )
-            schedule_storage_rekey()
-
-            SessionRefreshGate.mutex.withLock {
-                response.csrf_token?.let { api_client.set_csrf(it) }
-                response.access_token?.let {
-                    token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
-                    api_client.invalidate_bearer_cache()
+            val (encrypted_vault_b64, vault_nonce_b64) = when (server_vault) {
+                is CurrentVaultResult.Available -> server_vault.encrypted_vault to server_vault.vault_nonce
+                CurrentVaultResult.Missing -> session_key_store.get_encrypted_vault()
+                CurrentVaultResult.Unavailable -> null
+            } ?: run {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw if (server_vault == CurrentVaultResult.Unavailable) {
+                    ApiError.NetworkError
+                } else {
+                    ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
                 }
             }
 
-            val pgp_rewrapped = runCatching { rewrap_server_pgp_key(new_password) }.isSuccess
+            val vault_plain = try {
+                CryptoNative.decrypt_vault_with_password(
+                    base64_decode(encrypted_vault_b64),
+                    base64_decode(vault_nonce_b64),
+                    current_password_bytes,
+                )
+            } catch (cancelled: CancellationException) {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw cancelled
+            } catch (_: Throwable) {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw ApiError.ValidationError(
+                    listOf(context.getString(R.string.current_password_incorrect)),
+                    "CLIENT_MESSAGE",
+                )
+            }
 
-            runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
-
-            val reseal = password_change_sent_mail.reseal_after_change(
-                sent_mail_conversion,
-                current_password_bytes,
-                new_password_bytes,
-                pgp_rewrapped,
+            val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
+            vault_plain.fill(0)
+            org.astermail.android.crypto.storage_rotation.preserve_vault_fields(
+                org.json.JSONObject(vault_obj.toString()),
+                vault_obj,
+                org.astermail.android.crypto.storage_rotation.local_storage_keys(session_key_store),
+                false,
+                java.time.Instant.now().toString(),
             )
 
-            mail_repository.clear_caches()
-            database.decrypted_mail_dao().clear_all()
-            database.folder_row_dao().clear_all()
-            database.message_body_dao().clear_all()
-            database.thread_snapshot_dao().clear_all()
-            session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
+            val sent_mail_conversion = password_change_sent_mail.convert_before_change(
+                vault_obj.optString("identity_key", "").ifBlank { vault_obj.optString("identity_private_key", "") },
+                current_password_bytes,
+            )
 
-            current_password_hash.fill(0)
-            new_password_hash.fill(0)
-            new_password_hash_v2.fill(0)
-            current_password_bytes.fill(0)
-            new_password_bytes.fill(0)
-            stored_salt.fill(0)
-            preserved_data_kek.fill(0)
-            reseal
+            val current_identity = vault_obj.optString("identity_private_key", "")
+            if (current_identity.isNotBlank()) {
+                val previous = vault_obj.optJSONArray("previous_keys") ?: org.json.JSONArray()
+                val rotated = org.json.JSONArray().put(current_identity)
+                for (i in 0 until previous.length()) {
+                    if (rotated.length() >= 10) break
+                    rotated.put(previous.getString(i))
+                }
+                vault_obj.put("previous_keys", rotated)
+            }
+
+            val preserved_data_kek = try {
+                ensure_master_key_vault(vault_obj, current_password_bytes)
+            } catch (_: UnsupportedVaultKdfException) {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw ApiError.ValidationError(
+                    listOf(context.getString(R.string.password_change_web_required)),
+                    "CLIENT_MESSAGE",
+                )
+            }
+
+            org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
+            val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
+
+            val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
+            val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)
+            updated_vault_bytes.fill(0)
+
+            val new_salt = ByteArray(32).also { SecureRandom().nextBytes(it) }
+            val new_password_hash = CryptoNative.derive_pbkdf2_hash(
+                new_password_bytes, new_salt, pbkdf2_iterations,
+            )
+            val new_password_hash_v2 = LoginProof.derive_v2(new_password_hash)
+
+            withContext(NonCancellable) {
+                val response = settings_api.change_password(
+                    ChangePasswordRequest(
+                        current_password_hash = base64_encode(current_password_hash),
+                        new_password_hash = base64_encode(new_password_hash),
+                        new_password_hash_v2 = base64_encode(new_password_hash_v2),
+                        new_password_salt = base64_encode(new_salt),
+                        new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                        new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                        vault_format = MASTER_KEY_VAULT_FORMAT,
+                        vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
+                    ),
+                )
+
+                session_key_store.put_data_kek(preserved_data_kek)
+                session_key_store.put_legacy_keks(
+                    append_storage_keks(session_key_store.get_legacy_keks().orEmpty(), vault_legacy_kek_values(vault_obj)),
+                )
+                session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
+                session_key_store.put_passphrase(new_password_bytes)
+                session_key_store.put_password_salt(new_salt)
+                runCatching { login_salt_records.put(step_up.record_keys, new_salt) }
+                session_key_store.put_encrypted_vault(
+                    base64_encode(new_envelope.encrypted_vault),
+                    base64_encode(new_envelope.vault_nonce),
+                )
+                release_vault_lock()
+                schedule_storage_rekey()
+
+                SessionRefreshGate.mutex.withLock {
+                    response.csrf_token?.let { api_client.set_csrf(it) }
+                    response.access_token?.let {
+                        token_store.save(it, response.refresh_token ?: token_store.refresh_token ?: it)
+                        api_client.invalidate_bearer_cache()
+                    }
+                }
+
+                val pgp_rewrapped = runCatching { rewrap_server_pgp_key(new_password) }.isSuccess
+
+                runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+
+                val reseal = password_change_sent_mail.reseal_after_change(
+                    sent_mail_conversion,
+                    current_password_bytes,
+                    new_password_bytes,
+                    pgp_rewrapped,
+                )
+
+                mail_repository.clear_caches()
+                database.decrypted_mail_dao().clear_all()
+                database.folder_row_dao().clear_all()
+                database.message_body_dao().clear_all()
+                database.thread_snapshot_dao().clear_all()
+                session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
+
+                current_password_hash.fill(0)
+                new_password_hash.fill(0)
+                new_password_hash_v2.fill(0)
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                stored_salt.fill(0)
+                preserved_data_kek.fill(0)
+                reseal
+            }
+        } finally {
+            release_vault_lock()
         }
     }
 
@@ -1942,85 +1986,56 @@ class AuthRepository @Inject constructor(
         recovered_keks: List<String>,
         recovered_ratchet: List<org.json.JSONObject>,
         base_encrypted_vault: String,
-    ): RecoveredKeyCommitResult = vault_commit_mutex.withLock {
-        if (session_key_store.get_user_id() != user_id) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+    ): RecoveredKeyCommitResult {
+        if (session_key_store.get_user_id() != user_id) return RECOVERED_KEYS_NOT_WRITTEN
         val local_vault = session_key_store.get_encrypted_vault()
         if (local_vault == null || !same_vault_ciphertext(local_vault.first, base_encrypted_vault)) {
-            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+            return RECOVERED_KEYS_NOT_WRITTEN
         }
-        val server_vault = runCatching { keys_api.fetch_current_vault() }
-            .getOrDefault(CurrentVaultResult.Unavailable)
-        if (server_vault !is CurrentVaultResult.Available) return@withLock RECOVERED_KEYS_NOT_WRITTEN
-        if (!same_vault_ciphertext(server_vault.encrypted_vault, base_encrypted_vault)) {
-            return@withLock RECOVERED_KEYS_NOT_WRITTEN
-        }
-
-        val merged_keks = merge_legacy_keks_reporting(
-            vault_obj.optJSONArray("legacy_keks"),
-            recovered_keks,
-            java.time.Instant.now().toString(),
-        )
-        vault_obj.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
-        vault_obj.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
-        vault_obj.put("legacy_keks", merged_keks.keks)
-        val merged_ratchet = merge_previous_ratchet_keys_reporting(
-            vault_obj.optJSONArray("ratchet_previous_keys"),
-            recovered_ratchet,
-        )
-        vault_obj.put("ratchet_previous_keys", merged_ratchet.keys)
-
-        val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
-        val sealed = runCatching {
-            CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
-        }.getOrNull()
-        updated_plain.fill(0)
-        if (sealed == null) return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
-
-        val encrypted_vault = base64_encode(sealed.encrypted_vault)
-        val vault_nonce = base64_encode(sealed.vault_nonce)
-        if (!vault_roundtrip_ok(encrypted_vault, vault_nonce, passphrase, vault_identity_key(vault_obj))) {
-            return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
-        }
-
-        val pushed = runCatching {
-            keys_api.update_vault(
-                encrypted_vault,
-                vault_nonce,
-                user_id,
-                org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
-                stored_vault_format(vault_obj),
+        var merged_keks: MergedLegacyKeks? = null
+        var merged_ratchet: MergedRatchetKeys? = null
+        val outcome = vault_updates.with_passphrase(passphrase).update { draft ->
+            if (!same_vault_ciphertext(draft.snapshot.encrypted_vault, base_encrypted_vault)) {
+                return@update org.astermail.android.crypto.storage_rotation.VaultEdit.ABORT
+            }
+            val vault = draft.vault
+            val keks = merge_legacy_keks_reporting(
+                vault.optJSONArray("legacy_keks"),
+                recovered_keks,
+                java.time.Instant.now().toString(),
             )
-        }.getOrDefault(false)
-        if (!pushed) return@withLock RECOVERED_KEYS_NOT_WRITTEN
-
-        session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
-        absorb_previous_keys_and_keks(vault_obj)
-        absorb_recovered_ratchet_keys(merged_ratchet.keys)
-        RecoveredKeyCommitResult(
-            written = true,
-            dropped_keks = merged_keks.dropped,
-            dropped_ratchet_keys = merged_ratchet.dropped,
-        )
-    }
-
-    private fun vault_roundtrip_ok(
-        encrypted_vault: String,
-        vault_nonce: String,
-        passphrase: ByteArray,
-        expected_identity_key: String,
-    ): Boolean {
-        val plain = runCatching {
-            CryptoNative.decrypt_vault_with_password(
-                base64_decode(encrypted_vault),
-                base64_decode(vault_nonce),
-                passphrase,
+            vault.put("previous_keys", org.json.JSONArray(identity_keys.previous_keys))
+            vault.put("legacy_identity_keys", org.json.JSONArray(identity_keys.legacy_identity_keys))
+            vault.put("legacy_keks", keks.keks)
+            val ratchet = merge_previous_ratchet_keys_reporting(
+                vault.optJSONArray("ratchet_previous_keys"),
+                recovered_ratchet,
             )
-        }.getOrNull() ?: return false
-        val matches = runCatching {
-            vault_identity_key(org.json.JSONObject(String(plain, Charsets.UTF_8))) == expected_identity_key
-        }.getOrDefault(false)
-        plain.fill(0)
-        return matches
+            vault.put("ratchet_previous_keys", ratchet.keys)
+            merged_keks = keks
+            merged_ratchet = ratchet
+            org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
+        }
+        return when (outcome) {
+            is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written -> {
+                val keks = merged_keks ?: return RECOVERED_KEYS_NOT_WRITTEN
+                val ratchet = merged_ratchet ?: return RECOVERED_KEYS_NOT_WRITTEN
+                absorb_previous_keys_and_keks(outcome.vault)
+                absorb_recovered_ratchet_keys(ratchet.keys)
+                RecoveredKeyCommitResult(
+                    written = true,
+                    dropped_keks = keks.dropped,
+                    dropped_ratchet_keys = ratchet.dropped,
+                )
+            }
+            is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Failed ->
+                if (outcome.reason == "encrypt_failed" || outcome.reason == "roundtrip_failed") {
+                    RECOVERED_KEYS_ROUNDTRIP_FAILED
+                } else {
+                    RECOVERED_KEYS_NOT_WRITTEN
+                }
+            else -> RECOVERED_KEYS_NOT_WRITTEN
+        }
     }
 
     private fun absorb_recovered_ratchet_keys(vault_ratchet_keys: org.json.JSONArray) {
@@ -2165,40 +2180,11 @@ class AuthRepository @Inject constructor(
         identity_key: String,
         passphrase: ByteArray,
     ): Boolean {
-        val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return false
-
-        val vault_plain = CryptoNative.decrypt_vault_with_password(
-            base64_decode(encrypted_vault_b64),
-            base64_decode(vault_nonce_b64),
-            passphrase,
-        )
-        val vault_obj = try {
-            org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
-        } finally {
-            vault_plain.fill(0)
+        val outcome = vault_updates.with_passphrase(passphrase).update { draft ->
+            replace_vault_identity_key(draft.vault, identity_key)
+            org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
         }
-        replace_vault_identity_key(vault_obj, identity_key)
-
-        val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
-        val sealed = try {
-            CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
-        } finally {
-            updated_plain.fill(0)
-        }
-
-        val encrypted_vault = base64_encode(sealed.encrypted_vault)
-        val vault_nonce = base64_encode(sealed.vault_nonce)
-        val pushed = keys_api.update_vault(
-            encrypted_vault,
-            vault_nonce,
-            session_key_store.get_user_id(),
-            org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj),
-            stored_vault_format(vault_obj),
-        )
-        if (!pushed) return false
-
-        session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
-        return true
+        return outcome is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written
     }
 
     fun identity_keys_present(): Boolean =
@@ -2747,62 +2733,50 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun rotate_recovery_codes(step_up_token: String): List<String> {
-        val stored_vault = session_key_store.get_encrypted_vault()
-            ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
         val passphrase = session_key_store.get_passphrase()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
 
         try {
-            val vault_plain = CryptoNative.decrypt_vault_with_password(
-                base64_decode(stored_vault.first),
-                base64_decode(stored_vault.second),
-                passphrase,
-            )
-            val vault_obj = try {
-                org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
-            } finally {
-                vault_plain.fill(0)
-            }
-
             val codes = generate_recovery_codes()
-            val codes_array = org.json.JSONArray()
-            codes.forEach { codes_array.put(it) }
-            vault_obj.put("recovery_codes", codes_array)
-
-            val vault_format = stored_vault_format(vault_obj)
-
-            val updated_plain = vault_obj.toString().toByteArray(Charsets.UTF_8)
-            val sealed = CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
-            updated_plain.fill(0)
-            val encrypted_vault = base64_encode(sealed.encrypted_vault)
-            val vault_nonce = base64_encode(sealed.vault_nonce)
-
-            val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-            val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
-            val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
-            backup_plain.fill(0)
-            val shares = codes.map { generate_recovery_share(it, recovery_key) }
-            recovery_key.fill(0)
-
-            withContext(NonCancellable) {
-                recovery_api.backup(
-                    SaveRecoveryBackupRequest(
-                        recovery_shares = shares,
-                        encrypted_vault_backup = vault_backup.encrypted_data,
-                        vault_backup_nonce = vault_backup.nonce,
-                        recovery_key_salt = vault_backup.salt,
-                        step_up_token = step_up_token,
-                        encrypted_vault = encrypted_vault,
-                        vault_nonce = vault_nonce,
-                        vault_format = vault_format,
-                    ),
+            val outcome = withContext(NonCancellable) {
+                vault_updates.with_passphrase(passphrase).replace_through(
+                    edit = { draft ->
+                        val codes_array = org.json.JSONArray()
+                        codes.forEach { codes_array.put(it) }
+                        draft.vault.put("recovery_codes", codes_array)
+                        org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
+                    },
+                    send = { vault_obj, sealed, snapshot ->
+                        val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+                        val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
+                        val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
+                        backup_plain.fill(0)
+                        val shares = codes.map { generate_recovery_share(it, recovery_key) }
+                        recovery_key.fill(0)
+                        recovery_api.backup(
+                            SaveRecoveryBackupRequest(
+                                recovery_shares = shares,
+                                encrypted_vault_backup = vault_backup.encrypted_data,
+                                vault_backup_nonce = vault_backup.nonce,
+                                recovery_key_salt = vault_backup.salt,
+                                step_up_token = step_up_token,
+                                encrypted_vault = sealed.encrypted_vault,
+                                vault_nonce = sealed.vault_nonce,
+                                vault_format = stored_vault_format(vault_obj),
+                                expected_vault_sha256 = snapshot.vault_sha256,
+                            ),
+                        )
+                        true
+                    },
                 )
-
-                session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
+            }
+            if (outcome !is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written) {
+                throw ApiError.UnknownError(context.getString(R.string.error_generic))
+            }
+            withContext(NonCancellable) {
                 session_key_store.put_recovery_codes(codes)
                 runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
             }
-
             return codes
         } finally {
             passphrase.fill(0)

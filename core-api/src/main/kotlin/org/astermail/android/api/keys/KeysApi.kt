@@ -46,15 +46,6 @@ data class PublicKeyResponse(
 )
 
 @Serializable
-data class UpdateVaultRequest(
-    val encrypted_vault: String,
-    val vault_nonce: String,
-    val expected_user_id: String? = null,
-    val vault_key_fingerprints: List<String>? = null,
-    val vault_format: Int? = null,
-)
-
-@Serializable
 data class UpdateVaultResponse(
     val success: Boolean,
 )
@@ -183,13 +174,6 @@ interface KeysApi {
         prior_fingerprint: String,
         new_fingerprint: String,
     ): Boolean
-    suspend fun update_vault(
-        encrypted_vault: String,
-        vault_nonce: String,
-        expected_user_id: String?,
-        vault_key_fingerprints: List<String>?,
-        vault_format: Int?,
-    ): Boolean
     suspend fun fetch_current_vault(): CurrentVaultResult
     suspend fun get_account_key_token(): AccountKeyTokenResponse? = null
     suspend fun get_account_key_token_history(): List<AccountKeyTokenHistoryEntry> = emptyList()
@@ -281,29 +265,6 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         }
         if (response.status.value !in 200..299) return false
         return response.body<AcknowledgeFingerprintChangeResponse>().acknowledged
-    }
-
-    override suspend fun update_vault(
-        encrypted_vault: String,
-        vault_nonce: String,
-        expected_user_id: String?,
-        vault_key_fingerprints: List<String>?,
-        vault_format: Int?,
-    ): Boolean {
-        val response = client.http.put("${client.base_url}$base/vault") {
-            contentType(ContentType.Application.Json)
-            client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody(
-                UpdateVaultRequest(
-                    encrypted_vault,
-                    vault_nonce,
-                    expected_user_id,
-                    vault_key_fingerprints?.takeIf { it.isNotEmpty() },
-                    vault_format,
-                ),
-            )
-        }
-        return response.status.value in 200..299
     }
 
     override suspend fun fetch_current_vault(): CurrentVaultResult {

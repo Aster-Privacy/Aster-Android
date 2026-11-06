@@ -71,7 +71,6 @@ fun merge_legacy_keks_reporting(
 ): MergedLegacyKeks {
     val merged = JSONArray()
     val seen = mutableSetOf<String>()
-    val dropped = 0
 
     if (existing != null) {
         for (i in 0 until existing.length()) {
@@ -87,7 +86,7 @@ fun merge_legacy_keks_reporting(
         merged.put(JSONObject().put("k", kek).put("added_at", added_at))
     }
 
-    return MergedLegacyKeks(merged, dropped)
+    return MergedLegacyKeks(merged, 0)
 }
 
 fun retain_previous_ratchet_keys(vault: JSONObject): List<JSONObject> {
