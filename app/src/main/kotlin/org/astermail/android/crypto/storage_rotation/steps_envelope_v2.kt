@@ -49,6 +49,40 @@ const val ATTACHMENT_META_BATCH_PATH = "/mail/v1/attachments/meta/batch"
 const val ENVELOPE_V2_PAGE_LIMIT = 50
 const val ENVELOPE_V2_MAX_ITEMS_PER_RUN = 200
 const val ENVELOPE_CHANGED_CODE = "ENVELOPE_CHANGED"
+const val ENVELOPE_V2_UPGRADE_REQUIRED_CODE = "CLIENT_UPGRADE_REQUIRED"
+const val ENVELOPE_V2_NOT_ADMITTED_REASON = "level2_not_admitted"
+const val ENVELOPE_V2_UPGRADE_REASON = "upgrade_required"
+const val ENVELOPE_V2_NOT_DUE_REASON = "not_due"
+const val ENVELOPE_V2_RESCAN = "envelope_v2_rescan"
+const val ENVELOPE_V2_RESCAN_AFTER_MS = 7L * 24L * 60L * 60L * 1000L
+const val ENVELOPE_V2_FIRST_RETRY_MS = 60L * 60L * 1000L
+const val ENVELOPE_V2_MAX_RETRY_MS = ENVELOPE_V2_RESCAN_AFTER_MS
+
+data class EnvelopeV2Rescan(val next_at_ms: Long, val retry_delay_ms: Long)
+
+fun read_envelope_v2_rescan(progress: ResealProgress): EnvelopeV2Rescan? {
+    val parts = progress.steps[ENVELOPE_V2_RESCAN]?.cursor?.split(":") ?: return null
+    if (parts.size != 2) return null
+    val next_at = parts[0].toLongOrNull() ?: return null
+    val delay = parts[1].toLongOrNull() ?: return null
+    return EnvelopeV2Rescan(next_at, delay)
+}
+
+fun next_envelope_v2_retry_delay(previous: EnvelopeV2Rescan?): Long {
+    val prior = previous?.retry_delay_ms?.takeIf { it > 0 } ?: return ENVELOPE_V2_FIRST_RETRY_MS
+    if (prior >= ENVELOPE_V2_MAX_RETRY_MS / 2) return ENVELOPE_V2_MAX_RETRY_MS
+    return (prior * 2).coerceIn(ENVELOPE_V2_FIRST_RETRY_MS, ENVELOPE_V2_MAX_RETRY_MS)
+}
+
+internal fun refuse_if_unavailable(reply: ApiReply) {
+    if (!reply.error) return
+    if (reply.status == 409 && reply.code == VAULT_LEVEL2_NOT_ADMITTED_CODE) {
+        throw ResealDeferred(ENVELOPE_V2_NOT_ADMITTED_REASON, REKEY_NOT_ADMITTED_WAIT_SECS)
+    }
+    if (reply.status == 426 || reply.code == ENVELOPE_V2_UPGRADE_REQUIRED_CODE) {
+        throw ResealDeferred(ENVELOPE_V2_UPGRADE_REASON, REKEY_NOT_ADMITTED_WAIT_SECS)
+    }
+}
 
 suspend fun request_level2_admission(api: ResealApi): Boolean {
     val reply = try {
@@ -226,6 +260,7 @@ class EnvelopeV2Step(
                 "expected_envelope_sha256" to expected_sha256,
             ),
         )
+        refuse_if_unavailable(reply)
         val status = reply.status
         when {
             !reply.error -> ctx.counts.resealed += 1
@@ -255,7 +290,7 @@ class EnvelopeV2Step(
             budget.spend()
             val replacement = rewrap(ctx, sealed) ?: continue
             val expected = digest_of(sealed, meta_nonce)
-            write_if_unchanged(
+            val outcome = write_if_unchanged(
                 ctx,
                 "$name:attachment_meta",
                 still_same = { fetch_meta_digest(ctx, mail_id, meta_id) == expected },
@@ -266,8 +301,9 @@ class EnvelopeV2Step(
                         "encrypted_meta" to replacement,
                         "meta_nonce" to LevelTwoEnvelope.meta_marker_b64(),
                     ),
-                )
+                ).also(::refuse_if_unavailable)
             }
+            if (outcome == BatchOutcome.CONFLICT) mark_incomplete(ctx, "$name:attachment_meta")
         }
     }
 
@@ -324,6 +360,8 @@ suspend fun run_envelope_v2_sweep(
     sleep: suspend (Long) -> Unit = { delay(it) },
     max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
     draft_in_use: suspend (String) -> Boolean = { true },
+    now_ms: () -> Long = System::currentTimeMillis,
+    on_not_admitted: () -> Unit = {},
 ): ResealRunResult {
     val counts = StepCounts()
     val keys = build_reseal_keys(view)
@@ -331,6 +369,15 @@ suspend fun run_envelope_v2_sweep(
     try {
         val stored = runCatching { store.load() }.getOrNull()
         val progress = if (stored != null && stored.key_id == keys.key_id) stored else ResealProgress(keys.key_id)
+        val rescan = read_envelope_v2_rescan(progress)
+        if (rescan != null && rescan.next_at_ms >= 0) {
+            if (now_ms() < rescan.next_at_ms) {
+                return ResealRunResult(ResealRunStatus.DONE, counts, ENVELOPE_V2_NOT_DUE_REASON)
+            }
+            if (rescan.retry_delay_ms == 0L) progress.steps.clear()
+            progress.steps[ENVELOPE_V2_RESCAN] = StepProgress(cursor = "-1:${rescan.retry_delay_ms}")
+            runCatching { store.save(progress) }
+        }
         val ctx = ResealContext(
             keys = keys,
             api = api,
@@ -352,8 +399,14 @@ suspend fun run_envelope_v2_sweep(
                 return ResealRunResult(ResealRunStatus.INTERRUPTED, counts, step.name)
             }
         }
+        val pass_complete = ctx.incomplete.isEmpty() && steps.all { progress.steps[it.name]?.done == true }
+        val retry_delay = if (pass_complete) 0L else next_envelope_v2_retry_delay(rescan)
+        val wait = if (pass_complete) ENVELOPE_V2_RESCAN_AFTER_MS else retry_delay
+        progress.steps[ENVELOPE_V2_RESCAN] = StepProgress(cursor = "${now_ms() + wait}:$retry_delay")
+        runCatching { store.save(progress) }
         return ResealRunResult(ResealRunStatus.DONE, counts, incomplete = ctx.incomplete.toList())
     } catch (deferred: ResealDeferred) {
+        if (deferred.reason == ENVELOPE_V2_NOT_ADMITTED_REASON) runCatching(on_not_admitted)
         return ResealRunResult(
             ResealRunStatus.DEFERRED,
             counts,

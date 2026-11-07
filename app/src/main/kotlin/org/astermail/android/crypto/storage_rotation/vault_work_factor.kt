@@ -65,10 +65,7 @@ suspend fun run_vault_work_factor_step(
         VaultWorkFactor.SKIPPED
     }
     when (result) {
-        VaultWorkFactor.UPGRADED, VaultWorkFactor.CURRENT -> {
-            progress.steps.remove(VAULT_WORK_FACTOR_BACKOFF)
-            progress.steps[VAULT_WORK_FACTOR_STEP] = StepProgress(done = true)
-        }
+        VaultWorkFactor.UPGRADED, VaultWorkFactor.CURRENT,
         VaultWorkFactor.CONFLICT, VaultWorkFactor.NOT_ADMITTED -> progress.steps.remove(VAULT_WORK_FACTOR_BACKOFF)
         VaultWorkFactor.SKIPPED -> {
             val delay = next_work_factor_delay(backoff)

@@ -458,6 +458,7 @@ class StorageRekeyService @Inject constructor(
             crypto = SessionEnvelopeV2Crypto(session_key_store),
             is_cancelled = is_cancelled,
             draft_in_use = { org.astermail.android.mail.LocalDraftActivity.is_in_use(it) },
+            on_not_admitted = { session_key_store.set_level2_admitted(false) },
         )
         when (sweep.status) {
             ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> sweep

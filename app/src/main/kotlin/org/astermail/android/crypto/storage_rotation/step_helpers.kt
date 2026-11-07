@@ -322,14 +322,16 @@ suspend fun write_if_unchanged(
     what: String,
     still_same: suspend () -> Boolean,
     send: suspend () -> ApiReply,
-) {
+): BatchOutcome {
     if (!still_same()) {
         ctx.counts.conflicts += 1
-        return
+        return BatchOutcome.CONFLICT
     }
-    when (send_batch(ctx, what, send)) {
+    val outcome = send_batch(ctx, what, send)
+    when (outcome) {
         BatchOutcome.OK -> ctx.counts.resealed += 1
         BatchOutcome.CONFLICT -> ctx.counts.conflicts += 1
         BatchOutcome.REJECTED -> ctx.counts.rejected += 1
     }
+    return outcome
 }

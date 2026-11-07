@@ -78,6 +78,7 @@ class EnvelopeV2StepTest {
         val posts = mutableListOf<String>()
         var mutate_before_put: String? = null
         var put_status: Int? = null
+        var put_reply: ApiReply? = null
         val bodies = mutableListOf<JsonObject>()
         var admission: ApiReply = ApiReply(200, JsonObject(mapOf("level2_admitted" to JsonPrimitive(true))))
 
@@ -146,6 +147,7 @@ class EnvelopeV2StepTest {
             val record = body as JsonObject
             bodies.add(record)
             put_status?.let { return ApiReply(it) }
+            put_reply?.let { return it }
             val row = rows[id] ?: drafts[id] ?: return ApiReply(404)
             if (mutate_before_put == id) row.envelope = b64(byteArrayOf(1, 1, 1))
             val expected = record["expected_envelope_sha256"]?.jsonPrimitive?.contentOrNull
@@ -173,6 +175,8 @@ class EnvelopeV2StepTest {
         store: ProgressStore,
         max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
         draft_in_use: suspend (String) -> Boolean = { false },
+        now: Long = 0L,
+        on_not_admitted: () -> Unit = {},
     ) = runBlocking {
         run_envelope_v2_sweep(
             view(),
@@ -182,6 +186,8 @@ class EnvelopeV2StepTest {
             sleep = {},
             max_items = max_items,
             draft_in_use = draft_in_use,
+            now_ms = { now },
+            on_not_admitted = on_not_admitted,
         )
     }
 
@@ -269,7 +275,11 @@ class EnvelopeV2StepTest {
         assertFalse(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
         assertEquals(1, busy.counts.skipped)
 
-        val later = sweep(server, store, draft_in_use = { false })
+        val early = sweep(server, store, draft_in_use = { false }, now = ENVELOPE_V2_FIRST_RETRY_MS - 1)
+        assertEquals(ENVELOPE_V2_NOT_DUE_REASON, early.reason)
+        assertEquals(listOf("idle"), server.puts)
+
+        val later = sweep(server, store, draft_in_use = { false }, now = ENVELOPE_V2_FIRST_RETRY_MS)
 
         assertEquals(ResealRunStatus.DONE, later.status)
         assertEquals(listOf("idle", "open"), server.puts)
@@ -305,7 +315,7 @@ class EnvelopeV2StepTest {
 
         server.mutate_before_put = null
         server.drafts.getValue("d1").envelope = sealed(v1_tag, "edited draft")
-        sweep(server, store)
+        sweep(server, store, now = ENVELOPE_V2_FIRST_RETRY_MS)
 
         assertEquals(listOf("d1"), server.puts)
     }
@@ -390,7 +400,7 @@ class EnvelopeV2StepTest {
 
         server.mutate_before_put = null
         server.rows.getValue("a").envelope = sealed(v1_tag, "edited")
-        val retry = sweep(server, store)
+        val retry = sweep(server, store, now = ENVELOPE_V2_FIRST_RETRY_MS)
 
         assertEquals(ResealRunStatus.DONE, retry.status)
         assertEquals(listOf("a"), server.puts)
@@ -486,6 +496,169 @@ class EnvelopeV2StepTest {
         assertEquals(ResealRunStatus.DONE, result.status)
         assertEquals(1, result.counts.unreadable)
         assertTrue(server.puts.isEmpty())
+    }
+
+    @Test
+    fun a_level_two_refusal_stops_the_pass_and_resets_admission() {
+        val server = SentServer()
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.rows["b"] = Row(sealed(v1_tag, "second"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.drafts["d1"] = Row(sealed(v1_tag, "draft"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.put_reply = ApiReply(409, code = VAULT_LEVEL2_NOT_ADMITTED_CODE)
+        val store = MemoryProgressStore()
+        var refused = 0
+
+        val result = sweep(server, store, on_not_admitted = { refused += 1 })
+
+        assertEquals(ResealRunStatus.DEFERRED, result.status)
+        assertEquals(ENVELOPE_V2_NOT_ADMITTED_REASON, result.reason)
+        assertEquals(REKEY_NOT_ADMITTED_WAIT_SECS, result.retry_after_secs)
+        assertEquals(1, refused)
+        assertEquals(1, server.bodies.size)
+        assertEquals(0, result.counts.conflicts)
+        assertEquals(listOf(SENT_ITEM_TYPE), server.listed_types)
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_STEP)?.done == true)
+        assertNull(store.load()?.steps?.get(ENVELOPE_V2_RESCAN))
+
+        server.put_reply = null
+        val admitted = sweep(server, store, on_not_admitted = { refused += 1 })
+
+        assertEquals(ResealRunStatus.DONE, admitted.status)
+        assertEquals(listOf("a", "b", "d1"), server.puts)
+        assertEquals(1, refused)
+    }
+
+    @Test
+    fun an_upgrade_required_reply_stops_the_pass_without_finishing_it() {
+        val server = SentServer()
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.put_status = 426
+        val store = MemoryProgressStore()
+        var refused = 0
+
+        val result = sweep(server, store, on_not_admitted = { refused += 1 })
+
+        assertEquals(ResealRunStatus.DEFERRED, result.status)
+        assertEquals(ENVELOPE_V2_UPGRADE_REASON, result.reason)
+        assertEquals(0, refused)
+        assertEquals(0, result.counts.rejected)
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_STEP)?.done == true)
+        assertNull(store.load()?.steps?.get(ENVELOPE_V2_RESCAN))
+
+        server.put_status = null
+        server.put_reply = ApiReply(409, code = ENVELOPE_V2_UPGRADE_REQUIRED_CODE)
+        assertEquals(ResealRunStatus.DEFERRED, sweep(server, store).status)
+
+        server.put_reply = null
+        assertEquals(ResealRunStatus.DONE, sweep(server, store).status)
+        assertEquals(listOf("a"), server.puts)
+        assertTrue(store.load()?.steps?.get(ENVELOPE_V2_STEP)?.done == true)
+    }
+
+    @Test
+    fun an_incomplete_pass_retries_with_a_doubling_backoff_capped_at_seven_days() {
+        val server = SentServer()
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.put_reply = ApiReply(409, code = ENVELOPE_CHANGED_CODE)
+        val store = MemoryProgressStore()
+        var now = 0L
+        val waits = mutableListOf<Long>()
+
+        repeat(10) {
+            val result = sweep(server, store, now = now)
+            assertEquals(ResealRunStatus.DONE, result.status)
+            assertEquals(1, result.counts.conflicts)
+            val marker = read_envelope_v2_rescan(store.load()!!)!!
+            waits.add(marker.next_at_ms - now)
+            assertEquals(ENVELOPE_V2_NOT_DUE_REASON, sweep(server, store, now = marker.next_at_ms - 1).reason)
+            now = marker.next_at_ms
+        }
+
+        val hour = ENVELOPE_V2_FIRST_RETRY_MS
+        assertEquals(
+            listOf(hour, 2 * hour, 4 * hour, 8 * hour, 16 * hour, 32 * hour, 64 * hour, 128 * hour),
+            waits.take(8),
+        )
+        assertEquals(listOf(ENVELOPE_V2_MAX_RETRY_MS, ENVELOPE_V2_MAX_RETRY_MS), waits.drop(8))
+        assertEquals(10, server.bodies.size)
+        assertTrue(server.puts.isEmpty())
+
+        server.put_reply = null
+        assertEquals(ResealRunStatus.DONE, sweep(server, store, now = now).status)
+        assertEquals(listOf("a"), server.puts)
+        assertEquals(now + ENVELOPE_V2_RESCAN_AFTER_MS, read_envelope_v2_rescan(store.load()!!)!!.next_at_ms)
+    }
+
+    @Test
+    fun a_finished_pass_rescans_after_seven_days() {
+        val server = SentServer()
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        val store = MemoryProgressStore()
+
+        assertEquals(ResealRunStatus.DONE, sweep(server, store, now = 0L).status)
+        assertEquals(listOf("a"), server.puts)
+        server.rows["late"] = Row(sealed(v1_tag, "written by an old client"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.listed_types.clear()
+
+        val early = sweep(server, store, now = ENVELOPE_V2_RESCAN_AFTER_MS - 1)
+        assertEquals(ENVELOPE_V2_NOT_DUE_REASON, early.reason)
+        assertTrue(server.listed_types.isEmpty())
+
+        val due = sweep(server, store, now = ENVELOPE_V2_RESCAN_AFTER_MS)
+        assertEquals(ResealRunStatus.DONE, due.status)
+        assertEquals(listOf("a", "late"), server.puts)
+        assertEquals(listOf(SENT_ITEM_TYPE, "trash", "spam", DRAFT_ITEM_TYPE, "trash"), server.listed_types)
+        assertEquals(2 * ENVELOPE_V2_RESCAN_AFTER_MS, read_envelope_v2_rescan(store.load()!!)!!.next_at_ms)
+    }
+
+    @Test
+    fun an_interrupted_rescan_resumes_without_starting_over() {
+        val server = SentServer(page_size = 2)
+        for (id in listOf("a", "b", "c")) {
+            server.rows[id] = Row(sealed(v2_tag, "text $id"), LevelTwoEnvelope.marker_b64())
+        }
+        val store = MemoryProgressStore()
+        sweep(server, store, now = 0L)
+        for (id in listOf("a", "b", "c")) {
+            server.rows[id] = Row(sealed(v1_tag, "text $id"), SentMailResealCrypto.sentinel_nonce_b64())
+        }
+
+        val first = sweep(server, store, max_items = 1, now = ENVELOPE_V2_RESCAN_AFTER_MS)
+        assertEquals(ResealRunStatus.INTERRUPTED, first.status)
+        assertEquals(listOf("a"), server.puts)
+
+        val second = sweep(server, store, max_items = 1, now = ENVELOPE_V2_RESCAN_AFTER_MS + 1)
+        assertEquals(ResealRunStatus.INTERRUPTED, second.status)
+        assertEquals(listOf("a", "b"), server.puts)
+
+        val third = sweep(server, store, max_items = 1, now = ENVELOPE_V2_RESCAN_AFTER_MS + 2)
+        assertEquals(ResealRunStatus.DONE, third.status)
+        assertEquals(listOf("a", "b", "c"), server.puts)
+    }
+
+    @Test
+    fun a_progress_record_from_an_older_build_finishes_and_waits_for_the_rescan() {
+        val server = SentServer()
+        val probe = MemoryProgressStore()
+        sweep(server, probe, now = 0L)
+        server.listed_types.clear()
+        val legacy = ResealProgress(probe.load()!!.key_id)
+        for (step in listOf(
+            ENVELOPE_V2_STEP,
+            ENVELOPE_V2_STEP + "_trash",
+            ENVELOPE_V2_STEP + "_spam",
+            ENVELOPE_V2_DRAFT_STEP,
+            ENVELOPE_V2_DRAFT_STEP + "_trash",
+        )) {
+            legacy.steps[step] = StepProgress(done = true)
+        }
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        val store = MemoryProgressStore(legacy)
+
+        assertEquals(ResealRunStatus.DONE, sweep(server, store, now = 5L).status)
+        assertTrue(server.listed_types.isEmpty())
+        assertTrue(server.puts.isEmpty())
+        assertEquals(5L + ENVELOPE_V2_RESCAN_AFTER_MS, read_envelope_v2_rescan(store.load()!!)!!.next_at_ms)
     }
 
     @Test

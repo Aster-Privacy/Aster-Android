@@ -127,7 +127,8 @@ class VaultWorkFactorTest {
         assertEquals(listOf<String?>(before), server.sent_hashes)
         assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
         assertEquals(vault.toString(), server.vault.toString())
-        assertTrue(step_done(store))
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertFalse(step_done(store))
 
         val gets = server.gets
         assertEquals(VaultWorkFactor.CURRENT, work_factor_step(server, store))
@@ -141,7 +142,8 @@ class VaultWorkFactorTest {
         val store = MemoryProgressStore()
 
         assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
-        assertTrue(step_done(store))
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertFalse(step_done(store))
 
         server.stored_iterations = VaultKdf.DEFAULT_ITERATIONS
 
@@ -191,7 +193,8 @@ class VaultWorkFactorTest {
         assertEquals(VaultWorkFactor.CURRENT, work_factor_step(server, store))
 
         assertTrue(server.sent_iterations.isEmpty())
-        assertTrue(step_done(store))
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertFalse(step_done(store))
     }
 
     @Test
@@ -208,7 +211,8 @@ class VaultWorkFactorTest {
         assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
         assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
         assertEquals("other device", server.vault.getString("note"))
-        assertTrue(step_done(store))
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertFalse(step_done(store))
     }
 
     @Test
@@ -263,7 +267,7 @@ class VaultWorkFactorTest {
         assertEquals(VaultWorkFactor.UPGRADED, timed_step(store, 60L * 60L * 1000L) { VaultWorkFactor.UPGRADED })
 
         assertNull(read_work_factor_backoff(store.load()!!))
-        assertTrue(step_done(store))
+        assertFalse(step_done(store))
     }
 
     @Test
@@ -278,6 +282,30 @@ class VaultWorkFactorTest {
         assertEquals(3, calls)
         assertNull(read_work_factor_backoff(store.load()!!))
         assertFalse(step_done(store))
+    }
+
+    @Test
+    fun a_finished_upgrade_writes_no_step_marker() {
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.UPGRADED, timed_step(store, 0L) { VaultWorkFactor.UPGRADED })
+        assertEquals(VaultWorkFactor.CURRENT, timed_step(store, 1L) { VaultWorkFactor.CURRENT })
+
+        assertFalse(store.load()!!.steps.containsKey(VAULT_WORK_FACTOR_STEP))
+    }
+
+    @Test
+    fun a_done_marker_from_an_older_build_still_loads_and_runs() {
+        val raw = "{\"key_id\":\"$VAULT_WORK_FACTOR_STEP\",\"steps\":{\"$VAULT_WORK_FACTOR_STEP\":{\"done\":true,\"cursor\":null}}}"
+        val legacy = decode_progress(raw)
+        assertTrue(legacy?.steps?.get(VAULT_WORK_FACTOR_STEP)?.done == true)
+        val store = MemoryProgressStore(legacy)
+        var calls = 0
+
+        assertEquals(VaultWorkFactor.UPGRADED, timed_step(store, 0L) { calls += 1; VaultWorkFactor.UPGRADED })
+        assertEquals(VaultWorkFactor.SKIPPED, timed_step(store, 1L) { calls += 1; VaultWorkFactor.SKIPPED })
+        assertEquals(2, calls)
+        assertTrue(read_work_factor_backoff(store.load()!!) != null)
     }
 
     @Test

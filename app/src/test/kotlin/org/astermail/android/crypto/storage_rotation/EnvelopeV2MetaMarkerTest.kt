@@ -31,6 +31,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.mail.LevelTwoEnvelope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -62,6 +63,7 @@ class EnvelopeV2MetaMarkerTest {
     private inner class MetaServer : ResealApi {
         val metas = LinkedHashMap<String, MetaRow>()
         val meta_puts = mutableListOf<Pair<String, JsonObject>>()
+        var put_reply: ApiReply? = null
 
         override suspend fun get(path: String): ApiReply {
             if (!path.startsWith("$SENT_MESSAGES_PATH?")) return ApiReply(404)
@@ -115,6 +117,7 @@ class EnvelopeV2MetaMarkerTest {
             val record = body as JsonObject
             val id = path.removePrefix("/mail/v1/attachments/").removeSuffix("/meta")
             val row = metas[id] ?: return ApiReply(404)
+            put_reply?.let { return it }
             meta_puts.add(id to record)
             row.encrypted_meta = record.getValue("encrypted_meta").jsonPrimitive.contentOrNull!!
             row.meta_nonce = record.getValue("meta_nonce").jsonPrimitive.contentOrNull!!
@@ -130,15 +133,54 @@ class EnvelopeV2MetaMarkerTest {
         legacy_keks = emptyList(),
     )
 
-    private fun sweep(server: MetaServer) = runBlocking {
+    private fun sweep(
+        server: MetaServer,
+        store: ProgressStore = MemoryProgressStore(),
+        on_not_admitted: () -> Unit = {},
+    ) = runBlocking {
         run_envelope_v2_sweep(
             view(),
             server,
-            MemoryProgressStore(),
+            store,
             TaggedCrypto(),
             sleep = {},
             draft_in_use = { false },
+            now_ms = { 0L },
+            on_not_admitted = on_not_admitted,
         )
+    }
+
+    @Test
+    fun a_meta_changed_elsewhere_leaves_the_pass_for_a_retry() {
+        val server = MetaServer()
+        server.metas["a_zero"] = MetaRow(sealed(v1_tag, "meta zero"), b64(ByteArray(12)))
+        server.put_reply = ApiReply(409, code = "CONFLICT")
+        val store = MemoryProgressStore()
+
+        val result = sweep(server, store)
+
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertEquals(1, result.counts.conflicts)
+        assertTrue(result.incomplete.isNotEmpty())
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_STEP)?.done == true)
+        assertEquals(ENVELOPE_V2_FIRST_RETRY_MS, read_envelope_v2_rescan(store.load()!!)?.next_at_ms)
+    }
+
+    @Test
+    fun a_level_two_refusal_on_a_meta_stops_the_pass() {
+        val server = MetaServer()
+        server.metas["a_zero"] = MetaRow(sealed(v1_tag, "meta zero"), b64(ByteArray(12)))
+        server.put_reply = ApiReply(409, code = VAULT_LEVEL2_NOT_ADMITTED_CODE)
+        val store = MemoryProgressStore()
+        var refused = 0
+
+        val result = sweep(server, store) { refused += 1 }
+
+        assertEquals(ResealRunStatus.DEFERRED, result.status)
+        assertEquals(ENVELOPE_V2_NOT_ADMITTED_REASON, result.reason)
+        assertEquals(1, refused)
+        assertEquals(0, result.counts.conflicts)
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_STEP)?.done == true)
     }
 
     @Test
