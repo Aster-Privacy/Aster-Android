@@ -229,7 +229,7 @@ class MailCategorizerTest {
     fun category_for_tab_folds_forums_into_updates() {
         assertEquals("updates", category_for_tab("forums"))
         assertEquals("updates", category_for_tab("transactions"))
-        assertEquals("promotions", category_for_tab("newsletters"))
+        assertEquals("updates", category_for_tab("newsletters"))
         assertEquals("primary", category_for_tab("important"))
         assertEquals("primary", category_for_tab(null))
         assertEquals("social", category_for_tab("social"))
@@ -617,5 +617,40 @@ class MailCategorizerTest {
             raw_headers = esp_headers,
         )
         assertEquals("updates", classify(env, null))
+    }
+
+    @Test
+    fun moved_mfa_request_stays_in_deals() {
+        val env = envelope(
+            from_email = "no-reply@ui.com",
+            subject = "UniFi MFA Request",
+            raw_headers = esp_headers,
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        assertEquals("promotions", classify(env, meta))
+    }
+
+    @Test
+    fun moved_base_rate_notice_stays_in_primary() {
+        val env = envelope(
+            from_email = "news@email.aviva.co.uk",
+            subject = "The Bank of England has changed the base rate",
+            list_unsubscribe = "<https://aviva.co.uk/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        val meta = MailItemMetadata(category = "primary", category_pinned = true)
+        assertEquals("primary", classify(env, meta))
+    }
+
+    @Test
+    fun moved_sports_news_stays_in_deals() {
+        val env = envelope(
+            from_email = "news@news.uefa.com",
+            subject = "Conference League: matchday 4 preview",
+            list_unsubscribe = "<https://uefa.com/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        assertEquals("promotions", classify(env, meta))
     }
 }

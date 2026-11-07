@@ -54,9 +54,10 @@ class MutedCategoryFilterTest {
     }
 
     @Test
-    fun `disabled newsletters fold into muted deals`() {
+    fun `disabled newsletters fold into muted updates`() {
         val tabs = active_category_tabs(listOf("promotions", "social", "updates"), emptyList(), -1)
-        assertTrue(MailPollingWorker.is_item_in_muted_category(item("newsletters"), setOf("promotions"), tabs))
+        assertTrue(MailPollingWorker.is_item_in_muted_category(item("newsletters"), setOf("updates"), tabs))
+        assertFalse(MailPollingWorker.is_item_in_muted_category(item("newsletters"), setOf("promotions"), tabs))
     }
 
     @Test
