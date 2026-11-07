@@ -178,6 +178,9 @@ fun BehaviorScreen(
     var auto_save_recipients by remember(prefs_loaded) { mutableStateOf(prefs?.auto_save_recent_recipients ?: true) }
     var reply_include_quoted by remember(prefs_loaded) { mutableStateOf(prefs?.reply_include_quoted != false) }
     var reply_prefix_subject by remember(prefs_loaded) { mutableStateOf(prefs?.reply_prefix_subject != false) }
+    var compose_from_selected_alias by remember(prefs_loaded) {
+        mutableStateOf(prefs?.compose_from_selected_alias == true)
+    }
     var undo_send by remember(prefs_loaded) {
         mutableStateOf(org.astermail.android.mail.is_undo_send_active(prefs?.undo_send_enabled ?: true, prefs?.undo_send_seconds))
     }
@@ -259,6 +262,7 @@ fun BehaviorScreen(
                 auto_save_recipients = prefs.auto_save_recent_recipients
                 reply_include_quoted = prefs.reply_include_quoted
                 reply_prefix_subject = prefs.reply_prefix_subject
+                compose_from_selected_alias = prefs.compose_from_selected_alias
                 undo_send = org.astermail.android.mail.is_undo_send_active(prefs.undo_send_enabled, prefs.undo_send_seconds)
                 undo_send_secs = org.astermail.android.mail.clamp_undo_send_seconds(prefs.undo_send_seconds)
                 confirm_delete = prefs.confirm_delete
@@ -331,6 +335,7 @@ fun BehaviorScreen(
                 auto_save_recent_recipients = auto_save_recipients,
                 reply_include_quoted = reply_include_quoted,
                 reply_prefix_subject = reply_prefix_subject,
+                compose_from_selected_alias = compose_from_selected_alias,
                 undo_send_enabled = undo_send,
                 undo_send_seconds = org.astermail.android.mail.clamp_undo_send_seconds(undo_send_secs),
                 confirm_delete = confirm_delete,
@@ -543,6 +548,15 @@ fun BehaviorScreen(
                     subtitle = stringResource(R.string.reply_prefix_subject_subtitle),
                     checked = reply_prefix_subject,
                     on_change = { reply_prefix_subject = it; save_trigger++ },
+                )
+                settings_row_gap(modifier = Modifier)
+                behavior_toggle(
+                    title = stringResource(R.string.compose_from_selected_alias),
+                    subtitle = stringResource(R.string.compose_from_selected_alias_subtitle),
+                    checked = compose_from_selected_alias,
+                    info_title = stringResource(R.string.compose_from_selected_alias_info_title),
+                    info_description = stringResource(R.string.compose_from_selected_alias_info_desc),
+                    on_change = { compose_from_selected_alias = it; save_trigger++ },
                 )
             }
 

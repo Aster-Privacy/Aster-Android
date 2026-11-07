@@ -1968,6 +1968,10 @@
     <string name="reply_include_quoted_subtitle">Elk antwoord begint met het originele bericht geciteerd onder je tekst</string>
     <string name="reply_prefix_subject">Re: aan het onderwerp toevoegen</string>
     <string name="reply_prefix_subject_subtitle">Zet Re: voor het originele onderwerp wanneer je antwoordt</string>
+    <string name="compose_from_selected_alias">Opstellen vanaf geselecteerde alias</string>
+    <string name="compose_from_selected_alias_subtitle">Nieuwe berichten gebruiken de alias die je in de zijbalk hebt geopend als afzender</string>
+    <string name="compose_from_selected_alias_info_title">Opstellen vanaf geselecteerde alias</string>
+    <string name="compose_from_selected_alias_info_desc">Als dit aan staat, wordt een nieuw bericht dat je begint terwijl een alias in de zijbalk is geopend, vanaf die alias verzonden. Antwoorden, doorgestuurde berichten en concepten houden hun eigen afzender, en je kunt het Van-adres vóór het verzenden nog wijzigen.</string>
     <string name="section_account_protection">Accountbeveiliging</string>
     <string name="protection_score">Beveiligingsscore</string>
     <string name="section_authentication">Authenticatie</string>

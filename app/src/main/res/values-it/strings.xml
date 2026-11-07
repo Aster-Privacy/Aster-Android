@@ -1972,6 +1972,10 @@
     <string name="reply_include_quoted_subtitle">Ogni risposta inizia con il messaggio originale citato sotto il tuo testo</string>
     <string name="reply_prefix_subject">Aggiungi Re: all\'oggetto</string>
     <string name="reply_prefix_subject_subtitle">Mette Re: davanti all\'oggetto originale quando rispondi</string>
+    <string name="compose_from_selected_alias">Scrivi dall\'alias selezionato</string>
+    <string name="compose_from_selected_alias_subtitle">I nuovi messaggi usano come mittente l\'alias aperto nella barra laterale</string>
+    <string name="compose_from_selected_alias_info_title">Scrivi dall\'alias selezionato</string>
+    <string name="compose_from_selected_alias_info_desc">Quando questa opzione è attiva, un nuovo messaggio che inizi mentre un alias è aperto nella barra laterale viene inviato da quell\'alias. Risposte, inoltri e bozze mantengono il proprio mittente e puoi comunque cambiare l\'indirizzo Da prima dell\'invio.</string>
     <string name="section_account_protection">Protezione dell\'account</string>
     <string name="protection_score">Punteggio di protezione</string>
     <string name="section_authentication">Autenticazione</string>

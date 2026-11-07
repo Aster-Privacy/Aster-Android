@@ -1964,6 +1964,10 @@
     <string name="reply_include_quoted_subtitle">すべての返信が、入力欄の下に引用された元のメッセージで始まります</string>
     <string name="reply_prefix_subject">件名に Re: を追加</string>
     <string name="reply_prefix_subject_subtitle">返信するときに元の件名の前に Re: を付けます</string>
+    <string name="compose_from_selected_alias">選択中のエイリアスで作成</string>
+    <string name="compose_from_selected_alias_subtitle">サイドバーで開いているエイリアスを新規メッセージの差出人にします</string>
+    <string name="compose_from_selected_alias_info_title">選択中のエイリアスで作成</string>
+    <string name="compose_from_selected_alias_info_desc">オンにすると、サイドバーでエイリアスを開いている間に作成を始めた新規メッセージは、そのエイリアスから送信されます。返信、転送、下書きは元の差出人のままです。差出人アドレスは送信前に変更できます。</string>
     <string name="section_account_protection">アカウント保護</string>
     <string name="protection_score">保護スコア</string>
     <string name="section_authentication">認証</string>

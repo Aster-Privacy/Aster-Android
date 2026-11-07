@@ -1976,6 +1976,10 @@
     <string name="reply_include_quoted_subtitle">Каждый ответ начинается с исходного письма, процитированного под вашим текстом</string>
     <string name="reply_prefix_subject">Добавлять Re: к теме</string>
     <string name="reply_prefix_subject_subtitle">Ставит Re: перед исходной темой, когда вы отвечаете</string>
+    <string name="compose_from_selected_alias">Писать от выбранного псевдонима</string>
+    <string name="compose_from_selected_alias_subtitle">Новые письма отправляются от псевдонима, открытого на боковой панели</string>
+    <string name="compose_from_selected_alias_info_title">Писать от выбранного псевдонима</string>
+    <string name="compose_from_selected_alias_info_desc">Если параметр включен, новое письмо, которое вы начинаете при открытом на боковой панели псевдониме, отправляется от этого псевдонима. Ответы, пересылки и черновики сохраняют своего отправителя, а адрес «От» можно изменить перед отправкой.</string>
     <string name="section_account_protection">Защита аккаунта</string>
     <string name="protection_score">Оценка защиты</string>
     <string name="section_authentication">Аутентификация</string>
