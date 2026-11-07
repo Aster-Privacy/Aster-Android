@@ -260,17 +260,17 @@ class ContactsViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val existing_emails = email_keys(_state.value.contacts)
-                val existing_names = name_keys(_state.value.contacts)
-                val trashed_emails = email_keys(_state.value.trashed_contacts)
-                val trashed_names = name_keys(_state.value.trashed_contacts)
-                val candidates = device_contacts.filterNot {
-                    matches_any(it, existing_emails, existing_names)
+                val existing = repository.fetch_contacts().getOrElse { t ->
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    _state.value = _state.value.copy(
+                        is_syncing = false,
+                        error = friendly_error(t),
+                    )
+                    return@launch
                 }
-                val in_trash = candidates.count { matches_any(it, trashed_emails, trashed_names) }
-                val new_contacts = candidates.filterNot {
-                    matches_any(it, trashed_emails, trashed_names)
-                }
+                val plan = plan_contact_import(device_contacts, existing)
+                val in_trash = plan.in_trash
+                val new_contacts = plan.new_contacts
                 _state.value = _state.value.copy(import_done = 0, import_total = new_contacts.size)
                 val upload = upload_device_contacts(
                     contacts = new_contacts,
@@ -352,23 +352,17 @@ class ContactsViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val existing_emails = email_keys(_state.value.contacts)
-                val existing_names = name_keys(_state.value.contacts)
-                val trashed_emails = email_keys(_state.value.trashed_contacts)
-                val trashed_names = name_keys(_state.value.trashed_contacts)
-                val seen_emails = mutableSetOf<String>()
-                val candidates = parsed.filter { contact ->
-                    val email = contact.email.lowercase(java.util.Locale.ROOT).trim()
-                    if (email.isNotBlank()) {
-                        email !in existing_emails && seen_emails.add(email)
-                    } else {
-                        contact.name.lowercase(java.util.Locale.ROOT).trim() !in existing_names
-                    }
+                val existing = repository.fetch_contacts().getOrElse { t ->
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    _state.value = _state.value.copy(
+                        is_transferring = false,
+                        error = friendly_error(t),
+                    )
+                    return@launch
                 }
-                val in_trash = candidates.count { matches_any(it, trashed_emails, trashed_names) }
-                val new_contacts = candidates.filterNot {
-                    matches_any(it, trashed_emails, trashed_names)
-                }
+                val plan = plan_contact_import(parsed, existing)
+                val in_trash = plan.in_trash
+                val new_contacts = plan.new_contacts
                 val prepared = withContext(Dispatchers.Default) {
                     new_contacts.map { it.copy(avatar_url = normalize_contact_photo(it.avatar_url)) }
                 }
@@ -508,22 +502,6 @@ class ContactsViewModel @Inject constructor(
         if (bytes.isEmpty() || bytes.size > DEVICE_PHOTO_MAX_BYTES) return ""
         return runCatching { encode_contact_photo_bytes(bytes) }.getOrNull().orEmpty()
     }
-
-    private fun email_keys(contacts: List<Contact>): Set<String> =
-        contacts
-            .filter { it.email.isNotBlank() }
-            .map { it.email.lowercase(java.util.Locale.ROOT).trim() }
-            .toSet()
-
-    private fun name_keys(contacts: List<Contact>): Set<String> =
-        contacts.map { it.name.lowercase(java.util.Locale.ROOT).trim() }.toSet()
-
-    private fun matches_any(contact: Contact, emails: Set<String>, names: Set<String>): Boolean =
-        if (contact.email.isNotBlank()) {
-            contact.email.lowercase(java.util.Locale.ROOT).trim() in emails
-        } else {
-            contact.name.lowercase(java.util.Locale.ROOT).trim() in names
-        }
 
     private fun read_device_contacts(context: Context): List<Contact> {
         val contacts = linkedMapOf<String, Contact>()

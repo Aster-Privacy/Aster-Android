@@ -24,6 +24,7 @@ package org.astermail.android.contacts
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.ApiError
+import org.astermail.android.ui.contacts.Contact
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -32,6 +33,53 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class device_contact_upload_test {
+
+    private fun person(name: String, email: String = "", deleted_at: String = "", work_email: String = "") =
+        Contact(id = "", name = name, email = email, work_email = work_email, deleted_at = deleted_at)
+
+    @Test
+    fun repeated_import_adds_nothing_when_every_contact_is_stored() {
+        val phone = listOf(person("Ana", "ana@example.com"), person("Ben"), person("Cy", "cy@example.com"))
+        val stored = listOf(person("Ana", "ANA@example.com "), person("ben"), person("Cy", "cy@example.com"))
+        val plan = plan_contact_import(phone, stored)
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(0, plan.in_trash)
+    }
+
+    @Test
+    fun duplicates_inside_one_import_are_added_once() {
+        val phone = listOf(
+            person("Ana", "ana@example.com"),
+            person("Ana Work", "Ana@Example.com"),
+            person("Ben"),
+            person("BEN"),
+        )
+        val plan = plan_contact_import(phone, emptyList())
+        assertEquals(listOf("Ana", "Ben"), plan.new_contacts.map { it.name })
+    }
+
+    @Test
+    fun work_email_counts_as_a_match() {
+        val phone = listOf(person("Ana", "ana@work.example"))
+        val stored = listOf(person("Ana", "ana@example.com", work_email = "ana@work.example"))
+        assertTrue(plan_contact_import(phone, stored).new_contacts.isEmpty())
+    }
+
+    @Test
+    fun trashed_contacts_are_reported_and_not_reimported() {
+        val phone = listOf(person("Ana", "ana@example.com"), person("Dee", "dee@example.com"))
+        val stored = listOf(person("Ana", "ana@example.com", deleted_at = "2026-11-01T00:00:00Z"))
+        val plan = plan_contact_import(phone, stored)
+        assertEquals(listOf("Dee"), plan.new_contacts.map { it.name })
+        assertEquals(1, plan.in_trash)
+    }
+
+    @Test
+    fun an_email_match_ignores_a_shared_name() {
+        val phone = listOf(person("Ana", "ana.new@example.com"))
+        val stored = listOf(person("Ana", "ana@example.com"))
+        assertEquals(1, plan_contact_import(phone, stored).new_contacts.size)
+    }
 
     private fun limited_server(cap: Int): Pair<MutableList<Int>, suspend (Int) -> Result<*>> {
         val stored = mutableListOf<Int>()
