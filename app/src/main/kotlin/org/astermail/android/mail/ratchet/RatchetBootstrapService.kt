@@ -38,6 +38,7 @@ import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
+import org.astermail.android.auth.VaultWriteLock
 import org.astermail.android.auth.stored_vault_format
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.ratchet.RatchetCrypto
@@ -54,6 +55,7 @@ class RatchetBootstrapService @Inject constructor(
     private val ratchet_api: RatchetApi,
     private val keys_api: KeysApi,
     private val encryption_api: EncryptionApi,
+    private val vault_write_lock: VaultWriteLock,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -130,56 +132,60 @@ class RatchetBootstrapService @Inject constructor(
             return RatchetBootstrapOutcome.InFlight
         }
         try {
-            val user_id = session_key_store.get_user_id()
-                ?: return RatchetBootstrapOutcome.Deferred("no user_id in session key store")
-            if (!sync_vault_with_server()) {
-                return RatchetBootstrapOutcome.Deferred("could not verify the server vault")
-            }
-            reconcile_session_keys_with_vault()
-            val ensured_keys = ensure_local_ratchet_keys()
-                ?: return RatchetBootstrapOutcome.Deferred("local ratchet keys unavailable")
-            debug_log("local ratchet keys ready for user $user_id")
-            val published_keys_changed = persist_ratchet_identity_to_vault_if_needed()
-            val keys = ensured_keys.copy(
-                signed_prekey_public_b64 = session_key_store.get_ratchet_signed_prekey_public_b64()
-                    ?.takeIf { it.isNotBlank() }
-                    ?: ensured_keys.signed_prekey_public_b64,
-            )
-
-            val pq_public = session_key_store.get_ratchet_pq_identity_public()
-                ?.takeIf { local_pq_identity_ready(session_key_store.get_ratchet_pq_identity_secret(), it) }
-                ?: return RatchetBootstrapOutcome.Deferred("no local pq identity yet")
-
-            val published = when (val lookup = lookup_own_published_bundle()) {
-                is OwnBundleRead.Found -> lookup.view
-                OwnBundleRead.Missing -> null
-                OwnBundleRead.Unavailable ->
-                    return RatchetBootstrapOutcome.Deferred("could not read the published bundle")
-            }
-            val server_matches = published_bundle_matches_local(
-                published,
-                keys.identity_public_b64,
-                keys.signed_prekey_public_b64,
-                pq_public,
-            )
-            val needs_upload = !server_matches ||
-                published_keys_changed ||
-                uploaded_generation(user_id) < BUNDLE_UPLOAD_GENERATION
-
-            if (needs_upload) {
-                val blocked = upload_bundle(keys, pq_public)
-                if (blocked != null) return blocked
-                mark_uploaded(user_id)
-            } else {
-                debug_log("server already holds a matching pq bundle for user $user_id")
-            }
-
-            confirmed_user_ids.add(user_id)
-            report_capability(user_id, keys.identity_public_b64, pq_public, force = needs_upload)
-            return if (needs_upload) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
+            return vault_write_lock.with_lock { bootstrap_holding_vault_lock() }
         } finally {
             in_flight.set(false)
         }
+    }
+
+    private suspend fun bootstrap_holding_vault_lock(): RatchetBootstrapOutcome {
+        val user_id = session_key_store.get_user_id()
+            ?: return RatchetBootstrapOutcome.Deferred("no user_id in session key store")
+        if (!sync_vault_with_server()) {
+            return RatchetBootstrapOutcome.Deferred("could not verify the server vault")
+        }
+        reconcile_session_keys_with_vault()
+        val ensured_keys = ensure_local_ratchet_keys()
+            ?: return RatchetBootstrapOutcome.Deferred("local ratchet keys unavailable")
+        debug_log("local ratchet keys ready for user $user_id")
+        val published_keys_changed = persist_ratchet_identity_to_vault_if_needed()
+        val keys = ensured_keys.copy(
+            signed_prekey_public_b64 = session_key_store.get_ratchet_signed_prekey_public_b64()
+                ?.takeIf { it.isNotBlank() }
+                ?: ensured_keys.signed_prekey_public_b64,
+        )
+
+        val pq_public = session_key_store.get_ratchet_pq_identity_public()
+            ?.takeIf { local_pq_identity_ready(session_key_store.get_ratchet_pq_identity_secret(), it) }
+            ?: return RatchetBootstrapOutcome.Deferred("no local pq identity yet")
+
+        val published = when (val lookup = lookup_own_published_bundle()) {
+            is OwnBundleRead.Found -> lookup.view
+            OwnBundleRead.Missing -> null
+            OwnBundleRead.Unavailable ->
+                return RatchetBootstrapOutcome.Deferred("could not read the published bundle")
+        }
+        val server_matches = published_bundle_matches_local(
+            published,
+            keys.identity_public_b64,
+            keys.signed_prekey_public_b64,
+            pq_public,
+        )
+        val needs_upload = !server_matches ||
+            published_keys_changed ||
+            uploaded_generation(user_id) < BUNDLE_UPLOAD_GENERATION
+
+        if (needs_upload) {
+            val blocked = upload_bundle(keys, pq_public)
+            if (blocked != null) return blocked
+            mark_uploaded(user_id)
+        } else {
+            debug_log("server already holds a matching pq bundle for user $user_id")
+        }
+
+        confirmed_user_ids.add(user_id)
+        report_capability(user_id, keys.identity_public_b64, pq_public, force = needs_upload)
+        return if (needs_upload) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
     }
 
     private suspend fun upload_bundle(keys: LocalRatchetKeys, pq_public: String): RatchetBootstrapOutcome? {

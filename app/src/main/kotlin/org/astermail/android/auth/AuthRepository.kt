@@ -136,6 +136,7 @@ class AuthRepository @Inject constructor(
     private val mail_repository: org.astermail.android.mail.MailRepository,
     private val theme_store: ThemeStore,
     private val ratchet_bootstrap_service: org.astermail.android.mail.ratchet.RatchetBootstrapService,
+    private val vault_write_lock: VaultWriteLock,
     private val system_folder_bootstrap: org.astermail.android.mail.SystemFolderBootstrap,
     private val password_change_sent_mail: org.astermail.android.mail.PasswordChangeSentMail,
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
@@ -175,7 +176,6 @@ class AuthRepository @Inject constructor(
     )
 
     private val dead_session_mutex = kotlinx.coroutines.sync.Mutex()
-    private val vault_commit_mutex = kotlinx.coroutines.sync.Mutex()
 
     init {
         session_refresher.on_auth_failure { presented ->
@@ -1325,6 +1325,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { refresh_session_if_expiring() } }
+        background_scope.launch { runCatching { ensure_pgp_key_published() } }
         schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
@@ -1946,17 +1947,17 @@ class AuthRepository @Inject constructor(
         recovered_keks: List<String>,
         recovered_ratchet: List<org.json.JSONObject>,
         base_encrypted_vault: String,
-    ): RecoveredKeyCommitResult = vault_commit_mutex.withLock {
-        if (session_key_store.get_user_id() != user_id) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+    ): RecoveredKeyCommitResult = vault_write_lock.with_lock {
+        if (session_key_store.get_user_id() != user_id) return@with_lock RECOVERED_KEYS_NOT_WRITTEN
         val local_vault = session_key_store.get_encrypted_vault()
         if (local_vault == null || !same_vault_ciphertext(local_vault.first, base_encrypted_vault)) {
-            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+            return@with_lock RECOVERED_KEYS_NOT_WRITTEN
         }
         val server_vault = runCatching { keys_api.fetch_current_vault() }
             .getOrDefault(CurrentVaultResult.Unavailable)
-        if (server_vault !is CurrentVaultResult.Available) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        if (server_vault !is CurrentVaultResult.Available) return@with_lock RECOVERED_KEYS_NOT_WRITTEN
         if (!same_vault_ciphertext(server_vault.encrypted_vault, base_encrypted_vault)) {
-            return@withLock RECOVERED_KEYS_NOT_WRITTEN
+            return@with_lock RECOVERED_KEYS_NOT_WRITTEN
         }
 
         val merged_keks = merge_legacy_keks_reporting(
@@ -1978,12 +1979,12 @@ class AuthRepository @Inject constructor(
             CryptoNative.encrypt_vault_with_password(updated_plain, passphrase)
         }.getOrNull()
         updated_plain.fill(0)
-        if (sealed == null) return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
+        if (sealed == null) return@with_lock RECOVERED_KEYS_ROUNDTRIP_FAILED
 
         val encrypted_vault = base64_encode(sealed.encrypted_vault)
         val vault_nonce = base64_encode(sealed.vault_nonce)
         if (!vault_roundtrip_ok(encrypted_vault, vault_nonce, passphrase, vault_identity_key(vault_obj))) {
-            return@withLock RECOVERED_KEYS_ROUNDTRIP_FAILED
+            return@with_lock RECOVERED_KEYS_ROUNDTRIP_FAILED
         }
 
         val pushed = runCatching {
@@ -1995,7 +1996,7 @@ class AuthRepository @Inject constructor(
                 stored_vault_format(vault_obj),
             )
         }.getOrDefault(false)
-        if (!pushed) return@withLock RECOVERED_KEYS_NOT_WRITTEN
+        if (!pushed) return@with_lock RECOVERED_KEYS_NOT_WRITTEN
 
         session_key_store.put_encrypted_vault(encrypted_vault, vault_nonce)
         absorb_previous_keys_and_keks(vault_obj)
@@ -2421,8 +2422,12 @@ class AuthRepository @Inject constructor(
         val user_id = session_key_store.get_user_id() ?: return
         if (!pgp_publish_attempted_user_ids.add(user_id)) return
 
+        if (!is_pgp_private_key(session_key_store.get_identity_key())) {
+            install_identity_key_if_missing(user_id)
+        }
+
         val identity_key = session_key_store.get_identity_key() ?: return
-        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
+        if (!is_pgp_private_key(identity_key)) return
 
         val passphrase_bytes = session_key_store.get_passphrase() ?: return
 
@@ -2444,6 +2449,116 @@ class AuthRepository @Inject constructor(
         if (!profile_matches_session(profile)) return
         val account_email = profile.email?.trim()?.takeIf { it.isNotBlank() } ?: return
         heal_identity_key_account_addresses(account_email, profile.display_name.orEmpty())
+    }
+
+    private suspend fun install_identity_key_if_missing(user_id: String) {
+        if (published_pgp_key_state() != PublishedPgpKey.Absent) return
+        val profile = withTimeoutOrNull(8_000L) { auth_api.me() } ?: return
+        if (!profile_matches_session(profile)) return
+        val account_email = profile.email?.trim()?.takeIf { it.isNotBlank() } ?: return
+        val display_name = profile.display_name?.trim()?.takeIf { it.isNotBlank() } ?: account_email
+        val passphrase = session_key_store.get_passphrase() ?: return
+
+        try {
+            val installed = vault_write_lock.with_lock {
+                if (session_key_store.get_user_id() != user_id) return@with_lock null
+                val result = install_missing_identity_key(
+                    identity_key_install_port(passphrase, display_name, account_email),
+                )
+                val (vault_obj, sealed) = when (result) {
+                    is IdentityKeyInstallResult.Installed -> result.vault to result.sealed
+                    is IdentityKeyInstallResult.AlreadyInstalled -> result.vault to result.sealed
+                    IdentityKeyInstallResult.NotWritten -> return@with_lock null
+                }
+                session_key_store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce)
+                session_key_store.put_identity_key(vault_identity_key(vault_obj))
+                absorb_previous_keys_and_keks(vault_obj)
+                absorb_data_kek(vault_obj)
+                result
+            } ?: return
+
+            if (installed is IdentityKeyInstallResult.Installed) {
+                val password = passphrase_chars(passphrase)
+                try {
+                    runCatching { republish_pgp_key_with_password(installed.identity_key, password) }
+                        .onFailure { if (it is CancellationException) throw it }
+                } finally {
+                    password.fill(' ')
+                }
+            }
+        } finally {
+            passphrase.fill(0)
+        }
+
+        system_folder_heal_attempted_user_ids.remove(user_id)
+        trigger_system_folder_bootstrap()
+        load_account_keks()
+        schedule_ratchet_bootstrap(bypass_debounce = true)
+    }
+
+    private fun identity_key_install_port(
+        passphrase: ByteArray,
+        display_name: String,
+        account_email: String,
+    ) = object : IdentityKeyInstallPort {
+        override suspend fun fetch_server_vault(): CurrentVaultResult =
+            runCatching { keys_api.fetch_current_vault() }
+                .onFailure { if (it is CancellationException) throw it }
+                .getOrDefault(CurrentVaultResult.Unavailable)
+
+        override fun open_vault(sealed: SealedVault): org.json.JSONObject? = runCatching {
+            val plain = CryptoNative.decrypt_vault_with_password(
+                base64_decode(sealed.encrypted_vault),
+                base64_decode(sealed.vault_nonce),
+                passphrase,
+            )
+            try {
+                org.json.JSONObject(String(plain, Charsets.UTF_8))
+            } finally {
+                plain.fill(0)
+            }
+        }.getOrNull()
+
+        override fun generate_identity_key(): String? {
+            val password = passphrase_chars(passphrase)
+            return try {
+                runCatching { PgpKeyGenerator.generate(display_name, account_email, password) }
+                    .onFailure { if (it is CancellationException) throw it }
+                    .getOrNull()
+                    ?.armored_private_key
+            } finally {
+                password.fill(' ')
+            }
+        }
+
+        override fun seal_vault(vault: org.json.JSONObject): SealedVault? {
+            val plain = vault.toString().toByteArray(Charsets.UTF_8)
+            val sealed = try {
+                runCatching { CryptoNative.encrypt_vault_with_password(plain, passphrase) }.getOrNull()
+            } finally {
+                plain.fill(0)
+            } ?: return null
+            val encoded = SealedVault(base64_encode(sealed.encrypted_vault), base64_encode(sealed.vault_nonce))
+            val round_trips = vault_roundtrip_ok(
+                encoded.encrypted_vault,
+                encoded.vault_nonce,
+                passphrase,
+                vault_identity_key(vault),
+            )
+            return encoded.takeIf { round_trips }
+        }
+
+        override suspend fun save_vault(sealed: SealedVault, vault: org.json.JSONObject): Boolean =
+            runCatching {
+                keys_api.update_vault(
+                    sealed.encrypted_vault,
+                    sealed.vault_nonce,
+                    session_key_store.get_user_id(),
+                    org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault),
+                    stored_vault_format(vault),
+                )
+            }.onFailure { if (it is CancellationException) throw it }
+                .getOrDefault(false)
     }
 
     private suspend fun heal_identity_key_account_addresses(
