@@ -217,4 +217,19 @@ class ExternalPgpKeyStoreTest {
         assertNull(store.info.value)
         assertNull(session.get_external_pgp_blob())
     }
+
+    @Test
+    fun a_new_data_kek_retries_a_blob_that_failed_to_open() = runTest {
+        val good_kek = hex(vector.getString("data_kek_hex"))
+        session.put_data_kek(good_kek.copyOf().also { it[0] = (it[0].toInt() xor 0x01).toByte() })
+        coEvery { api.get_external_pgp_key() } returns row(published = true)
+        val store = store()
+        store.load()
+        assertTrue(store.decryption_keys().isEmpty())
+
+        session.put_data_kek(good_kek)
+
+        assertEquals(1, store.decryption_keys().size)
+        assertNotNull(store.signing_key_if_ready())
+    }
 }

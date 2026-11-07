@@ -81,6 +81,12 @@ object ExternalPgpKeyCodec {
         return address == primary
     }
 
+    fun allows_item_type(item_type: String?): Boolean =
+        when (item_type?.trim()?.lowercase()) {
+            "sent", "draft", "drafts", "scheduled" -> false
+            else -> true
+        }
+
     fun normalize_fingerprint(fingerprint: String): String =
         fingerprint.filterNot { it.isWhitespace() || it == ':' }.lowercase()
 
@@ -136,7 +142,11 @@ object ExternalPgpKeyCodec {
         }
     }
 
-    fun parse_unlocked(secret_key_bytes: ByteArray, expected_fingerprint: String): UnlockedExternalPgpKey? {
+    fun parse_unlocked(
+        secret_key_bytes: ByteArray,
+        expected_fingerprint: String,
+        now_ms: Long = System.currentTimeMillis(),
+    ): UnlockedExternalPgpKey? {
         return try {
             val ring = PGPSecretKeyRing(ByteArrayInputStream(secret_key_bytes), JcaKeyFingerprintCalculator())
             val primary = ring.publicKey
@@ -151,9 +161,12 @@ object ExternalPgpKeyCodec {
                 if (secret_key.isPrivateKeyEmpty) continue
                 if (secret_key.s2KUsage != SecretKeyPacket.USAGE_NONE) return null
                 val private_key = secret_key.extractPrivateKey(null) ?: continue
-                if (secret_key.publicKey.hasRevocation()) continue
                 if (secret_key.publicKey.isEncryptionKey) decryption[secret_key.keyID] = private_key
-                if (secret_key.isSigningKey && is_signing_algorithm(secret_key) && may_sign(ring, secret_key.publicKey)) {
+                if (secret_key.isSigningKey &&
+                    is_signing_algorithm(secret_key) &&
+                    is_currently_valid(secret_key.publicKey, now_ms) &&
+                    may_sign(ring, secret_key.publicKey)
+                ) {
                     if (secret_key.isMasterKey) primary_signing = private_key
                     else if (subkey_signing == null) subkey_signing = private_key
                 }
@@ -187,6 +200,13 @@ object ExternalPgpKeyCodec {
         } finally {
             plaintext.fill(0)
         }
+    }
+
+    private fun is_currently_valid(key: PGPPublicKey, now_ms: Long): Boolean {
+        if (key.hasRevocation()) return false
+        val valid_seconds = key.validSeconds
+        if (valid_seconds <= 0) return true
+        return now_ms < key.creationTime.time + valid_seconds * 1000
     }
 
     private fun may_sign(ring: PGPSecretKeyRing, key: PGPPublicKey): Boolean {
@@ -345,16 +365,16 @@ class ExternalPgpKeyStore @Inject constructor(
             unlocked?.let { return it }
             val current = _info.value ?: return null
             val user_id = session_key_store.get_user_id() ?: return null
-            val digest = blob_digest(current, user_id)
-            if (failed_blob_digest == digest) return null
             val data_kek = session_key_store.get_data_kek() ?: return null
-            val opened = try {
-                ExternalPgpKeyCodec.open(current, data_kek, user_id)
+            try {
+                val digest = blob_digest(current, user_id, data_kek)
+                if (failed_blob_digest == digest) return null
+                val opened = ExternalPgpKeyCodec.open(current, data_kek, user_id)
+                if (opened == null) failed_blob_digest = digest else unlocked = opened
+                return opened
             } finally {
                 data_kek.fill(0)
             }
-            if (opened == null) failed_blob_digest = digest else unlocked = opened
-            return opened
         }
     }
 
@@ -363,12 +383,15 @@ class ExternalPgpKeyStore @Inject constructor(
         return runCatching { cache_json.decodeFromString(ExternalPgpKeyInfo.serializer(), raw) }.getOrNull()
     }
 
-    private fun blob_digest(info: ExternalPgpKeyInfo, user_id: String): String {
+    private fun blob_digest(info: ExternalPgpKeyInfo, user_id: String, data_kek: ByteArray): String {
+        val kek_digest = MessageDigest.getInstance("SHA-256").digest(data_kek)
         val digest = MessageDigest.getInstance("SHA-256")
         for (part in listOf(info.fingerprint, info.wrapped_private_key, user_id)) {
             digest.update(part.toByteArray(Charsets.UTF_8))
             digest.update(0.toByte())
         }
+        digest.update(kek_digest)
+        kek_digest.fill(0)
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 

@@ -184,7 +184,14 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         ?: return PushResult.NeedsFetch
     val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
     val repo = entry.mail_repository()
-    val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id)
+    val envelope = repo.decrypt_envelope_public(
+        encrypted_envelope,
+        envelope_nonce,
+        item_id,
+        allow_external_pgp = org.astermail.android.crypto.ExternalPgpKeyCodec.allows_item_type(
+            obj.optString("item_type", "").ifBlank { null },
+        ),
+    )
         ?: return PushResult.NeedsFetch
     if (envelope.is_undecryptable) return PushResult.NeedsFetch
     if (

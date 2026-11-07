@@ -4005,7 +4005,7 @@ class SettingsViewModel @Inject constructor(
         val store = external_pgp_key_store_provider?.get() ?: return
         viewModelScope.launch {
             try {
-                store.load()
+                withContext(default_dispatcher) { store.load() }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_external_pgp_key", t)
@@ -4020,7 +4020,7 @@ class SettingsViewModel @Inject constructor(
         _state.update { it.copy(external_pgp_key_busy = true) }
         viewModelScope.launch {
             val stopped = try {
-                store.stop_publishing()
+                withContext(default_dispatcher) { store.stop_publishing() }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 false

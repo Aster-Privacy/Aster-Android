@@ -299,6 +299,78 @@ class ExternalPgpKeyCodecTest {
         assertTrue(encrypt_id in unlocked.decryption_keys.keys)
     }
 
+    private fun ring_with_subkey_state(revoke_subkeys: Boolean, sign_expiry_seconds: Long): Triple<ByteArray, Long, Long> {
+        java.security.Security.addProvider(BouncyCastleProvider())
+        val primary = rsa_pair()
+        val encrypt = rsa_pair()
+        val sign = rsa_pair()
+        val checksum = JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1)
+        val generator = PGPKeyRingGenerator(
+            PGPSignature.POSITIVE_CERTIFICATION,
+            primary,
+            "Outside Owner <owner@astermail.org>",
+            checksum,
+            flags(KeyFlags.CERTIFY_OTHER),
+            null,
+            signer_builder(primary.publicKey.algorithm),
+            null,
+        )
+        generator.addSubKey(encrypt, flags(KeyFlags.ENCRYPT_COMMS or KeyFlags.ENCRYPT_STORAGE), null)
+        val sign_subpackets = PGPSignatureSubpacketGenerator().apply {
+            setKeyFlags(false, KeyFlags.SIGN_DATA)
+            if (sign_expiry_seconds > 0) setKeyExpirationTime(false, sign_expiry_seconds)
+        }.generate()
+        generator.addSubKey(sign, sign_subpackets, null, signer_builder(sign.publicKey.algorithm))
+        var ring = generator.generateSecretKeyRing()
+        if (revoke_subkeys) {
+            for (subkey in listOf(encrypt, sign)) {
+                val revoker = org.bouncycastle.openpgp.PGPSignatureGenerator(
+                    signer_builder(primary.publicKey.algorithm),
+                    primary.publicKey,
+                )
+                revoker.init(PGPSignature.SUBKEY_REVOCATION, primary.privateKey)
+                val existing = ring.getSecretKey(subkey.keyID)
+                val revocation = revoker.generateCertification(primary.publicKey, existing.publicKey)
+                val revoked_public = org.bouncycastle.openpgp.PGPPublicKey.addCertification(existing.publicKey, revocation)
+                val replaced = org.bouncycastle.openpgp.PGPSecretKey.replacePublicKey(existing, revoked_public)
+                ring = org.bouncycastle.openpgp.PGPSecretKeyRing.insertSecretKey(ring, replaced)
+            }
+        }
+        return Triple(ring.encoded, encrypt.keyID, sign.keyID)
+    }
+
+    @Test
+    fun revoked_subkeys_still_decrypt_but_never_sign() {
+        val (ring, encrypt_id, _) = ring_with_subkey_state(revoke_subkeys = true, sign_expiry_seconds = 0)
+        val unlocked = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint_of(ring)))
+        assertTrue(encrypt_id in unlocked.decryption_keys.keys)
+        assertNull(unlocked.signing_key)
+    }
+
+    @Test
+    fun an_expired_signing_subkey_is_not_chosen_as_the_signer() {
+        val (ring, encrypt_id, sign_id) = ring_with_subkey_state(revoke_subkeys = false, sign_expiry_seconds = 60)
+        val fingerprint = fingerprint_of(ring)
+        val now = System.currentTimeMillis()
+        val fresh = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint, now))
+        assertEquals(sign_id, fresh.signing_key!!.keyID)
+        val later = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint, now + 86_400_000L))
+        assertNull(later.signing_key)
+        assertTrue(encrypt_id in later.decryption_keys.keys)
+    }
+
+    @Test
+    fun the_external_key_is_limited_to_inbound_item_types() {
+        assertTrue(ExternalPgpKeyCodec.allows_item_type("received"))
+        assertTrue(ExternalPgpKeyCodec.allows_item_type(null))
+        assertTrue(ExternalPgpKeyCodec.allows_item_type(""))
+        assertFalse(ExternalPgpKeyCodec.allows_item_type("sent"))
+        assertFalse(ExternalPgpKeyCodec.allows_item_type(" Sent "))
+        assertFalse(ExternalPgpKeyCodec.allows_item_type("draft"))
+        assertFalse(ExternalPgpKeyCodec.allows_item_type("drafts"))
+        assertFalse(ExternalPgpKeyCodec.allows_item_type("scheduled"))
+    }
+
     private fun <T> require_present(value: T?): T {
         assertNotNull(value)
         return value!!
