@@ -82,6 +82,21 @@ fun ensure_master_key_vault(
     return storage_key
 }
 
+fun retain_password_storage_key(
+    vault_obj: JSONObject,
+    password_storage_key: ByteArray,
+    encode: (ByteArray) -> String,
+    now: () -> String = { Instant.now().toString() },
+) {
+    if (password_storage_key.size != 32) return
+    val encoded = encode(password_storage_key)
+    if (encoded == vault_obj.optString("data_kek", "")) return
+    vault_obj.put(
+        "legacy_keks",
+        prepend_legacy_kek(vault_obj.optJSONArray("legacy_keks"), encoded, now()),
+    )
+}
+
 fun prepend_legacy_kek(
     existing: JSONArray?,
     encoded_key: String,

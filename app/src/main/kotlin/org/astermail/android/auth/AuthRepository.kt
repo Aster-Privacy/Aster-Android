@@ -1435,6 +1435,14 @@ class AuthRepository @Inject constructor(
             )
         }
 
+        val outgoing_password_key = CryptoNative.derive_storage_key(current_password_bytes)
+        val outgoing_password_key_b64 = try {
+            retain_password_storage_key(vault_obj, outgoing_password_key, ::base64_encode)
+            base64_encode(outgoing_password_key)
+        } finally {
+            outgoing_password_key.fill(0)
+        }
+
         org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
         val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
 
@@ -1463,6 +1471,10 @@ class AuthRepository @Inject constructor(
             )
 
             session_key_store.put_data_kek(preserved_data_kek)
+            val session_keks = session_key_store.get_legacy_keks().orEmpty()
+            if (!session_keks.contains(outgoing_password_key_b64)) {
+                session_key_store.put_legacy_keks(listOf(outgoing_password_key_b64) + session_keks)
+            }
             session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
             session_key_store.put_passphrase(new_password_bytes)
             session_key_store.put_password_salt(new_salt)
