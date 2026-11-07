@@ -36,11 +36,16 @@ import org.astermail.android.api.encryption.ExternalPgpKeyInfo
 import org.astermail.android.storage.SessionKeyStore
 import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
 import org.bouncycastle.bcpg.SecretKeyPacket
+import org.bouncycastle.bcpg.SignatureSubpacketTags
+import org.bouncycastle.bcpg.sig.KeyFlags
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openpgp.PGPPrivateKey
+import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPSecretKey
 import org.bouncycastle.openpgp.PGPSecretKeyRing
+import org.bouncycastle.openpgp.PGPSignature
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider
 
 class UnlockedExternalPgpKey(
     val fingerprint: String,
@@ -148,7 +153,7 @@ object ExternalPgpKeyCodec {
                 val private_key = secret_key.extractPrivateKey(null) ?: continue
                 if (secret_key.publicKey.hasRevocation()) continue
                 if (secret_key.publicKey.isEncryptionKey) decryption[secret_key.keyID] = private_key
-                if (secret_key.isSigningKey && is_signing_algorithm(secret_key)) {
+                if (secret_key.isSigningKey && is_signing_algorithm(secret_key) && may_sign(ring, secret_key.publicKey)) {
                     if (secret_key.isMasterKey) primary_signing = private_key
                     else if (subkey_signing == null) subkey_signing = private_key
                 }
@@ -183,6 +188,50 @@ object ExternalPgpKeyCodec {
             plaintext.fill(0)
         }
     }
+
+    private fun may_sign(ring: PGPSecretKeyRing, key: PGPPublicKey): Boolean {
+        val primary = ring.publicKey
+        val flags = key_flags(primary, key)
+        if (flags != null && flags and KeyFlags.SIGN_DATA == 0) return false
+        return key.isMasterKey || has_valid_back_signature(primary, key)
+    }
+
+    private fun key_flags(primary: PGPPublicKey, key: PGPPublicKey): Int? {
+        val self_signatures = key.signatures.asSequence()
+            .filterIsInstance<PGPSignature>()
+            .filter { it.keyID == primary.keyID }
+            .filter { signature ->
+                if (key.isMasterKey) {
+                    signature.isCertification || signature.signatureType == PGPSignature.DIRECT_KEY
+                } else {
+                    signature.signatureType == PGPSignature.SUBKEY_BINDING
+                }
+            }
+            .filter { it.hashedSubPackets?.hasSubpacket(SignatureSubpacketTags.KEY_FLAGS) == true }
+        return self_signatures.maxByOrNull { it.creationTime }?.hashedSubPackets?.keyFlags
+    }
+
+    private fun has_valid_back_signature(primary: PGPPublicKey, subkey: PGPPublicKey): Boolean =
+        subkey.getSignaturesOfType(PGPSignature.SUBKEY_BINDING).asSequence()
+            .filterIsInstance<PGPSignature>()
+            .filter { it.keyID == primary.keyID }
+            .flatMap { binding ->
+                listOfNotNull(binding.hashedSubPackets, binding.unhashedSubPackets)
+                    .asSequence()
+                    .flatMap { packets ->
+                        runCatching { packets.embeddedSignatures.toList() }.getOrDefault(emptyList()).asSequence()
+                    }
+            }
+            .filter { it.signatureType == PGPSignature.PRIMARYKEY_BINDING }
+            .any { embedded ->
+                runCatching {
+                    embedded.init(
+                        JcaPGPContentVerifierBuilderProvider().setProvider(BouncyCastleProvider.PROVIDER_NAME),
+                        subkey,
+                    )
+                    embedded.verifyCertification(primary, subkey)
+                }.getOrDefault(false)
+            }
 
     private fun is_signing_algorithm(secret_key: PGPSecretKey): Boolean =
         when (secret_key.publicKey.algorithm) {

@@ -24,7 +24,19 @@ package org.astermail.android.crypto
 import java.io.ByteArrayInputStream
 import java.util.Base64
 import org.astermail.android.api.encryption.ExternalPgpKeyInfo
+import java.security.KeyPairGenerator
+import java.util.Date
+import org.bouncycastle.bcpg.HashAlgorithmTags
+import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
+import org.bouncycastle.bcpg.sig.KeyFlags
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.openpgp.PGPKeyRingGenerator
 import org.bouncycastle.openpgp.PGPPublicKeyRing
+import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair
 import org.bouncycastle.openpgp.PGPSignatureList
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory
@@ -227,6 +239,64 @@ class ExternalPgpKeyCodecTest {
         signature.init(JcaPGPContentVerifierBuilderProvider().setProvider("BC"), signer_public)
         signature.update(data)
         assertTrue(signature.verify())
+    }
+
+    private fun rsa_pair(): JcaPGPKeyPair {
+        val generator = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME)
+        generator.initialize(2048)
+        return JcaPGPKeyPair(PublicKeyAlgorithmTags.RSA_GENERAL, generator.generateKeyPair(), Date())
+    }
+
+    private fun flags(value: Int) =
+        PGPSignatureSubpacketGenerator().apply { setKeyFlags(false, value) }.generate()
+
+    private fun signer_builder(algorithm: Int) =
+        JcaPGPContentSignerBuilder(algorithm, HashAlgorithmTags.SHA256).setProvider(BouncyCastleProvider.PROVIDER_NAME)
+
+    private fun certify_only_ring(with_back_signature: Boolean): Triple<ByteArray, Long, Long> {
+        java.security.Security.addProvider(BouncyCastleProvider())
+        val primary = rsa_pair()
+        val encrypt = rsa_pair()
+        val sign = rsa_pair()
+        val checksum = JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1)
+        val generator = PGPKeyRingGenerator(
+            PGPSignature.POSITIVE_CERTIFICATION,
+            primary,
+            "Outside Owner <owner@astermail.org>",
+            checksum,
+            flags(KeyFlags.CERTIFY_OTHER),
+            null,
+            signer_builder(primary.publicKey.algorithm),
+            null,
+        )
+        generator.addSubKey(encrypt, flags(KeyFlags.ENCRYPT_COMMS or KeyFlags.ENCRYPT_STORAGE), null)
+        if (with_back_signature) {
+            generator.addSubKey(sign, flags(KeyFlags.SIGN_DATA), null, signer_builder(sign.publicKey.algorithm))
+        } else {
+            generator.addSubKey(sign, flags(KeyFlags.SIGN_DATA), null)
+        }
+        return Triple(generator.generateSecretKeyRing().encoded, encrypt.keyID, sign.keyID)
+    }
+
+    private fun fingerprint_of(ring_bytes: ByteArray): String =
+        to_hex(
+            org.bouncycastle.openpgp.PGPSecretKeyRing(ring_bytes, JcaKeyFingerprintCalculator()).publicKey.fingerprint,
+        )
+
+    @Test
+    fun a_certify_only_primary_signs_with_its_back_signed_subkey() {
+        val (ring, encrypt_id, sign_id) = certify_only_ring(with_back_signature = true)
+        val unlocked = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint_of(ring)))
+        assertEquals(sign_id, unlocked.signing_key!!.keyID)
+        assertTrue(encrypt_id in unlocked.decryption_keys.keys)
+    }
+
+    @Test
+    fun a_signing_subkey_without_a_back_signature_is_not_used() {
+        val (ring, encrypt_id, _) = certify_only_ring(with_back_signature = false)
+        val unlocked = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint_of(ring)))
+        assertNull(unlocked.signing_key)
+        assertTrue(encrypt_id in unlocked.decryption_keys.keys)
     }
 
     private fun <T> require_present(value: T?): T {
