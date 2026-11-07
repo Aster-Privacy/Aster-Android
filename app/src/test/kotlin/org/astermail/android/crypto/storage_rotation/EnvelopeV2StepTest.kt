@@ -60,7 +60,7 @@ class EnvelopeV2StepTest {
         override fun seal_v2(plaintext: ByteArray): String? = b64(byteArrayOf(v2_tag) + plaintext)
     }
 
-    private class Row(var envelope: String, var nonce: String)
+    private class Row(var envelope: String, var nonce: String, val trashed: Boolean = false, val spam: Boolean = false)
 
     companion object {
         fun b64(bytes: ByteArray): String = Base64.getEncoder().encodeToString(bytes)
@@ -72,6 +72,7 @@ class EnvelopeV2StepTest {
     private class SentServer(val page_size: Int = 2) : ResealApi {
         val rows = LinkedHashMap<String, Row>()
         val drafts = LinkedHashMap<String, Row>()
+        val received = LinkedHashMap<String, Row>()
         val listed_types = mutableListOf<String>()
         val puts = mutableListOf<String>()
         val posts = mutableListOf<String>()
@@ -83,17 +84,27 @@ class EnvelopeV2StepTest {
         override suspend fun get(path: String): ApiReply {
             if (path.startsWith("$SENT_MESSAGES_PATH?")) {
                 val cursor = Regex("cursor=([^&]+)").find(path)?.groupValues?.get(1)?.toInt() ?: 0
-                val item_type = Regex("item_type=([^&]+)").find(path)?.groupValues?.get(1).orEmpty()
-                listed_types.add(item_type)
-                val source = if (item_type == DRAFT_ITEM_TYPE) drafts else rows
-                val ids = source.keys.toList()
+                val item_type = Regex("item_type=([^&]+)").find(path)?.groupValues?.get(1)
+                val everything = rows.map { Triple(it.key, it.value, SENT_ITEM_TYPE) } +
+                    drafts.map { Triple(it.key, it.value, DRAFT_ITEM_TYPE) } +
+                    received.map { Triple(it.key, it.value, "received") }
+                val (label, ids) = when {
+                    item_type == SENT_ITEM_TYPE ->
+                        SENT_ITEM_TYPE to everything.filter { it.third == SENT_ITEM_TYPE && !it.second.trashed && !it.second.spam }
+                    item_type == DRAFT_ITEM_TYPE ->
+                        DRAFT_ITEM_TYPE to everything.filter { it.third == DRAFT_ITEM_TYPE && !it.second.trashed }
+                    path.contains("is_trashed=true") -> "trash" to everything.filter { it.second.trashed }
+                    path.contains("is_spam=true") -> "spam" to everything.filter { it.second.spam && !it.second.trashed }
+                    else -> "unknown" to emptyList()
+                }
+                listed_types.add(label)
                 val page = ids.drop(cursor).take(page_size)
                 val next = cursor + page.size
-                val items = page.map { id ->
-                    val row = source.getValue(id)
+                val items = page.map { (id, row, type) ->
                     JsonObject(
                         mapOf(
                             "id" to JsonPrimitive(id),
+                            "item_type" to JsonPrimitive(type),
                             "encrypted_envelope" to JsonPrimitive(row.envelope),
                             "envelope_nonce" to JsonPrimitive(row.nonce),
                             "has_attachments" to JsonPrimitive(false),
@@ -185,7 +196,7 @@ class EnvelopeV2StepTest {
         val result = sweep(server, store)
 
         assertEquals(ResealRunStatus.DONE, result.status)
-        assertEquals(listOf(SENT_ITEM_TYPE, DRAFT_ITEM_TYPE), server.listed_types)
+        assertEquals(listOf(SENT_ITEM_TYPE, "trash", "spam", DRAFT_ITEM_TYPE, "trash"), server.listed_types)
         assertEquals(listOf("d1"), server.puts)
         val row = server.drafts.getValue("d1")
         assertTrue(LevelTwoEnvelope.is_marker_b64(row.nonce))
@@ -196,6 +207,51 @@ class EnvelopeV2StepTest {
         )
         assertTrue(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
         assertEquals(1, result.counts.current)
+    }
+
+    @Test
+    fun trashed_and_spam_items_move_to_level_two_with_their_stored_hash() {
+        val server = SentServer()
+        val nonce = SentMailResealCrypto.sentinel_nonce_b64()
+        val sent_in_trash = sealed(v1_tag, "sent in trash")
+        val sent_in_spam = sealed(v1_tag, "sent in spam")
+        val draft_in_trash = sealed(v1_tag, "draft in trash")
+        val received_in_trash = sealed(v1_tag, "received in trash")
+        server.rows["s_trash"] = Row(sent_in_trash, nonce, trashed = true)
+        server.rows["s_spam"] = Row(sent_in_spam, nonce, spam = true)
+        server.rows["s_archived"] = Row(sealed(v1_tag, "archived"), nonce)
+        server.drafts["d_trash"] = Row(draft_in_trash, nonce, trashed = true)
+        server.received["r_trash"] = Row(received_in_trash, nonce, trashed = true)
+        val store = MemoryProgressStore()
+
+        val result = sweep(server, store)
+
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertEquals(setOf("s_trash", "s_spam", "s_archived", "d_trash"), server.puts.toSet())
+        assertEquals(4, server.puts.size)
+        val hashes = server.bodies.map { it.getValue("expected_envelope_sha256").jsonPrimitive.contentOrNull }
+        for (stored in listOf(sent_in_trash, sent_in_spam, draft_in_trash)) {
+            assertTrue(hashes.contains(sha256_hex(unb64(stored))))
+        }
+        for (id in listOf("s_trash", "s_spam", "s_archived")) {
+            assertTrue(LevelTwoEnvelope.is_marker_b64(server.rows.getValue(id).nonce))
+        }
+        assertTrue(LevelTwoEnvelope.is_marker_b64(server.drafts.getValue("d_trash").nonce))
+        assertEquals(received_in_trash, server.received.getValue("r_trash").envelope)
+        assertEquals(unb64(draft_in_trash).size, unb64(server.drafts.getValue("d_trash").envelope).size)
+        for (step in listOf(
+            ENVELOPE_V2_STEP,
+            ENVELOPE_V2_STEP + "_trash",
+            ENVELOPE_V2_STEP + "_spam",
+            ENVELOPE_V2_DRAFT_STEP,
+            ENVELOPE_V2_DRAFT_STEP + "_trash",
+        )) {
+            assertTrue(step, store.load()?.steps?.get(step)?.done == true)
+        }
+
+        server.puts.clear()
+        assertEquals(ResealRunStatus.DONE, sweep(server, MemoryProgressStore()).status)
+        assertTrue(server.puts.isEmpty())
     }
 
     @Test

@@ -37,6 +37,12 @@ const val ENVELOPE_V2_STEP = "envelope_v2"
 const val ENVELOPE_V2_DRAFT_STEP = "envelope_v2_draft"
 const val SENT_ITEM_TYPE = "sent"
 const val DRAFT_ITEM_TYPE = "draft"
+
+enum class EnvelopeV2Scope(val step_suffix: String) {
+    BY_TYPE(""),
+    TRASH("_trash"),
+    SPAM("_spam"),
+}
 const val ENVELOPE_V2_PATH = "$STORAGE_REKEY_PATH/envelope-v2"
 const val SENT_MESSAGES_PATH = "/mail/v1/messages"
 const val ATTACHMENT_META_BATCH_PATH = "/mail/v1/attachments/meta/batch"
@@ -123,9 +129,11 @@ class EnvelopeV2Step(
     private val max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
     private val item_type: String = SENT_ITEM_TYPE,
     private val item_in_use: suspend (String) -> Boolean = { false },
+    private val scope: EnvelopeV2Scope = EnvelopeV2Scope.BY_TYPE,
 ) : ResealStep {
 
-    override val name: String = if (item_type == SENT_ITEM_TYPE) ENVELOPE_V2_STEP else ENVELOPE_V2_DRAFT_STEP
+    override val name: String =
+        (if (item_type == SENT_ITEM_TYPE) ENVELOPE_V2_STEP else ENVELOPE_V2_DRAFT_STEP) + scope.step_suffix
 
     override suspend fun run(ctx: ResealContext): StepResult {
         val progress = step_progress(ctx, name)
@@ -160,12 +168,20 @@ class EnvelopeV2Step(
     }
 
     private fun page_path(cursor: String?): String {
-        val base = "$SENT_MESSAGES_PATH?item_type=${url_component(item_type)}&include_envelope=true&skip_total=true&limit=$ENVELOPE_V2_PAGE_LIMIT"
+        val filter = when (scope) {
+            EnvelopeV2Scope.BY_TYPE -> "item_type=${url_component(item_type)}"
+            EnvelopeV2Scope.TRASH -> "is_trashed=true"
+            EnvelopeV2Scope.SPAM -> "is_spam=true"
+        }
+        val base = "$SENT_MESSAGES_PATH?$filter&include_envelope=true&skip_total=true&limit=$ENVELOPE_V2_PAGE_LIMIT"
         return if (cursor.isNullOrEmpty()) base else "$base&cursor=${url_component(cursor)}"
     }
 
     private suspend fun convert_item(ctx: ResealContext, item: JsonObject, budget: WorkBudget) {
         val id = item.str("id") ?: return
+        val row_type = item.str("item_type")
+        if (scope == EnvelopeV2Scope.BY_TYPE && row_type != null && row_type != item_type) return
+        if (scope != EnvelopeV2Scope.BY_TYPE && row_type != item_type) return
         val nonce = item.str("envelope_nonce")
         val is_v1 = SentMailResealCrypto.is_sentinel_nonce(nonce)
         val is_v2 = LevelTwoEnvelope.is_marker_b64(nonce)
@@ -321,7 +337,10 @@ suspend fun run_envelope_v2_sweep(
         )
         val steps = listOf(
             EnvelopeV2Step(crypto, max_items, SENT_ITEM_TYPE),
+            EnvelopeV2Step(crypto, max_items, SENT_ITEM_TYPE, scope = EnvelopeV2Scope.TRASH),
+            EnvelopeV2Step(crypto, max_items, SENT_ITEM_TYPE, scope = EnvelopeV2Scope.SPAM),
             EnvelopeV2Step(crypto, max_items, DRAFT_ITEM_TYPE, draft_in_use),
+            EnvelopeV2Step(crypto, max_items, DRAFT_ITEM_TYPE, draft_in_use, EnvelopeV2Scope.TRASH),
         )
         for (step in steps) {
             if (step.run(ctx) == StepResult.INTERRUPTED) {

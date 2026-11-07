@@ -357,6 +357,12 @@ class StorageRekeyService @Inject constructor(
         val admitted = request_level2_admission(api)
         session_key_store.set_level2_admitted(admitted)
         if (!admitted) return@withContext reseal
+        run_vault_work_factor_step(
+            admitted = admitted,
+            password_ready = { is_unlocked() },
+            store = PrefsProgressStore(prefs, VAULT_WORK_FACTOR_STEP + "_" + user_id),
+            raise = { session_vault_updater(api, session_key_store).raise_work_factor() },
+        )
         val sweep = run_envelope_v2_sweep(
             view = view,
             api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),

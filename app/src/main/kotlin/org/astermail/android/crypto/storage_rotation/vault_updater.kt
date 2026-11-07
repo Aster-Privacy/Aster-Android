@@ -221,6 +221,24 @@ class VaultUpdater(
         return CasWrite.WRITTEN to sealed
     }
 
+    suspend fun raise_work_factor(): VaultWorkFactor = lock.withLock {
+        val user = user_id() ?: return@withLock VaultWorkFactor.SKIPPED
+        val snapshot = fetch_snapshot() ?: return@withLock VaultWorkFactor.SKIPPED
+        if (snapshot.vault_kdf_iterations == VaultKdf.LEVEL2_ITERATIONS) return@withLock VaultWorkFactor.CURRENT
+        val server = decrypt_snapshot(snapshot) ?: return@withLock VaultWorkFactor.SKIPPED
+        val (result, sealed) = write_with_cas(server, snapshot, user, VaultKdf.LEVEL2_ITERATIONS)
+        when (result) {
+            CasWrite.WRITTEN -> {
+                val written = sealed ?: return@withLock VaultWorkFactor.SKIPPED
+                on_vault_changed(server, written)
+                VaultWorkFactor.UPGRADED
+            }
+            CasWrite.CONFLICT -> VaultWorkFactor.CONFLICT
+            CasWrite.NOT_ADMITTED -> VaultWorkFactor.NOT_ADMITTED
+            else -> VaultWorkFactor.SKIPPED
+        }
+    }
+
     suspend fun update(
         allow_storage_key_change: Boolean = false,
         edit: suspend (VaultDraft) -> VaultEdit,

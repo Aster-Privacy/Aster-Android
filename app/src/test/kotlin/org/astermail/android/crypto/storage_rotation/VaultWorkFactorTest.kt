@@ -31,6 +31,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.crypto.VaultKdf
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -50,6 +51,9 @@ class VaultWorkFactorTest {
 
     private class Server(var vault: JSONObject, var stored_iterations: Int?, val admits_level2: Boolean) : ResealApi {
         val sent_iterations = mutableListOf<Int?>()
+        val sent_hashes = mutableListOf<String?>()
+        var gets = 0
+        var change_before_put: (() -> Unit)? = null
 
         fun sealed(): String = encode_b64(vault.toString().toByteArray(Charsets.UTF_8))
 
@@ -57,6 +61,7 @@ class VaultWorkFactorTest {
             MessageDigest.getInstance("SHA-256").digest(sealed.toByteArray()).joinToString("") { "%02x".format(it) }
 
         override suspend fun get(path: String): ApiReply {
+            gets += 1
             val sealed = sealed()
             val fields = mutableMapOf<String, JsonElement>(
                 "encrypted_vault" to JsonPrimitive(sealed),
@@ -71,8 +76,11 @@ class VaultWorkFactorTest {
 
         override suspend fun put(path: String, body: JsonElement): ApiReply {
             val obj = body as JsonObject
+            change_before_put?.invoke()
+            change_before_put = null
             val iterations = obj.long("vault_kdf_iterations")?.toInt()
             sent_iterations.add(iterations)
+            sent_hashes.add(obj.str("expected_vault_sha256"))
             if (iterations == VaultKdf.LEVEL2_ITERATIONS && !admits_level2) {
                 return ApiReply(409, null, VAULT_LEVEL2_NOT_ADMITTED_CODE)
             }
@@ -92,6 +100,109 @@ class VaultWorkFactorTest {
         now = { "2026-11-07T00:00:00Z" },
         upgrade_on_rotation = upgrade,
     )
+
+    private fun work_factor_step(
+        server: Server,
+        store: ProgressStore,
+        admitted: Boolean = true,
+        password_ready: Boolean = true,
+    ): VaultWorkFactor = runBlocking {
+        val updater = updater(server, upgrade = false)
+        run_vault_work_factor_step(admitted, { password_ready }, store) { updater.raise_work_factor() }
+    }
+
+    private fun step_done(store: ProgressStore): Boolean =
+        store.load()?.steps?.get(VAULT_WORK_FACTOR_STEP)?.done == true
+
+    @Test
+    fun an_admitted_vault_is_rewrapped_once_at_the_higher_work_factor() {
+        val vault = JSONObject().put("identity_key", "id").put("data_kek", "a2V5")
+        val server = Server(JSONObject(vault.toString()), null, admits_level2 = true)
+        val before = server.digest(server.sealed())
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
+
+        assertEquals(listOf<Int?>(VaultKdf.LEVEL2_ITERATIONS), server.sent_iterations)
+        assertEquals(listOf<String?>(before), server.sent_hashes)
+        assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
+        assertEquals(vault.toString(), server.vault.toString())
+        assertTrue(step_done(store))
+
+        val gets = server.gets
+        assertEquals(VaultWorkFactor.CURRENT, work_factor_step(server, store))
+        assertEquals(gets, server.gets)
+        assertEquals(1, server.sent_iterations.size)
+    }
+
+    @Test
+    fun the_default_work_factor_value_is_upgraded_like_an_absent_one() {
+        val server = Server(JSONObject().put("identity_key", "id"), VaultKdf.DEFAULT_ITERATIONS, admits_level2 = true)
+
+        assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, MemoryProgressStore()))
+        assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
+    }
+
+    @Test
+    fun an_account_that_is_not_admitted_is_left_alone() {
+        val server = Server(JSONObject().put("identity_key", "id"), null, admits_level2 = true)
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.SKIPPED, work_factor_step(server, store, admitted = false))
+
+        assertEquals(0, server.gets)
+        assertTrue(server.sent_iterations.isEmpty())
+        assertNull(server.stored_iterations)
+        assertFalse(step_done(store))
+    }
+
+    @Test
+    fun a_server_refusal_of_admission_writes_nothing_at_the_default() {
+        val server = Server(JSONObject().put("identity_key", "id"), null, admits_level2 = false)
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.NOT_ADMITTED, work_factor_step(server, store))
+
+        assertEquals(listOf<Int?>(VaultKdf.LEVEL2_ITERATIONS), server.sent_iterations)
+        assertNull(server.stored_iterations)
+        assertFalse(step_done(store))
+    }
+
+    @Test
+    fun a_vault_already_at_the_higher_work_factor_is_not_written() {
+        val server = Server(JSONObject().put("identity_key", "id"), VaultKdf.LEVEL2_ITERATIONS, admits_level2 = true)
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.CURRENT, work_factor_step(server, store))
+
+        assertTrue(server.sent_iterations.isEmpty())
+        assertTrue(step_done(store))
+    }
+
+    @Test
+    fun a_vault_changed_elsewhere_is_refetched_on_the_next_pass() {
+        val server = Server(JSONObject().put("identity_key", "id"), VaultKdf.DEFAULT_ITERATIONS, admits_level2 = true)
+        server.change_before_put = { server.vault = JSONObject(server.vault.toString()).put("note", "other device") }
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.CONFLICT, work_factor_step(server, store))
+        assertEquals(1, server.sent_iterations.size)
+        assertEquals(VaultKdf.DEFAULT_ITERATIONS, server.stored_iterations)
+        assertFalse(step_done(store))
+
+        assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
+        assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
+        assertEquals("other device", server.vault.getString("note"))
+        assertTrue(step_done(store))
+    }
+
+    @Test
+    fun the_step_waits_for_the_password_to_be_in_memory() {
+        val server = Server(JSONObject().put("identity_key", "id"), null, admits_level2 = true)
+
+        assertEquals(VaultWorkFactor.SKIPPED, work_factor_step(server, MemoryProgressStore(), password_ready = false))
+        assertEquals(0, server.gets)
+    }
 
     private fun edit(draft: VaultDraft): VaultEdit {
         draft.vault.put("note", "changed")
