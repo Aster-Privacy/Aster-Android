@@ -52,9 +52,7 @@ private val PROMO_LOCALPARTS: Set<String> = setOf(
     "deals",
     "promo",
     "promotions",
-    "news",
-    "newsletter",
-    "newsletters",
+    "sales",
 )
 
 private val LIST_SUBJECT_TAG = Regex("""^\s*\[[^\]]{1,40}\]""")
@@ -309,10 +307,7 @@ fun classify(
         return "primary"
     }
 
-    val promo_signal =
-        in_any(MARKETING_DOMAIN_SUFFIXES) ||
-            PROMO_LOCALPARTS.contains(localpart) ||
-            hard_sell
+    val promo_signal = PROMO_LOCALPARTS.contains(localpart) || hard_sell
     val trusted_transactional =
         in_any(UPDATES_DOMAIN_SUFFIXES) || UPDATES_LOCALPARTS.contains(localpart)
     val transactional_signal =
@@ -326,8 +321,11 @@ fun classify(
         return "promotions"
     }
 
-    if (has_unsubscribe || in_any(BULK_INFRA_DOMAIN_SUFFIXES)) {
-        return "promotions"
+    if (has_unsubscribe ||
+        in_any(BULK_INFRA_DOMAIN_SUFFIXES) ||
+        in_any(MARKETING_DOMAIN_SUFFIXES)
+    ) {
+        return if (EMOJI_SUBJECT_PATTERN.containsMatchIn(subject)) "promotions" else "newsletters"
     }
 
     return "primary"

@@ -42,7 +42,7 @@ val BUILTIN_CATEGORIES: List<BuiltinCategory> = listOf(
         R.string.rules_category_newsletters,
         false,
         true,
-        "promotions",
+        "updates",
     ),
     BuiltinCategory("social", "users", R.string.rules_category_social, true, true, "primary"),
     BuiltinCategory("updates", "bell", R.string.rules_category_updates, true, true, "primary"),

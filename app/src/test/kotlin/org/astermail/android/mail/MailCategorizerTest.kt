@@ -109,14 +109,14 @@ class MailCategorizerTest {
     }
 
     @Test
-    fun generic_bulk_without_signals_is_promotions() {
+    fun generic_bulk_without_signals_is_newsletters() {
         val env = envelope(
             from_email = "hello@somesite.com",
             from_name = "Some Newsletter",
             subject = "This week at SomeSite",
             list_unsubscribe = "<mailto:unsub@somesite.com>",
         )
-        assertEquals("promotions", classify(env, null))
+        assertEquals("newsletters", classify(env, null))
     }
 
     @Test
@@ -151,11 +151,22 @@ class MailCategorizerTest {
     }
 
     @Test
-    fun brand_through_marketing_esp_via_dkim_is_promotions() {
+    fun brand_through_marketing_esp_via_dkim_is_newsletters() {
         val env = envelope(
             from_email = "hello@coolbrand.com",
             from_name = "Cool Brand",
             subject = "This week at Cool Brand",
+            raw_headers = listOf("DKIM-Signature" to "v=1; a=rsa-sha256; d=mcsv.net; s=k1"),
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun selling_subject_through_marketing_esp_is_promotions() {
+        val env = envelope(
+            from_email = "hello@coolbrand.com",
+            from_name = "Cool Brand",
+            subject = "Last chance: 30% off sitewide",
             raw_headers = listOf("DKIM-Signature" to "v=1; a=rsa-sha256; d=mcsv.net; s=k1"),
         )
         assertEquals("promotions", classify(env, null))
@@ -218,7 +229,7 @@ class MailCategorizerTest {
     fun category_for_tab_folds_forums_into_updates() {
         assertEquals("updates", category_for_tab("forums"))
         assertEquals("updates", category_for_tab("transactions"))
-        assertEquals("promotions", category_for_tab("newsletters"))
+        assertEquals("updates", category_for_tab("newsletters"))
         assertEquals("primary", category_for_tab("important"))
         assertEquals("primary", category_for_tab(null))
         assertEquals("social", category_for_tab("social"))
@@ -485,5 +496,161 @@ class MailCategorizerTest {
             ),
         )
         assertEquals("transactions", classify(env, null))
+    }
+
+    private val esp_headers = listOf("DKIM-Signature" to "v=1; a=rsa-sha256; d=sendgrid.net; s=s1")
+    private val marketing_cloud_headers =
+        listOf("DKIM-Signature" to "v=1; a=rsa-sha256; d=exacttarget.com; s=s1")
+
+    @Test
+    fun mfa_request_stays_out_of_deals() {
+        val env = envelope(
+            from_email = "no-reply@ui.com",
+            from_name = "Ubiquiti",
+            subject = "UniFi MFA Request",
+            list_unsubscribe = "<https://ui.com/unsub>",
+            raw_headers = esp_headers,
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun multi_factor_code_stays_out_of_deals() {
+        val env = envelope(
+            from_email = "no-reply@someservice.example",
+            subject = "Your multi-factor authentication code",
+            raw_headers = esp_headers,
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun sign_in_approval_stays_out_of_deals() {
+        val env = envelope(
+            from_email = "no-reply@someservice.example",
+            subject = "Approve your sign-in",
+            raw_headers = esp_headers,
+        )
+        assertEquals("primary", classify(env, null))
+    }
+
+    @Test
+    fun ubiquiti_account_mail_is_updates() {
+        val env = envelope(
+            from_email = "no-reply@ui.com",
+            subject = "Your console firmware was updated",
+            raw_headers = esp_headers,
+        )
+        assertEquals("updates", classify(env, null))
+    }
+
+    @Test
+    fun insurer_base_rate_notice_is_finance() {
+        val env = envelope(
+            from_email = "news@email.aviva.co.uk",
+            from_name = "Aviva",
+            subject = "The Bank of England has changed the base rate",
+            list_unsubscribe = "<https://aviva.co.uk/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        assertEquals("finance", classify(env, null))
+    }
+
+    @Test
+    fun sports_news_from_marketing_platform_is_newsletters() {
+        val env = envelope(
+            from_email = "news@news.uefa.com",
+            from_name = "UEFA",
+            subject = "Conference League: matchday 4 preview",
+            list_unsubscribe = "<https://uefa.com/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun news_sender_is_not_selling() {
+        val env = envelope(
+            from_email = "news@towncouncil.example",
+            subject = "Road closures this month",
+            list_unsubscribe = "<https://towncouncil.example/unsub>",
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun offers_sender_stays_in_deals() {
+        val env = envelope(
+            from_email = "offers@shop.example",
+            subject = "Picked for you",
+            list_unsubscribe = "<https://shop.example/unsub>",
+        )
+        assertEquals("promotions", classify(env, null))
+    }
+
+    @Test
+    fun emoji_bulk_marketing_stays_in_deals() {
+        val env = envelope(
+            from_email = "hello@shop.example",
+            subject = "\uD83C\uDF81 Something new for you",
+            list_unsubscribe = "<https://shop.example/unsub>",
+        )
+        assertEquals("promotions", classify(env, null))
+    }
+
+    @Test
+    fun emoji_newsletter_issue_is_newsletters() {
+        val env = envelope(
+            from_email = "newsletter@weeklyread.example",
+            subject = "\uD83D\uDCDA Issue #42",
+            list_unsubscribe = "<https://weeklyread.example/unsub>",
+            raw_headers = listOf("List-Id" to "<weekly.weeklyread.example>"),
+        )
+        assertEquals("newsletters", classify(env, null))
+    }
+
+    @Test
+    fun account_mail_through_esp_is_updates() {
+        val env = envelope(
+            from_email = "hello@shop.example",
+            subject = "Your account update",
+            raw_headers = esp_headers,
+        )
+        assertEquals("updates", classify(env, null))
+    }
+
+    @Test
+    fun moved_mfa_request_stays_in_deals() {
+        val env = envelope(
+            from_email = "no-reply@ui.com",
+            subject = "UniFi MFA Request",
+            raw_headers = esp_headers,
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        assertEquals("promotions", classify(env, meta))
+    }
+
+    @Test
+    fun moved_base_rate_notice_stays_in_primary() {
+        val env = envelope(
+            from_email = "news@email.aviva.co.uk",
+            subject = "The Bank of England has changed the base rate",
+            list_unsubscribe = "<https://aviva.co.uk/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        val meta = MailItemMetadata(category = "primary", category_pinned = true)
+        assertEquals("primary", classify(env, meta))
+    }
+
+    @Test
+    fun moved_sports_news_stays_in_deals() {
+        val env = envelope(
+            from_email = "news@news.uefa.com",
+            subject = "Conference League: matchday 4 preview",
+            list_unsubscribe = "<https://uefa.com/unsub>",
+            raw_headers = marketing_cloud_headers,
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        assertEquals("promotions", classify(env, meta))
     }
 }
