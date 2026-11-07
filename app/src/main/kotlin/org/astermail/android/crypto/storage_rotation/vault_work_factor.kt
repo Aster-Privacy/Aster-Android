@@ -55,7 +55,6 @@ suspend fun run_vault_work_factor_step(
 ): VaultWorkFactor {
     if (!admitted || !password_ready()) return VaultWorkFactor.SKIPPED
     val progress = runCatching { store.load() }.getOrNull() ?: ResealProgress(VAULT_WORK_FACTOR_STEP)
-    if (progress.steps[VAULT_WORK_FACTOR_STEP]?.done == true) return VaultWorkFactor.CURRENT
     val backoff = read_work_factor_backoff(progress)
     if (backoff != null && now_ms() < backoff.next_at_ms) return VaultWorkFactor.SKIPPED
     val result = try {

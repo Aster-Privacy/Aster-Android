@@ -131,8 +131,23 @@ class VaultWorkFactorTest {
 
         val gets = server.gets
         assertEquals(VaultWorkFactor.CURRENT, work_factor_step(server, store))
-        assertEquals(gets, server.gets)
+        assertEquals(gets + 1, server.gets)
         assertEquals(1, server.sent_iterations.size)
+    }
+
+    @Test
+    fun a_vault_written_back_at_the_default_elsewhere_is_upgraded_again() {
+        val server = Server(JSONObject().put("identity_key", "id"), VaultKdf.DEFAULT_ITERATIONS, admits_level2 = true)
+        val store = MemoryProgressStore()
+
+        assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
+        assertTrue(step_done(store))
+
+        server.stored_iterations = VaultKdf.DEFAULT_ITERATIONS
+
+        assertEquals(VaultWorkFactor.UPGRADED, work_factor_step(server, store))
+        assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
+        assertEquals(2, server.sent_iterations.size)
     }
 
     @Test
