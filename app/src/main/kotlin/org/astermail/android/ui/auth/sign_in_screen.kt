@@ -61,6 +61,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -91,8 +92,15 @@ import org.astermail.android.R
 import org.astermail.android.auth.AuthUiState
 import org.astermail.android.debugtools.debug_build_banner
 import org.astermail.android.auth.AuthViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.astermail.android.auth.SecurityKeyNfcStatus
+import org.astermail.android.auth.SecurityKeySession
+import org.astermail.android.auth.SecurityKeyUiState
+import org.astermail.android.auth.open_nfc_settings
 import org.astermail.android.auth.open_passkey_settings
 import org.astermail.android.auth.request_passkey_assertion
+import org.astermail.android.auth.security_key_min_pin_length
+import org.astermail.android.auth.security_key_transports
 import org.astermail.android.design.readable_on
 import org.astermail.android.settings.host_activity
 import org.astermail.android.design.AsterShapes
@@ -101,6 +109,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.util.ascii_digits
@@ -506,6 +515,12 @@ internal fun TotpVerifyScreen(
     val totp_available = challenge.available_methods.isEmpty() ||
         challenge.available_methods.contains(second_factor_method_totp)
     val passkey_available = challenge.available_methods.contains(second_factor_method_webauthn)
+    val host_activity = remember(context) { context.host_activity() }
+    val key_transports = remember(context) { security_key_transports(context) }
+    val key_session = remember(host_activity) { host_activity?.let { SecurityKeySession(it) } }
+    val idle_key_state = remember { MutableStateFlow<SecurityKeyUiState>(SecurityKeyUiState.Idle) }
+    val key_state by (key_session?.state ?: idle_key_state).collectAsStateWithLifecycle()
+    val security_key_available = passkey_available && key_session != null && key_transports.any
     var method by rememberSaveable {
         mutableStateOf(
             when {
@@ -517,7 +532,10 @@ internal fun TotpVerifyScreen(
     }
     val use_backup = method == second_factor_ui_method_backup
     val use_passkey = method == second_factor_ui_method_passkey
+    val use_security_key = method == second_factor_ui_method_security_key && security_key_available
+    val key_active = key_state != SecurityKeyUiState.Idle
     var code by remember { mutableStateOf("") }
+    var key_pin by remember { mutableStateOf("") }
     var trust_device by remember { mutableStateOf(false) }
     val is_loading = state is AuthUiState.Loading
     val error_message = (state as? AuthUiState.Error)?.message
@@ -533,10 +551,32 @@ internal fun TotpVerifyScreen(
             view_model.submit_totp(code, challenge, trust_device, use_backup_code = use_backup)
         }
     }
+    val submit_security_key: (Boolean) -> Unit = { from_fallback ->
+        val session = key_session
+        if (session != null) {
+            view_model.submit_security_key(challenge, trust_device) { prepare, origin ->
+                session.assert(prepare, origin, from_fallback)
+            }
+        }
+    }
+    val submit_key_pin: () -> Unit = {
+        if (key_pin.length >= security_key_min_pin_length) {
+            key_session?.submit_pin(key_pin.toCharArray())
+            key_pin = ""
+        }
+    }
     val submit_passkey: () -> Unit = {
         if (!is_loading) {
-            view_model.submit_passkey(challenge, trust_device) { options ->
-                request_passkey_assertion(context.host_activity() ?: context, options)
+            val fallback: (() -> Unit)? = if (security_key_available) {
+                {
+                    method = second_factor_ui_method_security_key
+                    submit_security_key(true)
+                }
+            } else {
+                null
+            }
+            view_model.submit_passkey(challenge, trust_device, on_unavailable = fallback) { options ->
+                request_passkey_assertion(host_activity ?: context, options)
             }
         }
     }
@@ -547,7 +587,17 @@ internal fun TotpVerifyScreen(
 
     LaunchedEffect(method) {
         code = ""
-        if (method != second_factor_ui_method_passkey) runCatching { code_focus.requestFocus() }
+        if (method == second_factor_ui_method_totp || method == second_factor_ui_method_backup) {
+            runCatching { code_focus.requestFocus() }
+        }
+    }
+
+    LaunchedEffect(key_state) {
+        if (key_state !is SecurityKeyUiState.NeedPin) key_pin = ""
+    }
+
+    DisposableEffect(key_session) {
+        onDispose { key_session?.cancel() }
     }
 
     Box(
@@ -571,6 +621,7 @@ internal fun TotpVerifyScreen(
                 Text(
                     text = when {
                         use_passkey -> stringResource(R.string.totp_passkey_subtitle)
+                        use_security_key -> stringResource(R.string.totp_security_key_subtitle)
                         use_backup -> stringResource(R.string.totp_backup_code_subtitle)
                         else -> stringResource(R.string.totp_verify_subtitle)
                     },
@@ -593,9 +644,9 @@ internal fun TotpVerifyScreen(
                     Spacer(Modifier.height(AsterSpacing.md))
                 }
 
-                if (use_passkey) {
+                if (use_passkey || use_security_key) {
                     Icon(
-                        imageVector = TablerIcons.Fingerprint,
+                        imageVector = if (use_security_key) TablerIcons.Key else TablerIcons.Fingerprint,
                         contentDescription = null,
                         tint = colors.accent_blue,
                         modifier = Modifier
@@ -603,6 +654,16 @@ internal fun TotpVerifyScreen(
                             .size(56.dp),
                     )
                     Spacer(Modifier.height(AsterSpacing.md))
+                    if (use_security_key && key_active) {
+                        security_key_status(
+                            state = key_state,
+                            pin = key_pin,
+                            on_pin_change = { value -> key_pin = value.take(security_key_max_pin_input) },
+                            on_submit_pin = submit_key_pin,
+                            on_open_nfc_settings = { open_nfc_settings(host_activity ?: context) },
+                        )
+                        Spacer(Modifier.height(AsterSpacing.md))
+                    }
                 } else {
                     AsterTextField(
                         value = code,
@@ -689,6 +750,29 @@ internal fun TotpVerifyScreen(
                         enabled = !is_loading,
                         is_loading = is_loading,
                     )
+                } else if (use_security_key && key_state is SecurityKeyUiState.NeedPin) {
+                    AsterButton(
+                        label = stringResource(R.string.action_continue),
+                        onClick = submit_key_pin,
+                        enabled = key_pin.length >= security_key_min_pin_length,
+                    )
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { key_session.cancel() },
+                    )
+                } else if (use_security_key && key_active) {
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.cancel),
+                        onClick = { key_session.cancel() },
+                    )
+                } else if (use_security_key) {
+                    AsterButton(
+                        label = stringResource(R.string.totp_security_key_button),
+                        onClick = { if (!is_loading) submit_security_key(false) },
+                        enabled = !is_loading,
+                        is_loading = is_loading,
+                    )
                 } else if (is_recovery_code) {
                     AsterButton(
                         label = stringResource(R.string.totp_reset_with_recovery_code),
@@ -709,6 +793,12 @@ internal fun TotpVerifyScreen(
                     visible = passkey_available && !use_passkey,
                     enabled = !is_loading,
                     on_click = { switch_method(second_factor_ui_method_passkey) },
+                )
+                second_factor_method_switch(
+                    label = stringResource(R.string.totp_use_security_key),
+                    visible = security_key_available && !use_security_key,
+                    enabled = !is_loading && !key_active,
+                    on_click = { switch_method(second_factor_ui_method_security_key) },
                 )
                 second_factor_method_switch(
                     label = stringResource(R.string.totp_use_authenticator),
@@ -743,6 +833,91 @@ internal fun TotpVerifyScreen(
 }
 
 @Composable
+private fun ColumnScope.security_key_status(
+    state: SecurityKeyUiState,
+    pin: String,
+    on_pin_change: (String) -> Unit,
+    on_submit_pin: () -> Unit,
+    on_open_nfc_settings: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    when (state) {
+        is SecurityKeyUiState.Waiting -> {
+            if (state.from_fallback && !state.tap_again) {
+                Text(
+                    text = stringResource(R.string.security_key_fallback),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+                Spacer(Modifier.height(AsterSpacing.sm))
+            }
+            val transports = state.transports
+            val message = when {
+                state.tap_again -> R.string.security_key_tap_again
+                transports.nfc == SecurityKeyNfcStatus.ready && transports.usb -> R.string.security_key_waiting
+                transports.nfc == SecurityKeyNfcStatus.ready -> R.string.security_key_waiting_nfc
+                transports.nfc == SecurityKeyNfcStatus.off && transports.usb -> R.string.security_key_waiting_nfc_off
+                transports.nfc == SecurityKeyNfcStatus.off -> R.string.security_key_waiting_nfc_off_only
+                else -> R.string.security_key_waiting_usb
+            }
+            Text(
+                text = stringResource(message),
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            if (transports.nfc == SecurityKeyNfcStatus.off) {
+                second_factor_method_switch(
+                    label = stringResource(R.string.security_key_turn_on_nfc),
+                    visible = true,
+                    enabled = true,
+                    on_click = on_open_nfc_settings,
+                )
+            }
+        }
+        SecurityKeyUiState.Working -> Text(
+            text = stringResource(R.string.security_key_working),
+            color = colors.text_primary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        is SecurityKeyUiState.NeedPin -> {
+            val retries = state.retries
+            Text(
+                text = when {
+                    state.wrong && retries != null -> stringResource(R.string.security_key_pin_wrong, retries)
+                    state.wrong -> stringResource(R.string.security_key_pin_wrong_unknown)
+                    else -> stringResource(R.string.security_key_pin_prompt)
+                },
+                color = if (state.wrong) colors.danger else colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(AsterSpacing.sm))
+            AsterTextField(
+                value = pin,
+                onValueChange = on_pin_change,
+                label = stringResource(R.string.security_key_pin_label),
+                keyboard_options = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboard_actions = KeyboardActions(onDone = { on_submit_pin() }),
+                visual_transformation = PasswordVisualTransformation(),
+                leading_icon = {
+                    Icon(
+                        imageVector = TablerIcons.Lock,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                    )
+                },
+            )
+        }
+        SecurityKeyUiState.Idle -> Unit
+    }
+}
+
+@Composable
 private fun ColumnScope.second_factor_method_switch(
     label: String,
     visible: Boolean,
@@ -762,6 +937,8 @@ private fun ColumnScope.second_factor_method_switch(
 private const val second_factor_method_totp = "totp"
 private const val second_factor_method_webauthn = "webauthn"
 private const val second_factor_ui_method_passkey = "passkey"
+private const val second_factor_ui_method_security_key = "security_key"
+private const val security_key_max_pin_input = 63
 private const val second_factor_ui_method_totp = "totp"
 private const val second_factor_ui_method_backup = "backup"
 

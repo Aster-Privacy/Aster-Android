@@ -156,6 +156,7 @@ class AuthViewModel @Inject constructor(
     fun submit_passkey(
         challenge: org.astermail.android.auth.TotpChallenge,
         trust_device: Boolean = false,
+        on_unavailable: (() -> Unit)? = null,
         get_assertion: suspend (org.astermail.android.api.auth.WebAuthnAssertionOptions) -> String,
     ) {
         if (_ui_state.value == AuthUiState.Loading) return
@@ -173,6 +174,11 @@ class AuthViewModel @Inject constructor(
                 )
                 repository.verify_webauthn(request, challenge, trust_device).getOrThrow()
             }
+            if (result.exceptionOrNull() is PasskeyUnavailableException && on_unavailable != null) {
+                _ui_state.value = AuthUiState.Idle
+                on_unavailable()
+                return@launch
+            }
             _ui_state.value = result.fold(
                 onSuccess = { AuthUiState.Success },
                 onFailure = { cause ->
@@ -180,10 +186,7 @@ class AuthViewModel @Inject constructor(
                         is PasskeyCancelledException -> AuthUiState.Idle
                         is PasskeyUnavailableException ->
                             AuthUiState.Error(
-                                passkey_message(
-                                    if (cause.no_provider) R.string.error_passkey_no_provider else R.string.error_passkey_unavailable,
-                                    cause,
-                                ),
+                                passkey_message(passkey_unavailable_message(cause, challenge), cause),
                                 passkey_settings = org.astermail.android.auth.passkey_settings_supported(),
                             )
                         is PasskeyFailedException ->
@@ -197,6 +200,62 @@ class AuthViewModel @Inject constructor(
                     }
                 },
             )
+        }
+    }
+
+    fun submit_security_key(
+        challenge: org.astermail.android.auth.TotpChallenge,
+        trust_device: Boolean = false,
+        run: suspend (
+            prepare: suspend () -> org.astermail.android.api.auth.WebAuthnAssertionOptions,
+            origin: String,
+        ) -> SecurityKeyAssertion,
+    ) {
+        if (_ui_state.value == AuthUiState.Loading) return
+        _ui_state.value = AuthUiState.Loading
+        viewModelScope.launch {
+            val result = runCatching {
+                val origin = security_key_origin(ctx, repository.webauthn_origin())
+                val assertion = run({ repository.begin_webauthn(challenge).getOrThrow() }, origin)
+                val request = assertion_verify_request(
+                    response_json = assertion.response_json,
+                    options = assertion.options,
+                    challenge = challenge,
+                    trust_device = trust_device,
+                    device_label = repository.login_device_label(),
+                )
+                repository.verify_webauthn(request, challenge, trust_device).getOrThrow()
+            }
+            _ui_state.value = result.fold(
+                onSuccess = { AuthUiState.Success },
+                onFailure = { cause -> security_key_failure_state(cause, challenge) },
+            )
+        }
+    }
+
+    private fun security_key_failure_state(
+        cause: Throwable,
+        challenge: org.astermail.android.auth.TotpChallenge,
+    ): AuthUiState {
+        if (cause is PasskeyCancelledException) return AuthUiState.Idle
+        val message_res = security_key_error_message(cause)
+        if (message_res != null) return AuthUiState.Error(ctx.getString(message_res))
+        if (is_passkey_challenge_expired(cause)) {
+            return AuthUiState.Error(ctx.getString(R.string.security_key_error_timed_out))
+        }
+        return second_factor_failure_state(cause, challenge)
+    }
+
+    private fun passkey_unavailable_message(
+        cause: PasskeyUnavailableException,
+        challenge: org.astermail.android.auth.TotpChallenge,
+    ): Int {
+        val totp = challenge.available_methods.isEmpty() || challenge.available_methods.contains("totp")
+        return when {
+            cause.no_provider && totp -> R.string.error_passkey_no_provider
+            cause.no_provider -> R.string.error_passkey_no_provider_no_totp
+            totp -> R.string.error_passkey_unavailable
+            else -> R.string.error_passkey_unavailable_no_totp
         }
     }
 

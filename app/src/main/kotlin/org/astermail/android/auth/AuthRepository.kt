@@ -457,6 +457,8 @@ class AuthRepository @Inject constructor(
         finish_second_factor_login(outcome, challenge, trust_device)
     }
 
+    fun webauthn_origin(): String = api_client.webauthn_origin.trimEnd('/')
+
     fun login_device_label(): String? {
         val manufacturer = android.os.Build.MANUFACTURER.orEmpty().trim()
         val model = android.os.Build.MODEL.orEmpty().trim()
