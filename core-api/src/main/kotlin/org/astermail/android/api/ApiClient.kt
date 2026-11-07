@@ -111,7 +111,7 @@ sealed class ApiError(message: String) : Exception(message) {
 }
 
 const val VAULT_LEVEL_HEADER = "X-Aster-Vault-Level"
-const val VAULT_LEVEL = "1"
+const val VAULT_LEVEL = "2"
 
 const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
@@ -555,7 +555,7 @@ class ApiClient(
                 parse_error_details(body),
             )
             409 -> ApiError.Conflict(detail.ifBlank { "conflict" }, server_code)
-            426 -> ApiError.UpgradeRequired(detail.ifBlank { "upgrade required" }, server_code)
+            426 -> ApiError.UpgradeRequired(detail.ifBlank { "upgrade required" }, server_code).also { ClientUpdateNotice.note(it) }
             429 -> ApiError.RateLimited(
                 detail = detail,
                 resets_at = parse_error_resets_at(body),

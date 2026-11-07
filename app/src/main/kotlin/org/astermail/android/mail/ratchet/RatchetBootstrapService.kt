@@ -185,32 +185,38 @@ class RatchetBootstrapService @Inject constructor(
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             .getOrDefault(CurrentVaultResult.Unavailable)
         return when (result) {
-            is CurrentVaultResult.Available -> adopt_server_vault(result.encrypted_vault, result.vault_nonce)
+            is CurrentVaultResult.Available -> adopt_server_vault(result.encrypted_vault, result.vault_nonce, result.vault_kdf_iterations)
             CurrentVaultResult.Missing -> true
             CurrentVaultResult.Unavailable -> false
         }
     }
 
-    private fun adopt_server_vault(encrypted_vault_b64: String, vault_nonce_b64: String): Boolean {
+    private fun adopt_server_vault(
+        encrypted_vault_b64: String,
+        vault_nonce_b64: String,
+        reported_iterations: Int?,
+    ): Boolean {
         val cached = session_key_store.get_encrypted_vault()
         if (cached != null && cached.first == encrypted_vault_b64 && cached.second == vault_nonce_b64) {
             return true
         }
         val passphrase = session_key_store.get_passphrase() ?: return false
-        val decryptable = runCatching {
-            val plain = CryptoNative.decrypt_vault_with_password(
+        val unwrapped_iterations = runCatching {
+            val unwrapped = CryptoNative.unwrap_vault(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
                 passphrase,
+                reported_iterations,
             )
-            plain.fill(0)
-            true
-        }.getOrDefault(false)
+            unwrapped.plaintext.fill(0)
+            unwrapped.iterations
+        }.getOrNull()
+        val decryptable = unwrapped_iterations != null
         if (!decryptable) {
             debug_log("server vault did not decrypt with the stored passphrase")
             return false
         }
-        session_key_store.put_encrypted_vault(encrypted_vault_b64, vault_nonce_b64)
+        session_key_store.put_encrypted_vault(encrypted_vault_b64, vault_nonce_b64, unwrapped_iterations!!)
         debug_log("adopted newer server vault into the session cache")
         return true
     }
@@ -258,11 +264,12 @@ class RatchetBootstrapService @Inject constructor(
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return null
         val passphrase = session_key_store.get_passphrase() ?: return null
         return runCatching {
-            val plain = CryptoNative.decrypt_vault_with_password(
+            val plain = CryptoNative.unwrap_vault(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
                 passphrase,
-            )
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
             val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
             plain.fill(0)
             json
@@ -417,11 +424,12 @@ class RatchetBootstrapService @Inject constructor(
         val passphrase = session_key_store.get_passphrase() ?: return VaultRatchetIdentity.Unavailable
 
         val vault_json = runCatching {
-            val plain = CryptoNative.decrypt_vault_with_password(
+            val plain = CryptoNative.unwrap_vault(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
                 passphrase,
-            )
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
             val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
             plain.fill(0)
             json
@@ -591,11 +599,12 @@ class RatchetBootstrapService @Inject constructor(
             ?: return emptyList()
         val passphrase = session_key_store.get_passphrase() ?: return emptyList()
         return runCatching {
-            val plain = CryptoNative.decrypt_vault_with_password(
+            val plain = CryptoNative.unwrap_vault(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
                 passphrase,
-            )
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
             val json = org.json.JSONObject(String(plain, Charsets.UTF_8))
             plain.fill(0)
             val keys = mutableListOf<String>()

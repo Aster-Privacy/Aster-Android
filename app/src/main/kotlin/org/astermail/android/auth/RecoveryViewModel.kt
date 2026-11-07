@@ -30,6 +30,8 @@ import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
+import org.astermail.android.crypto.VaultKdf
+import org.astermail.android.crypto.storage_rotation.is_level2_not_admitted
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -329,9 +331,14 @@ class RecoveryViewModel @Inject constructor(
                     password_chars.fill('\u0000')
                 }
 
+                val retry_plain = updated_vault.plain.copyOf()
                 val (new_envelope, backup) = try {
                     val envelope = withContext(compute_dispatcher) {
-                        CryptoNative.encrypt_vault_with_password(updated_vault.plain, password_bytes)
+                        CryptoNative.encrypt_vault_with_password(
+                            updated_vault.plain,
+                            password_bytes,
+                            VaultKdf.LEVEL2_ITERATIONS,
+                        )
                     }
                     _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
                     val sealed_backup = withContext(compute_dispatcher) {
@@ -350,21 +357,37 @@ class RecoveryViewModel @Inject constructor(
                 }
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_saving_credentials))
-                recovery_api.complete(
-                    CompleteRecoveryRequest(
-                        recovery_token = token,
-                        new_password_hash = base64_encode(new_password_hash),
-                        new_password_hash_v2 = base64_encode(new_password_hash_v2),
-                        new_password_salt = base64_encode(new_salt),
-                        new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
-                        new_vault_nonce = base64_encode(new_envelope.vault_nonce),
-                        new_recovery_shares = shares,
-                        new_encrypted_vault_backup = backup.encrypted_data,
-                        new_vault_backup_nonce = backup.nonce,
-                        new_recovery_key_salt = backup.salt,
-                        vault_format = updated_vault.vault_format,
-                    ),
+                val complete_request = CompleteRecoveryRequest(
+                    recovery_token = token,
+                    new_password_hash = base64_encode(new_password_hash),
+                    new_password_hash_v2 = base64_encode(new_password_hash_v2),
+                    new_password_salt = base64_encode(new_salt),
+                    new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                    new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                    new_recovery_shares = shares,
+                    new_encrypted_vault_backup = backup.encrypted_data,
+                    new_vault_backup_nonce = backup.nonce,
+                    new_recovery_key_salt = backup.salt,
+                    vault_format = updated_vault.vault_format,
+                    vault_kdf_iterations = VaultKdf.to_server(VaultKdf.LEVEL2_ITERATIONS),
                 )
+                try {
+                    recovery_api.complete(complete_request)
+                } catch (error: ApiError.Conflict) {
+                    if (!is_level2_not_admitted(error)) throw error
+                    val fallback = withContext(compute_dispatcher) {
+                        CryptoNative.encrypt_vault_with_password(retry_plain, password_bytes, VaultKdf.DEFAULT_ITERATIONS)
+                    }
+                    recovery_api.complete(
+                        complete_request.copy(
+                            new_encrypted_vault = base64_encode(fallback.encrypted_vault),
+                            new_vault_nonce = base64_encode(fallback.vault_nonce),
+                            vault_kdf_iterations = null,
+                        ),
+                    )
+                } finally {
+                    retry_plain.fill(0)
+                }
 
                 remember_login_salt(new_salt)
                 new_password_hash.fill(0)

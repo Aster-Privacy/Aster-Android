@@ -3534,4 +3534,8 @@
     <string name="mail_list_lines_two_subtitle">Afficher l’expéditeur et l’objet</string>
     <string name="mail_list_lines_three">3 lignes</string>
     <string name="mail_list_lines_three_subtitle">Afficher l’expéditeur, l’objet et une ligne du texte du message</string>
+    <string name="client_update_title">Mettre à jour Aster Mail</string>
+    <string name="client_update_body">Ce compte nécessite une version plus récente d\'Aster Mail. Pour continuer à l\'utiliser sur cet appareil, mettez à jour l\'app. Vous restez connecté, et rien n\'est supprimé de cet appareil.</string>
+    <string name="client_update_action">Mettre à jour</string>
+    <string name="client_update_later">Plus tard</string>
 </resources>

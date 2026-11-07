@@ -56,6 +56,7 @@ data class CurrentVaultResponse(
     val vault_nonce: String,
     val vault_format: Int = 1,
     val updated_at: String? = null,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable
@@ -86,7 +87,11 @@ data class AccountKeyTokenHistoryResponse(
 )
 
 sealed class CurrentVaultResult {
-    data class Available(val encrypted_vault: String, val vault_nonce: String) : CurrentVaultResult()
+    data class Available(
+        val encrypted_vault: String,
+        val vault_nonce: String,
+        val vault_kdf_iterations: Int? = null,
+    ) : CurrentVaultResult()
     object Missing : CurrentVaultResult()
     object Unavailable : CurrentVaultResult()
 }
@@ -273,7 +278,7 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         return when (response.status.value) {
             in 200..299 -> runCatching<CurrentVaultResult> {
                 val body: CurrentVaultResponse = response.body()
-                CurrentVaultResult.Available(body.encrypted_vault, body.vault_nonce)
+                CurrentVaultResult.Available(body.encrypted_vault, body.vault_nonce, body.vault_kdf_iterations)
             }.getOrDefault(CurrentVaultResult.Unavailable)
             404, 405 -> CurrentVaultResult.Missing
             else -> CurrentVaultResult.Unavailable

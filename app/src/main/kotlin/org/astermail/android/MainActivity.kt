@@ -767,6 +767,8 @@ private fun AsterNavHost() {
         }
     }
 
+    org.astermail.android.ui.upgrade.ClientUpdatePrompt()
+
     if (is_signed_in_state) {
         org.astermail.android.ui.upgrade.UpgradeHost(
             on_navigate_to_billing = {

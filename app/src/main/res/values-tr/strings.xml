@@ -3486,4 +3486,8 @@
     <string name="mail_list_lines_two_subtitle">Göndereni ve konuyu göster</string>
     <string name="mail_list_lines_three">3 satır</string>
     <string name="mail_list_lines_three_subtitle">Göndereni, konuyu ve ileti metninden bir satırı göster</string>
+    <string name="client_update_title">Aster Mail\'i güncelleyin</string>
+    <string name="client_update_body">Bu hesap için Aster Mail\'in daha yeni bir sürümü gerekiyor. Bu cihazda kullanmaya devam etmek için uygulamayı güncelleyin. Oturumunuz açık kalır ve bu cihazdan hiçbir şey kaldırılmaz.</string>
+    <string name="client_update_action">Güncelle</string>
+    <string name="client_update_later">Şimdi değil</string>
 </resources>

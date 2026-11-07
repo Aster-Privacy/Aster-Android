@@ -33,6 +33,7 @@ import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiClient
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.StorageWriteKey
+import org.astermail.android.crypto.VaultKdf
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
@@ -93,7 +94,7 @@ fun storage_password_keys(
 }
 
 fun absorb_rotated_vault(store: SessionKeyStore, vault: JSONObject, sealed: SealedVault) {
-    store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce)
+    store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
     val data_kek = vault.optString("data_kek", "")
     val incoming = ArrayList<String>()
     if (data_kek.isNotBlank()) {
@@ -130,13 +131,19 @@ class SessionVaultCodec(
 
     private fun passphrase(): ByteArray = passphrase_source() ?: throw IllegalStateException("locked")
 
-    override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? {
+    override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? =
+        decrypt_at(encrypted_vault, vault_nonce, VaultKdf.DEFAULT_ITERATIONS)
+
+    override fun encrypt(vault: JSONObject): SealedVault? = encrypt_at(vault, VaultKdf.DEFAULT_ITERATIONS)
+
+    override fun decrypt_at(encrypted_vault: String, vault_nonce: String, iterations: Int): JSONObject? {
         val pass = passphrase()
         val plain = try {
             CryptoNative.decrypt_vault_with_password(
                 decode_b64(encrypted_vault) ?: return null,
                 decode_b64(vault_nonce) ?: return null,
                 pass,
+                iterations,
             )
         } finally {
             pass.fill(0)
@@ -148,12 +155,12 @@ class SessionVaultCodec(
         }
     }
 
-    override fun encrypt(vault: JSONObject): SealedVault? {
+    override fun encrypt_at(vault: JSONObject, iterations: Int): SealedVault? {
         val pass = passphrase()
         val plain = vault.toString().toByteArray(Charsets.UTF_8)
         return try {
-            val envelope = CryptoNative.encrypt_vault_with_password(plain, pass)
-            SealedVault(encode_b64(envelope.encrypted_vault), encode_b64(envelope.vault_nonce))
+            val envelope = CryptoNative.encrypt_vault_with_password(plain, pass, iterations)
+            SealedVault(encode_b64(envelope.encrypted_vault), encode_b64(envelope.vault_nonce), iterations)
         } finally {
             plain.fill(0)
             pass.fill(0)
@@ -289,6 +296,7 @@ class StorageRekeyService @Inject constructor(
         lock = VaultWriteLock.mutex,
         on_vault_changed = { vault, sealed -> absorb_rotated_vault(session_key_store, vault, sealed) },
         local_keys = { local_storage_keys(session_key_store) },
+        upgrade_on_rotation = true,
     )
 
     fun is_unlocked(): Boolean {
@@ -328,7 +336,7 @@ class StorageRekeyService @Inject constructor(
             decode_b64(encoded)?.takeIf { it.size == RESEAL_KEY_LENGTH }
         }
         val expected = view.data_kek.orEmpty()
-        try {
+        val reseal = try {
             run_storage_reseal(
                 view = view,
                 api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),
@@ -342,5 +350,36 @@ class StorageRekeyService @Inject constructor(
         } finally {
             extra_old.forEach { it.fill(0) }
         }
+        if (reseal.status != ResealRunStatus.NOT_NEEDED && reseal.status != ResealRunStatus.DONE) {
+            return@withContext reseal
+        }
+        if (!view.data_kek_random || !local_key_matches(view)) return@withContext reseal
+        val admitted = request_level2_admission(api)
+        session_key_store.set_level2_admitted(admitted)
+        if (!admitted) return@withContext reseal
+        val sweep = run_envelope_v2_sweep(
+            view = view,
+            api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),
+            store = PrefsProgressStore(prefs, ENVELOPE_V2_STEP + "_" + user_id),
+            crypto = SessionEnvelopeV2Crypto(session_key_store),
+            is_cancelled = is_cancelled,
+        )
+        when (sweep.status) {
+            ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> sweep
+            else -> reseal
+        }
+    }
+
+    private fun local_key_matches(view: VaultKeyView): Boolean {
+        val server = decode_b64(view.data_kek.orEmpty()) ?: return false
+        val local = session_key_store.get_data_kek()
+        if (local == null) {
+            server.fill(0)
+            return false
+        }
+        val same = java.security.MessageDigest.isEqual(server, local)
+        server.fill(0)
+        local.fill(0)
+        return same
     }
 }

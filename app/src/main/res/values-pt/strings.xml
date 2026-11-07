@@ -3505,4 +3505,8 @@
     <string name="mail_list_lines_two_subtitle">Mostrar o remetente e o assunto</string>
     <string name="mail_list_lines_three">3 linhas</string>
     <string name="mail_list_lines_three_subtitle">Mostrar o remetente, o assunto e uma linha do texto da mensagem</string>
+    <string name="client_update_title">Atualize o Aster Mail</string>
+    <string name="client_update_body">Esta conta precisa de uma versão mais recente do Aster Mail. Para continuar a utilizá-la neste dispositivo, atualize a aplicação. Continua com a sessão iniciada e nada é removido deste dispositivo.</string>
+    <string name="client_update_action">Atualizar</string>
+    <string name="client_update_later">Agora não</string>
 </resources>

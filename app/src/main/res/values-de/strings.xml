@@ -3487,4 +3487,8 @@
     <string name="mail_list_lines_two_subtitle">Absender und Betreff anzeigen</string>
     <string name="mail_list_lines_three">3 Zeilen</string>
     <string name="mail_list_lines_three_subtitle">Absender, Betreff und eine Zeile Nachrichtentext anzeigen</string>
+    <string name="client_update_title">Aster Mail aktualisieren</string>
+    <string name="client_update_body">Für dieses Konto ist eine neuere Version von Aster Mail erforderlich. Aktualisieren Sie die App, um es auf diesem Gerät weiter zu verwenden. Sie bleiben angemeldet, und auf diesem Gerät wird nichts entfernt.</string>
+    <string name="client_update_action">Aktualisieren</string>
+    <string name="client_update_later">Nicht jetzt</string>
 </resources>

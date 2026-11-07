@@ -293,6 +293,7 @@ data class MailUserStatsResponse(
 data class UpdateMailItemEnvelopeRequest(
     val encrypted_envelope: String,
     val envelope_nonce: String,
+    val expected_envelope_sha256: String? = null,
 )
 
 @Serializable

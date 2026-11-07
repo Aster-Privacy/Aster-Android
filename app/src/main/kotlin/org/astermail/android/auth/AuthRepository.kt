@@ -51,6 +51,7 @@ import org.astermail.android.crypto.AuthSaltCollisionException
 import org.astermail.android.crypto.AuthSaltGuard
 import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
+import org.astermail.android.crypto.VaultKdf
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.Argon2Params
@@ -677,16 +678,29 @@ class AuthRepository @Inject constructor(
             runCatching { login_salt_records.put(login_record_keys(user_hash, login_resp.email), salt_bytes) }
             session_key_store.put_user_id(login_resp.user_id)
             session_key_store.put_user_email(login_resp.email)
-            session_key_store.put_encrypted_vault(login_resp.encrypted_vault, login_resp.vault_nonce)
+            session_key_store.put_encrypted_vault(
+                login_resp.encrypted_vault,
+                login_resp.vault_nonce,
+                reported_vault_kdf(login_resp.vault_kdf_iterations),
+            )
 
             try {
                 val vault_bytes = base64_decode(login_resp.encrypted_vault)
                 val nonce_bytes = base64_decode(login_resp.vault_nonce)
-                val vault_plain = CryptoNative.decrypt_vault_with_password(
+                val unwrapped = CryptoNative.unwrap_vault(
                     vault_bytes,
                     nonce_bytes,
                     password_bytes,
+                    login_resp.vault_kdf_iterations,
                 )
+                if (unwrapped.iterations != session_key_store.get_vault_kdf_iterations()) {
+                    session_key_store.put_encrypted_vault(
+                        login_resp.encrypted_vault,
+                        login_resp.vault_nonce,
+                        unwrapped.iterations,
+                    )
+                }
+                val vault_plain = unwrapped.plaintext
                 val vault_json = String(vault_plain, Charsets.UTF_8)
                 vault_plain.fill(0)
                 val vault_obj = org.json.JSONObject(vault_json)
@@ -1309,6 +1323,7 @@ class AuthRepository @Inject constructor(
                 identity_key = session_key_store.get_identity_key(),
                 encrypted_vault = session_key_store.get_encrypted_vault()?.first,
                 vault_nonce = session_key_store.get_encrypted_vault()?.second,
+                vault_kdf_iterations = session_key_store.get_vault_kdf_iterations(),
                 password_salt = session_key_store.get_password_salt(),
                 user_id = session_key_store.get_user_id(),
                 user_email = session_key_store.get_user_email(),
@@ -1355,7 +1370,7 @@ class AuthRepository @Inject constructor(
                 val ev = snapshot.encrypted_vault
                 val vn = snapshot.vault_nonce
                 if (ev != null && vn != null) {
-                    session_key_store.put_encrypted_vault(ev, vn)
+                    session_key_store.put_encrypted_vault(ev, vn, snapshot.vault_kdf_iterations)
                 }
                 snapshot.recovery_codes?.let { session_key_store.put_recovery_codes(it) }
                 snapshot.previous_keys?.let { session_key_store.put_previous_keys(it) }
@@ -1450,12 +1465,17 @@ class AuthRepository @Inject constructor(
                 }
             }
 
+            val reported_iterations = when (server_vault) {
+                is CurrentVaultResult.Available -> server_vault.vault_kdf_iterations
+                else -> session_key_store.get_vault_kdf_iterations()
+            }
             val vault_plain = try {
-                CryptoNative.decrypt_vault_with_password(
+                CryptoNative.unwrap_vault(
                     base64_decode(encrypted_vault_b64),
                     base64_decode(vault_nonce_b64),
                     current_password_bytes,
-                )
+                    reported_iterations,
+                ).plaintext
             } catch (cancelled: CancellationException) {
                 current_password_bytes.fill(0)
                 new_password_bytes.fill(0)
@@ -1510,7 +1530,12 @@ class AuthRepository @Inject constructor(
             val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
 
             val updated_vault_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
-            val new_envelope = CryptoNative.encrypt_vault_with_password(updated_vault_bytes, new_password_bytes)
+            var vault_iterations = VaultKdf.LEVEL2_ITERATIONS
+            var new_envelope = CryptoNative.encrypt_vault_with_password(
+                updated_vault_bytes,
+                new_password_bytes,
+                vault_iterations,
+            )
             updated_vault_bytes.fill(0)
 
             val new_salt = ByteArray(32).also { SecureRandom().nextBytes(it) }
@@ -1520,18 +1545,36 @@ class AuthRepository @Inject constructor(
             val new_password_hash_v2 = LoginProof.derive_v2(new_password_hash)
 
             withContext(NonCancellable) {
-                val response = settings_api.change_password(
-                    ChangePasswordRequest(
-                        current_password_hash = base64_encode(current_password_hash),
-                        new_password_hash = base64_encode(new_password_hash),
-                        new_password_hash_v2 = base64_encode(new_password_hash_v2),
-                        new_password_salt = base64_encode(new_salt),
-                        new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
-                        new_vault_nonce = base64_encode(new_envelope.vault_nonce),
-                        vault_format = MASTER_KEY_VAULT_FORMAT,
-                        vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
-                    ),
+                val request = ChangePasswordRequest(
+                    current_password_hash = base64_encode(current_password_hash),
+                    new_password_hash = base64_encode(new_password_hash),
+                    new_password_hash_v2 = base64_encode(new_password_hash_v2),
+                    new_password_salt = base64_encode(new_salt),
+                    new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                    new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                    vault_format = MASTER_KEY_VAULT_FORMAT,
+                    vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
+                    vault_kdf_iterations = VaultKdf.to_server(vault_iterations),
                 )
+                val response = try {
+                    settings_api.change_password(request)
+                } catch (error: ApiError.Conflict) {
+                    if (!org.astermail.android.crypto.storage_rotation.is_level2_not_admitted(error)) throw error
+                    vault_iterations = VaultKdf.DEFAULT_ITERATIONS
+                    val fallback_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
+                    new_envelope = try {
+                        CryptoNative.encrypt_vault_with_password(fallback_bytes, new_password_bytes, vault_iterations)
+                    } finally {
+                        fallback_bytes.fill(0)
+                    }
+                    settings_api.change_password(
+                        request.copy(
+                            new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                            new_vault_nonce = base64_encode(new_envelope.vault_nonce),
+                            vault_kdf_iterations = null,
+                        ),
+                    )
+                }
 
                 session_key_store.put_data_kek(preserved_data_kek)
                 session_key_store.put_legacy_keks(
@@ -1544,6 +1587,7 @@ class AuthRepository @Inject constructor(
                 session_key_store.put_encrypted_vault(
                     base64_encode(new_envelope.encrypted_vault),
                     base64_encode(new_envelope.vault_nonce),
+                    vault_iterations,
                 )
                 release_vault_lock()
                 schedule_storage_rekey()
@@ -1834,11 +1878,12 @@ class AuthRepository @Inject constructor(
 
         try {
             val vault_plain = runCatching {
-                CryptoNative.decrypt_vault_with_password(
+                CryptoNative.unwrap_vault(
                     base64_decode(stored_vault.first),
                     base64_decode(stored_vault.second),
                     passphrase,
-                )
+                    session_key_store.get_vault_kdf_iterations(),
+                ).plaintext
             }.getOrNull() ?: return 0
             val vault_obj = runCatching {
                 org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
@@ -1859,11 +1904,12 @@ class AuthRepository @Inject constructor(
                     }.getOrNull() ?: continue
 
                     val old_plain = runCatching {
-                        CryptoNative.decrypt_vault_with_password(
+                        CryptoNative.unwrap_vault(
                             base64_decode(fetched.encrypted_vault),
                             base64_decode(fetched.vault_nonce),
                             old_password_bytes,
-                        )
+                            fetched.vault_kdf_iterations,
+                        ).plaintext
                     }.getOrNull() ?: continue
 
                     val old_vault = runCatching {
@@ -1933,11 +1979,12 @@ class AuthRepository @Inject constructor(
 
         try {
             val vault_plain = runCatching {
-                CryptoNative.decrypt_vault_with_password(
+                CryptoNative.unwrap_vault(
                     base64_decode(stored_vault.first),
                     base64_decode(stored_vault.second),
                     passphrase,
-                )
+                    session_key_store.get_vault_kdf_iterations(),
+                ).plaintext
             }.getOrNull() ?: return CodeRestoreResult()
             val vault_obj = runCatching {
                 org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
@@ -2233,11 +2280,12 @@ class AuthRepository @Inject constructor(
         val (encrypted_vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return identity_already_present
         val passphrase = session_key_store.get_passphrase() ?: return identity_already_present
         return try {
-            val vault_plain = CryptoNative.decrypt_vault_with_password(
+            val vault_plain = CryptoNative.unwrap_vault(
                 base64_decode(encrypted_vault_b64),
                 base64_decode(vault_nonce_b64),
                 passphrase,
-            )
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
             val vault_json = String(vault_plain, Charsets.UTF_8)
             vault_plain.fill(0)
             val vault_obj = org.json.JSONObject(vault_json)
@@ -2262,14 +2310,19 @@ class AuthRepository @Inject constructor(
     suspend fun try_refresh_vault_keys(): Boolean {
         return try {
             val vault = auth_api.get_vault()
-            session_key_store.put_encrypted_vault(vault.encrypted_vault, vault.vault_nonce)
+            session_key_store.put_encrypted_vault(
+                vault.encrypted_vault,
+                vault.vault_nonce,
+                reported_vault_kdf(vault.vault_kdf_iterations),
+            )
             val passphrase = session_key_store.get_passphrase() ?: return false
             try {
-                val vault_plain = CryptoNative.decrypt_vault_with_password(
+                val vault_plain = CryptoNative.unwrap_vault(
                     base64_decode(vault.encrypted_vault),
                     base64_decode(vault.vault_nonce),
                     passphrase,
-                )
+                    vault.vault_kdf_iterations,
+                ).plaintext
                 val vault_json = String(vault_plain, Charsets.UTF_8)
                 vault_plain.fill(0)
                 val vault_obj = org.json.JSONObject(vault_json)
@@ -2751,6 +2804,9 @@ class AuthRepository @Inject constructor(
         return base64_encode(salt + ciphertext) to base64_encode(nonce)
     }
 
+    private fun reported_vault_kdf(value: Int?): Int =
+        SessionKeyStore.sanitize_vault_kdf_iterations(value ?: SessionKeyStore.default_vault_kdf_iterations)
+
     private fun decrypt_vault_aes_gcm(
         encrypted_vault_b64: String,
         vault_nonce_b64: String,
@@ -2783,6 +2839,7 @@ class AuthRepository @Inject constructor(
                         draft.vault.put("recovery_codes", codes_array)
                         org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
                     },
+                    upgrade = true,
                     send = { vault_obj, sealed, snapshot ->
                         val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
@@ -2801,6 +2858,7 @@ class AuthRepository @Inject constructor(
                                 vault_nonce = sealed.vault_nonce,
                                 vault_format = stored_vault_format(vault_obj),
                                 expected_vault_sha256 = snapshot.vault_sha256,
+                                vault_kdf_iterations = VaultKdf.to_server(sealed.kdf_iterations),
                             ),
                         )
                         true

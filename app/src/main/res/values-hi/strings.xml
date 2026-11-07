@@ -3378,4 +3378,8 @@
     <string name="mail_list_lines_two_subtitle">प्रेषक और विषय दिखाएँ</string>
     <string name="mail_list_lines_three">3 पंक्तियाँ</string>
     <string name="mail_list_lines_three_subtitle">प्रेषक, विषय और संदेश के टेक्स्ट की एक पंक्ति दिखाएँ</string>
+    <string name="client_update_title">Aster Mail अपडेट करें</string>
+    <string name="client_update_body">इस खाते के लिए Aster Mail का नया वर्शन ज़रूरी है। इस डिवाइस पर इसे इस्तेमाल करते रहने के लिए, ऐप अपडेट करें। आप साइन इन रहेंगे, और इस डिवाइस से कुछ भी नहीं हटाया जाएगा।</string>
+    <string name="client_update_action">अपडेट करें</string>
+    <string name="client_update_later">अभी नहीं</string>
 </resources>

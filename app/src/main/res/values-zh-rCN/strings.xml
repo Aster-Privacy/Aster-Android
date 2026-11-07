@@ -3467,4 +3467,8 @@
     <string name="mail_list_lines_two_subtitle">显示发件人和主题</string>
     <string name="mail_list_lines_three">3 行</string>
     <string name="mail_list_lines_three_subtitle">显示发件人、主题和一行邮件正文</string>
+    <string name="client_update_title">更新 Aster Mail</string>
+    <string name="client_update_body">此帐号需要更新版本的 Aster Mail。要在此设备上继续使用，请更新应用。你将保持登录状态，此设备上的任何内容都不会被删除。</string>
+    <string name="client_update_action">更新</string>
+    <string name="client_update_later">以后再说</string>
 </resources>

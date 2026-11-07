@@ -41,7 +41,7 @@ object CryptoNative {
     private const val derived_key_bits = 256
     private const val gcm_nonce_bytes = 12
     private const val vault_salt_bytes = 16
-    private const val vault_iterations = 310000
+    private const val vault_iterations = VaultKdf.DEFAULT_ITERATIONS
 
     private val secure_random = SecureRandom()
 
@@ -80,12 +80,16 @@ object CryptoNative {
 
     data class VaultEnvelope(val encrypted_vault: ByteArray, val vault_nonce: ByteArray)
 
-    fun encrypt_vault_with_password(plaintext: ByteArray, password: ByteArray): VaultEnvelope {
+    fun encrypt_vault_with_password(
+        plaintext: ByteArray,
+        password: ByteArray,
+        iterations: Int = vault_iterations,
+    ): VaultEnvelope {
         val salt = ByteArray(vault_salt_bytes)
         secure_random.nextBytes(salt)
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
-        val key_bytes = pbkdf2(password, salt, vault_iterations)
+        val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
         val ciphertext = try {
             AesGcm.encrypt(key_bytes, nonce, plaintext)
         } finally {
@@ -98,16 +102,42 @@ object CryptoNative {
         encrypted_vault: ByteArray,
         vault_nonce: ByteArray,
         password: ByteArray,
+        iterations: Int = vault_iterations,
     ): ByteArray {
         require(encrypted_vault.size > vault_salt_bytes) { "encrypted_vault too short" }
         require(vault_nonce.size == gcm_nonce_bytes) { "vault_nonce must be $gcm_nonce_bytes bytes" }
         val salt = encrypted_vault.copyOfRange(0, vault_salt_bytes)
         val ciphertext = encrypted_vault.copyOfRange(vault_salt_bytes, encrypted_vault.size)
-        val key_bytes = pbkdf2(password, salt, vault_iterations)
+        val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
         try {
             return AesGcm.decrypt(key_bytes, vault_nonce, ciphertext)
         } finally {
             key_bytes.fill(0)
+        }
+    }
+
+    class UnwrappedVault(val plaintext: ByteArray, val iterations: Int)
+
+    fun unwrap_vault(
+        encrypted_vault: ByteArray,
+        vault_nonce: ByteArray,
+        password: ByteArray,
+        reported_iterations: Int?,
+    ): UnwrappedVault {
+        val first = if (reported_iterations == VaultKdf.LEVEL2_ITERATIONS) {
+            VaultKdf.LEVEL2_ITERATIONS
+        } else {
+            VaultKdf.DEFAULT_ITERATIONS
+        }
+        val second = if (first == VaultKdf.LEVEL2_ITERATIONS) VaultKdf.DEFAULT_ITERATIONS else VaultKdf.LEVEL2_ITERATIONS
+        return try {
+            UnwrappedVault(decrypt_vault_with_password(encrypted_vault, vault_nonce, password, first), first)
+        } catch (primary: Exception) {
+            try {
+                UnwrappedVault(decrypt_vault_with_password(encrypted_vault, vault_nonce, password, second), second)
+            } catch (_: Exception) {
+                throw primary
+            }
         }
     }
 

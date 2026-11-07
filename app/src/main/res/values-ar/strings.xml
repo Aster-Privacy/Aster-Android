@@ -3569,4 +3569,8 @@
     <string name="mail_list_lines_two_subtitle">عرض المرسل والموضوع</string>
     <string name="mail_list_lines_three">3 أسطر</string>
     <string name="mail_list_lines_three_subtitle">عرض المرسل والموضوع وسطر من نص الرسالة</string>
+    <string name="client_update_title">حدّث Aster Mail</string>
+    <string name="client_update_body">يحتاج هذا الحساب إلى إصدار أحدث من Aster Mail. لمواصلة استخدامه على هذا الجهاز، حدّث التطبيق. ستبقى مسجلاً الدخول، ولن يُحذف أي شيء من هذا الجهاز.</string>
+    <string name="client_update_action">تحديث</string>
+    <string name="client_update_later">ليس الآن</string>
 </resources>

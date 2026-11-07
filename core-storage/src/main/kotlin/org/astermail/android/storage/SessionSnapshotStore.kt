@@ -46,6 +46,7 @@ class SessionSnapshotStore(context: Context? = null) {
         recovery_codes: List<String>?,
         previous_keys: List<String>?,
         legacy_keks: List<String>?,
+        vault_kdf_iterations: Int = SessionKeyStore.default_vault_kdf_iterations,
     ) {
         synchronized(lock) {
             val p = prefs ?: return
@@ -58,6 +59,10 @@ class SessionSnapshotStore(context: Context? = null) {
             e.putString("${account_id}_$key_identity", identity_key)
             e.putString("${account_id}_$key_enc_vault", encrypted_vault)
             e.putString("${account_id}_$key_vault_nonce", vault_nonce)
+            e.putInt(
+                "${account_id}_$key_vault_kdf_iterations",
+                SessionKeyStore.sanitize_vault_kdf_iterations(vault_kdf_iterations),
+            )
             e.putString("${account_id}_$key_password_salt", password_salt?.let { encode_b64(it) })
             e.putString("${account_id}_$key_user_id", user_id)
             e.putString("${account_id}_$key_user_email", user_email)
@@ -110,6 +115,9 @@ class SessionSnapshotStore(context: Context? = null) {
                 identity_key = p.getString("${account_id}_$key_identity", null),
                 encrypted_vault = p.getString("${account_id}_$key_enc_vault", null),
                 vault_nonce = p.getString("${account_id}_$key_vault_nonce", null),
+                vault_kdf_iterations = SessionKeyStore.sanitize_vault_kdf_iterations(
+                    p.getInt("${account_id}_$key_vault_kdf_iterations", SessionKeyStore.default_vault_kdf_iterations),
+                ),
                 password_salt = decode_b64_field(p, "${account_id}_$key_password_salt"),
                 user_id = p.getString("${account_id}_$key_user_id", null),
                 user_email = p.getString("${account_id}_$key_user_email", null),
@@ -126,7 +134,7 @@ class SessionSnapshotStore(context: Context? = null) {
             val e = p.edit()
             listOf(
                 key_token_access, key_token_refresh, key_csrf_token, key_session_key, key_passphrase,
-                key_identity, key_enc_vault, key_vault_nonce, key_password_salt,
+                key_identity, key_enc_vault, key_vault_nonce, key_vault_kdf_iterations, key_password_salt,
                 key_user_id, key_user_email, key_recovery_codes, key_previous_keys, key_legacy_keks,
             ).forEach { e.remove("${account_id}_$it") }
             e.commit()
@@ -152,6 +160,7 @@ class SessionSnapshotStore(context: Context? = null) {
         private const val key_identity = "identity_key"
         private const val key_enc_vault = "encrypted_vault"
         private const val key_vault_nonce = "vault_nonce"
+        private const val key_vault_kdf_iterations = "vault_kdf_iterations"
         private const val key_password_salt = "password_salt"
         private const val key_user_id = "user_id"
         private const val key_user_email = "user_email"
@@ -176,4 +185,5 @@ data class SessionSnapshot(
     val recovery_codes: List<String>?,
     val previous_keys: List<String>?,
     val legacy_keks: List<String>?,
+    val vault_kdf_iterations: Int = SessionKeyStore.default_vault_kdf_iterations,
 )

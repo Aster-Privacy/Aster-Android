@@ -34,6 +34,9 @@ import org.json.JSONObject
 interface StorageVaultCodec {
     fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject?
     fun encrypt(vault: JSONObject): SealedVault?
+    fun decrypt_at(encrypted_vault: String, vault_nonce: String, iterations: Int): JSONObject? =
+        decrypt(encrypted_vault, vault_nonce)
+    fun encrypt_at(vault: JSONObject, iterations: Int): SealedVault? = encrypt(vault)
     fun password_keys(vault: JSONObject): List<ByteArray>
     fun generate_key(): ByteArray
     fun fingerprints(vault: JSONObject): List<String>
@@ -56,8 +59,10 @@ class StorageVaultRotator(
     on_vault_changed: suspend (JSONObject, SealedVault) -> Unit,
     private val now: () -> String = { Instant.now().toString() },
     local_keys: () -> LocalStorageKeys = { LocalStorageKeys.NONE },
+    upgrade_on_rotation: Boolean = false,
 ) {
-    private val updater = VaultUpdater(api, codec, user_id, lock, on_vault_changed, now, local_keys)
+    private val updater =
+        VaultUpdater(api, codec, user_id, lock, on_vault_changed, now, local_keys, upgrade_on_rotation)
 
     suspend fun fetch_snapshot(): ServerVaultSnapshot? = updater.fetch_snapshot()
 

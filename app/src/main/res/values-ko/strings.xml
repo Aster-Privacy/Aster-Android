@@ -3467,4 +3467,8 @@
     <string name="mail_list_lines_two_subtitle">보낸 사람과 제목 표시</string>
     <string name="mail_list_lines_three">3줄</string>
     <string name="mail_list_lines_three_subtitle">보낸 사람, 제목, 메시지 본문 한 줄 표시</string>
+    <string name="client_update_title">Aster Mail 업데이트</string>
+    <string name="client_update_body">이 계정에는 최신 버전의 Aster Mail이 필요합니다. 이 기기에서 계속 사용하려면 앱을 업데이트하세요. 로그인 상태는 유지되며 이 기기에서 아무것도 삭제되지 않습니다.</string>
+    <string name="client_update_action">업데이트</string>
+    <string name="client_update_later">나중에</string>
 </resources>

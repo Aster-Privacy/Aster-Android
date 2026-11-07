@@ -3528,4 +3528,8 @@
     <string name="mail_list_lines_two_subtitle">Показывать отправителя и тему</string>
     <string name="mail_list_lines_three">3 строки</string>
     <string name="mail_list_lines_three_subtitle">Показывать отправителя, тему и строку текста сообщения</string>
+    <string name="client_update_title">Обновите Aster Mail</string>
+    <string name="client_update_body">Для этого аккаунта нужна более новая версия Aster Mail. Чтобы продолжить пользоваться им на этом устройстве, обновите приложение. Вы останетесь в аккаунте, и с этого устройства ничего не будет удалено.</string>
+    <string name="client_update_action">Обновить</string>
+    <string name="client_update_later">Не сейчас</string>
 </resources>

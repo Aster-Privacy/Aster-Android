@@ -4180,6 +4180,9 @@ class MailRepository @Inject constructor(
                 nonce_bytes.size == 1 && nonce_bytes[0] == 1.toByte() -> {
                     decrypt_envelope_pbkdf2(encrypted_envelope)
                 }
+                nonce_bytes.size == 1 && nonce_bytes[0] == 2.toByte() -> {
+                    decrypt_envelope_v2(encrypted_envelope) ?: throw EnvelopeKeysMissingException()
+                }
                 else -> {
                     decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value)
                         ?: runCatching {
@@ -4667,6 +4670,8 @@ class MailRepository @Inject constructor(
         val decrypted = runCatching {
             decrypt_envelope_identity_key(encrypted_meta, nonce_bytes)
         }.recoverCatching {
+            decrypt_envelope_v2(encrypted_meta) ?: throw IllegalStateException()
+        }.recoverCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
         }.getOrNull() ?: run {
             session_key_store.get_identity_key()
@@ -4692,12 +4697,15 @@ class MailRepository @Inject constructor(
             }
         }
 
-        val decrypted = runCatching {
+        val decrypted = decrypt_envelope_v2(encrypted_meta) ?: runCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
         }.getOrNull() ?: return null
 
         return parse_attachment_meta_json(decrypted)
     }
+
+    private fun decrypt_envelope_v2(encrypted_b64: String): ByteArray? =
+        LevelTwoEnvelope.open_with_store(encrypted_b64, session_key_store)
 
     fun decrypt_attachment_data(
         encrypted_data_b64: String,
@@ -7045,6 +7053,16 @@ class MailRepository @Inject constructor(
     }
 
     private fun encrypt_envelope(json: String): Pair<String, String> {
+        val level2_key = LevelTwoEnvelope.write_key(session_key_store)
+        if (level2_key != null) {
+            val plain = json.toByteArray(Charsets.UTF_8)
+            try {
+                return Pair(LevelTwoEnvelope.seal_b64(plain, level2_key), LevelTwoEnvelope.marker_b64())
+            } finally {
+                plain.fill(0)
+                level2_key.fill(0)
+            }
+        }
         val passphrase = session_key_store.get_passphrase()
         if (passphrase != null) {
             try {

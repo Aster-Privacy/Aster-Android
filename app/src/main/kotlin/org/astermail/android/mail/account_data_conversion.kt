@@ -420,7 +420,7 @@ class AccountDataConversion internal constructor(
                 if (converted_envelopes < status.remaining_sent) {
                     val outcome = convert_envelope_item(item, keys)
                     if (outcome != ConversionItemOutcome.SKIPPED ||
-                        SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)
+                        is_password_envelope_nonce(item.envelope_nonce)
                     ) {
                         counts.tally(outcome)
                     }
@@ -487,7 +487,7 @@ class AccountDataConversion internal constructor(
 
     internal suspend fun convert_envelope_item(item: MailItem, keys: ConversionKeys): ConversionItemOutcome {
         val envelope = item.encrypted_envelope
-        if (envelope.isNullOrEmpty() || !SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)) {
+        if (envelope.isNullOrEmpty() || !is_password_envelope_nonce(item.envelope_nonce)) {
             return ConversionItemOutcome.SKIPPED
         }
         val stored = decode_base64(envelope) ?: return ConversionItemOutcome.UNREADABLE
@@ -551,13 +551,17 @@ class AccountDataConversion internal constructor(
         return open_password_envelope(encrypted_meta, keys)
     }
 
+    private fun is_password_envelope_nonce(nonce_b64: String?): Boolean =
+        SentMailResealCrypto.is_sentinel_nonce(nonce_b64) || LevelTwoEnvelope.is_marker_b64(nonce_b64)
+
     private fun open_password_envelope(sealed_b64: String, keys: ConversionKeys): String? {
         val data = decode_base64(sealed_b64) ?: return null
         if (data.size <= SALT_LENGTH + NONCE_LENGTH) return null
         val salt = data.copyOfRange(0, SALT_LENGTH)
         val nonce = data.copyOfRange(SALT_LENGTH, SALT_LENGTH + NONCE_LENGTH)
         val ciphertext = data.copyOfRange(SALT_LENGTH + NONCE_LENGTH, data.size)
-        val opened = open_with_passphrases(salt, nonce, ciphertext, keys)
+        val opened = LevelTwoEnvelope.open_with_store(sealed_b64, session_key_store)
+            ?: open_with_passphrases(salt, nonce, ciphertext, keys)
             ?: decrypt_with_keks(nonce, ciphertext)
             ?: return null
         return try {

@@ -68,6 +68,7 @@ data class ChangePasswordRequest(
     val new_vault_nonce: String,
     val vault_format: Int? = null,
     val vault_key_fingerprints: List<String>? = null,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable

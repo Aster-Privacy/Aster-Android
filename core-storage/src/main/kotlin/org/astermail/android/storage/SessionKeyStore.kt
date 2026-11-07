@@ -69,6 +69,9 @@ class SessionKeyStore(context: Context? = null) {
     private var vault_nonce: String? = null
 
     @Volatile
+    private var vault_kdf_iterations: Int = default_vault_kdf_iterations
+
+    @Volatile
     private var password_salt: ByteArray? = null
 
     @Volatile
@@ -88,6 +91,9 @@ class SessionKeyStore(context: Context? = null) {
 
     @Volatile
     private var account_keks: List<String>? = null
+
+    @Volatile
+    private var level2_admitted = false
 
     @Volatile
     private var account_kek_generation: Long = 0
@@ -147,6 +153,9 @@ class SessionKeyStore(context: Context? = null) {
                 encrypted_vault = p.getString(key_enc_vault, null)
                 encrypted_vault?.let { remember_vault_salt_locked(it) }
                 vault_nonce = p.getString(key_vault_nonce, null)
+                vault_kdf_iterations = sanitize_vault_kdf_iterations(
+                    p.getInt(key_vault_kdf_iterations, default_vault_kdf_iterations),
+                )
                 password_salt = decode_b64_field(p, key_password_salt)
                 user_id = p.getString(key_user_id, null)
                 user_email = p.getString(key_user_email, null)
@@ -330,15 +339,28 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
-    fun put_encrypted_vault(encrypted_vault_b64: String, vault_nonce_b64: String) {
+    fun put_encrypted_vault(
+        encrypted_vault_b64: String,
+        vault_nonce_b64: String,
+        kdf_iterations: Int = default_vault_kdf_iterations,
+    ) {
         synchronized(lock) {
+            val iterations = sanitize_vault_kdf_iterations(kdf_iterations)
             this.encrypted_vault = encrypted_vault_b64
             this.vault_nonce = vault_nonce_b64
+            this.vault_kdf_iterations = iterations
             remember_vault_salt_locked(encrypted_vault_b64)
             prefs?.edit()
                 ?.putString(key_enc_vault, encrypted_vault_b64)
                 ?.putString(key_vault_nonce, vault_nonce_b64)
+                ?.putInt(key_vault_kdf_iterations, iterations)
                 ?.commit()
+        }
+    }
+
+    fun get_vault_kdf_iterations(): Int {
+        synchronized(lock) {
+            return vault_kdf_iterations
         }
     }
 
@@ -541,6 +563,12 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun set_level2_admitted(value: Boolean) {
+        level2_admitted = value
+    }
+
+    fun is_level2_admitted(): Boolean = level2_admitted
+
     fun get(): ByteArray? {
         synchronized(lock) {
             return key_material?.copyOf()
@@ -606,6 +634,7 @@ class SessionKeyStore(context: Context? = null) {
             identity_key = null
             encrypted_vault = null
             vault_nonce = null
+            vault_kdf_iterations = default_vault_kdf_iterations
             password_salt?.fill(0)
             password_salt = null
             user_id = null
@@ -620,6 +649,7 @@ class SessionKeyStore(context: Context? = null) {
             account_load_pending.value = false
             data_kek?.fill(0)
             data_kek = null
+            level2_admitted = false
             storage_kdf_version = null
             pending_reseal_passphrase?.fill(0)
             pending_reseal_passphrase = null
@@ -655,6 +685,12 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_identity = "identity_key"
         private const val key_enc_vault = "encrypted_vault"
         private const val key_vault_nonce = "vault_nonce"
+        private const val key_vault_kdf_iterations = "vault_kdf_iterations"
+        const val default_vault_kdf_iterations = 310000
+        private const val level2_vault_kdf_iterations = 600000
+
+        fun sanitize_vault_kdf_iterations(value: Int): Int =
+            if (value == level2_vault_kdf_iterations) level2_vault_kdf_iterations else default_vault_kdf_iterations
         private const val key_password_salt = "password_salt"
         private const val key_user_id = "user_id"
         private const val key_user_email = "user_email"

@@ -3486,4 +3486,8 @@
     <string name="mail_list_lines_two_subtitle">Afzender en onderwerp weergeven</string>
     <string name="mail_list_lines_three">3 regels</string>
     <string name="mail_list_lines_three_subtitle">Afzender, onderwerp en een regel berichttekst weergeven</string>
+    <string name="client_update_title">Aster Mail bijwerken</string>
+    <string name="client_update_body">Voor dit account is een nieuwere versie van Aster Mail nodig. Werk de app bij om het op dit apparaat te blijven gebruiken. Je blijft ingelogd en er wordt niets van dit apparaat verwijderd.</string>
+    <string name="client_update_action">Bijwerken</string>
+    <string name="client_update_later">Niet nu</string>
 </resources>

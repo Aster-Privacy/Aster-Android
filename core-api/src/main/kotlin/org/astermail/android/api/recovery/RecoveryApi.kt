@@ -94,6 +94,7 @@ data class CompleteRecoveryRequest(
     val new_email_recovery_backup: NewEmailRecoveryBackup? = null,
     val new_recovery_email: RecoveryEmailReencryption? = null,
     val vault_format: Int? = null,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable
@@ -121,6 +122,7 @@ data class SaveRecoveryBackupRequest(
     val vault_format: Int? = null,
     val expected_vault_sha256: String? = null,
     val refresh_only: Boolean? = null,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable
@@ -195,6 +197,7 @@ data class FetchInactiveKeySetResponse(
     val encrypted_vault: String,
     val vault_nonce: String,
     val vault_version: Int = 1,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable

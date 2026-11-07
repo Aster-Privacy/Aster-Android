@@ -65,17 +65,20 @@ interface DeviceRecoveryVaultCodec {
     fun derive_storage_key(passphrase: ByteArray): String?
 }
 
-class NativeDeviceRecoveryVaultCodec : DeviceRecoveryVaultCodec {
+class NativeDeviceRecoveryVaultCodec(
+    private val reported_iterations: () -> Int? = { null },
+) : DeviceRecoveryVaultCodec {
     override fun decrypt_vault(
         encrypted_vault: String,
         vault_nonce: String,
         passphrase: ByteArray,
     ): ByteArray? = runCatching {
-        CryptoNative.decrypt_vault_with_password(
+        CryptoNative.unwrap_vault(
             Base64.getDecoder().decode(encrypted_vault),
             Base64.getDecoder().decode(vault_nonce),
             passphrase,
-        )
+            reported_iterations(),
+        ).plaintext
     }.getOrNull()
 
     override fun derive_storage_key(passphrase: ByteArray): String? = runCatching {
@@ -134,7 +137,7 @@ class DeviceRecovery internal constructor(
         session_key_store,
         FileDeviceSnapshotStore(context),
         KeystoreDeviceRecoveryKeyProvider(),
-        NativeDeviceRecoveryVaultCodec(),
+        NativeDeviceRecoveryVaultCodec { session_key_store.get_vault_kdf_iterations() },
         PrefsDeviceRecoveryStateStore(context),
         DeviceRecoveryCommit { user_id, passphrase, vault_obj, identity_keys, keks, ratchet, base_vault ->
             auth_repository.get().commit_recovered_keys(

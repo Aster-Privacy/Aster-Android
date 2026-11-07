@@ -33,6 +33,7 @@ import org.astermail.android.api.mail.UpdateAttachmentMetaRequest
 import org.astermail.android.api.mail.UpdateMailItemEnvelopeRequest
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.PasswordKdf
+import org.astermail.android.storage.SessionKeyStore
 
 data class SentMailResealSummary(
     val checked: Int = 0,
@@ -106,6 +107,7 @@ object SentMailResealCrypto {
 @Singleton
 class SentMailResealer @Inject constructor(
     private val mail_api: MailApi,
+    private val session_key_store: SessionKeyStore? = null,
 ) {
     suspend fun run(
         old_passphrase: ByteArray,
@@ -164,8 +166,8 @@ class SentMailResealer @Inject constructor(
         if (plaintext == null) {
             return if (SentMailResealCrypto.opens_with(sealed, new_passphrase)) Outcome.SKIPPED else Outcome.UNREADABLE
         }
-        val resealed = try {
-            SentMailResealCrypto.seal(plaintext, new_passphrase)
+        val (resealed, resealed_nonce) = try {
+            reseal_plaintext(plaintext, new_passphrase, SentMailResealCrypto.sentinel_nonce_b64())
         } finally {
             plaintext.fill(0)
         }
@@ -174,7 +176,12 @@ class SentMailResealer @Inject constructor(
                 item.id,
                 UpdateMailItemEnvelopeRequest(
                     encrypted_envelope = resealed,
-                    envelope_nonce = SentMailResealCrypto.sentinel_nonce_b64(),
+                    envelope_nonce = resealed_nonce ?: SentMailResealCrypto.sentinel_nonce_b64(),
+                    expected_envelope_sha256 = if (LevelTwoEnvelope.is_marker_b64(resealed_nonce)) {
+                        LevelTwoEnvelope.stored_sha256_hex(sealed)
+                    } else {
+                        null
+                    },
                 ),
             )
         } catch (cancelled: CancellationException) {
@@ -214,13 +221,14 @@ class SentMailResealer @Inject constructor(
                 if (attachment.encrypted_meta.isEmpty()) continue
                 if (SentMailResealCrypto.is_pgp_armored_b64(attachment.encrypted_meta)) continue
                 if (legacy_only && !AccountDataConversion.is_legacy_meta_nonce(attachment.meta_nonce)) continue
+                if (opens_as_level2(attachment.encrypted_meta)) continue
                 val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase)
                 if (plaintext == null) {
                     if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase)) continue
                     return null
                 }
                 val resealed = try {
-                    SentMailResealCrypto.seal(plaintext, new_passphrase)
+                    reseal_plaintext(plaintext, new_passphrase, null).first
                 } finally {
                     plaintext.fill(0)
                 }
@@ -239,6 +247,28 @@ class SentMailResealer @Inject constructor(
         } catch (_: Throwable) {
             null
         }
+    }
+
+    private fun reseal_plaintext(
+        plaintext: ByteArray,
+        new_passphrase: ByteArray,
+        password_nonce: String?,
+    ): Pair<String, String?> {
+        val store = session_key_store ?: return Pair(SentMailResealCrypto.seal(plaintext, new_passphrase), password_nonce)
+        val level2_key = LevelTwoEnvelope.write_key(store)
+            ?: return Pair(SentMailResealCrypto.seal(plaintext, new_passphrase), password_nonce)
+        return try {
+            Pair(LevelTwoEnvelope.seal_b64(plaintext, level2_key), LevelTwoEnvelope.marker_b64())
+        } finally {
+            level2_key.fill(0)
+        }
+    }
+
+    private fun opens_as_level2(sealed_b64: String): Boolean {
+        val store = session_key_store ?: return false
+        val opened = LevelTwoEnvelope.open_with_store(sealed_b64, store) ?: return false
+        opened.fill(0)
+        return true
     }
 
     private enum class Outcome { REWRITTEN, SKIPPED, UNREADABLE, FAILED }

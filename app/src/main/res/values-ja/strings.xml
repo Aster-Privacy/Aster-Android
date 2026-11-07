@@ -3474,4 +3474,8 @@
     <string name="mail_list_lines_two_subtitle">差出人と件名を表示</string>
     <string name="mail_list_lines_three">3 行</string>
     <string name="mail_list_lines_three_subtitle">差出人、件名、本文の 1 行を表示</string>
+    <string name="client_update_title">Aster Mail をアップデート</string>
+    <string name="client_update_body">このアカウントには新しいバージョンの Aster Mail が必要です。このデバイスで引き続き使用するには、アプリをアップデートしてください。サインインしたままで、このデバイスから何も削除されません。</string>
+    <string name="client_update_action">アップデート</string>
+    <string name="client_update_later">後で</string>
 </resources>

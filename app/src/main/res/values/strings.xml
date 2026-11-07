@@ -3537,4 +3537,8 @@
     <string name="mail_list_lines_two_subtitle">Show the sender and the subject</string>
     <string name="mail_list_lines_three">3 lines</string>
     <string name="mail_list_lines_three_subtitle">Show the sender, the subject, and a line of message text</string>
+    <string name="client_update_title">Update Aster Mail</string>
+    <string name="client_update_body">This account needs a newer version of Aster Mail. To keep using it on this device, update the app. You stay signed in, and nothing on this device is removed.</string>
+    <string name="client_update_action">Update</string>
+    <string name="client_update_later">Not now</string>
 </resources>

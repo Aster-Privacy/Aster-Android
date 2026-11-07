@@ -3528,4 +3528,8 @@
     <string name="mail_list_lines_two_subtitle">Pokazuj nadawcę i temat</string>
     <string name="mail_list_lines_three">3 wiersze</string>
     <string name="mail_list_lines_three_subtitle">Pokazuj nadawcę, temat i jeden wiersz treści wiadomości</string>
+    <string name="client_update_title">Zaktualizuj Aster Mail</string>
+    <string name="client_update_body">To konto wymaga nowszej wersji Aster Mail. Aby nadal używać go na tym urządzeniu, zaktualizuj aplikację. Pozostaniesz zalogowany, a z tego urządzenia nic nie zostanie usunięte.</string>
+    <string name="client_update_action">Zaktualizuj</string>
+    <string name="client_update_later">Nie teraz</string>
 </resources>

@@ -67,6 +67,7 @@ data class LoginResponse(
     val switch_token: String? = null,
     val switch_token_expires_at: String? = null,
     val is_suspended: Boolean? = null,
+    val vault_kdf_iterations: Int? = null,
 )
 
 @Serializable
@@ -303,6 +304,7 @@ data class DeleteAccountRequest(
 data class VaultResponse(
     val encrypted_vault: String,
     val vault_nonce: String,
+    val vault_kdf_iterations: Int? = null,
 )
 
 interface AuthApi {

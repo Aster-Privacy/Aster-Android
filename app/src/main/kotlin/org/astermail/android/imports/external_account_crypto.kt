@@ -121,11 +121,12 @@ fun external_account_kdf_version(
     if (cached_version != null) return cached_version
     val (encrypted, nonce) = encrypted_vault ?: return null
     val plaintext = try {
-        CryptoNative.decrypt_vault_with_password(
+        CryptoNative.unwrap_vault(
             Base64.getDecoder().decode(encrypted),
             Base64.getDecoder().decode(nonce),
             passphrase,
-        )
+            null,
+        ).plaintext
     } catch (cancelled: java.util.concurrent.CancellationException) {
         throw cancelled
     } catch (_: Exception) {
