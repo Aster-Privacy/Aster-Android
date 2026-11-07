@@ -26,14 +26,10 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Mac
 import org.astermail.android.crypto.AesGcm
-import org.astermail.android.crypto.CryptoNative
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonObject
 
 private const val HMAC_INFO = "external-accounts-hmac-v1"
 private const val INTEGRITY_SUFFIX = "external-accounts-v1"
@@ -96,55 +92,6 @@ private fun generate_integrity_hash(
     val combined = "$encrypted_data:$nonce:$INTEGRITY_SUFFIX".toByteArray(Charsets.UTF_8)
     val signed = mac.doFinal(combined)
     return Base64.getEncoder().encodeToString(signed)
-}
-
-fun external_account_master_key(
-    data_kek: ByteArray?,
-    passphrase: () -> ByteArray?,
-    derive_storage_key: (ByteArray) -> ByteArray?,
-): ByteArray? {
-    if (data_kek != null && data_kek.size == 32) return data_kek
-    data_kek?.fill(0)
-    val password = passphrase() ?: return null
-    return try {
-        derive_storage_key(password)
-    } finally {
-        password.fill(0)
-    }
-}
-
-fun external_account_kdf_version(
-    cached_version: Int?,
-    encrypted_vault: Pair<String, String>?,
-    passphrase: ByteArray,
-): Int? {
-    if (cached_version != null) return cached_version
-    val (encrypted, nonce) = encrypted_vault ?: return null
-    val plaintext = try {
-        CryptoNative.unwrap_vault(
-            Base64.getDecoder().decode(encrypted),
-            Base64.getDecoder().decode(nonce),
-            passphrase,
-            null,
-        ).plaintext
-    } catch (cancelled: java.util.concurrent.CancellationException) {
-        throw cancelled
-    } catch (_: Exception) {
-        return null
-    }
-    return try {
-        val version = Json.parseToJsonElement(String(plaintext, Charsets.UTF_8))
-            .jsonObject["kdf_version"] as? JsonPrimitive
-        when {
-            version == null || version is kotlinx.serialization.json.JsonNull -> 1
-            version.isString -> -1
-            else -> version.intOrNull ?: -1
-        }
-    } catch (_: Exception) {
-        null
-    } finally {
-        plaintext.fill(0)
-    }
 }
 
 fun decrypt_account_data_with_keys(

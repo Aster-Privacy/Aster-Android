@@ -83,45 +83,8 @@ class ExternalAccountCryptoTest {
         ))
     }
 
-    @Test
-    fun upgraded_session_reads_v2_metadata_from_cached_vault() {
-        val passphrase = "fixture-password".toByteArray()
-        val envelope = CryptoNative.encrypt_vault_with_password("{\"kdf_version\":2,\"identity_key\":\"already-present\"}".toByteArray(), passphrase)
-        val encoder = java.util.Base64.getEncoder()
-        val vault = encoder.encodeToString(envelope.encrypted_vault) to encoder.encodeToString(envelope.vault_nonce)
-
-        assertEquals(2, external_account_kdf_version(null, vault, passphrase))
-    }
-
-    @Test
-    fun vault_without_kdf_metadata_uses_legacy_kdf() {
-        val passphrase = "fixture-password".toByteArray()
-        val envelope = CryptoNative.encrypt_vault_with_password("{}".toByteArray(), passphrase)
-        val encoder = java.util.Base64.getEncoder()
-        val vault = encoder.encodeToString(envelope.encrypted_vault) to encoder.encodeToString(envelope.vault_nonce)
-
-        assertEquals(1, external_account_kdf_version(null, vault, passphrase))
-    }
-
-    @Test
-    fun cached_kdf_version_does_not_require_opening_vault() {
-        assertEquals(2, external_account_kdf_version(2, null, ByteArray(0)))
-    }
-
-    @Test
-    fun missing_metadata_without_cached_vault_does_not_guess_a_write_key() {
-        assertNull(external_account_kdf_version(null, null, "fixture-password".toByteArray()))
-    }
-
-    @Test
-    fun unreadable_cached_vault_does_not_guess_a_write_key() {
-        assertNull(external_account_kdf_version(null, "invalid" to "invalid", "fixture-password".toByteArray()))
-    }
-
     private fun assert_storage_key(version: Int, expected_hex: String) {
-        val key = external_account_master_key(null, { "fixture-password".toByteArray() }) {
-            CryptoNative.derive_storage_key_for_version(it, version)
-        }
+        val key = CryptoNative.derive_storage_key_for_version("fixture-password".toByteArray(), version)
         val expected = expected_hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
         assertArrayEquals(expected, key)
