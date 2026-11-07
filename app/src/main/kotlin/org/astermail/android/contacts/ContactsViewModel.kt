@@ -271,25 +271,28 @@ class ContactsViewModel @Inject constructor(
                 val new_contacts = candidates.filterNot {
                     matches_any(it, trashed_emails, trashed_names)
                 }
-                var imported = 0
-                var last_failure: Throwable? = null
-                var failed = 0
                 _state.value = _state.value.copy(import_done = 0, import_total = new_contacts.size)
-                for ((index, contact) in new_contacts.withIndex()) {
-                    val prepared = withContext(Dispatchers.Default) {
-                        contact.copy(avatar_url = normalize_contact_photo(contact.avatar_url))
-                    }
-                    repository.create_contact(prepared).fold(
-                        onSuccess = { imported++ },
-                        onFailure = { t ->
-                            last_failure = t
-                            failed++
-                        },
-                    )
-                    _state.value = _state.value.copy(import_done = index + 1)
-                }
+                val upload = upload_device_contacts(
+                    contacts = new_contacts,
+                    create = { contact ->
+                        val prepared = withContext(Dispatchers.Default) {
+                            contact.copy(avatar_url = normalize_contact_photo(contact.avatar_url))
+                        }
+                        repository.create_contact(prepared)
+                    },
+                    on_progress = { done -> _state.value = _state.value.copy(import_done = done) },
+                )
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
-                val failure = last_failure
+                val imported = upload.imported
+                val failed = upload.failed
+                val failure = upload.last_failure
+                if (imported == 0 && upload.limit_reached) {
+                    _state.value = _state.value.copy(
+                        is_syncing = false,
+                        error = context.getString(R.string.contact_limit_reached),
+                    )
+                    return@launch
+                }
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_syncing = false,
@@ -309,6 +312,7 @@ class ContactsViewModel @Inject constructor(
                         failed == 0 -> context.getString(R.string.no_new_contacts)
                         else -> null
                     },
+                    error = if (upload.limit_reached) context.getString(R.string.contact_limit_reached) else null,
                 )
                 load_contacts()
             } catch (e: kotlinx.coroutines.CancellationException) {
