@@ -3382,4 +3382,14 @@
     <string name="mail_list_lines_two_subtitle">प्रेषक और विषय दिखाएँ</string>
     <string name="mail_list_lines_three">3 पंक्तियाँ</string>
     <string name="mail_list_lines_three_subtitle">प्रेषक, विषय और संदेश के टेक्स्ट की एक पंक्ति दिखाएँ</string>
+    <string name="external_pgp_key_title">आयात की गई OpenPGP कुंजी</string>
+    <string name="external_pgp_key_expires">%1$s को समाप्त होगी</string>
+    <string name="external_pgp_key_no_expiry">समाप्त नहीं होती</string>
+    <string name="external_pgp_key_published">प्रकाशित। Aster Mail के बाहर के लोग यह कुंजी ढूंढ सकते हैं और आपको एन्क्रिप्ट किया गया ईमेल भेज सकते हैं।</string>
+    <string name="external_pgp_key_not_published">प्रकाशित नहीं। Aster Mail के बाहर के लोग यह कुंजी नहीं ढूंढ सकते।</string>
+    <string name="external_pgp_key_fingerprint">फ़िंगरप्रिंट</string>
+    <string name="external_pgp_key_stop_publishing">प्रकाशित करना बंद करें</string>
+    <string name="external_pgp_key_manage_note">इस कुंजी को आयात करने, बदलने या हटाने के लिए वेब पर Aster Mail या डेस्कटॉप ऐप इस्तेमाल करें।</string>
+    <string name="external_pgp_key_unpublished">आपकी आयात की गई कुंजी अब प्रकाशित नहीं है।</string>
+    <string name="external_pgp_key_unpublish_failed">आपकी कुंजी का प्रकाशन बंद नहीं हो सका। फिर से कोशिश करें।</string>
 </resources>

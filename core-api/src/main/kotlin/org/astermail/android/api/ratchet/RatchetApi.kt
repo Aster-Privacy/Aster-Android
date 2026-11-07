@@ -123,6 +123,7 @@ data class ReportEnvelopeCapabilityRequest(
     val identity_fingerprint: String? = null,
     val pq_identity_fingerprint: String? = null,
     val x3dh_max_version: Int = 1,
+    val pgp_external_version: Int? = null,
 )
 
 @Serializable

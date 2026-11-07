@@ -158,4 +158,29 @@ class PgpRepublishPolicyTest {
             decide_pgp_republish(local_fingerprint, false, PublishedPgpKey.Present("")),
         )
     }
+
+    @Test
+    fun an_external_row_never_drives_a_republish() {
+        val external = published_pgp_key_from_info("BB".repeat(20), "external")
+        assertEquals(PublishedPgpKey.Unknown, external)
+        assertEquals(
+            PgpRepublishDecision.SKIP_PUBLISHED_STATE_UNKNOWN,
+            decide_pgp_republish(local_fingerprint, false, external),
+        )
+        assertEquals(
+            PgpRepublishDecision.SKIP_PUBLISHED_STATE_UNKNOWN,
+            decide_pgp_republish(local_fingerprint, false, published_pgp_key_from_info(local_fingerprint, "external")),
+        )
+    }
+
+    @Test
+    fun a_missing_or_internal_role_counts_as_internal() {
+        listOf(null, "", "internal", "INTERNAL", " internal ").forEach { role ->
+            assertTrue(pgp_key_role_is_internal(role))
+            assertEquals(PublishedPgpKey.Present(local_fingerprint), published_pgp_key_from_info(local_fingerprint, role))
+            assertEquals(local_fingerprint, internal_pgp_fingerprint_or_blank(local_fingerprint, role))
+        }
+        assertFalse(pgp_key_role_is_internal("external"))
+        assertEquals("", internal_pgp_fingerprint_or_blank(local_fingerprint, "external"))
+    }
 }

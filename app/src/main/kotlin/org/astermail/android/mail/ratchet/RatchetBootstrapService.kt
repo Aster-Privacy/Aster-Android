@@ -706,7 +706,9 @@ class RatchetBootstrapService @Inject constructor(
             previous_keys = vault_previous_keys() + session_key_store.get_previous_keys().orEmpty(),
         )
         val published_fingerprint = try {
-            encryption_api.get_pgp_key_info().fingerprint
+            encryption_api.get_pgp_key_info().let {
+                org.astermail.android.auth.internal_pgp_fingerprint_or_blank(it.fingerprint, it.role)
+            }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (_: ApiError.NotFoundError) {

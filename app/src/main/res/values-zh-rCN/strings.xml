@@ -3471,4 +3471,14 @@
     <string name="mail_list_lines_two_subtitle">显示发件人和主题</string>
     <string name="mail_list_lines_three">3 行</string>
     <string name="mail_list_lines_three_subtitle">显示发件人、主题和一行邮件正文</string>
+    <string name="external_pgp_key_title">导入的 OpenPGP 密钥</string>
+    <string name="external_pgp_key_expires">%1$s 到期</string>
+    <string name="external_pgp_key_no_expiry">永不过期</string>
+    <string name="external_pgp_key_published">已发布。Aster Mail 以外的人可以找到此密钥并向您发送加密邮件。</string>
+    <string name="external_pgp_key_not_published">未发布。Aster Mail 以外的人无法找到此密钥。</string>
+    <string name="external_pgp_key_fingerprint">指纹</string>
+    <string name="external_pgp_key_stop_publishing">停止发布</string>
+    <string name="external_pgp_key_manage_note">要导入、替换或删除此密钥，请使用 Aster Mail 网页版或桌面应用。</string>
+    <string name="external_pgp_key_unpublished">您导入的密钥已不再发布。</string>
+    <string name="external_pgp_key_unpublish_failed">无法停止发布您的密钥。请重试。</string>
 </resources>

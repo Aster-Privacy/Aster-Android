@@ -85,6 +85,7 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.crypto.ClientPgpCopies
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.DetachedSignature
+import org.astermail.android.crypto.ExternalPgpKeyCodec
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpSigner
@@ -542,7 +543,11 @@ class MailRepository @Inject constructor(
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val pending_action_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
     private val encryption_api_provider: dagger.Lazy<org.astermail.android.api.encryption.EncryptionApi>? = null,
+    private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
 ) {
+    private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
+        get() = external_pgp_key_store_provider?.get()
+
     private val pending_action_queue: PendingMailActionQueue?
         get() = pending_action_queue_provider?.get()
 
@@ -2135,14 +2140,25 @@ class MailRepository @Inject constructor(
         encrypted_envelope: String?,
         envelope_nonce: String?,
         message_id: String? = null,
+        allow_external_pgp: Boolean = false,
     ): HealingEnvelopeResult = withContext(Dispatchers.IO) {
-        val envelope = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
+        val envelope = try_decrypt_envelope(
+            encrypted_envelope,
+            envelope_nonce,
+            message_id,
+            allow_external_pgp = allow_external_pgp,
+        )
         if (envelope != null || !is_sealed_inbound_nonce(envelope_nonce)) {
             return@withContext HealingEnvelopeResult(envelope, false)
         }
         if (!heal_envelope_keys()) return@withContext HealingEnvelopeResult(null, true)
         HealingEnvelopeResult(
-            try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id),
+            try_decrypt_envelope(
+                encrypted_envelope,
+                envelope_nonce,
+                message_id,
+                allow_external_pgp = allow_external_pgp,
+            ),
             false,
         )
     }
@@ -3959,6 +3975,7 @@ class MailRepository @Inject constructor(
             ratchet_override = ratchet_override,
             key_sets = key_sets,
             base_envelope = base_envelope,
+            allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
         )
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
@@ -4061,6 +4078,7 @@ class MailRepository @Inject constructor(
             item.envelope_nonce,
             item.id,
             on_keys_missing = { keys_missing = true },
+            allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
         )
         val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
@@ -4115,13 +4133,24 @@ class MailRepository @Inject constructor(
         encrypted_envelope: String?,
         envelope_nonce: String?,
         message_id: String? = null,
-    ): DecryptedEnvelope? = try_decrypt_envelope(encrypted_envelope, envelope_nonce, message_id)
+        allow_external_pgp: Boolean = false,
+    ): DecryptedEnvelope? = try_decrypt_envelope(
+        encrypted_envelope,
+        envelope_nonce,
+        message_id,
+        allow_external_pgp = allow_external_pgp,
+    )
 
     fun notification_preview(envelope: DecryptedEnvelope): String =
         clean_preview(envelope.body_text, envelope.body_html)
 
     suspend fun decrypt_item_for_export(item: MailItem): DecryptedEnvelope? =
-        decrypt_envelope_with_heal(item.encrypted_envelope, item.envelope_nonce, item.id).envelope
+        decrypt_envelope_with_heal(
+            item.encrypted_envelope,
+            item.envelope_nonce,
+            item.id,
+            allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
+        ).envelope
 
     private fun try_decrypt_envelope(
         encrypted_envelope: String?,
@@ -4134,6 +4163,7 @@ class MailRepository @Inject constructor(
         base_envelope: DecryptedEnvelope? = null,
         base_sink: MutableMap<String, DecryptedEnvelope>? = null,
         on_keys_missing: (() -> Unit)? = null,
+        allow_external_pgp: Boolean = false,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -4142,7 +4172,7 @@ class MailRepository @Inject constructor(
         return try {
             if (base_envelope != null) {
                 return if (decrypt_body_fields) {
-                    decrypt_pgp_body_fields(base_envelope, message_id, ratchet_override)
+                    decrypt_pgp_body_fields(base_envelope, message_id, ratchet_override, allow_external_pgp)
                 } else {
                     base_envelope
                 }
@@ -4158,6 +4188,7 @@ class MailRepository @Inject constructor(
                         val armored_is_encrypted =
                             body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
                         val pgp_result = try_pgp_decrypt_own_result(text)
+                            ?: if (allow_external_pgp) try_external_pgp_decrypt(text, null) else null
                         val pgp_plaintext = pgp_result?.plaintext
                         if (pgp_plaintext != null) {
                             envelope_pgp_encrypted = armored_is_encrypted
@@ -4222,7 +4253,7 @@ class MailRepository @Inject constructor(
             when {
                 envelope == null -> null
                 !decrypt_body_fields -> envelope
-                else -> decrypt_pgp_body_fields(envelope, message_id, ratchet_override)
+                else -> decrypt_pgp_body_fields(envelope, message_id, ratchet_override, allow_external_pgp)
             }
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) {
@@ -5127,7 +5158,7 @@ class MailRepository @Inject constructor(
             report_signing_skipped("signed_mime_build_threw")
             return null
         }
-        val signed = sign_mime_bytes(mime_bytes) ?: return null
+        val signed = sign_mime_bytes(mime_bytes, from) ?: return null
         return SignedMimePayload(
             mime_base64 = android.util.Base64.encodeToString(mime_bytes, android.util.Base64.NO_WRAP),
             signature = signed.signature,
@@ -5161,7 +5192,15 @@ class MailRepository @Inject constructor(
         ),
     ).toByteArray(Charsets.UTF_8)
 
-    private suspend fun sign_mime_bytes(mime_bytes: ByteArray): DetachedSignature? {
+    private suspend fun sign_mime_bytes(mime_bytes: ByteArray, from: String): DetachedSignature? {
+        val external_signer = if (ExternalPgpKeyCodec.is_primary_sender(from, session_key_store.get_user_email())) {
+            runCatching { external_pgp_key_store?.signing_key_if_ready() }.getOrNull()
+        } else {
+            null
+        }
+        if (external_signer != null) {
+            PgpSigner.sign_detached_unlocked(mime_bytes, external_signer)?.let { return it }
+        }
         val vault_identity_key = session_key_store.get_identity_key()
         if (vault_identity_key == null) {
             report_signing_skipped("vault_identity_key_unavailable")
@@ -5220,7 +5259,7 @@ class MailRepository @Inject constructor(
             val discovered = keys_api.discover_external_keys_batch(outside)
             val recipient_keys = ClientPgpCopies.recipient_keys(outside, discovered) ?: return null
             val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
-            val entity = sign_mime_bytes(mime_bytes)
+            val entity = sign_mime_bytes(mime_bytes, from)
                 ?.let { ClientPgpCopies.build_signed_mime_entity(mime_bytes, it.signature, it.micalg) }
                 ?: mime_bytes
             ClientPgpCopies.encrypt_copies(entity, recipient_keys, attachment_bytes)
@@ -5237,6 +5276,25 @@ class MailRepository @Inject constructor(
     private fun try_pgp_decrypt_result(
         ciphertext: String,
         sender_public_key: String? = null,
+        allow_external_pgp: Boolean = false,
+    ): org.astermail.android.crypto.PgpDecryptionResult? =
+        try_pgp_decrypt_account_result(ciphertext, sender_public_key)
+            ?: if (allow_external_pgp) try_external_pgp_decrypt(ciphertext, sender_public_key) else null
+
+    private fun try_external_pgp_decrypt(
+        ciphertext: String,
+        sender_public_key: String?,
+    ): org.astermail.android.crypto.PgpDecryptionResult? {
+        val keys = runCatching { external_pgp_key_store?.decryption_keys() }.getOrNull().orEmpty()
+        if (keys.isEmpty()) return null
+        return runCatching { PgpDecryptor.decrypt_with_unlocked_keys(ciphertext, keys, sender_public_key) }
+            .getOrNull()
+            ?.takeIf { it.plaintext != null }
+    }
+
+    private fun try_pgp_decrypt_account_result(
+        ciphertext: String,
+        sender_public_key: String?,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
         if (!identity_key.contains("-----BEGIN PGP")) return null
@@ -5269,6 +5327,11 @@ class MailRepository @Inject constructor(
     }
 
     private fun try_pgp_decrypt_own_result(
+        ciphertext: String,
+    ): org.astermail.android.crypto.PgpDecryptionResult? =
+        try_pgp_decrypt_own_account_result(ciphertext)
+
+    private fun try_pgp_decrypt_own_account_result(
         ciphertext: String,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
         val identity_key = session_key_store.get_identity_key() ?: return null
@@ -5371,6 +5434,7 @@ class MailRepository @Inject constructor(
             decrypt_body_fields = false,
             key_sets = key_sets,
             base_sink = base_envelopes,
+            allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
         ) ?: return null
         val candidate = ratchet_body_candidate(envelope) ?: return null
         val our_email = session_key_store.get_user_email()
@@ -5448,6 +5512,7 @@ class MailRepository @Inject constructor(
         envelope: DecryptedEnvelope,
         message_id: String? = null,
         ratchet_override: String? = null,
+        allow_external_pgp: Boolean = false,
     ): DecryptedEnvelope {
         var body_text = envelope.body_text
         var body_html = envelope.body_html
@@ -5495,7 +5560,7 @@ class MailRepository @Inject constructor(
         var text_pgp_decrypted = false
         if (body_starts_with(body_text, "-----BEGIN PGP")) {
             if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_text, sender_verification_key(envelope.from_email))
+            val decrypted = try_pgp_decrypt_result(body_text, sender_verification_key(envelope.from_email), allow_external_pgp)
             if (decrypted?.plaintext != null) {
                 body_text = decrypted.plaintext
                 pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
@@ -5511,7 +5576,7 @@ class MailRepository @Inject constructor(
             if (text_pgp_decrypted) {
                 body_html = null
             } else {
-                val decrypted = try_pgp_decrypt_result(html_armor, sender_verification_key(envelope.from_email))
+                val decrypted = try_pgp_decrypt_result(html_armor, sender_verification_key(envelope.from_email), allow_external_pgp)
                 if (decrypted?.plaintext != null) {
                     body_text = decrypted.plaintext
                     body_html = null
@@ -5521,7 +5586,7 @@ class MailRepository @Inject constructor(
         }
         if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
             if (body_starts_with(body_html, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_html, sender_verification_key(envelope.from_email))
+            val decrypted = try_pgp_decrypt_result(body_html, sender_verification_key(envelope.from_email), allow_external_pgp)
             if (decrypted?.plaintext != null) {
                 body_html = decrypted.plaintext
                 pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)

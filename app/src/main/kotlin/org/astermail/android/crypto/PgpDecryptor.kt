@@ -235,43 +235,66 @@ object PgpDecryptor {
             val key_hash = key_digest(armored_private_key)
             val key_rings = secret_rings(armored_private_key, key_hash)
             val unlock_id = passphrase_digest(key_hash, passphrase)
-
-            val msg_stream = PGPUtil.getDecoderStream(
-                ByteArrayInputStream(armored_ciphertext.toByteArray(Charsets.UTF_8)),
-            )
-            val pgp_factory = PGPObjectFactory(msg_stream, JcaKeyFingerprintCalculator())
-            val enc_data_list = find_encrypted_data_list(pgp_factory) ?: return null
-
-            @Suppress("UNCHECKED_CAST")
-            val iterator = enc_data_list.encryptedDataObjects as Iterator<Any>
-            while (iterator.hasNext()) {
-                val pbe = iterator.next()
-                if (pbe !is PGPPublicKeyEncryptedData) continue
-
+            decrypt_message(armored_ciphertext, tracker) { key_id ->
                 @Suppress("DEPRECATION")
-                val holds_secret_key = key_rings.getSecretKey(pbe.keyID) != null
-                if (!holds_secret_key) continue
-
-                if (!pbe.isIntegrityProtected()) continue
-
-                val private_key = unlocked_private_key(key_rings, pbe.keyID, unlock_id, passphrase)
-                    ?: continue
-
-                val decryptor_factory = JcePublicKeyDataDecryptorFactoryBuilder()
-                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                    .build(private_key)
-
-                val clear_stream = pbe.getDataStream(decryptor_factory)
-                val plaintext = extract_literal_data(clear_stream, tracker)
-                if (plaintext != null) {
-                    if (pbe.verify()) return plaintext
-                    return null
-                }
+                val holds_secret_key = key_rings.getSecretKey(key_id) != null
+                if (holds_secret_key) unlocked_private_key(key_rings, key_id, unlock_id, passphrase) else null
             }
-            null
         } catch (_: Throwable) {
             null
         }
+    }
+
+    fun decrypt_with_unlocked_keys(
+        armored_ciphertext: String,
+        private_keys: Map<Long, PGPPrivateKey>,
+        sender_public_key_armored: String?,
+    ): PgpDecryptionResult {
+        if (private_keys.isEmpty()) return PgpDecryptionResult(null, PgpSignatureStatus.NONE)
+        val verifier = sender_public_key_armored
+            ?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { load_public_keys(it) }.getOrNull() }
+        val tracker = SignatureTracker(verifier)
+        val plaintext = try {
+            decrypt_message(armored_ciphertext, tracker) { key_id -> private_keys[key_id] }
+        } catch (_: Throwable) {
+            null
+        }
+        return PgpDecryptionResult(plaintext, if (plaintext == null) PgpSignatureStatus.NONE else tracker.result())
+    }
+
+    private fun decrypt_message(
+        armored_ciphertext: String,
+        tracker: SignatureTracker,
+        resolve_private_key: (Long) -> PGPPrivateKey?,
+    ): String? {
+        val msg_stream = PGPUtil.getDecoderStream(
+            ByteArrayInputStream(armored_ciphertext.toByteArray(Charsets.UTF_8)),
+        )
+        val pgp_factory = PGPObjectFactory(msg_stream, JcaKeyFingerprintCalculator())
+        val enc_data_list = find_encrypted_data_list(pgp_factory) ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        val iterator = enc_data_list.encryptedDataObjects as Iterator<Any>
+        while (iterator.hasNext()) {
+            val pbe = iterator.next()
+            if (pbe !is PGPPublicKeyEncryptedData) continue
+            if (!pbe.isIntegrityProtected()) continue
+
+            val private_key = resolve_private_key(pbe.keyID) ?: continue
+
+            val decryptor_factory = JcePublicKeyDataDecryptorFactoryBuilder()
+                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                .build(private_key)
+
+            val clear_stream = pbe.getDataStream(decryptor_factory)
+            val plaintext = extract_literal_data(clear_stream, tracker)
+            if (plaintext != null) {
+                if (pbe.verify()) return plaintext
+                return null
+            }
+        }
+        return null
     }
 
     private fun find_encrypted_data_list(factory: PGPObjectFactory): PGPEncryptedDataList? {

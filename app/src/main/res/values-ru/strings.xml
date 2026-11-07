@@ -3532,4 +3532,14 @@
     <string name="mail_list_lines_two_subtitle">Показывать отправителя и тему</string>
     <string name="mail_list_lines_three">3 строки</string>
     <string name="mail_list_lines_three_subtitle">Показывать отправителя, тему и строку текста сообщения</string>
+    <string name="external_pgp_key_title">Импортированный ключ OpenPGP</string>
+    <string name="external_pgp_key_expires">Истекает %1$s</string>
+    <string name="external_pgp_key_no_expiry">Бессрочный</string>
+    <string name="external_pgp_key_published">Опубликован. Люди за пределами Aster Mail могут найти этот ключ и отправлять вам зашифрованные письма.</string>
+    <string name="external_pgp_key_not_published">Не опубликован. Люди за пределами Aster Mail не могут найти этот ключ.</string>
+    <string name="external_pgp_key_fingerprint">Отпечаток</string>
+    <string name="external_pgp_key_stop_publishing">Отменить публикацию</string>
+    <string name="external_pgp_key_manage_note">Чтобы импортировать, заменить или удалить этот ключ, используйте Aster Mail в браузере или приложение для компьютера.</string>
+    <string name="external_pgp_key_unpublished">Ваш импортированный ключ больше не опубликован.</string>
+    <string name="external_pgp_key_unpublish_failed">Не удалось отменить публикацию ключа. Повторите попытку.</string>
 </resources>

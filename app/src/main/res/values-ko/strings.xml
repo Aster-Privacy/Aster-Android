@@ -3471,4 +3471,14 @@
     <string name="mail_list_lines_two_subtitle">보낸 사람과 제목 표시</string>
     <string name="mail_list_lines_three">3줄</string>
     <string name="mail_list_lines_three_subtitle">보낸 사람, 제목, 메시지 본문 한 줄 표시</string>
+    <string name="external_pgp_key_title">가져온 OpenPGP 키</string>
+    <string name="external_pgp_key_expires">%1$s에 만료</string>
+    <string name="external_pgp_key_no_expiry">만료되지 않음</string>
+    <string name="external_pgp_key_published">게시됨. Aster Mail 외부 사용자가 이 키를 찾아 암호화된 메일을 보낼 수 있습니다.</string>
+    <string name="external_pgp_key_not_published">게시 안 됨. Aster Mail 외부 사용자는 이 키를 찾을 수 없습니다.</string>
+    <string name="external_pgp_key_fingerprint">지문</string>
+    <string name="external_pgp_key_stop_publishing">게시 중지</string>
+    <string name="external_pgp_key_manage_note">이 키를 가져오거나 교체하거나 삭제하려면 웹의 Aster Mail 또는 데스크톱 앱을 사용하세요.</string>
+    <string name="external_pgp_key_unpublished">가져온 키가 더 이상 게시되지 않습니다.</string>
+    <string name="external_pgp_key_unpublish_failed">키 게시를 중지하지 못했습니다. 다시 시도하세요.</string>
 </resources>
