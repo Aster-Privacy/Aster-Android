@@ -1412,6 +1412,10 @@
     <string name="reply_include_quoted_subtitle">Commencer chaque réponse par le message d\'origine cité sous votre texte</string>
     <string name="reply_prefix_subject">Ajouter Rép. : à l\'objet</string>
     <string name="reply_prefix_subject_subtitle">Ajouter Re: devant l\'objet d\'origine lorsque vous répondez</string>
+    <string name="compose_from_selected_alias">Rédiger depuis l\'alias sélectionné</string>
+    <string name="compose_from_selected_alias_subtitle">Les nouveaux messages utilisent comme expéditeur l\'alias ouvert dans la barre latérale</string>
+    <string name="compose_from_selected_alias_info_title">Rédiger depuis l\'alias sélectionné</string>
+    <string name="compose_from_selected_alias_info_desc">Lorsque cette option est activée, un nouveau message que vous commencez alors qu\'un alias est ouvert dans la barre latérale est envoyé depuis cet alias. Les réponses, les transferts et les brouillons conservent leur expéditeur, et vous pouvez toujours modifier l\'adresse De avant l\'envoi.</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Protection du compte</string>

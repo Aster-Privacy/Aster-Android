@@ -274,6 +274,7 @@ fun ComposeScreen(
     shared_mail_vm: MailViewModel? = null,
     shared_settings_vm: SettingsViewModel? = null,
     share_payload: org.astermail.android.share.SharePayload? = null,
+    selected_alias: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -372,6 +373,29 @@ fun ComposeScreen(
     }
 
     val user_email = settings_state.user?.email?.takeIf { it.isNotBlank() } ?: current_user_email
+    val gated_selected_alias = remember(
+        settings_state.preferences?.compose_from_selected_alias,
+        selected_alias,
+        reply_to,
+        mode,
+        draft_id,
+        user_email,
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+    ) {
+        selected_alias_for_new_compose(
+            enabled = settings_state.preferences?.compose_from_selected_alias == true,
+            selected_alias = selected_alias,
+            reply_to = reply_to,
+            mode = mode,
+            draft_id = draft_id,
+            owned_senders = owned_sender_addresses(
+                user_email,
+                settings_state.aliases,
+                settings_state.custom_domain_addresses,
+            ),
+        )
+    }
     val thread_ghost_match = remember(thread_ghost_email, settings_state.ghost_aliases) {
         val target = thread_ghost_email?.lowercase()?.takeIf { it.isNotBlank() }
         if (target != null) {
@@ -602,7 +626,7 @@ fun ComposeScreen(
             )
         }
         build_compose_initial_state(
-            args = seed_args,
+            args = seed_args.copy(selected_alias = gated_selected_alias),
             identity = seeded_identity,
             thread = seed_thread,
             effective_mode = if (
@@ -626,6 +650,7 @@ fun ComposeScreen(
                 thread_ghost_match,
                 primary_sender_email,
                 alias_options,
+                gated_selected_alias,
             )
         }
     }
@@ -634,7 +659,7 @@ fun ComposeScreen(
     var from_manually_selected by rememberSaveable { mutableStateOf(false) }
     var pending_draft_from by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email) {
+    LaunchedEffect(alias_options, received_on_alias, thread_ghost_match, primary_sender_email, gated_selected_alias) {
         val next = next_from_alias(
             current = from_alias,
             current_tier = from_alias_tier,
@@ -643,6 +668,7 @@ fun ComposeScreen(
                 thread_ghost_match,
                 primary_sender_email,
                 alias_options,
+                gated_selected_alias,
             ),
             alias_options = alias_options,
             manually_selected = from_manually_selected,

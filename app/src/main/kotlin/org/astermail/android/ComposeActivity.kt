@@ -73,6 +73,7 @@ class ComposeActivity :
         private const val extra_draft_id = "draft_id"
         private const val extra_prefill_to = "prefill_to"
         private const val extra_thread_ghost = "thread_ghost"
+        private const val extra_selected_alias = "selected_alias"
 
         fun intent_for(
             context: Context,
@@ -81,6 +82,7 @@ class ComposeActivity :
             draft_id: String? = null,
             prefill_to: String? = null,
             thread_ghost_email: String? = null,
+            selected_alias: String? = null,
         ): Intent {
             val document_key = when {
                 !draft_id.isNullOrBlank() -> "draft/${Uri.encode(draft_id)}"
@@ -96,6 +98,7 @@ class ComposeActivity :
                 putExtra(extra_draft_id, draft_id)
                 putExtra(extra_prefill_to, prefill_to)
                 putExtra(extra_thread_ghost, thread_ghost_email)
+                putExtra(extra_selected_alias, selected_alias)
             }
         }
     }
@@ -136,6 +139,7 @@ class ComposeActivity :
         val draft_id = intent?.getStringExtra(extra_draft_id)?.takeIf { it.isNotBlank() }
         val prefill_to = intent?.getStringExtra(extra_prefill_to)?.takeIf { it.isNotBlank() }
         val thread_ghost_email = intent?.getStringExtra(extra_thread_ghost)?.takeIf { it.isNotBlank() }
+        val selected_alias = intent?.getStringExtra(extra_selected_alias)?.takeIf { it.isNotBlank() }
         enableEdgeToEdge()
         setContent {
             if (!secure_storage_ready.value) return@setContent
@@ -153,6 +157,7 @@ class ComposeActivity :
                         draft_id = draft_id,
                         prefill_to = prefill_to,
                         thread_ghost_email = thread_ghost_email,
+                        selected_alias = selected_alias,
                     )
                 }
                 if (is_locked) {

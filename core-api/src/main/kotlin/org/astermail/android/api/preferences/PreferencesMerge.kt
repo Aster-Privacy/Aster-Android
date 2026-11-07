@@ -36,8 +36,8 @@ private fun json_kind_matches(incoming: JsonElement, base: JsonElement): Boolean
         return incoming::class == base::class
     }
     return when {
-        base.booleanOrNull != null -> incoming.booleanOrNull != null
         base.isString -> incoming.isString
+        base.booleanOrNull != null -> !incoming.isString && incoming.booleanOrNull != null
         base.longOrNull != null || base.doubleOrNull != null ->
             !incoming.isString && (incoming.longOrNull != null || incoming.doubleOrNull != null)
         else -> true

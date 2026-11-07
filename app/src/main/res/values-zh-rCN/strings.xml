@@ -1964,6 +1964,10 @@
     <string name="reply_include_quoted_subtitle">每条回复都会在您的正文下方引用原始邮件</string>
     <string name="reply_prefix_subject">在主题中添加“回复：”</string>
     <string name="reply_prefix_subject_subtitle">回复时在原主题前加上 Re:</string>
+    <string name="compose_from_selected_alias">使用所选别名撰写</string>
+    <string name="compose_from_selected_alias_subtitle">新邮件使用您在侧边栏中打开的别名作为发件人</string>
+    <string name="compose_from_selected_alias_info_title">使用所选别名撰写</string>
+    <string name="compose_from_selected_alias_info_desc">开启后，在侧边栏中打开某个别名时新建的邮件将从该别名发送。回复、转发和草稿保留原发件人，您仍可以在发送前更改发件人地址。</string>
     <string name="section_account_protection">账户保护</string>
     <string name="protection_score">保护评分</string>
     <string name="section_authentication">身份验证</string>

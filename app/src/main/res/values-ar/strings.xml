@@ -1984,6 +1984,10 @@
     <string name="reply_include_quoted_subtitle">يبدأ كل رد بالرسالة الأصلية مقتبسة أسفل نصك</string>
     <string name="reply_prefix_subject">إضافة رد: إلى الموضوع</string>
     <string name="reply_prefix_subject_subtitle">يضع رد: قبل الموضوع الأصلي عند الرد</string>
+    <string name="compose_from_selected_alias">الإنشاء من الاسم المستعار المحدد</string>
+    <string name="compose_from_selected_alias_subtitle">تستخدم الرسائل الجديدة الاسم المستعار المفتوح في الشريط الجانبي كمرسل</string>
+    <string name="compose_from_selected_alias_info_title">الإنشاء من الاسم المستعار المحدد</string>
+    <string name="compose_from_selected_alias_info_desc">عند تفعيل هذا الخيار، تُرسَل الرسالة الجديدة التي تبدؤها أثناء فتح اسم مستعار في الشريط الجانبي من ذلك الاسم المستعار. تحتفظ الردود وإعادة التوجيه والمسودات بمرسلها، ويمكنك تغيير عنوان المرسل قبل الإرسال.</string>
     <string name="section_account_protection">حماية الحساب</string>
     <string name="protection_score">درجة الحماية</string>
     <string name="section_authentication">المصادقة</string>
