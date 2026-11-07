@@ -143,6 +143,7 @@ class AuthRepository @Inject constructor(
     private val identity_pins: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>,
     private val offer_preferences_store: org.astermail.android.ui.upgrade.OfferPreferencesStore,
     private val login_pins: LoginProofPinStore,
+    private val external_pgp_key_store: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -263,17 +264,36 @@ class AuthRepository @Inject constructor(
 
     private fun load_account_keks() {
         background_scope.launch { runCatching { account_key_loader.load() } }
+        background_scope.launch {
+            try {
+                external_pgp_key_store.get().load()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            }
+        }
     }
 
     fun trigger_ratchet_bootstrap() {
         if (!_is_signed_in.value) return
         load_account_keks()
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
-        background_scope.launch {
-            runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
-                .onFailure { if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "bootstrap_if_needed threw: ${it.javaClass.simpleName}: ${it.message}") }
-        }
+        schedule_ratchet_bootstrap(bypass_debounce = false)
     }
+
+    private fun schedule_ratchet_bootstrap(bypass_debounce: Boolean) {
+        ratchet_bootstrap_service.schedule_until_published(
+            scope = background_scope,
+            is_foreground = ::app_in_foreground,
+            bypass_debounce = bypass_debounce,
+        )
+    }
+
+    private fun app_in_foreground(): Boolean = runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get()
+            .lifecycle.currentState
+            .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    }.getOrDefault(true)
 
     suspend fun handle_unauthorized_signal(force: Boolean = false) {
         if (!_is_signed_in.value) return
@@ -763,7 +783,7 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
     }
 
@@ -1300,7 +1320,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         RegisterSuccess(recovery_codes = recovery_codes)
     }
@@ -1393,7 +1413,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { refresh_session_if_expiring() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         return true
@@ -1524,6 +1544,13 @@ class AuthRepository @Inject constructor(
                     listOf(context.getString(R.string.password_change_web_required)),
                     "CLIENT_MESSAGE",
                 )
+            }
+
+            val outgoing_password_key = CryptoNative.derive_storage_key(current_password_bytes)
+            try {
+                retain_password_storage_key(vault_obj, outgoing_password_key, ::base64_encode)
+            } finally {
+                outgoing_password_key.fill(0)
             }
 
             org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
@@ -1748,6 +1775,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.OwnAddressAvatars.clear()
             org.astermail.android.security.SenderTrustStore.clear()
             org.astermail.android.contacts.ContactPhotoDirectory.clear()
+            org.astermail.android.notifications.NotificationAvatars.clear()
         }
         runCatching { database.decrypted_mail_dao().clear_all() }
         runCatching { database.folder_row_dao().clear_all() }
@@ -2394,6 +2422,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.OwnAddressAvatars.clear()
             org.astermail.android.security.SenderTrustStore.clear()
             org.astermail.android.contacts.ContactPhotoDirectory.clear()
+            org.astermail.android.notifications.NotificationAvatars.clear()
         }
         database.decrypted_mail_dao().clear_all()
         database.folder_row_dao().clear_all()
@@ -2565,6 +2594,7 @@ class AuthRepository @Inject constructor(
         val local_fingerprint = pgp_key_fingerprint(identity_key) ?: return false
 
         val info = encryption_api.get_pgp_key_info()
+        if (!pgp_key_role_is_internal(info.role)) return false
         if (!info.fingerprint.equals(local_fingerprint, ignoreCase = true)) return false
         val published = PublishedPgpKey.Present(info.fingerprint)
 
@@ -2617,7 +2647,7 @@ class AuthRepository @Inject constructor(
         if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return null
 
         val published_fingerprint = try {
-            encryption_api.get_pgp_key_info().fingerprint
+            encryption_api.get_pgp_key_info().let { internal_pgp_fingerprint_or_blank(it.fingerprint, it.role) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -2638,7 +2668,8 @@ class AuthRepository @Inject constructor(
     private suspend fun published_pgp_key_state(): PublishedPgpKey {
         repeat(PUBLISHED_PGP_KEY_LOOKUP_ATTEMPTS) { attempt ->
             try {
-                return PublishedPgpKey.Present(encryption_api.get_pgp_key_info().fingerprint)
+                val info = encryption_api.get_pgp_key_info()
+                return published_pgp_key_from_info(info.fingerprint, info.role)
             } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
                 return PublishedPgpKey.Absent
             } catch (cancelled: CancellationException) {

@@ -237,6 +237,7 @@
     <string name="compose_locked_title">Aster लॉक है</string>
     <string name="compose_locked_message">लिखते रहने के लिए Aster अनलॉक करें। आपका ड्राफ़्ट सुरक्षित है।</string>
     <string name="swipe_read">पढ़े गए</string>
+    <string name="swipe_unread">अपठित</string>
     <string name="swipe_star">तारा</string>
     <string name="swipe_spam">स्पैम</string>
     <string name="swipe_inbox">इनबॉक्स</string>
@@ -2726,7 +2727,10 @@
     <string name="error_folder_password_not_set">इस फ़ोल्डर पर कोई पासवर्ड नहीं लगा है।</string>
     <string name="error_image_too_large">वह तस्वीर बहुत बड़ी है। कोई छोटी तस्वीर चुनें।</string>
     <string name="error_invalid_2fa_code">वह कोड सही नहीं है। अपना प्रमाणक ऐप देखें और फिर से कोशिश करें।</string>
-    <string name="error_passkey_unavailable">इस डिवाइस पर इस खाते के लिए कोई पासकी उपलब्ध नहीं है। अपने प्रमाणक ऐप का उपयोग करें या पहले ब्राउज़र से पासकी जोड़ें।</string>
+    <string name="error_passkey_unavailable">इस खाते के लिए कोई पासकी नहीं मिली। पक्का करें कि जिस पासवर्ड मैनेजर में आपकी पासकी है, वह Android सेटिंग में पासकी के लिए चालू है, या अपने प्रमाणक ऐप का उपयोग करें।</string>
+    <string name="error_passkey_no_provider">इस डिवाइस पर पासकी सेट नहीं हैं। Android सेटिंग में पासकी के लिए कोई पासवर्ड मैनेजर चालू करें, या अपने प्रमाणक ऐप का उपयोग करें।</string>
+    <string name="passkey_open_settings">पासकी सेटिंग</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s त्रुटि कोड: %2$s</string>
     <string name="error_passkey_failed">आपकी पासकी सत्यापित नहीं हो सकी। फिर से कोशिश करें या साइन इन का कोई और तरीका इस्तेमाल करें।</string>
     <string name="error_invalid_backup_code">वह बैकअप कोड मेल नहीं खाता। हर कोड सिर्फ़ एक बार चलता है, इसलिए अपनी सूची से अगला बिना इस्तेमाल किया कोड आज़माएं।</string>
     <string name="error_invalid_recovery_phrase">वह रिकवरी वाक्यांश मेल नहीं खाता। शब्दों का क्रम और वर्तनी जांचें, फिर से कोशिश करें।</string>
@@ -3247,7 +3251,7 @@
     <string name="passkey_added_sessions_revoked">पासकी जोड़ी गई। आपके दूसरे डिवाइस से साइन आउट कर दिया गया है।</string>
     <string name="passkey_added_second_step_only">पासकी जोड़ी गई। पासवर्ड से साइन इन करते समय इसे दूसरे चरण के रूप में इस्तेमाल करें।</string>
     <string name="passkey_already_registered">यह पासकी पहले से आपके खाते में सेव है।</string>
-    <string name="passkey_create_unavailable">यह डिवाइस पासकी सेव नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है और पासवर्ड मैनेजर सेट है।</string>
+    <string name="passkey_create_unavailable">यह डिवाइस अभी पासकी सेव नहीं कर सकता। स्क्रीन लॉक चालू करें और Android सेटिंग में पासकी के लिए कोई पासवर्ड मैनेजर चुनें।</string>
     <string name="passkey_create_failed">पासकी नहीं जोड़ी जा सकी। फिर से कोशिश करें।</string>
     <string name="error_passkey_timed_out">पासकी अनुरोध का समय समाप्त हो गया। फिर से कोशिश करें।</string>
     <string name="billing_play_unavailable">Google Play से खरीदारी अभी उपलब्ध नहीं है। बाद में फिर से कोशिश करें।</string>
@@ -3382,4 +3386,14 @@
     <string name="client_update_body">इस खाते के लिए Aster Mail का नया वर्शन ज़रूरी है। इस डिवाइस पर इसे इस्तेमाल करते रहने के लिए, ऐप अपडेट करें। आप साइन इन रहेंगे, और इस डिवाइस से कुछ भी नहीं हटाया जाएगा।</string>
     <string name="client_update_action">अपडेट करें</string>
     <string name="client_update_later">अभी नहीं</string>
+    <string name="external_pgp_key_title">आयात की गई OpenPGP कुंजी</string>
+    <string name="external_pgp_key_expires">%1$s को समाप्त होगी</string>
+    <string name="external_pgp_key_no_expiry">समाप्त नहीं होती</string>
+    <string name="external_pgp_key_published">प्रकाशित। Aster Mail के बाहर के लोग यह कुंजी ढूंढ सकते हैं और आपको एन्क्रिप्ट किया गया ईमेल भेज सकते हैं।</string>
+    <string name="external_pgp_key_not_published">प्रकाशित नहीं। Aster Mail के बाहर के लोग यह कुंजी नहीं ढूंढ सकते।</string>
+    <string name="external_pgp_key_fingerprint">फ़िंगरप्रिंट</string>
+    <string name="external_pgp_key_stop_publishing">प्रकाशित करना बंद करें</string>
+    <string name="external_pgp_key_manage_note">इस कुंजी को आयात करने, बदलने या हटाने के लिए वेब पर Aster Mail या डेस्कटॉप ऐप इस्तेमाल करें।</string>
+    <string name="external_pgp_key_unpublished">आपकी आयात की गई कुंजी अब प्रकाशित नहीं है।</string>
+    <string name="external_pgp_key_unpublish_failed">आपकी कुंजी का प्रकाशन बंद नहीं हो सका। फिर से कोशिश करें।</string>
 </resources>

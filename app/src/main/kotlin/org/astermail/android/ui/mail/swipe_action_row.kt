@@ -139,6 +139,13 @@ fun swipe_tone(color: Color, colors: AsterSemanticColors): Color {
 fun swipe_ink(surface: Color): Color =
     if (surface.luminance() > 0.5f) Color(0xFF14181F) else Color.White
 
+private class SwipeFaces(
+    var start_label: String,
+    var end_label: String,
+    var start_icon: ImageVector,
+    var end_icon: ImageVector,
+)
+
 @Composable
 fun swipe_action_row(
     start_action: String,
@@ -163,6 +170,7 @@ fun swipe_action_row(
     val haptics = org.astermail.android.design.remember_haptic()
     var is_dismissed by remember { mutableStateOf(false) }
     val offset_x = remember { Animatable(0f) }
+    val faces = remember { SwipeFaces(start_label, end_label, start_icon, end_icon) }
     val scope = rememberCoroutineScope()
     val current_removes_row by rememberUpdatedState(removes_row)
     val start_enabled = start_action != "none"
@@ -257,7 +265,12 @@ fun swipe_action_row(
             },
     ) {
         val travelled = offset_x.value
-        if (travelled != 0f) {
+        if (travelled == 0f) {
+            faces.start_label = start_label
+            faces.end_label = end_label
+            faces.start_icon = start_icon
+            faces.end_icon = end_icon
+        } else {
             val towards_start = travelled > 0f
             val surface = swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors)
             val ink = swipe_ink(surface)
@@ -272,14 +285,14 @@ fun swipe_action_row(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (towards_start) start_icon else end_icon,
-                        contentDescription = if (towards_start) start_label else end_label,
+                        imageVector = if (towards_start) faces.start_icon else faces.end_icon,
+                        contentDescription = if (towards_start) faces.start_label else faces.end_label,
                         tint = ink,
                         modifier = Modifier.size(22.dp),
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = if (towards_start) start_label else end_label,
+                        text = if (towards_start) faces.start_label else faces.end_label,
                         color = ink,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,

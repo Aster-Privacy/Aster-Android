@@ -318,6 +318,7 @@ data class PatchMetadataResponse(
 data class BulkLabelRequest(
     val ids: List<String>,
     val label_token: String,
+    val include_thread: Boolean = false,
 )
 
 @Serializable

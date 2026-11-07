@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Kalıcı olarak sil</string>
     <string name="swipe_not_spam">Spam değil</string>
     <string name="swipe_read">Okundu</string>
+    <string name="swipe_unread">Okunmadı</string>
     <string name="swipe_star">Yıldız</string>
     <string name="swipe_spam">Önemsiz</string>
     <string name="swipe_inbox">Gelen Kutusu</string>
@@ -2782,7 +2783,10 @@
     <string name="error_folder_password_not_set">Bu klasörün parolası yok.</string>
     <string name="error_image_too_large">Bu görüntü çok büyük. Daha küçük bir fotoğraf seçin.</string>
     <string name="error_invalid_2fa_code">Bu kod doğru değil. Kimlik doğrulama uygulamanızı kontrol edip tekrar deneyin.</string>
-    <string name="error_passkey_unavailable">Bu cihazda bu hesap için geçiş anahtarı yok. Kimlik doğrulama uygulamanızı kullanın ya da önce tarayıcıdan bir geçiş anahtarı ekleyin.</string>
+    <string name="error_passkey_unavailable">Bu hesap için geçiş anahtarı bulunamadı. Geçiş anahtarınızı tutan parola yöneticisinin Android ayarlarında geçiş anahtarları için açık olduğundan emin olun ya da kimlik doğrulama uygulamanızı kullanın.</string>
+    <string name="error_passkey_no_provider">Bu cihazda geçiş anahtarları ayarlanmamış. Android ayarlarında geçiş anahtarları için bir parola yöneticisini açın ya da kimlik doğrulama uygulamanızı kullanın.</string>
+    <string name="passkey_open_settings">Geçiş anahtarı ayarları</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Hata kodu: %2$s</string>
     <string name="error_passkey_failed">Geçiş anahtarınız doğrulanamadı. Yeniden deneyin ya da başka bir oturum açma yöntemi kullanın.</string>
     <string name="error_invalid_backup_code">Bu yedek kod eşleşmedi. Her kod yalnızca bir kez çalışır, bu yüzden listenizdeki bir sonraki kullanılmamış kodu deneyin.</string>
     <string name="error_invalid_recovery_phrase">Bu kurtarma ifadesi eşleşmedi. Kelime sırasını ve yazımı kontrol edip tekrar deneyin.</string>
@@ -3355,7 +3359,7 @@
     <string name="passkey_added_sessions_revoked">Geçiş anahtarı eklendi. Diğer cihazlarınızdaki oturumlarınız kapatıldı.</string>
     <string name="passkey_added_second_step_only">Geçiş anahtarı eklendi. Parolanızla giriş yaparken ikinci adım olarak kullanın.</string>
     <string name="passkey_already_registered">Bu geçiş anahtarı zaten hesabınıza kayıtlı.</string>
-    <string name="passkey_create_unavailable">Bu cihaz geçiş anahtarı kaydedemiyor. Ekran kilidinin açık ve bir parola yöneticisinin kurulu olduğundan emin olun.</string>
+    <string name="passkey_create_unavailable">Bu cihaz şu anda geçiş anahtarı kaydedemiyor. Ekran kilidini açın ve Android ayarlarında geçiş anahtarları için bir parola yöneticisi seçin.</string>
     <string name="passkey_create_failed">Geçiş anahtarı eklenemedi. Tekrar deneyin.</string>
     <string name="error_passkey_timed_out">Geçiş anahtarı isteğinin süresi doldu. Tekrar deneyin.</string>
     <string name="billing_play_unavailable">Google Play satın alımları şu anda kullanılamıyor. Daha sonra tekrar deneyin.</string>
@@ -3490,4 +3494,14 @@
     <string name="client_update_body">Bu hesap için Aster Mail\'in daha yeni bir sürümü gerekiyor. Bu cihazda kullanmaya devam etmek için uygulamayı güncelleyin. Oturumunuz açık kalır ve bu cihazdan hiçbir şey kaldırılmaz.</string>
     <string name="client_update_action">Güncelle</string>
     <string name="client_update_later">Şimdi değil</string>
+    <string name="external_pgp_key_title">İçe aktarılan OpenPGP anahtarı</string>
+    <string name="external_pgp_key_expires">Son geçerlilik: %1$s</string>
+    <string name="external_pgp_key_no_expiry">Süresi dolmaz</string>
+    <string name="external_pgp_key_published">Yayımlandı. Aster Mail dışındaki kişiler bu anahtarı bulabilir ve size şifreli e-posta gönderebilir.</string>
+    <string name="external_pgp_key_not_published">Yayımlanmadı. Aster Mail dışındaki kişiler bu anahtarı bulamaz.</string>
+    <string name="external_pgp_key_fingerprint">Parmak izi</string>
+    <string name="external_pgp_key_stop_publishing">Yayımlamayı durdur</string>
+    <string name="external_pgp_key_manage_note">Bu anahtarı içe aktarmak, değiştirmek veya kaldırmak için web üzerinde Aster Mail\'i ya da masaüstü uygulamasını kullanın.</string>
+    <string name="external_pgp_key_unpublished">İçe aktarılan anahtarınız artık yayımlanmıyor.</string>
+    <string name="external_pgp_key_unpublish_failed">Anahtarınızın yayımlanması durdurulamadı. Tekrar deneyin.</string>
 </resources>

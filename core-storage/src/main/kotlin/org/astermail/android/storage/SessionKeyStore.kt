@@ -136,6 +136,9 @@ class SessionKeyStore(context: Context? = null) {
     @Volatile
     private var ratchet_pq_identity_public: String? = null
 
+    @Volatile
+    private var external_pgp_blob: String? = null
+
     init {
         runCatching {
             remembered_vault_salts = VaultSaltMemory.parse(vault_salt_prefs?.getString(key_vault_salts, null))
@@ -191,6 +194,7 @@ class SessionKeyStore(context: Context? = null) {
                 ratchet_previous_keys_json = p.getString(key_ratchet_previous_keys, null)
                 ratchet_pq_identity_secret = p.getString(key_ratchet_pq_identity_priv, null)
                 ratchet_pq_identity_public = p.getString(key_ratchet_pq_identity_pub, null)
+                external_pgp_blob = p.getString(key_external_pgp_blob, null)
             }.onFailure { t ->
                 if (org.astermail.android.storage.BuildConfig.DEBUG) {
                     android.util.Log.e("SessionKeyStore", "Failed to load session keys", t)
@@ -548,6 +552,17 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun put_external_pgp_blob(json: String?) {
+        synchronized(lock) {
+            external_pgp_blob = json
+            prefs?.edit()?.apply {
+                if (json == null) remove(key_external_pgp_blob) else putString(key_external_pgp_blob, json)
+            }?.commit()
+        }
+    }
+
+    fun get_external_pgp_blob(): String? = synchronized(lock) { external_pgp_blob }
+
     fun put_storage_kdf_version(version: Int) {
         synchronized(lock) {
             storage_kdf_version = version
@@ -660,6 +675,7 @@ class SessionKeyStore(context: Context? = null) {
             ratchet_previous_keys_json = null
             ratchet_pq_identity_secret = null
             ratchet_pq_identity_public = null
+            external_pgp_blob = null
             prefs?.edit()?.clear()?.commit()
         }
         for (listener in clear_listeners) runCatching { listener() }
@@ -699,6 +715,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_legacy_keks = "legacy_keks"
         private const val key_account_keks = "account_keks"
         private const val key_data_kek = "data_kek"
+        private const val key_external_pgp_blob = "external_pgp_blob"
         private const val key_storage_kdf_version = "storage_kdf_version"
         private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"

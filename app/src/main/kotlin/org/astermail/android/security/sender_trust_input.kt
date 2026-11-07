@@ -229,9 +229,13 @@ object SenderTrustStore {
     private var primary_address: String? = null
     private val extra_addresses = LinkedHashMap<String, List<String>>()
     private var generation = 0L
+    @Volatile
+    private var contacts_loaded = false
 
     @Synchronized
     fun current_generation(): Long = generation
+
+    fun contacts_ready(): Boolean = contacts_loaded
 
     @Synchronized
     fun set_primary_address(address: String?) {
@@ -252,6 +256,7 @@ object SenderTrustStore {
     @Synchronized
     fun set_contacts(contacts: List<SenderTrustContact>, expected_generation: Long = generation) {
         if (expected_generation != generation) return
+        contacts_loaded = true
         val next = ArrayList<SenderTrustContact>()
         for (contact in contacts) {
             if (next.size >= max_contacts) break
@@ -267,6 +272,7 @@ object SenderTrustStore {
     @Synchronized
     fun clear_contacts() {
         generation += 1
+        contacts_loaded = false
         sender_trust_results.clear()
         val current = state.value
         if (current.contacts.isEmpty()) return
@@ -276,6 +282,7 @@ object SenderTrustStore {
     @Synchronized
     fun clear() {
         generation += 1
+        contacts_loaded = false
         sender_trust_results.clear()
         primary_address = null
         extra_addresses.clear()

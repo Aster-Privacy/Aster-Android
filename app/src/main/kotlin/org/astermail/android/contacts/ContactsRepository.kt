@@ -299,11 +299,13 @@ class ContactsRepository @Inject constructor(
             keys.forEach { it.fill(0) }
         }
         if (tokens.isEmpty()) throw IllegalStateException("no storage key")
-        val seen = mutableSetOf<String>()
-        val items = tokens.flatMap { token -> contacts_api.search_contacts(token, field, limit).items }
-            .filter { seen.add(it.id) }
-        val merged = decrypt_contacts(items)
-        if (limit != null) merged.take(limit) else merged
+        val items = LinkedHashMap<String, ContactItem>()
+        for (token in tokens) {
+            if (limit != null && items.size >= limit) break
+            contacts_api.search_contacts(token, field, limit).items.forEach { items.putIfAbsent(it.id, it) }
+        }
+        val found = decrypt_contacts(items.values.toList())
+        if (limit != null) found.take(limit) else found
     }
 
     suspend fun list_contact_groups(): Result<List<ContactGroup>> = runCatching {

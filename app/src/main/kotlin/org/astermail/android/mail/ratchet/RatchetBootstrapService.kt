@@ -26,11 +26,17 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.encryption.EncryptionApi
 import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
+import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.storage_rotation.VaultEdit
@@ -68,27 +74,73 @@ class RatchetBootstrapService @Inject constructor(
         val signed_prekey_public_b64: String,
     )
 
-    suspend fun bootstrap_if_needed() {
+    private val confirmed_user_ids = java.util.Collections.newSetFromMap(
+        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+    )
+    private val retry_job_lock = Any()
+    private var retry_job: Job? = null
+    private var retry_user_id: String? = null
+    private var last_scheduled_at_ms: Long = 0L
+
+    fun is_bundle_confirmed(user_id: String): Boolean = confirmed_user_ids.contains(user_id)
+
+    fun schedule_until_published(
+        scope: CoroutineScope,
+        is_foreground: () -> Boolean,
+        bypass_debounce: Boolean = false,
+        now_ms: () -> Long = { System.currentTimeMillis() },
+    ) {
+        val user_id = session_key_store.get_user_id() ?: return
+        if (is_bundle_confirmed(user_id)) return
+        synchronized(retry_job_lock) {
+            val same_user = retry_user_id == user_id
+            if (same_user && retry_job?.isActive == true) return
+            val now = now_ms()
+            if (same_user &&
+                !bypass_debounce &&
+                now - last_scheduled_at_ms in 0 until RATCHET_BOOTSTRAP_FOREGROUND_DEBOUNCE_MS
+            ) {
+                return
+            }
+            retry_job?.cancel()
+            retry_user_id = user_id
+            last_scheduled_at_ms = now
+            retry_job = scope.launch { retry_until_published(user_id, is_foreground) }
+        }
+    }
+
+    private suspend fun retry_until_published(user_id: String, is_foreground: () -> Boolean) {
+        var attempt = 0
+        while (session_key_store.get_user_id() == user_id) {
+            val outcome = try {
+                bootstrap_if_needed()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                RatchetBootstrapOutcome.Failed("bootstrap threw ${error.javaClass.simpleName}")
+            }
+            debug_log("bootstrap attempt $attempt outcome=$outcome")
+            if (outcome.bundle_confirmed || !is_foreground()) return
+            delay(ratchet_bootstrap_retry_delay_ms(attempt))
+            attempt += 1
+            if (!is_foreground()) return
+        }
+    }
+
+    suspend fun bootstrap_if_needed(): RatchetBootstrapOutcome {
         if (!in_flight.compareAndSet(false, true)) {
             debug_log("skipped: already in flight")
-            return
+            return RatchetBootstrapOutcome.InFlight
         }
         try {
             val user_id = session_key_store.get_user_id()
-            if (user_id == null) {
-                debug_log("aborted: no user_id in session key store")
-                return
-            }
+                ?: return RatchetBootstrapOutcome.Deferred("no user_id in session key store")
             if (!sync_vault_with_server()) {
-                debug_log("aborted: could not verify the server vault")
-                return
+                return RatchetBootstrapOutcome.Deferred("could not verify the server vault")
             }
             reconcile_session_keys_with_vault()
             val ensured_keys = ensure_local_ratchet_keys()
-            if (ensured_keys == null) {
-                debug_log("aborted: ensure_local_ratchet_keys returned null")
-                return
-            }
+                ?: return RatchetBootstrapOutcome.Deferred("local ratchet keys unavailable")
             debug_log("local ratchet keys ready for user $user_id")
             val published_keys_changed = persist_ratchet_identity_to_vault_if_needed()
             val keys = ensured_keys.copy(
@@ -97,86 +149,136 @@ class RatchetBootstrapService @Inject constructor(
                     ?: ensured_keys.signed_prekey_public_b64,
             )
 
-            val capability = runCatching {
-                capability_reporter.report_if_due(
-                    user_id,
-                    keys.identity_public_b64,
-                    session_key_store.get_ratchet_pq_identity_public(),
-                    !session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank(),
-                )
-            }
-                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-                .onFailure { debug_log("report_envelope_capability threw: ${it.javaClass.simpleName}") }
-                .getOrNull()
-            if (capability != null) {
-                debug_log(
-                    "envelope capability reported: min=${capability.min_supported_marker} " +
-                        "pq=${capability.pq_hybrid_enabled} identity=${capability.identity_verified} " +
-                        "pq_attested=${capability.pq_identity_attested}",
-                )
-            }
+            val pq_public = session_key_store.get_ratchet_pq_identity_public()
+                ?.takeIf { local_pq_identity_ready(session_key_store.get_ratchet_pq_identity_secret(), it) }
+                ?: return RatchetBootstrapOutcome.Deferred("no local pq identity yet")
 
-            val identity_unconfirmed = capability != null && !capability.identity_verified
-
-            val stored_generation = uploaded_generation(user_id)
-            if (stored_generation >= BUNDLE_UPLOAD_GENERATION &&
-                !published_keys_changed &&
-                !identity_unconfirmed
-            ) {
-                debug_log("skipped upload: already uploaded for user $user_id")
-                return
+            val published = when (val lookup = lookup_own_published_bundle()) {
+                is OwnBundleRead.Found -> lookup.view
+                OwnBundleRead.Missing -> null
+                OwnBundleRead.Unavailable ->
+                    return RatchetBootstrapOutcome.Deferred("could not read the published bundle")
             }
-
-            val pq_identity_public = session_key_store.get_ratchet_pq_identity_public()
-            if (stored_generation > 0 && pq_identity_public.isNullOrBlank()) {
-                debug_log("skipped upload: no local pq identity to publish for user $user_id")
-                return
-            }
-
-            val uploaded_pq_identity_public = pq_identity_public?.takeIf { it.isNotBlank() }
-            val vault_confirms_keys = cached_vault_json()?.let {
-                vault_holds_ratchet_keys(
-                    it,
-                    keys.identity_public_b64,
-                    keys.signed_prekey_public_b64,
-                    uploaded_pq_identity_public,
-                )
-            } ?: false
-            if (!vault_confirms_keys) {
-                debug_log("deferred upload: the key vault does not hold the keys to publish")
-                return
-            }
-            val signature = signed_prekey_signature(
-                identity_public_b64 = keys.identity_public_b64,
-                signed_prekey_public_b64 = keys.signed_prekey_public_b64,
-                pq_identity_public_b64 = uploaded_pq_identity_public,
+            val server_matches = published_bundle_matches_local(
+                published,
+                keys.identity_public_b64,
+                keys.signed_prekey_public_b64,
+                pq_public,
             )
-            if (signature == null) {
-                debug_log("deferred upload: no pgp signature available for the prekey bundle")
-                return
-            }
+            val needs_upload = !server_matches ||
+                published_keys_changed ||
+                uploaded_generation(user_id) < BUNDLE_UPLOAD_GENERATION
 
-            val uploaded = runCatching {
-                ratchet_api.upload_prekey_bundle(
-                    UploadPrekeyBundleRequest(
-                        kem_identity_key = keys.identity_public_b64,
-                        signed_prekey = keys.signed_prekey_public_b64,
-                        signed_prekey_signature = signature,
-                        one_time_prekeys = emptyList(),
-                        expected_version = null,
-                        pq_kem_public_key = uploaded_pq_identity_public,
-                    ),
-                )
-            }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-                .onFailure { debug_log("upload_prekey_bundle threw: ${it.javaClass.simpleName}") }
-                .getOrDefault(false)
-
-            debug_log("upload_prekey_bundle result=$uploaded")
-            if (uploaded) {
+            if (needs_upload) {
+                val blocked = upload_bundle(keys, pq_public)
+                if (blocked != null) return blocked
                 mark_uploaded(user_id)
+            } else {
+                debug_log("server already holds a matching pq bundle for user $user_id")
             }
+
+            confirmed_user_ids.add(user_id)
+            report_capability(user_id, keys.identity_public_b64, pq_public, force = needs_upload)
+            return if (needs_upload) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
         } finally {
             in_flight.set(false)
+        }
+    }
+
+    private suspend fun upload_bundle(keys: LocalRatchetKeys, pq_public: String): RatchetBootstrapOutcome? {
+        val vault_confirms_keys = cached_vault_json()?.let {
+            vault_holds_ratchet_keys(
+                it,
+                keys.identity_public_b64,
+                keys.signed_prekey_public_b64,
+                pq_public,
+            )
+        } ?: false
+        if (!vault_confirms_keys) {
+            return RatchetBootstrapOutcome.Deferred("the key vault does not hold the keys to publish")
+        }
+        val signature = signed_prekey_signature(
+            identity_public_b64 = keys.identity_public_b64,
+            signed_prekey_public_b64 = keys.signed_prekey_public_b64,
+            pq_identity_public_b64 = pq_public,
+        ) ?: return RatchetBootstrapOutcome.Deferred("no pgp signature available for the prekey bundle")
+
+        val uploaded = try {
+            ratchet_api.upload_prekey_bundle(
+                UploadPrekeyBundleRequest(
+                    kem_identity_key = keys.identity_public_b64,
+                    signed_prekey = keys.signed_prekey_public_b64,
+                    signed_prekey_signature = signature,
+                    one_time_prekeys = emptyList(),
+                    expected_version = null,
+                    pq_kem_public_key = pq_public,
+                ),
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            return RatchetBootstrapOutcome.Failed("upload_prekey_bundle threw ${error.javaClass.simpleName}")
+        }
+        debug_log("upload_prekey_bundle result=$uploaded")
+        return if (uploaded) null else RatchetBootstrapOutcome.Failed("upload_prekey_bundle rejected")
+    }
+
+    private suspend fun report_capability(
+        user_id: String,
+        identity_public_b64: String,
+        pq_public: String,
+        force: Boolean,
+    ) {
+        val capability = try {
+            capability_reporter.report_if_due(
+                user_id,
+                identity_public_b64,
+                pq_public,
+                !session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank(),
+                force,
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            debug_log("report_envelope_capability threw: ${error.javaClass.simpleName}")
+            null
+        }
+        if (capability != null) {
+            debug_log(
+                "envelope capability reported: min=${capability.min_supported_marker} " +
+                    "pq=${capability.pq_hybrid_enabled} identity=${capability.identity_verified} " +
+                    "pq_attested=${capability.pq_identity_attested}",
+            )
+        }
+    }
+
+    private sealed class OwnBundleRead {
+        data class Found(val view: PublishedRatchetBundleView) : OwnBundleRead()
+        object Missing : OwnBundleRead()
+        object Unavailable : OwnBundleRead()
+    }
+
+    private suspend fun lookup_own_published_bundle(): OwnBundleRead {
+        val email = session_key_store.get_user_email()?.takeIf { it.contains('@') }
+            ?: return OwnBundleRead.Unavailable
+        val lookup = try {
+            ratchet_api.fetch_own_ratchet_identity(email.substringBefore('@'), email)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            debug_log("own bundle lookup threw: ${error.javaClass.simpleName}")
+            return OwnBundleRead.Unavailable
+        }
+        return when (lookup) {
+            is OwnRatchetIdentityLookup.Found -> OwnBundleRead.Found(
+                PublishedRatchetBundleView(
+                    identity_public_b64 = lookup.identity.kem_identity_key,
+                    signed_prekey_public_b64 = lookup.identity.signed_prekey,
+                    pq_identity_public_b64 = lookup.identity.pq_kem_public_key,
+                ),
+            )
+            OwnRatchetIdentityLookup.NotFound -> OwnBundleRead.Missing
+            OwnRatchetIdentityLookup.Unavailable -> OwnBundleRead.Unavailable
         }
     }
 
@@ -575,7 +677,9 @@ class RatchetBootstrapService @Inject constructor(
             previous_keys = vault_previous_keys() + session_key_store.get_previous_keys().orEmpty(),
         )
         val published_fingerprint = try {
-            encryption_api.get_pgp_key_info().fingerprint
+            encryption_api.get_pgp_key_info().let {
+                org.astermail.android.auth.internal_pgp_fingerprint_or_blank(it.fingerprint, it.role)
+            }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (_: ApiError.NotFoundError) {

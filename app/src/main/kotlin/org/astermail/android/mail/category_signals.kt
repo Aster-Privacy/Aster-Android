@@ -328,6 +328,18 @@ val FINANCE_DOMAIN_SUFFIXES: Set<String> = setOf(
     "natwest.com",
     "santander.com",
     "santander.co.uk",
+    "aviva.co.uk",
+    "aviva.com",
+    "legalandgeneral.com",
+    "hl.co.uk",
+    "vanguardinvestor.co.uk",
+    "nationwide.co.uk",
+    "halifax.co.uk",
+    "lloydsbank.co.uk",
+    "natwest.co.uk",
+    "firstdirect.com",
+    "tsb.co.uk",
+    "nsandi.com",
     "bbva.com",
     "bnpparibas.com",
     "societegenerale.com",
@@ -686,6 +698,8 @@ val SHOPPING_DOMAIN_SUFFIXES: Set<String> = setOf(
 )
 
 val UPDATES_DOMAIN_SUFFIXES: Set<String> = setOf(
+    "ui.com",
+    "ubnt.com",
     "github.com",
     "gitlab.com",
     "bitbucket.org",
@@ -1091,8 +1105,9 @@ val PROMOTIONS_SUBJECT_PATTERNS: List<Regex> = listOf(
     Regex("""\bfree\s+gift\b""", RegexOption.IGNORE_CASE),
     Regex("""\brewards?\s+(?:points|await)\b""", RegexOption.IGNORE_CASE),
     Regex("""\bvip\s+(?:access|sale)\b""", RegexOption.IGNORE_CASE),
-    Regex("""[\x{1F300}-\x{1FAFF}]"""),
 )
+
+val EMOJI_SUBJECT_PATTERN: Regex = Regex("""[\x{1F300}-\x{1FAFF}]""")
 
 val UPDATES_SUBJECT_PATTERNS: List<Regex> = listOf(
     Regex("""\border(?:\s*#|\s+(?:confirm|number|placed|update))""", RegexOption.IGNORE_CASE),
@@ -1131,6 +1146,9 @@ val UPDATES_SUBJECT_PATTERNS: List<Regex> = listOf(
 )
 
 val FINANCE_SUBJECT_PATTERNS: List<Regex> = listOf(
+    Regex("""\b(?:interest|base|savings|bank|borrowing)\s+rates?\b""", RegexOption.IGNORE_CASE),
+    Regex("""\brate\s+(?:change|changes|cut|cuts|rise|rises|increase|decrease)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bpension\b""", RegexOption.IGNORE_CASE),
     Regex("""\byour\s+statement\b""", RegexOption.IGNORE_CASE),
     Regex("""\baccount\s+balance\b""", RegexOption.IGNORE_CASE),
     Regex("""\btransaction\s+(?:alert|declined|approved)\b""", RegexOption.IGNORE_CASE),
@@ -1321,6 +1339,9 @@ val ACCOUNT_ACCESS_SUBJECT_PATTERNS: List<Regex> = listOf(
     Regex("""\b(?:reset|recover)\s+your\s+password\b""", RegexOption.IGNORE_CASE),
     Regex("""\bpassword\s+(?:reset|recovery)\b""", RegexOption.IGNORE_CASE),
     Regex("""\b(?:magic|sign[\s-]?in|log[\s-]?in|login)\s+link\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:mfa|2fa|multi[\s-]?factor|two[\s-]?factor|two[\s-]?step|2[\s-]?step)(?:\s+(?:authentication|verification))?\s+(?:code|request|pin|link|prompt|challenge|approval)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\b(?:sign[\s-]?in|log[\s-]?in|login|authentication|mfa)\s+(?:request|attempt|approval)\b""", RegexOption.IGNORE_CASE),
+    Regex("""\bapprove\s+(?:your\s+|this\s+|the\s+|a\s+)?(?:new\s+)?(?:sign[\s-]?in|log[\s-]?in|login)\b""", RegexOption.IGNORE_CASE),
     Regex("""验证码|驗證碼|校验码|校驗碼|动态码|動態碼|确认码|確認碼|安全码|安全碼|登录码|登入碼"""),
     Regex("""(?:验证|驗證|确认|確認|激活|啟用)(?:您|你)的(?:帐户|账户|帐号|账号|帳戶|帳號|电子邮件|電子郵件|邮箱|郵箱|邮件地址|郵件地址|登录|登入)"""),
     Regex("""验证此次登录|驗證此次登入|验证登录|驗證登入|确认登录|確認登入|登录验证|登入驗證|重置密码|重設密碼|密码重置|密碼重設"""),

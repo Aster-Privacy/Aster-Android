@@ -62,27 +62,40 @@ object PgpSigner {
                 .build(passphrase)
             val private_key: PGPPrivateKey = secret_key.extractPrivateKey(decryptor)
 
-            val generator = PGPSignatureGenerator(
-                JcaPGPContentSignerBuilder(
-                    secret_key.publicKey.algorithm,
-                    HashAlgorithmTags.SHA512,
-                ).setProvider(BouncyCastleProvider.PROVIDER_NAME),
-            )
-            generator.init(PGPSignature.BINARY_DOCUMENT, private_key)
-            generator.update(data)
-
-            val armored_output = ByteArrayOutputStream()
-            ArmoredOutputStream(armored_output).use { armored ->
-                generator.generate().encode(armored)
-            }
-
-            DetachedSignature(
-                signature = armored_output.toString(Charsets.UTF_8.name()),
-                micalg = MICALG_SHA512,
-            )
+            sign_with_private_key(data, secret_key.publicKey.algorithm, private_key)
         } catch (_: Throwable) {
             null
         }
+    }
+
+    fun sign_detached_unlocked(data: ByteArray, private_key: PGPPrivateKey): DetachedSignature? =
+        try {
+            sign_with_private_key(data, private_key.publicKeyPacket.algorithm, private_key)
+        } catch (_: Throwable) {
+            null
+        }
+
+    private fun sign_with_private_key(
+        data: ByteArray,
+        algorithm: Int,
+        private_key: PGPPrivateKey,
+    ): DetachedSignature {
+        val generator = PGPSignatureGenerator(
+            JcaPGPContentSignerBuilder(algorithm, HashAlgorithmTags.SHA512)
+                .setProvider(BouncyCastleProvider.PROVIDER_NAME),
+        )
+        generator.init(PGPSignature.BINARY_DOCUMENT, private_key)
+        generator.update(data)
+
+        val armored_output = ByteArrayOutputStream()
+        ArmoredOutputStream(armored_output).use { armored ->
+            generator.generate().encode(armored)
+        }
+
+        return DetachedSignature(
+            signature = armored_output.toString(Charsets.UTF_8.name()),
+            micalg = MICALG_SHA512,
+        )
     }
 
     internal fun select_signing_key(armored_private_key: String): PGPSecretKey? {

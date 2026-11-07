@@ -264,6 +264,8 @@ data class SettingsUiState(
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
+    val external_pgp_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo? = null,
+    val external_pgp_key_busy: Boolean = false,
     val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
     val recovery_codes_status_load_failed: Boolean = false,
@@ -357,6 +359,7 @@ class SettingsViewModel @Inject constructor(
     private val theme_store: ThemeStore,
     val account_store: org.astermail.android.storage.AccountStore,
     @ApplicationContext private val context: Context,
+    private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
 ) : ViewModel() {
 
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -3533,7 +3536,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val options = security_api.initiate_passkey_registration()
-                val response_json = create_credential(org.astermail.android.auth.registration_request_json(options))
+                val response_json = try {
+                    create_credential(org.astermail.android.auth.registration_request_json(options))
+                } catch (first: org.astermail.android.auth.PasskeyFailedException) {
+                    create_credential(org.astermail.android.auth.registration_request_json(options, compat = true))
+                }
                 val registration = org.astermail.android.auth.registration_complete_request(
                     response_json = response_json,
                     options = options,
@@ -3562,9 +3569,9 @@ class SettingsViewModel @Inject constructor(
                     is org.astermail.android.auth.PasskeyAlreadyRegisteredException ->
                         context.getString(R.string.passkey_already_registered)
                     is org.astermail.android.auth.PasskeyUnavailableException ->
-                        context.getString(R.string.passkey_create_unavailable)
+                        passkey_message(R.string.passkey_create_unavailable, t)
                     is org.astermail.android.auth.PasskeyFailedException ->
-                        context.getString(R.string.passkey_create_failed)
+                        passkey_message(R.string.passkey_create_failed, t)
                     else ->
                         if (org.astermail.android.auth.is_passkey_challenge_expired(t)) {
                             context.getString(R.string.error_passkey_timed_out)
@@ -3575,6 +3582,12 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(is_adding_passkey = false, action_result = message ?: it.action_result) }
             }
         }
+    }
+
+    private fun passkey_message(message_res: Int, cause: Throwable): String {
+        val message = context.getString(message_res)
+        val code = org.astermail.android.auth.passkey_error_code(cause) ?: return message
+        return context.getString(R.string.passkey_error_with_code, message, code)
     }
 
     private suspend fun save_passkey_prf(
@@ -3734,6 +3747,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val info = encryption_api.get_pgp_key_info()
+                    .takeIf { org.astermail.android.auth.pgp_key_role_is_internal(it.role) }
                 _state.update { it.copy(pgp_key_info = info) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -3996,6 +4010,42 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_wkd_keyserver_status/keyserver", t)
+            }
+        }
+    }
+
+    fun load_external_pgp_key() {
+        val store = external_pgp_key_store_provider?.get() ?: return
+        viewModelScope.launch {
+            try {
+                withContext(default_dispatcher) { store.load() }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_external_pgp_key", t)
+            }
+            _state.update { it.copy(external_pgp_key = store.info.value) }
+        }
+    }
+
+    fun stop_publishing_external_pgp_key() {
+        val store = external_pgp_key_store_provider?.get() ?: return
+        if (_state.value.external_pgp_key?.published != true || _state.value.external_pgp_key_busy) return
+        _state.update { it.copy(external_pgp_key_busy = true) }
+        viewModelScope.launch {
+            val stopped = try {
+                withContext(default_dispatcher) { store.stop_publishing() }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            _state.update {
+                it.copy(
+                    external_pgp_key = store.info.value,
+                    external_pgp_key_busy = false,
+                    action_result = context.getString(
+                        if (stopped) R.string.external_pgp_key_unpublished else R.string.external_pgp_key_unpublish_failed,
+                    ),
+                )
             }
         }
     }

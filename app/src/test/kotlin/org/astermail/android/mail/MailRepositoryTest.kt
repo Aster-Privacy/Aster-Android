@@ -776,8 +776,8 @@ class MailRepositoryTest {
         val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", "myfeed")
 
         assertTrue(failed.isEmpty())
-        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills")) }
-        coVerify { mail_api.bulk_remove_label(BulkLabelRequest(ids = listOf("m1"), label_token = "myfeed")) }
+        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills", include_thread = true)) }
+        coVerify { mail_api.bulk_remove_label(BulkLabelRequest(ids = listOf("m1"), label_token = "myfeed", include_thread = true)) }
     }
 
     @Test
@@ -787,7 +787,7 @@ class MailRepositoryTest {
         val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", null)
 
         assertTrue(failed.isEmpty())
-        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills")) }
+        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills", include_thread = true)) }
         coVerify(exactly = 0) { mail_api.bulk_remove_label(any()) }
     }
 
@@ -1049,6 +1049,31 @@ class MailRepositoryTest {
         assertTrue(failed.isEmpty())
         assertEquals(listOf(100, 50), captured.map { it.ids.size })
         assertTrue(captured.all { it.label_token == "work_token" })
+        assertTrue(captured.all { it.include_thread })
+    }
+
+    @Test
+    fun `move_to_folder_bulk moves single messages when conversations are off`() = runTest {
+        coEvery { mail_api.bulk_add_label(any()) } returns BulkLabelResponse(status = "ok", affected = 1)
+        coEvery { mail_api.bulk_remove_label(any()) } returns BulkLabelResponse(status = "ok", affected = 1)
+        repo.set_conversation_grouping(false)
+
+        val failed = repo.move_to_folder_bulk(listOf("m1"), "bills", "myfeed")
+
+        assertTrue(failed.isEmpty())
+        coVerify { mail_api.bulk_add_label(BulkLabelRequest(ids = listOf("m1"), label_token = "bills", include_thread = false)) }
+        coVerify { mail_api.bulk_remove_label(BulkLabelRequest(ids = listOf("m1"), label_token = "myfeed", include_thread = false)) }
+    }
+
+    @Test
+    fun `remove_label_bulk covers the whole conversation by default`() = runTest {
+        val captured = mutableListOf<BulkLabelRequest>()
+        coEvery { mail_api.bulk_remove_label(capture(captured)) } returns BulkLabelResponse("ok", 1)
+
+        val failed = repo.remove_label_bulk(listOf("m1"), "bills")
+
+        assertTrue(failed.isEmpty())
+        assertEquals(listOf(true), captured.map { it.include_thread })
     }
 
     @Test

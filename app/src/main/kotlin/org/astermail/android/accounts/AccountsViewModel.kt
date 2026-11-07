@@ -143,6 +143,7 @@ class AccountsViewModel @Inject constructor(
                 org.astermail.android.billing.AvailablePlansCache.reset()
                 org.astermail.android.billing.PlanLimitsCache.reset()
                 org.astermail.android.contacts.ContactPhotoDirectory.clear()
+                org.astermail.android.notifications.NotificationAvatars.clear()
                 org.astermail.android.security.SenderTrustStore.clear_contacts()
             }
             refresh()

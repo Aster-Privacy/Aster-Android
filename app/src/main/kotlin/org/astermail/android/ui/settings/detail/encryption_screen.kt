@@ -162,6 +162,7 @@ fun EncryptionScreen(
         vm.load_recovery_codes_status()
         vm.load_encryption_settings()
         vm.load_wkd_keyserver_status()
+        vm.load_external_pgp_key()
     }
 
     val view_state = produceState<identity_key_view?>(initialValue = null, deps) {
@@ -263,19 +264,7 @@ fun EncryptionScreen(
             }
         } else if (key_available && fingerprint != null) {
             val pgp_info = state.pgp_key_info
-            val algorithm_line = run {
-                val raw = pgp_info?.algorithm.orEmpty().lowercase()
-                val size = pgp_info?.key_size ?: 0
-                when {
-                    raw.isBlank() -> null
-                    raw.contains("25519") -> "Curve25519"
-                    raw.contains("448") -> "Curve448"
-                    raw.contains("p256") || raw.contains("p-256") -> "NIST P-256"
-                    raw.contains("p384") || raw.contains("p-384") -> "NIST P-384"
-                    raw.startsWith("rsa") && size > 0 -> "RSA-$size"
-                    else -> raw.replace('_', ' ').uppercase()
-                }
-            }
+            val algorithm_line = pgp_algorithm_label(pgp_info?.algorithm, pgp_info?.key_size ?: 0)
             val created_at = pgp_info?.created_at.orEmpty()
             val date_line = listOfNotNull(
                 algorithm_line,
@@ -481,6 +470,15 @@ fun EncryptionScreen(
                     )
                 }
             }
+        }
+
+        state.external_pgp_key?.let { external_key ->
+            v_gap(AsterSpacing.lg)
+            external_pgp_key_card(
+                external_key = external_key,
+                busy = state.external_pgp_key_busy,
+                on_stop_publishing = { vm.stop_publishing_external_pgp_key() },
+            )
         }
 
         v_gap(AsterSpacing.lg)
@@ -934,6 +932,120 @@ internal fun save_recovery_codes(context: Context, codes: List<String>) {
     }.getOrDefault(false)
     if (!saved) {
         Toast.makeText(context, context.getString(R.string.fix_enc_codes_save_failed), Toast.LENGTH_LONG).show()
+    }
+}
+
+internal fun pgp_algorithm_label(algorithm: String?, key_size: Int): String? {
+    val raw = algorithm.orEmpty().lowercase()
+    return when {
+        raw.isBlank() -> null
+        raw.contains("25519") -> "Curve25519"
+        raw.contains("448") -> "Curve448"
+        raw.contains("p256") || raw.contains("p-256") -> "NIST P-256"
+        raw.contains("p384") || raw.contains("p-384") -> "NIST P-384"
+        raw.startsWith("rsa") && key_size > 0 -> "RSA-$key_size"
+        else -> raw.replace('_', ' ').uppercase()
+    }
+}
+
+@Composable
+private fun external_pgp_key_card(
+    external_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo,
+    busy: Boolean,
+    on_stop_publishing: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val algorithm_line = pgp_algorithm_label(external_key.algorithm, external_key.key_size)
+    val expires_at = external_key.expires_at.orEmpty()
+    val expiry_line = if (expires_at.isNotBlank()) {
+        stringResource(R.string.external_pgp_key_expires, absolute_date_label(expires_at))
+    } else {
+        stringResource(R.string.external_pgp_key_no_expiry)
+    }
+    val detail_line = listOfNotNull(algorithm_line, expiry_line).joinToString(" · ")
+    val grouped_fingerprint = remember(external_key.fingerprint) { format_fingerprint(external_key.fingerprint) }
+    AsterCard(modifier = Modifier.fillMaxWidth().testTag("external_pgp_key_card")) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AsterSpacing.lg),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.external_pgp_key_title),
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.size(2.dp))
+                    Text(
+                        text = detail_line,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                    )
+                }
+            }
+
+            settings_row_gap()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AsterSpacing.lg),
+            ) {
+                Text(
+                    text = stringResource(R.string.external_pgp_key_fingerprint),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                Text(
+                    text = grouped_fingerprint,
+                    color = colors.text_primary,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(AsterShapes.control)
+                        .background(field_surface_color(colors), AsterShapes.control)
+                        .padding(AsterSpacing.sm)
+                        .testTag("external_pgp_key_fingerprint"),
+                )
+                Spacer(Modifier.size(AsterSpacing.sm))
+                Text(
+                    text = stringResource(
+                        if (external_key.published) R.string.external_pgp_key_published
+                        else R.string.external_pgp_key_not_published,
+                    ),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.testTag("external_pgp_key_published_state"),
+                )
+                if (external_key.published) {
+                    Spacer(Modifier.size(AsterSpacing.sm))
+                    AsterSecondaryButton(
+                        label = stringResource(R.string.external_pgp_key_stop_publishing),
+                        onClick = on_stop_publishing,
+                        enabled = !busy,
+                        is_loading = busy,
+                        modifier = Modifier.fillMaxWidth().testTag("external_pgp_key_stop_publishing"),
+                    )
+                }
+                Spacer(Modifier.size(AsterSpacing.sm))
+                Text(
+                    text = stringResource(R.string.external_pgp_key_manage_note),
+                    color = colors.text_tertiary,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                )
+            }
+        }
     }
 }
 

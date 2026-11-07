@@ -184,7 +184,14 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         ?: return PushResult.NeedsFetch
     val envelope_nonce = obj.optString("envelope_nonce", "").takeIf { it.isNotBlank() }
     val repo = entry.mail_repository()
-    val envelope = repo.decrypt_envelope_public(encrypted_envelope, envelope_nonce, item_id)
+    val envelope = repo.decrypt_envelope_public(
+        encrypted_envelope,
+        envelope_nonce,
+        item_id,
+        allow_external_pgp = org.astermail.android.crypto.ExternalPgpKeyCodec.allows_item_type(
+            obj.optString("item_type", "").ifBlank { null },
+        ),
+    )
         ?: return PushResult.NeedsFetch
     if (envelope.is_undecryptable) return PushResult.NeedsFetch
     if (
@@ -231,6 +238,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             preview = repo.notification_preview(envelope),
             message_id = notification_id,
             item_id = item_id,
+            large_icon = push_large_icon(context, repo, shown_email, sender),
         )
     }.isSuccess
     if (!shown) {
@@ -240,3 +248,13 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     MailPollingWorker.note_push_notification_posted(context)
     return PushResult.Shown
 }
+
+private fun push_large_icon(
+    context: Context,
+    repo: org.astermail.android.mail.MailRepository,
+    shown_email: String,
+    shown_name: String,
+): android.graphics.Bitmap? = runCatching {
+    val settings = notification_avatar_settings(context, runCatching { repo.cached_avatar_preferences() }.getOrNull())
+    NotificationAvatars.offline_icon(context, push_avatar_plan(shown_email, shown_name, settings))
+}.getOrNull()

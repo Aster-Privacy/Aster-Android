@@ -218,3 +218,19 @@ fun ensure_master_key_vault(
         password_keys.forEach { it.fill(0) }
     }
 }
+
+fun retain_password_storage_key(
+    vault_obj: JSONObject,
+    outgoing_key: ByteArray,
+    encode: (ByteArray) -> String,
+    now: () -> String = { Instant.now().toString() },
+) {
+    if (outgoing_key.size != 32) return
+    val encoded = encode(outgoing_key)
+    val data_kek = vault_obj.optString("data_kek", "")
+    if (encoded == data_kek) return
+    vault_obj.put(
+        "legacy_keks",
+        prepend_keks_keeping_all(vault_obj.optJSONArray("legacy_keks"), listOf(encoded), now(), data_kek.ifBlank { null }),
+    )
+}

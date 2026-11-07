@@ -154,20 +154,17 @@ object ContactSyncAccounts {
         val declined = prefs.getStringSet(PREF_DECLINED, emptySet()).orEmpty().toMutableSet()
         val present_before = system_accounts(app).mapNotNull { aster_account_id(app, it) }.toSet()
         declined.addAll(linked_before - present_before)
-        val desired = if (is_enabled(app) && has_permissions(app)) {
-            eligible_accounts(app).filterKeys { it !in declined }
-        } else {
-            emptyMap()
-        }
+        val sync_active = is_enabled(app) && has_permissions(app)
+        val known = known_accounts(app)
         for (account in system_accounts(app)) {
             val id = aster_account_id(app, account)
-            if (id == null || desired[id] != account.name) {
+            if (!should_keep_sync_account(id, account.name, sync_active, known, declined)) {
                 runCatching { manager.removeAccountExplicitly(account) }
             }
         }
         val kept = system_accounts(app).mapNotNull { aster_account_id(app, it) }.toSet()
+        val desired = sync_accounts_to_add(sync_active, eligible_accounts(app), declined, kept)
         for ((id, email) in desired) {
-            if (id in kept) continue
             val account = Account(email, type)
             val data = Bundle().apply { putString(KEY_ACCOUNT_ID, id) }
             val added = runCatching { manager.addAccountExplicitly(account, null, data) }.getOrDefault(false)
@@ -185,6 +182,11 @@ object ContactSyncAccounts {
             .putStringSet(PREF_DECLINED, declined.intersect(known_ids))
             .commit()
     }
+
+    private fun known_accounts(context: Context): Map<String, String> =
+        contact_sync_entry_point(context).account_store().get_all()
+            .filter { it.email.isNotBlank() }
+            .associate { it.id to it.email }
 
     private fun eligible_accounts(context: Context): Map<String, String> {
         val entry = contact_sync_entry_point(context)
@@ -265,4 +267,25 @@ object ContactSyncAccounts {
             manager.setUserData(account, KEY_SCHEMA, CARD_SCHEMA.toString())
         }
     }
+}
+
+internal fun should_keep_sync_account(
+    id: String?,
+    name: String,
+    sync_active: Boolean,
+    known: Map<String, String>,
+    declined: Set<String>,
+): Boolean {
+    if (!sync_active || id == null || id in declined) return false
+    return known[id] == name
+}
+
+internal fun sync_accounts_to_add(
+    sync_active: Boolean,
+    eligible: Map<String, String>,
+    declined: Set<String>,
+    present: Set<String>,
+): Map<String, String> {
+    if (!sync_active) return emptyMap()
+    return eligible.filterKeys { it !in declined && it !in present }
 }

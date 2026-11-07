@@ -40,8 +40,8 @@ android {
         applicationId = "org.astermail.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 222
-        versionName = "1.0.19"
+        versionCode = 223
+        versionName = "1.0.20"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

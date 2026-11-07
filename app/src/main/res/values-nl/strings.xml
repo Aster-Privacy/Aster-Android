@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Permanent verwijderen</string>
     <string name="swipe_not_spam">Geen spam</string>
     <string name="swipe_read">Gelezen</string>
+    <string name="swipe_unread">Ongelezen</string>
     <string name="swipe_star">Ster</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Postvak IN</string>
@@ -2782,7 +2783,10 @@
     <string name="error_folder_password_not_set">Deze map heeft geen wachtwoord.</string>
     <string name="error_image_too_large">Deze afbeelding is te groot. Kies een kleinere foto.</string>
     <string name="error_invalid_2fa_code">Deze code klopt niet. Controleer je authenticator-app en probeer het opnieuw.</string>
-    <string name="error_passkey_unavailable">Op dit apparaat is geen toegangssleutel voor dit account beschikbaar. Gebruik je authenticator-app of voeg eerst een toegangssleutel toe via een browser.</string>
+    <string name="error_passkey_unavailable">Er is geen toegangssleutel voor dit account gevonden. Controleer of de wachtwoordbeheerder met je toegangssleutel aan staat voor toegangssleutels in de Android-instellingen, of gebruik je authenticator-app.</string>
+    <string name="error_passkey_no_provider">Toegangssleutels zijn niet ingesteld op dit apparaat. Zet in de Android-instellingen een wachtwoordbeheerder aan voor toegangssleutels, of gebruik je authenticator-app.</string>
+    <string name="passkey_open_settings">Instellingen voor toegangssleutels</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Foutcode: %2$s</string>
     <string name="error_passkey_failed">Je toegangssleutel kon niet worden geverifieerd. Probeer het opnieuw of gebruik een andere inlogmethode.</string>
     <string name="error_invalid_backup_code">Deze back-upcode komt niet overeen. Elke code werkt maar één keer, dus probeer de volgende ongebruikte code uit je lijst.</string>
     <string name="error_invalid_recovery_phrase">Deze herstelzin komt niet overeen. Controleer de volgorde van de woorden en de spelling en probeer het opnieuw.</string>
@@ -3355,7 +3359,7 @@
     <string name="passkey_added_sessions_revoked">Toegangssleutel toegevoegd. Je bent uitgelogd op je andere apparaten.</string>
     <string name="passkey_added_second_step_only">Toegangssleutel toegevoegd. Gebruik deze als tweede stap wanneer je inlogt met je wachtwoord.</string>
     <string name="passkey_already_registered">Deze toegangssleutel is al opgeslagen in je account.</string>
-    <string name="passkey_create_unavailable">Dit apparaat kan geen toegangssleutels opslaan. Controleer of schermvergrendeling aan staat en er een wachtwoordbeheerder is ingesteld.</string>
+    <string name="passkey_create_unavailable">Dit apparaat kan nu geen toegangssleutels opslaan. Zet schermvergrendeling aan en kies in de Android-instellingen een wachtwoordbeheerder voor toegangssleutels.</string>
     <string name="passkey_create_failed">De toegangssleutel kon niet worden toegevoegd. Probeer het opnieuw.</string>
     <string name="error_passkey_timed_out">Het verzoek voor de toegangssleutel is verlopen. Probeer het opnieuw.</string>
     <string name="billing_play_unavailable">Aankopen via Google Play zijn nu niet beschikbaar. Probeer het later opnieuw.</string>
@@ -3490,4 +3494,14 @@
     <string name="client_update_body">Voor dit account is een nieuwere versie van Aster Mail nodig. Werk de app bij om het op dit apparaat te blijven gebruiken. Je blijft ingelogd en er wordt niets van dit apparaat verwijderd.</string>
     <string name="client_update_action">Bijwerken</string>
     <string name="client_update_later">Niet nu</string>
+    <string name="external_pgp_key_title">Geïmporteerde OpenPGP-sleutel</string>
+    <string name="external_pgp_key_expires">Verloopt op %1$s</string>
+    <string name="external_pgp_key_no_expiry">Verloopt niet</string>
+    <string name="external_pgp_key_published">Gepubliceerd. Mensen buiten Aster Mail kunnen deze sleutel vinden en je versleutelde e-mail sturen.</string>
+    <string name="external_pgp_key_not_published">Niet gepubliceerd. Mensen buiten Aster Mail kunnen deze sleutel niet vinden.</string>
+    <string name="external_pgp_key_fingerprint">Vingerafdruk</string>
+    <string name="external_pgp_key_stop_publishing">Publiceren stoppen</string>
+    <string name="external_pgp_key_manage_note">Gebruik Aster Mail op het web of de desktop-app om deze sleutel te importeren, te vervangen of te verwijderen.</string>
+    <string name="external_pgp_key_unpublished">Je geïmporteerde sleutel is niet meer gepubliceerd.</string>
+    <string name="external_pgp_key_unpublish_failed">Kan het publiceren van je sleutel niet stoppen. Probeer het opnieuw.</string>
 </resources>

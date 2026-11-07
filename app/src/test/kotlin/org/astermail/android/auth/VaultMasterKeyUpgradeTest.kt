@@ -91,6 +91,33 @@ class VaultMasterKeyUpgradeTest {
     }
 
     @Test
+    fun `password change keeps the outgoing password key readable`() {
+        val vault_obj = JSONObject().put("data_kek", encode(ByteArray(32) { 1 }))
+        val outgoing = ByteArray(32) { 2 }
+        retain_password_storage_key(vault_obj, outgoing, ::encode) { "2026-11-07T00:00:00Z" }
+        val keks = vault_obj.getJSONArray("legacy_keks")
+        assertEquals(1, keks.length())
+        assertEquals(encode(outgoing), keks.getJSONObject(0).getString("k"))
+    }
+
+    @Test
+    fun `password key equal to the data key is not duplicated`() {
+        val key = ByteArray(32) { 3 }
+        val vault_obj = JSONObject().put("data_kek", encode(key))
+        retain_password_storage_key(vault_obj, key, ::encode)
+        assertTrue(vault_obj.optJSONArray("legacy_keks") == null)
+    }
+
+    @Test
+    fun `retaining the same password key twice keeps one entry`() {
+        val vault_obj = JSONObject().put("data_kek", encode(ByteArray(32) { 1 }))
+        val outgoing = ByteArray(32) { 4 }
+        retain_password_storage_key(vault_obj, outgoing, ::encode)
+        retain_password_storage_key(vault_obj, outgoing, ::encode)
+        assertEquals(1, vault_obj.getJSONArray("legacy_keks").length())
+    }
+
+    @Test
     fun `existing master key vault is returned untouched`() {
         val existing = ByteArray(32) { 7 }
         val vault_obj = JSONObject()

@@ -7,6 +7,8 @@
     <string name="security_center_all_clear">جميع وسائل الحماية مفعّلة.</string>
     <string name="action_recommended">يوصى باتخاذ إجراء</string>
     <string name="two_step_verification_recommendation">فعّل التحقق بخطوتين لإبقاء حسابك آمنًا حتى إذا سُرقت كلمة المرور.</string>
+    <string name="two_factor_on_with_security_key">مفعّل باستخدام مفتاح أمان</string>
+    <string name="two_factor_on_with_app_and_key">مفعّل باستخدام تطبيق مصادقة ومفتاح أمان</string>
     <string name="no_passkeys_recommendation">أضف مفتاح مرور لتسجيل دخول أسرع وأكثر أمانًا باستخدام القياسات الحيوية أو رمز PIN لجهازك.</string>
     <string name="login_alerts_off_recommendation">فعّل تنبيهات تسجيل الدخول لتصلك إشعارات عند تسجيل دخول جهاز جديد إلى حسابك.</string>
     <string name="billing_usage_title">نظرة عامة على الاستخدام</string>

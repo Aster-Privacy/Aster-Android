@@ -902,6 +902,7 @@ class MailViewModel @Inject constructor(
         runCatching { OwnAddressAvatars.clear() }
         runCatching { org.astermail.android.security.SenderTrustStore.clear() }
         runCatching { org.astermail.android.contacts.ContactPhotoDirectory.clear() }
+        runCatching { org.astermail.android.notifications.NotificationAvatars.clear() }
         viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             runCatching { search_index_manager.clear() }
         }

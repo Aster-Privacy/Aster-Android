@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Eliminar permanentemente</string>
     <string name="swipe_not_spam">Não é spam</string>
     <string name="swipe_read">Lido</string>
+    <string name="swipe_unread">Não lido</string>
     <string name="swipe_star">Estrela</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Caixa de entrada</string>
@@ -2795,7 +2796,10 @@
     <string name="error_folder_password_not_set">Esta pasta não tem palavra-passe.</string>
     <string name="error_image_too_large">Essa imagem é demasiado grande. Escolha uma fotografia mais pequena.</string>
     <string name="error_invalid_2fa_code">Esse código não está correto. Verifique a sua aplicação de autenticação e tente novamente.</string>
-    <string name="error_passkey_unavailable">Não existe nenhuma chave de acesso desta conta neste dispositivo. Use a sua aplicação de autenticação ou adicione primeiro uma chave de acesso num navegador.</string>
+    <string name="error_passkey_unavailable">Não foi encontrada nenhuma chave de acesso para esta conta. Confirme que o gestor de palavras-passe que guarda a sua chave de acesso está ativado para chaves de acesso nas definições do Android, ou use a sua aplicação de autenticação.</string>
+    <string name="error_passkey_no_provider">As chaves de acesso não estão configuradas neste dispositivo. Ative um gestor de palavras-passe para chaves de acesso nas definições do Android, ou use a sua aplicação de autenticação.</string>
+    <string name="passkey_open_settings">Definições de chaves de acesso</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Código de erro: %2$s</string>
     <string name="error_passkey_failed">Não foi possível verificar a sua chave de acesso. Tente novamente ou use outra forma de iniciar sessão.</string>
     <string name="error_invalid_backup_code">Esse código de segurança não corresponde. Cada código só funciona uma vez, por isso experimente o próximo código não usado da sua lista.</string>
     <string name="error_invalid_recovery_phrase">Essa frase de recuperação não corresponde. Verifique a ordem das palavras e a grafia e tente novamente.</string>
@@ -3374,7 +3378,7 @@
     <string name="passkey_added_sessions_revoked">Chave de acesso adicionada. A sua sessão foi terminada nos outros dispositivos.</string>
     <string name="passkey_added_second_step_only">Chave de acesso adicionada. Use-a como segundo passo ao iniciar sessão com a sua palavra-passe.</string>
     <string name="passkey_already_registered">Esta chave de acesso já está guardada na sua conta.</string>
-    <string name="passkey_create_unavailable">Este dispositivo não consegue guardar chaves de acesso. Confirme que o bloqueio de ecrã está ativado e que tem um gestor de palavras-passe configurado.</string>
+    <string name="passkey_create_unavailable">Este dispositivo não consegue guardar chaves de acesso neste momento. Ative o bloqueio de ecrã e escolha um gestor de palavras-passe para chaves de acesso nas definições do Android.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
     <string name="error_passkey_timed_out">O pedido da chave de acesso expirou. Tente novamente.</string>
     <string name="billing_play_unavailable">As compras no Google Play não estão disponíveis neste momento. Tente novamente mais tarde.</string>
@@ -3509,4 +3513,14 @@
     <string name="client_update_body">Esta conta precisa de uma versão mais recente do Aster Mail. Para continuar a utilizá-la neste dispositivo, atualize a aplicação. Continua com a sessão iniciada e nada é removido deste dispositivo.</string>
     <string name="client_update_action">Atualizar</string>
     <string name="client_update_later">Agora não</string>
+    <string name="external_pgp_key_title">Chave OpenPGP importada</string>
+    <string name="external_pgp_key_expires">Expira a %1$s</string>
+    <string name="external_pgp_key_no_expiry">Não expira</string>
+    <string name="external_pgp_key_published">Publicada. As pessoas fora do Aster Mail podem encontrar esta chave e enviar-lhe emails encriptados.</string>
+    <string name="external_pgp_key_not_published">Não publicada. As pessoas fora do Aster Mail não conseguem encontrar esta chave.</string>
+    <string name="external_pgp_key_fingerprint">Impressão digital</string>
+    <string name="external_pgp_key_stop_publishing">Deixar de publicar</string>
+    <string name="external_pgp_key_manage_note">Para importar, substituir ou remover esta chave, use o Aster Mail na web ou a aplicação para computador.</string>
+    <string name="external_pgp_key_unpublished">A sua chave importada já não está publicada.</string>
+    <string name="external_pgp_key_unpublish_failed">Não foi possível deixar de publicar a sua chave. Tente novamente.</string>
 </resources>
