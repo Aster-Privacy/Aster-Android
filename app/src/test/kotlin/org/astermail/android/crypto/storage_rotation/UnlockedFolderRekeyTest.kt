@@ -59,7 +59,7 @@ class UnlockedFolderRekeyTest {
         override fun seal_v2(plaintext: ByteArray): String? = b64(byteArrayOf(2) + plaintext)
     }
 
-    private class Row(val type: String, var envelope: String, var nonce: String)
+    private class Row(val type: String, var envelope: String, var nonce: String, val trashed: Boolean = false)
 
     private inner class FolderServer : ResealApi {
         val rows = LinkedHashMap<String, Row>()
@@ -92,7 +92,7 @@ class UnlockedFolderRekeyTest {
             return ApiReply(200)
         }
 
-        fun listing(): List<JsonObject> = rows.map { (id, row) ->
+        fun listing(trashed: Boolean = false): List<JsonObject> = rows.filter { it.value.trashed == trashed }.map { (id, row) ->
             json_object(
                 "id" to id,
                 "item_type" to row.type,
@@ -324,6 +324,7 @@ class UnlockedFolderRekeyTest {
         marker: () -> Long?,
         offsets: MutableList<Int>,
         max_per_unlock: Int,
+        phases: MutableList<Pair<Boolean, Int>> = mutableListOf(),
     ) = UnlockedFolderRekeyQueue(
         scope = scope,
         session_marker = { marker() },
@@ -339,9 +340,10 @@ class UnlockedFolderRekeyTest {
                 max_items = max_items,
             )
         },
-        fetch_page = { _, offset ->
+        fetch_page = { _, offset, trashed ->
             offsets.add(offset)
-            val all = server.listing()
+            phases.add(trashed to offset)
+            val all = server.listing(trashed)
             FolderRekeyPage(all.drop(offset).take(2), offset + 2 < all.size)
         },
         cursors = store,
@@ -363,7 +365,7 @@ class UnlockedFolderRekeyTest {
         }
 
         assertEquals(listOf("s1", "s2", "s3", "s4", "s5", "s6"), server.puts)
-        assertEquals(FolderRekeyCursor(done = true), store.saved["f1"])
+        assertEquals(FolderRekeyCursor(done = true, trash_done = true), store.saved["f1"])
         assertEquals(0, unlocked_folder_candidates(server.listing()).size)
 
         marker = 5L
@@ -393,14 +395,14 @@ class UnlockedFolderRekeyTest {
         val server = FolderServer()
         server.rows["d1"] = Row(DRAFT_ITEM_TYPE, sealed(1, "draft"), v1())
         val store = RecordingCursorStore()
-        store.saved["f1"] = FolderRekeyCursor(done = true)
+        store.saved["f1"] = FolderRekeyCursor(done = true, trash_done = true)
         val queue = paged_queue(CoroutineScope(coroutineContext), server, store, { 3L }, mutableListOf(), max_per_unlock = 5)
 
         assertNull(queue.offer("f1", emptyList()))
         queue.offer("f1", server.listing())?.join()
 
         assertEquals(listOf("d1"), server.puts)
-        assertEquals(FolderRekeyCursor(done = true), store.saved["f1"])
+        assertEquals(FolderRekeyCursor(done = true, trash_done = true), store.saved["f1"])
     }
 
     @Test
@@ -419,5 +421,123 @@ class UnlockedFolderRekeyTest {
         assertEquals(listOf(0), offsets)
         assertEquals(FolderRekeyCursor(offset = 0, clean = false), store.saved["f1"])
         assertTrue(store.saved["f1"]?.done != true)
+    }
+
+    @Test
+    fun the_trash_phase_path_adds_only_the_trashed_flag() {
+        assertEquals(
+            "$SENT_MESSAGES_PATH?label_token=tok&offset=50&include_envelope=true&skip_total=true&limit=50",
+            unlocked_folder_page_path("tok", 50),
+        )
+        assertEquals(
+            "$SENT_MESSAGES_PATH?label_token=tok&is_trashed=true&offset=50&include_envelope=true&skip_total=true&limit=50",
+            unlocked_folder_page_path("tok", 50, trashed = true),
+        )
+    }
+
+    @Test
+    fun trashed_rows_are_rekeyed_after_the_live_phase_finishes() = runBlocking {
+        val server = FolderServer()
+        server.rows["s1"] = Row(SENT_ITEM_TYPE, sealed(1, "live"), v1())
+        server.rows["t1"] = Row(SENT_ITEM_TYPE, sealed(1, "trash one"), v1(), trashed = true)
+        server.rows["t2"] = Row(DRAFT_ITEM_TYPE, sealed(1, "trash two"), v1(), trashed = true)
+        val store = RecordingCursorStore()
+        val phases = mutableListOf<Pair<Boolean, Int>>()
+        val queue = paged_queue(
+            CoroutineScope(coroutineContext), server, store, { 4L }, mutableListOf(), max_per_unlock = 10, phases = phases,
+        )
+
+        queue.offer("f1", emptyList())?.join()
+
+        assertEquals(listOf("s1", "t1", "t2"), server.puts)
+        assertEquals(listOf(false to 0, false to 0, true to 0, true to 0), phases)
+        assertEquals(FolderRekeyCursor(done = true, trash_done = true), store.saved["f1"])
+        assertNull(queue.offer("f1", emptyList()))
+    }
+
+    @Test
+    fun a_saved_cursor_from_before_the_trash_phase_resumes_with_trashed_rows() = runBlocking {
+        val server = FolderServer()
+        for (i in 1..4) server.rows["t$i"] = Row(SENT_ITEM_TYPE, sealed(1, "trash $i"), v1(), trashed = true)
+        val store = RecordingCursorStore()
+        store.saved.putAll(decode_folder_cursors("{\"f1\":{\"offset\":0,\"clean\":true,\"done\":true}}"))
+        assertEquals(FolderRekeyCursor(done = true), store.saved["f1"])
+        val phases = mutableListOf<Pair<Boolean, Int>>()
+        var marker = 0L
+        val queue = paged_queue(
+            CoroutineScope(coroutineContext), server, store, { marker }, mutableListOf(), max_per_unlock = 2, phases = phases,
+        )
+
+        marker = 1L
+        queue.offer("f1", emptyList())?.join()
+        assertEquals(listOf("t1", "t2"), server.puts)
+        assertEquals(FolderRekeyCursor(done = true, trash_offset = 2, trash_clean = false), store.saved["f1"])
+
+        for (unlock in 2..3) {
+            marker = unlock.toLong()
+            queue.offer("f1", emptyList())?.join()
+        }
+
+        assertEquals(listOf("t1", "t2", "t3", "t4"), server.puts)
+        assertTrue(phases.all { it.first })
+        assertEquals(FolderRekeyCursor(done = true, trash_done = true), store.saved["f1"])
+        marker = 4L
+        assertNull(queue.offer("f1", emptyList()))
+    }
+
+    @Test
+    fun the_trash_phase_shares_the_page_bound_of_one_unlock() = runBlocking {
+        val server = FolderServer()
+        for (i in 1..4) server.rows["s$i"] = Row(SENT_ITEM_TYPE, sealed(2, "current $i"), LevelTwoEnvelope.marker_b64())
+        server.rows["t1"] = Row(SENT_ITEM_TYPE, sealed(1, "trash"), v1(), trashed = true)
+        val store = RecordingCursorStore()
+        val phases = mutableListOf<Pair<Boolean, Int>>()
+        val queue = UnlockedFolderRekeyQueue(
+            scope = CoroutineScope(coroutineContext),
+            session_marker = { 6L },
+            run_batch = { items, still_unlocked, max_items ->
+                run_unlocked_folder_rekey(
+                    { keys() },
+                    server,
+                    TaggedCrypto(),
+                    items,
+                    still_unlocked,
+                    draft_in_use = { false },
+                    sleep = {},
+                    max_items = max_items,
+                )
+            },
+            fetch_page = { _, offset, trashed ->
+                phases.add(trashed to offset)
+                val all = server.listing(trashed)
+                FolderRekeyPage(all.drop(offset).take(2), offset + 2 < all.size)
+            },
+            cursors = store,
+            max_pages_per_unlock = 2,
+        )
+
+        queue.offer("f1", emptyList())?.join()
+
+        assertEquals(listOf(false to 0, false to 2), phases)
+        assertTrue(server.puts.isEmpty())
+        assertEquals(FolderRekeyCursor(done = true), store.saved["f1"])
+    }
+
+    @Test
+    fun locking_during_the_trash_phase_keeps_the_trash_cursor_in_place() = runBlocking {
+        val server = FolderServer()
+        server.rows["t1"] = Row(SENT_ITEM_TYPE, sealed(1, "trash one"), v1(), trashed = true)
+        server.rows["t2"] = Row(SENT_ITEM_TYPE, sealed(1, "trash two"), v1(), trashed = true)
+        val store = RecordingCursorStore()
+        store.saved["f1"] = FolderRekeyCursor(done = true)
+        var marker: Long? = 8L
+        server.after_put = { marker = null }
+        val queue = paged_queue(CoroutineScope(coroutineContext), server, store, { marker }, mutableListOf(), max_per_unlock = 10)
+
+        queue.offer("f1", emptyList())?.join()
+
+        assertEquals(listOf("t1"), server.puts)
+        assertEquals(FolderRekeyCursor(done = true, trash_clean = false), store.saved["f1"])
+        assertEquals(v1(), server.rows.getValue("t2").nonce)
     }
 }

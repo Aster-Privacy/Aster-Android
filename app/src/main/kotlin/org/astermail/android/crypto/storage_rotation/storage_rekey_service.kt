@@ -279,7 +279,7 @@ class StorageRekeyService @Inject constructor(
             scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
             session_marker = { org.astermail.android.folders.folder_lock_store.unlock_session_marker(it) },
             run_batch = { items, still_unlocked, max_items -> rekey_unlocked_items(items, still_unlocked, max_items) },
-            fetch_page = { folder_id, offset -> fetch_unlocked_folder_page(folder_id, offset) },
+            fetch_page = { folder_id, offset, trashed -> fetch_unlocked_folder_page(folder_id, offset, trashed) },
             cursors = PrefsFolderRekeyCursorStore(prefs) { session_key_store.get_user_id() },
         )
     }
@@ -313,10 +313,10 @@ class StorageRekeyService @Inject constructor(
         )
     }
 
-    private suspend fun fetch_unlocked_folder_page(folder_id: String, offset: Int): FolderRekeyPage? {
+    private suspend fun fetch_unlocked_folder_page(folder_id: String, offset: Int, trashed: Boolean): FolderRekeyPage? {
         if (!is_unlocked() || !session_key_store.is_level2_admitted()) return null
         val token = org.astermail.android.folders.folder_lock_store.unlocked_folder_label_token(folder_id) ?: return null
-        val reply = KtorResealApi(api_client).get(unlocked_folder_page_path(token, offset))
+        val reply = KtorResealApi(api_client).get(unlocked_folder_page_path(token, offset, trashed))
         if (reply.status != 200) return null
         val data = reply.data as? JsonObject ?: return null
         return FolderRekeyPage(items = data.objects("items"), has_more = data.bool("has_more") == true)

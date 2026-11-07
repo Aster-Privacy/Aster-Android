@@ -104,7 +104,27 @@ data class FolderRekeyCursor(
     val offset: Int = 0,
     val clean: Boolean = true,
     val done: Boolean = false,
-)
+    val trash_offset: Int = 0,
+    val trash_clean: Boolean = true,
+    val trash_done: Boolean = false,
+) {
+    fun phase_done(trashed: Boolean): Boolean = if (trashed) trash_done else done
+
+    fun phase_offset(trashed: Boolean): Int = if (trashed) trash_offset else offset
+
+    fun dirtied(trashed: Boolean): FolderRekeyCursor =
+        if (trashed) copy(trash_clean = false) else copy(clean = false)
+
+    fun advanced(trashed: Boolean, by: Int): FolderRekeyCursor =
+        if (trashed) copy(trash_offset = trash_offset + by) else copy(offset = offset + by)
+
+    fun finished_pass(trashed: Boolean): FolderRekeyCursor =
+        if (trashed) {
+            copy(trash_offset = 0, trash_clean = true, trash_done = trash_clean)
+        } else {
+            copy(offset = 0, clean = true, done = clean)
+        }
+}
 
 interface FolderRekeyCursorStore {
     fun load(folder_id: String): FolderRekeyCursor?
@@ -138,9 +158,10 @@ fun decode_folder_cursors(text: String?): Map<String, FolderRekeyCursor> {
     }.getOrDefault(emptyMap())
 }
 
-fun unlocked_folder_page_path(label_token: String, offset: Int): String =
-    "$SENT_MESSAGES_PATH?label_token=${url_component(label_token)}&offset=$offset" +
-        "&include_envelope=true&skip_total=true&limit=$UNLOCKED_FOLDER_PAGE_LIMIT"
+fun unlocked_folder_page_path(label_token: String, offset: Int, trashed: Boolean = false): String =
+    "$SENT_MESSAGES_PATH?label_token=${url_component(label_token)}" +
+        (if (trashed) "&is_trashed=true" else "") +
+        "&offset=$offset&include_envelope=true&skip_total=true&limit=$UNLOCKED_FOLDER_PAGE_LIMIT"
 
 data class FolderRekeyPage(val items: List<JsonObject>, val has_more: Boolean)
 
@@ -151,7 +172,8 @@ class UnlockedFolderRekeyQueue(
     private val scope: CoroutineScope,
     private val session_marker: (String) -> Long?,
     private val run_batch: suspend (items: List<JsonObject>, still_unlocked: () -> Boolean, max_items: Int) -> ResealRunResult,
-    private val fetch_page: suspend (folder_id: String, offset: Int) -> FolderRekeyPage? = { _, _ -> null },
+    private val fetch_page: suspend (folder_id: String, offset: Int, trashed: Boolean) -> FolderRekeyPage? =
+        { _, _, _ -> null },
     private val cursors: FolderRekeyCursorStore = MemoryFolderRekeyCursorStore(),
     private val max_per_unlock: Int = UNLOCKED_FOLDER_MAX_ITEMS_PER_UNLOCK,
     private val max_pages_per_unlock: Int = UNLOCKED_FOLDER_MAX_PAGES_PER_UNLOCK,
@@ -164,7 +186,7 @@ class UnlockedFolderRekeyQueue(
         val listed = unlocked_folder_candidates(items)
         val marker = session_marker(folder_id) ?: return null
         val stored = runCatching { cursors.load(folder_id) }.getOrNull() ?: FolderRekeyCursor()
-        if (listed.isEmpty() && stored.done) return null
+        if (listed.isEmpty() && stored.done && stored.trash_done) return null
         val entry: FolderBudget
         synchronized(folders) {
             val known = folders[folder_id]
@@ -216,34 +238,37 @@ class UnlockedFolderRekeyQueue(
             val batch = listed.take(remaining(entry))
             if (batch.isEmpty() || !keeps_going(convert(entry, batch, still_unlocked))) return
         }
-        while (!cursor.done && still_unlocked()) {
-            val budget = remaining(entry)
-            if (budget <= 0) return
-            val pages_left = synchronized(folders) {
-                if (entry.pages >= max_pages_per_unlock) false else {
-                    entry.pages += 1
-                    true
+        for (trashed in listOf(false, true)) {
+            while (!cursor.phase_done(trashed) && still_unlocked()) {
+                val budget = remaining(entry)
+                if (budget <= 0) return
+                val pages_left = synchronized(folders) {
+                    if (entry.pages >= max_pages_per_unlock) false else {
+                        entry.pages += 1
+                        true
+                    }
                 }
-            }
-            if (!pages_left) return
-            val page = fetch_page(folder_id, cursor.offset) ?: return
-            if (!still_unlocked()) return
-            val found = unlocked_folder_candidates(page.items)
-            if (found.isNotEmpty()) {
-                val batch = found.take(budget)
-                val result = convert(entry, batch, still_unlocked)
-                if (result.counts.resealed > 0) {
-                    cursor = cursor.copy(clean = false)
-                    save(folder_id, cursor)
+                if (!pages_left) return
+                val page = fetch_page(folder_id, cursor.phase_offset(trashed), trashed) ?: return
+                if (!still_unlocked()) return
+                val found = unlocked_folder_candidates(page.items)
+                if (found.isNotEmpty()) {
+                    val batch = found.take(budget)
+                    val result = convert(entry, batch, still_unlocked)
+                    if (result.counts.resealed > 0) {
+                        cursor = cursor.dirtied(trashed)
+                        save(folder_id, cursor)
+                    }
+                    if (!keeps_going(result) || batch.size < found.size) return
                 }
-                if (!keeps_going(result) || batch.size < found.size) return
+                cursor = if (page.has_more && page.items.isNotEmpty()) {
+                    cursor.advanced(trashed, page.items.size)
+                } else {
+                    cursor.finished_pass(trashed)
+                }
+                save(folder_id, cursor)
             }
-            cursor = when {
-                page.has_more && page.items.isNotEmpty() -> cursor.copy(offset = cursor.offset + page.items.size)
-                cursor.clean -> FolderRekeyCursor(done = true)
-                else -> FolderRekeyCursor()
-            }
-            save(folder_id, cursor)
+            if (!cursor.phase_done(trashed)) return
         }
     }
 
