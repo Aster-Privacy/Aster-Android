@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Excluir permanentemente</string>
     <string name="swipe_not_spam">Não é spam</string>
     <string name="swipe_read">Lido</string>
+    <string name="swipe_unread">Não lido</string>
     <string name="swipe_star">Estrela</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Caixa de entrada</string>

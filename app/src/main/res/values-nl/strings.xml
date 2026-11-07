@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Permanent verwijderen</string>
     <string name="swipe_not_spam">Geen spam</string>
     <string name="swipe_read">Gelezen</string>
+    <string name="swipe_unread">Ongelezen</string>
     <string name="swipe_star">Ster</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Postvak IN</string>

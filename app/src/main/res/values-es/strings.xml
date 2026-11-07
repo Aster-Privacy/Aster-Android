@@ -193,6 +193,7 @@
     <string name="swipe_delete_forever">Eliminar para siempre</string>
     <string name="swipe_not_spam">No es spam</string>
     <string name="swipe_read">Leído</string>
+    <string name="swipe_unread">No leído</string>
     <string name="swipe_star">Destacar</string>
     <string name="swipe_spam">Correo no deseado</string>
     <string name="swipe_inbox">Bandeja de entrada</string>

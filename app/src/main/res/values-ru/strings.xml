@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Удалить навсегда</string>
     <string name="swipe_not_spam">Не спам</string>
     <string name="swipe_read">Прочитано</string>
+    <string name="swipe_unread">Непрочитано</string>
     <string name="swipe_star">Избранное</string>
     <string name="swipe_spam">Спам</string>
     <string name="swipe_inbox">Входящие</string>
