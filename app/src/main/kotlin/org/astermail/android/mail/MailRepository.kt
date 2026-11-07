@@ -4713,6 +4713,9 @@ class MailRepository @Inject constructor(
             decrypt_envelope_v2(encrypted_meta) ?: throw IllegalStateException()
         }.recoverCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
+        }.recoverCatching {
+            LevelTwoEnvelope.open_raw_with_store(encrypted_meta, nonce_bytes, session_key_store)
+                ?: throw IllegalStateException()
         }.getOrNull() ?: run {
             session_key_store.get_identity_key()
                 ?.let { InboundAttachmentKeyStore.mark_unreadable(mail_item_id, seq_num) }
@@ -7202,6 +7205,7 @@ class MailRepository @Inject constructor(
         }
 
         fun server_meta_nonce(envelope_nonce: String): String {
+            if (LevelTwoEnvelope.is_marker_b64(envelope_nonce)) return LevelTwoEnvelope.meta_marker_b64()
             val decoded = runCatching {
                 android.util.Base64.decode(envelope_nonce, android.util.Base64.DEFAULT)
             }.getOrNull()

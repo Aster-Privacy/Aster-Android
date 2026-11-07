@@ -146,6 +146,15 @@ class AccountDataConversionContractTest {
     }
 
     @Test
+    fun the_shared_v2_meta_marker_is_not_legacy() {
+        assertEquals("AgAAAAAAAAAAAAAA", LevelTwoEnvelope.meta_marker_b64())
+        assertFalse(AccountDataConversion.is_legacy_meta_nonce("AgAAAAAAAAAAAAAA"))
+        assertTrue(LevelTwoEnvelope.is_meta_marker_b64("AgAAAAAAAAAAAAAA"))
+        assertFalse(LevelTwoEnvelope.is_meta_marker_b64("Ag=="))
+        assertTrue(AccountDataConversion.is_legacy_meta_nonce(Base64.getEncoder().encodeToString(ByteArray(12).also { it[0] = 2; it[11] = 1 })))
+    }
+
+    @Test
     fun rejects_malformed_utf8() {
         assertNull(AccountDataConversion.strict_utf8(byteArrayOf(0xC3.toByte(), 0x28)))
         assertEquals("{}", AccountDataConversion.strict_utf8("{}".toByteArray()))

@@ -717,7 +717,9 @@ class AccountDataConversion internal constructor(
         fun is_legacy_meta_nonce(nonce_b64: String?): Boolean {
             if (nonce_b64.isNullOrEmpty()) return false
             val nonce = decode_base64(nonce_b64) ?: return false
-            return nonce.size == META_NONCE_LENGTH && nonce.any { it != 0.toByte() }
+            return nonce.size == META_NONCE_LENGTH &&
+                nonce.any { it != 0.toByte() } &&
+                !LevelTwoEnvelope.is_meta_marker(nonce)
         }
 
         fun sha256_hex(bytes: ByteArray): String =

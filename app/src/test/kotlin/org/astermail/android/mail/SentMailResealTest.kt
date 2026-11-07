@@ -270,6 +270,49 @@ class SentMailResealTest {
         )
     }
 
+    @Test
+    fun a_level_two_attachment_reseal_writes_the_shared_meta_marker() = runTest {
+        val data_kek = ByteArray(32) { (it + 11).toByte() }
+        val store = mockk<SessionKeyStore>(relaxed = true)
+        every { store.is_level2_admitted() } returns true
+        every { store.get_data_kek() } answers { data_kek.copyOf() }
+        every { store.get_decrypt_keks() } returns emptyList()
+        val converted = MailItem(
+            id = "a",
+            item_type = "sent",
+            encrypted_envelope = "pgp",
+            envelope_nonce = "",
+            has_attachments = true,
+        )
+        val api = mockk<MailApi>()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(converted), has_more = false)
+        val legacy_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 7 })
+        coEvery { api.list_attachments("a") } returns AttachmentListResponse(
+            attachments = listOf(
+                attachment("att-old", SentMailResealCrypto.seal("old".toByteArray(), old_pass)).copy(meta_nonce = legacy_nonce),
+            ),
+        )
+        val meta = slot<UpdateAttachmentMetaRequest>()
+        coEvery { api.update_attachment_meta("att-old", capture(meta)) } returns Unit
+
+        val summary = SentMailResealer(api, store).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 1, rewritten = 1), summary)
+        assertEquals("AgAAAAAAAAAAAAAA", meta.captured.meta_nonce)
+        assertArrayEquals("old".toByteArray(), LevelTwoEnvelope.open_b64(meta.captured.encrypted_meta, listOf(data_kek)))
+    }
+
+    @Test
+    fun the_resealed_meta_nonce_keeps_non_level_two_writes_unchanged() {
+        val legacy_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 7 })
+        val zeros = Base64.getEncoder().encodeToString(ByteArray(12))
+        assertEquals("AgAAAAAAAAAAAAAA", SentMailResealCrypto.resealed_meta_nonce_b64(LevelTwoEnvelope.marker_b64(), legacy_nonce))
+        assertEquals(legacy_nonce, SentMailResealCrypto.resealed_meta_nonce_b64(null, legacy_nonce))
+        assertEquals(zeros, SentMailResealCrypto.resealed_meta_nonce_b64(null, null))
+        assertEquals(zeros, SentMailResealCrypto.resealed_meta_nonce_b64(SentMailResealCrypto.sentinel_nonce_b64(), "AQ=="))
+    }
+
     private fun attachment(id: String, encrypted_meta: String) = AttachmentResponse(
         id = id,
         mail_item_id = "a",

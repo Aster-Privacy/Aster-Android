@@ -23,6 +23,7 @@ package org.astermail.android.mail
 
 import java.security.MessageDigest
 import java.util.Base64
+import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.EnvelopeV2
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.storage.SessionKeyStore
@@ -35,6 +36,40 @@ object LevelTwoEnvelope {
         if (nonce_b64.isNullOrBlank()) return false
         val decoded = runCatching { Base64.getMimeDecoder().decode(nonce_b64.trim()) }.getOrNull() ?: return false
         return EnvelopeV2.is_marker(decoded)
+    }
+
+    const val META_MARKER_LENGTH = 12
+
+    fun meta_marker(): ByteArray = ByteArray(META_MARKER_LENGTH).also { it[0] = 2 }
+
+    fun meta_marker_b64(): String = Base64.getEncoder().encodeToString(meta_marker())
+
+    fun is_meta_marker(nonce: ByteArray?): Boolean =
+        nonce != null && nonce.contentEquals(meta_marker())
+
+    fun is_meta_marker_b64(nonce_b64: String?): Boolean {
+        if (nonce_b64.isNullOrBlank()) return false
+        val decoded = runCatching { Base64.getMimeDecoder().decode(nonce_b64.trim()) }.getOrNull() ?: return false
+        return is_meta_marker(decoded)
+    }
+
+    fun open_raw_b64(sealed_b64: String?, nonce: ByteArray?, keys: List<ByteArray>): ByteArray? {
+        if (sealed_b64.isNullOrBlank() || nonce == null || nonce.size != META_MARKER_LENGTH) return null
+        val ciphertext = runCatching { Base64.getMimeDecoder().decode(sealed_b64.trim()) }.getOrNull() ?: return null
+        for (key in keys) {
+            val opened = runCatching { AesGcm.decrypt(key, nonce, ciphertext) }.getOrNull()
+            if (opened != null) return opened
+        }
+        return null
+    }
+
+    fun open_raw_with_store(sealed_b64: String?, nonce: ByteArray?, store: SessionKeyStore): ByteArray? {
+        val keys = read_keys(store)
+        return try {
+            open_raw_b64(sealed_b64, nonce, keys)
+        } finally {
+            keys.forEach { it.fill(0) }
+        }
     }
 
     fun read_keys(store: SessionKeyStore): List<ByteArray> {

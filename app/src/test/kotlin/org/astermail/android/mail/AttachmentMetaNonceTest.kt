@@ -67,6 +67,13 @@ class AttachmentMetaNonceTest {
     }
 
     @Test
+    fun maps_the_level_two_envelope_marker_to_the_shared_meta_marker() {
+        assertEquals("AgAAAAAAAAAAAAAA", MailRepository.server_meta_nonce(LevelTwoEnvelope.marker_b64()))
+        assertEquals("AgAAAAAAAAAAAAAA", MailRepository.server_meta_nonce("Ag=="))
+        assertEquals(b64(ByteArray(12)), MailRepository.server_meta_nonce("AQ=="))
+    }
+
+    @Test
     fun replaces_unparseable_nonces_with_the_placeholder() {
         val out = MailRepository.server_meta_nonce("")
         assertEquals(12, java.util.Base64.getDecoder().decode(out).size)

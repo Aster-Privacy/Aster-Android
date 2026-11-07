@@ -264,7 +264,7 @@ class EnvelopeV2Step(
                     "/mail/v1/attachments/${url_component(meta_id)}/meta",
                     json_object(
                         "encrypted_meta" to replacement,
-                        "meta_nonce" to SentMailResealCrypto.placeholder_meta_nonce_b64(meta_nonce),
+                        "meta_nonce" to LevelTwoEnvelope.meta_marker_b64(),
                     ),
                 )
             }

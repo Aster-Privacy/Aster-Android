@@ -371,6 +371,112 @@ class AttachmentMetaSealedTest {
         assertEquals(key_b64, meta.session_key)
     }
 
+    private val vector_data_kek = ByteArray(32) { it.toByte() }
+    private val vector_legacy_kek = ByteArray(32) { (it + 32).toByte() }
+    private val vector_plaintext = """{"subject":"Vector test","n":7}"""
+    private val vector_current =
+        "oKGio6SlpqeoqaqrrK2ur8DBwsPExcbHyMnKyxmUrphDVc4W9hq0u8Q/kCWAkTj6oNg/L8FnTtfoYrei0cSkxxjeICkSF8UMMji/"
+    private val vector_legacy_only =
+        "oKGio6SlpqeoqaqrrK2ur8DBwsPExcbHyMnKywLFIOOJnavHPVGWAESVDuvrt2eV3125NPGXHdSgj9M13jpUGS2PQGNB/A8W43oA"
+
+    private fun use_keks(data_kek: ByteArray?, legacy: List<ByteArray> = emptyList()) {
+        every { session_key_store.get_data_kek() } answers { data_kek?.copyOf() }
+        every { session_key_store.get_decrypt_keks() } returns legacy.map(::b64)
+    }
+
+    @Test
+    fun the_web_marker_vector_opens_under_the_shared_meta_marker() {
+        val marker = java.util.Base64.getDecoder().decode("AgAAAAAAAAAAAAAA")
+
+        assertTrue(LevelTwoEnvelope.is_meta_marker(marker))
+        assertTrue(MailRepository.is_sealed_meta_nonce(marker))
+        assertFalse(AccountDataConversion.is_legacy_meta_nonce("AgAAAAAAAAAAAAAA"))
+        assertEquals(
+            vector_plaintext,
+            LevelTwoEnvelope.open_b64(vector_current, listOf(vector_data_kek))?.toString(Charsets.UTF_8),
+        )
+        assertEquals(
+            vector_plaintext,
+            LevelTwoEnvelope.open_b64(vector_legacy_only, listOf(vector_data_kek, vector_legacy_kek))
+                ?.toString(Charsets.UTF_8),
+        )
+    }
+
+    @Test
+    fun a_v2_meta_under_the_shared_marker_opens_through_the_reader() {
+        use_keks(vector_data_kek)
+        val sealed_meta = LevelTwoEnvelope.seal_b64(
+            """{"filename":"marker.pdf","content_type":"application/pdf"}""".toByteArray(Charsets.UTF_8),
+            vector_data_kek,
+        )
+
+        val meta = repo.decrypt_attachment_meta(sealed_meta, "AgAAAAAAAAAAAAAA", "item-m", 0, 21L)
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("marker.pdf", meta.filename)
+        assertEquals("application/pdf", meta.content_type)
+    }
+
+    @Test
+    fun a_v2_meta_under_a_zero_or_random_nonce_still_opens() {
+        use_keks(vector_data_kek)
+        val sealed_meta = LevelTwoEnvelope.seal_b64(
+            """{"filename":"either.pdf","content_type":"application/pdf"}""".toByteArray(Charsets.UTF_8),
+            vector_data_kek,
+        )
+
+        val under_random = repo.decrypt_attachment_meta(sealed_meta, b64(meta_nonce), "item-r", 0, 1L)
+        val under_zero = repo.decrypt_attachment_meta(sealed_meta, b64(ByteArray(12)), "item-z", 0, 1L)
+
+        assertEquals("either.pdf", under_random.filename)
+        assertEquals("either.pdf", under_zero.filename)
+    }
+
+    @Test
+    fun a_raw_meta_under_the_data_kek_and_its_stored_nonce_opens() {
+        use_keks(vector_data_kek)
+        val sealed_meta = seal(
+            """{"filename":"raw.pdf","content_type":"application/pdf"}""",
+            vector_data_kek,
+            meta_nonce,
+        )
+
+        val meta = repo.decrypt_attachment_meta(sealed_meta, b64(meta_nonce), "item-f6", 0, 30L)
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("raw.pdf", meta.filename)
+        assertEquals(30L, meta.size_bytes)
+    }
+
+    @Test
+    fun a_raw_meta_under_a_legacy_kek_opens() {
+        use_keks(vector_data_kek, listOf(vector_legacy_kek))
+        val sealed_meta = seal(
+            """{"filename":"old-kek.pdf","content_type":"application/pdf"}""",
+            vector_legacy_kek,
+            meta_nonce,
+        )
+
+        val meta = repo.decrypt_attachment_meta(sealed_meta, b64(meta_nonce), "item-f6l", 0, 4L)
+
+        assertEquals("old-kek.pdf", meta.filename)
+    }
+
+    @Test
+    fun a_raw_meta_under_an_unknown_key_stays_a_placeholder() {
+        use_keks(vector_data_kek)
+        val sealed_meta = seal(
+            """{"filename":"hidden.pdf","content_type":"application/pdf"}""",
+            ByteArray(32) { 5 },
+            meta_nonce,
+        )
+
+        val meta = repo.decrypt_attachment_meta(sealed_meta, b64(meta_nonce), "item-f6x", 0, 4L)
+
+        assertTrue(meta.is_placeholder)
+        assertFalse(meta.filename.contains("hidden"))
+    }
+
     @Test
     fun garbage_metadata_never_surfaces_ciphertext_as_a_name() {
         val garbage = b64(ByteArray(64) { (it * 7).toByte() })

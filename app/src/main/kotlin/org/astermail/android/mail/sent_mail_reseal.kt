@@ -102,6 +102,13 @@ object SentMailResealCrypto {
         if (existing_b64 != null && existing != null && existing.size == NONCE_LENGTH) return existing_b64
         return Base64.getEncoder().encodeToString(ByteArray(NONCE_LENGTH))
     }
+
+    fun resealed_meta_nonce_b64(resealed_nonce_b64: String?, existing_b64: String?): String =
+        if (LevelTwoEnvelope.is_marker_b64(resealed_nonce_b64)) {
+            LevelTwoEnvelope.meta_marker_b64()
+        } else {
+            placeholder_meta_nonce_b64(existing_b64)
+        }
 }
 
 @Singleton
@@ -227,8 +234,8 @@ class SentMailResealer @Inject constructor(
                     if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase)) continue
                     return null
                 }
-                val resealed = try {
-                    reseal_plaintext(plaintext, new_passphrase, null).first
+                val (resealed, resealed_nonce) = try {
+                    reseal_plaintext(plaintext, new_passphrase, null)
                 } finally {
                     plaintext.fill(0)
                 }
@@ -236,7 +243,7 @@ class SentMailResealer @Inject constructor(
                     attachment.id,
                     UpdateAttachmentMetaRequest(
                         encrypted_meta = resealed,
-                        meta_nonce = SentMailResealCrypto.placeholder_meta_nonce_b64(attachment.meta_nonce),
+                        meta_nonce = SentMailResealCrypto.resealed_meta_nonce_b64(resealed_nonce, attachment.meta_nonce),
                     ),
                 )
                 resealed_count += 1

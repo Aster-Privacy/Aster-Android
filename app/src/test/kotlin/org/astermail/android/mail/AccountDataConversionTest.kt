@@ -397,6 +397,22 @@ class AccountDataConversionTest {
     }
 
     @Test
+    fun leaves_a_meta_under_the_shared_v2_marker_alone() = runBlocking {
+        status = status_of(remaining_attachments = 2)
+        val plain = b64(meta_json.toByteArray(Charsets.UTF_8))
+        attachments["sent-1"] = listOf(
+            attachment("att-marker", plain, LevelTwoEnvelope.meta_marker_b64()),
+            attachment("att-legacy", plain),
+        )
+        pages = mutableListOf(page(MailItem(id = "sent-1", has_attachments = true)))
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(1, summary.converted)
+        assertEquals(listOf("att-legacy"), attachment_writes.map { it.first })
+    }
+
+    @Test
     fun counts_meta_that_is_not_an_attachment_object_as_unreadable() = runBlocking {
         status = status_of(remaining_attachments = 1)
         attachments["sent-1"] = listOf(attachment("att-1", password_envelope("""{"filename":"x"}""")))
