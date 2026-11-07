@@ -3083,7 +3083,7 @@ class MailRepository @Inject constructor(
         bulk_membership(
             item_ids,
             per_item = { mail_api.add_label_to_item(it, label_token) },
-            per_chunk = { mail_api.bulk_add_label(BulkLabelRequest(ids = it, label_token = label_token)) },
+            per_chunk = { mail_api.bulk_add_label(BulkLabelRequest(ids = it, label_token = label_token, include_thread = conversation_grouping)) },
         )
 
     suspend fun remove_label_bulk(item_ids: List<String>, label_token: String): Set<String> {
@@ -3098,7 +3098,7 @@ class MailRepository @Inject constructor(
         bulk_membership(
             item_ids,
             per_item = { mail_api.remove_label_from_item(it, label_token) },
-            per_chunk = { mail_api.bulk_remove_label(BulkLabelRequest(ids = it, label_token = label_token)) },
+            per_chunk = { mail_api.bulk_remove_label(BulkLabelRequest(ids = it, label_token = label_token, include_thread = conversation_grouping)) },
         )
 
     suspend fun add_tag_bulk(item_ids: List<String>, tag_token: String): Set<String> {
