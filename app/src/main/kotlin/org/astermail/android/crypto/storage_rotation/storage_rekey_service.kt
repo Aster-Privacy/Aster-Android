@@ -26,7 +26,9 @@ import android.content.SharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
@@ -37,6 +39,7 @@ import org.astermail.android.crypto.VaultKdf
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
+import kotlinx.serialization.json.JsonObject
 import org.json.JSONObject
 
 object VaultWriteLock {
@@ -48,6 +51,39 @@ private const val PROGRESS_KEY_PREFIX = "progress_"
 private const val KEY_MATERIAL_ITERATIONS = 310000
 private const val MAX_KEY_MATERIAL_SALTS = 4
 private const val BACKUP_REFRESH_KEY_PREFIX = "backup_refresh_"
+
+private const val FOLDER_CURSOR_KEY_PREFIX = "unlocked_folder_cursor_"
+
+class PrefsFolderRekeyCursorStore(
+    private val prefs: SharedPreferences?,
+    private val user_id: () -> String?,
+) : FolderRekeyCursorStore {
+    private fun key(): String? = user_id()?.let { FOLDER_CURSOR_KEY_PREFIX + it }
+
+    private fun read(key: String): Map<String, FolderRekeyCursor> = decode_folder_cursors(prefs?.getString(key, null))
+
+    @Synchronized
+    override fun load(folder_id: String): FolderRekeyCursor? {
+        val key = key() ?: return null
+        return read(key)[folder_id]
+    }
+
+    @Synchronized
+    override fun save(folder_id: String, cursor: FolderRekeyCursor) {
+        val key = key() ?: return
+        val next = read(key).toMutableMap()
+        if (cursor == FolderRekeyCursor()) next.remove(folder_id) else next[folder_id] = cursor
+        val editor = prefs?.edit() ?: return
+        if (next.isEmpty()) editor.remove(key) else editor.putString(key, encode_folder_cursors(next))
+        editor.apply()
+    }
+
+    @Synchronized
+    override fun clear() {
+        val key = key() ?: return
+        prefs?.edit()?.remove(key)?.apply()
+    }
+}
 
 class PrefsProgressStore(
     private val prefs: SharedPreferences?,
@@ -238,9 +274,61 @@ class StorageRekeyService @Inject constructor(
         }
     }
 
+    private val folder_queue by lazy {
+        UnlockedFolderRekeyQueue(
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            session_marker = { org.astermail.android.folders.folder_lock_store.unlock_session_marker(it) },
+            run_batch = { items, still_unlocked, max_items -> rekey_unlocked_items(items, still_unlocked, max_items) },
+            fetch_page = { folder_id, offset -> fetch_unlocked_folder_page(folder_id, offset) },
+            cursors = PrefsFolderRekeyCursorStore(prefs) { session_key_store.get_user_id() },
+        )
+    }
+
     fun forget_session() {
         healed_users.clear()
         side_copied.clear()
+        folder_queue.forget()
+    }
+
+    fun offer_unlocked_folder_items(folder_id: String, items: List<JsonObject>) {
+        if (!session_key_store.is_level2_admitted() || !is_unlocked()) return
+        folder_queue.offer(folder_id, items)
+    }
+
+    private suspend fun rekey_unlocked_items(
+        items: List<JsonObject>,
+        still_unlocked: () -> Boolean,
+        max_items: Int,
+    ): ResealRunResult {
+        val ready = { still_unlocked() && is_unlocked() && session_key_store.is_level2_admitted() }
+        if (!ready()) return ResealRunResult(ResealRunStatus.NOT_NEEDED, StepCounts(), "locked")
+        return run_unlocked_folder_rekey(
+            keys_source = { session_reseal_keys() },
+            api = GatedResealApi(KtorResealApi(api_client), sleep = { delay(it) }, is_cancelled = { !ready() }),
+            crypto = SessionEnvelopeV2Crypto(session_key_store),
+            items = items,
+            still_unlocked = ready,
+            draft_in_use = { org.astermail.android.mail.LocalDraftActivity.is_in_use(it) },
+            max_items = max_items,
+        )
+    }
+
+    private suspend fun fetch_unlocked_folder_page(folder_id: String, offset: Int): FolderRekeyPage? {
+        if (!is_unlocked() || !session_key_store.is_level2_admitted()) return null
+        val token = org.astermail.android.folders.folder_lock_store.unlocked_folder_label_token(folder_id) ?: return null
+        val reply = KtorResealApi(api_client).get(unlocked_folder_page_path(token, offset))
+        if (reply.status != 200) return null
+        val data = reply.data as? JsonObject ?: return null
+        return FolderRekeyPage(items = data.objects("items"), has_more = data.bool("has_more") == true)
+    }
+
+    private fun session_reseal_keys(): ResealKeys? {
+        val raw = session_key_store.get_data_kek() ?: return null
+        if (raw.size != RESEAL_KEY_LENGTH) {
+            raw.fill(0)
+            return null
+        }
+        return ResealKeys(raw, emptyList())
     }
 
     private fun wrap_crypto(): StorageKeyWrapCrypto =

@@ -204,6 +204,80 @@ class VaultWorkFactorTest {
         assertEquals(0, server.gets)
     }
 
+    private fun timed_step(store: ProgressStore, now: Long, raise: suspend () -> VaultWorkFactor): VaultWorkFactor =
+        runBlocking { run_vault_work_factor_step(true, { true }, store, { now }, raise) }
+
+    @Test
+    fun a_failing_upgrade_backs_off_from_one_hour_doubling_to_seven_days() {
+        val store = MemoryProgressStore()
+        val hour = 60L * 60L * 1000L
+        var calls = 0
+        val failing: suspend () -> VaultWorkFactor = {
+            calls += 1
+            throw IllegalStateException("offline")
+        }
+
+        assertEquals(VaultWorkFactor.SKIPPED, timed_step(store, 0L, failing))
+        assertEquals(1, calls)
+        assertEquals(WorkFactorBackoff(hour, hour), read_work_factor_backoff(store.load()!!))
+
+        assertEquals(VaultWorkFactor.SKIPPED, timed_step(store, hour - 1, failing))
+        assertEquals(1, calls)
+
+        var now = hour
+        val delays = mutableListOf<Long>()
+        repeat(10) {
+            timed_step(store, now, failing)
+            val backoff = read_work_factor_backoff(store.load()!!)!!
+            delays.add(backoff.delay_ms)
+            now = backoff.next_at_ms
+        }
+        assertEquals(11, calls)
+        assertEquals(
+            listOf(2L, 4L, 8L, 16L, 32L, 64L, 128L, 168L, 168L, 168L).map { it * hour },
+            delays,
+        )
+    }
+
+    @Test
+    fun a_success_after_backing_off_clears_the_backoff() {
+        val store = MemoryProgressStore()
+        timed_step(store, 0L) { VaultWorkFactor.SKIPPED }
+        assertTrue(read_work_factor_backoff(store.load()!!) != null)
+
+        assertEquals(VaultWorkFactor.UPGRADED, timed_step(store, 60L * 60L * 1000L) { VaultWorkFactor.UPGRADED })
+
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertTrue(step_done(store))
+    }
+
+    @Test
+    fun conflicts_and_refusals_retry_on_the_next_pass_without_backing_off() {
+        val store = MemoryProgressStore()
+        var calls = 0
+
+        assertEquals(VaultWorkFactor.CONFLICT, timed_step(store, 0L) { calls += 1; VaultWorkFactor.CONFLICT })
+        assertEquals(VaultWorkFactor.NOT_ADMITTED, timed_step(store, 1L) { calls += 1; VaultWorkFactor.NOT_ADMITTED })
+        assertEquals(VaultWorkFactor.CONFLICT, timed_step(store, 2L) { calls += 1; VaultWorkFactor.CONFLICT })
+
+        assertEquals(3, calls)
+        assertNull(read_work_factor_backoff(store.load()!!))
+        assertFalse(step_done(store))
+    }
+
+    @Test
+    fun the_backoff_is_kept_per_account() {
+        val first = MemoryProgressStore()
+        val second = MemoryProgressStore()
+        timed_step(first, 0L) { VaultWorkFactor.SKIPPED }
+        var called = false
+
+        assertEquals(VaultWorkFactor.UPGRADED, timed_step(second, 1L) { called = true; VaultWorkFactor.UPGRADED })
+
+        assertTrue(called)
+        assertTrue(read_work_factor_backoff(first.load()!!) != null)
+    }
+
     private fun edit(draft: VaultDraft): VaultEdit {
         draft.vault.put("note", "changed")
         return VaultEdit.CHANGED

@@ -95,7 +95,7 @@ class SessionEnvelopeV2Crypto(private val store: SessionKeyStore) : EnvelopeV2Cr
     }
 }
 
-private class WorkBudget(val limit: Int) {
+internal class WorkBudget(val limit: Int) {
     var used = 0
 
     fun spend() {
@@ -175,6 +175,11 @@ class EnvelopeV2Step(
         }
         val base = "$SENT_MESSAGES_PATH?$filter&include_envelope=true&skip_total=true&limit=$ENVELOPE_V2_PAGE_LIMIT"
         return if (cursor.isNullOrEmpty()) base else "$base&cursor=${url_component(cursor)}"
+    }
+
+    internal suspend fun convert_listed(ctx: ResealContext, item: JsonObject, budget: WorkBudget) {
+        if (item.str("item_type") != item_type) return
+        convert_item(ctx, item, budget)
     }
 
     private suspend fun convert_item(ctx: ResealContext, item: JsonObject, budget: WorkBudget) {

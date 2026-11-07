@@ -154,6 +154,26 @@ object folder_lock_store {
     fun unlock_token_for_id(folder_id: String): String? = session_for(folder_id)?.unlock_token
 
     @Synchronized
+    fun unlock_session_marker(folder_id: String): Long? {
+        if (folder_id !in protected_folder_ids) return null
+        return session_for(folder_id)?.unlocked_at_ms
+    }
+
+    @Synchronized
+    fun unlocked_folder_label_token(folder_id: String): String? {
+        if (folder_id !in protected_folder_ids) return null
+        if (session_for(folder_id) == null) return null
+        return folder_token_by_id[folder_id]?.takeIf { it.isNotBlank() }
+    }
+
+    @Synchronized
+    fun unlocked_protected_folder_id(token: String): String? {
+        val folder_id = folder_id_by_token[token] ?: return null
+        if (folder_id !in protected_folder_ids) return null
+        return folder_id.takeIf { session_for(it) != null }
+    }
+
+    @Synchronized
     fun folder_key_material(folder_id: String): Pair<String, String>? {
         val session = session_for(folder_id) ?: return null
         val key = session.encrypted_folder_key ?: return null

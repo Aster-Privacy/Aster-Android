@@ -540,6 +540,7 @@ class MailRepository @Inject constructor(
     private val auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>,
     private val pending_action_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
     private val encryption_api_provider: dagger.Lazy<org.astermail.android.api.encryption.EncryptionApi>? = null,
+    private val storage_rekey_service_provider: dagger.Lazy<org.astermail.android.crypto.storage_rotation.StorageRekeyService>? = null,
 ) {
     private val pending_action_queue: PendingMailActionQueue?
         get() = pending_action_queue_provider?.get()
@@ -2260,6 +2261,7 @@ class MailRepository @Inject constructor(
                 until == null || (parse_timestamp_ms(until) ?: 0L) <= now_ms
             }
         } else response.items
+        if (label_token != null) offer_unlocked_folder_rekey(label_token, response.items)
         val batch = decrypt_items_batch(filtered_raw)
         val next_cursor = if (is_token_scope && response.next_cursor == null && response.has_more) {
             ((offset ?: 0) + response.items.size).toString()
@@ -2273,6 +2275,25 @@ class MailRepository @Inject constructor(
             total = response.total.takeIf { it >= 0 },
             raw_ids = batch.server_ids,
         )
+    }
+
+    private fun offer_unlocked_folder_rekey(label_token: String, items: List<MailItem>) {
+        val provider = storage_rekey_service_provider ?: return
+        runCatching {
+            val folder_id = org.astermail.android.folders.folder_lock_store.unlocked_protected_folder_id(label_token)
+                ?: return
+            val rows = items.filter { it.item_type == "sent" || it.item_type == "draft" }.map { item ->
+                org.astermail.android.crypto.storage_rotation.json_object(
+                    "id" to item.id,
+                    "item_type" to item.item_type,
+                    "encrypted_envelope" to item.encrypted_envelope,
+                    "envelope_nonce" to item.envelope_nonce,
+                    "has_attachments" to item.has_attachments,
+                    "attachment_count" to item.attachment_count,
+                )
+            }
+            provider.get().offer_unlocked_folder_items(folder_id, rows)
+        }
     }
 
     private fun parse_timestamp_ms(value: String): Long? = runCatching {
