@@ -627,7 +627,7 @@ fun ThreadInboxRow(
             show_avatar,
             is_selected,
             metrics.avatar_size,
-            on_avatar_click,
+            if (select_mode) null else on_avatar_click,
         ) {
             val authenticated_system_email = androidx.compose.runtime.remember(
                 email.sender_email, email.display_sender_email, email.is_external, email.system_origin,

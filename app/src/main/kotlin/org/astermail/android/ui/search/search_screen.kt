@@ -1377,6 +1377,7 @@ internal fun search_results_list(
                 on_long_click = {
                     if (select_mode) on_toggle_selection(row_id) else on_enter_select_mode(row_id)
                 },
+                on_avatar_click = { on_enter_select_mode(row_id) },
                 on_toggle_star = { on_toggle_star(row_id) },
                 modifier = Modifier.testTag("search_row_$row_id"),
                 is_first = index == 0,

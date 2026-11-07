@@ -2511,7 +2511,6 @@ fun InboxScreen(
                                         thread = thread,
                                         on_click = { toggle_selection(thread.thread_id) },
                                         on_long_click = { toggle_selection(thread.thread_id) },
-                                        on_avatar_click = { toggle_selection(thread.thread_id) },
                                         on_toggle_star = { apply_thread_star(thread) },
                                         is_selected = is_selected,
                                         select_mode = true,
