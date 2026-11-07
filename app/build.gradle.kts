@@ -208,6 +208,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.credentials)
     "fullImplementation"(libs.androidx.credentials.play.services.auth)
+    implementation(libs.yubikit.android) {
+        exclude(group = "com.squareup.moshi")
+    }
+    implementation(libs.yubikit.fido) {
+        exclude(group = "com.squareup.moshi")
+    }
     implementation(libs.androidx.profileinstaller)
 
     if (!is_fdroid_build) {
