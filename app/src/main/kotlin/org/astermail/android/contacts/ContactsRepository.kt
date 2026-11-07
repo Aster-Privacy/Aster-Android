@@ -292,14 +292,31 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun search_contacts(query: String, field: String = "all", limit: Int? = null): Result<List<Contact>> = runCatching {
-        val key = derive_contacts_key()
-        val token = try {
-            generate_search_token(query, key)
-        } finally {
-            key.fill(0)
+        val tokens = search_token_keys().map { key ->
+            try {
+                generate_search_token(query, key)
+            } finally {
+                key.fill(0)
+            }
+        }.distinct()
+        val items = LinkedHashMap<String, ContactItem>()
+        for (token in tokens) {
+            if (limit != null && items.size >= limit) break
+            contacts_api.search_contacts(token, field, limit).items.forEach { items.putIfAbsent(it.id, it) }
         }
-        val response = contacts_api.search_contacts(token, field, limit)
-        decrypt_contacts(response.items)
+        val found = decrypt_contacts(items.values.toList())
+        if (limit != null) found.take(limit) else found
+    }
+
+    private fun search_token_keys(): List<ByteArray> {
+        val primary = derive_contacts_key()
+        val password_key = runCatching { derive_password_contacts_key() }.getOrNull()
+            ?: return listOf(primary)
+        if (password_key.contentEquals(primary)) {
+            password_key.fill(0)
+            return listOf(primary)
+        }
+        return listOf(primary, password_key)
     }
 
     suspend fun list_contact_groups(): Result<List<ContactGroup>> = runCatching {
@@ -566,6 +583,7 @@ class ContactsRepository @Inject constructor(
             }
         }
         session_key_store.get_data_kek()?.let { if (it.size == 32) yield(it) }
+        runCatching { derive_password_contacts_key() }.getOrNull()?.let { yield(it) }
         session_key_store.get_decrypt_keks().forEach { kek_b64 ->
             val raw = runCatching {
                 android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
@@ -638,6 +656,14 @@ class ContactsRepository @Inject constructor(
     }
 
     private fun derive_contacts_key(): ByteArray {
+        session_key_store.get_data_kek()?.let { kek ->
+            if (kek.size == 32) return kek
+            kek.fill(0)
+        }
+        return derive_password_contacts_key()
+    }
+
+    private fun derive_password_contacts_key(): ByteArray {
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
         try {
