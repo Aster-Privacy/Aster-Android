@@ -363,6 +363,7 @@ class StorageRekeyService @Inject constructor(
             store = PrefsProgressStore(prefs, ENVELOPE_V2_STEP + "_" + user_id),
             crypto = SessionEnvelopeV2Crypto(session_key_store),
             is_cancelled = is_cancelled,
+            draft_in_use = { org.astermail.android.mail.LocalDraftActivity.is_in_use(it) },
         )
         when (sweep.status) {
             ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> sweep

@@ -34,6 +34,9 @@ import org.astermail.android.mail.SentMailResealCrypto
 import org.astermail.android.storage.SessionKeyStore
 
 const val ENVELOPE_V2_STEP = "envelope_v2"
+const val ENVELOPE_V2_DRAFT_STEP = "envelope_v2_draft"
+const val SENT_ITEM_TYPE = "sent"
+const val DRAFT_ITEM_TYPE = "draft"
 const val ENVELOPE_V2_PATH = "$STORAGE_REKEY_PATH/envelope-v2"
 const val SENT_MESSAGES_PATH = "/mail/v1/messages"
 const val ATTACHMENT_META_BATCH_PATH = "/mail/v1/attachments/meta/batch"
@@ -118,9 +121,11 @@ private fun may_have_attachments(item: JsonObject): Boolean =
 class EnvelopeV2Step(
     private val crypto: EnvelopeV2Crypto,
     private val max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
+    private val item_type: String = SENT_ITEM_TYPE,
+    private val item_in_use: suspend (String) -> Boolean = { false },
 ) : ResealStep {
 
-    override val name: String = ENVELOPE_V2_STEP
+    override val name: String = if (item_type == SENT_ITEM_TYPE) ENVELOPE_V2_STEP else ENVELOPE_V2_DRAFT_STEP
 
     override suspend fun run(ctx: ResealContext): StepResult {
         val progress = step_progress(ctx, name)
@@ -155,7 +160,7 @@ class EnvelopeV2Step(
     }
 
     private fun page_path(cursor: String?): String {
-        val base = "$SENT_MESSAGES_PATH?item_type=sent&include_envelope=true&skip_total=true&limit=$ENVELOPE_V2_PAGE_LIMIT"
+        val base = "$SENT_MESSAGES_PATH?item_type=${url_component(item_type)}&include_envelope=true&skip_total=true&limit=$ENVELOPE_V2_PAGE_LIMIT"
         return if (cursor.isNullOrEmpty()) base else "$base&cursor=${url_component(cursor)}"
     }
 
@@ -165,6 +170,11 @@ class EnvelopeV2Step(
         val is_v1 = SentMailResealCrypto.is_sentinel_nonce(nonce)
         val is_v2 = LevelTwoEnvelope.is_marker_b64(nonce)
         if (!is_v1 && !is_v2) return
+        if (is_in_use(id)) {
+            ctx.counts.skipped += 1
+            mark_incomplete(ctx, "$name:in_use")
+            return
+        }
         if (may_have_attachments(item)) convert_metas(ctx, id, budget)
         if (is_v2) {
             ctx.counts.current += 1
@@ -240,6 +250,14 @@ class EnvelopeV2Step(
         }
     }
 
+    private suspend fun is_in_use(id: String): Boolean = try {
+        item_in_use(id)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Throwable) {
+        true
+    }
+
     private fun rewrap(ctx: ResealContext, sealed: String): String? {
         val plaintext = crypto.open_v1(sealed)
         if (plaintext == null) {
@@ -284,6 +302,7 @@ suspend fun run_envelope_v2_sweep(
     is_cancelled: () -> Boolean = { false },
     sleep: suspend (Long) -> Unit = { delay(it) },
     max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
+    draft_in_use: suspend (String) -> Boolean = { true },
 ): ResealRunResult {
     val counts = StepCounts()
     val keys = build_reseal_keys(view)
@@ -300,11 +319,16 @@ suspend fun run_envelope_v2_sweep(
             is_cancelled = is_cancelled,
             counts = counts,
         )
-        return when (EnvelopeV2Step(crypto, max_items).run(ctx)) {
-            StepResult.DONE, StepResult.INCOMPLETE ->
-                ResealRunResult(ResealRunStatus.DONE, counts, incomplete = ctx.incomplete.toList())
-            StepResult.INTERRUPTED -> ResealRunResult(ResealRunStatus.INTERRUPTED, counts, ENVELOPE_V2_STEP)
+        val steps = listOf(
+            EnvelopeV2Step(crypto, max_items, SENT_ITEM_TYPE),
+            EnvelopeV2Step(crypto, max_items, DRAFT_ITEM_TYPE, draft_in_use),
+        )
+        for (step in steps) {
+            if (step.run(ctx) == StepResult.INTERRUPTED) {
+                return ResealRunResult(ResealRunStatus.INTERRUPTED, counts, step.name)
+            }
         }
+        return ResealRunResult(ResealRunStatus.DONE, counts, incomplete = ctx.incomplete.toList())
     } catch (deferred: ResealDeferred) {
         return ResealRunResult(
             ResealRunStatus.DEFERRED,

@@ -1341,6 +1341,7 @@ class MailRepository @Inject constructor(
     }
 
     init {
+        LocalDraftActivity.attach { draft_id -> is_draft_in_use(draft_id) }
         app_scope.launch { runCatching { reconcile_pending_sends() } }
         app_scope.launch { runCatching { sweep_sent_drafts() } }
     }
@@ -1906,6 +1907,24 @@ class MailRepository @Inject constructor(
     suspend fun sweep_sent_drafts() {
         for (draft_id in pending_sweep_ids()) {
             if (try_delete_draft(draft_id)) forget_sweep_id(draft_id)
+        }
+    }
+
+    internal suspend fun is_draft_in_use(draft_id: String): Boolean {
+        if (draft_save_mutex.isLocked) return true
+        if (draft_id in retiring_draft_ids) return true
+        val open = draft_session_ids.values.any { held ->
+            held == draft_id || (is_local_draft_id(held) && local_draft_server_id(held) == draft_id)
+        }
+        if (open) return true
+        val queued = pending_action_queue?.actions?.value.orEmpty().any { action ->
+            action.kind == PendingActionKind.save_draft &&
+                (action.payload.key == draft_id || draft_id in action.payload.ids)
+        }
+        if (queued) return true
+        val sending = runCatching { pending_send_dao.active_draft_ids() }.getOrNull() ?: return true
+        return sending.any { held ->
+            held == draft_id || (is_local_draft_id(held) && local_draft_server_id(held) == draft_id)
         }
     }
 

@@ -71,6 +71,8 @@ class EnvelopeV2StepTest {
 
     private class SentServer(val page_size: Int = 2) : ResealApi {
         val rows = LinkedHashMap<String, Row>()
+        val drafts = LinkedHashMap<String, Row>()
+        val listed_types = mutableListOf<String>()
         val puts = mutableListOf<String>()
         val posts = mutableListOf<String>()
         var mutate_before_put: String? = null
@@ -81,11 +83,14 @@ class EnvelopeV2StepTest {
         override suspend fun get(path: String): ApiReply {
             if (path.startsWith("$SENT_MESSAGES_PATH?")) {
                 val cursor = Regex("cursor=([^&]+)").find(path)?.groupValues?.get(1)?.toInt() ?: 0
-                val ids = rows.keys.toList()
+                val item_type = Regex("item_type=([^&]+)").find(path)?.groupValues?.get(1).orEmpty()
+                listed_types.add(item_type)
+                val source = if (item_type == DRAFT_ITEM_TYPE) drafts else rows
+                val ids = source.keys.toList()
                 val page = ids.drop(cursor).take(page_size)
                 val next = cursor + page.size
                 val items = page.map { id ->
-                    val row = rows.getValue(id)
+                    val row = source.getValue(id)
                     JsonObject(
                         mapOf(
                             "id" to JsonPrimitive(id),
@@ -107,7 +112,7 @@ class EnvelopeV2StepTest {
                 )
             }
             val id = path.removePrefix("$SENT_MESSAGES_PATH/")
-            val row = rows[id] ?: return ApiReply(404)
+            val row = rows[id] ?: drafts[id] ?: return ApiReply(404)
             return ApiReply(
                 200,
                 JsonObject(
@@ -130,7 +135,7 @@ class EnvelopeV2StepTest {
             val record = body as JsonObject
             bodies.add(record)
             put_status?.let { return ApiReply(it) }
-            val row = rows[id] ?: return ApiReply(404)
+            val row = rows[id] ?: drafts[id] ?: return ApiReply(404)
             if (mutate_before_put == id) row.envelope = b64(byteArrayOf(1, 1, 1))
             val expected = record["expected_envelope_sha256"]?.jsonPrimitive?.contentOrNull
                 ?: return ApiReply(400, code = "VALIDATION_ERROR")
@@ -152,10 +157,125 @@ class EnvelopeV2StepTest {
         legacy_keks = emptyList(),
     )
 
-    private fun sweep(server: SentServer, store: ProgressStore, max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN) =
-        runBlocking {
-            run_envelope_v2_sweep(view(), server, store, TaggedCrypto(), sleep = {}, max_items = max_items)
-        }
+    private fun sweep(
+        server: SentServer,
+        store: ProgressStore,
+        max_items: Int = ENVELOPE_V2_MAX_ITEMS_PER_RUN,
+        draft_in_use: suspend (String) -> Boolean = { false },
+    ) = runBlocking {
+        run_envelope_v2_sweep(
+            view(),
+            server,
+            store,
+            TaggedCrypto(),
+            sleep = {},
+            max_items = max_items,
+            draft_in_use = draft_in_use,
+        )
+    }
+
+    @Test
+    fun drafts_move_to_level_two_with_the_stored_hash() {
+        val server = SentServer()
+        val stored = sealed(v1_tag, "draft body")
+        server.drafts["d1"] = Row(stored, SentMailResealCrypto.sentinel_nonce_b64())
+        server.drafts["d2"] = Row(sealed(v2_tag, "already"), LevelTwoEnvelope.marker_b64())
+        val store = MemoryProgressStore()
+
+        val result = sweep(server, store)
+
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertEquals(listOf(SENT_ITEM_TYPE, DRAFT_ITEM_TYPE), server.listed_types)
+        assertEquals(listOf("d1"), server.puts)
+        val row = server.drafts.getValue("d1")
+        assertTrue(LevelTwoEnvelope.is_marker_b64(row.nonce))
+        assertEquals(unb64(stored).size, unb64(row.envelope).size)
+        assertEquals(
+            sha256_hex(unb64(stored)),
+            server.bodies.single().getValue("expected_envelope_sha256").jsonPrimitive.contentOrNull,
+        )
+        assertTrue(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
+        assertEquals(1, result.counts.current)
+    }
+
+    @Test
+    fun a_draft_open_or_pending_on_this_device_is_left_for_a_later_pass() {
+        val server = SentServer()
+        server.drafts["open"] = Row(sealed(v1_tag, "being edited"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.drafts["idle"] = Row(sealed(v1_tag, "untouched"), SentMailResealCrypto.sentinel_nonce_b64())
+        val store = MemoryProgressStore()
+
+        val busy = sweep(server, store, draft_in_use = { it == "open" })
+
+        assertEquals(ResealRunStatus.DONE, busy.status)
+        assertEquals(listOf("idle"), server.puts)
+        assertTrue(SentMailResealCrypto.is_sentinel_nonce(server.drafts.getValue("open").nonce))
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
+        assertEquals(1, busy.counts.skipped)
+
+        val later = sweep(server, store, draft_in_use = { false })
+
+        assertEquals(ResealRunStatus.DONE, later.status)
+        assertEquals(listOf("idle", "open"), server.puts)
+        assertTrue(LevelTwoEnvelope.is_marker_b64(server.drafts.getValue("open").nonce))
+        assertTrue(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
+    }
+
+    @Test
+    fun an_unknown_draft_state_counts_as_in_use() {
+        val server = SentServer()
+        server.drafts["d1"] = Row(sealed(v1_tag, "draft"), SentMailResealCrypto.sentinel_nonce_b64())
+
+        val result = sweep(server, MemoryProgressStore(), draft_in_use = { throw IllegalStateException("db") })
+
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertTrue(server.puts.isEmpty())
+        assertTrue(server.bodies.isEmpty())
+    }
+
+    @Test
+    fun a_changed_draft_is_skipped_and_retried_next_pass() {
+        val server = SentServer()
+        server.drafts["d1"] = Row(sealed(v1_tag, "draft"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.mutate_before_put = "d1"
+        val store = MemoryProgressStore()
+
+        val result = sweep(server, store)
+
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertEquals(1, result.counts.conflicts)
+        assertTrue(server.puts.isEmpty())
+        assertFalse(store.load()?.steps?.get(ENVELOPE_V2_DRAFT_STEP)?.done == true)
+
+        server.mutate_before_put = null
+        server.drafts.getValue("d1").envelope = sealed(v1_tag, "edited draft")
+        sweep(server, store)
+
+        assertEquals(listOf("d1"), server.puts)
+    }
+
+    @Test
+    fun a_sent_interruption_stops_before_drafts() {
+        val server = SentServer()
+        server.rows["a"] = Row(sealed(v1_tag, "first"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.drafts["d1"] = Row(sealed(v1_tag, "draft"), SentMailResealCrypto.sentinel_nonce_b64())
+        server.put_status = 503
+
+        val result = sweep(server, MemoryProgressStore())
+
+        assertEquals(ResealRunStatus.INTERRUPTED, result.status)
+        assertEquals(listOf(SENT_ITEM_TYPE), server.listed_types)
+    }
+
+    @Test
+    fun the_draft_hook_fails_closed_until_the_mail_layer_attaches() = runBlocking {
+        org.astermail.android.mail.LocalDraftActivity.detach()
+        assertTrue(org.astermail.android.mail.LocalDraftActivity.is_in_use("any"))
+        org.astermail.android.mail.LocalDraftActivity.attach { it == "held" }
+        assertTrue(org.astermail.android.mail.LocalDraftActivity.is_in_use("held"))
+        assertFalse(org.astermail.android.mail.LocalDraftActivity.is_in_use("free"))
+        org.astermail.android.mail.LocalDraftActivity.detach()
+    }
 
     @Test
     fun password_envelopes_move_to_level_two_at_the_same_size() {

@@ -24,6 +24,7 @@ package org.astermail.android.mail
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import java.util.Base64
@@ -35,6 +36,7 @@ import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemsListResponse
 import org.astermail.android.api.mail.UpdateAttachmentMetaRequest
 import org.astermail.android.api.mail.UpdateMailItemEnvelopeRequest
+import org.astermail.android.storage.SessionKeyStore
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -226,6 +228,46 @@ class SentMailResealTest {
 
         assertEquals(SentMailResealSummary(checked = 1), summary)
         coVerify(exactly = 0) { api.list_attachments(any()) }
+    }
+
+    @Test
+    fun a_password_change_on_an_admitted_account_never_rewrites_level_two_copies() = runTest {
+        val data_kek = ByteArray(32) { (it + 11).toByte() }
+        val store = mockk<SessionKeyStore>(relaxed = true)
+        every { store.is_level2_admitted() } returns true
+        every { store.get_data_kek() } answers { data_kek.copyOf() }
+        every { store.get_decrypt_keks() } returns emptyList()
+        val level_two = MailItem(
+            id = "two",
+            item_type = "sent",
+            encrypted_envelope = LevelTwoEnvelope.seal_b64("kept".toByteArray(), data_kek),
+            envelope_nonce = LevelTwoEnvelope.marker_b64(),
+        )
+        val level_two_with_files = level_two.copy(id = "two-files", has_attachments = true)
+        val old_copy = sent_item("one", SentMailResealCrypto.seal("moved".toByteArray(), old_pass))
+        val api = mockk<MailApi>()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(level_two, level_two_with_files, old_copy), has_more = false)
+        coEvery { api.list_attachments("two-files") } returns AttachmentListResponse(
+            attachments = listOf(
+                attachment("att-two", LevelTwoEnvelope.seal_b64("meta".toByteArray(), data_kek))
+                    .copy(meta_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 7 })),
+            ),
+        )
+        val written = slot<UpdateMailItemEnvelopeRequest>()
+        coEvery { api.update_envelope("one", capture(written)) } returns Unit
+
+        val summary = SentMailResealer(api, store).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(checked = 3, rewritten = 1), summary)
+        coVerify(exactly = 0) { api.update_envelope("two", any()) }
+        coVerify(exactly = 0) { api.update_envelope("two-files", any()) }
+        coVerify(exactly = 0) { api.update_attachment_meta(any(), any()) }
+        assertTrue(LevelTwoEnvelope.is_marker_b64(written.captured.envelope_nonce))
+        assertEquals(
+            LevelTwoEnvelope.stored_sha256_hex(old_copy.encrypted_envelope),
+            written.captured.expected_envelope_sha256,
+        )
     }
 
     private fun attachment(id: String, encrypted_meta: String) = AttachmentResponse(
