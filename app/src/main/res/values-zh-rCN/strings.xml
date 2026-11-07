@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">永久删除</string>
     <string name="swipe_not_spam">非垃圾邮件</string>
     <string name="swipe_read">已读</string>
+    <string name="swipe_unread">未读</string>
     <string name="swipe_star">星标</string>
     <string name="swipe_spam">垃圾邮件</string>
     <string name="swipe_inbox">收件箱</string>

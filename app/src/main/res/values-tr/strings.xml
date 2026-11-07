@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Kalıcı olarak sil</string>
     <string name="swipe_not_spam">Spam değil</string>
     <string name="swipe_read">Okundu</string>
+    <string name="swipe_unread">Okunmadı</string>
     <string name="swipe_star">Yıldız</string>
     <string name="swipe_spam">Önemsiz</string>
     <string name="swipe_inbox">Gelen Kutusu</string>

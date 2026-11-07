@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">영구 삭제</string>
     <string name="swipe_not_spam">스팸 아님</string>
     <string name="swipe_read">읽음</string>
+    <string name="swipe_unread">읽지 않음</string>
     <string name="swipe_star">별표</string>
     <string name="swipe_spam">스팸</string>
     <string name="swipe_inbox">받은편지함</string>

@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">完全に削除</string>
     <string name="swipe_not_spam">スパムではない</string>
     <string name="swipe_read">既読</string>
+    <string name="swipe_unread">未読</string>
     <string name="swipe_star">スター</string>
     <string name="swipe_spam">スパム</string>
     <string name="swipe_inbox">受信トレイ</string>

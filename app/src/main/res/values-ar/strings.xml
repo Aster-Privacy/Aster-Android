@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">حذف نهائي</string>
     <string name="swipe_not_spam">ليس مزعجًا</string>
     <string name="swipe_read">مقروء</string>
+    <string name="swipe_unread">غير مقروء</string>
     <string name="swipe_star">نجمة</string>
     <string name="swipe_spam">بريد مزعج</string>
     <string name="swipe_inbox">صندوق الوارد</string>

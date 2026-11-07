@@ -204,7 +204,6 @@ import org.astermail.android.ui.mail.subject_prefix
 import org.astermail.android.ui.mail.thread_message_to_mock
 import org.astermail.android.util.strip_metadata
 import org.astermail.android.util.strip_status
-import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.mirror_in_rtl
 
 data class AttachmentItem(
@@ -2284,7 +2283,7 @@ fun ComposeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .page_surface(colors)
+            .background(colors.solid_bg)
             .systemBarsPadding()
             .imePadding(),
     ) {
