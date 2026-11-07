@@ -1969,6 +1969,10 @@
     <string name="reply_include_quoted_subtitle">Jede Antwort beginnt mit der zitierten Originalnachricht unter Ihrem Text</string>
     <string name="reply_prefix_subject">Aw: zum Betreff hinzufügen</string>
     <string name="reply_prefix_subject_subtitle">Stellt Aw: vor den ursprünglichen Betreff, wenn Sie antworten</string>
+    <string name="compose_from_selected_alias">Aus ausgewähltem Alias verfassen</string>
+    <string name="compose_from_selected_alias_subtitle">Neue Nachrichten verwenden den Alias, den Sie in der Seitenleiste geöffnet haben, als Absender</string>
+    <string name="compose_from_selected_alias_info_title">Aus ausgewähltem Alias verfassen</string>
+    <string name="compose_from_selected_alias_info_desc">Wenn diese Option aktiviert ist, wird eine neue Nachricht, die Sie bei geöffnetem Alias in der Seitenleiste beginnen, von diesem Alias gesendet. Antworten, Weiterleitungen und Entwürfe behalten ihren Absender, und Sie können die Absenderadresse vor dem Senden weiterhin ändern.</string>
     <string name="section_account_protection">Kontoschutz</string>
     <string name="protection_score">Schutzbewertung</string>
     <string name="section_authentication">Anmeldung</string>

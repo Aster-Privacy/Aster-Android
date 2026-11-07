@@ -1971,6 +1971,10 @@
     <string name="reply_include_quoted_subtitle">Cada resposta começa com a mensagem original citada abaixo do seu texto</string>
     <string name="reply_prefix_subject">Adicionar Re: ao assunto</string>
     <string name="reply_prefix_subject_subtitle">Coloca Re: antes do assunto original quando você responde</string>
+    <string name="compose_from_selected_alias">Escrever a partir do alias selecionado</string>
+    <string name="compose_from_selected_alias_subtitle">Novas mensagens usam como remetente o alias que você abriu na barra lateral</string>
+    <string name="compose_from_selected_alias_info_title">Escrever a partir do alias selecionado</string>
+    <string name="compose_from_selected_alias_info_desc">Quando esta opção está ativada, uma nova mensagem que você começa com um alias aberto na barra lateral é enviada por esse alias. Respostas, encaminhamentos e rascunhos mantêm o próprio remetente, e você ainda pode alterar o endereço De antes de enviar.</string>
     <string name="section_account_protection">Proteção da conta</string>
     <string name="protection_score">Pontuação de proteção</string>
     <string name="section_authentication">Autenticação</string>

@@ -1964,6 +1964,10 @@
     <string name="reply_include_quoted_subtitle">모든 답장에서 작성한 내용 아래에 원본 메시지를 인용합니다</string>
     <string name="reply_prefix_subject">제목에 Re: 추가</string>
     <string name="reply_prefix_subject_subtitle">답장할 때 원본 제목 앞에 Re: 를 붙입니다</string>
+    <string name="compose_from_selected_alias">선택한 별칭으로 작성</string>
+    <string name="compose_from_selected_alias_subtitle">새 메시지에 사이드바에서 열어 둔 별칭을 보낸 사람으로 사용합니다</string>
+    <string name="compose_from_selected_alias_info_title">선택한 별칭으로 작성</string>
+    <string name="compose_from_selected_alias_info_desc">이 옵션을 켜면 사이드바에서 별칭을 연 상태로 작성한 새 메시지가 해당 별칭으로 전송됩니다. 답장, 전달, 임시 보관 메일은 기존 보낸 사람을 유지하며, 보내기 전에 보낸 사람 주소를 변경할 수 있습니다.</string>
     <string name="section_account_protection">계정 보호</string>
     <string name="protection_score">보호 점수</string>
     <string name="section_authentication">인증</string>

@@ -2132,6 +2132,10 @@
     <string name="reply_include_quoted_subtitle">Start every reply with the original message quoted below your text</string>
     <string name="reply_prefix_subject">Add Re: to the subject</string>
     <string name="reply_prefix_subject_subtitle">Put Re: in front of the original subject when you reply</string>
+    <string name="compose_from_selected_alias">Compose from selected alias</string>
+    <string name="compose_from_selected_alias_subtitle">New messages use the alias you have open in the sidebar as the sender</string>
+    <string name="compose_from_selected_alias_info_title">Compose from selected alias</string>
+    <string name="compose_from_selected_alias_info_desc">When this is on, a new message that you start while an alias is open in the sidebar is sent from that alias. Replies, forwards, and drafts keep their own sender, and you can still change the From address before you send.</string>
 
     <!-- Security screen -->
     <string name="section_account_protection">Account Protection</string>

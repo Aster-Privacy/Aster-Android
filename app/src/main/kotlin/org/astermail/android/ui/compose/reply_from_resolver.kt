@@ -21,7 +21,10 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.api.settings.AliasInfo
+import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.crypto.same_address_ignoring_dots
+import org.astermail.android.mail.is_sendable_address
 
 fun compute_received_on_alias(
     recipient_addresses: List<String>,
@@ -82,9 +85,11 @@ const val from_tier_thread = 0
 
 const val from_tier_ghost = 1
 
-const val from_tier_pinned = 2
+const val from_tier_selected_alias = 2
 
-const val from_tier_fallback = 3
+const val from_tier_pinned = 3
+
+const val from_tier_fallback = 4
 
 data class resolved_from_alias(
     val address: String,
@@ -96,12 +101,16 @@ fun resolve_from_alias_tiered(
     thread_ghost_match: String?,
     primary_sender_email: String,
     alias_options: List<String>,
+    selected_alias: String? = null,
 ): resolved_from_alias {
     received_on_alias?.takeIf { it.isNotBlank() }?.let {
         return resolved_from_alias(it, from_tier_thread)
     }
     matching_alias_option(thread_ghost_match, alias_options)?.let {
         return resolved_from_alias(it, from_tier_ghost)
+    }
+    matching_alias_option(selected_alias, alias_options)?.let {
+        return resolved_from_alias(it, from_tier_selected_alias)
     }
     matching_alias_option(primary_sender_email, alias_options)?.let {
         return resolved_from_alias(it, from_tier_pinned)
@@ -137,6 +146,36 @@ fun resolve_reply_from_alias(
     primary_sender_email,
     alias_options,
 ).address
+
+fun owned_sender_addresses(
+    user_email: String,
+    aliases: List<AliasInfo>,
+    custom_domain_addresses: List<CustomDomainAddressInfo>,
+): List<String> {
+    val owned = mutableListOf<String>()
+    if (is_sendable_address(user_email)) owned.add(user_email)
+    aliases
+        .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
+        .forEach { owned.add(it.address) }
+    custom_domain_addresses
+        .filter { it.is_enabled && !it.decryption_failed && is_sendable_address(it.address) }
+        .forEach { owned.add(it.address) }
+    return owned
+}
+
+fun selected_alias_for_new_compose(
+    enabled: Boolean,
+    selected_alias: String?,
+    reply_to: String?,
+    mode: String?,
+    draft_id: String?,
+    owned_senders: List<String>,
+): String? {
+    if (!enabled) return null
+    if (!reply_to.isNullOrBlank() || !draft_id.isNullOrBlank()) return null
+    if (mode != null && mode != "new") return null
+    return matching_alias_option(selected_alias, owned_senders)
+}
 
 private fun matching_alias_option(value: String?, alias_options: List<String>): String? {
     val trimmed = value?.trim().orEmpty()

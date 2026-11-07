@@ -1976,6 +1976,10 @@
     <string name="reply_include_quoted_subtitle">Każda odpowiedź zaczyna się od oryginalnej wiadomości cytowanej pod Twoim tekstem</string>
     <string name="reply_prefix_subject">Dodaj Odp: do tematu</string>
     <string name="reply_prefix_subject_subtitle">Umieszcza Odp: przed oryginalnym tematem, gdy odpowiadasz</string>
+    <string name="compose_from_selected_alias">Pisz z wybranego aliasu</string>
+    <string name="compose_from_selected_alias_subtitle">Nowe wiadomości używają jako nadawcy aliasu otwartego na pasku bocznym</string>
+    <string name="compose_from_selected_alias_info_title">Pisz z wybranego aliasu</string>
+    <string name="compose_from_selected_alias_info_desc">Gdy ta opcja jest włączona, nowa wiadomość rozpoczęta przy otwartym aliasie na pasku bocznym jest wysyłana z tego aliasu. Odpowiedzi, przekazania i wersje robocze zachowują swojego nadawcę, a adres Od nadal możesz zmienić przed wysłaniem.</string>
     <string name="section_account_protection">Ochrona konta</string>
     <string name="protection_score">Wynik ochrony</string>
     <string name="section_authentication">Uwierzytelnianie</string>

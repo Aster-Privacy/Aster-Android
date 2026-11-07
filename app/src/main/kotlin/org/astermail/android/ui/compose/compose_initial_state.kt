@@ -33,6 +33,7 @@ data class compose_screen_args(
     val share_cc: List<String> = emptyList(),
     val share_bcc: List<String> = emptyList(),
     val share_subject: String = "",
+    val selected_alias: String? = null,
 )
 
 data class compose_identity_snapshot(
@@ -188,6 +189,7 @@ fun build_compose_initial_state(
         ghost_match,
         identity.primary_sender_email,
         alias_options,
+        args.selected_alias,
     )
     val from_address = from_resolution.address
 

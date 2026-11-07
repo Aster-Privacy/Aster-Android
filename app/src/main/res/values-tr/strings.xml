@@ -1968,6 +1968,10 @@
     <string name="reply_include_quoted_subtitle">Her yanıt, metninizin altında alıntılanan özgün iletiyle başlar</string>
     <string name="reply_prefix_subject">Konuya Yt: ekle</string>
     <string name="reply_prefix_subject_subtitle">Yanıtladığınızda özgün konunun önüne Re: ekler</string>
+    <string name="compose_from_selected_alias">Seçili takma addan yaz</string>
+    <string name="compose_from_selected_alias_subtitle">Yeni iletiler, kenar çubuğunda açık olan takma adı gönderen olarak kullanır</string>
+    <string name="compose_from_selected_alias_info_title">Seçili takma addan yaz</string>
+    <string name="compose_from_selected_alias_info_desc">Bu ayar açıkken, kenar çubuğunda bir takma ad açıkken başlattığınız yeni ileti o takma addan gönderilir. Yanıtlar, iletmeler ve taslaklar kendi gönderenini korur; Kimden adresini göndermeden önce yine de değiştirebilirsiniz.</string>
     <string name="section_account_protection">Hesap koruması</string>
     <string name="protection_score">Koruma puanı</string>
     <string name="section_authentication">Kimlik doğrulama</string>

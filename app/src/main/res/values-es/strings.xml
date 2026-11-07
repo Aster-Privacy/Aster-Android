@@ -1973,6 +1973,10 @@
     <string name="reply_include_quoted_subtitle">Cada respuesta empieza con el mensaje original citado debajo de tu texto</string>
     <string name="reply_prefix_subject">Añadir Re: al asunto</string>
     <string name="reply_prefix_subject_subtitle">Añade Re: delante del asunto original al responder</string>
+    <string name="compose_from_selected_alias">Redactar desde el alias seleccionado</string>
+    <string name="compose_from_selected_alias_subtitle">Los mensajes nuevos usan como remitente el alias que tienes abierto en la barra lateral</string>
+    <string name="compose_from_selected_alias_info_title">Redactar desde el alias seleccionado</string>
+    <string name="compose_from_selected_alias_info_desc">Cuando esta opción está activada, un mensaje nuevo que empiezas con un alias abierto en la barra lateral se envía desde ese alias. Las respuestas, los reenvíos y los borradores conservan su remitente, y puedes cambiar la dirección De antes de enviar.</string>
     <string name="section_account_protection">Protección de la cuenta</string>
     <string name="protection_score">Puntuación de protección</string>
     <string name="section_authentication">Autenticación</string>

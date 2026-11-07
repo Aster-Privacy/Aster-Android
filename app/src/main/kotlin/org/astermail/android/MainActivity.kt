@@ -2723,7 +2723,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_folder)) },
-                            on_compose = { drawer_context.startActivity(ComposeActivity.intent_for(drawer_context)) },
+                            on_compose = {
+                                drawer_context.startActivity(
+                                    ComposeActivity.intent_for(
+                                        drawer_context,
+                                        selected_alias = slot_filter_name.takeIf {
+                                            slot_filter_kind == org.astermail.android.mail.filter_kind_alias
+                                        },
+                                    ),
+                                )
+                            },
                             on_compose_draft = { id -> drawer_context.startActivity(ComposeActivity.intent_for(drawer_context, mode = "draft", draft_id = id)) },
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },

@@ -572,6 +572,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("behavior", R.string.settings_behavior, R.string.contact_sync_section, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.contact_sync_title, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.reply_prefix_subject_subtitle, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.compose_from_selected_alias, false),
+    settings_index_entry("behavior", R.string.settings_behavior, R.string.compose_from_selected_alias_subtitle, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.undo_send, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.enable_undo_send, false),
     settings_index_entry("behavior", R.string.settings_behavior, R.string.enable_undo_send_subtitle, false),
