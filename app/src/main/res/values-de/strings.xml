@@ -2783,7 +2783,10 @@
     <string name="error_folder_password_not_set">Dieser Ordner hat kein Passwort.</string>
     <string name="error_image_too_large">Dieses Bild ist zu groß. Wählen Sie ein kleineres Foto.</string>
     <string name="error_invalid_2fa_code">Dieser Code ist nicht korrekt. Sehen Sie in Ihrer Authenticator-App nach und versuchen Sie es erneut.</string>
-    <string name="error_passkey_unavailable">Auf diesem Gerät ist kein Passkey für dieses Konto verfügbar. Nutzen Sie Ihre Authenticator-App oder legen Sie zuerst im Browser einen Passkey an.</string>
+    <string name="error_passkey_unavailable">Für dieses Konto wurde kein Passkey gefunden. Prüfen Sie, ob der Passwort-Manager mit Ihrem Passkey in den Android-Einstellungen für Passkeys aktiviert ist, oder nutzen Sie Ihre Authenticator-App.</string>
+    <string name="error_passkey_no_provider">Auf diesem Gerät sind keine Passkeys eingerichtet. Aktivieren Sie in den Android-Einstellungen einen Passwort-Manager für Passkeys, oder nutzen Sie Ihre Authenticator-App.</string>
+    <string name="passkey_open_settings">Passkey-Einstellungen</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Fehlercode: %2$s</string>
     <string name="error_passkey_failed">Ihr Passkey konnte nicht geprüft werden. Versuchen Sie es erneut oder nutzen Sie eine andere Anmeldemethode.</string>
     <string name="error_invalid_backup_code">Dieser Backup-Code stimmt nicht. Jeder Code funktioniert nur einmal. Probieren Sie daher den nächsten unbenutzten Code aus Ihrer Liste.</string>
     <string name="error_invalid_recovery_phrase">Diese Wiederherstellungsphrase stimmt nicht. Prüfen Sie die Reihenfolge der Wörter und die Schreibweise und versuchen Sie es erneut.</string>
@@ -3356,7 +3359,7 @@
     <string name="passkey_added_sessions_revoked">Passkey hinzugefügt. Sie wurden auf Ihren anderen Geräten abgemeldet.</string>
     <string name="passkey_added_second_step_only">Passkey hinzugefügt. Verwenden Sie ihn als zweiten Schritt, wenn Sie sich mit Ihrem Passwort anmelden.</string>
     <string name="passkey_already_registered">Dieser Passkey ist bereits in Ihrem Konto gespeichert.</string>
-    <string name="passkey_create_unavailable">Dieses Gerät kann keine Passkeys speichern. Prüfen Sie, ob die Displaysperre aktiv und ein Passwort-Manager eingerichtet ist.</string>
+    <string name="passkey_create_unavailable">Dieses Gerät kann gerade keine Passkeys speichern. Aktivieren Sie die Displaysperre und wählen Sie in den Android-Einstellungen einen Passwort-Manager für Passkeys.</string>
     <string name="passkey_create_failed">Der Passkey konnte nicht hinzugefügt werden. Versuchen Sie es erneut.</string>
     <string name="error_passkey_timed_out">Die Passkey-Anfrage ist abgelaufen. Versuchen Sie es erneut.</string>
     <string name="billing_play_unavailable">Käufe über Google Play sind gerade nicht verfügbar. Versuchen Sie es später erneut.</string>

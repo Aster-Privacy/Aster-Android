@@ -85,6 +85,21 @@ data class PrekeyBundleResponse(
 )
 
 @Serializable
+data class RatchetIdentityResponse(
+    val user_id: String? = null,
+    val kem_identity_key: String,
+    val signed_prekey: String,
+    val signed_prekey_signature: String? = null,
+    val pq_kem_public_key: String? = null,
+)
+
+sealed class OwnRatchetIdentityLookup {
+    data class Found(val identity: RatchetIdentityResponse) : OwnRatchetIdentityLookup()
+    object NotFound : OwnRatchetIdentityLookup()
+    object Unavailable : OwnRatchetIdentityLookup()
+}
+
+@Serializable
 data class PqPrekeyInfo(
     val key_id: Int,
     val public_key: String,
@@ -148,6 +163,8 @@ interface RatchetApi {
     suspend fun fetch_prekey_bundle(username: String, email: String): PrekeyBundleResponse?
     suspend fun delete_state(conversation_id_b64: String): Boolean
     suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
+    suspend fun fetch_own_ratchet_identity(username: String, email: String): OwnRatchetIdentityLookup =
+        OwnRatchetIdentityLookup.Unavailable
     suspend fun report_envelope_capability(request: ReportEnvelopeCapabilityRequest): EnvelopeCapabilityResponse?
     suspend fun upload_plaintext_escrow(entry: PlaintextEscrowEntry): Boolean = false
     suspend fun fetch_plaintext_escrow(message_id: String): PlaintextEscrowEntry? = null
@@ -229,6 +246,19 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         }
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun fetch_own_ratchet_identity(username: String, email: String): OwnRatchetIdentityLookup {
+        val username_enc = java.net.URLEncoder.encode(username, "UTF-8").replace("+", "%20")
+        val email_enc = java.net.URLEncoder.encode(email, "UTF-8").replace("+", "%20")
+        val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/identity/$username_enc?email=$email_enc")
+        if (response.status.value == 404) return OwnRatchetIdentityLookup.NotFound
+        if (response.status.value !in 200..299) return OwnRatchetIdentityLookup.Unavailable
+        return try {
+            OwnRatchetIdentityLookup.Found(response.body())
+        } catch (_: Throwable) {
+            OwnRatchetIdentityLookup.Unavailable
+        }
     }
 
     override suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean {

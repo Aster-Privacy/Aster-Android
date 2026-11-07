@@ -2794,7 +2794,10 @@
     <string name="error_folder_password_not_set">Esta pasta não tem senha.</string>
     <string name="error_image_too_large">Essa imagem é muito grande. Escolha uma foto menor.</string>
     <string name="error_invalid_2fa_code">Esse código não está correto. Verifique o app autenticador e tente novamente.</string>
-    <string name="error_passkey_unavailable">Não há uma chave de acesso desta conta neste dispositivo. Use seu app autenticador ou adicione uma chave de acesso pelo navegador.</string>
+    <string name="error_passkey_unavailable">Nenhuma chave de acesso foi encontrada para esta conta. Verifique se o gerenciador de senhas que guarda sua chave de acesso está ativado para chaves de acesso nas configurações do Android, ou use seu app autenticador.</string>
+    <string name="error_passkey_no_provider">As chaves de acesso não estão configuradas neste dispositivo. Ative um gerenciador de senhas para chaves de acesso nas configurações do Android, ou use seu app autenticador.</string>
+    <string name="passkey_open_settings">Configurações de chaves de acesso</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Código de erro: %2$s</string>
     <string name="error_passkey_failed">Não foi possível verificar sua chave de acesso. Tente de novo ou use outro método de login.</string>
     <string name="error_invalid_backup_code">Esse código de backup não corresponde. Cada código funciona apenas uma vez, então tente o próximo não usado da sua lista.</string>
     <string name="error_invalid_recovery_phrase">Essa frase de recuperação não corresponde. Verifique a ordem das palavras e a grafia e tente novamente.</string>
@@ -3373,7 +3376,7 @@
     <string name="passkey_added_sessions_revoked">Chave de acesso adicionada. Sua sessão foi encerrada nos outros dispositivos.</string>
     <string name="passkey_added_second_step_only">Chave de acesso adicionada. Use-a como segunda etapa ao entrar com sua senha.</string>
     <string name="passkey_already_registered">Esta chave de acesso já está salva na sua conta.</string>
-    <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso. Verifique se o bloqueio de tela está ativado e se há um gerenciador de senhas configurado.</string>
+    <string name="passkey_create_unavailable">Este dispositivo não pode salvar chaves de acesso agora. Ative o bloqueio de tela e escolha um gerenciador de senhas para chaves de acesso nas configurações do Android.</string>
     <string name="passkey_create_failed">Não foi possível adicionar a chave de acesso. Tente novamente.</string>
     <string name="error_passkey_timed_out">A solicitação da chave de acesso expirou. Tente novamente.</string>
     <string name="billing_play_unavailable">As compras pelo Google Play não estão disponíveis no momento. Tente novamente mais tarde.</string>

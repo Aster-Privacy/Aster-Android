@@ -22,6 +22,7 @@
 package org.astermail.android.ui.mail
 
 import org.astermail.android.BuildConfig
+import org.astermail.android.security.is_shared_tenant_sender_domain
 import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -90,6 +91,11 @@ fun get_root_domain(domain: String): String {
 
 fun get_favicon_url(domain: String): String = "$FAVICON_BASE$domain"
 
+internal val aster_system_avatar_backdrop = Color.White
+
+fun inbox_logo_root_domain(domain: String): String =
+    if (domain.isBlank() || is_shared_tenant_sender_domain(domain)) "" else get_root_domain(domain)
+
 private const val FAVICON_MISS_TTL_MS = 30L * 60L * 1000L
 private const val FAVICON_TRANSIENT_TTL_MS = 20L * 1000L
 private const val FAVICON_MAX_ATTEMPTS = 3
@@ -97,7 +103,11 @@ private const val FAVICON_RETRY_BASE_DELAY_MS = 700L
 
 private val favicon_blocked_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
-private fun favicon_recently_missed(root_domain: String): Boolean {
+internal fun note_favicon_hit(root_domain: String) = clear_favicon_miss(root_domain)
+
+internal fun note_favicon_definitive_miss(root_domain: String) = mark_favicon_missed(root_domain, FAVICON_MISS_TTL_MS)
+
+internal fun favicon_recently_missed(root_domain: String): Boolean {
     val blocked_until = favicon_blocked_until[root_domain] ?: return false
     if (System.currentTimeMillis() < blocked_until) return true
     favicon_blocked_until.remove(root_domain)
@@ -224,7 +234,7 @@ fun SenderAvatar(
 
     val (bg, fg) = avatar_colors_for(avatar_key_for(email, name), profile_color)
     val domain = remember(email) { extract_domain(email) }
-    val root_domain = remember(domain) { get_root_domain(domain) }
+    val root_domain = remember(domain) { inbox_logo_root_domain(domain) }
 
     if (root_domain.isBlank()) {
         initials_circle(name, email, bg, fg, size, modifier)
@@ -390,7 +400,7 @@ private fun AsterSystemAvatar(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(Color.White),
+        modifier = modifier.size(size).clip(CircleShape).background(aster_system_avatar_backdrop),
         contentAlignment = Alignment.Center,
     ) {
         Image(

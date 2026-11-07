@@ -2834,7 +2834,10 @@
     <string name="error_folder_password_not_set">هذا المجلد غير محمي بكلمة مرور.</string>
     <string name="error_image_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر.</string>
     <string name="error_invalid_2fa_code">هذا الرمز غير صحيح. تحقق من تطبيق المصادقة وحاول مرة أخرى.</string>
-    <string name="error_passkey_unavailable">لا يوجد مفتاح مرور لهذا الحساب على هذا الجهاز. استخدم تطبيق المصادقة أو أضف مفتاح مرور من المتصفح أولاً.</string>
+    <string name="error_passkey_unavailable">لم يتم العثور على مفتاح مرور لهذا الحساب. تأكد من تفعيل مدير كلمات المرور الذي يحفظ مفتاح المرور لمفاتيح المرور في إعدادات Android، أو استخدم تطبيق المصادقة.</string>
+    <string name="error_passkey_no_provider">مفاتيح المرور غير معدّة على هذا الجهاز. فعّل مدير كلمات مرور لمفاتيح المرور في إعدادات Android، أو استخدم تطبيق المصادقة.</string>
+    <string name="passkey_open_settings">إعدادات مفاتيح المرور</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s رمز الخطأ: %2$s</string>
     <string name="error_passkey_failed">تعذر التحقق من مفتاح المرور. حاول مرة أخرى أو استخدم طريقة تسجيل دخول أخرى.</string>
     <string name="error_invalid_backup_code">رمز النسخ الاحتياطي هذا غير مطابق. يعمل كل رمز مرة واحدة فقط، لذا جرّب الرمز التالي غير المستخدم من قائمتك.</string>
     <string name="error_invalid_recovery_phrase">عبارة الاسترداد هذه غير مطابقة. تحقق من ترتيب الكلمات والإملاء ثم حاول مرة أخرى.</string>
@@ -3435,7 +3438,7 @@
     <string name="passkey_added_sessions_revoked">تمت إضافة مفتاح المرور. تم تسجيل خروجك من أجهزتك الأخرى.</string>
     <string name="passkey_added_second_step_only">تمت إضافة مفتاح المرور. استخدمه كخطوة ثانية عند تسجيل الدخول بكلمة المرور.</string>
     <string name="passkey_already_registered">مفتاح المرور هذا محفوظ بالفعل في حسابك.</string>
-    <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور. تأكد من تفعيل قفل الشاشة وإعداد مدير كلمات مرور.</string>
+    <string name="passkey_create_unavailable">لا يمكن لهذا الجهاز حفظ مفاتيح المرور الآن. فعّل قفل الشاشة واختر مدير كلمات مرور لمفاتيح المرور في إعدادات Android.</string>
     <string name="passkey_create_failed">تعذّرت إضافة مفتاح المرور. حاول مرة أخرى.</string>
     <string name="error_passkey_timed_out">انتهت مهلة طلب مفتاح المرور. حاول مرة أخرى.</string>
     <string name="billing_play_unavailable">عمليات الشراء عبر Google Play غير متاحة الآن. حاول مرة أخرى لاحقًا.</string>

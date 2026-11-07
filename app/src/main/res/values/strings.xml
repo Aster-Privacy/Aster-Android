@@ -3028,7 +3028,10 @@
     <string name="error_folder_password_not_set">This folder doesn\'t have a password.</string>
     <string name="error_image_too_large">That image is too large. Choose a smaller photo.</string>
     <string name="error_invalid_2fa_code">That code isn\'t correct. Check your authenticator app and try again.</string>
-    <string name="error_passkey_unavailable">No passkey for this account is available on this device. Use your authenticator app, or add a passkey from a browser first.</string>
+    <string name="error_passkey_unavailable">No passkey for this account was found. Make sure the password manager that holds your passkey is turned on for passkeys in Android settings, or use your authenticator app.</string>
+    <string name="error_passkey_no_provider">Passkeys aren\'t set up on this device. To use one, turn on a password manager for passkeys in Android settings, or use your authenticator app.</string>
+    <string name="passkey_open_settings">Passkey settings</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Error code: %2$s</string>
     <string name="error_passkey_failed">Couldn\'t verify your passkey. Try again, or use another way to sign in.</string>
     <string name="error_invalid_backup_code">That backup code didn\'t match. Each code works only once, so try the next unused one from your list.</string>
     <string name="error_invalid_recovery_phrase">That recovery phrase didn\'t match. Check the word order and the spelling, then try again.</string>
@@ -3406,7 +3409,7 @@
     <string name="passkey_added_sessions_revoked">Passkey added. You\'re signed out on your other devices.</string>
     <string name="passkey_added_second_step_only">Passkey added. Use it as a second step when you sign in with your password.</string>
     <string name="passkey_already_registered">This passkey is already saved to your account.</string>
-    <string name="passkey_create_unavailable">This device can\'t save passkeys. Make sure screen lock is on and a password manager is set up.</string>
+    <string name="passkey_create_unavailable">This device can\'t save passkeys right now. To save one, turn on screen lock and choose a password manager for passkeys in Android settings.</string>
     <string name="passkey_create_failed">Couldn\'t add the passkey. Try again.</string>
     <string name="error_passkey_timed_out">The passkey request timed out. Try again.</string>
     <string name="billing_play_unavailable">Google Play purchases aren\'t available right now. Try again later.</string>

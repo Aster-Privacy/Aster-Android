@@ -2808,7 +2808,10 @@
     <string name="error_folder_password_not_set">У этой папки нет пароля.</string>
     <string name="error_image_too_large">Это изображение слишком большое. Выберите фото поменьше.</string>
     <string name="error_invalid_2fa_code">Этот код неверный. Проверьте приложение для аутентификации и повторите попытку.</string>
-    <string name="error_passkey_unavailable">На этом устройстве нет ключа доступа для этого аккаунта. Используйте приложение-аутентификатор или сначала добавьте ключ доступа в браузере.</string>
+    <string name="error_passkey_unavailable">Ключ доступа для этого аккаунта не найден. Убедитесь, что менеджер паролей, в котором хранится ваш ключ доступа, включен для ключей доступа в настройках Android, или используйте приложение-аутентификатор.</string>
+    <string name="error_passkey_no_provider">На этом устройстве не настроены ключи доступа. Включите менеджер паролей для ключей доступа в настройках Android или используйте приложение-аутентификатор.</string>
+    <string name="passkey_open_settings">Настройки ключей доступа</string>
+    <string name="passkey_error_with_code" formatted="true">%1$s Код ошибки: %2$s</string>
     <string name="error_passkey_failed">Не удалось проверить ключ доступа. Попробуйте ещё раз или выберите другой способ входа.</string>
     <string name="error_invalid_backup_code">Этот резервный код не подошёл. Каждый код действует один раз, поэтому попробуйте следующий неиспользованный из списка.</string>
     <string name="error_invalid_recovery_phrase">Эта фраза восстановления не подошла. Проверьте порядок слов и написание, затем повторите попытку.</string>
@@ -3395,7 +3398,7 @@
     <string name="passkey_added_sessions_revoked">Ключ доступа добавлен. Вы вышли из аккаунта на других устройствах.</string>
     <string name="passkey_added_second_step_only">Ключ доступа добавлен. Используйте его как второй шаг при входе с паролем.</string>
     <string name="passkey_already_registered">Этот ключ доступа уже сохранён в вашем аккаунте.</string>
-    <string name="passkey_create_unavailable">Это устройство не может сохранять ключи доступа. Убедитесь, что блокировка экрана включена и настроен менеджер паролей.</string>
+    <string name="passkey_create_unavailable">Сейчас это устройство не может сохранять ключи доступа. Включите блокировку экрана и выберите менеджер паролей для ключей доступа в настройках Android.</string>
     <string name="passkey_create_failed">Не удалось добавить ключ доступа. Повторите попытку.</string>
     <string name="error_passkey_timed_out">Время запроса ключа доступа истекло. Попробуйте ещё раз.</string>
     <string name="billing_play_unavailable">Покупки через Google Play сейчас недоступны. Повторите попытку позже.</string>

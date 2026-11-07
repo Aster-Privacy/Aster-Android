@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Create and use passkeys with any passkey provider you set up.
+- New mail notifications show the sender's picture.
+- Sign-in and verification codes stay in Primary.
+- Send to outside contacts with public keys when Require encryption is on.
+- Security keys count as a second sign-in factor in your checkup.
+- Mail deleted on another device no longer lingers in search.

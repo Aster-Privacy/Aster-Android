@@ -219,11 +219,22 @@ class AuthRepository @Inject constructor(
         if (!_is_signed_in.value) return
         load_account_keks()
         if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "trigger_ratchet_bootstrap firing")
-        background_scope.launch {
-            runCatching { ratchet_bootstrap_service.bootstrap_if_needed() }
-                .onFailure { if (BuildConfig.DEBUG) android.util.Log.w("RatchetBootstrap", "bootstrap_if_needed threw: ${it.javaClass.simpleName}: ${it.message}") }
-        }
+        schedule_ratchet_bootstrap(bypass_debounce = false)
     }
+
+    private fun schedule_ratchet_bootstrap(bypass_debounce: Boolean) {
+        ratchet_bootstrap_service.schedule_until_published(
+            scope = background_scope,
+            is_foreground = ::app_in_foreground,
+            bypass_debounce = bypass_debounce,
+        )
+    }
+
+    private fun app_in_foreground(): Boolean = runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get()
+            .lifecycle.currentState
+            .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    }.getOrDefault(true)
 
     suspend fun handle_unauthorized_signal(force: Boolean = false) {
         if (!_is_signed_in.value) return
@@ -698,7 +709,7 @@ class AuthRepository @Inject constructor(
         background_scope.launch { runCatching { ensure_pgp_key_published() } }
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         background_scope.launch { runCatching { backfill_server_recovery_email() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
     }
 
@@ -1230,7 +1241,7 @@ class AuthRepository @Inject constructor(
         runCatching { UnifiedPushState.clear_backend_registration(context) }
         runCatching { UnifiedPushState.sync_registration(context) }
         runCatching { org.astermail.android.notifications.PersistentPushService.start_if_enabled(context) }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         RegisterSuccess(recovery_codes = recovery_codes)
     }
@@ -1321,7 +1332,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { refresh_session_if_expiring() } }
-        background_scope.launch { runCatching { ratchet_bootstrap_service.bootstrap_if_needed() } }
+        schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
         return true
@@ -1433,6 +1444,14 @@ class AuthRepository @Inject constructor(
             )
         }
 
+        val outgoing_password_key = CryptoNative.derive_storage_key(current_password_bytes)
+        val outgoing_password_key_b64 = try {
+            retain_password_storage_key(vault_obj, outgoing_password_key, ::base64_encode)
+            base64_encode(outgoing_password_key)
+        } finally {
+            outgoing_password_key.fill(0)
+        }
+
         org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(vault_obj, session_key_store)
         val vault_key_fingerprints = org.astermail.android.mail.ratchet.collect_vault_key_fingerprints(vault_obj)
 
@@ -1461,6 +1480,10 @@ class AuthRepository @Inject constructor(
             )
 
             session_key_store.put_data_kek(preserved_data_kek)
+            val session_keks = session_key_store.get_legacy_keks().orEmpty()
+            if (!session_keks.contains(outgoing_password_key_b64)) {
+                session_key_store.put_legacy_keks(listOf(outgoing_password_key_b64) + session_keks)
+            }
             session_key_store.put(if (account_on_v2) new_password_hash_v2 else new_password_hash)
             session_key_store.put_passphrase(new_password_bytes)
             session_key_store.put_password_salt(new_salt)
@@ -1622,6 +1645,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.OwnAddressAvatars.clear()
             org.astermail.android.security.SenderTrustStore.clear()
             org.astermail.android.contacts.ContactPhotoDirectory.clear()
+            org.astermail.android.notifications.NotificationAvatars.clear()
         }
         runCatching { database.decrypted_mail_dao().clear_all() }
         runCatching { database.folder_row_dao().clear_all() }
@@ -2302,6 +2326,7 @@ class AuthRepository @Inject constructor(
             org.astermail.android.mail.OwnAddressAvatars.clear()
             org.astermail.android.security.SenderTrustStore.clear()
             org.astermail.android.contacts.ContactPhotoDirectory.clear()
+            org.astermail.android.notifications.NotificationAvatars.clear()
         }
         database.decrypted_mail_dao().clear_all()
         database.folder_row_dao().clear_all()
