@@ -192,6 +192,7 @@
     <string name="swipe_delete_forever">Usuń na zawsze</string>
     <string name="swipe_not_spam">Nie spam</string>
     <string name="swipe_read">Przeczytane</string>
+    <string name="swipe_unread">Nieprzeczytane</string>
     <string name="swipe_star">Gwiazdka</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Odebrane</string>

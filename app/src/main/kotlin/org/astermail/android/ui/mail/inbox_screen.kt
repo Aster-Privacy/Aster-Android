@@ -2250,6 +2250,7 @@ fun InboxScreen(
                     val delete_forever_label_outer = stringResource(R.string.swipe_delete_forever)
                     val not_spam_label_outer = stringResource(R.string.swipe_not_spam)
                     val discard_draft_label_outer = stringResource(R.string.discard_draft)
+                    val unread_label_outer = stringResource(R.string.swipe_unread)
                     val hoisted_swipe_config = remember(
                         current_folder, right_action_outer, left_action_outer,
                         right_label_outer, left_label_outer, restore_label_outer,
@@ -2560,10 +2561,10 @@ fun InboxScreen(
                                     on_toggle_star = { apply_thread_star(thread) },
                                     swipe_start_action = swipe_config.start_action,
                                     swipe_end_action = swipe_config.end_action,
-                                    swipe_start_label = swipe_config.start_label,
-                                    swipe_end_label = swipe_config.end_label,
-                                    swipe_start_icon = swipe_config.start_icon,
-                                    swipe_end_icon = swipe_config.end_icon,
+                                    swipe_start_label = read_toggle_swipe_label(swipe_config.start_action, swipe_config.start_label, thread.has_unread, unread_label_outer),
+                                    swipe_end_label = read_toggle_swipe_label(swipe_config.end_action, swipe_config.end_label, thread.has_unread, unread_label_outer),
+                                    swipe_start_icon = read_toggle_swipe_icon(swipe_config.start_action, swipe_config.start_icon, thread.has_unread),
+                                    swipe_end_icon = read_toggle_swipe_icon(swipe_config.end_action, swipe_config.end_icon, thread.has_unread),
                                     swipe_start_color = swipe_action_color(swipe_config.start_action, colors),
                                     swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
                                     on_swipe_start = {
@@ -4421,6 +4422,16 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
 
 private fun drafts_swipe_label(folder: String, action: String, label: String, discard_label: String): String =
     if (folder == "drafts" && (action == "delete" || action == "trash")) discard_label else label
+
+internal fun read_toggle_swipe_label(action: String, label: String, has_unread: Boolean, unread_label: String): String =
+    if (action == "toggle_read" && !has_unread) unread_label else label
+
+internal fun read_toggle_swipe_icon(
+    action: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    has_unread: Boolean,
+): androidx.compose.ui.graphics.vector.ImageVector =
+    if (action == "toggle_read" && !has_unread) TablerIcons.Mail else icon
 
 @Composable
 private fun swipe_action_label(action: String): String = when (action) {

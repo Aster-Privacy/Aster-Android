@@ -237,6 +237,7 @@
     <string name="compose_locked_title">Aster लॉक है</string>
     <string name="compose_locked_message">लिखते रहने के लिए Aster अनलॉक करें। आपका ड्राफ़्ट सुरक्षित है।</string>
     <string name="swipe_read">पढ़े गए</string>
+    <string name="swipe_unread">अपठित</string>
     <string name="swipe_star">तारा</string>
     <string name="swipe_spam">स्पैम</string>
     <string name="swipe_inbox">इनबॉक्स</string>
