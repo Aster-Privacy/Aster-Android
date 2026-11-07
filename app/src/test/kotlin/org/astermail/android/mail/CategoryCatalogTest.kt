@@ -53,7 +53,7 @@ class CategoryCatalogTest {
         assertEquals(listOf("promotions", "social", "updates"), DEFAULT_ENABLED_CATEGORIES)
         assertFalse(builtin_category("newsletters")!!.default_enabled)
         assertFalse(builtin_category("transactions")!!.default_enabled)
-        assertEquals("promotions", fold_builtin("newsletters"))
+        assertEquals("updates", fold_builtin("newsletters"))
         assertEquals("updates", fold_builtin("transactions"))
         assertEquals(listOf("primary", "promotions", "social", "updates"), CATEGORY_TABS)
     }
@@ -62,7 +62,7 @@ class CategoryCatalogTest {
     fun saved_preferences_without_newsletters_keep_their_tabs() {
         val tabs = active_category_tabs(listOf("promotions", "social", "updates", "forums"), emptyList(), -1)
         assertEquals(listOf("primary", "promotions", "social", "updates", "forums"), tabs)
-        assertEquals("promotions", category_for_tab("newsletters", tabs))
+        assertEquals("updates", category_for_tab("newsletters", tabs))
         assertEquals("updates", category_for_tab("transactions", tabs))
     }
 
