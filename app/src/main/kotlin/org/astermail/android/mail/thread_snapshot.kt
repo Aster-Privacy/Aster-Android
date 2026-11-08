@@ -115,4 +115,5 @@ fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted
     sent_encryption_scope = snapshot.sent_encryption_scope
         ?.takeIf { snapshot.encryption_rules >= THREAD_SNAPSHOT_ENCRYPTION_RULES }
         ?.let { name -> runCatching { SentEncryptionScope.valueOf(name) }.getOrNull() },
+    is_trashed = is_message_trashed(snapshot.raw_item.is_trashed, snapshot.raw_item.metadata?.is_trashed),
 )

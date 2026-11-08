@@ -250,6 +250,7 @@ data class ThreadMessageItem(
     val is_reaction: Boolean? = null,
     val is_read: Boolean? = null,
     val is_starred: Boolean? = null,
+    val is_trashed: Boolean? = null,
     val has_attachments: Boolean? = null,
     val attachment_count: Int? = null,
     val message_group_id: String? = null,
