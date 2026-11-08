@@ -3583,4 +3583,17 @@
     <string name="external_pgp_key_manage_note">To import, replace, or remove this key, use Aster Mail on the web or the desktop app.</string>
     <string name="external_pgp_key_unpublished">Your imported key is no longer published.</string>
     <string name="external_pgp_key_unpublish_failed">Couldn\'t stop publishing your key. Try again.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail couldn\'t encrypt this email with the recipient\'s PGP key. Your draft is saved, so you can try again.</string>
+    <string name="send_pgp_attachments_too_large">These attachments are too large to encrypt with the recipient\'s PGP key. To send this email, keep attachments under %1$s in total. Your draft is saved.</string>
+    <string name="send_scheduled_no_pgp">Scheduled emails to outside addresses can\'t use PGP encryption. To encrypt this email, send it now.</string>
+    <string name="send_expiry_no_pgp">Expiring emails to outside addresses can\'t use PGP encryption. To encrypt this email with PGP, remove the expiry.</string>
+    <string name="encryption_status_unknown">Encryption status unavailable</string>
+    <string name="encryption_status_unknown_description">Aster Mail couldn\'t check this recipient\'s keys, so it can\'t tell whether this email can be end-to-end encrypted. Check your connection and try again.</string>
+    <string name="recipient_key_outdated">Recipient\'s key is outdated</string>
+    <string name="recipient_key_outdated_description">This recipient\'s published key is expired or invalid, so this email can\'t be end-to-end encrypted. It\'s protected in transit only.</string>
+    <string name="encryption_available">Encryption available</string>
+    <string name="encryption_available_description">This recipient publishes a usable encryption key. To encrypt this email end-to-end, tap the lock.</string>
+    <string name="recipient_published_key_description">Encrypted with the recipient\'s published public key.</string>
+    <string name="tap_to_encrypt">Tap to encrypt this email end-to-end</string>
+    <string name="tap_to_turn_off_encryption">Encrypted. Tap to turn off encryption for this email.</string>
 </resources>

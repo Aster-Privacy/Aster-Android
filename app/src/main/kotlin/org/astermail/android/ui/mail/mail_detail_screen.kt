@@ -944,6 +944,7 @@ fun MailDetailScreen(
     }
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
     val is_thread_pgp = remember(messages) { thread_is_pgp_encrypted(messages) }
+    val is_thread_outside_pgp = remember(messages) { thread_reaches_outside_with_pgp(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
 
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
@@ -2319,7 +2320,7 @@ fun MailDetailScreen(
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_encryption_info = false },
             title = encryption_badge_label(is_thread_encrypted, is_thread_pgp),
-            body = { encryption_info_body(is_thread_encrypted, is_thread_pgp) },
+            body = { encryption_info_body(is_thread_encrypted, is_thread_pgp, is_thread_outside_pgp) },
             footer = {
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.done),
@@ -2840,6 +2841,7 @@ internal fun expanded_message(
                 reply_to = details_reply_to,
                 is_encrypted = msg.is_e2e_encrypted,
                 pgp_encrypted = msg.pgp_encrypted,
+                pgp_label = msg.shows_pgp_label,
                 pgp_signature = msg.pgp_signature,
                 tracking_pixel_count = tracker_report.pixel_count,
                 tracking_link_count = tracker_report.cleaned_link_count,
@@ -4492,7 +4494,7 @@ private fun message_details_dialog(
                 )
                 message_detail_row(
                     stringResource(R.string.encryption),
-                    if (message.is_e2e_encrypted && message.pgp_encrypted) {
+                    if (message.is_e2e_encrypted && message.shows_pgp_label) {
                         stringResource(R.string.encrypted_pgp)
                     } else if (message.is_e2e_encrypted) {
                         stringResource(R.string.encrypted_e2e)
@@ -4562,6 +4564,7 @@ internal fun message_details_panel(
     raw_headers: List<Pair<String, String>> = emptyList(),
     show_raw_headers: Boolean = false,
     pgp_encrypted: Boolean = false,
+    pgp_label: Boolean = pgp_encrypted,
     pgp_signature: org.astermail.android.crypto.PgpSignatureStatus =
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     to_recipients: List<String> = emptyList(),
@@ -4589,7 +4592,7 @@ internal fun message_details_panel(
     val raw_headers_text = remember(raw_headers) {
         raw_headers.joinToString("\n") { "${it.first}: ${it.second}" }
     }
-    val encryption_value = if (is_encrypted && pgp_encrypted) {
+    val encryption_value = if (is_encrypted && pgp_label) {
         stringResource(R.string.encrypted_pgp)
     } else if (is_encrypted) {
         stringResource(R.string.encrypted_e2e)
@@ -4685,6 +4688,7 @@ internal fun message_details_panel(
         security_details_dialog(
             is_encrypted = is_encrypted,
             pgp_encrypted = pgp_encrypted,
+            pgp_label = pgp_label,
             pgp_signature = pgp_signature,
             tracking_pixel_count = tracking_pixel_count,
             tracking_link_count = tracking_link_count,
@@ -4701,6 +4705,7 @@ internal fun message_details_panel(
 private fun security_details_dialog(
     is_encrypted: Boolean,
     pgp_encrypted: Boolean,
+    pgp_label: Boolean,
     pgp_signature: org.astermail.android.crypto.PgpSignatureStatus,
     tracking_pixel_count: Int,
     tracking_link_count: Int,
@@ -4748,7 +4753,7 @@ private fun security_details_dialog(
             Column(modifier = Modifier.fillMaxWidth()) {
                 detail_meta_row(
                     label = stringResource(R.string.encryption),
-                    value = if (is_encrypted && pgp_encrypted) {
+                    value = if (is_encrypted && pgp_label) {
                         stringResource(R.string.encrypted_pgp)
                     } else if (is_encrypted) {
                         stringResource(R.string.encrypted_e2e)
@@ -8625,14 +8630,21 @@ internal fun thread_is_end_to_end_encrypted(messages: List<ThreadMessage>): Bool
 
 internal fun thread_is_pgp_encrypted(messages: List<ThreadMessage>): Boolean =
     messages.isNotEmpty() &&
-        messages.any { it.pgp_encrypted } &&
+        messages.any { it.shows_pgp_label } &&
         messages.all { it.is_e2e_encrypted }
 
+internal fun thread_reaches_outside_with_pgp(messages: List<ThreadMessage>): Boolean =
+    thread_is_pgp_encrypted(messages) &&
+        messages.any { it.reaches_outside_with_pgp } &&
+        messages.none { it.pgp_encrypted }
+
 @Composable
-internal fun encryption_info_body(is_encrypted: Boolean, is_pgp: Boolean = false) {
+internal fun encryption_info_body(is_encrypted: Boolean, is_pgp: Boolean = false, is_outside: Boolean = false) {
     val colors = AsterMaterial.colors
     Text(
-        text = if (is_encrypted && is_pgp)
+        text = if (is_encrypted && is_pgp && is_outside)
+            stringResource(R.string.recipient_published_key_description)
+        else if (is_encrypted && is_pgp)
             stringResource(R.string.pgp_recipient_description)
         else if (is_encrypted)
             stringResource(R.string.e2e_recipient_description)

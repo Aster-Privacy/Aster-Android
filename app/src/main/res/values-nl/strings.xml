@@ -3532,4 +3532,17 @@
     <string name="external_pgp_key_manage_note">Gebruik Aster Mail op het web of de desktop-app om deze sleutel te importeren, te vervangen of te verwijderen.</string>
     <string name="external_pgp_key_unpublished">Je geïmporteerde sleutel is niet meer gepubliceerd.</string>
     <string name="external_pgp_key_unpublish_failed">Kan het publiceren van je sleutel niet stoppen. Probeer het opnieuw.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail kon deze e-mail niet versleutelen met de PGP-sleutel van de ontvanger. Je concept is opgeslagen, dus je kunt het opnieuw proberen.</string>
+    <string name="send_pgp_attachments_too_large">Deze bijlagen zijn te groot om te versleutelen met de PGP-sleutel van de ontvanger. Houd bijlagen in totaal onder %1$s om deze e-mail te versturen. Je concept is opgeslagen.</string>
+    <string name="send_scheduled_no_pgp">Ingeplande e-mails naar externe adressen kunnen geen PGP-versleuteling gebruiken. Verstuur deze e-mail nu om hem te versleutelen.</string>
+    <string name="send_expiry_no_pgp">Verlopende e-mails naar externe adressen kunnen geen PGP-versleuteling gebruiken. Verwijder de vervaldatum om deze e-mail met PGP te versleutelen.</string>
+    <string name="encryption_status_unknown">Versleutelingsstatus niet beschikbaar</string>
+    <string name="encryption_status_unknown_description">Aster Mail kon de sleutels van deze ontvanger niet controleren en weet dus niet of deze e-mail end-to-end versleuteld kan worden. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="recipient_key_outdated">Sleutel van ontvanger is verouderd</string>
+    <string name="recipient_key_outdated_description">De gepubliceerde sleutel van deze ontvanger is verlopen of ongeldig, dus deze e-mail kan niet end-to-end versleuteld worden. Hij is alleen tijdens verzending beveiligd.</string>
+    <string name="encryption_available">Versleuteling beschikbaar</string>
+    <string name="encryption_available_description">Deze ontvanger publiceert een bruikbare versleutelingssleutel. Tik op het slot om deze e-mail end-to-end te versleutelen.</string>
+    <string name="recipient_published_key_description">Versleuteld met de gepubliceerde openbare sleutel van de ontvanger.</string>
+    <string name="tap_to_encrypt">Tik om deze e-mail end-to-end te versleutelen</string>
+    <string name="tap_to_turn_off_encryption">Versleuteld. Tik om versleuteling voor deze e-mail uit te zetten.</string>
 </resources>

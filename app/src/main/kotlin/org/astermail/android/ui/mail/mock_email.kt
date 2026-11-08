@@ -266,10 +266,26 @@ data class ThreadMessage(
     val send_error: String? = null,
     val trust_message: SenderTrustMessage? = null,
     val pending_send_at_ms: Long? = null,
+    val sent_encryption_scope: org.astermail.android.crypto.SentEncryptionScope? = null,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
-    get() = pgp_encrypted || !is_external || has_recipient_key == true
+    get() {
+        if (sent_encryption_scope != null || pgp_encrypted) return true
+        if (has_recipient_key == true) return true
+        if (is_external) return false
+        if (item_type == "sent" || item_type == "scheduled") {
+            val recipients = to_addresses + cc_addresses + bcc_addresses
+            if (recipients.any { !org.astermail.android.mail.is_internal_recipient(it) }) return false
+        }
+        return true
+    }
+
+val ThreadMessage.reaches_outside_with_pgp: Boolean
+    get() = sent_encryption_scope == org.astermail.android.crypto.SentEncryptionScope.OUTSIDE
+
+val ThreadMessage.shows_pgp_label: Boolean
+    get() = pgp_encrypted || reaches_outside_with_pgp
 
 enum class SenderAuthStatus { verified, failed, unknown }
 
@@ -477,6 +493,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         send_error = msg.raw_item.send_error,
         trust_message = thread_message_trust_message(msg),
         pending_send_at_ms = msg.pending_send_at_ms,
+        sent_encryption_scope = msg.sent_encryption_scope,
     )
 }
 

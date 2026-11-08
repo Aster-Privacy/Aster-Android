@@ -3574,4 +3574,17 @@
     <string name="external_pgp_key_manage_note">Чтобы импортировать, заменить или удалить этот ключ, используйте Aster Mail в браузере или приложение для компьютера.</string>
     <string name="external_pgp_key_unpublished">Ваш импортированный ключ больше не опубликован.</string>
     <string name="external_pgp_key_unpublish_failed">Не удалось отменить публикацию ключа. Повторите попытку.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail не удалось зашифровать это письмо ключом PGP получателя. Черновик сохранен, поэтому вы можете попробовать еще раз.</string>
+    <string name="send_pgp_attachments_too_large">Эти вложения слишком велики для шифрования ключом PGP получателя. Чтобы отправить это письмо, уменьшите общий размер вложений до %1$s. Черновик сохранен.</string>
+    <string name="send_scheduled_no_pgp">Запланированные письма на внешние адреса не могут использовать шифрование PGP. Чтобы зашифровать это письмо, отправьте его сейчас.</string>
+    <string name="send_expiry_no_pgp">Письма со сроком действия на внешние адреса не могут использовать шифрование PGP. Чтобы зашифровать это письмо с помощью PGP, уберите срок действия.</string>
+    <string name="encryption_status_unknown">Статус шифрования недоступен</string>
+    <string name="encryption_status_unknown_description">Aster Mail не удалось проверить ключи этого получателя, поэтому неизвестно, можно ли зашифровать это письмо сквозным шифрованием. Проверьте подключение и попробуйте еще раз.</string>
+    <string name="recipient_key_outdated">Ключ получателя устарел</string>
+    <string name="recipient_key_outdated_description">Опубликованный ключ этого получателя истек или недействителен, поэтому это письмо нельзя зашифровать сквозным шифрованием. Оно защищено только при передаче.</string>
+    <string name="encryption_available">Шифрование доступно</string>
+    <string name="encryption_available_description">Этот получатель публикует рабочий ключ шифрования. Чтобы зашифровать это письмо сквозным шифрованием, нажмите на замок.</string>
+    <string name="recipient_published_key_description">Зашифровано опубликованным открытым ключом получателя.</string>
+    <string name="tap_to_encrypt">Нажмите, чтобы зашифровать это письмо сквозным шифрованием</string>
+    <string name="tap_to_turn_off_encryption">Зашифровано. Нажмите, чтобы отключить шифрование для этого письма.</string>
 </resources>

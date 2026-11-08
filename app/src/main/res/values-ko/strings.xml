@@ -3513,4 +3513,17 @@
     <string name="external_pgp_key_manage_note">이 키를 가져오거나 교체하거나 삭제하려면 웹의 Aster Mail 또는 데스크톱 앱을 사용하세요.</string>
     <string name="external_pgp_key_unpublished">가져온 키가 더 이상 게시되지 않습니다.</string>
     <string name="external_pgp_key_unpublish_failed">키 게시를 중지하지 못했습니다. 다시 시도하세요.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail에서 수신자의 PGP 키로 이 이메일을 암호화하지 못했습니다. 임시 보관함에 저장되었으므로 다시 시도할 수 있습니다.</string>
+    <string name="send_pgp_attachments_too_large">첨부 파일이 너무 커서 수신자의 PGP 키로 암호화할 수 없습니다. 이 이메일을 보내려면 첨부 파일 합계를 %1$s 미만으로 유지하세요. 임시 보관함에 저장되었습니다.</string>
+    <string name="send_scheduled_no_pgp">외부 주소로 예약된 이메일에는 PGP 암호화를 사용할 수 없습니다. 이 이메일을 암호화하려면 지금 보내세요.</string>
+    <string name="send_expiry_no_pgp">외부 주소로 보내는 만료 이메일에는 PGP 암호화를 사용할 수 없습니다. 이 이메일을 PGP로 암호화하려면 만료를 제거하세요.</string>
+    <string name="encryption_status_unknown">암호화 상태를 확인할 수 없음</string>
+    <string name="encryption_status_unknown_description">Aster Mail에서 이 수신자의 키를 확인하지 못해 이 이메일을 종단 간 암호화할 수 있는지 알 수 없습니다. 연결을 확인하고 다시 시도하세요.</string>
+    <string name="recipient_key_outdated">수신자의 키가 오래됨</string>
+    <string name="recipient_key_outdated_description">이 수신자가 게시한 키가 만료되었거나 유효하지 않아 이 이메일을 종단 간 암호화할 수 없습니다. 전송 중에만 보호됩니다.</string>
+    <string name="encryption_available">암호화 사용 가능</string>
+    <string name="encryption_available_description">이 수신자는 사용 가능한 암호화 키를 게시합니다. 이 이메일을 종단 간 암호화하려면 자물쇠를 탭하세요.</string>
+    <string name="recipient_published_key_description">수신자가 게시한 공개 키로 암호화되었습니다.</string>
+    <string name="tap_to_encrypt">탭하여 이 이메일을 종단 간 암호화</string>
+    <string name="tap_to_turn_off_encryption">암호화됨. 탭하면 이 이메일의 암호화가 꺼집니다.</string>
 </resources>

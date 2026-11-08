@@ -3574,4 +3574,17 @@
     <string name="external_pgp_key_manage_note">Aby zaimportować, zastąpić lub usunąć ten klucz, użyj Aster Mail w przeglądarce lub aplikacji na komputer.</string>
     <string name="external_pgp_key_unpublished">Twój zaimportowany klucz nie jest już opublikowany.</string>
     <string name="external_pgp_key_unpublish_failed">Nie udało się zatrzymać publikowania klucza. Spróbuj ponownie.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail nie może zaszyfrować tej wiadomości kluczem PGP odbiorcy. Wersja robocza jest zapisana, więc możesz spróbować ponownie.</string>
+    <string name="send_pgp_attachments_too_large">Te załączniki są zbyt duże, aby zaszyfrować je kluczem PGP odbiorcy. Aby wysłać tę wiadomość, utrzymaj łączny rozmiar załączników poniżej %1$s. Wersja robocza jest zapisana.</string>
+    <string name="send_scheduled_no_pgp">Zaplanowane wiadomości na adresy zewnętrzne nie mogą używać szyfrowania PGP. Aby zaszyfrować tę wiadomość, wyślij ją teraz.</string>
+    <string name="send_expiry_no_pgp">Wygasające wiadomości na adresy zewnętrzne nie mogą używać szyfrowania PGP. Aby zaszyfrować tę wiadomość za pomocą PGP, usuń wygaśnięcie.</string>
+    <string name="encryption_status_unknown">Stan szyfrowania niedostępny</string>
+    <string name="encryption_status_unknown_description">Aster Mail nie może sprawdzić kluczy tego odbiorcy, więc nie wiadomo, czy tę wiadomość można zaszyfrować end-to-end. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="recipient_key_outdated">Klucz odbiorcy jest nieaktualny</string>
+    <string name="recipient_key_outdated_description">Opublikowany klucz tego odbiorcy wygasł lub jest nieprawidłowy, więc tej wiadomości nie można zaszyfrować end-to-end. Jest chroniona tylko podczas przesyłania.</string>
+    <string name="encryption_available">Szyfrowanie dostępne</string>
+    <string name="encryption_available_description">Ten odbiorca publikuje działający klucz szyfrowania. Aby zaszyfrować tę wiadomość end-to-end, stuknij kłódkę.</string>
+    <string name="recipient_published_key_description">Zaszyfrowano opublikowanym kluczem publicznym odbiorcy.</string>
+    <string name="tap_to_encrypt">Stuknij, aby zaszyfrować tę wiadomość end-to-end</string>
+    <string name="tap_to_turn_off_encryption">Zaszyfrowano. Stuknij, aby wyłączyć szyfrowanie tej wiadomości.</string>
 </resources>

@@ -24,6 +24,11 @@ package org.astermail.android.crypto
 import java.security.SecureRandom
 import org.astermail.android.api.keys.ExternalKeyInfo
 
+sealed interface ClientPgpCopyOutcome {
+    data class Copies(val copies: Map<String, String>) : ClientPgpCopyOutcome
+    data class Failed(val too_large: Boolean) : ClientPgpCopyOutcome
+}
+
 object ClientPgpCopies {
     const val PLACEHOLDER_BODY = " "
     const val MAX_COPY_ATTACHMENT_BYTES = 11L * 1024L * 1024L
@@ -91,19 +96,29 @@ object ClientPgpCopies {
         entity: ByteArray,
         recipient_keys: Map<String, String>,
         attachment_bytes: Long,
-    ): Map<String, String>? {
-        if (recipient_keys.isEmpty() || attachment_bytes > MAX_COPY_ATTACHMENT_BYTES) return null
+    ): Map<String, String>? =
+        (encrypt_copies_outcome(entity, recipient_keys, attachment_bytes) as? ClientPgpCopyOutcome.Copies)?.copies
+
+    fun encrypt_copies_outcome(
+        entity: ByteArray,
+        recipient_keys: Map<String, String>,
+        attachment_bytes: Long,
+        encrypt: (ByteArray, String) -> String? = { bytes, key -> PgpEncryptor.encrypt_bytes_to_keys(bytes, listOf(key)) },
+    ): ClientPgpCopyOutcome {
+        if (attachment_bytes > MAX_COPY_ATTACHMENT_BYTES) return ClientPgpCopyOutcome.Failed(too_large = true)
+        if (recipient_keys.isEmpty()) return ClientPgpCopyOutcome.Failed(too_large = false)
         val limit = copy_limit_bytes(attachment_bytes)
         val copies = LinkedHashMap<String, String>()
         var total = 0L
         for ((recipient, key) in recipient_keys) {
-            val copy = PgpEncryptor.encrypt_bytes_to_keys(entity, listOf(key)) ?: return null
-            if (!is_armored_message(copy) || copy.length > limit) return null
+            val copy = encrypt(entity, key)
+            if (copy == null || !is_armored_message(copy)) return ClientPgpCopyOutcome.Failed(too_large = false)
+            if (copy.length > limit) return ClientPgpCopyOutcome.Failed(too_large = true)
             total += copy.length
-            if (total > MAX_TOTAL_COPY_BYTES) return null
+            if (total > MAX_TOTAL_COPY_BYTES) return ClientPgpCopyOutcome.Failed(too_large = true)
             copies[recipient] = copy
         }
-        return copies
+        return ClientPgpCopyOutcome.Copies(copies)
     }
 
     private fun to_crlf(text: String): String =

@@ -30,7 +30,7 @@ import org.astermail.android.storage.actions.PendingMailActionEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 20
+const val aster_database_version = 21
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -167,6 +167,10 @@ val migration_columns: Map<Int, List<schema_column>> = mapOf(
         schema_column(decrypted_mail_table, "item_type", "TEXT") +
         sender_auth_columns(folder_row_table),
     20 to listOf(schema_column(folder_row_table, "has_unseen_reaction", "INTEGER NOT NULL DEFAULT 0")),
+    21 to listOf(
+        schema_column(pending_send_table, "force_pgp", "INTEGER"),
+        schema_column(pending_send_table, "pgp_recipients_json", "TEXT"),
+    ),
 )
 
 val migration_statements: Map<Int, List<String>> = mapOf(
@@ -254,6 +258,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_17_18 = step_migration(18)
         val migration_18_19 = step_migration(19)
         val migration_19_20 = step_migration(20)
+        val migration_20_21 = step_migration(21)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -275,6 +280,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_17_18,
             migration_18_19,
             migration_19_20,
+            migration_20_21,
         )
     }
 }
