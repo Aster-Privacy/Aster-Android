@@ -3607,4 +3607,5 @@
     <string name="sidebar_mail_items_subtitle">Choisissez les boîtes qui apparaissent dans la section Courrier.</string>
     <string name="sidebar_move_section_up">Monter %1$s</string>
     <string name="sidebar_move_section_down">Descendre %1$s</string>
+    <string name="contacts_pending_sync">En attente de synchronisation</string>
 </resources>

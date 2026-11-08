@@ -85,6 +85,7 @@ data class ContactsUiState(
     val bulk_total: Int = 0,
     val import_done: Int = 0,
     val import_total: Int = 0,
+    val pending_ids: Set<String> = emptySet(),
 ) {
     val is_selecting: Boolean get() = selected_ids.isNotEmpty()
 
@@ -110,6 +111,14 @@ class ContactsViewModel @Inject constructor(
         viewModelScope.launch {
             org.astermail.android.contacts.sync.ContactSyncAccounts.remote_updated.collect {
                 load_contacts(quiet = true)
+            }
+        }
+        viewModelScope.launch {
+            var previous = emptySet<String>()
+            repository.pending_contact_ids.collect { ids ->
+                _state.value = _state.value.copy(pending_ids = ids)
+                if ((previous - ids).isNotEmpty()) load_contacts(quiet = true)
+                previous = ids
             }
         }
     }

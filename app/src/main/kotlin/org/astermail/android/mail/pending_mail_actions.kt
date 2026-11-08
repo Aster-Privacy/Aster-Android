@@ -57,7 +57,19 @@ enum class PendingActionKind {
     report_spam_senders,
     remove_spam_senders,
     save_draft,
+    contact_create,
+    contact_update,
+    contact_delete,
 }
+
+val contact_action_kinds: Set<PendingActionKind> = setOf(
+    PendingActionKind.contact_create,
+    PendingActionKind.contact_update,
+    PendingActionKind.contact_delete,
+)
+
+val PendingActionKind.is_contact: Boolean
+    get() = this in contact_action_kinds
 
 @Serializable
 data class PendingActionPayload(
@@ -74,6 +86,7 @@ data class PendingActionPayload(
     val hash: String? = null,
     val reply_to: String? = null,
     val count: Int = 0,
+    val contact: org.astermail.android.contacts.PendingContactPayload? = null,
 )
 
 data class PendingMailAction(
@@ -183,6 +196,7 @@ fun is_server_side_failure(error: Throwable?): Boolean {
 }
 
 internal fun pending_action_exhausted(action: PendingMailAction, error: Throwable?): Boolean {
+    if (action.kind.is_contact) return false
     val attempts = action.attempts + 1
     if (is_server_side_failure(error)) return attempts >= PENDING_ACTION_MAX_SERVER_ATTEMPTS
     if (action.kind == PendingActionKind.save_draft) return false
@@ -254,7 +268,10 @@ private fun targets(action: PendingMailAction, item: InboxItem): Boolean = when 
         (item.thread_token != null && item.thread_token in action.thread_set)
     PendingActionKind.report_spam_senders,
     PendingActionKind.remove_spam_senders,
-    PendingActionKind.save_draft -> false
+    PendingActionKind.save_draft,
+    PendingActionKind.contact_create,
+    PendingActionKind.contact_update,
+    PendingActionKind.contact_delete -> false
     else -> item.id in action.id_set
 }
 
@@ -296,7 +313,10 @@ private fun apply_action(state: OverlayState, action: PendingMailAction) {
         PendingActionKind.empty_spam -> state.gone = true
         PendingActionKind.report_spam_senders,
         PendingActionKind.remove_spam_senders,
-        PendingActionKind.save_draft -> Unit
+        PendingActionKind.save_draft,
+        PendingActionKind.contact_create,
+        PendingActionKind.contact_update,
+        PendingActionKind.contact_delete -> Unit
     }
 }
 

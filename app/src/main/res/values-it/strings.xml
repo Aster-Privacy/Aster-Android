@@ -3578,4 +3578,5 @@
     <string name="sidebar_mail_items_subtitle">Scegli quali caselle compaiono nella sezione Posta.</string>
     <string name="sidebar_move_section_up">Sposta %1$s in alto</string>
     <string name="sidebar_move_section_down">Sposta %1$s in basso</string>
+    <string name="contacts_pending_sync">In attesa di sincronizzazione</string>
 </resources>

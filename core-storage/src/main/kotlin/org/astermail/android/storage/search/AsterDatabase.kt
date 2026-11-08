@@ -27,10 +27,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.astermail.android.storage.actions.PendingMailActionDao
 import org.astermail.android.storage.actions.PendingMailActionEntity
+import org.astermail.android.storage.contacts.ContactCacheDao
+import org.astermail.android.storage.contacts.ContactCacheEntity
+import org.astermail.android.storage.contacts.ContactGroupCacheDao
+import org.astermail.android.storage.contacts.ContactGroupCacheEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 21
+const val aster_database_version = 22
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -130,6 +134,32 @@ const val create_pending_mail_action =
         "`created_at_ms` INTEGER NOT NULL, " +
         "`attempts` INTEGER NOT NULL)"
 
+const val create_contact_cache =
+    "CREATE TABLE IF NOT EXISTS `contact_cache` (" +
+        "`account_id` TEXT NOT NULL, " +
+        "`id` TEXT NOT NULL, " +
+        "`contact_token` TEXT, " +
+        "`encrypted_data` TEXT NOT NULL, " +
+        "`data_nonce` TEXT NOT NULL, " +
+        "`integrity_hash` TEXT, " +
+        "`data_version` INTEGER, " +
+        "`created_at` TEXT, " +
+        "`updated_at` TEXT, " +
+        "`change_seq` INTEGER, " +
+        "`revision` INTEGER, " +
+        "PRIMARY KEY(`account_id`, `id`))"
+
+const val create_contact_group_cache =
+    "CREATE TABLE IF NOT EXISTS `contact_group_cache` (" +
+        "`account_id` TEXT NOT NULL, " +
+        "`id` TEXT NOT NULL, " +
+        "`encrypted_name` TEXT NOT NULL, " +
+        "`name_nonce` TEXT NOT NULL, " +
+        "`contact_count` INTEGER NOT NULL, " +
+        "`created_at` TEXT, " +
+        "`position` INTEGER NOT NULL, " +
+        "PRIMARY KEY(`account_id`, `id`))"
+
 private fun sender_auth_columns(table: String): List<schema_column> = listOf(
     schema_column(table, "spf_result", "TEXT"),
     schema_column(table, "dkim_result", "TEXT"),
@@ -181,6 +211,7 @@ val migration_statements: Map<Int, List<String>> = mapOf(
     16 to listOf(create_message_body_cache),
     17 to listOf(create_thread_snapshot_cache),
     18 to listOf(create_pending_mail_action),
+    22 to listOf(create_contact_cache, create_contact_group_cache),
 )
 
 private fun has_table(db: SupportSQLiteDatabase, table: String): Boolean =
@@ -226,6 +257,8 @@ private fun step_migration(to_version: Int): Migration = object : Migration(to_v
         MessageBodyEntity::class,
         ThreadSnapshotEntity::class,
         PendingMailActionEntity::class,
+        ContactCacheEntity::class,
+        ContactGroupCacheEntity::class,
     ],
     version = aster_database_version,
     exportSchema = false,
@@ -237,6 +270,8 @@ abstract class AsterDatabase : RoomDatabase() {
     abstract fun message_body_dao(): MessageBodyDao
     abstract fun thread_snapshot_dao(): ThreadSnapshotDao
     abstract fun pending_mail_action_dao(): PendingMailActionDao
+    abstract fun contact_cache_dao(): ContactCacheDao
+    abstract fun contact_group_cache_dao(): ContactGroupCacheDao
 
     companion object {
         val migration_1_2 = step_migration(2)
@@ -259,6 +294,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_18_19 = step_migration(19)
         val migration_19_20 = step_migration(20)
         val migration_20_21 = step_migration(21)
+        val migration_21_22 = step_migration(22)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -281,6 +317,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_18_19,
             migration_19_20,
             migration_20_21,
+            migration_21_22,
         )
     }
 }

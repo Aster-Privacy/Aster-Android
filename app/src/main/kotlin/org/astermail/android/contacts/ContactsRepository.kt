@@ -25,6 +25,12 @@ import java.security.MessageDigest
 import javax.crypto.Mac
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -55,7 +61,19 @@ import org.astermail.android.api.contacts.ImportContactsResponse
 import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.api.contacts.UpdateContactResponse
+import org.astermail.android.contacts.sync.REVISION_CONFLICT_CODE
+import org.astermail.android.crypto.StorageKeyUnavailableException
+import org.astermail.android.mail.PendingActionKind
+import org.astermail.android.mail.PendingActionPayload
+import org.astermail.android.mail.PendingMailAction
+import org.astermail.android.mail.PendingMailActionQueue
+import org.astermail.android.mail.is_contact
+import org.astermail.android.mail.is_transient_failure
 import org.astermail.android.security.SenderTrustContact
+import org.astermail.android.storage.contacts.ContactCacheDao
+import org.astermail.android.storage.contacts.ContactCacheEntity
+import org.astermail.android.storage.contacts.ContactGroupCacheDao
+import org.astermail.android.storage.contacts.ContactGroupCacheEntity
 import org.astermail.android.security.SenderTrustStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
@@ -80,13 +98,53 @@ class ContactUndecryptableException : IllegalStateException("failed to decrypt c
 class ContactsRepository @Inject constructor(
     private val contacts_api: ContactsApi,
     private val session_key_store: SessionKeyStore,
+    private val cache_dao_provider: dagger.Lazy<ContactCacheDao>? = null,
+    private val group_cache_dao_provider: dagger.Lazy<ContactGroupCacheDao>? = null,
+    private val pending_queue_provider: dagger.Lazy<PendingMailActionQueue>? = null,
 ) : ContactPhotoSource {
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
+
+    internal var network_probe: (() -> Boolean)? = null
+
+    private val local_ops_mutex = Mutex()
+
+    private val resolved_ids = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private val cache_writes = java.util.concurrent.atomic.AtomicLong(0)
+
+    private val cache_dao: ContactCacheDao?
+        get() = cache_dao_provider?.get()
+
+    private val group_cache_dao: ContactGroupCacheDao?
+        get() = group_cache_dao_provider?.get()
+
+    private val pending_queue: PendingMailActionQueue?
+        get() = pending_queue_provider?.get()
+
+    private fun current_account(): String? = session_key_store.get_user_id()?.takeIf { it.isNotBlank() }
+
+    private fun is_online(): Boolean = network_probe?.invoke() ?: (pending_queue?.is_network_available() ?: true)
+
+    fun resolve_contact_id(contact_id: String): String = resolved_ids[contact_id] ?: contact_id
+
+    val pending_contact_ids: Flow<Set<String>>
+        get() {
+            val queue = pending_queue ?: return flowOf(emptySet())
+            return queue.actions.map { actions ->
+                val account = current_account() ?: return@map emptySet<String>()
+                actions.asSequence()
+                    .filter { it.account_id == account && it.kind.is_contact }
+                    .mapNotNull { it.payload.contact?.contact_id }
+                    .toSet()
+            }.distinctUntilChanged()
+        }
+
+    suspend fun <T> with_op_lock(block: suspend () -> T): T = local_ops_mutex.withLock { block() }
 
     suspend fun fetch_contacts(group_id: String? = null): Result<List<Contact>> {
         val trust_generation = SenderTrustStore.current_generation()
         return runCatching {
-            fetch_all_contacts(group_id)
+            load_contacts(group_id)
         }.onSuccess { contacts ->
             if (group_id == null) {
                 val photo_entries = withContext(default_dispatcher) {
@@ -111,7 +169,7 @@ class ContactsRepository @Inject constructor(
         val passphrase = session_key_store.get_passphrase() ?: throw IllegalStateException("no session")
         passphrase.fill(0)
         val trust_generation = SenderTrustStore.current_generation()
-        val contacts = fetch_all_contacts(null)
+        val contacts = load_contacts(null)
         publish_trust_contacts(contacts, trust_generation)
         return contacts.mapNotNull { contact_photo_entry(it) }
     }
@@ -130,7 +188,77 @@ class ContactsRepository @Inject constructor(
         ContactPhotoFetch.Failed(t)
     }
 
-    private suspend fun fetch_all_contacts(group_id: String?): List<Contact> {
+    private suspend fun load_contacts(group_id: String?): List<Contact> {
+        val account = current_account()
+        val dao = cache_dao
+        if (group_id != null || account == null || dao == null) return fetch_all_contacts(group_id)
+        if (!is_online()) return cached_contacts(account, dao)
+        val writes_before = cache_writes.get()
+        val (items, complete) = try {
+            fetch_all_items(null)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (is_transient_failure(t)) return cached_contacts(account, dao)
+            throw t
+        }
+        if (current_account() == account) {
+            val rows = items.mapNotNull { it.to_cache_row(account) }
+            if (complete && cache_writes.get() == writes_before) dao.replace_for_account(account, rows) else dao.upsert_all(rows)
+        }
+        return decrypt_contacts(overlay_pending(account, items, include_missing = true))
+    }
+
+    private suspend fun cached_contacts(account: String, dao: ContactCacheDao): List<Contact> {
+        val rows = dao.get_for_account(account).map { it.to_item() }
+        return decrypt_contacts(overlay_pending(account, rows, include_missing = true))
+    }
+
+    private suspend fun pending_contact_ops(account: String): List<PendingMailAction> {
+        val queue = pending_queue ?: return emptyList()
+        queue.await_loaded()
+        return queue.for_account(account).filter { it.kind.is_contact && it.payload.contact != null }
+    }
+
+    private suspend fun pending_op_for(account: String, contact_id: String): PendingMailAction? =
+        pending_contact_ops(account).firstOrNull { it.payload.contact?.contact_id == contact_id }
+
+    private suspend fun overlay_pending(
+        account: String,
+        items: List<ContactItem>,
+        include_missing: Boolean,
+    ): List<ContactItem> {
+        val ops = pending_contact_ops(account)
+        if (ops.isEmpty()) return items
+        val merged = LinkedHashMap<String, ContactItem>()
+        items.forEach { merged[it.id] = it }
+        for (op in ops) {
+            val payload = op.payload.contact ?: continue
+            val id = payload.contact_id
+            when (op.kind) {
+                PendingActionKind.contact_delete -> merged.remove(id)
+                PendingActionKind.contact_create,
+                PendingActionKind.contact_update -> {
+                    val local = payload.local ?: continue
+                    val existing = merged[id]
+                    if (existing == null && !include_missing) continue
+                    merged[id] = local.to_item(
+                        id = id,
+                        created_at = existing?.created_at ?: payload.created_at,
+                        revision = existing?.revision,
+                        contact_token = existing?.contact_token,
+                    )
+                }
+                else -> Unit
+            }
+        }
+        return merged.values.toList()
+    }
+
+    private suspend fun fetch_all_contacts(group_id: String?): List<Contact> =
+        decrypt_contacts(fetch_all_items(group_id).first)
+
+    private suspend fun fetch_all_items(group_id: String?): Pair<List<ContactItem>, Boolean> {
         val all = mutableListOf<ContactItem>()
         val seen_cursors = mutableSetOf<String>()
         var cursor: String? = null
@@ -141,38 +269,152 @@ class ContactsRepository @Inject constructor(
                 throw t
             } catch (t: Throwable) {
                 if (cursor == null) throw t
-                break
+                return all to false
             }
             all.addAll(page.items)
             val next = page.next_cursor
-            if (!page.has_more || next.isNullOrBlank() || !seen_cursors.add(next)) break
+            if (!page.has_more || next.isNullOrBlank()) return all to true
+            if (!seen_cursors.add(next)) return all to false
             cursor = next
         }
-        return decrypt_contacts(all)
     }
 
     private suspend fun decrypt_contacts(items: List<ContactItem>): List<Contact> =
         withContext(default_dispatcher) { items.mapNotNull { decrypt_contact(it) } }
 
     suspend fun fetch_contact(contact_id: String): Result<Contact> = runCatching {
-        val item = contacts_api.get_contact(contact_id)
+        val id = resolve_contact_id(contact_id)
+        val account = current_account()
+        val dao = cache_dao
+        if (account != null && dao != null &&
+            (is_local_contact_id(id) || !is_online() || pending_op_for(account, id) != null)
+        ) {
+            return@runCatching cached_contact(account, dao, id) ?: throw ApiError.NotFoundError
+        }
+        val item = try {
+            contacts_api.get_contact(id)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (account != null && dao != null) {
+                if (t is ApiError.NotFoundError) forget_cached(account, id)
+                if (is_transient_failure(t)) return@runCatching cached_contact(account, dao, id) ?: throw t
+            }
+            throw t
+        }
+        if (account != null && dao != null && current_account() == account) {
+            item.to_cache_row(account)?.let { dao.upsert(it) }
+        }
         withContext(default_dispatcher) { decrypt_contact(item) }
             ?: throw IllegalStateException("failed to decrypt contact")
     }
 
-    suspend fun get_count(): Result<Int> = runCatching {
-        contacts_api.get_contacts_count().count
+    private suspend fun cached_contact(account: String, dao: ContactCacheDao, id: String): Contact? {
+        val rows = listOfNotNull(dao.get(account, id)?.to_item())
+        val item = overlay_pending(account, rows, include_missing = true).firstOrNull { it.id == id }
+            ?: pending_contact_ops(account)
+                .firstOrNull { it.payload.contact?.contact_id == id && it.kind != PendingActionKind.contact_delete }
+                ?.let { op -> op.payload.contact?.local?.to_item(id, op.payload.contact?.created_at, null, null) }
+            ?: return null
+        return withContext(default_dispatcher) { decrypt_contact(item) }
     }
 
+    suspend fun get_count(): Result<Int> = runCatching {
+        val account = current_account()
+        val dao = cache_dao
+        if (account == null || dao == null) return@runCatching contacts_api.get_contacts_count().count
+        if (!is_online()) return@runCatching cached_count(account, dao)
+        try {
+            contacts_api.get_contacts_count().count
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (is_transient_failure(t)) cached_count(account, dao) else throw t
+        }
+    }
+
+    private suspend fun cached_count(account: String, dao: ContactCacheDao): Int =
+        overlay_pending(account, dao.get_for_account(account).map { it.to_item() }, include_missing = true).size
+
     suspend fun create_contact(contact: Contact): Result<CreateContactResponse> = runCatching {
+        val account = current_account()
+        val dao = cache_dao
+        val queue = pending_queue
+        if (account == null || dao == null || queue == null) return@runCatching create_contact_now(contact, null, null)
+        queue.await_loaded()
+        if (!is_online()) return@runCatching queue_create(account, contact)
+        try {
+            create_contact_now(contact, account, dao)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (is_transient_failure(t)) queue_create(account, contact) else throw t
+        }
+    }.also { on_local_change() }
+
+    private suspend fun create_contact_now(contact: Contact, account: String?, dao: ContactCacheDao?): CreateContactResponse {
         val key = write_contacts_key()
         try {
             val request = build_create_request(contact, key)
-            contacts_api.create_contact(request)
+            val response = contacts_api.create_contact(request)
+            val id = response.id
+            if (account != null && dao != null && id != null && current_account() == account) {
+                cache_writes.incrementAndGet()
+                dao.upsert(request.to_cache_row(account, id, response.created_at, response.revision, response.change_seq))
+            }
+            return response
         } finally {
             key.fill(0)
         }
-    }.also { on_local_change() }
+    }
+
+    private suspend fun queue_create(account: String, contact: Contact): CreateContactResponse = local_ops_mutex.withLock {
+        val queue = pending_queue ?: throw IllegalStateException("no queue")
+        val key = write_contacts_key()
+        try {
+            val token = generate_contact_token(contact, key)
+            if (has_duplicate_token(account, token, key)) throw ApiError.Conflict("Contact already exists", null)
+            val cipher = encrypt_contact_cipher(contact, key)
+            val id = LOCAL_CONTACT_PREFIX + java.util.UUID.randomUUID().toString()
+            val created_at = java.time.Instant.now().toString()
+            queue.enqueue(
+                account,
+                PendingActionKind.contact_create,
+                PendingActionPayload(contact = PendingContactPayload(contact_id = id, local = cipher, created_at = created_at)),
+            )
+            CreateContactResponse(id = id, success = true, created_at = created_at)
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private suspend fun has_duplicate_token(account: String, token: String, key: ByteArray): Boolean {
+        val dao = cache_dao ?: return false
+        val rows = dao.get_for_account(account).map { it.to_item() }
+        val visible = overlay_pending(account, rows, include_missing = true)
+        val pending_ids = pending_contact_ops(account).mapNotNull { it.payload.contact?.contact_id }.toSet()
+        return visible.any { item ->
+            if (item.id in pending_ids) {
+                decrypt_contact(item)?.let { generate_contact_token(it, key) } == token
+            } else {
+                item.contact_token == token
+            }
+        }
+    }
+
+    private fun encrypt_contact_cipher(contact: Contact, key: ByteArray): PendingContactCipher {
+        val payload = encode_contact_json(contact, include_envelope = true)
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val ciphertext = aes_gcm_encrypt(payload.toByteArray(Charsets.UTF_8), key, nonce)
+        val encrypted_data = b64(ciphertext)
+        val data_nonce = b64(nonce)
+        return PendingContactCipher(
+            encrypted_data = encrypted_data,
+            data_nonce = data_nonce,
+            integrity_hash = generate_integrity_hash(encrypted_data, data_nonce, CONTACT_DATA_VERSION, key),
+            data_version = CONTACT_DATA_VERSION,
+        )
+    }
 
     suspend fun import_contacts(
         contacts: List<Contact>,
@@ -262,15 +504,122 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun update_contact(contact_id: String, contact: Contact): Result<Unit> = runCatching {
+        val id = resolve_contact_id(contact_id)
+        val account = current_account()
+        val dao = cache_dao
+        val queue = pending_queue
+        if (account == null || dao == null || queue == null) return@runCatching update_contact_now(id, contact, null, null)
+        queue.await_loaded()
+        val queued = local_ops_mutex.withLock {
+            val pending = pending_op_for(account, id)
+            if (pending != null || is_local_contact_id(id) || !is_online()) {
+                queue_update_locked(account, id, contact, pending)
+                true
+            } else {
+                false
+            }
+        }
+        if (queued) return@runCatching
+        try {
+            update_contact_now(id, contact, account, dao)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (!is_transient_failure(t)) throw t
+            local_ops_mutex.withLock { queue_update_locked(account, id, contact, pending_op_for(account, id)) }
+        }
+    }.also { on_local_change() }
+
+    private suspend fun update_contact_now(id: String, contact: Contact, account: String?, dao: ContactCacheDao?) {
         val key = write_contacts_key()
         try {
             val request = build_update_request(contact, key)
-            contacts_api.update_contact(contact_id, request)
-            Unit
+            val response = contacts_api.update_contact(id, request)
+            if (account != null && dao != null) store_updated_row(account, id, request, response)
         } finally {
             key.fill(0)
         }
-    }.also { on_local_change() }
+    }
+
+    private suspend fun store_updated_row(account: String, id: String, request: UpdateContactRequest, response: UpdateContactResponse) {
+        val dao = cache_dao ?: return
+        if (current_account() != account) return
+        val previous = dao.get(account, id)
+        cache_writes.incrementAndGet()
+        dao.upsert(
+            ContactCacheEntity(
+                account_id = account,
+                id = id,
+                contact_token = previous?.contact_token,
+                encrypted_data = request.encrypted_data,
+                data_nonce = request.data_nonce,
+                integrity_hash = request.integrity_hash,
+                data_version = CONTACT_DATA_VERSION,
+                created_at = previous?.created_at,
+                updated_at = java.time.Instant.now().toString(),
+                change_seq = response.change_seq ?: previous?.change_seq,
+                revision = response.revision ?: previous?.revision,
+            ),
+        )
+    }
+
+    private suspend fun queue_update_locked(account: String, id: String, contact: Contact, pending: PendingMailAction?) {
+        val queue = pending_queue ?: throw IllegalStateException("no queue")
+        val key = write_contacts_key()
+        val cipher = try {
+            encrypt_contact_cipher(contact, key)
+        } finally {
+            key.fill(0)
+        }
+        if (pending == null && is_local_contact_id(id)) {
+            queue.enqueue(
+                account,
+                PendingActionKind.contact_create,
+                PendingActionPayload(
+                    contact = PendingContactPayload(contact_id = id, local = cipher, created_at = java.time.Instant.now().toString()),
+                ),
+            )
+            return
+        }
+        val base = cache_dao?.get(account, id)
+        val incoming = ContactOp(
+            PendingActionKind.contact_update,
+            PendingContactPayload(contact_id = id, local = cipher, base = base?.to_cipher(), base_revision = base?.revision),
+        )
+        apply_contact_op(queue, account, pending, incoming)
+    }
+
+    private suspend fun apply_contact_op(
+        queue: PendingMailActionQueue,
+        account: String,
+        pending: PendingMailAction?,
+        incoming: ContactOp,
+    ) {
+        if (pending == null) {
+            queue.enqueue(account, incoming.kind, PendingActionPayload(contact = incoming.payload))
+            return
+        }
+        val existing = pending.payload.contact ?: return
+        when (val merged = coalesce_contact_op(ContactOp(pending.kind, existing), incoming)) {
+            is ContactOpMerge.Replace -> {
+                val rewritten = queue.rewrite(pending.id, merged.op.kind, PendingActionPayload(contact = merged.op.payload))
+                if (!rewritten) queue.enqueue(account, merged.op.kind, PendingActionPayload(contact = merged.op.payload))
+            }
+            ContactOpMerge.Drop -> queue.complete(pending.id)
+            ContactOpMerge.Keep -> Unit
+        }
+    }
+
+    private suspend fun queue_delete_locked(account: String, id: String, pending: PendingMailAction?) {
+        val queue = pending_queue ?: throw IllegalStateException("no queue")
+        if (pending == null && is_local_contact_id(id)) return
+        val base = cache_dao?.get(account, id)
+        val incoming = ContactOp(
+            PendingActionKind.contact_delete,
+            PendingContactPayload(contact_id = id, base = base?.to_cipher(), base_revision = base?.revision),
+        )
+        apply_contact_op(queue, account, pending, incoming)
+    }
 
     suspend fun trash_contact(contact: Contact): Result<Unit> =
         update_contact(contact.id, contact.copy(deleted_at = java.time.Instant.now().toString()))
@@ -279,12 +628,236 @@ class ContactsRepository @Inject constructor(
         update_contact(contact.id, contact.copy(deleted_at = ""))
 
     suspend fun delete_contact(contact_id: String): Result<DeleteContactResponse> = runCatching {
-        contacts_api.delete_contact(contact_id)
+        val id = resolve_contact_id(contact_id)
+        val account = current_account()
+        val dao = cache_dao
+        val queue = pending_queue
+        if (account == null || dao == null || queue == null) return@runCatching contacts_api.delete_contact(id)
+        queue.await_loaded()
+        val queued = local_ops_mutex.withLock {
+            val pending = pending_op_for(account, id)
+            if (pending != null || is_local_contact_id(id) || !is_online()) {
+                queue_delete_locked(account, id, pending)
+                true
+            } else {
+                false
+            }
+        }
+        if (queued) return@runCatching DeleteContactResponse(success = true, deleted_count = 1)
+        try {
+            contacts_api.delete_contact(id).also { forget_cached(account, id) }
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (t is ApiError.NotFoundError) forget_cached(account, id)
+            if (!is_transient_failure(t)) throw t
+            local_ops_mutex.withLock { queue_delete_locked(account, id, pending_op_for(account, id)) }
+            DeleteContactResponse(success = true, deleted_count = 1)
+        }
     }.also { on_local_change() }
 
     suspend fun bulk_delete_contacts(ids: List<String>): Result<DeleteContactResponse> = runCatching {
-        contacts_api.bulk_delete_contacts(BulkDeleteContactsRequest(ids))
+        val account = current_account()
+        val dao = cache_dao
+        val queue = pending_queue
+        if (account == null || dao == null || queue == null) {
+            return@runCatching contacts_api.bulk_delete_contacts(BulkDeleteContactsRequest(ids))
+        }
+        queue.await_loaded()
+        val resolved = ids.map { resolve_contact_id(it) }.distinct()
+        val online = is_online()
+        val direct = local_ops_mutex.withLock {
+            val remaining = mutableListOf<String>()
+            for (id in resolved) {
+                val pending = pending_op_for(account, id)
+                if (pending != null || is_local_contact_id(id) || !online) {
+                    queue_delete_locked(account, id, pending)
+                } else {
+                    remaining.add(id)
+                }
+            }
+            remaining
+        }
+        val queued_count = resolved.size - direct.size
+        if (direct.isEmpty()) return@runCatching DeleteContactResponse(success = true, deleted_count = queued_count)
+        try {
+            val response = contacts_api.bulk_delete_contacts(BulkDeleteContactsRequest(direct))
+            direct.forEach { forget_cached(account, it) }
+            response.copy(deleted_count = response.deleted_count + queued_count)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (!is_transient_failure(t)) throw t
+            local_ops_mutex.withLock { direct.forEach { queue_delete_locked(account, it, pending_op_for(account, it)) } }
+            DeleteContactResponse(success = true, deleted_count = resolved.size)
+        }
     }.also { on_local_change() }
+
+    private suspend fun forget_cached(account: String, id: String) {
+        val dao = cache_dao ?: return
+        if (current_account() != account) return
+        cache_writes.incrementAndGet()
+        dao.delete(account, id)
+    }
+
+    private suspend fun store_item(account: String, item: ContactItem) {
+        val dao = cache_dao ?: return
+        if (current_account() != account) return
+        val row = item.to_cache_row(account) ?: return
+        cache_writes.incrementAndGet()
+        dao.upsert(row)
+    }
+
+    suspend fun replay_pending_op(account: String, action: PendingMailAction): Result<Unit> = try {
+        if (current_account() != account) throw java.io.IOException("account not active")
+        val payload = action.payload.contact
+        if (payload != null) {
+            when (action.kind) {
+                PendingActionKind.contact_create -> replay_create(account, payload)
+                PendingActionKind.contact_update -> replay_update(account, payload)
+                PendingActionKind.contact_delete -> replay_delete(account, payload)
+                else -> Unit
+            }
+            ContactPhotoDirectory.invalidate()
+        }
+        Result.success(Unit)
+    } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancelled
+    } catch (e: StorageKeyUnavailableException) {
+        Result.failure(java.io.IOException("storage key unavailable", e))
+    } catch (e: ContactUndecryptableException) {
+        Result.failure(java.io.IOException("remote contact unreadable", e))
+    } catch (t: Throwable) {
+        Result.failure(t)
+    }
+
+    private fun cipher_json(id: String, cipher: PendingContactCipher): String? =
+        decrypt_contact(cipher.to_item(id, null, null, null))?.raw_json?.takeIf { it.isNotBlank() }
+
+    private suspend fun fetch_remote_item(id: String): ContactItem? = try {
+        contacts_api.get_contact(id)
+    } catch (_: ApiError.NotFoundError) {
+        null
+    }
+
+    private suspend fun contact_token_for_json(json: String): String {
+        val contact = parse_contact_json("", json) ?: throw IllegalArgumentException("invalid contact json")
+        val key = write_contacts_key()
+        return try {
+            generate_contact_token(contact, key)
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private suspend fun create_or_adopt(account: String, local_id: String, json: String, created_at: String?): String {
+        val adopted = try {
+            val (response, request) = create_raw_contact_request(json, unique_token = false)
+            val id = response.id ?: throw java.io.IOException("create returned no id")
+            store_created(account, local_id, id, request, response.created_at ?: created_at, response.revision, response.change_seq)
+            return id
+        } catch (e: ApiError.Conflict) {
+            find_equivalent_by_token(json, contact_token_for_json(json))
+        }
+        if (adopted != null) {
+            resolved_ids[local_id] = adopted.id
+            if (adopted.id != local_id) forget_cached(account, local_id)
+            store_item(account, adopted)
+            return adopted.id
+        }
+        val (response, request) = create_raw_contact_request(json, unique_token = true)
+        val id = response.id ?: throw java.io.IOException("create returned no id")
+        store_created(account, local_id, id, request, response.created_at ?: created_at, response.revision, response.change_seq)
+        return id
+    }
+
+    private suspend fun find_equivalent_by_token(json: String, token: String): ContactItem? {
+        val (items, _) = fetch_all_items(null)
+        return items.firstOrNull { item ->
+            item.contact_token == token &&
+                (decrypt_contact(item)?.raw_json?.let { contact_json_equivalent(it, json) } == true)
+        }
+    }
+
+    private suspend fun store_created(
+        account: String,
+        local_id: String,
+        id: String,
+        request: CreateContactRequest,
+        created_at: String?,
+        revision: Long?,
+        change_seq: Long?,
+    ) {
+        resolved_ids[local_id] = id
+        if (id != local_id) forget_cached(account, local_id)
+        val dao = cache_dao ?: return
+        if (current_account() != account) return
+        cache_writes.incrementAndGet()
+        dao.upsert(request.to_cache_row(account, id, created_at, revision, change_seq))
+    }
+
+    private suspend fun replay_create(account: String, payload: PendingContactPayload) {
+        val local = payload.local ?: return
+        val json = cipher_json(payload.contact_id, local) ?: return
+        create_or_adopt(account, payload.contact_id, json, payload.created_at)
+    }
+
+    private suspend fun replay_update(account: String, payload: PendingContactPayload) {
+        val id = resolve_contact_id(payload.contact_id)
+        val local = payload.local ?: return
+        val local_json = cipher_json(id, local) ?: return
+        val base_json = payload.base?.let { cipher_json(id, it) }
+        var attempts = 0
+        while (true) {
+            val item = fetch_remote_item(id)
+            if (item == null) {
+                if (contact_json_trashed(local_json)) {
+                    forget_cached(account, id)
+                    return
+                }
+                create_or_adopt(account, id, local_json, payload.created_at)
+                return
+            }
+            val remote_json = raw_record(item)?.json ?: throw ContactUndecryptableException()
+            val merged = merge_contact_json(base_json, local_json, remote_json)
+            if (contact_json_equivalent(merged, remote_json)) {
+                store_item(account, item)
+                return
+            }
+            try {
+                val (response, request) = update_raw_contact_request(id, merged, item.revision)
+                store_updated_row(account, id, request, response)
+                return
+            } catch (e: ApiError.Conflict) {
+                if (e.code != REVISION_CONFLICT_CODE) throw e
+                attempts++
+                if (attempts >= 3) throw java.io.IOException("revision conflict", e)
+            } catch (_: ApiError.NotFoundError) {
+                attempts++
+                if (attempts >= 3) throw java.io.IOException("contact vanished during update")
+            }
+        }
+    }
+
+    private suspend fun replay_delete(account: String, payload: PendingContactPayload) {
+        val id = resolve_contact_id(payload.contact_id)
+        if (is_local_contact_id(id)) return
+        val item = fetch_remote_item(id)
+        if (item == null) {
+            forget_cached(account, id)
+            return
+        }
+        val base = payload.base
+        if (base != null && item.data_nonce != base.data_nonce) {
+            store_item(account, item)
+            return
+        }
+        try {
+            contacts_api.delete_contact(id)
+        } catch (_: ApiError.NotFoundError) {
+        }
+        forget_cached(account, id)
+    }
 
     private fun on_local_change() {
         ContactPhotoDirectory.invalidate()
@@ -292,6 +865,41 @@ class ContactsRepository @Inject constructor(
     }
 
     suspend fun search_contacts(query: String, field: String = "all", limit: Int? = null): Result<List<Contact>> = runCatching {
+        val account = current_account()
+        val dao = cache_dao
+        if (account == null || dao == null) return@runCatching search_contacts_online(query, field, limit)
+        if (!is_online()) return@runCatching search_cached(account, dao, query, field, limit)
+        val found = try {
+            search_contacts_online(query, field, limit)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (is_transient_failure(t)) return@runCatching search_cached(account, dao, query, field, limit)
+            throw t
+        }
+        val ops = pending_contact_ops(account)
+        if (ops.isEmpty()) return@runCatching found
+        val pending_ids = ops.mapNotNull { it.payload.contact?.contact_id }.toSet()
+        val untouched = found.filter { it.id !in pending_ids }
+        val local = search_cached(account, dao, query, field, null).filter { it.id in pending_ids }
+        val combined = untouched + local
+        if (limit != null) combined.take(limit) else combined
+    }
+
+    private suspend fun search_cached(
+        account: String,
+        dao: ContactCacheDao,
+        query: String,
+        field: String,
+        limit: Int?,
+    ): List<Contact> {
+        val needle = query.lowercase(java.util.Locale.ROOT).trim()
+        if (needle.isEmpty()) return emptyList()
+        val matches = cached_contacts(account, dao).filter { contact_matches_search(it, needle, field) }
+        return if (limit != null) matches.take(limit) else matches
+    }
+
+    private suspend fun search_contacts_online(query: String, field: String, limit: Int?): List<Contact> {
         val keys = StorageWriteKey.lookup_keys(session_key_store)
         val tokens = try {
             keys.map { generate_search_token(query, it) }.distinct()
@@ -305,12 +913,60 @@ class ContactsRepository @Inject constructor(
             contacts_api.search_contacts(token, field, limit).items.forEach { items.putIfAbsent(it.id, it) }
         }
         val found = decrypt_contacts(items.values.toList())
-        if (limit != null) found.take(limit) else found
+        return if (limit != null) found.take(limit) else found
     }
 
     suspend fun list_contact_groups(): Result<List<ContactGroup>> = runCatching {
-        val response = contacts_api.list_contact_groups()
+        val account = current_account()
+        val dao = group_cache_dao
+        if (account == null || dao == null) {
+            return@runCatching contacts_api.list_contact_groups().groups.mapNotNull { decrypt_group(it) }
+        }
+        if (!is_online()) return@runCatching cached_groups(account, dao)
+        val response = try {
+            contacts_api.list_contact_groups()
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (is_transient_failure(t)) return@runCatching cached_groups(account, dao)
+            throw t
+        }
+        if (current_account() == account) {
+            dao.replace_for_account(
+                account,
+                response.groups.mapIndexed { index, group ->
+                    ContactGroupCacheEntity(
+                        account_id = account,
+                        id = group.id,
+                        encrypted_name = group.encrypted_name,
+                        name_nonce = group.name_nonce,
+                        contact_count = group.contact_count,
+                        created_at = group.created_at,
+                        position = index,
+                    )
+                },
+            )
+        }
         response.groups.mapNotNull { decrypt_group(it) }
+    }
+
+    private suspend fun cached_groups(account: String, dao: ContactGroupCacheDao): List<ContactGroup> =
+        dao.get_for_account(account).mapNotNull {
+            decrypt_group(
+                ContactGroupEncrypted(
+                    id = it.id,
+                    encrypted_name = it.encrypted_name,
+                    name_nonce = it.name_nonce,
+                    contact_count = it.contact_count,
+                    created_at = it.created_at,
+                ),
+            )
+        }
+
+    suspend fun clear_cache(account_id: String) {
+        runCatching { cache_dao?.clear_for_account(account_id) }
+        runCatching { group_cache_dao?.clear_for_account(account_id) }
+        resolved_ids.clear()
     }
 
     suspend fun create_contact_group(
@@ -398,13 +1054,15 @@ class ContactsRepository @Inject constructor(
         return raw_record(item) ?: throw ContactUndecryptableException()
     }
 
-    suspend fun create_raw_contact(json: String, unique_token: Boolean): CreateContactResponse {
+    suspend fun create_raw_contact(json: String, unique_token: Boolean): CreateContactResponse =
+        create_raw_contact_request(json, unique_token).first
+
+    private suspend fun create_raw_contact_request(json: String, unique_token: Boolean): Pair<CreateContactResponse, CreateContactRequest> {
         val key = write_contacts_key()
         return try {
             val contact = parse_contact_json("", json) ?: throw IllegalArgumentException("invalid contact json")
             val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
-            contacts_api.create_contact(
-                CreateContactRequest(
+            val request = CreateContactRequest(
                     contact_token = if (unique_token) {
                         b64(ByteArray(32).also { java.security.SecureRandom().nextBytes(it) })
                     } else {
@@ -417,22 +1075,27 @@ class ContactsRepository @Inject constructor(
                     name_search_token = generate_name_token(contact, key),
                     email_search_token = generate_email_token(contact, key),
                     company_search_token = generate_company_token(contact, key),
-                ),
-            )
+                )
+            contacts_api.create_contact(request) to request
         } finally {
             key.fill(0)
             ContactPhotoDirectory.invalidate()
         }
     }
 
-    suspend fun update_raw_contact(contact_id: String, json: String, expected_revision: Long?): UpdateContactResponse {
+    suspend fun update_raw_contact(contact_id: String, json: String, expected_revision: Long?): UpdateContactResponse =
+        update_raw_contact_request(contact_id, json, expected_revision).first
+
+    private suspend fun update_raw_contact_request(
+        contact_id: String,
+        json: String,
+        expected_revision: Long?,
+    ): Pair<UpdateContactResponse, UpdateContactRequest> {
         val key = write_contacts_key()
         return try {
             val contact = parse_contact_json(contact_id, json) ?: throw IllegalArgumentException("invalid contact json")
             val (encrypted_data, data_nonce) = encrypt_raw_json(json, key)
-            contacts_api.update_contact(
-                contact_id,
-                UpdateContactRequest(
+            val request = UpdateContactRequest(
                     encrypted_data = encrypted_data,
                     data_nonce = data_nonce,
                     integrity_hash = generate_integrity_hash(encrypted_data, data_nonce, CONTACT_DATA_VERSION, key),
@@ -440,8 +1103,8 @@ class ContactsRepository @Inject constructor(
                     email_search_token = generate_email_token(contact, key),
                     company_search_token = generate_company_token(contact, key),
                     expected_revision = expected_revision,
-                ),
-            )
+                )
+            contacts_api.update_contact(contact_id, request) to request
         } finally {
             key.fill(0)
             ContactPhotoDirectory.invalidate()
@@ -1079,3 +1742,90 @@ data class ContactImportSummary(
     val limit_reached: Boolean,
     val last_failure: Throwable?,
 )
+
+private fun ContactItem.to_cache_row(account: String): ContactCacheEntity? {
+    val data = encrypted_data ?: return null
+    val nonce = data_nonce ?: return null
+    return ContactCacheEntity(
+        account_id = account,
+        id = id,
+        contact_token = contact_token,
+        encrypted_data = data,
+        data_nonce = nonce,
+        integrity_hash = integrity_hash,
+        data_version = data_version,
+        created_at = created_at,
+        updated_at = updated_at,
+        change_seq = change_seq,
+        revision = revision,
+    )
+}
+
+private fun ContactCacheEntity.to_item(): ContactItem = ContactItem(
+    id = id,
+    contact_token = contact_token,
+    encrypted_data = encrypted_data,
+    data_nonce = data_nonce,
+    integrity_hash = integrity_hash,
+    data_version = data_version,
+    created_at = created_at,
+    updated_at = updated_at,
+    change_seq = change_seq,
+    revision = revision,
+)
+
+private fun ContactCacheEntity.to_cipher(): PendingContactCipher = PendingContactCipher(
+    encrypted_data = encrypted_data,
+    data_nonce = data_nonce,
+    integrity_hash = integrity_hash,
+    data_version = data_version,
+)
+
+private fun PendingContactCipher.to_item(
+    id: String,
+    created_at: String?,
+    revision: Long?,
+    contact_token: String?,
+): ContactItem = ContactItem(
+    id = id,
+    contact_token = contact_token,
+    encrypted_data = encrypted_data,
+    data_nonce = data_nonce,
+    integrity_hash = integrity_hash,
+    data_version = data_version,
+    created_at = created_at,
+    revision = revision,
+)
+
+private fun CreateContactRequest.to_cache_row(
+    account: String,
+    id: String,
+    created_at: String?,
+    revision: Long?,
+    change_seq: Long?,
+): ContactCacheEntity = ContactCacheEntity(
+    account_id = account,
+    id = id,
+    contact_token = contact_token,
+    encrypted_data = encrypted_data,
+    data_nonce = data_nonce,
+    integrity_hash = integrity_hash,
+    data_version = data_version,
+    created_at = created_at,
+    updated_at = created_at,
+    change_seq = change_seq,
+    revision = revision,
+)
+
+internal fun contact_matches_search(contact: Contact, needle: String, field: String): Boolean {
+    fun same(value: String): Boolean = value.isNotBlank() && value.lowercase(java.util.Locale.ROOT).trim() == needle
+    return when (field) {
+        "name" -> same(contact.name)
+        "email" -> same(contact.email)
+        "company" -> same(contact.company)
+        else -> same(contact.name) || same(contact.email) || same(contact.company)
+    }
+}
+
+private fun contact_json_trashed(json: String): Boolean =
+    runCatching { org.json.JSONObject(json).optString("deleted_at", "").isNotBlank() }.getOrDefault(false)

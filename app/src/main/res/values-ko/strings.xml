@@ -3540,4 +3540,5 @@
     <string name="sidebar_mail_items_subtitle">메일 섹션에 표시할 편지함을 선택합니다.</string>
     <string name="sidebar_move_section_up">%1$s 위로 이동</string>
     <string name="sidebar_move_section_down">%1$s 아래로 이동</string>
+    <string name="contacts_pending_sync">동기화 대기 중</string>
 </resources>

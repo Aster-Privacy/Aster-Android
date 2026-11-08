@@ -3560,4 +3560,5 @@
     <string name="sidebar_mail_items_subtitle">Wähle aus, welche Postfächer im Bereich E-Mail angezeigt werden.</string>
     <string name="sidebar_move_section_up">%1$s nach oben verschieben</string>
     <string name="sidebar_move_section_down">%1$s nach unten verschieben</string>
+    <string name="contacts_pending_sync">Wartet auf Synchronisierung</string>
 </resources>

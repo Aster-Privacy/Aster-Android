@@ -3601,4 +3601,5 @@
     <string name="sidebar_mail_items_subtitle">Wybierz, które skrzynki są widoczne w sekcji Poczta.</string>
     <string name="sidebar_move_section_up">Przenieś %1$s w górę</string>
     <string name="sidebar_move_section_down">Przenieś %1$s w dół</string>
+    <string name="contacts_pending_sync">Oczekuje na synchronizację</string>
 </resources>

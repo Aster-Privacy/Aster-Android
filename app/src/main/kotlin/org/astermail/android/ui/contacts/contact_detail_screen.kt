@@ -316,6 +316,10 @@ fun ContactDetailScreen(
                         modifier = Modifier.padding(horizontal = AsterSpacing.xxl),
                     )
                 }
+                if (contact.id in ui_state.pending_ids) {
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    contact_pending_sync_label()
+                }
             }
 
             val email_entries = contact.email_entries()

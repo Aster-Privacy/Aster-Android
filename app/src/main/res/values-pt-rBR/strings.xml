@@ -3578,4 +3578,5 @@
     <string name="sidebar_mail_items_subtitle">Escolha quais caixas de e-mail aparecem na seção E-mail.</string>
     <string name="sidebar_move_section_up">Mover %1$s para cima</string>
     <string name="sidebar_move_section_down">Mover %1$s para baixo</string>
+    <string name="contacts_pending_sync">Aguardando sincronização</string>
 </resources>

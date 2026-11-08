@@ -3610,4 +3610,5 @@
     <string name="sidebar_mail_items_subtitle">Choose which mailboxes appear in the Mail section.</string>
     <string name="sidebar_move_section_up">Move %1$s up</string>
     <string name="sidebar_move_section_down">Move %1$s down</string>
+    <string name="contacts_pending_sync">Waiting to sync</string>
 </resources>

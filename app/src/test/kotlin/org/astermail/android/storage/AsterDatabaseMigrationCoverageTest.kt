@@ -22,6 +22,8 @@
 package org.astermail.android.storage
 
 import org.astermail.android.storage.actions.PendingMailActionEntity
+import org.astermail.android.storage.contacts.ContactCacheEntity
+import org.astermail.android.storage.contacts.ContactGroupCacheEntity
 import org.astermail.android.storage.outbox.PendingSendEntity
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailEntity
@@ -29,6 +31,8 @@ import org.astermail.android.storage.search.FolderRowEntity
 import org.astermail.android.storage.search.MessageBodyEntity
 import org.astermail.android.storage.search.ThreadSnapshotEntity
 import org.astermail.android.storage.search.aster_database_version
+import org.astermail.android.storage.search.create_contact_cache
+import org.astermail.android.storage.search.create_contact_group_cache
 import org.astermail.android.storage.search.create_folder_row_cache
 import org.astermail.android.storage.search.create_message_body_cache
 import org.astermail.android.storage.search.create_pending_mail_action
@@ -47,6 +51,8 @@ class AsterDatabaseMigrationCoverageTest {
     private val message_body_table = "message_body_cache"
     private val thread_snapshot_table = "thread_snapshot_cache"
     private val pending_mail_action_table = "pending_mail_action"
+    private val contact_cache_table = "contact_cache"
+    private val contact_group_cache_table = "contact_group_cache"
 
     private val decrypted_mail_baseline = listOf(
         "id",
@@ -205,6 +211,32 @@ class AsterDatabaseMigrationCoverageTest {
         assertEquals("has_unseen_reaction", added.first().name)
         assertEquals("INTEGER NOT NULL DEFAULT 0", added.first().definition)
         assertTrue(create_folder_row_cache.contains("`has_unseen_reaction` INTEGER NOT NULL DEFAULT 0"))
+    }
+
+    @Test
+    fun the_contact_cache_tables_are_created_by_their_migration_step() {
+        val statements = migration_statements.getValue(22)
+
+        assertTrue(statements.contains(create_contact_cache))
+        assertTrue(statements.contains(create_contact_group_cache))
+        assertTrue(create_contact_cache.contains("PRIMARY KEY(`account_id`, `id`)"))
+        assertTrue(create_contact_group_cache.contains("PRIMARY KEY(`account_id`, `id`)"))
+    }
+
+    @Test
+    fun every_contact_cache_column_is_created_by_its_migration() {
+        val expected = entity_columns(ContactCacheEntity::class.java).sorted()
+        val actual = created_columns(create_contact_cache, contact_cache_table).sorted()
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun every_contact_group_cache_column_is_created_by_its_migration() {
+        val expected = entity_columns(ContactGroupCacheEntity::class.java).sorted()
+        val actual = created_columns(create_contact_group_cache, contact_group_cache_table).sorted()
+
+        assertEquals(expected, actual)
     }
 
     @Test

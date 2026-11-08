@@ -155,6 +155,23 @@ class PendingMailActionQueue @Inject constructor(
             }
         }
 
+    fun has_pending_matching(account_id: String?, predicate: (PendingMailAction) -> Boolean): Boolean {
+        if (account_id.isNullOrBlank()) return false
+        return _actions.value.any { it.account_id == account_id && predicate(it) }
+    }
+
+    suspend fun rewrite(id: Long, kind: PendingActionKind, payload: PendingActionPayload): Boolean {
+        val updated = withContext(Dispatchers.IO) {
+            mutex.withLock {
+                val changed = dao_provider.get().update_row(id, kind.name, encode_pending_payload(payload)) > 0
+                reload_locked()
+                changed
+            }
+        }
+        if (updated) schedule_drain()
+        return updated
+    }
+
     fun is_queued(id: Long): Boolean = _actions.value.any { it.id == id }
 
     private fun draft_rows_locked(account_id: String, key: String): List<PendingMailAction> =
