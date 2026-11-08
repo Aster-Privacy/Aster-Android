@@ -33,6 +33,7 @@ for a in "$@"; do
   if [ "$a" = "--dry-run" ]; then dry_run=1; fi
 done
 skip_fdroid="${ASTER_SKIP_FDROID:-0}"
+branch="${ASTER_RELEASE_BRANCH:-main}"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 work="${ASTER_RELEASE_WORKDIR:-$repo_root/../.release_work}"
@@ -82,7 +83,7 @@ fi
 say "clean clone"
 rm -rf "$clone"
 mkdir -p "$work"
-git clone -q --branch main https://github.com/Aster-Privacy/Aster-Android.git "$clone"
+git clone -q --branch "$branch" https://github.com/Aster-Privacy/Aster-Android.git "$clone"
 cd "$clone"
 echo "HEAD $(git rev-parse --short HEAD)"
 
@@ -281,7 +282,7 @@ if [ "$dry_run" = 1 ]; then
 fi
 
 say "push commit and tag"
-git push origin main
+git push origin "$branch"
 git push origin "v$ver"
 
 say "GitHub release"
