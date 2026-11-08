@@ -69,6 +69,7 @@ data class Email(
     val send_error: String? = null,
     val trust_message: SenderTrustMessage? = null,
     val has_unseen_reaction: Boolean = false,
+    val is_trashed: Boolean = false,
 )
 
 data class list_folder_chip(
@@ -267,6 +268,7 @@ data class ThreadMessage(
     val trust_message: SenderTrustMessage? = null,
     val pending_send_at_ms: Long? = null,
     val sent_encryption_scope: org.astermail.android.crypto.SentEncryptionScope? = null,
+    val is_trashed: Boolean = false,
 )
 
 val ThreadMessage.is_e2e_encrypted: Boolean
@@ -413,6 +415,7 @@ fun inbox_item_to_email(
         send_error = item.raw_item.send_error,
         trust_message = inbox_item_trust_message(item),
         has_unseen_reaction = item.has_unseen_reaction,
+        is_trashed = item.is_trashed,
     )
 }
 
@@ -494,6 +497,7 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         trust_message = thread_message_trust_message(msg),
         pending_send_at_ms = msg.pending_send_at_ms,
         sent_encryption_scope = msg.sent_encryption_scope,
+        is_trashed = msg.is_trashed,
     )
 }
 

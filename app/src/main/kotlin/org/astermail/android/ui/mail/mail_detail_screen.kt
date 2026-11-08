@@ -803,8 +803,16 @@ fun MailDetailScreen(
     val reaction_own_addresses = remember(reaction_sender_options) {
         reaction_sender_options.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
     }
-    val is_in_trash_folder = inbox_state_for_folder.current_folder == "trash"
-    val is_trashed = (api_item?.is_trashed == true) || is_in_trash_folder
+    val is_trashed = api_item?.is_trashed
+        ?: api_messages.firstOrNull { it.id == email_id }?.is_trashed
+        ?: inbox_state_for_folder.items.firstOrNull { it.id == email_id }?.is_trashed
+        ?: false
+    val thread_trash_flags = remember(api_messages, email_id, is_trashed) {
+        api_messages.map { it.id to (it.is_trashed || (it.id == email_id && is_trashed)) }
+    }
+    val message_is_trashed: (String) -> Boolean = { id ->
+        thread_trash_flags.firstOrNull { it.first == id }?.second ?: (id == email_id && is_trashed)
+    }
     val reaction_restriction_for: (ThreadMessage) -> org.astermail.android.mail.ReactionRestriction? =
         { msg ->
             org.astermail.android.mail.reaction_restriction(
@@ -828,7 +836,7 @@ fun MailDetailScreen(
     var show_raw_source_dialog by remember { mutableStateOf(false) }
     var show_encryption_info by remember { mutableStateOf(false) }
     var pending_block_sender by remember { mutableStateOf<String?>(null) }
-    var pending_delete_permanent by remember { mutableStateOf(false) }
+    var pending_delete_permanent by remember { mutableStateOf<List<String>?>(null) }
     var profile_sender by remember { mutableStateOf<Pair<String, String>?>(null) }
     var profile_sender_trust by remember { mutableStateOf<org.astermail.android.security.SenderTrust?>(null) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
@@ -1432,7 +1440,11 @@ fun MailDetailScreen(
                         ) {
                             show_topbar_menu = false
                             if (is_trashed) {
-                                pending_delete_permanent = true
+                                pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
+                                    email_id,
+                                    message_scope = false,
+                                    thread_trash_flags = thread_trash_flags,
+                                )
                             } else {
                                 mail_vm.trash(listOf(email_id))
                                 on_delete()
@@ -1940,9 +1952,12 @@ fun MailDetailScreen(
                                 }
                                 "trash" -> {
                                     if (is_trashed) {
-                                        bottom_action(TablerIcons.Inbox, stringResource(R.string.swipe_restore), test_tag = "delete") {
-                                            mail_vm.restore_trash(listOf(email_id))
-                                            on_delete()
+                                        bottom_action(TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), test_tag = "delete") {
+                                            pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
+                                                email_id,
+                                                message_scope = false,
+                                                thread_trash_flags = thread_trash_flags,
+                                            )
                                         }
                                     } else {
                                         bottom_action(TablerIcons.Trash, stringResource(if (inbox_state_for_folder.current_folder == "drafts") R.string.discard_draft else R.string.move_to_trash), test_tag = "delete") {
@@ -1951,7 +1966,12 @@ fun MailDetailScreen(
                                         }
                                     }
                                 }
-                                "archive" -> {
+                                "archive" -> if (is_trashed) {
+                                    bottom_action(TablerIcons.Inbox, stringResource(R.string.swipe_restore), test_tag = "toolbar_archive") {
+                                        mail_vm.restore_trash(listOf(email_id))
+                                        on_delete()
+                                    }
+                                } else {
                                     val archived = api_item?.is_archived == true
                                     bottom_action(
                                         if (archived) TablerIcons.Inbox else TablerIcons.Archive,
@@ -2025,8 +2045,19 @@ fun MailDetailScreen(
         val target = action_target_id ?: messages.lastOrNull()?.id.orEmpty()
         val item_target = action_target_id ?: email_id
         val message_scope = action_target_id != null
-        action_menu_sheet(
+        val target_trashed = message_is_trashed(item_target)
+        val destructive_action = org.astermail.android.mail.destructive_action_for(
+            is_trashed = target_trashed,
             is_draft = inbox_state_for_folder.current_folder == "drafts",
+        )
+        action_menu_sheet(
+            is_draft = destructive_action == org.astermail.android.mail.DestructiveAction.discard_draft,
+            is_trashed = target_trashed,
+            on_restore = {
+                show_action_sheet = false
+                mail_vm.restore_trash(listOf(item_target))
+                on_delete()
+            },
             expanded = show_action_sheet,
             on_close = { show_action_sheet = false },
             on_reply = { show_action_sheet = false; on_reply(target, thread_ghost_email) },
@@ -2061,8 +2092,16 @@ fun MailDetailScreen(
             is_archived = api_item?.is_archived == true,
             on_trash = {
                 show_action_sheet = false
-                mail_vm.trash(listOf(item_target), message_scope = message_scope)
-                on_delete()
+                if (destructive_action == org.astermail.android.mail.DestructiveAction.delete_forever) {
+                    pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
+                        item_target,
+                        message_scope = message_scope,
+                        thread_trash_flags = thread_trash_flags,
+                    )
+                } else {
+                    mail_vm.trash(listOf(item_target), message_scope = message_scope)
+                    on_delete()
+                }
             },
             on_spam = {
                 show_action_sheet = false
@@ -2288,17 +2327,29 @@ fun MailDetailScreen(
         )
     }
 
-    if (pending_delete_permanent) {
+    val delete_permanent_ids = pending_delete_permanent
+    if (delete_permanent_ids != null) {
         org.astermail.android.design.components.AsterAlertDialog(
-            on_dismiss = { pending_delete_permanent = false },
+            on_dismiss = { pending_delete_permanent = null },
             title = stringResource(R.string.confirm_delete_permanent_title),
-            message = stringResource(R.string.confirm_delete_permanent_message),
+            message = if (delete_permanent_ids.size > 1) {
+                stringResource(
+                    R.string.confirm_delete_permanent_message_count,
+                    pluralStringResource(
+                        R.plurals.common_messages_count,
+                        delete_permanent_ids.size,
+                        delete_permanent_ids.size,
+                    ),
+                )
+            } else {
+                stringResource(R.string.confirm_delete_permanent_message)
+            },
             confirm_label = stringResource(R.string.swipe_delete_forever),
             cancel_label = stringResource(R.string.cancel),
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             on_confirm = {
-                pending_delete_permanent = false
-                mail_vm.delete_permanent(email_id)
+                pending_delete_permanent = null
+                mail_vm.delete_permanent_bulk(delete_permanent_ids)
                 on_delete()
             },
         )
@@ -5173,6 +5224,8 @@ internal fun action_menu_sheet(
     on_customize_toolbar: () -> Unit = {},
     anchor: IntRect? = null,
     is_draft: Boolean = false,
+    is_trashed: Boolean = false,
+    on_restore: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val parent_view = LocalView.current
@@ -5245,11 +5298,15 @@ internal fun action_menu_sheet(
                         aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
                         aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
                         aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
-                        aster_menu_item(
-                            if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
-                            on_archive,
-                            icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
-                        )
+                        if (is_trashed) {
+                            aster_menu_item(stringResource(R.string.swipe_restore), on_restore, icon = TablerIcons.Inbox)
+                        } else {
+                            aster_menu_item(
+                                if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.swipe_archive),
+                                on_archive,
+                                icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
+                            )
+                        }
                         if (is_spam) {
                             aster_menu_item(
                                 stringResource(R.string.swipe_not_spam),
@@ -5266,9 +5323,15 @@ internal fun action_menu_sheet(
                             )
                         }
                         aster_menu_item(
-                            stringResource(if (is_draft) R.string.discard_draft else R.string.move_to_trash),
+                            stringResource(
+                                when (org.astermail.android.mail.destructive_action_for(is_trashed, is_draft)) {
+                                    org.astermail.android.mail.DestructiveAction.delete_forever -> R.string.swipe_delete_forever
+                                    org.astermail.android.mail.DestructiveAction.discard_draft -> R.string.discard_draft
+                                    org.astermail.android.mail.DestructiveAction.move_to_trash -> R.string.move_to_trash
+                                },
+                            ),
                             on_trash,
-                            icon = TablerIcons.Trash,
+                            icon = if (is_trashed) TablerIcons.TrashOff else TablerIcons.Trash,
                             destructive = true,
                         )
                         aster_menu_item(

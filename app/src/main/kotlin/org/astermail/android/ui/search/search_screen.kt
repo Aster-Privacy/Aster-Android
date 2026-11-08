@@ -524,8 +524,9 @@ fun SearchScreen(
     }
 
     fun delete_selected() {
-        val ids = expand_selection(selected_ids.toList())
-        mail_vm.trash(ids, selected_ids.size)
+        val trashed_ids = visible_corpus.filter { it.is_trashed }.map { it.id }.toSet()
+        val ids = org.astermail.android.mail.untrashed_ids(expand_selection(selected_ids.toList()), trashed_ids)
+        if (ids.isNotEmpty()) mail_vm.trash(ids, minOf(selected_ids.size, ids.size))
         exit_select_mode()
     }
 

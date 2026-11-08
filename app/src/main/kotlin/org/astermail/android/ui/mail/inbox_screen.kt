@@ -1245,6 +1245,13 @@ fun InboxScreen(
             val picked = emails.filter { it.thread_id in ids || it.id in ids }
             picked.isNotEmpty() && picked.none { !it.is_starred }
         }
+    val selection_all_trashed = selected_ids.isNotEmpty() && !scope_selection &&
+        current_folder != "trash" && current_folder != "scheduled" &&
+        selected_ids.toSet().let { ids ->
+            val picked = emails.filter { it.thread_id in ids || it.id in ids }
+            picked.isNotEmpty() && picked.all { it.is_trashed }
+        }
+    val selection_folder = if (selection_all_trashed) "trash" else current_folder
     val selection_all_read = selected_ids.isNotEmpty() &&
         selected_ids.toSet().let { ids ->
             val picked = emails.filter { it.thread_id in ids || it.id in ids }
@@ -1618,9 +1625,22 @@ fun InboxScreen(
             exit_select_mode()
             return
         }
+        val trashed_ids = emails.filter { it.is_trashed }.map { it.id }.toSet()
         with_selection_ids { scope_ids ->
-            mail_vm.trash(scope_ids, maxOf(thread_count, scope_ids.size))
-            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            val live_ids = if (current_folder == "trash") {
+                scope_ids
+            } else {
+                org.astermail.android.mail.untrashed_ids(scope_ids, trashed_ids)
+            }
+            if (live_ids.isNotEmpty()) {
+                val all_live = live_ids.size == scope_ids.size
+                mail_vm.trash(live_ids, if (all_live) maxOf(thread_count, scope_ids.size) else live_ids.size)
+                if (all_live) {
+                    emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+                } else {
+                    emails.removeAll { it.id in live_ids }
+                }
+            }
             notify_if_scope_incomplete(scope_ids.size)
         }
         exit_select_mode()
@@ -1835,11 +1855,12 @@ fun InboxScreen(
     }
 
     fun run_selection_action(action_id: String) {
-        if (current_folder == "drafts" && action_id == "trash") {
+        val resolved_action = org.astermail.android.mail.list_destructive_action(action_id, selection_all_trashed)
+        if (current_folder == "drafts" && resolved_action == "trash") {
             show_discard_drafts_dialog = true
             return
         }
-        perform_selection_action(action_id)
+        perform_selection_action(resolved_action)
     }
 
     LaunchedEffect(current_folder) {
@@ -2524,7 +2545,20 @@ fun InboxScreen(
                                     )
                                 }
                             } else {
-                                val swipe_config = hoisted_swipe_config
+                                val swipe_config = if (
+                                    thread.newest.is_trashed && current_folder != "trash" && current_folder != "scheduled"
+                                ) {
+                                    val start = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.start_action, true)
+                                    val end = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.end_action, true)
+                                    hoisted_swipe_config.copy(
+                                        start_action = start,
+                                        start_label = if (start != hoisted_swipe_config.start_action) delete_forever_label_outer else hoisted_swipe_config.start_label,
+                                        end_action = end,
+                                        end_label = if (end != hoisted_swipe_config.end_action) delete_forever_label_outer else hoisted_swipe_config.end_label,
+                                    )
+                                } else {
+                                    hoisted_swipe_config
+                                }
                                 swipeable_thread_row(
                                     modifier = Modifier
                                         .animateItem(fadeInSpec = row_fade_in_spec)
@@ -2876,7 +2910,7 @@ fun InboxScreen(
                 custom_actions = selection_toolbar_slots,
                 on_action = { run_selection_action(it) },
                 on_more = { show_selection_overflow = true },
-                current_folder = current_folder,
+                current_folder = selection_folder,
                 selection_all_starred = selection_all_starred,
                 selection_all_read = selection_all_read,
                 show_category = categories_enabled,
@@ -2916,7 +2950,7 @@ fun InboxScreen(
                     run_selection_action(id)
                 },
                 show_unsnooze = current_folder == "snoozed",
-                current_folder = current_folder,
+                current_folder = selection_folder,
                 selection_all_starred = selection_all_starred,
                 show_category = categories_enabled,
                 on_customize = {
@@ -4495,8 +4529,15 @@ private fun execute_swipe_action(
         }
         "delete", "trash" -> {
             if (current_folder == "trash") return
-            mail_vm.trash(ids, 1)
-            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            val trashed_ids = emails.filter { it.is_trashed }.map { it.id }.toSet()
+            val live_ids = org.astermail.android.mail.untrashed_ids(ids, trashed_ids)
+            if (live_ids.isEmpty()) return
+            mail_vm.trash(live_ids, 1)
+            if (live_ids.size == ids.size) {
+                emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            } else {
+                emails.removeAll { it.id in live_ids }
+            }
         }
         "toggle_read" -> {
             val was_read = emails.filter { (thread_row_covers(it, thread_id, grouping_enabled)) }.all { it.is_read }
@@ -4550,8 +4591,19 @@ private fun execute_swipe_action(
             emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
         "delete_permanent" -> {
-            mail_vm.delete_permanent_bulk(ids)
-            emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            val targets = if (current_folder == "trash") {
+                ids
+            } else {
+                val trashed_ids = emails.filter { it.is_trashed }.map { it.id }.toSet()
+                ids.filter { it in trashed_ids }
+            }
+            if (targets.isEmpty()) return
+            mail_vm.delete_permanent_bulk(targets)
+            if (targets.size == ids.size) {
+                emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
+            } else {
+                emails.removeAll { it.id in targets }
+            }
         }
     }
 }

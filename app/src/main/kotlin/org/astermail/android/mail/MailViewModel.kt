@@ -2453,6 +2453,7 @@ class MailViewModel @Inject constructor(
             display_sender_name = item.display_sender_name,
             display_sender_email = item.display_sender_email,
             is_body_pending = true,
+            is_trashed = item.is_trashed,
         )
     }
 
@@ -5996,6 +5997,7 @@ class MailViewModel @Inject constructor(
             message_ts = raw.message_ts,
             created_at = raw.created_at,
             metadata = raw.metadata,
+            is_trashed = raw.is_trashed,
             spf_result = raw.spf_result,
             dkim_result = raw.dkim_result,
             dmarc_result = raw.dmarc_result,
