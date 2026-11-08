@@ -3592,4 +3592,12 @@
     <string name="contact_birthday_year_optional">Rok (opcjonalnie)</string>
     <string name="contact_birthday_year_hint">Aby zapisać tylko miesiąc i dzień, pozostaw rok pusty.</string>
     <string name="contact_birthday_year_invalid">Wpisz rok w formacie 4 cyfr lub pozostaw rok pusty.</string>
+    <string name="sidebar_layout">Układ paska bocznego</string>
+    <string name="sidebar_layout_subtitle">Wybierz kolejność sekcji paska bocznego i to, które z nich są widoczne.</string>
+    <string name="reset_sidebar_layout">Przywróć układ</string>
+    <string name="sidebar_mail_section_subtitle">Skrzynka odbiorcza jest zawsze widoczna na pasku bocznym.</string>
+    <string name="sidebar_mail_items">Elementy poczty</string>
+    <string name="sidebar_mail_items_subtitle">Wybierz, które skrzynki są widoczne w sekcji Poczta.</string>
+    <string name="sidebar_move_section_up">Przenieś %1$s w górę</string>
+    <string name="sidebar_move_section_down">Przenieś %1$s w dół</string>
 </resources>

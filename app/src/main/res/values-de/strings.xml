@@ -3551,4 +3551,12 @@
     <string name="contact_birthday_year_optional">Jahr (optional)</string>
     <string name="contact_birthday_year_hint">Um nur Monat und Tag zu speichern, lassen Sie das Jahr leer.</string>
     <string name="contact_birthday_year_invalid">Geben Sie eine vierstellige Jahreszahl ein oder lassen Sie das Jahr leer.</string>
+    <string name="sidebar_layout">Seitenleisten-Layout</string>
+    <string name="sidebar_layout_subtitle">Lege die Reihenfolge der Bereiche in der Seitenleiste fest und wähle aus, welche angezeigt werden.</string>
+    <string name="reset_sidebar_layout">Layout zurücksetzen</string>
+    <string name="sidebar_mail_section_subtitle">Der Posteingang wird immer in der Seitenleiste angezeigt.</string>
+    <string name="sidebar_mail_items">E-Mail-Elemente</string>
+    <string name="sidebar_mail_items_subtitle">Wähle aus, welche Postfächer im Bereich E-Mail angezeigt werden.</string>
+    <string name="sidebar_move_section_up">%1$s nach oben verschieben</string>
+    <string name="sidebar_move_section_down">%1$s nach unten verschieben</string>
 </resources>

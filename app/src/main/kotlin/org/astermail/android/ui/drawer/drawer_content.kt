@@ -21,6 +21,13 @@
 
 package org.astermail.android.ui.drawer
 
+import org.astermail.android.api.preferences.SIDEBAR_SECTION_ALIASES
+import org.astermail.android.api.preferences.SIDEBAR_SECTION_FOLDERS
+import org.astermail.android.api.preferences.SIDEBAR_SECTION_IDS
+import org.astermail.android.api.preferences.SIDEBAR_SECTION_LABELS
+import org.astermail.android.api.preferences.SIDEBAR_SECTION_MAIL
+import org.astermail.android.api.preferences.is_sidebar_item_hidden
+import org.astermail.android.api.preferences.resolve_sidebar_section_order
 import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
@@ -319,6 +326,8 @@ fun DrawerContent(
     totp_enabled: Boolean = false,
     purge_locked_folder_default: Boolean = false,
     on_sidebar_toggle: (String, Boolean) -> Unit = { _, _ -> },
+    sidebar_section_order: List<String> = SIDEBAR_SECTION_IDS,
+    hidden_items: List<String> = emptyList(),
 ) {
     val colors = AsterMaterial.colors
     val folder_plan_vm: org.astermail.android.billing.PlanLimitsViewModel =
@@ -398,6 +407,10 @@ fun DrawerContent(
     val folder_items = api_folder_items.ifEmpty { default_folder_items }
     val label_items = api_label_items.ifEmpty { default_label_items }
     val alias_items = api_alias_items.ifEmpty { default_alias_items }
+    val visible_sections = remember(sidebar_section_order, hidden_items) {
+        resolve_sidebar_section_order(sidebar_section_order)
+            .filter { !is_sidebar_item_hidden(hidden_items, it) }
+    }
 
     val label_inbox = stringResource(R.string.folder_inbox)
     val label_sent = stringResource(R.string.folder_sent)
@@ -471,384 +484,398 @@ fun DrawerContent(
         ) {
             Spacer(Modifier.height(AsterSpacing.sm))
 
-            val category_children = if (categories_enabled) {
-                category_entries.filter { it.id != "primary" }
-            } else {
-                emptyList()
-            }
-
-            core_items.forEach { item ->
-                if (item.id == "inbox" && categories_enabled) {
-                    drawer_row(
-                        icon = item.icon,
-                        label = item.label,
-                        count = item.count,
-                        is_unread_count = true,
-                        selected = selected_id == "inbox" && selected_category == "primary",
-                        on_click = {
-                            on_select_category("primary")
-                            on_close()
-                        },
-                        show_expand_slot = true,
-                        can_expand = category_children.isNotEmpty(),
-                        expanded = categories_expanded,
-                        on_toggle_expand = {
-                            categories_expanded = !categories_expanded
-                            sidebar_prefs.edit()
-                                .putBoolean(key_categories_collapsed, !categories_expanded)
-                                .apply()
-                            on_sidebar_toggle("sidebar_categories_collapsed", !categories_expanded)
-                        },
-                    )
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = categories_expanded && category_children.isNotEmpty(),
-                        enter = section_expand_enter(),
-                        exit = section_expand_exit(),
-                    ) {
-                        androidx.compose.foundation.layout.Column {
-                            category_children.forEachIndexed { index, entry ->
-                                drawer_row(
-                                    icon = org.astermail.android.ui.common.category_icon_for(entry.icon),
-                                    label = entry.label,
-                                    count = category_unread[entry.id] ?: 0,
-                                    is_unread_count = true,
-                                    selected = selected_id == "inbox" && entry.id == selected_category,
-                                    on_click = {
-                                        on_select_category(entry.id)
-                                        on_close()
-                                    },
-                                    depth = 1,
-                                    has_next = index < category_children.lastIndex,
-                                    show_expand_slot = true,
-                                )
+            visible_sections.forEachIndexed { section_index, section_id ->
+                androidx.compose.runtime.key(section_id) {
+                    when (section_id) {
+                        SIDEBAR_SECTION_MAIL -> {
+                            if (section_index > 0) Spacer(Modifier.height(14.dp))
+                            val category_children = if (categories_enabled) {
+                                category_entries.filter { it.id != "primary" }
+                            } else {
+                                emptyList()
                             }
-                        }
-                    }
-                } else {
-                    drawer_row(
-                        icon = item.icon,
-                        label = item.label,
-                        count = item.count,
-                        is_unread_count = item.id == "inbox",
-                        selected = item.id == selected_id,
-                        on_click = {
-                            on_select(item.id)
-                            on_close()
-                        },
-                    )
-                }
-            }
 
-            drawer_row(
-                icon = TablerIcons.Users,
-                label = label_contacts,
-                count = 0,
-                is_unread_count = false,
-                selected = selected_id == "contacts",
-                on_click = {
-                    on_select("contacts")
-                    on_close()
-                },
-            )
-
-            collapsible_section_header(
-                text = stringResource(R.string.drawer_more),
-                expanded = more_expanded,
-                on_toggle = {
-                    more_expanded = !more_expanded
-                    sidebar_prefs.edit().putBoolean(key_more_collapsed, !more_expanded).apply()
-                    on_sidebar_toggle("sidebar_more_collapsed", !more_expanded)
-                },
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = more_expanded,
-                enter = section_expand_enter(),
-                exit = section_expand_exit(),
-            ) {
-                androidx.compose.foundation.layout.Column {
-                    more_secondary.forEach { item ->
-                        drawer_row(
-                            icon = item.icon,
-                            label = item.label,
-                            count = item.count,
-                            is_unread_count = false,
-                            selected = item.id == selected_id,
-                            on_click = {
-                                on_select(item.id)
-                                on_close()
-                            },
-                        )
-                    }
-                    drawer_row(
-                        icon = TablerIcons.MailOpened,
-                        label = stringResource(R.string.refer_a_friend),
-                        count = 0,
-                        is_unread_count = false,
-                        selected = false,
-                        on_click = {
-                            on_select("referral")
-                            on_close()
-                        },
-                    )
-                }
-            }
-
-            collapsible_section_header(
-                text = stringResource(R.string.drawer_folders),
-                expanded = folders_expanded,
-                on_toggle = {
-                    folders_expanded = !folders_expanded
-                    sidebar_prefs.edit().putBoolean(key_folders_collapsed, !folders_expanded).apply()
-                    on_sidebar_toggle("sidebar_folders_collapsed", !folders_expanded)
-                },
-                show_add = true,
-                on_add = { show_create_folder = true },
-                add_test_tag = "create_folder",
-                add_description = stringResource(R.string.create_folder),
-                on_sort = on_sort_folders,
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = folders_expanded,
-                enter = section_expand_enter(),
-                exit = section_expand_exit(),
-            ) {
-                androidx.compose.foundation.layout.Column {
-                    if (folder_items.isEmpty()) {
-                        empty_section_hint(stringResource(R.string.no_folders_yet))
-                    } else {
-                        val root_count = root_folder_count(folder_items)
-                        val has_more_roots = root_count > folders_collapsed_root_count
-                        val visible_folders = visible_folder_items(
-                            items = folder_items,
-                            expanded_tokens = expanded_folder_tokens,
-                            max_root_count = if (folders_show_all) null else folders_collapsed_root_count,
-                        )
-                        val any_expandable = folder_items.any { it.has_children }
-                        visible_folders.forEach { item ->
-                            Box {
-                                var menu_open by remember(item.id) { mutableStateOf(false) }
-                                drawer_row(
-                                    icon = item.icon,
-                                    label = item.label,
-                                    count = item.count,
-                                    is_unread_count = true,
-                                    muted = item.muted,
-                                    selected = item.id == selected_id,
-                                    on_click = {
-                                        on_navigate_folder(item.id, item.label)
-                                        on_close()
-                                    },
-                                    depth = item.depth,
-                                    trail = item.trail,
-                                    has_next = item.has_next,
-                                    show_expand_slot = any_expandable,
-                                    can_expand = item.has_children,
-                                    expanded = item.id in expanded_folder_tokens,
-                                    on_toggle_expand = {
-                                        val next = expanded_folder_tokens.toMutableSet()
-                                        if (!next.add(item.id)) next.remove(item.id)
-                                        update_expanded_folders(next)
-                                    },
-                                    on_long_click = if (item.label_id.isBlank()) null else {
-                                        {
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menu_open = true
+                            core_items.filter { !is_sidebar_item_hidden(hidden_items, it.id) }.forEach { item ->
+                                if (item.id == "inbox" && categories_enabled) {
+                                    drawer_row(
+                                        icon = item.icon,
+                                        label = item.label,
+                                        count = item.count,
+                                        is_unread_count = true,
+                                        selected = selected_id == "inbox" && selected_category == "primary",
+                                        on_click = {
+                                            on_select_category("primary")
+                                            on_close()
+                                        },
+                                        show_expand_slot = true,
+                                        can_expand = category_children.isNotEmpty(),
+                                        expanded = categories_expanded,
+                                        on_toggle_expand = {
+                                            categories_expanded = !categories_expanded
+                                            sidebar_prefs.edit()
+                                                .putBoolean(key_categories_collapsed, !categories_expanded)
+                                                .apply()
+                                            on_sidebar_toggle("sidebar_categories_collapsed", !categories_expanded)
+                                        },
+                                    )
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = categories_expanded && category_children.isNotEmpty(),
+                                        enter = section_expand_enter(),
+                                        exit = section_expand_exit(),
+                                    ) {
+                                        androidx.compose.foundation.layout.Column {
+                                            category_children.forEachIndexed { index, entry ->
+                                                drawer_row(
+                                                    icon = org.astermail.android.ui.common.category_icon_for(entry.icon),
+                                                    label = entry.label,
+                                                    count = category_unread[entry.id] ?: 0,
+                                                    is_unread_count = true,
+                                                    selected = selected_id == "inbox" && entry.id == selected_category,
+                                                    on_click = {
+                                                        on_select_category(entry.id)
+                                                        on_close()
+                                                    },
+                                                    depth = 1,
+                                                    has_next = index < category_children.lastIndex,
+                                                    show_expand_slot = true,
+                                                )
+                                            }
                                         }
-                                    },
-                                    icon_tint = item.color?.let { parse_hex_color_safe(it) },
-                                )
-                                folder_actions_menu(
-                                    item = item,
-                                    expanded = menu_open,
-                                    on_dismiss = { menu_open = false },
-                                    on_create_subfolder = { pending_subfolder = item },
-                                    on_expand_all = {
-                                        update_expanded_folders(
-                                            expanded_folder_tokens + expandable_subtree_tokens(folder_items, item.id),
-                                        )
-                                    },
-                                    on_collapse_all = {
-                                        update_expanded_folders(
-                                            expanded_folder_tokens - expandable_subtree_tokens(folder_items, item.id),
-                                        )
-                                    },
-                                    on_rename = { pending_rename = item },
-                                    on_recolor = { pending_recolor = item },
-                                    on_move_to = { pending_move = item },
-                                    on_lock = {
-                                        when {
-                                            item.password_set -> pending_remove_lock = item
-                                            folder_lock_locked -> on_select("plan")
-                                            else -> pending_set_lock = item
-                                        }
-                                    },
-                                    on_toggle_mute = { folder_actions.on_toggle_mute(item) },
-                                    on_move_up = { folder_actions.on_move_order(item, -1) },
-                                    on_move_down = { folder_actions.on_move_order(item, 1) },
-                                    on_sort_a_to_z = on_sort_folders,
-                                    on_lock_now = if (item.password_set) {
-                                        { folder_actions.on_lock_now(item) }
-                                    } else {
-                                        null
-                                    },
-                                    on_delete = { pending_delete = item },
-                                )
-                            }
-                        }
-                        if (has_more_roots) {
-                            val remaining = root_count - folders_collapsed_root_count
-                            show_more_row(
-                                text = if (folders_show_all) {
-                                    stringResource(R.string.show_less)
+                                    }
                                 } else {
-                                    pluralStringResource(R.plurals.show_n_more_folders, remaining, remaining)
-                                },
-                                expanded = folders_show_all,
-                                on_click = { folders_show_all = !folders_show_all },
-                            )
-                        }
-                    }
-                }
-            }
-
-            collapsible_section_header(
-                text = stringResource(R.string.drawer_labels),
-                expanded = labels_expanded,
-                on_toggle = {
-                    labels_expanded = !labels_expanded
-                    sidebar_prefs.edit().putBoolean(key_labels_collapsed, !labels_expanded).apply()
-                    on_sidebar_toggle("sidebar_labels_collapsed", !labels_expanded)
-                },
-                show_add = true,
-                on_add = { show_create_label = true },
-                add_test_tag = "create_label",
-                add_description = stringResource(R.string.create_label),
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = labels_expanded,
-                enter = section_expand_enter(),
-                exit = section_expand_exit(),
-            ) {
-                androidx.compose.foundation.layout.Column {
-                    if (label_items.isEmpty()) {
-                        empty_section_hint(stringResource(R.string.no_labels_yet))
-                    } else {
-                        label_items.forEach { item ->
-                            Box {
-                                var menu_open by remember(item.id) { mutableStateOf(false) }
-                                drawer_label_row(
-                                    color = item.color,
-                                    label = item.label,
-                                    icon = resolve_label_icon(item.icon),
-                                    selected = item.id == selected_id,
-                                    on_click = {
-                                        on_select(item.id)
-                                        on_navigate_label(item.id, item.label)
-                                        on_close()
-                                    },
-                                    on_long_click = if (item.api_id.isBlank()) null else {
-                                        {
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menu_open = true
-                                        }
-                                    },
-                                    depth = item.depth,
-                                    trail = item.trail,
-                                    has_next = item.has_next,
-                                )
-                                label_actions_menu(
-                                    item = item,
-                                    expanded = menu_open,
-                                    on_dismiss = { menu_open = false },
-                                    on_rename = if (item.kind == "tag" && !item.name_readable) {
-                                        null
-                                    } else {
-                                        { pending_label_rename = item }
-                                    },
-                                    on_recolor = { pending_label_recolor = item },
-                                    on_change_icon = { pending_label_icon = item },
-                                    on_move_up = { label_actions.on_move_order(item, -1) },
-                                    on_move_down = { label_actions.on_move_order(item, 1) },
-                                    on_delete = { pending_label_delete = item },
-                                    on_move_to = if (item.kind == "tag") {
-                                        { pending_label_move = item }
-                                    } else {
-                                        null
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            collapsible_section_header(
-                text = stringResource(R.string.drawer_aliases),
-                expanded = aliases_expanded,
-                on_toggle = {
-                    aliases_expanded = !aliases_expanded
-                    sidebar_prefs.edit().putBoolean(key_aliases_collapsed, !aliases_expanded).apply()
-                    on_sidebar_toggle("sidebar_aliases_collapsed", !aliases_expanded)
-                },
-                show_add = true,
-                on_add = {
-                    on_select("aliases_create")
-                    on_close()
-                },
-                add_description = stringResource(R.string.create_alias),
-            )
-            androidx.compose.animation.AnimatedVisibility(
-                visible = aliases_expanded,
-                enter = section_expand_enter(),
-                exit = section_expand_exit(),
-            ) {
-                androidx.compose.foundation.layout.Column {
-                    if (alias_items.isEmpty()) {
-                        empty_section_hint(stringResource(R.string.no_aliases_yet))
-                    } else {
-                        val collapsed_aliases = alias_items.take(aliases_collapsed_count)
-                        val extra_aliases = if (alias_items.size > aliases_collapsed_count) {
-                            alias_items.drop(aliases_collapsed_count)
-                        } else emptyList()
-                        collapsed_aliases.forEach { item ->
-                            drawer_alias_row(
-                                address = item.address,
-                                selected = item.id == selected_id,
-                                on_click = {
-                                    on_navigate_alias(item.id, item.address, item.routing_token)
-                                    on_close()
-                                },
-                            )
-                        }
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = aliases_show_all,
-                            enter = section_expand_enter(),
-                            exit = section_expand_exit(),
-                        ) {
-                            androidx.compose.foundation.layout.Column {
-                                extra_aliases.forEach { item ->
-                                    drawer_alias_row(
-                                        address = item.address,
+                                    drawer_row(
+                                        icon = item.icon,
+                                        label = item.label,
+                                        count = item.count,
+                                        is_unread_count = item.id == "inbox",
                                         selected = item.id == selected_id,
                                         on_click = {
-                                            on_navigate_alias(item.id, item.address, item.routing_token)
+                                            on_select(item.id)
+                                            on_close()
+                                        },
+                                    )
+                                }
+                            }
+
+                            if (!is_sidebar_item_hidden(hidden_items, "contacts")) {
+                                drawer_row(
+                                    icon = TablerIcons.Users,
+                                    label = label_contacts,
+                                    count = 0,
+                                    is_unread_count = false,
+                                    selected = selected_id == "contacts",
+                                    on_click = {
+                                        on_select("contacts")
+                                        on_close()
+                                    },
+                                )
+                            }
+
+                            collapsible_section_header(
+                                text = stringResource(R.string.drawer_more),
+                                expanded = more_expanded,
+                                on_toggle = {
+                                    more_expanded = !more_expanded
+                                    sidebar_prefs.edit().putBoolean(key_more_collapsed, !more_expanded).apply()
+                                    on_sidebar_toggle("sidebar_more_collapsed", !more_expanded)
+                                },
+                            )
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = more_expanded,
+                                enter = section_expand_enter(),
+                                exit = section_expand_exit(),
+                            ) {
+                                androidx.compose.foundation.layout.Column {
+                                    more_secondary.filter { !is_sidebar_item_hidden(hidden_items, it.id) }.forEach { item ->
+                                        drawer_row(
+                                            icon = item.icon,
+                                            label = item.label,
+                                            count = item.count,
+                                            is_unread_count = false,
+                                            selected = item.id == selected_id,
+                                            on_click = {
+                                                on_select(item.id)
+                                                on_close()
+                                            },
+                                        )
+                                    }
+                                    drawer_row(
+                                        icon = TablerIcons.MailOpened,
+                                        label = stringResource(R.string.refer_a_friend),
+                                        count = 0,
+                                        is_unread_count = false,
+                                        selected = false,
+                                        on_click = {
+                                            on_select("referral")
                                             on_close()
                                         },
                                     )
                                 }
                             }
                         }
-                        if (alias_items.size > aliases_collapsed_count) {
-                            val remaining = alias_items.size - aliases_collapsed_count
-                            show_more_row(
-                                text = if (aliases_show_all) {
-                                    stringResource(R.string.show_less)
-                                } else {
-                                    pluralStringResource(R.plurals.show_n_more_aliases, remaining, remaining)
+                        SIDEBAR_SECTION_FOLDERS -> {
+                            collapsible_section_header(
+                                text = stringResource(R.string.drawer_folders),
+                                expanded = folders_expanded,
+                                on_toggle = {
+                                    folders_expanded = !folders_expanded
+                                    sidebar_prefs.edit().putBoolean(key_folders_collapsed, !folders_expanded).apply()
+                                    on_sidebar_toggle("sidebar_folders_collapsed", !folders_expanded)
                                 },
-                                expanded = aliases_show_all,
-                                on_click = { aliases_show_all = !aliases_show_all },
+                                show_add = true,
+                                on_add = { show_create_folder = true },
+                                add_test_tag = "create_folder",
+                                add_description = stringResource(R.string.create_folder),
+                                on_sort = on_sort_folders,
                             )
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = folders_expanded,
+                                enter = section_expand_enter(),
+                                exit = section_expand_exit(),
+                            ) {
+                                androidx.compose.foundation.layout.Column {
+                                    if (folder_items.isEmpty()) {
+                                        empty_section_hint(stringResource(R.string.no_folders_yet))
+                                    } else {
+                                        val root_count = root_folder_count(folder_items)
+                                        val has_more_roots = root_count > folders_collapsed_root_count
+                                        val visible_folders = visible_folder_items(
+                                            items = folder_items,
+                                            expanded_tokens = expanded_folder_tokens,
+                                            max_root_count = if (folders_show_all) null else folders_collapsed_root_count,
+                                        )
+                                        val any_expandable = folder_items.any { it.has_children }
+                                        visible_folders.forEach { item ->
+                                            Box {
+                                                var menu_open by remember(item.id) { mutableStateOf(false) }
+                                                drawer_row(
+                                                    icon = item.icon,
+                                                    label = item.label,
+                                                    count = item.count,
+                                                    is_unread_count = true,
+                                                    muted = item.muted,
+                                                    selected = item.id == selected_id,
+                                                    on_click = {
+                                                        on_navigate_folder(item.id, item.label)
+                                                        on_close()
+                                                    },
+                                                    depth = item.depth,
+                                                    trail = item.trail,
+                                                    has_next = item.has_next,
+                                                    show_expand_slot = any_expandable,
+                                                    can_expand = item.has_children,
+                                                    expanded = item.id in expanded_folder_tokens,
+                                                    on_toggle_expand = {
+                                                        val next = expanded_folder_tokens.toMutableSet()
+                                                        if (!next.add(item.id)) next.remove(item.id)
+                                                        update_expanded_folders(next)
+                                                    },
+                                                    on_long_click = if (item.label_id.isBlank()) null else {
+                                                        {
+                                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                            menu_open = true
+                                                        }
+                                                    },
+                                                    icon_tint = item.color?.let { parse_hex_color_safe(it) },
+                                                )
+                                                folder_actions_menu(
+                                                    item = item,
+                                                    expanded = menu_open,
+                                                    on_dismiss = { menu_open = false },
+                                                    on_create_subfolder = { pending_subfolder = item },
+                                                    on_expand_all = {
+                                                        update_expanded_folders(
+                                                            expanded_folder_tokens + expandable_subtree_tokens(folder_items, item.id),
+                                                        )
+                                                    },
+                                                    on_collapse_all = {
+                                                        update_expanded_folders(
+                                                            expanded_folder_tokens - expandable_subtree_tokens(folder_items, item.id),
+                                                        )
+                                                    },
+                                                    on_rename = { pending_rename = item },
+                                                    on_recolor = { pending_recolor = item },
+                                                    on_move_to = { pending_move = item },
+                                                    on_lock = {
+                                                        when {
+                                                            item.password_set -> pending_remove_lock = item
+                                                            folder_lock_locked -> on_select("plan")
+                                                            else -> pending_set_lock = item
+                                                        }
+                                                    },
+                                                    on_toggle_mute = { folder_actions.on_toggle_mute(item) },
+                                                    on_move_up = { folder_actions.on_move_order(item, -1) },
+                                                    on_move_down = { folder_actions.on_move_order(item, 1) },
+                                                    on_sort_a_to_z = on_sort_folders,
+                                                    on_lock_now = if (item.password_set) {
+                                                        { folder_actions.on_lock_now(item) }
+                                                    } else {
+                                                        null
+                                                    },
+                                                    on_delete = { pending_delete = item },
+                                                )
+                                            }
+                                        }
+                                        if (has_more_roots) {
+                                            val remaining = root_count - folders_collapsed_root_count
+                                            show_more_row(
+                                                text = if (folders_show_all) {
+                                                    stringResource(R.string.show_less)
+                                                } else {
+                                                    pluralStringResource(R.plurals.show_n_more_folders, remaining, remaining)
+                                                },
+                                                expanded = folders_show_all,
+                                                on_click = { folders_show_all = !folders_show_all },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        SIDEBAR_SECTION_LABELS -> {
+                            collapsible_section_header(
+                                text = stringResource(R.string.drawer_labels),
+                                expanded = labels_expanded,
+                                on_toggle = {
+                                    labels_expanded = !labels_expanded
+                                    sidebar_prefs.edit().putBoolean(key_labels_collapsed, !labels_expanded).apply()
+                                    on_sidebar_toggle("sidebar_labels_collapsed", !labels_expanded)
+                                },
+                                show_add = true,
+                                on_add = { show_create_label = true },
+                                add_test_tag = "create_label",
+                                add_description = stringResource(R.string.create_label),
+                            )
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = labels_expanded,
+                                enter = section_expand_enter(),
+                                exit = section_expand_exit(),
+                            ) {
+                                androidx.compose.foundation.layout.Column {
+                                    if (label_items.isEmpty()) {
+                                        empty_section_hint(stringResource(R.string.no_labels_yet))
+                                    } else {
+                                        label_items.forEach { item ->
+                                            Box {
+                                                var menu_open by remember(item.id) { mutableStateOf(false) }
+                                                drawer_label_row(
+                                                    color = item.color,
+                                                    label = item.label,
+                                                    icon = resolve_label_icon(item.icon),
+                                                    selected = item.id == selected_id,
+                                                    on_click = {
+                                                        on_select(item.id)
+                                                        on_navigate_label(item.id, item.label)
+                                                        on_close()
+                                                    },
+                                                    on_long_click = if (item.api_id.isBlank()) null else {
+                                                        {
+                                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                            menu_open = true
+                                                        }
+                                                    },
+                                                    depth = item.depth,
+                                                    trail = item.trail,
+                                                    has_next = item.has_next,
+                                                )
+                                                label_actions_menu(
+                                                    item = item,
+                                                    expanded = menu_open,
+                                                    on_dismiss = { menu_open = false },
+                                                    on_rename = if (item.kind == "tag" && !item.name_readable) {
+                                                        null
+                                                    } else {
+                                                        { pending_label_rename = item }
+                                                    },
+                                                    on_recolor = { pending_label_recolor = item },
+                                                    on_change_icon = { pending_label_icon = item },
+                                                    on_move_up = { label_actions.on_move_order(item, -1) },
+                                                    on_move_down = { label_actions.on_move_order(item, 1) },
+                                                    on_delete = { pending_label_delete = item },
+                                                    on_move_to = if (item.kind == "tag") {
+                                                        { pending_label_move = item }
+                                                    } else {
+                                                        null
+                                                    },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        SIDEBAR_SECTION_ALIASES -> {
+                            collapsible_section_header(
+                                text = stringResource(R.string.drawer_aliases),
+                                expanded = aliases_expanded,
+                                on_toggle = {
+                                    aliases_expanded = !aliases_expanded
+                                    sidebar_prefs.edit().putBoolean(key_aliases_collapsed, !aliases_expanded).apply()
+                                    on_sidebar_toggle("sidebar_aliases_collapsed", !aliases_expanded)
+                                },
+                                show_add = true,
+                                on_add = {
+                                    on_select("aliases_create")
+                                    on_close()
+                                },
+                                add_description = stringResource(R.string.create_alias),
+                            )
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = aliases_expanded,
+                                enter = section_expand_enter(),
+                                exit = section_expand_exit(),
+                            ) {
+                                androidx.compose.foundation.layout.Column {
+                                    if (alias_items.isEmpty()) {
+                                        empty_section_hint(stringResource(R.string.no_aliases_yet))
+                                    } else {
+                                        val collapsed_aliases = alias_items.take(aliases_collapsed_count)
+                                        val extra_aliases = if (alias_items.size > aliases_collapsed_count) {
+                                            alias_items.drop(aliases_collapsed_count)
+                                        } else emptyList()
+                                        collapsed_aliases.forEach { item ->
+                                            drawer_alias_row(
+                                                address = item.address,
+                                                selected = item.id == selected_id,
+                                                on_click = {
+                                                    on_navigate_alias(item.id, item.address, item.routing_token)
+                                                    on_close()
+                                                },
+                                            )
+                                        }
+                                        androidx.compose.animation.AnimatedVisibility(
+                                            visible = aliases_show_all,
+                                            enter = section_expand_enter(),
+                                            exit = section_expand_exit(),
+                                        ) {
+                                            androidx.compose.foundation.layout.Column {
+                                                extra_aliases.forEach { item ->
+                                                    drawer_alias_row(
+                                                        address = item.address,
+                                                        selected = item.id == selected_id,
+                                                        on_click = {
+                                                            on_navigate_alias(item.id, item.address, item.routing_token)
+                                                            on_close()
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        if (alias_items.size > aliases_collapsed_count) {
+                                            val remaining = alias_items.size - aliases_collapsed_count
+                                            show_more_row(
+                                                text = if (aliases_show_all) {
+                                                    stringResource(R.string.show_less)
+                                                } else {
+                                                    pluralStringResource(R.plurals.show_n_more_aliases, remaining, remaining)
+                                                },
+                                                expanded = aliases_show_all,
+                                                on_click = { aliases_show_all = !aliases_show_all },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

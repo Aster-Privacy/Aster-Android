@@ -3538,4 +3538,12 @@
     <string name="contact_birthday_year_optional">年（任意）</string>
     <string name="contact_birthday_year_hint">月と日だけを保存するには、年を空欄のままにします。</string>
     <string name="contact_birthday_year_invalid">4 桁の年を入力するか、年を空欄のままにしてください。</string>
+    <string name="sidebar_layout">サイドバーのレイアウト</string>
+    <string name="sidebar_layout_subtitle">サイドバーのセクションの順序と、表示するセクションを選択します。</string>
+    <string name="reset_sidebar_layout">レイアウトをリセット</string>
+    <string name="sidebar_mail_section_subtitle">受信トレイは常にサイドバーに表示されます。</string>
+    <string name="sidebar_mail_items">メールの項目</string>
+    <string name="sidebar_mail_items_subtitle">「メール」セクションに表示するメールボックスを選択します。</string>
+    <string name="sidebar_move_section_up">%1$sを上に移動</string>
+    <string name="sidebar_move_section_down">%1$sを下に移動</string>
 </resources>

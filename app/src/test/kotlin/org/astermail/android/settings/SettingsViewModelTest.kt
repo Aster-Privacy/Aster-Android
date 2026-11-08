@@ -33,6 +33,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.api.autoforward.AutoForwardApi
@@ -3424,5 +3427,115 @@ class SettingsViewModelTest {
         coVerify(exactly = 2) { api.get_encrypted_preferences() }
         assertEquals("dark", fresh_vm.state.value.preferences?.theme)
         assertTrue(fresh_vm.state.value.preferences_authoritative)
+    }
+
+    private fun sidebar_layout_of(written: String): Pair<List<String>, List<String>> {
+        val obj = kotlinx.serialization.json.Json.parseToJsonElement(written).jsonObject
+        fun list(key: String) = obj.getValue(key).jsonArray.map { it.jsonPrimitive.content }
+        return list("sidebar_section_order") to list("sidebar_hidden_items")
+    }
+
+    private fun kotlinx.coroutines.test.TestScope.sidebar_vm(
+        identity_key: String,
+        server_json: String,
+    ): SettingsViewModel {
+        every { session_key_store.get_identity_key() } returns identity_key
+        server_blob(encrypt_test_blob(server_json, identity_key))
+        val target = new_vm()
+        advanceUntilIdle()
+        return target
+    }
+
+    @Test
+    fun `sidebar layout changes save to the synced blob and keep unknown ids`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = sidebar_vm(
+            identity_key,
+            """{"sidebar_section_order":["mail","calendar","folders","labels","aliases"],""" +
+                """"sidebar_hidden_items":["future_item"],"web_only_setting":"keep_me"}""",
+        )
+        val requests = mutableListOf<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(requests)) } returns Unit
+
+        target.move_sidebar_section("folders", -1)
+        target.set_sidebar_item_hidden("trash", true)
+        advanceUntilIdle()
+
+        val prefs = target.state.value.preferences!!
+        assertEquals(listOf("folders", "calendar", "mail", "labels", "aliases"), prefs.sidebar_section_order)
+        assertEquals(listOf("future_item", "trash"), prefs.sidebar_hidden_items)
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        val written = decrypt_test_blob(
+            requests.last().encrypted_preferences,
+            requests.last().preferences_nonce,
+            identity_key,
+        )
+        val (order, hidden) = sidebar_layout_of(written)
+        assertEquals(listOf("folders", "calendar", "mail", "labels", "aliases"), order)
+        assertEquals(listOf("future_item", "trash"), hidden)
+        assertTrue(written.contains("\"web_only_setting\":\"keep_me\""))
+    }
+
+    @Test
+    fun `sidebar changes that do nothing never save`() = runTest {
+        val target = sidebar_vm("user_identity_key", """{"sidebar_hidden_items":["spam"]}""")
+
+        target.move_sidebar_section("mail", -1)
+        target.move_sidebar_section("aliases", 1)
+        target.move_sidebar_section("calendar", 1)
+        target.set_sidebar_item_hidden("inbox", true)
+        target.set_sidebar_item_hidden("mail", true)
+        target.set_sidebar_item_hidden("spam", true)
+        target.set_sidebar_item_hidden("trash", false)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        assertEquals(listOf("spam"), target.state.value.preferences!!.sidebar_hidden_items)
+    }
+
+    @Test
+    fun `sidebar move rebases onto a hide saved by another device`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = sidebar_vm(identity_key, """{"web_only_setting":"keep_me"}""")
+        server_blob(
+            encrypt_test_blob(
+                """{"sidebar_hidden_items":["spam","aliases"],"web_only_setting":"keep_me"}""",
+                identity_key,
+            ),
+        )
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        target.move_sidebar_section("labels", -1)
+        advanceUntilIdle()
+
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        val (order, hidden) = sidebar_layout_of(written)
+        assertEquals(listOf("mail", "labels", "folders", "aliases"), order)
+        assertEquals(listOf("spam", "aliases"), hidden)
+    }
+
+    @Test
+    fun `sidebar reset restores the default layout`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = sidebar_vm(
+            identity_key,
+            """{"sidebar_section_order":["aliases","labels"],"sidebar_hidden_items":["sent","folders"]}""",
+        )
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        target.reset_sidebar_layout()
+        advanceUntilIdle()
+
+        val prefs = target.state.value.preferences!!
+        assertEquals(listOf("mail", "folders", "labels", "aliases"), prefs.sidebar_section_order)
+        assertTrue(prefs.sidebar_hidden_items.isEmpty())
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        assertEquals(listOf("mail", "folders", "labels", "aliases") to emptyList<String>(), sidebar_layout_of(written))
+
+        target.reset_sidebar_layout()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { preferences_api.save_encrypted_preferences(any()) }
     }
 }

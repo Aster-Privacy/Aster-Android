@@ -2650,6 +2650,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 on_sidebar_toggle = { key, value ->
                     settings_vm.update_sidebar_state(key, value)
                 },
+                sidebar_section_order = prefs?.sidebar_section_order
+                    ?: org.astermail.android.api.preferences.SIDEBAR_SECTION_IDS,
+                hidden_items = prefs?.sidebar_hidden_items.orEmpty(),
             )
             }
         },

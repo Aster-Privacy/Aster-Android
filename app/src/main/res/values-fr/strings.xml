@@ -3598,4 +3598,12 @@
     <string name="contact_birthday_year_optional">Année (facultatif)</string>
     <string name="contact_birthday_year_hint">Pour n\'enregistrer que le mois et le jour, laissez l\'année vide.</string>
     <string name="contact_birthday_year_invalid">Saisissez une année à 4 chiffres ou laissez l\'année vide.</string>
+    <string name="sidebar_layout">Disposition de la barre latérale</string>
+    <string name="sidebar_layout_subtitle">Choisissez l’ordre des sections de la barre latérale et celles qui s’affichent.</string>
+    <string name="reset_sidebar_layout">Réinitialiser la disposition</string>
+    <string name="sidebar_mail_section_subtitle">La boîte de réception apparaît toujours dans la barre latérale.</string>
+    <string name="sidebar_mail_items">Éléments de messagerie</string>
+    <string name="sidebar_mail_items_subtitle">Choisissez les boîtes qui apparaissent dans la section Courrier.</string>
+    <string name="sidebar_move_section_up">Monter %1$s</string>
+    <string name="sidebar_move_section_down">Descendre %1$s</string>
 </resources>

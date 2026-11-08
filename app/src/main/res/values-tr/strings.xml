@@ -3550,4 +3550,12 @@
     <string name="contact_birthday_year_optional">Yıl (isteğe bağlı)</string>
     <string name="contact_birthday_year_hint">Yalnızca ayı ve günü kaydetmek için yılı boş bırakın.</string>
     <string name="contact_birthday_year_invalid">4 haneli bir yıl girin veya yılı boş bırakın.</string>
+    <string name="sidebar_layout">Kenar çubuğu düzeni</string>
+    <string name="sidebar_layout_subtitle">Kenar çubuğu bölümlerinin sırasını ve hangilerinin görüneceğini seçin.</string>
+    <string name="reset_sidebar_layout">Düzeni sıfırla</string>
+    <string name="sidebar_mail_section_subtitle">Gelen Kutusu her zaman kenar çubuğunda görünür.</string>
+    <string name="sidebar_mail_items">Posta öğeleri</string>
+    <string name="sidebar_mail_items_subtitle">Posta bölümünde hangi posta kutularının görüneceğini seçin.</string>
+    <string name="sidebar_move_section_up">%1$s öğesini yukarı taşı</string>
+    <string name="sidebar_move_section_down">%1$s öğesini aşağı taşı</string>
 </resources>

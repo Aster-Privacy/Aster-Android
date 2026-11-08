@@ -3601,4 +3601,12 @@
     <string name="contact_birthday_year_optional">Year (optional)</string>
     <string name="contact_birthday_year_hint">To save only the month and day, leave the year blank.</string>
     <string name="contact_birthday_year_invalid">Enter a 4-digit year, or leave the year blank.</string>
+    <string name="sidebar_layout">Sidebar layout</string>
+    <string name="sidebar_layout_subtitle">Choose the order of the sidebar sections and which ones appear.</string>
+    <string name="reset_sidebar_layout">Reset layout</string>
+    <string name="sidebar_mail_section_subtitle">Inbox always appears in the sidebar.</string>
+    <string name="sidebar_mail_items">Mail items</string>
+    <string name="sidebar_mail_items_subtitle">Choose which mailboxes appear in the Mail section.</string>
+    <string name="sidebar_move_section_up">Move %1$s up</string>
+    <string name="sidebar_move_section_down">Move %1$s down</string>
 </resources>

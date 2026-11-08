@@ -3569,4 +3569,12 @@
     <string name="contact_birthday_year_optional">Anno (facoltativo)</string>
     <string name="contact_birthday_year_hint">Per salvare solo il mese e il giorno, lascia vuoto l\'anno.</string>
     <string name="contact_birthday_year_invalid">Inserisci un anno di 4 cifre oppure lascia vuoto l\'anno.</string>
+    <string name="sidebar_layout">Layout della barra laterale</string>
+    <string name="sidebar_layout_subtitle">Scegli l’ordine delle sezioni della barra laterale e quali mostrare.</string>
+    <string name="reset_sidebar_layout">Ripristina layout</string>
+    <string name="sidebar_mail_section_subtitle">La posta in arrivo è sempre visibile nella barra laterale.</string>
+    <string name="sidebar_mail_items">Elementi della posta</string>
+    <string name="sidebar_mail_items_subtitle">Scegli quali caselle compaiono nella sezione Posta.</string>
+    <string name="sidebar_move_section_up">Sposta %1$s in alto</string>
+    <string name="sidebar_move_section_down">Sposta %1$s in basso</string>
 </resources>

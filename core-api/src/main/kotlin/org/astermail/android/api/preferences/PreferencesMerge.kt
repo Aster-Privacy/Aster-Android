@@ -76,6 +76,8 @@ val read_only_preference_keys = setOf(
     "calendar_week_starts_on",
 )
 
+private val sidebar_layout_list_keys = setOf(SIDEBAR_SECTION_ORDER_KEY, SIDEBAR_HIDDEN_ITEMS_KEY)
+
 val fallback_preference_key_aliases = mapOf(
     "send_read_receipts" to "show_read_receipts",
 )
@@ -100,12 +102,16 @@ fun merge_decrypted_preferences(
                 own_value != null -> own_value
                 else -> fallback_value
             }
-            val in_value = raw_value?.let { coerce_font_size_scale(k, it, base_value) }
+            val in_value = raw_value
+                ?.let { coerce_font_size_scale(k, it, base_value) }
+                ?.let { if (k in sidebar_layout_list_keys) string_entries_only(it) else it }
             put(k, if (in_value != null && json_kind_matches(in_value, base_value)) in_value else base_value)
         }
     }
-    return normalize_order_preferences(
-        json.decodeFromJsonElement(UserPreferences.serializer(), merged),
+    return normalize_sidebar_layout_preferences(
+        normalize_order_preferences(
+            json.decodeFromJsonElement(UserPreferences.serializer(), merged),
+        ),
     )
 }
 

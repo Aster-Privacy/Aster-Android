@@ -3550,4 +3550,12 @@
     <string name="contact_birthday_year_optional">Jaar (optioneel)</string>
     <string name="contact_birthday_year_hint">Laat het jaar leeg om alleen de maand en dag op te slaan.</string>
     <string name="contact_birthday_year_invalid">Voer een jaartal van 4 cijfers in of laat het jaar leeg.</string>
+    <string name="sidebar_layout">Indeling van de zijbalk</string>
+    <string name="sidebar_layout_subtitle">Kies de volgorde van de onderdelen in de zijbalk en welke worden getoond.</string>
+    <string name="reset_sidebar_layout">Indeling herstellen</string>
+    <string name="sidebar_mail_section_subtitle">Inbox staat altijd in de zijbalk.</string>
+    <string name="sidebar_mail_items">E-mailonderdelen</string>
+    <string name="sidebar_mail_items_subtitle">Kies welke mappen in het onderdeel E-mail worden getoond.</string>
+    <string name="sidebar_move_section_up">%1$s omhoog verplaatsen</string>
+    <string name="sidebar_move_section_down">%1$s omlaag verplaatsen</string>
 </resources>

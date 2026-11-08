@@ -3570,4 +3570,12 @@
     <string name="contact_birthday_year_optional">Año (opcional)</string>
     <string name="contact_birthday_year_hint">Para guardar solo el mes y el día, deja el año en blanco.</string>
     <string name="contact_birthday_year_invalid">Introduce un año de 4 dígitos o deja el año en blanco.</string>
+    <string name="sidebar_layout">Diseño de la barra lateral</string>
+    <string name="sidebar_layout_subtitle">Elige el orden de las secciones de la barra lateral y cuáles se muestran.</string>
+    <string name="reset_sidebar_layout">Restablecer diseño</string>
+    <string name="sidebar_mail_section_subtitle">La bandeja de entrada siempre aparece en la barra lateral.</string>
+    <string name="sidebar_mail_items">Elementos de correo</string>
+    <string name="sidebar_mail_items_subtitle">Elige qué buzones aparecen en la sección Correo.</string>
+    <string name="sidebar_move_section_up">Mover %1$s hacia arriba</string>
+    <string name="sidebar_move_section_down">Mover %1$s hacia abajo</string>
 </resources>

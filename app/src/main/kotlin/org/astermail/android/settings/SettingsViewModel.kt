@@ -5993,6 +5993,43 @@ class SettingsViewModel @Inject constructor(
         save_preferences(updated)
     }
 
+    fun move_sidebar_section(id: String, direction: Int) {
+        val current = _state.value.preferences ?: return
+        val next_order = org.astermail.android.api.preferences.move_sidebar_section(
+            current.sidebar_section_order,
+            id,
+            direction,
+        )
+        if (next_order == current.sidebar_section_order) return
+        val updated = current.copy(sidebar_section_order = next_order)
+        _state.value = _state.value.copy(preferences = updated)
+        save_preferences(updated)
+    }
+
+    fun set_sidebar_item_hidden(id: String, hidden: Boolean) {
+        val current = _state.value.preferences ?: return
+        val next_hidden = org.astermail.android.api.preferences.set_sidebar_item_hidden(
+            current.sidebar_hidden_items,
+            id,
+            hidden,
+        )
+        if (next_hidden == current.sidebar_hidden_items) return
+        val updated = current.copy(sidebar_hidden_items = next_hidden)
+        _state.value = _state.value.copy(preferences = updated)
+        save_preferences(updated)
+    }
+
+    fun reset_sidebar_layout() {
+        val current = _state.value.preferences ?: return
+        val updated = current.copy(
+            sidebar_section_order = org.astermail.android.api.preferences.SIDEBAR_SECTION_IDS,
+            sidebar_hidden_items = emptyList(),
+        )
+        if (updated == current) return
+        _state.value = _state.value.copy(preferences = updated)
+        save_preferences(updated)
+    }
+
     fun load_ghost_aliases() {
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)

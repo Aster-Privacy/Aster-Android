@@ -3531,4 +3531,12 @@
     <string name="contact_birthday_year_optional">연도(선택 사항)</string>
     <string name="contact_birthday_year_hint">월과 일만 저장하려면 연도를 비워 두세요.</string>
     <string name="contact_birthday_year_invalid">4자리 연도를 입력하거나 연도를 비워 두세요.</string>
+    <string name="sidebar_layout">사이드바 레이아웃</string>
+    <string name="sidebar_layout_subtitle">사이드바 섹션의 순서와 표시할 섹션을 선택합니다.</string>
+    <string name="reset_sidebar_layout">레이아웃 재설정</string>
+    <string name="sidebar_mail_section_subtitle">받은편지함은 항상 사이드바에 표시됩니다.</string>
+    <string name="sidebar_mail_items">메일 항목</string>
+    <string name="sidebar_mail_items_subtitle">메일 섹션에 표시할 편지함을 선택합니다.</string>
+    <string name="sidebar_move_section_up">%1$s 위로 이동</string>
+    <string name="sidebar_move_section_down">%1$s 아래로 이동</string>
 </resources>

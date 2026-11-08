@@ -3531,4 +3531,12 @@
     <string name="contact_birthday_year_optional">年份（可选）</string>
     <string name="contact_birthday_year_hint">如果只想保存月份和日期，请将年份留空。</string>
     <string name="contact_birthday_year_invalid">请输入 4 位数的年份，或将年份留空。</string>
+    <string name="sidebar_layout">侧边栏布局</string>
+    <string name="sidebar_layout_subtitle">选择侧边栏各部分的顺序以及要显示的部分。</string>
+    <string name="reset_sidebar_layout">重置布局</string>
+    <string name="sidebar_mail_section_subtitle">收件箱始终显示在侧边栏中。</string>
+    <string name="sidebar_mail_items">邮件项目</string>
+    <string name="sidebar_mail_items_subtitle">选择在“邮件”部分中显示哪些邮箱。</string>
+    <string name="sidebar_move_section_up">上移%1$s</string>
+    <string name="sidebar_move_section_down">下移%1$s</string>
 </resources>
