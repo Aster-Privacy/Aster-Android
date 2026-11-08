@@ -1551,6 +1551,7 @@
     <string name="cannot_react_bcc">BCCで受け取ったメッセージにはリアクションできません。</string>
     <string name="cannot_react_too_many_emojis">このメッセージのリアクションは上限に達しています。</string>
     <string name="cannot_react_no_recipient">このメッセージには、リアクションの送信先となる送信者がいません。</string>
+    <string name="cannot_react_require_encryption">「暗号化を必須にする」がオンになっています。Aster 以外のユーザーへのリアクションはエンドツーエンドで暗号化されないため、このメッセージにはリアクションできません。</string>
     <string name="cannot_react_limit">1件のメッセージに追加できるリアクションは2つまでです。別のリアクションを追加するには、自分のリアクションを1つ削除してください。</string>
     <string name="reaction_failed">リアクションを送信できませんでした</string>
     <string name="reaction_remove_failed">リアクションを削除できませんでした</string>

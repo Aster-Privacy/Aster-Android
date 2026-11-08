@@ -266,6 +266,7 @@
     <string name="cannot_react_bcc">जिस संदेश में आप BCC में थे, उस पर आप प्रतिक्रिया नहीं दे सकते।</string>
     <string name="cannot_react_too_many_emojis">इस संदेश पर पहले से अधिकतम संख्या में प्रतिक्रियाएं हैं।</string>
     <string name="cannot_react_no_recipient">इस संदेश का कोई प्रेषक नहीं है जिसे प्रतिक्रिया भेजी जा सके।</string>
+    <string name="cannot_react_require_encryption">\"एन्क्रिप्शन ज़रूरी करें\" चालू है, और Aster से बाहर के लोगों को भेजी गई प्रतिक्रियाएं एंड-टू-एंड एन्क्रिप्टेड नहीं होतीं, इसलिए आप इस संदेश पर प्रतिक्रिया नहीं दे सकते।</string>
     <string name="cannot_react_limit">आप किसी संदेश पर अधिकतम दो प्रतिक्रियाएं जोड़ सकते हैं। दूसरी जोड़ने के लिए, अपनी एक प्रतिक्रिया हटाएं।</string>
     <string name="reaction_failed">प्रतिक्रिया नहीं भेजी जा सकी</string>
     <string name="reaction_remove_failed">प्रतिक्रिया हटाई नहीं जा सकी</string>

@@ -1571,6 +1571,7 @@
     <string name="cannot_react_bcc">لا يمكنك التفاعل مع رسالة وصلتك بنسخة مخفية.</string>
     <string name="cannot_react_too_many_emojis">وصلت هذه الرسالة إلى الحد الأقصى من التفاعلات.</string>
     <string name="cannot_react_no_recipient">لا يوجد مرسل لهذه الرسالة لإرسال التفاعل إليه.</string>
+    <string name="cannot_react_require_encryption">خيار «اشتراط التشفير» مفعّل، والتفاعلات المرسلة إلى أشخاص خارج Aster غير مشفّرة من طرف إلى طرف، لذلك لا يمكنك التفاعل مع هذه الرسالة.</string>
     <string name="cannot_react_limit">يمكنك إضافة تفاعلين كحد أقصى إلى الرسالة. لإضافة تفاعل آخر، أزل أحد تفاعلاتك.</string>
     <string name="reaction_failed">تعذّر إرسال التفاعل</string>
     <string name="reaction_remove_failed">تعذّرت إزالة التفاعل</string>

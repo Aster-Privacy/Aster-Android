@@ -1563,6 +1563,7 @@
     <string name="cannot_react_bcc">Nie możesz zareagować na wiadomość otrzymaną w UDW.</string>
     <string name="cannot_react_too_many_emojis">Ta wiadomość ma już maksymalną liczbę reakcji.</string>
     <string name="cannot_react_no_recipient">Ta wiadomość nie ma nadawcy, do którego można wysłać reakcję.</string>
+    <string name="cannot_react_require_encryption">Opcja „Wymagaj szyfrowania” jest włączona, a reakcje wysyłane do osób spoza Aster nie są szyfrowane end-to-end, więc nie możesz zareagować na tę wiadomość.</string>
     <string name="cannot_react_limit">Do wiadomości możesz dodać maksymalnie dwie reakcje. Aby dodać kolejną, usuń jedną ze swoich.</string>
     <string name="reaction_failed">Nie udało się wysłać reakcji</string>
     <string name="reaction_remove_failed">Nie udało się usunąć reakcji</string>

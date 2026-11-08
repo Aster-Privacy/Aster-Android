@@ -282,6 +282,61 @@ class MailRepositoryTest {
         coVerify(exactly = 0) { send_api.react(any()) }
     }
 
+    @Test
+    fun `reaction to an Aster recipient without post-quantum keys asks for consent`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), false) } throws
+            org.astermail.android.mail.ratchet.PostQuantumUnavailableException(listOf("friend@astermail.org"))
+
+        val err = repo.send_reaction("msg_1", "group_1", null, "friend@astermail.org", "x").exceptionOrNull()
+
+        assertTrue(err.toString(), err is org.astermail.android.mail.ratchet.PostQuantumUnavailableException)
+        assertEquals(
+            listOf("friend@astermail.org"),
+            (err as org.astermail.android.mail.ratchet.PostQuantumUnavailableException).recipients,
+        )
+        coVerify(exactly = 0) { send_api.react(any()) }
+    }
+
+    @Test
+    fun `reaction sent after consent is sealed without post-quantum keys`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), true) } returns "sealed_reaction"
+        coEvery { send_api.react(any()) } returns
+            org.astermail.android.api.send.ReactResponse(success = true, own_reaction_mail_item_id = "r1")
+
+        val result = repo.send_reaction(
+            "msg_1", "group_1", null, "friend@astermail.org", "x",
+            allow_non_post_quantum = true,
+        )
+
+        assertEquals("r1", result.getOrNull())
+        coVerify(exactly = 1) {
+            ratchet_encryptor.encrypt_envelope("me@astermail.org", listOf("friend@astermail.org"), any(), true)
+        }
+        val request = slot<org.astermail.android.api.send.ReactRequest>()
+        coVerify(exactly = 1) { send_api.react(capture(request)) }
+        assertEquals("sealed_reaction", request.captured.body)
+        assertTrue(request.captured.is_e2e_encrypted)
+    }
+
+    @Test
+    fun `reaction to an Aster recipient is never sent unsealed`() = runTest {
+        every { session_key_store.has_ratchet_keys() } returns true
+        every { context.getString(org.astermail.android.R.string.e2e_identity_changed_blocked) } returns "identity changed"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } throws
+            org.astermail.android.mail.ratchet.RatchetIdentityPinException("friend@astermail.org", "pin")
+
+        val pinned = repo.send_reaction("msg_1", "group_1", null, "friend@astermail.org", "x").exceptionOrNull()
+        assertEquals("identity changed", pinned?.message)
+
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) } returns null
+        val empty = repo.send_reaction("msg_1", "group_1", null, "friend@astermail.org", "x").exceptionOrNull()
+        assertTrue(empty.toString(), empty is E2eEncryptionException)
+
+        coVerify(exactly = 0) { send_api.react(any()) }
+    }
+
     private fun required_encryption_send_repo(): MailRepository {
         every { session_key_store.get_user_id() } returns "user_1"
         every { session_key_store.has_ratchet_keys() } returns true

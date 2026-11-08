@@ -41,6 +41,7 @@ class ReactionRestrictionTest {
         is_trashed: Boolean = false,
         reactions_enabled: Boolean = true,
         is_own_address: (String) -> Boolean = { false },
+        require_encryption: Boolean = false,
     ): ReactionRestriction? = reaction_restriction(
         item_type = item_type,
         sender_email = sender_email,
@@ -53,7 +54,62 @@ class ReactionRestrictionTest {
         is_trashed = is_trashed,
         reactions_enabled = reactions_enabled,
         is_own_address = is_own_address,
+        require_encryption = require_encryption,
     )
+
+    @Test
+    fun require_encryption_blocks_reactions_to_outside_senders() {
+        assertEquals(
+            ReactionRestriction.require_encryption,
+            restriction(sender_email = "friend@outside.example", require_encryption = true),
+        )
+        assertEquals(
+            ReactionRestriction.require_encryption,
+            restriction(sender_email = "Friend@Custom-Domain.example", require_encryption = true),
+        )
+    }
+
+    @Test
+    fun require_encryption_allows_reactions_to_aster_senders() {
+        assertNull(restriction(sender_email = "friend@astermail.org", require_encryption = true))
+        assertNull(restriction(sender_email = "friend@aster.cx", require_encryption = true))
+    }
+
+    @Test
+    fun outside_senders_can_get_reactions_when_require_encryption_is_off() {
+        assertNull(restriction(sender_email = "friend@outside.example", require_encryption = false))
+    }
+
+    @Test
+    fun require_encryption_checks_the_recipient_of_a_reaction_to_your_own_message() {
+        assertEquals(
+            ReactionRestriction.require_encryption,
+            restriction(
+                sender_email = "m.e@astermail.org",
+                to_addresses = listOf("friend@outside.example", me),
+                require_encryption = true,
+            ),
+        )
+        assertNull(
+            restriction(
+                sender_email = "alias@aster.cx",
+                to_addresses = listOf("friend@astermail.org", me),
+                is_own_address = { it == "alias@aster.cx" },
+                require_encryption = true,
+            ),
+        )
+    }
+
+    @Test
+    fun reaction_recipient_is_the_sender_unless_the_sender_is_you() {
+        assertEquals("friend@outside.example", reaction_recipient("friend@outside.example", listOf(me), me))
+        assertEquals("friend@astermail.org", reaction_recipient(me, listOf("friend@astermail.org"), me))
+        assertEquals(
+            "friend@astermail.org",
+            reaction_recipient("alias@aster.cx", listOf(" ", "friend@astermail.org"), me) { it == "alias@aster.cx" },
+        )
+        assertNull(reaction_recipient(me, emptyList(), me))
+    }
 
     @Test
     fun allows_a_normal_received_message() {

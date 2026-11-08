@@ -5895,6 +5895,14 @@ class MailRepository @Inject constructor(
         }
     }
 
+    suspend fun require_encryption_setting(): Boolean? = try {
+        require_encryption_enabled()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Throwable) {
+        null
+    }
+
     private suspend fun require_encryption_enabled(): Boolean {
         val account = current_account_id()?.takeIf { it.isNotBlank() }
         val api = encryption_api_provider?.get()
@@ -6365,6 +6373,7 @@ class MailRepository @Inject constructor(
         sender_alias_hash: String? = null,
         reply_subject: String? = null,
         in_reply_to: String? = null,
+        allow_non_post_quantum: Boolean = false,
     ): Result<String?> = runCatching {
         if (has_external_recipient(listOf(recipient)) && require_encryption_enabled()) {
             throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
@@ -6402,13 +6411,7 @@ class MailRepository @Inject constructor(
             if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                 throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
             }
-            val encrypted = try {
-                ratchet_encryptor.encrypt_envelope(from_addr, listOf(recipient), payload)
-            } catch (t: Throwable) {
-                if (t is CancellationException) throw t
-                throw IllegalStateException(context.getString(R.string.e2e_encryption_failed), t)
-            }
-            encrypted ?: throw IllegalStateException(context.getString(R.string.e2e_encryption_failed))
+            seal_internal_envelope(from_addr, listOf(recipient), payload, allow_non_post_quantum)
         } else {
             payload
         }

@@ -23,6 +23,7 @@ package org.astermail.android.mail
 
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
+import org.astermail.android.crypto.same_address_ignoring_dots
 
 const val MAX_REACTION_RECIPIENTS = 20
 const val MAX_REACTION_EMOJIS = 20
@@ -40,6 +41,7 @@ enum class ReactionRestriction {
     too_many_emojis,
     reaction_limit,
     no_recipient,
+    require_encryption,
 }
 
 fun reaction_restriction_string(restriction: ReactionRestriction): Int = when (restriction) {
@@ -53,6 +55,7 @@ fun reaction_restriction_string(restriction: ReactionRestriction): Int = when (r
     ReactionRestriction.too_many_emojis -> R.string.cannot_react_too_many_emojis
     ReactionRestriction.reaction_limit -> R.string.cannot_react_limit
     ReactionRestriction.no_recipient -> R.string.cannot_react_no_recipient
+    ReactionRestriction.require_encryption -> R.string.cannot_react_require_encryption
 }
 
 fun is_reaction_limit_error(t: Throwable?): Boolean =
@@ -100,6 +103,19 @@ private fun is_addressed_to(
     }
 }
 
+fun reaction_recipient(
+    sender_email: String,
+    to_addresses: List<String>,
+    user_email: String,
+    is_own_address: (String) -> Boolean = { false },
+): String? {
+    val sender = normalize(sender_email)
+    val sender_is_self = sender.isNotEmpty() &&
+        (same_address_ignoring_dots(sender, user_email) || is_own_address(sender))
+    val recipient = if (sender_is_self) to_addresses.firstOrNull { it.isNotBlank() } else sender_email
+    return recipient?.trim()?.takeIf { it.isNotEmpty() }
+}
+
 fun reaction_restriction(
     item_type: String,
     sender_email: String,
@@ -112,6 +128,7 @@ fun reaction_restriction(
     is_trashed: Boolean,
     reactions_enabled: Boolean,
     is_own_address: (String) -> Boolean = { false },
+    require_encryption: Boolean = false,
 ): ReactionRestriction? {
     if (!reactions_enabled) return ReactionRestriction.disabled
     if (item_type == "sent") return ReactionRestriction.own_message
@@ -129,5 +146,11 @@ fun reaction_restriction(
     }
     if (reactions.count { it.is_own } >= MAX_OWN_REACTIONS) return ReactionRestriction.reaction_limit
     if (normalize(sender_email).isEmpty()) return ReactionRestriction.no_recipient
+    if (require_encryption) {
+        val recipient = reaction_recipient(sender_email, to_addresses, user_email, is_own_address)
+        if (recipient != null && has_external_recipient(listOf(recipient))) {
+            return ReactionRestriction.require_encryption
+        }
+    }
     return null
 }

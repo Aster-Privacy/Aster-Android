@@ -337,6 +337,7 @@
     <string name="cannot_react_bcc">You cannot react to a message you were BCC\'d on.</string>
     <string name="cannot_react_too_many_emojis">This message already has the maximum number of reactions.</string>
     <string name="cannot_react_no_recipient">This message has no sender to send the reaction to.</string>
+    <string name="cannot_react_require_encryption">Require encryption is on, and reactions to people outside Aster aren\'t end-to-end encrypted, so you can\'t react to this message.</string>
     <string name="cannot_react_limit">You can add up to two reactions to a message. To add another, remove one of yours.</string>
     <string name="reaction_failed">Could not send reaction</string>
     <string name="reaction_remove_failed">Could not remove reaction</string>

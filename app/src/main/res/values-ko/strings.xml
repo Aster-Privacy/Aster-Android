@@ -1551,6 +1551,7 @@
     <string name="cannot_react_bcc">숨은 참조로 받은 메시지에는 반응할 수 없습니다.</string>
     <string name="cannot_react_too_many_emojis">이 메시지에는 이미 최대 개수의 반응이 있습니다.</string>
     <string name="cannot_react_no_recipient">이 메시지에는 반응을 보낼 발신자가 없습니다.</string>
+    <string name="cannot_react_require_encryption">\'암호화 필수\'가 켜져 있고 Aster 외부 사용자에게 보내는 반응은 종단 간 암호화되지 않으므로 이 메시지에 반응할 수 없습니다.</string>
     <string name="cannot_react_limit">메시지 하나에 반응을 최대 2개까지 추가할 수 있습니다. 다른 반응을 추가하려면 내 반응 중 하나를 삭제하세요.</string>
     <string name="reaction_failed">반응을 보내지 못했습니다</string>
     <string name="reaction_remove_failed">반응을 삭제하지 못했습니다</string>
