@@ -3642,4 +3642,5 @@
     <string name="sidebar_mail_items_subtitle">اختر صناديق البريد التي تظهر في قسم البريد.</string>
     <string name="sidebar_move_section_up">نقل %1$s لأعلى</string>
     <string name="sidebar_move_section_down">نقل %1$s لأسفل</string>
+    <string name="contacts_pending_sync">في انتظار المزامنة</string>
 </resources>

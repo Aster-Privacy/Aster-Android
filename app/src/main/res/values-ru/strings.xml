@@ -3601,4 +3601,5 @@
     <string name="sidebar_mail_items_subtitle">Выберите, какие почтовые ящики показывать в разделе «Почта».</string>
     <string name="sidebar_move_section_up">Переместить %1$s вверх</string>
     <string name="sidebar_move_section_down">Переместить %1$s вниз</string>
+    <string name="contacts_pending_sync">Ожидает синхронизации</string>
 </resources>

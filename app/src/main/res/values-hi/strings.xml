@@ -3451,4 +3451,5 @@
     <string name="sidebar_mail_items_subtitle">चुनें कि मेल सेक्शन में कौन-से मेलबॉक्स दिखें।</string>
     <string name="sidebar_move_section_up">%1$s को ऊपर ले जाएँ</string>
     <string name="sidebar_move_section_down">%1$s को नीचे ले जाएँ</string>
+    <string name="contacts_pending_sync">सिंक होने की प्रतीक्षा में</string>
 </resources>

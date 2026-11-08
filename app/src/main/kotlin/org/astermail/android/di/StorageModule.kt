@@ -39,6 +39,8 @@ import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
 import org.astermail.android.storage.actions.PendingMailActionDao
+import org.astermail.android.storage.contacts.ContactCacheDao
+import org.astermail.android.storage.contacts.ContactGroupCacheDao
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.MessageBodyDao
@@ -64,6 +66,15 @@ object StorageModule {
     @Singleton
     fun provide_pending_mail_action_dao(database: AsterDatabase): PendingMailActionDao =
         database.pending_mail_action_dao()
+
+    @Provides
+    @Singleton
+    fun provide_contact_cache_dao(database: AsterDatabase): ContactCacheDao = database.contact_cache_dao()
+
+    @Provides
+    @Singleton
+    fun provide_contact_group_cache_dao(database: AsterDatabase): ContactGroupCacheDao =
+        database.contact_group_cache_dao()
 
     @Provides
     @Singleton

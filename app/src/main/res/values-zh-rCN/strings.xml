@@ -3540,4 +3540,5 @@
     <string name="sidebar_mail_items_subtitle">选择在“邮件”部分中显示哪些邮箱。</string>
     <string name="sidebar_move_section_up">上移%1$s</string>
     <string name="sidebar_move_section_down">下移%1$s</string>
+    <string name="contacts_pending_sync">等待同步</string>
 </resources>

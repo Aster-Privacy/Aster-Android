@@ -3559,4 +3559,5 @@
     <string name="sidebar_mail_items_subtitle">Kies welke mappen in het onderdeel E-mail worden getoond.</string>
     <string name="sidebar_move_section_up">%1$s omhoog verplaatsen</string>
     <string name="sidebar_move_section_down">%1$s omlaag verplaatsen</string>
+    <string name="contacts_pending_sync">Wacht op synchronisatie</string>
 </resources>

@@ -3547,4 +3547,5 @@
     <string name="sidebar_mail_items_subtitle">「メール」セクションに表示するメールボックスを選択します。</string>
     <string name="sidebar_move_section_up">%1$sを上に移動</string>
     <string name="sidebar_move_section_down">%1$sを下に移動</string>
+    <string name="contacts_pending_sync">同期待ち</string>
 </resources>

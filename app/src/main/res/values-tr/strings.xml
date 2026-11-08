@@ -3559,4 +3559,5 @@
     <string name="sidebar_mail_items_subtitle">Posta bölümünde hangi posta kutularının görüneceğini seçin.</string>
     <string name="sidebar_move_section_up">%1$s öğesini yukarı taşı</string>
     <string name="sidebar_move_section_down">%1$s öğesini aşağı taşı</string>
+    <string name="contacts_pending_sync">Eşitlenmeyi bekliyor</string>
 </resources>

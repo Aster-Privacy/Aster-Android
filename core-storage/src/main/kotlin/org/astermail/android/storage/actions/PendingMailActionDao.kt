@@ -41,6 +41,9 @@ interface PendingMailActionDao {
     @Query("UPDATE pending_mail_action SET attempts = attempts + 1 WHERE id = :id")
     suspend fun bump_attempts(id: Long)
 
+    @Query("UPDATE pending_mail_action SET kind = :kind, payload = :payload WHERE id = :id")
+    suspend fun update_row(id: Long, kind: String, payload: String): Int
+
     @Query("DELETE FROM pending_mail_action WHERE id = :id")
     suspend fun delete_by_id(id: Long)
 

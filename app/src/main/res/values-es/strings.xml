@@ -3579,4 +3579,5 @@
     <string name="sidebar_mail_items_subtitle">Elige qué buzones aparecen en la sección Correo.</string>
     <string name="sidebar_move_section_up">Mover %1$s hacia arriba</string>
     <string name="sidebar_move_section_down">Mover %1$s hacia abajo</string>
+    <string name="contacts_pending_sync">Pendiente de sincronizar</string>
 </resources>

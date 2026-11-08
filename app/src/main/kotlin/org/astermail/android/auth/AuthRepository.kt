@@ -1783,6 +1783,10 @@ class AuthRepository @Inject constructor(
         runCatching { database.folder_row_dao().clear_all() }
         runCatching { database.message_body_dao().clear_all() }
         runCatching { database.thread_snapshot_dao().clear_all() }
+        current_id?.let { id ->
+            runCatching { database.contact_cache_dao().clear_for_account(id) }
+            runCatching { database.contact_group_cache_dao().clear_for_account(id) }
+        }
         current_id?.let { runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, it) } }
         if (remove_account) {
             val outbox_ids = runCatching {
@@ -2435,6 +2439,8 @@ class AuthRepository @Inject constructor(
             runCatching { forget_deleted_account_device_recovery(context, current_id) }
             runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
             runCatching { mail_repository.clear_pending_actions(current_id) }
+            runCatching { database.contact_cache_dao().clear_for_account(current_id) }
+            runCatching { database.contact_group_cache_dao().clear_for_account(current_id) }
             val outbox_ids = runCatching {
                 database.pending_send_dao().get_for_account(current_id).map { it.id }
             }.getOrDefault(emptyList())

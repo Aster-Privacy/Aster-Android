@@ -553,6 +553,7 @@ class MailRepository @Inject constructor(
     private val encryption_api_provider: dagger.Lazy<org.astermail.android.api.encryption.EncryptionApi>? = null,
     private val storage_rekey_service_provider: dagger.Lazy<org.astermail.android.crypto.storage_rotation.StorageRekeyService>? = null,
     private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
+    private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -600,7 +601,7 @@ class MailRepository @Inject constructor(
         val queue = pending_action_queue ?: return block()
         val account = current_account_id()?.takeIf { it.isNotBlank() } ?: return block()
         queue.await_loaded()
-        if (queue.has_pending(account) || !queue.is_network_available()) {
+        if (queue.for_account(account).any { !it.kind.is_contact } || !queue.is_network_available()) {
             queue.enqueue(account, kind, payload)
             return Result.success(queued_value)
         }
@@ -636,27 +637,71 @@ class MailRepository @Inject constructor(
     private suspend fun drain_locked(queue: PendingMailActionQueue): PendingDrainOutcome {
         queue.await_loaded()
         val account = current_account_id()?.takeIf { it.isNotBlank() } ?: return PendingDrainOutcome.Done
+        val blocked_lanes = mutableSetOf<Boolean>()
         while (true) {
             if (drain_holds.get() > 0 || current_account_id() != account) return PendingDrainOutcome.Done
-            val next = queue.for_account(account).firstOrNull() ?: return PendingDrainOutcome.Done
-            if (pending_action_expired(next, System.currentTimeMillis())) {
+            val next = queue.for_account(account).firstOrNull { it.kind.is_contact !in blocked_lanes }
+                ?: return if (blocked_lanes.isEmpty()) PendingDrainOutcome.Done else PendingDrainOutcome.Retry
+            if (!next.kind.is_contact && pending_action_expired(next, System.currentTimeMillis())) {
                 queue.complete(next.id)
                 continue
             }
+            val step = if (next.kind.is_contact) {
+                drain_contact_action(queue, account, next)
+            } else {
+                settle_pending_action(queue, next, replay_guarded(next))
+            }
+            when (step) {
+                PendingDrainStep.Next -> Unit
+                PendingDrainStep.Stop -> return PendingDrainOutcome.Done
+                PendingDrainStep.Blocked -> blocked_lanes.add(next.kind.is_contact)
+            }
+        }
+    }
+
+    private enum class PendingDrainStep { Next, Stop, Blocked }
+
+    private suspend fun replay_guarded(action: PendingMailAction): Result<*> = try {
+        replay_pending_action(action)
+    } catch (error: Throwable) {
+        if (error is CancellationException && !currentCoroutineContext().isActive) throw error
+        Result.failure<Unit>(error)
+    }
+
+    private suspend fun settle_pending_action(
+        queue: PendingMailActionQueue,
+        action: PendingMailAction,
+        result: Result<*>,
+    ): PendingDrainStep {
+        val error = result.exceptionOrNull()
+        if (error is ApiError.UnauthorizedError) return PendingDrainStep.Stop
+        if (error == null || !is_transient_failure(error) || pending_action_exhausted(action, error)) {
+            queue.complete(action.id)
+            return PendingDrainStep.Next
+        }
+        if (pending_action_counts_attempt(error)) queue.record_attempt(action.id)
+        return PendingDrainStep.Blocked
+    }
+
+    private suspend fun drain_contact_action(
+        queue: PendingMailActionQueue,
+        account: String,
+        action: PendingMailAction,
+    ): PendingDrainStep {
+        val contacts = contacts_repository_provider?.get()
+        if (contacts == null) {
+            queue.complete(action.id)
+            return PendingDrainStep.Next
+        }
+        return contacts.with_op_lock {
+            val fresh = queue.for_account(account).firstOrNull { it.id == action.id } ?: return@with_op_lock PendingDrainStep.Next
             val result = try {
-                replay_pending_action(next)
+                contacts.replay_pending_op(account, fresh)
             } catch (error: Throwable) {
                 if (error is CancellationException && !currentCoroutineContext().isActive) throw error
                 Result.failure<Unit>(error)
             }
-            val error = result.exceptionOrNull()
-            if (error is ApiError.UnauthorizedError) return PendingDrainOutcome.Done
-            if (error == null || !is_transient_failure(error) || pending_action_exhausted(next, error)) {
-                queue.complete(next.id)
-                continue
-            }
-            if (pending_action_counts_attempt(error)) queue.record_attempt(next.id)
-            return PendingDrainOutcome.Retry
+            settle_pending_action(queue, fresh, result)
         }
     }
 
@@ -750,6 +795,9 @@ class MailRepository @Inject constructor(
             PendingActionKind.report_spam_senders -> runCatching { report_spam_senders_now(ids) }
             PendingActionKind.remove_spam_senders -> runCatching { remove_spam_senders_now(ids) }
             PendingActionKind.save_draft -> replay_save_draft(action)
+            PendingActionKind.contact_create,
+            PendingActionKind.contact_update,
+            PendingActionKind.contact_delete -> Result.success(Unit)
         }
     }
 

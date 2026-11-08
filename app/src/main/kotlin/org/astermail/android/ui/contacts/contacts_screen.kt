@@ -643,6 +643,7 @@ fun ContactsScreen(
                                     contact = c,
                                     is_selected = c.id in ui_state.selected_ids,
                                     is_selecting = ui_state.is_selecting,
+                                    is_pending = c.id in ui_state.pending_ids,
                                     is_first = index == 0,
                                     is_last = index == group.size - 1,
                                     on_click = {
@@ -1680,6 +1681,7 @@ private fun ContactRow(
     contact: Contact,
     is_selected: Boolean,
     is_selecting: Boolean,
+    is_pending: Boolean,
     is_first: Boolean,
     is_last: Boolean,
     on_click: () -> Unit,
@@ -1766,7 +1768,32 @@ private fun ContactRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            if (is_pending) {
+                Spacer(Modifier.height(2.dp))
+                contact_pending_sync_label()
+            }
         }
+    }
+}
+
+@Composable
+internal fun contact_pending_sync_label(modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = TablerIcons.Clock,
+            contentDescription = null,
+            tint = colors.text_secondary,
+            modifier = Modifier.size(12.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.xs))
+        Text(
+            text = stringResource(R.string.contacts_pending_sync),
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
