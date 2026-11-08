@@ -1,0 +1,9 @@
+Bug fixes and improvements:
+
+- Reorder or hide sidebar folders, and the change syncs to your other devices.
+- Contacts load offline, and edits you make offline sync when you reconnect.
+- Delete messages forever from Trash.
+- Lock folders so their mail needs your password to open.
+- Birthdays can skip the year, and you can choose the first day of the week.
+- Reactions are encrypted like replies.
+- Accounts missing an encryption key get one at sign-in.
