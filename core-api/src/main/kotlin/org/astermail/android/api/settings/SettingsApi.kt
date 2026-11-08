@@ -194,6 +194,8 @@ data class AliasInfo(
     val decryption_failed: Boolean = false,
     val is_retained_primary: Boolean = false,
     val retained_local_part: String? = null,
+    val sidebar_order: Int? = null,
+    val sidebar_hidden: Boolean = false,
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain.isNotBlank()) "@$domain" else id
@@ -248,6 +250,8 @@ data class CustomDomainAddressInfo(
     val profile_picture: String? = null,
     val decryption_failed: Boolean = false,
     val created_at: String = "",
+    val sidebar_order: Int? = null,
+    val sidebar_hidden: Boolean = false,
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain_name.isNotBlank()) "@$domain_name" else id
