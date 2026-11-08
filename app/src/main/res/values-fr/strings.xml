@@ -1065,7 +1065,6 @@
     <string name="remove_payment_failed">Impossible de supprimer le moyen de paiement</string>
     <string name="no_device_contacts">Aucun contact trouvé sur l\'appareil</string>
     <string name="no_new_contacts">Aucun nouveau contact à importer</string>
-    <string name="contact_limit_reached">Vous avez atteint votre limite de contacts. Passez à un forfait supérieur pour importer le reste.</string>
 
     <!-- Privacy settings -->
     <string name="privacy">Confidentialité</string>
@@ -1973,7 +1972,6 @@
     <string name="upgrade_perk_features">Filtres, modèles, signatures et plus</string>
     <string name="upgrade_perk_storage">Plus de stockage pour les messages et pièces jointes</string>
     <string name="upgrade_resource_aliases">alias</string>
-    <string name="upgrade_resource_contacts">contacts</string>
     <string name="upgrade_resource_domains">domaines</string>
     <string name="upgrade_resource_filters">filtres</string>
     <string name="upgrade_resource_generic">cette fonctionnalité</string>
@@ -3582,4 +3580,22 @@
     <string name="external_pgp_key_manage_note">Pour importer, remplacer ou supprimer cette clé, utilisez Aster Mail sur le web ou l\'application de bureau.</string>
     <string name="external_pgp_key_unpublished">Votre clé importée n\'est plus publiée.</string>
     <string name="external_pgp_key_unpublish_failed">Impossible d\'arrêter la publication de votre clé. Réessayez.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail n\'a pas pu chiffrer cet e-mail avec la clé PGP du destinataire. Votre brouillon est enregistré, vous pouvez donc réessayer.</string>
+    <string name="send_pgp_attachments_too_large">Ces pièces jointes sont trop volumineuses pour être chiffrées avec la clé PGP du destinataire. Pour envoyer cet e-mail, gardez les pièces jointes sous %1$s au total. Votre brouillon est enregistré.</string>
+    <string name="send_scheduled_no_pgp">Les e-mails programmés vers des adresses externes ne peuvent pas utiliser le chiffrement PGP. Pour chiffrer cet e-mail, envoyez-le maintenant.</string>
+    <string name="send_expiry_no_pgp">Les e-mails avec expiration vers des adresses externes ne peuvent pas utiliser le chiffrement PGP. Pour chiffrer cet e-mail avec PGP, retirez l\'expiration.</string>
+    <string name="encryption_status_unknown">État du chiffrement indisponible</string>
+    <string name="encryption_status_unknown_description">Aster Mail n\'a pas pu vérifier les clés de ce destinataire et ne peut donc pas savoir si cet e-mail peut être chiffré de bout en bout. Vérifiez votre connexion et réessayez.</string>
+    <string name="recipient_key_outdated">La clé du destinataire est obsolète</string>
+    <string name="recipient_key_outdated_description">La clé publiée de ce destinataire a expiré ou n\'est pas valide, donc cet e-mail ne peut pas être chiffré de bout en bout. Il est uniquement protégé en transit.</string>
+    <string name="encryption_available">Chiffrement disponible</string>
+    <string name="encryption_available_description">Ce destinataire publie une clé de chiffrement utilisable. Pour chiffrer cet e-mail de bout en bout, touchez le cadenas.</string>
+    <string name="recipient_published_key_description">Chiffré avec la clé publique publiée du destinataire.</string>
+    <string name="tap_to_encrypt">Touchez pour chiffrer cet e-mail de bout en bout</string>
+    <string name="tap_to_turn_off_encryption">Chiffré. Touchez pour désactiver le chiffrement de cet e-mail.</string>
+    <string name="contact_birthday_month">Mois</string>
+    <string name="contact_birthday_day">Jour</string>
+    <string name="contact_birthday_year_optional">Année (facultatif)</string>
+    <string name="contact_birthday_year_hint">Pour n\'enregistrer que le mois et le jour, laissez l\'année vide.</string>
+    <string name="contact_birthday_year_invalid">Saisissez une année à 4 chiffres ou laissez l\'année vide.</string>
 </resources>

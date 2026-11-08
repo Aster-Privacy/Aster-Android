@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings
 import org.astermail.android.ui.upgrade.UpgradeLimitKey
 import org.astermail.android.ui.upgrade.UpgradeStore
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -64,5 +65,15 @@ class SettingsSearchKeywordTest {
         UpgradeStore.show_plan_limit("mail rules", null)
         assertEquals(UpgradeLimitKey.MaxCustomFilters, UpgradeStore.state.value.limit_key)
         UpgradeStore.close()
+    }
+
+    @Test
+    fun contacts_plan_limit_opens_no_upsell() {
+        UpgradeStore.close()
+        UpgradeStore.show_plan_limit("contacts", "Contact limit reached")
+        assertFalse(UpgradeStore.state.value.is_open)
+        assertTrue(UpgradeStore.is_uncapped(" Contacts "))
+        assertFalse(UpgradeStore.is_uncapped("aliases"))
+        assertFalse(UpgradeStore.is_uncapped(null))
     }
 }

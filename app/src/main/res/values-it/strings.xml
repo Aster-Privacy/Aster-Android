@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">Impossibile rimuovere il metodo di pagamento</string>
     <string name="no_device_contacts">Nessun contatto trovato sul dispositivo</string>
     <string name="no_new_contacts">Nessun nuovo contatto da importare</string>
-    <string name="contact_limit_reached">Hai raggiunto il limite di contatti. Passa a un piano superiore per importare il resto.</string>
 
     <string name="privacy">Privacy</string>
     <string name="tracking">Tracciamento</string>
@@ -1841,7 +1840,6 @@
     <string name="upgrade_perk_features">Filtri, modelli, firme e altro</string>
     <string name="upgrade_resource_aliases">alias</string>
     <string name="upgrade_resource_domains">domini</string>
-    <string name="upgrade_resource_contacts">contatti</string>
     <string name="upgrade_resource_templates">modelli</string>
     <string name="upgrade_resource_signatures">firme</string>
     <string name="upgrade_resource_filters">filtri</string>
@@ -3553,4 +3551,22 @@
     <string name="external_pgp_key_manage_note">Per importare, sostituire o rimuovere questa chiave, usa Aster Mail sul web o l’app desktop.</string>
     <string name="external_pgp_key_unpublished">La chiave importata non è più pubblicata.</string>
     <string name="external_pgp_key_unpublish_failed">Impossibile interrompere la pubblicazione della chiave. Riprova.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail non è riuscito a crittografare questa email con la chiave PGP del destinatario. La bozza è salvata, quindi puoi riprovare.</string>
+    <string name="send_pgp_attachments_too_large">Questi allegati sono troppo grandi per essere crittografati con la chiave PGP del destinatario. Per inviare questa email, mantieni gli allegati sotto %1$s in totale. La bozza è salvata.</string>
+    <string name="send_scheduled_no_pgp">Le email programmate verso indirizzi esterni non possono usare la crittografia PGP. Per crittografare questa email, inviala ora.</string>
+    <string name="send_expiry_no_pgp">Le email con scadenza verso indirizzi esterni non possono usare la crittografia PGP. Per crittografare questa email con PGP, rimuovi la scadenza.</string>
+    <string name="encryption_status_unknown">Stato della crittografia non disponibile</string>
+    <string name="encryption_status_unknown_description">Aster Mail non è riuscito a verificare le chiavi di questo destinatario, quindi non può sapere se questa email può essere crittografata end-to-end. Controlla la connessione e riprova.</string>
+    <string name="recipient_key_outdated">La chiave del destinatario è obsoleta</string>
+    <string name="recipient_key_outdated_description">La chiave pubblicata da questo destinatario è scaduta o non valida, quindi questa email non può essere crittografata end-to-end. È protetta solo durante il transito.</string>
+    <string name="encryption_available">Crittografia disponibile</string>
+    <string name="encryption_available_description">Questo destinatario pubblica una chiave di crittografia utilizzabile. Per crittografare questa email end-to-end, tocca il lucchetto.</string>
+    <string name="recipient_published_key_description">Crittografata con la chiave pubblica pubblicata dal destinatario.</string>
+    <string name="tap_to_encrypt">Tocca per crittografare questa email end-to-end</string>
+    <string name="tap_to_turn_off_encryption">Crittografata. Tocca per disattivare la crittografia per questa email.</string>
+    <string name="contact_birthday_month">Mese</string>
+    <string name="contact_birthday_day">Giorno</string>
+    <string name="contact_birthday_year_optional">Anno (facoltativo)</string>
+    <string name="contact_birthday_year_hint">Per salvare solo il mese e il giorno, lascia vuoto l\'anno.</string>
+    <string name="contact_birthday_year_invalid">Inserisci un anno di 4 cifre oppure lascia vuoto l\'anno.</string>
 </resources>

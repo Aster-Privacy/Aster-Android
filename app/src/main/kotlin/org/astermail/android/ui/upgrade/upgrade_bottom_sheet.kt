@@ -94,7 +94,6 @@ import org.astermail.android.ui.settings.detail.switcher_option
 private fun limit_key_to_field(key: UpgradeLimitKey): String? = when (key) {
     UpgradeLimitKey.MaxEmailAliases -> "max_email_aliases"
     UpgradeLimitKey.MaxCustomDomains -> "max_custom_domains"
-    UpgradeLimitKey.MaxContacts -> "max_contacts"
     UpgradeLimitKey.MaxEmailTemplates -> "max_email_templates"
     UpgradeLimitKey.MaxHtmlSignatures -> "max_html_signatures"
     UpgradeLimitKey.MaxCustomFilters -> "max_custom_filters"
@@ -106,7 +105,6 @@ private fun resource_label_for(key: UpgradeLimitKey, fallback: String?): String 
     return when (key) {
         UpgradeLimitKey.MaxEmailAliases -> stringResource(R.string.upgrade_resource_aliases)
         UpgradeLimitKey.MaxCustomDomains -> stringResource(R.string.upgrade_resource_domains)
-        UpgradeLimitKey.MaxContacts -> stringResource(R.string.upgrade_resource_contacts)
         UpgradeLimitKey.MaxEmailTemplates -> stringResource(R.string.upgrade_resource_templates)
         UpgradeLimitKey.MaxHtmlSignatures -> stringResource(R.string.upgrade_resource_signatures)
         UpgradeLimitKey.MaxCustomFilters -> stringResource(R.string.upgrade_resource_filters)

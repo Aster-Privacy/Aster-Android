@@ -110,6 +110,8 @@ data class ExternalSendRequest(
     val signed_mime_signature: String? = null,
     val signed_mime_micalg: String? = null,
     val external_pgp_bodies: Map<String, String>? = null,
+    val force_pgp: Boolean? = null,
+    val pgp_recipients: List<String>? = null,
 )
 
 @Serializable
@@ -154,6 +156,8 @@ data class QueueEmailRequest(
     val signed_mime_micalg: String? = null,
     val client_send_id: String? = null,
     val external_pgp_bodies: Map<String, String>? = null,
+    val force_pgp: Boolean? = null,
+    val pgp_recipients: List<String>? = null,
 )
 
 @Serializable

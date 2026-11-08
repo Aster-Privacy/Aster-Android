@@ -1012,7 +1012,6 @@
     <string name="remove_payment_failed">Zahlungsmethode konnte nicht entfernt werden</string>
     <string name="no_device_contacts">Keine Kontakte auf dem Gerät gefunden</string>
     <string name="no_new_contacts">Keine neuen Kontakte zum Importieren</string>
-    <string name="contact_limit_reached">Sie haben Ihr Kontaktlimit erreicht. Führen Sie ein Upgrade durch, um den Rest zu importieren.</string>
 
     <string name="privacy">Datenschutz</string>
     <string name="tracking">Tracking</string>
@@ -1838,7 +1837,6 @@
     <string name="upgrade_perk_features">Filter, Vorlagen, Signaturen und mehr</string>
     <string name="upgrade_resource_aliases">Aliasse</string>
     <string name="upgrade_resource_domains">Domains</string>
-    <string name="upgrade_resource_contacts">Kontakte</string>
     <string name="upgrade_resource_templates">Vorlagen</string>
     <string name="upgrade_resource_signatures">Signaturen</string>
     <string name="upgrade_resource_filters">Filter</string>
@@ -3535,4 +3533,22 @@
     <string name="external_pgp_key_manage_note">Um diesen Schlüssel zu importieren, zu ersetzen oder zu entfernen, verwenden Sie Aster Mail im Web oder die Desktop-App.</string>
     <string name="external_pgp_key_unpublished">Ihr importierter Schlüssel ist nicht mehr veröffentlicht.</string>
     <string name="external_pgp_key_unpublish_failed">Die Veröffentlichung Ihres Schlüssels konnte nicht beendet werden. Versuchen Sie es erneut.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail konnte diese E-Mail nicht mit dem PGP-Schlüssel des Empfängers verschlüsseln. Ihr Entwurf ist gespeichert, Sie können es also erneut versuchen.</string>
+    <string name="send_pgp_attachments_too_large">Diese Anhänge sind zu groß, um sie mit dem PGP-Schlüssel des Empfängers zu verschlüsseln. Um diese E-Mail zu senden, halten Sie Anhänge insgesamt unter %1$s. Ihr Entwurf ist gespeichert.</string>
+    <string name="send_scheduled_no_pgp">Geplante E-Mails an externe Adressen können keine PGP-Verschlüsselung verwenden. Um diese E-Mail zu verschlüsseln, senden Sie sie jetzt.</string>
+    <string name="send_expiry_no_pgp">Ablaufende E-Mails an externe Adressen können keine PGP-Verschlüsselung verwenden. Um diese E-Mail mit PGP zu verschlüsseln, entfernen Sie den Ablauf.</string>
+    <string name="encryption_status_unknown">Verschlüsselungsstatus nicht verfügbar</string>
+    <string name="encryption_status_unknown_description">Aster Mail konnte die Schlüssel dieses Empfängers nicht prüfen und weiß daher nicht, ob diese E-Mail Ende-zu-Ende-verschlüsselt werden kann. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
+    <string name="recipient_key_outdated">Schlüssel des Empfängers ist veraltet</string>
+    <string name="recipient_key_outdated_description">Der veröffentlichte Schlüssel dieses Empfängers ist abgelaufen oder ungültig, daher kann diese E-Mail nicht Ende-zu-Ende-verschlüsselt werden. Sie ist nur bei der Übertragung geschützt.</string>
+    <string name="encryption_available">Verschlüsselung verfügbar</string>
+    <string name="encryption_available_description">Dieser Empfänger veröffentlicht einen nutzbaren Verschlüsselungsschlüssel. Um diese E-Mail Ende-zu-Ende zu verschlüsseln, tippen Sie auf das Schloss.</string>
+    <string name="recipient_published_key_description">Mit dem veröffentlichten öffentlichen Schlüssel des Empfängers verschlüsselt.</string>
+    <string name="tap_to_encrypt">Tippen, um diese E-Mail Ende-zu-Ende zu verschlüsseln</string>
+    <string name="tap_to_turn_off_encryption">Verschlüsselt. Tippen, um die Verschlüsselung für diese E-Mail auszuschalten.</string>
+    <string name="contact_birthday_month">Monat</string>
+    <string name="contact_birthday_day">Tag</string>
+    <string name="contact_birthday_year_optional">Jahr (optional)</string>
+    <string name="contact_birthday_year_hint">Um nur Monat und Tag zu speichern, lassen Sie das Jahr leer.</string>
+    <string name="contact_birthday_year_invalid">Geben Sie eine vierstellige Jahreszahl ein oder lassen Sie das Jahr leer.</string>
 </resources>

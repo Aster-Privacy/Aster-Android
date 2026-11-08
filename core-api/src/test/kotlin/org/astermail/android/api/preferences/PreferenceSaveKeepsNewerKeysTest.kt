@@ -26,6 +26,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PreferenceSaveKeepsNewerKeysTest {
@@ -69,5 +70,44 @@ class PreferenceSaveKeepsNewerKeysTest {
 
         assertEquals(JsonPrimitive(true), saved["compose_from_selected_alias"])
         assertEquals(JsonPrimitive(false), saved["relative_dates"])
+    }
+
+    @Test
+    fun the_week_start_is_read_from_the_shared_preferences() {
+        val prefs = merge_decrypted_preferences(json, """{"calendar_week_starts_on":"monday"}""", null)
+
+        assertEquals("monday", prefs.calendar_week_starts_on)
+    }
+
+    @Test
+    fun a_save_keeps_the_week_start_that_another_client_changed_after_the_load() {
+        val loaded = """{"theme":"light","calendar_week_starts_on":"sunday"}"""
+        val fresh = """{"theme":"light","calendar_week_starts_on":"saturday"}"""
+
+        val saved = save_like_the_settings_view_model(loaded, fresh) { it.copy(relative_dates = false) }
+
+        assertEquals(JsonPrimitive("saturday"), saved["calendar_week_starts_on"])
+        assertEquals(JsonPrimitive(false), saved["relative_dates"])
+    }
+
+    @Test
+    fun a_stale_snapshot_never_overwrites_the_week_start() {
+        val stale = merge_decrypted_preferences(json, """{"calendar_week_starts_on":"sunday"}""", null)
+        val payload = encode_preferences_preserving_unknown(json, stale, """{"calendar_week_starts_on":"monday"}""")
+
+        assertEquals(JsonPrimitive("monday"), json.parseToJsonElement(payload).jsonObject["calendar_week_starts_on"])
+    }
+
+    @Test
+    fun a_save_does_not_invent_a_week_start() {
+        val saved = save_like_the_settings_view_model("""{"theme":"light"}""", """{"theme":"light"}""") {
+            it.copy(relative_dates = false)
+        }
+        val without_original = json.parseToJsonElement(
+            encode_preferences_preserving_unknown(json, UserPreferences(), null),
+        ).jsonObject
+
+        assertNull(saved["calendar_week_starts_on"])
+        assertNull(without_original["calendar_week_starts_on"])
     }
 }

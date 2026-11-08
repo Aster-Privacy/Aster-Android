@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">无法移除支付方式</string>
     <string name="no_device_contacts">设备上未找到联系人</string>
     <string name="no_new_contacts">没有新联系人可导入</string>
-    <string name="contact_limit_reached">已达到联系人数量上限。升级套餐以导入其余联系人。</string>
 
     <string name="privacy">隐私</string>
     <string name="tracking">跟踪</string>
@@ -1833,7 +1832,6 @@
     <string name="upgrade_perk_features">过滤器、模板、签名等</string>
     <string name="upgrade_resource_aliases">别名</string>
     <string name="upgrade_resource_domains">域名</string>
-    <string name="upgrade_resource_contacts">联系人</string>
     <string name="upgrade_resource_templates">模板</string>
     <string name="upgrade_resource_signatures">签名</string>
     <string name="upgrade_resource_filters">过滤器</string>
@@ -3515,4 +3513,22 @@
     <string name="external_pgp_key_manage_note">要导入、替换或删除此密钥，请使用 Aster Mail 网页版或桌面应用。</string>
     <string name="external_pgp_key_unpublished">您导入的密钥已不再发布。</string>
     <string name="external_pgp_key_unpublish_failed">无法停止发布您的密钥。请重试。</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail 无法使用收件人的 PGP 密钥加密此邮件。你的草稿已保存，可以再试一次。</string>
+    <string name="send_pgp_attachments_too_large">这些附件太大，无法使用收件人的 PGP 密钥加密。要发送此邮件，请将附件总大小保持在 %1$s 以下。你的草稿已保存。</string>
+    <string name="send_scheduled_no_pgp">发送到外部地址的定时邮件无法使用 PGP 加密。要加密此邮件，请立即发送。</string>
+    <string name="send_expiry_no_pgp">发送到外部地址的限时邮件无法使用 PGP 加密。要使用 PGP 加密此邮件，请移除过期时间。</string>
+    <string name="encryption_status_unknown">加密状态不可用</string>
+    <string name="encryption_status_unknown_description">Aster Mail 无法检查此收件人的密钥，因此无法确定此邮件能否端到端加密。请检查网络连接并重试。</string>
+    <string name="recipient_key_outdated">收件人的密钥已过时</string>
+    <string name="recipient_key_outdated_description">此收件人发布的密钥已过期或无效，因此此邮件无法端到端加密。它仅在传输过程中受保护。</string>
+    <string name="encryption_available">可以加密</string>
+    <string name="encryption_available_description">此收件人发布了可用的加密密钥。要端到端加密此邮件，请轻点锁形图标。</string>
+    <string name="recipient_published_key_description">已使用收件人发布的公钥加密。</string>
+    <string name="tap_to_encrypt">轻点以端到端加密此邮件</string>
+    <string name="tap_to_turn_off_encryption">已加密。轻点可关闭此邮件的加密。</string>
+    <string name="contact_birthday_month">月</string>
+    <string name="contact_birthday_day">日</string>
+    <string name="contact_birthday_year_optional">年份（可选）</string>
+    <string name="contact_birthday_year_hint">如果只想保存月份和日期，请将年份留空。</string>
+    <string name="contact_birthday_year_invalid">请输入 4 位数的年份，或将年份留空。</string>
 </resources>

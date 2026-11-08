@@ -25,6 +25,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.crypto.PgpSignatureStatus
+import org.astermail.android.crypto.SentEncryptionScope
+
+const val THREAD_SNAPSHOT_ENCRYPTION_RULES = 1
 
 val thread_snapshot_json = Json {
     ignoreUnknownKeys = true
@@ -54,6 +57,8 @@ data class thread_snapshot_message(
     val pgp_encrypted: Boolean = false,
     val pgp_signature: String = PgpSignatureStatus.NONE.name,
     val sender_verification: String? = null,
+    val sent_encryption_scope: String? = null,
+    val encryption_rules: Int = 0,
 )
 
 fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message = thread_snapshot_message(
@@ -78,6 +83,8 @@ fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message
     pgp_encrypted = message.pgp_encrypted,
     pgp_signature = message.pgp_signature.name,
     sender_verification = message.sender_verification,
+    sent_encryption_scope = message.sent_encryption_scope?.name,
+    encryption_rules = THREAD_SNAPSHOT_ENCRYPTION_RULES,
 )
 
 fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted = ThreadMessageDecrypted(
@@ -101,8 +108,11 @@ fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted
     subject = snapshot.subject,
     display_sender_name = snapshot.display_sender_name,
     display_sender_email = snapshot.display_sender_email,
-    pgp_encrypted = snapshot.pgp_encrypted,
+    pgp_encrypted = snapshot.pgp_encrypted && snapshot.encryption_rules >= THREAD_SNAPSHOT_ENCRYPTION_RULES,
     pgp_signature = runCatching { PgpSignatureStatus.valueOf(snapshot.pgp_signature) }
         .getOrDefault(PgpSignatureStatus.NONE),
     sender_verification = snapshot.sender_verification,
+    sent_encryption_scope = snapshot.sent_encryption_scope
+        ?.takeIf { snapshot.encryption_rules >= THREAD_SNAPSHOT_ENCRYPTION_RULES }
+        ?.let { name -> runCatching { SentEncryptionScope.valueOf(name) }.getOrNull() },
 )

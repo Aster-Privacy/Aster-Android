@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">支払い方法を削除できませんでした</string>
     <string name="no_device_contacts">デバイスに連絡先が見つかりません</string>
     <string name="no_new_contacts">インポートする新しい連絡先はありません</string>
-    <string name="contact_limit_reached">連絡先の上限に達しました。残りをインポートするにはプランをアップグレードしてください。</string>
 
     <string name="privacy">プライバシー</string>
     <string name="tracking">トラッキング</string>
@@ -1833,7 +1832,6 @@
     <string name="upgrade_perk_features">フィルタ、テンプレート、署名など</string>
     <string name="upgrade_resource_aliases">エイリアス</string>
     <string name="upgrade_resource_domains">ドメイン</string>
-    <string name="upgrade_resource_contacts">連絡先</string>
     <string name="upgrade_resource_templates">テンプレート</string>
     <string name="upgrade_resource_signatures">署名</string>
     <string name="upgrade_resource_filters">フィルタ</string>
@@ -3522,4 +3520,22 @@
     <string name="external_pgp_key_manage_note">このキーのインポート、置き換え、削除は、ウェブ版の Aster Mail またはデスクトップアプリで行ってください。</string>
     <string name="external_pgp_key_unpublished">インポートしたキーの公開を停止しました。</string>
     <string name="external_pgp_key_unpublish_failed">キーの公開を停止できませんでした。もう一度お試しください。</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail は受信者の PGP 鍵でこのメールを暗号化できませんでした。下書きは保存されているので、もう一度お試しください。</string>
+    <string name="send_pgp_attachments_too_large">これらの添付ファイルは大きすぎるため、受信者の PGP 鍵で暗号化できません。このメールを送信するには、添付ファイルの合計を %1$s 未満にしてください。下書きは保存されています。</string>
+    <string name="send_scheduled_no_pgp">外部アドレスへの予約メールでは PGP 暗号化を使用できません。このメールを暗号化するには、今すぐ送信してください。</string>
+    <string name="send_expiry_no_pgp">外部アドレスへの有効期限付きメールでは PGP 暗号化を使用できません。このメールを PGP で暗号化するには、有効期限を削除してください。</string>
+    <string name="encryption_status_unknown">暗号化の状態を確認できません</string>
+    <string name="encryption_status_unknown_description">Aster Mail はこの受信者の鍵を確認できなかったため、このメールをエンドツーエンドで暗号化できるかどうかわかりません。接続を確認して、もう一度お試しください。</string>
+    <string name="recipient_key_outdated">受信者の鍵が古くなっています</string>
+    <string name="recipient_key_outdated_description">この受信者が公開している鍵は期限切れか無効なため、このメールはエンドツーエンドで暗号化できません。転送中のみ保護されます。</string>
+    <string name="encryption_available">暗号化を利用できます</string>
+    <string name="encryption_available_description">この受信者は使用可能な暗号鍵を公開しています。このメールをエンドツーエンドで暗号化するには、鍵アイコンをタップしてください。</string>
+    <string name="recipient_published_key_description">受信者が公開している公開鍵で暗号化されています。</string>
+    <string name="tap_to_encrypt">タップしてこのメールをエンドツーエンドで暗号化</string>
+    <string name="tap_to_turn_off_encryption">暗号化済み。タップするとこのメールの暗号化をオフにします。</string>
+    <string name="contact_birthday_month">月</string>
+    <string name="contact_birthday_day">日</string>
+    <string name="contact_birthday_year_optional">年（任意）</string>
+    <string name="contact_birthday_year_hint">月と日だけを保存するには、年を空欄のままにします。</string>
+    <string name="contact_birthday_year_invalid">4 桁の年を入力するか、年を空欄のままにしてください。</string>
 </resources>

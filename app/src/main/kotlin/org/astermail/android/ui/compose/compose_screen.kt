@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.ui.mail.with_account_week_start
 import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.graphics.RectangleShape
@@ -168,6 +169,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import org.astermail.android.R
+import org.astermail.android.crypto.RecipientEncryptionRules
+import org.astermail.android.crypto.RecipientLockStatus
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterDuration
@@ -1687,6 +1690,24 @@ fun ComposeScreen(
         mail_vm.prefetch_external_key_trust(to_chips + cc_chips + bcc_chips)
     }
 
+    var pgp_override by remember { mutableStateOf<Boolean?>(null) }
+    var recipient_lock_statuses by remember { mutableStateOf<Map<String, RecipientLockStatus>>(emptyMap()) }
+    val outside_chip_addresses = remember(to_chips, cc_chips, bcc_chips) {
+        (to_chips + cc_chips + bcc_chips)
+            .map { RecipientEncryptionRules.normalize(it) }
+            .filter { it.isNotEmpty() && !is_internal_email(it) }
+            .distinct()
+    }
+    LaunchedEffect(outside_chip_addresses) {
+        val known = recipient_lock_statuses
+        recipient_lock_statuses = outside_chip_addresses.associateWith { known[it] ?: RecipientLockStatus.CHECKING }
+        val pending = outside_chip_addresses.filter { recipient_lock_statuses[it] == RecipientLockStatus.CHECKING }
+        if (pending.isEmpty()) return@LaunchedEffect
+        kotlinx.coroutines.delay(KEY_TRUST_PREFETCH_DELAY_MS)
+        val found = mail_vm.recipient_lock_statuses(pending)
+        recipient_lock_statuses = recipient_lock_statuses.mapValues { (address, status) -> found[address] ?: status }
+    }
+
     val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -1878,6 +1899,23 @@ fun ComposeScreen(
             }
         }
     }
+    fun chip_lock_status(address: String): RecipientLockStatus {
+        val normalized = RecipientEncryptionRules.normalize(address)
+        if (is_internal_email(normalized)) {
+            return RecipientEncryptionRules.displayed_internal_status(outside_chip_addresses.isNotEmpty())
+        }
+        return recipient_lock_statuses[normalized] ?: RecipientLockStatus.CHECKING
+    }
+
+    fun pgp_recipients_for(recipients: List<String>): List<String> {
+        if (settings_state.preferences?.show_encryption_indicators == false) return emptyList()
+        return RecipientEncryptionRules.collect_pgp_recipients(
+            outside_recipients = recipients.filterNot { is_internal_email(it) },
+            statuses = recipient_lock_statuses,
+            pgp_override = pgp_override,
+        )
+    }
+
     fun execute_send(
         body_html: String,
         attachment_payloads: List<org.astermail.android.api.send.ExternalAttachmentPayload>,
@@ -1888,6 +1926,8 @@ fun ComposeScreen(
         snapshot_from: String = from_alias,
         suppress_branding: Boolean = false,
         allow_non_post_quantum: Boolean = false,
+        snapshot_force_pgp: Boolean? = pgp_override,
+        snapshot_pgp_recipients: List<String> = pgp_recipients_for(snapshot_to + snapshot_cc + snapshot_bcc),
     ) {
         if (snapshot_to.isEmpty() && snapshot_cc.isEmpty() && snapshot_bcc.isEmpty()) {
             is_sending = false
@@ -1921,6 +1961,8 @@ fun ComposeScreen(
                 sender_alias_hash = if (snapshot_from != user_email) alias_hash_map[snapshot_from]?.takeIf { it.isNotBlank() } else null,
                 suppress_branding = suppress_branding,
                 allow_non_post_quantum = allow_non_post_quantum,
+                force_pgp = snapshot_force_pgp,
+                pgp_recipients = snapshot_pgp_recipients,
             )
             result.fold(
                 onSuccess = { resp ->
@@ -2049,6 +2091,21 @@ fun ComposeScreen(
                 return
             }
         }
+        val snap_pgp_recipients = if (external_sender_tokens[from_alias] == null) {
+            pgp_recipients_for(to_chips.toList() + cc_chips.toList() + bcc_chips.toList())
+        } else {
+            emptyList()
+        }
+        if (snap_pgp_recipients.isNotEmpty() && scheduled_send) {
+            send_lock.set(false)
+            send_error = context.getString(R.string.send_scheduled_no_pgp)
+            return
+        }
+        if (snap_pgp_recipients.isNotEmpty() && expires_at_iso != null) {
+            send_lock.set(false)
+            send_error = context.getString(R.string.send_expiry_no_pgp)
+            return
+        }
         if (is_sending) { send_lock.set(false); return }
         dismiss_keyboard()
         is_sending = true
@@ -2059,6 +2116,7 @@ fun ComposeScreen(
         val snap_bcc = bcc_chips.toList()
         val snap_subject = subject
         val snap_from = from_alias
+        val snap_force_pgp = pgp_override
 
         if (snap_to.size > max_recipients_per_field ||
             snap_cc.size > max_recipients_per_field ||
@@ -2273,6 +2331,8 @@ fun ComposeScreen(
                     draft_id = current_draft_id.takeIf { it.isNotBlank() },
                     allow_non_post_quantum = allow_non_post_quantum,
                     reply_to_id = if (mode == "reply" || mode == "reply_all") reply_to?.takeIf { it.isNotBlank() } else null,
+                    force_pgp = snap_force_pgp,
+                    pgp_recipients = snap_pgp_recipients,
                 )
                 is_sending = false
                 send_lock.set(false)
@@ -2299,6 +2359,8 @@ fun ComposeScreen(
                     snap_from,
                     suppress_branding,
                     allow_non_post_quantum,
+                    snap_force_pgp,
+                    snap_pgp_recipients,
                 )
             }
         }
@@ -2519,6 +2581,9 @@ fun ComposeScreen(
                 chip_input(
                     chips = to_chips,
                     show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
+                    lock_status_for = ::chip_lock_status,
+                    pgp_override = pgp_override,
+                    on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                     input = to_input,
                     focus_requester = to_focus_requester,
                     on_input_change = { value ->
@@ -2562,6 +2627,9 @@ fun ComposeScreen(
                     chip_input(
                         chips = cc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
+                        lock_status_for = ::chip_lock_status,
+                        pgp_override = pgp_override,
+                        on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                         input = cc_input,
                         on_input_change = { value ->
                             val result = parse_chips(value)
@@ -2593,6 +2661,9 @@ fun ComposeScreen(
                     chip_input(
                         chips = bcc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
+                        lock_status_for = ::chip_lock_status,
+                        pgp_override = pgp_override,
+                        on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                         input = bcc_input,
                         on_input_change = { value ->
                             val result = parse_chips(value)
@@ -3331,6 +3402,7 @@ fun ComposeScreen(
                 date_picker.datePicker.maxDate =
                     org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
             }
+            date_picker.with_account_week_start()
             date_picker.setOnCancelListener {
                 show_schedule_picker = false
                 scheduled_send = false
@@ -3707,6 +3779,9 @@ private fun chip_input(
     on_suggestion_pick: ((String) -> Unit)? = null,
     focus_requester: androidx.compose.ui.focus.FocusRequester? = null,
     show_encryption_indicator: Boolean = true,
+    lock_status_for: (String) -> RecipientLockStatus = { RecipientLockStatus.TRANSIT },
+    pgp_override: Boolean? = null,
+    on_toggle_pgp: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val query = org.astermail.android.ui.search.fold_text(input.trim())
@@ -3746,7 +3821,13 @@ private fun chip_input(
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
         ) {
             chips.forEachIndexed { idx, chip ->
-                recipient_chip(chip, show_encryption_indicator) { on_remove(idx) }
+                recipient_chip(
+                    text = chip,
+                    show_encryption_indicator = show_encryption_indicator,
+                    lock_status = lock_status_for(chip),
+                    pgp_override = pgp_override,
+                    on_toggle_pgp = on_toggle_pgp,
+                ) { on_remove(idx) }
             }
             BasicTextField(
                 value = input,
@@ -3960,15 +4041,32 @@ private fun derive_contact_name(email: String): String {
 private fun is_internal_email(email: String): Boolean =
     org.astermail.android.mail.is_internal_recipient(email)
 
-private enum class EncryptionLevel { END_TO_END, IN_TRANSIT }
+private fun lock_title_res(status: RecipientLockStatus): Int = when (status) {
+    RecipientLockStatus.ENCRYPTED -> R.string.end_to_end_encrypted
+    RecipientLockStatus.UNKNOWN -> R.string.encryption_status_unknown
+    RecipientLockStatus.KEY_INVALID -> R.string.recipient_key_outdated
+    RecipientLockStatus.AVAILABLE -> R.string.encryption_available
+    RecipientLockStatus.CHECKING, RecipientLockStatus.TRANSIT -> R.string.protected_in_transit
+}
 
-private fun encryption_level_for(email: String): EncryptionLevel {
-    if (is_internal_email(email)) return EncryptionLevel.END_TO_END
-    return EncryptionLevel.IN_TRANSIT
+private fun lock_description_res(status: RecipientLockStatus, internal: Boolean): Int = when (status) {
+    RecipientLockStatus.ENCRYPTED ->
+        if (internal) R.string.e2e_recipient_description else R.string.recipient_published_key_description
+    RecipientLockStatus.UNKNOWN -> R.string.encryption_status_unknown_description
+    RecipientLockStatus.KEY_INVALID -> R.string.recipient_key_outdated_description
+    RecipientLockStatus.AVAILABLE -> R.string.encryption_available_description
+    RecipientLockStatus.CHECKING, RecipientLockStatus.TRANSIT -> R.string.transit_recipient_description
 }
 
 @Composable
-private fun recipient_chip(text: String, show_encryption_indicator: Boolean = true, on_remove: () -> Unit) {
+private fun recipient_chip(
+    text: String,
+    show_encryption_indicator: Boolean = true,
+    lock_status: RecipientLockStatus = RecipientLockStatus.TRANSIT,
+    pgp_override: Boolean? = null,
+    on_toggle_pgp: () -> Unit = {},
+    on_remove: () -> Unit,
+) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val contacts_vm: ContactsViewModel = hiltViewModel()
@@ -3978,9 +4076,25 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
     val saved_contact = remember(normalized, contacts_state.contacts) {
         contacts_state.contacts.firstOrNull { it.email.equals(normalized, ignoreCase = true) }
     }
-    val level = encryption_level_for(text)
-    val is_encrypted = level == EncryptionLevel.END_TO_END
-    val accent = if (is_encrypted) colors.accent_blue else colors.text_muted
+    val is_internal = remember(normalized) { is_internal_email(normalized) }
+    val toggleable = lock_status == RecipientLockStatus.AVAILABLE
+    val effective = RecipientEncryptionRules.effective_status(lock_status, pgp_override, toggleable)
+    val pgp_active = pgp_override == true
+    val accent = when (effective) {
+        RecipientLockStatus.ENCRYPTED -> colors.accent_blue
+        RecipientLockStatus.KEY_INVALID, RecipientLockStatus.UNKNOWN -> colors.warning
+        else -> colors.text_muted
+    }
+    val lock_alpha = when {
+        lock_status == RecipientLockStatus.CHECKING -> 0.4f
+        toggleable && !pgp_active -> 0.7f
+        else -> 1f
+    }
+    val lock_label = when {
+        toggleable && pgp_active -> stringResource(R.string.tap_to_turn_off_encryption)
+        toggleable -> stringResource(R.string.tap_to_encrypt)
+        else -> stringResource(lock_title_res(effective))
+    }
     var show_tooltip by remember { mutableStateOf(false) }
     var menu_open by remember { mutableStateOf(false) }
     Box {
@@ -3997,13 +4111,15 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .clickable { show_tooltip = !show_tooltip },
+                        .clickable(enabled = lock_status != RecipientLockStatus.CHECKING) {
+                            if (toggleable) on_toggle_pgp() else show_tooltip = !show_tooltip
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = TablerIcons.Lock,
-                        contentDescription = if (is_encrypted) stringResource(R.string.end_to_end_encrypted) else stringResource(R.string.protected_in_transit),
-                        tint = accent,
+                        contentDescription = lock_label,
+                        tint = accent.copy(alpha = accent.alpha * lock_alpha),
                         modifier = Modifier.size(14.dp),
                     )
                 }
@@ -4107,11 +4223,8 @@ private fun recipient_chip(text: String, show_encryption_indicator: Boolean = tr
     if (show_tooltip) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { show_tooltip = false },
-            title = if (is_encrypted) stringResource(R.string.end_to_end_encrypted) else stringResource(R.string.protected_in_transit),
-            message = if (is_encrypted)
-                stringResource(R.string.e2e_recipient_description)
-            else
-                stringResource(R.string.transit_recipient_description),
+            title = stringResource(lock_title_res(effective)),
+            message = stringResource(lock_description_res(effective, is_internal)),
             footer = {
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.done),
@@ -5120,6 +5233,7 @@ internal fun ExpiringSheet(
             calendar.get(java.util.Calendar.DAY_OF_MONTH),
         )
         date_picker.datePicker.minDate = System.currentTimeMillis()
+        date_picker.with_account_week_start()
         date_picker.show()
     }
     val commit_or_close: () -> Unit = commit@{

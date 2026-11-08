@@ -265,7 +265,7 @@ fun contact_to_vcard(contact: Contact): String {
     }
     if (contact.company.isNotBlank()) push("ORG:${escape_vcard(contact.company)}")
     if (contact.title.isNotBlank()) push("TITLE:${escape_vcard(contact.title)}")
-    if (contact.birthday.isNotBlank()) push("BDAY:${escape_vcard(contact.birthday)}")
+    if (contact.birthday.isNotBlank()) push("BDAY:${escape_vcard(ContactDates.vcard_value(contact.birthday, false))}")
 
     for (postal in contact.address_entries()) {
         val (type_param, label) = vcard_type_for(postal.type, postal.label, ADDRESS_TYPE_PARAMS)
@@ -477,7 +477,10 @@ fun parse_vcards(raw_text: String): List<Contact> {
             "X-ABLABEL" -> if (parsed.group.isNotEmpty()) ab_labels[parsed.group] = value
             "ORG" -> fields["company"] = split_vcard_value(parsed.value).firstOrNull().orEmpty().trim()
             "TITLE" -> fields["title"] = value
-            "BDAY" -> fields["birthday"] = value
+            "BDAY" -> fields["birthday"] = ContactDates.normalize(
+                value,
+                param_value(parsed.params, "X-APPLE-OMIT-YEAR").ifBlank { null },
+            )
             "ADR" -> {
                 val parts = split_vcard_value(parsed.value)
                 val street = listOf(parts.getOrNull(1).orEmpty(), parts.getOrNull(2).orEmpty())

@@ -82,7 +82,13 @@ import org.astermail.android.api.send.SimpleSendResponse
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.astermail.android.api.keys.ExternalKeyInfo
 import org.astermail.android.crypto.ClientPgpCopies
+import org.astermail.android.crypto.ClientPgpCopyOutcome
+import org.astermail.android.crypto.RecipientEncryption
+import org.astermail.android.crypto.RecipientEncryptionRules
+import org.astermail.android.crypto.SentEncryptionEvidenceRules
+import org.astermail.android.crypto.SentEncryptionScope
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.DetachedSignature
 import org.astermail.android.crypto.ExternalPgpKeyCodec
@@ -264,6 +270,7 @@ data class DecryptedEnvelope(
         org.astermail.android.crypto.PgpSignatureStatus.NONE,
     val draft_attachments: List<ExternalAttachmentPayload> = emptyList(),
     val is_decrypt_pending: Boolean = false,
+    val sent_encryption_scope: SentEncryptionScope? = null,
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -521,6 +528,7 @@ data class ThreadMessageDecrypted(
     val draft_attachments: List<DraftAttachmentFile> = emptyList(),
     val sender_verification: String? = null,
     val pending_send_at_ms: Long? = null,
+    val sent_encryption_scope: SentEncryptionScope? = null,
 )
 
 @Singleton
@@ -1386,6 +1394,8 @@ class MailRepository @Inject constructor(
         draft_id: String? = null,
         allow_non_post_quantum: Boolean = false,
         reply_to_id: String? = null,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
@@ -1435,6 +1445,8 @@ class MailRepository @Inject constructor(
                     draft_id = draft_id,
                     allow_non_post_quantum = allow_non_post_quantum,
                     reply_to_id = reply_to_id,
+                    force_pgp = force_pgp,
+                    pgp_recipients = pgp_recipients,
                 )
             }
         }
@@ -1490,6 +1502,8 @@ class MailRepository @Inject constructor(
         draft_id: String?,
         allow_non_post_quantum: Boolean = false,
         reply_to_id: String? = null,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
     ): String {
         val already_queued = draft_id?.takeIf { it.isNotBlank() }?.let { existing_draft_id ->
             pending_rows_for_current_account()?.firstOrNull { queued ->
@@ -1521,6 +1535,8 @@ class MailRepository @Inject constructor(
             created_at_ms = now,
             account_id = session_key_store.get_user_id(),
             allow_non_post_quantum = allow_non_post_quantum,
+            force_pgp = force_pgp,
+            pgp_recipients_json = pgp_recipients.takeIf { it.isNotEmpty() }?.let { outbox_json.encodeToString(it) },
         )
         pending_send_dao.upsert(row)
         if (clear_undo_canceled(pending_id)) {
@@ -1751,6 +1767,8 @@ class MailRepository @Inject constructor(
             suppress_branding = row.suppress_branding,
             allow_non_post_quantum = row.allow_non_post_quantum,
             client_send_id = client_send_id_for(pending_id),
+            force_pgp = row.force_pgp,
+            pgp_recipients = row.pgp_recipients_json?.let { decode_outbox_recipients(outbox_json, it, "pgp_recipients") }.orEmpty(),
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -4160,6 +4178,7 @@ class MailRepository @Inject constructor(
             pgp_signature = envelope?.pgp_signature
                 ?: org.astermail.android.crypto.PgpSignatureStatus.NONE,
             sender_verification = envelope?.sender_verification,
+            sent_encryption_scope = envelope?.sent_encryption_scope,
         )
     }
 
@@ -4214,8 +4233,8 @@ class MailRepository @Inject constructor(
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
-        var envelope_pgp_encrypted = false
         var envelope_pgp_signature = org.astermail.android.crypto.PgpSignatureStatus.NONE
+        var envelope_own_seal_verified = false
         return try {
             if (base_envelope != null) {
                 return if (decrypt_body_fields) {
@@ -4234,12 +4253,14 @@ class MailRepository @Inject constructor(
                     if (body_starts_with(text, "-----BEGIN PGP")) {
                         val armored_is_encrypted =
                             body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
-                        val pgp_result = try_pgp_decrypt_own_result(text)
+                        val own_result = try_pgp_decrypt_own_result(text)
+                        val pgp_result = own_result
                             ?: if (allow_external_pgp) try_external_pgp_decrypt(text, null) else null
                         val pgp_plaintext = pgp_result?.plaintext
                         if (pgp_plaintext != null) {
-                            envelope_pgp_encrypted = armored_is_encrypted
                             envelope_pgp_signature = pgp_result.signature
+                            envelope_own_seal_verified = own_result?.plaintext != null &&
+                                own_result.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
                             if (MimeParser.looks_like_mime(pgp_plaintext)) {
                                 val mime = MimeParser.parse(pgp_plaintext)
                                 return DecryptedEnvelope(
@@ -4290,10 +4311,16 @@ class MailRepository @Inject constructor(
                     envelope
                 }
             }
-            val carried = if (envelope_pgp_encrypted || envelope_pgp_signature != org.astermail.android.crypto.PgpSignatureStatus.NONE) {
+            val sent_scope = if (envelope_own_seal_verified) {
+                SentEncryptionEvidenceRules.scope_from_envelope_json(json_str)
+            } else {
+                null
+            }
+            val carried = if (envelope_pgp_signature != org.astermail.android.crypto.PgpSignatureStatus.NONE || sent_scope != null) {
                 parsed?.copy(
-                    pgp_encrypted = envelope_pgp_encrypted,
+                    pgp_encrypted = false,
                     pgp_signature = envelope_pgp_signature,
+                    sent_encryption_scope = sent_scope,
                 )
             } else {
                 parsed
@@ -5263,6 +5290,35 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private suspend fun discover_keys_in_batches(recipients: List<String>): List<ExternalKeyInfo> =
+        recipients
+            .map { it.trim().lowercase() }
+            .distinct()
+            .chunked(RecipientEncryptionRules.DISCOVERY_BATCH_SIZE)
+            .flatMap { keys_api.discover_external_keys_batch(it) }
+
+    private fun pgp_copy_failure(
+        explicit: Boolean,
+        listed: Boolean,
+        too_large: Boolean,
+        require_encryption: Boolean,
+    ): Map<String, String>? {
+        if (!RecipientEncryptionRules.copy_failure_throws(explicit, listed, too_large, require_encryption)) return null
+        throw pgp_copy_exception(too_large)
+    }
+
+    private fun pgp_copy_exception(too_large: Boolean): EncryptionRequiredException =
+        EncryptionRequiredException(
+            if (too_large) {
+                context.getString(
+                    R.string.send_pgp_attachments_too_large,
+                    "${ClientPgpCopies.MAX_COPY_ATTACHMENT_BYTES / (1024L * 1024L)} MB",
+                )
+            } else {
+                context.getString(R.string.send_pgp_encrypt_failed)
+            },
+        )
+
     private suspend fun build_client_pgp_copies(
         subject: String,
         body_html: String,
@@ -5273,24 +5329,62 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
         expires_at: String?,
         expiry_password: String?,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+        require_encryption: Boolean,
     ): Map<String, String>? {
-        if (expires_at != null || !expiry_password.isNullOrEmpty() || from.isBlank()) return null
         val outside = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
         if (outside.isEmpty()) return null
+        val listed = outside.any { RecipientEncryptionRules.is_listed(it, pgp_recipients) }
+        if (expires_at != null || !expiry_password.isNullOrEmpty() || from.isBlank()) {
+            if (RecipientEncryptionRules.skipped_copies_throw(listed, require_encryption)) {
+                throw pgp_copy_exception(too_large = false)
+            }
+            return null
+        }
+        if (!RecipientEncryptionRules.wants_copies(force_pgp, require_encryption, pgp_recipients)) return null
+        val explicit = RecipientEncryptionRules.is_explicit(force_pgp, require_encryption, listed)
         val attachment_bytes = attachments.sumOf { it.size_bytes }
-        if (attachment_bytes > ClientPgpCopies.MAX_COPY_ATTACHMENT_BYTES) return null
-        return try {
-            val discovered = keys_api.discover_external_keys_batch(outside)
-            val recipient_keys = ClientPgpCopies.recipient_keys(outside, discovered) ?: return null
+        if (attachment_bytes > ClientPgpCopies.MAX_COPY_ATTACHMENT_BYTES) {
+            return pgp_copy_failure(explicit, listed, too_large = true, require_encryption)
+        }
+        val discovered = try {
+            discover_keys_in_batches(outside)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            return pgp_copy_failure(explicit, listed, too_large = false, require_encryption)
+        }
+        val by_address = discovered.associateBy { RecipientEncryptionRules.normalize(it.email) }
+        val recipient_keys = LinkedHashMap<String, String>()
+        for (recipient in outside) {
+            val info = by_address[RecipientEncryptionRules.normalize(recipient)]
+            val decision = RecipientEncryptionRules.decide(
+                info,
+                force_pgp,
+                require_encryption,
+                RecipientEncryptionRules.is_listed(recipient, pgp_recipients),
+            )
+            when (decision) {
+                RecipientEncryption.SERVER -> throw pgp_copy_exception(too_large = false)
+                RecipientEncryption.PLAIN -> return pgp_copy_failure(listed, listed, too_large = false, require_encryption)
+                RecipientEncryption.ENCRYPT -> recipient_keys[recipient] = info!!.public_key!!
+            }
+        }
+        val outcome = try {
             val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
             val entity = sign_mime_bytes(mime_bytes, from)
                 ?.let { ClientPgpCopies.build_signed_mime_entity(mime_bytes, it.signature, it.micalg) }
                 ?: mime_bytes
-            ClientPgpCopies.encrypt_copies(entity, recipient_keys, attachment_bytes)
+            ClientPgpCopies.encrypt_copies_outcome(entity, recipient_keys, attachment_bytes)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
-            null
+            ClientPgpCopyOutcome.Failed(too_large = false)
+        }
+        return when (outcome) {
+            is ClientPgpCopyOutcome.Copies -> outcome.copies
+            is ClientPgpCopyOutcome.Failed -> pgp_copy_failure(explicit, listed, outcome.too_large, require_encryption)
         }
     }
 
@@ -5725,6 +5819,16 @@ class MailRepository @Inject constructor(
         lookup
     }
 
+    suspend fun recipient_lock_statuses(
+        outside_recipients: List<String>,
+    ): Map<String, org.astermail.android.crypto.RecipientLockStatus> =
+        RecipientEncryptionRules.lookup_lock_statuses(
+            outside_recipients = outside_recipients,
+            now_ms = { System.currentTimeMillis() },
+            wait = { kotlinx.coroutines.delay(it) },
+            discover = { discover_keys_in_batches(it) },
+        )
+
     fun prefetch_external_key_trust(recipients: List<String>) {
         val external = external_key_trust_candidates(recipients)
         if (external.isEmpty() || key_trust_cache.fresh_changes(external) != null) return
@@ -5771,12 +5875,18 @@ class MailRepository @Inject constructor(
 
     private val last_known_require_encryption = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
-    private suspend fun require_outside_recipient_keys(recipients: List<String>) {
+    private suspend fun require_outside_recipient_keys(
+        recipients: List<String>,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+    ) {
         val outside = ClientPgpCopies.outside_recipients(recipients, ::is_internal_recipient)
         if (outside.isEmpty()) return
-        val missing = ClientPgpCopies.recipients_without_keys(
+        val missing = RecipientEncryptionRules.recipients_failing_required_encryption(
             outside,
-            keys_api.discover_external_keys_batch(outside),
+            discover_keys_in_batches(outside),
+            force_pgp,
+            pgp_recipients,
         )
         if (missing.isNotEmpty()) {
             throw EncryptionRequiredException(
@@ -5828,24 +5938,47 @@ class MailRepository @Inject constructor(
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
         client_send_id: String? = null,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
     ): Result<SimpleSendResponse> = runCatching {
         val is_mixed = has_mixed_recipients(to + cc + bcc)
         if (is_mixed && !expiry_password.isNullOrEmpty()) throw MixedRecipientsPasswordException()
-        if (has_external_recipient(to + cc + bcc) && require_encryption_enabled()) {
+        val require_encryption = has_external_recipient(to + cc + bcc) && require_encryption_enabled()
+        if (require_encryption) {
             if (expires_at != null || !expiry_password.isNullOrEmpty()) {
                 throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
             }
-            require_outside_recipient_keys(to + cc + bcc)
+            require_outside_recipient_keys(to + cc + bcc, force_pgp, pgp_recipients)
         }
-        val envelope = build_envelope_json(
-            subject = subject,
-            body_html = body_html,
-            from_email = sender_email.orEmpty(),
-            from_name = sender_display_name.orEmpty(),
-            to = to,
-            cc = cc,
-        )
-        val (encrypted_envelope, envelope_nonce) = encrypt_sent_envelope(envelope)
+        val outside_recipients = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
+        val listed_pgp_recipients = outside_recipients
+            .filter { RecipientEncryptionRules.is_listed(it, pgp_recipients) }
+            .map { RecipientEncryptionRules.normalize(it) }
+            .distinct()
+        suspend fun sealed_sent_envelope(
+            client_copies: Map<String, String>?,
+            internal_copy_is_encrypted: Boolean,
+        ): Pair<String, String> {
+            val evidence = SentEncryptionEvidenceRules.build(
+                all_recipients = to + cc + bcc,
+                outside_recipients = outside_recipients,
+                client_copies = client_copies,
+                internal_copy_is_encrypted = internal_copy_is_encrypted,
+            )
+            val envelope = SentEncryptionEvidenceRules.with_evidence(
+                build_envelope_json(
+                    subject = subject,
+                    body_html = body_html,
+                    from_email = sender_email.orEmpty(),
+                    from_name = sender_display_name.orEmpty(),
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                ),
+                evidence,
+            )
+            return encrypt_sent_envelope(envelope)
+        }
         val recipient_body_html = with_cid_image_references(body_html, attachments)
 
         val sent_folder_token = resolve_sent_folder_token()
@@ -5885,7 +6018,11 @@ class MailRepository @Inject constructor(
                 attachments = attachments,
                 expires_at = expires_at,
                 expiry_password = null,
+                force_pgp = force_pgp,
+                pgp_recipients = listed_pgp_recipients,
+                require_encryption = require_encryption,
             )
+            val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val mixed_attachments = if (attachments.isNotEmpty()) {
                 build_mixed_attachments(
                     shared_internal + hidden_bcc,
@@ -5935,6 +6072,8 @@ class MailRepository @Inject constructor(
                     signed_mime_micalg = signed_payload?.micalg,
                     client_send_id = client_send_id,
                     external_pgp_bodies = client_copies,
+                    force_pgp = force_pgp,
+                    pgp_recipients = listed_pgp_recipients.takeIf { it.isNotEmpty() },
                 ),
             )
             val mail_item_id = await_queued_send(queued.queue_id)
@@ -5977,7 +6116,11 @@ class MailRepository @Inject constructor(
                 attachments = attachments,
                 expires_at = expires_at,
                 expiry_password = expiry_password,
+                force_pgp = force_pgp,
+                pgp_recipients = listed_pgp_recipients,
+                require_encryption = require_encryption,
             )
+            val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
             val encrypted_subject = encrypt_field(
                 if (client_copies != null) "" else subject,
@@ -6027,6 +6170,10 @@ class MailRepository @Inject constructor(
                     signed_mime_signature = signed_payload?.signature,
                     signed_mime_micalg = signed_payload?.micalg,
                     external_pgp_bodies = client_copies,
+                    force_pgp = force_pgp.takeIf { expiry_password.isNullOrEmpty() },
+                    pgp_recipients = listed_pgp_recipients.takeIf {
+                        it.isNotEmpty() && expiry_password.isNullOrEmpty()
+                    },
                 ),
             )
             val sent_item_id = result.mail_item_id
@@ -6067,6 +6214,10 @@ class MailRepository @Inject constructor(
 
             val final_body = ratchet_body ?: recipient_body_html
             val final_subject = if (ratchet_body != null) "" else subject
+            val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(
+                client_copies = null,
+                internal_copy_is_encrypted = ratchet_body != null,
+            )
 
             val internal_attachments = if (attachments.isNotEmpty()) {
                 build_internal_attachments(

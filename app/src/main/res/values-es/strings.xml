@@ -1012,7 +1012,6 @@
     <string name="remove_payment_failed">No se pudo eliminar el método de pago</string>
     <string name="no_device_contacts">No se encontraron contactos en el dispositivo</string>
     <string name="no_new_contacts">No hay contactos nuevos para importar</string>
-    <string name="contact_limit_reached">Has alcanzado el límite de contactos. Mejora tu plan para importar el resto.</string>
 
     <string name="privacy">Privacidad</string>
     <string name="tracking">Seguimiento</string>
@@ -1842,7 +1841,6 @@
     <string name="upgrade_perk_features">Filtros, plantillas, firmas y más</string>
     <string name="upgrade_resource_aliases">alias</string>
     <string name="upgrade_resource_domains">dominios</string>
-    <string name="upgrade_resource_contacts">contactos</string>
     <string name="upgrade_resource_templates">plantillas</string>
     <string name="upgrade_resource_signatures">firmas</string>
     <string name="upgrade_resource_filters">filtros</string>
@@ -3554,4 +3552,22 @@
     <string name="external_pgp_key_manage_note">Para importar, reemplazar o eliminar esta clave, usa Aster Mail en la web o la app de escritorio.</string>
     <string name="external_pgp_key_unpublished">Tu clave importada ya no está publicada.</string>
     <string name="external_pgp_key_unpublish_failed">No se pudo dejar de publicar tu clave. Inténtalo de nuevo.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail no pudo cifrar este correo con la clave PGP del destinatario. Tu borrador está guardado, así que puedes volver a intentarlo.</string>
+    <string name="send_pgp_attachments_too_large">Estos archivos adjuntos son demasiado grandes para cifrarlos con la clave PGP del destinatario. Para enviar este correo, mantén los adjuntos por debajo de %1$s en total. Tu borrador está guardado.</string>
+    <string name="send_scheduled_no_pgp">Los correos programados a direcciones externas no pueden usar cifrado PGP. Para cifrar este correo, envíalo ahora.</string>
+    <string name="send_expiry_no_pgp">Los correos con caducidad a direcciones externas no pueden usar cifrado PGP. Para cifrar este correo con PGP, quita la caducidad.</string>
+    <string name="encryption_status_unknown">Estado de cifrado no disponible</string>
+    <string name="encryption_status_unknown_description">Aster Mail no pudo comprobar las claves de este destinatario, así que no sabe si este correo se puede cifrar de extremo a extremo. Comprueba tu conexión y vuelve a intentarlo.</string>
+    <string name="recipient_key_outdated">La clave del destinatario está desactualizada</string>
+    <string name="recipient_key_outdated_description">La clave publicada de este destinatario ha caducado o no es válida, así que este correo no se puede cifrar de extremo a extremo. Solo está protegido en tránsito.</string>
+    <string name="encryption_available">Cifrado disponible</string>
+    <string name="encryption_available_description">Este destinatario publica una clave de cifrado válida. Para cifrar este correo de extremo a extremo, toca el candado.</string>
+    <string name="recipient_published_key_description">Cifrado con la clave pública publicada del destinatario.</string>
+    <string name="tap_to_encrypt">Toca para cifrar este correo de extremo a extremo</string>
+    <string name="tap_to_turn_off_encryption">Cifrado. Toca para desactivar el cifrado de este correo.</string>
+    <string name="contact_birthday_month">Mes</string>
+    <string name="contact_birthday_day">Día</string>
+    <string name="contact_birthday_year_optional">Año (opcional)</string>
+    <string name="contact_birthday_year_hint">Para guardar solo el mes y el día, deja el año en blanco.</string>
+    <string name="contact_birthday_year_invalid">Introduce un año de 4 dígitos o deja el año en blanco.</string>
 </resources>

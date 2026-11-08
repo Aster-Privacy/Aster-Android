@@ -1407,7 +1407,6 @@
     <string name="remove_payment_failed">भुगतान का तरीका हटाया नहीं जा सका</string>
     <string name="no_device_contacts">डिवाइस पर कोई संपर्क नहीं मिला</string>
     <string name="no_new_contacts">इंपोर्ट करने के लिए कोई नया संपर्क नहीं</string>
-    <string name="contact_limit_reached">आप अपनी संपर्क सीमा तक पहुँच गए हैं। बाकी आयात करने के लिए अपना प्लान अपग्रेड करें।</string>
     <string name="privacy">निजता</string>
     <string name="tracking">ट्रैकिंग</string>
     <string name="block_tracking_pixels_privacy">ट्रैकिंग पिक्सेल रोकें</string>
@@ -1733,7 +1732,6 @@
     <string name="upgrade_perk_features">फ़िल्टर, टेम्पलेट, हस्ताक्षर और बहुत कुछ</string>
     <string name="upgrade_resource_aliases">एलियास</string>
     <string name="upgrade_resource_domains">डोमेन</string>
-    <string name="upgrade_resource_contacts">संपर्क</string>
     <string name="upgrade_resource_templates">टेम्पलेट</string>
     <string name="upgrade_resource_signatures">हस्ताक्षर</string>
     <string name="upgrade_resource_filters">फ़िल्टर</string>
@@ -3426,4 +3424,22 @@
     <string name="external_pgp_key_manage_note">इस कुंजी को आयात करने, बदलने या हटाने के लिए वेब पर Aster Mail या डेस्कटॉप ऐप इस्तेमाल करें।</string>
     <string name="external_pgp_key_unpublished">आपकी आयात की गई कुंजी अब प्रकाशित नहीं है।</string>
     <string name="external_pgp_key_unpublish_failed">आपकी कुंजी का प्रकाशन बंद नहीं हो सका। फिर से कोशिश करें।</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail इस ईमेल को प्राप्तकर्ता की PGP कुंजी से एन्क्रिप्ट नहीं कर सका। आपका ड्राफ़्ट सहेजा गया है, इसलिए आप फिर से कोशिश कर सकते हैं।</string>
+    <string name="send_pgp_attachments_too_large">ये अटैचमेंट प्राप्तकर्ता की PGP कुंजी से एन्क्रिप्ट करने के लिए बहुत बड़े हैं। यह ईमेल भेजने के लिए, अटैचमेंट का कुल आकार %1$s से कम रखें। आपका ड्राफ़्ट सहेजा गया है।</string>
+    <string name="send_scheduled_no_pgp">बाहरी पतों पर शेड्यूल किए गए ईमेल PGP एन्क्रिप्शन का उपयोग नहीं कर सकते। इस ईमेल को एन्क्रिप्ट करने के लिए, इसे अभी भेजें।</string>
+    <string name="send_expiry_no_pgp">बाहरी पतों पर समाप्त होने वाले ईमेल PGP एन्क्रिप्शन का उपयोग नहीं कर सकते। इस ईमेल को PGP से एन्क्रिप्ट करने के लिए, समाप्ति हटाएँ।</string>
+    <string name="encryption_status_unknown">एन्क्रिप्शन स्थिति उपलब्ध नहीं है</string>
+    <string name="encryption_status_unknown_description">Aster Mail इस प्राप्तकर्ता की कुंजियाँ जाँच नहीं सका, इसलिए यह पता नहीं है कि यह ईमेल एंड-टू-एंड एन्क्रिप्ट हो सकता है या नहीं। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
+    <string name="recipient_key_outdated">प्राप्तकर्ता की कुंजी पुरानी है</string>
+    <string name="recipient_key_outdated_description">इस प्राप्तकर्ता की प्रकाशित कुंजी समाप्त या अमान्य है, इसलिए यह ईमेल एंड-टू-एंड एन्क्रिप्ट नहीं हो सकता। यह केवल ट्रांज़िट में सुरक्षित है।</string>
+    <string name="encryption_available">एन्क्रिप्शन उपलब्ध है</string>
+    <string name="encryption_available_description">यह प्राप्तकर्ता एक उपयोग योग्य एन्क्रिप्शन कुंजी प्रकाशित करता है। इस ईमेल को एंड-टू-एंड एन्क्रिप्ट करने के लिए, लॉक पर टैप करें।</string>
+    <string name="recipient_published_key_description">प्राप्तकर्ता की प्रकाशित सार्वजनिक कुंजी से एन्क्रिप्ट किया गया।</string>
+    <string name="tap_to_encrypt">इस ईमेल को एंड-टू-एंड एन्क्रिप्ट करने के लिए टैप करें</string>
+    <string name="tap_to_turn_off_encryption">एन्क्रिप्ट किया गया। इस ईमेल का एन्क्रिप्शन बंद करने के लिए टैप करें।</string>
+    <string name="contact_birthday_month">महीना</string>
+    <string name="contact_birthday_day">दिन</string>
+    <string name="contact_birthday_year_optional">वर्ष (वैकल्पिक)</string>
+    <string name="contact_birthday_year_hint">केवल महीना और दिन सहेजने के लिए, वर्ष खाली छोड़ें।</string>
+    <string name="contact_birthday_year_invalid">4 अंकों का वर्ष दर्ज करें, या वर्ष खाली छोड़ें।</string>
 </resources>

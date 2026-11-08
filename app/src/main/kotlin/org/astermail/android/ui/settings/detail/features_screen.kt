@@ -132,7 +132,7 @@ private fun build_features(): List<feature_row> = listOf(
     row(R.string.settings_feat_smart_folders, no_cell, no_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_advanced_search, yes_cell, yes_cell, yes_cell, yes_cell),
     row(R.string.settings_feat_search_history, days(30), one_year, unlimited, unlimited),
-    row(R.string.settings_feat_contacts, count(150), unlimited, unlimited, unlimited),
+    row(R.string.settings_feat_contacts, unlimited, unlimited, unlimited, unlimited),
     row(R.string.settings_feat_contact_groups, yes_cell, yes_cell, yes_cell, yes_cell),
 
     category(R.string.settings_cat_security),

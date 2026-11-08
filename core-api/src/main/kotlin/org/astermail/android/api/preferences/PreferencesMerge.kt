@@ -72,6 +72,10 @@ val web_preference_key_aliases = mapOf(
     "folder_lock_mode" to "protected_folder_lock_mode",
 )
 
+val read_only_preference_keys = setOf(
+    "calendar_week_starts_on",
+)
+
 val fallback_preference_key_aliases = mapOf(
     "send_read_receipts" to "show_read_receipts",
 )
@@ -134,11 +138,15 @@ fun encode_preferences_preserving_unknown(
     val known = json.encodeToJsonElement(UserPreferences.serializer(), prefs).jsonObject
     val original = original_json_str
         ?.let { runCatching { json.parseToJsonElement(it).jsonObject }.getOrNull() }
-        ?: return json.encodeToString(JsonObject.serializer(), known)
+        ?: return json.encodeToString(
+            JsonObject.serializer(),
+            JsonObject(known.filterKeys { it !in read_only_preference_keys }),
+        )
     val known_keys = known.keys
     val merged = buildJsonObject {
         for ((k, v) in original) if (k !in known_keys) put(k, v)
-        for ((k, v) in known) put(k, v)
+        for ((k, v) in known) if (k !in read_only_preference_keys) put(k, v)
+        for (k in read_only_preference_keys) original[k]?.let { put(k, it) }
         preserved_font_size_scale(known, original)?.let { put(FONT_SIZE_SCALE_KEY, it) }
         for ((own_key, web_key) in web_preference_key_aliases) {
             val v = known[own_key] ?: continue

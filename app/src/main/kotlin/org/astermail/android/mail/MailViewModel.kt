@@ -5622,6 +5622,11 @@ class MailViewModel @Inject constructor(
         recipients: List<String>,
     ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
 
+    suspend fun recipient_lock_statuses(
+        outside_recipients: List<String>,
+    ): Map<String, org.astermail.android.crypto.RecipientLockStatus> =
+        repository.recipient_lock_statuses(outside_recipients)
+
     fun prefetch_external_key_trust(recipients: List<String>) =
         repository.prefetch_external_key_trust(recipients)
 
@@ -5644,6 +5649,8 @@ class MailViewModel @Inject constructor(
         sender_alias_hash: String? = null,
         suppress_branding: Boolean? = null,
         allow_non_post_quantum: Boolean = false,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
     ): Result<org.astermail.android.api.send.SimpleSendResponse> = repository.durable_async {
         val result = repository.send_email(
             to = to,
@@ -5660,6 +5667,8 @@ class MailViewModel @Inject constructor(
             sender_alias_hash = sender_alias_hash,
             suppress_branding = suppress_branding,
             allow_non_post_quantum = allow_non_post_quantum,
+            force_pgp = force_pgp,
+            pgp_recipients = pgp_recipients,
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
@@ -5804,6 +5813,8 @@ class MailViewModel @Inject constructor(
         draft_id: String? = null,
         allow_non_post_quantum: Boolean = false,
         reply_to_id: String? = null,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -5823,6 +5834,8 @@ class MailViewModel @Inject constructor(
             draft_id = draft_id,
             allow_non_post_quantum = allow_non_post_quantum,
             reply_to_id = reply_to_id,
+            force_pgp = force_pgp,
+            pgp_recipients = pgp_recipients,
         )
     }
 

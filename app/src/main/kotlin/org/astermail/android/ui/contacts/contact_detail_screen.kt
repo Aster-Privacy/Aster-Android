@@ -435,7 +435,7 @@ fun ContactDetailScreen(
 
             if (contact.birthday.isNotBlank()) {
                 detail_section(stringResource(R.string.birthday)) {
-                    DetailRow(stringResource(R.string.date), format_contact_date(contact.birthday))
+                    DetailRow(stringResource(R.string.date), contact_date_label(contact.birthday))
                 }
             }
 
@@ -612,12 +612,6 @@ private fun QuickAction(
         )
     }
 }
-
-private fun format_contact_date(value: String): String = runCatching {
-    java.time.LocalDate.parse(value.trim()).format(
-        java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG),
-    )
-}.getOrDefault(value)
 
 @Composable
 private fun detail_section(label: String, content: @Composable ColumnScope.() -> Unit) {

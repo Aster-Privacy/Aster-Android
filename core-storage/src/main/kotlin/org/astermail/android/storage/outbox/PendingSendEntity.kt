@@ -47,4 +47,6 @@ data class PendingSendEntity(
     val sending_started_at_ms: Long = 0,
     val account_id: String? = null,
     val allow_non_post_quantum: Boolean = false,
+    val force_pgp: Boolean? = null,
+    val pgp_recipients_json: String? = null,
 )

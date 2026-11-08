@@ -63,6 +63,7 @@ data class UserPreferences(
     val date_format: String = "MM/DD/YYYY",
     val time_format: String = "auto",
     val relative_dates: Boolean = true,
+    val calendar_week_starts_on: String = "",
     val compose_from_selected_alias: Boolean = false,
     val push_notifications: Boolean = true,
     val sound: Boolean = true,

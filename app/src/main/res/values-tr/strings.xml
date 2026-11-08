@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">Ödeme yöntemi kaldırılamadı</string>
     <string name="no_device_contacts">Cihazda kişi bulunamadı</string>
     <string name="no_new_contacts">İçe aktarılacak yeni kişi yok</string>
-    <string name="contact_limit_reached">Kişi sınırına ulaştınız. Kalanları içe aktarmak için planınızı yükseltin.</string>
 
     <string name="privacy">Gizlilik</string>
     <string name="tracking">İzleme</string>
@@ -1837,7 +1836,6 @@
     <string name="upgrade_perk_features">Filtreler, şablonlar, imzalar ve daha fazlası</string>
     <string name="upgrade_resource_aliases">takma ad</string>
     <string name="upgrade_resource_domains">alan adı</string>
-    <string name="upgrade_resource_contacts">kişi</string>
     <string name="upgrade_resource_templates">şablon</string>
     <string name="upgrade_resource_signatures">imza</string>
     <string name="upgrade_resource_filters">filtre</string>
@@ -3534,4 +3532,22 @@
     <string name="external_pgp_key_manage_note">Bu anahtarı içe aktarmak, değiştirmek veya kaldırmak için web üzerinde Aster Mail\'i ya da masaüstü uygulamasını kullanın.</string>
     <string name="external_pgp_key_unpublished">İçe aktarılan anahtarınız artık yayımlanmıyor.</string>
     <string name="external_pgp_key_unpublish_failed">Anahtarınızın yayımlanması durdurulamadı. Tekrar deneyin.</string>
+    <string name="send_pgp_encrypt_failed">Aster Mail bu e-postayı alıcının PGP anahtarıyla şifreleyemedi. Taslağınız kaydedildi, bu yüzden yeniden deneyebilirsiniz.</string>
+    <string name="send_pgp_attachments_too_large">Bu ekler alıcının PGP anahtarıyla şifrelenemeyecek kadar büyük. Bu e-postayı göndermek için eklerin toplam boyutunu %1$s altında tutun. Taslağınız kaydedildi.</string>
+    <string name="send_scheduled_no_pgp">Harici adreslere zamanlanmış e-postalar PGP şifrelemesi kullanamaz. Bu e-postayı şifrelemek için şimdi gönderin.</string>
+    <string name="send_expiry_no_pgp">Harici adreslere süresi dolan e-postalar PGP şifrelemesi kullanamaz. Bu e-postayı PGP ile şifrelemek için son kullanma süresini kaldırın.</string>
+    <string name="encryption_status_unknown">Şifreleme durumu kullanılamıyor</string>
+    <string name="encryption_status_unknown_description">Aster Mail bu alıcının anahtarlarını kontrol edemedi, bu yüzden bu e-postanın uçtan uca şifrelenip şifrelenemeyeceği bilinmiyor. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="recipient_key_outdated">Alıcının anahtarı güncel değil</string>
+    <string name="recipient_key_outdated_description">Bu alıcının yayımlanmış anahtarının süresi dolmuş veya anahtar geçersiz, bu yüzden bu e-posta uçtan uca şifrelenemez. Yalnızca aktarım sırasında korunur.</string>
+    <string name="encryption_available">Şifreleme kullanılabilir</string>
+    <string name="encryption_available_description">Bu alıcı kullanılabilir bir şifreleme anahtarı yayımlıyor. Bu e-postayı uçtan uca şifrelemek için kilide dokunun.</string>
+    <string name="recipient_published_key_description">Alıcının yayımlanmış genel anahtarıyla şifrelendi.</string>
+    <string name="tap_to_encrypt">Bu e-postayı uçtan uca şifrelemek için dokunun</string>
+    <string name="tap_to_turn_off_encryption">Şifrelendi. Bu e-postanın şifrelemesini kapatmak için dokunun.</string>
+    <string name="contact_birthday_month">Ay</string>
+    <string name="contact_birthday_day">Gün</string>
+    <string name="contact_birthday_year_optional">Yıl (isteğe bağlı)</string>
+    <string name="contact_birthday_year_hint">Yalnızca ayı ve günü kaydetmek için yılı boş bırakın.</string>
+    <string name="contact_birthday_year_invalid">4 haneli bir yıl girin veya yılı boş bırakın.</string>
 </resources>

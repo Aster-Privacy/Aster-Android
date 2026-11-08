@@ -286,13 +286,6 @@ class ContactsViewModel @Inject constructor(
                 val imported = upload.imported
                 val failed = upload.failed
                 val failure = upload.last_failure
-                if (imported == 0 && upload.limit_reached) {
-                    _state.value = _state.value.copy(
-                        is_syncing = false,
-                        error = context.getString(R.string.contact_limit_reached),
-                    )
-                    return@launch
-                }
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_syncing = false,
@@ -312,7 +305,7 @@ class ContactsViewModel @Inject constructor(
                         failed == 0 -> context.getString(R.string.no_new_contacts)
                         else -> null
                     },
-                    error = if (upload.limit_reached) context.getString(R.string.contact_limit_reached) else null,
+                    error = if (imported == 0 && upload.limit_reached) context.getString(R.string.contacts_import_failed) else null,
                 )
                 load_contacts()
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -376,13 +369,6 @@ class ContactsViewModel @Inject constructor(
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
                 val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt()
                 val failure = summary?.last_failure
-                if (imported == 0 && summary != null && summary.limit_reached) {
-                    _state.value = _state.value.copy(
-                        is_transferring = false,
-                        error = context.getString(R.string.contact_limit_reached),
-                    )
-                    return@launch
-                }
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_transferring = false,
@@ -403,8 +389,8 @@ class ContactsViewModel @Inject constructor(
                     } else {
                         context.getString(R.string.no_new_contacts)
                     },
-                    error = if (summary != null && summary.limit_reached) {
-                        context.getString(R.string.contact_limit_reached)
+                    error = if (imported == 0 && summary != null && summary.limit_reached) {
+                        context.getString(R.string.contacts_import_failed)
                     } else {
                         null
                     },

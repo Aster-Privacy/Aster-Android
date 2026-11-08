@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.search
 
+import org.astermail.android.ui.mail.with_account_week_start
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Adjustments
 import compose.icons.tablericons.ChevronDown
@@ -169,7 +170,7 @@ internal fun remember_date_range_picker(
                         end_seed.year,
                         end_seed.monthValue - 1,
                         end_seed.dayOfMonth,
-                    ).apply {
+                    ).with_account_week_start().apply {
                         setTitle(end_title)
                         datePicker.minDate = earliest_end.timeInMillis
                     }.show()
@@ -177,7 +178,7 @@ internal fun remember_date_range_picker(
                 start_seed.year,
                 start_seed.monthValue - 1,
                 start_seed.dayOfMonth,
-            ).apply { setTitle(start_title) }.show()
+            ).with_account_week_start().apply { setTitle(start_title) }.show()
         }
     }
 }

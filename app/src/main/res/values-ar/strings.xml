@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">تعذر إزالة طريقة الدفع</string>
     <string name="no_device_contacts">لم يتم العثور على جهات اتصال على الجهاز</string>
     <string name="no_new_contacts">لا توجد جهات اتصال جديدة للاستيراد</string>
-    <string name="contact_limit_reached">لقد وصلت إلى الحد الأقصى لجهات الاتصال. قم بترقية خطتك لاستيراد البقية.</string>
 
     <string name="privacy">الخصوصية</string>
     <string name="tracking">التتبع</string>
@@ -1853,7 +1852,6 @@
     <string name="upgrade_perk_features">عوامل التصفية والقوالب والتواقيع والمزيد</string>
     <string name="upgrade_resource_aliases">الأسماء المستعارة</string>
     <string name="upgrade_resource_domains">النطاقات</string>
-    <string name="upgrade_resource_contacts">جهات الاتصال</string>
     <string name="upgrade_resource_templates">القوالب</string>
     <string name="upgrade_resource_signatures">التواقيع</string>
     <string name="upgrade_resource_filters">عوامل التصفية</string>
@@ -3617,4 +3615,22 @@
     <string name="external_pgp_key_manage_note">لاستيراد هذا المفتاح أو استبداله أو إزالته، استخدم Aster Mail على الويب أو تطبيق سطح المكتب.</string>
     <string name="external_pgp_key_unpublished">لم يعد مفتاحك المستورد منشورًا.</string>
     <string name="external_pgp_key_unpublish_failed">تعذّر إيقاف نشر مفتاحك. حاول مرة أخرى.</string>
+    <string name="send_pgp_encrypt_failed">تعذّر على Aster Mail تشفير هذه الرسالة بمفتاح PGP الخاص بالمستلم. تم حفظ المسودة، لذا يمكنك المحاولة مرة أخرى.</string>
+    <string name="send_pgp_attachments_too_large">هذه المرفقات أكبر من أن تُشفَّر بمفتاح PGP الخاص بالمستلم. لإرسال هذه الرسالة، اجعل حجم المرفقات الإجمالي أقل من %1$s. تم حفظ المسودة.</string>
+    <string name="send_scheduled_no_pgp">لا يمكن للرسائل المجدولة إلى عناوين خارجية استخدام تشفير PGP. لتشفير هذه الرسالة، أرسلها الآن.</string>
+    <string name="send_expiry_no_pgp">لا يمكن للرسائل ذات مدة الصلاحية إلى عناوين خارجية استخدام تشفير PGP. لتشفير هذه الرسالة باستخدام PGP، أزل مدة الصلاحية.</string>
+    <string name="encryption_status_unknown">حالة التشفير غير متاحة</string>
+    <string name="encryption_status_unknown_description">تعذّر على Aster Mail التحقق من مفاتيح هذا المستلم، لذا لا يمكن معرفة ما إذا كان يمكن تشفير هذه الرسالة تشفيرًا تامًا بين الطرفين. تحقق من اتصالك وحاول مرة أخرى.</string>
+    <string name="recipient_key_outdated">مفتاح المستلم قديم</string>
+    <string name="recipient_key_outdated_description">المفتاح المنشور لهذا المستلم منتهي الصلاحية أو غير صالح، لذا لا يمكن تشفير هذه الرسالة تشفيرًا تامًا بين الطرفين. إنها محمية أثناء النقل فقط.</string>
+    <string name="encryption_available">التشفير متاح</string>
+    <string name="encryption_available_description">ينشر هذا المستلم مفتاح تشفير صالحًا. لتشفير هذه الرسالة تشفيرًا تامًا بين الطرفين، اضغط على القفل.</string>
+    <string name="recipient_published_key_description">مشفرة بالمفتاح العام المنشور للمستلم.</string>
+    <string name="tap_to_encrypt">اضغط لتشفير هذه الرسالة تشفيرًا تامًا بين الطرفين</string>
+    <string name="tap_to_turn_off_encryption">مشفرة. اضغط لإيقاف التشفير لهذه الرسالة.</string>
+    <string name="contact_birthday_month">الشهر</string>
+    <string name="contact_birthday_day">اليوم</string>
+    <string name="contact_birthday_year_optional">السنة (اختياري)</string>
+    <string name="contact_birthday_year_hint">لحفظ الشهر واليوم فقط، اترك السنة فارغة.</string>
+    <string name="contact_birthday_year_invalid">أدخل سنة من 4 أرقام، أو اترك السنة فارغة.</string>
 </resources>

@@ -4330,6 +4330,7 @@ internal fun show_reschedule_picker(
     date_picker.datePicker.minDate = System.currentTimeMillis()
     date_picker.datePicker.maxDate =
         org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
+    date_picker.with_account_week_start()
     date_picker.setOnCancelListener { on_cancel() }
     date_picker.show()
 }
