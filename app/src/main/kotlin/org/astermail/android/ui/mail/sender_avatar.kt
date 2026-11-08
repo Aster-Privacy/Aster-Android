@@ -550,7 +550,7 @@ fun StackedAvatars(
         2 -> listOf(Alignment.TopStart, Alignment.BottomEnd)
         else -> listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomCenter)
     }
-    Box(modifier = modifier.size(width = size, height = (size.value * 1.25f).dp)) {
+    Box(modifier = modifier.size(size)) {
         take.forEachIndexed { idx, (nm, em) ->
             androidx.compose.runtime.key(em.lowercase().ifBlank { nm.lowercase() }) {
                 SenderAvatar(
