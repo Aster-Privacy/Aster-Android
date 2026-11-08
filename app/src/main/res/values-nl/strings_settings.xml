@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">E-mailsjablonen</string>
     <string name="settings_feat_auto_responder">Automatisch antwoord</string>
     <string name="settings_feat_alias_avatars">Aliasafbeeldingen</string>
-    <string name="settings_feat_instant_alias_delete">Aliassen direct verwijderen</string>
+    <string name="settings_feat_instant_alias_delete">Aliassen op Aster-domeinen direct verwijderen</string>
     <string name="alias_too_new_title">Deze alias is te nieuw om te verwijderen</string>
-    <string name="alias_too_new_message">Nieuwe aliassen blijven 30 dagen actief voordat ze kunnen worden verwijderd. Deze kan vanaf %1$s worden verwijderd. Stap over op Supernova om aliassen direct te verwijderen.</string>
+    <string name="alias_too_new_message">Nieuwe aliassen op Aster-domeinen blijven 30 dagen actief voordat je ze kunt verwijderen. Je kunt deze vanaf %1$s verwijderen. Stap over op Supernova om ze direct te verwijderen.</string>
     <string name="ghost_alias_too_new_title">Deze ghost-alias is te nieuw om te laten verlopen</string>
     <string name="ghost_alias_too_new_message">Nieuwe ghost-aliassen blijven 30 dagen actief voordat ze kunnen verlopen. Deze kan vanaf %1$s verlopen. Stap over op Supernova om ghost-aliassen direct te laten verlopen.</string>
     <string name="ghost_alias_max_extension_toast">Dit tijdelijke alias heeft de maximale levensduur van 90 dagen al bereikt en kan niet verder worden verlengd.</string>

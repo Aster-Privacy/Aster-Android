@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">Modelos de e-mail</string>
     <string name="settings_feat_auto_responder">Resposta automática</string>
     <string name="settings_feat_alias_avatars">Avatares de alias</string>
-    <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases</string>
+    <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases em domínios Aster</string>
     <string name="alias_too_new_title">Este alias é muito recente para ser excluído</string>
-    <string name="alias_too_new_message">Aliases novos ficam ativos por 30 dias antes de poderem ser excluídos. Este pode ser removido a partir de %1$s. Faça upgrade para o Supernova para excluir aliases na hora.</string>
+    <string name="alias_too_new_message">Aliases novos em domínios Aster ficam ativos por 30 dias antes que você possa excluí-los. Você pode excluir este a partir de %1$s. Para excluí-los na hora, faça upgrade para o Supernova.</string>
     <string name="ghost_alias_too_new_title">Este alias fantasma é muito recente para expirar</string>
     <string name="ghost_alias_too_new_message">Aliases fantasma novos ficam ativos por 30 dias antes de poderem expirar. Este pode expirar a partir de %1$s. Faça upgrade para o Supernova para expirar aliases fantasma na hora.</string>
     <string name="ghost_alias_max_extension_toast">Este alias fantasma já atingiu a vida útil máxima de 90 dias e não pode ser estendido.</string>

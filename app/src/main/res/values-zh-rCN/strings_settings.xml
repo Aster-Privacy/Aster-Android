@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">邮件模板</string>
     <string name="settings_feat_auto_responder">自动回复</string>
     <string name="settings_feat_alias_avatars">别名头像</string>
-    <string name="settings_feat_instant_alias_delete">即时删除别名</string>
+    <string name="settings_feat_instant_alias_delete">即时删除 Aster 域名上的别名</string>
     <string name="alias_too_new_title">该别名创建时间过短，暂无法删除</string>
-    <string name="alias_too_new_message">新别名在创建后会保留 30 天才能删除，这一个从 %1$s 开始可以移除。升级到 Supernova 即可立即删除别名。</string>
+    <string name="alias_too_new_message">Aster 域名上的新别名在创建后会保留 30 天才能删除。这个别名从 %1$s 开始可以删除。如需立即删除，请升级到 Supernova。</string>
     <string name="ghost_alias_too_new_title">该幽灵别名创建时间过短，暂无法停用</string>
     <string name="ghost_alias_too_new_message">新的幽灵别名在创建后会保留 30 天才能停用，这一个从 %1$s 开始可以停用。升级到 Supernova 即可立即停用幽灵别名。</string>
     <string name="ghost_alias_max_extension_toast">此幽灵别名已达到 90 天的最长有效期，无法再延长。</string>

@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">Шаблоны писем</string>
     <string name="settings_feat_auto_responder">Автоответчик</string>
     <string name="settings_feat_alias_avatars">Аватары псевдонимов</string>
-    <string name="settings_feat_instant_alias_delete">Мгновенное удаление псевдонимов</string>
+    <string name="settings_feat_instant_alias_delete">Мгновенное удаление псевдонимов на доменах Aster</string>
     <string name="alias_too_new_title">Этот псевдоним слишком новый для удаления</string>
-    <string name="alias_too_new_message">Новые псевдонимы остаются активными 30 дней до возможности удаления. Этот можно убрать начиная с %1$s. Перейдите на Supernova, чтобы удалять псевдонимы мгновенно.</string>
+    <string name="alias_too_new_message">Новые псевдонимы на доменах Aster остаются активными 30 дней, прежде чем вы сможете их удалить. Этот можно удалить начиная с %1$s. Чтобы удалять их сразу, перейдите на Supernova.</string>
     <string name="ghost_alias_too_new_title">Этот ghost-псевдоним слишком новый для отзыва</string>
     <string name="ghost_alias_too_new_message">Новые ghost-псевдонимы остаются активными 30 дней до возможности отзыва. Этот можно отозвать начиная с %1$s. Перейдите на Supernova, чтобы отзывать ghost-псевдонимы мгновенно.</string>
     <string name="ghost_alias_max_extension_toast">Этот ghost-псевдоним уже достиг максимального срока действия в 90 дней и не может быть продлён.</string>
