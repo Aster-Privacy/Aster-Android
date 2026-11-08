@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">E-posta şablonları</string>
     <string name="settings_feat_auto_responder">Otomatik yanıtlayıcı</string>
     <string name="settings_feat_alias_avatars">Takma ad görselleri</string>
-    <string name="settings_feat_instant_alias_delete">Anında rumuz silme</string>
+    <string name="settings_feat_instant_alias_delete">Aster alan adlarındaki rumuzları anında silme</string>
     <string name="alias_too_new_title">Bu takma ad silinemeyecek kadar yeni</string>
-    <string name="alias_too_new_message">Yeni takma adlar silinebilmesinden önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren kaldırılabilir. Rumuzları anında silmek için Supernova\'ya geçin.</string>
+    <string name="alias_too_new_message">Aster alan adlarındaki yeni takma adlar, silebilmeniz için 30 gün boyunca aktif kalır. Bunu %1$s tarihinden itibaren silebilirsiniz. Hemen silmek için Supernova\'ya geçin.</string>
     <string name="ghost_alias_too_new_title">Bu ghost takma ad süresini doldurmaya henüz çok yeni</string>
     <string name="ghost_alias_too_new_message">Yeni ghost takma adlar süresi dolmadan önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren süresi doldurulabilir. Ghost takma adları anında sonlandırmak için Supernova\'ya geçin.</string>
     <string name="ghost_alias_max_extension_toast">Bu hayalet takma ad zaten 90 günlük azami ömrüne ulaştı ve daha fazla uzatılamaz.</string>

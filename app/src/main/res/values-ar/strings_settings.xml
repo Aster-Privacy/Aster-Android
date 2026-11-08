@@ -23,9 +23,9 @@
     <string name="settings_feat_email_templates">قوالب الرسائل</string>
     <string name="settings_feat_auto_responder">الرد التلقائي</string>
     <string name="settings_feat_alias_avatars">صور الأسماء المستعارة</string>
-    <string name="settings_feat_instant_alias_delete">حذف فوري للأسماء المستعارة</string>
+    <string name="settings_feat_instant_alias_delete">حذف فوري للأسماء المستعارة على نطاقات Aster</string>
     <string name="alias_too_new_title">هذا الاسم المستعار جديد جدًا ولا يمكن حذفه</string>
-    <string name="alias_too_new_message">الأسماء المستعارة الجديدة تبقى نشطة 30 يومًا قبل أن يمكن حذفها. يمكن إزالة هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لحذف الأسماء المستعارة فورًا.</string>
+    <string name="alias_too_new_message">تبقى الأسماء المستعارة الجديدة على نطاقات Aster نشطة 30 يومًا قبل أن تتمكن من حذفها. يمكنك حذف هذا الاسم اعتبارًا من %1$s. لحذفها فورًا، قم بالترقية إلى Supernova.</string>
     <string name="ghost_alias_too_new_title">هذا الاسم الشبحي جديد جدًا ولا يمكن إنهاؤه</string>
     <string name="ghost_alias_too_new_message">الأسماء الشبحية الجديدة تبقى نشطة 30 يومًا قبل أن يمكن إنهاؤها. يمكن إنهاء هذا اعتبارًا من %1$s. قم بالترقية إلى Supernova لإنهاء الأسماء الشبحية فورًا.</string>
     <string name="ghost_alias_max_extension_toast">وصل هذا الاسم المستعار الشبحي إلى الحد الأقصى لمدة صلاحيته وهو 90 يومًا ولا يمكن تمديده أكثر من ذلك.</string>
