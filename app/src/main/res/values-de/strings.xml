@@ -1556,6 +1556,7 @@
     <string name="cannot_react_bcc">Sie können nicht auf eine Nachricht reagieren, bei der Sie in BCC waren.</string>
     <string name="cannot_react_too_many_emojis">Diese Nachricht hat bereits die maximale Anzahl an Reaktionen.</string>
     <string name="cannot_react_no_recipient">Diese Nachricht hat keinen Absender, an den die Reaktion gesendet werden kann.</string>
+    <string name="cannot_react_require_encryption">„Verschlüsselung erzwingen“ ist aktiviert, und Reaktionen an Personen außerhalb von Aster sind nicht Ende-zu-Ende-verschlüsselt. Deshalb können Sie auf diese Nachricht nicht reagieren.</string>
     <string name="cannot_react_limit">Sie können einer Nachricht höchstens zwei Reaktionen hinzufügen. Um eine weitere hinzuzufügen, entfernen Sie eine Ihrer Reaktionen.</string>
     <string name="reaction_failed">Reaktion konnte nicht gesendet werden</string>
     <string name="reaction_remove_failed">Reaktion konnte nicht entfernt werden</string>

@@ -611,6 +611,13 @@ fun MailDetailScreen(
     val thread_state by mail_vm.thread_state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val reactions_enabled = settings_state.preferences?.reactions_enabled != false
+    val fetched_require_encryption by produceState<Boolean?>(initialValue = null, email_id) {
+        value = mail_vm.require_encryption_setting()
+    }
+    val require_encryption = settings_state.encryption_settings?.require_encryption
+        ?: fetched_require_encryption
+        ?: settings_state.preferences?.require_encryption
+        ?: false
     val show_encryption_indicators = settings_state.preferences?.show_encryption_indicators != false
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
@@ -812,6 +819,7 @@ fun MailDetailScreen(
                 is_trashed = is_trashed,
                 reactions_enabled = reactions_enabled,
                 is_own_address = { address -> address in reaction_own_addresses },
+                require_encryption = require_encryption,
             )
         }
     var show_action_sheet by remember { mutableStateOf(false) }
@@ -1038,6 +1046,40 @@ fun MailDetailScreen(
                 },
                 duration_ms = held.delay_ms,
             ),
+        )
+    }
+
+    var pending_post_quantum_reaction by remember { mutableStateOf<post_quantum_reaction?>(null) }
+
+    fun dispatch_reaction(message_id: String, emoji: String, allow_non_post_quantum: Boolean = false) {
+        val identity = reaction_identity_for(message_id)
+        mail_vm.send_reaction(
+            message_id = message_id,
+            emoji = emoji,
+            sender_email = identity.email,
+            sender_alias_hash = identity.alias_hash,
+            own_addresses = reaction_own_addresses,
+            hold_seconds = reaction_hold_seconds,
+            require_encryption = require_encryption,
+            allow_non_post_quantum = allow_non_post_quantum,
+            on_post_quantum_missing = { coverage ->
+                pending_post_quantum_reaction = post_quantum_reaction(message_id, emoji, coverage)
+            },
+            on_held = { held -> announce_reaction(held, message_id, emoji) },
+        ) { error ->
+            if (error != null) show_toast(error)
+        }
+    }
+
+    pending_post_quantum_reaction?.let { pending ->
+        org.astermail.android.ui.common.post_quantum_consent_dialog(
+            missing = pending.coverage.missing,
+            downgraded = pending.coverage.downgraded,
+            on_cancel = { pending_post_quantum_reaction = null },
+            on_send_anyway = {
+                pending_post_quantum_reaction = null
+                dispatch_reaction(pending.message_id, pending.emoji, allow_non_post_quantum = true)
+            },
         )
     }
 
@@ -1746,18 +1788,7 @@ fun MailDetailScreen(
                                     return@expanded_message
                                 }
                                 haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                val identity = reaction_identity_for(msg.id)
-                                mail_vm.send_reaction(
-                                    message_id = msg.id,
-                                    emoji = emoji,
-                                    sender_email = identity.email,
-                                    sender_alias_hash = identity.alias_hash,
-                                    own_addresses = reaction_own_addresses,
-                                    hold_seconds = reaction_hold_seconds,
-                                    on_held = { held -> announce_reaction(held, msg.id, emoji) },
-                                ) { error ->
-                                    if (error != null) show_toast(error)
-                                }
+                                dispatch_reaction(msg.id, emoji)
                             },
                             on_unreact = { emoji ->
                                 mail_vm.remove_reaction(message_id = msg.id, emoji = emoji) { error ->
@@ -1849,18 +1880,7 @@ fun MailDetailScreen(
                                 return@reaction_quick_picker
                             }
                             haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                            val identity = reaction_identity_for(react_target.id)
-                            mail_vm.send_reaction(
-                                message_id = react_target.id,
-                                emoji = emoji,
-                                sender_email = identity.email,
-                                sender_alias_hash = identity.alias_hash,
-                                own_addresses = reaction_own_addresses,
-                                hold_seconds = reaction_hold_seconds,
-                                on_held = { held -> announce_reaction(held, react_target.id, emoji) },
-                            ) { error ->
-                                if (error != null) show_toast(error)
-                            }
+                            dispatch_reaction(react_target.id, emoji)
                         },
                     )
                 }
@@ -8019,6 +8039,12 @@ private fun safe_view_mime(filename: String, declared: String): String {
 }
 
 private data class saved_attachment(val uri: android.net.Uri, val mime: String)
+
+private data class post_quantum_reaction(
+    val message_id: String,
+    val emoji: String,
+    val coverage: org.astermail.android.mail.ratchet.PostQuantumCoverage,
+)
 
 private suspend fun save_attachment_to_storage(
     context: android.content.Context,

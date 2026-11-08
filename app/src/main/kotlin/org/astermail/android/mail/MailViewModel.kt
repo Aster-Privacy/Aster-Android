@@ -344,6 +344,9 @@ class MailViewModel @Inject constructor(
         sender_alias_hash: String? = null,
         own_addresses: Set<String> = emptySet(),
         hold_seconds: Int = 0,
+        require_encryption: Boolean = false,
+        allow_non_post_quantum: Boolean = false,
+        on_post_quantum_missing: ((org.astermail.android.mail.ratchet.PostQuantumCoverage) -> Unit)? = null,
         on_held: ((HeldReaction) -> Unit)? = null,
         on_result: (String?) -> Unit,
     ) {
@@ -363,19 +366,19 @@ class MailViewModel @Inject constructor(
             is_trashed = state.item?.is_trashed == true,
             reactions_enabled = true,
             is_own_address = { address -> address in own_addresses },
+            require_encryption = require_encryption,
         )
         if (restriction != null) {
             on_result(context.getString(reaction_restriction_string(restriction)))
             return
         }
         val from_email = sender_email?.takeIf { it.isNotBlank() } ?: our_email
-        val sender_is_self = same_address_ignoring_dots(message.sender_email, our_email) ||
-            same_address_ignoring_dots(message.sender_email, from_email)
-        val recipient = if (!sender_is_self) {
-            message.sender_email
-        } else {
-            message.to_addresses.firstOrNull { it.isNotBlank() }
-        }
+        val recipient = reaction_recipient(
+            sender_email = message.sender_email,
+            to_addresses = message.to_addresses,
+            user_email = our_email,
+            is_own_address = { address -> address in own_addresses || same_address_ignoring_dots(address, from_email) },
+        )
         if (recipient.isNullOrBlank()) {
             on_result(context.getString(R.string.reaction_failed))
             return
@@ -424,6 +427,7 @@ class MailViewModel @Inject constructor(
                         sender_alias_hash = sender_alias_hash,
                         reply_subject = message.subject,
                         in_reply_to = in_reply_to,
+                        allow_non_post_quantum = allow_non_post_quantum,
                     )
                 }
             },
@@ -465,7 +469,19 @@ class MailViewModel @Inject constructor(
                     unsettled_reaction_ids.remove(optimistic.reaction_mail_item_id)
                     late_undo_reaction_ids.remove(optimistic.reaction_mail_item_id)
                     drop_optimistic()
-                    deliver(reaction_error_text(outcome.error, R.string.reaction_failed))
+                    val missing_pq = outcome.error as? org.astermail.android.mail.ratchet.PostQuantumUnavailableException
+                    if (missing_pq != null && on_post_quantum_missing != null) {
+                        viewModelScope.launch {
+                            val coverage = runCatching {
+                                repository.check_post_quantum_coverage(listOf(recipient), from_email.ifBlank { null })
+                            }.getOrNull()
+                                ?.takeIf { it.missing.isNotEmpty() }
+                                ?: org.astermail.android.mail.ratchet.PostQuantumCoverage(missing = missing_pq.recipients)
+                            kotlinx.coroutines.withContext(Dispatchers.Main) { on_post_quantum_missing(coverage) }
+                        }
+                    } else {
+                        deliver(reaction_error_text(outcome.error, R.string.reaction_failed))
+                    }
                 }
                 ReactionHoldOutcome.Canceled, ReactionHoldOutcome.AccountChanged -> {
                     unsettled_reaction_ids.remove(optimistic.reaction_mail_item_id)
@@ -532,7 +548,8 @@ class MailViewModel @Inject constructor(
         is_reaction_limit_error(error) -> context.getString(R.string.cannot_react_limit)
         error is org.astermail.android.api.ApiError.RateLimited &&
             error.detail.isNotBlank() && error.detail != "rate limited" -> error.detail
-        error is IllegalStateException && !error.message.isNullOrBlank() -> error.message.orEmpty()
+        (error is IllegalStateException || error is E2eEncryptionException || error is EncryptionRequiredException) &&
+            !error.message.isNullOrBlank() -> error.message.orEmpty()
         else -> org.astermail.android.localized_api_error(context, error, context.getString(fallback))
     }
 
@@ -5617,6 +5634,8 @@ class MailViewModel @Inject constructor(
         recipients: List<String>,
         sender_email: String? = null,
     ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
+
+    suspend fun require_encryption_setting(): Boolean? = repository.require_encryption_setting()
 
     suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,

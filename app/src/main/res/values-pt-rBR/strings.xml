@@ -1558,6 +1558,7 @@
     <string name="cannot_react_bcc">Não é possível reagir a uma mensagem em que você estava em Cco.</string>
     <string name="cannot_react_too_many_emojis">Esta mensagem já tem o número máximo de reações.</string>
     <string name="cannot_react_no_recipient">Esta mensagem não tem remetente para enviar a reação.</string>
+    <string name="cannot_react_require_encryption">A opção \"Exigir criptografia\" está ativada e as reações para pessoas fora do Aster não têm criptografia de ponta a ponta, então você não pode reagir a esta mensagem.</string>
     <string name="cannot_react_limit">Você pode adicionar até duas reações a uma mensagem. Para adicionar outra, remova uma das suas.</string>
     <string name="reaction_failed">Não foi possível enviar a reação</string>
     <string name="reaction_remove_failed">Não foi possível remover a reação</string>

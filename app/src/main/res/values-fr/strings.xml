@@ -2106,6 +2106,7 @@
     <string name="cannot_react_bcc">Vous ne pouvez pas réagir à un message reçu en Cci.</string>
     <string name="cannot_react_too_many_emojis">Ce message a déjà atteint le nombre maximal de réactions.</string>
     <string name="cannot_react_no_recipient">Ce message n\'a pas d\'expéditeur à qui envoyer la réaction.</string>
+    <string name="cannot_react_require_encryption">L\'option « Chiffrement obligatoire » est activée et les réactions envoyées à des personnes extérieures à Aster ne sont pas chiffrées de bout en bout. Vous ne pouvez donc pas réagir à ce message.</string>
     <string name="cannot_react_limit">Vous pouvez ajouter jusqu\'à deux réactions à un message. Pour en ajouter une autre, retirez l\'une des vôtres.</string>
     <string name="reaction_failed">Impossible d\'envoyer la réaction</string>
     <string name="reaction_remove_failed">Impossible de retirer la réaction</string>

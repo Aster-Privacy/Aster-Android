@@ -3502,61 +3502,21 @@ fun ComposeScreen(
     }
 
     if (post_quantum_missing.isNotEmpty()) {
-        val is_downgrade = post_quantum_downgraded.isNotEmpty()
-        val missing_list = (if (is_downgrade) post_quantum_downgraded else post_quantum_missing)
-            .joinToString(", ")
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = {
+        org.astermail.android.ui.common.post_quantum_consent_dialog(
+            missing = post_quantum_missing,
+            downgraded = post_quantum_downgraded,
+            on_cancel = {
                 post_quantum_downgraded = emptyList()
                 post_quantum_missing = emptyList()
             },
-            title = stringResource(
-                if (is_downgrade) R.string.post_quantum_downgrade_title else R.string.post_quantum_unavailable_title,
-            ),
-            message = stringResource(
-                if (is_downgrade) R.string.post_quantum_downgrade_message else R.string.post_quantum_unavailable_message,
-                missing_list,
-            ),
-            footer = {
-                androidx.compose.foundation.layout.FlowRow(
-                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(
-                        4.dp,
-                        Alignment.End,
-                    ),
-                ) {
-                    androidx.compose.material3.TextButton(
-                        modifier = androidx.compose.ui.Modifier.testTag("post_quantum_cancel"),
-                        onClick = {
-                            post_quantum_downgraded = emptyList()
-                            post_quantum_missing = emptyList()
-                        },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.cancel),
-                            color = colors.text_secondary,
-                            fontSize = 14.sp,
-                        )
-                    }
-                    androidx.compose.material3.TextButton(
-                        modifier = androidx.compose.ui.Modifier.testTag("post_quantum_send_anyway"),
-                        onClick = {
-                            post_quantum_downgraded = emptyList()
-                            post_quantum_missing = emptyList()
-                            do_send(
-                                skip_from_guard = true,
-                                allow_non_post_quantum = true,
-                                allow_key_change = true,
-                            )
-                        },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.post_quantum_send_anyway),
-                            color = colors.accent_blue,
-                            fontSize = 14.sp,
-                        )
-                    }
-                }
+            on_send_anyway = {
+                post_quantum_downgraded = emptyList()
+                post_quantum_missing = emptyList()
+                do_send(
+                    skip_from_guard = true,
+                    allow_non_post_quantum = true,
+                    allow_key_change = true,
+                )
             },
         )
     }

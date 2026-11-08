@@ -1563,6 +1563,7 @@
     <string name="cannot_react_bcc">Нельзя поставить реакцию на сообщение, полученное в скрытой копии.</string>
     <string name="cannot_react_too_many_emojis">У этого сообщения уже максимальное число реакций.</string>
     <string name="cannot_react_no_recipient">У этого сообщения нет отправителя, которому можно отправить реакцию.</string>
+    <string name="cannot_react_require_encryption">Параметр «Требовать шифрование» включен, а реакции для людей за пределами Aster не защищены сквозным шифрованием, поэтому вы не можете отреагировать на это сообщение.</string>
     <string name="cannot_react_limit">К сообщению можно добавить не больше двух реакций. Чтобы добавить другую, удалите одну из своих.</string>
     <string name="reaction_failed">Не удалось отправить реакцию</string>
     <string name="reaction_remove_failed">Не удалось удалить реакцию</string>

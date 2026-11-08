@@ -1555,6 +1555,7 @@
     <string name="cannot_react_bcc">Gizli kopyada olduğunuz bir mesaja tepki veremezsiniz.</string>
     <string name="cannot_react_too_many_emojis">Bu mesaj zaten en fazla sayıda tepkiye sahip.</string>
     <string name="cannot_react_no_recipient">Bu mesajın tepki gönderilecek bir göndereni yok.</string>
+    <string name="cannot_react_require_encryption">\"Şifrelemeyi zorunlu kıl\" seçeneği açık ve Aster dışındaki kişilere gönderilen tepkiler uçtan uca şifrelenmez, bu yüzden bu iletiye tepki veremezsiniz.</string>
     <string name="cannot_react_limit">Bir mesaja en fazla iki tepki ekleyebilirsiniz. Başka bir tepki eklemek için tepkilerinizden birini kaldırın.</string>
     <string name="reaction_failed">Tepki gönderilemedi</string>
     <string name="reaction_remove_failed">Tepki kaldırılamadı</string>
