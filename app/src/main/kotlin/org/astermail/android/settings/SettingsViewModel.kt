@@ -5004,13 +5004,18 @@ class SettingsViewModel @Inject constructor(
                         folder_key_nonce = material.folder_key_nonce,
                     ),
                 )
+                org.astermail.android.folders.open_folder_unlock_session(label_id) {
+                    labels_api.verify_folder_password(
+                        label_id,
+                        VerifyFolderPasswordRequest(password_hash = material.password_hash),
+                    )
+                }
                 true
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 false
             }
             if (ok) {
-                org.astermail.android.folders.folder_lock_store.mark_unlocked(label_id)
                 load_labels(force = true)
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.folder_lock_set),
