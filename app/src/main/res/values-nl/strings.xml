@@ -3545,4 +3545,9 @@
     <string name="recipient_published_key_description">Versleuteld met de gepubliceerde openbare sleutel van de ontvanger.</string>
     <string name="tap_to_encrypt">Tik om deze e-mail end-to-end te versleutelen</string>
     <string name="tap_to_turn_off_encryption">Versleuteld. Tik om versleuteling voor deze e-mail uit te zetten.</string>
+    <string name="contact_birthday_month">Maand</string>
+    <string name="contact_birthday_day">Dag</string>
+    <string name="contact_birthday_year_optional">Jaar (optioneel)</string>
+    <string name="contact_birthday_year_hint">Laat het jaar leeg om alleen de maand en dag op te slaan.</string>
+    <string name="contact_birthday_year_invalid">Voer een jaartal van 4 cijfers in of laat het jaar leeg.</string>
 </resources>

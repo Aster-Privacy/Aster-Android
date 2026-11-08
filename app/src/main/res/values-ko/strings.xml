@@ -3526,4 +3526,9 @@
     <string name="recipient_published_key_description">수신자가 게시한 공개 키로 암호화되었습니다.</string>
     <string name="tap_to_encrypt">탭하여 이 이메일을 종단 간 암호화</string>
     <string name="tap_to_turn_off_encryption">암호화됨. 탭하면 이 이메일의 암호화가 꺼집니다.</string>
+    <string name="contact_birthday_month">월</string>
+    <string name="contact_birthday_day">일</string>
+    <string name="contact_birthday_year_optional">연도(선택 사항)</string>
+    <string name="contact_birthday_year_hint">월과 일만 저장하려면 연도를 비워 두세요.</string>
+    <string name="contact_birthday_year_invalid">4자리 연도를 입력하거나 연도를 비워 두세요.</string>
 </resources>

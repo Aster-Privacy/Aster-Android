@@ -359,7 +359,7 @@ fun ContactEditScreen(
 
             FormSection(icon = TablerIcons.User, title = stringResource(R.string.personal)) {
                 FormField(stringResource(R.string.name), name, keyboard_capitalization = KeyboardCapitalization.Words) { name = it }
-                FormField(stringResource(R.string.birthday), birthday) { birthday = it }
+                ContactBirthdayField(stringResource(R.string.birthday), birthday, on_change = { birthday = it })
             }
 
             FormSection(icon = TablerIcons.Mail, title = stringResource(R.string.email)) {

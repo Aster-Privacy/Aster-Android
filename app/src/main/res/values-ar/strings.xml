@@ -3628,4 +3628,9 @@
     <string name="recipient_published_key_description">مشفرة بالمفتاح العام المنشور للمستلم.</string>
     <string name="tap_to_encrypt">اضغط لتشفير هذه الرسالة تشفيرًا تامًا بين الطرفين</string>
     <string name="tap_to_turn_off_encryption">مشفرة. اضغط لإيقاف التشفير لهذه الرسالة.</string>
+    <string name="contact_birthday_month">الشهر</string>
+    <string name="contact_birthday_day">اليوم</string>
+    <string name="contact_birthday_year_optional">السنة (اختياري)</string>
+    <string name="contact_birthday_year_hint">لحفظ الشهر واليوم فقط، اترك السنة فارغة.</string>
+    <string name="contact_birthday_year_invalid">أدخل سنة من 4 أرقام، أو اترك السنة فارغة.</string>
 </resources>

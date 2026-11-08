@@ -3546,4 +3546,9 @@
     <string name="recipient_published_key_description">Mit dem veröffentlichten öffentlichen Schlüssel des Empfängers verschlüsselt.</string>
     <string name="tap_to_encrypt">Tippen, um diese E-Mail Ende-zu-Ende zu verschlüsseln</string>
     <string name="tap_to_turn_off_encryption">Verschlüsselt. Tippen, um die Verschlüsselung für diese E-Mail auszuschalten.</string>
+    <string name="contact_birthday_month">Monat</string>
+    <string name="contact_birthday_day">Tag</string>
+    <string name="contact_birthday_year_optional">Jahr (optional)</string>
+    <string name="contact_birthday_year_hint">Um nur Monat und Tag zu speichern, lassen Sie das Jahr leer.</string>
+    <string name="contact_birthday_year_invalid">Geben Sie eine vierstellige Jahreszahl ein oder lassen Sie das Jahr leer.</string>
 </resources>

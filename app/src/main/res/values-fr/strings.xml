@@ -3593,4 +3593,9 @@
     <string name="recipient_published_key_description">Chiffré avec la clé publique publiée du destinataire.</string>
     <string name="tap_to_encrypt">Touchez pour chiffrer cet e-mail de bout en bout</string>
     <string name="tap_to_turn_off_encryption">Chiffré. Touchez pour désactiver le chiffrement de cet e-mail.</string>
+    <string name="contact_birthday_month">Mois</string>
+    <string name="contact_birthday_day">Jour</string>
+    <string name="contact_birthday_year_optional">Année (facultatif)</string>
+    <string name="contact_birthday_year_hint">Pour n\'enregistrer que le mois et le jour, laissez l\'année vide.</string>
+    <string name="contact_birthday_year_invalid">Saisissez une année à 4 chiffres ou laissez l\'année vide.</string>
 </resources>

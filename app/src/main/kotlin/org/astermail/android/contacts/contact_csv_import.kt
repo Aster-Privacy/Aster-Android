@@ -781,7 +781,7 @@ private fun build_csv_contact(
         website = social_links.optString("website", ""),
         twitter = social_links.optString("twitter", ""),
         linkedin = social_links.optString("linkedin", ""),
-        birthday = birthday,
+        birthday = ContactDates.normalize(birthday),
         notes = notes.joinToString("\n"),
         is_favorite = is_favorite,
         groups = group_names,

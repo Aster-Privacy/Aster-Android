@@ -3526,4 +3526,9 @@
     <string name="recipient_published_key_description">已使用收件人发布的公钥加密。</string>
     <string name="tap_to_encrypt">轻点以端到端加密此邮件</string>
     <string name="tap_to_turn_off_encryption">已加密。轻点可关闭此邮件的加密。</string>
+    <string name="contact_birthday_month">月</string>
+    <string name="contact_birthday_day">日</string>
+    <string name="contact_birthday_year_optional">年份（可选）</string>
+    <string name="contact_birthday_year_hint">如果只想保存月份和日期，请将年份留空。</string>
+    <string name="contact_birthday_year_invalid">请输入 4 位数的年份，或将年份留空。</string>
 </resources>

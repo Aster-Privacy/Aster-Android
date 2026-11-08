@@ -3596,4 +3596,9 @@
     <string name="recipient_published_key_description">Encrypted with the recipient\'s published public key.</string>
     <string name="tap_to_encrypt">Tap to encrypt this email end-to-end</string>
     <string name="tap_to_turn_off_encryption">Encrypted. Tap to turn off encryption for this email.</string>
+    <string name="contact_birthday_month">Month</string>
+    <string name="contact_birthday_day">Day</string>
+    <string name="contact_birthday_year_optional">Year (optional)</string>
+    <string name="contact_birthday_year_hint">To save only the month and day, leave the year blank.</string>
+    <string name="contact_birthday_year_invalid">Enter a 4-digit year, or leave the year blank.</string>
 </resources>
