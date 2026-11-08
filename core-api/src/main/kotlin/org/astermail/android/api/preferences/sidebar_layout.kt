@@ -102,9 +102,19 @@ fun set_sidebar_item_hidden(hidden: List<String>?, id: String, should_hide: Bool
     if (!is_sidebar_item_hideable(id)) return current
     val without = current.filter { it != id }
     if (!should_hide) return without
-    if (without.size >= MAX_SIDEBAR_LAYOUT_IDS) return current
-    return without + id
+    if (without.size < MAX_SIDEBAR_LAYOUT_IDS) return without + id
+    val evict_index = without.indexOfFirst { !is_sidebar_item_hideable(it) }
+    if (evict_index == -1) return current
+    return without.filterIndexed { index, _ -> index != evict_index } + id
 }
+
+fun reset_sidebar_section_order(order: List<String>?): List<String> {
+    val defaults = SIDEBAR_SECTION_IDS.iterator()
+    return sanitize_sidebar_section_order(order).map { if (it in known_section_ids) defaults.next() else it }
+}
+
+fun reset_sidebar_hidden_items(hidden: List<String>?): List<String> =
+    sanitize_sidebar_hidden_items(hidden).filter { !is_sidebar_item_hideable(it) }
 
 fun move_sidebar_section(order: List<String>?, id: String, direction: Int): List<String> {
     val full = sanitize_sidebar_section_order(order)

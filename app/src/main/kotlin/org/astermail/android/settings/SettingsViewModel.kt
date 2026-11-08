@@ -6022,8 +6022,8 @@ class SettingsViewModel @Inject constructor(
     fun reset_sidebar_layout() {
         val current = _state.value.preferences ?: return
         val updated = current.copy(
-            sidebar_section_order = org.astermail.android.api.preferences.SIDEBAR_SECTION_IDS,
-            sidebar_hidden_items = emptyList(),
+            sidebar_section_order = org.astermail.android.api.preferences.reset_sidebar_section_order(current.sidebar_section_order),
+            sidebar_hidden_items = org.astermail.android.api.preferences.reset_sidebar_hidden_items(current.sidebar_hidden_items),
         )
         if (updated == current) return
         _state.value = _state.value.copy(preferences = updated)

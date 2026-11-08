@@ -3538,4 +3538,24 @@ class SettingsViewModelTest {
         advanceUntilIdle()
         coVerify(exactly = 1) { preferences_api.save_encrypted_preferences(any()) }
     }
+
+    @Test
+    fun `sidebar reset keeps ids from newer apps`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = sidebar_vm(
+            identity_key,
+            """{"sidebar_section_order":["aliases","calendar","labels","mail"],"sidebar_hidden_items":["calendar_tasks","spam"]}""",
+        )
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        target.reset_sidebar_layout()
+        advanceUntilIdle()
+
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        assertEquals(
+            listOf("mail", "calendar", "folders", "labels", "aliases") to listOf("calendar_tasks"),
+            sidebar_layout_of(written),
+        )
+    }
 }

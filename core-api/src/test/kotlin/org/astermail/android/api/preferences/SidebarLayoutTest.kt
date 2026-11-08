@@ -98,10 +98,47 @@ class SidebarLayoutTest {
     }
 
     @Test
-    fun hiding_stops_at_the_cap() {
+    fun hiding_at_the_cap_evicts_the_oldest_unknown_id() {
         val full = (0 until MAX_SIDEBAR_LAYOUT_IDS).map { "item_$it" }
+        val next = set_sidebar_item_hidden(full, "trash", true)
 
-        assertEquals(full, set_sidebar_item_hidden(full, "trash", true))
+        assertEquals(MAX_SIDEBAR_LAYOUT_IDS, next.size)
+        assertEquals(full.drop(1) + "trash", next)
+    }
+
+    @Test
+    fun hiding_at_the_cap_keeps_known_hidden_items() {
+        val full = listOf("spam") + (0 until MAX_SIDEBAR_LAYOUT_IDS - 1).map { "item_$it" }
+        val next = set_sidebar_item_hidden(full, "trash", true)
+
+        assertEquals(MAX_SIDEBAR_LAYOUT_IDS, next.size)
+        assertEquals(listOf("spam") + full.drop(2) + "trash", next)
+    }
+
+    @Test
+    fun hiding_an_already_hidden_item_at_the_cap_moves_it_to_the_end() {
+        val full = listOf("spam") + (0 until MAX_SIDEBAR_LAYOUT_IDS - 1).map { "item_$it" }
+
+        assertEquals(full.drop(1) + "spam", set_sidebar_item_hidden(full, "spam", true))
+    }
+
+    @Test
+    fun reset_order_restores_known_sections_and_keeps_unknown_ids_in_place() {
+        assertEquals(default_order, reset_sidebar_section_order(listOf("aliases", "labels")))
+        assertEquals(default_order, reset_sidebar_section_order(null))
+        assertEquals(
+            listOf("mail", "calendar", "folders", "labels", "aliases"),
+            reset_sidebar_section_order(listOf("aliases", "calendar", "labels", "mail", "folders")),
+        )
+    }
+
+    @Test
+    fun reset_hidden_items_drops_known_ids_and_keeps_unknown_ids() {
+        assertEquals(
+            listOf("calendar_tasks"),
+            reset_sidebar_hidden_items(listOf("spam", "calendar_tasks", "folders", "Bad Id")),
+        )
+        assertEquals(emptyList<String>(), reset_sidebar_hidden_items(null))
     }
 
     @Test
