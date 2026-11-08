@@ -1,0 +1,8 @@
+Bug fixes and improvements:
+
+- Sign in with a hardware security key over NFC or USB.
+- New messages can use the alias open in the sidebar as the sender.
+- Moving a conversation to a folder moves every message in it.
+- Synced contacts stay put, and imports skip contacts you saved.
+- Sign-in and bulk mail no longer land in Deals.
+- Swiping shows Unread on messages you have read.
