@@ -1575,7 +1575,6 @@
     <string name="remove_payment_failed">Could not remove payment method</string>
     <string name="no_device_contacts">No contacts found on device</string>
     <string name="no_new_contacts">No new contacts to import</string>
-    <string name="contact_limit_reached">You reached your contact limit. Upgrade your plan to import the rest.</string>
 
     <!-- Privacy settings -->
     <string name="privacy">Privacy</string>
@@ -1960,7 +1959,6 @@
     <string name="upgrade_perk_features">Filters, templates, signatures and more</string>
     <string name="upgrade_resource_aliases">aliases</string>
     <string name="upgrade_resource_domains">domains</string>
-    <string name="upgrade_resource_contacts">contacts</string>
     <string name="upgrade_resource_templates">templates</string>
     <string name="upgrade_resource_signatures">signatures</string>
     <string name="upgrade_resource_filters">filters</string>

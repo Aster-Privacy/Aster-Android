@@ -30,7 +30,6 @@ enum class UpgradeReason { PlanLimit, StorageFull, Feature }
 enum class UpgradeLimitKey {
     MaxEmailAliases,
     MaxCustomDomains,
-    MaxContacts,
     MaxEmailTemplates,
     MaxHtmlSignatures,
     MaxCustomFilters,
@@ -56,7 +55,6 @@ object UpgradeStore {
         "email aliases" to UpgradeLimitKey.MaxEmailAliases,
         "domains" to UpgradeLimitKey.MaxCustomDomains,
         "custom domains" to UpgradeLimitKey.MaxCustomDomains,
-        "contacts" to UpgradeLimitKey.MaxContacts,
         "templates" to UpgradeLimitKey.MaxEmailTemplates,
         "email templates" to UpgradeLimitKey.MaxEmailTemplates,
         "signatures" to UpgradeLimitKey.MaxHtmlSignatures,
@@ -68,12 +66,18 @@ object UpgradeStore {
         "rules" to UpgradeLimitKey.MaxCustomFilters,
     )
 
+    private val uncapped_resources = setOf("contacts", "contact")
+
+    fun is_uncapped(resource: String?): Boolean =
+        !resource.isNullOrBlank() && resource.trim().lowercase() in uncapped_resources
+
     private fun resolve_key(resource: String?): UpgradeLimitKey {
         if (resource.isNullOrBlank()) return UpgradeLimitKey.Generic
         return resource_to_key[resource.trim().lowercase()] ?: UpgradeLimitKey.Generic
     }
 
     fun show_plan_limit(resource: String?, message: String?) {
+        if (is_uncapped(resource)) return
         _state.value = UpgradeState(
             is_open = true,
             reason = UpgradeReason.PlanLimit,

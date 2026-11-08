@@ -1012,7 +1012,6 @@
     <string name="remove_payment_failed">No se pudo eliminar el método de pago</string>
     <string name="no_device_contacts">No se encontraron contactos en el dispositivo</string>
     <string name="no_new_contacts">No hay contactos nuevos para importar</string>
-    <string name="contact_limit_reached">Has alcanzado el límite de contactos. Mejora tu plan para importar el resto.</string>
 
     <string name="privacy">Privacidad</string>
     <string name="tracking">Seguimiento</string>
@@ -1842,7 +1841,6 @@
     <string name="upgrade_perk_features">Filtros, plantillas, firmas y más</string>
     <string name="upgrade_resource_aliases">alias</string>
     <string name="upgrade_resource_domains">dominios</string>
-    <string name="upgrade_resource_contacts">contactos</string>
     <string name="upgrade_resource_templates">plantillas</string>
     <string name="upgrade_resource_signatures">firmas</string>
     <string name="upgrade_resource_filters">filtros</string>

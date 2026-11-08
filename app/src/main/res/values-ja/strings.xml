@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">支払い方法を削除できませんでした</string>
     <string name="no_device_contacts">デバイスに連絡先が見つかりません</string>
     <string name="no_new_contacts">インポートする新しい連絡先はありません</string>
-    <string name="contact_limit_reached">連絡先の上限に達しました。残りをインポートするにはプランをアップグレードしてください。</string>
 
     <string name="privacy">プライバシー</string>
     <string name="tracking">トラッキング</string>
@@ -1833,7 +1832,6 @@
     <string name="upgrade_perk_features">フィルタ、テンプレート、署名など</string>
     <string name="upgrade_resource_aliases">エイリアス</string>
     <string name="upgrade_resource_domains">ドメイン</string>
-    <string name="upgrade_resource_contacts">連絡先</string>
     <string name="upgrade_resource_templates">テンプレート</string>
     <string name="upgrade_resource_signatures">署名</string>
     <string name="upgrade_resource_filters">フィルタ</string>

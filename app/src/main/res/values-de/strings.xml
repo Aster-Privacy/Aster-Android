@@ -1012,7 +1012,6 @@
     <string name="remove_payment_failed">Zahlungsmethode konnte nicht entfernt werden</string>
     <string name="no_device_contacts">Keine Kontakte auf dem Gerät gefunden</string>
     <string name="no_new_contacts">Keine neuen Kontakte zum Importieren</string>
-    <string name="contact_limit_reached">Sie haben Ihr Kontaktlimit erreicht. Führen Sie ein Upgrade durch, um den Rest zu importieren.</string>
 
     <string name="privacy">Datenschutz</string>
     <string name="tracking">Tracking</string>
@@ -1838,7 +1837,6 @@
     <string name="upgrade_perk_features">Filter, Vorlagen, Signaturen und mehr</string>
     <string name="upgrade_resource_aliases">Aliasse</string>
     <string name="upgrade_resource_domains">Domains</string>
-    <string name="upgrade_resource_contacts">Kontakte</string>
     <string name="upgrade_resource_templates">Vorlagen</string>
     <string name="upgrade_resource_signatures">Signaturen</string>
     <string name="upgrade_resource_filters">Filter</string>

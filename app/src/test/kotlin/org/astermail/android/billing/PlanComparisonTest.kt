@@ -121,4 +121,21 @@ class PlanComparisonTest {
         assertEquals("en", plan_comparison_locale(Locale.forLanguageTag("it-IT")))
         assertEquals("en", plan_comparison_locale(Locale.forLanguageTag("pl")))
     }
+
+    @Test
+    fun free_contacts_match_paid_plans_in_every_bundled_locale() {
+        for (locale in plan_comparison_bundled_locales) {
+            val row = parse_plan_comparison(asset(locale))!!.row("contacts")!!
+            assertEquals(locale, row.value_for("star"), row.value_for("free"))
+            assertTrue(locale, row.value_for("free").included)
+        }
+    }
+
+    @Test
+    fun remote_feed_with_a_contacts_cap_shows_unlimited_on_free() {
+        val raw = """{"schema":1,"locale":"en","plans":[{"code":"free","name":"Free"},{"code":"star","name":"Star"}],"groups":[{"id":"contacts","title":"Contacts","rows":[{"id":"contacts","label":"Contact management","tip":null,"values":{"free":"150","star":"Unlimited"}},{"id":"contact_merge","label":"Merge","tip":null,"values":{"free":false,"star":true}}]}]}"""
+        val feed = parse_plan_comparison(raw)!!
+        assertEquals(plan_comparison_value(true, "Unlimited"), feed.row("contacts")!!.value_for("free"))
+        assertEquals(plan_comparison_value(false, null), feed.row("contact_merge")!!.value_for("free"))
+    }
 }

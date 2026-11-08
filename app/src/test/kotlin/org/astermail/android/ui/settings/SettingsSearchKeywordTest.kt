@@ -65,4 +65,14 @@ class SettingsSearchKeywordTest {
         assertEquals(UpgradeLimitKey.MaxCustomFilters, UpgradeStore.state.value.limit_key)
         UpgradeStore.close()
     }
+
+    @Test
+    fun contacts_plan_limit_opens_no_upsell() {
+        UpgradeStore.close()
+        UpgradeStore.show_plan_limit("contacts", "Contact limit reached")
+        assertFalse(UpgradeStore.state.value.is_open)
+        assertTrue(UpgradeStore.is_uncapped(" Contacts "))
+        assertFalse(UpgradeStore.is_uncapped("aliases"))
+        assertFalse(UpgradeStore.is_uncapped(null))
+    }
 }

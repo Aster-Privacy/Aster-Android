@@ -152,7 +152,7 @@ internal fun parse_plan_comparison(raw: String): plan_comparison_feed? = runCatc
                 }
             }
             if (values.isEmpty()) continue
-            rows += plan_comparison_row(id = row_id, label = label, tip = tip, values = values)
+            rows += plan_comparison_row(id = row_id, label = label, tip = tip, values = same_on_every_plan(row_id, values))
             total_rows += 1
         }
         if (rows.isNotEmpty()) groups += plan_comparison_group(id = group_id, title = title, rows = rows)
@@ -160,6 +160,17 @@ internal fun parse_plan_comparison(raw: String): plan_comparison_feed? = runCatc
     if (groups.isEmpty()) return null
     plan_comparison_feed(locale = locale, plans = plans, groups = groups)
 }.getOrNull()
+
+internal val plan_comparison_uncapped_rows = setOf("contacts")
+
+private fun same_on_every_plan(
+    row_id: String,
+    values: Map<String, plan_comparison_value>,
+): Map<String, plan_comparison_value> {
+    if (row_id !in plan_comparison_uncapped_rows) return values
+    val widest = values.values.lastOrNull { it.included } ?: return values
+    return values.mapValues { widest }
+}
 
 private fun is_safe_id(value: String): Boolean =
     value.isNotEmpty() && value.length <= 64 && value.all { it in 'a'..'z' || it in '0'..'9' || it == '_' || it == '-' }

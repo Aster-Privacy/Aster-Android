@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">Не удалось удалить способ оплаты</string>
     <string name="no_device_contacts">Контакты на устройстве не найдены</string>
     <string name="no_new_contacts">Нет новых контактов для импорта</string>
-    <string name="contact_limit_reached">Достигнут лимит контактов. Перейдите на другой тариф, чтобы импортировать остальные.</string>
 
     <string name="privacy">Конфиденциальность</string>
     <string name="tracking">Отслеживание</string>
@@ -1845,7 +1844,6 @@
     <string name="upgrade_perk_features">Фильтры, шаблоны, подписи и другое</string>
     <string name="upgrade_resource_aliases">псевдонимов</string>
     <string name="upgrade_resource_domains">доменов</string>
-    <string name="upgrade_resource_contacts">контактов</string>
     <string name="upgrade_resource_templates">шаблонов</string>
     <string name="upgrade_resource_signatures">подписей</string>
     <string name="upgrade_resource_filters">фильтров</string>

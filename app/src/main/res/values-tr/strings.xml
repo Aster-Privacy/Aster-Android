@@ -1011,7 +1011,6 @@
     <string name="remove_payment_failed">Ödeme yöntemi kaldırılamadı</string>
     <string name="no_device_contacts">Cihazda kişi bulunamadı</string>
     <string name="no_new_contacts">İçe aktarılacak yeni kişi yok</string>
-    <string name="contact_limit_reached">Kişi sınırına ulaştınız. Kalanları içe aktarmak için planınızı yükseltin.</string>
 
     <string name="privacy">Gizlilik</string>
     <string name="tracking">İzleme</string>
@@ -1837,7 +1836,6 @@
     <string name="upgrade_perk_features">Filtreler, şablonlar, imzalar ve daha fazlası</string>
     <string name="upgrade_resource_aliases">takma ad</string>
     <string name="upgrade_resource_domains">alan adı</string>
-    <string name="upgrade_resource_contacts">kişi</string>
     <string name="upgrade_resource_templates">şablon</string>
     <string name="upgrade_resource_signatures">imza</string>
     <string name="upgrade_resource_filters">filtre</string>
