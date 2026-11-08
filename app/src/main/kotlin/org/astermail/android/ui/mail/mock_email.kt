@@ -604,6 +604,17 @@ object AsterTimePreferences {
         generation += 1
     }
 
+    @Volatile
+    var account_week_start: Int? = null
+        private set
+
+    @Synchronized
+    fun set_account_week_start(value: String?) {
+        account_week_start = WeekStart.day_of_week(value)
+    }
+
+    fun first_day_of_week(): Int = WeekStart.resolve(account_week_start, account_calendar().firstDayOfWeek)
+
     @Synchronized
     fun set_account_relative_dates(value: Boolean) {
         if (value == relative_dates) return

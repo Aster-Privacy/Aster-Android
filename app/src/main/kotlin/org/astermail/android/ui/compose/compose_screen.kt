@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.ui.mail.with_account_week_start
 import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import androidx.compose.ui.graphics.RectangleShape
@@ -3401,6 +3402,7 @@ fun ComposeScreen(
                 date_picker.datePicker.maxDate =
                     org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
             }
+            date_picker.with_account_week_start()
             date_picker.setOnCancelListener {
                 show_schedule_picker = false
                 scheduled_send = false
@@ -5231,6 +5233,7 @@ internal fun ExpiringSheet(
             calendar.get(java.util.Calendar.DAY_OF_MONTH),
         )
         date_picker.datePicker.minDate = System.currentTimeMillis()
+        date_picker.with_account_week_start()
         date_picker.show()
     }
     val commit_or_close: () -> Unit = commit@{

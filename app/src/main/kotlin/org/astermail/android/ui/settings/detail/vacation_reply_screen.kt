@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.mail.with_account_week_start
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -316,6 +317,7 @@ private fun vacation_date_row(
                     vacation_bound_millis(max_date, true)?.let {
                         dialog.datePicker.maxDate = it
                     }
+                    dialog.with_account_week_start()
                     dialog.show()
                 }
                 .padding(AsterSpacing.lg),
