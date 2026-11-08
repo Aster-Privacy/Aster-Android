@@ -70,8 +70,32 @@ object RecipientEncryptionRules {
         return if (info!!.will_encrypt) RecipientEncryption.ENCRYPT else RecipientEncryption.PLAIN
     }
 
-    fun copy_failure_throws(explicit: Boolean, listed: Boolean, too_large: Boolean): Boolean =
-        if (too_large) listed else explicit
+    fun recipients_failing_required_encryption(
+        recipients: List<String>,
+        discovered: List<ExternalKeyInfo>,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+    ): List<String> {
+        val by_address = discovered.associateBy { normalize(it.email) }
+        return recipients.filter { recipient ->
+            decide(
+                by_address[normalize(recipient)],
+                force_pgp,
+                require_encryption = true,
+                listed = is_listed(recipient, pgp_recipients),
+            ) != RecipientEncryption.ENCRYPT
+        }
+    }
+
+    fun copy_failure_throws(
+        explicit: Boolean,
+        listed: Boolean,
+        too_large: Boolean,
+        require_encryption: Boolean,
+    ): Boolean = require_encryption || if (too_large) listed else explicit
+
+    fun skipped_copies_throw(listed: Boolean, require_encryption: Boolean): Boolean =
+        listed || require_encryption
 
     fun is_expired(expires_at: String?, now_ms: Long): Boolean {
         val raw = expires_at?.trim().orEmpty()

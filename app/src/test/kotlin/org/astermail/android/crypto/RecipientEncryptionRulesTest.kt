@@ -98,10 +98,84 @@ class RecipientEncryptionRulesTest {
 
     @Test
     fun copy_failure_blocks_explicit_sends_and_listed_oversize_sends() {
-        assertTrue(RecipientEncryptionRules.copy_failure_throws(explicit = true, listed = false, too_large = false))
-        assertFalse(RecipientEncryptionRules.copy_failure_throws(explicit = false, listed = false, too_large = false))
-        assertTrue(RecipientEncryptionRules.copy_failure_throws(explicit = true, listed = true, too_large = true))
-        assertFalse(RecipientEncryptionRules.copy_failure_throws(explicit = true, listed = false, too_large = true))
+        assertTrue(RecipientEncryptionRules.copy_failure_throws(true, false, too_large = false, require_encryption = false))
+        assertFalse(RecipientEncryptionRules.copy_failure_throws(false, false, too_large = false, require_encryption = false))
+        assertTrue(RecipientEncryptionRules.copy_failure_throws(true, true, too_large = true, require_encryption = false))
+        assertFalse(RecipientEncryptionRules.copy_failure_throws(true, false, too_large = true, require_encryption = false))
+    }
+
+    @Test
+    fun required_encryption_never_lets_a_copy_failure_fall_back_to_plaintext() {
+        for (explicit in listOf(true, false)) {
+            for (listed in listOf(true, false)) {
+                for (too_large in listOf(true, false)) {
+                    assertTrue(RecipientEncryptionRules.copy_failure_throws(explicit, listed, too_large, require_encryption = true))
+                }
+            }
+        }
+        assertTrue(RecipientEncryptionRules.skipped_copies_throw(listed = false, require_encryption = true))
+        assertTrue(RecipientEncryptionRules.skipped_copies_throw(listed = true, require_encryption = false))
+        assertFalse(RecipientEncryptionRules.skipped_copies_throw(listed = false, require_encryption = false))
+    }
+
+    @Test
+    fun required_encryption_gate_passes_a_keyserver_only_key_and_the_send_path_encrypts_it() {
+        val keyserver_only = info(will_encrypt = false)
+        assertTrue(
+            RecipientEncryptionRules.recipients_failing_required_encryption(
+                listOf("Bob@Example.com"),
+                listOf(keyserver_only),
+                null,
+                emptyList(),
+            ).isEmpty(),
+        )
+        assertEquals(
+            RecipientEncryption.ENCRYPT,
+            RecipientEncryptionRules.decide(keyserver_only, null, require_encryption = true, listed = false),
+        )
+    }
+
+    @Test
+    fun required_encryption_gate_blocks_recipients_without_a_usable_key() {
+        val failing = RecipientEncryptionRules.recipients_failing_required_encryption(
+            listOf("bob@example.com", "eve@example.com", "dan@example.com", "amy@example.com"),
+            listOf(
+                info("bob@example.com", found = false),
+                info("eve@example.com", public_key = " "),
+                info("amy@example.com", will_encrypt = true),
+            ),
+            force_pgp = false,
+            pgp_recipients = emptyList(),
+        )
+        assertEquals(listOf("bob@example.com", "eve@example.com", "dan@example.com"), failing)
+    }
+
+    @Test
+    fun required_encryption_gate_and_send_path_agree_for_every_key_state() {
+        val states = listOf(
+            null,
+            info(found = false),
+            info(public_key = null),
+            info(public_key = ""),
+            info(will_encrypt = false),
+            info(will_encrypt = true),
+        )
+        for (state in states) {
+            for (force_pgp in listOf(null, true, false)) {
+                for (listed in listOf(true, false)) {
+                    val pgp_recipients = if (listed) listOf("bob@example.com") else emptyList()
+                    val passes_gate = RecipientEncryptionRules.recipients_failing_required_encryption(
+                        listOf("bob@example.com"),
+                        listOfNotNull(state),
+                        force_pgp,
+                        pgp_recipients,
+                    ).isEmpty()
+                    val decision = RecipientEncryptionRules.decide(state, force_pgp, true, listed)
+                    assertEquals(passes_gate, decision == RecipientEncryption.ENCRYPT)
+                    assertTrue(decision != RecipientEncryption.PLAIN)
+                }
+            }
+        }
     }
 
     @Test

@@ -5297,8 +5297,13 @@ class MailRepository @Inject constructor(
             .chunked(RecipientEncryptionRules.DISCOVERY_BATCH_SIZE)
             .flatMap { keys_api.discover_external_keys_batch(it) }
 
-    private fun pgp_copy_failure(explicit: Boolean, listed: Boolean, too_large: Boolean): Map<String, String>? {
-        if (!RecipientEncryptionRules.copy_failure_throws(explicit, listed, too_large)) return null
+    private fun pgp_copy_failure(
+        explicit: Boolean,
+        listed: Boolean,
+        too_large: Boolean,
+        require_encryption: Boolean,
+    ): Map<String, String>? {
+        if (!RecipientEncryptionRules.copy_failure_throws(explicit, listed, too_large, require_encryption)) return null
         throw pgp_copy_exception(too_large)
     }
 
@@ -5332,21 +5337,23 @@ class MailRepository @Inject constructor(
         if (outside.isEmpty()) return null
         val listed = outside.any { RecipientEncryptionRules.is_listed(it, pgp_recipients) }
         if (expires_at != null || !expiry_password.isNullOrEmpty() || from.isBlank()) {
-            if (listed) throw pgp_copy_exception(too_large = false)
+            if (RecipientEncryptionRules.skipped_copies_throw(listed, require_encryption)) {
+                throw pgp_copy_exception(too_large = false)
+            }
             return null
         }
         if (!RecipientEncryptionRules.wants_copies(force_pgp, require_encryption, pgp_recipients)) return null
         val explicit = RecipientEncryptionRules.is_explicit(force_pgp, require_encryption, listed)
         val attachment_bytes = attachments.sumOf { it.size_bytes }
         if (attachment_bytes > ClientPgpCopies.MAX_COPY_ATTACHMENT_BYTES) {
-            return pgp_copy_failure(explicit, listed, too_large = true)
+            return pgp_copy_failure(explicit, listed, too_large = true, require_encryption)
         }
         val discovered = try {
             discover_keys_in_batches(outside)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
-            return pgp_copy_failure(explicit, listed, too_large = false)
+            return pgp_copy_failure(explicit, listed, too_large = false, require_encryption)
         }
         val by_address = discovered.associateBy { RecipientEncryptionRules.normalize(it.email) }
         val recipient_keys = LinkedHashMap<String, String>()
@@ -5360,7 +5367,7 @@ class MailRepository @Inject constructor(
             )
             when (decision) {
                 RecipientEncryption.SERVER -> throw pgp_copy_exception(too_large = false)
-                RecipientEncryption.PLAIN -> return pgp_copy_failure(listed, listed, too_large = false)
+                RecipientEncryption.PLAIN -> return pgp_copy_failure(listed, listed, too_large = false, require_encryption)
                 RecipientEncryption.ENCRYPT -> recipient_keys[recipient] = info!!.public_key!!
             }
         }
@@ -5377,7 +5384,7 @@ class MailRepository @Inject constructor(
         }
         return when (outcome) {
             is ClientPgpCopyOutcome.Copies -> outcome.copies
-            is ClientPgpCopyOutcome.Failed -> pgp_copy_failure(explicit, listed, outcome.too_large)
+            is ClientPgpCopyOutcome.Failed -> pgp_copy_failure(explicit, listed, outcome.too_large, require_encryption)
         }
     }
 
@@ -5868,12 +5875,18 @@ class MailRepository @Inject constructor(
 
     private val last_known_require_encryption = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
-    private suspend fun require_outside_recipient_keys(recipients: List<String>) {
+    private suspend fun require_outside_recipient_keys(
+        recipients: List<String>,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+    ) {
         val outside = ClientPgpCopies.outside_recipients(recipients, ::is_internal_recipient)
         if (outside.isEmpty()) return
-        val missing = ClientPgpCopies.recipients_without_keys(
+        val missing = RecipientEncryptionRules.recipients_failing_required_encryption(
             outside,
-            keys_api.discover_external_keys_batch(outside),
+            discover_keys_in_batches(outside),
+            force_pgp,
+            pgp_recipients,
         )
         if (missing.isNotEmpty()) {
             throw EncryptionRequiredException(
@@ -5935,7 +5948,7 @@ class MailRepository @Inject constructor(
             if (expires_at != null || !expiry_password.isNullOrEmpty()) {
                 throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
             }
-            require_outside_recipient_keys(to + cc + bcc)
+            require_outside_recipient_keys(to + cc + bcc, force_pgp, pgp_recipients)
         }
         val outside_recipients = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
         val listed_pgp_recipients = outside_recipients
