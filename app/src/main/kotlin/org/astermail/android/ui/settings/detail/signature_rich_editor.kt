@@ -201,14 +201,18 @@ private const val signature_editor_script = """
   };
   window.aster_font_size=function(px){
     ed.focus();
+    try{document.execCommand('styleWithCSS',false,false);}catch(e){}
     try{document.execCommand('fontSize',false,'7');}catch(e){}
-    var fonts=ed.querySelectorAll('font[size="7"]');
+    try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+    var fonts=ed.querySelectorAll('font[size]');
     for(var index=0;index<fonts.length;index++){
       var node=fonts[index];
       var span=document.createElement('span');
       span.style.fontSize=px;
       while(node.firstChild){span.appendChild(node.firstChild);}
       node.parentNode.replaceChild(span,node);
+      var inner=span.querySelectorAll('[style*="font-size"]');
+      for(var k=0;k<inner.length;k++){inner[k].style.fontSize='';}
     }
     push();
   };
