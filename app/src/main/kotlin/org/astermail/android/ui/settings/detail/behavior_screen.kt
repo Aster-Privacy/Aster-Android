@@ -520,6 +520,16 @@ fun BehaviorScreen(
                 on_packs_cleared = { translate_pack_trigger++ },
             )
 
+            if (prefs != null && prefs_loaded) {
+                v_gap(AsterSpacing.lg)
+                sidebar_layout_settings(
+                    preferences = prefs,
+                    on_move = { id, direction -> vm.move_sidebar_section(id, direction) },
+                    on_set_hidden = { id, hidden -> vm.set_sidebar_item_hidden(id, hidden) },
+                    on_reset = { vm.reset_sidebar_layout() },
+                )
+            }
+
             v_gap(AsterSpacing.lg)
 
             section_label(stringResource(R.string.section_composing_replies))

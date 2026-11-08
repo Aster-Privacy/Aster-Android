@@ -3593,4 +3593,12 @@
     <string name="contact_birthday_year_optional">Год (необязательно)</string>
     <string name="contact_birthday_year_hint">Чтобы сохранить только месяц и день, оставьте год пустым.</string>
     <string name="contact_birthday_year_invalid">Введите год из 4 цифр или оставьте год пустым.</string>
+    <string name="sidebar_layout">Макет боковой панели</string>
+    <string name="sidebar_layout_subtitle">Выберите порядок разделов боковой панели и то, какие из них показывать.</string>
+    <string name="reset_sidebar_layout">Сбросить макет</string>
+    <string name="sidebar_mail_section_subtitle">Входящие всегда отображаются на боковой панели.</string>
+    <string name="sidebar_mail_items">Элементы почты</string>
+    <string name="sidebar_mail_items_subtitle">Выберите, какие почтовые ящики показывать в разделе «Почта».</string>
+    <string name="sidebar_move_section_up">Переместить %1$s вверх</string>
+    <string name="sidebar_move_section_down">Переместить %1$s вниз</string>
 </resources>

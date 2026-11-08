@@ -129,6 +129,8 @@ data class UserPreferences(
     val sidebar_labels_collapsed: Boolean = false,
     val sidebar_aliases_collapsed: Boolean = false,
     val sidebar_categories_collapsed: Boolean = false,
+    val sidebar_section_order: List<String> = SIDEBAR_SECTION_IDS,
+    val sidebar_hidden_items: List<String> = emptyList(),
     val swipe_right_action: String = "toggle_read",
     val swipe_left_action: String = "archive",
     val toolbar_actions: String = "",

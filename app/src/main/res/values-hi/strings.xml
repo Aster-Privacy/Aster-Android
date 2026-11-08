@@ -3443,4 +3443,12 @@
     <string name="contact_birthday_year_optional">वर्ष (वैकल्पिक)</string>
     <string name="contact_birthday_year_hint">केवल महीना और दिन सहेजने के लिए, वर्ष खाली छोड़ें।</string>
     <string name="contact_birthday_year_invalid">4 अंकों का वर्ष दर्ज करें, या वर्ष खाली छोड़ें।</string>
+    <string name="sidebar_layout">साइडबार लेआउट</string>
+    <string name="sidebar_layout_subtitle">साइडबार के सेक्शन का क्रम और दिखने वाले सेक्शन चुनें।</string>
+    <string name="reset_sidebar_layout">लेआउट रीसेट करें</string>
+    <string name="sidebar_mail_section_subtitle">इनबॉक्स हमेशा साइडबार में दिखता है।</string>
+    <string name="sidebar_mail_items">मेल आइटम</string>
+    <string name="sidebar_mail_items_subtitle">चुनें कि मेल सेक्शन में कौन-से मेलबॉक्स दिखें।</string>
+    <string name="sidebar_move_section_up">%1$s को ऊपर ले जाएँ</string>
+    <string name="sidebar_move_section_down">%1$s को नीचे ले जाएँ</string>
 </resources>
