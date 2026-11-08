@@ -24,6 +24,7 @@ package org.astermail.android.ui.settings
 import org.astermail.android.ui.upgrade.UpgradeLimitKey
 import org.astermail.android.ui.upgrade.UpgradeStore
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
