@@ -26,6 +26,18 @@ private const val MIN_MEASURABLE_WIDTH_DP = 120f
 internal fun zoomed_body_height_dp(base_dp: Float, ratio: Float, max_dp: Int): Float =
     (base_dp * ratio).coerceIn(1f, max_dp.coerceAtLeast(1).toFloat())
 
+internal const val NATURAL_SCALE_TOLERANCE = 0.001f
+
+internal fun natural_body_scale(estimate: Float, web_scale_px: Float, density: Float): Float {
+    if (web_scale_px <= 0f || density <= 0f) return estimate
+    return (web_scale_px / density).coerceIn(0.1f, 1f)
+}
+
+internal fun rescaled_body_height_dp(height_dp: Float, old_scale: Float, new_scale: Float): Float {
+    if (height_dp <= 0f || old_scale <= 0f || new_scale <= 0f) return height_dp
+    return height_dp * new_scale / old_scale
+}
+
 internal class body_height_guard(private val max_capped_remeasures: Int = 2) {
     private var capped_remeasures = 0
 
