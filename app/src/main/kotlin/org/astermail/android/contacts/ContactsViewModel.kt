@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
 
 private const val bulk_delete_concurrency = 8
 
@@ -292,10 +293,14 @@ class ContactsViewModel @Inject constructor(
                     on_progress = { done -> _state.value = _state.value.copy(import_done = done) },
                 )
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
+                var merged = 0
+                for (update in plan.updates) {
+                    if (repository.update_contact(update.id, update).isSuccess) merged++
+                }
                 val imported = upload.imported
                 val failed = upload.failed
                 val failure = upload.last_failure
-                if (imported == 0 && failure != null) {
+                if (imported == 0 && merged == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_syncing = false,
                         error = friendly_error(failure),
@@ -305,10 +310,10 @@ class ContactsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_syncing = false,
                     sync_message = when {
-                        imported > 0 -> context.resources.getQuantityString(
+                        imported + merged > 0 -> context.resources.getQuantityString(
                             R.plurals.imported_contacts,
-                            imported,
-                            imported,
+                            imported + merged,
+                            imported + merged,
                         )
                         in_trash > 0 -> context.getString(R.string.contacts_already_in_trash)
                         failed == 0 -> context.getString(R.string.no_new_contacts)
@@ -375,8 +380,12 @@ class ContactsViewModel @Inject constructor(
                         _state.value = _state.value.copy(import_done = done, import_total = total)
                     }
                 }
+                var merged = 0
+                for (update in plan.updates) {
+                    if (repository.update_contact(update.id, update).isSuccess) merged++
+                }
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
-                val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt()
+                val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt() + merged
                 val failure = summary?.last_failure
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(
@@ -576,6 +585,9 @@ class ContactsViewModel @Inject constructor(
             ContactsContract.Data.DATA10,
         )
 
+        val all_phones = mutableMapOf<String, MutableList<ContactEntry>>()
+        val all_emails = mutableMapOf<String, MutableList<ContactEntry>>()
+
         val selection = ContactsContract.Data.MIMETYPE +
             " IN (" + mime_types.joinToString(",") { "?" } + ") AND " + foreign_selection
 
@@ -607,9 +619,26 @@ class ContactsViewModel @Inject constructor(
                 val value = column(d1_idx)
                 val kind = if (d2_idx < 0) 0 else cursor.getInt(d2_idx)
 
+                if (mime == ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE && value.isNotBlank()) {
+                    val list = all_emails.getOrPut(contact_id) { mutableListOf() }
+                    if (list.none { it.value.equals(value, ignoreCase = true) }) {
+                        list.add(ContactEntry(value, device_email_type(kind)))
+                    }
+                }
+                if (mime == ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE && value.isNotBlank()) {
+                    val list = all_phones.getOrPut(contact_id) { mutableListOf() }
+                    if (list.none { phone_digits(it.value) == phone_digits(value) }) {
+                        list.add(ContactEntry(value, device_phone_type(kind)))
+                    }
+                }
+
                 contacts[contact_id] = when (mime) {
                     ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE -> {
                         if (value.isBlank()) {
+                            existing
+                        } else if (existing.email.equals(value, ignoreCase = true) ||
+                            existing.work_email.equals(value, ignoreCase = true)
+                        ) {
                             existing
                         } else if (kind == ContactsContract.CommonDataKinds.Email.TYPE_WORK) {
                             if (existing.work_email.isBlank()) {
@@ -630,6 +659,8 @@ class ContactsViewModel @Inject constructor(
 
                     ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE -> {
                         if (value.isBlank()) {
+                            existing
+                        } else if (existing.phones.any { phone_digits(it.value) == phone_digits(value) }) {
                             existing
                         } else if (kind == ContactsContract.CommonDataKinds.Phone.TYPE_WORK ||
                             kind == ContactsContract.CommonDataKinds.Phone.TYPE_WORK_MOBILE
@@ -700,6 +731,18 @@ class ContactsViewModel @Inject constructor(
                     else -> existing
                 }
             }
+        }
+
+        for (contact_id in (all_phones.keys + all_emails.keys)) {
+            val contact = contacts[contact_id] ?: continue
+            val device_phones = all_phones[contact_id].orEmpty()
+            val device_emails = all_emails[contact_id].orEmpty()
+            if (device_phones.size < 2 && device_emails.size < 2) continue
+            contacts[contact_id] = contact.with_typed_fields(
+                emails = if (device_emails.size >= 2) device_emails else contact.email_entries(),
+                phones = if (device_phones.size >= 2) device_phones else contact.phone_entries(),
+                addresses = contact.address_entries(),
+            )
         }
 
         for (contact_id in with_photo) {
@@ -1130,4 +1173,23 @@ class ContactsViewModel @Inject constructor(
             else -> org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
         }
     }
+}
+
+private fun device_email_type(kind: Int): String = when (kind) {
+    ContactsContract.CommonDataKinds.Email.TYPE_HOME -> ContactEntry.TYPE_HOME
+    ContactsContract.CommonDataKinds.Email.TYPE_WORK -> ContactEntry.TYPE_WORK
+    else -> ContactEntry.TYPE_OTHER
+}
+
+private fun phone_digits(value: String): String = value.filter { it.isDigit() }
+
+private fun device_phone_type(kind: Int): String = when (kind) {
+    ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE -> ContactEntry.TYPE_MOBILE
+    ContactsContract.CommonDataKinds.Phone.TYPE_HOME -> ContactEntry.TYPE_HOME
+    ContactsContract.CommonDataKinds.Phone.TYPE_WORK,
+    ContactsContract.CommonDataKinds.Phone.TYPE_WORK_MOBILE -> ContactEntry.TYPE_WORK
+    ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK,
+    ContactsContract.CommonDataKinds.Phone.TYPE_FAX_HOME -> ContactEntry.TYPE_FAX
+    ContactsContract.CommonDataKinds.Phone.TYPE_PAGER -> ContactEntry.TYPE_PAGER
+    else -> ContactEntry.TYPE_OTHER
 }
