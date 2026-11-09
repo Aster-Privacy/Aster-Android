@@ -232,4 +232,26 @@ class BodyHeightGuardTest {
         assertFalse(overflow_tracks_viewport(411.4f, 560f, 562f, 602f))
         assertFalse(overflow_tracks_viewport(411.4f, 560f, 411.4f, 600f))
     }
+
+    @Test
+    fun a_fitted_body_uses_the_scale_the_web_view_applied() {
+        assertEquals(0.5686f, natural_body_scale(0.587f, 1.4925f, 2.625f), 0.0005f)
+        assertEquals(1f, natural_body_scale(0.587f, 3.2f, 2.625f), 0.0001f)
+        assertEquals(0.1f, natural_body_scale(0.587f, 0.05f, 2.625f), 0.0001f)
+    }
+
+    @Test
+    fun an_unknown_web_view_scale_keeps_the_estimate() {
+        assertEquals(0.587f, natural_body_scale(0.587f, 0f, 2.625f), 0f)
+        assertEquals(0.587f, natural_body_scale(0.587f, 1.49f, 0f), 0f)
+    }
+
+    @Test
+    fun a_measured_height_follows_a_corrected_scale() {
+        assertEquals(1370.5f, rescaled_body_height_dp(1415f, 0.587f, 0.5686f), 0.5f)
+        assertEquals(80f, rescaled_body_height_dp(80f, 0.5f, 0.5f), 0f)
+        assertEquals(0f, rescaled_body_height_dp(0f, 0.587f, 0.5686f), 0f)
+        assertEquals(500f, rescaled_body_height_dp(500f, 0f, 0.5686f), 0f)
+        assertEquals(500f, rescaled_body_height_dp(500f, 0.587f, 0f), 0f)
+    }
 }

@@ -6898,6 +6898,22 @@ internal fun email_html_view(
 
     val height_sink = remember { height_channel { h, exact -> on_height_report(h, exact, false) } }
 
+    fun adopt_natural_scale(view: android.webkit.WebView?, px_scale: Float) {
+        if (!is_nl_ref[0] || view == null) return
+        val previous = nl_scale_ref[0]
+        val actual = natural_body_scale(previous, px_scale, view.resources.displayMetrics.density)
+        if (kotlin.math.abs(actual - previous) < NATURAL_SCALE_TOLERANCE) return
+        nl_scale_ref[0] = actual
+        scale_ref[0] = actual
+        zoom_scale_ref[0] = actual
+        measured_scale_ref[0] = actual
+        if (has_measured && measured_dp_ref[0] > 0f) {
+            val rescaled = rescaled_body_height_dp(measured_dp_ref[0], previous, actual)
+            measured_dp_ref[0] = rescaled
+            content_height_dp = rescaled.dp
+        }
+    }
+
     LaunchedEffect(height_cache_key) {
         if (has_measured) on_ready()
     }
@@ -6981,6 +6997,8 @@ internal fun email_html_view(
             if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
             val content = web.contentHeight
             if (content <= 0) continue
+            @Suppress("DEPRECATION")
+            if (!zoom_active) adopt_natural_scale(web, web.scale)
             if (!overflow_checked && !zoom_active && loaded_built == prebuilt_html && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
                 val body = web as? mail_body_web_view
                 @Suppress("DEPRECATION")
@@ -7278,10 +7296,14 @@ internal fun email_html_view(
                 if (!height_settled) {
                     zoom_base_ref[0] = newScale
                     zoom_active = false
+                    adopt_natural_scale(view, newScale)
                     return
                 }
                 (view as? mail_body_web_view)?.report_horizontal_scroll()
-                if (zoom_base_ref[0] <= 0f) zoom_base_ref[0] = newScale
+                if (zoom_base_ref[0] <= 0f) {
+                    zoom_base_ref[0] = newScale
+                    adopt_natural_scale(view, newScale)
+                }
                 val ratio = newScale / zoom_base_ref[0]
                 scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else ratio
                 zoom_scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] * ratio else ratio
