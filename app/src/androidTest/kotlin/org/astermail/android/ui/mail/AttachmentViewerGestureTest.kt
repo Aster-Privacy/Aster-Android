@@ -123,7 +123,7 @@ class AttachmentViewerGestureTest {
         compose_rule.setContent {
             AsterTheme {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    image_attachment_viewer(bytes, "sample")
+                    image_attachment_viewer(bytes, "sample", fallback = {})
                 }
             }
         }

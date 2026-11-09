@@ -1,1 +1,9 @@
-Fixes mail showing as "Encrypted message" after you change your password in the app. Your encryption keys now stay unlocked with your new password, so received mail opens normally. If mail still shows as encrypted after you update, open the banner at the top of your inbox and enter your previous password to recover it.
+Bug fixes and improvements:
+
+- Mail opens normally after you change your password.
+- New mail notifications arrive while your phone is idle.
+- Avatars in group conversations are no longer cut off.
+- Contact import keeps every phone number and email address.
+- Your profile shows your default address.
+- Messages shrink back after you collapse quoted text.
+- USB security key sign-in continues after you grant access.

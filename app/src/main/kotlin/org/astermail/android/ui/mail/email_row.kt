@@ -119,7 +119,7 @@ import org.astermail.android.security.trusted_sender_name
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun inbox_leading_slot(
+internal fun inbox_leading_slot(
     show_pictures: Boolean,
     is_selected: Boolean,
     avatar_size: androidx.compose.ui.unit.Dp,
@@ -129,10 +129,14 @@ private fun inbox_leading_slot(
     val colors = AsterMaterial.colors
     if (!is_selected && !show_pictures) return
     val toggle_label = stringResource(if (is_selected) R.string.deselect else R.string.select)
+    val tap_interaction = remember { MutableInteractionSource() }
     val tap_modifier = if (on_avatar_click != null) {
-        Modifier
-            .clip(CircleShape)
-            .clickable(onClickLabel = toggle_label, onClick = on_avatar_click)
+        Modifier.clickable(
+            interactionSource = tap_interaction,
+            indication = androidx.compose.material3.ripple(bounded = false, radius = avatar_size / 2),
+            onClickLabel = toggle_label,
+            onClick = on_avatar_click,
+        )
     } else {
         Modifier
     }
