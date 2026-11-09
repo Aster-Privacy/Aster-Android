@@ -293,10 +293,14 @@ class ContactsViewModel @Inject constructor(
                     on_progress = { done -> _state.value = _state.value.copy(import_done = done) },
                 )
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
+                var merged = 0
+                for (update in plan.updates) {
+                    if (repository.update_contact(update.id, update).isSuccess) merged++
+                }
                 val imported = upload.imported
                 val failed = upload.failed
                 val failure = upload.last_failure
-                if (imported == 0 && failure != null) {
+                if (imported == 0 && merged == 0 && failure != null) {
                     _state.value = _state.value.copy(
                         is_syncing = false,
                         error = friendly_error(failure),
@@ -306,10 +310,10 @@ class ContactsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_syncing = false,
                     sync_message = when {
-                        imported > 0 -> context.resources.getQuantityString(
+                        imported + merged > 0 -> context.resources.getQuantityString(
                             R.plurals.imported_contacts,
-                            imported,
-                            imported,
+                            imported + merged,
+                            imported + merged,
                         )
                         in_trash > 0 -> context.getString(R.string.contacts_already_in_trash)
                         failed == 0 -> context.getString(R.string.no_new_contacts)
@@ -376,8 +380,12 @@ class ContactsViewModel @Inject constructor(
                         _state.value = _state.value.copy(import_done = done, import_total = total)
                     }
                 }
+                var merged = 0
+                for (update in plan.updates) {
+                    if (repository.update_contact(update.id, update).isSuccess) merged++
+                }
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
-                val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt()
+                val imported = ((summary?.imported ?: 0L) + (summary?.updated ?: 0L)).toInt() + merged
                 val failure = summary?.last_failure
                 if (imported == 0 && failure != null) {
                     _state.value = _state.value.copy(

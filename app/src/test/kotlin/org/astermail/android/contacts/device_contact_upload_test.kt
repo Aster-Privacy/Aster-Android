@@ -25,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.ApiError
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -79,6 +80,62 @@ class device_contact_upload_test {
         val phone = listOf(person("Ana", "ana.new@example.com"))
         val stored = listOf(person("Ana", "ana@example.com"))
         assertEquals(1, plan_contact_import(phone, stored).new_contacts.size)
+    }
+
+    private fun stored(id: String, name: String, email: String = "", phone: String = "") =
+        Contact(id = id, name = name, email = email, phone = phone)
+
+    @Test
+    fun a_new_email_on_a_stored_contact_is_merged() {
+        val phone = listOf(
+            person("Ana").with_typed_fields(
+                emails = listOf(
+                    ContactEntry("ana@example.com", ContactEntry.TYPE_HOME),
+                    ContactEntry("ana@work.example", ContactEntry.TYPE_WORK),
+                ),
+                phones = emptyList(),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(phone, listOf(stored("c1", "Ana", email = "ana@example.com")))
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(listOf("c1"), plan.updates.map { it.id })
+        assertEquals(
+            listOf("ana@example.com", "ana@work.example"),
+            plan.updates.single().email_entries().map { it.value },
+        )
+    }
+
+    @Test
+    fun a_new_phone_on_a_stored_contact_is_merged() {
+        val phone = listOf(
+            person("Ben").with_typed_fields(
+                emails = emptyList(),
+                phones = listOf(
+                    ContactEntry("+1 555 0100", ContactEntry.TYPE_MOBILE),
+                    ContactEntry("+1 555 0199", ContactEntry.TYPE_WORK),
+                ),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(phone, listOf(stored("c2", "Ben", phone = "+15550100")))
+        assertEquals(listOf("+15550100", "+1 555 0199"), plan.updates.single().phone_entries().map { it.value })
+    }
+
+    @Test
+    fun an_email_added_to_a_name_only_contact_is_merged() {
+        val phone = listOf(person("Cy", "cy@example.com"))
+        val plan = plan_contact_import(phone, listOf(stored("c3", "Cy")))
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(listOf("cy@example.com"), plan.updates.single().email_entries().map { it.value })
+    }
+
+    @Test
+    fun an_unchanged_contact_produces_no_update() {
+        val phone = listOf(person("Dee", "dee@example.com"))
+        val plan = plan_contact_import(phone, listOf(stored("c4", "Dee", email = "DEE@example.com")))
+        assertTrue(plan.updates.isEmpty())
+        assertTrue(plan.new_contacts.isEmpty())
     }
 
     private fun limited_server(cap: Int): Pair<MutableList<Int>, suspend (Int) -> Result<*>> {

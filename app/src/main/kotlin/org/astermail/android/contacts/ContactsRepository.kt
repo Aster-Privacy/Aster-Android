@@ -25,6 +25,7 @@ import java.security.MessageDigest
 import javax.crypto.Mac
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -48,6 +49,7 @@ import org.astermail.android.api.contacts.CONTACT_DATA_VERSION
 import org.astermail.android.api.contacts.ContactGroupEncrypted
 import org.astermail.android.api.contacts.ContactItem
 import org.astermail.android.api.contacts.ContactsApi
+import org.astermail.android.api.contacts.ListContactsResponse
 import org.astermail.android.api.contacts.CreateContactGroupRequest
 import org.astermail.android.api.contacts.UpdateContactGroupRequest
 import org.astermail.android.api.contacts.CreateContactGroupResponse
@@ -205,6 +207,7 @@ class ContactsRepository @Inject constructor(
         if (current_account() == account) {
             val rows = items.mapNotNull { it.to_cache_row(account) }
             if (complete && cache_writes.get() == writes_before) dao.replace_for_account(account, rows) else dao.upsert_all(rows)
+            if (!complete) return cached_contacts(account, dao)
         }
         return decrypt_contacts(overlay_pending(account, items, include_missing = true))
     }
@@ -263,19 +266,28 @@ class ContactsRepository @Inject constructor(
         val seen_cursors = mutableSetOf<String>()
         var cursor: String? = null
         while (true) {
-            val page = try {
-                contacts_api.list_contacts(limit = 100, cursor = cursor, group_id = group_id)
-            } catch (t: kotlin.coroutines.cancellation.CancellationException) {
-                throw t
-            } catch (t: Throwable) {
-                if (cursor == null) throw t
-                return all to false
-            }
+            val page = fetch_page_with_retry(cursor, group_id) ?: return all to false
             all.addAll(page.items)
             val next = page.next_cursor
             if (!page.has_more || next.isNullOrBlank()) return all to true
             if (!seen_cursors.add(next)) return all to false
             cursor = next
+        }
+    }
+
+    private suspend fun fetch_page_with_retry(cursor: String?, group_id: String?): ListContactsResponse? {
+        var attempt = 0
+        while (true) {
+            try {
+                return contacts_api.list_contacts(limit = 100, cursor = cursor, group_id = group_id)
+            } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+                throw t
+            } catch (t: Throwable) {
+                if (cursor == null) throw t
+                if (attempt >= PAGE_RETRY_DELAYS_MS.size) return null
+                delay(PAGE_RETRY_DELAYS_MS[attempt])
+                attempt++
+            }
         }
     }
 
@@ -1708,6 +1720,7 @@ class ContactsRepository @Inject constructor(
     companion object {
         private const val IMPORT_CHUNK_SIZE = 100
         private const val IMPORT_MAX_RETRIES = 3
+        private val PAGE_RETRY_DELAYS_MS = longArrayOf(500L, 1_500L, 4_000L)
         private const val HMAC_INFO = "contacts-hmac-v2"
         private const val SEARCH_INFO = "contacts-search-v2"
         private val TYPED_FIELDS = listOf(
