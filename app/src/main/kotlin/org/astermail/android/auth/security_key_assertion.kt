@@ -41,14 +41,18 @@ import java.io.IOException
 import java.util.Base64
 import java.util.Locale
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.delay
 import org.astermail.android.api.auth.WebAuthnAssertionOptions
 import org.json.JSONObject
 
 const val security_key_min_pin_length = 4
 const val security_key_options_max_age_ms = 60_000L
+const val security_key_attached_retries = 2
+const val security_key_attached_retry_delay_ms = 400L
 
 fun interface SecurityKeyTarget {
     fun open(): YubiKeyConnection
+    fun attached(): Boolean = false
 }
 
 data class SecurityKeyRequest(
@@ -115,12 +119,14 @@ suspend fun run_security_key_flow(
     on_working: () -> Unit,
     now_ms: () -> Long,
     run_on_key: suspend ((CommandState) -> String) -> String,
+    on_failure: (Throwable) -> Unit = {},
 ): SecurityKeyAssertion {
     var options = prepare()
     var options_at = now_ms()
     var pin: CharArray? = null
     var tap_again = false
     var retry_target: SecurityKeyTarget? = null
+    var attached_failures = 0
     try {
         while (true) {
             val target = retry_target ?: next_target(tap_again)
@@ -137,7 +143,7 @@ suspend fun run_security_key_flow(
                     val connection = try {
                         target.open()
                     } catch (failure: Throwable) {
-                        throw map_security_key_failure(failure, uv_required = false, pin_supplied = false)
+                        throw map_security_key_open_failure(failure)
                     }
                     assert_with_security_key(connection, SecurityKeyRequest(current, origin), attempt_pin, state)
                 }
@@ -155,7 +161,21 @@ suspend fun run_security_key_flow(
                 retry_target = target
                 tap_again = true
             } catch (failure: SecurityKeyException.Removed) {
-                tap_again = true
+                on_failure(failure)
+                if (target.attached()) {
+                    attached_failures += 1
+                    if (attached_failures > security_key_attached_retries) {
+                        throw SecurityKeyException.Failed(failure.cause ?: failure)
+                    }
+                    delay(security_key_attached_retry_delay_ms)
+                    retry_target = target
+                } else {
+                    attached_failures = 0
+                    tap_again = true
+                }
+            } catch (failure: Throwable) {
+                on_failure(failure)
+                throw failure
             } finally {
                 attempt_pin?.fill(0.toChar())
             }
@@ -277,6 +297,12 @@ fun security_key_response_json(
         .put("response", response_json)
         .put("clientExtensionResults", JSONObject())
         .toString()
+}
+
+fun map_security_key_open_failure(failure: Throwable): Throwable = when (failure) {
+    is CancellationException, is SecurityKeyException -> failure
+    is IllegalStateException -> SecurityKeyException.Removed(failure)
+    else -> map_security_key_failure(failure, uv_required = false, pin_supplied = false)
 }
 
 fun map_security_key_failure(

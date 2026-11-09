@@ -31,6 +31,7 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -64,6 +65,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.auth.WebAuthnAssertionOptions
 
@@ -87,6 +89,11 @@ sealed interface SecurityKeyUiState {
 private const val android_origin_prefix = "android:apk-key-hash:"
 private const val yubico_vendor_id = 0x1050
 private const val nfc_timeout_ms = 5000
+private const val usb_scan_interval_ms = 1000L
+private const val security_key_log_tag = "AsterSecurityKey"
+
+private fun describe_failure(failure: Throwable): String =
+    generateSequence(failure) { it.cause }.take(4).joinToString(" <- ") { "${it.javaClass.simpleName}: ${it.message}" }
 
 fun security_key_error_message(cause: Throwable): Int? = when (cause) {
     is SecurityKeyException.PinBlocked -> R.string.security_key_error_pin_blocked
@@ -174,13 +181,16 @@ class SecurityKeySession(private val activity: ComponentActivity) {
 
     @Volatile private var pin_request: CompletableDeferred<CharArray?>? = null
     @Volatile private var active: Job? = null
-    private var discovering = false
+    private val usb_manager: UsbManager? by lazy { app_context.getSystemService(Context.USB_SERVICE) as? UsbManager }
+    private val delivered_usb = mutableSetOf<String>()
+    @Volatile private var discovering = false
     private var nfc_running = false
-    private var usb_running = false
+    @Volatile private var usb_running = false
 
     private val lifecycle_observer = object : DefaultLifecycleObserver {
         override fun onResume(owner: LifecycleOwner) {
             start_nfc()
+            scan_usb()
             _state.update { current ->
                 if (current is SecurityKeyUiState.Waiting) {
                     current.copy(transports = security_key_transports(app_context))
@@ -251,16 +261,61 @@ class SecurityKeySession(private val activity: ComponentActivity) {
             on_working = { _state.value = SecurityKeyUiState.Working },
             now_ms = { SystemClock.elapsedRealtime() },
             run_on_key = { block -> run_on_key(block) },
+            on_failure = { failure ->
+                if (failure !is CancellationException && failure !is PasskeyCancelledException) {
+                    Log.w(security_key_log_tag, "key attempt failed: ${describe_failure(failure)}")
+                }
+            },
         )
     }
 
     private suspend fun next_target(tap_again: Boolean, from_fallback: Boolean): SecurityKeyTarget {
         while (true) {
             _state.value = SecurityKeyUiState.Waiting(transports(), tap_again, from_fallback)
-            val device = devices.receive()
-            if (device is UsbYubiKeyDevice && !device.supportsConnection(FidoConnection::class.java)) continue
-            return SecurityKeyTarget { open_connection(device) }
+            val device = withTimeoutOrNull(usb_scan_interval_ms) { devices.receive() }
+            if (device == null) {
+                scan_usb()
+                continue
+            }
+            if (device is UsbYubiKeyDevice && !device.supportsConnection(FidoConnection::class.java)) {
+                Log.w(security_key_log_tag, "usb device has no FIDO interface")
+                continue
+            }
+            return security_key_target(device)
         }
+    }
+
+    private fun security_key_target(device: YubiKeyDevice): SecurityKeyTarget = when (device) {
+        is UsbYubiKeyDevice -> object : SecurityKeyTarget {
+            override fun open(): YubiKeyConnection = open_connection(device)
+            override fun attached(): Boolean = usb_attached(device.usbDevice)
+        }
+        else -> SecurityKeyTarget { open_connection(device) }
+    }
+
+    private fun usb_attached(device: UsbDevice): Boolean = runCatching {
+        val manager = usb_manager ?: return@runCatching false
+        manager.deviceList.containsKey(device.deviceName) && manager.hasPermission(device)
+    }.getOrDefault(false)
+
+    private fun deliver_usb(device: UsbYubiKeyDevice) {
+        val name = device.usbDevice.deviceName
+        val fresh = synchronized(delivered_usb) { delivered_usb.add(name) }
+        if (fresh) devices.trySend(device)
+    }
+
+    private fun scan_usb() {
+        if (!discovering || !usb_running) return
+        val manager = usb_manager ?: return
+        runCatching {
+            manager.deviceList.values
+                .filter { is_security_key_usb_device(it) && manager.hasPermission(it) }
+                .filter { synchronized(delivered_usb) { it.deviceName !in delivered_usb } }
+                .forEach { device ->
+                    Log.i(security_key_log_tag, "usb key found with permission granted")
+                    deliver_usb(UsbYubiKeyDevice(manager, device))
+                }
+        }.onFailure { Log.w(security_key_log_tag, "usb scan failed: ${describe_failure(it)}") }
     }
 
     private suspend fun await_pin(retries: Int?, wrong: Boolean): CharArray? {
@@ -292,15 +347,17 @@ class SecurityKeySession(private val activity: ComponentActivity) {
     private fun start_discovery() {
         discovering = true
         while (devices.tryReceive().isSuccess) continue
+        synchronized(delivered_usb) { delivered_usb.clear() }
         if (!usb_running && transports().usb) {
             usb_running = runCatching {
-                val usb_manager = app_context.getSystemService(Context.USB_SERVICE) as? UsbManager
                 manager.startUsbDiscovery(
                     UsbConfiguration()
                         .handlePermissions(true)
                         .setDeviceFilter(SecurityKeyUsbFilter(usb_manager)),
-                ) { device -> devices.trySend(device) }
+                ) { device -> deliver_usb(device) }
                 true
+            }.onFailure {
+                Log.w(security_key_log_tag, "usb discovery failed: ${describe_failure(it)}")
             }.getOrDefault(false)
         }
         runCatching { activity.lifecycle.addObserver(lifecycle_observer) }
@@ -332,6 +389,7 @@ class SecurityKeySession(private val activity: ComponentActivity) {
             runCatching { manager.stopUsbDiscovery() }
             usb_running = false
         }
+        synchronized(delivered_usb) { delivered_usb.clear() }
         while (devices.tryReceive().isSuccess) continue
     }
 }

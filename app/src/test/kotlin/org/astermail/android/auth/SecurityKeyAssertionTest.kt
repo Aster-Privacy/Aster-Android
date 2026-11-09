@@ -22,6 +22,7 @@
 package org.astermail.android.auth
 
 import com.yubico.yubikit.core.Transport
+import com.yubico.yubikit.core.YubiKeyConnection
 import com.yubico.yubikit.core.application.CommandState
 import com.yubico.yubikit.core.fido.FidoConnection
 import com.yubico.yubikit.core.smartcard.SmartCardConnection
@@ -594,6 +595,22 @@ private fun nfc_target(
 private fun usb_target(authenticator: SoftAuthenticator, remove_on_touch: Boolean = false): SecurityKeyTarget =
     SecurityKeyTarget { FakeHidConnection(authenticator, remove_on_touch) }
 
+private class FlakyUsbTarget(
+    private val authenticator: SoftAuthenticator,
+    private val failures: List<Throwable>,
+    private val still_attached: Boolean,
+) : SecurityKeyTarget {
+    var opens = 0
+
+    override fun open(): YubiKeyConnection {
+        opens += 1
+        failures.getOrNull(opens - 1)?.let { throw it }
+        return FakeHidConnection(authenticator)
+    }
+
+    override fun attached(): Boolean = still_attached
+}
+
 private fun assertion_options(
     challenge: ByteArray,
     user_verification: String,
@@ -1153,5 +1170,69 @@ class SecurityKeyAssertionTest {
         assertEquals("webauthn.get", client.getString("type"))
         assertFalse(client.getBoolean("crossOrigin"))
         assertFalse(client.has("tokenBinding"))
+    }
+
+    @Test
+    fun usb_key_that_fails_to_open_while_attached_is_retried_in_place() {
+        val key = SoftAuthenticator(pin = good_pin)
+        val credential = key.register()
+        val challenge = random_bytes(32)
+        val record = FlowRecord()
+        val target = FlakyUsbTarget(key, listOf(IOException("transfer failed")), still_attached = true)
+        val result = run_flow(record, release_origin, listOf(target), listOf(good_pin)) {
+            assertion_options(challenge, uv_required, credential)
+        }
+        verify_assertion(result.response_json, key, credential, challenge, release_origin, true)
+        assertEquals(listOf(false), record.targets)
+        assertEquals(listOf<Pair<Int?, Boolean>>(null to false), record.prompts)
+        assertEquals(3, target.opens)
+    }
+
+    @Test
+    fun usb_key_that_keeps_failing_while_attached_reports_an_error_instead_of_waiting() {
+        val key = SoftAuthenticator(pin = good_pin)
+        val credential = key.register()
+        val record = FlowRecord()
+        val failures = List(security_key_attached_retries + 1) { IOException("transfer failed") }
+        val target = FlakyUsbTarget(key, failures, still_attached = true)
+        val failure = expect_failure<SecurityKeyException.Failed> {
+            run_flow(record, release_origin, listOf(target), emptyList()) {
+                assertion_options(random_bytes(32), uv_required, credential)
+            }
+        }
+        assertTrue(failure.cause is IOException)
+        assertEquals(listOf(false), record.targets)
+        assertEquals(security_key_attached_retries + 1, target.opens)
+        assertTrue(record.prompts.isEmpty())
+    }
+
+    @Test
+    fun usb_key_unplugged_while_the_pin_is_typed_is_asked_for_again_and_keeps_the_pin() {
+        val key = SoftAuthenticator(pin = good_pin)
+        val credential = key.register()
+        val challenge = random_bytes(32)
+        val record = FlowRecord()
+        val first = object : SecurityKeyTarget {
+            var opens = 0
+            override fun open(): YubiKeyConnection {
+                opens += 1
+                if (opens > 1) throw IllegalStateException("Device access not permitted")
+                return FakeHidConnection(key)
+            }
+        }
+        val result = run_flow(record, release_origin, listOf(first, usb_target(key)), listOf(good_pin)) {
+            assertion_options(challenge, uv_required, credential)
+        }
+        verify_assertion(result.response_json, key, credential, challenge, release_origin, true)
+        assertEquals(listOf(false, true), record.targets)
+        assertEquals(listOf<Pair<Int?, Boolean>>(null to false), record.prompts)
+        assertEquals(2, first.opens)
+    }
+
+    @Test
+    fun open_failures_map_to_removal_only_for_transport_and_state_errors() {
+        assertTrue(map_security_key_open_failure(IllegalStateException("gone")) is SecurityKeyException.Removed)
+        assertTrue(map_security_key_open_failure(IOException("gone")) is SecurityKeyException.Removed)
+        assertTrue(map_security_key_open_failure(IllegalArgumentException("bad")) is SecurityKeyException.Failed)
     }
 }
