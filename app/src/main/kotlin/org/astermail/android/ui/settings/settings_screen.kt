@@ -179,6 +179,10 @@ fun SettingsScreen(
         if (settings_state.user == null) settings_vm.load_profile()
         if (settings_state.subscription == null) settings_vm.load_subscription()
         settings_vm.load_storage()
+        settings_vm.load_default_sender()
+        settings_vm.load_aliases()
+        settings_vm.load_ghost_aliases()
+        settings_vm.load_custom_domain_addresses()
     }
 
     Column(
@@ -213,7 +217,13 @@ fun SettingsScreen(
                     ?: settings_state.user?.username
                     ?: "",
                 username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
-                email = settings_state.user?.email ?: live_account?.email ?: "",
+                email = org.astermail.android.ui.common.resolve_primary_sender_email(
+                    settings_state.default_sender_id,
+                    settings_state.user?.email ?: live_account?.email ?: "",
+                    settings_state.aliases,
+                    settings_state.ghost_aliases,
+                    settings_state.custom_domain_addresses,
+                ),
                 subscription = settings_state.subscription,
                 profile_loading = (settings_state.user == null && live_account == null) ||
                     (settings_state.user == null && cached_display_name == null && settings_state.is_loading),

@@ -96,6 +96,7 @@ import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
+import org.astermail.android.ui.common.resolve_primary_sender_email
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterShapes
@@ -131,6 +132,9 @@ fun ProfileScreen(
     LaunchedEffect(Unit) {
         vm.load_profile()
         vm.load_aliases()
+        vm.load_ghost_aliases()
+        vm.load_custom_domain_addresses()
+        vm.load_default_sender()
         vm.load_badges()
         vm.load_subscription(force = false)
     }
@@ -146,6 +150,13 @@ fun ProfileScreen(
     )
     val user = state.user
     val email = user?.email ?: live_account?.email ?: ""
+    val header_email = resolve_primary_sender_email(
+        state.default_sender_id,
+        email,
+        state.aliases,
+        state.ghost_aliases,
+        state.custom_domain_addresses,
+    )
     var display_name by remember { mutableStateOf(live_account?.display_name ?: user?.display_name ?: "") }
     LaunchedEffect(live_account?.display_name, user?.display_name) {
         val incoming = user?.display_name ?: live_account?.display_name ?: return@LaunchedEffect
@@ -319,7 +330,7 @@ fun ProfileScreen(
             )
             v_gap(AsterSpacing.xs)
             Text(
-                text = email,
+                text = header_email,
                 color = colors.text_secondary,
                 fontSize = 15.sp,
                 textAlign = TextAlign.Center,
@@ -329,7 +340,7 @@ fun ProfileScreen(
                     .clip(SquircleShape(10.dp))
                     .combinedClickable(
                         onClick = {},
-                        onLongClick = { copy_address(context, email) },
+                        onLongClick = { copy_address(context, header_email) },
                         onLongClickLabel = copy_address_label,
                     )
                     .padding(horizontal = AsterSpacing.sm, vertical = 2.dp),
