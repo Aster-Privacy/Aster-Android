@@ -4516,7 +4516,7 @@ class MailRepository @Inject constructor(
     private fun identity_key_cache_tag(identity_key: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(("astermail-key-cache-tag" + identity_key).toByteArray(Charsets.UTF_8))
-        return android.util.Base64.encodeToString(digest, 0, 12, android.util.Base64.NO_WRAP)
+        return java.util.Base64.getEncoder().withoutPadding().encodeToString(digest.copyOf(12))
     }
 
     internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
