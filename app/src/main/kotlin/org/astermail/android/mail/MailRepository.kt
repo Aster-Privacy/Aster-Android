@@ -271,6 +271,7 @@ data class DecryptedEnvelope(
     val draft_attachments: List<ExternalAttachmentPayload> = emptyList(),
     val is_decrypt_pending: Boolean = false,
     val sent_encryption_scope: SentEncryptionScope? = null,
+    val is_pgp_placeholder: Boolean = false,
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -469,6 +470,7 @@ data class InboxItem(
     val is_decrypt_pending: Boolean = false,
     val sender_verification: String? = null,
     val has_unseen_reaction: Boolean = false,
+    val is_pgp_placeholder: Boolean = false,
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
@@ -530,6 +532,7 @@ data class ThreadMessageDecrypted(
     val pending_send_at_ms: Long? = null,
     val sent_encryption_scope: SentEncryptionScope? = null,
     val is_trashed: Boolean = false,
+    val is_pgp_placeholder: Boolean = false,
 )
 
 @Singleton
@@ -810,7 +813,14 @@ class MailRepository @Inject constructor(
 
     suspend fun cached_message_body(id: String): Pair<String, String?>? = withContext(Dispatchers.IO) {
         val row = runCatching { message_body_dao.get(id) }.getOrNull() ?: return@withContext null
-        if (row.body_text.isBlank() && row.body_html.isNullOrBlank()) null else row.body_text to row.body_html
+        if (row.body_text.isBlank() && row.body_html.isNullOrBlank()) return@withContext null
+        if (is_cached_pgp_placeholder(row.body_text, row.body_html)) null else row.body_text to row.body_html
+    }
+
+    private fun is_cached_pgp_placeholder(body_text: String, body_html: String?): Boolean {
+        if (!body_html.isNullOrBlank()) return false
+        val placeholder = runCatching { context.getString(R.string.pgp_encrypted_body) }.getOrNull()
+        return !placeholder.isNullOrBlank() && body_text == placeholder
     }
 
     suspend fun cached_message_bodies(ids: List<String>): Map<String, Pair<String, String?>> =
@@ -818,6 +828,7 @@ class MailRepository @Inject constructor(
             if (ids.isEmpty()) return@withContext emptyMap()
             val rows = runCatching { message_body_dao.get_many(ids) }.getOrNull().orEmpty()
             rows.filterNot { it.body_text.isBlank() && it.body_html.isNullOrBlank() }
+                .filterNot { is_cached_pgp_placeholder(it.body_text, it.body_html) }
                 .associate { it.id to (it.body_text to it.body_html) }
         }
 
@@ -831,7 +842,11 @@ class MailRepository @Inject constructor(
             val parsed = runCatching {
                 thread_snapshot_json.decodeFromString<List<thread_snapshot_message>>(row.payload)
             }.getOrNull() ?: return@withContext null
-            parsed.map { thread_message_of(it) }.takeIf { it.isNotEmpty() }
+            parsed.map { thread_message_of(it) }
+                .takeIf { messages ->
+                    messages.isNotEmpty() &&
+                        messages.none { is_cached_pgp_placeholder(it.body_text, it.body_html) }
+                }
         }
 
     private class thread_snapshot_ids(val cached_at: Long, val message_ids: Set<String>)
@@ -910,7 +925,7 @@ class MailRepository @Inject constructor(
         thread_token: String,
         messages: List<ThreadMessageDecrypted>,
     ) {
-        if (messages.isEmpty() || messages.any { it.is_undecryptable || it.is_body_pending }) return
+        if (messages.isEmpty() || messages.any { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }) return
         val payload = runCatching {
             thread_snapshot_json.encodeToString(messages.map { thread_snapshot_of(it) })
         }.getOrNull() ?: return
@@ -936,7 +951,7 @@ class MailRepository @Inject constructor(
 
     private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {
         val now = System.currentTimeMillis()
-        val rows = messages.filterNot { it.is_undecryptable || it.is_body_pending }
+        val rows = messages.filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
             .filterNot { it.body_text.isBlank() && it.body_html.isNullOrBlank() }
             .map {
                 MessageBodyEntity(
@@ -2198,16 +2213,22 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun needs_envelope_heal(
+        is_undecryptable: Boolean,
+        is_pgp_placeholder: Boolean,
+        envelope_nonce: String?,
+    ): Boolean = is_pgp_placeholder || (is_undecryptable && is_sealed_inbound_nonce(envelope_nonce))
+
     private suspend fun heal_undecryptable_items(
         decrypted: List<InboxItem>,
         overrides: Map<String, String>,
     ): List<InboxItem> {
         val needs_heal = decrypted.any {
-            it.is_undecryptable && is_sealed_inbound_nonce(it.raw_item.envelope_nonce)
+            needs_envelope_heal(it.is_undecryptable, it.is_pgp_placeholder, it.raw_item.envelope_nonce)
         }
         if (!needs_heal || !heal_envelope_keys()) return decrypted
         return decrypted.map { existing ->
-            if (existing.is_undecryptable && is_sealed_inbound_nonce(existing.raw_item.envelope_nonce)) {
+            if (needs_envelope_heal(existing.is_undecryptable, existing.is_pgp_placeholder, existing.raw_item.envelope_nonce)) {
                 runCatching { decrypt_inbox_item(existing.raw_item, overrides[existing.id]) }
                     .getOrNull() ?: existing
             } else {
@@ -2220,11 +2241,11 @@ class MailRepository @Inject constructor(
         decrypted: List<ThreadMessageDecrypted>,
     ): List<ThreadMessageDecrypted> {
         val needs_heal = decrypted.any {
-            it.is_undecryptable && is_sealed_inbound_nonce(it.raw_item.envelope_nonce)
+            needs_envelope_heal(it.is_undecryptable, it.is_pgp_placeholder, it.raw_item.envelope_nonce)
         }
         if (!needs_heal || !heal_envelope_keys()) return decrypted
         return decrypted.map { existing ->
-            if (existing.is_undecryptable && is_sealed_inbound_nonce(existing.raw_item.envelope_nonce)) {
+            if (needs_envelope_heal(existing.is_undecryptable, existing.is_pgp_placeholder, existing.raw_item.envelope_nonce)) {
                 runCatching { decrypt_thread_message(existing.raw_item) }.getOrNull() ?: existing
             } else {
                 existing
@@ -2249,17 +2270,18 @@ class MailRepository @Inject constructor(
             message_id,
             allow_external_pgp = allow_external_pgp,
         )
-        if (envelope != null || !is_sealed_inbound_nonce(envelope_nonce)) {
+        val is_placeholder = envelope?.is_pgp_placeholder == true
+        if (!is_placeholder && (envelope != null || !is_sealed_inbound_nonce(envelope_nonce))) {
             return@withContext HealingEnvelopeResult(envelope, false)
         }
-        if (!heal_envelope_keys()) return@withContext HealingEnvelopeResult(null, true)
+        if (!heal_envelope_keys()) return@withContext HealingEnvelopeResult(envelope, envelope == null)
         HealingEnvelopeResult(
             try_decrypt_envelope(
                 encrypted_envelope,
                 envelope_nonce,
                 message_id,
                 allow_external_pgp = allow_external_pgp,
-            ),
+            ) ?: envelope,
             false,
         )
     }
@@ -4153,6 +4175,7 @@ class MailRepository @Inject constructor(
             is_decrypt_pending = is_decrypt_pending,
             sender_verification = envelope?.sender_verification,
             has_unseen_reaction = item.has_unseen_reaction == true,
+            is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
         )
     }
 
@@ -4160,7 +4183,9 @@ class MailRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val decrypted = decrypt_thread_message(item)
             val resolved =
-                if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
+                if (needs_envelope_heal(decrypted.is_undecryptable, decrypted.is_pgp_placeholder, item.envelope_nonce) &&
+                    heal_envelope_keys()
+                ) {
                     runCatching { decrypt_thread_message(item) }.getOrElse { decrypted }
                 } else {
                     decrypted
@@ -4229,6 +4254,7 @@ class MailRepository @Inject constructor(
                 ?: org.astermail.android.crypto.PgpSignatureStatus.NONE,
             sender_verification = envelope?.sender_verification,
             sent_encryption_scope = envelope?.sent_encryption_scope,
+            is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
         )
     }
 
@@ -4243,6 +4269,7 @@ class MailRepository @Inject constructor(
             cc = emptyList(),
             sent_at = null,
             pgp_encrypted = pgp_encrypted,
+            is_pgp_placeholder = pgp_encrypted,
         )
 
     fun decrypt_envelope_public(
@@ -5471,17 +5498,16 @@ class MailRepository @Inject constructor(
         ciphertext: String,
         sender_public_key: String?,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
-        val identity_key = session_key_store.get_identity_key() ?: return null
-        if (!identity_key.contains("-----BEGIN PGP")) return null
+        val keys_to_try = own_pgp_key_candidates(
+            session_key_store.get_identity_key(),
+            session_key_store.get_previous_keys(),
+        )
+        if (keys_to_try.isEmpty()) return null
         val passphrase = session_key_store.get_passphrase() ?: return null
         var chars: CharArray? = null
         return try {
             val decoded = org.astermail.android.util.passphrase_chars(passphrase)
             chars = decoded
-            val keys_to_try = buildList {
-                add(identity_key)
-                session_key_store.get_previous_keys()?.let { addAll(it) }
-            }.filter { it.contains("-----BEGIN PGP") }
             var result: org.astermail.android.crypto.PgpDecryptionResult? = null
             for (key in keys_to_try) {
                 result = try {
@@ -5509,17 +5535,16 @@ class MailRepository @Inject constructor(
     private fun try_pgp_decrypt_own_account_result(
         ciphertext: String,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
-        val identity_key = session_key_store.get_identity_key() ?: return null
-        if (!identity_key.contains("-----BEGIN PGP")) return null
+        val keys_to_try = own_pgp_key_candidates(
+            session_key_store.get_identity_key(),
+            session_key_store.get_previous_keys(),
+        )
+        if (keys_to_try.isEmpty()) return null
         val passphrase = session_key_store.get_passphrase() ?: return null
         var chars: CharArray? = null
         return try {
             val decoded = org.astermail.android.util.passphrase_chars(passphrase)
             chars = decoded
-            val keys_to_try = buildList {
-                add(identity_key)
-                session_key_store.get_previous_keys()?.let { addAll(it) }
-            }.filter { it.contains("-----BEGIN PGP") }
             PgpDecryptor.decrypt_with_own_keys_status(ciphertext, keys_to_try, decoded)
         } catch (_: Throwable) {
             null
