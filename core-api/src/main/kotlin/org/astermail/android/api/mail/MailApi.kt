@@ -42,6 +42,9 @@ private const val list_messages_timeout_millis = 45_000L
 private fun url_encode_path(value: String): String =
     URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
+internal fun thread_pages_param(group_by_thread: Boolean?): Boolean? =
+    if (group_by_thread == true) true else null
+
 interface MailApi {
     suspend fun list_messages(
         limit: Int? = null,
@@ -251,6 +254,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             label_token?.let { parameter("label_token", it) }
             tag_token?.let { parameter("tag_token", it) }
             group_by_thread?.let { parameter("group_by_thread", it) }
+            thread_pages_param(group_by_thread)?.let { parameter("thread_pages", it) }
             is_snoozed?.let { parameter("is_snoozed", it) }
             routing_token?.let { parameter("routing_token", it) }
             order?.let { parameter("order", it) }
