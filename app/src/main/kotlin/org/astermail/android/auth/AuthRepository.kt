@@ -1538,6 +1538,15 @@ class AuthRepository @Inject constructor(
                 vault_obj.put("previous_keys", rotated)
             }
 
+            val old_pgp_passphrase = passphrase_chars(current_password_bytes)
+            val new_pgp_passphrase = passphrase_chars(new_password_bytes)
+            try {
+                reprotect_vault_pgp_keys(vault_obj, old_pgp_passphrase, new_pgp_passphrase)
+            } finally {
+                old_pgp_passphrase.fill(' ')
+                new_pgp_passphrase.fill(' ')
+            }
+
             val preserved_data_kek = try {
                 ensure_master_key_vault(vault_obj, current_password_bytes)
             } catch (_: UnsupportedVaultKdfException) {
@@ -1619,6 +1628,11 @@ class AuthRepository @Inject constructor(
                     base64_encode(new_envelope.vault_nonce),
                     vault_iterations,
                 )
+                vault_identity_key(vault_obj).takeIf { it.isNotBlank() }?.let {
+                    session_key_store.put_identity_key(it)
+                }
+                absorb_previous_keys_and_keks(vault_obj)
+                org.astermail.android.crypto.PgpDecryptor.clear_caches()
                 release_vault_lock()
                 schedule_storage_rekey()
 

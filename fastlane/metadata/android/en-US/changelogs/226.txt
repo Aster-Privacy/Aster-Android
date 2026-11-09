@@ -1,0 +1,1 @@
+Fixes mail showing as "Encrypted message" after you change your password in the app. Your encryption keys now stay unlocked with your new password, so received mail opens normally. If mail still shows as encrypted after you update, open the banner at the top of your inbox and enter your previous password to recover it.
