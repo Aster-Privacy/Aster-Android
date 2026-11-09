@@ -1415,6 +1415,7 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
         background_scope.launch { runCatching { ensure_csrf_ready() } }
         background_scope.launch { runCatching { refresh_session_if_expiring() } }
+        background_scope.launch { runCatching { ensure_pgp_key_published() } }
         schedule_ratchet_bootstrap(bypass_debounce = true)
         load_account_keks()
         background_scope.launch { runCatching { system_folder_bootstrap.ensure_system_folders() } }
@@ -2546,8 +2547,12 @@ class AuthRepository @Inject constructor(
         val user_id = session_key_store.get_user_id() ?: return
         if (!pgp_publish_attempted_user_ids.add(user_id)) return
 
+        if (!is_pgp_private_key(session_key_store.get_identity_key())) {
+            install_identity_key_if_missing(user_id)
+        }
+
         val identity_key = session_key_store.get_identity_key() ?: return
-        if (!identity_key.trimStart().startsWith("-----BEGIN PGP PRIVATE KEY")) return
+        if (!is_pgp_private_key(identity_key)) return
 
         val passphrase_bytes = session_key_store.get_passphrase() ?: return
 
@@ -2569,6 +2574,71 @@ class AuthRepository @Inject constructor(
         if (!profile_matches_session(profile)) return
         val account_email = profile.email?.trim()?.takeIf { it.isNotBlank() } ?: return
         heal_identity_key_account_addresses(account_email, profile.display_name.orEmpty())
+    }
+
+    private suspend fun install_identity_key_if_missing(user_id: String) {
+        if (published_pgp_key_state() != PublishedPgpKey.Absent) return
+        val profile = withTimeoutOrNull(8_000L) { auth_api.me() } ?: return
+        if (!profile_matches_session(profile)) return
+        val account_email = profile.email?.trim()?.takeIf { it.isNotBlank() } ?: return
+        val display_name = profile.display_name?.trim()?.takeIf { it.isNotBlank() } ?: account_email
+        val passphrase = session_key_store.get_passphrase() ?: return
+
+        try {
+            if (session_key_store.get_user_id() != user_id) return
+            val edit = MissingIdentityKeyEdit(
+                generate_identity_key = { generate_missing_identity_key(passphrase, display_name, account_email) },
+                now = { java.time.Instant.now().toString() },
+            )
+            val outcome = vault_updates.update_identity(vault_updates.with_passphrase(passphrase)) { draft ->
+                edit.apply(draft.vault)
+            }
+            val vault_obj = when (outcome) {
+                is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written -> outcome.vault
+                is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Unchanged -> outcome.vault
+                else -> return
+            }
+            if (session_key_store.get_user_id() != user_id) return
+            val identity_key = vault_identity_key(vault_obj)
+            if (!is_pgp_private_key(identity_key)) return
+            session_key_store.put_identity_key(identity_key)
+            absorb_previous_keys_and_keks(vault_obj)
+            absorb_data_kek(vault_obj)
+
+            val installed_key = edit.installed_key
+            val written = outcome is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written
+            if (written && installed_key != null) {
+                val password = passphrase_chars(passphrase)
+                try {
+                    runCatching { republish_pgp_key_with_password(installed_key, password) }
+                        .onFailure { if (it is CancellationException) throw it }
+                } finally {
+                    password.fill(' ')
+                }
+            }
+        } finally {
+            passphrase.fill(0)
+        }
+
+        system_folder_heal_attempted_user_ids.remove(user_id)
+        trigger_system_folder_bootstrap()
+        load_account_keks()
+        schedule_ratchet_bootstrap(bypass_debounce = true)
+    }
+
+    private fun generate_missing_identity_key(
+        passphrase: ByteArray,
+        display_name: String,
+        account_email: String,
+    ): String? {
+        val password = passphrase_chars(passphrase)
+        return try {
+            runCatching { PgpKeyGenerator.generate(display_name, account_email, password) }
+                .getOrNull()
+                ?.armored_private_key
+        } finally {
+            password.fill(' ')
+        }
     }
 
     private suspend fun heal_identity_key_account_addresses(
