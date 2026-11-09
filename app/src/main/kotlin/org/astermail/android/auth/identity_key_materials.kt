@@ -112,6 +112,36 @@ fun reprotect_pgp_key(armored: String, old_passphrase: CharArray, new_passphrase
     return out.toString(Charsets.UTF_8.name())
 }
 
+fun reprotect_vault_pgp_keys(
+    vault: JSONObject,
+    old_passphrase: CharArray,
+    new_passphrase: CharArray,
+    reprotect: (String, CharArray, CharArray) -> String = ::reprotect_pgp_key,
+): Int {
+    var changed = 0
+    val move = { armored: String ->
+        if (armored.isEmpty()) {
+            armored
+        } else {
+            runCatching { reprotect(armored, old_passphrase, new_passphrase) }
+                .getOrNull()
+                ?.also { changed++ }
+                ?: armored
+        }
+    }
+    for (field in listOf("identity_key", "identity_private_key")) {
+        val current = vault.optString(field, "")
+        if (current.isNotEmpty()) vault.put(field, move(current))
+    }
+    for (field in listOf("previous_keys", "legacy_identity_keys")) {
+        val existing = vault.optJSONArray(field) ?: continue
+        val updated = JSONArray()
+        for (i in 0 until existing.length()) updated.put(move(existing.optString(i, "")))
+        vault.put(field, updated)
+    }
+    return changed
+}
+
 private fun unique_by_fingerprint(keys: List<String>): List<String> {
     val seen = mutableSetOf<String>()
     val result = mutableListOf<String>()
