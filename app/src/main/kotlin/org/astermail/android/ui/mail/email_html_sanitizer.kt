@@ -103,8 +103,8 @@ object EmailHtmlSanitizer {
     private fun bounded_input(raw_html: String): String =
         if (raw_html.length > max_sanitizer_input_chars) raw_html.take(max_sanitizer_input_chars) else raw_html
 
-    private fun clean_body(pre: String, clean_tracking_links: Boolean): Document {
-        val dirty = Jsoup.parseBodyFragment(extract_body_html(pre), "https://mail-content.invalid/")
+    private fun clean_body(body_html: String, clean_tracking_links: Boolean): Document {
+        val dirty = Jsoup.parseBodyFragment(body_html, "https://mail-content.invalid/")
         drop_blank_image_sources(dirty)
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, clean_tracking_links)
@@ -114,14 +114,14 @@ object EmailHtmlSanitizer {
 
     private fun sanitize_unsafe(raw_html: String, options: SanitizeOptions): String {
         val pre = strip_dangerous_blocks(bounded_input(raw_html))
-        val head_styles = extract_head_styles(pre)
-        val doc = clean_body(pre, options.clean_tracking_links)
+        val parts = split_document(pre)
+        val doc = clean_body(parts.body, options.clean_tracking_links)
         if (options.remove_tracking_pixels) remove_tracking_pixels(doc)
         scrub_style_blocks(doc, options)
         autolink_bare_urls(doc, options.clean_tracking_links)
         mark_email_buttons(doc)
         val sb = StringBuilder()
-        for (css in head_styles) {
+        for (css in parts.styles) {
             val safe_css = sanitize_css_block(css, options)
             if (safe_css.isNotBlank()) sb.append("<style>").append(safe_css).append("</style>")
         }
@@ -540,25 +540,27 @@ object EmailHtmlSanitizer {
         }
     }
 
-    private fun extract_head_styles(html: String): List<String> {
-        val result = mutableListOf<String>()
-        val head_re = head_block_regex
-        val style_re = style_block_regex
-        for (head in head_re.findAll(html)) {
-            for (m in style_re.findAll(head.value)) {
-                result.add(m.groupValues[1])
-            }
-        }
-        return result
-    }
+    private class DocumentParts(val body: String, val styles: List<String>)
 
-    private fun extract_body_html(html: String): String {
-        val open = body_open_regex.find(html) ?: return html
-        if (!is_document_preamble(html.substring(0, open.range.first))) return html
+    private fun style_blocks(html: String): List<String> =
+        style_or_comment_regex.findAll(html).mapNotNull { it.groups[1]?.value }.toList()
+
+    private fun extract_head_styles(html: String): List<String> =
+        head_block_regex.findAll(html).flatMap { style_blocks(it.value) }.toList()
+
+    private fun split_document(html: String): DocumentParts {
+        val unsplit = DocumentParts(html, extract_head_styles(html))
+        val open = body_open_regex.find(html) ?: return unsplit
+        val preamble = html.substring(0, open.range.first)
+        if (!is_document_preamble(preamble)) return unsplit
         val close = body_close_regex.findAll(html).lastOrNull()
-            ?: return html.substring(open.range.last + 1)
-        if (close.range.first < open.range.last) return html
-        return html.substring(open.range.last + 1, close.range.first)
+            ?: return DocumentParts(html.substring(open.range.last + 1), style_blocks(preamble))
+        if (close.range.first < open.range.last) return unsplit
+        val trailer = html.substring(close.range.last + 1)
+        return DocumentParts(
+            html.substring(open.range.last + 1, close.range.first),
+            style_blocks(preamble) + style_blocks(trailer),
+        )
     }
 
     private fun is_document_preamble(prefix: String): Boolean {
@@ -657,7 +659,8 @@ object EmailHtmlSanitizer {
         Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE)
 
     private val head_block_regex =Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE)
-    private val style_block_regex = Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>", RegexOption.IGNORE_CASE)
+    private val style_or_comment_regex =
+        Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>|<!--[\\s\\S]*?-->", RegexOption.IGNORE_CASE)
     private val body_open_regex = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE)
     private val body_close_regex = Regex("</body\\s*>", RegexOption.IGNORE_CASE)
     private val html_comment_regex = Regex("<!--[\\s\\S]*?-->")
