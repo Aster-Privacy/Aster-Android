@@ -4513,14 +4513,21 @@ class MailRepository @Inject constructor(
         }
     }
 
+    private fun identity_key_cache_tag(identity_key: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(("astermail-key-cache-tag" + identity_key).toByteArray(Charsets.UTF_8))
+        return android.util.Base64.encodeToString(digest, 0, 12, android.util.Base64.NO_WRAP)
+    }
+
     internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
         val identity_key = session_key_store.get_identity_key()
             ?: throw IllegalStateException("no identity key")
         val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
 
+        val identity_tag = identity_key_cache_tag(identity_key)
         for (version in ENVELOPE_VERSIONS) {
             try {
-                val key = identity_key_cache.get_or_put(version) {
+                val key = identity_key_cache.get_or_put("cur_${identity_tag}_$version") {
                     val material = (identity_key + version).toByteArray(Charsets.UTF_8)
                     MessageDigest.getInstance("SHA-256").digest(material)
                 }
@@ -4538,7 +4545,7 @@ class MailRepository @Inject constructor(
             for (prev_key in previous_keys) {
                 for (version in ENVELOPE_VERSIONS) {
                     try {
-                        val cache_key = "prev_${prev_key.hashCode()}_$version"
+                        val cache_key = "prev_${identity_key_cache_tag(prev_key)}_$version"
                         val key = identity_key_cache.get_or_put(cache_key) {
                             val material = (prev_key + version).toByteArray(Charsets.UTF_8)
                             MessageDigest.getInstance("SHA-256").digest(material)
