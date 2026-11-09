@@ -45,9 +45,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -118,6 +121,8 @@ class PersistentPushService : Service() {
 
     private var network_callback: ConnectivityManager.NetworkCallback? = null
 
+    private val fetch_requests = Channel<Unit>(Channel.CONFLATED)
+
     private val ws_client: OkHttpClient by lazy {
         val specs = if (BuildConfig.API_BASE_URL.startsWith("http://")) {
             listOf(ConnectionSpec.CLEARTEXT, ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS)
@@ -141,6 +146,7 @@ class PersistentPushService : Service() {
         create_channel(this)
         runCatching { enter_foreground() }
         register_network_callback()
+        scope.launch { fetch_requests.consumeEach { fetch_and_notify() } }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -172,6 +178,7 @@ class PersistentPushService : Service() {
         heartbeat_job?.cancel()
         reconnect_job?.cancel()
         connect_job?.cancel()
+        fetch_requests.close()
         scope.cancel()
         super.onDestroy()
     }
@@ -337,22 +344,40 @@ class PersistentPushService : Service() {
         }
     }
 
-    private fun deliver_new_mail() {
+    private fun acquire_wake_lock(timeout_ms: Long): PowerManager.WakeLock? {
         val power = getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val lock = runCatching {
+        return runCatching {
             power?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)?.apply {
                 setReferenceCounted(false)
-                acquire(WAKE_LOCK_TIMEOUT_MS)
+                acquire(timeout_ms)
             }
         }.getOrNull()
+    }
+
+    private fun release_wake_lock(lock: PowerManager.WakeLock?) {
+        runCatching { if (lock?.isHeld == true) lock.release() }
+    }
+
+    private suspend fun fetch_and_notify() {
+        val lock = acquire_wake_lock(FETCH_WAKE_LOCK_TIMEOUT_MS)
+        try {
+            val completed = withTimeoutOrNull(FETCH_TIMEOUT_MS) {
+                runCatching { MailPollingWorker.notify_now(applicationContext) }.isSuccess
+            } == true
+            if (!completed) runCatching { MailPollingWorker.enqueue_forced_notify(this) }
+        } finally {
+            release_wake_lock(lock)
+        }
+    }
+
+    private fun deliver_new_mail() {
+        val lock = acquire_wake_lock(WAKE_LOCK_TIMEOUT_MS)
         try {
             val result = runCatching { handle_push_payload(this, WAKE_PAYLOAD) }
                 .getOrDefault(PushResult.NeedsFetch)
-            if (result == PushResult.NeedsFetch) {
-                runCatching { MailPollingWorker.enqueue_forced_notify(this) }
-            }
+            if (result == PushResult.NeedsFetch) fetch_requests.trySend(Unit)
         } finally {
-            runCatching { if (lock?.isHeld == true) lock.release() }
+            release_wake_lock(lock)
         }
     }
 
@@ -366,21 +391,13 @@ class PersistentPushService : Service() {
             runCatching { handle_reaction_changed(this, frame) }
             return
         }
-        val power = getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val lock = runCatching {
-            power?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)?.apply {
-                setReferenceCounted(false)
-                acquire(WAKE_LOCK_TIMEOUT_MS)
-            }
-        }.getOrNull()
+        val lock = acquire_wake_lock(WAKE_LOCK_TIMEOUT_MS)
         try {
             val result = runCatching { handle_reaction_added(this, frame) }
                 .getOrDefault(PushResult.NeedsFetch)
-            if (result == PushResult.NeedsFetch) {
-                runCatching { MailPollingWorker.enqueue_forced_notify(this) }
-            }
+            if (result == PushResult.NeedsFetch) fetch_requests.trySend(Unit)
         } finally {
-            runCatching { if (lock?.isHeld == true) lock.release() }
+            release_wake_lock(lock)
         }
     }
 
@@ -509,6 +526,8 @@ class PersistentPushService : Service() {
         private const val NORMAL_CLOSURE = 1000
         private const val WAKE_LOCK_TAG = "aster:persistent_push"
         private const val WAKE_LOCK_TIMEOUT_MS = 30_000L
+        private const val FETCH_TIMEOUT_MS = 90_000L
+        private const val FETCH_WAKE_LOCK_TIMEOUT_MS = 100_000L
         private const val MIN_RECONNECT_DELAY_MS = 5_000L
         private const val MAX_RECONNECT_DELAY_MS = 300_000L
         private const val MAX_BACKOFF_STEPS = 6
