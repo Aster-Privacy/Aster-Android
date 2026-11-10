@@ -31,6 +31,7 @@ import org.astermail.android.ui.mail.MessageAttachment
 const val THREAD_PREFETCH_CONCURRENCY = 2
 const val THREAD_PREFETCH_MAX_ATTACHMENT_BYTES = 16L * 1024 * 1024
 const val THREAD_PREFETCH_MAX_MESSAGE_BYTES = 32L * 1024 * 1024
+const val INLINE_IMAGE_MAX_BYTES = 32L * 1024 * 1024
 
 fun select_attachment_prefetch(
     metas: Map<String, List<MessageAttachment>>,
@@ -51,13 +52,14 @@ fun plan_attachment_prefetch(
     metas: Map<String, List<MessageAttachment>>,
     max_attachment_bytes: Long = THREAD_PREFETCH_MAX_ATTACHMENT_BYTES,
     max_message_bytes: Long = THREAD_PREFETCH_MAX_MESSAGE_BYTES,
+    max_inline_bytes: Long = INLINE_IMAGE_MAX_BYTES,
 ): AttachmentPrefetchPlan {
     val full = select_attachment_prefetch(metas, max_attachment_bytes, max_message_bytes)
     val full_set = full.toSet()
     val inline = metas.filterKeys { it !in full_set }.mapValues { (_, attachments) ->
         attachments.filter { a ->
             !a.content_id.isNullOrBlank() && a.encrypted_data.isNullOrBlank() &&
-                a.size_bytes in 0..max_attachment_bytes
+                a.size_bytes in 0..max_inline_bytes
         }.map { it.id }
     }.filterValues { it.isNotEmpty() }
     return AttachmentPrefetchPlan(full, inline)

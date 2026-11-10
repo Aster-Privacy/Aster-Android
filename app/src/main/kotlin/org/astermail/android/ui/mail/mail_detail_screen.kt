@@ -489,8 +489,7 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
     }
 }
 
-private const val INLINE_IMAGE_MAX_BYTES = 16 * 1024 * 1024
-private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 32 * 1024 * 1024
+private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 48 * 1024 * 1024
 private const val TRANSPARENT_PIXEL_DATA_URI =
     "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 
@@ -547,7 +546,7 @@ internal fun inline_image_sources(
                 att.seq_num,
             )
         }.getOrNull() ?: continue
-        if (bytes.isEmpty() || bytes.size > INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
+        if (bytes.isEmpty() || bytes.size > org.astermail.android.mail.INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
         budget -= bytes.size
         val key = InlineImageStore.content_key(used.first(), bytes)
         InlineImageStore.put(key, att.content_type, bytes)

@@ -25,23 +25,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class DraftUploadTimeoutTest {
+class LargeUploadTimeoutTest {
 
     @Test
     fun small_drafts_keep_the_base_timeout() {
-        assertEquals(60_000L, draft_upload_timeout_ms(0))
-        assertTrue(draft_upload_timeout_ms(4_000) < 61_000L)
+        assertEquals(60_000L, large_upload_timeout_ms(0))
+        assertTrue(large_upload_timeout_ms(4_000) < 61_000L)
     }
 
     @Test
     fun large_drafts_get_time_to_upload() {
         val ten_megabytes = 10 * 1024 * 1024
-        assertTrue(draft_upload_timeout_ms(ten_megabytes) >= 5 * 60_000L)
+        assertTrue(large_upload_timeout_ms(ten_megabytes) >= 5 * 60_000L)
     }
 
     @Test
     fun the_timeout_is_capped() {
-        assertEquals(30 * 60_000L, draft_upload_timeout_ms(Int.MAX_VALUE))
-        assertEquals(60_000L, draft_upload_timeout_ms(-1))
+        assertEquals(30 * 60_000L, large_upload_timeout_ms(Int.MAX_VALUE))
+        assertEquals(60_000L, large_upload_timeout_ms(-1))
     }
 }

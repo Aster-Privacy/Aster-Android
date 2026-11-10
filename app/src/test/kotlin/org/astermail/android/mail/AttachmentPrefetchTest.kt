@@ -58,6 +58,15 @@ class AttachmentPrefetchTest {
     }
 
     @Test
+    fun loads_an_18_mb_inline_image() {
+        val photo = att("photo", 18 * mb).copy(content_id = "<photo@mail>", content_type = "image/jpeg")
+        val too_big = att("raw", INLINE_IMAGE_MAX_BYTES + 1).copy(content_id = "<raw@mail>", content_type = "image/png")
+        val plan = plan_attachment_prefetch(mapOf("photo_mail" to listOf(photo), "raw_mail" to listOf(too_big)))
+        assertEquals(emptyList<String>(), plan.full_message_ids)
+        assertEquals(mapOf("photo_mail" to listOf("photo")), plan.inline_attachment_ids)
+    }
+
+    @Test
     fun fetches_with_bounded_concurrency() = runBlocking {
         val in_flight = AtomicInteger(0)
         val peak = AtomicInteger(0)
