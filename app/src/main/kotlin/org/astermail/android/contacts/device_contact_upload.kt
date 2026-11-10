@@ -90,18 +90,30 @@ private fun stored_match_keys(contacts: List<Contact>): Set<String> = buildSet {
 
 private fun phone_digits_key(value: String): String = value.filter { it.isDigit() }
 
-private fun merge_new_entries(existing: Contact, incoming: Contact): Contact? {
+private fun email_entry_key(value: String): String = hash_entry_key("e:" + normalized_key(value))
+
+private fun phone_entry_key(value: String): String = hash_entry_key("p:" + phone_digits_key(value))
+
+fun device_entry_keys(contacts: List<Contact>): Set<String> = buildSet {
+    for (contact in contacts) {
+        contact.email_entries().filter { normalized_key(it.value).isNotEmpty() }.forEach { add(email_entry_key(it.value)) }
+        contact.phone_entries().filter { phone_digits_key(it.value).isNotEmpty() }.forEach { add(phone_entry_key(it.value)) }
+    }
+}
+
+private fun merge_new_entries(existing: Contact, incoming: Contact, previously_seen: Set<String>?): Contact? {
+    if (previously_seen == null) return null
     val known_emails = existing.email_entries()
     val known_phones = existing.phone_entries()
     val email_set = known_emails.map { normalized_key(it.value) }.toSet()
     val phone_set = known_phones.map { phone_digits_key(it.value) }.filter { it.isNotEmpty() }.toSet()
     val added_emails = incoming.email_entries().filter {
         val key = normalized_key(it.value)
-        key.isNotEmpty() && key !in email_set
+        key.isNotEmpty() && key !in email_set && email_entry_key(it.value) !in previously_seen
     }.distinctBy { normalized_key(it.value) }
     val added_phones = incoming.phone_entries().filter {
         val key = phone_digits_key(it.value)
-        key.isNotEmpty() && key !in phone_set
+        key.isNotEmpty() && key !in phone_set && phone_entry_key(it.value) !in previously_seen
     }.distinctBy { phone_digits_key(it.value) }
     if (added_emails.isEmpty() && added_phones.isEmpty()) return null
     return existing.with_typed_fields(
@@ -125,7 +137,11 @@ private fun emailless_name_index(active: List<Contact>): Map<String, Contact> = 
     }
 }
 
-fun plan_contact_import(incoming: List<Contact>, existing: List<Contact>): ContactImportPlan {
+fun plan_contact_import(
+    incoming: List<Contact>,
+    existing: List<Contact>,
+    previously_seen: Set<String>? = emptySet(),
+): ContactImportPlan {
     val active = existing.filter { it.deleted_at.isBlank() }
     val active_index = active_match_index(active)
     val emailless_index = emailless_name_index(active)
@@ -144,7 +160,7 @@ fun plan_contact_import(incoming: List<Contact>, existing: List<Contact>): Conta
             ?: name_key(contact)?.let { emailless_index[it] }
         if (target != null) {
             if (target.id.isNotBlank()) {
-                merge_new_entries(updates[target.id] ?: target, contact)?.let { updates[target.id] = it }
+                merge_new_entries(updates[target.id] ?: target, contact, previously_seen)?.let { updates[target.id] = it }
             }
             continue
         }

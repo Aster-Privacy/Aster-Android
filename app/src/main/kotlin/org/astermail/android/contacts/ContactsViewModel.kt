@@ -278,7 +278,9 @@ class ContactsViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val plan = plan_contact_import(device_contacts, existing)
+                val account_id = repository.current_account()
+                val baseline = DeviceImportBaseline(context)
+                val plan = plan_contact_import(device_contacts, existing, account_id?.let(baseline::load))
                 val in_trash = plan.in_trash
                 val new_contacts = plan.new_contacts
                 _state.value = _state.value.copy(import_done = 0, import_total = new_contacts.size)
@@ -296,6 +298,9 @@ class ContactsViewModel @Inject constructor(
                 var merged = 0
                 for (update in plan.updates) {
                     if (repository.update_contact(update.id, update).isSuccess) merged++
+                }
+                if (account_id != null && merged == plan.updates.size) {
+                    baseline.save(account_id, device_entry_keys(device_contacts))
                 }
                 val imported = upload.imported
                 val failed = upload.failed
