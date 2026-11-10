@@ -144,10 +144,22 @@ class InlineImageSourcesTest {
     }
 
     @Test
+    fun inlines_an_18_mb_image() {
+        every {
+            MailRepository.decrypt_attachment_bytes(any(), any(), any())
+        } returns ByteArray(18 * 1024 * 1024)
+        val out = inline_image_sources(
+            """<img src="cid:photo">""",
+            listOf(attachment("a", "photo")),
+        )
+        assertTrue(out.containsKey("photo"))
+    }
+
+    @Test
     fun skips_images_over_the_per_image_cap() {
         every {
             MailRepository.decrypt_attachment_bytes(any(), any(), any())
-        } returns ByteArray(17 * 1024 * 1024)
+        } returns ByteArray(33 * 1024 * 1024)
         val out = inline_image_sources(
             """<img src="cid:big">""",
             listOf(attachment("a", "big")),
@@ -159,7 +171,7 @@ class InlineImageSourcesTest {
     fun stops_inlining_once_the_total_budget_is_spent() {
         every {
             MailRepository.decrypt_attachment_bytes(any(), any(), any())
-        } returns ByteArray(12 * 1024 * 1024)
+        } returns ByteArray(20 * 1024 * 1024)
         val body = """<img src="cid:a"><img src="cid:b"><img src="cid:c"><img src="cid:d">"""
         val out = inline_image_sources(
             body,
