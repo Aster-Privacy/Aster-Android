@@ -198,18 +198,19 @@ data class CreateAttachmentRequestBody(
     val seq_num: Int? = null,
 )
 
-private const val DRAFT_UPLOAD_BASE_TIMEOUT_MS = 60_000L
-private const val DRAFT_UPLOAD_MIN_BYTES_PER_SECOND = 32_768L
-private const val DRAFT_UPLOAD_MAX_TIMEOUT_MS = 30 * 60_000L
-private const val DRAFT_UPLOAD_SOCKET_TIMEOUT_MS = 120_000L
+private const val LARGE_UPLOAD_BASE_TIMEOUT_MS = 60_000L
+private const val LARGE_UPLOAD_MIN_BYTES_PER_SECOND = 32_768L
+private const val LARGE_UPLOAD_MAX_TIMEOUT_MS = 30 * 60_000L
+internal const val LARGE_TRANSFER_SOCKET_TIMEOUT_MS = 120_000L
 
-internal fun draft_upload_timeout_ms(payload_chars: Int): Long =
-    (DRAFT_UPLOAD_BASE_TIMEOUT_MS + payload_chars.coerceAtLeast(0).toLong() * 1000 / DRAFT_UPLOAD_MIN_BYTES_PER_SECOND)
-        .coerceAtMost(DRAFT_UPLOAD_MAX_TIMEOUT_MS)
+internal const val LARGE_DOWNLOAD_TIMEOUT_MS = LARGE_UPLOAD_MAX_TIMEOUT_MS
+
+internal fun large_upload_timeout_ms(payload_chars: Int): Long =
+    (LARGE_UPLOAD_BASE_TIMEOUT_MS + payload_chars.coerceAtLeast(0).toLong() * 1000 / LARGE_UPLOAD_MIN_BYTES_PER_SECOND)
+        .coerceAtMost(LARGE_UPLOAD_MAX_TIMEOUT_MS)
 
 class MailApiImpl(private val client: ApiClient) : MailApi {
     private val base = "/api/mail/v1"
-    private val large_payload_timeout_ms = 60_000L
     private val thread_messages_page_size = 100
     private val thread_messages_page_cap = 50
 
@@ -279,7 +280,12 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     }
 
     override suspend fun get_message(item_id: String): MailItem {
-        val response = client.http.get("${client.base_url}$base/messages/$item_id")
+        val response = client.http.get("${client.base_url}$base/messages/$item_id") {
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
+        }
         return decode_or_throw(response)
     }
 
@@ -294,8 +300,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse {
         val response = client.http.post("${client.base_url}$base/drafts") {
             timeout {
-                requestTimeoutMillis = draft_upload_timeout_ms(request.encrypted_content.length)
-                socketTimeoutMillis = DRAFT_UPLOAD_SOCKET_TIMEOUT_MS
+                requestTimeoutMillis = large_upload_timeout_ms(request.encrypted_content.length)
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
             }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -312,8 +318,8 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             "${client.base_url}$base/drafts/${url_encode_path(draft_id)}",
         ) {
             timeout {
-                requestTimeoutMillis = draft_upload_timeout_ms(request.encrypted_content.length)
-                socketTimeoutMillis = DRAFT_UPLOAD_SOCKET_TIMEOUT_MS
+                requestTimeoutMillis = large_upload_timeout_ms(request.encrypted_content.length)
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
             }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
@@ -334,14 +340,24 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
     override suspend fun get_draft(draft_id: String): DraftItem {
         val response = client.http.get(
             "${client.base_url}$base/drafts/${url_encode_path(draft_id)}",
-        )
+        ) {
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
+        }
         return decode_or_throw(response)
     }
 
     override suspend fun get_thread_draft(thread_token: String): DraftItem? {
         val response = client.http.get(
             "${client.base_url}$base/drafts/thread/${url_encode_path(thread_token)}",
-        )
+        ) {
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
+        }
         return decode_or_throw<DraftItem?>(response)
     }
 
@@ -361,7 +377,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             ) {
                 parameter("limit", thread_messages_page_size)
                 cursor?.let { parameter("cursor", it) }
-                timeout { requestTimeoutMillis = large_payload_timeout_ms }
+                timeout {
+                    requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                    socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+                }
             }
             val page: ThreadWithMessages = decode_or_throw(response)
             thread = page.thread ?: thread
@@ -583,7 +602,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         item_type: String,
     ): MailItemsListResponse {
         val response = client.http.get("${client.base_url}$base/messages/encrypted") {
-            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
             parameter("item_type", item_type)
             parameter("limit", limit)
             if (cursor != null) parameter("cursor", cursor)
@@ -594,7 +616,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun list_attachments(mail_item_id: String): AttachmentListResponse {
         val response = client.http.get("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
-            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
         }
         return decode_or_throw(response)
     }
@@ -604,7 +629,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
         request: CreateAttachmentRequestBody,
     ): CreateAttachmentResponse {
         val response = client.http.post("${client.base_url}$base/attachments/by-mail/$mail_item_id") {
-            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            timeout {
+                requestTimeoutMillis = large_upload_timeout_ms(request.encrypted_data.length)
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
@@ -614,7 +642,10 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun get_attachment(attachment_id: String): AttachmentResponse {
         val response = client.http.get("${client.base_url}$base/attachments/$attachment_id") {
-            timeout { requestTimeoutMillis = large_payload_timeout_ms }
+            timeout {
+                requestTimeoutMillis = LARGE_DOWNLOAD_TIMEOUT_MS
+                socketTimeoutMillis = LARGE_TRANSFER_SOCKET_TIMEOUT_MS
+            }
         }
         return decode_or_throw(response)
     }

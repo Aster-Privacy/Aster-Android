@@ -36,7 +36,7 @@ internal class InlineImageReloader(
 
 internal object InlineImageStore {
 
-    private const val STORE_MAX_TOTAL_BYTES = 32 * 1024 * 1024
+    private const val STORE_MAX_TOTAL_BYTES = 48 * 1024 * 1024
 
     private val entries = object : LinkedHashMap<String, InlineImageEntry>(16, 0.75f, true) {}
 

@@ -19,29 +19,28 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-package org.astermail.android.api.mail
+package org.astermail.android.ui.mail
 
-import org.junit.Assert.assertEquals
+import org.astermail.android.mail.INLINE_IMAGE_MAX_BYTES
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class DraftUploadTimeoutTest {
+class lightbox_data_uri_limit_test {
+    private fun data_uri_chars(image_bytes: Long): Long =
+        "data:image/jpeg;base64,".length + (image_bytes + 2) / 3 * 4
 
     @Test
-    fun small_drafts_keep_the_base_timeout() {
-        assertEquals(60_000L, draft_upload_timeout_ms(0))
-        assertTrue(draft_upload_timeout_ms(4_000) < 61_000L)
+    fun an_18_mb_image_fits_the_lightbox_limit() {
+        assertTrue(data_uri_chars(18L * 1024 * 1024) <= LIGHTBOX_MAX_DATA_URI_CHARS)
     }
 
     @Test
-    fun large_drafts_get_time_to_upload() {
-        val ten_megabytes = 10 * 1024 * 1024
-        assertTrue(draft_upload_timeout_ms(ten_megabytes) >= 5 * 60_000L)
+    fun the_largest_inline_image_fits_the_lightbox_limit() {
+        assertTrue(data_uri_chars(INLINE_IMAGE_MAX_BYTES) <= LIGHTBOX_MAX_DATA_URI_CHARS)
     }
 
     @Test
-    fun the_timeout_is_capped() {
-        assertEquals(30 * 60_000L, draft_upload_timeout_ms(Int.MAX_VALUE))
-        assertEquals(60_000L, draft_upload_timeout_ms(-1))
+    fun the_lightbox_limit_stays_bounded() {
+        assertTrue(LIGHTBOX_MAX_DATA_URI_CHARS < data_uri_chars(INLINE_IMAGE_MAX_BYTES + 1024 * 1024))
     }
 }

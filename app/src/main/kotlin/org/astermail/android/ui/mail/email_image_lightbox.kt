@@ -66,7 +66,9 @@ import org.astermail.android.design.AsterScale
 import org.astermail.android.design.aster_reduce_motion
 
 private const val LIGHTBOX_MAX_SCALE = 6f
-private const val LIGHTBOX_MAX_DATA_URI_CHARS = 16 * 1024 * 1024
+private const val LIGHTBOX_DATA_URI_HEADER_CHARS = 256
+internal const val LIGHTBOX_MAX_DATA_URI_CHARS =
+    ((org.astermail.android.mail.INLINE_IMAGE_MAX_BYTES + 2) / 3 * 4 + LIGHTBOX_DATA_URI_HEADER_CHARS).toInt()
 
 private const val LIGHTBOX_MAX_PIXELS = 4096
 private const val LIGHTBOX_SCRIM_ALPHA = 0.94f
