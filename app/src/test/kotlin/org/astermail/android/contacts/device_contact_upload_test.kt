@@ -130,6 +130,62 @@ class device_contact_upload_test {
         assertEquals(listOf("cy@example.com"), plan.updates.single().email_entries().map { it.value })
     }
 
+    private fun with_emails(name: String, vararg emails: String) = person(name).with_typed_fields(
+        emails = emails.map { ContactEntry(it, ContactEntry.TYPE_HOME) },
+        phones = emptyList(),
+        addresses = emptyList(),
+    )
+
+    @Test
+    fun an_email_removed_in_aster_stays_removed_after_device_sync() {
+        val phone = listOf(with_emails("Eve", "eve@example.com", "eve@old.example"))
+        val synced_before = device_entry_keys(phone)
+        val plan = plan_contact_import(phone, listOf(stored("c5", "Eve", email = "eve@example.com")), synced_before)
+        assertTrue(plan.updates.isEmpty())
+        assertTrue(plan.new_contacts.isEmpty())
+    }
+
+    @Test
+    fun a_phone_removed_in_aster_stays_removed_after_device_sync() {
+        val phone = listOf(
+            person("Fay").with_typed_fields(
+                emails = emptyList(),
+                phones = listOf(
+                    ContactEntry("+1 555 0100", ContactEntry.TYPE_MOBILE),
+                    ContactEntry("+1 555 0101", ContactEntry.TYPE_WORK),
+                ),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(phone, listOf(stored("c6", "Fay", phone = "+15550100")), device_entry_keys(phone))
+        assertTrue(plan.updates.isEmpty())
+    }
+
+    @Test
+    fun only_entries_added_on_the_device_since_the_last_sync_are_merged() {
+        val before = listOf(with_emails("Gus", "gus@example.com", "gus@old.example"))
+        val after = listOf(with_emails("Gus", "gus@example.com", "gus@old.example", "gus@new.example"))
+        val plan = plan_contact_import(after, listOf(stored("c7", "Gus", email = "gus@example.com")), device_entry_keys(before))
+        assertEquals(
+            listOf("gus@example.com", "gus@new.example"),
+            plan.updates.single().email_entries().map { it.value },
+        )
+    }
+
+    @Test
+    fun a_first_device_sync_never_merges_into_stored_contacts() {
+        val phone = listOf(with_emails("Hal", "hal@example.com", "hal@old.example"))
+        val plan = plan_contact_import(phone, listOf(stored("c8", "Hal", email = "hal@example.com")), null)
+        assertTrue(plan.updates.isEmpty())
+        assertTrue(plan.new_contacts.isEmpty())
+    }
+
+    @Test
+    fun a_first_device_sync_still_uploads_new_contacts() {
+        val phone = listOf(with_emails("Ivy", "ivy@example.com"))
+        assertEquals(1, plan_contact_import(phone, emptyList(), null).new_contacts.size)
+    }
+
     @Test
     fun an_unchanged_contact_produces_no_update() {
         val phone = listOf(person("Dee", "dee@example.com"))
