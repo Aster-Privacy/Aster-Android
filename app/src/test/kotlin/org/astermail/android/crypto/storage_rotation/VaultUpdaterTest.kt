@@ -26,11 +26,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import org.astermail.android.api.ApiError
+import org.astermail.android.crypto.VaultKdf
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class VaultUpdaterTest {
@@ -50,7 +53,7 @@ class VaultUpdaterTest {
         override fun fingerprints(vault: JSONObject): List<String> = emptyList()
     }
 
-    private class Server(initial: JSONObject) : ResealApi {
+    private class Server(initial: JSONObject, val stored_iterations: Int? = null) : ResealApi {
         var vault: JSONObject = initial
         var puts = 0
         var conflicts = 0
@@ -63,10 +66,13 @@ class VaultUpdaterTest {
 
         override suspend fun get(path: String): ApiReply {
             val sealed = sealed()
-            return ApiReply(
-                200,
-                json_object("encrypted_vault" to sealed, "vault_nonce" to "bm9uY2U=", "vault_sha256" to digest(sealed)),
+            val fields = mutableListOf<Pair<String, Any?>>(
+                "encrypted_vault" to sealed,
+                "vault_nonce" to "bm9uY2U=",
+                "vault_sha256" to digest(sealed),
             )
+            stored_iterations?.let { fields.add("vault_kdf_iterations" to it) }
+            return ApiReply(200, json_object(*fields.toTypedArray()))
         }
 
         override suspend fun post(path: String, body: JsonElement): ApiReply = ApiReply(404)
@@ -251,5 +257,88 @@ class VaultUpdaterTest {
         assertEquals("rotated", written.getJSONArray("recovery_codes").getString(0))
         assertTrue(local_kek in legacy_values(written))
         assertEquals("kept", written.getString("future_field"))
+    }
+
+    private class SingleUseStepUpBackend(val level2_admitted: Boolean) {
+        private var token_used = false
+        var calls = 0
+        val sent_iterations = mutableListOf<Int>()
+
+        fun backup(token: String, sealed: SealedVault): Boolean {
+            calls += 1
+            sent_iterations.add(sealed.kdf_iterations)
+            if (token != "step-up" || token_used) throw ApiError.StepUpRequired()
+            token_used = true
+            if (sealed.kdf_iterations == VaultKdf.LEVEL2_ITERATIONS && !level2_admitted) {
+                throw ApiError.Conflict("not admitted", VAULT_LEVEL2_NOT_ADMITTED_CODE)
+            }
+            return true
+        }
+    }
+
+    private class IterationCodec : StorageVaultCodec {
+        override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? =
+            decode_b64(encrypted_vault)?.let { JSONObject(String(it, Charsets.UTF_8)) }
+        override fun encrypt(vault: JSONObject): SealedVault = encrypt_at(vault, VaultKdf.DEFAULT_ITERATIONS)
+        override fun encrypt_at(vault: JSONObject, iterations: Int): SealedVault =
+            SealedVault(encode_b64(vault.toString().toByteArray(Charsets.UTF_8)), "bm9uY2U=", iterations)
+        override fun password_keys(vault: JSONObject): List<ByteArray> = emptyList()
+        override fun generate_key(): ByteArray = ByteArray(32) { 3 }
+        override fun fingerprints(vault: JSONObject): List<String> = emptyList()
+    }
+
+    private fun iteration_updater(server: Server) = VaultUpdater(
+        api = server,
+        codec = IterationCodec(),
+        user_id = { "user-1" },
+        lock = Mutex(),
+        on_vault_changed = { _, _ -> },
+        now = { now },
+        local_keys = { LocalStorageKeys.NONE },
+    )
+
+    private suspend fun rotate_codes(updater: VaultUpdater, backend: SingleUseStepUpBackend): VaultUpdateOutcome =
+        updater.replace_through(
+            edit = { draft ->
+                draft.vault.put("recovery_codes", JSONArray().put("rotated"))
+                VaultEdit.CHANGED
+            },
+            send = { _, sealed, _ -> backend.backup("step-up", sealed) },
+        )
+
+    @Test
+    fun rotating_codes_on_an_account_outside_level2_spends_the_step_up_token_once_and_writes() = runBlocking {
+        val backend = SingleUseStepUpBackend(level2_admitted = false)
+
+        val outcome = rotate_codes(iteration_updater(Server(rotated_vault())), backend)
+
+        assertTrue(outcome is VaultUpdateOutcome.Written)
+        assertEquals(1, backend.calls)
+        assertEquals(listOf(VaultKdf.DEFAULT_ITERATIONS), backend.sent_iterations)
+    }
+
+    @Test
+    fun rotating_codes_keeps_a_level2_vault_at_level2() = runBlocking {
+        val backend = SingleUseStepUpBackend(level2_admitted = true)
+        val server = Server(rotated_vault(), stored_iterations = VaultKdf.LEVEL2_ITERATIONS)
+
+        val outcome = rotate_codes(iteration_updater(server), backend)
+
+        assertTrue(outcome is VaultUpdateOutcome.Written)
+        assertEquals(listOf(VaultKdf.LEVEL2_ITERATIONS), backend.sent_iterations)
+    }
+
+    @Test
+    fun a_refused_rotation_never_resends_the_step_up_token() = runBlocking {
+        val backend = SingleUseStepUpBackend(level2_admitted = false)
+        val server = Server(rotated_vault(), stored_iterations = VaultKdf.LEVEL2_ITERATIONS)
+
+        try {
+            rotate_codes(iteration_updater(server), backend)
+            fail("expected the refusal to reach the caller")
+        } catch (error: ApiError.Conflict) {
+            assertTrue(is_level2_not_admitted(error))
+        }
+        assertEquals(1, backend.calls)
     }
 }

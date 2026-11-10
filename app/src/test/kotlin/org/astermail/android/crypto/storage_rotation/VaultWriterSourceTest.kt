@@ -94,6 +94,7 @@ class VaultWriterSourceTest {
         val body = text.substring(start, end)
         assertTrue(body.contains("replace_through("))
         assertTrue(!body.contains("get_encrypted_vault()"))
+        assertTrue(!body.contains("LEVEL2_ITERATIONS"))
     }
 
     @Test

@@ -3027,7 +3027,6 @@ class AuthRepository @Inject constructor(
                         draft.vault.put("recovery_codes", codes_array)
                         org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
                     },
-                    upgrade = true,
                     send = { vault_obj, sealed, snapshot ->
                         val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())

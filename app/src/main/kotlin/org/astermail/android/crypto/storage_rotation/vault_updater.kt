@@ -255,7 +255,6 @@ class VaultUpdater(
 
     suspend fun replace_through(
         edit: suspend (VaultDraft) -> VaultEdit,
-        upgrade: Boolean = false,
         send: suspend (JSONObject, SealedVault, ServerVaultSnapshot) -> Boolean,
     ): VaultUpdateOutcome = lock.withLock {
         if (user_id() == null) return@withLock VaultUpdateOutcome.Failed("no_account")
@@ -268,18 +267,9 @@ class VaultUpdater(
             VaultEdit.CHANGED -> Unit
         }
         preserve_vault_fields(server, next, local_keys(), false, now())
-        val iterations = if (upgrade) VaultKdf.LEVEL2_ITERATIONS else snapshot.vault_kdf_iterations
-        var sealed = seal_for_send(next, iterations)
+        val sealed = seal_for_send(next, snapshot.vault_kdf_iterations)
             ?: return@withLock VaultUpdateOutcome.Failed("roundtrip_failed")
-        val sent = try {
-            send(next, sealed, snapshot)
-        } catch (error: Exception) {
-            if (!is_level2_not_admitted(error) || iterations == VaultKdf.DEFAULT_ITERATIONS) throw error
-            sealed = seal_for_send(next, VaultKdf.DEFAULT_ITERATIONS)
-                ?: return@withLock VaultUpdateOutcome.Failed("roundtrip_failed")
-            send(next, sealed, snapshot)
-        }
-        if (!sent) return@withLock VaultUpdateOutcome.Failed("write_failed")
+        if (!send(next, sealed, snapshot)) return@withLock VaultUpdateOutcome.Failed("write_failed")
         on_vault_changed(next, sealed)
         VaultUpdateOutcome.Written(next, sealed)
     }
