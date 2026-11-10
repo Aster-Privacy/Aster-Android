@@ -5959,6 +5959,7 @@ private const val remeasure_settle_ms = 32L
 private const val remeasure_visual_timeout_ms = 250L
 private const val remeasure_resize_frames = 20
 private const val remeasure_read_frames = 12
+private const val remeasure_stale_read_frames = 36
 private const val remeasure_stable_reads = 1
 private const val remeasure_probe_inset_dp = 8f
 private const val remeasure_viewport_slack_px = 4
@@ -7127,6 +7128,9 @@ internal fun email_html_view(
             }
 
             suspend fun probe_document_height(probe_dp: Dp): Int? {
+                val stale_web = web_ref[0] ?: return null
+                val stale_content = stale_web.contentHeight
+                val stale_viewport = web_viewport_css_height(stale_web)
                 probe_height_dp.value = probe_dp
                 measure_probe.value = true
                 var frames = 0
@@ -7142,11 +7146,24 @@ internal fun email_html_view(
                 var last = 0
                 var same = 0
                 var reads = 0
-                while (reads < remeasure_read_frames) {
+                val probe_shrank = web_viewport_css_height(web) < stale_viewport
+                while (reads < remeasure_stale_read_frames) {
                     androidx.compose.runtime.withFrameNanos { }
                     reads++
                     val content = web.contentHeight
                     if (content <= 0) continue
+                    if (probe_read_is_stale(
+                            content_css = content,
+                            stale_content_css = stale_content,
+                            stale_viewport_css = stale_viewport,
+                            probe_shrank = probe_shrank,
+                            slack_css = remeasure_viewport_slack_px,
+                        )
+                    ) {
+                        last = content
+                        same = 0
+                        continue
+                    }
                     if (content == last) {
                         same++
                         if (same >= remeasure_stable_reads) break
