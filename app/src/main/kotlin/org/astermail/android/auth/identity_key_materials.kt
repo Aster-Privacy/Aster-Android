@@ -122,6 +122,19 @@ fun pgp_key_unlocks(armored: String, passphrase: CharArray): Boolean {
     return runCatching { read_secret_ring(armored).secretKey.extractPrivateKey(decryptor) != null }.getOrDefault(false)
 }
 
+fun pgp_keys_locked(
+    identity_key: String?,
+    vault: JSONObject?,
+    unlocks: (String) -> Boolean,
+): Boolean {
+    val candidates = listOfNotNull(
+        identity_key,
+        vault?.optString("identity_key", ""),
+        vault?.optString("signed_prekey_private", ""),
+    ).filter { is_pgp_private_key(it) }.distinct()
+    return candidates.any { !unlocks(it) }
+}
+
 fun reprotect_vault_pgp_keys(
     vault: JSONObject,
     old_passphrase: CharArray,
