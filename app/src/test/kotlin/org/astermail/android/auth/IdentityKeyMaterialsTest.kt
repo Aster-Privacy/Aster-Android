@@ -382,4 +382,17 @@ class IdentityKeyMaterialsTest {
         assertTrue(pgp_key_unlocks(key.armored_private_key, current_password))
         assertFalse(pgp_key_unlocks(key.armored_private_key, old_password))
     }
+
+    @Test
+    fun a_signed_prekey_under_an_old_password_counts_as_locked() {
+        val good = "-----BEGIN PGP PRIVATE KEY BLOCK-----good"
+        val stale = "-----BEGIN PGP PRIVATE KEY BLOCK-----stale"
+        val unlocks = { armored: String -> armored == good }
+        val vault = JSONObject().put("identity_key", good).put("signed_prekey_private", stale)
+        assertTrue(pgp_keys_locked(good, vault, unlocks))
+        assertFalse(pgp_keys_locked(good, JSONObject().put("identity_key", good).put("signed_prekey_private", good), unlocks))
+        assertFalse(pgp_keys_locked(good, JSONObject().put("signed_prekey_private", "not a key"), unlocks))
+        assertTrue(pgp_keys_locked(stale, null, unlocks))
+        assertFalse(pgp_keys_locked(null, null, unlocks))
+    }
 }

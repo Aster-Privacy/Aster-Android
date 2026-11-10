@@ -105,6 +105,18 @@ internal fun body_tap_may_toggle(
     return dx * dx + dy * dy <= reach * reach
 }
 
+internal fun probe_read_is_stale(
+    content_css: Int,
+    stale_content_css: Int,
+    stale_viewport_css: Int,
+    probe_shrank: Boolean,
+    slack_css: Int,
+): Boolean {
+    if (!probe_shrank || content_css <= 0 || stale_content_css <= 0) return false
+    if (content_css != stale_content_css) return false
+    return stale_content_css <= stale_viewport_css + slack_css.coerceAtLeast(0)
+}
+
 internal fun body_overflows_vertically(content_px: Int, view_px: Int, slack_px: Int): Boolean =
     view_px > 0 && content_px > view_px + slack_px.coerceAtLeast(0)
 

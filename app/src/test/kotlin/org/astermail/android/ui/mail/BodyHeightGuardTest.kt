@@ -254,4 +254,18 @@ class BodyHeightGuardTest {
         assertEquals(500f, rescaled_body_height_dp(500f, 0f, 0.5686f), 0f)
         assertEquals(500f, rescaled_body_height_dp(500f, 0.587f, 0f), 0f)
     }
+
+    @Test
+    fun a_collapse_probe_ignores_the_old_viewport_height_until_it_updates() {
+        assertTrue(probe_read_is_stale(1200, 1200, 1200, probe_shrank = true, slack_css = 4))
+        assertTrue(probe_read_is_stale(1192, 1192, 1190, probe_shrank = true, slack_css = 4))
+    }
+
+    @Test
+    fun a_fresh_or_unshrunk_probe_read_is_trusted() {
+        assertFalse(probe_read_is_stale(640, 1200, 1200, probe_shrank = true, slack_css = 4))
+        assertFalse(probe_read_is_stale(1200, 1200, 1200, probe_shrank = false, slack_css = 4))
+        assertFalse(probe_read_is_stale(1600, 1600, 1200, probe_shrank = true, slack_css = 4))
+        assertFalse(probe_read_is_stale(0, 1200, 1200, probe_shrank = true, slack_css = 4))
+    }
 }

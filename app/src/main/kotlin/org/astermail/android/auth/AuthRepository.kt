@@ -2320,12 +2320,27 @@ class AuthRepository @Inject constructor(
         return outcome is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written
     }
 
+    @Volatile
+    private var vault_pgp_lock_cache: Pair<List<String?>, Boolean>? = null
+
     fun vault_pgp_keys_locked(): Boolean {
-        val identity_key = session_key_store.get_identity_key()?.takeIf { is_pgp_private_key(it) } ?: return false
+        val identity_key = session_key_store.get_identity_key()
+        val sealed = session_key_store.get_encrypted_vault()
+        if (!is_pgp_private_key(identity_key) && sealed == null) return false
+        val cache_key = listOf(identity_key, sealed?.first, sealed?.second)
+        vault_pgp_lock_cache?.let { if (it.first == cache_key) return it.second }
         val passphrase = session_key_store.get_passphrase() ?: return false
         val chars = passphrase_chars(passphrase)
         return try {
-            !pgp_key_unlocks(identity_key, chars)
+            val vault = sealed?.let {
+                runCatching {
+                    org.astermail.android.crypto.storage_rotation.SessionVaultCodec(session_key_store) { passphrase.copyOf() }
+                        .decrypt_at(it.first, it.second, session_key_store.get_vault_kdf_iterations())
+                }.getOrNull()
+            }
+            val locked = pgp_keys_locked(identity_key, vault) { pgp_key_unlocks(it, chars) }
+            vault_pgp_lock_cache = cache_key to locked
+            locked
         } finally {
             chars.fill(' ')
             passphrase.fill(0)
