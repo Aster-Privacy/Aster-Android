@@ -1,0 +1,1 @@
+Getting new recovery codes works again after you confirm your password. When you collapse quoted text in a message, the message shrinks to fit instead of leaving empty space below it.
