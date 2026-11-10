@@ -4228,11 +4228,13 @@ class SettingsViewModel @Inject constructor(
                 val enc = response.encrypted_email
                 val nonce = response.email_nonce
                 val address = if (!enc.isNullOrBlank() && !nonce.isNullOrBlank() && !identity_key.isNullOrBlank()) {
-                    try {
-                        decrypt_recovery_email(enc, nonce, identity_key)
-                    } catch (t: Throwable) {
-                        if (t is kotlinx.coroutines.CancellationException) throw t
-                        null
+                    withContext(default_dispatcher) {
+                        org.astermail.android.recovery.open_recovery_email(
+                            enc,
+                            nonce,
+                            listOf(identity_key) + session_key_store.get_previous_keys().orEmpty(),
+                            session_key_store.get_decrypt_keks(),
+                        )
                     }
                 } else {
                     null
@@ -4393,16 +4395,6 @@ class SettingsViewModel @Inject constructor(
             nonce_b64 = encrypted.nonce_b64,
         )
     }
-
-    private fun decrypt_recovery_email(
-        ciphertext_b64: String,
-        nonce_b64: String,
-        identity_key: String,
-    ): String = org.astermail.android.recovery.decrypt_recovery_email(
-        ciphertext_b64,
-        nonce_b64,
-        identity_key,
-    )
 
     private fun hash_recovery_email(email: String): String =
         org.astermail.android.recovery.hash_recovery_email(email)

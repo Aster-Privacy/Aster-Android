@@ -77,3 +77,33 @@ fun hash_recovery_email(email: String): String {
 }
 
 fun normalize_recovery_email(email: String): String = email.trim().lowercase(java.util.Locale.ROOT)
+
+fun open_recovery_email(
+    ciphertext_b64: String,
+    nonce_b64: String,
+    identity_keys: List<String>,
+    raw_keks_b64: List<String>,
+): String? {
+    val decoder = java.util.Base64.getMimeDecoder()
+    val ciphertext = runCatching { decoder.decode(ciphertext_b64) }.getOrNull() ?: return null
+    val nonce = runCatching { decoder.decode(nonce_b64) }.getOrNull() ?: return null
+    for (identity_key in identity_keys.filter { it.isNotBlank() }.distinct()) {
+        val key = derive_recovery_email_key(identity_key)
+        try {
+            return String(AesGcm.decrypt(key, nonce, ciphertext), Charsets.UTF_8)
+        } catch (_: Exception) {
+        } finally {
+            key.fill(0)
+        }
+    }
+    for (kek_b64 in raw_keks_b64.distinct()) {
+        val raw = runCatching { decoder.decode(kek_b64) }.getOrNull() ?: continue
+        try {
+            if (raw.size == 32) return String(AesGcm.decrypt(raw, nonce, ciphertext), Charsets.UTF_8)
+        } catch (_: Exception) {
+        } finally {
+            raw.fill(0)
+        }
+    }
+    return null
+}
