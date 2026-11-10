@@ -651,7 +651,10 @@ fun MailDetailScreen(
         locked_data_vm.outcomes.collect { outcome ->
             val unlocked_some = outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS ||
                 outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.PARTIAL
-            if (unlocked_some) mail_vm.retry_decrypt_thread()
+            if (unlocked_some) {
+                mail_vm.reload_after_key_recovery()
+                mail_vm.retry_decrypt_thread()
+            }
             if (outcome == org.astermail.android.mail.LockedDataRecoveryOutcome.SUCCESS) {
                 show_recover_data_dialog = false
                 org.astermail.android.ui.common.app_toast.show(

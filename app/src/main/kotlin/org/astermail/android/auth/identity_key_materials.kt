@@ -112,34 +112,76 @@ fun reprotect_pgp_key(armored: String, old_passphrase: CharArray, new_passphrase
     return out.toString(Charsets.UTF_8.name())
 }
 
+fun pgp_key_needs_passphrase(armored: String): Boolean =
+    runCatching { read_secret_ring(armored).secretKey.keyEncryptionAlgorithm != SymmetricKeyAlgorithmTags.NULL }
+        .getOrDefault(false)
+
+fun pgp_key_unlocks(armored: String, passphrase: CharArray): Boolean {
+    if (!pgp_key_needs_passphrase(armored)) return true
+    val decryptor = BcPBESecretKeyDecryptorBuilder(BcPGPDigestCalculatorProvider()).build(passphrase)
+    return runCatching { read_secret_ring(armored).secretKey.extractPrivateKey(decryptor) != null }.getOrDefault(false)
+}
+
 fun reprotect_vault_pgp_keys(
     vault: JSONObject,
     old_passphrase: CharArray,
     new_passphrase: CharArray,
     reprotect: (String, CharArray, CharArray) -> String = ::reprotect_pgp_key,
+    unlocks: (String) -> Boolean = { pgp_key_unlocks(it, new_passphrase) },
 ): Int {
-    var changed = 0
-    val move = { armored: String ->
+    val replaced = mutableListOf<String>()
+    val usable_ids = mutableSetOf<String>()
+    val usable_materials = mutableSetOf<String>()
+
+    val results = mutableMapOf<String, String>()
+    val repair_once = { armored: String ->
         if (armored.isEmpty()) {
             armored
+        } else if (unlocks(armored)) {
+            usable_ids.add(pgp_key_identity(armored))
+            usable_materials.add(armored)
+            armored
         } else {
-            runCatching { reprotect(armored, old_passphrase, new_passphrase) }
-                .getOrNull()
-                ?.also { changed++ }
-                ?: armored
+            val relocked = runCatching { reprotect(armored, old_passphrase, new_passphrase) }.getOrNull()
+            if (relocked == null || relocked == armored) {
+                armored
+            } else {
+                usable_ids.add(pgp_key_identity(armored))
+                usable_materials.add(relocked)
+                replaced.add(armored)
+                relocked
+            }
         }
     }
-    for (field in listOf("identity_key", "identity_private_key")) {
-        val current = vault.optString(field, "")
-        if (current.isNotEmpty()) vault.put(field, move(current))
+    val repair = { armored: String -> results.getOrPut(armored) { repair_once(armored) } }
+
+    val single_fields = listOf("identity_key", "identity_private_key", "signed_prekey_private")
+    val repaired_fields = single_fields.associateWith { field -> repair(vault.optString(field, "")) }
+    val repaired_previous = json_strings(vault.optJSONArray("previous_keys")).map(repair)
+    val legacy = json_strings(vault.optJSONArray("legacy_identity_keys"))
+    val recovered_legacy = mutableListOf<String>()
+    for (armored in unique_non_empty(legacy)) {
+        if (pgp_key_identity(armored) in usable_ids) continue
+        val relocked = repair(armored)
+        if (relocked != armored) recovered_legacy.add(relocked)
     }
-    for (field in listOf("previous_keys", "legacy_identity_keys")) {
-        val existing = vault.optJSONArray(field) ?: continue
-        val updated = JSONArray()
-        for (i in 0 until existing.length()) updated.put(move(existing.optString(i, "")))
-        vault.put(field, updated)
+
+    if (replaced.isEmpty()) return 0
+
+    for ((field, value) in repaired_fields) {
+        if (value.isNotEmpty()) vault.put(field, value)
     }
-    return changed
+    val previous_keys = unique_by_fingerprint(
+        repaired_previous.filter { it in usable_materials } +
+            recovered_legacy +
+            repaired_previous.filter { it !in usable_materials },
+    ).take(MAX_PREVIOUS_IDENTITY_KEYS)
+    vault.put("previous_keys", JSONArray(previous_keys))
+    vault.put(
+        "legacy_identity_keys",
+        JSONArray(unique_non_empty(replaced + legacy).take(MAX_LEGACY_IDENTITY_KEYS)),
+    )
+    return replaced.size
 }
 
 private fun unique_by_fingerprint(keys: List<String>): List<String> {

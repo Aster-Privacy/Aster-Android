@@ -45,6 +45,7 @@ class LockedDataTest {
         var reseal = 0
         var changed = 0
         var code_restore = 0
+        var repair = 0
         var reseal_old: String? = null
     }
 
@@ -57,6 +58,8 @@ class LockedDataTest {
         conversion: suspend (String, String) -> AccountDataConversionSummary? = { _, _ -> null },
         reseal: SentMailResealSummary = SentMailResealSummary(),
         restore_with_code: suspend (String) -> CodeRestoreResult = { CodeRestoreResult() },
+        pgp_locked: Boolean = false,
+        repair: suspend (String) -> Int = { 0 },
     ) = LockedDataService(
         list_inactive_key_set_ids = { ids },
         locked_counts = counts,
@@ -78,6 +81,11 @@ class LockedDataTest {
         restore_inactive_key_sets_with_code = {
             calls.code_restore++
             restore_with_code(it)
+        },
+        vault_pgp_keys_locked = { pgp_locked },
+        repair_vault_pgp_keys = {
+            calls.repair++
+            repair(it)
         },
     )
 
@@ -354,5 +362,46 @@ class LockedDataTest {
         assertFalse(message_locked_by_reset(false, archived))
         assertFalse(message_locked_by_reset(true, locked_data_status(emptyList(), 3)))
         assertFalse(message_locked_by_reset(true, null))
+    }
+
+    @Test
+    fun locked_pgp_keys_alone_count_as_locked_data_and_change_the_signature() {
+        val status = locked_data_status(emptyList(), 0, locked_pgp_keys = true)
+
+        assertTrue(has_locked_data(status))
+        assertEquals("||keys", status.signature)
+        assertTrue(should_show_locked_data_banner(status, true, true, "|"))
+    }
+
+    @Test
+    fun status_reports_locked_pgp_keys_even_when_the_key_set_list_fails() = runTest {
+        val status = service(ids = null, pgp_locked = true).status("acct")
+
+        assertTrue(status!!.locked_pgp_keys)
+        assertNull(service(ids = null).status("acct"))
+    }
+
+    @Test
+    fun recovery_repairs_stranded_pgp_keys_and_reports_success() = runTest {
+        val calls = Calls()
+        val result = service(calls = calls, pgp_locked = true, repair = { if (it == "old pass") 2 else 0 })
+            .recover_locked_data("acct", "old pass")
+
+        assertEquals(1, calls.repair)
+        assertEquals(1, calls.restore)
+        assertEquals(2, result.restored_key_sets)
+        assertFalse(result.failed)
+        assertEquals(LockedDataRecoveryOutcome.SUCCESS, locked_data_recovery_outcome(result))
+    }
+
+    @Test
+    fun a_failing_repair_still_runs_the_other_recovery_steps() = runTest {
+        val calls = Calls()
+        val result = service(calls = calls, restore = { 1 }, repair = { error("boom") })
+            .recover_locked_data("acct", "old pass")
+
+        assertEquals(1, calls.restore)
+        assertEquals(1, result.restored_key_sets)
+        assertTrue(result.failed)
     }
 }

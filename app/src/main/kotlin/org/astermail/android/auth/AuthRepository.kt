@@ -2320,6 +2320,56 @@ class AuthRepository @Inject constructor(
         return outcome is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written
     }
 
+    fun vault_pgp_keys_locked(): Boolean {
+        val identity_key = session_key_store.get_identity_key()?.takeIf { is_pgp_private_key(it) } ?: return false
+        val passphrase = session_key_store.get_passphrase() ?: return false
+        val chars = passphrase_chars(passphrase)
+        return try {
+            !pgp_key_unlocks(identity_key, chars)
+        } finally {
+            chars.fill(' ')
+            passphrase.fill(0)
+        }
+    }
+
+    suspend fun repair_vault_pgp_keys(old_password: String): Int = withContext(Dispatchers.Default) {
+        if (old_password.isEmpty()) return@withContext 0
+        val passphrase = session_key_store.get_passphrase() ?: return@withContext 0
+        val old_bytes = old_password.toByteArray(Charsets.UTF_8)
+        val old_chars = passphrase_chars(old_bytes)
+        val current_chars = passphrase_chars(passphrase)
+        try {
+            if (old_bytes.contentEquals(passphrase)) return@withContext 0
+            var changed = 0
+            val outcome = vault_updates.update_identity(vault_updates.with_passphrase(passphrase)) { draft ->
+                changed = reprotect_vault_pgp_keys(draft.vault, old_chars, current_chars)
+                if (changed > 0) {
+                    org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
+                } else {
+                    org.astermail.android.crypto.storage_rotation.VaultEdit.UNCHANGED
+                }
+            }
+            val saved = when (outcome) {
+                is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written -> outcome.vault
+                is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Unchanged -> outcome.vault
+                else -> if (changed > 0) throw IllegalStateException("vault_save_failed") else return@withContext 0
+            }
+            withContext(NonCancellable) {
+                vault_identity_key(saved).takeIf { is_pgp_private_key(it) }?.let {
+                    session_key_store.put_identity_key(it)
+                }
+                absorb_previous_keys_and_keks(saved)
+                org.astermail.android.crypto.PgpDecryptor.clear_caches()
+            }
+            if (outcome is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written) changed else 0
+        } finally {
+            old_chars.fill(' ')
+            current_chars.fill(' ')
+            old_bytes.fill(0)
+            passphrase.fill(0)
+        }
+    }
+
     fun identity_keys_present(): Boolean =
         session_key_store.get_identity_key() != null && session_key_store.has_ratchet_keys()
 

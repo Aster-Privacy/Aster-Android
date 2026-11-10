@@ -1,0 +1,1 @@
+Fixes received mail that still showed as "Encrypted message" after an earlier password change. If your mail is affected, a banner now appears at the top of your inbox. Enter the password you used before your last password change, and your mail opens again.

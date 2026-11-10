@@ -109,14 +109,41 @@ class IdentityKeyMaterialsTest {
     }
 
     @Test
+    fun a_vault_left_on_the_old_password_is_repaired_with_it_and_current_keys_stay_put() {
+        val stranded = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val current = PgpKeyGenerator.generate("User", "user@astermail.org", current_password)
+        val to_stranded = PgpEncryptor.encrypt_to_keys("stranded hello", listOf(stranded.armored_public_key))!!
+        val live = vault(stranded.armored_private_key, listOf(current.armored_private_key))
+
+        assertNull(PgpDecryptor.decrypt(to_stranded, vault_identity_key(live), current_password))
+        val changed = reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        assertEquals(1, changed)
+        assertEquals("stranded hello", PgpDecryptor.decrypt(to_stranded, vault_identity_key(live), current_password))
+        assertEquals(current.armored_private_key, json_strings(live.optJSONArray("previous_keys")).single())
+    }
+
+    @Test
+    fun repairing_with_a_wrong_previous_password_changes_nothing() {
+        val stranded = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val live = vault(stranded.armored_private_key)
+
+        val changed = reprotect_vault_pgp_keys(live, "not it".toCharArray(), current_password)
+
+        assertEquals(0, changed)
+        assertEquals(stranded.armored_private_key, vault_identity_key(live))
+    }
+
+    @Test
     fun a_key_that_cannot_be_reprotected_is_left_untouched() {
         val live = vault("identity", listOf("broken_previous", "older"))
 
-        val changed = reprotect_vault_pgp_keys(live, old_password, current_password, ::fake_reprotect)
+        val changed = reprotect_vault_pgp_keys(live, old_password, current_password, ::fake_reprotect) { false }
 
         assertEquals(2, changed)
         assertEquals("re_identity", vault_identity_key(live))
-        assertEquals(listOf("broken_previous", "re_older"), json_strings(live.optJSONArray("previous_keys")))
+        assertEquals(listOf("re_older", "broken_previous"), json_strings(live.optJSONArray("previous_keys")))
+        assertEquals(listOf("identity", "older"), json_strings(live.optJSONArray("legacy_identity_keys")))
     }
 
     @Test
@@ -271,5 +298,88 @@ class IdentityKeyMaterialsTest {
         val live = vault("key_b", listOf("prev_1", "key_a"), listOf("key_a", "key_b", "older"))
 
         assertEquals(listOf("prev_1", "key_a", "older"), vault_older_identity_keys(live))
+    }
+
+    @Test
+    fun the_original_key_text_stays_reachable_after_a_repair() {
+        val stranded = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val original = stranded.armored_private_key
+        val live = vault(original)
+
+        reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        assertNotEquals(original, vault_identity_key(live))
+        assertTrue(original in vault_older_identity_keys(live))
+        assertEquals(listOf(original), json_strings(live.optJSONArray("legacy_identity_keys")))
+    }
+
+    @Test
+    fun a_password_change_keeps_every_original_text() {
+        val identity = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val older = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val live = vault(identity.armored_private_key, listOf(older.armored_private_key), listOf("ancient"))
+
+        reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        val reachable = vault_older_identity_keys(live)
+        assertTrue(identity.armored_private_key in reachable)
+        assertTrue(older.armored_private_key in reachable)
+        assertTrue("ancient" in reachable)
+    }
+
+    @Test
+    fun a_legacy_key_on_the_old_password_gains_a_usable_copy_and_keeps_its_original() {
+        val current = PgpKeyGenerator.generate("User", "user@astermail.org", current_password)
+        val stranded = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val legacy = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val to_legacy = PgpEncryptor.encrypt_to_keys("legacy hello", listOf(legacy.armored_public_key))!!
+        val live = vault(stranded.armored_private_key, legacy = listOf(legacy.armored_private_key))
+        live.put("previous_keys", JSONArray(listOf(current.armored_private_key)))
+
+        val changed = reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        assertEquals(2, changed)
+        val previous = json_strings(live.optJSONArray("previous_keys"))
+        assertEquals(current.armored_private_key, previous.first())
+        val copy = previous.single { pgp_key_identity(it) == pgp_key_identity(legacy.armored_private_key) }
+        assertEquals("legacy hello", PgpDecryptor.decrypt(to_legacy, copy, current_password))
+        val kept = json_strings(live.optJSONArray("legacy_identity_keys"))
+        assertTrue(legacy.armored_private_key in kept)
+        assertTrue(stranded.armored_private_key in kept)
+    }
+
+    @Test
+    fun the_signed_prekey_is_repaired_with_the_identity() {
+        val stranded = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val prekey = PgpKeyGenerator.generate("User", "user@astermail.org", old_password)
+        val to_prekey = PgpEncryptor.encrypt_to_keys("prekey hello", listOf(prekey.armored_public_key))!!
+        val live = vault(stranded.armored_private_key).put("signed_prekey_private", prekey.armored_private_key)
+
+        reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        assertEquals("prekey hello", PgpDecryptor.decrypt(to_prekey, live.getString("signed_prekey_private"), current_password))
+    }
+
+    @Test
+    fun a_vault_already_on_the_current_password_is_left_exactly_as_it_was() {
+        val current = PgpKeyGenerator.generate("User", "user@astermail.org", current_password)
+        val live = vault(current.armored_private_key, listOf("raw ratchet key"), listOf("old text"))
+        val before = live.toString()
+
+        val changed = reprotect_vault_pgp_keys(live, old_password, current_password)
+
+        assertEquals(0, changed)
+        assertEquals(before, live.toString())
+    }
+
+    @Test
+    fun a_key_without_a_passphrase_or_an_unreadable_key_never_counts_as_locked() {
+        val key = PgpKeyGenerator.generate("User", "user@astermail.org", current_password)
+        val unlocked = unlock_pgp_key(key.armored_private_key, current_password)
+
+        assertTrue(pgp_key_unlocks(unlocked, "anything".toCharArray()))
+        assertTrue(pgp_key_unlocks("not a key", current_password))
+        assertTrue(pgp_key_unlocks(key.armored_private_key, current_password))
+        assertFalse(pgp_key_unlocks(key.armored_private_key, old_password))
     }
 }

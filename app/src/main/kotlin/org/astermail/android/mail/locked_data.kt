@@ -26,10 +26,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.auth.AuthRepository
@@ -83,6 +85,7 @@ data class LockedDataStatus(
     val inactive_key_sets: Int,
     val locked_sent_mail: Int,
     val signature: String,
+    val locked_pgp_keys: Boolean = false,
 )
 
 data class LockedDataRecovery(
@@ -93,23 +96,33 @@ data class LockedDataRecovery(
     val rate_limited: Boolean = false,
 )
 
-fun locked_data_signature(inactive_key_set_ids: List<String>, locked_sent_mail: Int): String {
+fun locked_data_signature(
+    inactive_key_set_ids: List<String>,
+    locked_sent_mail: Int,
+    locked_pgp_keys: Boolean = false,
+): String {
     val ids = inactive_key_set_ids.filter { it.isNotEmpty() }.sorted()
-    return ids.joinToString(",") + "|" + if (locked_sent_mail > 0) "sent" else ""
+    val base = ids.joinToString(",") + "|" + if (locked_sent_mail > 0) "sent" else ""
+    return if (locked_pgp_keys) "$base|keys" else base
 }
 
-fun locked_data_status(inactive_key_set_ids: List<String>, locked_sent_mail: Int): LockedDataStatus {
+fun locked_data_status(
+    inactive_key_set_ids: List<String>,
+    locked_sent_mail: Int,
+    locked_pgp_keys: Boolean = false,
+): LockedDataStatus {
     val ids = inactive_key_set_ids.filter { it.isNotEmpty() }
     val locked = locked_sent_mail.coerceAtLeast(0)
     return LockedDataStatus(
         inactive_key_sets = ids.size,
         locked_sent_mail = locked,
-        signature = locked_data_signature(ids, locked),
+        signature = locked_data_signature(ids, locked, locked_pgp_keys),
+        locked_pgp_keys = locked_pgp_keys,
     )
 }
 
 fun has_locked_data(status: LockedDataStatus?): Boolean =
-    status != null && (status.inactive_key_sets > 0 || status.locked_sent_mail > 0)
+    status != null && (status.inactive_key_sets > 0 || status.locked_sent_mail > 0 || status.locked_pgp_keys)
 
 fun message_locked_by_reset(sealed_to_missing_keys: Boolean, status: LockedDataStatus?): Boolean =
     sealed_to_missing_keys && status != null && status.inactive_key_sets > 0
@@ -134,6 +147,8 @@ class LockedDataService internal constructor(
     private val reseal_sent_mail: suspend (ByteArray, ByteArray) -> SentMailResealSummary,
     private val on_changed: () -> Unit,
     private val restore_inactive_key_sets_with_code: suspend (String) -> CodeRestoreResult = { CodeRestoreResult() },
+    private val vault_pgp_keys_locked: () -> Boolean = { false },
+    private val repair_vault_pgp_keys: suspend (String) -> Int = { 0 },
 ) {
     @Inject
     constructor(
@@ -156,6 +171,8 @@ class LockedDataService internal constructor(
         reseal_sent_mail = { old, current -> resealer.run(old, current) },
         on_changed = { locked_sent_mail_store.notify_changed() },
         restore_inactive_key_sets_with_code = { auth_repository.restore_inactive_key_sets_with_code(it) },
+        vault_pgp_keys_locked = { auth_repository.vault_pgp_keys_locked() },
+        repair_vault_pgp_keys = { auth_repository.repair_vault_pgp_keys(it) },
     )
 
     suspend fun status(account_id: String): LockedDataStatus? {
@@ -166,8 +183,12 @@ class LockedDataService internal constructor(
             throw cancelled
         } catch (_: Throwable) {
             null
-        } ?: return null
-        return locked_data_status(ids, locked_counts.read(account_id))
+        }
+        val pgp_locked = withContext(Dispatchers.Default) {
+            runCatching { vault_pgp_keys_locked() }.getOrDefault(false)
+        }
+        if (ids == null && !pgp_locked) return null
+        return locked_data_status(ids.orEmpty(), locked_counts.read(account_id), pgp_locked)
     }
 
     suspend fun recover_locked_data(account_id: String, password: String): LockedDataRecovery {
@@ -177,7 +198,15 @@ class LockedDataService internal constructor(
         var failed = false
 
         try {
-            restored = restore_inactive_key_sets(password)
+            restored += repair_vault_pgp_keys(password)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            failed = true
+        }
+
+        try {
+            restored += restore_inactive_key_sets(password)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {

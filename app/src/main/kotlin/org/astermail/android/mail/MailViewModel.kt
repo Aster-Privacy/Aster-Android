@@ -2135,6 +2135,14 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    fun reload_after_key_recovery() {
+        repository.begin_decrypt_retry()
+        folder_cache.clear()
+        folder_cache_time.clear()
+        clear_folder_cache_store()
+        reload_keeping_items(replace_items = true)
+    }
+
     @Volatile
     private var send_guard_until = 0L
 
