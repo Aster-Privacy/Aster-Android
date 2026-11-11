@@ -281,9 +281,34 @@ if [ "$dry_run" = 1 ]; then
   exit 0
 fi
 
-say "push commit and tag"
-git push origin "$branch"
+say "release pull request"
+rel_branch="release/$ver"
+rel_sha="$(git rev-parse HEAD)"
+git push origin "HEAD:refs/heads/$rel_branch"
+pr_url=$(gh pr create --repo Aster-Privacy/Aster-Android --base "$branch" --head "$rel_branch" \
+  --title "chore(release): $ver" --body "Sets the version to $ver (versionCode $vc).")
+pr="${pr_url##*/}"
+echo "opened $pr_url"
+for _ in $(seq 1 30); do
+  [ -n "$(gh pr checks "$pr" --repo Aster-Privacy/Aster-Android --required 2>/dev/null)" ] && break
+  sleep 10
+done
+gh pr checks "$pr" --repo Aster-Privacy/Aster-Android --required --watch --fail-fast --interval 30 \
+  || die "required checks did not pass on $pr_url, nothing was tagged or published"
+pr_check="${ASTER_PR_CHECK:-$repo_root/../Claude/scripts/public_pr_check.sh}"
+if [ -f "$pr_check" ]; then
+  (cd "$(dirname "$pr_check")/../.." && bash "$pr_check" Aster-Privacy/Aster-Android "$pr") \
+    || die "pre-merge check failed on $pr_url, nothing was tagged or published"
+fi
+gh pr merge "$pr" --repo Aster-Privacy/Aster-Android --merge --match-head-commit "$rel_sha"
+git fetch -q origin "$branch"
+git merge-base --is-ancestor "$rel_sha" "origin/$branch" \
+  || die "release commit $rel_sha is not on $branch after the merge"
+echo "merged $pr_url into $branch"
+
+say "push tag"
 git push origin "v$ver"
+git push origin --delete "$rel_branch" 2>/dev/null || true
 
 say "GitHub release"
 # Aster-Mail-fdroid-<ver>.apk is what the F-Droid recipe's Binaries: line fetches. The
