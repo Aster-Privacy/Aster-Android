@@ -264,6 +264,8 @@ private fun targets(action: PendingMailAction, item: InboxItem): Boolean = when 
     PendingActionKind.empty_trash -> item.is_trashed
     PendingActionKind.empty_spam -> item.is_spam
     PendingActionKind.mark_thread_read -> item.thread_token != null && item.thread_token in action.thread_set
+    PendingActionKind.archive,
+    PendingActionKind.unarchive,
     PendingActionKind.trash -> item.id in action.id_set ||
         (item.thread_token != null && item.thread_token in action.thread_set)
     PendingActionKind.report_spam_senders,

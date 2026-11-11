@@ -735,8 +735,8 @@ class MailRepository @Inject constructor(
         val patch = payload.value == PENDING_PATCH_MODE
         val token = payload.token
         return when (action.kind) {
-            PendingActionKind.archive -> archive_now(ids)
-            PendingActionKind.unarchive -> unarchive_now(ids)
+            PendingActionKind.archive -> archive_now(ids, emptyList(), payload.threads)
+            PendingActionKind.unarchive -> unarchive_now(ids, emptyList(), payload.threads)
             PendingActionKind.trash -> trash_now(ids, emptyList(), payload.threads, payload.covered.toSet())
             PendingActionKind.restore_trash -> restore_trash_now(ids)
             PendingActionKind.mark_spam -> mark_spam_now(ids, emptyList(), payload.threads)
@@ -3401,24 +3401,43 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> =
-        run_or_queue(PendingActionKind.archive, PendingActionPayload(ids = item_ids), Unit) {
-            archive_now(item_ids, raw_items)
+    suspend fun archive(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> =
+        run_or_queue(PendingActionKind.archive, PendingActionPayload(ids = item_ids, threads = thread_tokens), Unit) {
+            archive_now(item_ids, raw_items, thread_tokens)
         }
 
-    private suspend fun archive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        bulk_action_by_ids("archive", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            raw_items,
-            mapOf(
-                "is_archived" to true,
-                "is_trashed" to false,
-                "is_spam" to false,
-            ),
-            require_patch = false,
-        )
+    private suspend fun archive_now(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> = runCatching {
+        val thread_ids = conversation_member_ids(thread_tokens, item_ids)
+        bulk_action_by_ids("archive", item_ids + thread_ids)
+        val archive_patch = mapOf("is_archived" to true, "is_trashed" to false, "is_spam" to false)
+        patch_metadata_for_items(item_ids, raw_items, archive_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), archive_patch, require_patch = false)
         Unit
+    }
+
+    private suspend fun conversation_member_ids(thread_tokens: List<String>, exclude: Collection<String>): List<String> {
+        val targets = thread_tokens.filter { it.isNotBlank() }.distinct()
+        if (targets.isEmpty()) return emptyList()
+        val excluded = exclude.toHashSet()
+        val ids = LinkedHashSet<String>()
+        targets.forEach { token ->
+            runCatching { mail_api.get_thread_messages(token) }
+                .onSuccess { thread ->
+                    thread.messages
+                        .filter { it.item_type == "received" && it.is_trashed != true && it.id !in excluded }
+                        .forEach { ids.add(it.id) }
+                }
+                .onFailure { rethrow_if_transient(it) }
+        }
+        return ids.toList()
     }
 
     suspend fun trash(
@@ -3631,19 +3650,29 @@ class MailRepository @Inject constructor(
             .digest(value.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
 
-    suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> =
-        run_or_queue(PendingActionKind.unarchive, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
-            unarchive_now(item_ids, raw_items)
+    suspend fun unarchive(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.unarchive,
+            PendingActionPayload(ids = item_ids, threads = thread_tokens),
+            queued_scope_response(item_ids.size),
+        ) {
+            unarchive_now(item_ids, raw_items, thread_tokens)
         }
 
-    private suspend fun unarchive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
-        val response = bulk_action_by_ids("unarchive", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            raw_items,
-            mapOf("is_archived" to false),
-            require_patch = false,
-        )
+    private suspend fun unarchive_now(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> = runCatching {
+        val thread_ids = conversation_member_ids(thread_tokens, item_ids)
+        val response = bulk_action_by_ids("unarchive", item_ids + thread_ids)
+        val unarchive_patch = mapOf("is_archived" to false)
+        patch_metadata_for_items(item_ids, raw_items, unarchive_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), unarchive_patch, require_patch = false)
         response
     }
 

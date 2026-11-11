@@ -4124,6 +4124,7 @@ class MailViewModel @Inject constructor(
         val target_items = previous.filter { it.id in item_ids }
         val removed_items = if (keeps_archived) emptyList() else target_items
         val raw_items = lookup_raw_items(item_ids)
+        val thread_tokens = if (message_scope) emptyList() else conversation_thread_tokens(item_ids)
         if (keeps_archived) {
             set_archived_in_view(item_ids, true)
         } else {
@@ -4156,14 +4157,14 @@ class MailViewModel @Inject constructor(
                     search_removed = search_removed,
                     item_ids = item_ids,
                     reindex = { search_index_manager.mark_unarchived(it) },
-                    restore = { repository.unarchive(it, lookup_raw_items(it)) },
+                    restore = { repository.unarchive(it, lookup_raw_items(it), thread_tokens) },
                     pending = archive_job,
                 )
             }
         }
         archive_job = viewModelScope.launch {
             try {
-                repository.archive(item_ids, raw_items).fold(
+                repository.archive(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_archived(item_ids) }
                         load_stats()
@@ -4375,12 +4376,13 @@ class MailViewModel @Inject constructor(
         }
     }
 
-    private fun spam_thread_tokens(item_ids: Collection<String>): List<String> {
+    private fun conversation_thread_tokens(item_ids: Collection<String>): List<String> {
         if (item_ids.isEmpty() || !repository.is_conversation_grouping_enabled) return emptyList()
         val ids = item_ids.toHashSet()
         val known = _inbox_state.value.items +
             folder_cache.values.flatMap { it.items } +
-            _search_state.value.all_items
+            _search_state.value.all_items +
+            listOfNotNull(_thread_state.value.item)
         return known
             .filter { it.id in ids && it.thread_message_count > 1 }
             .mapNotNull { it.thread_token?.takeIf { token -> token.isNotBlank() } }
@@ -4397,7 +4399,7 @@ class MailViewModel @Inject constructor(
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
-        val thread_tokens = spam_thread_tokens(item_ids)
+        val thread_tokens = conversation_thread_tokens(item_ids)
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
@@ -4448,7 +4450,7 @@ class MailViewModel @Inject constructor(
         if (item_ids.isEmpty()) return
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
-        val thread_tokens = spam_thread_tokens(item_ids)
+        val thread_tokens = conversation_thread_tokens(item_ids)
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
@@ -4629,7 +4631,7 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val removed = repository.remove_label_bulk(item_ids, label_token).isEmpty()
-                val restored = repository.unarchive(item_ids, raw_items).isSuccess
+                val restored = repository.unarchive(item_ids, raw_items, conversation_thread_tokens(item_ids)).isSuccess
                 if (removed && restored) {
                     runCatching { search_index_manager.mark_unarchived(item_ids) }
                     emit_toast(context.getString(R.string.moved_to_inbox))
@@ -4653,6 +4655,7 @@ class MailViewModel @Inject constructor(
             folder_keeps_archived(_inbox_state.value.current_folder)
         val removed_items = if (keeps_unarchived) emptyList() else previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
+        val thread_tokens = conversation_thread_tokens(item_ids)
         if (keeps_unarchived) {
             set_archived_in_view(item_ids, false)
         } else {
@@ -4666,7 +4669,7 @@ class MailViewModel @Inject constructor(
         invalidate_caches_except_current(listOf("starred", "snoozed"))
         viewModelScope.launch {
             try {
-                repository.unarchive(item_ids, raw_items).fold(
+                repository.unarchive(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
                         runCatching { search_index_manager.mark_unarchived(item_ids) }
                         emit_toast_undo(
@@ -4679,7 +4682,7 @@ class MailViewModel @Inject constructor(
                                 search_removed = emptyList(),
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_archived(it) },
-                                restore = { repository.archive(it, lookup_raw_items(it)) },
+                                restore = { repository.archive(it, lookup_raw_items(it), thread_tokens) },
                             )
                         }
                         load_stats()
