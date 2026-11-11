@@ -694,12 +694,12 @@ private fun localized_format(
     return format
 }
 
-private fun account_date_pattern(skeleton: String): String? {
+internal fun account_date_pattern(skeleton: String): String? {
     val preference = AsterTimePreferences.account_date_format ?: return null
     val with_year = skeleton.startsWith("y")
     val date_part = when (preference) {
         "DD/MM/YYYY" -> if (with_year) "dd/MM/yyyy" else "dd/MM"
-        "YYYY-MM-DD" -> if (with_year) "yyyy-MM-dd" else "MM-dd"
+        "YYYY-MM-DD" -> "yyyy-MM-dd"
         else -> if (with_year) "MM/dd/yyyy" else "MM/dd"
     }
     if (!skeleton.contains("d")) return null
