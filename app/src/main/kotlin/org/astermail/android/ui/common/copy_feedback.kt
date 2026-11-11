@@ -17,8 +17,11 @@
 package org.astermail.android.ui.common
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
+import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -46,6 +49,20 @@ fun write_to_clipboard(context: Context, clip: ClipData): Boolean {
         ?: return false
     return runCatching { clipboard.setPrimaryClip(clip) }.isSuccess
 }
+
+fun write_sensitive_to_clipboard(context: Context, label: String, value: String): Boolean {
+    val clip = ClipData.newPlainText(label, value)
+    clip.description.extras = PersistableBundle().apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+        } else {
+            putBoolean("android.content.extra.IS_SENSITIVE", true)
+        }
+    }
+    return write_to_clipboard(context, clip)
+}
+
+fun system_confirms_copy(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
 fun show_copy_failed_toast(context: Context) {
     Toast.makeText(context, context.getString(R.string.copy_failed), Toast.LENGTH_SHORT).show()

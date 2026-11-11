@@ -1032,10 +1032,14 @@ class MailPollingWorker(
 
         data class LockScreenPolicy(val visibility: Int, val redacted_public_version: Boolean)
 
-        fun message_lock_screen_policy(private_mode: Boolean, has_sender_avatar: Boolean = false): LockScreenPolicy {
+        fun message_lock_screen_policy(
+            private_mode: Boolean,
+            has_sender_avatar: Boolean = false,
+            has_code: Boolean = false,
+        ): LockScreenPolicy {
             return LockScreenPolicy(
                 visibility = NotificationCompat.VISIBILITY_PRIVATE,
-                redacted_public_version = private_mode || has_sender_avatar,
+                redacted_public_version = private_mode || has_sender_avatar || has_code,
             )
         }
 
@@ -1092,6 +1096,7 @@ class MailPollingWorker(
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
+            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
             val builder = base_builder(context, silent)
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
@@ -1114,7 +1119,7 @@ class MailPollingWorker(
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                add_message_actions(context, builder, item_id, message_id)
+                add_message_actions(context, builder, item_id, message_id, code)
                 if (is_valid_notified_item_id(item_id)) {
                     builder.extras.putString(EXTRA_NOTIFIED_ITEM_ID, item_id)
                     builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
@@ -1127,7 +1132,11 @@ class MailPollingWorker(
                         .addLine(one_line_preview),
                 )
             }
-            val lock_screen = message_lock_screen_policy(private_mode, has_sender_avatar = large_icon != null)
+            val lock_screen = message_lock_screen_policy(
+                private_mode,
+                has_sender_avatar = large_icon != null,
+                has_code = code != null,
+            )
             builder.setVisibility(lock_screen.visibility)
             if (lock_screen.redacted_public_version) {
                 builder.setPublicVersion(
@@ -1155,7 +1164,9 @@ class MailPollingWorker(
             builder: NotificationCompat.Builder,
             item_id: String,
             message_id: Int,
+            code: String?,
         ) {
+            if (code != null) add_copy_code_action(context, builder, code, message_id)
             val actions = listOf(
                 Triple(
                     MailNotificationActionReceiver.ACTION_ARCHIVE,
@@ -1172,7 +1183,7 @@ class MailPollingWorker(
                     R.drawable.ic_action_mark_read,
                     R.string.mark_read_action,
                 ),
-            )
+            ).take(if (code != null) MAX_VISIBLE_ACTIONS - 1 else MAX_VISIBLE_ACTIONS)
             actions.forEachIndexed { index, (action, icon, label) ->
                 val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
                     this.action = action
@@ -1194,7 +1205,37 @@ class MailPollingWorker(
             }
         }
 
+        private fun add_copy_code_action(
+            context: Context,
+            builder: NotificationCompat.Builder,
+            code: String,
+            message_id: Int,
+        ) {
+            val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
+                action = MailNotificationActionReceiver.ACTION_COPY_CODE
+                putExtra(MailNotificationActionReceiver.EXTRA_CODE, code)
+            }
+            val pending = PendingIntent.getBroadcast(
+                context,
+                message_id * ACTION_REQUEST_STRIDE + COPY_CODE_REQUEST_OFFSET,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.ic_action_copy_code,
+                    localized(context).getString(R.string.copy_code),
+                    pending,
+                )
+                    .setShowsUserInterface(false)
+                    .setAuthenticationRequired(true)
+                    .build(),
+            )
+        }
+
+        private const val MAX_VISIBLE_ACTIONS = 3
         private const val ACTION_REQUEST_STRIDE = 8
+        private const val COPY_CODE_REQUEST_OFFSET = 3
         private const val DISMISS_REQUEST_OFFSET = 7
 
         private fun dismiss_intent(context: Context, notification_id: Int): PendingIntent {

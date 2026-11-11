@@ -12,4 +12,8 @@
     <string name="scope_collect_failed">इस फ़ोल्डर के सभी संदेश लोड नहीं हो सके, इसलिए कुछ नहीं बदला। फिर से कोशिश करें।</string>
     <string name="inbox_a11y_state_read">पढ़ा गया</string>
     <string name="inbox_a11y_state_unread">अपठित</string>
+    <string name="copy_code">कोड कॉपी करें</string>
+    <string name="copy_subject">विषय कॉपी करें</string>
+    <string name="code_copied">कोड कॉपी किया गया</string>
+    <string name="subject_copied">विषय कॉपी किया गया</string>
 </resources>

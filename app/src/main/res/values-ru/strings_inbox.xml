@@ -12,4 +12,8 @@
     <string name="scope_collect_failed">Не удалось загрузить все письма в этой папке, поэтому ничего не изменено. Повторите попытку.</string>
     <string name="inbox_a11y_state_read">Прочитано</string>
     <string name="inbox_a11y_state_unread">Не прочитано</string>
+    <string name="copy_code">Копировать код</string>
+    <string name="copy_subject">Копировать тему</string>
+    <string name="code_copied">Код скопирован</string>
+    <string name="subject_copied">Тема скопирована</string>
 </resources>

@@ -12,4 +12,8 @@
     <string name="scope_collect_failed">تعذر تحميل كل الرسائل في هذا المجلد، لذلك لم يتغير شيء. حاول مرة أخرى.</string>
     <string name="inbox_a11y_state_read">مقروءة</string>
     <string name="inbox_a11y_state_unread">غير مقروءة</string>
+    <string name="copy_code">نسخ الرمز</string>
+    <string name="copy_subject">نسخ الموضوع</string>
+    <string name="code_copied">تم نسخ الرمز</string>
+    <string name="subject_copied">تم نسخ الموضوع</string>
 </resources>

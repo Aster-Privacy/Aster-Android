@@ -24,6 +24,11 @@ package org.astermail.android.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
+import org.astermail.android.R
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.system_confirms_copy
+import org.astermail.android.ui.common.write_sensitive_to_clipboard
 
 class MailNotificationActionReceiver : BroadcastReceiver() {
 
@@ -33,6 +38,10 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
             if (dismissed_id != 0) {
                 runCatching { MailPollingWorker.on_notification_dismissed(context, dismissed_id) }
             }
+            return
+        }
+        if (intent.action == ACTION_COPY_CODE) {
+            copy_code(context, intent.getStringExtra(EXTRA_CODE))
             return
         }
         val item_id = intent.getStringExtra(EXTRA_ITEM_ID)?.takeIf { it.isNotBlank() } ?: return
@@ -54,11 +63,24 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
         MailNotificationActionWorker.enqueue(context, item_id, action)
     }
 
+    private fun copy_code(context: Context, code: String?) {
+        if (code.isNullOrBlank()) return
+        val local = org.astermail.android.settings.app_language.wrap(context)
+        val copied = write_sensitive_to_clipboard(context, local.getString(R.string.app_name), code)
+        if (!copied) {
+            show_copy_failed_toast(local)
+        } else if (!system_confirms_copy()) {
+            Toast.makeText(context, local.getString(R.string.code_copied), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     companion object {
         const val ACTION_ARCHIVE = "org.astermail.android.MAIL_NOTIFICATION_ARCHIVE"
         const val ACTION_TRASH = "org.astermail.android.MAIL_NOTIFICATION_TRASH"
         const val ACTION_MARK_READ = "org.astermail.android.MAIL_NOTIFICATION_MARK_READ"
         const val ACTION_DISMISSED = "org.astermail.android.MAIL_NOTIFICATION_DISMISSED"
+        const val ACTION_COPY_CODE = "org.astermail.android.MAIL_NOTIFICATION_COPY_CODE"
+        const val EXTRA_CODE = "mail_notification_code"
         const val EXTRA_ITEM_ID = "mail_notification_item_id"
         const val EXTRA_NOTIFICATION_ID = "mail_notification_id"
     }
