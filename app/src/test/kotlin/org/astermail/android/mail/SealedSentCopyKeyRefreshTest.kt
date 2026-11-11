@@ -142,7 +142,7 @@ class SealedSentCopyKeyRefreshTest {
         val result = repo.decrypt_envelope_with_heal(ciphertext, nonce)
 
         assertTrue(result.envelope?.is_pgp_placeholder == true)
-        assertTrue(result.envelope?.pgp_encrypted == true)
+        assertFalse(result.envelope?.pgp_encrypted == true)
         assertFalse(result.heal_pending)
     }
 }

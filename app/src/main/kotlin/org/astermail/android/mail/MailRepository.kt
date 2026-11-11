@@ -4287,18 +4287,11 @@ class MailRepository @Inject constructor(
         )
     }
 
-    private fun pgp_placeholder_envelope(pgp_encrypted: Boolean = true): DecryptedEnvelope =
-        DecryptedEnvelope(
+    private fun pgp_placeholder_envelope(is_encrypted_armor: Boolean = true): DecryptedEnvelope =
+        pgp_placeholder_envelope_of(
             subject = context.getString(R.string.pgp_encrypted_subject),
             body_text = context.getString(R.string.pgp_encrypted_body),
-            body_html = null,
-            from_name = "",
-            from_email = "",
-            to = emptyList(),
-            cc = emptyList(),
-            sent_at = null,
-            pgp_encrypted = pgp_encrypted,
-            is_pgp_placeholder = pgp_encrypted,
+            is_encrypted_armor = is_encrypted_armor,
         )
 
     fun decrypt_envelope_public(
@@ -5783,44 +5776,15 @@ class MailRepository @Inject constructor(
             }
         }
 
-        var pgp_encrypted = envelope.pgp_encrypted
-        var pgp_signature = envelope.pgp_signature
-
-        var text_pgp_decrypted = false
-        if (body_starts_with(body_text, "-----BEGIN PGP")) {
-            if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_text, sender_verification_key(envelope.from_email), allow_external_pgp)
-            if (decrypted?.plaintext != null) {
-                body_text = decrypted.plaintext
-                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-                text_pgp_decrypted = true
-            }
+        val pgp_fields = resolve_pgp_body_fields(
+            PgpBodyFields(body_text, body_html, envelope.pgp_encrypted, envelope.pgp_signature),
+        ) { armored ->
+            try_pgp_decrypt_result(armored, sender_verification_key(envelope.from_email), allow_external_pgp)
         }
-        val html_armor = body_html
-            ?.takeIf { !body_starts_with(it, "-----BEGIN PGP") }
-            ?.takeIf { text_pgp_decrypted || !is_quoted_inline_pgp(body_text, it) }
-            ?.let { inline_pgp_html_armor(it) }
-        if (html_armor != null) {
-            pgp_encrypted = true
-            if (text_pgp_decrypted) {
-                body_html = null
-            } else {
-                val decrypted = try_pgp_decrypt_result(html_armor, sender_verification_key(envelope.from_email), allow_external_pgp)
-                if (decrypted?.plaintext != null) {
-                    body_text = decrypted.plaintext
-                    body_html = null
-                    pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-                }
-            }
-        }
-        if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
-            if (body_starts_with(body_html, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = try_pgp_decrypt_result(body_html, sender_verification_key(envelope.from_email), allow_external_pgp)
-            if (decrypted?.plaintext != null) {
-                body_html = decrypted.plaintext
-                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-            }
-        }
+        body_text = pgp_fields.body_text
+        body_html = pgp_fields.body_html
+        val pgp_encrypted = pgp_fields.pgp_encrypted
+        val pgp_signature = pgp_fields.pgp_signature
 
         if (MimeParser.looks_like_mime(body_text)) {
             val parsed = MimeParser.parse(body_text)

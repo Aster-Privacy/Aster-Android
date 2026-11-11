@@ -598,10 +598,7 @@ fun MailDetailScreen(
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val detail_swipe = remember_detail_swipe_state(email_id, swipe_direction)
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    val remote_images_always = settings_state.preferences?.load_remote_images == "always" ||
-        settings_state.preferences?.block_external_content == false
-    val privacy_blocks_external =
-        (settings_state.preferences?.block_external_images ?: true) && !remote_images_always
+    val privacy_blocks_external = setting_blocks_remote_images(settings_state.preferences)
     val traffic_blocks_external = org.astermail.android.network.low_network_active()
     val block_external_images = privacy_blocks_external || traffic_blocks_external
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
@@ -1361,15 +1358,8 @@ fun MailDetailScreen(
                                 val print_allow_external = !block_external_images ||
                                     msg.id in allow_external_ids ||
                                     is_aster_system_sender(msg)
-                                val print_tracking_protection = settings_state.preferences?.block_external_content != false
-                                val print_sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
-                                    clean_tracking_links = print_tracking_protection &&
-                                        settings_state.preferences?.block_tracking_links != false,
-                                    remove_tracking_pixels = print_tracking_protection &&
-                                        settings_state.preferences?.block_tracking_pixels != false,
-                                    block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
-                                    block_remote_css = settings_state.preferences?.block_remote_css != false,
-                                )
+                                val print_sanitize_options =
+                                    remote_content_sanitize_options(settings_state.preferences)
                                 scope.launch {
                                     print_email(
                                         context = context,
@@ -6587,13 +6577,7 @@ internal fun email_html_view(
         tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
     )
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
-    val tracking_protection_on = settings_state.preferences?.block_external_content != false
-    val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
-        clean_tracking_links = tracking_protection_on && settings_state.preferences?.block_tracking_links != false,
-        remove_tracking_pixels = tracking_protection_on && settings_state.preferences?.block_tracking_pixels != false,
-        block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
-        block_remote_css = settings_state.preferences?.block_remote_css != false,
-    )
+    val sanitize_options = remote_content_sanitize_options(settings_state.preferences)
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
     val underline_links = settings_state.preferences?.underline_links == true
     val email_font_id = org.astermail.android.design.resolve_email_font_id(

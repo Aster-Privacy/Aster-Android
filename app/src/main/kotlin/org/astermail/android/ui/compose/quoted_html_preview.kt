@@ -53,7 +53,9 @@ import org.astermail.android.ui.mail.REMOTE_IMAGE_PROXY_BASE
 import org.astermail.android.ui.mail.build_email_html
 import org.astermail.android.ui.mail.configure_mail_body_web_view
 import org.astermail.android.ui.mail.proxy_external_urls
+import org.astermail.android.ui.mail.remote_content_sanitize_options
 import org.astermail.android.ui.mail.resolve_inline_cids
+import org.astermail.android.ui.mail.setting_blocks_remote_images
 
 internal val quoted_preview_card_shape = SquircleShape(16.dp)
 
@@ -89,17 +91,9 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
     val settings_vm = shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val preferences = settings_state.preferences
-    val remote_images_always = preferences?.load_remote_images == "always" ||
-        preferences?.block_external_content == false
-    val privacy_blocks_external = (preferences?.block_external_images ?: true) && !remote_images_always
-    val allow_external = !privacy_blocks_external && !org.astermail.android.network.low_network_active()
-    val tracking_protection_on = preferences?.block_external_content != false
-    val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
-        clean_tracking_links = tracking_protection_on && preferences?.block_tracking_links != false,
-        remove_tracking_pixels = tracking_protection_on && preferences?.block_tracking_pixels != false,
-        block_remote_fonts = preferences?.block_remote_fonts != false,
-        block_remote_css = preferences?.block_remote_css != false,
-    )
+    val allow_external = !setting_blocks_remote_images(preferences) &&
+        !org.astermail.android.network.low_network_active()
+    val sanitize_options = remote_content_sanitize_options(preferences)
     val text_zoom = when (preferences?.font_size_scale) {
         "small" -> 85
         "large" -> 120
