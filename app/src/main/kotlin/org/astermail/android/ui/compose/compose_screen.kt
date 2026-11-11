@@ -260,13 +260,44 @@ private suspend fun draft_attachment_payloads(
     payloads
 }
 
+@Composable
+fun ComposeScreen(
+    on_back: () -> Unit,
+    on_sent: () -> Unit,
+    reply_to: String? = null,
+    mode: String? = null,
+    draft_id: String? = null,
+    prefill_to: String? = null,
+    thread_ghost_email: String? = null,
+    shared_mail_vm: MailViewModel? = null,
+    shared_settings_vm: SettingsViewModel? = null,
+    share_payload: org.astermail.android.share.SharePayload? = null,
+    selected_alias: String? = null,
+) {
+    org.astermail.android.ui.common.solid_surface_scope {
+        compose_screen_content(
+            on_back = on_back,
+            on_sent = on_sent,
+            reply_to = reply_to,
+            mode = mode,
+            draft_id = draft_id,
+            prefill_to = prefill_to,
+            thread_ghost_email = thread_ghost_email,
+            shared_mail_vm = shared_mail_vm,
+            shared_settings_vm = shared_settings_vm,
+            share_payload = share_payload,
+            selected_alias = selected_alias,
+        )
+    }
+}
+
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class,
     androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
 )
 @Composable
-fun ComposeScreen(
+private fun compose_screen_content(
     on_back: () -> Unit,
     on_sent: () -> Unit,
     reply_to: String? = null,
