@@ -27,7 +27,9 @@ import org.astermail.android.api.mail.ThreadMessageItem
 import org.astermail.android.crypto.PgpSignatureStatus
 import org.astermail.android.crypto.SentEncryptionScope
 
-const val THREAD_SNAPSHOT_ENCRYPTION_RULES = 1
+const val THREAD_SNAPSHOT_ENCRYPTION_RULES = 2
+
+const val THREAD_SNAPSHOT_SENT_SCOPE_RULES = 1
 
 val thread_snapshot_json = Json {
     ignoreUnknownKeys = true
@@ -113,7 +115,7 @@ fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted
         .getOrDefault(PgpSignatureStatus.NONE),
     sender_verification = snapshot.sender_verification,
     sent_encryption_scope = snapshot.sent_encryption_scope
-        ?.takeIf { snapshot.encryption_rules >= THREAD_SNAPSHOT_ENCRYPTION_RULES }
+        ?.takeIf { snapshot.encryption_rules >= THREAD_SNAPSHOT_SENT_SCOPE_RULES }
         ?.let { name -> runCatching { SentEncryptionScope.valueOf(name) }.getOrNull() },
     is_trashed = is_message_trashed(snapshot.raw_item.is_trashed, snapshot.raw_item.metadata?.is_trashed),
 )
