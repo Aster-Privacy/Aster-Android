@@ -2275,6 +2275,9 @@ fun InboxScreen(
                     val not_spam_label_outer = stringResource(R.string.swipe_not_spam)
                     val discard_draft_label_outer = stringResource(R.string.discard_draft)
                     val unread_label_outer = stringResource(R.string.swipe_unread)
+                    val read_toggle_unread_keys by remember(grouping_enabled) {
+                        derivedStateOf { read_toggle_row_keys(emails, grouping_enabled) }
+                    }
                     val hoisted_swipe_config = remember(
                         current_folder, right_action_outer, left_action_outer,
                         right_label_outer, left_label_outer, restore_label_outer,
@@ -2562,6 +2565,7 @@ fun InboxScreen(
                                 } else {
                                     hoisted_swipe_config
                                 }
+                                val swipe_marks_read = thread.thread_id in read_toggle_unread_keys
                                 swipeable_thread_row(
                                     modifier = Modifier
                                         .animateItem(fadeInSpec = row_fade_in_spec)
@@ -2598,10 +2602,10 @@ fun InboxScreen(
                                     on_toggle_star = { apply_thread_star(thread) },
                                     swipe_start_action = swipe_config.start_action,
                                     swipe_end_action = swipe_config.end_action,
-                                    swipe_start_label = read_toggle_swipe_label(swipe_config.start_action, swipe_config.start_label, thread.has_unread, unread_label_outer),
-                                    swipe_end_label = read_toggle_swipe_label(swipe_config.end_action, swipe_config.end_label, thread.has_unread, unread_label_outer),
-                                    swipe_start_icon = read_toggle_swipe_icon(swipe_config.start_action, swipe_config.start_icon, thread.has_unread),
-                                    swipe_end_icon = read_toggle_swipe_icon(swipe_config.end_action, swipe_config.end_icon, thread.has_unread),
+                                    swipe_start_label = read_toggle_swipe_label(swipe_config.start_action, swipe_config.start_label, swipe_marks_read, unread_label_outer),
+                                    swipe_end_label = read_toggle_swipe_label(swipe_config.end_action, swipe_config.end_label, swipe_marks_read, unread_label_outer),
+                                    swipe_start_icon = read_toggle_swipe_icon(swipe_config.start_action, swipe_config.start_icon, swipe_marks_read),
+                                    swipe_end_icon = read_toggle_swipe_icon(swipe_config.end_action, swipe_config.end_icon, swipe_marks_read),
                                     swipe_start_color = swipe_action_color(swipe_config.start_action, colors),
                                     swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
                                     on_swipe_start = {
@@ -4461,15 +4465,28 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
 private fun drafts_swipe_label(folder: String, action: String, label: String, discard_label: String): String =
     if (folder == "drafts" && (action == "delete" || action == "trash")) discard_label else label
 
-internal fun read_toggle_swipe_label(action: String, label: String, has_unread: Boolean, unread_label: String): String =
-    if (action == "toggle_read" && !has_unread) unread_label else label
+internal fun read_toggle_row_keys(emails: List<Email>, grouping_enabled: Boolean): Set<String> {
+    val keys = HashSet<String>()
+    for (email in emails) {
+        if (email.is_read) continue
+        keys.add(email.id)
+        if (grouping_enabled) keys.add(email.thread_id)
+    }
+    return keys
+}
+
+internal fun read_toggle_marks_read(emails: List<Email>, thread_id: String, grouping_enabled: Boolean): Boolean =
+    emails.any { thread_row_covers(it, thread_id, grouping_enabled) && !it.is_read }
+
+internal fun read_toggle_swipe_label(action: String, label: String, marks_read: Boolean, unread_label: String): String =
+    if (action == "toggle_read" && !marks_read) unread_label else label
 
 internal fun read_toggle_swipe_icon(
     action: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    has_unread: Boolean,
+    marks_read: Boolean,
 ): androidx.compose.ui.graphics.vector.ImageVector =
-    if (action == "toggle_read" && !has_unread) TablerIcons.Mail else icon
+    if (action == "toggle_read" && !marks_read) TablerIcons.Mail else icon
 
 @Composable
 private fun swipe_action_label(action: String): String = when (action) {
@@ -4543,7 +4560,7 @@ private fun execute_swipe_action(
             }
         }
         "toggle_read" -> {
-            val was_read = emails.filter { (thread_row_covers(it, thread_id, grouping_enabled)) }.all { it.is_read }
+            val was_read = !read_toggle_marks_read(emails, thread_id, grouping_enabled)
             if (was_read) {
                 mail_vm.mark_unread_bulk(ids)
             } else {
