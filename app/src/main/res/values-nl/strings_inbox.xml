@@ -12,4 +12,8 @@
     <string name="scope_collect_failed">Niet alle berichten in deze map konden worden geladen, dus er is niets gewijzigd. Probeer het opnieuw.</string>
     <string name="inbox_a11y_state_read">Gelezen</string>
     <string name="inbox_a11y_state_unread">Ongelezen</string>
+    <string name="copy_code">Code kopiëren</string>
+    <string name="copy_subject">Onderwerp kopiëren</string>
+    <string name="code_copied">Code gekopieerd</string>
+    <string name="subject_copied">Onderwerp gekopieerd</string>
 </resources>

@@ -113,6 +113,15 @@ import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.detect_verification_code
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.system_confirms_copy
+import org.astermail.android.ui.common.write_sensitive_to_clipboard
+import org.astermail.android.ui.common.write_to_clipboard
+import android.content.ClipData
+import android.widget.Toast
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.security.safe_sender_name
 import org.astermail.android.security.trusted_sender_name
@@ -751,15 +760,25 @@ fun ThreadInboxRow(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = subject_text,
-                        style = inbox_subject_text_style(),
-                        color = subject_color,
-                        fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    subject_with_copy_menu(
+                        subject = email.subject,
+                        preview = email.preview,
+                        enabled = !select_mode,
+                        interaction_source = interaction_source,
+                        haptic_enabled = haptic_enabled,
+                        on_click = { if (!tap_guard.blocked) on_click() },
                         modifier = Modifier.weight(1f, fill = false),
-                    )
+                    ) {
+                        Text(
+                            text = subject_text,
+                            style = inbox_subject_text_style(),
+                            color = subject_color,
+                            fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = it,
+                        )
+                    }
                     alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
@@ -1195,4 +1214,76 @@ private fun low_network_preview(preview: String): String {
     ) ?: return preview
     if (preview.length <= limit) return preview
     return preview.take(limit).trimEnd() + "…"
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun subject_with_copy_menu(
+    subject: String,
+    preview: String,
+    enabled: Boolean,
+    interaction_source: MutableInteractionSource,
+    haptic_enabled: Boolean,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable (Modifier) -> Unit,
+) {
+    if (!enabled) {
+        Box(modifier = modifier) { content(Modifier) }
+        return
+    }
+    val context = LocalContext.current
+    var menu_open by remember { androidx.compose.runtime.mutableStateOf(false) }
+    Box(modifier = modifier) {
+        content(
+            Modifier.combinedClickable(
+                interactionSource = interaction_source,
+                indication = null,
+                onClick = on_click,
+                onLongClick = { menu_open = true },
+                onLongClickLabel = stringResource(R.string.copy),
+                hapticFeedbackEnabled = haptic_enabled,
+            ),
+        )
+        aster_menu(
+            expanded = menu_open,
+            on_dismiss = { menu_open = false },
+        ) {
+            val code = remember(subject, preview) { detect_verification_code(subject, preview) }
+            if (code != null) {
+                val copied_label = stringResource(R.string.code_copied)
+                aster_menu_item(
+                    label = stringResource(R.string.copy_code),
+                    icon = TablerIcons.Key,
+                    test_tag = "row_copy_code",
+                    on_click = {
+                        menu_open = false
+                        val copied = write_sensitive_to_clipboard(context, context.getString(R.string.app_name), code)
+                        confirm_copy(context, copied, copied_label)
+                    },
+                )
+            }
+            if (subject.isNotBlank()) {
+                val copied_label = stringResource(R.string.subject_copied)
+                aster_menu_item(
+                    label = stringResource(R.string.copy_subject),
+                    icon = TablerIcons.Copy,
+                    test_tag = "row_copy_subject",
+                    on_click = {
+                        menu_open = false
+                        val copied = write_to_clipboard(context, ClipData.newPlainText(subject, subject))
+                        confirm_copy(context, copied, copied_label)
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun confirm_copy(context: android.content.Context, copied: Boolean, message: String) {
+    if (!copied) {
+        show_copy_failed_toast(context)
+    } else if (!system_confirms_copy()) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
 }
