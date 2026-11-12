@@ -5343,6 +5343,10 @@ class MailRepository @Inject constructor(
         if (expiry_password != null) return null
         if (from.isBlank()) return null
         if ((to + cc + bcc).none { it.isNotBlank() && !is_internal_recipient(it) }) return null
+        if (!sender_may_sign_outbound(from, session_key_store.get_user_email())) {
+            report_signing_skipped("sender_has_no_signing_key")
+            return null
+        }
 
         val attachment_bytes = attachments.sumOf { it.size_bytes }
         if (attachment_bytes > MAX_SIGNED_ATTACHMENT_BYTES) {
@@ -7708,6 +7712,9 @@ class MailRepository @Inject constructor(
                 key.fill(0)
             }
         }
+
+        fun sender_may_sign_outbound(from: String, primary_email: String?): Boolean =
+            ExternalPgpKeyCodec.is_primary_sender(from, primary_email)
 
         fun attachment_data_aad(seq_num: Int): ByteArray =
             "aster-attachment-v2|att=$seq_num|part=data".toByteArray(Charsets.UTF_8)
