@@ -272,6 +272,7 @@ data class DecryptedEnvelope(
     val is_decrypt_pending: Boolean = false,
     val sent_encryption_scope: SentEncryptionScope? = null,
     val is_pgp_placeholder: Boolean = false,
+    val details_sealed: Boolean = false,
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -314,7 +315,11 @@ fun is_internal_recipient(email: String): Boolean {
     return ASTER_INTERNAL_DOMAINS.any { normalized.endsWith("@$it") }
 }
 
-internal data class SubjectBundle(val subject: String?, val body: String)
+internal data class SubjectBundle(
+    val subject: String?,
+    val body: String,
+    val details: SealedMessageDetails? = null,
+)
 
 private fun unescape_json_char(escape: Char): Char = when (escape) {
     'b' -> '\b'
@@ -416,7 +421,7 @@ private fun unwrap_subject_bundle_layer(text: String): SubjectBundle? {
         val s = obj.opt("s")
         val b = obj.opt("b")
         if (s is String && b is String) {
-            return SubjectBundle(s, b)
+            return SubjectBundle(s, b, parse_sealed_details(obj.opt("details")))
         }
     } catch (_: Throwable) {
     }
@@ -427,18 +432,20 @@ internal fun extract_subject_bundle(body: String): SubjectBundle {
     if (body.isEmpty()) return SubjectBundle(null, body)
 
     var subject: String? = null
+    var details: SealedMessageDetails? = null
     var current = body
     var unwrapped = false
 
     for (depth in 0 until MAX_SUBJECT_BUNDLE_DEPTH) {
         val layer = unwrap_subject_bundle_layer(current) ?: break
+        if (depth == 0) details = layer.details
         if (subject.isNullOrEmpty()) subject = layer.subject
         current = layer.body
         unwrapped = true
     }
 
     if (!unwrapped) return SubjectBundle(null, body)
-    return SubjectBundle(subject, current)
+    return SubjectBundle(subject, current, details)
 }
 
 data class InboxItem(
@@ -533,6 +540,7 @@ data class ThreadMessageDecrypted(
     val sent_encryption_scope: SentEncryptionScope? = null,
     val is_trashed: Boolean = false,
     val is_pgp_placeholder: Boolean = false,
+    val sealed_sent_at: String? = null,
 )
 
 @Singleton
@@ -4285,6 +4293,7 @@ class MailRepository @Inject constructor(
             sender_verification = envelope?.sender_verification,
             sent_encryption_scope = envelope?.sent_encryption_scope,
             is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
+            sealed_sent_at = envelope?.takeIf { it.details_sealed }?.sent_at,
         )
     }
 
@@ -5850,7 +5859,12 @@ class MailRepository @Inject constructor(
             }
         }
 
+        val sealed_details = bundle.details.takeIf {
+            carries_sealed_details(ratchet_decrypted, is_unauthenticated, is_unconfirmed_sender)
+        }
+
         return if (
+            sealed_details != null ||
             body_text != envelope.body_text ||
             body_html != envelope.body_html ||
             resolved_subject != envelope.subject ||
@@ -5871,7 +5885,7 @@ class MailRepository @Inject constructor(
                 is_unconfirmed_sender = is_unconfirmed_sender,
                 pgp_encrypted = pgp_encrypted,
                 pgp_signature = pgp_signature,
-            )
+            ).with_sealed_details(sealed_details)
         } else {
             envelope
         }
@@ -6105,11 +6119,15 @@ class MailRepository @Inject constructor(
             }
             val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
-            val existing_bundle = extract_subject_bundle(recipient_body_html)
-            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-                put("b", existing_bundle.body)
-            }.toString()
+            val wrapped = build_subject_bundle_text(
+                subject,
+                recipient_body_html,
+                build_sealed_details(
+                    from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                    to = to,
+                    cc = cc,
+                ),
+            )
             val sealed = seal_with_private_bcc(
                 from_addr,
                 shared_internal,
@@ -6326,11 +6344,15 @@ class MailRepository @Inject constructor(
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
-                val existing_bundle = extract_subject_bundle(recipient_body_html)
-                val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                    put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-                    put("b", existing_bundle.body)
-                }.toString()
+                val wrapped = build_subject_bundle_text(
+                    subject,
+                    recipient_body_html,
+                    build_sealed_details(
+                        from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                        to = to,
+                        cc = cc,
+                    ),
+                )
                 val sealed = seal_with_private_bcc(
                     from_addr,
                     shared_internal,
@@ -7255,6 +7277,8 @@ class MailRepository @Inject constructor(
                         subject, body_html, sender_email, sender_display_name, to, cc, bcc,
                         shared_targets(to, cc, bcc).filter { is_internal_recipient(it) },
                         allow_non_post_quantum,
+                        scheduled_at,
+                        sender_alias_hash,
                     ),
                 )
             } else {
@@ -7265,6 +7289,8 @@ class MailRepository @Inject constructor(
                 subject, body_html, sender_email, sender_display_name, to, cc, bcc,
                 shared_targets(to, cc, bcc),
                 allow_non_post_quantum,
+                scheduled_at,
+                sender_alias_hash,
             )
             val key = scheduled_local_key()
                 ?: throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
@@ -7302,17 +7328,24 @@ class MailRepository @Inject constructor(
         bcc: List<String>,
         shared_internal: List<String>,
         allow_non_post_quantum: Boolean,
+        scheduled_at: String,
+        sender_alias_hash: String?,
     ): org.astermail.android.api.scheduled.ScheduledDelivery {
         val from_addr = sender_email?.takeIf { it.isNotBlank() }
             ?: session_key_store.get_user_email().orEmpty()
         if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
             throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
         }
-        val existing_bundle = extract_subject_bundle(body_html)
-        val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-            put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-            put("b", existing_bundle.body)
-        }.toString()
+        val wrapped = build_subject_bundle_text(
+            subject,
+            body_html,
+            build_sealed_details(
+                from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                to = to,
+                cc = cc,
+                sent_at = scheduled_at,
+            ),
+        )
         val sealed = seal_with_private_bcc(
             from_addr,
             shared_internal,
