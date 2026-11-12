@@ -260,6 +260,20 @@ class SelfSendRoundTripTest {
         decryptor.try_decrypt(envelope, listOf(me), me, id)
 
     @Test
+    fun `alias self copy needs no network`() = runTest {
+        build(signed_pq = false)
+        val alias = "new.user.alias@aster.cx"
+        session_key_store.put_user_email(me)
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Accepted(active = true)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        val first = encryptor.encrypt_envelope(alias, listOf(alias), "one", allow_non_post_quantum = true)!!
+        val second = encryptor.encrypt_envelope(alias, listOf(alias), "two", allow_non_post_quantum = true)!!
+        assertEquals("one", decryptor.try_decrypt(first, listOf(alias), alias, "m1"))
+        assertEquals("two", decryptor.try_decrypt(second, listOf(alias), alias, "m2"))
+    }
+
+    @Test
     fun `send to self then read`() = runTest {
         build(signed_pq = false)
         assertEquals("one", open(send("one"), "m1"))

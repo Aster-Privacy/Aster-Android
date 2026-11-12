@@ -45,6 +45,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.astermail.android.mail.is_permanent_send_failure_cause
+import org.astermail.android.mail.is_transient_send_cause
 
 class AddressIdentityDirectoryTest {
 
@@ -202,15 +204,113 @@ class AddressIdentityDirectoryTest {
         coVerify(exactly = 2) { ratchet_api.upload_address_bundle(any()) }
     }
 
+    private fun own_entry(source: AddressKeySource = own_source): PrekeyBundleResponse {
+        val entry = checkNotNull(AddressIdentity.sign_entry(source, emptyList(), alias))
+        return PrekeyBundleResponse(
+            user_id = "u_owner",
+            kem_identity_key = entry.kem_identity_key,
+            signed_prekey = entry.signed_prekey,
+            signed_prekey_signature = entry.signed_prekey_signature,
+            pq_kem_public_key = entry.pq_kem_public_key,
+            address_scoped = true,
+        )
+    }
+
+    private fun own_account(): PrekeyBundleResponse = PrekeyBundleResponse(
+        user_id = "u_owner",
+        kem_identity_key = own_source.identity_public,
+        signed_prekey = own_source.signed_prekey_public,
+        signed_prekey_signature = "",
+    )
+
     @Test
-    fun `failed upload refuses to pick an identity and retries after a minute`() = runTest {
+    fun `failed upload with no active entry sends with the account identity`() = runTest {
         coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Failed
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns own_account()
         val directory = new_directory()
-        assertNull(directory.resolve_sender_identity(alias))
-        assertEquals(AddressEntryState.FAILED, directory.address_entry_state(alias))
+        val identity = directory.resolve_sender_identity(alias)
+        assertEquals(own_source.identity_public, identity?.identity_public)
+        assertNull(directory.own_address_identity(alias, identity!!))
+    }
+
+    @Test
+    fun `failed upload with a matching active entry sends with the derived identity`() = runTest {
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Failed
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns own_entry()
+        val directory = new_directory()
+        val identity = directory.resolve_sender_identity(alias)
+        val expected = AddressIdentity.derive_sender_identity(own_source.identity_jwk, alias)
+        assertEquals(expected?.identity_public, identity?.identity_public)
+        assertEquals(expected?.identity_public, directory.own_address_identity(alias, identity!!))
+    }
+
+    @Test
+    fun `failed upload with a mismatched active entry fails the send`() = runTest {
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Failed
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns own_entry(peer_source)
+        val failure = runCatching { new_directory().resolve_sender_identity(alias) }.exceptionOrNull()
+        assertTrue(failure is SenderAddressEntryMismatchException)
+        val wrapped = RatchetEncryptionException(null, "sender address identity unavailable", failure)
+        assertTrue(is_permanent_send_failure_cause(wrapped))
+    }
+
+    @Test
+    fun `failed upload and failed lookup gives a retryable error`() = runTest {
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Failed
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        val failure = runCatching { new_directory().resolve_sender_identity(alias) }.exceptionOrNull()
+        assertTrue(failure is SenderIdentityLookupException)
+        val wrapped = RatchetEncryptionException(null, "sender address identity unavailable", failure)
+        assertTrue(is_transient_send_cause(wrapped))
+        assertFalse(is_permanent_send_failure_cause(wrapped))
+    }
+
+    @Test
+    fun `failed upload is retried on the next send`() = runTest {
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Failed
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns own_account()
+        val directory = new_directory()
+        directory.resolve_sender_identity(alias)
+        coVerify(exactly = 2) { ratchet_api.upload_address_bundle(any()) }
         coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Accepted(active = true)
-        clock += AddressIdentityDirectory.FAILED_RETRY_MS + 1
         assertEquals(AddressEntryState.ACTIVE, directory.address_entry_state(alias))
+        coVerify(exactly = 4) { ratchet_api.upload_address_bundle(any()) }
+    }
+
+    @Test
+    fun `local derivation failure uses the account identity only without an active entry`() = runTest {
+        val active_entry = own_entry()
+        AddressIdentity.clear_cache()
+        every { session_key_store.get_ratchet_identity_jwk() } returns "not-a-key"
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns own_account()
+        val identity = new_directory().resolve_sender_identity(alias)
+        assertEquals(own_source.identity_public, identity?.identity_public)
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns active_entry
+        val failure = runCatching { new_directory().resolve_sender_identity(alias) }.exceptionOrNull()
+        assertTrue(failure is SenderAddressEntryMismatchException)
+    }
+
+    @Test
+    fun `dotted and tagged primary forms count as the primary address`() = runTest {
+        val directory = new_directory()
+        assertTrue(directory.is_primary_address("Ow.ner@astermail.org"))
+        assertTrue(directory.is_primary_address("owner+news@astermail.org"))
+        assertFalse(directory.is_primary_address(alias))
+        assertEquals(own_source.identity_public, directory.resolve_sender_identity("o.w.n.e.r@astermail.org")?.identity_public)
+        coVerify(exactly = 0) { ratchet_api.upload_address_bundle(any()) }
+        every { session_key_store.get_user_email() } returns " "
+        assertTrue(directory.is_primary_address(alias))
+    }
+
+    @Test
+    fun `local address bundle needs no network`() = runTest {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        val directory = new_directory()
+        val derived = checkNotNull(AddressIdentity.derive_sender_identity(own_source.identity_jwk, alias))
+        val bundle = directory.local_address_bundle(alias, derived.identity_public)
+        assertEquals(own_entry().kem_identity_key, bundle?.kem_identity_key)
+        assertEquals(own_entry().signed_prekey, bundle?.signed_prekey)
+        assertNull(directory.local_address_bundle(alias, peer_source.identity_public))
     }
 
     @Test

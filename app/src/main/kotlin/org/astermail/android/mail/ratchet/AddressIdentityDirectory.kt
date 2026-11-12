@@ -34,7 +34,6 @@ import org.astermail.android.crypto.ratchet.AddressIdentity
 import org.astermail.android.crypto.ratchet.AddressKeySet
 import org.astermail.android.crypto.ratchet.AddressKeySource
 import org.astermail.android.crypto.ratchet.DerivedAddressKey
-import org.astermail.android.crypto.same_address_ignoring_dots
 import org.astermail.android.storage.SessionKeyStore
 
 enum class AddressEntryState { ACTIVE, INACTIVE, FAILED }
@@ -46,6 +45,11 @@ data class ResolvedRecipientBundle(
     val scoped: Boolean,
     val trust: DirectoryTrust,
 )
+
+class SenderIdentityLookupException(message: String, cause: Throwable? = null) :
+    java.io.IOException(message, cause)
+
+class SenderAddressEntryMismatchException(message: String) : Exception(message)
 
 fun is_directory_trust_rejected(trust: DirectoryTrust): Boolean =
     trust == DirectoryTrust.REPLACED || trust == DirectoryTrust.DOWNGRADED || trust == DirectoryTrust.INVALID
@@ -152,12 +156,13 @@ open class AddressIdentityDirectory @Inject constructor(
 
     fun is_primary_address(address: String?): Boolean {
         val primary = session_key_store.get_user_email()
-        return address.isNullOrBlank() || primary.isNullOrBlank() || same_address_ignoring_dots(address, primary)
+        return address.isNullOrBlank() || primary.isNullOrBlank() ||
+            AddressIdentity.same_canonical_address(address, primary)
     }
 
     private suspend fun upload_entry(form: String): UploadOutcome {
         val entry = AddressIdentity.sign_entry(current_source(), previous_identity_jwks(), form)
-            ?: return UploadOutcome(AddressEntryState.FAILED, FAILED_RETRY_MS)
+            ?: return UploadOutcome(AddressEntryState.FAILED, 0L)
         val result = ratchet_api.upload_address_bundle(
             UploadAddressBundleRequest(
                 address = entry.address,
@@ -178,7 +183,7 @@ open class AddressIdentityDirectory @Inject constructor(
                 UploadOutcome(AddressEntryState.INACTIVE, INACTIVE_RETRY_MS)
             }
             AddressBundleUpload.Rejected -> UploadOutcome(AddressEntryState.INACTIVE, INACTIVE_RETRY_MS)
-            AddressBundleUpload.Failed -> UploadOutcome(AddressEntryState.FAILED, FAILED_RETRY_MS)
+            AddressBundleUpload.Failed -> UploadOutcome(AddressEntryState.FAILED, 0L)
         }
     }
 
@@ -200,7 +205,7 @@ open class AddressIdentityDirectory @Inject constructor(
         } catch (c: CancellationException) {
             throw c
         } catch (_: Throwable) {
-            UploadOutcome(AddressEntryState.FAILED, FAILED_RETRY_MS)
+            UploadOutcome(AddressEntryState.FAILED, 0L)
         }
         synchronized(published_states) {
             published_states[exact] = PublishedState(fingerprint, result.state, now_ms() + result.retry_ms)
@@ -253,11 +258,53 @@ open class AddressIdentityDirectory @Inject constructor(
     suspend fun resolve_sender_identity(sender_email: String): DerivedAddressKey? {
         if (is_primary_address(sender_email)) return account_sender_identity()
         return when (address_entry_state(sender_email)) {
-            AddressEntryState.FAILED -> null
+            AddressEntryState.FAILED -> confirm_sender_identity(sender_email)
             AddressEntryState.INACTIVE -> account_sender_identity()
             AddressEntryState.ACTIVE ->
                 AddressIdentity.derive_sender_identity(session_key_store.get_ratchet_identity_jwk(), sender_email)
         }
+    }
+
+    private fun local_key_sets(address: String): List<AddressKeySet> = try {
+        val source = current_source()
+        if (source == null) {
+            emptyList()
+        } else {
+            AddressIdentity.entry_forms(address).mapNotNull { AddressIdentity.derive_key_set(source, it) }
+        }
+    } catch (_: Throwable) {
+        emptyList()
+    }
+
+    private fun matches_entry(set: AddressKeySet, entry: PrekeyBundleResponse): Boolean =
+        set.identity_public == entry.kem_identity_key &&
+            set.signed_prekey_public == entry.signed_prekey &&
+            set.pq_identity_public.orEmpty() == entry.pq_kem_public_key.orEmpty()
+
+    private suspend fun confirm_sender_identity(sender_email: String): DerivedAddressKey? {
+        val published = try {
+            ratchet_api.fetch_address_prekey_bundle(sender_email.substringBefore('@'), sender_email)
+        } catch (c: CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            throw SenderIdentityLookupException("sender address lookup failed", t)
+        } ?: throw SenderIdentityLookupException("sender address lookup failed")
+        if (published.address_scoped != true) return account_sender_identity()
+        val own = local_key_sets(sender_email).firstOrNull { matches_entry(it, published) }
+            ?: throw SenderAddressEntryMismatchException("published sender address entry does not match")
+        return DerivedAddressKey(own.identity_jwk, own.identity_public)
+    }
+
+    fun local_address_bundle(address: String, identity_public: String): PrekeyBundleResponse? {
+        val own = local_key_sets(address).firstOrNull { it.identity_public == identity_public } ?: return null
+        return PrekeyBundleResponse(
+            user_id = "",
+            kem_identity_key = own.identity_public,
+            signed_prekey = own.signed_prekey_public,
+            signed_prekey_signature = "",
+            pq_kem_public_key = own.pq_identity_public,
+            address_scoped = true,
+        )
     }
 
     fun own_address_identity(sender_email: String, sender_identity: DerivedAddressKey): String? {
@@ -406,6 +453,5 @@ open class AddressIdentityDirectory @Inject constructor(
         const val ADDRESS_IDENTITY_VERSION: Int = 1
         const val INACTIVE_RETRY_MS: Long = 10L * 60 * 1000
         const val ACTIVE_REFRESH_MS: Long = 6L * 60 * 60 * 1000
-        const val FAILED_RETRY_MS: Long = 60L * 1000
     }
 }

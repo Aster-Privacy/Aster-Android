@@ -137,7 +137,8 @@ class RatchetEncryptor @Inject constructor(
                 val username = recipient_email.substringBefore('@')
                 val bootstrap = state_store.load(conversation_id)?.bootstrap
                 if (bootstrap != null) {
-                    val sender_identity_public = address_directory.resolve_sender_identity(sender_email)
+                    val sender_identity_public = runCatching { address_directory.resolve_sender_identity(sender_email) }
+                        .getOrNull()
                         ?.identity_public
                         ?: session_key_store.get_ratchet_identity_public_b64()
                     val sender_changed = bootstrap.sender_identity_key != sender_identity_public
@@ -532,7 +533,8 @@ class RatchetEncryptor @Inject constructor(
         var x3dh_version: Int? = null
 
         if (state == null) {
-            val directory_entry = try {
+            val local_bundle = required_identity?.let { address_directory.local_address_bundle(recipient_email, it) }
+            val directory_entry = if (local_bundle != null) null else try {
                 address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
@@ -544,7 +546,7 @@ class RatchetEncryptor @Inject constructor(
             val resolved_bundle: PrekeyBundleResponse
             val signature_covers_pq_identity: Boolean
             if (required_identity != null) {
-                resolved_bundle = try {
+                resolved_bundle = local_bundle ?: try {
                     resolve_own_address_bundle(username, recipient_email, required_identity, directory_entry)
                 } catch (c: kotlinx.coroutines.CancellationException) {
                     throw c

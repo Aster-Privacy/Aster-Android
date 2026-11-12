@@ -106,6 +106,13 @@ object AddressIdentity {
         return local + "@" + normalized.substring(at + 1)
     }
 
+    fun same_canonical_address(left: String?, right: String?): Boolean {
+        if (left.isNullOrBlank() || right.isNullOrBlank()) return false
+        val left_form = canonical_form(left).ifEmpty { normalize(left) }
+        val right_form = canonical_form(right).ifEmpty { normalize(right) }
+        return left_form == right_form
+    }
+
     fun entry_forms(address: String): List<String> {
         val normalized = normalize(address)
         val canonical = canonical_form(normalized)
@@ -229,7 +236,7 @@ object AddressIdentity {
         val identity = derive_key(source.identity_jwk, form, identity_salt)
         val signed_prekey = derive_key(source.signed_prekey_jwk, form, signed_prekey_salt)
         val pq = derive_pq(source, form)
-        val derived = if (identity != null && signed_prekey != null) {
+        val derived = if (identity != null && signed_prekey != null && (!has_pq || pq != null)) {
             AddressKeySet(
                 identity_jwk = identity.identity_jwk,
                 identity_public = identity.identity_public,
@@ -239,7 +246,7 @@ object AddressIdentity {
                 pq_identity_public = pq?.second,
             )
         } else {
-            null
+            return null
         }
         synchronized(key_set_cache) {
             if (key_set_cache.size >= KEY_SET_CACHE_LIMIT) key_set_cache.clear()

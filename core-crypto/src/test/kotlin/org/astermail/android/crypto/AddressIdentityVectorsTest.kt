@@ -179,6 +179,15 @@ class AddressIdentityVectorsTest {
     }
 
     @Test
+    fun a_failed_derivation_is_not_remembered() {
+        val good = current_source()
+        val address = "owner.alias@aster.cx"
+        assertEquals(null, AddressIdentity.derive_key_set(good.copy(identity_jwk = "not-a-key"), address))
+        assertEquals(null, AddressIdentity.derive_key_set(good.copy(pq_identity_seed = "AAAA"), address))
+        assertNotNull(AddressIdentity.derive_key_set(good, address)?.pq_identity_public)
+    }
+
+    @Test
     fun rejects_an_entry_for_another_address() {
         val entry = vectors.getJSONObject("entry")
         val verification = AddressIdentity.verify_entry(
