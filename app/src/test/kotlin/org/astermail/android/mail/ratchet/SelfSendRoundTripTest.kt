@@ -47,6 +47,7 @@ import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
+import org.astermail.android.api.ratchet.AddressBundleUpload
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.auth.AuthRepository
@@ -153,6 +154,11 @@ class SelfSendRoundTripTest {
 
         val pins = RatchetIdentityPinStore(mockk(relaxed = true), session_key_store)
         val locks = ConversationLocks()
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } answers {
+            ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
+        }
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Unsupported
+        val address_directory = AddressIdentityDirectory(session_key_store, ratchet_api, pins)
         encryptor = RatchetEncryptor(
             state_store,
             session_key_store,
@@ -161,6 +167,7 @@ class SelfSendRoundTripTest {
             locks,
             keys_api,
             pins,
+            address_directory,
         )
         val escrow = mockk<MessageEscrow>(relaxed = true)
         coEvery { escrow.fetch(any()) } returns null
@@ -175,6 +182,7 @@ class SelfSendRoundTripTest {
             pins,
             mockk(relaxed = true),
             escrow,
+            address_directory,
         )
     }
 

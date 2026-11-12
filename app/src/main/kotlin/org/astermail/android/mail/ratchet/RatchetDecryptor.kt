@@ -52,6 +52,7 @@ class RatchetDecryptor @Inject constructor(
     private val identity_pins: RatchetIdentityPinStore,
     private val plaintext_cache: RatchetPlaintextCache,
     private val escrow: MessageEscrow,
+    private val address_directory: AddressIdentityDirectory,
 ) {
 
     private data class ReceiverKeySet(
@@ -59,6 +60,7 @@ class RatchetDecryptor @Inject constructor(
         val identity_public_b64: String,
         val signed_prekey_jwk: String,
         val signed_prekey_public_b64: String,
+        val pq_identity_secret: String? = null,
     )
 
     @Volatile
@@ -140,7 +142,7 @@ class RatchetDecryptor @Inject constructor(
         } ?: our_addresses.firstOrNull() ?: return
         val conversation_id = X3dh.derive_conversation_id(address, sender_email)
         val bound_key = runCatching { state_store.load(conversation_id)?.remote_identity_key }.getOrNull() ?: return
-        val continuity = sender_continuity(conversation_id, sender_email, bound_key, session_bound = true)
+        val continuity = sender_continuity(conversation_id, sender_email, bound_key, session_bound = true, address)
         if (continuity != SenderIdentityContinuity.KNOWN) return
         runCatching { plaintext_cache.confirm_sender(message_id) }
     }
@@ -357,6 +359,7 @@ class RatchetDecryptor @Inject constructor(
                     envelope.sender_identity_key,
                     recipient,
                     tried,
+                    matched_address,
                 )
                 if (recovered == null) {
                     refresh_vault_keys()
@@ -365,6 +368,7 @@ class RatchetDecryptor @Inject constructor(
                         envelope.sender_identity_key,
                         recipient,
                         tried,
+                        matched_address,
                     )
                 }
                 if (recovered != null) {
@@ -390,6 +394,7 @@ class RatchetDecryptor @Inject constructor(
                     recipient,
                     conversation_id,
                     envelope.sender_identity_key,
+                    matched_address,
                 )
                 if (recovered == null && recipient.recovery != null) {
                     refresh_vault_keys()
@@ -398,9 +403,16 @@ class RatchetDecryptor @Inject constructor(
                     recipient,
                     conversation_id,
                     envelope.sender_identity_key,
+                    matched_address,
                 )
                 if (final_recovery != null) {
-                    val continuity = sender_continuity(conversation_id, sender_email, envelope.sender_identity_key, session_bound = false)
+                    val continuity = sender_continuity(
+                        conversation_id,
+                        sender_email,
+                        envelope.sender_identity_key,
+                        session_bound = false,
+                        matched_address,
+                    )
                     if (continuity != SenderIdentityContinuity.CHANGED &&
                         RatchetIdentityPinRules.records_identity(IdentitySighting.RECOVERY_LANE, bootstrap_already_accepted)
                     ) {
@@ -424,6 +436,7 @@ class RatchetDecryptor @Inject constructor(
                 sender_email,
                 identity_key,
                 session_bound = final_state.remote_identity_key != null,
+                matched_address,
             )
             if (chained && final_state.remote_identity_key == null && continuity == SenderIdentityContinuity.KNOWN) {
                 final_state.remote_identity_key = identity_key
@@ -471,21 +484,61 @@ class RatchetDecryptor @Inject constructor(
         runCatching { plaintext_cache.put(message_id, plaintext, sender_unauthenticated, unconfirmed_sender, binding) }
     }
 
-    private fun sender_continuity(
+    private suspend fun sender_continuity(
         conversation_id: String,
         sender_email: String,
         sender_identity_key: String,
         session_bound: Boolean,
+        own_address: String,
     ): SenderIdentityContinuity {
-        if (session_bound && is_own_identity_key(sender_identity_key)) return SenderIdentityContinuity.KNOWN
-        return runCatching {
+        if (session_bound && is_own_identity_key(sender_identity_key, listOf(sender_email, own_address))) {
+            return SenderIdentityContinuity.KNOWN
+        }
+        val stored = runCatching {
             identity_pins.sender_continuity(conversation_id, sender_email, sender_identity_key)
-        }.getOrNull() ?: SenderIdentityContinuity.CHANGED
+        }.getOrNull() ?: return SenderIdentityContinuity.CHANGED
+        if (stored != SenderIdentityContinuity.CHANGED) return stored
+        return if (is_endorsed_address_rotation(conversation_id, sender_email, sender_identity_key)) {
+            SenderIdentityContinuity.KNOWN
+        } else {
+            stored
+        }
     }
 
-    private fun is_own_identity_key(sender_identity_key: String): Boolean {
+    private suspend fun is_endorsed_address_rotation(
+        conversation_id: String,
+        sender_email: String,
+        sender_identity_key: String,
+    ): Boolean {
+        val known = try {
+            (identity_pins.remembered_sender_fingerprints(sender_email) +
+                listOfNotNull(identity_pins.pinned_fingerprint(conversation_id))).distinct()
+        } catch (c: CancellationException) {
+            throw c
+        } catch (_: Throwable) {
+            return false
+        }
+        if (known.isEmpty()) return false
+        val endorsed = try {
+            address_directory.is_sender_entry_endorsed(
+                sender_email.substringBefore("@"),
+                sender_email,
+                sender_identity_key,
+                known,
+            )
+        } catch (c: CancellationException) {
+            throw c
+        } catch (_: Throwable) {
+            false
+        }
+        if (endorsed) runCatching { identity_pins.replace_pin(conversation_id, sender_identity_key) }
+        return endorsed
+    }
+
+    private fun is_own_identity_key(sender_identity_key: String, addresses: List<String> = emptyList()): Boolean {
         val candidate = sender_identity_key.trim()
         if (candidate.isEmpty()) return false
+        if (address_directory.is_own_address_identity_key(addresses.filter { it.isNotBlank() }, candidate)) return true
         val current = runCatching { session_key_store.get_ratchet_identity_public_b64() }.getOrNull()
         if (current?.trim() == candidate) return true
         val previous_json = runCatching { session_key_store.get_ratchet_previous_keys_json() }.getOrNull()
@@ -550,8 +603,20 @@ class RatchetDecryptor @Inject constructor(
         val pq_identity_public: String,
     )
 
-    private fun recovery_lane_candidates(): List<RecoveryLaneCandidate> {
+    private fun recovery_lane_candidates(own_address: String? = null): List<RecoveryLaneCandidate> {
         val candidates = mutableListOf<RecoveryLaneCandidate>()
+        address_directory.receiver_key_sets(own_address).forEach { set ->
+            candidates.add(
+                RecoveryLaneCandidate(
+                    own_keys = RecoveryLane.OwnKeys(
+                        identity_jwk = set.identity_jwk,
+                        identity_public = set.identity_public,
+                        pq_identity_secret = set.pq_identity_secret,
+                    ),
+                    pq_identity_public = set.pq_identity_public.orEmpty(),
+                ),
+            )
+        }
 
         val identity_jwk = session_key_store.get_ratchet_identity_jwk()
         val identity_public = session_key_store.get_ratchet_identity_public_b64()
@@ -636,8 +701,9 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         conversation_id: String,
         sender_identity_key: String,
+        own_address: String? = null,
     ): String? {
-        val message_key_b64 = open_recovery_lane_message_key(recipient, conversation_id, sender_identity_key)
+        val message_key_b64 = open_recovery_lane_message_key(recipient, conversation_id, sender_identity_key, own_address)
             ?: return null
 
         val message_key = try {
@@ -659,6 +725,7 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         conversation_id: String,
         sender_identity_key: String,
+        own_address: String? = null,
     ): String? {
         val lane = recipient.recovery ?: return null
         if (lane.kem_ct == null && identity_pins.is_post_quantum_established(conversation_id)) {
@@ -677,7 +744,7 @@ class RatchetDecryptor @Inject constructor(
             rid = lane.rid,
         )
 
-        val ordered = recovery_lane_candidates()
+        val ordered = recovery_lane_candidates(own_address)
             .sortedByDescending { it.own_keys.identity_public == lane.rid }
 
         for (candidate in ordered) {
@@ -694,7 +761,7 @@ class RatchetDecryptor @Inject constructor(
         return null
     }
 
-    private fun receiver_key_sets(): List<ReceiverKeySet> {
+    private fun receiver_key_sets(own_address: String? = null): List<ReceiverKeySet> {
         val sets = mutableListOf<ReceiverKeySet>()
         val identity_jwk = session_key_store.get_ratchet_identity_jwk()
         val identity_pub = session_key_store.get_ratchet_identity_public_b64()
@@ -720,6 +787,17 @@ class RatchetDecryptor @Inject constructor(
             } catch (_: Throwable) {
             }
         }
+        address_directory.receiver_key_sets(own_address).forEach { set ->
+            sets.add(
+                ReceiverKeySet(
+                    identity_jwk = set.identity_jwk,
+                    identity_public_b64 = set.identity_public,
+                    signed_prekey_jwk = set.signed_prekey_jwk,
+                    signed_prekey_public_b64 = set.signed_prekey_public,
+                    pq_identity_secret = set.pq_identity_secret,
+                ),
+            )
+        }
         return sets
     }
 
@@ -728,8 +806,9 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key_b64: String,
         recipient: RatchetRecipientData,
         tried: MutableSet<String>,
+        own_address: String? = null,
     ): Pair<RatchetState, String>? {
-        val key_sets = receiver_key_sets()
+        val key_sets = receiver_key_sets(own_address)
         if (org.astermail.android.BuildConfig.DEBUG) {
             android.util.Log.i("AsterRatchet", "bootstrap over ${key_sets.size} receiver key sets")
         }
@@ -811,7 +890,7 @@ class RatchetDecryptor @Inject constructor(
 
         val pq_secrets: List<ByteArray> = when {
             pq_ciphertext == null || pq_key_id == null -> emptyList()
-            from_identity -> pq_identity_secret_candidates().mapNotNull {
+            from_identity -> (keys.pq_identity_secret?.let { listOf(it) } ?: pq_identity_secret_candidates()).mapNotNull {
                 try {
                     RatchetCrypto.b64_decode(it)
                 } catch (cancelled: CancellationException) {

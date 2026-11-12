@@ -567,6 +567,7 @@ class MailRepository @Inject constructor(
     private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
     private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
     private val identity_pins_provider: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>? = null,
+    private val address_directory_provider: dagger.Lazy<org.astermail.android.mail.ratchet.AddressIdentityDirectory>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -1349,6 +1350,13 @@ class MailRepository @Inject constructor(
             .filter { it.isNotBlank() }
             .toSet()
         org.astermail.android.security.SenderTrustStore.set_own_addresses("registered", addresses)
+        val directory = address_directory_provider?.get() ?: return
+        val targets = registered_own_addresses.toList()
+        if (targets.isEmpty()) return
+        app_scope.launch {
+            runCatching { directory.publish_address_entries(targets) }
+                .onFailure { if (it is CancellationException) throw it }
+        }
     }
 
     internal fun is_own_address(address: String, sender_email: String?): Boolean {
@@ -2344,6 +2352,7 @@ class MailRepository @Inject constructor(
         ratchet_plaintext_cache.clear()
         sender_pgp_key_cache.clear()
         sender_pgp_key_misses.clear()
+        address_directory_provider?.get()?.clear()
     }
 
     suspend fun fetch_inbox(
