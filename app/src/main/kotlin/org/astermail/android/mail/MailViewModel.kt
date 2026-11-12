@@ -343,6 +343,7 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
         sender_alias_hash: String? = null,
         own_addresses: Set<String> = emptySet(),
+        sender_resolved: Boolean = false,
         hold_seconds: Int = 0,
         require_encryption: Boolean = false,
         allow_non_post_quantum: Boolean = false,
@@ -366,13 +367,18 @@ class MailViewModel @Inject constructor(
             is_trashed = state.item?.is_trashed == true,
             reactions_enabled = true,
             is_own_address = { address -> address in own_addresses },
+            sender_resolved = sender_resolved,
             require_encryption = require_encryption,
         )
         if (restriction != null) {
             on_result(context.getString(reaction_restriction_string(restriction)))
             return
         }
-        val from_email = sender_email?.takeIf { it.isNotBlank() } ?: our_email
+        val from_email = sender_email?.takeIf { it.isNotBlank() }
+        if (from_email == null) {
+            on_result(context.getString(R.string.cannot_react_bcc))
+            return
+        }
         val recipient = reaction_recipient(
             sender_email = message.sender_email,
             to_addresses = message.to_addresses,
@@ -6018,6 +6024,7 @@ class MailViewModel @Inject constructor(
             is_reaction = raw.is_reaction,
             message_group_id = raw.message_group_id,
             reactions = raw.reactions,
+            routing_token = if (raw.item_type == "received") raw.routing_token else null,
         )
 
     private suspend fun item_to_single_message(item: InboxItem): ThreadMessageDecrypted {

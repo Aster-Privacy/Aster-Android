@@ -128,6 +128,7 @@ fun reaction_restriction(
     is_trashed: Boolean,
     reactions_enabled: Boolean,
     is_own_address: (String) -> Boolean = { false },
+    sender_resolved: Boolean = false,
     require_encryption: Boolean = false,
 ): ReactionRestriction? {
     if (!reactions_enabled) return ReactionRestriction.disabled
@@ -138,7 +139,7 @@ fun reaction_restriction(
     if (to_addresses.size + cc_addresses.size > MAX_REACTION_RECIPIENTS) {
         return ReactionRestriction.too_many_recipients
     }
-    if (!is_addressed_to(to_addresses, cc_addresses, user_email, is_own_address)) {
+    if (!sender_resolved || !is_addressed_to(to_addresses, cc_addresses, user_email, is_own_address)) {
         return ReactionRestriction.bcc
     }
     if (reactions.map { it.emoji }.filter { it.isNotBlank() }.toSet().size >= MAX_REACTION_EMOJIS) {

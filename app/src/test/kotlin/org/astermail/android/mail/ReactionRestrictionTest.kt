@@ -41,6 +41,7 @@ class ReactionRestrictionTest {
         is_trashed: Boolean = false,
         reactions_enabled: Boolean = true,
         is_own_address: (String) -> Boolean = { false },
+        sender_resolved: Boolean = true,
         require_encryption: Boolean = false,
     ): ReactionRestriction? = reaction_restriction(
         item_type = item_type,
@@ -54,6 +55,7 @@ class ReactionRestrictionTest {
         is_trashed = is_trashed,
         reactions_enabled = reactions_enabled,
         is_own_address = is_own_address,
+        sender_resolved = sender_resolved,
         require_encryption = require_encryption,
     )
 
@@ -165,6 +167,50 @@ class ReactionRestrictionTest {
         assertEquals(
             ReactionRestriction.bcc,
             restriction(to_addresses = listOf("someone@example.com")),
+        )
+    }
+
+    @Test
+    fun blocks_a_message_with_no_visible_recipients_and_no_known_delivery_address() {
+        assertEquals(
+            ReactionRestriction.bcc,
+            restriction(to_addresses = emptyList(), sender_resolved = false),
+        )
+    }
+
+    @Test
+    fun allows_a_message_with_no_visible_recipients_once_its_delivery_address_is_known() {
+        assertNull(restriction(to_addresses = emptyList(), sender_resolved = true))
+    }
+
+    @Test
+    fun blocks_an_addressed_message_when_the_reacting_address_is_unknown() {
+        assertEquals(
+            ReactionRestriction.bcc,
+            restriction(
+                to_addresses = listOf("alias@astermail.org"),
+                is_own_address = { it == "alias@astermail.org" },
+                sender_resolved = false,
+            ),
+        )
+    }
+
+    @Test
+    fun the_reacting_address_is_unknown_unless_the_caller_says_otherwise() {
+        assertEquals(
+            ReactionRestriction.bcc,
+            reaction_restriction(
+                item_type = "received",
+                sender_email = "sender@example.com",
+                to_addresses = listOf(me),
+                cc_addresses = emptyList(),
+                raw_headers = emptyList(),
+                reactions = emptyList(),
+                user_email = me,
+                is_spam = false,
+                is_trashed = false,
+                reactions_enabled = true,
+            ),
         )
     }
 
