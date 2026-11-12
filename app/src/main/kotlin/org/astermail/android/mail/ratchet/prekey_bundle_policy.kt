@@ -73,6 +73,7 @@ suspend fun seal_pgp_for_recipients(
     is_owner_key_trusted: (String, String) -> Boolean,
     can_encrypt_to: (String) -> Boolean,
     encrypt_and_sign: (List<String>) -> String?,
+    include_own_key: Boolean = true,
 ): String {
     val keys = ArrayList<String>()
     val missing = ArrayList<String>()
@@ -91,6 +92,9 @@ suspend fun seal_pgp_for_recipients(
     }
     if (missing.isNotEmpty()) throw RecipientPublicKeyMissingException(missing)
     if (keys.isEmpty()) throw RecipientPublicKeyMissingException(recipients)
+    if (!include_own_key) {
+        return encrypt_and_sign(keys) ?: throw PgpFallbackSealException("pgp encryption failed")
+    }
     val own = own_public_key?.takeIf { it.isNotBlank() && can_encrypt_to(it) }
         ?: throw PgpFallbackSealException("sender public key unavailable")
     if (own !in keys) keys.add(own)

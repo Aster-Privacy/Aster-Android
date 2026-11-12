@@ -477,26 +477,36 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key: String,
         session_bound: Boolean,
     ): SenderIdentityContinuity {
-        if (session_bound && is_own_identity_key(sender_identity_key)) return SenderIdentityContinuity.KNOWN
+        if (session_bound && is_own_identity_key(sender_identity_key, sender_email)) return SenderIdentityContinuity.KNOWN
         return runCatching {
             identity_pins.sender_continuity(conversation_id, sender_email, sender_identity_key)
         }.getOrNull() ?: SenderIdentityContinuity.CHANGED
     }
 
-    private fun is_own_identity_key(sender_identity_key: String): Boolean {
+    private fun is_own_identity_key(sender_identity_key: String, sender_email: String): Boolean {
         val candidate = sender_identity_key.trim()
         if (candidate.isEmpty()) return false
         val current = runCatching { session_key_store.get_ratchet_identity_public_b64() }.getOrNull()
         if (current?.trim() == candidate) return true
+        val account_jwks = ArrayList<String>()
+        runCatching { session_key_store.get_ratchet_identity_jwk() }.getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { account_jwks.add(it) }
         val previous_json = runCatching { session_key_store.get_ratchet_previous_keys_json() }.getOrNull()
-        if (previous_json.isNullOrBlank()) return false
-        return try {
-            val entries = org.json.JSONArray(previous_json)
-            (0 until entries.length()).any { index ->
-                entries.optJSONObject(index)?.optString("ratchet_identity_public", "")?.trim() == candidate
+        if (!previous_json.isNullOrBlank()) {
+            try {
+                val entries = org.json.JSONArray(previous_json)
+                for (index in 0 until entries.length()) {
+                    val entry = entries.optJSONObject(index) ?: continue
+                    if (entry.optString("ratchet_identity_public", "").trim() == candidate) return true
+                    val previous_jwk = entry.optString("ratchet_identity_key", "")
+                    if (previous_jwk.isNotBlank()) account_jwks.add(previous_jwk)
+                }
+            } catch (_: Throwable) {
             }
-        } catch (_: Throwable) {
-            false
+        }
+        return account_jwks.any { account_jwk ->
+            RatchetCrypto.derive_address_identity(account_jwk, sender_email)?.identity_public_b64 == candidate
         }
     }
 

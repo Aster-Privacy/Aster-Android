@@ -5359,6 +5359,9 @@ class MailRepository @Inject constructor(
         if (external_signer != null) {
             PgpSigner.sign_detached_unlocked(mime_bytes, external_signer)?.let { return it }
         }
+        if (!ExternalPgpKeyCodec.is_primary_sender(from, session_key_store.get_user_email())) {
+            return null
+        }
         val vault_identity_key = session_key_store.get_identity_key()
         if (vault_identity_key == null) {
             report_signing_skipped("vault_identity_key_unavailable")
@@ -6418,10 +6421,21 @@ class MailRepository @Inject constructor(
         recipients: List<String>,
         wrapped: String,
     ): String {
+        val own_key = own_public_key()
+        if (!ExternalPgpKeyCodec.is_primary_sender(from_addr, session_key_store.get_user_email())) {
+            return org.astermail.android.mail.ratchet.seal_pgp_for_recipients(
+                recipients = recipients,
+                own_public_key = null,
+                fetch_public_key = { recipient -> pgp_fallback_recipient_key(recipient, from_addr, own_key) },
+                is_owner_key_trusted = { recipient, key -> ratchet_encryptor.owner_key_matches_pin(recipient, key) },
+                can_encrypt_to = { key -> PgpEncryptor.can_encrypt_to(key) },
+                encrypt_and_sign = { keys -> PgpEncryptor.encrypt_to_keys(wrapped, keys) },
+                include_own_key = false,
+            )
+        }
         val identity_key = session_key_store.get_identity_key()
             ?.takeIf { it.contains("-----BEGIN PGP") }
             ?: throw org.astermail.android.mail.ratchet.PgpFallbackSealException("sender signing key unavailable")
-        val own_key = own_public_key()
         return org.astermail.android.mail.ratchet.seal_pgp_for_recipients(
             recipients = recipients,
             own_public_key = own_key,

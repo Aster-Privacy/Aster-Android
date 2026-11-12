@@ -97,6 +97,13 @@ internal fun session_post_quantum_status(bootstrap: BootstrapData): PostQuantumR
         PostQuantumRecipientStatus.UNSUPPORTED
     }
 
+internal fun sender_uses_account_identity(sender_email: String, primary_email: String?): Boolean {
+    val primary = primary_email?.trim()?.lowercase(java.util.Locale.ROOT).orEmpty()
+    val sender = sender_email.trim().lowercase(java.util.Locale.ROOT)
+    if (primary.isEmpty() || sender.isEmpty()) return true
+    return sender == primary
+}
+
 @Singleton
 class RatchetEncryptor @Inject constructor(
     private val state_store: RatchetStateStore,
@@ -135,7 +142,7 @@ class RatchetEncryptor @Inject constructor(
                 val username = recipient_email.substringBefore('@')
                 val bootstrap = state_store.load(conversation_id)?.bootstrap
                 if (bootstrap != null) {
-                    val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
+                    val sender_identity_public = sender_identity_for(sender_email)?.identity_public_b64
                     val sender_changed = bootstrap.sender_identity_key != sender_identity_public
                     val bundle = if (sender_changed) {
                         ratchet_api.fetch_prekey_bundle(username, recipient_email)
@@ -173,10 +180,10 @@ class RatchetEncryptor @Inject constructor(
         allow_non_post_quantum: Boolean = false,
     ): String? {
         if (recipients.isEmpty()) return null
-        val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
-            ?: throw RatchetEncryptionException(null, "missing ratchet identity public key")
-        val sender_identity_jwk = session_key_store.get_ratchet_identity_jwk()
+        val sender_identity = sender_identity_for(sender_email)
             ?: throw RatchetEncryptionException(null, "missing ratchet identity key")
+        val sender_identity_public = sender_identity.identity_public_b64
+        val sender_identity_jwk = sender_identity.identity_jwk
 
         val per_recipient = mutableMapOf<String, RatchetRecipientData>()
         for (recipient_email in recipients) {
@@ -206,6 +213,18 @@ class RatchetEncryptor @Inject constructor(
             recipients = per_recipient,
         )
         return json.encodeToString(envelope)
+    }
+
+    private fun sender_identity_for(sender_email: String): RatchetCrypto.AddressIdentity? {
+        val account_jwk = session_key_store.get_ratchet_identity_jwk()?.takeIf { it.isNotBlank() }
+            ?: return null
+        val account_public = session_key_store.get_ratchet_identity_public_b64()?.takeIf { it.isNotBlank() }
+            ?: return null
+        val primary_email = runCatching { session_key_store.get_user_email() }.getOrNull()
+        if (sender_uses_account_identity(sender_email, primary_email)) {
+            return RatchetCrypto.AddressIdentity(account_jwk, account_public)
+        }
+        return RatchetCrypto.derive_address_identity(account_jwk, sender_email)
     }
 
     private val verifying_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()

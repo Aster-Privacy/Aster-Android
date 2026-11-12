@@ -241,4 +241,24 @@ class PrekeyBundlePolicyTest {
         }.exceptionOrNull()
         assertTrue(thrown is PgpFallbackSealException)
     }
+
+    @Test
+    fun `sealing without the sender key uses only recipient keys`() = runTest {
+        var sealed_keys: List<String> = emptyList()
+        val sealed = seal_pgp_for_recipients(
+            recipients = listOf("peer@astermail.org"),
+            own_public_key = null,
+            fetch_public_key = { "peer-key" },
+            is_owner_key_trusted = { _, _ -> true },
+            can_encrypt_to = { true },
+            encrypt_and_sign = { keys ->
+                sealed_keys = keys
+                "sealed"
+            },
+            include_own_key = false,
+        )
+
+        assertEquals("sealed", sealed)
+        assertEquals(listOf("peer-key"), sealed_keys)
+    }
 }

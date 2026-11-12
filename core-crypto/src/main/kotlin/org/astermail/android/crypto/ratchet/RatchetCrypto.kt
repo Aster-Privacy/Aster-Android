@@ -171,6 +171,54 @@ object RatchetCrypto {
         return "{\"kty\":\"EC\",\"crv\":\"P-256\",\"d\":\"$d_b64url\"}"
     }
 
+    data class AddressIdentity(
+        val identity_jwk: String,
+        val identity_public_b64: String,
+    )
+
+    private val address_identity_salt =
+        "aster/ratchet/address-sender-identity/v1".toByteArray(Charsets.UTF_8)
+
+    fun normalize_identity_address(address: String): String =
+        address.trim().lowercase(java.util.Locale.ROOT)
+
+    fun derive_address_identity(account_identity_jwk: String, address: String): AddressIdentity? {
+        val normalized = normalize_identity_address(address)
+        if (account_identity_jwk.isBlank() || normalized.isEmpty()) return null
+        var account_scalar: ByteArray? = null
+        var seed: ByteArray? = null
+        var scalar_bytes: ByteArray? = null
+        try {
+            val account_d = jwk_extract_d_bytes(account_identity_jwk)
+            account_scalar = account_d
+            if (account_d.size != 32) return null
+            val derived_seed = hkdf_sha256(
+                account_d,
+                address_identity_salt,
+                normalized.toByteArray(Charsets.UTF_8),
+                48,
+            )
+            seed = derived_seed
+            val order = secp256r1.order
+            val scalar = BigInteger(1, derived_seed)
+                .mod(order.subtract(BigInteger.ONE))
+                .add(BigInteger.ONE)
+            val fixed = int_to_fixed(scalar, 32)
+            scalar_bytes = fixed
+            val identity_jwk = p256_private_to_jwk(raw_d_to_private(fixed))
+            return AddressIdentity(
+                identity_jwk = identity_jwk,
+                identity_public_b64 = b64_encode(p256_public_raw_from_private_jwk(identity_jwk)),
+            )
+        } catch (_: Throwable) {
+            return null
+        } finally {
+            account_scalar?.fill(0)
+            seed?.fill(0)
+            scalar_bytes?.fill(0)
+        }
+    }
+
     fun p256_public_raw_from_private_jwk(jwk_json: String): ByteArray {
         val private_key = parse_p256_private_jwk(jwk_json)
         val ec = private_key as java.security.interfaces.ECPrivateKey
