@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">복구 코드 저장</string>
     <string name="recovery_codes_reminder_body">Aster는 비밀번호로 메일을 암호화하므로 누구도 대신 재설정할 수 없습니다. 암호화된 메일로 돌아가는 유일한 방법은 복구 코드입니다.</string>
     <string name="recovery_codes_reminder_action">복구 코드 받기</string>
+    <string name="recovery_codes_refresh_title">복구 코드를 교체하세요</string>
+    <string name="recovery_codes_refresh_body">저장된 복구 코드는 이전의 짧은 형식을 사용합니다. 새 코드를 받아 저장하세요. 새 코드를 받으면 이전 코드는 작동하지 않습니다.</string>
+    <string name="recovery_codes_refresh_action">새 코드 받기</string>
     <string name="recovery_phrase_migrate_title">복구 코드로 전환</string>
     <string name="recovery_phrase_migrate_body">복구 문구는 곧 사라집니다. 계정을 계속 복구할 수 있도록 지금 복구 코드를 받으세요.</string>
     <string name="recovery_phrase_migrate_action">코드 받기</string>

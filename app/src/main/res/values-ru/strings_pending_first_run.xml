@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">Сохраните коды восстановления</string>
     <string name="recovery_codes_reminder_body">Aster шифрует вашу почту вашим паролем, поэтому никто не сможет сбросить его за вас. Коды восстановления остаются единственным способом вернуться к зашифрованной почте.</string>
     <string name="recovery_codes_reminder_action">Получить коды восстановления</string>
+    <string name="recovery_codes_refresh_title">Замените коды восстановления</string>
+    <string name="recovery_codes_refresh_body">Сохранённые коды восстановления имеют старый, более короткий формат. Получите новые коды и сохраните их. После этого старые коды перестанут работать.</string>
+    <string name="recovery_codes_refresh_action">Получить новые коды</string>
     <string name="recovery_phrase_migrate_title">Перейдите на коды восстановления</string>
     <string name="recovery_phrase_migrate_body">Фразы восстановления скоро перестанут работать. Получите коды восстановления сейчас, чтобы сохранить возможность восстановить аккаунт.</string>
     <string name="recovery_phrase_migrate_action">Получить коды</string>

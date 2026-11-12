@@ -37,6 +37,24 @@ import org.astermail.android.api.ApiError
 data class InitiateRecoveryRequest(
     val code_hash: String,
     val email: String,
+    val candidates: List<VerifierCandidate> = emptyList(),
+)
+
+@Serializable
+data class VerifierCandidate(
+    val verifier_salt: String,
+    val code_verifier: String,
+)
+
+@Serializable
+data class VerifierSaltsRequest(
+    val email: String,
+)
+
+@Serializable
+data class VerifierSaltsResponse(
+    val verifier_salts: List<String> = emptyList(),
+    val code_hash_optional: Boolean? = null,
 )
 
 @Serializable
@@ -69,6 +87,8 @@ data class RecoveryShareData(
     val code_salt: String,
     val encrypted_recovery_key: String,
     val recovery_key_nonce: String,
+    val verifier_salt: String? = null,
+    val code_verifier: String? = null,
 )
 
 @Serializable
@@ -147,6 +167,8 @@ data class CodesStatusResponse(
     val total: Long = 0,
     val remaining: Long = 0,
     val used: List<UsedCode> = emptyList(),
+    val verifier_salts: List<String?> = emptyList(),
+    val code_hash_optional: Boolean? = null,
 )
 
 @Serializable
@@ -185,6 +207,8 @@ data class InactiveKeySetInfo(
 @Serializable
 data class ListInactiveKeySetsResponse(
     val inactive_key_sets: List<InactiveKeySetInfo> = emptyList(),
+    val verifier_salts: List<String> = emptyList(),
+    val code_hash_optional: Boolean? = null,
 )
 
 @Serializable
@@ -213,6 +237,7 @@ data class ConsumeInactiveKeySetResponse(
 @Serializable
 data class UnlockInactiveWithCodeRequest(
     val code_hash: String,
+    val candidates: List<VerifierCandidate> = emptyList(),
 )
 
 @Serializable
@@ -265,6 +290,7 @@ data class DeviceSecretsResponse(
 
 interface RecoveryApi {
     suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse
+    suspend fun verifier_salts(request: VerifierSaltsRequest): VerifierSaltsResponse = VerifierSaltsResponse()
     suspend fun initiate_email(request: InitiateEmailRecoveryRequest): InitiateEmailRecoveryResponse
     suspend fun complete(request: CompleteRecoveryRequest): CompleteRecoveryResponse
     suspend fun backup(request: SaveRecoveryBackupRequest): SaveRecoveryBackupResponse
@@ -287,6 +313,14 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
 
     override suspend fun initiate(request: InitiateRecoveryRequest): InitiateRecoveryResponse {
         val response = client.http.post("${client.base_url}$base/initiate") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun verifier_salts(request: VerifierSaltsRequest): VerifierSaltsResponse {
+        val response = client.http.post("${client.base_url}$base/verifier-salts") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

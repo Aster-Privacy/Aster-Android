@@ -169,7 +169,7 @@ fun FirstRunPromptCard(
     title: String,
     body: String,
     action_label: String,
-    dismiss_label: String,
+    dismiss_label: String?,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     on_action: () -> Unit,
     on_dismiss: () -> Unit,
@@ -214,14 +214,16 @@ fun FirstRunPromptCard(
                     modifier = Modifier.fillMaxWidth(),
                     spacing = AsterSpacing.xs,
                 ) {
-                    TextButton(onClick = on_dismiss) {
-                        Text(
-                            text = dismiss_label,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colors.text_secondary,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
+                    if (dismiss_label != null) {
+                        TextButton(onClick = on_dismiss) {
+                            Text(
+                                text = dismiss_label,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = colors.text_secondary,
+                                maxLines = 1,
+                                softWrap = false,
+                            )
+                        }
                     }
                     TextButton(onClick = on_action) {
                         Text(
@@ -274,6 +276,25 @@ fun RecoveryCodesReminderCard(
         icon = TablerIcons.Key,
         on_action = on_get_codes,
         on_dismiss = on_later,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun RecoveryCodesRefreshCard(
+    visible: Boolean,
+    on_get_codes: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FirstRunPromptCard(
+        visible = visible,
+        title = stringResource(R.string.recovery_codes_refresh_title),
+        body = stringResource(R.string.recovery_codes_refresh_body),
+        action_label = stringResource(R.string.recovery_codes_refresh_action),
+        dismiss_label = null,
+        icon = TablerIcons.Key,
+        on_action = on_get_codes,
+        on_dismiss = {},
         modifier = modifier,
     )
 }

@@ -213,7 +213,8 @@ class AuthRepository @Inject constructor(
             } finally {
                 backup_plain.fill(0)
             }
-            val shares = codes.map { generate_recovery_share(it, recovery_key) }
+            val verifier_salt = generate_verifier_salt()
+            val shares = codes.map { generate_recovery_share(it, recovery_key, verifier_salt) }
             val request = SaveRecoveryBackupRequest(
                 recovery_shares = shares,
                 encrypted_vault_backup = vault_backup.encrypted_data,
@@ -1224,7 +1225,10 @@ class AuthRepository @Inject constructor(
         )
         val vault_backup = encrypt_vault_backup(vault_for_backup, recovery_key)
         vault_for_backup.fill(0)
-        val recovery_shares = recovery_codes.map { code -> generate_recovery_share(code, recovery_key) }
+        val verifier_salt = generate_verifier_salt()
+        val recovery_shares = recovery_codes.map { code ->
+            generate_recovery_share(code, recovery_key, verifier_salt)
+        }
         recovery_key.fill(0)
 
         val register_resp = auth_api.register(
@@ -2018,8 +2022,23 @@ class AuthRepository @Inject constructor(
 
     suspend fun restore_inactive_key_sets_with_code(code: String): CodeRestoreResult {
         val code_hash = hash_recovery_code(canonicalize_recovery_code(code))
+        val listed = try {
+            recovery_api.list_inactive_key_sets()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
+        val candidates = withContext(Dispatchers.Default) {
+            build_verifier_candidates(code, listed?.verifier_salts.orEmpty())
+        }
+        val omit_code_hash = candidates.isNotEmpty() && listed?.code_hash_optional == true
         val key_sets = recovery_api
-            .unlock_inactive_key_sets_with_code(UnlockInactiveWithCodeRequest(code_hash))
+            .unlock_inactive_key_sets_with_code(
+                UnlockInactiveWithCodeRequest(
+                    code_hash = if (omit_code_hash) "" else code_hash,
+                    candidates = candidates,
+                ),
+            )
             .key_sets
         if (key_sets.isEmpty()) return CodeRestoreResult()
 
@@ -3020,6 +3039,13 @@ class AuthRepository @Inject constructor(
 
         try {
             val codes = generate_recovery_codes()
+            val include_code_hash = try {
+                recovery_api.codes_status().code_hash_optional != true
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                true
+            }
+            val verifier_salt = generate_verifier_salt()
             val outcome = withContext(NonCancellable) {
                 vault_updates.with_passphrase(passphrase).replace_through(
                     edit = { draft ->
@@ -3033,7 +3059,9 @@ class AuthRepository @Inject constructor(
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
                         val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
                         backup_plain.fill(0)
-                        val shares = codes.map { generate_recovery_share(it, recovery_key) }
+                        val shares = codes.map {
+                            generate_recovery_share(it, recovery_key, verifier_salt, include_code_hash)
+                        }
                         recovery_key.fill(0)
                         recovery_api.backup(
                             SaveRecoveryBackupRequest(
@@ -3076,7 +3104,12 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private fun generate_recovery_share(code: String, recovery_key: ByteArray): RecoveryShareData {
+    private fun generate_recovery_share(
+        code: String,
+        recovery_key: ByteArray,
+        verifier_salt: ByteArray,
+        include_code_hash: Boolean = true,
+    ): RecoveryShareData {
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
@@ -3084,10 +3117,14 @@ class AuthRepository @Inject constructor(
         val encrypted = AesGcm.encrypt(derived, nonce, recovery_key)
         derived.fill(0)
         return RecoveryShareData(
-            code_hash = code_hash,
+            code_hash = if (include_code_hash) code_hash else "",
             code_salt = base64_encode(salt),
             encrypted_recovery_key = base64_encode(encrypted),
             recovery_key_nonce = base64_encode(nonce),
+            verifier_salt = encode_verifier_field(verifier_salt),
+            code_verifier = encode_verifier_field(
+                derive_code_verifier(raw_recovery_code_hash(code), verifier_salt),
+            ),
         )
     }
 
