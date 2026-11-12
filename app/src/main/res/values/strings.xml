@@ -3611,4 +3611,11 @@
     <string name="sidebar_move_section_up">Move %1$s up</string>
     <string name="sidebar_move_section_down">Move %1$s down</string>
     <string name="contacts_pending_sync">Waiting to sync</string>
+    <string name="recovery_previous_password_placeholder">Enter your previous password</string>
+    <string name="recovery_previous_password_body">Your encryption keys are still protected by the password you used before this reset. To keep your mail readable, enter that previous password. Your keys stay the same and your new password protects them from now on.</string>
+    <string name="recovery_previous_password_required">Enter your previous password, or tap I don\'t remember it.</string>
+    <string name="recovery_previous_password_incorrect">That password doesn\'t unlock your encryption keys. Check it and try again.</string>
+    <string name="recovery_previous_password_forgot">I don\'t remember it</string>
+    <string name="recovery_previous_password_use">Enter my previous password</string>
+    <string name="recovery_previous_password_skipped_warning">Your password is reset and your encryption keys are kept, but they stay locked with your previous password. Your mail can\'t be read until you enter that password from the Recover data banner.</string>
 </resources>

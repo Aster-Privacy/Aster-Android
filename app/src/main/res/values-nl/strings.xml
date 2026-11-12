@@ -3560,4 +3560,11 @@
     <string name="sidebar_move_section_up">%1$s omhoog verplaatsen</string>
     <string name="sidebar_move_section_down">%1$s omlaag verplaatsen</string>
     <string name="contacts_pending_sync">Wacht op synchronisatie</string>
+    <string name="recovery_previous_password_placeholder">Voer je vorige wachtwoord in</string>
+    <string name="recovery_previous_password_body">Je versleutelingssleutels zijn nog beveiligd met het wachtwoord dat je vóór deze reset gebruikte. Voer dat vorige wachtwoord in om je e-mail leesbaar te houden. Je sleutels blijven hetzelfde en worden vanaf nu beveiligd met je nieuwe wachtwoord.</string>
+    <string name="recovery_previous_password_required">Voer je vorige wachtwoord in of tik op Ik weet het niet meer.</string>
+    <string name="recovery_previous_password_incorrect">Dat wachtwoord ontgrendelt je versleutelingssleutels niet. Controleer het en probeer het opnieuw.</string>
+    <string name="recovery_previous_password_forgot">Ik weet het niet meer</string>
+    <string name="recovery_previous_password_use">Mijn vorige wachtwoord invoeren</string>
+    <string name="recovery_previous_password_skipped_warning">Je wachtwoord wordt gereset en je versleutelingssleutels blijven behouden, maar ze blijven vergrendeld met je vorige wachtwoord. Je e-mail is pas leesbaar nadat je dat wachtwoord invoert via de banner Gegevens herstellen.</string>
 </resources>

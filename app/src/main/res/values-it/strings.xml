@@ -3579,4 +3579,11 @@
     <string name="sidebar_move_section_up">Sposta %1$s in alto</string>
     <string name="sidebar_move_section_down">Sposta %1$s in basso</string>
     <string name="contacts_pending_sync">In attesa di sincronizzazione</string>
+    <string name="recovery_previous_password_placeholder">Inserisci la password precedente</string>
+    <string name="recovery_previous_password_body">Le tue chiavi di crittografia sono ancora protette dalla password che usavi prima di questo ripristino. Per mantenere leggibile la tua posta, inserisci quella password precedente. Le tue chiavi restano le stesse e da ora sono protette dalla nuova password.</string>
+    <string name="recovery_previous_password_required">Inserisci la password precedente o tocca Non la ricordo.</string>
+    <string name="recovery_previous_password_incorrect">Questa password non sblocca le tue chiavi di crittografia. Controllala e riprova.</string>
+    <string name="recovery_previous_password_forgot">Non la ricordo</string>
+    <string name="recovery_previous_password_use">Inserisci la password precedente</string>
+    <string name="recovery_previous_password_skipped_warning">La password viene reimpostata e le chiavi di crittografia vengono conservate, ma restano bloccate con la password precedente. Non potrai leggere la posta finché non inserisci quella password dal banner Recupera dati.</string>
 </resources>

@@ -3643,4 +3643,11 @@
     <string name="sidebar_move_section_up">نقل %1$s لأعلى</string>
     <string name="sidebar_move_section_down">نقل %1$s لأسفل</string>
     <string name="contacts_pending_sync">في انتظار المزامنة</string>
+    <string name="recovery_previous_password_placeholder">أدخل كلمة المرور السابقة</string>
+    <string name="recovery_previous_password_body">لا تزال مفاتيح التشفير محمية بكلمة المرور التي كنت تستخدمها قبل إعادة التعيين هذه. لكي يبقى بريدك قابلاً للقراءة، أدخل كلمة المرور السابقة. تبقى مفاتيحك كما هي وتحميها كلمة المرور الجديدة من الآن فصاعدًا.</string>
+    <string name="recovery_previous_password_required">أدخل كلمة المرور السابقة أو انقر على لا أتذكرها.</string>
+    <string name="recovery_previous_password_incorrect">كلمة المرور هذه لا تفتح مفاتيح التشفير. تحقق منها وحاول مرة أخرى.</string>
+    <string name="recovery_previous_password_forgot">لا أتذكرها</string>
+    <string name="recovery_previous_password_use">إدخال كلمة المرور السابقة</string>
+    <string name="recovery_previous_password_skipped_warning">تتم إعادة تعيين كلمة المرور ويتم الاحتفاظ بمفاتيح التشفير، لكنها تبقى مقفلة بكلمة المرور السابقة. لا يمكن قراءة بريدك حتى تدخل كلمة المرور تلك من شريط استعادة البيانات.</string>
 </resources>

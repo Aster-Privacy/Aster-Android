@@ -3580,4 +3580,11 @@
     <string name="sidebar_move_section_up">Mover %1$s hacia arriba</string>
     <string name="sidebar_move_section_down">Mover %1$s hacia abajo</string>
     <string name="contacts_pending_sync">Pendiente de sincronizar</string>
+    <string name="recovery_previous_password_placeholder">Introduce tu contraseña anterior</string>
+    <string name="recovery_previous_password_body">Tus claves de cifrado siguen protegidas con la contraseña que usabas antes de este restablecimiento. Para que tu correo siga siendo legible, introduce esa contraseña anterior. Tus claves no cambian y, a partir de ahora, las protege tu nueva contraseña.</string>
+    <string name="recovery_previous_password_required">Introduce tu contraseña anterior o toca No la recuerdo.</string>
+    <string name="recovery_previous_password_incorrect">Esa contraseña no desbloquea tus claves de cifrado. Compruébala e inténtalo de nuevo.</string>
+    <string name="recovery_previous_password_forgot">No la recuerdo</string>
+    <string name="recovery_previous_password_use">Introducir mi contraseña anterior</string>
+    <string name="recovery_previous_password_skipped_warning">Tu contraseña se restablece y tus claves de cifrado se conservan, pero siguen bloqueadas con tu contraseña anterior. No podrás leer tu correo hasta que introduzcas esa contraseña desde el aviso Recuperar datos.</string>
 </resources>

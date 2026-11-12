@@ -3579,4 +3579,11 @@
     <string name="sidebar_move_section_up">Mover %1$s para cima</string>
     <string name="sidebar_move_section_down">Mover %1$s para baixo</string>
     <string name="contacts_pending_sync">A aguardar sincronização</string>
+    <string name="recovery_previous_password_placeholder">Introduza a sua palavra-passe anterior</string>
+    <string name="recovery_previous_password_body">As suas chaves de encriptação continuam protegidas pela palavra-passe que usava antes desta reposição. Para manter o seu correio legível, introduza essa palavra-passe anterior. As suas chaves mantêm-se e passam a ser protegidas pela nova palavra-passe.</string>
+    <string name="recovery_previous_password_required">Introduza a sua palavra-passe anterior ou toque em Não me lembro.</string>
+    <string name="recovery_previous_password_incorrect">Essa palavra-passe não desbloqueia as suas chaves de encriptação. Verifique-a e tente novamente.</string>
+    <string name="recovery_previous_password_forgot">Não me lembro</string>
+    <string name="recovery_previous_password_use">Introduzir a minha palavra-passe anterior</string>
+    <string name="recovery_previous_password_skipped_warning">A sua palavra-passe é reposta e as suas chaves de encriptação são mantidas, mas continuam bloqueadas com a palavra-passe anterior. Não poderá ler o seu correio até introduzir essa palavra-passe a partir do aviso Recuperar dados.</string>
 </resources>

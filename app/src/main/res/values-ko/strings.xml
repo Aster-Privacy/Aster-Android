@@ -3541,4 +3541,11 @@
     <string name="sidebar_move_section_up">%1$s 위로 이동</string>
     <string name="sidebar_move_section_down">%1$s 아래로 이동</string>
     <string name="contacts_pending_sync">동기화 대기 중</string>
+    <string name="recovery_previous_password_placeholder">이전 비밀번호 입력</string>
+    <string name="recovery_previous_password_body">암호화 키는 이번 재설정 전에 사용하던 비밀번호로 계속 보호되고 있습니다. 메일을 읽을 수 있도록 유지하려면 이전 비밀번호를 입력하세요. 키는 그대로 유지되며 이제부터 새 비밀번호로 보호됩니다.</string>
+    <string name="recovery_previous_password_required">이전 비밀번호를 입력하거나 기억나지 않음을 탭하세요.</string>
+    <string name="recovery_previous_password_incorrect">이 비밀번호로는 암호화 키를 잠금 해제할 수 없습니다. 확인 후 다시 시도하세요.</string>
+    <string name="recovery_previous_password_forgot">기억나지 않음</string>
+    <string name="recovery_previous_password_use">이전 비밀번호 입력하기</string>
+    <string name="recovery_previous_password_skipped_warning">비밀번호는 재설정되고 암호화 키는 유지되지만, 이전 비밀번호로 잠긴 상태로 남습니다. 데이터 복구 배너에서 그 비밀번호를 입력할 때까지 메일을 읽을 수 없습니다.</string>
 </resources>

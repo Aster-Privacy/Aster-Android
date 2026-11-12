@@ -3560,4 +3560,11 @@
     <string name="sidebar_move_section_up">%1$s öğesini yukarı taşı</string>
     <string name="sidebar_move_section_down">%1$s öğesini aşağı taşı</string>
     <string name="contacts_pending_sync">Eşitlenmeyi bekliyor</string>
+    <string name="recovery_previous_password_placeholder">Önceki şifrenizi girin</string>
+    <string name="recovery_previous_password_body">Şifreleme anahtarlarınız hâlâ bu sıfırlamadan önce kullandığınız şifreyle korunuyor. E-postalarınızın okunabilir kalması için bu önceki şifreyi girin. Anahtarlarınız aynı kalır ve bundan sonra yeni şifreniz tarafından korunur.</string>
+    <string name="recovery_previous_password_required">Önceki şifrenizi girin veya Hatırlamıyorum seçeneğine dokunun.</string>
+    <string name="recovery_previous_password_incorrect">Bu şifre, şifreleme anahtarlarınızın kilidini açmıyor. Kontrol edip yeniden deneyin.</string>
+    <string name="recovery_previous_password_forgot">Hatırlamıyorum</string>
+    <string name="recovery_previous_password_use">Önceki şifremi gir</string>
+    <string name="recovery_previous_password_skipped_warning">Şifreniz sıfırlanır ve şifreleme anahtarlarınız korunur, ancak önceki şifrenizle kilitli kalır. Bu şifreyi Verileri kurtar başlığından girene kadar e-postalarınız okunamaz.</string>
 </resources>

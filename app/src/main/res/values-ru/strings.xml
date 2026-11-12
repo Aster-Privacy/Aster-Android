@@ -3602,4 +3602,11 @@
     <string name="sidebar_move_section_up">Переместить %1$s вверх</string>
     <string name="sidebar_move_section_down">Переместить %1$s вниз</string>
     <string name="contacts_pending_sync">Ожидает синхронизации</string>
+    <string name="recovery_previous_password_placeholder">Введите прежний пароль</string>
+    <string name="recovery_previous_password_body">Ваши ключи шифрования всё ещё защищены паролем, который вы использовали до этого сброса. Чтобы ваша почта оставалась читаемой, введите этот прежний пароль. Ключи останутся прежними, и теперь их будет защищать новый пароль.</string>
+    <string name="recovery_previous_password_required">Введите прежний пароль или нажмите «Не помню».</string>
+    <string name="recovery_previous_password_incorrect">Этот пароль не разблокирует ваши ключи шифрования. Проверьте его и повторите попытку.</string>
+    <string name="recovery_previous_password_forgot">Не помню</string>
+    <string name="recovery_previous_password_use">Ввести прежний пароль</string>
+    <string name="recovery_previous_password_skipped_warning">Пароль будет сброшен, а ключи шифрования сохранятся, но останутся заблокированными прежним паролем. Почту нельзя будет прочитать, пока вы не введёте этот пароль в баннере «Восстановить данные».</string>
 </resources>

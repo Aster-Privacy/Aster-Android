@@ -3561,4 +3561,11 @@
     <string name="sidebar_move_section_up">%1$s nach oben verschieben</string>
     <string name="sidebar_move_section_down">%1$s nach unten verschieben</string>
     <string name="contacts_pending_sync">Wartet auf Synchronisierung</string>
+    <string name="recovery_previous_password_placeholder">Vorheriges Passwort eingeben</string>
+    <string name="recovery_previous_password_body">Deine Verschlüsselungsschlüssel sind noch mit dem Passwort geschützt, das du vor dieser Zurücksetzung verwendet hast. Damit deine E-Mails lesbar bleiben, gib dieses vorherige Passwort ein. Deine Schlüssel bleiben gleich und werden ab jetzt mit deinem neuen Passwort geschützt.</string>
+    <string name="recovery_previous_password_required">Gib dein vorheriges Passwort ein oder tippe auf Ich weiß es nicht mehr.</string>
+    <string name="recovery_previous_password_incorrect">Dieses Passwort entsperrt deine Verschlüsselungsschlüssel nicht. Prüfe es und versuche es erneut.</string>
+    <string name="recovery_previous_password_forgot">Ich weiß es nicht mehr</string>
+    <string name="recovery_previous_password_use">Vorheriges Passwort eingeben</string>
+    <string name="recovery_previous_password_skipped_warning">Dein Passwort wird zurückgesetzt und deine Verschlüsselungsschlüssel bleiben erhalten, sind aber weiterhin mit deinem vorherigen Passwort gesperrt. Deine E-Mails sind erst lesbar, wenn du dieses Passwort über das Banner Daten wiederherstellen eingibst.</string>
 </resources>
