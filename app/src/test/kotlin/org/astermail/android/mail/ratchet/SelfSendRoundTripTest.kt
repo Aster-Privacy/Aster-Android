@@ -154,7 +154,7 @@ class SelfSendRoundTripTest {
 
         val pins = RatchetIdentityPinStore(mockk(relaxed = true), session_key_store)
         val locks = ConversationLocks()
-        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } answers {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
             ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
         }
         coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Unsupported

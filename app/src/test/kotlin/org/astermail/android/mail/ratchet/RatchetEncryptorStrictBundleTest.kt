@@ -144,7 +144,7 @@ class RatchetEncryptorStrictBundleTest {
     }
 
     private fun account_only_directory(): AddressIdentityDirectory {
-        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } answers {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
             ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
         }
         return AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins)
