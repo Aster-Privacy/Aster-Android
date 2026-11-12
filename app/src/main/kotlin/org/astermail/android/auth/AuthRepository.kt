@@ -3033,6 +3033,28 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun sync_recovery_codes(): List<String>? {
+        val user_id = session_key_store.get_user_id() ?: return session_key_store.get_recovery_codes()
+        val passphrase = session_key_store.get_passphrase() ?: return session_key_store.get_recovery_codes()
+        try {
+            val draft = vault_updates.with_passphrase(passphrase).latest()
+                ?: return session_key_store.get_recovery_codes()
+            val codes = org.astermail.android.crypto.storage_rotation.vault_recovery_codes(draft.vault)
+            if (codes.isEmpty() || session_key_store.get_user_id() != user_id) {
+                return session_key_store.get_recovery_codes()
+            }
+            if (codes != session_key_store.get_recovery_codes()) {
+                withContext(NonCancellable) {
+                    session_key_store.put_recovery_codes(codes)
+                    runCatching { save_session_snapshot(user_id) }
+                }
+            }
+            return codes
+        } finally {
+            passphrase.fill(0)
+        }
+    }
+
     suspend fun rotate_recovery_codes(step_up_token: String): List<String> {
         val passphrase = session_key_store.get_passphrase()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
