@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">Sla je herstelcodes op</string>
     <string name="recovery_codes_reminder_body">Aster versleutelt je mail met je wachtwoord, dus niemand kan dat wachtwoord voor je opnieuw instellen. Herstelcodes zijn de enige weg terug naar je versleutelde mail.</string>
     <string name="recovery_codes_reminder_action">Herstelcodes ophalen</string>
+    <string name="recovery_codes_refresh_title">Vervang je herstelcodes</string>
+    <string name="recovery_codes_refresh_body">Je opgeslagen herstelcodes gebruiken een oudere, kortere indeling. Haal nieuwe codes op en bewaar ze. Daarna werken je oude codes niet meer.</string>
+    <string name="recovery_codes_refresh_action">Nieuwe codes ophalen</string>
     <string name="recovery_phrase_migrate_title">Overstappen op herstelcodes</string>
     <string name="recovery_phrase_migrate_body">Herstelzinnen verdwijnen. Haal nu herstelcodes op zodat je je account nog kunt herstellen.</string>
     <string name="recovery_phrase_migrate_action">Codes ophalen</string>

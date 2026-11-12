@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">Zapisz kody odzyskiwania</string>
     <string name="recovery_codes_reminder_body">Aster szyfruje Twoją pocztę Twoim hasłem, więc nikt nie zresetuje go za Ciebie. Kody odzyskiwania to jedyna droga powrotu do zaszyfrowanej poczty.</string>
     <string name="recovery_codes_reminder_action">Uzyskaj kody odzyskiwania</string>
+    <string name="recovery_codes_refresh_title">Wymień kody odzyskiwania</string>
+    <string name="recovery_codes_refresh_body">Twoje zapisane kody odzyskiwania mają starszy, krótszy format. Pobierz nowe kody i zapisz je. Od tej chwili stare kody przestają działać.</string>
+    <string name="recovery_codes_refresh_action">Pobierz nowe kody</string>
     <string name="recovery_phrase_migrate_title">Przejdź na kody odzyskiwania</string>
     <string name="recovery_phrase_migrate_body">Frazy odzyskiwania zostaną wycofane. Uzyskaj teraz kody odzyskiwania, aby nadal móc odzyskać konto.</string>
     <string name="recovery_phrase_migrate_action">Uzyskaj kody</string>

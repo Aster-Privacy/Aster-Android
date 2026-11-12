@@ -70,9 +70,11 @@ import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Lock
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.astermail.android.R
-import org.astermail.android.auth.recovery_code_stored_hashes
+import org.astermail.android.auth.used_recovery_codes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
@@ -106,6 +108,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
     var is_verifying by remember { mutableStateOf(false) }
     var step_up_token by remember { mutableStateOf<String?>(null) }
     var used_hashes by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var used_codes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var total_codes by remember { mutableStateOf(0) }
     var created_at by remember { mutableStateOf<String?>(null) }
     var codes by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -204,6 +207,12 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                     .toSet()
                                 total_codes = response.codes.size
                                 codes = vm.get_recovery_codes().orEmpty()
+                                val shown_codes = codes
+                                val stored_hashes = used_hashes
+                                used_codes = withContext(Dispatchers.Default) {
+                                    runCatching { used_recovery_codes(shown_codes, stored_hashes) }
+                                        .getOrDefault(emptySet())
+                                }
                                 created_at = format_codes_date(vm.recovery_codes_status_now()?.created_at)
                             }
                             .onFailure { error = vm.error_text(it) }
@@ -277,7 +286,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                     }
                 }
             } else {
-                recovery_codes_status_grid(codes = codes, used_hashes = used_hashes)
+                recovery_codes_status_grid(codes = codes, used_codes = used_codes)
                 v_gap(AsterSpacing.lg)
                 AsterActionRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -396,6 +405,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                         .onSuccess { new_codes ->
                             codes = new_codes
                             used_hashes = emptySet()
+                            used_codes = emptySet()
                             total_codes = new_codes.size
                             created_at = format_codes_date(null)
                             rotated = true
@@ -417,7 +427,7 @@ private fun format_codes_date(iso: String?): String {
 }
 
 @Composable
-private fun recovery_codes_status_grid(codes: List<String>, used_hashes: Set<String>) {
+private fun recovery_codes_status_grid(codes: List<String>, used_codes: Set<String>) {
     val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
@@ -434,9 +444,7 @@ private fun recovery_codes_status_grid(codes: List<String>, used_hashes: Set<Str
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
                 pair.forEachIndexed { column_index, code ->
-                    val is_used = runCatching { recovery_code_stored_hashes(code) }
-                        .getOrDefault(emptySet())
-                        .any { it in used_hashes }
+                    val is_used = code in used_codes
                     Row(
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,

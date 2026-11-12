@@ -48,6 +48,7 @@ import org.astermail.android.api.recovery.InitiateEmailRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryRequest
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery.RecoveryShareData
+import org.astermail.android.api.recovery.VerifierSaltsRequest
 import org.astermail.android.crypto.CryptoNative
 
 enum class RecoveryStep {
@@ -93,6 +94,7 @@ class RecoveryViewModel @Inject constructor(
     val state: StateFlow<RecoveryUiState> = _state.asStateFlow()
 
     internal var compute_dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
+    private var is_code_hash_optional = false
 
     private var recovery_token: String? = null
     private var decrypted_vault: ByteArray? = null
@@ -243,8 +245,23 @@ class RecoveryViewModel @Inject constructor(
                 val code_hash = withContext(compute_dispatcher) {
                     hash_recovery_code(normalized)
                 }
+                val salts = try {
+                    recovery_api.verifier_salts(VerifierSaltsRequest(email = user_email))
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+                val candidates = withContext(compute_dispatcher) {
+                    build_verifier_candidates(normalized, salts?.verifier_salts.orEmpty())
+                }
+                val omit_code_hash = candidates.isNotEmpty() && salts?.code_hash_optional == true
+                is_code_hash_optional = omit_code_hash
                 val response = recovery_api.initiate(
-                    InitiateRecoveryRequest(code_hash = code_hash, email = user_email),
+                    InitiateRecoveryRequest(
+                        code_hash = if (omit_code_hash) "" else code_hash,
+                        email = user_email,
+                        candidates = candidates,
+                    ),
                 )
                 recovery_token = response.recovery_token
                 had_recovery_email = !response.encrypted_recovery_email.isNullOrBlank()
@@ -351,8 +368,10 @@ class RecoveryViewModel @Inject constructor(
                 }
 
                 val shares = withContext(compute_dispatcher) {
+                    val verifier_salt = generate_verifier_salt()
+
                     new_codes.map { code ->
-                        generate_recovery_share(code, new_recovery_key)
+                        generate_recovery_share(code, new_recovery_key, verifier_salt)
                     }
                 }
 
@@ -578,7 +597,11 @@ class RecoveryViewModel @Inject constructor(
         return VaultBackup(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
     }
 
-    private fun generate_recovery_share(code: String, recovery_key: ByteArray): RecoveryShareData {
+    private fun generate_recovery_share(
+        code: String,
+        recovery_key: ByteArray,
+        verifier_salt: ByteArray,
+    ): RecoveryShareData {
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
@@ -588,10 +611,14 @@ class RecoveryViewModel @Inject constructor(
         derived.fill(0)
 
         return RecoveryShareData(
-            code_hash = code_hash,
+            code_hash = if (is_code_hash_optional) "" else code_hash,
             code_salt = base64_encode(salt),
             encrypted_recovery_key = base64_encode(encrypted),
             recovery_key_nonce = base64_encode(nonce),
+            verifier_salt = encode_verifier_field(verifier_salt),
+            code_verifier = encode_verifier_field(
+                derive_code_verifier(raw_recovery_code_hash(code), verifier_salt),
+            ),
         )
     }
 

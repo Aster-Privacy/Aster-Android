@@ -2960,7 +2960,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         recovery_methods.has_codes &&
         recovery_methods.codes_remaining <= 3L
 
-    val show_phrase_prompt = recovery_methods != null &&
+    val show_codes_refresh_prompt = !first_run_setup_pending &&
+        org.astermail.android.auth.has_outdated_recovery_codes(settings_vm.get_recovery_codes())
+
+    val show_phrase_prompt = !show_codes_refresh_prompt &&
+        recovery_methods != null &&
         recovery_methods.has_phrase &&
         !recovery_methods.has_codes &&
         !first_run_setup_pending &&
@@ -2993,9 +2997,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         !first_run_setup_pending &&
         !plan_prompt_dismissed &&
         !show_recovery_prompt &&
-        !show_phrase_prompt
+        !show_phrase_prompt &&
+        !show_codes_refresh_prompt
 
-    if (show_recovery_prompt || show_phrase_prompt || show_plan_prompt) {
+    if (show_codes_refresh_prompt || show_recovery_prompt || show_phrase_prompt || show_plan_prompt) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -3003,7 +3008,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xxl),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            if (show_phrase_prompt) {
+            if (show_codes_refresh_prompt) {
+                org.astermail.android.ui.onboarding.RecoveryCodesRefreshCard(
+                    visible = true,
+                    on_get_codes = {
+                        nav_controller.navigate(routes.settings_detail("recovery_codes"))
+                    },
+                )
+            } else if (show_phrase_prompt) {
                 org.astermail.android.ui.onboarding.PhraseMigrationCard(
                     visible = true,
                     on_get_codes = {
