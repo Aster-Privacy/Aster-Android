@@ -219,6 +219,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.mail.AttachmentIntegrityException
 import org.astermail.android.mail.AttachmentKeyUnavailableException
 import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
@@ -604,6 +605,7 @@ fun MailDetailScreen(
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
     val offer_always_allow_external =
         settings_state.preferences?.load_remote_images != "never"
+    val image_grant_allowed = allows_remote_image_grant(settings_state.preferences)
     val thread_state by mail_vm.thread_state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val reactions_enabled = settings_state.preferences?.reactions_enabled != false
@@ -931,7 +933,8 @@ fun MailDetailScreen(
             result.onSuccess { (resolved_att, bytes) -> block(resolved_att, bytes) }
                 .onFailure { error ->
                     org.astermail.android.ui.common.app_toast.show(
-                        if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                        if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                        else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                         else context.getString(R.string.failed_to_download, att.filename),
                     )
                 }
@@ -1390,9 +1393,12 @@ fun MailDetailScreen(
                             val msg = messages.lastOrNull()
                             if (msg != null) {
                                 val print_subject = email?.subject.orEmpty()
-                                val print_allow_external = !block_external_images ||
-                                    msg.id in allow_external_ids ||
-                                    is_aster_system_sender(msg)
+                                val print_allow_external = message_loads_remote_content(
+                                    blocked = block_external_images,
+                                    granted = msg.id in allow_external_ids,
+                                    grant_allowed = image_grant_allowed,
+                                    is_system_sender = is_aster_system_sender(msg),
+                                )
                                 val print_sanitize_options =
                                     remote_content_sanitize_options(settings_state.preferences)
                                 scope.launch {
@@ -1664,8 +1670,14 @@ fun MailDetailScreen(
                             my_profile_pic = my_profile_pic,
                             is_first_card = is_first_card,
                             is_last_card = is_last_card,
-                            allow_external = !block_external_images || msg.id in allow_external_ids || is_system_sender,
+                            allow_external = message_loads_remote_content(
+                                blocked = block_external_images,
+                                granted = msg.id in allow_external_ids,
+                                grant_allowed = image_grant_allowed,
+                                is_system_sender = is_system_sender,
+                            ),
                             blocked_for_traffic = blocked_for_traffic_only,
+                            offer_load_once = image_grant_allowed,
                             offer_always_allow = offer_always_allow_external,
                             show_raw_headers = settings_state.preferences?.show_raw_headers == true,
                             on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
@@ -1800,7 +1812,8 @@ fun MailDetailScreen(
                                         preview_bytes = bytes
                                     }.onFailure { error ->
                                         show_toast(
-                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                                            else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                                             else context.getString(R.string.failed_to_load_preview),
                                         )
                                     }
@@ -2560,6 +2573,7 @@ internal fun expanded_message(
     allow_external: Boolean = false,
     blocked_for_traffic: Boolean = false,
     offer_always_allow: Boolean = true,
+    offer_load_once: Boolean = true,
     on_load_external: () -> Unit = {},
     on_always_allow_external: () -> Unit = {},
     on_disable_low_network: () -> Unit = {},
@@ -3002,7 +3016,7 @@ internal fun expanded_message(
             } else {
                 external_content_banner(
                     counts = external_counts,
-                    on_allow_once = on_load_external,
+                    on_allow_once = if (offer_load_once) on_load_external else null,
                     on_always_allow = if (offer_always_allow) on_always_allow_external else null,
                     on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
                 )
@@ -4299,7 +4313,7 @@ internal fun tracker_details_dialog(
 @Composable
 internal fun external_content_banner(
     counts: ExternalContentCounts,
-    on_allow_once: () -> Unit,
+    on_allow_once: (() -> Unit)?,
     on_always_allow: (() -> Unit)?,
     on_show_trackers: (() -> Unit)? = null,
 ) {
@@ -4375,11 +4389,13 @@ internal fun external_content_banner(
             }
         }) else null,
     ) {
-        compact_banner_action(
-            label = stringResource(R.string.detail_external_load),
-            primary = true,
-            onClick = on_allow_once,
-        )
+        if (on_allow_once != null) {
+            compact_banner_action(
+                label = stringResource(R.string.detail_external_load),
+                primary = true,
+                onClick = on_allow_once,
+            )
+        }
         if (on_always_allow != null) {
             compact_banner_menu_action(
                 content_description = stringResource(R.string.more_options),

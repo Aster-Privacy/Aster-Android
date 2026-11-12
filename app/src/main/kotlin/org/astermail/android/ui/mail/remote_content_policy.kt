@@ -42,6 +42,16 @@ internal fun effective_remote_image_mode(preferences: UserPreferences?): String 
 internal fun setting_blocks_remote_images(preferences: UserPreferences?): Boolean =
     effective_remote_image_mode(preferences) != REMOTE_IMAGES_ALWAYS
 
+internal fun allows_remote_image_grant(preferences: UserPreferences?): Boolean =
+    effective_remote_image_mode(preferences) != REMOTE_IMAGES_NEVER
+
+internal fun message_loads_remote_content(
+    blocked: Boolean,
+    granted: Boolean,
+    grant_allowed: Boolean,
+    is_system_sender: Boolean,
+): Boolean = !blocked || is_system_sender || (grant_allowed && granted)
+
 internal fun setting_removes_tracking_pixels(preferences: UserPreferences?): Boolean {
     if (setting_blocks_remote_images(preferences)) return true
     return preferences?.block_external_content != false && preferences?.block_tracking_pixels != false

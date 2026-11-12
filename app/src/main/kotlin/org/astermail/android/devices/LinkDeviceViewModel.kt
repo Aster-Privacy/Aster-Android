@@ -48,7 +48,7 @@ enum class LinkDeviceStep { INPUT, CONFIRM, SUCCESS }
 enum class LinkDeviceError {
     INVALID_CODE,
     INVALID_DEVICE_KEYS,
-    CODES_NOT_CONFIRMED,
+    FINGERPRINT_MISMATCH,
     EXPIRED_CODE,
     ALREADY_LINKED,
     UPGRADE_REQUIRED,
@@ -63,7 +63,7 @@ data class LinkDeviceUiState(
     val code_input: String = "",
     val pending_device: PendingDevice? = null,
     val fingerprint: String = "",
-    val codes_match_confirmed: Boolean = false,
+    val fingerprint_input: String = "",
     val linked_device_name: String = "",
     val is_verifying: Boolean = false,
     val is_confirming: Boolean = false,
@@ -71,6 +71,15 @@ data class LinkDeviceUiState(
 ) {
     val is_code_complete: Boolean
         get() = normalize_device_code(code_input).length == DEVICE_CODE_LENGTH
+
+    val typed_fingerprint: String?
+        get() = DeviceKeyFingerprint.normalize(fingerprint_input)
+
+    val fingerprint_matches: Boolean
+        get() = fingerprint.isNotBlank() && typed_fingerprint == fingerprint
+
+    val fingerprint_rejected: Boolean
+        get() = typed_fingerprint != null && !fingerprint_matches
 }
 
 @HiltViewModel
@@ -117,7 +126,7 @@ class LinkDeviceViewModel @Inject constructor(
                         step = LinkDeviceStep.CONFIRM,
                         pending_device = device,
                         fingerprint = fingerprint,
-                        codes_match_confirmed = false,
+                        fingerprint_input = "",
                         is_verifying = false,
                         error = null,
                     )
@@ -136,15 +145,16 @@ class LinkDeviceViewModel @Inject constructor(
         val current = _state.value
         val device = current.pending_device ?: return
         if (current.is_confirming) return
-        if (!current.codes_match_confirmed || current.fingerprint.isBlank()) {
-            _state.value = current.copy(error = LinkDeviceError.CODES_NOT_CONFIRMED)
+        val typed = current.typed_fingerprint
+        if (typed == null || !current.fingerprint_matches) {
+            _state.value = current.copy(error = LinkDeviceError.FINGERPRINT_MISMATCH)
             return
         }
 
         _state.value = current.copy(is_confirming = true, error = null)
         viewModelScope.launch {
             runCatching {
-                val envelope = withContext(Dispatchers.Default) { seal_for(device, current.fingerprint) }
+                val envelope = withContext(Dispatchers.Default) { seal_for(device, typed) }
                 withContext(Dispatchers.IO) {
                     device_code_api.confirm_code(current.code_input, envelope)
                 }
@@ -166,7 +176,7 @@ class LinkDeviceViewModel @Inject constructor(
                     step = if (restart) LinkDeviceStep.INPUT else LinkDeviceStep.CONFIRM,
                     pending_device = if (restart) null else _state.value.pending_device,
                     fingerprint = if (restart) "" else _state.value.fingerprint,
-                    codes_match_confirmed = if (restart) false else _state.value.codes_match_confirmed,
+                    fingerprint_input = if (restart) "" else _state.value.fingerprint_input,
                     code_input = if (restart) "" else _state.value.code_input,
                     is_confirming = false,
                     error = error,
@@ -175,10 +185,10 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    fun set_codes_match_confirmed(confirmed: Boolean) {
+    fun on_fingerprint_change(raw: String) {
         _state.value = _state.value.copy(
-            codes_match_confirmed = confirmed,
-            error = if (confirmed) null else _state.value.error,
+            fingerprint_input = DeviceKeyFingerprint.format_input(raw),
+            error = null,
         )
     }
 
@@ -206,7 +216,7 @@ class LinkDeviceViewModel @Inject constructor(
             throw DeviceEnvelope.InvalidDeviceKeyException("bad device key size")
         }
         if (DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk) != confirmed_fingerprint) {
-            throw DeviceEnvelope.InvalidDeviceKeyException("device keys changed after confirmation")
+            throw DeviceEnvelope.InvalidDeviceKeyException("device keys do not match the typed fingerprint")
         }
 
         val passphrase = session_key_store.get_passphrase() ?: throw SessionExpiredException()

@@ -146,4 +146,18 @@ class RemoteContentPolicyTest {
         val body = preview_body(preferences("always"))
         assertTrue(body.contains(REMOTE_IMAGE_PROXY_BASE))
     }
+
+    @Test
+    fun never_mode_refuses_a_one_time_image_grant() {
+        assertFalse(allows_remote_image_grant(preferences("never")))
+        assertFalse(allows_remote_image_grant(null))
+        assertTrue(allows_remote_image_grant(preferences("ask")))
+        assertTrue(allows_remote_image_grant(preferences("always")))
+
+        assertFalse(message_loads_remote_content(blocked = true, granted = true, grant_allowed = false, is_system_sender = false))
+        assertTrue(message_loads_remote_content(blocked = true, granted = true, grant_allowed = true, is_system_sender = false))
+        assertFalse(message_loads_remote_content(blocked = true, granted = false, grant_allowed = true, is_system_sender = false))
+        assertTrue(message_loads_remote_content(blocked = false, granted = false, grant_allowed = false, is_system_sender = false))
+        assertTrue(message_loads_remote_content(blocked = true, granted = false, grant_allowed = false, is_system_sender = true))
+    }
 }

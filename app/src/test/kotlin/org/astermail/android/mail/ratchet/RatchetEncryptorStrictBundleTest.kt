@@ -143,6 +143,13 @@ class RatchetEncryptorStrictBundleTest {
         return "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"${RatchetCrypto.b64url_encode(x)}\",\"y\":\"${RatchetCrypto.b64url_encode(y)}\",\"d\":\"${RatchetCrypto.b64url_encode(d)}\"}"
     }
 
+    private fun account_only_directory(): AddressIdentityDirectory {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
+            ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
+        }
+        return AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins)
+    }
+
     private fun new_encryptor(strict: Boolean = true): RatchetEncryptor = RatchetEncryptor(
         state_store,
         session_key_store,
@@ -151,6 +158,7 @@ class RatchetEncryptorStrictBundleTest {
         ConversationLocks(),
         keys_api,
         identity_pins,
+        account_only_directory(),
     ).also { it.require_verified_prekey_bundle = strict }
 
     private val pgp_passphrase = "prekey-binding-fixture"
@@ -233,6 +241,7 @@ class RatchetEncryptorStrictBundleTest {
             ConversationLocks(),
             keys_api,
             identity_pins,
+            account_only_directory(),
         )
         assertEquals(PrekeyBundlePolicy.require_verified_prekey_bundle, encryptor.require_verified_prekey_bundle)
     }

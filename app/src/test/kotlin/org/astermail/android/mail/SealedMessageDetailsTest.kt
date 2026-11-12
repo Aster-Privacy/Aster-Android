@@ -180,4 +180,39 @@ class SealedMessageDetailsTest {
         )
         assertEquals("2026-11-12T10:00:00.000Z", restored.sealed_sent_at)
     }
+
+    @Test
+    fun sealed_subject_replaces_the_served_subject() {
+        val details = extract_subject_bundle(web_bundle).details
+        val served = envelope().copy(subject = "Served subject")
+
+        assertEquals("Lunch", served.with_sealed_details(details, "Lunch").subject)
+        assertEquals("Served subject", served.with_sealed_details(details, null).subject)
+    }
+
+    @Test
+    fun sealed_details_drop_the_served_reply_to() {
+        val details = extract_subject_bundle(web_bundle).details
+        val served = envelope().copy(
+            raw_headers = listOf(
+                " Reply-To " to "other@example.com",
+                "reply-to" to "second@example.com",
+                "Delivered-To" to "bob@astermail.org",
+            ),
+        )
+
+        val sealed = served.with_sealed_details(details, "Lunch")
+
+        assertEquals(listOf("Delivered-To" to "bob@astermail.org"), sealed.raw_headers)
+    }
+
+    @Test
+    fun without_sealed_details_the_served_subject_and_reply_to_stay() {
+        val served = envelope().copy(
+            subject = "Served subject",
+            raw_headers = listOf("Reply-To" to "other@example.com"),
+        )
+
+        assertEquals(served, served.with_sealed_details(null, "Lunch"))
+    }
 }

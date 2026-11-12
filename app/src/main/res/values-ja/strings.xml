@@ -247,6 +247,7 @@
     <string name="no_body">(本文なし)</string>
     <string name="attachment_unnamed">添付ファイル</string>
     <string name="attachment_locked">この添付ファイルは、暗号化キーがこのデバイスで利用できないため開けません。</string>
+    <string name="attachment_content_mismatch">この添付ファイルは一緒に届いたメッセージと一致しないため、開かれませんでした。</string>
     <string name="download_complete">ダウンロード完了</string>
     <string name="cannot_decode_image">画像をデコードできません</string>
     <string name="no_app_to_open">このファイルを開くアプリがありません</string>
@@ -3014,11 +3015,11 @@
     <string name="alias_pinned_toast">エイリアスをピン留めしました</string>
     <string name="alias_unpinned_toast">エイリアスのピン留めを解除しました</string>
     <string name="e2e_identity_changed_blocked">送信できませんでした。受信者の暗号化キーが変更されました。受信トレイで変更を確認してから、もう一度送信してください。メッセージは送信されていません。</string>
-    <string name="link_device_fingerprint_label">確認コード</string>
-    <string name="link_device_fingerprint_hint">このコードを、もう一方のデバイスに表示されている確認コードまたはデバイスのフィンガープリントと比べてください。コードが異なる場合は、キャンセルをタップしてください。</string>
-    <string name="link_device_codes_match">コードが一致しています</string>
+    <string name="link_device_fingerprint_label">デバイスのフィンガープリント</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">リンクするアプリに表示されているデバイスのフィンガープリントを入力してください。アプリによっては確認コードと表示されます。</string>
     <string name="link_device_error_invalid_keys">もう一方のデバイスから使用できない鍵が送信されました。そのデバイスで新しいコードを取得してから、もう一度お試しください。</string>
-    <string name="link_device_error_codes_not_confirmed">デバイスをリンクするには、コードが一致していることを確認してください。</string>
+    <string name="link_device_error_codes_not_confirmed">このリンクコードのデバイスと一致しません。リンクするアプリの表示と 1 文字ずつ比べてから、もう一度お試しください。それでも一致しない場合は、デバイスをリンクしないでください。</string>
     <string name="restore">復元</string>
     <string name="contact_trash_confirm_message">連絡先はゴミ箱から復元できます。</string>
     <string name="empty_contacts_trash_confirm_message">ゴミ箱内の連絡先をすべて完全に削除しますか？この操作は元に戻せません。</string>

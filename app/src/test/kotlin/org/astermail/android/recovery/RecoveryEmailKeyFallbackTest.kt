@@ -26,7 +26,9 @@ import java.security.SecureRandom
 import java.util.Base64
 import org.astermail.android.crypto.AesGcm
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RecoveryEmailKeyFallbackTest {
@@ -35,9 +37,9 @@ class RecoveryEmailKeyFallbackTest {
     private val current_identity_key = "current-identity-key-after-password-change"
     private val previous_identity_key = "identity-key-before-password-change"
 
-    private fun seal(key: ByteArray, mime: Boolean = false): Pair<String, String> {
+    private fun seal(key: ByteArray, mime: Boolean = false, plaintext: String = address): Pair<String, String> {
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val ciphertext = AesGcm.encrypt(key, nonce, address.toByteArray(Charsets.UTF_8))
+        val ciphertext = AesGcm.encrypt(key, nonce, plaintext.toByteArray(Charsets.UTF_8))
         val encoder = if (mime) Base64.getMimeEncoder(8, "\n".toByteArray()) else Base64.getEncoder()
         return encoder.encodeToString(ciphertext) to encoder.encodeToString(nonce)
     }
@@ -116,5 +118,57 @@ class RecoveryEmailKeyFallbackTest {
     @Test
     fun malformed_ciphertext_returns_null() {
         assertNull(open_recovery_email("%%%", "%%%", listOf(current_identity_key), emptyList()))
+    }
+
+    @Test
+    fun the_backfill_opens_an_address_sealed_under_an_identity_key() {
+        val (ciphertext, nonce) = seal(identity_scoped_key(previous_identity_key))
+
+        assertEquals(
+            address,
+            open_recovery_email_for_backfill(ciphertext, nonce, listOf(current_identity_key, previous_identity_key)),
+        )
+    }
+
+    @Test
+    fun the_backfill_never_tries_raw_account_data_keys() {
+        val account_context_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val (ciphertext, nonce) = seal(account_context_key.copyOf())
+
+        assertNull(open_recovery_email_for_backfill(ciphertext, nonce, listOf(current_identity_key)))
+    }
+
+    @Test
+    fun the_backfill_skips_a_plaintext_that_is_not_an_address() {
+        for (plaintext in listOf("not an address", "a@b.co\nsecond line", "a@b.co,c@d.co", "{\"k\":1}")) {
+            val (ciphertext, nonce) = seal(identity_scoped_key(current_identity_key), plaintext = plaintext)
+
+            assertNull(open_recovery_email_for_backfill(ciphertext, nonce, listOf(current_identity_key)))
+            assertEquals(plaintext, open_recovery_email(ciphertext, nonce, listOf(current_identity_key), emptyList()))
+        }
+    }
+
+    @Test
+    fun the_address_check_matches_the_web_rules() {
+        assertTrue(is_valid_recovery_email("user@example.com"))
+        assertTrue(is_valid_recovery_email("first.last+tag@sub.example.org"))
+        assertTrue(is_valid_recovery_email("jürgen@müller.example"))
+        assertTrue(is_valid_recovery_email("用户@例子.公司"))
+        assertTrue(is_valid_recovery_email("x".repeat(64) + "@example.com"))
+        assertFalse(is_valid_recovery_email("jürgen m@example.com"))
+        assertFalse(is_valid_recovery_email("a@b.co;c@d.co"))
+        assertFalse(is_valid_recovery_email("a@b@c.co"))
+        assertFalse(is_valid_recovery_email("ü".repeat(60) + "@" + "ü".repeat(70) + ".example"))
+        assertFalse(is_valid_recovery_email("user@example.com "))
+        assertFalse(is_valid_recovery_email("user@example.com\n"))
+        assertFalse(is_valid_recovery_email("a@b.co,c@d.co"))
+        assertFalse(is_valid_recovery_email("no-at-sign"))
+        assertFalse(is_valid_recovery_email(null))
+        assertFalse(is_valid_recovery_email(""))
+        assertFalse(is_valid_recovery_email("x".repeat(250) + "@example.com"))
+        assertFalse(is_valid_recovery_email("\"first last\"@example.com"))
+        assertFalse(is_valid_recovery_email("user@[192.0.2.1]"))
+        assertFalse(is_valid_recovery_email("user@mail_host.example.com"))
+        assertFalse(is_valid_recovery_email("x".repeat(65) + "@example.com"))
     }
 }

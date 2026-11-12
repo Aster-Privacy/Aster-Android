@@ -248,6 +248,7 @@
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachment_unnamed">Anhang</string>
     <string name="attachment_locked">Dieser Anhang kann nicht geöffnet werden, weil sein Verschlüsselungsschlüssel auf diesem Gerät nicht verfügbar ist.</string>
+    <string name="attachment_content_mismatch">Dieser Anhang stimmt nicht mit der Nachricht überein, mit der er gesendet wurde, und wurde deshalb nicht geöffnet.</string>
     <string name="download_complete">Download abgeschlossen</string>
     <string name="cannot_decode_image">Bild kann nicht decodiert werden</string>
     <string name="no_app_to_open">Keine App zum Öffnen dieser Datei</string>
@@ -3029,11 +3030,11 @@
     <string name="alias_pinned_toast">Alias angeheftet</string>
     <string name="alias_unpinned_toast">Alias gelöst</string>
     <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätigen Sie die Änderung in Ihrem Posteingang und senden Sie die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
-    <string name="link_device_fingerprint_label">Prüfcode</string>
-    <string name="link_device_fingerprint_hint">Vergleiche diesen Code mit dem Prüfcode oder Gerätefingerabdruck auf deinem anderen Gerät. Wenn die Codes nicht übereinstimmen, tippe auf Abbrechen.</string>
-    <string name="link_device_codes_match">Die Codes stimmen überein</string>
+    <string name="link_device_fingerprint_label">Gerätefingerabdruck</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Geben Sie den Gerätefingerabdruck ein, der in der App angezeigt wird, die Sie verknüpfen. Manche Apps nennen ihn Bestätigungscode.</string>
     <string name="link_device_error_invalid_keys">Das andere Gerät hat Schlüssel gesendet, die nicht verwendet werden können. Hole dir auf diesem Gerät einen neuen Code und versuche es dann erneut.</string>
-    <string name="link_device_error_codes_not_confirmed">Bestätige, dass die Codes übereinstimmen, um das Gerät zu verknüpfen.</string>
+    <string name="link_device_error_codes_not_confirmed">Das stimmt nicht mit dem Gerät für diesen Verknüpfungscode überein. Vergleichen Sie jedes Zeichen mit der App, die Sie verknüpfen, und versuchen Sie es erneut. Wenn es weiterhin nicht übereinstimmt, verknüpfen Sie das Gerät nicht.</string>
     <string name="restore">Wiederherstellen</string>
     <string name="contact_trash_confirm_message">Sie können Kontakte aus dem Papierkorb wiederherstellen.</string>
     <string name="empty_contacts_trash_confirm_message">Alle Kontakte im Papierkorb endgültig löschen? Das lässt sich nicht rückgängig machen.</string>

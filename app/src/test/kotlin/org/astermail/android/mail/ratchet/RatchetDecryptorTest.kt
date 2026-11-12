@@ -190,6 +190,7 @@ class RatchetDecryptorTest {
         identity_pins,
         plaintext_cache,
         escrow,
+        AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins),
     )
 
     private fun escrow_returning(

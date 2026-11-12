@@ -93,6 +93,7 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
     val preferences = settings_state.preferences
     val allow_external = !setting_blocks_remote_images(preferences) &&
         !org.astermail.android.network.low_network_active()
+    val allow_external_now = androidx.compose.runtime.rememberUpdatedState(allow_external)
     val sanitize_options = remote_content_sanitize_options(preferences)
     val text_zoom = when (preferences?.font_size_scale) {
         "small" -> 85
@@ -191,6 +192,12 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
                         view: android.webkit.WebView,
                         request: android.webkit.WebResourceRequest,
                     ): Boolean = true
+
+                    override fun shouldInterceptRequest(
+                        view: android.webkit.WebView?,
+                        request: android.webkit.WebResourceRequest?,
+                    ): android.webkit.WebResourceResponse? =
+                        org.astermail.android.ui.mail.intercept_side_view_image(view?.context, request, allow_external_now.value)
 
                     override fun onPageFinished(view: android.webkit.WebView, url: String?) {
                         quoted_preview_measure_delays_ms.forEach { delay_ms ->

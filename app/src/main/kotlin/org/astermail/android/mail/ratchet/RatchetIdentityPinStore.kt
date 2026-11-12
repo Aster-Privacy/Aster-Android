@@ -154,6 +154,45 @@ class RatchetIdentityPinStore @Inject constructor(
         }
     }
 
+    fun fingerprint_of(identity_key_b64: String): String? =
+        if (identity_key_b64.isBlank()) null else fingerprint(identity_key_b64)
+
+    fun pinned_fingerprint(conversation_id: String): String? {
+        if (conversation_id.isBlank()) return null
+        return read_string(refresh_scope(), pin_key(conversation_id))
+    }
+
+    fun remembered_sender_fingerprints(sender_email: String): List<String> {
+        val contact = contact_of(sender_email) ?: return emptyList()
+        return read_history(refresh_scope(), contact).orEmpty()
+    }
+
+    fun is_address_rooted(conversation_id: String): Boolean {
+        if (conversation_id.isBlank()) return false
+        return read_boolean(refresh_scope(), rooted_key(conversation_id))
+    }
+
+    suspend fun mark_address_rooted(conversation_id: String): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val scope = refresh_scope()
+        if (read_boolean(scope, rooted_key(conversation_id))) return@withLock
+        prefs.edit().putBoolean(scoped(scope, rooted_key(conversation_id)), true).commit()
+    }
+
+    suspend fun replace_pin(conversation_id: String, identity_key_b64: String): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val current = fingerprint(identity_key_b64) ?: return@withLock
+        val scope = refresh_scope()
+        prefs.edit().putString(scoped(scope, pin_key(conversation_id)), current).commit()
+        synchronized(pending_guard) {
+            val updated = pending.value.filterNot { it.conversation_id == conversation_id }
+            if (updated.size != pending.value.size) {
+                prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
+                pending.value = updated
+            }
+        }
+    }
+
     fun sender_continuity(
         conversation_id: String,
         sender_email: String,
@@ -623,6 +662,8 @@ class RatchetIdentityPinStore @Inject constructor(
     }.getOrNull()
 
     private fun pin_key(conversation_id: String): String = "pin_$conversation_id"
+
+    private fun rooted_key(conversation_id: String): String = "rooted_$conversation_id"
 
     private fun bootstrap_key(conversation_id: String): String = "boot_$conversation_id"
 

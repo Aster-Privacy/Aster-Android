@@ -578,11 +578,10 @@ class AuthRepository @Inject constructor(
         val ciphertext = state.encrypted_email ?: return
         val nonce = state.email_nonce ?: return
         val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() } ?: return
-        val plaintext = org.astermail.android.recovery.open_recovery_email(
+        val plaintext = org.astermail.android.recovery.open_recovery_email_for_backfill(
             ciphertext,
             nonce,
             listOf(identity_key) + session_key_store.get_previous_keys().orEmpty(),
-            session_key_store.get_decrypt_keks(),
         ) ?: return
         recovery_email_api.backfill_server_enc(
             org.astermail.android.api.recovery_email.BackfillServerEncRequest(

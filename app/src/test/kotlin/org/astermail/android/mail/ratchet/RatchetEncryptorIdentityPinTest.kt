@@ -142,6 +142,13 @@ class RatchetEncryptorIdentityPinTest {
         return "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"${RatchetCrypto.b64url_encode(x)}\",\"y\":\"${RatchetCrypto.b64url_encode(y)}\",\"d\":\"${RatchetCrypto.b64url_encode(d)}\"}"
     }
 
+    private fun account_only_directory(): AddressIdentityDirectory {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
+            ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
+        }
+        return AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins)
+    }
+
     private fun new_encryptor(): RatchetEncryptor = RatchetEncryptor(
         state_store,
         session_key_store,
@@ -150,6 +157,7 @@ class RatchetEncryptorIdentityPinTest {
         ConversationLocks(),
         keys_api,
         identity_pins,
+        account_only_directory(),
     )
 
     @Test

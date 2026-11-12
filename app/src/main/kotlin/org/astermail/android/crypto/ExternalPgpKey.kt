@@ -75,10 +75,10 @@ object ExternalPgpKeyCodec {
     }
 
     fun is_primary_sender(from: String, primary_email: String?): Boolean {
-        val primary = primary_email?.trim()?.lowercase().orEmpty()
-        if (primary.isEmpty()) return false
-        val address = from.substringAfterLast('<', from).substringBefore('>').trim().lowercase()
-        return address == primary
+        val primary = primary_email?.trim().orEmpty()
+        if (primary.isEmpty()) return true
+        val address = from.substringAfterLast('<', from).substringBefore('>').trim()
+        return org.astermail.android.crypto.ratchet.AddressIdentity.same_canonical_address(address, primary)
     }
 
     fun allows_item_type(item_type: String?): Boolean =

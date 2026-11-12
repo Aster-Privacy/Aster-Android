@@ -171,9 +171,14 @@ internal fun carries_sealed_details(
     is_unconfirmed_sender: Boolean,
 ): Boolean = ratchet_decrypted && !is_unauthenticated && !is_unconfirmed_sender
 
-internal fun DecryptedEnvelope.with_sealed_details(details: SealedMessageDetails?): DecryptedEnvelope {
+internal fun DecryptedEnvelope.with_sealed_details(
+    details: SealedMessageDetails?,
+    sealed_subject: String? = null,
+): DecryptedEnvelope {
     if (details == null) return this
     return copy(
+        subject = sealed_subject ?: subject,
+        raw_headers = raw_headers.filterNot { it.first.trim().equals("reply-to", ignoreCase = true) },
         from_name = details.from_name.ifBlank { from_email.substringBefore('@').ifBlank { from_email } },
         to = details.to.map { it.name to it.email },
         cc = details.cc.map { it.name to it.email },

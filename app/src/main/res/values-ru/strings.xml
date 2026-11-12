@@ -247,6 +247,7 @@
     <string name="no_body">(нет текста)</string>
     <string name="attachment_unnamed">Вложение</string>
     <string name="attachment_locked">Это вложение нельзя открыть, потому что ключ шифрования недоступен на этом устройстве.</string>
+    <string name="attachment_content_mismatch">Это вложение не соответствует сообщению, с которым оно пришло, поэтому оно не было открыто.</string>
     <string name="download_complete">Загрузка завершена</string>
     <string name="cannot_decode_image">Не удаётся декодировать изображение</string>
     <string name="no_app_to_open">Нет приложения для открытия этого файла</string>
@@ -3064,11 +3065,11 @@
     <string name="alias_pinned_toast">Псевдоним закреплён</string>
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
     <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
-    <string name="link_device_fingerprint_label">Код проверки</string>
-    <string name="link_device_fingerprint_hint">Сравните этот код с кодом проверки или отпечатком устройства на другом устройстве. Если коды отличаются, нажмите «Отмена».</string>
-    <string name="link_device_codes_match">Коды совпадают</string>
+    <string name="link_device_fingerprint_label">Отпечаток устройства</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Введите отпечаток устройства, показанный в приложении, которое вы привязываете. В некоторых приложениях он называется кодом подтверждения.</string>
     <string name="link_device_error_invalid_keys">Другое устройство отправило ключи, которые нельзя использовать. Получите новый код на том устройстве и повторите попытку.</string>
-    <string name="link_device_error_codes_not_confirmed">Чтобы привязать устройство, подтвердите, что коды совпадают.</string>
+    <string name="link_device_error_codes_not_confirmed">Это не совпадает с устройством для этого кода привязки. Сравните каждый символ с приложением, которое вы привязываете, и повторите попытку. Если совпадения по-прежнему нет, не привязывайте устройство.</string>
     <string name="restore">Восстановить</string>
     <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
     <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>

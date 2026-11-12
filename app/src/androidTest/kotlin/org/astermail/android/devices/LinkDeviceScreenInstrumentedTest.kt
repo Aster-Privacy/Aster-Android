@@ -24,6 +24,7 @@ package org.astermail.android.devices
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -37,6 +38,7 @@ import org.astermail.android.api.devices.DeviceCodeConfirmResponse
 import org.astermail.android.api.devices.DeviceLinkError
 import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.crypto.DeviceEnvelope
+import org.astermail.android.crypto.DeviceKeyFingerprint
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.design.AsterTheme
 import org.astermail.android.storage.SessionKeyStore
@@ -65,7 +67,7 @@ class LinkDeviceScreenInstrumentedTest {
     private val x25519_pk = X25519PrivateKeyParameters(x25519_sk, 0).generatePublicKey().encoded
 
     private class FakeApi(
-        private val device: PendingDevice,
+        val device: PendingDevice,
         private val verify_error: Throwable? = null,
         private val confirm_error: Throwable? = null,
         private val confirm_delay_ms: Long = 0,
@@ -137,6 +139,15 @@ class LinkDeviceScreenInstrumentedTest {
         compose.onNodeWithText(string(R.string.link_device_continue)).performClick()
     }
 
+    private fun type_fingerprint(api: FakeApi, override: String? = null) {
+        val fingerprint = override ?: DeviceKeyFingerprint.of_encoded(
+            api.device.ed25519_pk,
+            api.device.mlkem_pk,
+            api.device.x25519_pk,
+        )
+        compose.onNode(hasSetTextAction()).performTextInput(require_value(fingerprint))
+    }
+
     private fun open_envelope(envelope_b64: String): ByteArray =
         DeviceEnvelope.open_secret_for_device(
             DeviceEnvelope.base64url_decode(envelope_b64),
@@ -153,6 +164,7 @@ class LinkDeviceScreenInstrumentedTest {
 
         await_text("adam-desktop")
         compose.onNodeWithText(string(R.string.link_device_type_bridge)).assertExists()
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
 
         await_text(string(R.string.link_device_success_title))
@@ -170,6 +182,7 @@ class LinkDeviceScreenInstrumentedTest {
 
         enter_code_and_continue()
         await_text("adam-desktop")
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         await_text(string(R.string.link_device_success_title))
 
@@ -185,6 +198,7 @@ class LinkDeviceScreenInstrumentedTest {
 
         enter_code_and_continue()
         await_text("adam-desktop")
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         await_text(string(R.string.link_device_success_title))
 
@@ -210,6 +224,7 @@ class LinkDeviceScreenInstrumentedTest {
         enter_code_and_continue()
         await_text("adam-desktop")
 
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         compose.runOnUiThread {
             vm.confirm_link()
@@ -277,9 +292,25 @@ class LinkDeviceScreenInstrumentedTest {
 
         enter_code_and_continue()
         await_text(string(R.string.link_device_confirm_action))
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
 
         await_text(string(R.string.link_device_error_session))
+        assertNull(api.confirmed_envelope)
+    }
+
+    @Test
+    fun a_mistyped_fingerprint_keeps_confirm_disabled_and_sends_nothing() {
+        val api = FakeApi(pending())
+        show(api, session_store())
+
+        enter_code_and_continue()
+        await_text("adam-desktop")
+        type_fingerprint(api, override = "0000 0000 0000 0000 0000")
+
+        await_text(string(R.string.link_device_error_codes_not_confirmed))
+        compose.onNodeWithText(string(R.string.link_device_confirm_action)).assertIsNotEnabled()
+        assertEquals(0, api.confirm_calls)
         assertNull(api.confirmed_envelope)
     }
 

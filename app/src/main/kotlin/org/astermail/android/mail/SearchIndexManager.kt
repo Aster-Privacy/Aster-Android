@@ -48,6 +48,24 @@ private const val snoozed_page_size = 200
 private const val max_snoozed_pages = 50
 private const val index_removal_chunk = 500
 
+fun is_expired_mail(expires_at: String?, now_ms: Long): Boolean {
+    val raw = expires_at?.trim().orEmpty()
+    if (raw.isEmpty()) return false
+    val millis = runCatching { java.time.Instant.parse(raw).toEpochMilli() }
+        .recoverCatching { java.time.OffsetDateTime.parse(raw).toInstant().toEpochMilli() }
+        .recoverCatching { java.time.LocalDateTime.parse(raw).toInstant(java.time.ZoneOffset.UTC).toEpochMilli() }
+        .getOrNull() ?: return false
+    return millis <= now_ms
+}
+
+fun split_expired_rows(
+    rows: List<DecryptedMailEntity>,
+    now_ms: Long,
+): Pair<List<DecryptedMailEntity>, List<String>> {
+    val (expired, live) = rows.partition { is_expired_mail(it.expires_at, now_ms) }
+    return live to expired.map { it.id }
+}
+
 fun index_rows_missing_from_page(
     rows: List<InboxWindowRow>,
     returned_ids: Set<String>,
@@ -214,8 +232,9 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun get_warm_items(limit: Int): List<DecryptedMailEntity> {
         val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
-        val rows = dao.get_warm_window(limit)
+        val (rows, expired_ids) = split_expired_rows(dao.get_warm_window(limit), System.currentTimeMillis())
         scope.launch {
+            if (expired_ids.isNotEmpty()) runCatching { remove_items(expired_ids) }
             purge_bundle_poisoned()
             if (protected_tokens.isNotEmpty()) purge_folder_tokens(protected_tokens)
         }
@@ -242,7 +261,8 @@ class SearchIndexManager @Inject constructor(
         purge_bundle_poisoned()
         val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
         if (protected_tokens.isNotEmpty()) purge_folder_tokens(protected_tokens)
-        val rows = dao.get_all()
+        val (rows, expired_ids) = split_expired_rows(dao.get_all(), System.currentTimeMillis())
+        if (expired_ids.isNotEmpty()) runCatching { remove_items(expired_ids) }
         if (protected_tokens.isEmpty()) return rows
         return rows.filterNot { row ->
             row.labels.split(',').any { it.isNotBlank() && it in protected_tokens }
@@ -674,8 +694,10 @@ class SearchIndexManager @Inject constructor(
     private suspend fun cache_items(items: List<InboxItem>, my_epoch: Int): Set<String> {
         if (items.isEmpty()) return emptySet()
         val protected_tokens = org.astermail.android.folders.folder_lock_store.protected_tokens()
+        val now_ms = System.currentTimeMillis()
         val indexable = items
             .filterNot { is_index_poisoned(it) }
+            .filterNot { is_expired_mail(it.raw_item.expires_at, now_ms) }
             .filterNot { item ->
                 protected_tokens.isNotEmpty() &&
                     org.astermail.android.folders.inbox_item_folder_tokens(item).any { it in protected_tokens }
@@ -719,6 +741,7 @@ class SearchIndexManager @Inject constructor(
                 sender_verified_domain = item.raw_item.sender_verified_domain,
                 sender_verification = item.sender_verification,
                 item_type = item.raw_item.item_type,
+                expires_at = item.raw_item.expires_at,
             )
         }
         mutex.withLock {

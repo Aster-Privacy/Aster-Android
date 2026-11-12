@@ -34,6 +34,7 @@ data class EnvelopeCapabilityReport(
     val identity_fingerprint: String,
     val pq_identity_fingerprint: String = "",
     val pgp_external_version: Int = 0,
+    val address_identity_version: Int = 0,
 )
 
 interface EnvelopeCapabilityStore {
@@ -63,6 +64,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
             parts.getOrElse(1) { "" },
             parts.getOrElse(2) { "" },
             parts.getOrNull(3)?.toIntOrNull() ?: 0,
+            parts.getOrNull(4)?.toIntOrNull() ?: 0,
         )
     }
 
@@ -70,7 +72,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
         prefs().edit()
             .putString(
                 LAST_REPORTED_PREFIX + user_id,
-                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}",
+                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.address_identity_version}",
             )
             .apply()
     }
@@ -109,6 +111,7 @@ class EnvelopeCapabilityReporter(
             last.identity_fingerprint == fingerprint &&
             last.pq_identity_fingerprint == pq_fingerprint &&
             last.pgp_external_version == PGP_EXTERNAL_VERSION &&
+            last.address_identity_version == ADDRESS_IDENTITY_VERSION &&
             now - last.at_ms in 0 until REPORT_INTERVAL_MS
         ) {
             return null
@@ -126,6 +129,7 @@ class EnvelopeCapabilityReporter(
                     pq_identity_fingerprint = pq_fingerprint.ifEmpty { null },
                     x3dh_max_version = X3DH_MAX_VERSION,
                     pgp_external_version = PGP_EXTERNAL_VERSION,
+                    address_identity_version = ADDRESS_IDENTITY_VERSION,
                 ),
             )
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
@@ -134,7 +138,13 @@ class EnvelopeCapabilityReporter(
         if (response != null && response.success) {
             store.put_last_report(
                 user_id,
-                EnvelopeCapabilityReport(now, fingerprint, pq_fingerprint, PGP_EXTERNAL_VERSION),
+                EnvelopeCapabilityReport(
+                    now,
+                    fingerprint,
+                    pq_fingerprint,
+                    PGP_EXTERNAL_VERSION,
+                    ADDRESS_IDENTITY_VERSION,
+                ),
             )
         }
         return response
@@ -167,6 +177,7 @@ class EnvelopeCapabilityReporter(
         const val MAX_ENVELOPE_MARKER: Int = 4
         const val X3DH_MAX_VERSION: Int = 2
         const val PGP_EXTERNAL_VERSION: Int = 1
+        const val ADDRESS_IDENTITY_VERSION: Int = AddressIdentityDirectory.ADDRESS_IDENTITY_VERSION
         const val PLATFORM: String = "android"
         const val REPORT_INTERVAL_MS: Long = 7L * 24 * 60 * 60 * 1000
         private const val IDENTITY_POINT_LEN: Int = 65
