@@ -1476,6 +1476,70 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `send_email seals a password protected external message on the device`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+        val password = "Tr0ub4dor-and-3"
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            expires_at = "2030-01-01T00:00:00Z",
+            expiry_password = password,
+            attachments = listOf(
+                org.astermail.android.api.send.ExternalAttachmentPayload(
+                    filename = "a.txt",
+                    content_type = "text/plain",
+                    data = "aGVsbG8=",
+                    size_bytes = 5,
+                ),
+            ),
+        )
+
+        assertTrue(result.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        val sealed = request.captured.secure_message
+        assertNotNull(sealed)
+        assertNull(request.captured.expiry_password)
+        assertTrue(request.captured.attachments.isEmpty())
+        assertNull(request.captured.signed_mime)
+        assertNull(request.captured.external_pgp_bodies)
+        assertNotNull(sealed!!.attachments_bundle)
+        assertEquals(
+            org.astermail.android.crypto.SecureMessageCrypto.derive_auth_proof(password, sealed.kdf_salt),
+            sealed.auth_proof,
+        )
+    }
+
+    @Test
+    fun `send_email without a message password sends no sealed message`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertNull(request.captured.secure_message)
+    }
+
+    @Test
     fun `send_email refuses to relay when the sent folder cannot be resolved`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
         every { session_key_store.has_ratchet_keys() } returns true
