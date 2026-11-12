@@ -5927,7 +5927,7 @@ class MailRepository @Inject constructor(
                 is_unconfirmed_sender = is_unconfirmed_sender,
                 pgp_encrypted = pgp_encrypted,
                 pgp_signature = pgp_signature,
-            ).with_sealed_details(sealed_details)
+            ).with_sealed_details(sealed_details, bundle.subject)
         } else {
             envelope
         }
