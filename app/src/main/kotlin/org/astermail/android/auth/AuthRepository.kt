@@ -35,6 +35,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -2576,8 +2578,8 @@ class AuthRepository @Inject constructor(
         return runCatching { derive_password_hash_b64(password) }.getOrNull()
     }
 
-    suspend fun derive_password_hash_b64(password: String): String? {
-        val step_up = step_up_salt() ?: return null
+    suspend fun derive_password_hash_b64(password: String): String? = withContext(Dispatchers.Default) {
+        val step_up = step_up_salt() ?: return@withContext null
         val salt = step_up.salt
         require_usable_auth_salt(salt)
         val password_bytes = password.toByteArray(Charsets.UTF_8)
@@ -2589,7 +2591,7 @@ class AuthRepository @Inject constructor(
         }
         val encoded = base64_encode(hash)
         hash.fill(0)
-        return encoded
+        encoded
     }
 
     private fun extract_ratchet_keys(vault_obj: org.json.JSONObject) {
@@ -3033,7 +3035,10 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun sync_recovery_codes(): List<String>? {
+    suspend fun sync_recovery_codes(): List<String>? =
+        withContext(Dispatchers.Default) { sync_recovery_codes_off_main() }
+
+    private suspend fun sync_recovery_codes_off_main(): List<String>? {
         val user_id = session_key_store.get_user_id() ?: return session_key_store.get_recovery_codes()
         val passphrase = session_key_store.get_passphrase() ?: return session_key_store.get_recovery_codes()
         try {
@@ -3055,9 +3060,14 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun rotate_recovery_codes(step_up_token: String): List<String> {
+    suspend fun rotate_recovery_codes(step_up_token: String): List<String> =
+        withContext(Dispatchers.Default) { rotate_recovery_codes_off_main(step_up_token) }
+
+    private suspend fun rotate_recovery_codes_off_main(step_up_token: String): List<String> {
         val passphrase = session_key_store.get_passphrase()
             ?: throw ApiError.UnknownError(context.getString(R.string.session_unavailable_sign_in_again))
+        val user_id = session_key_store.get_user_id()
+        val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
 
         try {
             val codes = generate_recovery_codes()
@@ -3068,6 +3078,13 @@ class AuthRepository @Inject constructor(
                 true
             }
             val verifier_salt = generate_verifier_salt()
+            val shares = kotlinx.coroutines.coroutineScope {
+                codes.map { code ->
+                    async(Dispatchers.Default) {
+                        generate_recovery_share(code, recovery_key, verifier_salt, include_code_hash)
+                    }
+                }.awaitAll()
+            }
             val outcome = withContext(NonCancellable) {
                 vault_updates.with_passphrase(passphrase).replace_through(
                     edit = { draft ->
@@ -3077,14 +3094,9 @@ class AuthRepository @Inject constructor(
                         org.astermail.android.crypto.storage_rotation.VaultEdit.CHANGED
                     },
                     send = { vault_obj, sealed, snapshot ->
-                        val recovery_key = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
                         val vault_backup = encrypt_vault_backup(backup_plain, recovery_key)
                         backup_plain.fill(0)
-                        val shares = codes.map {
-                            generate_recovery_share(it, recovery_key, verifier_salt, include_code_hash)
-                        }
-                        recovery_key.fill(0)
                         recovery_api.backup(
                             SaveRecoveryBackupRequest(
                                 recovery_shares = shares,
@@ -3107,11 +3119,14 @@ class AuthRepository @Inject constructor(
                 throw ApiError.UnknownError(context.getString(R.string.error_generic))
             }
             withContext(NonCancellable) {
-                session_key_store.put_recovery_codes(codes)
-                runCatching { session_key_store.get_user_id()?.let { save_session_snapshot(it) } }
+                if (user_id != null && session_key_store.get_user_id() == user_id) {
+                    session_key_store.put_recovery_codes(codes)
+                    runCatching { save_session_snapshot(user_id) }
+                }
             }
             return codes
         } finally {
+            recovery_key.fill(0)
             passphrase.fill(0)
         }
     }

@@ -87,6 +87,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.DialogConfirmStyle
+import org.astermail.android.settings.RecoveryRotationPhase
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.print_recovery_codes
@@ -112,18 +113,61 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
     var total_codes by remember { mutableStateOf(0) }
     var created_at by remember { mutableStateOf<String?>(null) }
     var codes by remember { mutableStateOf<List<String>>(emptyList()) }
-    var is_rotating by remember { mutableStateOf(false) }
     var show_rotate_confirm by remember { mutableStateOf(false) }
     var rotated by remember { mutableStateOf(false) }
     var codes_saved by remember { mutableStateOf(false) }
+    var token_issued_at by remember { mutableStateOf(0L) }
+    var token_spent by remember { mutableStateOf(false) }
+    var awaiting_step_up by remember { mutableStateOf(false) }
+    var rotate_after_verify by remember { mutableStateOf(false) }
 
+    val rotation = state.recovery_rotation
+    val is_rotating = rotation.phase == RecoveryRotationPhase.rotating
+    val showing_codes = !awaiting_step_up && (
+        step_up_token != null ||
+            rotated ||
+            rotation.phase == RecoveryRotationPhase.rotating ||
+            rotation.phase == RecoveryRotationPhase.done
+        )
     val totp_required = state.security_status?.totp_enabled == true
     val account_email = state.user?.email.orEmpty()
 
     LaunchedEffect(Unit) { vm.load_security_status() }
 
+    LaunchedEffect(showing_codes) {
+        if (showing_codes && codes.isEmpty()) codes = vm.get_recovery_codes().orEmpty()
+    }
+
+    LaunchedEffect(rotation) {
+        when (rotation.phase) {
+            RecoveryRotationPhase.done -> {
+                codes = rotation.codes
+                used_hashes = emptySet()
+                used_codes = emptySet()
+                total_codes = rotation.codes.size
+                created_at = format_codes_date(null)
+                rotated = true
+                codes_saved = false
+                token_spent = true
+                error = null
+                vm.acknowledge_recovery_rotation()
+            }
+            RecoveryRotationPhase.failed -> {
+                error = rotation.error
+                if (rotation.needs_step_up) {
+                    step_up_token = null
+                    token_spent = false
+                    awaiting_step_up = true
+                    rotate_after_verify = true
+                }
+                vm.acknowledge_recovery_rotation()
+            }
+            else -> Unit
+        }
+    }
+
     detail_scaffold(title = stringResource(R.string.recovery_codes), on_back = on_back) {
-        if (step_up_token == null) {
+        if (!showing_codes) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier
@@ -201,6 +245,11 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                 password = ""
                                 totp_code = ""
                                 step_up_token = response.step_up_token
+                                token_issued_at = android.os.SystemClock.elapsedRealtime()
+                                token_spent = false
+                                awaiting_step_up = false
+                                rotated = false
+                                codes_saved = false
                                 used_hashes = response.codes
                                     .filter { it.status == "used" }
                                     .map { it.code_hash }
@@ -214,6 +263,10 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                         .getOrDefault(emptySet())
                                 }
                                 created_at = format_codes_date(vm.recovery_codes_status_now()?.created_at)
+                                if (rotate_after_verify) {
+                                    rotate_after_verify = false
+                                    show_rotate_confirm = true
+                                }
                             }
                             .onFailure { error = vm.error_text(it) }
                     }
@@ -366,7 +419,19 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
 
             AsterButton(
                 label = stringResource(R.string.get_new_codes),
-                onClick = { show_rotate_confirm = true },
+                onClick = {
+                    val token_fresh = step_up_token != null &&
+                        !token_spent &&
+                        android.os.SystemClock.elapsedRealtime() - token_issued_at < STEP_UP_REUSE_WINDOW_MS
+                    if (token_fresh) {
+                        show_rotate_confirm = true
+                    } else {
+                        step_up_token = null
+                        error = null
+                        awaiting_step_up = true
+                        rotate_after_verify = true
+                    }
+                },
                 enabled = !is_rotating && (!rotated || codes_saved),
                 is_loading = is_rotating,
             )
@@ -395,28 +460,22 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
             confirm_style = DialogConfirmStyle.destructive,
             on_confirm = {
                 show_rotate_confirm = false
-                val token = step_up_token ?: return@AsterAlertDialog
-                is_rotating = true
-                error = null
-                scope.launch {
-                    val result = vm.rotate_recovery_codes_now(token)
-                    is_rotating = false
-                    result
-                        .onSuccess { new_codes ->
-                            codes = new_codes
-                            used_hashes = emptySet()
-                            used_codes = emptySet()
-                            total_codes = new_codes.size
-                            created_at = format_codes_date(null)
-                            rotated = true
-                            codes_saved = false
-                        }
-                        .onFailure { error = vm.error_text(it) }
+                val token = step_up_token
+                if (token == null || token_spent) {
+                    step_up_token = null
+                    awaiting_step_up = true
+                    rotate_after_verify = true
+                    return@AsterAlertDialog
                 }
+                token_spent = true
+                error = null
+                vm.start_recovery_codes_rotation(token)
             },
         )
     }
 }
+
+private const val STEP_UP_REUSE_WINDOW_MS = 4 * 60_000L
 
 private fun format_codes_date(iso: String?): String {
     val formatter = DateFormat.getDateInstance(DateFormat.LONG)
