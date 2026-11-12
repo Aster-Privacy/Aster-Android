@@ -43,8 +43,15 @@ class SignedMimeSenderTest {
     }
 
     @Test
-    fun unknown_primary_never_signs() {
-        assertFalse(MailRepository.sender_may_sign_outbound(primary, null))
-        assertFalse(MailRepository.sender_may_sign_outbound(primary, " "))
+    fun blank_primary_counts_as_primary() {
+        assertTrue(MailRepository.sender_may_sign_outbound(primary, null))
+        assertTrue(MailRepository.sender_may_sign_outbound(primary, " "))
+    }
+
+    @Test
+    fun dotted_and_tagged_primary_forms_may_sign() {
+        assertTrue(MailRepository.sender_may_sign_outbound("Ow.ner+x <ow.ner+x@astermail.org>", primary))
+        assertTrue(MailRepository.sender_may_sign_outbound("o.w.n.e.r@AsterMail.org", primary))
+        assertFalse(MailRepository.sender_may_sign_outbound("owner@aster.cx", primary))
     }
 }

@@ -382,7 +382,8 @@ class ExternalPgpKeyCodecTest {
         assertTrue(ExternalPgpKeyCodec.is_primary_sender("Alice <Alice@AsterMail.org>", " alice@astermail.org "))
         assertFalse(ExternalPgpKeyCodec.is_primary_sender("alias@astermail.org", "alice@astermail.org"))
         assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@example.com", "alice@astermail.org"))
-        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", null))
-        assertFalse(ExternalPgpKeyCodec.is_primary_sender("", ""))
+        assertTrue(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", null))
+        assertTrue(ExternalPgpKeyCodec.is_primary_sender("", ""))
+        assertTrue(ExternalPgpKeyCodec.is_primary_sender("a.lice+news@astermail.org", "alice@astermail.org"))
     }
 }
