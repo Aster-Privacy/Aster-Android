@@ -3200,9 +3200,9 @@
     <string name="shipping_status_exception">Problème de livraison</string>
     <string name="shipping_status_unknown">Mise à jour de l’envoi</string>
     <string name="inbox_arrives_on">Arrive le %1$s</string>
-    <string name="sender_verified_badge">Expéditeur vérifié</string>
-    <string name="sender_verified_title">Expéditeur vérifié</string>
-    <string name="sender_verified_message">L\'expéditeur de cet e-mail a vérifié qu\'il est propriétaire de %1$s.</string>
+    <string name="sender_verified_badge">Domaine vérifié</string>
+    <string name="sender_verified_title">Domaine vérifié</string>
+    <string name="sender_verified_message">Les serveurs d\'Aster ont vérifié que l\'expéditeur est propriétaire de %1$s.</string>
     <string name="password_recovery_email_title">E-mail de récupération du mot de passe</string>
     <string name="recovery_email_step_desc">Ajoutez une adresse e-mail pour retrouver l\'accès à votre compte si vous perdez vos codes de récupération.</string>
     <string name="notifications_step_title">Activez les notifications</string>

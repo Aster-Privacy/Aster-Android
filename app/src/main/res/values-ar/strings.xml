@@ -3229,9 +3229,9 @@
     <string name="shipping_status_exception">مشكلة في التسليم</string>
     <string name="shipping_status_unknown">تحديث الشحنة</string>
     <string name="inbox_arrives_on">يصل %1$s</string>
-    <string name="sender_verified_badge">مرسل موثّق</string>
-    <string name="sender_verified_title">مرسل موثّق</string>
-    <string name="sender_verified_message">أكّد مرسل هذه الرسالة أنه يملك النطاق %1$s.</string>
+    <string name="sender_verified_badge">نطاق موثّق</string>
+    <string name="sender_verified_title">نطاق موثّق</string>
+    <string name="sender_verified_message">تحقّقت خوادم Aster من أن المرسل يملك النطاق %1$s.</string>
     <string name="password_recovery_email_title">بريد استعادة كلمة المرور</string>
     <string name="recovery_email_step_desc">أضف عنوان بريد إلكتروني لتتمكن من العودة إلى حسابك إذا فقدت رموز الاسترداد.</string>
     <string name="notifications_step_title">فعّل الإشعارات</string>

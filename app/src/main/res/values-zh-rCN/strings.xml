@@ -3136,9 +3136,9 @@
     <string name="shipping_status_exception">配送问题</string>
     <string name="shipping_status_unknown">物流更新</string>
     <string name="inbox_arrives_on">%1$s 送达</string>
-    <string name="sender_verified_badge">已验证的发件人</string>
-    <string name="sender_verified_title">已验证的发件人</string>
-    <string name="sender_verified_message">此邮件的发件人已验证其拥有 %1$s。</string>
+    <string name="sender_verified_badge">已验证的域名</string>
+    <string name="sender_verified_title">已验证的域名</string>
+    <string name="sender_verified_message">Aster 的服务器已核实发件人拥有 %1$s。</string>
     <string name="password_recovery_email_title">密码恢复邮箱</string>
     <string name="recovery_email_step_desc">添加一个邮箱地址，以便在丢失恢复码时重新进入账户。</string>
     <string name="notifications_step_title">开启通知</string>

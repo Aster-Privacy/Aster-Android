@@ -626,7 +626,10 @@ fun MailDetailScreen(
     val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
     val unauthenticated_message_ids by mail_vm.unauthenticated_message_ids.collectAsStateWithLifecycle()
     val identity_changed_senders = remember(identity_changes) {
-        identity_changes.mapNotNull { it.sender_email.trim().lowercase().takeIf { e -> e.isNotBlank() } }.toSet()
+        identity_changes.mapNotNull {
+            it.sender_email.takeIf { e -> e.isNotBlank() }
+                ?.let { e -> org.astermail.android.mail.ratchet.PinIdentity.canonical_id(e) }
+        }.toSet()
     }
     var reaction_picker_open by remember { mutableStateOf(false) }
     var left_after_unread by remember(email_id) { mutableStateOf(false) }
@@ -1648,7 +1651,7 @@ fun MailDetailScreen(
                             attachments_failed = msg.id in attachment_failure_ids,
                             on_retry_attachments = { mail_vm.retry_thread_attachments() },
                             identity_changed = identity_changed_senders.contains(
-                                msg.sender_email.trim().lowercase(),
+                                org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
                             ),
                             sender_unauthenticated = msg.id in unauthenticated_message_ids,
                             on_acknowledge_identity = {

@@ -3191,9 +3191,9 @@
     <string name="shipping_status_exception">Проблема с доставкой</string>
     <string name="shipping_status_unknown">Обновление по отправлению</string>
     <string name="inbox_arrives_on">Прибудет %1$s</string>
-    <string name="sender_verified_badge">Проверенный отправитель</string>
-    <string name="sender_verified_title">Проверенный отправитель</string>
-    <string name="sender_verified_message">Отправитель этого письма подтвердил, что владеет доменом %1$s.</string>
+    <string name="sender_verified_badge">Проверенный домен</string>
+    <string name="sender_verified_title">Проверенный домен</string>
+    <string name="sender_verified_message">Серверы Aster проверили, что отправитель владеет доменом %1$s.</string>
     <string name="password_recovery_email_title">Почта для восстановления пароля</string>
     <string name="recovery_email_step_desc">Добавьте адрес электронной почты, чтобы вернуться в аккаунт, если потеряете коды восстановления.</string>
     <string name="notifications_step_title">Включите уведомления</string>

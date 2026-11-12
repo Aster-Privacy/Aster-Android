@@ -23,6 +23,8 @@ package org.astermail.android.mail
 
 import org.astermail.android.crypto.PgpDecryptionResult
 import org.astermail.android.crypto.PgpSignatureStatus
+import org.astermail.android.mail.ratchet.RatchetIdentityPinRules
+import org.astermail.android.mail.ratchet.SavedKeyCheck
 
 data class PgpBodyFields(
     val body_text: String,
@@ -32,6 +34,17 @@ data class PgpBodyFields(
 )
 
 private const val PGP_ARMOR_PREFIX = "-----BEGIN PGP"
+
+fun settle_sender_signature(
+    result: PgpDecryptionResult?,
+    saved_key_check: () -> SavedKeyCheck?,
+    is_own_signature: () -> Boolean,
+): PgpDecryptionResult? {
+    if (result == null || result.signature != PgpSignatureStatus.VALID) return result
+    if (RatchetIdentityPinRules.signature_trusted(saved_key_check())) return result
+    if (is_own_signature()) return result
+    return result.copy(signature = PgpSignatureStatus.UNVERIFIED)
+}
 
 fun resolve_pgp_body_fields(
     fields: PgpBodyFields,

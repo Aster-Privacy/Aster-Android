@@ -3153,9 +3153,9 @@
     <string name="shipping_status_exception">Bezorgprobleem</string>
     <string name="shipping_status_unknown">Zendingsupdate</string>
     <string name="inbox_arrives_on">Komt aan op %1$s</string>
-    <string name="sender_verified_badge">Geverifieerde afzender</string>
-    <string name="sender_verified_title">Geverifieerde afzender</string>
-    <string name="sender_verified_message">De afzender van deze e-mail heeft bevestigd eigenaar te zijn van %1$s.</string>
+    <string name="sender_verified_badge">Geverifieerd domein</string>
+    <string name="sender_verified_title">Geverifieerd domein</string>
+    <string name="sender_verified_message">De servers van Aster hebben gecontroleerd dat de afzender eigenaar is van %1$s.</string>
     <string name="password_recovery_email_title">Herstel-e-mailadres voor wachtwoord</string>
     <string name="recovery_email_step_desc">Voeg een e-mailadres toe zodat je weer in je account kunt als je je herstelcodes kwijtraakt.</string>
     <string name="notifications_step_title">Meldingen inschakelen</string>

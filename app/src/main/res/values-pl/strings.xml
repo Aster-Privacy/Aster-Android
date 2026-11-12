@@ -3191,9 +3191,9 @@
     <string name="shipping_status_exception">Problem z dostawą</string>
     <string name="shipping_status_unknown">Aktualizacja przesyłki</string>
     <string name="inbox_arrives_on">Dotrze %1$s</string>
-    <string name="sender_verified_badge">Zweryfikowany nadawca</string>
-    <string name="sender_verified_title">Zweryfikowany nadawca</string>
-    <string name="sender_verified_message">Nadawca tej wiadomości potwierdził, że jest właścicielem domeny %1$s.</string>
+    <string name="sender_verified_badge">Zweryfikowana domena</string>
+    <string name="sender_verified_title">Zweryfikowana domena</string>
+    <string name="sender_verified_message">Serwery Aster sprawdziły, że nadawca jest właścicielem domeny %1$s.</string>
     <string name="password_recovery_email_title">E-mail do odzyskiwania hasła</string>
     <string name="recovery_email_step_desc">Dodaj adres e-mail, aby odzyskać dostęp do konta, jeśli zgubisz kody odzyskiwania.</string>
     <string name="notifications_step_title">Włącz powiadomienia</string>

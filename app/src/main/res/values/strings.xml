@@ -3241,9 +3241,9 @@
     <string name="shipping_status_exception">Delivery issue</string>
     <string name="shipping_status_unknown">Shipment update</string>
     <string name="inbox_arrives_on">Arrives %1$s</string>
-    <string name="sender_verified_badge">Verified sender</string>
-    <string name="sender_verified_title">Verified sender</string>
-    <string name="sender_verified_message">The sender of this email has verified that they own %1$s.</string>
+    <string name="sender_verified_badge">Verified domain</string>
+    <string name="sender_verified_title">Verified domain</string>
+    <string name="sender_verified_message">Aster\'s servers checked that the sender owns %1$s.</string>
     <string name="password_recovery_email_title">Password recovery email</string>
     <string name="recovery_email_step_desc">Add an email address so you can get back into your account if you lose your recovery codes.</string>
     <string name="notifications_step_title">Turn on notifications</string>

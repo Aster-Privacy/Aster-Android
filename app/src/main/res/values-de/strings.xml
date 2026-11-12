@@ -3154,9 +3154,9 @@
     <string name="shipping_status_exception">Zustellproblem</string>
     <string name="shipping_status_unknown">Sendungsupdate</string>
     <string name="inbox_arrives_on">Kommt am %1$s</string>
-    <string name="sender_verified_badge">Verifizierter Absender</string>
-    <string name="sender_verified_title">Verifizierter Absender</string>
-    <string name="sender_verified_message">Der Absender dieser E-Mail hat bestätigt, dass ihm %1$s gehört.</string>
+    <string name="sender_verified_badge">Verifizierte Domain</string>
+    <string name="sender_verified_title">Verifizierte Domain</string>
+    <string name="sender_verified_message">Die Server von Aster haben geprüft, dass dem Absender %1$s gehört.</string>
     <string name="password_recovery_email_title">E-Mail-Adresse zur Passwort-Wiederherstellung</string>
     <string name="recovery_email_step_desc">Fügen Sie eine E-Mail-Adresse hinzu, damit Sie wieder in Ihr Konto kommen, falls Sie Ihre Wiederherstellungscodes verlieren.</string>
     <string name="notifications_step_title">Benachrichtigungen aktivieren</string>

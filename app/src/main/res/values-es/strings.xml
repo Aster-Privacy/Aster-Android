@@ -3172,9 +3172,9 @@
     <string name="shipping_status_exception">Problema de entrega</string>
     <string name="shipping_status_unknown">Novedad del envío</string>
     <string name="inbox_arrives_on">Llega el %1$s</string>
-    <string name="sender_verified_badge">Remitente verificado</string>
-    <string name="sender_verified_title">Remitente verificado</string>
-    <string name="sender_verified_message">El remitente de este correo ha verificado que es propietario de %1$s.</string>
+    <string name="sender_verified_badge">Dominio verificado</string>
+    <string name="sender_verified_title">Dominio verificado</string>
+    <string name="sender_verified_message">Los servidores de Aster comprobaron que el remitente es propietario de %1$s.</string>
     <string name="password_recovery_email_title">Correo de recuperación de contraseña</string>
     <string name="recovery_email_step_desc">Añade una dirección de correo para volver a entrar en tu cuenta si pierdes tus códigos de recuperación.</string>
     <string name="notifications_step_title">Activa las notificaciones</string>
