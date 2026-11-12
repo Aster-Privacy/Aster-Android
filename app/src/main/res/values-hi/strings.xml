@@ -337,6 +337,7 @@
     <string name="no_body">(कोई मुख्य भाग नहीं)</string>
     <string name="attachment_unnamed">अटैचमेंट</string>
     <string name="attachment_locked">यह अटैचमेंट नहीं खुल सकता, क्योंकि इसकी एन्क्रिप्शन कुंजी इस डिवाइस पर उपलब्ध नहीं है।</string>
+    <string name="attachment_content_mismatch">यह अटैचमेंट उस संदेश से मेल नहीं खाता जिसके साथ यह आया था, इसलिए इसे खोला नहीं गया।</string>
     <string name="download_complete">डाउनलोड पूरा हुआ</string>
     <string name="cannot_decode_image">तस्वीर पढ़ी नहीं जा सकी</string>
     <string name="no_app_to_open">यह फ़ाइल खोलने के लिए कोई ऐप नहीं</string>

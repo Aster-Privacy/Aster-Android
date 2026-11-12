@@ -248,6 +248,7 @@
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachment_unnamed">Anhang</string>
     <string name="attachment_locked">Dieser Anhang kann nicht geöffnet werden, weil sein Verschlüsselungsschlüssel auf diesem Gerät nicht verfügbar ist.</string>
+    <string name="attachment_content_mismatch">Dieser Anhang stimmt nicht mit der Nachricht überein, mit der er gesendet wurde, und wurde deshalb nicht geöffnet.</string>
     <string name="download_complete">Download abgeschlossen</string>
     <string name="cannot_decode_image">Bild kann nicht decodiert werden</string>
     <string name="no_app_to_open">Keine App zum Öffnen dieser Datei</string>

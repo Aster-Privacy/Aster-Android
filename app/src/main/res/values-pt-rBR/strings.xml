@@ -247,6 +247,7 @@
     <string name="no_body">(sem corpo)</string>
     <string name="attachment_unnamed">Anexo</string>
     <string name="attachment_locked">Este anexo não pode ser aberto porque a chave de criptografia dele não está disponível neste dispositivo.</string>
+    <string name="attachment_content_mismatch">Este anexo não corresponde à mensagem com a qual chegou, por isso não foi aberto.</string>
     <string name="download_complete">Download concluído</string>
     <string name="cannot_decode_image">Não é possível decodificar a imagem</string>
     <string name="no_app_to_open">Nenhum aplicativo para abrir este arquivo</string>

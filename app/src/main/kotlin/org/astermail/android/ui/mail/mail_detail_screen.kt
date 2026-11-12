@@ -219,6 +219,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.mail.AttachmentIntegrityException
 import org.astermail.android.mail.AttachmentKeyUnavailableException
 import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
@@ -931,7 +932,8 @@ fun MailDetailScreen(
             result.onSuccess { (resolved_att, bytes) -> block(resolved_att, bytes) }
                 .onFailure { error ->
                     org.astermail.android.ui.common.app_toast.show(
-                        if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                        if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                        else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                         else context.getString(R.string.failed_to_download, att.filename),
                     )
                 }
@@ -1800,7 +1802,8 @@ fun MailDetailScreen(
                                         preview_bytes = bytes
                                     }.onFailure { error ->
                                         show_toast(
-                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                                            else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                                             else context.getString(R.string.failed_to_load_preview),
                                         )
                                     }

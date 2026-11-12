@@ -257,6 +257,7 @@
     <string name="no_body">(aucun contenu)</string>
     <string name="attachment_unnamed">Pièce jointe</string>
     <string name="attachment_locked">Cette pièce jointe ne peut pas être ouverte, car sa clé de chiffrement n\'est pas disponible sur cet appareil.</string>
+    <string name="attachment_content_mismatch">Cette pièce jointe ne correspond pas au message avec lequel elle est arrivée. Elle n\'a donc pas été ouverte.</string>
     <string name="download_complete">Téléchargement terminé</string>
     <string name="cannot_decode_image">Impossible de décoder l\'image</string>
     <string name="no_app_to_open">Aucune application pour ouvrir ce fichier</string>

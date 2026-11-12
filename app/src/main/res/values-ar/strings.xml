@@ -247,6 +247,7 @@
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachment_unnamed">مرفق</string>
     <string name="attachment_locked">لا يمكن فتح هذا المرفق لأن مفتاح التشفير الخاص به غير متوفر على هذا الجهاز.</string>
+    <string name="attachment_content_mismatch">هذا المرفق لا يطابق الرسالة التي وصل معها، لذلك لم يتم فتحه.</string>
     <string name="download_complete">اكتمل التنزيل</string>
     <string name="cannot_decode_image">تعذّرت قراءة الصورة</string>
     <string name="no_app_to_open">لا يوجد تطبيق لفتح هذا الملف</string>

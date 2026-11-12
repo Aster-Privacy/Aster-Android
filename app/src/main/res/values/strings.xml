@@ -409,6 +409,7 @@
     <string name="no_body">(no body)</string>
     <string name="attachment_unnamed">Attachment</string>
     <string name="attachment_locked">This attachment can\'t be opened because its encryption key isn\'t available on this device.</string>
+    <string name="attachment_content_mismatch">This attachment doesn\'t match the message it came with, so it wasn\'t opened.</string>
     <string name="download_complete">Download complete</string>
     <string name="cannot_decode_image">Cannot decode image</string>
     <string name="no_app_to_open">No app to open this file</string>

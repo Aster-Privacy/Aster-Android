@@ -247,6 +247,7 @@
     <string name="no_body">(nessun contenuto)</string>
     <string name="attachment_unnamed">Allegato</string>
     <string name="attachment_locked">Questo allegato non può essere aperto perché la sua chiave di crittografia non è disponibile su questo dispositivo.</string>
+    <string name="attachment_content_mismatch">Questo allegato non corrisponde al messaggio con cui è arrivato, quindi non è stato aperto.</string>
     <string name="download_complete">Download completato</string>
     <string name="cannot_decode_image">Impossibile decodificare l\'immagine</string>
     <string name="no_app_to_open">Nessuna app per aprire questo file</string>
