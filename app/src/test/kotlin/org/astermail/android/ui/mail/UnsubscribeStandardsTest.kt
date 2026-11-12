@@ -23,6 +23,7 @@ package org.astermail.android.ui.mail
 
 import kotlinx.coroutines.runBlocking
 import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
+import org.astermail.android.ui.compose.ReactionSenderIdentity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -182,5 +183,66 @@ class UnsubscribeStandardsTest {
             ) { throw IllegalStateException("offline") }
         }
         assertEquals(UnsubscribeOutcome.manual_required, outcome)
+    }
+
+    private val mail_only = UnsubscribeInfo(
+        has_unsubscribe = true,
+        method = "mailto",
+        unsubscribe_mailto = "stop@sender.example.com",
+    )
+
+    @Test
+    fun mail_request_names_the_receiving_address() {
+        val sender = resolve_unsubscribe_sender(ReactionSenderIdentity("shop@aster.cx", "hash"), "token")
+        val request = build_proxy_unsubscribe_requests(mail_only, sender).single()
+        assertEquals("mailto", request.method)
+        assertEquals("shop@aster.cx", request.from_address)
+        assertEquals("hash", request.from_address_hash)
+    }
+
+    @Test
+    fun mail_request_to_the_main_address_carries_no_hash() {
+        val sender = resolve_unsubscribe_sender(ReactionSenderIdentity("me@astermail.org", null), null)
+        val request = build_proxy_unsubscribe_requests(mail_only, sender).single()
+        assertEquals("me@astermail.org", request.from_address)
+        assertNull(request.from_address_hash)
+    }
+
+    @Test
+    fun mail_request_without_a_known_address_stays_as_before() {
+        val request = build_proxy_unsubscribe_requests(mail_only, resolve_unsubscribe_sender(null, null)).single()
+        assertNull(request.from_address)
+        assertNull(request.from_address_hash)
+        assertEquals(build_proxy_unsubscribe_requests(mail_only).single(), request)
+    }
+
+    @Test
+    fun unmatched_delivery_address_sends_no_mail() {
+        val sender = resolve_unsubscribe_sender(null, "token")
+        assertTrue(build_proxy_unsubscribe_requests(mail_only, sender).isEmpty())
+        var calls = 0
+        val outcome = runBlocking {
+            execute_unsubscribe(mail_only, sender) {
+                calls += 1
+                true
+            }
+        }
+        assertEquals(UnsubscribeOutcome.manual_required, outcome)
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun one_click_request_never_names_an_address() {
+        val sender = resolve_unsubscribe_sender(ReactionSenderIdentity("shop@aster.cx", "hash"), "token")
+        val request = build_proxy_unsubscribe_requests(
+            UnsubscribeInfo(
+                has_unsubscribe = true,
+                method = "one-click",
+                unsubscribe_link = "https://sender.example.com/oc",
+            ),
+            sender,
+        ).single()
+        assertNull(request.from_address)
+        assertNull(request.from_address_hash)
     }
 }

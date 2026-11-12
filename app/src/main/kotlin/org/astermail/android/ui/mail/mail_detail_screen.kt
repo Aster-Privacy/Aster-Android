@@ -1725,8 +1725,12 @@ fun MailDetailScreen(
                             on_image_click = { src -> lightbox_src = src },
                             on_unsubscribe = { info ->
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
+                                val unsubscribe_sender = resolve_unsubscribe_sender(
+                                    reaction_identity_for(msg.id),
+                                    thread_state.messages.find { it.id == msg.id }?.raw_item?.routing_token,
+                                )
                                 scope.launch {
-                                    val outcome = execute_unsubscribe(info) { request ->
+                                    val outcome = execute_unsubscribe(info, unsubscribe_sender) { request ->
                                         subscriptions_vm.proxy_unsubscribe(request)
                                     }
                                     val record_unsubscribed = {

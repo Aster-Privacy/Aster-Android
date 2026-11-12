@@ -22,13 +22,35 @@
 package org.astermail.android.ui.mail
 
 import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
+import org.astermail.android.ui.compose.ReactionSenderIdentity
 
 enum class UnsubscribeOutcome {
     unsubscribed,
     manual_required,
 }
 
-fun build_proxy_unsubscribe_requests(info: UnsubscribeInfo): List<ProxyUnsubscribeRequest> {
+data class UnsubscribeSender(
+    val from_address: String? = null,
+    val from_address_hash: String? = null,
+    val can_send_mail: Boolean = true,
+)
+
+fun resolve_unsubscribe_sender(
+    received_on: ReactionSenderIdentity?,
+    routing_token: String?,
+): UnsubscribeSender = when {
+    received_on != null -> UnsubscribeSender(
+        from_address = received_on.email.trim().ifEmpty { null },
+        from_address_hash = received_on.alias_hash?.trim()?.ifEmpty { null },
+    )
+    routing_token.isNullOrBlank() -> UnsubscribeSender()
+    else -> UnsubscribeSender(can_send_mail = false)
+}
+
+fun build_proxy_unsubscribe_requests(
+    info: UnsubscribeInfo,
+    sender: UnsubscribeSender = UnsubscribeSender(),
+): List<ProxyUnsubscribeRequest> {
     val requests = mutableListOf<ProxyUnsubscribeRequest>()
     if (info.method == "one-click" && info.unsubscribe_link != null) {
         requests += ProxyUnsubscribeRequest(
@@ -37,10 +59,12 @@ fun build_proxy_unsubscribe_requests(info: UnsubscribeInfo): List<ProxyUnsubscri
             list_unsubscribe_post = ONE_CLICK_POST_VALUE,
         )
     }
-    if (info.unsubscribe_mailto != null) {
+    if (info.unsubscribe_mailto != null && sender.can_send_mail) {
         requests += ProxyUnsubscribeRequest(
             method = "mailto",
             mailto_address = info.unsubscribe_mailto,
+            from_address = sender.from_address,
+            from_address_hash = sender.from_address_hash,
         )
     }
     return requests
@@ -48,9 +72,10 @@ fun build_proxy_unsubscribe_requests(info: UnsubscribeInfo): List<ProxyUnsubscri
 
 suspend fun execute_unsubscribe(
     info: UnsubscribeInfo,
+    sender: UnsubscribeSender = UnsubscribeSender(),
     send: suspend (ProxyUnsubscribeRequest) -> Boolean,
 ): UnsubscribeOutcome {
-    for (request in build_proxy_unsubscribe_requests(info)) {
+    for (request in build_proxy_unsubscribe_requests(info, sender)) {
         val succeeded = try {
             send(request)
         } catch (t: kotlinx.coroutines.CancellationException) {
