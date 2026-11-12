@@ -21,10 +21,14 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.crypto.same_address_ignoring_dots
 import org.astermail.android.mail.is_sendable_address
+import java.security.MessageDigest
+import java.util.Base64
+import java.util.Locale
 
 fun compute_received_on_alias(
     recipient_addresses: List<String>,
@@ -45,6 +49,24 @@ data class ReactionSenderIdentity(
     val alias_hash: String?,
 )
 
+private fun reaction_alias_identity(
+    address: String?,
+    alias_options: List<String>,
+    alias_hash_map: Map<String, String>,
+    user_email: String,
+): ReactionSenderIdentity? {
+    val target = address?.trim().orEmpty()
+    if (target.isEmpty()) return null
+    val option = alias_options.firstOrNull { it.trim().equals(target, ignoreCase = true) } ?: return null
+    if (same_address_ignoring_dots(option, user_email)) return null
+    val hash = alias_hash_map.entries
+        .firstOrNull { it.key.trim().equals(option.trim(), ignoreCase = true) }
+        ?.value
+        ?.takeIf { it.isNotBlank() }
+        ?: return null
+    return ReactionSenderIdentity(option, hash)
+}
+
 fun resolve_reaction_sender_identity(
     own_recipient_addresses: List<String>,
     message_sender_email: String,
@@ -52,22 +74,68 @@ fun resolve_reaction_sender_identity(
     alias_options: List<String>,
     alias_hash_map: Map<String, String>,
     user_email: String,
-): ReactionSenderIdentity {
-    val resolved = if (is_own_message) {
-        alias_options.firstOrNull { it.equals(message_sender_email.trim(), ignoreCase = true) }
-    } else {
-        compute_received_on_alias(own_recipient_addresses, alias_options, user_email)
+    delivered_to: String? = null,
+    routing_token: String? = null,
+    routing_token_map: Map<String, String> = emptyMap(),
+): ReactionSenderIdentity? {
+    if (user_email.isBlank()) return null
+    val primary = ReactionSenderIdentity(user_email, null)
+    if (is_own_message) {
+        val sender = message_sender_email.trim()
+        if (sender.isEmpty()) return null
+        if (same_address_ignoring_dots(sender, user_email)) return primary
+        return reaction_alias_identity(sender, alias_options, alias_hash_map, user_email)
     }
-    val email = resolved?.takeIf { it.isNotBlank() } ?: user_email
-    if (same_address_ignoring_dots(email, user_email)) {
-        return ReactionSenderIdentity(user_email, null)
+    val token = routing_token?.trim().orEmpty()
+    if (token.isNotEmpty()) {
+        reaction_alias_identity(routing_token_map[token], alias_options, alias_hash_map, user_email)
+            ?.let { return it }
     }
-    val hash = alias_hash_map.entries
-        .firstOrNull { it.key.equals(email, ignoreCase = true) }
-        ?.value
-        ?.takeIf { it.isNotBlank() }
-        ?: return ReactionSenderIdentity(user_email, null)
-    return ReactionSenderIdentity(email, hash)
+    val delivered = delivered_to?.trim().orEmpty()
+    val delivered_to_primary = delivered.isNotEmpty() && same_address_ignoring_dots(delivered, user_email)
+    if (delivered.isNotEmpty() && !delivered_to_primary) {
+        reaction_alias_identity(delivered, alias_options, alias_hash_map, user_email)?.let { return it }
+    }
+    val visible = own_recipient_addresses.map { it.trim() }.filter { it.isNotEmpty() }
+    if (visible.any { same_address_ignoring_dots(it, user_email) }) return primary
+    visible.firstNotNullOfOrNull {
+        reaction_alias_identity(it, alias_options, alias_hash_map, user_email)
+    }?.let { return it }
+    if (delivered_to_primary) return primary
+    return null
+}
+
+fun domain_address_routing_token(local_part: String, domain: String): String {
+    val normalized_local_part = local_part.trim().lowercase(Locale.ROOT).replace(".", "")
+    val address = "$normalized_local_part@${domain.trim().lowercase(Locale.ROOT)}"
+    val digest = MessageDigest.getInstance("SHA-256").digest(address.toByteArray(Charsets.UTF_8))
+    return Base64.getEncoder().encodeToString(digest)
+}
+
+fun reaction_routing_token_map(
+    aliases: List<AliasInfo>,
+    custom_domain_addresses: List<CustomDomainAddressInfo>,
+    ghost_aliases: List<GhostAlias>,
+): Map<String, String> {
+    val tokens = mutableMapOf<String, String>()
+    aliases
+        .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
+        .filter { it.alias_address_hash.isNotBlank() }
+        .forEach { tokens[it.alias_address_hash] = it.address }
+    ghost_aliases
+        .filter { it.is_enabled && !it.decryption_failed && it.decrypted_address.contains('@') }
+        .filter { it.alias_address_hash.isNotBlank() }
+        .forEach { tokens[it.alias_address_hash] = it.decrypted_address }
+    custom_domain_addresses
+        .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
+        .forEach {
+            val local_part = it.address.substringBeforeLast('@')
+            val domain = it.address.substringAfterLast('@')
+            if (local_part.isNotBlank() && domain.isNotBlank()) {
+                tokens[domain_address_routing_token(local_part, domain)] = it.address
+            }
+        }
+    return tokens.toMap()
 }
 
 fun reply_from_mismatch(

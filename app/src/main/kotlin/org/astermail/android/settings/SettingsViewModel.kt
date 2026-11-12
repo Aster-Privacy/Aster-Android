@@ -6032,7 +6032,7 @@ class SettingsViewModel @Inject constructor(
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val response = ghost_alias_api.list_ghost_aliases()
-                val decrypted = response.aliases.map { decrypt_ghost_alias(it) }
+                val decrypted = response.aliases.map { with_ghost_alias_hash(decrypt_ghost_alias(it)) }
                 prime_own_ghost_avatars(decrypted)
                 _state.value = _state.value.copy(ghost_aliases = decrypted, is_loading = false)
             } catch (t: Throwable) {
@@ -6880,6 +6880,18 @@ class SettingsViewModel @Inject constructor(
         val data = "${key.lowercase(java.util.Locale.ROOT)}@${domain.lowercase(java.util.Locale.ROOT)}".toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(data)
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+    }
+
+    private suspend fun with_ghost_alias_hash(alias: GhostAlias): GhostAlias {
+        if (alias.decryption_failed || alias.alias_address_hash.isNotBlank()) return alias
+        val local_part = alias.decrypted_address.substringBeforeLast('@', "")
+        if (local_part.isBlank() || alias.domain.isBlank()) return alias
+        return try {
+            alias.copy(alias_address_hash = compute_alias_address_hash(local_part, alias.domain))
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            alias
+        }
     }
 
     private fun decrypt_ghost_alias(alias: GhostAlias): GhostAlias {

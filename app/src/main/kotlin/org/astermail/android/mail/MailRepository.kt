@@ -6230,13 +6230,33 @@ class MailRepository @Inject constructor(
                 require_encryption = require_encryption,
             )
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
+            val secure_message = if (uses_password_sealed_message(expiry_password)) {
+                withContext(Dispatchers.Default) {
+                    build_secure_message_payload(
+                        password = expiry_password.orEmpty(),
+                        subject = subject,
+                        body_html = recipient_body_html,
+                        attachments = attachments,
+                    )
+                }
+            } else {
+                null
+            }
             val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
             val encrypted_subject = encrypt_field(
-                if (client_copies != null) "" else subject,
+                when {
+                    secure_message != null -> SECURE_MESSAGE_PLACEHOLDER
+                    client_copies != null -> ""
+                    else -> subject
+                },
                 derive_nonce(base_nonce, 0x02),
             )
             val encrypted_body = encrypt_field(
-                if (client_copies != null) ClientPgpCopies.PLACEHOLDER_BODY else recipient_body_html,
+                when {
+                    secure_message != null -> SECURE_MESSAGE_PLACEHOLDER
+                    client_copies != null -> ClientPgpCopies.PLACEHOLDER_BODY
+                    else -> recipient_body_html
+                },
                 derive_nonce(base_nonce, 0x03),
             )
             val ephemeral_key_b64 = android.util.Base64.encodeToString(ephemeral_key, android.util.Base64.NO_WRAP)
@@ -6270,9 +6290,9 @@ class MailRepository @Inject constructor(
                     sender_email = sender_email,
                     sender_display_name = sender_display_name,
                     expires_at = expires_at,
-                    expiry_password = expiry_password,
+                    expiry_password = null,
                     acknowledge_server_readable = true,
-                    attachments = if (client_copies != null) emptyList() else attachments,
+                    attachments = if (client_copies != null || secure_message != null) emptyList() else attachments,
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
                     signed_mime = signed_payload?.mime_base64,
@@ -6283,6 +6303,7 @@ class MailRepository @Inject constructor(
                     pgp_recipients = listed_pgp_recipients.takeIf {
                         it.isNotEmpty() && expiry_password.isNullOrEmpty()
                     },
+                    secure_message = secure_message,
                 ),
             )
             val sent_item_id = result.mail_item_id

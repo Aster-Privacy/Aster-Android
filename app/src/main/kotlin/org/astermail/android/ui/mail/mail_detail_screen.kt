@@ -737,8 +737,8 @@ fun MailDetailScreen(
         }
     }
 
-    LaunchedEffect(reactions_enabled, thread_ghost_email) {
-        if (reactions_enabled && !thread_ghost_email.isNullOrBlank()) {
+    LaunchedEffect(reactions_enabled) {
+        if (reactions_enabled) {
             settings_vm.load_ghost_aliases()
         }
     }
@@ -765,14 +765,14 @@ fun MailDetailScreen(
         val options = mutableListOf<String>()
         if (my_email.isNotBlank()) options.add(my_email)
         settings_state.aliases
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
             .forEach { if (it.address !in options) options.add(it.address) }
         settings_state.custom_domain_addresses
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
             .forEach { if (it.address !in options) options.add(it.address) }
         settings_state.ghost_aliases
-            .filter { it.address.contains('@') }
-            .forEach { if (it.address !in options) options.add(it.address) }
+            .filter { it.is_enabled && !it.decryption_failed && it.decrypted_address.contains('@') }
+            .forEach { if (it.decrypted_address !in options) options.add(it.decrypted_address) }
         options.toList()
     }
     val reaction_sender_hashes = remember(
@@ -781,26 +781,52 @@ fun MailDetailScreen(
         settings_state.ghost_aliases,
     ) {
         val map = mutableMapOf<String, String>()
-        settings_state.aliases.forEach { map[it.address] = it.alias_address_hash }
-        settings_state.custom_domain_addresses.forEach { map[it.address] = it.local_part_hash }
+        settings_state.aliases
+            .filter { !it.decryption_failed }
+            .forEach { map[it.address] = it.alias_address_hash }
+        settings_state.custom_domain_addresses
+            .filter { !it.decryption_failed }
+            .forEach { map[it.address] = it.local_part_hash }
         settings_state.ghost_aliases.forEach { ghost ->
-            if (ghost.address.isNotBlank() && ghost.alias_address_hash.isNotBlank()) {
-                map[ghost.address] = ghost.alias_address_hash
+            if (!ghost.decryption_failed && ghost.decrypted_address.contains('@') &&
+                ghost.alias_address_hash.isNotBlank()
+            ) {
+                map[ghost.decrypted_address] = ghost.alias_address_hash
             }
         }
         map.toMap()
     }
-    val reaction_identity_for: (String) -> org.astermail.android.ui.compose.ReactionSenderIdentity =
+    val reaction_routing_tokens = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+    ) {
+        org.astermail.android.ui.compose.reaction_routing_token_map(
+            aliases = settings_state.aliases,
+            custom_domain_addresses = settings_state.custom_domain_addresses,
+            ghost_aliases = settings_state.ghost_aliases,
+        )
+    }
+    val reaction_identity_for: (String) -> org.astermail.android.ui.compose.ReactionSenderIdentity? =
         { message_id ->
             val target = thread_state.messages.find { it.id == message_id }
-            org.astermail.android.ui.compose.resolve_reaction_sender_identity(
-                own_recipient_addresses = target?.let { it.to_addresses + it.cc_addresses }.orEmpty(),
-                message_sender_email = target?.sender_email.orEmpty(),
-                is_own_message = target?.raw_item?.item_type == "sent",
-                alias_options = reaction_sender_options,
-                alias_hash_map = reaction_sender_hashes,
-                user_email = my_email,
-            )
+            if (target == null) {
+                null
+            } else {
+                val item_type = target.raw_item.item_type ?: target.raw_item.metadata?.item_type ?: "received"
+                val is_received = item_type == "received"
+                org.astermail.android.ui.compose.resolve_reaction_sender_identity(
+                    own_recipient_addresses = target.to_addresses + target.cc_addresses,
+                    message_sender_email = target.sender_email,
+                    is_own_message = item_type == "sent",
+                    alias_options = reaction_sender_options,
+                    alias_hash_map = reaction_sender_hashes,
+                    user_email = my_email,
+                    delivered_to = if (is_received) extract_delivered_to(target.raw_headers) else null,
+                    routing_token = if (is_received) target.raw_item.routing_token else null,
+                    routing_token_map = reaction_routing_tokens,
+                )
+            }
         }
     val reaction_own_addresses = remember(reaction_sender_options) {
         reaction_sender_options.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
@@ -829,6 +855,7 @@ fun MailDetailScreen(
                 is_trashed = is_trashed,
                 reactions_enabled = reactions_enabled,
                 is_own_address = { address -> address in reaction_own_addresses },
+                sender_resolved = reaction_identity_for(msg.id) != null,
                 require_encryption = require_encryption,
             )
         }
@@ -1063,12 +1090,17 @@ fun MailDetailScreen(
 
     fun dispatch_reaction(message_id: String, emoji: String, allow_non_post_quantum: Boolean = false) {
         val identity = reaction_identity_for(message_id)
+        if (identity == null) {
+            show_toast(context.getString(R.string.cannot_react_bcc))
+            return
+        }
         mail_vm.send_reaction(
             message_id = message_id,
             emoji = emoji,
             sender_email = identity.email,
             sender_alias_hash = identity.alias_hash,
             own_addresses = reaction_own_addresses,
+            sender_resolved = true,
             hold_seconds = reaction_hold_seconds,
             require_encryption = require_encryption,
             allow_non_post_quantum = allow_non_post_quantum,
