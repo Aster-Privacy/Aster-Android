@@ -127,7 +127,11 @@ class ChangePasswordViewModel @Inject constructor(
             }.onFailure { t ->
                 _state.value = _state.value.copy(
                     is_submitting = false,
-                    error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_change_password)),
+                    error = if (t is org.astermail.android.api.ApiError.Conflict && t.code == "VAULT_CHANGED") {
+                        context.getString(R.string.error_key_continuity_required)
+                    } else {
+                        org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_change_password))
+                    },
                 )
             }
         }

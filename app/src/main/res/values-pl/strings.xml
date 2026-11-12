@@ -3602,4 +3602,11 @@
     <string name="sidebar_move_section_up">Przenieś %1$s w górę</string>
     <string name="sidebar_move_section_down">Przenieś %1$s w dół</string>
     <string name="contacts_pending_sync">Oczekuje na synchronizację</string>
+    <string name="recovery_previous_password_placeholder">Wpisz poprzednie hasło</string>
+    <string name="recovery_previous_password_body">Twoje klucze szyfrowania są nadal chronione hasłem używanym przed tym resetem. Aby Twoja poczta pozostała czytelna, wpisz to poprzednie hasło. Klucze pozostają takie same i od teraz chroni je nowe hasło.</string>
+    <string name="recovery_previous_password_required">Wpisz poprzednie hasło lub dotknij Nie pamiętam go.</string>
+    <string name="recovery_previous_password_incorrect">To hasło nie odblokowuje Twoich kluczy szyfrowania. Sprawdź je i spróbuj ponownie.</string>
+    <string name="recovery_previous_password_forgot">Nie pamiętam go</string>
+    <string name="recovery_previous_password_use">Wpisz moje poprzednie hasło</string>
+    <string name="recovery_previous_password_skipped_warning">Hasło zostanie zresetowane, a klucze szyfrowania zachowane, ale pozostaną zablokowane poprzednim hasłem. Poczty nie da się odczytać, dopóki nie wpiszesz tego hasła w banerze Odzyskaj dane.</string>
 </resources>

@@ -3579,4 +3579,11 @@
     <string name="sidebar_move_section_up">Mover %1$s para cima</string>
     <string name="sidebar_move_section_down">Mover %1$s para baixo</string>
     <string name="contacts_pending_sync">Aguardando sincronização</string>
+    <string name="recovery_previous_password_placeholder">Digite sua senha anterior</string>
+    <string name="recovery_previous_password_body">Suas chaves de criptografia ainda estão protegidas pela senha que você usava antes desta redefinição. Para manter seus e-mails legíveis, digite essa senha anterior. Suas chaves continuam as mesmas e passam a ser protegidas pela nova senha.</string>
+    <string name="recovery_previous_password_required">Digite sua senha anterior ou toque em Não lembro.</string>
+    <string name="recovery_previous_password_incorrect">Essa senha não desbloqueia suas chaves de criptografia. Verifique e tente novamente.</string>
+    <string name="recovery_previous_password_forgot">Não lembro</string>
+    <string name="recovery_previous_password_use">Digitar minha senha anterior</string>
+    <string name="recovery_previous_password_skipped_warning">Sua senha é redefinida e suas chaves de criptografia são mantidas, mas continuam bloqueadas com a senha anterior. Você não poderá ler seus e-mails até digitar essa senha no aviso Recuperar dados.</string>
 </resources>

@@ -3452,4 +3452,11 @@
     <string name="sidebar_move_section_up">%1$s को ऊपर ले जाएँ</string>
     <string name="sidebar_move_section_down">%1$s को नीचे ले जाएँ</string>
     <string name="contacts_pending_sync">सिंक होने की प्रतीक्षा में</string>
+    <string name="recovery_previous_password_placeholder">अपना पिछला पासवर्ड डालें</string>
+    <string name="recovery_previous_password_body">आपकी एन्क्रिप्शन कुंजियां अब भी उस पासवर्ड से सुरक्षित हैं जो आप इस रीसेट से पहले इस्तेमाल करते थे। अपना मेल पढ़ने योग्य रखने के लिए वह पिछला पासवर्ड डालें। आपकी कुंजियां वही रहती हैं और अब से आपका नया पासवर्ड उन्हें सुरक्षित रखता है।</string>
+    <string name="recovery_previous_password_required">अपना पिछला पासवर्ड डालें, या मुझे याद नहीं पर टैप करें।</string>
+    <string name="recovery_previous_password_incorrect">यह पासवर्ड आपकी एन्क्रिप्शन कुंजियों को अनलॉक नहीं करता। इसे जांचें और फिर से कोशिश करें।</string>
+    <string name="recovery_previous_password_forgot">मुझे याद नहीं</string>
+    <string name="recovery_previous_password_use">मेरा पिछला पासवर्ड डालें</string>
+    <string name="recovery_previous_password_skipped_warning">आपका पासवर्ड रीसेट हो जाता है और आपकी एन्क्रिप्शन कुंजियां रखी जाती हैं, लेकिन वे आपके पिछले पासवर्ड से लॉक रहती हैं। जब तक आप डेटा पुनर्प्राप्त करें बैनर से वह पासवर्ड नहीं डालते, आपका मेल पढ़ा नहीं जा सकता।</string>
 </resources>

@@ -1599,6 +1599,7 @@ class AuthRepository @Inject constructor(
                     vault_format = MASTER_KEY_VAULT_FORMAT,
                     vault_key_fingerprints = vault_key_fingerprints.takeIf { it.isNotEmpty() },
                     vault_kdf_iterations = VaultKdf.to_server(vault_iterations),
+                    expected_vault_sha256 = expected_vault_sha256(server_vault),
                 )
                 val response = try {
                     settings_api.change_password(request)

@@ -3548,4 +3548,11 @@
     <string name="sidebar_move_section_up">%1$sを上に移動</string>
     <string name="sidebar_move_section_down">%1$sを下に移動</string>
     <string name="contacts_pending_sync">同期待ち</string>
+    <string name="recovery_previous_password_placeholder">以前のパスワードを入力</string>
+    <string name="recovery_previous_password_body">暗号鍵は、今回のリセット前に使用していたパスワードで引き続き保護されています。メールを読める状態に保つには、その以前のパスワードを入力してください。鍵は変わらず、今後は新しいパスワードで保護されます。</string>
+    <string name="recovery_previous_password_required">以前のパスワードを入力するか、「覚えていません」をタップしてください。</string>
+    <string name="recovery_previous_password_incorrect">そのパスワードでは暗号鍵のロックを解除できません。確認してもう一度お試しください。</string>
+    <string name="recovery_previous_password_forgot">覚えていません</string>
+    <string name="recovery_previous_password_use">以前のパスワードを入力する</string>
+    <string name="recovery_previous_password_skipped_warning">パスワードはリセットされ、暗号鍵は保持されますが、以前のパスワードでロックされたままです。「データを復元」バナーからそのパスワードを入力するまで、メールは読めません。</string>
 </resources>

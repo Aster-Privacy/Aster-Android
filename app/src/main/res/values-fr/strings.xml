@@ -3608,4 +3608,11 @@
     <string name="sidebar_move_section_up">Monter %1$s</string>
     <string name="sidebar_move_section_down">Descendre %1$s</string>
     <string name="contacts_pending_sync">En attente de synchronisation</string>
+    <string name="recovery_previous_password_placeholder">Saisissez votre ancien mot de passe</string>
+    <string name="recovery_previous_password_body">Vos clés de chiffrement sont toujours protégées par le mot de passe que vous utilisiez avant cette réinitialisation. Pour que vos e-mails restent lisibles, saisissez cet ancien mot de passe. Vos clés restent les mêmes et sont désormais protégées par votre nouveau mot de passe.</string>
+    <string name="recovery_previous_password_required">Saisissez votre ancien mot de passe ou touchez Je ne m\'en souviens pas.</string>
+    <string name="recovery_previous_password_incorrect">Ce mot de passe ne déverrouille pas vos clés de chiffrement. Vérifiez-le et réessayez.</string>
+    <string name="recovery_previous_password_forgot">Je ne m\'en souviens pas</string>
+    <string name="recovery_previous_password_use">Saisir mon ancien mot de passe</string>
+    <string name="recovery_previous_password_skipped_warning">Votre mot de passe est réinitialisé et vos clés de chiffrement sont conservées, mais elles restent verrouillées par votre ancien mot de passe. Vos e-mails ne seront lisibles qu\'après avoir saisi ce mot de passe depuis la bannière Récupérer les données.</string>
 </resources>
