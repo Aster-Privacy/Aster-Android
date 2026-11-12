@@ -3047,11 +3047,11 @@
     <string name="alias_pinned_toast">Alias fixado</string>
     <string name="alias_unpinned_toast">Alias desafixado</string>
     <string name="e2e_identity_changed_blocked">Não foi possível enviar: a chave de encriptação de um destinatário mudou. Confirme a alteração na sua caixa de entrada e envie novamente. A mensagem não foi enviada.</string>
-    <string name="link_device_fingerprint_label">Código de verificação</string>
-    <string name="link_device_fingerprint_hint">Compare este código com o código de verificação ou a impressão digital do dispositivo no seu outro dispositivo. Se os códigos forem diferentes, toque em Cancelar.</string>
-    <string name="link_device_codes_match">Os códigos coincidem</string>
+    <string name="link_device_fingerprint_label">Impressão digital do dispositivo</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Introduza a impressão digital do dispositivo mostrada na aplicação que está a associar. Algumas aplicações chamam-lhe código de verificação.</string>
     <string name="link_device_error_invalid_keys">O outro dispositivo enviou chaves que não podem ser utilizadas. Obtenha um novo código nesse dispositivo e tente novamente.</string>
-    <string name="link_device_error_codes_not_confirmed">Para associar o dispositivo, confirme que os códigos coincidem.</string>
+    <string name="link_device_error_codes_not_confirmed">Isto não corresponde ao dispositivo deste código de associação. Compare cada carácter com a aplicação que está a associar e tente novamente. Se continuar a não corresponder, não associe o dispositivo.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Pode restaurar contactos a partir do Lixo.</string>
     <string name="empty_contacts_trash_confirm_message">Eliminar permanentemente todos os contactos no Lixo? Esta ação não pode ser anulada.</string>

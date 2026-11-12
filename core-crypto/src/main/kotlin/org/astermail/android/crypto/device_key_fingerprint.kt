@@ -29,6 +29,10 @@ object DeviceKeyFingerprint {
     private const val DOMAIN = "aster-bridge-device-fingerprint-v1"
     private const val FINGERPRINT_BYTES = 10
     private const val GROUP_CHARS = 4
+    private const val FINGERPRINT_HEX_CHARS = FINGERPRINT_BYTES * 2
+    private const val MAX_INPUT_CHARS = 64
+    private val HEX_CHAR = Regex("[0-9a-fA-F]")
+    private val ALLOWED_INPUT = Regex("[0-9a-fA-F\\s-]*")
 
     fun of(ed25519_pk: ByteArray, mlkem_pk: ByteArray, x25519_pk: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -54,5 +58,19 @@ object DeviceKeyFingerprint {
             return null
         }
         return of(ed, mlkem, x)
+    }
+
+    fun format_input(raw: String): String =
+        raw.filter { HEX_CHAR.matches(it.toString()) }
+            .uppercase()
+            .take(FINGERPRINT_HEX_CHARS)
+            .chunked(GROUP_CHARS)
+            .joinToString(" ")
+
+    fun normalize(raw: String): String? {
+        if (raw.length > MAX_INPUT_CHARS || !ALLOWED_INPUT.matches(raw)) return null
+        val hex = raw.filterNot { it.isWhitespace() || it == '-' }.uppercase()
+        if (hex.length != FINGERPRINT_HEX_CHARS) return null
+        return hex.chunked(GROUP_CHARS).joinToString(" ")
     }
 }
