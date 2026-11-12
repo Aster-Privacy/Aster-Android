@@ -69,6 +69,37 @@ private fun empty_image_response(code: Int, reason: String): WebResourceResponse
         ByteArrayInputStream(ByteArray(0)),
     )
 
+internal fun <T> fetch_with_one_token_refresh(
+    token: String?,
+    fetch: (String?) -> T?,
+    status_of: (T) -> Int,
+    close: (T) -> Unit,
+    refresh: (String) -> String?,
+): T? {
+    val first = fetch(token) ?: return null
+    if (status_of(first) != 401 || token.isNullOrBlank()) return first
+    val refreshed = refresh(token)?.trim()?.takeIf { it.isNotEmpty() && it != token } ?: return first
+    close(first)
+    return fetch(refreshed)
+}
+
+private fun refreshed_access_token(context: Context, failed_token: String): String? =
+    runCatching {
+        val entry_point = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            AsterApplication.ImageLoaderEntryPoint::class.java,
+        )
+        val token_store = entry_point.token_store()
+        token_store.access_token?.takeIf { it.isNotBlank() && it != failed_token }
+            ?: kotlinx.coroutines.runBlocking {
+                when (entry_point.lazy_auth_repository().get().refresh_session()) {
+                    org.astermail.android.api.auth.RefreshOutcome.Success ->
+                        token_store.access_token?.takeIf { it != failed_token }
+                    else -> null
+                }
+            }
+    }.getOrNull()
+
 private fun current_access_token(context: Context): String? =
     runCatching {
         EntryPointAccessors.fromApplication(
@@ -96,22 +127,32 @@ internal fun intercept_side_view_image(
     val token = current_access_token(context)
     val client = side_view_image_client()
     return try {
-        fun fetch_once(target: String): okhttp3.Response? =
-            proxied_image_request(target, token)?.let { client.newCall(it).execute() }
-        var target = uri.toString()
-        var response = fetch_once(target) ?: return empty_image_response(403, "Forbidden")
-        if (response.isRedirect) {
-            val next = proxy_redirect_target(target, response.header("Location"))
-            if (next != null) {
-                response.close()
-                target = next
-                response = fetch_once(target) ?: return empty_image_response(403, "Forbidden")
+        fun fetch_once(target: String, bearer: String?): okhttp3.Response? =
+            proxied_image_request(target, bearer)?.let { client.newCall(it).execute() }
+        fun fetch(bearer: String?): okhttp3.Response? {
+            var target = uri.toString()
+            var response = fetch_once(target, bearer) ?: return null
+            if (response.isRedirect) {
+                val next = proxy_redirect_target(target, response.header("Location"))
+                if (next != null) {
+                    response.close()
+                    target = next
+                    response = fetch_once(target, bearer) ?: return null
+                }
             }
+            if (proxy_status_is_retryable(response.code)) {
+                response.close()
+                response = fetch_once(target, bearer) ?: return null
+            }
+            return response
         }
-        if (proxy_status_is_retryable(response.code)) {
-            response.close()
-            response = fetch_once(target) ?: return empty_image_response(403, "Forbidden")
-        }
+        val response = fetch_with_one_token_refresh(
+            token = token,
+            fetch = ::fetch,
+            status_of = { it.code },
+            close = { it.close() },
+            refresh = { failed -> refreshed_access_token(context, failed) },
+        ) ?: return empty_image_response(403, "Forbidden")
         val body = response.body
         if (!response.isSuccessful || body == null) {
             response.close()

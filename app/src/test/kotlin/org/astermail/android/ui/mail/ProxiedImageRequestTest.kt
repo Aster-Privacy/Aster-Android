@@ -39,6 +39,53 @@ class ProxiedImageRequestTest {
     }
 
     @Test
+    fun an_expired_token_is_refreshed_once() {
+        val sent = mutableListOf<String?>()
+        val closed = mutableListOf<Int>()
+        val result = fetch_with_one_token_refresh(
+            token = "old",
+            fetch = { bearer -> sent += bearer; if (bearer == "old") 401 else 200 },
+            status_of = { it },
+            close = { closed += it },
+            refresh = { "new" },
+        )
+        assertEquals(200, result)
+        assertEquals(listOf<String?>("old", "new"), sent)
+        assertEquals(listOf(401), closed)
+    }
+
+    @Test
+    fun a_second_expiry_is_not_refreshed_again() {
+        var refreshes = 0
+        val sent = mutableListOf<String?>()
+        val result = fetch_with_one_token_refresh(
+            token = "old",
+            fetch = { bearer -> sent += bearer; 401 },
+            status_of = { it },
+            close = {},
+            refresh = { refreshes++; "new" },
+        )
+        assertEquals(401, result)
+        assertEquals(1, refreshes)
+        assertEquals(listOf<String?>("old", "new"), sent)
+    }
+
+    @Test
+    fun a_failed_refresh_keeps_the_first_answer() {
+        val sent = mutableListOf<String?>()
+        val result = fetch_with_one_token_refresh(
+            token = "old",
+            fetch = { bearer -> sent += bearer; 401 },
+            status_of = { it },
+            close = {},
+            refresh = { null },
+        )
+        assertEquals(401, result)
+        assertEquals(listOf<String?>("old"), sent)
+        assertEquals(200, fetch_with_one_token_refresh("old", { 200 }, { it }, {}, { error("unused") }))
+    }
+
+    @Test
     fun skips_the_fetch_without_a_token() {
         assertNull(proxied_image_request(url, null))
         assertNull(proxied_image_request(url, "  "))

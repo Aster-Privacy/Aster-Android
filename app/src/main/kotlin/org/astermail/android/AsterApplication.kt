@@ -342,6 +342,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         fun labels_api(): org.astermail.android.api.labels.LabelsApi
         fun search_index_manager(): org.astermail.android.mail.SearchIndexManager
         fun app_lock_store(): org.astermail.android.security.AppLockStore
+        fun lazy_auth_repository(): dagger.Lazy<org.astermail.android.auth.AuthRepository>
     }
 
     override fun newImageLoader(): ImageLoader {
