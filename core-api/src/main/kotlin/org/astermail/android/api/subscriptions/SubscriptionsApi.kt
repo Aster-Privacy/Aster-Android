@@ -75,6 +75,8 @@ data class ProxyUnsubscribeRequest(
     val url: String? = null,
     val mailto_address: String? = null,
     val list_unsubscribe_post: String? = null,
+    val from_address: String? = null,
+    val from_address_hash: String? = null,
 )
 
 @Serializable
