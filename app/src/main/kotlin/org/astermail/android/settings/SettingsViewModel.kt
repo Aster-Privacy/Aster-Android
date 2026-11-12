@@ -267,6 +267,7 @@ data class SettingsUiState(
     val external_pgp_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo? = null,
     val external_pgp_key_busy: Boolean = false,
     val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
+    val recovery_codes_outdated: Boolean = false,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
     val recovery_codes_status_load_failed: Boolean = false,
     val encryption_settings: org.astermail.android.api.encryption.EncryptionSettings? = null,
@@ -4167,6 +4168,9 @@ class SettingsViewModel @Inject constructor(
     suspend fun rotate_recovery_codes_now(step_up_token: String): Result<List<String>> {
         return try {
             val codes = auth_repository.rotate_recovery_codes(step_up_token)
+            _state.update {
+                it.copy(recovery_codes_outdated = org.astermail.android.auth.has_outdated_recovery_codes(codes))
+            }
             load_recovery_codes_status()
             Result.success(codes)
         } catch (t: Throwable) {
@@ -4187,6 +4191,22 @@ class SettingsViewModel @Inject constructor(
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "refresh_recovery_methods", t)
                 }
+            }
+        }
+    }
+
+    fun refresh_recovery_codes_outdated() {
+        val gen = account_generation
+        viewModelScope.launch {
+            val codes = try {
+                auth_repository.sync_recovery_codes()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                get_recovery_codes()
+            }
+            if (gen != account_generation) return@launch
+            _state.update {
+                it.copy(recovery_codes_outdated = org.astermail.android.auth.has_outdated_recovery_codes(codes))
             }
         }
     }

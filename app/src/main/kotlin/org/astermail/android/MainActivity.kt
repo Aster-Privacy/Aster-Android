@@ -2950,6 +2950,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.refresh_recovery_methods()
     }
 
+    androidx.compose.runtime.LaunchedEffect(accounts_state.current_account_id) {
+        settings_vm.refresh_recovery_codes_outdated()
+    }
+
     androidx.compose.runtime.LaunchedEffect(recovery_prompt_due, accounts_state.current_account_id) {
         if (recovery_prompt_due) settings_vm.refresh_recovery_email_presence()
     }
@@ -2961,7 +2965,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         recovery_methods.codes_remaining <= 3L
 
     val show_codes_refresh_prompt = !first_run_setup_pending &&
-        org.astermail.android.auth.has_outdated_recovery_codes(settings_vm.get_recovery_codes())
+        settings_state.recovery_codes_outdated
 
     val show_phrase_prompt = !show_codes_refresh_prompt &&
         recovery_methods != null &&
