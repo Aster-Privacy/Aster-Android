@@ -3045,9 +3045,9 @@
     <string name="shipping_status_exception">डिलीवरी में समस्या</string>
     <string name="shipping_status_unknown">शिपमेंट अपडेट</string>
     <string name="inbox_arrives_on">%1$s को पहुंचेगा</string>
-    <string name="sender_verified_badge">सत्यापित भेजने वाला</string>
-    <string name="sender_verified_title">सत्यापित भेजने वाला</string>
-    <string name="sender_verified_message">इस ईमेल के भेजने वाले ने पुष्टि की है कि %1$s उनका है।</string>
+    <string name="sender_verified_badge">सत्यापित डोमेन</string>
+    <string name="sender_verified_title">सत्यापित डोमेन</string>
+    <string name="sender_verified_message">Aster के सर्वर ने जाँच की है कि %1$s भेजने वाले का है।</string>
     <string name="password_recovery_email_title">पासवर्ड रिकवरी ईमेल</string>
     <string name="recovery_email_step_desc">अगर आप अपने रिकवरी कोड खो देते हैं तो खाते में वापस आने के लिए एक ईमेल पता जोड़ें।</string>
     <string name="notifications_step_title">सूचनाएं चालू करें</string>

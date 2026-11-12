@@ -3153,9 +3153,9 @@
     <string name="shipping_status_exception">Teslimat sorunu</string>
     <string name="shipping_status_unknown">Gönderi güncellemesi</string>
     <string name="inbox_arrives_on">%1$s tarihinde geliyor</string>
-    <string name="sender_verified_badge">Doğrulanmış gönderen</string>
-    <string name="sender_verified_title">Doğrulanmış gönderen</string>
-    <string name="sender_verified_message">Bu e-postanın göndereni %1$s alan adının sahibi olduğunu doğruladı.</string>
+    <string name="sender_verified_badge">Doğrulanmış alan adı</string>
+    <string name="sender_verified_title">Doğrulanmış alan adı</string>
+    <string name="sender_verified_message">Aster sunucuları, gönderenin %1$s alan adının sahibi olduğunu doğruladı.</string>
     <string name="password_recovery_email_title">Parola kurtarma e-postası</string>
     <string name="recovery_email_step_desc">Kurtarma kodlarınızı kaybederseniz hesabınıza geri dönebilmek için bir e-posta adresi ekleyin.</string>
     <string name="notifications_step_title">Bildirimleri açın</string>

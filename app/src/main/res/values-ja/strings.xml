@@ -3138,9 +3138,9 @@
     <string name="shipping_status_exception">配達の問題</string>
     <string name="shipping_status_unknown">配送状況の更新</string>
     <string name="inbox_arrives_on">%1$s に到着</string>
-    <string name="sender_verified_badge">認証済みの送信者</string>
-    <string name="sender_verified_title">認証済みの送信者</string>
-    <string name="sender_verified_message">このメールの送信者は %1$s を所有していることを確認済みです。</string>
+    <string name="sender_verified_badge">認証済みのドメイン</string>
+    <string name="sender_verified_title">認証済みのドメイン</string>
+    <string name="sender_verified_message">Aster のサーバーが、送信者が %1$s を所有していることを確認しました。</string>
     <string name="password_recovery_email_title">パスワード復旧用メール</string>
     <string name="recovery_email_step_desc">リカバリーコードを紛失してもアカウントに戻れるよう、メールアドレスを追加してください。</string>
     <string name="notifications_step_title">通知をオンにする</string>

@@ -3136,9 +3136,9 @@
     <string name="shipping_status_exception">배송 문제</string>
     <string name="shipping_status_unknown">배송 업데이트</string>
     <string name="inbox_arrives_on">%1$s 도착</string>
-    <string name="sender_verified_badge">인증된 발신자</string>
-    <string name="sender_verified_title">인증된 발신자</string>
-    <string name="sender_verified_message">이 이메일의 발신자가 %1$s을(를) 소유하고 있음을 확인했습니다.</string>
+    <string name="sender_verified_badge">인증된 도메인</string>
+    <string name="sender_verified_title">인증된 도메인</string>
+    <string name="sender_verified_message">Aster 서버가 발신자가 %1$s을(를) 소유하고 있음을 확인했습니다.</string>
     <string name="password_recovery_email_title">비밀번호 복구 이메일</string>
     <string name="recovery_email_step_desc">복구 코드를 분실해도 계정에 다시 들어갈 수 있도록 이메일 주소를 추가하세요.</string>
     <string name="notifications_step_title">알림 켜기</string>

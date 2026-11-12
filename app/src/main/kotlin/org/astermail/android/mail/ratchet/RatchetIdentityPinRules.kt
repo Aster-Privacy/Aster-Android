@@ -46,6 +46,20 @@ enum class SenderIdentityContinuity {
     CHANGED,
 }
 
+enum class SavedKeyState {
+    ABSENT,
+    FOUND,
+    CONFLICT,
+    UNREADABLE,
+}
+
+enum class SavedKeyCheck {
+    FIRST,
+    MATCH,
+    CHANGED,
+    UNREADABLE,
+}
+
 object RatchetIdentityPinRules {
 
     private const val account_prefix = "acct/"
@@ -80,6 +94,40 @@ object RatchetIdentityPinRules {
         else -> OwnerKeyDecision.UNTRUSTED
     }
 
+    fun check_saved_key(
+        state: SavedKeyState,
+        saved_fingerprint: String?,
+        served_fingerprint: String?,
+    ): SavedKeyCheck = when {
+        served_fingerprint.isNullOrBlank() -> SavedKeyCheck.UNREADABLE
+        state == SavedKeyState.UNREADABLE -> SavedKeyCheck.UNREADABLE
+        state == SavedKeyState.CONFLICT -> SavedKeyCheck.CHANGED
+        state == SavedKeyState.ABSENT || saved_fingerprint.isNullOrBlank() -> SavedKeyCheck.FIRST
+        saved_fingerprint.equals(served_fingerprint, ignoreCase = true) -> SavedKeyCheck.MATCH
+        else -> SavedKeyCheck.CHANGED
+    }
+
+    fun signature_trusted(check: SavedKeyCheck?): Boolean =
+        check == SavedKeyCheck.FIRST || check == SavedKeyCheck.MATCH
+
+    fun stored_continuity(
+        remembered_fingerprints: List<String>?,
+        pinned_fingerprint: String?,
+        pin_readable: Boolean,
+        current_fingerprint: String?,
+    ): SenderIdentityContinuity {
+        if (current_fingerprint.isNullOrBlank()) return SenderIdentityContinuity.NEW
+        if (remembered_fingerprints != null && pin_readable) {
+            return continuity(remembered_fingerprints, pinned_fingerprint, current_fingerprint)
+        }
+        val known = remembered_fingerprints.orEmpty().contains(current_fingerprint) ||
+            pinned_fingerprint == current_fingerprint
+        return if (known) SenderIdentityContinuity.KNOWN else SenderIdentityContinuity.CHANGED
+    }
+
+    fun merge_remembered(lists: List<List<String>>, limit: Int): List<String> =
+        lists.flatten().filter { it.isNotBlank() }.asReversed().distinct().asReversed().takeLast(limit)
+
     fun continuity(
         remembered_fingerprints: List<String>,
         pinned_fingerprint: String?,
@@ -106,6 +154,8 @@ object RatchetIdentityPinRules {
         val scope = account_id?.trim().orEmpty()
         return if (scope.isEmpty()) legacy_key else "$account_prefix$scope/$legacy_key"
     }
+
+    fun is_account_scoped(key: String): Boolean = key.startsWith(account_prefix)
 
     fun account_key_prefix(account_id: String): String = "$account_prefix${account_id.trim()}/"
 

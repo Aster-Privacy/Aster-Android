@@ -558,6 +558,7 @@ class MailRepository @Inject constructor(
     private val storage_rekey_service_provider: dagger.Lazy<org.astermail.android.crypto.storage_rotation.StorageRekeyService>? = null,
     private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
     private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
+    private val identity_pins_provider: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -5604,6 +5605,23 @@ class MailRepository @Inject constructor(
         return key
     }
 
+    private fun saved_sender_key_check(
+        sender_email: String?,
+        sender_public_key: String?,
+    ): org.astermail.android.mail.ratchet.SavedKeyCheck? {
+        val store = identity_pins_provider?.get() ?: return null
+        val email = sender_email?.takeIf { it.isNotBlank() } ?: return null
+        val fingerprint = org.astermail.android.mail.ratchet.PrekeyBindingVerifier
+            .owner_fingerprint(sender_public_key)
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+        return runCatching {
+            kotlinx.coroutines.runBlocking {
+                store.check_sender_key(email, fingerprint, System.currentTimeMillis())
+            }
+        }.getOrNull()
+    }
+
     private fun ratchet_body_candidate(envelope: DecryptedEnvelope): String? {
         val body_text = envelope.body_text
         val body_html = envelope.body_html
@@ -5779,7 +5797,15 @@ class MailRepository @Inject constructor(
         val pgp_fields = resolve_pgp_body_fields(
             PgpBodyFields(body_text, body_html, envelope.pgp_encrypted, envelope.pgp_signature),
         ) { armored ->
-            try_pgp_decrypt_result(armored, sender_verification_key(envelope.from_email), allow_external_pgp)
+            val sender_key = sender_verification_key(envelope.from_email)
+            settle_sender_signature(
+                result = try_pgp_decrypt_result(armored, sender_key, allow_external_pgp),
+                saved_key_check = { saved_sender_key_check(envelope.from_email, sender_key) },
+                is_own_signature = {
+                    try_pgp_decrypt_own_result(armored)?.signature ==
+                        org.astermail.android.crypto.PgpSignatureStatus.VALID
+                },
+            )
         }
         body_text = pgp_fields.body_text
         body_html = pgp_fields.body_html
