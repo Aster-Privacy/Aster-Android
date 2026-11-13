@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.settings.DecryptedSignature
+
 fun signature_below_quote(signature_placement: Int?, preference: String?): Boolean {
     if (signature_placement == 1) return false
     if (signature_placement == 0) return true
@@ -158,3 +160,9 @@ fun draft_html_with_signature(formatted: String, is_rich: Boolean, signature_htm
     val body_html = if (is_rich) formatted else escape_body_text(formatted).replace("\n", "<br>")
     return body_html + "<br><br><div class=\"aster_signature\">" + signature_html + "</div>"
 }
+
+fun signatures_for_alias(
+    signatures: List<DecryptedSignature>,
+    alias_id: String?,
+): List<DecryptedSignature> =
+    signatures.filter { it.alias_id == null || (alias_id != null && it.alias_id == alias_id) }

@@ -3282,7 +3282,7 @@ private fun compose_screen_content(
 
     if (show_signature_sheet) {
         SignaturePickerSheet(
-            signatures = signatures_list,
+            signatures = signatures_for_alias(signatures_list, current_alias_id),
             current_id = manual_signature_id,
             on_close = { show_signature_sheet = false },
             on_pick = { picked_id ->
