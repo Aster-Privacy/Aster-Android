@@ -200,6 +200,7 @@ class MainActivity :
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
+        const val EXTRA_OPEN_CONTACT_SYNC = "open_contact_sync"
         private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
         private const val CONTENT_INSET_TIMEOUT_MS = 4000L
         private const val STATE_LAUNCH_PENDING = "launch_intent_pending"
@@ -415,6 +416,10 @@ class MainActivity :
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
             if (trusted) pending_launch.pending_open_sessions.value = true
         }
+        if (intent?.getBooleanExtra(EXTRA_OPEN_CONTACT_SYNC, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_CONTACT_SYNC)
+            pending_launch.pending_open_contact_sync.value = true
+        }
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
         if (!trusted) return
@@ -491,6 +496,7 @@ private fun request_notification_permission(should_request: Boolean) {
 class pending_launch_state {
     val pending_open_email_id = mutableStateOf<String?>(null)
     val pending_open_sessions = mutableStateOf(false)
+    val pending_open_contact_sync = mutableStateOf(false)
     val pending_open_billing = mutableStateOf(false)
     val pending_reveal_email_id = mutableStateOf<String?>(null)
     val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
@@ -503,6 +509,7 @@ class pending_launch_state {
             pending_reveal_email_id.value != null ||
             pending_share.value != null ||
             pending_open_sessions.value ||
+            pending_open_contact_sync.value ||
             pending_open_billing.value
 
     fun take_launch_folder(): String? {
@@ -753,6 +760,16 @@ private fun AsterNavHost() {
         if (!pending_sessions || !is_signed_in_state || is_locked) return@LaunchedEffect
         pending.pending_open_sessions.value = false
         nav_controller.navigate(routes.settings_detail("sessions")) {
+            launchSingleTop = true
+        }
+    }
+
+    val pending_contact_sync = pending.pending_open_contact_sync.value
+    androidx.compose.runtime.LaunchedEffect(pending_contact_sync, is_signed_in_state, is_locked) {
+        if (!pending_contact_sync || !is_signed_in_state || is_locked) return@LaunchedEffect
+        pending.pending_open_contact_sync.value = false
+        org.astermail.android.contacts.sync.ContactSyncAccounts.request_setup()
+        nav_controller.navigate(routes.settings_detail("behavior")) {
             launchSingleTop = true
         }
     }

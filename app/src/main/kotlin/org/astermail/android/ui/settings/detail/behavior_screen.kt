@@ -51,6 +51,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -902,6 +904,15 @@ private fun phone_contacts_sync_section() {
     var show_off_confirm by remember { mutableStateOf(false) }
     var show_settings_prompt by remember { mutableStateOf(false) }
     var pending_enable by remember { mutableStateOf(false) }
+    val setup_requested by ContactSyncAccounts.setup_requested.collectAsStateWithLifecycle()
+    val section_requester = remember { BringIntoViewRequester() }
+
+    LaunchedEffect(setup_requested) {
+        if (!setup_requested || !ContactSyncAccounts.consume_setup_request()) return@LaunchedEffect
+        section_requester.bringIntoView()
+        val active = ContactSyncAccounts.is_enabled(context) && ContactSyncAccounts.has_permissions(context)
+        if (!active) show_disclosure = true
+    }
 
     fun apply(value: Boolean) {
         scope.launch(Dispatchers.IO) { ContactSyncAccounts.set_enabled(context, value) }
@@ -939,7 +950,7 @@ private fun phone_contacts_sync_section() {
     }
 
     section_label(stringResource(R.string.contact_sync_section))
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
+    AsterCard(modifier = Modifier.fillMaxWidth().bringIntoViewRequester(section_requester)) {
         behavior_toggle(
             title = stringResource(R.string.contact_sync_title),
             subtitle = stringResource(R.string.contact_sync_subtitle),
