@@ -1079,6 +1079,36 @@ class MailPollingWorker(
             return true
         }
 
+        fun preview_without_subject(subject: String, preview: String): String {
+            val trimmed_preview = preview.trim()
+            if (trimmed_preview.isEmpty()) return ""
+            val subject_chars = subject.filterNot { it.isWhitespace() }.lowercase()
+            if (subject_chars.isEmpty()) return trimmed_preview
+            var preview_index = 0
+            var subject_index = 0
+            while (preview_index < trimmed_preview.length && subject_index < subject_chars.length) {
+                val current = trimmed_preview[preview_index]
+                if (current.isWhitespace()) {
+                    preview_index++
+                    continue
+                }
+                if (current.lowercaseChar() != subject_chars[subject_index]) break
+                preview_index++
+                subject_index++
+            }
+            if (subject_index < subject_chars.length) {
+                return if (preview_index == trimmed_preview.length) "" else trimmed_preview
+            }
+            val next = trimmed_preview.getOrNull(preview_index)
+            if (next != null && next.isLetterOrDigit() && subject_chars.last().isLetterOrDigit()) {
+                return trimmed_preview
+            }
+            return trimmed_preview.substring(preview_index)
+                .trimStart { it.isWhitespace() || it in PREVIEW_SUBJECT_SEPARATORS }
+        }
+
+        private const val PREVIEW_SUBJECT_SEPARATORS = "-:|.,;–—•"
+
         fun show_message(
             context: Context,
             sender: String,
@@ -1125,11 +1155,14 @@ class MailPollingWorker(
                     builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
                 }
             }
-            if (one_line_preview.isNotBlank() && one_line_preview != one_line_subject) {
+            val body_text = preview_without_subject(
+                org.astermail.android.mail.safe_display_text(subject),
+                one_line_preview,
+            )
+            if (body_text.isNotBlank()) {
                 builder.setStyle(
-                    NotificationCompat.InboxStyle()
-                        .addLine(one_line_subject)
-                        .addLine(one_line_preview),
+                    NotificationCompat.BigTextStyle()
+                        .bigText("$one_line_subject\n$body_text"),
                 )
             }
             val lock_screen = message_lock_screen_policy(
