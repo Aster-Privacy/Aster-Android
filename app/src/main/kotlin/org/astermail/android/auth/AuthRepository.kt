@@ -3080,7 +3080,7 @@ class AuthRepository @Inject constructor(
             val verifier_salt = generate_verifier_salt()
             val shares = kotlinx.coroutines.coroutineScope {
                 codes.map { code ->
-                    async(Dispatchers.Default) {
+                    async(recovery_share_dispatcher) {
                         generate_recovery_share(code, recovery_key, verifier_salt, include_code_hash)
                     }
                 }.awaitAll()
@@ -3225,5 +3225,9 @@ class AuthRepository @Inject constructor(
         private const val vault_pbkdf2_iterations = 310000
         private const val pgp_private_key_pbkdf2_iterations = 310000
         private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
+        private val recovery_share_parallelism =
+            (Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4)
+        private val recovery_share_dispatcher =
+            Dispatchers.Default.limitedParallelism(recovery_share_parallelism)
     }
 }

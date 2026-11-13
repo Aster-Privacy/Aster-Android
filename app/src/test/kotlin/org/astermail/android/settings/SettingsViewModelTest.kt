@@ -259,6 +259,7 @@ class SettingsViewModelTest {
             context = context,
         )
         vm.default_dispatcher = dispatcher
+        vm.io_dispatcher = dispatcher
     }
 
     @After
@@ -732,7 +733,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `get_recovery_codes delegates to session key store`() {
+    fun `get_recovery_codes delegates to session key store`() = runTest {
         every { session_key_store.get_recovery_codes() } returns listOf("code1", "code2", "code3")
 
         val codes = vm.get_recovery_codes()
@@ -743,7 +744,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `get_recovery_codes returns null when no codes stored`() {
+    fun `get_recovery_codes returns null when no codes stored`() = runTest {
         every { session_key_store.get_recovery_codes() } returns null
 
         assertNull(vm.get_recovery_codes())
@@ -2397,7 +2398,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)
@@ -2440,7 +2444,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2516,7 +2523,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         every { session_key_store.get_identity_key() } returns identity_key
@@ -2568,7 +2578,10 @@ class SettingsViewModelTest {
         preferences_cache = preferences_cache,
         theme_store = theme_store,
         context = context,
-    ).also { it.default_dispatcher = dispatcher }
+    ).also {
+        it.default_dispatcher = dispatcher
+        it.io_dispatcher = dispatcher
+    }
 
     private fun aes_gcm(mode: Int, key: ByteArray, nonce: ByteArray, input: ByteArray): ByteArray {
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
@@ -2792,7 +2805,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
         assertEquals("dark", vm.state.value.preferences?.theme)
 
@@ -2843,7 +2859,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2903,7 +2922,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)
@@ -3362,7 +3384,10 @@ class SettingsViewModelTest {
         preferences_cache = preferences_cache,
         theme_store = theme_store,
         context = context,
-    ).also { it.default_dispatcher = dispatcher }
+    ).also {
+        it.default_dispatcher = dispatcher
+        it.io_dispatcher = dispatcher
+    }
 
     @Test
     fun `load_preferences does not restart an in-flight load`() = runTest {
@@ -3585,6 +3610,22 @@ class SettingsViewModelTest {
 
         vm.acknowledge_recovery_rotation()
         assertEquals(RecoveryRotationPhase.idle, vm.state.value.recovery_rotation.phase)
+    }
+
+    @Test
+    fun `starting a rotation reads stored codes inside the background job`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.rotate_recovery_codes("token-1") } returns new_recovery_codes
+
+        vm.start_recovery_codes_rotation("token-1")
+
+        assertEquals(RecoveryRotationPhase.rotating, vm.state.value.recovery_rotation.phase)
+        verify(exactly = 0) { session_key_store.get_recovery_codes() }
+
+        advanceUntilIdle()
+
+        verify(exactly = 1) { session_key_store.get_recovery_codes() }
+        assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
     }
 
     @Test
