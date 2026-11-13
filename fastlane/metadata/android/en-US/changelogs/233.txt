@@ -1,0 +1,10 @@
+What's new:
+
+- The recovery codes prompt has a Later button that hides it for three days.
+- When you choose Aster Mail on the system Add account screen, contact sync setup opens.
+
+Fixed:
+
+- Replacing your recovery codes no longer freezes the app, and progress shows while new codes are created.
+- Notifications show the sender's address when there's no name and no longer repeat the subject.
+- Insert signature lists only the signatures for the address you're sending from.
