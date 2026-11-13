@@ -293,13 +293,17 @@ class MailPollingWorker(
                 if (item.is_undecryptable) {
                     localized(context).getString(org.astermail.android.R.string.encrypted)
                 } else {
-                    org.astermail.android.security.trusted_sender_name(
-                        org.astermail.android.ui.mail.inbox_item_trust_message(item),
-                        item.display_sender_name
-                            ?: item.sender_name.takeIf { it.isNotBlank() }
-                            ?: item.sender_email,
-                        localized(context).getString(org.astermail.android.R.string.unknown),
-                    ).trim()
+                    MailPollingWorker.notification_sender_label(
+                        org.astermail.android.security.trusted_sender_name(
+                            org.astermail.android.ui.mail.inbox_item_trust_message(item),
+                            item.display_sender_name?.takeIf { it.isNotBlank() }
+                                ?: item.sender_name.takeIf { it.isNotBlank() }
+                                ?: item.display_sender_email?.takeIf { it.isNotBlank() }
+                                ?: item.sender_email,
+                            "",
+                        ),
+                        item.display_sender_email?.takeIf { it.isNotBlank() } ?: item.sender_email,
+                    )
                 }
             var fetched_any_page = false
             var forced_heal_armed = false
@@ -1077,6 +1081,13 @@ class MailPollingWorker(
             manager.notify(NOTIFICATION_ID, notification)
             post_group_summary(context, manager, NOTIFICATION_ID)
             return true
+        }
+
+        fun notification_sender_label(trusted_name: String, raw_email: String?): String {
+            val name = trusted_name.trim()
+            if (name.isNotEmpty()) return name
+            val email = raw_email?.trim().orEmpty()
+            return if (email.length > 2 && email.indexOf('@') in 1 until email.length - 1) email else ""
         }
 
         fun preview_without_subject(subject: String, preview: String): String {
