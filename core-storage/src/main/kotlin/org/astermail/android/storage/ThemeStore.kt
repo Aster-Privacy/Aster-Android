@@ -129,6 +129,7 @@ class ThemeStore(context: Context) {
     private val key_first_run_at = longPreferencesKey("first_run_at")
     private val key_recovery_snooze_until = longPreferencesKey("recovery_snooze_until")
     private val key_phrase_prompt_snooze_until = longPreferencesKey("phrase_prompt_snooze_until")
+    private val key_codes_refresh_snooze_until = longPreferencesKey("codes_refresh_snooze_until")
     private val key_color_theme = stringPreferencesKey("color_theme")
     private val key_custom_theme_seed = stringPreferencesKey("custom_theme_seed")
     private val key_custom_theme_overrides = stringPreferencesKey("custom_theme_overrides")
@@ -220,6 +221,11 @@ class ThemeStore(context: Context) {
         .map { prefs -> prefs[key_phrase_prompt_snooze_until] ?: 0L }
         .onEach { cache_long("phrase_prompt_snooze_until", it) }
         .stateIn(scope, SharingStarted.Eagerly, cached_long("phrase_prompt_snooze_until", 0L))
+
+    val codes_refresh_snooze_until: StateFlow<Long> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_codes_refresh_snooze_until] ?: 0L }
+        .onEach { cache_long("codes_refresh_snooze_until", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_long("codes_refresh_snooze_until", 0L))
 
     val color_theme: StateFlow<String> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_color_theme] ?: "default" }
@@ -340,6 +346,12 @@ class ThemeStore(context: Context) {
     fun snooze_phrase_prompt(until_ms: Long) {
         scope.launch {
             app_context.theme_data_store.edit { it[key_phrase_prompt_snooze_until] = until_ms }
+        }
+    }
+
+    fun snooze_codes_refresh_prompt(until_ms: Long) {
+        scope.launch {
+            app_context.theme_data_store.edit { it[key_codes_refresh_snooze_until] = until_ms }
         }
     }
 

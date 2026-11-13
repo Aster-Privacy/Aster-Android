@@ -68,6 +68,7 @@ const val first_run_recovery_delay_ms = 24L * 60L * 60L * 1000L
 const val first_run_plan_delay_ms = 72L * 60L * 60L * 1000L
 const val first_run_recovery_snooze_ms = 3L * 24L * 60L * 60L * 1000L
 const val phrase_prompt_snooze_ms = 7L * 24L * 60L * 60L * 1000L
+const val codes_refresh_snooze_ms = 3L * 24L * 60L * 60L * 1000L
 
 @Composable
 fun FirstRunSetupSheet(
@@ -284,6 +285,7 @@ fun RecoveryCodesReminderCard(
 fun RecoveryCodesRefreshCard(
     visible: Boolean,
     on_get_codes: () -> Unit,
+    on_later: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FirstRunPromptCard(
@@ -291,10 +293,10 @@ fun RecoveryCodesRefreshCard(
         title = stringResource(R.string.recovery_codes_refresh_title),
         body = stringResource(R.string.recovery_codes_refresh_body),
         action_label = stringResource(R.string.recovery_codes_refresh_action),
-        dismiss_label = null,
+        dismiss_label = stringResource(R.string.recovery_reminder_later),
         icon = TablerIcons.Key,
         on_action = on_get_codes,
-        on_dismiss = {},
+        on_dismiss = on_later,
         modifier = modifier,
     )
 }

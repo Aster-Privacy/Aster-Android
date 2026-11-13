@@ -375,6 +375,8 @@ class SettingsViewModel @Inject constructor(
 
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
 
+    internal var io_dispatcher: CoroutineDispatcher = Dispatchers.IO
+
     private val _state = MutableStateFlow(SettingsUiState())
     private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
     private var last_subscription_load_ms = 0L
@@ -4187,12 +4189,14 @@ class SettingsViewModel @Inject constructor(
             return
         }
         val gen = account_generation
-        val previous_codes = get_recovery_codes()
         _state.update {
             it.copy(recovery_rotation = RecoveryCodesRotation(phase = RecoveryRotationPhase.rotating))
         }
         recovery_rotation_job = viewModelScope.launch {
-            val work = async { attempt_recovery_rotation(step_up_token, previous_codes) }
+            val work = async {
+                val previous_codes = get_recovery_codes()
+                attempt_recovery_rotation(step_up_token, previous_codes)
+            }
             val in_time = kotlinx.coroutines.withTimeoutOrNull(RECOVERY_ROTATION_TIMEOUT_MS) { work.await() }
             if (in_time == null && gen == account_generation) {
                 _state.update {
@@ -4540,8 +4544,8 @@ class SettingsViewModel @Inject constructor(
         settings_api.send_feedback(FeedbackRequest(category = category, message = message))
     }
 
-    fun get_recovery_codes(): List<String>? {
-        return session_key_store.get_recovery_codes()
+    suspend fun get_recovery_codes(): List<String>? = withContext(io_dispatcher) {
+        session_key_store.get_recovery_codes()
     }
 
     private fun user_facing_error(t: Throwable): String =

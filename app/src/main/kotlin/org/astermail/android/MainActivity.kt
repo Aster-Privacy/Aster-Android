@@ -2928,6 +2928,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val recovery_snooze_until by theme_vm_inbox.recovery_snooze_until.collectAsStateWithLifecycle()
     val phrase_prompt_snooze_until by theme_vm_inbox.phrase_prompt_snooze_until
         .collectAsStateWithLifecycle()
+    val codes_refresh_snooze_until by theme_vm_inbox.codes_refresh_snooze_until
+        .collectAsStateWithLifecycle()
 
     var recovery_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
@@ -2936,6 +2938,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         mutableStateOf(false)
     }
     var phrase_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(false)
+    }
+    var codes_refresh_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -2965,7 +2970,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         recovery_methods.codes_remaining <= 3L
 
     val show_codes_refresh_prompt = !first_run_setup_pending &&
-        settings_state.recovery_codes_outdated
+        settings_state.recovery_codes_outdated &&
+        !codes_refresh_prompt_dismissed &&
+        now_ms >= codes_refresh_snooze_until
 
     val show_phrase_prompt = !show_codes_refresh_prompt &&
         recovery_methods != null &&
@@ -3016,7 +3023,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 org.astermail.android.ui.onboarding.RecoveryCodesRefreshCard(
                     visible = true,
                     on_get_codes = {
+                        codes_refresh_prompt_dismissed = true
                         nav_controller.navigate(routes.settings_detail("recovery_codes"))
+                    },
+                    on_later = {
+                        codes_refresh_prompt_dismissed = true
+                        theme_vm_inbox.snooze_codes_refresh_prompt(
+                            org.astermail.android.ui.onboarding.codes_refresh_snooze_ms,
+                        )
                     },
                 )
             } else if (show_phrase_prompt) {

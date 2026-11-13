@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -323,7 +324,9 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
 
             v_gap(AsterSpacing.lg)
 
-            if (codes.isEmpty()) {
+            if (is_rotating) {
+                recovery_codes_rotating_card()
+            } else if (codes.isEmpty()) {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
@@ -483,6 +486,31 @@ private fun format_codes_date(iso: String?): String {
     return runCatching {
         formatter.format(Date(java.time.Instant.parse(iso).toEpochMilli()))
     }.getOrDefault(iso)
+}
+
+@Composable
+private fun recovery_codes_rotating_card() {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AsterSpacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = colors.accent_blue,
+                strokeWidth = 2.dp,
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.status_generating_codes),
+                color = colors.text_secondary,
+                fontSize = 14.sp,
+            )
+        }
+    }
 }
 
 @Composable
