@@ -112,6 +112,25 @@ data class ExternalSendRequest(
     val external_pgp_bodies: Map<String, String>? = null,
     val force_pgp: Boolean? = null,
     val pgp_recipients: List<String>? = null,
+    val secure_message: SecureMessagePayload? = null,
+)
+
+@Serializable
+data class SecureMessageField(
+    val ciphertext: String,
+    val nonce: String,
+)
+
+@Serializable
+data class SecureMessagePayload(
+    val kdf_salt: String,
+    val auth_proof: String,
+    val encrypted_subject: SecureMessageField,
+    val encrypted_body: SecureMessageField,
+    val kem_ciphertext: String,
+    val encrypted_kem_seed: String,
+    val kem_seed_nonce: String,
+    val attachments_bundle: String? = null,
 )
 
 @Serializable

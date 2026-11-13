@@ -1001,6 +1001,7 @@
     <string name="default_payment_updated">Способ оплаты по умолчанию обновлён</string>
     <string name="payment_method_removed">Способ оплаты удалён</string>
     <string name="session_expired_sign_in">Сеанс истёк. Войдите снова.</string>
+    <string name="vault_open_failed_notice">Не удалось разблокировать ваши ключи на этом устройстве, поэтому некоторые письма могут здесь не открыться. Чтобы восстановить ключи, войдите в Aster Mail в браузере, а затем снова войдите на этом устройстве.</string>
     <string name="could_not_start_checkout">Не удалось перейти к оплате</string>
     <string name="could_not_open_portal">Не удалось открыть портал оплаты</string>
     <string name="cancel_failed">Не удалось отменить подписку</string>
@@ -3065,10 +3066,11 @@
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
     <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
     <string name="link_device_fingerprint_label">Код проверки</string>
-    <string name="link_device_fingerprint_hint">Сравните этот код с кодом проверки или отпечатком устройства на другом устройстве. Если коды отличаются, нажмите «Отмена».</string>
-    <string name="link_device_codes_match">Коды совпадают</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Введите код проверки или отпечаток устройства, который показывает новое устройство. В приложении для компьютера выберите «Проверить это устройство», чтобы его увидеть.</string>
     <string name="link_device_error_invalid_keys">Другое устройство отправило ключи, которые нельзя использовать. Получите новый код на том устройстве и повторите попытку.</string>
-    <string name="link_device_error_codes_not_confirmed">Чтобы привязать устройство, подтвердите, что коды совпадают.</string>
+    <string name="link_device_error_codes_not_confirmed">Чтобы привязать устройство, введите полный код проверки с нового устройства.</string>
+    <string name="link_device_error_fingerprint_mismatch">Этот код не совпадает с кодом нового устройства. Проверьте код на новом устройстве и введите его ещё раз. Если он по-прежнему не совпадает, нажмите «Отмена».</string>
     <string name="restore">Восстановить</string>
     <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
     <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>

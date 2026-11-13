@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.security.SecureRandom
 import org.astermail.android.crypto.PasswordKdf
+import org.astermail.android.storage.LockKeyHolder
+import org.astermail.android.storage.LockSeal
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,7 +41,11 @@ data class AppLockConfig(
 )
 
 @Singleton
-class AppLockStore @Inject constructor(@ApplicationContext private val context: Context) {
+class AppLockStore @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val session_key_store: dagger.Lazy<org.astermail.android.storage.SessionKeyStore>,
+    private val session_snapshot_store: dagger.Lazy<org.astermail.android.storage.SessionSnapshotStore>,
+) {
 
     private companion object {
         const val PREFS_NAME = "aster_app_lock"
@@ -47,6 +53,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         const val KEY_PIN_SALT = "pin_salt"
         const val KEY_PIN_TYPE = "pin_type"
         const val KEY_PIN_DIGITS = "pin_digits"
+        const val KEY_LOCK_KEY_WRAP = "lock_key_wrap"
         const val KEY_LOCKOUT_COUNT = "lockout_count"
         const val KEY_LOCKOUT_UNTIL = "lockout_until_ms"
         const val KEY_LOCKOUT_UNTIL_ELAPSED = "lockout_until_elapsed_ms"
@@ -62,6 +69,48 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     }
 
     @Volatile private var session_unlocked = false
+
+    private val lock_key_guard = Any()
+
+    init {
+        LockKeyHolder.add_open_listener { seal_stores() }
+    }
+
+    private fun seal_stores() {
+        runCatching { session_key_store.get().seal_persisted() }
+        runCatching { session_snapshot_store.get().seal_persisted() }
+    }
+
+    private fun unseal_stores(lock_key: ByteArray?): Boolean =
+        runCatching {
+            session_key_store.get().unseal_persisted(lock_key) &&
+                session_snapshot_store.get().unseal_persisted(lock_key)
+        }.getOrDefault(false)
+
+    private fun stores_hold_sealed_values(): Boolean =
+        runCatching {
+            session_key_store.get().has_sealed_values() || session_snapshot_store.get().has_sealed_values()
+        }.getOrDefault(true)
+
+    private fun open_lock_key(pin: String) {
+        synchronized(lock_key_guard) {
+            val wrapped = prefs.getString(KEY_LOCK_KEY_WRAP, null)
+            val unwrapped = LockKeyWrap.unwrap(pin, wrapped, PBKDF2_ITERATIONS)
+            if (unwrapped == null && (wrapped != null || stores_hold_sealed_values()) && !LockKeyHolder.is_open()) return
+            val lock_key = unwrapped ?: LockKeyHolder.current() ?: LockSeal.new_lock_key()
+            try {
+                if (unwrapped == null) {
+                    val stored = prefs.edit()
+                        .putString(KEY_LOCK_KEY_WRAP, LockKeyWrap.wrap(pin, lock_key, PBKDF2_ITERATIONS))
+                        .commit()
+                    if (!stored) return
+                }
+                LockKeyHolder.open(lock_key)
+            } finally {
+                lock_key.fill(0)
+            }
+        }
+    }
 
     private val _is_locked = MutableStateFlow(false)
     val is_locked: StateFlow<Boolean> = _is_locked.asStateFlow()
@@ -117,9 +166,13 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
     fun failed_attempt_count(): Int = prefs.getInt(KEY_LOCKOUT_COUNT, 0)
 
     fun setup_pin(pin: String, pin_type: String, digits: Int?) {
+        if (!LockKeyHolder.is_open() && stores_hold_sealed_values()) return
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val hash = hash_pin(pin, salt)
-        prefs.edit().apply {
+        val lock_key = LockKeyHolder.current() ?: LockSeal.new_lock_key()
+        val wrapped = LockKeyWrap.wrap(pin, lock_key, PBKDF2_ITERATIONS)
+        val stored = prefs.edit().apply {
+            putString(KEY_LOCK_KEY_WRAP, wrapped)
             putString(KEY_PIN_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
             putString(KEY_PIN_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
             putString(KEY_PIN_TYPE, pin_type)
@@ -128,6 +181,8 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
             putLong(KEY_LOCKOUT_UNTIL, 0L)
             putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L)
         }.commit()
+        if (stored) LockKeyHolder.open(lock_key)
+        lock_key.fill(0)
         runCatching { BiometricUnlockGate.reset(context) }
         _config_version.value += 1
         mark_session_unlocked()
@@ -144,6 +199,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         if (ok) {
             prefs.edit().putInt(KEY_LOCKOUT_COUNT, 0).putLong(KEY_LOCKOUT_UNTIL, 0L)
                 .putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L).apply()
+            runCatching { open_lock_key(pin) }
             if (unlock_session) mark_session_unlocked()
         } else {
             record_failed_attempt()
@@ -151,8 +207,17 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         return ok
     }
 
-    fun disable() {
+    fun disable(): Boolean {
+        val lock_key = LockKeyHolder.current()
+        try {
+            if (!unseal_stores(lock_key)) return false
+            LockKeyHolder.close()
+            if (!unseal_stores(lock_key)) return false
+        } finally {
+            lock_key?.fill(0)
+        }
         prefs.edit().apply {
+            remove(KEY_LOCK_KEY_WRAP)
             remove(KEY_PIN_HASH)
             remove(KEY_PIN_SALT)
             remove(KEY_PIN_TYPE)
@@ -165,6 +230,7 @@ class AppLockStore @Inject constructor(@ApplicationContext private val context: 
         session_unlocked = false
         _is_locked.value = false
         _config_version.value += 1
+        return true
     }
 
     private fun record_failed_attempt() {

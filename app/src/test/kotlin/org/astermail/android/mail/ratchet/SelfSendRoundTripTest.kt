@@ -47,6 +47,7 @@ import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
+import org.astermail.android.api.ratchet.PqPrekeyInfo
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.auth.AuthRepository
@@ -55,6 +56,8 @@ import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.json.JSONObject
 import org.junit.Test
@@ -71,6 +74,8 @@ class SelfSendRoundTripTest {
     private lateinit var encryptor: RatchetEncryptor
     private lateinit var decryptor: RatchetDecryptor
     private var pq_mode = false
+    private lateinit var covered_bundle: PrekeyBundleResponse
+    private lateinit var current_bundle: PrekeyBundleResponse
 
     @Before
     fun setup() {
@@ -98,7 +103,7 @@ class SelfSendRoundTripTest {
         every { SecurePrefs.open(any(), any()) } returns fake_prefs()
     }
 
-    private fun build(signed_pq: Boolean) {
+    private fun build(signed_pq: Boolean, cover_pq: Boolean = signed_pq, onetime_key_id: Int? = null) {
         val identity = RatchetCrypto.generate_p256_keypair()
         val spk = RatchetCrypto.generate_p256_keypair()
         session_key_store = SessionKeyStore(null)
@@ -113,30 +118,44 @@ class SelfSendRoundTripTest {
         val spk_b64 = RatchetCrypto.b64_encode(spk.public_raw)
         val keys_api = mockk<KeysApi>(relaxed = true)
         var pq_public_b64: String? = null
-        var signature = ""
         if (signed_pq) {
             val pq = RatchetCrypto.ml_kem_768_generate_keypair()
             pq_public_b64 = RatchetCrypto.b64_encode(pq.public_key)
             session_key_store.put_ratchet_pq_identity(RatchetCrypto.b64_encode(pq.secret_key), pq_public_b64)
-            val pgp = generate_pgp_key()
+        }
+        val pgp = generate_pgp_key()
+        fun sign(text: String): String {
             val armored = PrekeyBindingSigner.sign_cleartext(
                 armored_secret_key = armor { pgp.encode(it) },
                 passphrase = pgp_passphrase.toCharArray(),
-                text = PrekeyBindingSigner.canonical_binding_v2(ik_b64, spk_b64, pq_public_b64),
+                text = text,
             )
-            signature = java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
-            coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
-                PublicKeyResponse(username = "newuser", public_key = armor { pgp.publicKey.encode(it) })
+            return java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
         }
-        ratchet_api = mockk(relaxed = true)
-        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns PrekeyBundleResponse(
+        val covered_signature = sign(
+            pq_public_b64?.let { PrekeyBindingSigner.canonical_binding_v2(ik_b64, spk_b64, it) }
+                ?: PrekeyBindingSigner.canonical_binding(ik_b64, spk_b64),
+        )
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse(username = "newuser", public_key = armor { pgp.publicKey.encode(it) })
+        covered_bundle = PrekeyBundleResponse(
             user_id = "u_me",
             kem_identity_key = ik_b64,
             signed_prekey = spk_b64,
-            signed_prekey_signature = signature,
+            signed_prekey_signature = covered_signature,
+            pq_prekey = onetime_key_id?.let {
+                PqPrekeyInfo(it, RatchetCrypto.b64_encode(RatchetCrypto.ml_kem_768_generate_keypair().public_key))
+            },
             pq_kem_public_key = pq_public_b64,
             x3dh_max_version = if (signed_pq) X3dh.VERSION_TRANSCRIPT_BOUND else null,
         )
+        current_bundle = if (cover_pq) {
+            covered_bundle
+        } else {
+            covered_bundle.copy(signed_prekey_signature = sign(PrekeyBindingSigner.canonical_binding(ik_b64, spk_b64)))
+        }
+        ratchet_api = mockk(relaxed = true)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } answers { current_bundle }
 
         val state_store = mockk<RatchetStateStore>(relaxed = true)
         coEvery { state_store.load(any()) } answers { local_states[firstArg()]?.let { copy(it) } }
@@ -247,6 +266,69 @@ class SelfSendRoundTripTest {
 
     private suspend fun send(body: String): String =
         encryptor.encrypt_envelope(me, listOf(me), body, allow_non_post_quantum = !pq_mode)!!
+
+    private suspend fun seal(body: String, allow_non_post_quantum: Boolean): String =
+        encryptor.encrypt_envelope(me, listOf(me), body, allow_non_post_quantum = allow_non_post_quantum)!!
+
+    private fun sealed_for_me(envelope: String): JSONObject =
+        JSONObject(envelope).getJSONObject("recipients").getJSONObject(me)
+
+    private suspend fun refused_without_consent(): Boolean =
+        runCatching { seal("one", allow_non_post_quantum = false) }.exceptionOrNull() is PostQuantumUnavailableException
+
+    private suspend fun coverage_missing(): List<String> =
+        encryptor.check_post_quantum_coverage(me, listOf(me)).missing
+
+    @Test
+    fun `a post-quantum key the owner never signed needs consent before sending`() = runTest {
+        build(signed_pq = true, cover_pq = false)
+        assertTrue(refused_without_consent())
+        assertEquals(listOf(me), coverage_missing())
+    }
+
+    @Test
+    fun `an unsigned one-time post-quantum prekey is not counted as post-quantum`() = runTest {
+        build(signed_pq = false, onetime_key_id = 77)
+        assertEquals(listOf(me), coverage_missing())
+    }
+
+    @Test
+    fun `a signed post-quantum key sends without consent and keeps its session counted`() = runTest {
+        pq_mode = true
+        build(signed_pq = true, onetime_key_id = 77)
+        assertEquals(emptyList<String>(), coverage_missing())
+        val sealed = seal("one", allow_non_post_quantum = false)
+        assertEquals(X3dh.PQ_IDENTITY_KEY_ID, sealed_for_me(sealed).getInt("pq_key_id"))
+        assertEquals(emptyList<String>(), coverage_missing())
+        assertEquals("one", open(sealed, "m1"))
+    }
+
+    @Test
+    fun `a session on an unsigned one-time prekey is not counted as post-quantum`() = runTest {
+        pq_mode = true
+        build(signed_pq = true, cover_pq = false, onetime_key_id = 77)
+        val first = seal("one", allow_non_post_quantum = true)
+        assertEquals(77, sealed_for_me(first).getInt("pq_key_id"))
+        assertEquals(listOf(me), coverage_missing())
+        assertTrue(refused_without_consent())
+        val second = seal("two", allow_non_post_quantum = true)
+        assertEquals(sealed_for_me(first).getString("ephemeral_key"), sealed_for_me(second).getString("ephemeral_key"))
+    }
+
+    @Test
+    fun `a one-time prekey session restarts on the signed key once the owner signs it`() = runTest {
+        pq_mode = true
+        build(signed_pq = true, cover_pq = false, onetime_key_id = 77)
+        val first = seal("one", allow_non_post_quantum = true)
+        current_bundle = covered_bundle
+        assertEquals(emptyList<String>(), coverage_missing())
+        val second = seal("two", allow_non_post_quantum = false)
+        val third = seal("three", allow_non_post_quantum = false)
+        assertEquals(X3dh.PQ_IDENTITY_KEY_ID, sealed_for_me(second).getInt("pq_key_id"))
+        assertNotEquals(sealed_for_me(first).getString("ephemeral_key"), sealed_for_me(second).getString("ephemeral_key"))
+        assertEquals(sealed_for_me(second).getString("ephemeral_key"), sealed_for_me(third).getString("ephemeral_key"))
+        assertEquals("two", open(second, "m2"))
+    }
 
     private suspend fun open(envelope: String, id: String): String =
         decryptor.try_decrypt(envelope, listOf(me), me, id)

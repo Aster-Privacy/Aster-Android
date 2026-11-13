@@ -338,6 +338,7 @@ class RecoveryViewModel @Inject constructor(
                             updated_vault.plain,
                             password_bytes,
                             VaultKdf.LEVEL2_ITERATIONS,
+                            org.astermail.android.api.keys.BoundWriteSwitches.vault(),
                         )
                     }
                     _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
@@ -376,7 +377,12 @@ class RecoveryViewModel @Inject constructor(
                 } catch (error: ApiError.Conflict) {
                     if (!is_level2_not_admitted(error)) throw error
                     val fallback = withContext(compute_dispatcher) {
-                        CryptoNative.encrypt_vault_with_password(retry_plain, password_bytes, VaultKdf.DEFAULT_ITERATIONS)
+                        CryptoNative.encrypt_vault_with_password(
+                            retry_plain,
+                            password_bytes,
+                            VaultKdf.DEFAULT_ITERATIONS,
+                            org.astermail.android.api.keys.BoundWriteSwitches.vault(),
+                        )
                     }
                     recovery_api.complete(
                         complete_request.copy(

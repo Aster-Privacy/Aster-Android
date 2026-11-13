@@ -59,6 +59,8 @@ data class thread_snapshot_message(
     val sender_verification: String? = null,
     val sent_encryption_scope: String? = null,
     val encryption_rules: Int = 0,
+    val e2e_verified: Boolean = false,
+    val own_sealed: Boolean = false,
 )
 
 fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message = thread_snapshot_message(
@@ -85,6 +87,8 @@ fun thread_snapshot_of(message: ThreadMessageDecrypted): thread_snapshot_message
     sender_verification = message.sender_verification,
     sent_encryption_scope = message.sent_encryption_scope?.name,
     encryption_rules = THREAD_SNAPSHOT_ENCRYPTION_RULES,
+    e2e_verified = message.e2e_verified,
+    own_sealed = message.own_sealed,
 )
 
 fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted = ThreadMessageDecrypted(
@@ -116,4 +120,6 @@ fun thread_message_of(snapshot: thread_snapshot_message): ThreadMessageDecrypted
         ?.takeIf { snapshot.encryption_rules >= THREAD_SNAPSHOT_ENCRYPTION_RULES }
         ?.let { name -> runCatching { SentEncryptionScope.valueOf(name) }.getOrNull() },
     is_trashed = is_message_trashed(snapshot.raw_item.is_trashed, snapshot.raw_item.metadata?.is_trashed),
+    e2e_verified = snapshot.e2e_verified,
+    own_sealed = snapshot.own_sealed,
 )

@@ -157,6 +157,34 @@ class X3dhV2VectorTest {
     }
 
     @Test
+    fun signed_prekey_derivation_matches_the_shared_public_key() {
+        val derived = RatchetCrypto.p256_public_raw_from_private_jwk(
+            vectors.getString("receiver_signed_prekey_jwk"),
+        )
+
+        assertEquals(
+            java.util.Base64.getEncoder().encodeToString(derived),
+            vectors.getString("receiver_signed_prekey_raw"),
+        )
+    }
+
+    @Test
+    fun key_bound_secrets_match_the_other_clients() {
+        val pair = RatchetCrypto.ml_kem_768_keypair_from_seed(b64("kem_seed"))
+        val shared = RatchetCrypto.ml_kem_768_decapsulate(b64("kem_ciphertext"), pair.secret_key)
+
+        assertEquals(vectors.getString("classical_v3"), derive(X3dh.VERSION_KEY_BOUND, null, false))
+        assertEquals(vectors.getString("pq_v3"), derive(X3dh.VERSION_KEY_BOUND, shared, false))
+        assertEquals(vectors.getString("pq_identity_v3"), derive(X3dh.VERSION_KEY_BOUND, shared, true))
+    }
+
+    @Test
+    fun an_unknown_version_is_treated_as_legacy() {
+        assertEquals(vectors.getString("classical_v1"), derive(5, null, false))
+        assertEquals(vectors.getString("classical_v1"), derive(0, null, false))
+    }
+
+    @Test
     fun every_version_and_lane_is_domain_separated() {
         val pair = RatchetCrypto.ml_kem_768_keypair_from_seed(b64("kem_seed"))
         val shared = RatchetCrypto.ml_kem_768_decapsulate(b64("kem_ciphertext"), pair.secret_key)
@@ -167,6 +195,9 @@ class X3dhV2VectorTest {
             derive(X3dh.VERSION_LEGACY, shared, false),
             derive(X3dh.VERSION_TRANSCRIPT_BOUND, shared, false),
             derive(X3dh.VERSION_TRANSCRIPT_BOUND, shared, true),
+            derive(X3dh.VERSION_KEY_BOUND, null, false),
+            derive(X3dh.VERSION_KEY_BOUND, shared, false),
+            derive(X3dh.VERSION_KEY_BOUND, shared, true),
         )
 
         assertEquals(derived.size, derived.toSet().size)

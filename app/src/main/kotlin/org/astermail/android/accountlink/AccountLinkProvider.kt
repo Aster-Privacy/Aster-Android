@@ -178,8 +178,8 @@ class AccountLinkProvider : ContentProvider() {
         require(x25519_pk.size == DeviceEnvelope.X25519_PK_BYTES) { "bad x25519 key" }
         val sealed = DeviceEnvelope.seal_secret_for_device(
             secret = passphrase,
-            device_mlkem_pk = mlkem_pk,
-            device_x25519_pk = x25519_pk,
+            recipient = DeviceEnvelope.DeviceRecipient(ed25519_pk, mlkem_pk, x25519_pk),
+            version = DeviceEnvelope.choose_envelope_version(pending.envelope_versions),
         )
         return DeviceEnvelope.base64url_encode(sealed)
     }

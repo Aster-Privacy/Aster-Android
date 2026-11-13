@@ -1094,9 +1094,10 @@ private fun vanguard_section(
             on_confirm = {
                 show_disable_confirm = false
                 vm.disable_vanguard {
-                    store.disable()
-                    app_lock_enabled = false
-                    biometric_enabled = false
+                    if (store.disable()) {
+                        app_lock_enabled = false
+                        biometric_enabled = false
+                    }
                 }
             },
         )
@@ -1118,7 +1119,13 @@ private fun vanguard_section(
             store = store,
             description = stringResource(R.string.app_lock_enter_to_disable),
             on_dismiss = { modal = null },
-            on_success = { store.disable(); app_lock_enabled = false; biometric_enabled = false; modal = null },
+            on_success = {
+                if (store.disable()) {
+                    app_lock_enabled = false
+                    biometric_enabled = false
+                }
+                modal = null
+            },
         )
         AppLockModal.verify_to_enable_biometric -> AppLockVerifySheet(
             store = store,

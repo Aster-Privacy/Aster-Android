@@ -83,10 +83,33 @@ class PasskeyWireFormatTest {
     @Test
     fun prf_seal_round_trips_and_rejects_wrong_key() {
         val prf_output = ByteArray(32) { 7 }
-        val (sealed, nonce) = encrypt_passphrase_with_prf(prf_output, "round trip".toByteArray())
+        val (sealed, nonce) = encrypt_passphrase_with_prf(prf_output, "round trip".toByteArray(), "EBESExQVFhcYGRobHB0eHw")
         assertEquals(12, Base64.getDecoder().decode(nonce).size)
-        assertEquals("round trip", decrypt_passphrase_with_prf(prf_output, sealed, nonce)?.toString(Charsets.UTF_8))
-        assertNull(decrypt_passphrase_with_prf(ByteArray(32) { 8 }, sealed, nonce))
+        assertEquals(
+            "round trip",
+            decrypt_passphrase_with_prf(prf_output, sealed, nonce, "EBESExQVFhcYGRobHB0eHw")?.toString(Charsets.UTF_8),
+        )
+        assertNull(decrypt_passphrase_with_prf(ByteArray(32) { 8 }, sealed, nonce, "EBESExQVFhcYGRobHB0eHw"))
+    }
+
+    @Test
+    fun decrypts_bound_passphrase_sealed_by_web_client() {
+        val prf_output = ByteArray(32) { (it + 1).toByte() }
+        val plain = decrypt_passphrase_with_prf(
+            prf_output,
+            "4rrq0JEBoOQ3jCSzOI2h+8YyQo/vlZr+fsIWWkKjndVO",
+            "oKGio6Slpqeoqaqr",
+            "EBESExQVFhcYGRobHB0eHw",
+        )
+        assertEquals("vector passphrase", plain?.toString(Charsets.UTF_8))
+    }
+
+    @Test
+    fun bound_passphrase_never_opens_for_another_passkey() {
+        val prf_output = ByteArray(32) { 7 }
+        val (sealed, nonce) = encrypt_passphrase_with_prf(prf_output, "bound".toByteArray(), "EBESExQVFhcYGRobHB0eHw")
+        assertNull(decrypt_passphrase_with_prf(prf_output, sealed, nonce, "QEFCQ0RFRkdISUpLTE1OTw"))
+        assertNull(decrypt_passphrase_with_prf(prf_output, sealed, nonce))
     }
 
     @Test

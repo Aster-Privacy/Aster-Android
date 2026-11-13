@@ -73,6 +73,7 @@ class RatchetEncryptorIdentityPinTest {
     private lateinit var recipient_identity_b64: String
     private lateinit var bundle: PrekeyBundleResponse
     private lateinit var conversation_id: String
+    private lateinit var fixture_owner: PGPSecretKey
 
     @Before
     fun setup() {
@@ -128,6 +129,14 @@ class RatchetEncryptorIdentityPinTest {
         every { identity_pins.is_prekey_binding_verified(any()) } returns false
         every { identity_pins.owner_key_pin(any()) } returns null
         coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns true
+
+        fixture_owner = generate_pgp_key()
+        bundle = bundle.copy(
+            signed_prekey_signature = sign_binding(fixture_owner, bundle.kem_identity_key, bundle.signed_prekey),
+        )
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(fixture_owner))
     }
 
     @After
@@ -309,31 +318,37 @@ class RatchetEncryptorIdentityPinTest {
     }
 
     @Test
-    fun `signed bundle is still sent when the owner key cannot be fetched`() = runTest {
+    fun `signed bundle whose owner key cannot be fetched falls back to pgp`() = runTest {
         val key = generate_pgp_key()
         serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
         coEvery { keys_api.get_recipient_public_key(any(), any()) } throws RuntimeException("offline")
 
-        assertNotNull(send().getOrThrow())
+        assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any()) }
     }
 
     @Test
-    fun `signature from a key the recipient does not publish is still sent`() = runTest {
+    fun `signature from a key the recipient does not publish falls back to pgp`() = runTest {
         val signer = generate_pgp_key()
         val published = generate_pgp_key()
         serve_bundle(sign_binding(signer, bundle.kem_identity_key, bundle.signed_prekey))
         coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
             PublicKeyResponse("kchaos", public_armor(published))
 
-        assertNotNull(send().getOrThrow())
+        assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+        coVerify(exactly = 0) { identity_pins.pin_owner_key_if_absent(any(), any()) }
     }
 
     @Test
-    fun `unsigned bundle is still sent after a verified one was seen`() = runTest {
+    fun `unsigned bundle on first contact falls back to pgp`() = runTest {
         serve_bundle("")
-        every { identity_pins.is_prekey_binding_verified(any()) } returns true
 
-        assertNotNull(send().getOrThrow())
+        assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any()) }
+        coVerify(exactly = 0) { identity_pins.pin_owner_key_if_absent(any(), any()) }
     }
 
     private fun pin_owner(key: PGPSecretKey) {
@@ -375,15 +390,26 @@ class RatchetEncryptorIdentityPinTest {
     }
 
     @Test
-    fun `unsigned bundle for a pinned owner blocks the send`() = runTest {
+    fun `unsigned bundle for a pinned owner never uses the ratchet`() = runTest {
         val key = generate_pgp_key()
         pin_owner(key)
         serve_bundle("")
         coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
             PublicKeyResponse("kchaos", public_armor(key))
 
-        val thrown = send().exceptionOrNull()
-        assertTrue(thrown is RecipientKeyUntrustedException)
+        assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
+        coVerify(exactly = 0) { state_store.save(any()) }
+    }
+
+    @Test
+    fun `unsigned bundle for a pinned owner whose served key changed blocks the send`() = runTest {
+        val key = generate_pgp_key()
+        pin_owner(key)
+        serve_bundle("")
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(generate_pgp_key()))
+
+        assertTrue(send().exceptionOrNull() is RecipientKeyUntrustedException)
         coVerify(exactly = 0) { state_store.save(any()) }
     }
 

@@ -297,7 +297,11 @@ class VaultUpdater(
             preserve_vault_fields(server, next, local_keys(), allow_storage_key_change, now())
             val iterations = target_iterations(snapshot, allow_storage_key_change)
             var (result, sealed) = write_with_cas(next, snapshot, user, iterations)
-            if (result == CasWrite.NOT_ADMITTED && iterations != VaultKdf.DEFAULT_ITERATIONS) {
+            if (
+                result == CasWrite.NOT_ADMITTED &&
+                iterations != VaultKdf.DEFAULT_ITERATIONS &&
+                snapshot.vault_kdf_iterations != VaultKdf.LEVEL2_ITERATIONS
+            ) {
                 val retry = write_with_cas(next, snapshot, user, VaultKdf.DEFAULT_ITERATIONS)
                 result = retry.first
                 sealed = retry.second

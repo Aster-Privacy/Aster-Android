@@ -244,6 +244,24 @@ object PgpDecryptor {
         return null
     }
 
+    fun decrypt_bytes_signed_by_own_keys(
+        ciphertext: ByteArray,
+        armored_private_keys: List<String>,
+        passphrase: CharArray,
+    ): ByteArray? {
+        val unique = armored_private_keys.filter { it.isNotBlank() }.distinct()
+        val verifier = own_public_keys(unique) ?: return null
+        for (key in unique) {
+            val tracker = SignatureTracker(verifier)
+            val plaintext = runCatching { decrypt_internal(ciphertext, key, passphrase, tracker) }.getOrNull()
+                ?: continue
+            if (tracker.result() == PgpSignatureStatus.VALID) return plaintext
+            plaintext.fill(0)
+            return null
+        }
+        return null
+    }
+
     private fun decrypt_internal(
         ciphertext: ByteArray,
         armored_private_key: String,

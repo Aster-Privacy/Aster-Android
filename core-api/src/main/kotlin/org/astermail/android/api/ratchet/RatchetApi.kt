@@ -82,6 +82,34 @@ data class PrekeyBundleResponse(
     val pq_kem_public_key: String? = null,
     val x3dh_max_version: Int? = null,
     val pq_capable: Boolean? = null,
+    val ec_one_time_prekey: EcOneTimePrekeyInfo? = null,
+)
+
+@Serializable
+data class EcOneTimePrekeyInfo(
+    val key_id: Int,
+    val public_key: String,
+)
+
+@Serializable
+data class EcPrekeyStatusResponse(
+    val accepted: Boolean? = null,
+    val available: Int? = null,
+    val target: Int? = null,
+    val max_upload: Int? = null,
+)
+
+@Serializable
+data class EcPrekeyUpload(
+    val key_id: Int,
+    val public_key: String,
+    val encrypted_secret: String,
+    val secret_nonce: String,
+)
+
+@Serializable
+data class UploadEcPrekeysRequest(
+    val prekeys: List<EcPrekeyUpload>,
 )
 
 @Serializable
@@ -91,6 +119,16 @@ data class RatchetIdentityResponse(
     val signed_prekey: String,
     val signed_prekey_signature: String? = null,
     val pq_kem_public_key: String? = null,
+)
+
+@Serializable
+data class RatchetIdentityHistoryEntry(
+    val kem_identity_key: String? = null,
+)
+
+@Serializable
+data class RatchetIdentityHistoryResponse(
+    val entries: List<RatchetIdentityHistoryEntry> = emptyList(),
 )
 
 sealed class OwnRatchetIdentityLookup {
@@ -124,6 +162,7 @@ data class ReportEnvelopeCapabilityRequest(
     val pq_identity_fingerprint: String? = null,
     val x3dh_max_version: Int = 1,
     val pgp_external_version: Int? = null,
+    val bound_envelope_version: Int? = null,
 )
 
 @Serializable
@@ -165,13 +204,19 @@ interface RatchetApi {
     suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
     suspend fun fetch_own_ratchet_identity(username: String, email: String): OwnRatchetIdentityLookup =
         OwnRatchetIdentityLookup.Unavailable
+    suspend fun fetch_identity_history(username: String, email: String): List<String>? = null
     suspend fun report_envelope_capability(request: ReportEnvelopeCapabilityRequest): EnvelopeCapabilityResponse?
     suspend fun upload_plaintext_escrow(entry: PlaintextEscrowEntry): Boolean = false
     suspend fun fetch_plaintext_escrow(message_id: String): PlaintextEscrowEntry? = null
+    suspend fun fetch_ec_prekey_status(): EcPrekeyStatusResponse? = null
+    suspend fun upload_ec_prekeys(request: UploadEcPrekeysRequest): Boolean = false
+    suspend fun fetch_ec_prekey_secret(key_id: Int): PqSecretResponse? = null
+    suspend fun delete_ec_prekey(key_id: Int): Boolean = false
 }
 
 class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
     private val base = "/api/crypto/v1/ratchet/state"
+    private val ec_prekeys = "/api/crypto/v1/keys/ec-prekeys"
 
     override suspend fun fetch_state(conversation_id_b64: String): RatchetStateResponse? {
         val encoded = java.net.URLEncoder.encode(conversation_id_b64, "UTF-8").replace("+", "%20")
@@ -261,6 +306,21 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         }
     }
 
+    override suspend fun fetch_identity_history(username: String, email: String): List<String>? {
+        val username_enc = java.net.URLEncoder.encode(username, "UTF-8").replace("+", "%20")
+        val email_enc = java.net.URLEncoder.encode(email, "UTF-8").replace("+", "%20")
+        val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/prekey-bundle/$username_enc/history?email=$email_enc")
+        if (response.status.value !in 200..299) return null
+        return try {
+            response.body<RatchetIdentityHistoryResponse>().entries
+                .mapNotNull { entry -> entry.kem_identity_key?.takeIf { it.isNotBlank() } }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     override suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean {
         val response = client.http.put("${client.base_url}/api/crypto/v1/ratchet/prekey-bundle") {
             contentType(ContentType.Application.Json)
@@ -297,5 +357,33 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         if (response.status.value == 404) return null
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun fetch_ec_prekey_status(): EcPrekeyStatusResponse? {
+        val response = client.http.get("${client.base_url}$ec_prekeys/status")
+        if (response.status.value !in 200..299) return null
+        return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun upload_ec_prekeys(request: UploadEcPrekeysRequest): Boolean {
+        val response = client.http.post("${client.base_url}$ec_prekeys") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return response.status.value in 200..299
+    }
+
+    override suspend fun fetch_ec_prekey_secret(key_id: Int): PqSecretResponse? {
+        val response = client.http.get("${client.base_url}$ec_prekeys/secret/$key_id")
+        if (response.status.value !in 200..299) return null
+        return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun delete_ec_prekey(key_id: Int): Boolean {
+        val response = client.http.delete("${client.base_url}$ec_prekeys/$key_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return response.status.value in 200..299 || response.status.value == 404
     }
 }

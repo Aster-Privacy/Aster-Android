@@ -62,8 +62,40 @@ data class ResealRunResult(
     val retry_after_secs: Long? = null,
 )
 
+const val LEGACY_KEY_SWEEP_STEP = "legacy_key_sweep"
+
 fun needs_storage_reseal(view: VaultKeyView?): Boolean =
     view != null && view.data_kek_random && view.storage_rekey_state == STORAGE_REKEY_PENDING
+
+suspend fun run_legacy_key_sweep(
+    view: VaultKeyView,
+    api: ResealApi,
+    store: ProgressStore,
+    legacy_keys: List<ByteArray>,
+    retire: () -> Unit,
+    still_current: (suspend () -> Boolean)? = null,
+    sleep: suspend (Long) -> Unit = { delay(it) },
+    is_cancelled: () -> Boolean = { false },
+    steps: List<ResealStep> = DEFAULT_RESEAL_STEPS,
+    gate: (suspend () -> RekeyGateDecision)? = null,
+): ResealRunResult {
+    if (legacy_keys.isEmpty()) return ResealRunResult(ResealRunStatus.NOT_NEEDED, StepCounts())
+    val result = run_storage_reseal(
+        view = view,
+        api = api,
+        store = store,
+        finish = { StorageRekeyFinish.DONE },
+        still_current = still_current,
+        sleep = sleep,
+        is_cancelled = is_cancelled,
+        steps = steps,
+        extra_old_keys = legacy_keys,
+        gate = gate,
+        sweep = true,
+    )
+    if (result.status == ResealRunStatus.DONE) retire()
+    return result
+}
 
 suspend fun run_storage_reseal(
     view: VaultKeyView,
@@ -76,10 +108,12 @@ suspend fun run_storage_reseal(
     steps: List<ResealStep> = DEFAULT_RESEAL_STEPS,
     extra_old_keys: List<ByteArray> = emptyList(),
     gate: (suspend () -> RekeyGateDecision)? = null,
+    sweep: Boolean = false,
 ): ResealRunResult {
     val counts = StepCounts()
     val data_kek = view.data_kek
-    if (!needs_storage_reseal(view) || data_kek.isNullOrEmpty()) {
+    val wanted = if (sweep) view.data_kek_random else needs_storage_reseal(view)
+    if (!wanted || data_kek.isNullOrEmpty()) {
         return ResealRunResult(ResealRunStatus.NOT_NEEDED, counts)
     }
     if (gate != null) {

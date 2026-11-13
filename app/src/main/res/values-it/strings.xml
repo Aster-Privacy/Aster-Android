@@ -1001,6 +1001,7 @@
     <string name="default_payment_updated">Metodo di pagamento predefinito aggiornato</string>
     <string name="payment_method_removed">Metodo di pagamento rimosso</string>
     <string name="session_expired_sign_in">La tua sessione è scaduta. Accedi di nuovo.</string>
+    <string name="vault_open_failed_notice">Non è stato possibile sbloccare le tue chiavi su questo dispositivo, quindi alcune email potrebbero non aprirsi qui. Per riparare le chiavi, accedi ad Aster Mail sul web e poi accedi di nuovo su questo dispositivo.</string>
     <string name="could_not_start_checkout">Impossibile avviare il pagamento</string>
     <string name="could_not_open_portal">Impossibile aprire il portale di fatturazione</string>
     <string name="cancel_failed">Impossibile annullare l\'abbonamento</string>
@@ -3047,10 +3048,11 @@
     <string name="alias_unpinned_toast">Alias sbloccato</string>
     <string name="e2e_identity_changed_blocked">Invio non riuscito: la chiave di crittografia di un destinatario è cambiata. Conferma la modifica nella tua casella di posta, poi invia di nuovo. Il messaggio non è stato inviato.</string>
     <string name="link_device_fingerprint_label">Codice di verifica</string>
-    <string name="link_device_fingerprint_hint">Confronta questo codice con il codice di verifica o l\'impronta del dispositivo sull\'altro dispositivo. Se i codici sono diversi, tocca Annulla.</string>
-    <string name="link_device_codes_match">I codici corrispondono</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Inserisci il codice di verifica o l\'impronta del dispositivo mostrati sul nuovo dispositivo. Nell\'app desktop, seleziona Verifica questo dispositivo per visualizzarlo.</string>
     <string name="link_device_error_invalid_keys">L\'altro dispositivo ha inviato chiavi non utilizzabili. Ottieni un nuovo codice su quel dispositivo, poi riprova.</string>
-    <string name="link_device_error_codes_not_confirmed">Per collegare il dispositivo, conferma che i codici corrispondono.</string>
+    <string name="link_device_error_codes_not_confirmed">Per collegare il dispositivo, inserisci il codice di verifica completo del nuovo dispositivo.</string>
+    <string name="link_device_error_fingerprint_mismatch">Questo codice non corrisponde al nuovo dispositivo. Controlla il codice sul nuovo dispositivo e inseriscilo di nuovo. Se ancora non corrisponde, tocca Annulla.</string>
     <string name="restore">Ripristina</string>
     <string name="contact_trash_confirm_message">Puoi ripristinare i contatti dal cestino.</string>
     <string name="empty_contacts_trash_confirm_message">Eliminare definitivamente tutti i contatti nel cestino? L’operazione è irreversibile.</string>

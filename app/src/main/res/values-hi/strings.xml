@@ -1398,6 +1398,7 @@
     <string name="default_payment_updated">डिफ़ॉल्ट भुगतान तरीका अपडेट हो गया</string>
     <string name="payment_method_removed">भुगतान का तरीका हटा दिया गया</string>
     <string name="session_expired_sign_in">आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।</string>
+    <string name="vault_open_failed_notice">इस डिवाइस पर आपकी कुंजियाँ अनलॉक नहीं हो सकीं, इसलिए कुछ मेल यहाँ शायद न खुलें। अपनी कुंजियाँ ठीक करने के लिए, वेब पर Aster Mail में साइन इन करें और फिर इस डिवाइस पर दोबारा साइन इन करें।</string>
     <string name="could_not_start_checkout">चेकआउट शुरू नहीं हो सका</string>
     <string name="could_not_open_portal">बिलिंग पोर्टल नहीं खुल सका</string>
     <string name="cancel_failed">सदस्यता रद्द नहीं हो सकी</string>
@@ -2921,10 +2922,11 @@
     <string name="alias_unpinned_toast">एलियास से पिन हट गया</string>
     <string name="e2e_identity_changed_blocked">भेजा नहीं जा सका: किसी प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई है। अपने इनबॉक्स में बदलाव की पुष्टि करें, फिर दोबारा भेजें। संदेश नहीं भेजा गया।</string>
     <string name="link_device_fingerprint_label">पुष्टि कोड</string>
-    <string name="link_device_fingerprint_hint">इस कोड की तुलना अपने दूसरे डिवाइस पर दिखे पुष्टि कोड या डिवाइस फ़िंगरप्रिंट से करें। अगर कोड अलग हैं, तो रद्द करें पर टैप करें।</string>
-    <string name="link_device_codes_match">कोड मेल खाते हैं</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">अपने नए डिवाइस पर दिखाया गया पुष्टि कोड या डिवाइस फ़िंगरप्रिंट डालें। डेस्कटॉप ऐप में, इसे देखने के लिए इस डिवाइस की पुष्टि करें चुनें।</string>
     <string name="link_device_error_invalid_keys">दूसरे डिवाइस ने ऐसी कुंजियाँ भेजीं जिनका उपयोग नहीं किया जा सकता। उस डिवाइस पर नया कोड लें, फिर दोबारा कोशिश करें।</string>
-    <string name="link_device_error_codes_not_confirmed">डिवाइस लिंक करने के लिए, पुष्टि करें कि कोड मेल खाते हैं।</string>
+    <string name="link_device_error_codes_not_confirmed">डिवाइस लिंक करने के लिए, अपने नए डिवाइस से पूरा पुष्टि कोड डालें।</string>
+    <string name="link_device_error_fingerprint_mismatch">यह कोड आपके नए डिवाइस से मेल नहीं खाता। अपने नए डिवाइस पर कोड जाँचें और उसे फिर से डालें। अगर यह अब भी मेल नहीं खाता, तो रद्द करें पर टैप करें।</string>
     <string name="restore">वापस लाएं</string>
     <string name="contact_trash_confirm_message">आप ट्रैश से संपर्क वापस ला सकते हैं।</string>
     <string name="empty_contacts_trash_confirm_message">ट्रैश के सभी संपर्क हमेशा के लिए हटाएं? इसे वापस नहीं लिया जा सकता।</string>

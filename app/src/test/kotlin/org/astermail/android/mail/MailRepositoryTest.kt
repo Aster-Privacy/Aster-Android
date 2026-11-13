@@ -188,7 +188,10 @@ class MailRepositoryTest {
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
             encryption_api_provider = dagger.Lazy { encryption_api },
         )
+        repo.outbox_file_cipher_override = OutboxFileCipher { outbox_row_key.copyOf() }
     }
+
+    private val outbox_row_key = ByteArray(32) { 11 }
 
     private val encryption_api: org.astermail.android.api.encryption.EncryptionApi = mockk {
         coEvery { get_encryption_settings() } returns org.astermail.android.api.encryption.EncryptionSettings()
@@ -1476,6 +1479,120 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `a password protected external send keeps the password and the content on the device`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+        val password = "Tr0ub4dor&3-horse-Battery!"
+        val file_bytes = "attachment secret".toByteArray()
+
+        val result = repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Launch plan",
+            body_html = "<p>The launch is on Tuesday</p>",
+            attachments = listOf(
+                ExternalAttachmentPayload(
+                    data = java.util.Base64.getEncoder().encodeToString(file_bytes),
+                    filename = "plan.txt",
+                    content_type = "text/plain",
+                    size_bytes = file_bytes.size.toLong(),
+                ),
+            ),
+            expires_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString(),
+            expiry_password = password,
+        )
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        val sent = request.captured
+        assertNull(sent.expiry_password)
+        assertTrue(sent.attachments.isEmpty())
+        assertNull(sent.signed_mime)
+        assertNull(sent.external_pgp_bodies)
+        assertNull(sent.force_pgp)
+        assertNull(sent.pgp_recipients)
+        val wire = kotlinx.serialization.json.Json.encodeToString(
+            org.astermail.android.api.send.ExternalSendRequest.serializer(),
+            sent,
+        )
+        assertFalse(wire.contains(password))
+        assertFalse(wire.contains("Launch plan"))
+        assertFalse(wire.contains("Tuesday"))
+        assertFalse(wire.contains("plan.txt"))
+
+        val decoder = java.util.Base64.getDecoder()
+        val relay_key = decoder.decode(sent.ephemeral_key)
+        fun relay_field(ciphertext: String, xor_byte: Int): String {
+            val nonce = decoder.decode(sent.nonce)
+            nonce[11] = (nonce[11].toInt() xor xor_byte).toByte()
+            return String(
+                org.astermail.android.crypto.AesGcm.decrypt(relay_key, nonce, decoder.decode(ciphertext)),
+                Charsets.UTF_8,
+            )
+        }
+        assertEquals("[secure message]", relay_field(sent.encrypted_subject, 0x02))
+        assertEquals("[secure message]", relay_field(sent.encrypted_body, 0x03))
+
+        val secure = checkNotNull(sent.secure_message)
+        val material = org.astermail.android.crypto.SecureMessage.derive_password_material(
+            password,
+            decoder.decode(secure.kdf_salt),
+        )
+        val seed = org.astermail.android.crypto.AesGcm.decrypt(
+            material.kdf_key,
+            decoder.decode(secure.kem_seed_nonce),
+            decoder.decode(secure.encrypted_kem_seed),
+        )
+        val shared = org.astermail.android.crypto.ratchet.RatchetCrypto.ml_kem_768_decapsulate(
+            decoder.decode(secure.kem_ciphertext),
+            org.astermail.android.crypto.ratchet.RatchetCrypto.ml_kem_768_keypair_from_seed(seed).secret_key,
+        )
+        val content_key = org.astermail.android.crypto.SecureMessage.derive_content_key(shared, material.kdf_key)
+        val opened_subject = org.astermail.android.crypto.AesGcm.decrypt(
+            content_key,
+            decoder.decode(secure.encrypted_subject.nonce),
+            decoder.decode(secure.encrypted_subject.ciphertext),
+            org.astermail.android.crypto.SecureMessage.field_aad("subject"),
+        )
+        val opened_body = org.astermail.android.crypto.AesGcm.decrypt(
+            content_key,
+            decoder.decode(secure.encrypted_body.nonce),
+            decoder.decode(secure.encrypted_body.ciphertext),
+            org.astermail.android.crypto.SecureMessage.field_aad("body"),
+        )
+        assertEquals("Launch plan", String(opened_subject, Charsets.UTF_8))
+        assertTrue(String(opened_body, Charsets.UTF_8).contains("The launch is on Tuesday"))
+        assertNotNull(secure.attachments_bundle)
+    }
+
+    @Test
+    fun `an external send without a password carries no secure message`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } returns
+            org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
+        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+
+        repo.send_email(
+            to = listOf("someone@example.com"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+        )
+
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertNull(request.captured.secure_message)
+        assertNull(request.captured.expiry_password)
+    }
+
+    @Test
     fun `send_email refuses to relay when the sent folder cannot be resolved`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("network error")
         every { session_key_store.has_ratchet_keys() } returns true
@@ -2429,6 +2546,77 @@ class MailRepositoryTest {
         assertEquals("pending", row!!.status)
         assertEquals("safety_draft_1", row.draft_id)
         coVerify { mail_api.create_draft(any()) }
+    }
+
+    @Test
+    fun `the queued row keeps the subject body and message password sealed at rest`() = runTest {
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "safety_draft_s", success = true)
+
+        await_real {
+            repo.persist_and_schedule_undo_send(
+                pending_id = "pend_sealed",
+                to = listOf("pal@outside.example"),
+                cc = emptyList(),
+                bcc = emptyList(),
+                subject = "Quarterly plans",
+                body_html = "<p>hello there</p>",
+                sender_email = "me@astermail.org",
+                sender_display_name = null,
+                thread_token = null,
+                expires_at = null,
+                expiry_password = "correct horse battery 42",
+                attachments = emptyList(),
+                sender_alias_hash = null,
+                suppress_branding = null,
+                delay_ms = 10_000L,
+                draft_id = null,
+            )
+        }
+
+        val stored = pending_send_dao.rows["pend_sealed"]!!
+        assertTrue(OutboxRowSeal.is_sealed(stored.subject))
+        assertTrue(OutboxRowSeal.is_sealed(stored.body_html))
+        assertTrue(OutboxRowSeal.is_sealed(stored.expiry_password!!))
+        val at_rest = stored.toString()
+        assertFalse(at_rest.contains("Quarterly plans"))
+        assertFalse(at_rest.contains("hello there"))
+        assertFalse(at_rest.contains("correct horse battery 42"))
+        val opened = OutboxRowSeal.open(OutboxFileCipher { outbox_row_key.copyOf() }, stored)
+        assertEquals("Quarterly plans", opened.subject)
+        assertEquals("<p>hello there</p>", opened.body_html)
+        assertEquals("correct horse battery 42", opened.expiry_password)
+    }
+
+    @Test
+    fun `run_pending_send delivers a sealed row`() = runTest {
+        pending_send_dao.upsert(
+            OutboxRowSeal.seal(
+                OutboxFileCipher { outbox_row_key.copyOf() },
+                pending_row("pend_seal_ok", draft_id = "draft_seal"),
+            ),
+        )
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_seal")
+        coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        assertEquals(PendingSendOutcome.SENT, repo.run_pending_send("pend_seal_ok"))
+        coVerify(exactly = 1) { send_api.send_simple(any()) }
+    }
+
+    @Test
+    fun `run_pending_send fails a row it cannot open and sends nothing`() = runTest {
+        pending_send_dao.upsert(
+            OutboxRowSeal.seal(OutboxFileCipher { ByteArray(32) { 99 } }, pending_row("pend_seal_bad")),
+        )
+        every { session_key_store.has_ratchet_keys() } returns true
+
+        assertEquals(PendingSendOutcome.FAILED, repo.run_pending_send("pend_seal_bad"))
+        assertEquals("failed", pending_send_dao.rows["pend_seal_bad"]?.status)
+        coVerify(exactly = 0) { send_api.send_simple(any()) }
+        coVerify(exactly = 0) { send_api.send_external(any()) }
     }
 
     @Test
@@ -3896,5 +4084,154 @@ class MailRepositoryTest {
         assertEquals("known", repo.get_or_create_thread_token("original_1", "known"))
 
         coVerify(exactly = 0) { mail_api.create_thread(any(), any(), any()) }
+    }
+
+    private val inline_owner_keys by lazy {
+        org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+    }
+    private val inline_sender_keys by lazy {
+        org.astermail.android.crypto.PgpKeyGenerator.generate("Sender", "sender@example.test", "sender".toCharArray())
+    }
+    private val inline_impostor_keys by lazy {
+        org.astermail.android.crypto.PgpKeyGenerator.generate("Impostor", "impostor@example.test", "impostor".toCharArray())
+    }
+
+    private fun use_inline_owner_keys() {
+        every { session_key_store.get_identity_key() } returns inline_owner_keys.armored_private_key
+        every { session_key_store.get_passphrase() } answers { "pw".toByteArray(Charsets.UTF_8) }
+    }
+
+    private fun inline_ciphertext(text: String, signer: org.astermail.android.crypto.PgpKeyPairResult?, passphrase: String = ""): String =
+        if (signer == null) {
+            org.astermail.android.crypto.PgpEncryptor.encrypt_to_keys(text, listOf(inline_owner_keys.armored_public_key))!!
+        } else {
+            org.astermail.android.crypto.PgpEncryptor.encrypt_and_sign(
+                text,
+                listOf(inline_owner_keys.armored_public_key),
+                signer.armored_private_key,
+                passphrase.toCharArray(),
+            )!!
+        }
+
+    private fun inline_envelope(from: String, body: String): String {
+        val json = org.json.JSONObject()
+            .put("from", org.json.JSONObject().put("name", "Sender").put("email", from))
+            .put("subject", "Hello")
+            .put("body_text", body)
+        return java.util.Base64.getEncoder().encodeToString(json.toString().toByteArray(Charsets.UTF_8))
+    }
+
+    private fun discovered_sender_key(
+        public_key: String = inline_sender_keys.armored_public_key,
+        source: String? = "wkd",
+        expires_at: String? = null,
+        email: String = "sender@example.test",
+    ) = org.astermail.android.api.keys.ExternalKeyInfo(
+        email = email,
+        found = true,
+        public_key = public_key,
+        source = source,
+        expires_at = expires_at,
+    )
+
+    private fun open_inline(target: MailRepository, from: String, body: String) =
+        target.decrypt_envelope_public(inline_envelope(from, body), "", "inline_msg", allow_external_pgp = true)!!
+
+    private fun fresh_inline_repo(): MailRepository =
+        require_encryption_repo { org.astermail.android.api.encryption.EncryptionSettings() }
+
+    @Test
+    fun `an unsigned inline PGP body decrypts without a valid signature or a key lookup`() {
+        use_inline_owner_keys()
+        coEvery { keys_api.discover_external_key(any()) } returns discovered_sender_key()
+
+        val envelope = open_inline(repo, "sender@example.test", inline_ciphertext("no signature", null))
+
+        assertEquals("no signature", envelope.body_text.trim())
+        assertTrue(envelope.pgp_encrypted)
+        assertEquals(org.astermail.android.crypto.PgpSignatureStatus.NONE, envelope.pgp_signature)
+        coVerify(exactly = 0) { keys_api.discover_external_key(any()) }
+    }
+
+    @Test
+    fun `an inline PGP body signed by the published sender key is valid`() {
+        use_inline_owner_keys()
+        coEvery { keys_api.discover_external_key("sender@example.test") } returns discovered_sender_key()
+
+        val envelope = open_inline(
+            repo,
+            "Sender@Example.test",
+            inline_ciphertext("signed by sender", inline_sender_keys, "sender"),
+        )
+
+        assertEquals("signed by sender", envelope.body_text.trim())
+        assertEquals(org.astermail.android.crypto.PgpSignatureStatus.VALID, envelope.pgp_signature)
+    }
+
+    @Test
+    fun `an inline PGP body signed by another key is not valid`() {
+        use_inline_owner_keys()
+        coEvery { keys_api.discover_external_key("sender@example.test") } returns discovered_sender_key()
+
+        val envelope = open_inline(
+            repo,
+            "sender@example.test",
+            inline_ciphertext("signed by someone else", inline_impostor_keys, "impostor"),
+        )
+
+        assertEquals("signed by someone else", envelope.body_text.trim())
+        assertFalse(envelope.pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID)
+    }
+
+    @Test
+    fun `a sender key from a source the sender does not control is never used to verify`() {
+        use_inline_owner_keys()
+        val ciphertext = inline_ciphertext("signed by sender", inline_sender_keys, "sender")
+
+        for (source in listOf("keyserver", "database", "", null)) {
+            coEvery { keys_api.discover_external_key("sender@example.test") } returns
+                discovered_sender_key(source = source)
+
+            val envelope = open_inline(fresh_inline_repo(), "sender@example.test", ciphertext)
+
+            assertEquals("signed by sender", envelope.body_text.trim())
+            assertFalse(
+                "source $source",
+                envelope.pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID,
+            )
+        }
+    }
+
+    @Test
+    fun `an expired, unreadable or mismatched sender key is never used to verify`() {
+        use_inline_owner_keys()
+        val ciphertext = inline_ciphertext("signed by sender", inline_sender_keys, "sender")
+        val rejected = listOf(
+            discovered_sender_key(expires_at = "2000-01-01T00:00:00Z"),
+            discovered_sender_key(expires_at = "not a date"),
+            discovered_sender_key(email = "other@example.test"),
+            discovered_sender_key(public_key = ""),
+        )
+
+        for (info in rejected) {
+            coEvery { keys_api.discover_external_key("sender@example.test") } returns info
+
+            val envelope = open_inline(fresh_inline_repo(), "sender@example.test", ciphertext)
+
+            assertFalse(envelope.pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID)
+        }
+    }
+
+    @Test
+    fun `an Aster sender is verified against the Aster key directory only`() {
+        use_inline_owner_keys()
+        val friend = org.astermail.android.crypto.PgpKeyGenerator.generate("Friend", "friend@astermail.org", "friend".toCharArray())
+        coEvery { keys_api.get_recipient_public_key("friend", "friend@astermail.org") } returns
+            org.astermail.android.api.keys.PublicKeyResponse(username = "friend", public_key = friend.armored_public_key)
+
+        val envelope = open_inline(repo, "friend@astermail.org", inline_ciphertext("from a friend", friend, "friend"))
+
+        assertEquals(org.astermail.android.crypto.PgpSignatureStatus.VALID, envelope.pgp_signature)
+        coVerify(exactly = 0) { keys_api.discover_external_key(any()) }
     }
 }

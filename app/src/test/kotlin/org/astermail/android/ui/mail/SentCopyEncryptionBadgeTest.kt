@@ -40,6 +40,8 @@ class SentCopyEncryptionBadgeTest {
         bcc: List<String> = emptyList(),
         scope: SentEncryptionScope? = null,
         item_type: String = "sent",
+        own_sealed: Boolean = true,
+        e2e_verified: Boolean = false,
     ) = ThreadMessage(
         id = "s1",
         sender_name = "Me",
@@ -52,6 +54,8 @@ class SentCopyEncryptionBadgeTest {
         body = "hello",
         item_type = item_type,
         sent_encryption_scope = scope,
+        own_sealed = own_sealed,
+        e2e_verified = e2e_verified,
     )
 
     @Test
@@ -94,8 +98,19 @@ class SentCopyEncryptionBadgeTest {
     }
 
     @Test
-    fun received_mail_keeps_the_old_rule() {
-        assertTrue(sent(listOf("bob@example.com"), item_type = "received").is_e2e_encrypted)
+    fun sent_copy_not_sealed_on_this_account_is_not_end_to_end() {
+        assertFalse(sent(listOf("alice@astermail.org"), own_sealed = false).is_e2e_encrypted)
+        assertFalse(
+            sent(listOf("alice@astermail.org"), own_sealed = false, e2e_verified = true).is_e2e_encrypted,
+        )
+    }
+
+    @Test
+    fun received_mail_needs_a_body_this_device_verified() {
+        assertFalse(sent(listOf("bob@example.com"), item_type = "received").is_e2e_encrypted)
+        assertTrue(
+            sent(listOf("bob@example.com"), item_type = "received", e2e_verified = true).is_e2e_encrypted,
+        )
     }
 
     private fun decrypted(pgp_encrypted: Boolean, scope: SentEncryptionScope?) = ThreadMessageDecrypted(

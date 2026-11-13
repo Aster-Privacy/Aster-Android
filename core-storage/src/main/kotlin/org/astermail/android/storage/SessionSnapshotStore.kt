@@ -28,7 +28,18 @@ import android.util.Base64
 class SessionSnapshotStore(context: Context? = null) {
 
     private val lock = Any()
-    private val prefs: SharedPreferences? = context?.let { SecurePrefs.open(it, prefs_name) }
+    private val prefs: SealedPrefs? = context?.let {
+        SealedPrefs(SecurePrefs.open(it, prefs_name), prefs_name) { name ->
+            plain_suffixes.any { suffix -> name.endsWith(suffix) }
+        }
+    }
+
+    fun has_sealed_values(): Boolean = prefs?.has_sealed_values() ?: false
+
+    fun seal_persisted(): Boolean = synchronized(lock) { prefs?.seal_all() ?: true }
+
+    fun unseal_persisted(lock_key: ByteArray? = null): Boolean =
+        synchronized(lock) { prefs?.unseal_all(lock_key) ?: true }
 
     fun save(
         account_id: String,
@@ -59,10 +70,12 @@ class SessionSnapshotStore(context: Context? = null) {
             e.putString("${account_id}_$key_identity", identity_key)
             e.putString("${account_id}_$key_enc_vault", encrypted_vault)
             e.putString("${account_id}_$key_vault_nonce", vault_nonce)
-            e.putInt(
-                "${account_id}_$key_vault_kdf_iterations",
-                SessionKeyStore.sanitize_vault_kdf_iterations(vault_kdf_iterations),
-            )
+            if (!p.drops_write("${account_id}_$key_enc_vault")) {
+                e.putInt(
+                    "${account_id}_$key_vault_kdf_iterations",
+                    SessionKeyStore.sanitize_vault_kdf_iterations(vault_kdf_iterations),
+                )
+            }
             e.putString("${account_id}_$key_password_salt", password_salt?.let { encode_b64(it) })
             e.putString("${account_id}_$key_user_id", user_id)
             e.putString("${account_id}_$key_user_email", user_email)
@@ -167,6 +180,13 @@ class SessionSnapshotStore(context: Context? = null) {
         private const val key_recovery_codes = "recovery_codes"
         private const val key_previous_keys = "previous_keys"
         private const val key_legacy_keks = "legacy_keks"
+        private val plain_suffixes = listOf(
+            "_$key_token_access",
+            "_$key_token_refresh",
+            "_$key_csrf_token",
+            "_$key_user_id",
+            "_$key_user_email",
+        )
     }
 }
 

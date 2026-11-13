@@ -43,8 +43,8 @@ class PrekeyBundlePolicyTest {
     private val pinned = "ABCDEF0123456789"
 
     @Test
-    fun `switch defaults to current behavior`() {
-        assertFalse(PrekeyBundlePolicy.require_verified_prekey_bundle)
+    fun `switch requires a verified bundle by default`() {
+        assertTrue(PrekeyBundlePolicy.require_verified_prekey_bundle)
     }
 
     @Test
@@ -66,9 +66,9 @@ class PrekeyBundlePolicyTest {
     }
 
     @Test
-    fun `strict mode with a pinned owner falls back only when the served key matches the pin`() {
+    fun `strict mode with a pinned owner falls back only for an unsigned bundle whose served key matches the pin`() {
         assertTrue(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.UNSIGNED_LEGACY, pinned, pinned.lowercase()))
-        assertTrue(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.UNVERIFIABLE, pinned, pinned))
+        assertFalse(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.UNVERIFIABLE, pinned, pinned))
         assertFalse(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.UNSIGNED_LEGACY, pinned, "other"))
         assertFalse(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.UNSIGNED_LEGACY, pinned, null))
         assertFalse(prekey_bundle_needs_pgp_fallback(true, PrekeyBindingResult.VERIFIED, pinned, pinned))

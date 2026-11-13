@@ -1001,6 +1001,7 @@
     <string name="default_payment_updated">Varsayılan ödeme yöntemi güncellendi</string>
     <string name="payment_method_removed">Ödeme yöntemi kaldırıldı</string>
     <string name="session_expired_sign_in">Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.</string>
+    <string name="vault_open_failed_notice">Anahtarlarınızın kilidi bu cihazda açılamadı, bu nedenle bazı e-postalar burada açılmayabilir. Anahtarlarınızı onarmak için web\'de Aster Mail\'de oturum açın, ardından bu cihazda yeniden oturum açın.</string>
     <string name="could_not_start_checkout">Ödeme başlatılamadı</string>
     <string name="could_not_open_portal">Faturalandırma portalı açılamadı</string>
     <string name="cancel_failed">Abonelik iptal edilemedi</string>
@@ -3029,10 +3030,11 @@
     <string name="alias_unpinned_toast">Rumuz sabitlemesi kaldırıldı</string>
     <string name="e2e_identity_changed_blocked">Gönderilemedi: bir alıcının şifreleme anahtarı değişti. Değişikliği gelen kutunuzda onaylayın, ardından yeniden gönderin. Mesaj gönderilmedi.</string>
     <string name="link_device_fingerprint_label">Doğrulama kodu</string>
-    <string name="link_device_fingerprint_hint">Bu kodu diğer cihazınızdaki doğrulama kodu veya cihaz parmak iziyle karşılaştırın. Kodlar farklıysa İptal\'e dokunun.</string>
-    <string name="link_device_codes_match">Kodlar eşleşiyor</string>
+    <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
+    <string name="link_device_fingerprint_hint">Yeni cihazınızın gösterdiği doğrulama kodunu veya cihaz parmak izini girin. Masaüstü uygulamasında görmek için Bu cihazı doğrula\'yı seçin.</string>
     <string name="link_device_error_invalid_keys">Diğer cihaz kullanılamayan anahtarlar gönderdi. O cihazda yeni bir kod alın ve tekrar deneyin.</string>
-    <string name="link_device_error_codes_not_confirmed">Cihazı bağlamak için kodların eşleştiğini onaylayın.</string>
+    <string name="link_device_error_codes_not_confirmed">Cihazı bağlamak için yeni cihazınızdaki doğrulama kodunun tamamını girin.</string>
+    <string name="link_device_error_fingerprint_mismatch">Bu kod yeni cihazınızla eşleşmiyor. Yeni cihazınızdaki kodu kontrol edip tekrar girin. Hâlâ eşleşmiyorsa İptal\'e dokunun.</string>
     <string name="restore">Geri yükle</string>
     <string name="contact_trash_confirm_message">Kişileri çöp kutusundan geri yükleyebilirsiniz.</string>
     <string name="empty_contacts_trash_confirm_message">Çöp kutusundaki tüm kişiler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.</string>

@@ -55,6 +55,7 @@ class PgpIndicationTest {
         body = "hello",
         is_external = is_external,
         pgp_encrypted = pgp_encrypted,
+        e2e_verified = true,
     )
 
     private fun save_device_screenshot(name: String) {

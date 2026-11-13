@@ -3606,7 +3606,11 @@ class SettingsViewModel @Inject constructor(
                 null
             }
             prf_output ?: return false
-            val (encrypted, nonce) = org.astermail.android.auth.encrypt_passphrase_with_prf(prf_output, passphrase)
+            val (encrypted, nonce) = org.astermail.android.auth.encrypt_passphrase_with_prf(
+                prf_output,
+                passphrase,
+                registration.credential_id,
+            )
             prf_output.fill(0)
             security_api.store_passkey_prf(
                 key_id,
@@ -4567,14 +4571,18 @@ class SettingsViewModel @Inject constructor(
                 if (salt.isNullOrBlank()) {
                     false
                 } else {
+                    val allow_legacy = !org.astermail.android.folders.folder_kdf_pins.is_pinned(context, label_id)
                     val password_hash = withContext(Dispatchers.Default) {
-                        org.astermail.android.folders.derive_folder_auth_hash(password, salt)
+                        org.astermail.android.folders.derive_folder_auth_hash(password, salt, allow_legacy)
                     }
                     val response = labels_api.verify_folder_password(
                         label_id,
                         VerifyFolderPasswordRequest(password_hash = password_hash),
                     )
                     if (response.verified) {
+                        if (org.astermail.android.folders.folder_salt_is_current(salt)) {
+                            org.astermail.android.folders.folder_kdf_pins.pin(context, label_id)
+                        }
                         org.astermail.android.folders.folder_lock_store.mark_unlocked(
                             folder_id = label_id,
                             unlock_token = response.unlock_token,
@@ -4996,6 +5004,7 @@ class SettingsViewModel @Inject constructor(
                         folder_key_nonce = material.folder_key_nonce,
                     ),
                 )
+                org.astermail.android.folders.folder_kdf_pins.pin(context, label_id)
                 org.astermail.android.folders.open_folder_unlock_session(label_id) {
                     labels_api.verify_folder_password(
                         label_id,
@@ -5029,8 +5038,9 @@ class SettingsViewModel @Inject constructor(
                 if (salt.isNullOrBlank()) {
                     false
                 } else {
+                    val allow_legacy = !org.astermail.android.folders.folder_kdf_pins.is_pinned(context, label_id)
                     val password_hash = withContext(Dispatchers.Default) {
-                        org.astermail.android.folders.derive_folder_auth_hash(password, salt)
+                        org.astermail.android.folders.derive_folder_auth_hash(password, salt, allow_legacy)
                     }
                     labels_api.remove_folder_password(
                         label_id,

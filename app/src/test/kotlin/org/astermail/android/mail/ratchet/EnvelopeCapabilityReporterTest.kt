@@ -205,6 +205,31 @@ class EnvelopeCapabilityReporterTest {
     }
 
     @Test
+    fun reports_that_android_reads_owner_bound_envelopes() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+
+        assertEquals(1, api.requests[0].bound_envelope_version)
+        assertEquals(1, store.last_reported[user_id]?.bound_envelope_version)
+    }
+
+    @Test
+    fun reports_again_when_the_stored_report_predates_bound_envelopes() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+        val stored = store.last_reported.getValue(user_id)
+        store.last_reported[user_id] = stored.copy(bound_envelope_version = 0)
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, identity)
+
+        assertEquals(2, api.requests.size)
+        assertEquals(1, api.requests[1].bound_envelope_version)
+    }
+
+    @Test
     fun persists_and_reuses_one_client_id_across_reports() = runTest {
         val store = FakeStore()
         val api = FakeRatchetApi()

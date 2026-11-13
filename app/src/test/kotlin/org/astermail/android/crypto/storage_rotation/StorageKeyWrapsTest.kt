@@ -33,6 +33,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.crypto.AccountKey
 import org.astermail.android.crypto.PgpDecryptor
+import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpKeyGenerator
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
 import org.astermail.android.mail.ratchet.vault_identity_fingerprint
@@ -312,7 +313,7 @@ class StorageKeyWrapsTest {
     }
 
     @Test
-    fun a_wrap_made_by_the_web_client_opens_here() {
+    fun an_unsigned_wrap_made_by_the_web_client_decrypts_but_is_never_trusted() {
         val opened = PgpDecryptor.decrypt_bytes_with_own_keys(
             Base64.getDecoder().decode(WEB_WRAP),
             listOf(WEB_PRIVATE_KEY),
@@ -325,7 +326,76 @@ class StorageKeyWrapsTest {
         val crypto = PgpStorageKeyWrapCrypto { WEB_PASSPHRASE.toByteArray(Charsets.UTF_8) }
         val vault = JSONObject().put("identity_key", WEB_PRIVATE_KEY)
         val wraps = listOf(StorageKeyWrap(WEB_KEY_ID, WEB_WRAP, "", now))
-        assertArrayEquals(Base64.getDecoder().decode(WEB_DATA_KEK), open_side_copy(wraps, vault, crypto))
+        assertNull(open_side_copy(wraps, vault, crypto))
+    }
+
+    @Test
+    fun a_wrap_the_server_encrypts_to_the_public_key_never_replaces_the_vault_key() = runBlocking {
+        val pass = "wrap passphrase"
+        val key = PgpKeyGenerator.generate("User", "user@astermail.org", pass.toCharArray())
+        val crypto = PgpStorageKeyWrapCrypto { pass.toByteArray(Charsets.UTF_8) }
+        val public_key = AccountKey.public_key_armored(key.armored_private_key)!!
+        val minted = PgpEncryptor.encrypt_bytes_binary(newest_kek, listOf(public_key))!!
+        val server = Server(random_vault(stale_kek, key.armored_private_key))
+        server.wraps.add(
+            json_object(
+                "key_id" to wrap_key_id(newest_kek),
+                "wrap" to encode_b64(minted),
+                "identity_fingerprint" to identity_fingerprint(key.armored_private_key),
+                "created_at" to now,
+            ),
+        )
+
+        val result = heal_storage_key_from_side_copy(server, updater(server), crypto)
+
+        assertTrue(result is StorageKeyHeal.Current)
+        assertEquals(0, server.vault_puts)
+        assertEquals(encode_b64(stale_kek), server.vault.getString("data_kek"))
+    }
+
+    @Test
+    fun a_wrap_signed_by_another_key_is_refused() {
+        val pass = "wrap passphrase"
+        val key = PgpKeyGenerator.generate("User", "user@astermail.org", pass.toCharArray())
+        val stranger = PgpKeyGenerator.generate("Other", "other@astermail.org", pass.toCharArray())
+        val crypto = PgpStorageKeyWrapCrypto { pass.toByteArray(Charsets.UTF_8) }
+        val public_key = AccountKey.public_key_armored(key.armored_private_key)!!
+        val forged = PgpEncryptor.encrypt_and_sign_bytes_binary(
+            newest_kek,
+            listOf(public_key),
+            stranger.armored_private_key,
+            pass.toCharArray(),
+        )!!
+        assertNull(crypto.open(forged, listOf(key.armored_private_key)))
+        val vault = random_vault(stale_kek, key.armored_private_key)
+        val wraps = listOf(StorageKeyWrap(wrap_key_id(newest_kek), encode_b64(forged), "", now))
+        assertNull(open_side_copy(wraps, vault, crypto))
+    }
+
+    @Test
+    fun an_unsigned_side_copy_of_the_current_key_is_sealed_again() = runBlocking {
+        val pass = "wrap passphrase"
+        val key = PgpKeyGenerator.generate("User", "user@astermail.org", pass.toCharArray())
+        val crypto = PgpStorageKeyWrapCrypto { pass.toByteArray(Charsets.UTF_8) }
+        val public_key = AccountKey.public_key_armored(key.armored_private_key)!!
+        val vault = random_vault(newest_kek, key.armored_private_key)
+        val server = Server(vault)
+        server.wraps.add(
+            json_object(
+                "key_id" to wrap_key_id(newest_kek),
+                "wrap" to encode_b64(PgpEncryptor.encrypt_bytes_binary(newest_kek, listOf(public_key))!!),
+                "identity_fingerprint" to identity_fingerprint(key.armored_private_key),
+                "created_at" to now,
+            ),
+        )
+
+        val first = store_side_copy(server, crypto, vault, list_storage_key_wraps(server)!!)
+        val second = store_side_copy(server, crypto, vault, list_storage_key_wraps(server)!!)
+
+        assertEquals(SideCopyStore.STORED, first)
+        assertEquals(SideCopyStore.CURRENT, second)
+        val sealed = decode_b64(server.posted.single().str("wrap"))!!
+        assertArrayEquals(newest_kek, crypto.open(sealed, listOf(key.armored_private_key)))
     }
 
     @Test

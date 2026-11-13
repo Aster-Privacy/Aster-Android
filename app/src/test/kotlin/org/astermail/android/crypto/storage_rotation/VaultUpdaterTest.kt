@@ -57,6 +57,8 @@ class VaultUpdaterTest {
         var vault: JSONObject = initial
         var puts = 0
         var conflicts = 0
+        var refuse_level2 = false
+        val put_iterations = mutableListOf<Int>()
         var on_put: (Server) -> Unit = {}
 
         fun sealed(): String = encode_b64(vault.toString().toByteArray(Charsets.UTF_8))
@@ -80,6 +82,11 @@ class VaultUpdaterTest {
         override suspend fun put(path: String, body: JsonElement): ApiReply {
             on_put(this)
             val obj = body as JsonObject
+            val sent = obj.long("vault_kdf_iterations")?.toInt() ?: VaultKdf.DEFAULT_ITERATIONS
+            put_iterations.add(sent)
+            if (refuse_level2 && sent == VaultKdf.LEVEL2_ITERATIONS) {
+                return ApiReply(409, null, VAULT_LEVEL2_NOT_ADMITTED_CODE)
+            }
             if (obj.str("expected_vault_sha256") != digest(sealed())) {
                 conflicts += 1
                 return ApiReply(409, null, VAULT_CHANGED_CODE)
@@ -340,5 +347,20 @@ class VaultUpdaterTest {
             assertTrue(is_level2_not_admitted(error))
         }
         assertEquals(1, backend.calls)
+    }
+
+    @Test
+    fun a_refused_write_never_reseals_a_level2_vault_at_the_lower_work_factor() = runBlocking {
+        val server = Server(rotated_vault(), stored_iterations = VaultKdf.LEVEL2_ITERATIONS)
+        server.refuse_level2 = true
+
+        val outcome = iteration_updater(server).update { draft ->
+            draft.vault.put("recovery_codes", JSONArray().put("rotated"))
+            VaultEdit.CHANGED
+        }
+
+        assertTrue(outcome is VaultUpdateOutcome.Failed)
+        assertEquals(listOf(VaultKdf.LEVEL2_ITERATIONS), server.put_iterations)
+        assertEquals(0, server.puts)
     }
 }

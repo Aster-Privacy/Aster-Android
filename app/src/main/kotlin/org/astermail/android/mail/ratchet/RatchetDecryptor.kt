@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
@@ -69,6 +70,14 @@ class RatchetDecryptor @Inject constructor(
 
     private val pq_secret_missed_at = java.util.concurrent.ConcurrentHashMap<Int, Long>()
 
+    private val ec_one_time_prekeys by lazy {
+        EcOneTimePrekeyStore(
+            storage = SessionEcOneTimeSecretStorage(session_key_store),
+            ratchet_api = ratchet_api,
+            sync_key_candidates = { state_store.state_encryption_key_candidates() },
+        )
+    }
+
     private val escrow_upgrade_attempted = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     private val background = kotlinx.coroutines.CoroutineScope(
@@ -79,6 +88,7 @@ class RatchetDecryptor @Inject constructor(
         forced_recovery_until = System.currentTimeMillis() + FORCED_RECOVERY_WINDOW_MS
         last_vault_refresh_at = 0L
         pq_secret_missed_at.clear()
+        ec_one_time_prekeys.clear_missing()
         syncer.clear_missing_state_cache()
     }
 
@@ -298,6 +308,7 @@ class RatchetDecryptor @Inject constructor(
 
             var state = state_store.load(conversation_id)
             val state_loaded_locally = state != null
+            val established_identity_key = state?.remote_identity_key
             val bootstrap_already_accepted = can_bootstrap && runCatching {
                 identity_pins.is_replayed_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
             }.getOrDefault(false)
@@ -371,6 +382,7 @@ class RatchetDecryptor @Inject constructor(
                     state = recovered.first
                     plaintext = recovered.second
                     consume_pq_prekey(recipient)
+                    consume_ec_one_time_prekey(recipient)
                 }
             }
 
@@ -425,11 +437,21 @@ class RatchetDecryptor @Inject constructor(
                 identity_key,
                 session_bound = final_state.remote_identity_key != null,
             )
+            val directory_confirmed = continuity != SenderIdentityContinuity.KNOWN &&
+                directory_confirms_identity(sender_email, identity_key)
+            val unconfirmed_sender = continuity == SenderIdentityContinuity.CHANGED || (continuity == SenderIdentityContinuity.NEW && !directory_confirmed)
+            if (!chained && state_loaded_locally &&
+                !bootstrap_may_replace_session(established_identity_key, identity_key, continuity, directory_confirmed)
+            ) {
+                flag_sender_rotation(conversation_id, sender_email, identity_key)
+                cache_plaintext(message_id, resolved, unconfirmed_sender = true, binding = binding)
+                return@with_lock resolved
+            }
             if (chained && final_state.remote_identity_key == null && continuity == SenderIdentityContinuity.KNOWN) {
                 final_state.remote_identity_key = identity_key
             }
             val sighting = if (chained) IdentitySighting.CHAINED else IdentitySighting.BOOTSTRAP
-            if (continuity != SenderIdentityContinuity.CHANGED &&
+            if (!unconfirmed_sender &&
                 RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)
             ) {
                 record_identity_pin(conversation_id, sender_email, identity_key)
@@ -446,10 +468,9 @@ class RatchetDecryptor @Inject constructor(
                 runCatching { identity_pins.record_x3dh_version(conversation_id, version) }
             }
 
-            val unconfirmed_sender = continuity == SenderIdentityContinuity.CHANGED
-            if (unconfirmed_sender) {
+            if (continuity == SenderIdentityContinuity.CHANGED) {
                 flag_sender_rotation(conversation_id, sender_email, identity_key)
-            } else {
+            } else if (!unconfirmed_sender) {
                 remember_sender_identity(sender_email, identity_key)
             }
             cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
@@ -500,6 +521,38 @@ class RatchetDecryptor @Inject constructor(
         }
     }
 
+    private suspend fun bootstrap_may_replace_session(
+        established_identity_key: String?,
+        bootstrap_identity_key: String,
+        continuity: SenderIdentityContinuity,
+        directory_confirmed: Boolean,
+    ): Boolean {
+        if (established_identity_key != null && established_identity_key == bootstrap_identity_key) return true
+        return continuity == SenderIdentityContinuity.KNOWN || directory_confirmed
+    }
+
+    private suspend fun directory_confirms_identity(sender_email: String, identity_key: String): Boolean {
+        val email = sender_email.trim().lowercase()
+        if (!email.contains('@') || identity_key.isBlank()) return false
+        val username = email.substringBefore('@')
+        val current = try {
+            ratchet_api.fetch_own_ratchet_identity(username, email)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        if (current is OwnRatchetIdentityLookup.Found && current.identity.kem_identity_key == identity_key) return true
+        val history = try {
+            ratchet_api.fetch_identity_history(username, email)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        return history?.contains(identity_key) == true
+    }
+
     private suspend fun remember_sender_identity(sender_email: String, sender_identity_key: String) {
         runCatching { identity_pins.remember_sender_identity(sender_email, sender_identity_key) }
     }
@@ -525,6 +578,16 @@ class RatchetDecryptor @Inject constructor(
         if (recipient.pq_ciphertext == null || key_id == X3dh.PQ_IDENTITY_KEY_ID) return
         runCatching { identity_pins.record_pq_prekey_consumed(key_id, ephemeral) }
         runCatching { session_key_store.remove_pq_secret(key_id) }
+    }
+
+    private suspend fun consume_ec_one_time_prekey(recipient: RatchetRecipientData) {
+        if (recipient.x3dh_v != X3dh.VERSION_ONE_TIME_BOUND) return
+        try {
+            ec_one_time_prekeys.consume(recipient.opk_id)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+        }
     }
 
     private suspend fun record_identity_pin(
@@ -729,7 +792,7 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         tried: MutableSet<String>,
     ): Pair<RatchetState, String>? {
-        val key_sets = receiver_key_sets()
+        val key_sets = order_receiver_key_sets(receiver_key_sets(), recipient)
         if (org.astermail.android.BuildConfig.DEBUG) {
             android.util.Log.i("AsterRatchet", "bootstrap over ${key_sets.size} receiver key sets")
         }
@@ -761,6 +824,20 @@ class RatchetDecryptor @Inject constructor(
         return null
     }
 
+    private fun order_receiver_key_sets(
+        key_sets: List<ReceiverKeySet>,
+        recipient: RatchetRecipientData,
+    ): List<ReceiverKeySet> {
+        val hint = recipient.spk_id?.takeIf { recipient.x3dh_v == X3dh.VERSION_ONE_TIME_BOUND && it.isNotBlank() }
+            ?: return key_sets
+        val (matching, others) = key_sets.partition { keys ->
+            runCatching {
+                X3dh.signed_prekey_id(RatchetCrypto.b64_decode(keys.signed_prekey_public_b64)) == hint
+            }.getOrDefault(false)
+        }
+        return matching + others
+    }
+
     private suspend fun refresh_vault_keys(): Boolean {
         val now = System.currentTimeMillis()
         if (now - last_vault_refresh_at < VAULT_REFRESH_COOLDOWN_MS) return false
@@ -782,7 +859,7 @@ class RatchetDecryptor @Inject constructor(
     ): List<RatchetState> {
         val ephemeral_b64 = recipient.ephemeral_key ?: return emptyList()
         val offered_x3dh_version = recipient.x3dh_v ?: 1
-        if (offered_x3dh_version < identity_pins.highest_x3dh_version(conversation_id)) {
+        if (offered_x3dh_version < X3dh.receive_floor(identity_pins.highest_x3dh_version(conversation_id))) {
             if (org.astermail.android.BuildConfig.DEBUG) {
                 android.util.Log.w("AsterRatchet", "refusing a downgraded x3dh handshake")
             }
@@ -830,6 +907,24 @@ class RatchetDecryptor @Inject constructor(
             return emptyList()
         }
 
+        val one_time_bound = recipient.x3dh_v == X3dh.VERSION_ONE_TIME_BOUND
+        val one_time_prekey_id = recipient.opk_id.takeIf { one_time_bound }
+        val one_time_prekey_jwk = if (one_time_bound) {
+            if (!X3dh.is_valid_one_time_prekey_id(one_time_prekey_id)) {
+                pq_secrets.forEach { it.fill(0) }
+                return emptyList()
+            }
+            ec_one_time_prekeys.load_private_jwk(one_time_prekey_id) ?: run {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("AsterRatchet", "bootstrap aborted: one-time prekey unavailable")
+                }
+                pq_secrets.forEach { it.fill(0) }
+                return emptyList()
+            }
+        } else {
+            null
+        }
+
         val pq_ciphertext_raw = pq_ciphertext?.let {
             try {
                 RatchetCrypto.b64_decode(it)
@@ -850,6 +945,8 @@ class RatchetDecryptor @Inject constructor(
                 pq_from_identity = from_identity,
                 x3dh_version = recipient.x3dh_v,
                 pq_ciphertext = pq_ciphertext_raw,
+                one_time_prekey_jwk = one_time_prekey_jwk,
+                one_time_prekey_id = one_time_prekey_id,
             )
             return X3dh.init_receiver_state(
                 conversation_id = conversation_id,

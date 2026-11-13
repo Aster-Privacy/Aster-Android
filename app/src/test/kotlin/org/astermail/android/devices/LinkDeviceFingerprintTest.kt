@@ -36,10 +36,12 @@ import kotlinx.coroutines.test.setMain
 import org.astermail.android.api.devices.DeviceCodeApi
 import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.crypto.DeviceEnvelope
+import org.astermail.android.crypto.DeviceKeyFingerprint
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -48,6 +50,7 @@ class LinkDeviceFingerprintTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val code = "ABCD-2345"
+    private val shown_fingerprint = "9B16 AF79 0A6A E2F2 55D3"
     private val ed25519_pk = DeviceEnvelope.base64url_encode(ByteArray(32) { 1 })
     private val mlkem_pk = DeviceEnvelope.base64url_encode(ByteArray(1184) { 2 })
     private val x25519_pk = DeviceEnvelope.base64url_encode(ByteArray(32) { 3 })
@@ -95,16 +98,17 @@ class LinkDeviceFingerprintTest {
     }
 
     @Test
-    fun `confirm step shows the shared fingerprint of the device keys`() = runTest(dispatcher) {
+    fun `confirm step starts with an empty typed code`() = runTest(dispatcher) {
         val vm = run_flow(pending())
 
         assertEquals(LinkDeviceStep.CONFIRM, vm.state.value.step)
-        assertEquals("9B16 AF79 0A6A E2F2 55D3", vm.state.value.fingerprint)
-        assertFalse(vm.state.value.codes_match_confirmed)
+        assertEquals(shown_fingerprint, vm.state.value.fingerprint)
+        assertEquals("", vm.state.value.fingerprint_input)
+        assertFalse(vm.state.value.is_fingerprint_input_complete)
     }
 
     @Test
-    fun `linking is refused until the codes are confirmed to match`() = runTest(dispatcher) {
+    fun `linking is refused until the code from the new device is typed`() = runTest(dispatcher) {
         val vm = run_flow(pending())
 
         confirm_and_settle(vm)
@@ -115,14 +119,86 @@ class LinkDeviceFingerprintTest {
     }
 
     @Test
-    fun `confirmed codes proceed to sealing`() = runTest(dispatcher) {
+    fun `a partial code is refused even when it matches the start`() = runTest(dispatcher) {
         val vm = run_flow(pending())
-        vm.set_codes_match_confirmed(true)
+        vm.on_fingerprint_input_change("9B16 AF79 0A6A E2F2 55D")
+
+        confirm_and_settle(vm)
+
+        assertEquals(LinkDeviceError.CODES_NOT_CONFIRMED, vm.state.value.error)
+        verify(exactly = 0) { session_key_store.get_passphrase() }
+        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+    }
+
+    @Test
+    fun `a code that differs in one character is refused`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+        vm.on_fingerprint_input_change("9B16 AF79 0A6A E2F2 55D4")
+
+        confirm_and_settle(vm)
+
+        assertEquals(LinkDeviceError.FINGERPRINT_MISMATCH, vm.state.value.error)
+        assertEquals(LinkDeviceStep.CONFIRM, vm.state.value.step)
+        verify(exactly = 0) { session_key_store.get_passphrase() }
+        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+    }
+
+    @Test
+    fun `the code of another device is refused`() = runTest(dispatcher) {
+        val other = DeviceKeyFingerprint.of_encoded(
+            ed25519_pk,
+            mlkem_pk,
+            DeviceEnvelope.base64url_encode(ByteArray(32) { 4 }),
+        )!!
+        val vm = run_flow(pending())
+        vm.on_fingerprint_input_change(other)
+
+        confirm_and_settle(vm)
+
+        assertEquals(LinkDeviceError.FINGERPRINT_MISMATCH, vm.state.value.error)
+        verify(exactly = 0) { session_key_store.get_passphrase() }
+    }
+
+    @Test
+    fun `the matching code proceeds to sealing`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+        vm.on_fingerprint_input_change(shown_fingerprint)
 
         confirm_and_settle(vm)
 
         assertEquals(LinkDeviceError.SESSION_EXPIRED, vm.state.value.error)
         verify(exactly = 1) { session_key_store.get_passphrase() }
+    }
+
+    @Test
+    fun `the matching code is accepted in lowercase and without spaces`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+        vm.on_fingerprint_input_change("9b16af790a6ae2f255d3")
+
+        assertEquals(shown_fingerprint, vm.state.value.fingerprint_input)
+        confirm_and_settle(vm)
+
+        assertEquals(LinkDeviceError.SESSION_EXPIRED, vm.state.value.error)
+        verify(exactly = 1) { session_key_store.get_passphrase() }
+    }
+
+    @Test
+    fun `typed input keeps only the code characters and stops at full length`() = runTest(dispatcher) {
+        val vm = run_flow(pending())
+
+        vm.on_fingerprint_input_change("9b16-af79 0a6a:e2f2 55d3 ffff zz")
+
+        assertEquals(shown_fingerprint, vm.state.value.fingerprint_input)
+        assertTrue(vm.state.value.is_fingerprint_input_complete)
+    }
+
+    @Test
+    fun `fingerprint comparison rejects empty and short values`() {
+        assertTrue(DeviceKeyFingerprint.matches(shown_fingerprint, shown_fingerprint))
+        assertFalse(DeviceKeyFingerprint.matches("", shown_fingerprint))
+        assertFalse(DeviceKeyFingerprint.matches(shown_fingerprint, ""))
+        assertFalse(DeviceKeyFingerprint.matches("9B16", "9B16"))
+        assertFalse(DeviceKeyFingerprint.matches("9B16 AF79 0A6A E2F2 55D3", "9B16 AF79 0A6A E2F2 55D2"))
     }
 
     @Test
@@ -151,14 +227,14 @@ class LinkDeviceFingerprintTest {
     }
 
     @Test
-    fun `cancel clears the fingerprint and confirmation`() = runTest(dispatcher) {
+    fun `cancel clears the fingerprint and the typed code`() = runTest(dispatcher) {
         val vm = run_flow(pending())
-        vm.set_codes_match_confirmed(true)
+        vm.on_fingerprint_input_change(shown_fingerprint)
 
         vm.cancel_confirm()
 
         assertEquals("", vm.state.value.fingerprint)
-        assertFalse(vm.state.value.codes_match_confirmed)
+        assertEquals("", vm.state.value.fingerprint_input)
         assertEquals(LinkDeviceStep.INPUT, vm.state.value.step)
     }
 }

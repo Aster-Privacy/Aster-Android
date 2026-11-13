@@ -68,6 +68,19 @@ class RatchetStateMergeTest {
     )
 
     @Test
+    fun keeps_a_bound_header_pin_from_either_side() {
+        val pinned = state().copy(header_bound = true)
+        val unpinned = state()
+        val other_epoch = state(root_key = "root-key-epoch-2", epoch = 1)
+
+        assertEquals(true, RatchetStateMerge.merge(pinned, unpinned).header_bound)
+        assertEquals(true, RatchetStateMerge.merge(unpinned, pinned).header_bound)
+        assertEquals(true, RatchetStateMerge.merge(pinned, other_epoch).header_bound)
+        assertEquals(true, RatchetStateMerge.merge(other_epoch, pinned).header_bound)
+        assertEquals(false, RatchetStateMerge.merge(unpinned, unpinned.copy()).header_bound)
+    }
+
+    @Test
     fun keeps_the_furthest_send_chain() {
         val local = state(chain_key_send = "send-chain-5", send_message_number = 5)
         val remote = state(chain_key_send = "send-chain-2", send_message_number = 2)

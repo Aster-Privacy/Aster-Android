@@ -93,4 +93,101 @@ class RatchetMessageKeyOnlyTest {
 
         assertEquals("legacy mail", DoubleRatchet.decrypt_with_message_key(sealed, message_key))
     }
+
+    private fun to_private_jwk(kp: RatchetCrypto.EcKeyPair): String {
+        val d = RatchetCrypto.private_to_raw_d(kp.private_key)
+        val x = kp.public_raw.copyOfRange(1, 33)
+        val y = kp.public_raw.copyOfRange(33, 65)
+        return "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"${b64url(x)}\",\"y\":\"${b64url(y)}\",\"d\":\"${b64url(d)}\"}"
+    }
+
+    private fun b64url(bytes: ByteArray): String =
+        java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+
+    private fun session(): Pair<RatchetState, RatchetState> {
+        val prekey = RatchetCrypto.generate_p256_keypair()
+        val prekey_public = RatchetCrypto.b64_encode(prekey.public_raw)
+        val shared = ByteArray(32) { 7 }
+        val sender = DoubleRatchet.init_sender("conv", shared, prekey_public)
+        val receiver = X3dh.init_receiver_state("conv", shared, to_private_jwk(prekey), prekey_public)
+        return sender to receiver
+    }
+
+    private fun bound_message(sender: RatchetState, text: String): RatchetRecipientData {
+        val sealed = DoubleRatchet.encrypt(sender, text)
+        return RatchetRecipientData(
+            header = sealed.header,
+            ciphertext = RatchetCrypto.b64_encode(sealed.ciphertext),
+            nonce = RatchetCrypto.b64_encode(sealed.nonce),
+        )
+    }
+
+    private fun unbound_message(sender: RatchetState, text: String, version: Int?): RatchetRecipientData {
+        val sealed = DoubleRatchet.encrypt(sender, "discarded")
+        val nonce = RatchetCrypto.random_bytes(12)
+        val ciphertext = RatchetCrypto.aes_gcm_encrypt(
+            text.toByteArray(Charsets.UTF_8),
+            sealed.message_key,
+            nonce,
+            null,
+        )
+        return RatchetRecipientData(
+            header = sealed.header.copy(v = version),
+            ciphertext = RatchetCrypto.b64_encode(ciphertext),
+            nonce = RatchetCrypto.b64_encode(nonce),
+        )
+    }
+
+    @Test
+    fun `a new session accepts an unbound header`() {
+        val (sender, receiver) = session()
+
+        assertEquals("old client", DoubleRatchet.decrypt(receiver, unbound_message(sender, "old client", null)))
+        assertEquals(false, receiver.header_bound)
+    }
+
+    @Test
+    fun `a bound message pins the session to bound headers`() {
+        val (sender, receiver) = session()
+
+        assertEquals("first", DoubleRatchet.decrypt(receiver, bound_message(sender, "first")))
+        assertEquals(true, receiver.header_bound)
+    }
+
+    @Test
+    fun `a pinned session refuses an unbound header and keeps its state`() {
+        val (sender, receiver) = session()
+        DoubleRatchet.decrypt(receiver, bound_message(sender, "first"))
+        val before = receiver.copy(skipped_message_keys = receiver.skipped_message_keys.toMutableList())
+
+        for (version in listOf<Int?>(null, 1)) {
+            val downgraded = unbound_message(sender.copy(), "downgraded", version)
+            assertTrue(runCatching { DoubleRatchet.decrypt(receiver, downgraded) }.isFailure)
+        }
+
+        assertEquals(before, receiver)
+        assertEquals("second", DoubleRatchet.decrypt(receiver, bound_message(sender, "second")))
+    }
+
+    @Test
+    fun `a failed bound message does not pin the session`() {
+        val (sender, receiver) = session()
+        val genuine = bound_message(sender, "first")
+        val tampered = genuine.copy(nonce = RatchetCrypto.b64_encode(ByteArray(12)))
+
+        assertTrue(runCatching { DoubleRatchet.decrypt(receiver, tampered) }.isFailure)
+        assertEquals(false, receiver.header_bound)
+    }
+
+    @Test
+    fun `an out of order bound message pins the session`() {
+        val (sender, receiver) = session()
+        val first = bound_message(sender, "first")
+        val second = bound_message(sender, "second")
+        DoubleRatchet.decrypt(receiver, second)
+        receiver.header_bound = false
+
+        assertEquals("first", DoubleRatchet.decrypt(receiver, first))
+        assertEquals(true, receiver.header_bound)
+    }
 }

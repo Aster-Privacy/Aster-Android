@@ -78,28 +78,28 @@ object StorageWriteKey {
         password_keys: List<ByteArray> = emptyList(),
     ): List<ByteArray> = dedupe(listOfNotNull(write_key) + legacy_keks.mapNotNull(::decode_key) + password_keys)
 
-    fun lookup_keys(store: SessionKeyStore): List<ByteArray> {
-        val passphrase = store.get_passphrase()
-        return try {
-            lookup_keys(
-                write_key(store),
-                store.get_decrypt_keks(),
-                password_read_keys(passphrase, CryptoNative.legacy_storage_kdf_version),
-            )
-        } finally {
-            passphrase?.fill(0)
-        }
-    }
+    fun lookup_keys(store: SessionKeyStore): List<ByteArray> =
+        lookup_keys(write_key(store), store.get_decrypt_keks(), legacy_password_keys(store))
 
-    fun read_keys(store: SessionKeyStore): List<ByteArray> {
+    fun read_keys(store: SessionKeyStore): List<ByteArray> =
+        dedupe(
+            listOfNotNull(write_key(store), store.get_data_kek()) +
+                store.get_decrypt_keks().mapNotNull(::decode_key) +
+                legacy_read_keys(store),
+        )
+
+    fun legacy_read_keys(store: SessionKeyStore): List<ByteArray> =
+        if (store.legacy_storage_keys_retired()) {
+            emptyList()
+        } else {
+            dedupe(legacy_password_keys(store) + listOfNotNull(store.get()))
+        }
+
+    private fun legacy_password_keys(store: SessionKeyStore): List<ByteArray> {
+        if (store.legacy_storage_keys_retired()) return emptyList()
         val passphrase = store.get_passphrase()
         return try {
-            dedupe(
-                listOfNotNull(write_key(store), store.get_data_kek()) +
-                    password_read_keys(passphrase, CryptoNative.legacy_storage_kdf_version) +
-                    store.get_decrypt_keks().mapNotNull(::decode_key) +
-                    listOfNotNull(store.get()),
-            )
+            password_read_keys(passphrase, CryptoNative.legacy_storage_kdf_version)
         } finally {
             passphrase?.fill(0)
         }

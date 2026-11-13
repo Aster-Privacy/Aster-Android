@@ -28,14 +28,14 @@ We don't pursue legal action against researchers who:
 
 ## Encryption architecture
 
-All encryption and decryption happens on your device. The server never has access to your plaintext data.
+Mail between Aster users is encrypted and decrypted on your device, so the server never has access to its plaintext. Mail that arrives from outside Aster without OpenPGP encryption reaches the server readable, and the server encrypts it with your public key as soon as it arrives. Mail that you send to an outside address whose owner has no OpenPGP key is handed to the mail server for delivery, as with any provider.
 
 | Channel | Protocol |
 |---|---|
 | Aster to Aster | X3DH and Double Ratchet with ML-KEM-768 (post-quantum) |
-| Aster to external recipients | Ed25519 OpenPGP, portable keys that work with any OpenPGP client |
+| Aster to external recipients | Ed25519 OpenPGP when the recipient publishes a key, with portable keys that work with any OpenPGP client |
 
-Encrypted metadata includes subject lines, message content, contacts, folder structure, search indices, timestamps, and attachment data.
+Encrypted data includes subject lines, message content, contacts, folder structure, search indices, and attachment data. Routing data that mail delivery depends on, such as sender and recipient addresses and timestamps, stays visible to the server.
 
 ## Coordinated disclosure
 

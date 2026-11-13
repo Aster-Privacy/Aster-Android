@@ -30,13 +30,16 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
 import org.astermail.android.api.ratchet.RatchetApi
+import org.astermail.android.api.ratchet.RatchetIdentityResponse
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
@@ -44,6 +47,7 @@ import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -596,7 +600,7 @@ class RatchetDecryptorTest {
         val decryptor = new_decryptor(
             state_store,
             session_key_store,
-            mockk(relaxed = true),
+            directory_publishing(RatchetCrypto.b64_encode(fixture.sender_identity_raw)),
             syncer,
             mockk(relaxed = true),
             escrow = escrow,
@@ -1037,7 +1041,7 @@ class RatchetDecryptorTest {
         val decryptor = new_decryptor(
             state_store,
             session_key_store,
-            mockk(relaxed = true),
+            directory_publishing(RatchetCrypto.b64_encode(fixture.sender_identity_raw)),
             syncer,
             mockk(relaxed = true),
             identity_pins = identity_pins,
@@ -1113,6 +1117,7 @@ class RatchetDecryptorTest {
         session_key_store: SessionKeyStore = SessionKeyStore(null).also {
             seed_session_key_store(it, fixture.receiver_keys)
         },
+        ratchet_api: RatchetApi = directory_publishing(RatchetCrypto.b64_encode(fixture.sender_identity_raw)),
     ): RatchetDecryptor {
         val syncer = mockk<RatchetStateSyncer>(relaxed = true)
         coEvery { syncer.fetch_from_server(any()) } returns null
@@ -1120,7 +1125,7 @@ class RatchetDecryptorTest {
         return new_decryptor(
             state_store,
             session_key_store,
-            mockk(relaxed = true),
+            ratchet_api,
             syncer,
             mockk(relaxed = true),
             plaintext_cache,
@@ -1165,7 +1170,7 @@ class RatchetDecryptorTest {
     }
 
     @Test
-    fun `a first contact with no stored sender key is treated as confirmed`() = runTest {
+    fun `a first contact whose key the directory publishes is treated as confirmed`() = runTest {
         val fixture = build_fixture()
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
         val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
@@ -1181,6 +1186,78 @@ class RatchetDecryptorTest {
             escrow.upload_bound_in_background(any(), "hello kchaos", sender_email, fixture.conversation_id, false)
         }
         assertTrue(identity_pins.unacknowledged_changes.value.isEmpty())
+    }
+
+    private suspend fun first_contact_is_unconfirmed(directory_for: (String) -> RatchetApi): Boolean {
+        val fixture = build_fixture()
+        val ratchet_api = directory_for(RatchetCrypto.b64_encode(fixture.sender_identity_raw))
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "first contact")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        val identity_pins = real_pin_store()
+        val decryptor = chain_decryptor(
+            fixture,
+            stateful_store(),
+            identity_pins,
+            plaintext_cache,
+            escrow_returning(null),
+            ratchet_api = ratchet_api,
+        )
+
+        assertEquals("first contact", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first_contact"))
+
+        val unconfirmed = slot<Boolean>()
+        coVerify(exactly = 1) {
+            plaintext_cache.put("msg_first_contact", "first contact", false, capture(unconfirmed), any())
+        }
+        assertTrue(identity_pins.unacknowledged_changes.value.isEmpty())
+        assertEquals(
+            if (unconfirmed.captured) SenderIdentityContinuity.NEW else SenderIdentityContinuity.KNOWN,
+            identity_pins.sender_continuity(
+                fixture.conversation_id,
+                sender_email,
+                RatchetCrypto.b64_encode(fixture.sender_identity_raw),
+            ),
+        )
+        return unconfirmed.captured
+    }
+
+    @Test
+    fun `a first contact whose key the directory does not publish is unconfirmed and not remembered`() = runTest {
+        val other_identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+
+        assertTrue(first_contact_is_unconfirmed { directory_publishing(null) })
+        assertTrue(first_contact_is_unconfirmed { directory_publishing(other_identity) })
+    }
+
+    @Test
+    fun `a first contact stays unconfirmed when the directory cannot be reached`() = runTest {
+        assertTrue(
+            first_contact_is_unconfirmed {
+                mockk<RatchetApi>(relaxed = true).also { api ->
+                    coEvery { api.fetch_own_ratchet_identity(any(), any()) } throws java.io.IOException("offline")
+                    coEvery { api.fetch_identity_history(any(), any()) } throws java.io.IOException("offline")
+                }
+            },
+        )
+    }
+
+    @Test
+    fun `a first contact whose key is in the directory history is confirmed`() = runTest {
+        val current_identity = RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw)
+
+        assertFalse(
+            first_contact_is_unconfirmed { sender_identity ->
+                directory_publishing(current_identity).also { api ->
+                    coEvery { api.fetch_identity_history(any(), any()) } returns listOf(current_identity, sender_identity)
+                }
+            },
+        )
+    }
+
+    @Test
+    fun `a first contact whose key the directory publishes is remembered for the next message`() = runTest {
+        assertFalse(first_contact_is_unconfirmed { sender_identity -> directory_publishing(sender_identity) })
     }
 
     @Test
@@ -1413,5 +1490,165 @@ class RatchetDecryptorTest {
         identity_pins.remember_sender_identity(sender_email, identity)
 
         assertTrue(pin_values.keys.none { it.startsWith("hist_") })
+    }
+
+    private fun fixture_for_receiver(
+        receiver: ReceiverKeys,
+        sender_identity_kp: RatchetCrypto.EcKeyPair = RatchetCrypto.generate_p256_keypair(),
+    ): Fixture {
+        val conversation_id = X3dh.derive_conversation_id(recipient_email, sender_email)
+        val sender_result = X3dh.perform_sender(
+            sender_identity_jwk = to_private_jwk(sender_identity_kp),
+            recipient_identity_raw = RatchetCrypto.b64_decode(receiver.identity_public_b64),
+            recipient_signed_prekey_raw = RatchetCrypto.b64_decode(receiver.spk_public_b64),
+        )
+        val sender_state = DoubleRatchet.init_sender(
+            conversation_id = conversation_id,
+            shared_secret = sender_result.shared_secret,
+            remote_signed_prekey_raw_b64 = receiver.spk_public_b64,
+        )
+        return Fixture(
+            conversation_id = conversation_id,
+            sender_identity_raw = sender_identity_kp.public_raw,
+            sender_state = sender_state,
+            sender_ephemeral_raw = sender_result.ephemeral_public_raw,
+            receiver_keys = receiver,
+        )
+    }
+
+    private class EstablishedSession(
+        val receiver: ReceiverKeys,
+        val sender_identity_kp: RatchetCrypto.EcKeyPair,
+        val established_identity_b64: String,
+        val saved: MutableList<RatchetState>,
+    )
+
+    private fun established_session(): EstablishedSession {
+        val receiver_identity_kp = RatchetCrypto.generate_p256_keypair()
+        val receiver_spk_kp = RatchetCrypto.generate_p256_keypair()
+        val receiver = ReceiverKeys(
+            to_private_jwk(receiver_identity_kp),
+            RatchetCrypto.b64_encode(receiver_identity_kp.public_raw),
+            to_private_jwk(receiver_spk_kp),
+            RatchetCrypto.b64_encode(receiver_spk_kp.public_raw),
+        )
+        val sender_identity_kp = RatchetCrypto.generate_p256_keypair()
+        val original = fixture_for_receiver(receiver, sender_identity_kp)
+        val established_identity_b64 = RatchetCrypto.b64_encode(original.sender_identity_raw)
+        val state = receiver_state_from(original).also { it.remote_identity_key = established_identity_b64 }
+        return EstablishedSession(receiver, sender_identity_kp, established_identity_b64, mutableListOf(state))
+    }
+
+    private suspend fun receive_bootstrap(
+        session: EstablishedSession,
+        bootstrap: Fixture,
+        plaintext: String,
+        continuity: SenderIdentityContinuity,
+        ratchet_api: RatchetApi,
+        syncer: RatchetStateSyncer = mockk(relaxed = true),
+        plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
+    ): String? {
+        coEvery { syncer.fetch_from_server(any()) } returns null
+        val enc = DoubleRatchet.encrypt(bootstrap.sender_state, plaintext)
+        val body = envelope_json(bootstrap.sender_identity_raw, recipient_data_for(bootstrap, enc))
+        val session_key_store = SessionKeyStore(null)
+        seed_session_key_store(session_key_store, session.receiver)
+        val decryptor = new_decryptor(
+            stateful_store(session.saved),
+            session_key_store,
+            ratchet_api,
+            syncer,
+            mockk(relaxed = true),
+            plaintext_cache = plaintext_cache,
+            identity_pins = pin_store(continuity = continuity),
+        )
+        return decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "message-1")
+    }
+
+    private fun directory_publishing(identity_b64: String?): RatchetApi {
+        val ratchet_api = mockk<RatchetApi>(relaxed = true)
+        coEvery { ratchet_api.fetch_own_ratchet_identity(any(), any()) } returns if (identity_b64 == null) {
+            OwnRatchetIdentityLookup.NotFound
+        } else {
+            OwnRatchetIdentityLookup.Found(RatchetIdentityResponse(kem_identity_key = identity_b64, signed_prekey = "spk"))
+        }
+        return ratchet_api
+    }
+
+    @Test
+    fun `an unconfirmed identity cannot replace an established session by bootstrapping`() = runTest {
+        val session = established_session()
+        val intruder = fixture_for_receiver(session.receiver)
+        val syncer = mockk<RatchetStateSyncer>(relaxed = true)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        val result = receive_bootstrap(
+            session,
+            intruder,
+            "forged",
+            SenderIdentityContinuity.CHANGED,
+            directory_publishing(session.established_identity_b64),
+            syncer,
+            plaintext_cache,
+        )
+
+        assertEquals("forged", result)
+        assertEquals(1, session.saved.size)
+        assertEquals(session.established_identity_b64, session.saved.last().remote_identity_key)
+        coVerify(exactly = 0) { syncer.sync(any(), any()) }
+        coVerify { plaintext_cache.put("message-1", "forged", false, true, any()) }
+    }
+
+    @Test
+    fun `a directory confirmed identity replaces an established session`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+
+        val result = receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            directory_publishing(rotated_b64),
+        )
+
+        assertEquals("rotated", result)
+        assertEquals(rotated_b64, session.saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `a remembered identity replaces an established session`() = runTest {
+        val session = established_session()
+        val remembered = fixture_for_receiver(session.receiver)
+        val remembered_b64 = RatchetCrypto.b64_encode(remembered.sender_identity_raw)
+
+        receive_bootstrap(
+            session,
+            remembered,
+            "remembered",
+            SenderIdentityContinuity.KNOWN,
+            directory_publishing(null),
+        )
+
+        assertEquals(remembered_b64, session.saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `the same identity starting a new chain replaces an established session`() = runTest {
+        val session = established_session()
+        val restarted = fixture_for_receiver(session.receiver, session.sender_identity_kp)
+
+        val result = receive_bootstrap(
+            session,
+            restarted,
+            "restarted",
+            SenderIdentityContinuity.NEW,
+            directory_publishing(null),
+        )
+
+        assertEquals("restarted", result)
+        assertEquals(2, session.saved.size)
+        assertEquals(session.established_identity_b64, session.saved.last().remote_identity_key)
     }
 }

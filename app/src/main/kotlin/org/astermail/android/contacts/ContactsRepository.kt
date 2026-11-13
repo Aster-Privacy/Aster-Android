@@ -722,6 +722,7 @@ class ContactsRepository @Inject constructor(
 
     suspend fun replay_pending_op(account: String, action: PendingMailAction): Result<Unit> = try {
         if (current_account() != account) throw java.io.IOException("account not active")
+        if (session_key_store.is_locked()) throw java.io.IOException("keys locked")
         val payload = action.payload.contact
         if (payload != null) {
             when (action.kind) {

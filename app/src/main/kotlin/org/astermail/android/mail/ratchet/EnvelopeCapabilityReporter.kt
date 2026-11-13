@@ -34,6 +34,8 @@ data class EnvelopeCapabilityReport(
     val identity_fingerprint: String,
     val pq_identity_fingerprint: String = "",
     val pgp_external_version: Int = 0,
+    val bound_envelope_version: Int = 0,
+    val x3dh_max_version: Int = 0,
 )
 
 interface EnvelopeCapabilityStore {
@@ -63,6 +65,8 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
             parts.getOrElse(1) { "" },
             parts.getOrElse(2) { "" },
             parts.getOrNull(3)?.toIntOrNull() ?: 0,
+            parts.getOrNull(4)?.toIntOrNull() ?: 0,
+            parts.getOrNull(5)?.toIntOrNull() ?: 0,
         )
     }
 
@@ -70,7 +74,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
         prefs().edit()
             .putString(
                 LAST_REPORTED_PREFIX + user_id,
-                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}",
+                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.bound_envelope_version}|${report.x3dh_max_version}",
             )
             .apply()
     }
@@ -95,8 +99,11 @@ class EnvelopeCapabilityReporter(
         pq_identity_public_b64: String? = null,
         holds_pq_identity_secret: Boolean = false,
         force: Boolean = false,
+        one_time_prekeys_readable: Boolean = false,
     ): EnvelopeCapabilityResponse? {
         if (user_id.isBlank()) return null
+
+        val x3dh_max_version = reported_x3dh_max_version(one_time_prekeys_readable)
 
         val now = now_ms()
         val fingerprint = identity_fingerprint(identity_public_b64)
@@ -109,6 +116,8 @@ class EnvelopeCapabilityReporter(
             last.identity_fingerprint == fingerprint &&
             last.pq_identity_fingerprint == pq_fingerprint &&
             last.pgp_external_version == PGP_EXTERNAL_VERSION &&
+            last.bound_envelope_version == BOUND_ENVELOPE_VERSION &&
+            (last.x3dh_max_version.takeIf { it > 0 } ?: X3DH_MAX_VERSION) == x3dh_max_version &&
             now - last.at_ms in 0 until REPORT_INTERVAL_MS
         ) {
             return null
@@ -124,8 +133,9 @@ class EnvelopeCapabilityReporter(
                     platform = PLATFORM,
                     identity_fingerprint = fingerprint.ifEmpty { null },
                     pq_identity_fingerprint = pq_fingerprint.ifEmpty { null },
-                    x3dh_max_version = X3DH_MAX_VERSION,
+                    x3dh_max_version = x3dh_max_version,
                     pgp_external_version = PGP_EXTERNAL_VERSION,
+                    bound_envelope_version = BOUND_ENVELOPE_VERSION,
                 ),
             )
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
@@ -134,7 +144,14 @@ class EnvelopeCapabilityReporter(
         if (response != null && response.success) {
             store.put_last_report(
                 user_id,
-                EnvelopeCapabilityReport(now, fingerprint, pq_fingerprint, PGP_EXTERNAL_VERSION),
+                EnvelopeCapabilityReport(
+                    now,
+                    fingerprint,
+                    pq_fingerprint,
+                    PGP_EXTERNAL_VERSION,
+                    BOUND_ENVELOPE_VERSION,
+                    x3dh_max_version,
+                ),
             )
         }
         return response
@@ -165,12 +182,17 @@ class EnvelopeCapabilityReporter(
 
     companion object {
         const val MAX_ENVELOPE_MARKER: Int = 4
-        const val X3DH_MAX_VERSION: Int = 2
+        const val X3DH_MAX_VERSION: Int = X3dh.VERSION_MAX
+        const val X3DH_ONE_TIME_READ_VERSION: Int = X3dh.READ_VERSION_MAX
         const val PGP_EXTERNAL_VERSION: Int = 1
+        const val BOUND_ENVELOPE_VERSION: Int = 1
         const val PLATFORM: String = "android"
         const val REPORT_INTERVAL_MS: Long = 7L * 24 * 60 * 60 * 1000
         private const val IDENTITY_POINT_LEN: Int = 65
         private const val UNCOMPRESSED_POINT_TAG: Byte = 0x04
         private const val ML_KEM_768_PUBLIC_KEY_LEN: Int = 1184
+
+        fun reported_x3dh_max_version(one_time_prekeys_readable: Boolean): Int =
+            if (one_time_prekeys_readable) X3DH_ONE_TIME_READ_VERSION else X3DH_MAX_VERSION
     }
 }

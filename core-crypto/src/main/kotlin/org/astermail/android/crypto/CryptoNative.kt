@@ -35,8 +35,6 @@ import java.security.SecureRandom
 
 data class IdentityKeypair(val public_key: ByteArray, val private_key: ByteArray)
 
-data class RecoveryKeyResult(val mnemonic: String, val bytes: ByteArray)
-
 object CryptoNative {
     private const val derived_key_bits = 256
     private const val gcm_nonce_bytes = 12
@@ -84,6 +82,7 @@ object CryptoNative {
         plaintext: ByteArray,
         password: ByteArray,
         iterations: Int = vault_iterations,
+        bound: Boolean = false,
     ): VaultEnvelope {
         val salt = ByteArray(vault_salt_bytes)
         secure_random.nextBytes(salt)
@@ -91,7 +90,7 @@ object CryptoNative {
         secure_random.nextBytes(nonce)
         val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
         val ciphertext = try {
-            AesGcm.encrypt(key_bytes, nonce, plaintext)
+            AesGcm.encrypt(key_bytes, nonce, plaintext, if (bound) vault_aad else null)
         } finally {
             key_bytes.fill(0)
         }
@@ -110,11 +109,17 @@ object CryptoNative {
         val ciphertext = encrypted_vault.copyOfRange(vault_salt_bytes, encrypted_vault.size)
         val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
         try {
-            return AesGcm.decrypt(key_bytes, vault_nonce, ciphertext)
+            return try {
+                AesGcm.decrypt(key_bytes, vault_nonce, ciphertext, vault_aad)
+            } catch (_: javax.crypto.AEADBadTagException) {
+                AesGcm.decrypt(key_bytes, vault_nonce, ciphertext)
+            }
         } finally {
             key_bytes.fill(0)
         }
     }
+
+    private val vault_aad = "aster-vault-v1".toByteArray(Charsets.UTF_8)
 
     class UnwrappedVault(val plaintext: ByteArray, val iterations: Int)
 
@@ -281,12 +286,6 @@ object CryptoNative {
         return hex.toString()
     }
 
-    fun generate_recovery_key(): RecoveryKeyResult {
-        val bytes = generate_recovery_bytes()
-        val mnemonic = bytes_to_mnemonic(bytes)
-        return RecoveryKeyResult(mnemonic, bytes)
-    }
-
     private fun pbkdf2(password: ByteArray, salt: ByteArray, iterations: Int): ByteArray {
         return PasswordKdf.derive_aes_key(password, salt, iterations, derived_key_bits)
     }
@@ -297,46 +296,7 @@ object CryptoNative {
             else -> MessageDigest.getInstance("SHA-256").digest(key)
         }
     }
-
-    private fun bytes_to_mnemonic(bytes: ByteArray): String {
-        val words = recovery_wordlist
-        val sb = StringBuilder()
-        for (i in bytes.indices) {
-            val idx = bytes[i].toInt() and 0xff
-            if (sb.isNotEmpty()) sb.append(' ')
-            sb.append(words[idx % words.size])
-        }
-        return sb.toString()
-    }
 }
-
-private val recovery_wordlist: List<String> = listOf(
-    "aster", "apple", "april", "arrow", "atlas", "axiom", "amber", "anvil",
-    "bread", "bloom", "breeze", "brook", "brave", "braid", "blaze", "butter",
-    "candle", "cedar", "cipher", "cloud", "coral", "crane", "crest", "crown",
-    "delta", "desert", "dew", "dove", "dream", "drift", "dune", "dusk",
-    "echo", "ember", "emerald", "every", "ever", "evolve", "eager", "earth",
-    "falcon", "feather", "fern", "flame", "flint", "flood", "forest", "frost",
-    "galaxy", "garden", "gentle", "giant", "glade", "glass", "glow", "granite",
-    "harbor", "hazel", "heart", "heath", "herald", "hollow", "honey", "humble",
-    "iris", "island", "ivory", "ivy", "indigo", "inlet", "ink", "ion",
-    "jade", "jasmine", "jewel", "join", "jolly", "juice", "jungle", "juniper",
-    "karma", "keel", "kelp", "kernel", "kestrel", "kite", "knight", "koala",
-    "lagoon", "laurel", "leaf", "ledger", "lemon", "lichen", "lily", "lotus",
-    "maple", "marble", "marsh", "meadow", "mirror", "mist", "mocha", "moss",
-    "nectar", "nest", "night", "nimbus", "nomad", "north", "nova", "novel",
-    "oasis", "ocean", "opal", "orbit", "orchid", "otter", "owl", "oyster",
-    "pine", "pearl", "petal", "pinecone", "plume", "pond", "poppy", "prairie",
-    "quartz", "quest", "quick", "quiet", "quill", "quince", "queen", "quiver",
-    "raven", "reed", "ripple", "river", "rose", "ruby", "rune", "rust",
-    "sage", "sand", "sapphire", "shore", "silver", "sky", "slate", "spruce",
-    "tide", "tiger", "timber", "topaz", "torch", "tranquil", "tulip", "turtle",
-    "umbra", "unity", "urban", "urchin", "umber", "usher", "utmost", "uproot",
-    "valley", "vapor", "velvet", "verdant", "vessel", "vine", "violet", "vivid",
-    "walnut", "water", "weave", "whisper", "willow", "winter", "woods", "wren",
-    "xenon", "xylem", "xerox", "yarrow", "yield", "yonder", "young", "yucca",
-    "zenith", "zephyr", "zinnia", "zircon", "zodiac", "zone", "zoom", "zucchini",
-)
 
 fun zeroize(vararg arrays: ByteArray) {
     for (a in arrays) a.fill(0)

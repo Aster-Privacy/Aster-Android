@@ -49,6 +49,7 @@ data class PendingDevice(
     val x25519_pk: String = "",
     val machine_name: String = "",
     val device_type: String = "",
+    val envelope_versions: List<Int> = emptyList(),
 )
 
 @Serializable

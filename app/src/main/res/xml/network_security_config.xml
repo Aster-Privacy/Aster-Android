@@ -7,6 +7,7 @@
     </base-config>
     <domain-config>
         <domain includeSubdomains="false">app.astermail.org</domain>
+        <domain includeSubdomains="false">astermail.org</domain>
         <pin-set expiration="2028-01-01">
             <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
             <pin digest="SHA-256">vh78KSg1Ry4NaqGDV10w/cTb9VH3BQUZoCWNa93W/EY=</pin>

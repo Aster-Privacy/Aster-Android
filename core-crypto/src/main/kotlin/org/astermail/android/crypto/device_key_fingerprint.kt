@@ -43,6 +43,25 @@ object DeviceKeyFingerprint {
         return hex.chunked(GROUP_CHARS).joinToString(" ")
     }
 
+    const val FINGERPRINT_CHARS = FINGERPRINT_BYTES * 2
+
+    fun normalize_input(raw: String): String =
+        raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }.take(FINGERPRINT_CHARS)
+
+    fun format_input(raw: String): String =
+        normalize_input(raw).chunked(GROUP_CHARS).joinToString(" ")
+
+    fun matches(typed: String, fingerprint: String): Boolean {
+        val expected = normalize_input(fingerprint)
+        if (expected.length != FINGERPRINT_CHARS) return false
+        val actual = normalize_input(typed)
+        if (actual.length != FINGERPRINT_CHARS) return false
+        return MessageDigest.isEqual(
+            actual.toByteArray(Charsets.US_ASCII),
+            expected.toByteArray(Charsets.US_ASCII),
+        )
+    }
+
     fun of_encoded(ed25519_pk: String, mlkem_pk: String, x25519_pk: String): String? {
         val ed = runCatching { DeviceEnvelope.base64url_decode(ed25519_pk) }.getOrNull() ?: return null
         val mlkem = runCatching { DeviceEnvelope.base64url_decode(mlkem_pk) }.getOrNull() ?: return null

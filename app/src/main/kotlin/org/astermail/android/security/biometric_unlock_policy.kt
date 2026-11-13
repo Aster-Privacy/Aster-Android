@@ -21,7 +21,7 @@
 
 package org.astermail.android.security
 
-const val BIOMETRIC_BINDING_VERSION = 2
+const val BIOMETRIC_BINDING_VERSION = 3
 
 data class BiometricBindingState(
     val has_token: Boolean,
