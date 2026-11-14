@@ -2996,6 +2996,7 @@
     <string name="checkout_payment_details">결제 세부 정보</string>
     <string name="checkout_best_value">최고 가치</string>
     <string name="checkout_plan_recommended">추천</string>
+    <string name="plan_most_popular">가장 인기</string>
     <string name="checkout_continue">결제 진행</string>
     <string name="checkout_money_back">30일 환불 보장</string>
     <string name="checkout_stripe_secure">Stripe 보안 결제</string>

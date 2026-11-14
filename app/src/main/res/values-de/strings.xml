@@ -3013,6 +3013,7 @@
     <string name="checkout_payment_details">Zahlungsdetails</string>
     <string name="checkout_best_value">Bestes Angebot</string>
     <string name="checkout_plan_recommended">Empfohlen</string>
+    <string name="plan_most_popular">Am beliebtesten</string>
     <string name="checkout_continue">Weiter zur Kasse</string>
     <string name="checkout_money_back">30 Tage Geld-zurück-Garantie</string>
     <string name="checkout_stripe_secure">Abgesichert durch Stripe</string>

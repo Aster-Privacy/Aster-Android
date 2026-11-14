@@ -3048,6 +3048,7 @@
     <string name="checkout_payment_details">Платёжные данные</string>
     <string name="checkout_best_value">Лучшая цена</string>
     <string name="checkout_plan_recommended">Рекомендуемый</string>
+    <string name="plan_most_popular">Самый популярный</string>
     <string name="checkout_continue">Перейти к оплате</string>
     <string name="checkout_money_back">Возврат денег в течение 30 дней</string>
     <string name="checkout_stripe_secure">Защищено Stripe</string>

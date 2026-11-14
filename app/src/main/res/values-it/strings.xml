@@ -3030,6 +3030,7 @@
     <string name="checkout_payment_details">Dettagli di pagamento</string>
     <string name="checkout_best_value">Miglior valore</string>
     <string name="checkout_plan_recommended">Consigliato</string>
+    <string name="plan_most_popular">Il più scelto</string>
     <string name="checkout_continue">Procedi al pagamento</string>
     <string name="checkout_money_back">Garanzia di rimborso di 30 giorni</string>
     <string name="checkout_stripe_secure">Protetto da Stripe</string>

@@ -3048,6 +3048,7 @@
     <string name="checkout_payment_details">Szczegóły płatności</string>
     <string name="checkout_best_value">Najlepsza oferta</string>
     <string name="checkout_plan_recommended">Rekomendowane</string>
+    <string name="plan_most_popular">Najpopularniejszy</string>
     <string name="checkout_continue">Przejdź do płatności</string>
     <string name="checkout_money_back">30-dniowa gwarancja zwrotu pieniędzy</string>
     <string name="checkout_stripe_secure">Zabezpieczone przez Stripe</string>

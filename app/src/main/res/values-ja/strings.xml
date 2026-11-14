@@ -2998,6 +2998,7 @@
     <string name="checkout_payment_details">お支払い情報</string>
     <string name="checkout_best_value">お得</string>
     <string name="checkout_plan_recommended">おすすめ</string>
+    <string name="plan_most_popular">一番人気</string>
     <string name="checkout_continue">お支払いに進む</string>
     <string name="checkout_money_back">30 日間の返金保証</string>
     <string name="checkout_stripe_secure">Stripe による保護</string>
