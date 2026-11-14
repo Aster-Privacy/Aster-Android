@@ -67,16 +67,7 @@ fun ContactAvatar(
 ) {
     val (background_color, text_color) = avatar_colors_for(avatar_key_for(email, name), profile_color)
     val initial = initial_for(name, email)
-    val bitmap by androidx.compose.runtime.produceState(
-        initialValue = contact_photo_cache.get(avatar_url),
-        avatar_url,
-    ) {
-        if (value == null && is_inline_contact_photo(avatar_url)) {
-            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                decode_contact_photo(avatar_url)
-            }?.also { contact_photo_cache.put(avatar_url, it) }
-        }
-    }
+    val bitmap = remember_inline_contact_photo(avatar_url)
     val remote_url = remember(avatar_url) {
         avatar_url.takeIf { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) }
     }
@@ -131,6 +122,47 @@ fun ContactAvatar(
             )
         }
     }
+}
+
+@Composable
+private fun remember_inline_contact_photo(avatar_url: String): ImageBitmap? {
+    val loaded by androidx.compose.runtime.produceState(
+        initialValue = KeyedContactPhoto(avatar_url, contact_photo_cache.get(avatar_url)),
+        avatar_url,
+    ) {
+        value = resolve_keyed_contact_photo(
+            current = value,
+            avatar_url = avatar_url,
+            cached = { contact_photo_cache.get(it) },
+            decode = {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    decode_contact_photo(it)
+                }
+            },
+            store = { key, photo -> contact_photo_cache.put(key, photo) },
+        )
+    }
+    return loaded.photo_for(avatar_url) ?: contact_photo_cache.get(avatar_url)
+}
+
+internal data class KeyedContactPhoto<B : Any>(val avatar_url: String, val photo: B?)
+
+internal fun <B : Any> KeyedContactPhoto<B>.photo_for(avatar_url: String): B? =
+    if (this.avatar_url == avatar_url) photo else null
+
+internal suspend fun <B : Any> resolve_keyed_contact_photo(
+    current: KeyedContactPhoto<B>,
+    avatar_url: String,
+    cached: (String) -> B?,
+    decode: suspend (String) -> B?,
+    store: (String, B) -> Unit,
+): KeyedContactPhoto<B> {
+    current.photo_for(avatar_url)?.let { return current }
+    cached(avatar_url)?.let { return KeyedContactPhoto(avatar_url, it) }
+    if (!is_inline_contact_photo(avatar_url)) return KeyedContactPhoto(avatar_url, null)
+    val decoded = decode(avatar_url)
+    if (decoded != null) store(avatar_url, decoded)
+    return KeyedContactPhoto(avatar_url, decoded)
 }
 
 private const val contact_photo_min_bytes = 64
