@@ -196,8 +196,9 @@ fun optimistic_sends_for_thread(
     thread_token: String?,
     item_id: String?,
     server_messages: List<ThreadMessageDecrypted>,
+    conversation_grouping: Boolean = true,
 ): List<ThreadMessageDecrypted> {
-    if (sends.isEmpty() || item_id.isNullOrBlank()) return emptyList()
+    if (!conversation_grouping || sends.isEmpty() || item_id.isNullOrBlank()) return emptyList()
     val message_ids = server_messages.map { it.id }.toSet() + item_id
     val token = thread_token?.takeIf { it.isNotBlank() }
     return sends

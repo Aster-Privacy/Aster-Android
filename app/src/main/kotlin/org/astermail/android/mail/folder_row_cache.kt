@@ -186,6 +186,13 @@ fun folder_cache_layout_signature(
     "c" + custom_categories.toString(16),
 ).joinToString(":")
 
+fun folder_cache_layout_grouping(signature: String?): Boolean? =
+    when (signature?.substringBefore(":")) {
+        "g1" -> true
+        "g0" -> false
+        else -> null
+    }
+
 fun folder_cache_skeleton_allowed(cache_pending: Boolean, cached_count: Int): Boolean =
     !cache_pending && cached_count == 0
 
