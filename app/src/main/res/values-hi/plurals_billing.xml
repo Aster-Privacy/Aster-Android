@@ -36,4 +36,12 @@
         <item quantity="one">%d सुविधा की तुलना करें</item>
         <item quantity="other">सभी %d सुविधाओं की तुलना करें</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">अपने अगले मासिक भुगतान पर %2$d%% छूट के साथ %1$s रखें। आपकी मेल, पते और सेटिंग जैसे हैं वैसे ही रहेंगे।</item>
+        <item quantity="other">अगले %3$d मासिक भुगतानों पर %2$d%% छूट के साथ %1$s रखें। आपकी मेल, पते और सेटिंग जैसे हैं वैसे ही रहेंगे।</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">आपकी छूट चालू है। अपने अगले मासिक भुगतान पर आप %1$d%% कम भुगतान करेंगे।</item>
+        <item quantity="other">आपकी छूट चालू है। अगले %2$d मासिक भुगतानों पर आप %1$d%% कम भुगतान करेंगे।</item>
+    </plurals>
 </resources>

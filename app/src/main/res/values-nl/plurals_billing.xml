@@ -36,4 +36,12 @@
         <item quantity="one">%d functie vergelijken</item>
         <item quantity="other">Alle %d functies vergelijken</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">Houd %1$s met %2$d%% korting op uw volgende maandbetaling. Uw e-mail, adressen en instellingen blijven zoals ze zijn.</item>
+        <item quantity="other">Houd %1$s met %2$d%% korting op de volgende %3$d maandbetalingen. Uw e-mail, adressen en instellingen blijven zoals ze zijn.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">Uw korting is actief. U betaalt %1$d%% minder voor uw volgende maandbetaling.</item>
+        <item quantity="other">Uw korting is actief. U betaalt %1$d%% minder voor de volgende %2$d maandbetalingen.</item>
+    </plurals>
 </resources>

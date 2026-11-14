@@ -27,6 +27,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.BillingHistoryItem
+import org.astermail.android.api.billing.SaveOfferStatusResponse
 import org.junit.Test
 
 class SubscriptionNoticesTest {
@@ -236,5 +237,25 @@ class SubscriptionNoticesTest {
         assertNull(cheaper_plan_code("free"))
         assertNull(cheaper_plan_code(null))
         assertNull(cheaper_plan_code("unknown_plan"))
+    }
+
+    @Test
+    fun `save offer shows only for price and testing reasons`() {
+        val status = SaveOfferStatusResponse(eligible = true, percent_off = 50, months = 6)
+        assertEquals(SaveOfferTerms(50, 6), save_offer_for("too_expensive", status))
+        assertEquals(SaveOfferTerms(50, 6), save_offer_for("just_testing", status))
+        assertNull(save_offer_for("bugs", status))
+        assertNull(save_offer_for(null, status))
+    }
+
+    @Test
+    fun `save offer needs an eligible status with sane terms`() {
+        assertNull(save_offer_for("too_expensive", null))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = false, ineligible_reason = "already_used")))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = true, percent_off = null, months = 6)))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = true, percent_off = 0, months = 6)))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = true, percent_off = 101, months = 6)))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = true, percent_off = 50, months = 0)))
+        assertNull(save_offer_for("too_expensive", SaveOfferStatusResponse(eligible = true, percent_off = 50, months = 13)))
     }
 }

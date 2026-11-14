@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">A vita</string>
     <string name="billing_lifetime_note">Questo piano non si rinnova mai e non lo paghi mai più. Per modificarlo, contatta l\'assistenza Aster.</string>
     <string name="billing_lifetime_locked">Hai un piano a vita, quindi non c\'è nulla da rinnovare o pagare. Per modificarlo, contatta l\'assistenza Aster.</string>
+    <string name="save_offer_title">Un prezzo più basso</string>
+    <string name="save_offer_description">Puoi mantenere il tuo piano e pagare meno per un periodo.</string>
+    <string name="save_offer_action">Mantieni il piano con il %1$d%% di sconto</string>
+    <string name="save_offer_hint">Al termine dello sconto, il piano si rinnova al prezzo normale. Questa offerta è disponibile una sola volta per account.</string>
+    <string name="save_offer_failed">Impossibile applicare lo sconto. Riprova.</string>
 </resources>

@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">مدى الحياة</string>
     <string name="billing_lifetime_note">لا تتجدد هذه الخطة أبدًا، ولا تدفع مقابلها مرة أخرى. لتغييرها، تواصل مع دعم Aster.</string>
     <string name="billing_lifetime_locked">لديك خطة مدى الحياة، فلا يوجد ما يتجدد أو تدفع مقابله. لتغييرها، تواصل مع دعم Aster.</string>
+    <string name="save_offer_title">سعر أقل بدلاً من الإلغاء</string>
+    <string name="save_offer_description">يمكنك الاحتفاظ بخطتك ودفع مبلغ أقل لفترة.</string>
+    <string name="save_offer_action">الاحتفاظ بخطتي بخصم %1$d%%</string>
+    <string name="save_offer_hint">بعد انتهاء الخصم، تتجدد خطتك بسعرها المعتاد. هذا العرض متاح مرة واحدة لكل حساب.</string>
+    <string name="save_offer_failed">تعذر تطبيق الخصم. حاول مرة أخرى.</string>
 </resources>

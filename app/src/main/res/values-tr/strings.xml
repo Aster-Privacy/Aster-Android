@@ -778,8 +778,6 @@
     <string name="unlimited_aliases">Sınırsız takma ad</string>
     <string name="alias_page_indicator">Sayfa %1$d / %2$d</string>
     <string name="unlimited_domains">Sınırsız alan adı</string>
-    <string name="cancel_subscription_title">Aboneliği iptal et</string>
-    <string name="cancel_subscription_description">Planınız mevcut faturalandırma döneminin sonuna kadar aktif kalır. Sonrasında ücretsiz plana geçersiniz.</string>
     <string name="keep_plan">Planı koru</string>
     <string name="expires_format">%s tarihinde sona erer</string>
 

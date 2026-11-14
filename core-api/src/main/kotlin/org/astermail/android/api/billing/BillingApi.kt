@@ -197,6 +197,26 @@ data class CancelSubscriptionRequest(
 )
 
 @Serializable
+data class SaveOfferStatusResponse(
+    val eligible: Boolean = false,
+    val ineligible_reason: String? = null,
+    val percent_off: Int? = null,
+    val months: Int? = null,
+)
+
+@Serializable
+data class AcceptSaveOfferRequest(
+    val cancel_reason: String? = null,
+)
+
+@Serializable
+data class SaveOfferAcceptedResponse(
+    val applied: Boolean = false,
+    val percent_off: Int = 0,
+    val months: Int = 0,
+)
+
+@Serializable
 data class CancelSubscriptionResponse(
     val cancel_at_period_end: Boolean = false,
     val current_period_end: String? = null,
@@ -565,6 +585,8 @@ data class CryptoNativePendingInvoicesResponse(
 interface BillingApi {
     suspend fun get_subscription(): SubscriptionResponse
     suspend fun get_cancel_impact(): CancelImpactResponse
+    suspend fun get_save_offer(): SaveOfferStatusResponse
+    suspend fun accept_save_offer(request: AcceptSaveOfferRequest): SaveOfferAcceptedResponse
     suspend fun get_credit_balance(): CreditBalanceResponse
     suspend fun get_academic_discount_status(): AcademicDiscountStatusResponse
     suspend fun get_credit_packages(): CreditPackagesResponse
@@ -679,6 +701,18 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
 
     override suspend fun get_cancel_impact(): CancelImpactResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/cancel-impact"))
+
+    override suspend fun get_save_offer(): SaveOfferStatusResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/save-offer"))
+
+    override suspend fun accept_save_offer(request: AcceptSaveOfferRequest): SaveOfferAcceptedResponse {
+        val response = client.http.post("${client.base_url}$base/save-offer/accept") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
 
     override suspend fun get_credit_balance(): CreditBalanceResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/credits"))

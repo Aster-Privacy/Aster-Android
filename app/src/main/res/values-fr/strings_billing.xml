@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">À vie</string>
     <string name="billing_lifetime_note">Ce forfait ne se renouvelle jamais et vous ne le payez plus jamais. Pour le modifier, contactez l\'assistance Aster.</string>
     <string name="billing_lifetime_locked">Vous avez un forfait à vie, il n\'y a donc rien à renouveler ni à payer. Pour le modifier, contactez l\'assistance Aster.</string>
+    <string name="save_offer_title">Un prix réduit à la place</string>
+    <string name="save_offer_description">Vous pouvez garder votre offre et payer moins pendant un temps.</string>
+    <string name="save_offer_action">Garder mon offre à -%1$d %%</string>
+    <string name="save_offer_hint">À la fin de la réduction, votre offre est renouvelée à son prix normal. Cette offre n\'est disponible qu\'une fois par compte.</string>
+    <string name="save_offer_failed">Impossible d\'appliquer la réduction. Réessayez.</string>
 </resources>

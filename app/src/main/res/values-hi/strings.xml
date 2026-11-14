@@ -1090,8 +1090,6 @@
     <string name="unlimited_aliases">असीमित एलियास</string>
     <string name="alias_page_indicator">%2$d में से पेज %1$d</string>
     <string name="unlimited_domains">असीमित डोमेन</string>
-    <string name="cancel_subscription_title">सदस्यता रद्द करें</string>
-    <string name="cancel_subscription_description">आपका प्लान मौजूदा बिलिंग अवधि के अंत तक सक्रिय रहता है। उसके बाद आप मुफ़्त प्लान पर आ जाते हैं।</string>
     <string name="keep_plan">प्लान बनाए रखें</string>
     <string name="expires_format">%s को खत्म</string>
     <string name="blocked_senders">अवरुद्ध प्रेषक</string>

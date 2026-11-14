@@ -36,4 +36,12 @@
         <item quantity="one">Compare %d feature</item>
         <item quantity="other">Compare all %d features</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">Keep %1$s at %2$d%% off for your next monthly payment. Your mail, addresses, and settings stay as they are.</item>
+        <item quantity="other">Keep %1$s at %2$d%% off for the next %3$d monthly payments. Your mail, addresses, and settings stay as they are.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">Your discount is on. You pay %1$d%% less for your next monthly payment.</item>
+        <item quantity="other">Your discount is on. You pay %1$d%% less for the next %2$d monthly payments.</item>
+    </plurals>
 </resources>

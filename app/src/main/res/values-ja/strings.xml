@@ -778,8 +778,6 @@
     <string name="unlimited_aliases">無制限のエイリアス</string>
     <string name="alias_page_indicator">%1$d / %2$d ページ</string>
     <string name="unlimited_domains">無制限のドメイン</string>
-    <string name="cancel_subscription_title">サブスクリプションをキャンセル</string>
-    <string name="cancel_subscription_description">現在の請求期間の終了までプランは有効です。その後は無料プランに切り替わります。</string>
     <string name="keep_plan">プランを維持</string>
     <string name="expires_format">%sに期限切れ</string>
 

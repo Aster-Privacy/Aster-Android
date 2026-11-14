@@ -778,8 +778,6 @@
     <string name="unlimited_aliases">Alias illimitati</string>
     <string name="alias_page_indicator">Pagina %1$d di %2$d</string>
     <string name="unlimited_domains">Domini illimitati</string>
-    <string name="cancel_subscription_title">Annulla abbonamento</string>
-    <string name="cancel_subscription_description">Il tuo piano resta attivo fino alla fine del periodo di fatturazione corrente. Poi passi al piano gratuito.</string>
     <string name="keep_plan">Mantieni piano</string>
     <string name="expires_format">Scade il %s</string>
 

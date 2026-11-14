@@ -117,6 +117,20 @@ const val MAX_CANCEL_REASON_TEXT = 2000
 fun clamp_cancel_reason_text(input: String?): String? =
     input?.trim()?.take(MAX_CANCEL_REASON_TEXT)?.takeIf { it.isNotEmpty() }
 
+val SAVE_OFFER_REASONS = setOf("too_expensive", "just_testing")
+
+data class SaveOfferTerms(val percent_off: Int, val months: Int)
+
+fun save_offer_for(
+    reason: String?,
+    status: org.astermail.android.api.billing.SaveOfferStatusResponse?,
+): SaveOfferTerms? {
+    if (reason !in SAVE_OFFER_REASONS || status?.eligible != true) return null
+    val percent_off = status.percent_off?.takeIf { it in 1..100 } ?: return null
+    val months = status.months?.takeIf { it in 1..12 } ?: return null
+    return SaveOfferTerms(percent_off, months)
+}
+
 fun payment_failed_days_left(due_date: String?, today: String): Int? {
     val due = due_date?.takeIf { it.length >= 10 } ?: return null
     val days = try {
