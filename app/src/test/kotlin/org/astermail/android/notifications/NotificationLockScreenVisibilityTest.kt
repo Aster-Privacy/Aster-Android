@@ -45,6 +45,15 @@ class NotificationLockScreenVisibilityTest {
     }
 
     @Test
+    fun detected_code_always_shows_the_redacted_version_on_the_lock_screen() {
+        for (private_mode in listOf(true, false)) {
+            val policy = MailPollingWorker.message_lock_screen_policy(private_mode, has_code = true)
+            assertEquals(NotificationCompat.VISIBILITY_PRIVATE, policy.visibility)
+            assertTrue(policy.redacted_public_version)
+        }
+    }
+
+    @Test
     fun message_notifications_are_never_forced_public() {
         for (private_mode in listOf(true, false)) {
             assertNotEquals(

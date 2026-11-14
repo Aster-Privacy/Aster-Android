@@ -82,6 +82,7 @@ data class PrekeyBundleResponse(
     val pq_kem_public_key: String? = null,
     val x3dh_max_version: Int? = null,
     val pq_capable: Boolean? = null,
+    val address_scoped: Boolean? = null,
     val ec_one_time_prekey: EcOneTimePrekeyInfo? = null,
 )
 
@@ -119,6 +120,7 @@ data class RatchetIdentityResponse(
     val signed_prekey: String,
     val signed_prekey_signature: String? = null,
     val pq_kem_public_key: String? = null,
+    val address_scoped: Boolean? = null,
 )
 
 @Serializable
@@ -163,7 +165,30 @@ data class ReportEnvelopeCapabilityRequest(
     val x3dh_max_version: Int = 1,
     val pgp_external_version: Int? = null,
     val bound_envelope_version: Int? = null,
+    val address_identity_version: Int? = null,
 )
+
+@Serializable
+data class UploadAddressBundleRequest(
+    val address: String,
+    val kem_identity_key: String,
+    val signed_prekey: String,
+    val signed_prekey_signature: String,
+    val pq_kem_public_key: String? = null,
+)
+
+@Serializable
+data class UploadAddressBundleResponse(
+    val success: Boolean = false,
+    val active: Boolean = false,
+)
+
+sealed class AddressBundleUpload {
+    data class Accepted(val active: Boolean) : AddressBundleUpload()
+    object Unsupported : AddressBundleUpload()
+    object Rejected : AddressBundleUpload()
+    object Failed : AddressBundleUpload()
+}
 
 @Serializable
 data class EnvelopeCapabilityResponse(
@@ -200,6 +225,10 @@ interface RatchetApi {
     suspend fun put_state(conversation_id_b64: String, encrypted_state: String, state_nonce: String, expected_version: Int): PutStateOutcome
     suspend fun fetch_pq_secret(key_id: Int): PqSecretResponse?
     suspend fun fetch_prekey_bundle(username: String, email: String): PrekeyBundleResponse?
+    suspend fun fetch_address_prekey_bundle(username: String, email: String): PrekeyBundleResponse? =
+        fetch_prekey_bundle(username, email)
+    suspend fun upload_address_bundle(request: UploadAddressBundleRequest): AddressBundleUpload =
+        AddressBundleUpload.Unsupported
     suspend fun delete_state(conversation_id_b64: String): Boolean
     suspend fun upload_prekey_bundle(request: UploadPrekeyBundleRequest): Boolean
     suspend fun fetch_own_ratchet_identity(username: String, email: String): OwnRatchetIdentityLookup =
@@ -291,6 +320,44 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         }
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun fetch_address_prekey_bundle(username: String, email: String): PrekeyBundleResponse? {
+        val username_enc = java.net.URLEncoder.encode(username, "UTF-8").replace("+", "%20")
+        val email_enc = java.net.URLEncoder.encode(email, "UTF-8").replace("+", "%20")
+        val response = client.http.get(
+            "${client.base_url}/api/crypto/v1/ratchet/prekey-bundle/$username_enc?email=$email_enc&scope=address",
+        )
+        if (response.status.value == 404) return null
+        if (is_retryable_prekey_bundle_status(response.status.value)) {
+            throw PrekeyBundleFetchException(response.status.value)
+        }
+        if (response.status.value !in 200..299) return null
+        return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun upload_address_bundle(request: UploadAddressBundleRequest): AddressBundleUpload {
+        val response = try {
+            client.http.put("${client.base_url}/api/crypto/v1/ratchet/address-bundle") {
+                contentType(ContentType.Application.Json)
+                client.get_csrf()?.let { header("X-CSRF-Token", it) }
+                setBody(request)
+            }
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (_: Throwable) {
+            return AddressBundleUpload.Failed
+        }
+        val status = response.status.value
+        if (status == 404 || status == 405) return AddressBundleUpload.Unsupported
+        if (status in 400..499) return AddressBundleUpload.Rejected
+        if (status !in 200..299) return AddressBundleUpload.Failed
+        val body = try {
+            response.body<UploadAddressBundleResponse>()
+        } catch (_: Throwable) {
+            return AddressBundleUpload.Failed
+        }
+        return AddressBundleUpload.Accepted(body.active)
     }
 
     override suspend fun fetch_own_ratchet_identity(username: String, email: String): OwnRatchetIdentityLookup {

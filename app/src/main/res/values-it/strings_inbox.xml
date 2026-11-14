@@ -12,4 +12,8 @@
     <string name="scope_collect_failed">Impossibile caricare tutti i messaggi di questa cartella, quindi non è cambiato nulla. Riprova.</string>
     <string name="inbox_a11y_state_read">Letto</string>
     <string name="inbox_a11y_state_unread">Non letto</string>
+    <string name="copy_code">Copia codice</string>
+    <string name="copy_subject">Copia oggetto</string>
+    <string name="code_copied">Codice copiato</string>
+    <string name="subject_copied">Oggetto copiato</string>
 </resources>

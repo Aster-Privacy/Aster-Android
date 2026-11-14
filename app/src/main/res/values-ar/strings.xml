@@ -247,6 +247,7 @@
     <string name="no_body">(بدون محتوى)</string>
     <string name="attachment_unnamed">مرفق</string>
     <string name="attachment_locked">لا يمكن فتح هذا المرفق لأن مفتاح التشفير الخاص به غير متوفر على هذا الجهاز.</string>
+    <string name="attachment_content_mismatch">هذا المرفق لا يطابق الرسالة التي وصل معها، لذلك لم يتم فتحه.</string>
     <string name="download_complete">اكتمل التنزيل</string>
     <string name="cannot_decode_image">تعذّرت قراءة الصورة</string>
     <string name="no_app_to_open">لا يوجد تطبيق لفتح هذا الملف</string>
@@ -3101,11 +3102,11 @@
     <string name="alias_pinned_toast">تم تثبيت الاسم المستعار</string>
     <string name="alias_unpinned_toast">تم إلغاء تثبيت الاسم المستعار</string>
     <string name="e2e_identity_changed_blocked">تعذّر الإرسال: تغيّر مفتاح التشفير لأحد المستلمين. أكّد التغيير في بريدك الوارد، ثم أعد الإرسال. لم تُرسل الرسالة.</string>
-    <string name="link_device_fingerprint_label">رمز التحقق</string>
+    <string name="link_device_fingerprint_label">بصمة الجهاز</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">أدخل رمز التحقق أو بصمة الجهاز التي يعرضها جهازك الجديد. في تطبيق سطح المكتب، اختر التحقق من هذا الجهاز لعرضه.</string>
+    <string name="link_device_fingerprint_hint">أدخل بصمة الجهاز المعروضة في التطبيق الذي تربطه. بعض التطبيقات تسميها رمز التحقق.</string>
     <string name="link_device_error_invalid_keys">أرسل الجهاز الآخر مفاتيح لا يمكن استخدامها. احصل على رمز جديد على ذلك الجهاز، ثم حاول مرة أخرى.</string>
-    <string name="link_device_error_codes_not_confirmed">لربط الجهاز، أدخل رمز التحقق الكامل من جهازك الجديد.</string>
+    <string name="link_device_error_codes_not_confirmed">هذه البصمة لا تطابق الجهاز الخاص برمز الربط هذا. قارن كل حرف بما يعرضه التطبيق الذي تربطه ثم حاول مرة أخرى. إذا استمر عدم التطابق، فلا تربط الجهاز.</string>
     <string name="link_device_error_fingerprint_mismatch">هذا الرمز لا يطابق جهازك الجديد. تحقق من الرمز على جهازك الجديد وأدخله مرة أخرى. إذا ظل غير مطابق، فانقر على إلغاء.</string>
     <string name="restore">استعادة</string>
     <string name="contact_trash_confirm_message">يمكنك استعادة جهات الاتصال من سلة المهملات.</string>
@@ -3231,9 +3232,9 @@
     <string name="shipping_status_exception">مشكلة في التسليم</string>
     <string name="shipping_status_unknown">تحديث الشحنة</string>
     <string name="inbox_arrives_on">يصل %1$s</string>
-    <string name="sender_verified_badge">مرسل موثّق</string>
-    <string name="sender_verified_title">مرسل موثّق</string>
-    <string name="sender_verified_message">أكّد مرسل هذه الرسالة أنه يملك النطاق %1$s.</string>
+    <string name="sender_verified_badge">نطاق موثّق</string>
+    <string name="sender_verified_title">نطاق موثّق</string>
+    <string name="sender_verified_message">تحقّقت خوادم Aster من أن المرسل يملك النطاق %1$s.</string>
     <string name="password_recovery_email_title">بريد استعادة كلمة المرور</string>
     <string name="recovery_email_step_desc">أضف عنوان بريد إلكتروني لتتمكن من العودة إلى حسابك إذا فقدت رموز الاسترداد.</string>
     <string name="notifications_step_title">فعّل الإشعارات</string>
@@ -3645,4 +3646,11 @@
     <string name="sidebar_move_section_up">نقل %1$s لأعلى</string>
     <string name="sidebar_move_section_down">نقل %1$s لأسفل</string>
     <string name="contacts_pending_sync">في انتظار المزامنة</string>
+    <string name="recovery_previous_password_placeholder">أدخل كلمة المرور السابقة</string>
+    <string name="recovery_previous_password_body">لا تزال مفاتيح التشفير محمية بكلمة المرور التي كنت تستخدمها قبل إعادة التعيين هذه. لكي يبقى بريدك قابلاً للقراءة، أدخل كلمة المرور السابقة. تبقى مفاتيحك كما هي وتحميها كلمة المرور الجديدة من الآن فصاعدًا.</string>
+    <string name="recovery_previous_password_required">أدخل كلمة المرور السابقة أو انقر على لا أتذكرها.</string>
+    <string name="recovery_previous_password_incorrect">كلمة المرور هذه لا تفتح مفاتيح التشفير. تحقق منها وحاول مرة أخرى.</string>
+    <string name="recovery_previous_password_forgot">لا أتذكرها</string>
+    <string name="recovery_previous_password_use">إدخال كلمة المرور السابقة</string>
+    <string name="recovery_previous_password_skipped_warning">تتم إعادة تعيين كلمة المرور ويتم الاحتفاظ بمفاتيح التشفير، لكنها تبقى مقفلة بكلمة المرور السابقة. لا يمكن قراءة بريدك حتى تدخل كلمة المرور تلك من شريط استعادة البيانات.</string>
 </resources>

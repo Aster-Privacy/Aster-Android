@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,12 +73,20 @@ object ContactSyncAccounts {
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
     val remote_updated: SharedFlow<Unit> = remote_updates
+    private val setup_requests = MutableStateFlow(false)
+    val setup_requested: StateFlow<Boolean> = setup_requests.asStateFlow()
     private var watching = false
 
     fun account_type(context: Context): String = context.getString(R.string.contact_sync_account_type)
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun request_setup() {
+        setup_requests.value = true
+    }
+
+    fun consume_setup_request(): Boolean = setup_requests.getAndUpdate { false }
 
     fun is_enabled(context: Context): Boolean =
         enabled_state.value ?: prefs(context).getBoolean(PREF_ENABLED, false).also { enabled_state.value = it }

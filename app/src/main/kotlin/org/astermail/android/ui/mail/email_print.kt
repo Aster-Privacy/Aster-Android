@@ -276,6 +276,9 @@ internal fun print_email_document(
     web_view.webViewClient = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
 
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): android.webkit.WebResourceResponse? =
+            intercept_side_view_image(view.context, request, allow_network)
+
         override fun onPageFinished(view: WebView, url: String?) {
             if (started || released) return
             started = true

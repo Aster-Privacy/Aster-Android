@@ -75,8 +75,6 @@ import org.astermail.android.api.scheduled.ScheduledSummary
 import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.api.send.ExternalSendRequest
 import org.astermail.android.api.send.QueueEmailRequest
-import org.astermail.android.api.send.SecureMessageField
-import org.astermail.android.api.send.SecureMessagePayload
 import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SendAttachmentPayload
 import org.astermail.android.api.send.SimpleSendRequest
@@ -89,7 +87,6 @@ import org.astermail.android.crypto.ClientPgpCopies
 import org.astermail.android.crypto.ClientPgpCopyOutcome
 import org.astermail.android.crypto.RecipientEncryption
 import org.astermail.android.crypto.RecipientEncryptionRules
-import org.astermail.android.crypto.SecureMessage
 import org.astermail.android.crypto.SentEncryptionEvidenceRules
 import org.astermail.android.crypto.SentEncryptionScope
 import org.astermail.android.crypto.CryptoNative
@@ -277,6 +274,7 @@ data class DecryptedEnvelope(
     val is_pgp_placeholder: Boolean = false,
     val ratchet_verified: Boolean = false,
     val own_sealed: Boolean = false,
+    val details_sealed: Boolean = false,
 )
 
 const val PGP_ENCRYPTED_MESSAGE_HEADER = "-----BEGIN PGP MESSAGE-----"
@@ -319,7 +317,12 @@ fun is_internal_recipient(email: String): Boolean {
     return ASTER_INTERNAL_DOMAINS.any { normalized.endsWith("@$it") }
 }
 
-internal data class SubjectBundle(val subject: String?, val body: String)
+internal data class SubjectBundle(
+    val subject: String?,
+    val body: String,
+    val details: SealedMessageDetails? = null,
+    val attachment_manifest: org.json.JSONArray? = null,
+)
 
 private fun unescape_json_char(escape: Char): Char = when (escape) {
     'b' -> '\b'
@@ -421,7 +424,12 @@ private fun unwrap_subject_bundle_layer(text: String): SubjectBundle? {
         val s = obj.opt("s")
         val b = obj.opt("b")
         if (s is String && b is String) {
-            return SubjectBundle(s, b)
+            return SubjectBundle(
+                s,
+                b,
+                parse_sealed_details(obj.opt("details")),
+                obj.opt("attachment_manifest") as? org.json.JSONArray,
+            )
         }
     } catch (_: Throwable) {
     }
@@ -432,18 +440,24 @@ internal fun extract_subject_bundle(body: String): SubjectBundle {
     if (body.isEmpty()) return SubjectBundle(null, body)
 
     var subject: String? = null
+    var details: SealedMessageDetails? = null
+    var attachment_manifest: org.json.JSONArray? = null
     var current = body
     var unwrapped = false
 
     for (depth in 0 until MAX_SUBJECT_BUNDLE_DEPTH) {
         val layer = unwrap_subject_bundle_layer(current) ?: break
+        if (depth == 0) {
+            details = layer.details
+            attachment_manifest = layer.attachment_manifest
+        }
         if (subject.isNullOrEmpty()) subject = layer.subject
         current = layer.body
         unwrapped = true
     }
 
     if (!unwrapped) return SubjectBundle(null, body)
-    return SubjectBundle(subject, current)
+    return SubjectBundle(subject, current, details, attachment_manifest)
 }
 
 data class InboxItem(
@@ -540,6 +554,7 @@ data class ThreadMessageDecrypted(
     val is_pgp_placeholder: Boolean = false,
     val e2e_verified: Boolean = false,
     val own_sealed: Boolean = false,
+    val sealed_sent_at: String? = null,
 )
 
 @Singleton
@@ -565,6 +580,8 @@ class MailRepository @Inject constructor(
     private val storage_rekey_service_provider: dagger.Lazy<org.astermail.android.crypto.storage_rotation.StorageRekeyService>? = null,
     private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
     private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
+    private val identity_pins_provider: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>? = null,
+    private val address_directory_provider: dagger.Lazy<org.astermail.android.mail.ratchet.AddressIdentityDirectory>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -742,8 +759,8 @@ class MailRepository @Inject constructor(
         val patch = payload.value == PENDING_PATCH_MODE
         val token = payload.token
         return when (action.kind) {
-            PendingActionKind.archive -> archive_now(ids)
-            PendingActionKind.unarchive -> unarchive_now(ids)
+            PendingActionKind.archive -> archive_now(ids, emptyList(), payload.threads)
+            PendingActionKind.unarchive -> unarchive_now(ids, emptyList(), payload.threads)
             PendingActionKind.trash -> trash_now(ids, emptyList(), payload.threads, payload.covered.toSet())
             PendingActionKind.restore_trash -> restore_trash_now(ids)
             PendingActionKind.mark_spam -> mark_spam_now(ids, emptyList(), payload.threads)
@@ -1361,6 +1378,13 @@ class MailRepository @Inject constructor(
             .filter { it.isNotBlank() }
             .toSet()
         org.astermail.android.security.SenderTrustStore.set_own_addresses("registered", addresses)
+        val directory = address_directory_provider?.get() ?: return
+        val targets = registered_own_addresses.toList()
+        if (targets.isEmpty()) return
+        app_scope.launch {
+            runCatching { directory.publish_address_entries(targets) }
+                .onFailure { if (it is CancellationException) throw it }
+        }
     }
 
     internal fun is_own_address(address: String, sender_email: String?): Boolean {
@@ -2384,6 +2408,7 @@ class MailRepository @Inject constructor(
         ratchet_plaintext_cache.clear()
         sender_pgp_key_cache.clear()
         sender_pgp_key_misses.clear()
+        address_directory_provider?.get()?.clear()
     }
 
     suspend fun fetch_inbox(
@@ -3450,24 +3475,43 @@ class MailRepository @Inject constructor(
         }
     }
 
-    suspend fun archive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> =
-        run_or_queue(PendingActionKind.archive, PendingActionPayload(ids = item_ids), Unit) {
-            archive_now(item_ids, raw_items)
+    suspend fun archive(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> =
+        run_or_queue(PendingActionKind.archive, PendingActionPayload(ids = item_ids, threads = thread_tokens), Unit) {
+            archive_now(item_ids, raw_items, thread_tokens)
         }
 
-    private suspend fun archive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<Unit> = runCatching {
-        bulk_action_by_ids("archive", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            raw_items,
-            mapOf(
-                "is_archived" to true,
-                "is_trashed" to false,
-                "is_spam" to false,
-            ),
-            require_patch = false,
-        )
+    private suspend fun archive_now(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<Unit> = runCatching {
+        val thread_ids = conversation_member_ids(thread_tokens, item_ids)
+        bulk_action_by_ids("archive", item_ids + thread_ids)
+        val archive_patch = mapOf("is_archived" to true, "is_trashed" to false, "is_spam" to false)
+        patch_metadata_for_items(item_ids, raw_items, archive_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), archive_patch, require_patch = false)
         Unit
+    }
+
+    private suspend fun conversation_member_ids(thread_tokens: List<String>, exclude: Collection<String>): List<String> {
+        val targets = thread_tokens.filter { it.isNotBlank() }.distinct()
+        if (targets.isEmpty()) return emptyList()
+        val excluded = exclude.toHashSet()
+        val ids = LinkedHashSet<String>()
+        targets.forEach { token ->
+            runCatching { mail_api.get_thread_messages(token) }
+                .onSuccess { thread ->
+                    thread.messages
+                        .filter { it.item_type == "received" && it.is_trashed != true && it.id !in excluded }
+                        .forEach { ids.add(it.id) }
+                }
+                .onFailure { rethrow_if_transient(it) }
+        }
+        return ids.toList()
     }
 
     suspend fun trash(
@@ -3680,19 +3724,29 @@ class MailRepository @Inject constructor(
             .digest(value.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
 
-    suspend fun unarchive(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> =
-        run_or_queue(PendingActionKind.unarchive, PendingActionPayload(ids = item_ids), queued_scope_response(item_ids.size)) {
-            unarchive_now(item_ids, raw_items)
+    suspend fun unarchive(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> =
+        run_or_queue(
+            PendingActionKind.unarchive,
+            PendingActionPayload(ids = item_ids, threads = thread_tokens),
+            queued_scope_response(item_ids.size),
+        ) {
+            unarchive_now(item_ids, raw_items, thread_tokens)
         }
 
-    private suspend fun unarchive_now(item_ids: List<String>, raw_items: List<MailItem?> = emptyList()): Result<BulkScopeResponse> = runCatching {
-        val response = bulk_action_by_ids("unarchive", item_ids)
-        patch_metadata_for_items(
-            item_ids,
-            raw_items,
-            mapOf("is_archived" to false),
-            require_patch = false,
-        )
+    private suspend fun unarchive_now(
+        item_ids: List<String>,
+        raw_items: List<MailItem?> = emptyList(),
+        thread_tokens: List<String> = emptyList(),
+    ): Result<BulkScopeResponse> = runCatching {
+        val thread_ids = conversation_member_ids(thread_tokens, item_ids)
+        val response = bulk_action_by_ids("unarchive", item_ids + thread_ids)
+        val unarchive_patch = mapOf("is_archived" to false)
+        patch_metadata_for_items(item_ids, raw_items, unarchive_patch, require_patch = false)
+        patch_metadata_for_items(thread_ids, emptyList(), unarchive_patch, require_patch = false)
         response
     }
 
@@ -4306,21 +4360,15 @@ class MailRepository @Inject constructor(
             is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
             e2e_verified = envelope?.ratchet_verified == true,
             own_sealed = envelope?.own_sealed == true,
+            sealed_sent_at = envelope?.takeIf { it.details_sealed }?.sent_at,
         )
     }
 
-    private fun pgp_placeholder_envelope(pgp_encrypted: Boolean = true): DecryptedEnvelope =
-        DecryptedEnvelope(
+    private fun pgp_placeholder_envelope(is_encrypted_armor: Boolean = true): DecryptedEnvelope =
+        pgp_placeholder_envelope_of(
             subject = context.getString(R.string.pgp_encrypted_subject),
             body_text = context.getString(R.string.pgp_encrypted_body),
-            body_html = null,
-            from_name = "",
-            from_email = "",
-            to = emptyList(),
-            cc = emptyList(),
-            sent_at = null,
-            pgp_encrypted = pgp_encrypted,
-            is_pgp_placeholder = pgp_encrypted,
+            is_encrypted_armor = is_encrypted_armor,
         )
 
     fun decrypt_envelope_public(
@@ -4884,6 +4932,7 @@ class MailRepository @Inject constructor(
         size_bytes: Long? = null,
     ): AttachmentMeta {
         val entry = InboundAttachmentKeyStore.entry(mail_item_id, seq_num)
+        if (entry?.sealed == true) return sealed_attachment_meta(entry)
         val nonce_bytes = runCatching {
             if (meta_nonce.isNullOrBlank()) null
             else android.util.Base64.decode(meta_nonce, android.util.Base64.DEFAULT)
@@ -4896,6 +4945,18 @@ class MailRepository @Inject constructor(
         }
 
         return merge_attachment_meta(entry, row_meta, size_bytes)
+    }
+
+    private fun sealed_attachment_meta(entry: InboundAttachmentEntry): AttachmentMeta {
+        val filename = entry.filename?.takeIf { it.isNotBlank() }
+        return AttachmentMeta(
+            filename = filename ?: context.getString(R.string.attachment_unnamed),
+            content_type = entry.content_type?.takeIf { it.isNotBlank() } ?: DEFAULT_ATTACHMENT_CONTENT_TYPE,
+            session_key = entry.key,
+            content_id = entry.content_id?.takeIf { it.isNotBlank() },
+            size_bytes = entry.size,
+            is_placeholder = filename == null,
+        )
     }
 
     private fun merge_attachment_meta(
@@ -5051,7 +5112,7 @@ class MailRepository @Inject constructor(
         items: Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>,
     ): Map<String, List<Pair<org.astermail.android.api.mail.AttachmentMetaItem, AttachmentMeta>>> =
         items.mapValues { (_, rows) ->
-            rows.map { att ->
+            rows.filter { InboundAttachmentKeyStore.is_row_listed(it.mail_item_id, it.seq_num) }.map { att ->
                 att to decrypt_attachment_meta(
                     att.encrypted_meta,
                     att.meta_nonce,
@@ -5068,6 +5129,7 @@ class MailRepository @Inject constructor(
         return try {
             val api_response = mail_api.list_attachments(mail_item_id)
             val api_attachments = api_response.attachments
+                .filter { InboundAttachmentKeyStore.is_row_listed(it.mail_item_id, it.seq_num) }
             var metas = api_attachments.map { att ->
                 decrypt_attachment_meta(
                     att.encrypted_meta,
@@ -5349,6 +5411,10 @@ class MailRepository @Inject constructor(
         if (expiry_password != null) return null
         if (from.isBlank()) return null
         if ((to + cc + bcc).none { it.isNotBlank() && !is_internal_recipient(it) }) return null
+        if (!sender_may_sign_outbound(from, session_key_store.get_user_email())) {
+            report_signing_skipped("sender_has_no_signing_key")
+            return null
+        }
 
         val attachment_bytes = attachments.sumOf { it.size_bytes }
         if (attachment_bytes > MAX_SIGNED_ATTACHMENT_BYTES) {
@@ -5460,36 +5526,6 @@ class MailRepository @Inject constructor(
     ): Map<String, String>? {
         if (!RecipientEncryptionRules.copy_failure_throws(explicit, listed, too_large, require_encryption)) return null
         throw pgp_copy_exception(too_large)
-    }
-
-    private fun seal_secure_message(
-        password: String,
-        subject: String,
-        body_html: String,
-        attachments: List<ExternalAttachmentPayload>,
-    ): SecureMessagePayload {
-        val sealed = SecureMessage.seal(
-            password = password,
-            subject = subject,
-            body = body_html,
-            attachments = attachments.map {
-                SecureMessage.Attachment(
-                    filename = it.filename,
-                    content_type = it.content_type,
-                    data = android.util.Base64.decode(it.data, android.util.Base64.DEFAULT),
-                )
-            },
-        )
-        return SecureMessagePayload(
-            kdf_salt = sealed.kdf_salt,
-            auth_proof = sealed.auth_proof,
-            encrypted_subject = SecureMessageField(sealed.encrypted_subject.ciphertext, sealed.encrypted_subject.nonce),
-            encrypted_body = SecureMessageField(sealed.encrypted_body.ciphertext, sealed.encrypted_body.nonce),
-            kem_ciphertext = sealed.kem_ciphertext,
-            encrypted_kem_seed = sealed.encrypted_kem_seed,
-            kem_seed_nonce = sealed.kem_seed_nonce,
-            attachments_bundle = sealed.attachments_bundle,
-        )
     }
 
     private fun pgp_copy_exception(too_large: Boolean): EncryptionRequiredException =
@@ -5662,19 +5698,24 @@ class MailRepository @Inject constructor(
     private val sender_pgp_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val sender_pgp_key_misses = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
-    private fun decrypt_inline_pgp(
+    private fun verify_with_outside_sender_key(
         ciphertext: String,
         sender_email: String?,
         allow_external_pgp: Boolean,
+        first: org.astermail.android.crypto.PgpDecryptionResult?,
     ): org.astermail.android.crypto.PgpDecryptionResult? {
-        val first = try_pgp_decrypt_result(ciphertext, sender_verification_key(sender_email), allow_external_pgp)
         if (first?.plaintext == null || first.signature != org.astermail.android.crypto.PgpSignatureStatus.UNVERIFIED) {
             return first
         }
         val outside_key = outside_sender_verification_key(sender_email) ?: return first
-        return try_pgp_decrypt_result(ciphertext, outside_key, allow_external_pgp)
+        val retried = try_pgp_decrypt_result(ciphertext, outside_key, allow_external_pgp)
             ?.takeIf { it.plaintext != null }
-            ?: first
+            ?: return first
+        return settle_sender_signature(
+            result = retried,
+            saved_key_check = { saved_sender_key_check(sender_email, outside_key) },
+            is_own_signature = { false },
+        )
     }
 
     private fun normalized_sender(sender_email: String?): String? =
@@ -5718,6 +5759,23 @@ class MailRepository @Inject constructor(
         sender_pgp_key_misses.remove(normalized)
         sender_pgp_key_cache[normalized] = key
         return key
+    }
+
+    private fun saved_sender_key_check(
+        sender_email: String?,
+        sender_public_key: String?,
+    ): org.astermail.android.mail.ratchet.SavedKeyCheck? {
+        val store = identity_pins_provider?.get() ?: return null
+        val email = sender_email?.takeIf { it.isNotBlank() } ?: return null
+        val fingerprint = org.astermail.android.mail.ratchet.PrekeyBindingVerifier
+            .owner_fingerprint(sender_public_key)
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+        return runCatching {
+            kotlinx.coroutines.runBlocking {
+                store.check_sender_key(email, fingerprint, System.currentTimeMillis())
+            }
+        }.getOrNull()
     }
 
     private fun ratchet_body_candidate(envelope: DecryptedEnvelope): String? {
@@ -5892,44 +5950,24 @@ class MailRepository @Inject constructor(
             }
         }
 
-        var pgp_encrypted = envelope.pgp_encrypted
-        var pgp_signature = envelope.pgp_signature
-
-        var text_pgp_decrypted = false
-        if (body_starts_with(body_text, "-----BEGIN PGP")) {
-            if (body_starts_with(body_text, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = decrypt_inline_pgp(body_text, envelope.from_email, allow_external_pgp)
-            if (decrypted?.plaintext != null) {
-                body_text = decrypted.plaintext
-                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-                text_pgp_decrypted = true
-            }
+        val pgp_fields = resolve_pgp_body_fields(
+            PgpBodyFields(body_text, body_html, envelope.pgp_encrypted, envelope.pgp_signature),
+        ) { armored ->
+            val sender_key = sender_verification_key(envelope.from_email)
+            val settled = settle_sender_signature(
+                result = try_pgp_decrypt_result(armored, sender_key, allow_external_pgp),
+                saved_key_check = { saved_sender_key_check(envelope.from_email, sender_key) },
+                is_own_signature = {
+                    try_pgp_decrypt_own_result(armored)?.signature ==
+                        org.astermail.android.crypto.PgpSignatureStatus.VALID
+                },
+            )
+            verify_with_outside_sender_key(armored, envelope.from_email, allow_external_pgp, settled)
         }
-        val html_armor = body_html
-            ?.takeIf { !body_starts_with(it, "-----BEGIN PGP") }
-            ?.takeIf { text_pgp_decrypted || !is_quoted_inline_pgp(body_text, it) }
-            ?.let { inline_pgp_html_armor(it) }
-        if (html_armor != null) {
-            pgp_encrypted = true
-            if (text_pgp_decrypted) {
-                body_html = null
-            } else {
-                val decrypted = decrypt_inline_pgp(html_armor, envelope.from_email, allow_external_pgp)
-                if (decrypted?.plaintext != null) {
-                    body_text = decrypted.plaintext
-                    body_html = null
-                    pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-                }
-            }
-        }
-        if (body_html != null && body_starts_with(body_html, "-----BEGIN PGP")) {
-            if (body_starts_with(body_html, PGP_ENCRYPTED_MESSAGE_HEADER)) pgp_encrypted = true
-            val decrypted = decrypt_inline_pgp(body_html, envelope.from_email, allow_external_pgp)
-            if (decrypted?.plaintext != null) {
-                body_html = decrypted.plaintext
-                pgp_signature = merge_pgp_signature(pgp_signature, decrypted.signature)
-            }
-        }
+        body_text = pgp_fields.body_text
+        body_html = pgp_fields.body_html
+        val pgp_encrypted = pgp_fields.pgp_encrypted
+        val pgp_signature = pgp_fields.pgp_signature
 
         if (MimeParser.looks_like_mime(body_text)) {
             val parsed = MimeParser.parse(body_text)
@@ -5958,9 +5996,11 @@ class MailRepository @Inject constructor(
             resolved_subject = bundle.subject
         }
 
+        var attachment_manifest = bundle.attachment_manifest
         val html = body_html
         if (html != null && html.contains(ASTER_SUBJECT_BUNDLE_MARKER)) {
             val html_bundle = extract_subject_bundle(html)
+            if (attachment_manifest == null) attachment_manifest = html_bundle.attachment_manifest
             if (html_bundle.body != html) {
                 body_html = html_bundle.body.ifBlank { null }
                 if (html_bundle.subject != null && resolved_subject.isBlank()) {
@@ -5970,8 +6010,15 @@ class MailRepository @Inject constructor(
         }
 
         val ratchet_verified = ratchet_decrypted && !is_unauthenticated && !is_unconfirmed_sender
+        val sealed_fields_trusted =
+            carries_sealed_details(ratchet_decrypted, is_unauthenticated, is_unconfirmed_sender)
+        val sealed_details = bundle.details.takeIf { sealed_fields_trusted }
+        if (sealed_fields_trusted) {
+            InboundAttachmentKeyStore.register_sealed_manifest(message_id, attachment_manifest)
+        }
 
         return if (
+            sealed_details != null ||
             body_text != envelope.body_text ||
             body_html != envelope.body_html ||
             resolved_subject != envelope.subject ||
@@ -5994,7 +6041,7 @@ class MailRepository @Inject constructor(
                 pgp_encrypted = pgp_encrypted,
                 pgp_signature = pgp_signature,
                 ratchet_verified = ratchet_verified,
-            )
+            ).with_sealed_details(sealed_details, bundle.subject)
         } else {
             envelope
         }
@@ -6229,11 +6276,15 @@ class MailRepository @Inject constructor(
             }
             val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
-            val existing_bundle = extract_subject_bundle(recipient_body_html)
-            val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-                put("b", existing_bundle.body)
-            }.toString()
+            val wrapped = build_subject_bundle_text(
+                subject,
+                recipient_body_html,
+                build_sealed_details(
+                    from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                    to = to,
+                    cc = cc,
+                ),
+            )
             val sealed = seal_with_private_bcc(
                 from_addr,
                 shared_internal,
@@ -6353,16 +6404,23 @@ class MailRepository @Inject constructor(
                 pgp_recipients = listed_pgp_recipients,
                 require_encryption = require_encryption,
             )
-            val secure_message = if (expiry_password.isNullOrEmpty()) {
-                null
-            } else {
-                seal_secure_message(expiry_password, subject, recipient_body_html, attachments)
-            }
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
+            val secure_message = if (uses_password_sealed_message(expiry_password)) {
+                withContext(Dispatchers.Default) {
+                    build_secure_message_payload(
+                        password = expiry_password.orEmpty(),
+                        subject = subject,
+                        body_html = recipient_body_html,
+                        attachments = attachments,
+                    )
+                }
+            } else {
+                null
+            }
             val encrypted_recipients = encrypt_field(recipients_json, derive_nonce(base_nonce, 0x01))
             val encrypted_subject = encrypt_field(
                 when {
-                    secure_message != null -> SecureMessage.PLACEHOLDER
+                    secure_message != null -> SECURE_MESSAGE_PLACEHOLDER
                     client_copies != null -> ""
                     else -> subject
                 },
@@ -6370,7 +6428,7 @@ class MailRepository @Inject constructor(
             )
             val encrypted_body = encrypt_field(
                 when {
-                    secure_message != null -> SecureMessage.PLACEHOLDER
+                    secure_message != null -> SECURE_MESSAGE_PLACEHOLDER
                     client_copies != null -> ClientPgpCopies.PLACEHOLDER_BODY
                     else -> recipient_body_html
                 },
@@ -6407,6 +6465,7 @@ class MailRepository @Inject constructor(
                     sender_email = sender_email,
                     sender_display_name = sender_display_name,
                     expires_at = expires_at,
+                    expiry_password = null,
                     acknowledge_server_readable = true,
                     attachments = if (client_copies != null || secure_message != null) emptyList() else attachments,
                     sender_alias_hash = sender_alias_hash,
@@ -6442,11 +6501,15 @@ class MailRepository @Inject constructor(
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
-                val existing_bundle = extract_subject_bundle(recipient_body_html)
-                val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-                    put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-                    put("b", existing_bundle.body)
-                }.toString()
+                val wrapped = build_subject_bundle_text(
+                    subject,
+                    recipient_body_html,
+                    build_sealed_details(
+                        from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                        to = to,
+                        cc = cc,
+                    ),
+                )
                 val sealed = seal_with_private_bcc(
                     from_addr,
                     shared_internal,
@@ -7371,6 +7434,8 @@ class MailRepository @Inject constructor(
                         subject, body_html, sender_email, sender_display_name, to, cc, bcc,
                         shared_targets(to, cc, bcc).filter { is_internal_recipient(it) },
                         allow_non_post_quantum,
+                        scheduled_at,
+                        sender_alias_hash,
                     ),
                 )
             } else {
@@ -7381,6 +7446,8 @@ class MailRepository @Inject constructor(
                 subject, body_html, sender_email, sender_display_name, to, cc, bcc,
                 shared_targets(to, cc, bcc),
                 allow_non_post_quantum,
+                scheduled_at,
+                sender_alias_hash,
             )
             val key = scheduled_local_key()
                 ?: throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
@@ -7418,17 +7485,24 @@ class MailRepository @Inject constructor(
         bcc: List<String>,
         shared_internal: List<String>,
         allow_non_post_quantum: Boolean,
+        scheduled_at: String,
+        sender_alias_hash: String?,
     ): org.astermail.android.api.scheduled.ScheduledDelivery {
         val from_addr = sender_email?.takeIf { it.isNotBlank() }
             ?: session_key_store.get_user_email().orEmpty()
         if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
             throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
         }
-        val existing_bundle = extract_subject_bundle(body_html)
-        val wrapped = ASTER_SUBJECT_BUNDLE_PREFIX + org.json.JSONObject().apply {
-            put("s", subject.ifBlank { existing_bundle.subject.orEmpty() })
-            put("b", existing_bundle.body)
-        }.toString()
+        val wrapped = build_subject_bundle_text(
+            subject,
+            body_html,
+            build_sealed_details(
+                from_name = sealed_sender_name(sender_display_name, sender_alias_hash, null),
+                to = to,
+                cc = cc,
+                sent_at = scheduled_at,
+            ),
+        )
         val sealed = seal_with_private_bcc(
             from_addr,
             shared_internal,
@@ -7747,6 +7821,11 @@ class MailRepository @Inject constructor(
             if (encrypted_data_b64.length > max_attachment_base64_chars) {
                 throw IllegalStateException("attachment payload exceeds the supported size")
             }
+            if (mail_item_id != null && seq_num != null && InboundAttachmentKeyStore.is_sealed(mail_item_id)) {
+                val sealed_entry = InboundAttachmentKeyStore.entry(mail_item_id, seq_num)
+                    ?: throw AttachmentKeyUnavailableException()
+                return decrypt_sealed_attachment_bytes(encrypted_data_b64, data_nonce_b64, sealed_entry, seq_num)
+            }
             val envelope_key_b64 = InboundAttachmentKeyStore.key(mail_item_id, seq_num).orEmpty()
             val resolved_key_b64 = session_key_b64.ifBlank { envelope_key_b64 }
             val key = if (resolved_key_b64.isBlank()) {
@@ -7778,6 +7857,56 @@ class MailRepository @Inject constructor(
             }
         }
 
+        fun sender_may_sign_outbound(from: String, primary_email: String?): Boolean =
+            ExternalPgpKeyCodec.is_primary_sender(from, primary_email)
+
+        private fun decrypt_sealed_attachment_bytes(
+            encrypted_data_b64: String,
+            data_nonce_b64: String,
+            entry: InboundAttachmentEntry,
+            seq_num: Int,
+        ): ByteArray {
+            val key = runCatching {
+                android.util.Base64.decode(entry.key, android.util.Base64.DEFAULT)
+            }.getOrNull() ?: throw AttachmentIntegrityException()
+            val plaintext = try {
+                val ciphertext = android.util.Base64.decode(encrypted_data_b64, android.util.Base64.DEFAULT)
+                val nonce = android.util.Base64.decode(data_nonce_b64, android.util.Base64.DEFAULT)
+                runCatching { aes_gcm_decrypt_with_aad(ciphertext, key, nonce, attachment_data_aad(seq_num)) }
+                    .recoverCatching { aes_gcm_decrypt_bytes(ciphertext, key, nonce) }
+                    .getOrElse { throw AttachmentIntegrityException() }
+            } catch (error: AttachmentIntegrityException) {
+                throw error
+            } catch (_: Exception) {
+                throw AttachmentIntegrityException()
+            } finally {
+                key.fill(0)
+            }
+            if (entry.size != null && plaintext.size.toLong() != entry.size) {
+                throw AttachmentIntegrityException()
+            }
+            val expected_digest = entry.sha256
+            if (expected_digest != null) {
+                val digest = MessageDigest.getInstance("SHA-256").digest(plaintext)
+                    .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                if (digest != expected_digest) throw AttachmentIntegrityException()
+            }
+            return plaintext
+        }
+
+        private fun aes_gcm_decrypt_with_aad(
+            ciphertext: ByteArray,
+            key: ByteArray,
+            iv: ByteArray,
+            aad: ByteArray,
+        ): ByteArray {
+            if (iv.size != 12) throw IllegalStateException("invalid gcm nonce length")
+            if (key.size != 16 && key.size != 24 && key.size != 32) {
+                throw IllegalStateException("invalid aes key length")
+            }
+            return AesGcm.decrypt(key, iv, ciphertext, aad)
+        }
+
         fun is_unencrypted_stored_attachment(data_nonce_b64: String): Boolean {
             if (data_nonce_b64.isBlank()) return false
             val nonce = runCatching {
@@ -7789,6 +7918,8 @@ class MailRepository @Inject constructor(
 }
 
 class AttachmentKeyUnavailableException : Exception("attachment key unavailable")
+
+class AttachmentIntegrityException : Exception("attachment differs from the sealed message")
 
 private const val OFFLINE_PREFETCH_LIMIT = 25
 private const val OFFLINE_PREFETCH_CONCURRENCY = 2

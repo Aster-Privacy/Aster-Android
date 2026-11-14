@@ -56,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.Fingerprint
 import compose.icons.tablericons.Key
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
@@ -217,41 +218,31 @@ fun LinkDeviceScreen(
                 }
                 v_gap(AsterSpacing.lg)
 
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(AsterSpacing.lg),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.link_device_fingerprint_hint),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                        )
-                        v_gap(AsterSpacing.md)
-                        AsterTextField(
-                            value = state.fingerprint_input,
-                            onValueChange = { vm.on_fingerprint_input_change(it) },
-                            label = stringResource(R.string.link_device_fingerprint_label),
-                            placeholder = stringResource(R.string.link_device_fingerprint_placeholder),
-                            enabled = !state.is_confirming,
-                            keyboard_options = KeyboardOptions(
-                                keyboardType = KeyboardType.Ascii,
-                                imeAction = ImeAction.Done,
-                                capitalization = KeyboardCapitalization.Characters,
-                                autoCorrectEnabled = false,
-                            ),
-                            keyboard_actions = KeyboardActions(
-                                onDone = {
-                                    if (state.is_fingerprint_input_complete && !state.is_confirming) {
-                                        vm.confirm_link()
-                                    }
-                                },
-                            ),
-                            leading_icon = { Icon(TablerIcons.Key, null, tint = colors.text_muted) },
-                        )
-                    }
-                }
+                AsterTextField(
+                    value = state.fingerprint_input,
+                    onValueChange = { vm.on_fingerprint_change(it) },
+                    label = stringResource(R.string.link_device_fingerprint_label),
+                    placeholder = stringResource(R.string.link_device_fingerprint_placeholder),
+                    helper_text = stringResource(R.string.link_device_fingerprint_hint),
+                    error_text = if (state.fingerprint_rejected) {
+                        stringResource(R.string.link_device_error_codes_not_confirmed)
+                    } else {
+                        null
+                    },
+                    enabled = !state.is_confirming,
+                    keyboard_options = KeyboardOptions(
+                        keyboardType = KeyboardType.Ascii,
+                        imeAction = ImeAction.Done,
+                        capitalization = KeyboardCapitalization.Characters,
+                        autoCorrectEnabled = false,
+                    ),
+                    keyboard_actions = KeyboardActions(
+                        onDone = {
+                            if (state.fingerprint_matches && !state.is_confirming) vm.confirm_link()
+                        },
+                    ),
+                    leading_icon = { Icon(TablerIcons.Fingerprint, null, tint = colors.text_muted) },
+                )
                 v_gap(AsterSpacing.md)
 
                 Text(
@@ -264,7 +255,7 @@ fun LinkDeviceScreen(
                 AsterButton(
                     label = stringResource(R.string.link_device_confirm_action),
                     onClick = { vm.confirm_link() },
-                    enabled = state.is_fingerprint_input_complete && !state.is_confirming,
+                    enabled = state.fingerprint_matches && !state.is_confirming,
                     is_loading = state.is_confirming,
                 )
                 v_gap(AsterSpacing.sm)
@@ -382,8 +373,7 @@ private fun link_device_progress(current: Int) {
 private fun link_device_error_res(error: LinkDeviceError): Int = when (error) {
     LinkDeviceError.INVALID_CODE -> R.string.link_device_error_invalid
     LinkDeviceError.INVALID_DEVICE_KEYS -> R.string.link_device_error_invalid_keys
-    LinkDeviceError.CODES_NOT_CONFIRMED -> R.string.link_device_error_codes_not_confirmed
-    LinkDeviceError.FINGERPRINT_MISMATCH -> R.string.link_device_error_fingerprint_mismatch
+    LinkDeviceError.FINGERPRINT_MISMATCH -> R.string.link_device_error_codes_not_confirmed
     LinkDeviceError.EXPIRED_CODE -> R.string.link_device_error_expired
     LinkDeviceError.ALREADY_LINKED -> R.string.link_device_error_already_linked
     LinkDeviceError.UPGRADE_REQUIRED -> R.string.link_device_error_upgrade_required

@@ -22,14 +22,39 @@
 package org.astermail.android.ui.common
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.local_acrylic
+import org.astermail.android.design.local_aster_colors
+
+fun solid_surface_colors(colors: AsterSemanticColors): AsterSemanticColors =
+    if (colors.is_glass) colors.copy(glass_opacity = 1f) else colors
+
+@Composable
+fun solid_surface_scope(content: @Composable () -> Unit) {
+    val base = AsterMaterial.colors
+    val solid = remember(base) { solid_surface_colors(base) }
+    CompositionLocalProvider(
+        local_aster_colors provides solid,
+        local_acrylic provides null,
+    ) {
+        Box(modifier = Modifier.fillMaxSize().background(solid.solid_bg)) {
+            content()
+        }
+    }
+}
 
 fun glass_page_wash(colors: AsterSemanticColors): Float = 0f
 

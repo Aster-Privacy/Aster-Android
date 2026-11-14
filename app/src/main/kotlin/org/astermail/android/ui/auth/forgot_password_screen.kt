@@ -132,6 +132,7 @@ fun ForgotPasswordScreen(
     val state by view_model.state.collectAsStateWithLifecycle()
     var new_password by remember { mutableStateOf("") }
     var new_password_confirm by remember { mutableStateOf("") }
+    var previous_password by remember { mutableStateOf("") }
 
     LaunchedEffect(start_with_code) {
         if (start_with_code) {
@@ -235,7 +236,18 @@ fun ForgotPasswordScreen(
                             on_confirm_change = { new_password_confirm = it },
                             is_loading = state.is_loading,
                             error = state.error,
-                            on_submit = { pw, confirm -> view_model.submit_new_password(pw, confirm) },
+                            on_submit = { pw, confirm ->
+                                view_model.submit_new_password(pw, confirm, previous_password)
+                            },
+                            needs_previous_password = state.needs_previous_password,
+                            previous_password_skipped = state.previous_password_skipped,
+                            previous_password = previous_password,
+                            on_previous_password_change = { previous_password = it },
+                            on_skip_previous_password = {
+                                previous_password = ""
+                                view_model.skip_previous_password()
+                            },
+                            on_use_previous_password = { view_model.use_previous_password() },
                         )
                         RecoveryStep.processing -> processing_step(
                             status = state.processing_status,
@@ -795,11 +807,20 @@ private fun password_step(
     is_loading: Boolean,
     error: String?,
     on_submit: (String, String) -> Unit,
+    needs_previous_password: Boolean = false,
+    previous_password_skipped: Boolean = false,
+    previous_password: String = "",
+    on_previous_password_change: (String) -> Unit = {},
+    on_skip_previous_password: () -> Unit = {},
+    on_use_previous_password: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     var password_visible by remember { mutableStateOf(false) }
     var confirm_visible by remember { mutableStateOf(false) }
+    var previous_visible by remember { mutableStateOf(false) }
     val confirm_focus = remember { androidx.compose.ui.focus.FocusRequester() }
+    val asks_previous = needs_previous_password && !previous_password_skipped
+    val previous_ready = !asks_previous || previous_password.isNotEmpty()
 
     recovery_step_header(
         title = stringResource(R.string.create_new_password),
@@ -876,13 +897,64 @@ private fun password_step(
         modifier = Modifier.focusRequester(confirm_focus),
     )
 
+    if (needs_previous_password) {
+        Spacer(Modifier.height(AsterSpacing.xxl))
+        Text(
+            text = stringResource(
+                if (previous_password_skipped) {
+                    R.string.recovery_previous_password_skipped_warning
+                } else {
+                    R.string.recovery_previous_password_body
+                },
+            ),
+            color = colors.text_secondary,
+            fontSize = 15.sp,
+            lineHeight = 22.sp,
+        )
+        Spacer(Modifier.height(AsterSpacing.lg))
+        if (asks_previous) {
+            AsterTextField(
+                value = previous_password,
+                onValueChange = on_previous_password_change,
+                label = stringResource(R.string.recover_data_previous_password),
+                placeholder = stringResource(R.string.recovery_previous_password_placeholder),
+                enabled = !is_loading,
+                visual_transformation = if (previous_visible) VisualTransformation.None else PasswordVisualTransformation(),
+                content_type = ContentType.Password,
+                keyboard_options = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
+                ),
+                trailing_icon = {
+                    AsterIconButton(
+                        icon = if (previous_visible) TablerIcons.EyeOff else TablerIcons.Eye,
+                        content_description = stringResource(if (previous_visible) R.string.hide_password else R.string.show_password),
+                        onClick = { previous_visible = !previous_visible },
+                        tint = colors.text_muted,
+                    )
+                },
+            )
+        }
+    }
+
     Spacer(Modifier.height(AsterSpacing.xxxl))
 
     recovery_actions(
         primary_label = stringResource(R.string.reset_password),
         on_primary = { on_submit(password, confirm) },
-        primary_enabled = password.isNotBlank() && confirm.isNotBlank() && !is_loading,
+        primary_enabled = password.isNotBlank() && confirm.isNotBlank() && previous_ready && !is_loading,
         primary_loading = is_loading,
+        secondary_label = when {
+            !needs_previous_password -> null
+            previous_password_skipped -> stringResource(R.string.recovery_previous_password_use)
+            else -> stringResource(R.string.recovery_previous_password_forgot)
+        },
+        on_secondary = when {
+            !needs_previous_password -> null
+            previous_password_skipped -> on_use_previous_password
+            else -> on_skip_previous_password
+        },
+        secondary_enabled = !is_loading,
     )
 }
 

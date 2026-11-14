@@ -24,8 +24,13 @@ package org.astermail.android.auth
 import android.util.Base64
 import java.security.MessageDigest
 import java.security.SecureRandom
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
+import org.astermail.android.api.recovery.VerifierCandidate
 
 const val RECOVERY_CODE_SET_SIZE = 10
+const val CURRENT_RECOVERY_CODE_SEGMENTS = 4
+const val VERIFIER_SALT_BYTES = 16
 
 private const val recovery_code_alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 private const val recovery_code_segment_length = 4
@@ -107,5 +112,106 @@ fun recovery_code_stored_hashes(code: String): Set<String> {
     )
 }
 
+fun is_outdated_recovery_code(code: String): Boolean {
+    if (!is_valid_recovery_code(code)) return false
+
+    return canonicalize_recovery_code(code).split("-").size - 1 < CURRENT_RECOVERY_CODE_SEGMENTS
+}
+
+fun has_outdated_recovery_codes(codes: List<String>?): Boolean =
+    codes.orEmpty().any { is_outdated_recovery_code(it) }
+
+fun generate_verifier_salt(): ByteArray =
+    ByteArray(VERIFIER_SALT_BYTES).also { SecureRandom().nextBytes(it) }
+
+fun derive_code_verifier(raw_hash: ByteArray, verifier_salt: ByteArray): ByteArray {
+    require(verifier_salt.size == VERIFIER_SALT_BYTES) { "invalid verifier salt" }
+
+    val digest = MessageDigest.getInstance("SHA-256")
+    digest.update(RECOVERY_VERIFIER_DOMAIN.toByteArray(Charsets.UTF_8))
+    digest.update(raw_hash)
+    val inner = digest.digest()
+    val password = CharArray(inner.size * 2)
+
+    inner.forEachIndexed { index, byte ->
+        val value = byte.toInt() and 0xff
+        password[index * 2] = HEX_DIGITS[value ushr 4]
+        password[index * 2 + 1] = HEX_DIGITS[value and 0x0f]
+    }
+
+    val spec = PBEKeySpec(password, verifier_salt, CODE_VERIFIER_ITERATIONS, CODE_VERIFIER_BYTES * 8)
+
+    try {
+        return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
+    } finally {
+        spec.clearPassword()
+        password.fill('\u0000')
+        inner.fill(0)
+    }
+}
+
+fun salted_recovery_verifier(raw_hash: ByteArray, verifier_salt: ByteArray): ByteArray {
+    val code_verifier = derive_code_verifier(raw_hash, verifier_salt)
+    val digest = MessageDigest.getInstance("SHA-256")
+    digest.update(SALTED_VERIFIER_DOMAIN.toByteArray(Charsets.UTF_8))
+    digest.update(verifier_salt)
+    digest.update(code_verifier)
+    code_verifier.fill(0)
+
+    return SALTED_VERIFIER_PREFIX + verifier_salt + digest.digest()
+}
+
+fun stored_verifier_salt(stored: ByteArray): ByteArray? {
+    val prefix_size = SALTED_VERIFIER_PREFIX.size
+
+    if (stored.size != prefix_size + VERIFIER_SALT_BYTES + CODE_VERIFIER_BYTES) return null
+    if (!stored.copyOfRange(0, prefix_size).contentEquals(SALTED_VERIFIER_PREFIX)) return null
+
+    return stored.copyOfRange(prefix_size, prefix_size + VERIFIER_SALT_BYTES)
+}
+
+fun encode_verifier_field(bytes: ByteArray): String = java.util.Base64.getEncoder().encodeToString(bytes)
+
+fun decode_verifier_field(value: String?): ByteArray? =
+    value?.let { runCatching { java.util.Base64.getDecoder().decode(it) }.getOrNull() }
+
+fun build_verifier_candidates(code: String, verifier_salts: List<String?>): List<VerifierCandidate> {
+    val raw_hash = raw_recovery_code_hash(code)
+
+    return verifier_salts.filterNotNull().distinct().mapNotNull { encoded ->
+        val salt = decode_verifier_field(encoded)?.takeIf { it.size == VERIFIER_SALT_BYTES }
+            ?: return@mapNotNull null
+
+        VerifierCandidate(
+            verifier_salt = encoded,
+            code_verifier = encode_verifier_field(derive_code_verifier(raw_hash, salt)),
+        )
+    }
+}
+
+fun used_recovery_codes(codes: List<String>, stored_hashes: Set<String>): Set<String> {
+    if (stored_hashes.isEmpty()) return emptySet()
+
+    val encoder = java.util.Base64.getEncoder()
+    val salts = stored_hashes
+        .mapNotNull { stored -> decode_verifier_field(stored)?.let { stored_verifier_salt(it) } }
+        .distinctBy { encoder.encodeToString(it) }
+
+    return codes.filter { code ->
+        val raw_hash = raw_recovery_code_hash(code)
+
+        encoder.encodeToString(raw_hash) in stored_hashes ||
+            encoder.encodeToString(recovery_code_verifier(raw_hash)) in stored_hashes ||
+            salts.any { salt ->
+                encoder.encodeToString(salted_recovery_verifier(raw_hash, salt)) in stored_hashes
+            }
+    }.toSet()
+}
+
 private const val RECOVERY_VERIFIER_DOMAIN = "aster-recovery-verifier-v2"
 private val RECOVERY_VERIFIER_PREFIX = "ARV2".toByteArray(Charsets.US_ASCII)
+private const val SALTED_VERIFIER_DOMAIN = "aster-recovery-verifier-v3"
+private val SALTED_VERIFIER_PREFIX = "ARV3".toByteArray(Charsets.US_ASCII)
+private const val CODE_VERIFIER_ITERATIONS = 310000
+private const val CODE_VERIFIER_BYTES = 32
+private const val HEX_DIGITS = "0123456789abcdef"

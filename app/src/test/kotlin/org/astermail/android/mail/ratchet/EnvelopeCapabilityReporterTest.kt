@@ -188,6 +188,22 @@ class EnvelopeCapabilityReporterTest {
         assertEquals(true, response?.pq_hybrid_enabled)
         assertEquals(1, api.requests[0].pgp_external_version)
         assertEquals(1, store.last_reported[user_id]?.pgp_external_version)
+        assertEquals(1, api.requests[0].address_identity_version)
+        assertEquals(1, store.last_reported[user_id]?.address_identity_version)
+    }
+
+    @Test
+    fun reports_again_when_the_stored_report_predates_address_identities() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+        val stored = store.last_reported.getValue(user_id)
+        store.last_reported[user_id] = stored.copy(address_identity_version = 0)
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, identity)
+
+        assertEquals(2, api.requests.size)
+        assertEquals(1, api.requests[1].address_identity_version)
     }
 
     @Test

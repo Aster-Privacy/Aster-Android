@@ -255,6 +255,7 @@ data class ThreadMessageItem(
     val attachment_count: Int? = null,
     val message_group_id: String? = null,
     val reactions: List<ReactionSummary>? = null,
+    val routing_token: String? = null,
 )
 
 @Serializable

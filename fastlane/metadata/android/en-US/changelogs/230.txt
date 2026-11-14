@@ -1,0 +1,1 @@
+You can copy a verification code from the message list or from a notification. Aster Mail checks a sender's signature against the key you saved for that contact. Large attachments and inline images load. Archiving a conversation archives every message in it. The swipe label matches the action it performs. Syncing contacts adds only the new entries from your device.

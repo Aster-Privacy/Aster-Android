@@ -111,4 +111,22 @@ class VaultWriterSourceTest {
         assertTrue(request.contains("encrypted_vault = sealed.encrypted_vault"))
         assertTrue(request.contains("expected_vault_sha256 = snapshot.vault_sha256"))
     }
+
+    @Test
+    fun `recovery code work runs on a background dispatcher`() {
+        val text = File(app_root, "auth/AuthRepository.kt").readText()
+        listOf(
+            "suspend fun rotate_recovery_codes(",
+            "suspend fun sync_recovery_codes(",
+            "suspend fun derive_password_hash_b64(",
+        ).forEach { signature ->
+            val start = text.indexOf(signature)
+            assertTrue(signature, start >= 0)
+            val head = text.substring(start, start + 160)
+            assertTrue(signature, head.contains("withContext(Dispatchers.Default)"))
+        }
+        val start = text.indexOf("suspend fun rotate_recovery_codes(")
+        val body = text.substring(start, text.indexOf("private fun backup_vault_bytes(", start))
+        assertTrue(body.indexOf("generate_recovery_share(") < body.indexOf("replace_through("))
+    }
 }

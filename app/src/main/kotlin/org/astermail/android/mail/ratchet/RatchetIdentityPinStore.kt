@@ -60,6 +60,9 @@ class RatchetIdentityPinStore @Inject constructor(
     @Volatile
     private var loaded_scope: String? = null
 
+    @Volatile
+    private var indexed_names: Pair<String, Map<String, Set<String>>>? = null
+
     private val pending = MutableStateFlow<List<IdentityChange>>(emptyList())
     val unacknowledged_changes: StateFlow<List<IdentityChange>> = pending.asStateFlow()
 
@@ -151,6 +154,45 @@ class RatchetIdentityPinStore @Inject constructor(
         }
     }
 
+    fun fingerprint_of(identity_key_b64: String): String? =
+        if (identity_key_b64.isBlank()) null else fingerprint(identity_key_b64)
+
+    fun pinned_fingerprint(conversation_id: String): String? {
+        if (conversation_id.isBlank()) return null
+        return read_string(refresh_scope(), pin_key(conversation_id))
+    }
+
+    fun remembered_sender_fingerprints(sender_email: String): List<String> {
+        val contact = contact_of(sender_email) ?: return emptyList()
+        return read_history(refresh_scope(), contact).orEmpty()
+    }
+
+    fun is_address_rooted(conversation_id: String): Boolean {
+        if (conversation_id.isBlank()) return false
+        return read_boolean(refresh_scope(), rooted_key(conversation_id))
+    }
+
+    suspend fun mark_address_rooted(conversation_id: String): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val scope = refresh_scope()
+        if (read_boolean(scope, rooted_key(conversation_id))) return@withLock
+        prefs.edit().putBoolean(scoped(scope, rooted_key(conversation_id)), true).commit()
+    }
+
+    suspend fun replace_pin(conversation_id: String, identity_key_b64: String): Unit = mutex.withLock {
+        if (conversation_id.isBlank()) return@withLock
+        val current = fingerprint(identity_key_b64) ?: return@withLock
+        val scope = refresh_scope()
+        prefs.edit().putString(scoped(scope, pin_key(conversation_id)), current).commit()
+        synchronized(pending_guard) {
+            val updated = pending.value.filterNot { it.conversation_id == conversation_id }
+            if (updated.size != pending.value.size) {
+                prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
+                pending.value = updated
+            }
+        }
+    }
+
     fun sender_continuity(
         conversation_id: String,
         sender_email: String,
@@ -159,23 +201,30 @@ class RatchetIdentityPinStore @Inject constructor(
         if (sender_identity_key_b64.isBlank()) return SenderIdentityContinuity.NEW
         val current = fingerprint(sender_identity_key_b64) ?: return SenderIdentityContinuity.NEW
         val scope = refresh_scope()
-        val remembered = normalize_email(sender_email)?.let { read_history(scope, it) }.orEmpty()
+        val contact = contact_of(sender_email)
+        val remembered = if (contact == null) emptyList() else read_history(scope, contact)
         val pinned = if (conversation_id.isBlank()) {
-            null
+            Result.success(null)
         } else {
-            runCatching { read_string(scope, pin_key(conversation_id)) }.getOrNull()
+            runCatching { read_string(scope, pin_key(conversation_id)) }
         }
-        return RatchetIdentityPinRules.continuity(remembered, pinned, current)
+        return RatchetIdentityPinRules.stored_continuity(
+            remembered_fingerprints = remembered,
+            pinned_fingerprint = pinned.getOrNull(),
+            pin_readable = pinned.isSuccess,
+            current_fingerprint = current,
+        )
     }
 
     suspend fun remember_sender_identity(sender_email: String, sender_identity_key_b64: String): Unit = mutex.withLock {
-        val normalized = normalize_email(sender_email) ?: return@withLock
+        val contact = contact_of(sender_email) ?: return@withLock
         val current = fingerprint(sender_identity_key_b64) ?: return@withLock
         val scope = refresh_scope()
-        val existing = read_history(scope, normalized) ?: return@withLock
-        if (existing.lastOrNull() == current) return@withLock
+        val existing = read_history(scope, contact) ?: return@withLock
+        val saved = runCatching { remembered_fingerprints(scope, contact.id) }.getOrNull() ?: return@withLock
+        if (existing.lastOrNull() == current && saved == existing) return@withLock
         val updated = RatchetIdentityPinRules.remember_fingerprint(existing, current, max_remembered_identities)
-        prefs.edit().putString(scoped(scope, history_key(normalized)), updated.joinToString(separator)).commit()
+        prefs.edit().putString(scoped(scope, history_key(contact.id)), updated.joinToString(separator)).commit()
     }
 
     suspend fun flag_sender_rotation(
@@ -188,7 +237,7 @@ class RatchetIdentityPinStore @Inject constructor(
         val current = fingerprint(sender_identity_key_b64) ?: return@withLock
         val scope = refresh_scope()
         val pinned = read_string(scope, pin_key(conversation_id))
-        val remembered = normalize_email(sender_email)?.let { remembered_fingerprints(scope, it) }.orEmpty()
+        val remembered = contact_of(sender_email)?.let { read_history(scope, it) }.orEmpty()
         val previous = (listOfNotNull(pinned) + remembered.asReversed())
             .firstOrNull { it.isNotBlank() && it != current }
             ?: return@withLock
@@ -212,8 +261,136 @@ class RatchetIdentityPinStore @Inject constructor(
             ?.filter { it.isNotBlank() }
             .orEmpty()
 
-    private fun read_history(scope: String, normalized_email: String): List<String>? =
-        runCatching { remembered_fingerprints(scope, normalized_email) }.getOrNull()
+    private fun read_history(scope: String, contact: PinContact): List<String>? {
+        val stored = read_contact_strings(scope, history_prefix, contact) ?: return null
+        val ordered = stored.filterNot { it.first == contact.id } + stored.filter { it.first == contact.id }
+        return RatchetIdentityPinRules.merge_remembered(
+            ordered.map { entry -> entry.second.split(separator) },
+            max_remembered_identities,
+        )
+    }
+
+    private fun contact_of(email: String): PinContact? =
+        normalize_email(email)?.let { PinIdentity.describe(email) }
+
+    private fun stored_contact_names(scope: String): Map<String, Set<String>>? {
+        indexed_names?.takeIf { it.first == scope }?.let { return it.second }
+        val built = runCatching {
+            val own_prefix = if (scope.isEmpty()) null else RatchetIdentityPinRules.account_key_prefix(scope)
+            val out = HashMap<String, MutableSet<String>>()
+            for (key in prefs.all.keys) {
+                val legacy = when {
+                    own_prefix != null && key.startsWith(own_prefix) -> key.removePrefix(own_prefix)
+                    RatchetIdentityPinRules.is_account_scoped(key) -> continue
+                    else -> key
+                }
+                val prefix = contact_prefixes.firstOrNull { legacy.startsWith(it) } ?: continue
+                val name = legacy.removePrefix(prefix)
+                if (name.isBlank()) continue
+                out.getOrPut(prefix + PinIdentity.canonical_id(name)) { mutableSetOf() }.add(name)
+            }
+            out
+        }.getOrNull() ?: return null
+        indexed_names = scope to built
+        return built
+    }
+
+    private fun contact_names(scope: String, prefix: String, contact: PinContact): List<String>? {
+        val stored = stored_contact_names(scope) ?: return null
+        return (listOf(contact.id) + contact.spellings + stored[prefix + contact.id].orEmpty()).distinct()
+    }
+
+    private fun read_contact_strings(
+        scope: String,
+        prefix: String,
+        contact: PinContact,
+    ): List<Pair<String, String>>? = runCatching {
+        val names = contact_names(scope, prefix, contact) ?: return null
+        names.mapNotNull { name ->
+            read_string(scope, prefix + name)?.takeIf { it.isNotBlank() }?.let { name to it }
+        }
+    }.getOrNull()
+
+    private data class SavedKeyEntry(val state: SavedKeyState, val values: List<String>)
+
+    private fun read_owner_entry(scope: String, contact: PinContact): SavedKeyEntry {
+        val stored = read_contact_strings(scope, owner_prefix, contact)
+            ?: return SavedKeyEntry(SavedKeyState.UNREADABLE, emptyList())
+        val values = stored.map { it.second }.distinctBy { it.uppercase(java.util.Locale.ROOT) }
+        return when (values.size) {
+            0 -> SavedKeyEntry(SavedKeyState.ABSENT, values)
+            1 -> {
+                if (stored.none { it.first == contact.id }) {
+                    runCatching {
+                        prefs.edit().putString(scoped(scope, owner_key(contact.id)), values.first()).apply()
+                    }
+                }
+                SavedKeyEntry(SavedKeyState.FOUND, values)
+            }
+            else -> SavedKeyEntry(SavedKeyState.CONFLICT, values)
+        }
+    }
+
+    fun sender_key_state(sender_email: String): SavedKeyState {
+        val contact = contact_of(sender_email) ?: return SavedKeyState.ABSENT
+        return runCatching { read_owner_entry(refresh_scope(), contact).state }
+            .getOrDefault(SavedKeyState.UNREADABLE)
+    }
+
+    suspend fun check_sender_key(
+        sender_email: String,
+        served_fingerprint: String,
+        observed_at: Long,
+    ): SavedKeyCheck = mutex.withLock {
+        val contact = contact_of(sender_email) ?: return@withLock SavedKeyCheck.UNREADABLE
+        runCatching {
+            val scope = refresh_scope()
+            val entry = read_owner_entry(scope, contact)
+            val check = RatchetIdentityPinRules.check_saved_key(
+                entry.state,
+                entry.values.firstOrNull(),
+                served_fingerprint,
+            )
+            when (check) {
+                SavedKeyCheck.FIRST -> {
+                    val saved = prefs.edit()
+                        .putString(scoped(scope, owner_key(contact.id)), served_fingerprint)
+                        .commit()
+                    if (saved) SavedKeyCheck.FIRST else SavedKeyCheck.UNREADABLE
+                }
+                SavedKeyCheck.CHANGED -> {
+                    flag_owner_change(scope, contact, entry, served_fingerprint, observed_at)
+                    SavedKeyCheck.CHANGED
+                }
+                else -> check
+            }
+        }.getOrDefault(SavedKeyCheck.UNREADABLE)
+    }
+
+    private fun flag_owner_change(
+        scope: String,
+        contact: PinContact,
+        entry: SavedKeyEntry,
+        served_fingerprint: String,
+        observed_at: Long,
+    ) {
+        val stored = entry.values.firstOrNull { !it.equals(served_fingerprint, ignoreCase = true) } ?: return
+        val marker = owner_change_marker(contact.id)
+        synchronized(pending_guard) {
+            val known = pending.value.firstOrNull { it.conversation_id == marker }
+            if (known != null && known.current_fingerprint.equals(served_fingerprint, ignoreCase = true)) return
+            val updated = pending.value.filterNot { it.conversation_id == marker } +
+                IdentityChange(
+                    conversation_id = marker,
+                    sender_email = contact.id,
+                    previous_fingerprint = stored,
+                    current_fingerprint = served_fingerprint,
+                    observed_at = observed_at,
+                )
+            prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
+            pending.value = updated
+        }
+    }
 
     suspend fun is_replayed_bootstrap(conversation_id: String, ephemeral_key_b64: String): Boolean {
         if (conversation_id.isBlank() || ephemeral_key_b64.isBlank()) return false
@@ -268,32 +445,41 @@ class RatchetIdentityPinStore @Inject constructor(
     }
 
     fun is_prekey_binding_verified(recipient_email: String): Boolean {
-        val normalized = recipient_email.trim().lowercase(java.util.Locale.ROOT)
-        if (normalized.isBlank()) return false
-        return read_boolean(refresh_scope(), binding_key(normalized))
+        val contact = contact_of(recipient_email) ?: return false
+        val scope = refresh_scope()
+        val names = contact_names(scope, binding_prefix, contact) ?: return false
+        return names.any { read_boolean(scope, binding_key(it)) }
     }
 
     suspend fun record_prekey_binding_verified(recipient_email: String): Unit = mutex.withLock {
-        val normalized = recipient_email.trim().lowercase(java.util.Locale.ROOT)
-        if (normalized.isBlank()) return@withLock
+        val normalized = contact_of(recipient_email)?.id ?: return@withLock
         val scope = refresh_scope()
         if (read_boolean(scope, binding_key(normalized))) return@withLock
         prefs.edit().putBoolean(scoped(scope, binding_key(normalized)), true).commit()
     }
 
     fun owner_key_pin(recipient_email: String): String? {
-        val normalized = normalize_email(recipient_email) ?: return null
-        return read_string(refresh_scope(), owner_key(normalized))?.takeIf { it.isNotBlank() }
+        val contact = contact_of(recipient_email) ?: return null
+        val entry = read_owner_entry(refresh_scope(), contact)
+        return when (entry.state) {
+            SavedKeyState.ABSENT -> null
+            SavedKeyState.FOUND -> entry.values.first()
+            SavedKeyState.CONFLICT -> entry.values.joinToString(separator)
+            SavedKeyState.UNREADABLE -> throw IllegalStateException("saved contact key unavailable")
+        }
     }
 
     suspend fun pin_owner_key_if_absent(recipient_email: String, fingerprint: String): Boolean = mutex.withLock {
-        val normalized = normalize_email(recipient_email) ?: return@withLock false
+        val contact = contact_of(recipient_email) ?: return@withLock false
         if (fingerprint.isBlank()) return@withLock false
         val scope = refresh_scope()
-        if (!read_string(scope, owner_key(normalized)).isNullOrBlank()) return@withLock true
-        runCatching {
-            prefs.edit().putString(scoped(scope, owner_key(normalized)), fingerprint).commit()
-        }.getOrDefault(false)
+        when (read_owner_entry(scope, contact).state) {
+            SavedKeyState.FOUND -> true
+            SavedKeyState.CONFLICT, SavedKeyState.UNREADABLE -> false
+            SavedKeyState.ABSENT -> runCatching {
+                prefs.edit().putString(scoped(scope, owner_key(contact.id)), fingerprint).commit()
+            }.getOrDefault(false)
+        }
     }
 
     suspend fun flag_owner_key_change(
@@ -301,24 +487,10 @@ class RatchetIdentityPinStore @Inject constructor(
         served_fingerprint: String,
         observed_at: Long,
     ): Unit = mutex.withLock {
-        val normalized = normalize_email(recipient_email) ?: return@withLock
+        val contact = contact_of(recipient_email) ?: return@withLock
         if (served_fingerprint.isBlank()) return@withLock
         val scope = refresh_scope()
-        val stored = read_string(scope, owner_key(normalized)) ?: return@withLock
-        if (stored.equals(served_fingerprint, ignoreCase = true)) return@withLock
-        val marker = owner_change_marker(normalized)
-        synchronized(pending_guard) {
-            val updated = pending.value.filterNot { it.conversation_id == marker } +
-                IdentityChange(
-                    conversation_id = marker,
-                    sender_email = normalized,
-                    previous_fingerprint = stored,
-                    current_fingerprint = served_fingerprint,
-                    observed_at = observed_at,
-                )
-            prefs.edit().putString(scoped(scope, pending_key), encode_pending(updated)).commit()
-            pending.value = updated
-        }
+        flag_owner_change(scope, contact, read_owner_entry(scope, contact), served_fingerprint, observed_at)
     }
 
     fun pq_prekey_consumer(key_id: Int): String? =
@@ -349,17 +521,12 @@ class RatchetIdentityPinStore @Inject constructor(
     }
 
     fun acknowledge_sender(sender_email: String) {
-        val normalized = sender_email.trim().lowercase(java.util.Locale.ROOT)
-        if (normalized.isBlank()) return
+        val normalized = normalize_email(sender_email)?.let { PinIdentity.canonical_id(it) } ?: return
         val scope = refresh_scope()
         synchronized(pending_guard) {
-            val accepted = pending.value.filter {
-                it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized
-            }
+            val accepted = pending.value.filter { PinIdentity.canonical_id(it.sender_email) == normalized }
             if (accepted.isEmpty()) return
-            val updated = pending.value.filterNot {
-                it.sender_email.trim().lowercase(java.util.Locale.ROOT) == normalized
-            }
+            val updated = pending.value.filterNot { PinIdentity.canonical_id(it.sender_email) == normalized }
             pending.value = updated
             adopt(scope, accepted, updated)
         }
@@ -385,12 +552,13 @@ class RatchetIdentityPinStore @Inject constructor(
             }
             accepted.forEach { change ->
                 if (change.conversation_id.isNotBlank() && change.current_fingerprint.isNotBlank()) {
-                    val pinned_key = if (change.conversation_id.startsWith(owner_change_prefix)) {
-                        owner_key(change.conversation_id.removePrefix(owner_change_prefix))
+                    val pinned_keys = if (change.conversation_id.startsWith(owner_change_prefix)) {
+                        val contact = PinIdentity.describe(change.conversation_id.removePrefix(owner_change_prefix))
+                        (contact_names(scope, owner_prefix, contact) ?: listOf(contact.id)).map { owner_key(it) }
                     } else {
-                        pin_key(change.conversation_id)
+                        listOf(pin_key(change.conversation_id))
                     }
-                    editor.putString(scoped(scope, pinned_key), change.current_fingerprint)
+                    pinned_keys.forEach { editor.putString(scoped(scope, it), change.current_fingerprint) }
                 }
             }
             editor.apply()
@@ -403,6 +571,7 @@ class RatchetIdentityPinStore @Inject constructor(
         val editor = prefs.edit()
         keys.filter { RatchetIdentityPinRules.belongs_to_account(it, account_id) }.forEach { editor.remove(it) }
         editor.commit()
+        indexed_names = null
         synchronized(pending_guard) {
             if (loaded_scope == account_id.trim()) {
                 pending.value = emptyList()
@@ -413,6 +582,7 @@ class RatchetIdentityPinStore @Inject constructor(
 
     suspend fun clear(): Unit = mutex.withLock {
         prefs.edit().clear().commit()
+        indexed_names = null
         synchronized(pending_guard) {
             pending.value = emptyList()
             loaded_scope = null
@@ -505,9 +675,11 @@ class RatchetIdentityPinStore @Inject constructor(
 
     private fun pin_key(conversation_id: String): String = "pin_$conversation_id"
 
+    private fun rooted_key(conversation_id: String): String = "rooted_$conversation_id"
+
     private fun bootstrap_key(conversation_id: String): String = "boot_$conversation_id"
 
-    private fun history_key(normalized_email: String): String = "hist_$normalized_email"
+    private fun history_key(normalized_email: String): String = "$history_prefix$normalized_email"
 
     private fun post_quantum_key(conversation_id: String): String = "pq_$conversation_id"
 
@@ -515,11 +687,11 @@ class RatchetIdentityPinStore @Inject constructor(
 
     private fun x3dh_advertised_key(conversation_id: String): String = "x3dhadv_$conversation_id"
 
-    private fun binding_key(recipient_email: String): String = "binding_$recipient_email"
+    private fun binding_key(recipient_email: String): String = "$binding_prefix$recipient_email"
 
     private fun pq_consumed_key(key_id: Int): String = "pqused_$key_id"
 
-    private fun owner_key(recipient_email: String): String = "owner_$recipient_email"
+    private fun owner_key(recipient_email: String): String = "$owner_prefix$recipient_email"
 
     private fun owner_change_marker(recipient_email: String): String = "$owner_change_prefix$recipient_email"
 
@@ -534,5 +706,9 @@ class RatchetIdentityPinStore @Inject constructor(
         private const val pending_key = "pending_identity_changes"
         private const val max_pending_changes = 50
         private const val owner_change_prefix = "owner:"
+        private const val owner_prefix = "owner_"
+        private const val history_prefix = "hist_"
+        private const val binding_prefix = "binding_"
+        private val contact_prefixes = listOf(owner_prefix, history_prefix, binding_prefix)
     }
 }

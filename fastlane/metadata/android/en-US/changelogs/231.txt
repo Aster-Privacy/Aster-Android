@@ -1,0 +1,1 @@
+Messages you send to other Aster addresses carry the sender name, recipients, and date inside the encrypted message. Unsubscribe requests go out from the address that received the message. A password reset with a recovery code keeps your existing encryption keys. The prompt to renew recovery codes clears after you renew them on another device.

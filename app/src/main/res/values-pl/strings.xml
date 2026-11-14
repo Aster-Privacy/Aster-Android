@@ -247,6 +247,7 @@
     <string name="no_body">(brak treści)</string>
     <string name="attachment_unnamed">Załącznik</string>
     <string name="attachment_locked">Nie można otworzyć tego załącznika, ponieważ jego klucz szyfrowania nie jest dostępny na tym urządzeniu.</string>
+    <string name="attachment_content_mismatch">Ten załącznik nie pasuje do wiadomości, z którą został dostarczony, dlatego nie został otwarty.</string>
     <string name="download_complete">Pobieranie zakończone</string>
     <string name="cannot_decode_image">Nie można zdekodować obrazu</string>
     <string name="no_app_to_open">Brak aplikacji do otwarcia tego pliku</string>
@@ -3065,11 +3066,11 @@
     <string name="alias_pinned_toast">Alias przypięty</string>
     <string name="alias_unpinned_toast">Alias odpięty</string>
     <string name="e2e_identity_changed_blocked">Nie można wysłać: klucz szyfrowania odbiorcy uległ zmianie. Potwierdź zmianę w skrzynce odbiorczej, a następnie wyślij ponownie. Wiadomość nie została wysłana.</string>
-    <string name="link_device_fingerprint_label">Kod weryfikacyjny</string>
+    <string name="link_device_fingerprint_label">Odcisk urządzenia</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Wpisz kod weryfikacyjny lub odcisk urządzenia widoczny na nowym urządzeniu. W aplikacji na komputer wybierz Zweryfikuj to urządzenie, aby go wyświetlić.</string>
+    <string name="link_device_fingerprint_hint">Wprowadź odcisk urządzenia wyświetlony w aplikacji, którą łączysz. Niektóre aplikacje nazywają go kodem weryfikacyjnym.</string>
     <string name="link_device_error_invalid_keys">Drugie urządzenie wysłało klucze, których nie można użyć. Pobierz nowy kod na tamtym urządzeniu i spróbuj ponownie.</string>
-    <string name="link_device_error_codes_not_confirmed">Aby połączyć urządzenie, wpisz pełny kod weryfikacyjny z nowego urządzenia.</string>
+    <string name="link_device_error_codes_not_confirmed">To nie zgadza się z urządzeniem dla tego kodu łączenia. Porównaj każdy znak z aplikacją, którą łączysz, i spróbuj ponownie. Jeśli nadal się nie zgadza, nie łącz urządzenia.</string>
     <string name="link_device_error_fingerprint_mismatch">Ten kod nie pasuje do nowego urządzenia. Sprawdź kod na nowym urządzeniu i wpisz go ponownie. Jeśli nadal nie pasuje, kliknij Anuluj.</string>
     <string name="restore">Przywróć</string>
     <string name="contact_trash_confirm_message">Kontakty możesz przywrócić z kosza.</string>
@@ -3193,9 +3194,9 @@
     <string name="shipping_status_exception">Problem z dostawą</string>
     <string name="shipping_status_unknown">Aktualizacja przesyłki</string>
     <string name="inbox_arrives_on">Dotrze %1$s</string>
-    <string name="sender_verified_badge">Zweryfikowany nadawca</string>
-    <string name="sender_verified_title">Zweryfikowany nadawca</string>
-    <string name="sender_verified_message">Nadawca tej wiadomości potwierdził, że jest właścicielem domeny %1$s.</string>
+    <string name="sender_verified_badge">Zweryfikowana domena</string>
+    <string name="sender_verified_title">Zweryfikowana domena</string>
+    <string name="sender_verified_message">Serwery Aster sprawdziły, że nadawca jest właścicielem domeny %1$s.</string>
     <string name="password_recovery_email_title">E-mail do odzyskiwania hasła</string>
     <string name="recovery_email_step_desc">Dodaj adres e-mail, aby odzyskać dostęp do konta, jeśli zgubisz kody odzyskiwania.</string>
     <string name="notifications_step_title">Włącz powiadomienia</string>
@@ -3604,4 +3605,11 @@
     <string name="sidebar_move_section_up">Przenieś %1$s w górę</string>
     <string name="sidebar_move_section_down">Przenieś %1$s w dół</string>
     <string name="contacts_pending_sync">Oczekuje na synchronizację</string>
+    <string name="recovery_previous_password_placeholder">Wpisz poprzednie hasło</string>
+    <string name="recovery_previous_password_body">Twoje klucze szyfrowania są nadal chronione hasłem używanym przed tym resetem. Aby Twoja poczta pozostała czytelna, wpisz to poprzednie hasło. Klucze pozostają takie same i od teraz chroni je nowe hasło.</string>
+    <string name="recovery_previous_password_required">Wpisz poprzednie hasło lub dotknij Nie pamiętam go.</string>
+    <string name="recovery_previous_password_incorrect">To hasło nie odblokowuje Twoich kluczy szyfrowania. Sprawdź je i spróbuj ponownie.</string>
+    <string name="recovery_previous_password_forgot">Nie pamiętam go</string>
+    <string name="recovery_previous_password_use">Wpisz moje poprzednie hasło</string>
+    <string name="recovery_previous_password_skipped_warning">Hasło zostanie zresetowane, a klucze szyfrowania zachowane, ale pozostaną zablokowane poprzednim hasłem. Poczty nie da się odczytać, dopóki nie wpiszesz tego hasła w banerze Odzyskaj dane.</string>
 </resources>

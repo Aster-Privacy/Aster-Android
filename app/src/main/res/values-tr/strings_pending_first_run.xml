@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">Kurtarma kodlarınızı kaydedin</string>
     <string name="recovery_codes_reminder_body">Aster postanızı parolanızla şifreler, bu yüzden kimse onu sizin için sıfırlayamaz. Şifreli postanıza dönmenin tek yolu kurtarma kodlarıdır.</string>
     <string name="recovery_codes_reminder_action">Kurtarma kodu al</string>
+    <string name="recovery_codes_refresh_title">Kurtarma kodlarınızı değiştirin</string>
+    <string name="recovery_codes_refresh_body">Kayıtlı kurtarma kodlarınız daha eski ve daha kısa bir biçim kullanıyor. Yeni kod alın ve kaydedin. Bunu yaptığınızda eski kodlarınız çalışmaz.</string>
+    <string name="recovery_codes_refresh_action">Yeni kod al</string>
     <string name="recovery_phrase_migrate_title">Kurtarma kodlarına geçin</string>
     <string name="recovery_phrase_migrate_body">Kurtarma ifadeleri kaldırılıyor. Hesabınızı hâlâ kurtarabilmek için şimdi kurtarma kodu alın.</string>
     <string name="recovery_phrase_migrate_action">Kod al</string>

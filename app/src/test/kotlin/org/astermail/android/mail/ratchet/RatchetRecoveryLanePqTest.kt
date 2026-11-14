@@ -188,6 +188,13 @@ class RatchetRecoveryLanePqTest {
         )
     }
 
+    private fun account_only_directory(): AddressIdentityDirectory {
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
+            ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
+        }
+        return AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins)
+    }
+
     private suspend fun send(): RatchetRecipientData {
         val envelope = RatchetEncryptor(
             state_store,
@@ -197,6 +204,7 @@ class RatchetRecoveryLanePqTest {
             ConversationLocks(),
             keys_api,
             identity_pins,
+            account_only_directory(),
         ).encrypt_envelope(sender_email, listOf(recipient_email), "hello", allow_non_post_quantum = true)
         return json.decodeFromString(RatchetEnvelope.serializer(), envelope!!).recipients.getValue(recipient_email)
     }

@@ -62,4 +62,5 @@ data class DecryptedMailEntity(
     val sender_verified_domain: String? = null,
     val sender_verification: String? = null,
     val item_type: String? = null,
+    val expires_at: String? = null,
 )

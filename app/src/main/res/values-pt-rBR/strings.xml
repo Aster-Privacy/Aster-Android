@@ -247,6 +247,7 @@
     <string name="no_body">(sem corpo)</string>
     <string name="attachment_unnamed">Anexo</string>
     <string name="attachment_locked">Este anexo não pode ser aberto porque a chave de criptografia dele não está disponível neste dispositivo.</string>
+    <string name="attachment_content_mismatch">Este anexo não corresponde à mensagem com a qual chegou, por isso não foi aberto.</string>
     <string name="download_complete">Download concluído</string>
     <string name="cannot_decode_image">Não é possível decodificar a imagem</string>
     <string name="no_app_to_open">Nenhum aplicativo para abrir este arquivo</string>
@@ -3046,11 +3047,11 @@
     <string name="alias_pinned_toast">Alias fixado</string>
     <string name="alias_unpinned_toast">Alias desafixado</string>
     <string name="e2e_identity_changed_blocked">Não foi possível enviar: a chave de criptografia de um destinatário mudou. Confirme a alteração na sua caixa de entrada e envie novamente. A mensagem não foi enviada.</string>
-    <string name="link_device_fingerprint_label">Código de verificação</string>
+    <string name="link_device_fingerprint_label">Impressão digital do dispositivo</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Digite o código de verificação ou a impressão digital do dispositivo exibidos no seu novo dispositivo. No app para computador, selecione Verificar este dispositivo para vê-lo.</string>
+    <string name="link_device_fingerprint_hint">Digite a impressão digital do dispositivo mostrada no app que você está vinculando. Alguns apps a chamam de código de verificação.</string>
     <string name="link_device_error_invalid_keys">O outro dispositivo enviou chaves que não podem ser usadas. Gere um novo código nesse dispositivo e tente novamente.</string>
-    <string name="link_device_error_codes_not_confirmed">Para vincular o dispositivo, digite o código de verificação completo do seu novo dispositivo.</string>
+    <string name="link_device_error_codes_not_confirmed">Isso não corresponde ao dispositivo deste código de vinculação. Compare cada caractere com o app que você está vinculando e tente novamente. Se ainda não corresponder, não vincule o dispositivo.</string>
     <string name="link_device_error_fingerprint_mismatch">Esse código não é igual ao do seu novo dispositivo. Confira o código no seu novo dispositivo e digite-o novamente. Se ainda não for igual, toque em Cancelar.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Você pode restaurar contatos da lixeira.</string>
@@ -3172,9 +3173,9 @@
     <string name="shipping_status_exception">Problema na entrega</string>
     <string name="shipping_status_unknown">Atualização da remessa</string>
     <string name="inbox_arrives_on">Chega em %1$s</string>
-    <string name="sender_verified_badge">Remetente verificado</string>
-    <string name="sender_verified_title">Remetente verificado</string>
-    <string name="sender_verified_message">O remetente deste e-mail verificou que é proprietário de %1$s.</string>
+    <string name="sender_verified_badge">Domínio verificado</string>
+    <string name="sender_verified_title">Domínio verificado</string>
+    <string name="sender_verified_message">Os servidores da Aster verificaram que o remetente é proprietário de %1$s.</string>
     <string name="password_recovery_email_title">E-mail de recuperação de senha</string>
     <string name="recovery_email_step_desc">Adicione um endereço de e-mail para voltar a entrar na sua conta caso perca os códigos de recuperação.</string>
     <string name="notifications_step_title">Ative as notificações</string>
@@ -3581,4 +3582,11 @@
     <string name="sidebar_move_section_up">Mover %1$s para cima</string>
     <string name="sidebar_move_section_down">Mover %1$s para baixo</string>
     <string name="contacts_pending_sync">Aguardando sincronização</string>
+    <string name="recovery_previous_password_placeholder">Digite sua senha anterior</string>
+    <string name="recovery_previous_password_body">Suas chaves de criptografia ainda estão protegidas pela senha que você usava antes desta redefinição. Para manter seus e-mails legíveis, digite essa senha anterior. Suas chaves continuam as mesmas e passam a ser protegidas pela nova senha.</string>
+    <string name="recovery_previous_password_required">Digite sua senha anterior ou toque em Não lembro.</string>
+    <string name="recovery_previous_password_incorrect">Essa senha não desbloqueia suas chaves de criptografia. Verifique e tente novamente.</string>
+    <string name="recovery_previous_password_forgot">Não lembro</string>
+    <string name="recovery_previous_password_use">Digitar minha senha anterior</string>
+    <string name="recovery_previous_password_skipped_warning">Sua senha é redefinida e suas chaves de criptografia são mantidas, mas continuam bloqueadas com a senha anterior. Você não poderá ler seus e-mails até digitar essa senha no aviso Recuperar dados.</string>
 </resources>

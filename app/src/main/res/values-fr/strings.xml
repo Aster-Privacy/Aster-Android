@@ -257,6 +257,7 @@
     <string name="no_body">(aucun contenu)</string>
     <string name="attachment_unnamed">Pièce jointe</string>
     <string name="attachment_locked">Cette pièce jointe ne peut pas être ouverte, car sa clé de chiffrement n\'est pas disponible sur cet appareil.</string>
+    <string name="attachment_content_mismatch">Cette pièce jointe ne correspond pas au message avec lequel elle est arrivée. Elle n\'a donc pas été ouverte.</string>
     <string name="download_complete">Téléchargement terminé</string>
     <string name="cannot_decode_image">Impossible de décoder l\'image</string>
     <string name="no_app_to_open">Aucune application pour ouvrir ce fichier</string>
@@ -3076,11 +3077,11 @@
     <string name="alias_pinned_toast">Alias épinglé</string>
     <string name="alias_unpinned_toast">Alias désépinglé</string>
     <string name="e2e_identity_changed_blocked">Envoi impossible : la clé de chiffrement d\'un destinataire a changé. Confirmez le changement dans votre boîte de réception, puis envoyez à nouveau. Le message n\'a pas été envoyé.</string>
-    <string name="link_device_fingerprint_label">Code de vérification</string>
+    <string name="link_device_fingerprint_label">Empreinte de l\'appareil</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Saisissez le code de vérification ou l\'empreinte de l\'appareil affiché sur votre nouvel appareil. Dans l\'app de bureau, sélectionnez Vérifier cet appareil pour l\'afficher.</string>
+    <string name="link_device_fingerprint_hint">Entrez l\'empreinte de l\'appareil affichée dans l\'application que vous associez. Certaines applications l\'appellent code de vérification.</string>
     <string name="link_device_error_invalid_keys">L\'autre appareil a envoyé des clés inutilisables. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
-    <string name="link_device_error_codes_not_confirmed">Pour associer l\'appareil, saisissez le code de vérification complet de votre nouvel appareil.</string>
+    <string name="link_device_error_codes_not_confirmed">Cela ne correspond pas à l\'appareil de ce code d\'association. Comparez chaque caractère avec l\'application que vous associez, puis réessayez. Si cela ne correspond toujours pas, n\'associez pas l\'appareil.</string>
     <string name="link_device_error_fingerprint_mismatch">Ce code ne correspond pas à votre nouvel appareil. Vérifiez le code sur votre nouvel appareil et saisissez-le de nouveau. S\'il ne correspond toujours pas, touchez Annuler.</string>
     <string name="restore">Restaurer</string>
     <string name="contact_trash_confirm_message">Vous pouvez restaurer des contacts depuis la corbeille.</string>
@@ -3202,9 +3203,9 @@
     <string name="shipping_status_exception">Problème de livraison</string>
     <string name="shipping_status_unknown">Mise à jour de l’envoi</string>
     <string name="inbox_arrives_on">Arrive le %1$s</string>
-    <string name="sender_verified_badge">Expéditeur vérifié</string>
-    <string name="sender_verified_title">Expéditeur vérifié</string>
-    <string name="sender_verified_message">L\'expéditeur de cet e-mail a vérifié qu\'il est propriétaire de %1$s.</string>
+    <string name="sender_verified_badge">Domaine vérifié</string>
+    <string name="sender_verified_title">Domaine vérifié</string>
+    <string name="sender_verified_message">Les serveurs d\'Aster ont vérifié que l\'expéditeur est propriétaire de %1$s.</string>
     <string name="password_recovery_email_title">E-mail de récupération du mot de passe</string>
     <string name="recovery_email_step_desc">Ajoutez une adresse e-mail pour retrouver l\'accès à votre compte si vous perdez vos codes de récupération.</string>
     <string name="notifications_step_title">Activez les notifications</string>
@@ -3610,4 +3611,11 @@
     <string name="sidebar_move_section_up">Monter %1$s</string>
     <string name="sidebar_move_section_down">Descendre %1$s</string>
     <string name="contacts_pending_sync">En attente de synchronisation</string>
+    <string name="recovery_previous_password_placeholder">Saisissez votre ancien mot de passe</string>
+    <string name="recovery_previous_password_body">Vos clés de chiffrement sont toujours protégées par le mot de passe que vous utilisiez avant cette réinitialisation. Pour que vos e-mails restent lisibles, saisissez cet ancien mot de passe. Vos clés restent les mêmes et sont désormais protégées par votre nouveau mot de passe.</string>
+    <string name="recovery_previous_password_required">Saisissez votre ancien mot de passe ou touchez Je ne m\'en souviens pas.</string>
+    <string name="recovery_previous_password_incorrect">Ce mot de passe ne déverrouille pas vos clés de chiffrement. Vérifiez-le et réessayez.</string>
+    <string name="recovery_previous_password_forgot">Je ne m\'en souviens pas</string>
+    <string name="recovery_previous_password_use">Saisir mon ancien mot de passe</string>
+    <string name="recovery_previous_password_skipped_warning">Votre mot de passe est réinitialisé et vos clés de chiffrement sont conservées, mais elles restent verrouillées par votre ancien mot de passe. Vos e-mails ne seront lisibles qu\'après avoir saisi ce mot de passe depuis la bannière Récupérer les données.</string>
 </resources>

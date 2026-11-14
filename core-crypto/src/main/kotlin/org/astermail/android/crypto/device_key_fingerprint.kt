@@ -29,6 +29,10 @@ object DeviceKeyFingerprint {
     private const val DOMAIN = "aster-bridge-device-fingerprint-v1"
     private const val FINGERPRINT_BYTES = 10
     private const val GROUP_CHARS = 4
+    private const val FINGERPRINT_HEX_CHARS = FINGERPRINT_BYTES * 2
+    private const val MAX_INPUT_CHARS = 64
+    private val HEX_CHAR = Regex("[0-9a-fA-F]")
+    private val ALLOWED_INPUT = Regex("[0-9a-fA-F\\s-]*")
 
     fun of(ed25519_pk: ByteArray, mlkem_pk: ByteArray, x25519_pk: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -43,25 +47,6 @@ object DeviceKeyFingerprint {
         return hex.chunked(GROUP_CHARS).joinToString(" ")
     }
 
-    const val FINGERPRINT_CHARS = FINGERPRINT_BYTES * 2
-
-    fun normalize_input(raw: String): String =
-        raw.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }.take(FINGERPRINT_CHARS)
-
-    fun format_input(raw: String): String =
-        normalize_input(raw).chunked(GROUP_CHARS).joinToString(" ")
-
-    fun matches(typed: String, fingerprint: String): Boolean {
-        val expected = normalize_input(fingerprint)
-        if (expected.length != FINGERPRINT_CHARS) return false
-        val actual = normalize_input(typed)
-        if (actual.length != FINGERPRINT_CHARS) return false
-        return MessageDigest.isEqual(
-            actual.toByteArray(Charsets.US_ASCII),
-            expected.toByteArray(Charsets.US_ASCII),
-        )
-    }
-
     fun of_encoded(ed25519_pk: String, mlkem_pk: String, x25519_pk: String): String? {
         val ed = runCatching { DeviceEnvelope.base64url_decode(ed25519_pk) }.getOrNull() ?: return null
         val mlkem = runCatching { DeviceEnvelope.base64url_decode(mlkem_pk) }.getOrNull() ?: return null
@@ -73,5 +58,28 @@ object DeviceKeyFingerprint {
             return null
         }
         return of(ed, mlkem, x)
+    }
+
+    fun format_input(raw: String): String =
+        raw.filter { HEX_CHAR.matches(it.toString()) }
+            .uppercase()
+            .take(FINGERPRINT_HEX_CHARS)
+            .chunked(GROUP_CHARS)
+            .joinToString(" ")
+
+    fun normalize(raw: String): String? {
+        if (raw.length > MAX_INPUT_CHARS || !ALLOWED_INPUT.matches(raw)) return null
+        val hex = raw.filterNot { it.isWhitespace() || it == '-' }.uppercase()
+        if (hex.length != FINGERPRINT_HEX_CHARS) return null
+        return hex.chunked(GROUP_CHARS).joinToString(" ")
+    }
+
+    fun matches(typed: String, fingerprint: String): Boolean {
+        val expected = normalize(fingerprint) ?: return false
+        val actual = normalize(typed) ?: return false
+        return MessageDigest.isEqual(
+            actual.toByteArray(Charsets.US_ASCII),
+            expected.toByteArray(Charsets.US_ASCII),
+        )
     }
 }

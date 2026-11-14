@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
+import org.astermail.android.crypto.ratchet.AddressIdentity
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
@@ -143,6 +144,7 @@ class RatchetEncryptor @Inject constructor(
     private val conversation_locks: ConversationLocks,
     private val keys_api: KeysApi,
     private val identity_pins: RatchetIdentityPinStore,
+    private val address_directory: AddressIdentityDirectory,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -172,21 +174,30 @@ class RatchetEncryptor @Inject constructor(
                 val username = recipient_email.substringBefore('@')
                 val bootstrap = state_store.load(conversation_id)?.bootstrap
                 if (bootstrap != null) {
-                    val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
+                    val sender_identity_public = runCatching { address_directory.resolve_sender_identity(sender_email) }
+                        .getOrNull()
+                        ?.identity_public
+                        ?: session_key_store.get_ratchet_identity_public_b64()
                     val sender_changed = bootstrap.sender_identity_key != sender_identity_public
-                    val bundle = if (sender_changed) {
-                        ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                    val entry = if (sender_changed) {
+                        address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
                     } else {
                         try {
-                            ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                            address_directory.resolve_recipient_bundle(
+                                username,
+                                recipient_email,
+                                conversation_id,
+                                bootstrap.recipient_identity_key,
+                            )
                         } catch (c: kotlinx.coroutines.CancellationException) {
                             throw c
                         } catch (t: Throwable) {
                             null
                         }
                     }
-                    if (bundle == null) return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
-                    val covers = pq_binding_signed(conversation_id, username, recipient_email, bundle)
+                    if (entry == null) return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
+                    val bundle = entry.bundle
+                    val covers = pq_binding_covered(conversation_id, username, recipient_email, entry)
                     val renews = !session_reused_for_send(bootstrap, sender_identity_public, bundle) ||
                         RecoveryLanePolicy.session_lacks_advertised_pq_key(bootstrap, bundle.pq_kem_public_key) ||
                         session_restarts_for_signed_pq_key(bootstrap, bundle.pq_kem_public_key, covers)
@@ -196,11 +207,11 @@ class RatchetEncryptor @Inject constructor(
                         session_post_quantum_status(bootstrap, bundle.pq_kem_public_key, covers)
                     }
                 } else {
-                    val bundle = ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                    val entry = address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
                         ?: return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
                     classify_prekey_bundle(
-                        bundle,
-                        pq_binding_signed(conversation_id, username, recipient_email, bundle),
+                        entry.bundle,
+                        pq_binding_covered(conversation_id, username, recipient_email, entry),
                     )
                 }
             }.getOrElse {
@@ -221,16 +232,36 @@ class RatchetEncryptor @Inject constructor(
         allow_non_post_quantum: Boolean = false,
     ): String? {
         if (recipients.isEmpty()) return null
-        val sender_identity_public = session_key_store.get_ratchet_identity_public_b64()
+        session_key_store.get_ratchet_identity_public_b64()
             ?: throw RatchetEncryptionException(null, "missing ratchet identity public key")
-        val sender_identity_jwk = session_key_store.get_ratchet_identity_jwk()
+        session_key_store.get_ratchet_identity_jwk()
             ?: throw RatchetEncryptionException(null, "missing ratchet identity key")
+        val sender_identity = try {
+            address_directory.resolve_sender_identity(sender_email)
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            throw RatchetEncryptionException(null, "sender address identity unavailable", t)
+        } ?: throw RatchetEncryptionException(null, "sender address identity unavailable")
+        val sender_identity_public = sender_identity.identity_public
+        val sender_identity_jwk = sender_identity.identity_jwk
+        val own_address_identity = address_directory.own_address_identity(sender_email, sender_identity)
+        val own_address = AddressIdentity.normalize(sender_email)
 
         val per_recipient = mutableMapOf<String, RatchetRecipientData>()
         val unsigned_recipients = mutableListOf<String>()
         for (recipient_email in recipients) {
+            val required_identity = own_address_identity
+                ?.takeIf { AddressIdentity.normalize(recipient_email) == own_address }
             val encryption = try {
-                encrypt_for_recipient(sender_email, sender_identity_public, sender_identity_jwk, recipient_email, body)
+                encrypt_for_recipient(
+                    sender_email,
+                    sender_identity_public,
+                    sender_identity_jwk,
+                    recipient_email,
+                    body,
+                    required_identity,
+                )
             } catch (e: RatchetEncryptionException) {
                 throw e
             } catch (c: kotlinx.coroutines.CancellationException) {
@@ -268,6 +299,18 @@ class RatchetEncryptor @Inject constructor(
         throw cancelled
     } catch (t: Throwable) {
         false
+    }
+
+    private suspend fun pq_binding_covered(
+        conversation_id: String,
+        username: String,
+        recipient_email: String,
+        resolved: ResolvedRecipientBundle,
+    ): Boolean = when (resolved.trust) {
+        DirectoryTrust.ENTRY, DirectoryTrust.ENDORSED -> true
+        DirectoryTrust.REPLACED, DirectoryTrust.INVALID -> false
+        DirectoryTrust.ACCOUNT, DirectoryTrust.DOWNGRADED ->
+            pq_binding_signed(conversation_id, username, recipient_email, resolved.bundle)
     }
 
     private suspend fun verify_prekey_binding(
@@ -410,13 +453,101 @@ class RatchetEncryptor @Inject constructor(
         sender_identity_jwk: String,
         recipient_email: String,
         body: String,
+        required_identity: String? = null,
     ): RecipientEncryption? {
         val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
         val username = recipient_email.substringBefore('@')
 
         return conversation_locks.with_lock(conversation_id) {
-            encrypt_for_recipient_locked(conversation_id, username, sender_identity_public, sender_identity_jwk, recipient_email, body)
+            encrypt_for_recipient_locked(
+                conversation_id,
+                username,
+                sender_identity_public,
+                sender_identity_jwk,
+                recipient_email,
+                body,
+                required_identity,
+            )
         }
+    }
+
+    private suspend fun resolve_own_address_bundle(
+        username: String,
+        recipient_email: String,
+        required_identity: String,
+        candidate: ResolvedRecipientBundle?,
+    ): PrekeyBundleResponse? {
+        val bundle = candidate?.bundle?.takeIf { candidate.scoped && it.kem_identity_key == required_identity }
+            ?: ratchet_api.fetch_address_prekey_bundle(username, recipient_email)
+                ?.takeIf { it.address_scoped == true && it.kem_identity_key == required_identity }
+            ?: return null
+        val verification = AddressIdentity.verify_entry(
+            AddressIdentity.normalize(recipient_email),
+            bundle.kem_identity_key,
+            bundle.signed_prekey,
+            bundle.signed_prekey_signature,
+            bundle.pq_kem_public_key,
+        )
+        return bundle.takeIf { verification.valid }
+    }
+
+    private suspend fun verify_directory_bundle(
+        conversation_id: String,
+        username: String,
+        recipient_email: String,
+        resolved: ResolvedRecipientBundle,
+    ): Boolean {
+        val bundle = resolved.bundle
+        return when (resolved.trust) {
+            DirectoryTrust.ACCOUNT -> {
+                val covers = verify_prekey_binding(conversation_id, username, recipient_email, bundle)
+                verify_identity_pin(conversation_id, recipient_email, bundle)
+                covers
+            }
+            DirectoryTrust.DOWNGRADED -> {
+                val pinned = try {
+                    identity_pins.pinned_fingerprint(conversation_id)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
+                } catch (_: Throwable) {
+                    null
+                }
+                if (pinned == null || pinned != identity_pins.fingerprint_of(bundle.kem_identity_key)) {
+                    reject_directory_bundle(conversation_id, recipient_email, bundle)
+                }
+                val covers = verify_prekey_binding(conversation_id, username, recipient_email, bundle)
+                verify_identity_pin(conversation_id, recipient_email, bundle)
+                covers
+            }
+            DirectoryTrust.REPLACED, DirectoryTrust.INVALID ->
+                reject_directory_bundle(conversation_id, recipient_email, bundle)
+            DirectoryTrust.ENTRY -> {
+                verify_identity_pin(conversation_id, recipient_email, bundle)
+                runCatching { identity_pins.mark_address_rooted(conversation_id) }
+                true
+            }
+            DirectoryTrust.ENDORSED -> {
+                identity_pins.replace_pin(conversation_id, bundle.kem_identity_key)
+                runCatching { identity_pins.mark_address_rooted(conversation_id) }
+                true
+            }
+        }
+    }
+
+    private suspend fun reject_directory_bundle(
+        conversation_id: String,
+        recipient_email: String,
+        bundle: PrekeyBundleResponse,
+    ): Nothing {
+        runCatching {
+            identity_pins.flag_identity_change(
+                conversation_id = conversation_id,
+                peer_email = recipient_email,
+                identity_key_b64 = bundle.kem_identity_key,
+                observed_at = System.currentTimeMillis(),
+            )
+        }
+        throw RecipientKeyUntrustedException(recipient_email, "recipient key is not trusted")
     }
 
     private suspend fun encrypt_for_recipient_locked(
@@ -426,13 +557,20 @@ class RatchetEncryptor @Inject constructor(
         sender_identity_jwk: String,
         recipient_email: String,
         body: String,
+        required_identity: String? = null,
     ): RecipientEncryption? {
         var state = state_store.load(conversation_id)
         if (state != null && state.bootstrap == null) {
             state = null
         }
+        if (state != null && required_identity != null &&
+            state.bootstrap?.recipient_identity_key != required_identity
+        ) {
+            state = null
+        }
 
         var bundle: PrekeyBundleResponse? = null
+        var resolved: ResolvedRecipientBundle? = null
         var session_pq_signed = false
 
         if (state != null) {
@@ -440,15 +578,22 @@ class RatchetEncryptor @Inject constructor(
             val sender_changed = boot.sender_identity_key != sender_identity_public
             var recipient_changed = false
             if (!sender_changed) {
-                bundle = try {
-                    ratchet_api.fetch_prekey_bundle(username, recipient_email)
+                resolved = try {
+                    address_directory.resolve_recipient_bundle(
+                        username,
+                        recipient_email,
+                        conversation_id,
+                        boot.recipient_identity_key,
+                    )
                 } catch (c: kotlinx.coroutines.CancellationException) {
                     throw c
                 } catch (t: Throwable) {
                     null
                 }
-                val advertised = bundle
-                if (advertised != null) {
+                val advertised_entry = resolved
+                bundle = advertised_entry?.bundle
+                if (advertised_entry != null) {
+                    val advertised = advertised_entry.bundle
                     recipient_changed =
                         boot.recipient_identity_key != advertised.kem_identity_key ||
                             RecoveryLanePolicy.session_lacks_advertised_pq_key(boot, advertised.pq_kem_public_key)
@@ -456,7 +601,7 @@ class RatchetEncryptor @Inject constructor(
                         boot.pq_ciphertext != null &&
                         !advertised.pq_kem_public_key.isNullOrBlank()
                     ) {
-                        val covers = pq_binding_signed(conversation_id, username, recipient_email, advertised)
+                        val covers = pq_binding_covered(conversation_id, username, recipient_email, advertised_entry)
                         recipient_changed = session_restarts_for_signed_pq_key(boot, advertised.pq_kem_public_key, covers)
                         session_pq_signed = session_post_quantum_status(boot, advertised.pq_kem_public_key, covers) ==
                             PostQuantumRecipientStatus.SUPPORTED
@@ -477,21 +622,37 @@ class RatchetEncryptor @Inject constructor(
         var post_quantum_signed = false
 
         if (state == null) {
-            val resolved_bundle = (bundle ?: try {
-                ratchet_api.fetch_prekey_bundle(username, recipient_email)
+            val local_bundle = required_identity?.let { address_directory.local_address_bundle(recipient_email, it) }
+            val directory_entry = if (local_bundle != null) null else try {
+                address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "prekey bundle fetch threw: ${t.javaClass.simpleName}")
                 throw RatchetEncryptionException(recipient_email, "prekey bundle fetch failed", t)
-            }) ?: run {
-                if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no prekey bundle for recipient")
-                return null
             }
 
-            val signature_covers_pq_identity =
-                verify_prekey_binding(conversation_id, username, recipient_email, resolved_bundle)
-            verify_identity_pin(conversation_id, recipient_email, resolved_bundle)
+            val resolved_bundle: PrekeyBundleResponse
+            val signature_covers_pq_identity: Boolean
+            if (required_identity != null) {
+                resolved_bundle = local_bundle ?: try {
+                    resolve_own_address_bundle(username, recipient_email, required_identity, directory_entry)
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
+                } catch (t: Throwable) {
+                    throw RatchetEncryptionException(recipient_email, "prekey bundle fetch failed", t)
+                } ?: return null
+                identity_pins.replace_pin(conversation_id, resolved_bundle.kem_identity_key)
+                runCatching { identity_pins.mark_address_rooted(conversation_id) }
+                signature_covers_pq_identity = true
+            } else {
+                val entry = directory_entry ?: run {
+                    if (BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "no prekey bundle for recipient")
+                    return null
+                }
+                resolved_bundle = entry.bundle
+                signature_covers_pq_identity = verify_directory_bundle(conversation_id, username, recipient_email, entry)
+            }
 
             bundle = resolved_bundle
 

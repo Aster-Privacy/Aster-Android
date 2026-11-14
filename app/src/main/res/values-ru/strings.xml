@@ -247,6 +247,7 @@
     <string name="no_body">(нет текста)</string>
     <string name="attachment_unnamed">Вложение</string>
     <string name="attachment_locked">Это вложение нельзя открыть, потому что ключ шифрования недоступен на этом устройстве.</string>
+    <string name="attachment_content_mismatch">Это вложение не соответствует сообщению, с которым оно пришло, поэтому оно не было открыто.</string>
     <string name="download_complete">Загрузка завершена</string>
     <string name="cannot_decode_image">Не удаётся декодировать изображение</string>
     <string name="no_app_to_open">Нет приложения для открытия этого файла</string>
@@ -3065,11 +3066,11 @@
     <string name="alias_pinned_toast">Псевдоним закреплён</string>
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
     <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
-    <string name="link_device_fingerprint_label">Код проверки</string>
+    <string name="link_device_fingerprint_label">Отпечаток устройства</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Введите код проверки или отпечаток устройства, который показывает новое устройство. В приложении для компьютера выберите «Проверить это устройство», чтобы его увидеть.</string>
+    <string name="link_device_fingerprint_hint">Введите отпечаток устройства, показанный в приложении, которое вы привязываете. В некоторых приложениях он называется кодом подтверждения.</string>
     <string name="link_device_error_invalid_keys">Другое устройство отправило ключи, которые нельзя использовать. Получите новый код на том устройстве и повторите попытку.</string>
-    <string name="link_device_error_codes_not_confirmed">Чтобы привязать устройство, введите полный код проверки с нового устройства.</string>
+    <string name="link_device_error_codes_not_confirmed">Это не совпадает с устройством для этого кода привязки. Сравните каждый символ с приложением, которое вы привязываете, и повторите попытку. Если совпадения по-прежнему нет, не привязывайте устройство.</string>
     <string name="link_device_error_fingerprint_mismatch">Этот код не совпадает с кодом нового устройства. Проверьте код на новом устройстве и введите его ещё раз. Если он по-прежнему не совпадает, нажмите «Отмена».</string>
     <string name="restore">Восстановить</string>
     <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
@@ -3193,9 +3194,9 @@
     <string name="shipping_status_exception">Проблема с доставкой</string>
     <string name="shipping_status_unknown">Обновление по отправлению</string>
     <string name="inbox_arrives_on">Прибудет %1$s</string>
-    <string name="sender_verified_badge">Проверенный отправитель</string>
-    <string name="sender_verified_title">Проверенный отправитель</string>
-    <string name="sender_verified_message">Отправитель этого письма подтвердил, что владеет доменом %1$s.</string>
+    <string name="sender_verified_badge">Проверенный домен</string>
+    <string name="sender_verified_title">Проверенный домен</string>
+    <string name="sender_verified_message">Серверы Aster проверили, что отправитель владеет доменом %1$s.</string>
     <string name="password_recovery_email_title">Почта для восстановления пароля</string>
     <string name="recovery_email_step_desc">Добавьте адрес электронной почты, чтобы вернуться в аккаунт, если потеряете коды восстановления.</string>
     <string name="notifications_step_title">Включите уведомления</string>
@@ -3604,4 +3605,11 @@
     <string name="sidebar_move_section_up">Переместить %1$s вверх</string>
     <string name="sidebar_move_section_down">Переместить %1$s вниз</string>
     <string name="contacts_pending_sync">Ожидает синхронизации</string>
+    <string name="recovery_previous_password_placeholder">Введите прежний пароль</string>
+    <string name="recovery_previous_password_body">Ваши ключи шифрования всё ещё защищены паролем, который вы использовали до этого сброса. Чтобы ваша почта оставалась читаемой, введите этот прежний пароль. Ключи останутся прежними, и теперь их будет защищать новый пароль.</string>
+    <string name="recovery_previous_password_required">Введите прежний пароль или нажмите «Не помню».</string>
+    <string name="recovery_previous_password_incorrect">Этот пароль не разблокирует ваши ключи шифрования. Проверьте его и повторите попытку.</string>
+    <string name="recovery_previous_password_forgot">Не помню</string>
+    <string name="recovery_previous_password_use">Ввести прежний пароль</string>
+    <string name="recovery_previous_password_skipped_warning">Пароль будет сброшен, а ключи шифрования сохранятся, но останутся заблокированными прежним паролем. Почту нельзя будет прочитать, пока вы не введёте этот пароль в баннере «Восстановить данные».</string>
 </resources>

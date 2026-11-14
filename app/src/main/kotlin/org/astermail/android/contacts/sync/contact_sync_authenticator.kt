@@ -31,6 +31,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
+import org.astermail.android.MainActivity
 
 class ContactSyncAuthenticator(private val context: Context) : AbstractAccountAuthenticator(context) {
     private fun unsupported(): Bundle = Bundle().apply {
@@ -47,8 +48,9 @@ class ContactSyncAuthenticator(private val context: Context) : AbstractAccountAu
         requiredFeatures: Array<out String>?,
         options: Bundle?,
     ): Bundle {
-        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-            ?: return unsupported()
+        val intent = Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .putExtra(MainActivity.EXTRA_OPEN_CONTACT_SYNC, true)
         return Bundle().apply { putParcelable(AccountManager.KEY_INTENT, intent) }
     }
 

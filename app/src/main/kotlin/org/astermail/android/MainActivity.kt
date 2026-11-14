@@ -200,6 +200,7 @@ class MainActivity :
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
+        const val EXTRA_OPEN_CONTACT_SYNC = "open_contact_sync"
         private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
         private const val CONTENT_INSET_TIMEOUT_MS = 4000L
         private const val STATE_LAUNCH_PENDING = "launch_intent_pending"
@@ -415,6 +416,10 @@ class MainActivity :
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
             if (trusted) pending_launch.pending_open_sessions.value = true
         }
+        if (intent?.getBooleanExtra(EXTRA_OPEN_CONTACT_SYNC, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_CONTACT_SYNC)
+            pending_launch.pending_open_contact_sync.value = true
+        }
         val email_id = intent?.getStringExtra(EXTRA_OPEN_EMAIL_ID)?.takeIf { it.isNotBlank() } ?: return
         intent.removeExtra(EXTRA_OPEN_EMAIL_ID)
         if (!trusted) return
@@ -491,6 +496,7 @@ private fun request_notification_permission(should_request: Boolean) {
 class pending_launch_state {
     val pending_open_email_id = mutableStateOf<String?>(null)
     val pending_open_sessions = mutableStateOf(false)
+    val pending_open_contact_sync = mutableStateOf(false)
     val pending_open_billing = mutableStateOf(false)
     val pending_reveal_email_id = mutableStateOf<String?>(null)
     val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
@@ -503,6 +509,7 @@ class pending_launch_state {
             pending_reveal_email_id.value != null ||
             pending_share.value != null ||
             pending_open_sessions.value ||
+            pending_open_contact_sync.value ||
             pending_open_billing.value
 
     fun take_launch_folder(): String? {
@@ -764,6 +771,16 @@ private fun AsterNavHost() {
         if (!pending_sessions || !is_signed_in_state || is_locked) return@LaunchedEffect
         pending.pending_open_sessions.value = false
         nav_controller.navigate(routes.settings_detail("sessions")) {
+            launchSingleTop = true
+        }
+    }
+
+    val pending_contact_sync = pending.pending_open_contact_sync.value
+    androidx.compose.runtime.LaunchedEffect(pending_contact_sync, is_signed_in_state, is_locked) {
+        if (!pending_contact_sync || !is_signed_in_state || is_locked) return@LaunchedEffect
+        pending.pending_open_contact_sync.value = false
+        org.astermail.android.contacts.sync.ContactSyncAccounts.request_setup()
+        nav_controller.navigate(routes.settings_detail("behavior")) {
             launchSingleTop = true
         }
     }
@@ -2939,6 +2956,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     val recovery_snooze_until by theme_vm_inbox.recovery_snooze_until.collectAsStateWithLifecycle()
     val phrase_prompt_snooze_until by theme_vm_inbox.phrase_prompt_snooze_until
         .collectAsStateWithLifecycle()
+    val codes_refresh_snooze_until by theme_vm_inbox.codes_refresh_snooze_until
+        .collectAsStateWithLifecycle()
 
     var recovery_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
@@ -2947,6 +2966,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         mutableStateOf(false)
     }
     var phrase_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(false)
+    }
+    var codes_refresh_prompt_dismissed by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -2961,6 +2983,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         settings_vm.refresh_recovery_methods()
     }
 
+    androidx.compose.runtime.LaunchedEffect(accounts_state.current_account_id) {
+        settings_vm.refresh_recovery_codes_outdated()
+    }
+
     androidx.compose.runtime.LaunchedEffect(recovery_prompt_due, accounts_state.current_account_id) {
         if (recovery_prompt_due) settings_vm.refresh_recovery_email_presence()
     }
@@ -2971,7 +2997,13 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         recovery_methods.has_codes &&
         recovery_methods.codes_remaining <= 3L
 
-    val show_phrase_prompt = recovery_methods != null &&
+    val show_codes_refresh_prompt = !first_run_setup_pending &&
+        settings_state.recovery_codes_outdated &&
+        !codes_refresh_prompt_dismissed &&
+        now_ms >= codes_refresh_snooze_until
+
+    val show_phrase_prompt = !show_codes_refresh_prompt &&
+        recovery_methods != null &&
         recovery_methods.has_phrase &&
         !recovery_methods.has_codes &&
         !first_run_setup_pending &&
@@ -3004,9 +3036,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         !first_run_setup_pending &&
         !plan_prompt_dismissed &&
         !show_recovery_prompt &&
-        !show_phrase_prompt
+        !show_phrase_prompt &&
+        !show_codes_refresh_prompt
 
-    if (show_recovery_prompt || show_phrase_prompt || show_plan_prompt) {
+    if (show_codes_refresh_prompt || show_recovery_prompt || show_phrase_prompt || show_plan_prompt) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -3014,7 +3047,21 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xxl),
             contentAlignment = Alignment.BottomCenter,
         ) {
-            if (show_phrase_prompt) {
+            if (show_codes_refresh_prompt) {
+                org.astermail.android.ui.onboarding.RecoveryCodesRefreshCard(
+                    visible = true,
+                    on_get_codes = {
+                        codes_refresh_prompt_dismissed = true
+                        nav_controller.navigate(routes.settings_detail("recovery_codes"))
+                    },
+                    on_later = {
+                        codes_refresh_prompt_dismissed = true
+                        theme_vm_inbox.snooze_codes_refresh_prompt(
+                            org.astermail.android.ui.onboarding.codes_refresh_snooze_ms,
+                        )
+                    },
+                )
+            } else if (show_phrase_prompt) {
                 org.astermail.android.ui.onboarding.PhraseMigrationCard(
                     visible = true,
                     on_get_codes = {

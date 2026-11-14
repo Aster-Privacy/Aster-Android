@@ -29,7 +29,9 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -257,6 +259,7 @@ class SettingsViewModelTest {
             context = context,
         )
         vm.default_dispatcher = dispatcher
+        vm.io_dispatcher = dispatcher
     }
 
     @After
@@ -730,7 +733,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `get_recovery_codes delegates to session key store`() {
+    fun `get_recovery_codes delegates to session key store`() = runTest {
         every { session_key_store.get_recovery_codes() } returns listOf("code1", "code2", "code3")
 
         val codes = vm.get_recovery_codes()
@@ -741,7 +744,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `get_recovery_codes returns null when no codes stored`() {
+    fun `get_recovery_codes returns null when no codes stored`() = runTest {
         every { session_key_store.get_recovery_codes() } returns null
 
         assertNull(vm.get_recovery_codes())
@@ -2395,7 +2398,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)
@@ -2438,7 +2444,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2514,7 +2523,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         every { session_key_store.get_identity_key() } returns identity_key
@@ -2566,7 +2578,10 @@ class SettingsViewModelTest {
         preferences_cache = preferences_cache,
         theme_store = theme_store,
         context = context,
-    ).also { it.default_dispatcher = dispatcher }
+    ).also {
+        it.default_dispatcher = dispatcher
+        it.io_dispatcher = dispatcher
+    }
 
     private fun aes_gcm(mode: Int, key: ByteArray, nonce: ByteArray, input: ByteArray): ByteArray {
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
@@ -2790,7 +2805,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
         assertEquals("dark", vm.state.value.preferences?.theme)
 
@@ -2841,7 +2859,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
@@ -2901,7 +2922,10 @@ class SettingsViewModelTest {
             preferences_cache = preferences_cache,
             theme_store = theme_store,
             context = context,
-        ).also { it.default_dispatcher = dispatcher }
+        ).also {
+            it.default_dispatcher = dispatcher
+            it.io_dispatcher = dispatcher
+        }
         advanceUntilIdle()
 
         assertNotNull(fresh_vm.state.value.preferences)
@@ -3360,7 +3384,10 @@ class SettingsViewModelTest {
         preferences_cache = preferences_cache,
         theme_store = theme_store,
         context = context,
-    ).also { it.default_dispatcher = dispatcher }
+    ).also {
+        it.default_dispatcher = dispatcher
+        it.io_dispatcher = dispatcher
+    }
 
     @Test
     fun `load_preferences does not restart an in-flight load`() = runTest {
@@ -3557,5 +3584,170 @@ class SettingsViewModelTest {
             listOf("mail", "calendar", "folders", "labels", "aliases") to listOf("calendar_tasks"),
             sidebar_layout_of(written),
         )
+    }
+
+    private val old_recovery_codes = listOf("ASTER-AAAA-BBBB-CCCC", "ASTER-DDDD-EEEE-FFFF")
+    private val new_recovery_codes = listOf("ASTER-AAAA-BBBB-CCCC-DDDD", "ASTER-EEEE-FFFF-GGGG-HHHH")
+
+    @Test
+    fun `recovery code rotation success shows new codes and clears the prompt`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.sync_recovery_codes() } returns old_recovery_codes
+        vm.refresh_recovery_codes_outdated()
+        advanceUntilIdle()
+        assertTrue(vm.state.value.recovery_codes_outdated)
+
+        coEvery { auth_repository.rotate_recovery_codes("token-1") } returns new_recovery_codes
+        vm.start_recovery_codes_rotation("token-1")
+        assertEquals(RecoveryRotationPhase.rotating, vm.state.value.recovery_rotation.phase)
+        advanceUntilIdle()
+
+        val rotation = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.done, rotation.phase)
+        assertEquals(new_recovery_codes, rotation.codes)
+        assertFalse(vm.state.value.recovery_codes_outdated)
+        coVerify { recovery_api.methods() }
+
+        vm.acknowledge_recovery_rotation()
+        assertEquals(RecoveryRotationPhase.idle, vm.state.value.recovery_rotation.phase)
+    }
+
+    @Test
+    fun `starting a rotation reads stored codes inside the background job`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.rotate_recovery_codes("token-1") } returns new_recovery_codes
+
+        vm.start_recovery_codes_rotation("token-1")
+
+        assertEquals(RecoveryRotationPhase.rotating, vm.state.value.recovery_rotation.phase)
+        verify(exactly = 0) { session_key_store.get_recovery_codes() }
+
+        advanceUntilIdle()
+
+        verify(exactly = 1) { session_key_store.get_recovery_codes() }
+        assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
+    }
+
+    @Test
+    fun `a stale outdated check cannot bring the prompt back after rotation`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.sync_recovery_codes() } coAnswers {
+            kotlinx.coroutines.delay(5_000)
+            old_recovery_codes
+        }
+        coEvery { auth_repository.rotate_recovery_codes(any()) } returns new_recovery_codes
+        vm.refresh_recovery_codes_outdated()
+        vm.start_recovery_codes_rotation("token-1")
+        advanceUntilIdle()
+
+        assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
+        assertFalse(vm.state.value.recovery_codes_outdated)
+    }
+
+    @Test
+    fun `recovery code rotation server error ends in failed with a message`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.rotate_recovery_codes(any()) } throws
+            org.astermail.android.api.ApiError.ServerError(500)
+        coEvery { auth_repository.sync_recovery_codes() } returns old_recovery_codes
+
+        vm.start_recovery_codes_rotation("token-1")
+        advanceUntilIdle()
+
+        val rotation = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.failed, rotation.phase)
+        assertNotNull(rotation.error)
+        assertFalse(rotation.needs_step_up)
+    }
+
+    @Test
+    fun `recovery code rotation keeps codes the server already saved`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.rotate_recovery_codes(any()) } throws
+            org.astermail.android.api.ApiError.NetworkError
+        coEvery { auth_repository.sync_recovery_codes() } returns new_recovery_codes
+
+        vm.start_recovery_codes_rotation("token-1")
+        advanceUntilIdle()
+
+        val rotation = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.done, rotation.phase)
+        assertEquals(new_recovery_codes, rotation.codes)
+    }
+
+    @Test
+    fun `an expired step up token asks for the password again`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        every { context.getString(org.astermail.android.R.string.recovery_step_up_description) } returns
+            "Confirm your password"
+        coEvery { auth_repository.rotate_recovery_codes(any()) } throws
+            org.astermail.android.api.ApiError.ForbiddenError("step-up required", "STEP_UP_REQUIRED")
+
+        vm.start_recovery_codes_rotation("spent")
+        advanceUntilIdle()
+
+        val rotation = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.failed, rotation.phase)
+        assertTrue(rotation.needs_step_up)
+        assertEquals("Confirm your password", rotation.error)
+        coVerify(exactly = 0) { auth_repository.sync_recovery_codes() }
+    }
+
+    @Test
+    fun `recovery code rotation timeout never leaves the screen loading`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        every { context.getString(org.astermail.android.R.string.error_timeout) } returns "Timed out"
+        coEvery { auth_repository.rotate_recovery_codes(any()) } coAnswers {
+            kotlinx.coroutines.delay(SettingsViewModel.RECOVERY_ROTATION_TIMEOUT_MS * 2)
+            new_recovery_codes
+        }
+
+        vm.start_recovery_codes_rotation("token-1")
+        advanceTimeBy(SettingsViewModel.RECOVERY_ROTATION_TIMEOUT_MS + 1)
+        runCurrent()
+
+        val timed_out = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.failed, timed_out.phase)
+        assertEquals("Timed out", timed_out.error)
+
+        advanceUntilIdle()
+        val late = vm.state.value.recovery_rotation
+        assertEquals(RecoveryRotationPhase.done, late.phase)
+        assertEquals(new_recovery_codes, late.codes)
+    }
+
+    @Test
+    fun `a second tap while rotating does not start another rotation`() = runTest {
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        coEvery { auth_repository.rotate_recovery_codes(any()) } coAnswers {
+            kotlinx.coroutines.delay(1_000)
+            new_recovery_codes
+        }
+
+        vm.start_recovery_codes_rotation("token-1")
+        vm.start_recovery_codes_rotation("token-1")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { auth_repository.rotate_recovery_codes(any()) }
+        assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
+    }
+
+    @Test
+    fun `recovery code rotation runs off the main dispatcher`() = runTest {
+        val worker = StandardTestDispatcher(testScheduler, name = "recovery-worker")
+        vm.default_dispatcher = worker
+        every { session_key_store.get_recovery_codes() } returns old_recovery_codes
+        var observed: kotlin.coroutines.ContinuationInterceptor? = null
+        coEvery { auth_repository.rotate_recovery_codes(any()) } coAnswers {
+            observed = kotlin.coroutines.coroutineContext[kotlin.coroutines.ContinuationInterceptor]
+            new_recovery_codes
+        }
+
+        vm.start_recovery_codes_rotation("token-1")
+        advanceUntilIdle()
+
+        assertEquals(worker, observed)
+        assertTrue(observed != dispatcher)
+        assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
     }
 }

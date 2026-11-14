@@ -21,10 +21,10 @@
 
 package org.astermail.android.devices
 
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -67,7 +67,7 @@ class LinkDeviceScreenInstrumentedTest {
     private val x25519_pk = X25519PrivateKeyParameters(x25519_sk, 0).generatePublicKey().encoded
 
     private class FakeApi(
-        private val device: PendingDevice,
+        val device: PendingDevice,
         private val verify_error: Throwable? = null,
         private val confirm_error: Throwable? = null,
         private val confirm_delay_ms: Long = 0,
@@ -106,12 +106,6 @@ class LinkDeviceScreenInstrumentedTest {
         envelope_versions = DeviceEnvelope.ENVELOPE_VERSIONS,
     )
 
-    private fun recipient_of(device: PendingDevice) = DeviceEnvelope.DeviceRecipient(
-        DeviceEnvelope.base64url_decode(device.ed25519_pk),
-        DeviceEnvelope.base64url_decode(device.mlkem_pk),
-        DeviceEnvelope.base64url_decode(device.x25519_pk),
-    )
-
     private fun session_store(with_passphrase: Boolean = true): SessionKeyStore {
         val store = SessionKeyStore(context)
         store.clear()
@@ -146,15 +140,20 @@ class LinkDeviceScreenInstrumentedTest {
         compose.onNodeWithText(string(R.string.link_device_continue)).performClick()
     }
 
-    private fun fingerprint_of(device: PendingDevice): String =
-        require_value(
-            DeviceKeyFingerprint.of_encoded(device.ed25519_pk, device.mlkem_pk, device.x25519_pk),
+    private fun type_fingerprint(api: FakeApi, override: String? = null) {
+        val fingerprint = override ?: DeviceKeyFingerprint.of_encoded(
+            api.device.ed25519_pk,
+            api.device.mlkem_pk,
+            api.device.x25519_pk,
         )
-
-    private fun type_fingerprint(value: String) {
-        await_text(string(R.string.link_device_confirm_action))
-        compose.onNode(hasSetTextAction()).performTextInput(value)
+        compose.onNode(hasSetTextAction()).performTextInput(require_value(fingerprint))
     }
+
+    private fun recipient_of(device: PendingDevice) = DeviceEnvelope.DeviceRecipient(
+        DeviceEnvelope.base64url_decode(device.ed25519_pk),
+        DeviceEnvelope.base64url_decode(device.mlkem_pk),
+        DeviceEnvelope.base64url_decode(device.x25519_pk),
+    )
 
     private fun open_envelope(device: PendingDevice, envelope_b64: String): ByteArray =
         DeviceEnvelope.open_secret_for_device(
@@ -166,34 +165,32 @@ class LinkDeviceScreenInstrumentedTest {
 
     @Test
     fun a_user_links_a_device_and_the_device_can_open_the_envelope() {
-        val device = pending()
-        val api = FakeApi(device)
+        val api = FakeApi(pending())
         show(api, session_store())
 
         enter_code_and_continue()
 
         await_text("adam-desktop")
         compose.onNodeWithText(string(R.string.link_device_type_bridge)).assertExists()
-        type_fingerprint(fingerprint_of(device))
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
 
         await_text(string(R.string.link_device_success_title))
 
         assertEquals("QEME-77ET", api.verified_code)
         val envelope = require_value(api.confirmed_envelope)
-        assertArrayEquals(passphrase, open_envelope(device, envelope))
+        assertArrayEquals(passphrase, open_envelope(api.device, envelope))
     }
 
     @Test
     fun linking_leaves_the_vault_passphrase_in_the_session_store() {
         val store = session_store()
-        val device = pending()
-        val api = FakeApi(device)
+        val api = FakeApi(pending())
         show(api, store)
 
         enter_code_and_continue()
         await_text("adam-desktop")
-        type_fingerprint(fingerprint_of(device))
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         await_text(string(R.string.link_device_success_title))
 
@@ -204,13 +201,12 @@ class LinkDeviceScreenInstrumentedTest {
 
     @Test
     fun another_device_cannot_open_the_envelope() {
-        val device = pending()
-        val api = FakeApi(device)
+        val api = FakeApi(pending())
         show(api, session_store())
 
         enter_code_and_continue()
         await_text("adam-desktop")
-        type_fingerprint(fingerprint_of(device))
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         await_text(string(R.string.link_device_success_title))
 
@@ -221,7 +217,7 @@ class LinkDeviceScreenInstrumentedTest {
         assertThrows(Exception::class.java) {
             DeviceEnvelope.open_secret_for_device(
                 envelope,
-                recipient_of(device),
+                recipient_of(api.device),
                 other_mlkem.secret_key,
                 other_x25519_sk,
             )
@@ -230,15 +226,14 @@ class LinkDeviceScreenInstrumentedTest {
 
     @Test
     fun tapping_confirm_twice_links_the_device_once() {
-        val device = pending()
-        val api = FakeApi(device, confirm_delay_ms = 750)
+        val api = FakeApi(pending(), confirm_delay_ms = 750)
         val vm = LinkDeviceViewModel(api, session_store())
         show_vm(vm)
 
         enter_code_and_continue()
         await_text("adam-desktop")
-        type_fingerprint(fingerprint_of(device))
 
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
         compose.runOnUiThread {
             vm.confirm_link()
@@ -301,12 +296,12 @@ class LinkDeviceScreenInstrumentedTest {
 
     @Test
     fun a_locked_vault_blocks_the_confirm_step_and_sends_nothing() {
-        val device = pending("desktop")
-        val api = FakeApi(device)
+        val api = FakeApi(pending("desktop"))
         show(api, session_store(with_passphrase = false))
 
         enter_code_and_continue()
-        type_fingerprint(fingerprint_of(device))
+        await_text(string(R.string.link_device_confirm_action))
+        type_fingerprint(api)
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
 
         await_text(string(R.string.link_device_error_session))
@@ -314,32 +309,16 @@ class LinkDeviceScreenInstrumentedTest {
     }
 
     @Test
-    fun the_confirm_button_stays_disabled_until_the_code_is_typed() {
+    fun a_mistyped_fingerprint_keeps_confirm_disabled_and_sends_nothing() {
         val api = FakeApi(pending())
         show(api, session_store())
 
         enter_code_and_continue()
         await_text("adam-desktop")
+        type_fingerprint(api, override = "0000 0000 0000 0000 0000")
+
+        await_text(string(R.string.link_device_error_codes_not_confirmed))
         compose.onNodeWithText(string(R.string.link_device_confirm_action)).assertIsNotEnabled()
-        compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
-
-        compose.waitForIdle()
-        assertEquals(0, api.confirm_calls)
-        assertNull(api.confirmed_envelope)
-    }
-
-    @Test
-    fun a_code_from_another_device_is_refused_and_sends_nothing() {
-        val api = FakeApi(pending())
-        show(api, session_store())
-
-        enter_code_and_continue()
-        await_text("adam-desktop")
-        type_fingerprint(fingerprint_of(pending()))
-        compose.onNodeWithText(string(R.string.link_device_confirm_action)).performClick()
-
-        await_text(string(R.string.link_device_error_fingerprint_mismatch).substringBefore("."))
-        compose.waitForIdle()
         assertEquals(0, api.confirm_calls)
         assertNull(api.confirmed_envelope)
     }

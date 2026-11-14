@@ -29,6 +29,7 @@ import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -53,6 +54,94 @@ class RecoveryCodeVectorsTest {
     @After
     fun tear_down() {
         unmockkStatic(android.util.Base64::class)
+    }
+
+    private fun hex_of(bytes: ByteArray): String = bytes.joinToString("") { "%02x".format(it) }
+
+    private fun encoded(bytes: ByteArray): String = java.util.Base64.getEncoder().encodeToString(bytes)
+
+    @Test
+    fun code_verifier_matches_the_server() {
+        val raw_hash = ByteArray(32) { 7 }
+        val verifier_salt = ByteArray(16) { 3 }
+
+        assertEquals(
+            "06f99b085e73a17975cc61fe253dfddc21e4b683d81d204d5bcdf848a4c74dd4",
+            hex_of(derive_code_verifier(raw_hash, verifier_salt)),
+        )
+        assertEquals(
+            "4152563303030303030303030303030303030303" +
+                "aa0037a7929d74b1589ea2085b171720fdf103f4d70a81a512583ce4df275146",
+            hex_of(salted_recovery_verifier(raw_hash, verifier_salt)),
+        )
+    }
+
+    @Test
+    fun code_verifier_rejects_a_salt_of_the_wrong_length() {
+        val failure = runCatching { derive_code_verifier(ByteArray(32) { 7 }, ByteArray(8) { 3 }) }
+
+        assertTrue(failure.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun stored_salt_is_read_only_from_the_salted_format() {
+        val raw_hash = ByteArray(32) { 7 }
+        val verifier_salt = ByteArray(16) { 3 }
+
+        assertArrayEquals(
+            verifier_salt,
+            stored_verifier_salt(salted_recovery_verifier(raw_hash, verifier_salt)),
+        )
+        assertNull(stored_verifier_salt(raw_hash))
+        assertNull(stored_verifier_salt(recovery_code_verifier(raw_hash)))
+        assertNull(stored_verifier_salt(ByteArray(52) { 1 }))
+    }
+
+    @Test
+    fun candidates_cover_each_distinct_usable_salt() {
+        val code = "ASTER-AAAA-BBBB-CCCC-DDDD"
+        val first = encoded(ByteArray(16) { 3 })
+        val second = encoded(ByteArray(16) { 4 })
+        val candidates = build_verifier_candidates(
+            code,
+            listOf(first, first, null, encoded(ByteArray(8) { 3 }), "not base64 !", second),
+        )
+
+        assertEquals(listOf(first, second), candidates.map { it.verifier_salt })
+        assertEquals(
+            encoded(derive_code_verifier(raw_recovery_code_hash(code), ByteArray(16) { 3 })),
+            candidates[0].code_verifier,
+        )
+        assertTrue(build_verifier_candidates(code, emptyList()).isEmpty())
+    }
+
+    @Test
+    fun used_codes_are_found_in_every_stored_form() {
+        val plain = "ASTER-AAAA-BBBB-CCCC-DDDD"
+        val tagged = "ASTER-EEEE-FFFF-GGGG-HHHH"
+        val salted = "ASTER-JJJJ-KKKK-LLLL-MMMM"
+        val unused = "ASTER-NNNN-PPPP-QQQQ-RRRR"
+        val stored = setOf(
+            encoded(raw_recovery_code_hash(plain)),
+            encoded(recovery_code_verifier(raw_recovery_code_hash(tagged))),
+            encoded(salted_recovery_verifier(raw_recovery_code_hash(salted), ByteArray(16) { 5 })),
+        )
+
+        assertEquals(
+            setOf(plain, tagged, salted),
+            used_recovery_codes(listOf(plain, tagged, salted, unused), stored),
+        )
+        assertTrue(used_recovery_codes(listOf(plain), emptySet()).isEmpty())
+    }
+
+    @Test
+    fun shorter_codes_are_outdated() {
+        assertTrue(is_outdated_recovery_code("ASTER-AAAA-BBBB-CCCC"))
+        assertFalse(is_outdated_recovery_code("ASTER-AAAA-BBBB-CCCC-DDDD"))
+        assertFalse(is_outdated_recovery_code("not a code"))
+        assertTrue(has_outdated_recovery_codes(listOf("ASTER-AAAA-BBBB-CCCC-DDDD", "ASTER-AAAA-BBBB-CCCC")))
+        assertFalse(has_outdated_recovery_codes(listOf("ASTER-AAAA-BBBB-CCCC-DDDD")))
+        assertFalse(has_outdated_recovery_codes(null))
     }
 
     @Test

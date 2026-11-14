@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">保存恢复代码</string>
     <string name="recovery_codes_reminder_body">Aster 用您的密码加密邮件，因此没有人能替您重置密码。恢复代码是回到加密邮件的唯一方式。</string>
     <string name="recovery_codes_reminder_action">获取恢复代码</string>
+    <string name="recovery_codes_refresh_title">更换恢复代码</string>
+    <string name="recovery_codes_refresh_body">您保存的恢复代码使用较旧、较短的格式。请获取新代码并妥善保存。获取后，旧代码将停止使用。</string>
+    <string name="recovery_codes_refresh_action">获取新代码</string>
     <string name="recovery_phrase_migrate_title">改用恢复代码</string>
     <string name="recovery_phrase_migrate_body">恢复短语即将停用。请立即获取恢复代码，以便日后仍能找回账户。</string>
     <string name="recovery_phrase_migrate_action">获取代码</string>

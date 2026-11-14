@@ -337,6 +337,7 @@
     <string name="no_body">(कोई मुख्य भाग नहीं)</string>
     <string name="attachment_unnamed">अटैचमेंट</string>
     <string name="attachment_locked">यह अटैचमेंट नहीं खुल सकता, क्योंकि इसकी एन्क्रिप्शन कुंजी इस डिवाइस पर उपलब्ध नहीं है।</string>
+    <string name="attachment_content_mismatch">यह अटैचमेंट उस संदेश से मेल नहीं खाता जिसके साथ यह आया था, इसलिए इसे खोला नहीं गया।</string>
     <string name="download_complete">डाउनलोड पूरा हुआ</string>
     <string name="cannot_decode_image">तस्वीर पढ़ी नहीं जा सकी</string>
     <string name="no_app_to_open">यह फ़ाइल खोलने के लिए कोई ऐप नहीं</string>
@@ -2921,11 +2922,11 @@
     <string name="alias_pinned_toast">एलियास पिन हो गया</string>
     <string name="alias_unpinned_toast">एलियास से पिन हट गया</string>
     <string name="e2e_identity_changed_blocked">भेजा नहीं जा सका: किसी प्राप्तकर्ता की एन्क्रिप्शन कुंजी बदल गई है। अपने इनबॉक्स में बदलाव की पुष्टि करें, फिर दोबारा भेजें। संदेश नहीं भेजा गया।</string>
-    <string name="link_device_fingerprint_label">पुष्टि कोड</string>
+    <string name="link_device_fingerprint_label">डिवाइस फ़िंगरप्रिंट</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">अपने नए डिवाइस पर दिखाया गया पुष्टि कोड या डिवाइस फ़िंगरप्रिंट डालें। डेस्कटॉप ऐप में, इसे देखने के लिए इस डिवाइस की पुष्टि करें चुनें।</string>
+    <string name="link_device_fingerprint_hint">जिस ऐप को आप लिंक कर रहे हैं, उसमें दिख रहा डिवाइस फ़िंगरप्रिंट डालें। कुछ ऐप इसे सत्यापन कोड कहते हैं।</string>
     <string name="link_device_error_invalid_keys">दूसरे डिवाइस ने ऐसी कुंजियाँ भेजीं जिनका उपयोग नहीं किया जा सकता। उस डिवाइस पर नया कोड लें, फिर दोबारा कोशिश करें।</string>
-    <string name="link_device_error_codes_not_confirmed">डिवाइस लिंक करने के लिए, अपने नए डिवाइस से पूरा पुष्टि कोड डालें।</string>
+    <string name="link_device_error_codes_not_confirmed">यह इस लिंकिंग कोड के डिवाइस से मेल नहीं खाता। हर वर्ण का मिलान उस ऐप से करें जिसे आप लिंक कर रहे हैं, फिर दोबारा कोशिश करें। अगर यह फिर भी मेल नहीं खाता, तो डिवाइस को लिंक न करें।</string>
     <string name="link_device_error_fingerprint_mismatch">यह कोड आपके नए डिवाइस से मेल नहीं खाता। अपने नए डिवाइस पर कोड जाँचें और उसे फिर से डालें। अगर यह अब भी मेल नहीं खाता, तो रद्द करें पर टैप करें।</string>
     <string name="restore">वापस लाएं</string>
     <string name="contact_trash_confirm_message">आप ट्रैश से संपर्क वापस ला सकते हैं।</string>
@@ -3047,9 +3048,9 @@
     <string name="shipping_status_exception">डिलीवरी में समस्या</string>
     <string name="shipping_status_unknown">शिपमेंट अपडेट</string>
     <string name="inbox_arrives_on">%1$s को पहुंचेगा</string>
-    <string name="sender_verified_badge">सत्यापित भेजने वाला</string>
-    <string name="sender_verified_title">सत्यापित भेजने वाला</string>
-    <string name="sender_verified_message">इस ईमेल के भेजने वाले ने पुष्टि की है कि %1$s उनका है।</string>
+    <string name="sender_verified_badge">सत्यापित डोमेन</string>
+    <string name="sender_verified_title">सत्यापित डोमेन</string>
+    <string name="sender_verified_message">Aster के सर्वर ने जाँच की है कि %1$s भेजने वाले का है।</string>
     <string name="password_recovery_email_title">पासवर्ड रिकवरी ईमेल</string>
     <string name="recovery_email_step_desc">अगर आप अपने रिकवरी कोड खो देते हैं तो खाते में वापस आने के लिए एक ईमेल पता जोड़ें।</string>
     <string name="notifications_step_title">सूचनाएं चालू करें</string>
@@ -3454,4 +3455,11 @@
     <string name="sidebar_move_section_up">%1$s को ऊपर ले जाएँ</string>
     <string name="sidebar_move_section_down">%1$s को नीचे ले जाएँ</string>
     <string name="contacts_pending_sync">सिंक होने की प्रतीक्षा में</string>
+    <string name="recovery_previous_password_placeholder">अपना पिछला पासवर्ड डालें</string>
+    <string name="recovery_previous_password_body">आपकी एन्क्रिप्शन कुंजियां अब भी उस पासवर्ड से सुरक्षित हैं जो आप इस रीसेट से पहले इस्तेमाल करते थे। अपना मेल पढ़ने योग्य रखने के लिए वह पिछला पासवर्ड डालें। आपकी कुंजियां वही रहती हैं और अब से आपका नया पासवर्ड उन्हें सुरक्षित रखता है।</string>
+    <string name="recovery_previous_password_required">अपना पिछला पासवर्ड डालें, या मुझे याद नहीं पर टैप करें।</string>
+    <string name="recovery_previous_password_incorrect">यह पासवर्ड आपकी एन्क्रिप्शन कुंजियों को अनलॉक नहीं करता। इसे जांचें और फिर से कोशिश करें।</string>
+    <string name="recovery_previous_password_forgot">मुझे याद नहीं</string>
+    <string name="recovery_previous_password_use">मेरा पिछला पासवर्ड डालें</string>
+    <string name="recovery_previous_password_skipped_warning">आपका पासवर्ड रीसेट हो जाता है और आपकी एन्क्रिप्शन कुंजियां रखी जाती हैं, लेकिन वे आपके पिछले पासवर्ड से लॉक रहती हैं। जब तक आप डेटा पुनर्प्राप्त करें बैनर से वह पासवर्ड नहीं डालते, आपका मेल पढ़ा नहीं जा सकता।</string>
 </resources>

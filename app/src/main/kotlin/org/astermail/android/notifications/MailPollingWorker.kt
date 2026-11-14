@@ -293,13 +293,17 @@ class MailPollingWorker(
                 if (item.is_undecryptable) {
                     localized(context).getString(org.astermail.android.R.string.encrypted)
                 } else {
-                    org.astermail.android.security.trusted_sender_name(
-                        org.astermail.android.ui.mail.inbox_item_trust_message(item),
-                        item.display_sender_name
-                            ?: item.sender_name.takeIf { it.isNotBlank() }
-                            ?: item.sender_email,
-                        localized(context).getString(org.astermail.android.R.string.unknown),
-                    ).trim()
+                    MailPollingWorker.notification_sender_label(
+                        org.astermail.android.security.trusted_sender_name(
+                            org.astermail.android.ui.mail.inbox_item_trust_message(item),
+                            item.display_sender_name?.takeIf { it.isNotBlank() }
+                                ?: item.sender_name.takeIf { it.isNotBlank() }
+                                ?: item.display_sender_email?.takeIf { it.isNotBlank() }
+                                ?: item.sender_email,
+                            "",
+                        ),
+                        item.display_sender_email?.takeIf { it.isNotBlank() } ?: item.sender_email,
+                    )
                 }
             var fetched_any_page = false
             var forced_heal_armed = false
@@ -1032,10 +1036,14 @@ class MailPollingWorker(
 
         data class LockScreenPolicy(val visibility: Int, val redacted_public_version: Boolean)
 
-        fun message_lock_screen_policy(private_mode: Boolean, has_sender_avatar: Boolean = false): LockScreenPolicy {
+        fun message_lock_screen_policy(
+            private_mode: Boolean,
+            has_sender_avatar: Boolean = false,
+            has_code: Boolean = false,
+        ): LockScreenPolicy {
             return LockScreenPolicy(
                 visibility = NotificationCompat.VISIBILITY_PRIVATE,
-                redacted_public_version = private_mode || has_sender_avatar,
+                redacted_public_version = private_mode || has_sender_avatar || has_code,
             )
         }
 
@@ -1075,6 +1083,43 @@ class MailPollingWorker(
             return true
         }
 
+        fun notification_sender_label(trusted_name: String, raw_email: String?): String {
+            val name = trusted_name.trim()
+            if (name.isNotEmpty()) return name
+            val email = raw_email?.trim().orEmpty()
+            return if (email.length > 2 && email.indexOf('@') in 1 until email.length - 1) email else ""
+        }
+
+        fun preview_without_subject(subject: String, preview: String): String {
+            val trimmed_preview = preview.trim()
+            if (trimmed_preview.isEmpty()) return ""
+            val subject_chars = subject.filterNot { it.isWhitespace() }.lowercase()
+            if (subject_chars.isEmpty()) return trimmed_preview
+            var preview_index = 0
+            var subject_index = 0
+            while (preview_index < trimmed_preview.length && subject_index < subject_chars.length) {
+                val current = trimmed_preview[preview_index]
+                if (current.isWhitespace()) {
+                    preview_index++
+                    continue
+                }
+                if (current.lowercaseChar() != subject_chars[subject_index]) break
+                preview_index++
+                subject_index++
+            }
+            if (subject_index < subject_chars.length) {
+                return if (preview_index == trimmed_preview.length) "" else trimmed_preview
+            }
+            val next = trimmed_preview.getOrNull(preview_index)
+            if (next != null && next.isLetterOrDigit() && subject_chars.last().isLetterOrDigit()) {
+                return trimmed_preview
+            }
+            return trimmed_preview.substring(preview_index)
+                .trimStart { it.isWhitespace() || it in PREVIEW_SUBJECT_SEPARATORS }
+        }
+
+        private const val PREVIEW_SUBJECT_SEPARATORS = "-:|.,;–—•"
+
         fun show_message(
             context: Context,
             sender: String,
@@ -1092,6 +1137,7 @@ class MailPollingWorker(
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
+            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
             val builder = base_builder(context, silent)
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
@@ -1114,20 +1160,27 @@ class MailPollingWorker(
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                add_message_actions(context, builder, item_id, message_id)
+                add_message_actions(context, builder, item_id, message_id, code)
                 if (is_valid_notified_item_id(item_id)) {
                     builder.extras.putString(EXTRA_NOTIFIED_ITEM_ID, item_id)
                     builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
                 }
             }
-            if (one_line_preview.isNotBlank() && one_line_preview != one_line_subject) {
+            val body_text = preview_without_subject(
+                org.astermail.android.mail.safe_display_text(subject),
+                one_line_preview,
+            )
+            if (body_text.isNotBlank()) {
                 builder.setStyle(
-                    NotificationCompat.InboxStyle()
-                        .addLine(one_line_subject)
-                        .addLine(one_line_preview),
+                    NotificationCompat.BigTextStyle()
+                        .bigText("$one_line_subject\n$body_text"),
                 )
             }
-            val lock_screen = message_lock_screen_policy(private_mode, has_sender_avatar = large_icon != null)
+            val lock_screen = message_lock_screen_policy(
+                private_mode,
+                has_sender_avatar = large_icon != null,
+                has_code = code != null,
+            )
             builder.setVisibility(lock_screen.visibility)
             if (lock_screen.redacted_public_version) {
                 builder.setPublicVersion(
@@ -1155,7 +1208,9 @@ class MailPollingWorker(
             builder: NotificationCompat.Builder,
             item_id: String,
             message_id: Int,
+            code: String?,
         ) {
+            if (code != null) add_copy_code_action(context, builder, code, message_id)
             val actions = listOf(
                 Triple(
                     MailNotificationActionReceiver.ACTION_ARCHIVE,
@@ -1172,7 +1227,7 @@ class MailPollingWorker(
                     R.drawable.ic_action_mark_read,
                     R.string.mark_read_action,
                 ),
-            )
+            ).take(if (code != null) MAX_VISIBLE_ACTIONS - 1 else MAX_VISIBLE_ACTIONS)
             actions.forEachIndexed { index, (action, icon, label) ->
                 val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
                     this.action = action
@@ -1194,7 +1249,37 @@ class MailPollingWorker(
             }
         }
 
+        private fun add_copy_code_action(
+            context: Context,
+            builder: NotificationCompat.Builder,
+            code: String,
+            message_id: Int,
+        ) {
+            val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
+                action = MailNotificationActionReceiver.ACTION_COPY_CODE
+                putExtra(MailNotificationActionReceiver.EXTRA_CODE, code)
+            }
+            val pending = PendingIntent.getBroadcast(
+                context,
+                message_id * ACTION_REQUEST_STRIDE + COPY_CODE_REQUEST_OFFSET,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.ic_action_copy_code,
+                    localized(context).getString(R.string.copy_code),
+                    pending,
+                )
+                    .setShowsUserInterface(false)
+                    .setAuthenticationRequired(true)
+                    .build(),
+            )
+        }
+
+        private const val MAX_VISIBLE_ACTIONS = 3
         private const val ACTION_REQUEST_STRIDE = 8
+        private const val COPY_CODE_REQUEST_OFFSET = 3
         private const val DISMISS_REQUEST_OFFSET = 7
 
         private fun dismiss_intent(context: Context, notification_id: Int): PendingIntent {

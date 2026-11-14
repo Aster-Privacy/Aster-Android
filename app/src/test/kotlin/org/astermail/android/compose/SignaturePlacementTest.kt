@@ -21,9 +21,11 @@
 
 package org.astermail.android.compose
 
+import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.ui.compose.html_signature_with_separator
 import org.astermail.android.ui.compose.plain_signature_with_separator
 import org.astermail.android.ui.compose.signature_below_quote
+import org.astermail.android.ui.compose.signatures_for_alias
 import org.astermail.android.ui.compose.split_trailing_signature
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,5 +100,20 @@ class SignaturePlacementTest {
     fun html_signature_separator_matches_web_markup() {
         assertEquals("--<br><b>Adam</b>", html_signature_with_separator("<b>Adam</b>", null))
         assertEquals("<b>Adam</b>", html_signature_with_separator("<b>Adam</b>", false))
+    }
+
+    private fun sig(id: String, alias_id: String?) =
+        DecryptedSignature(id, id, id, false, false, alias_id, null)
+
+    private val all = listOf(sig("global", null), sig("a", "alias-a"), sig("b", "alias-b"))
+
+    @Test
+    fun picker_shows_alias_signatures_and_unassigned_ones() {
+        assertEquals(listOf("global", "a"), signatures_for_alias(all, "alias-a").map { it.id })
+    }
+
+    @Test
+    fun picker_hides_alias_signatures_for_primary_address() {
+        assertEquals(listOf("global"), signatures_for_alias(all, null).map { it.id })
     }
 }

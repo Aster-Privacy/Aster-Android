@@ -27,14 +27,24 @@ data class InboundAttachmentEntry(
     val content_type: String? = null,
     val content_id: String? = null,
     val size: Long? = null,
+    val sha256: String? = null,
+    val is_inline: Boolean = false,
+    val sealed: Boolean = false,
 )
 
 object InboundAttachmentKeyStore {
 
     private const val MAX_ENTRIES = 4096
+    private const val MAX_SEALED_ITEMS = 1024
     private const val UNREADABLE_TTL_MS = 60_000L
 
     private val keys = BoundedKeyCache(MAX_ENTRIES)
+
+    private val sealed_items = object : LinkedHashMap<String, Map<Int, InboundAttachmentEntry>>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, Map<Int, InboundAttachmentEntry>>?,
+        ): Boolean = size > MAX_SEALED_ITEMS
+    }
 
     private val metas = object : LinkedHashMap<String, InboundAttachmentEntry>(64, 0.75f, true) {
         override fun removeEldestEntry(
@@ -73,6 +83,7 @@ object InboundAttachmentKeyStore {
         if (mail_item_id.isNullOrBlank() || seq_num == null || key.isNullOrBlank()) return
         val id = entry_key(mail_item_id, seq_num)
         synchronized(lock) {
+            if (sealed_items.containsKey(mail_item_id)) return
             if (unencrypted) {
                 if (keys.get(id) != null && !unencrypted_ids.containsKey(id)) return
                 unencrypted_ids[id] = Unit
@@ -125,9 +136,34 @@ object InboundAttachmentKeyStore {
         }
     }
 
+    fun register_sealed_manifest(mail_item_id: String?, manifest: org.json.JSONArray?): Boolean {
+        if (mail_item_id.isNullOrBlank() || manifest == null || manifest.length() == 0) return false
+        val entries = LinkedHashMap<Int, InboundAttachmentEntry>()
+        for (index in 0 until manifest.length()) {
+            val raw = manifest.opt(index) as? org.json.JSONObject ?: return false
+            val (seq, entry) = read_sealed_entry(raw) ?: return false
+            entries[seq] = entry
+        }
+        synchronized(lock) {
+            sealed_items[mail_item_id] = entries
+        }
+        return true
+    }
+
+    fun is_sealed(mail_item_id: String?): Boolean {
+        if (mail_item_id.isNullOrBlank()) return false
+        return synchronized(lock) { sealed_items.containsKey(mail_item_id) }
+    }
+
+    fun is_row_listed(mail_item_id: String?, seq_num: Int?): Boolean {
+        if (mail_item_id.isNullOrBlank() || seq_num == null) return true
+        return synchronized(lock) { sealed_items[mail_item_id]?.containsKey(seq_num) ?: true }
+    }
+
     fun key(mail_item_id: String?, seq_num: Int?): String? {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return null
         return synchronized(lock) {
+            sealed_items[mail_item_id]?.let { return@synchronized it[seq_num]?.key }
             keys.get(entry_key(mail_item_id, seq_num))?.let { String(it, Charsets.UTF_8) }
         }
     }
@@ -136,6 +172,7 @@ object InboundAttachmentKeyStore {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return null
         val id = entry_key(mail_item_id, seq_num)
         return synchronized(lock) {
+            sealed_items[mail_item_id]?.let { return@synchronized it[seq_num] }
             val key = keys.get(id)?.let { String(it, Charsets.UTF_8) } ?: return@synchronized null
             metas[id]?.copy(key = key) ?: InboundAttachmentEntry(key = key)
         }
@@ -166,6 +203,7 @@ object InboundAttachmentKeyStore {
         synchronized(lock) {
             keys.clear()
             unencrypted_ids.clear()
+            sealed_items.clear()
             metas.clear()
             unreadable.clear()
         }
@@ -177,6 +215,30 @@ object InboundAttachmentKeyStore {
         if (!entry.has(name) || entry.isNull(name)) return null
         return entry.optString(name, "").ifBlank { null }
     }
+
+    private fun read_sealed_entry(raw: org.json.JSONObject): Pair<Int, InboundAttachmentEntry>? {
+        val seq_value = raw.opt("seq") as? Number ?: return null
+        val seq_double = seq_value.toDouble()
+        if (seq_double < 0 || seq_double > Int.MAX_VALUE || seq_double != Math.floor(seq_double)) return null
+        val key = raw.opt("key") as? String
+        if (key.isNullOrEmpty()) return null
+        val size = (raw.opt("size") as? Number)?.toDouble()
+            ?.takeIf { it >= 0 && it == Math.floor(it) }
+            ?.toLong()
+        return seq_double.toInt() to InboundAttachmentEntry(
+            key = key,
+            filename = sealed_text(raw, "filename"),
+            content_type = sealed_text(raw, "content_type"),
+            content_id = sealed_text(raw, "content_id"),
+            size = size,
+            sha256 = sealed_text(raw, "sha256")?.trim()?.lowercase(java.util.Locale.ROOT),
+            is_inline = raw.opt("is_inline") == true,
+            sealed = true,
+        )
+    }
+
+    private fun sealed_text(raw: org.json.JSONObject, name: String): String? =
+        (raw.opt(name) as? String)?.takeIf { it.isNotEmpty() }
 
     private fun entry_key(mail_item_id: String, seq_num: Int): String = "$mail_item_id:$seq_num"
 }

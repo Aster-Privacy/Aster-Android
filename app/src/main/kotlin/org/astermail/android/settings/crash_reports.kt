@@ -22,15 +22,29 @@
 package org.astermail.android.settings
 
 import android.content.Context
+import android.content.SharedPreferences
 import org.astermail.android.api.errors.ClientErrorReporter
+import org.astermail.android.security.LockdownStore
+
+fun crash_reports_allowed(consent: Boolean, lockdown_enabled: Boolean): Boolean =
+    consent && !lockdown_enabled
 
 object crash_reports {
 
     private const val PREFS_NAME = "aster_crash_reports"
     private const val KEY_ENABLED = "crash_reports_enabled"
 
+    @Volatile
+    private var lockdown_listener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+
     fun start(context: Context) {
-        ClientErrorReporter.set_enabled(read(context))
+        val app = context.applicationContext
+        sync_reporter(app)
+        if (lockdown_listener == null) {
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> sync_reporter(app) }
+            lockdown_listener = listener
+            LockdownStore.register_listener(app, listener)
+        }
     }
 
     fun read(context: Context): Boolean =
@@ -39,11 +53,17 @@ object crash_reports {
             .getBoolean(KEY_ENABLED, false)
 
     fun set(context: Context, enabled: Boolean) {
-        ClientErrorReporter.set_enabled(enabled)
         context.applicationContext
             .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_ENABLED, enabled)
             .commit()
+        sync_reporter(context)
+    }
+
+    private fun sync_reporter(context: Context) {
+        ClientErrorReporter.set_enabled(
+            crash_reports_allowed(read(context), LockdownStore.is_enabled(context.applicationContext)),
+        )
     }
 }

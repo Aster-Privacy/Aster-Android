@@ -247,6 +247,7 @@
     <string name="no_body">(geen inhoud)</string>
     <string name="attachment_unnamed">Bijlage</string>
     <string name="attachment_locked">Deze bijlage kan niet worden geopend omdat de versleutelingssleutel niet beschikbaar is op dit apparaat.</string>
+    <string name="attachment_content_mismatch">Deze bijlage komt niet overeen met het bericht waarmee ze is ontvangen en is daarom niet geopend.</string>
     <string name="download_complete">Download voltooid</string>
     <string name="cannot_decode_image">Kan afbeelding niet decoderen</string>
     <string name="no_app_to_open">Geen app om dit bestand te openen</string>
@@ -3029,11 +3030,11 @@
     <string name="alias_pinned_toast">Alias vastgezet</string>
     <string name="alias_unpinned_toast">Alias losgemaakt</string>
     <string name="e2e_identity_changed_blocked">Verzenden mislukt: de versleutelingssleutel van een ontvanger is gewijzigd. Bevestig de wijziging in je inbox en verstuur het bericht opnieuw. Het bericht is niet verzonden.</string>
-    <string name="link_device_fingerprint_label">Verificatiecode</string>
+    <string name="link_device_fingerprint_label">Apparaatvingerafdruk</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Voer de verificatiecode of vingerafdruk van het apparaat in die je nieuwe apparaat toont. Kies in de desktop-app Dit apparaat verifiëren om deze te zien.</string>
+    <string name="link_device_fingerprint_hint">Voer de apparaatvingerafdruk in die in de app staat die je koppelt. Sommige apps noemen dit een verificatiecode.</string>
     <string name="link_device_error_invalid_keys">Het andere apparaat heeft sleutels gestuurd die niet bruikbaar zijn. Vraag een nieuwe code aan op dat apparaat en probeer het opnieuw.</string>
-    <string name="link_device_error_codes_not_confirmed">Voer de volledige verificatiecode van je nieuwe apparaat in om het apparaat te koppelen.</string>
+    <string name="link_device_error_codes_not_confirmed">Dit komt niet overeen met het apparaat voor deze koppelcode. Vergelijk elk teken met de app die je koppelt en probeer het opnieuw. Als het nog steeds niet overeenkomt, koppel het apparaat dan niet.</string>
     <string name="link_device_error_fingerprint_mismatch">Deze code komt niet overeen met je nieuwe apparaat. Controleer de code op je nieuwe apparaat en voer deze opnieuw in. Tik op Annuleren als de code nog steeds niet overeenkomt.</string>
     <string name="restore">Herstellen</string>
     <string name="contact_trash_confirm_message">Je kunt contacten herstellen uit de prullenbak.</string>
@@ -3155,9 +3156,9 @@
     <string name="shipping_status_exception">Bezorgprobleem</string>
     <string name="shipping_status_unknown">Zendingsupdate</string>
     <string name="inbox_arrives_on">Komt aan op %1$s</string>
-    <string name="sender_verified_badge">Geverifieerde afzender</string>
-    <string name="sender_verified_title">Geverifieerde afzender</string>
-    <string name="sender_verified_message">De afzender van deze e-mail heeft bevestigd eigenaar te zijn van %1$s.</string>
+    <string name="sender_verified_badge">Geverifieerd domein</string>
+    <string name="sender_verified_title">Geverifieerd domein</string>
+    <string name="sender_verified_message">De servers van Aster hebben gecontroleerd dat de afzender eigenaar is van %1$s.</string>
     <string name="password_recovery_email_title">Herstel-e-mailadres voor wachtwoord</string>
     <string name="recovery_email_step_desc">Voeg een e-mailadres toe zodat je weer in je account kunt als je je herstelcodes kwijtraakt.</string>
     <string name="notifications_step_title">Meldingen inschakelen</string>
@@ -3562,4 +3563,11 @@
     <string name="sidebar_move_section_up">%1$s omhoog verplaatsen</string>
     <string name="sidebar_move_section_down">%1$s omlaag verplaatsen</string>
     <string name="contacts_pending_sync">Wacht op synchronisatie</string>
+    <string name="recovery_previous_password_placeholder">Voer je vorige wachtwoord in</string>
+    <string name="recovery_previous_password_body">Je versleutelingssleutels zijn nog beveiligd met het wachtwoord dat je vóór deze reset gebruikte. Voer dat vorige wachtwoord in om je e-mail leesbaar te houden. Je sleutels blijven hetzelfde en worden vanaf nu beveiligd met je nieuwe wachtwoord.</string>
+    <string name="recovery_previous_password_required">Voer je vorige wachtwoord in of tik op Ik weet het niet meer.</string>
+    <string name="recovery_previous_password_incorrect">Dat wachtwoord ontgrendelt je versleutelingssleutels niet. Controleer het en probeer het opnieuw.</string>
+    <string name="recovery_previous_password_forgot">Ik weet het niet meer</string>
+    <string name="recovery_previous_password_use">Mijn vorige wachtwoord invoeren</string>
+    <string name="recovery_previous_password_skipped_warning">Je wachtwoord wordt gereset en je versleutelingssleutels blijven behouden, maar ze blijven vergrendeld met je vorige wachtwoord. Je e-mail is pas leesbaar nadat je dat wachtwoord invoert via de banner Gegevens herstellen.</string>
 </resources>

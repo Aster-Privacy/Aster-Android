@@ -267,8 +267,10 @@ data class SettingsUiState(
     val external_pgp_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo? = null,
     val external_pgp_key_busy: Boolean = false,
     val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
+    val recovery_codes_outdated: Boolean = false,
     val recovery_codes_status: org.astermail.android.api.encryption.RecoveryCodesStatus? = null,
     val recovery_codes_status_load_failed: Boolean = false,
+    val recovery_rotation: RecoveryCodesRotation = RecoveryCodesRotation(),
     val encryption_settings: org.astermail.android.api.encryption.EncryptionSettings? = null,
     val spam_settings: org.astermail.android.api.preferences.SpamSettings? = null,
     val encryption_settings_load_failed: Boolean = false,
@@ -291,6 +293,15 @@ data class SettingsUiState(
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
+
+enum class RecoveryRotationPhase { idle, rotating, done, failed }
+
+data class RecoveryCodesRotation(
+    val phase: RecoveryRotationPhase = RecoveryRotationPhase.idle,
+    val codes: List<String> = emptyList(),
+    val error: String? = null,
+    val needs_step_up: Boolean = false,
+)
 
 data class DecryptedDeletedAlias(
     val id: String,
@@ -364,6 +375,8 @@ class SettingsViewModel @Inject constructor(
 
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
 
+    internal var io_dispatcher: CoroutineDispatcher = Dispatchers.IO
+
     private val _state = MutableStateFlow(SettingsUiState())
     private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
     private var last_subscription_load_ms = 0L
@@ -400,6 +413,8 @@ class SettingsViewModel @Inject constructor(
     private var twin_address_job: kotlinx.coroutines.Job? = null
     private var twin_address_generation = 0
     private var account_generation = 0
+    private var recovery_rotation_job: kotlinx.coroutines.Job? = null
+    private var recovery_outdated_epoch = 0
     private var tags_load_job: kotlinx.coroutines.Job? = null
     private var tags_reload_job: kotlinx.coroutines.Job? = null
     private var labels_reload_job: kotlinx.coroutines.Job? = null
@@ -920,6 +935,8 @@ class SettingsViewModel @Inject constructor(
         twin_address_job?.cancel()
         twin_address_job = null
         account_generation++
+        recovery_rotation_job = null
+        recovery_outdated_epoch++
         tags_load_job?.cancel()
         tags_load_job = null
         tags_reload_job?.cancel()
@@ -4168,15 +4185,122 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    suspend fun rotate_recovery_codes_now(step_up_token: String): Result<List<String>> {
-        return try {
-            val codes = auth_repository.rotate_recovery_codes(step_up_token)
-            load_recovery_codes_status()
-            Result.success(codes)
+    fun start_recovery_codes_rotation(step_up_token: String) {
+        if (recovery_rotation_job?.isActive == true) {
+            _state.update {
+                it.copy(recovery_rotation = RecoveryCodesRotation(phase = RecoveryRotationPhase.rotating))
+            }
+            return
+        }
+        val gen = account_generation
+        _state.update {
+            it.copy(recovery_rotation = RecoveryCodesRotation(phase = RecoveryRotationPhase.rotating))
+        }
+        recovery_rotation_job = viewModelScope.launch {
+            val work = async {
+                val previous_codes = get_recovery_codes()
+                attempt_recovery_rotation(step_up_token, previous_codes)
+            }
+            val in_time = kotlinx.coroutines.withTimeoutOrNull(RECOVERY_ROTATION_TIMEOUT_MS) { work.await() }
+            if (in_time == null && gen == account_generation) {
+                _state.update {
+                    it.copy(
+                        recovery_rotation = RecoveryCodesRotation(
+                            phase = RecoveryRotationPhase.failed,
+                            error = context.getString(R.string.error_timeout),
+                        ),
+                    )
+                }
+            }
+            val result = in_time ?: work.await()
+            if (gen != account_generation) return@launch
+            finish_recovery_rotation(result)
+        }
+    }
+
+    fun acknowledge_recovery_rotation() {
+        _state.update {
+            if (it.recovery_rotation.phase == RecoveryRotationPhase.rotating) {
+                it
+            } else {
+                it.copy(recovery_rotation = RecoveryCodesRotation())
+            }
+        }
+    }
+
+    private suspend fun attempt_recovery_rotation(
+        step_up_token: String,
+        previous_codes: List<String>?,
+    ): Result<List<String>> {
+        val failure = try {
+            return Result.success(
+                withContext(default_dispatcher) { auth_repository.rotate_recovery_codes(step_up_token) },
+            )
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
-            Result.failure(t)
+            t
         }
+        if (is_step_up_rejection(failure)) return Result.failure(failure)
+        val committed = reconcile_rotated_codes(previous_codes) ?: return Result.failure(failure)
+        return Result.success(committed)
+    }
+
+    private suspend fun reconcile_rotated_codes(previous_codes: List<String>?): List<String>? {
+        if (previous_codes.isNullOrEmpty()) return null
+        val current = try {
+            withContext(default_dispatcher) { auth_repository.sync_recovery_codes() }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            null
+        }
+        if (current.isNullOrEmpty() || current == previous_codes) return null
+        if (org.astermail.android.auth.has_outdated_recovery_codes(current)) return null
+        return current
+    }
+
+    private fun finish_recovery_rotation(result: Result<List<String>>) {
+        result
+            .onSuccess { codes ->
+                recovery_outdated_epoch++
+                _state.update {
+                    it.copy(
+                        recovery_codes_outdated = org.astermail.android.auth.has_outdated_recovery_codes(codes),
+                        recovery_rotation = RecoveryCodesRotation(
+                            phase = RecoveryRotationPhase.done,
+                            codes = codes,
+                        ),
+                    )
+                }
+                refresh_recovery_methods()
+                load_recovery_codes_status()
+            }
+            .onFailure { t ->
+                val needs_step_up = is_step_up_rejection(t)
+                _state.update {
+                    it.copy(
+                        recovery_rotation = RecoveryCodesRotation(
+                            phase = RecoveryRotationPhase.failed,
+                            error = if (needs_step_up) {
+                                context.getString(R.string.recovery_step_up_description)
+                            } else {
+                                user_facing_error(t)
+                            },
+                            needs_step_up = needs_step_up,
+                        ),
+                    )
+                }
+            }
+    }
+
+    private fun is_step_up_rejection(t: Throwable): Boolean {
+        val code = when (t) {
+            is org.astermail.android.api.ApiError.StepUpRequired -> return true
+            is org.astermail.android.api.ApiError.ForbiddenError -> t.code
+            is org.astermail.android.api.ApiError.ValidationError -> t.code
+            is org.astermail.android.api.ApiError.Conflict -> t.code
+            else -> null
+        }
+        return code == "STEP_UP_REQUIRED"
     }
 
     fun error_text(t: Throwable): String = user_facing_error(t)
@@ -4191,6 +4315,23 @@ class SettingsViewModel @Inject constructor(
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "refresh_recovery_methods", t)
                 }
+            }
+        }
+    }
+
+    fun refresh_recovery_codes_outdated() {
+        val gen = account_generation
+        val epoch = recovery_outdated_epoch
+        viewModelScope.launch {
+            val codes = try {
+                auth_repository.sync_recovery_codes()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                get_recovery_codes()
+            }
+            if (gen != account_generation || epoch != recovery_outdated_epoch) return@launch
+            _state.update {
+                it.copy(recovery_codes_outdated = org.astermail.android.auth.has_outdated_recovery_codes(codes))
             }
         }
     }
@@ -4407,8 +4548,8 @@ class SettingsViewModel @Inject constructor(
         settings_api.send_feedback(FeedbackRequest(category = category, message = message))
     }
 
-    fun get_recovery_codes(): List<String>? {
-        return session_key_store.get_recovery_codes()
+    suspend fun get_recovery_codes(): List<String>? = withContext(io_dispatcher) {
+        session_key_store.get_recovery_codes()
     }
 
     private fun user_facing_error(t: Throwable): String =
@@ -6042,7 +6183,7 @@ class SettingsViewModel @Inject constructor(
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
                 val response = ghost_alias_api.list_ghost_aliases()
-                val decrypted = response.aliases.map { decrypt_ghost_alias(it) }
+                val decrypted = response.aliases.map { with_ghost_alias_hash(decrypt_ghost_alias(it)) }
                 prime_own_ghost_avatars(decrypted)
                 _state.value = _state.value.copy(ghost_aliases = decrypted, is_loading = false)
             } catch (t: Throwable) {
@@ -6892,6 +7033,18 @@ class SettingsViewModel @Inject constructor(
         return android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
     }
 
+    private suspend fun with_ghost_alias_hash(alias: GhostAlias): GhostAlias {
+        if (alias.decryption_failed || alias.alias_address_hash.isNotBlank()) return alias
+        val local_part = alias.decrypted_address.substringBeforeLast('@', "")
+        if (local_part.isBlank() || alias.domain.isBlank()) return alias
+        return try {
+            alias.copy(alias_address_hash = compute_alias_address_hash(local_part, alias.domain))
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            alias
+        }
+    }
+
     private fun decrypt_ghost_alias(alias: GhostAlias): GhostAlias {
         if (alias.encrypted_local_part.isBlank()) return alias.copy(decryption_failed = true)
         return try {
@@ -7122,6 +7275,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     companion object {
+        internal const val RECOVERY_ROTATION_TIMEOUT_MS = 90_000L
         private const val BLOCKED_SENDERS_HMAC_INFO = "blocked-senders-hmac-v1"
         private const val BLOCKED_SENDERS_INTEGRITY_INFO = "blocked-senders-v1"
         private const val ALLOWED_SENDERS_HMAC_INFO = "allowed-senders-hmac-v1"

@@ -116,7 +116,7 @@ data class ExternalSendRequest(
 )
 
 @Serializable
-data class SecureMessageField(
+data class SecureMessageFieldPayload(
     val ciphertext: String,
     val nonce: String,
 )
@@ -125,11 +125,11 @@ data class SecureMessageField(
 data class SecureMessagePayload(
     val kdf_salt: String,
     val auth_proof: String,
-    val encrypted_subject: SecureMessageField,
-    val encrypted_body: SecureMessageField,
     val kem_ciphertext: String,
     val encrypted_kem_seed: String,
     val kem_seed_nonce: String,
+    val encrypted_subject: SecureMessageFieldPayload,
+    val encrypted_body: SecureMessageFieldPayload,
     val attachments_bundle: String? = null,
 )
 

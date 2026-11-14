@@ -409,6 +409,7 @@
     <string name="no_body">(no body)</string>
     <string name="attachment_unnamed">Attachment</string>
     <string name="attachment_locked">This attachment can\'t be opened because its encryption key isn\'t available on this device.</string>
+    <string name="attachment_content_mismatch">This attachment doesn\'t match the message it came with, so it wasn\'t opened.</string>
     <string name="download_complete">Download complete</string>
     <string name="cannot_decode_image">Cannot decode image</string>
     <string name="no_app_to_open">No app to open this file</string>
@@ -2914,11 +2915,11 @@
     <string name="link_device_error_session">Your session is locked. Sign in again, then link the device.</string>
     <string name="link_device_error_unavailable">Device linking is unavailable right now. Try again later.</string>
     <string name="link_device_error_failed">The device could not be linked. Try again.</string>
-    <string name="link_device_fingerprint_label">Verification code</string>
+    <string name="link_device_fingerprint_label">Device fingerprint</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Enter the verification code or device fingerprint that your new device shows. In the desktop app, select Verify this device to see it.</string>
+    <string name="link_device_fingerprint_hint">Enter the device fingerprint shown in the app that you\'re linking. Some apps call it a verification code.</string>
     <string name="link_device_error_invalid_keys">The other device sent keys that cannot be used. Get a new code on that device, then try again.</string>
-    <string name="link_device_error_codes_not_confirmed">To link the device, enter the full verification code from your new device.</string>
+    <string name="link_device_error_codes_not_confirmed">This doesn\'t match the device for this linking code. Compare each character with the app that you\'re linking, then try again. If it still doesn\'t match, don\'t link the device.</string>
     <string name="link_device_error_fingerprint_mismatch">That code doesn\'t match your new device. Check the code on your new device and enter it again. If it still doesn\'t match, tap Cancel.</string>
     <string name="alias_locked_title">Locked by a password change</string>
     <string name="alias_locked_body">This alias still receives mail, but its label was encrypted with your previous password, so this device can’t read it. If you remember the address, you can restore the label.</string>
@@ -3243,9 +3244,9 @@
     <string name="shipping_status_exception">Delivery issue</string>
     <string name="shipping_status_unknown">Shipment update</string>
     <string name="inbox_arrives_on">Arrives %1$s</string>
-    <string name="sender_verified_badge">Verified sender</string>
-    <string name="sender_verified_title">Verified sender</string>
-    <string name="sender_verified_message">The sender of this email has verified that they own %1$s.</string>
+    <string name="sender_verified_badge">Verified domain</string>
+    <string name="sender_verified_title">Verified domain</string>
+    <string name="sender_verified_message">Aster\'s servers checked that the sender owns %1$s.</string>
     <string name="password_recovery_email_title">Password recovery email</string>
     <string name="recovery_email_step_desc">Add an email address so you can get back into your account if you lose your recovery codes.</string>
     <string name="notifications_step_title">Turn on notifications</string>
@@ -3613,4 +3614,11 @@
     <string name="sidebar_move_section_up">Move %1$s up</string>
     <string name="sidebar_move_section_down">Move %1$s down</string>
     <string name="contacts_pending_sync">Waiting to sync</string>
+    <string name="recovery_previous_password_placeholder">Enter your previous password</string>
+    <string name="recovery_previous_password_body">Your encryption keys are still protected by the password you used before this reset. To keep your mail readable, enter that previous password. Your keys stay the same and your new password protects them from now on.</string>
+    <string name="recovery_previous_password_required">Enter your previous password, or tap I don\'t remember it.</string>
+    <string name="recovery_previous_password_incorrect">That password doesn\'t unlock your encryption keys. Check it and try again.</string>
+    <string name="recovery_previous_password_forgot">I don\'t remember it</string>
+    <string name="recovery_previous_password_use">Enter my previous password</string>
+    <string name="recovery_previous_password_skipped_warning">Your password is reset and your encryption keys are kept, but they stay locked with your previous password. Your mail can\'t be read until you enter that password from the Recover data banner.</string>
 </resources>

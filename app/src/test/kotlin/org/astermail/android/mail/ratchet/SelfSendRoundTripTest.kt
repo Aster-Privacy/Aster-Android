@@ -47,6 +47,7 @@ import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
+import org.astermail.android.api.ratchet.AddressBundleUpload
 import org.astermail.android.api.ratchet.PqPrekeyInfo
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
@@ -172,6 +173,11 @@ class SelfSendRoundTripTest {
 
         val pins = RatchetIdentityPinStore(mockk(relaxed = true), session_key_store)
         val locks = ConversationLocks()
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } coAnswers {
+            ratchet_api.fetch_prekey_bundle(firstArg(), secondArg())
+        }
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Unsupported
+        val address_directory = AddressIdentityDirectory(session_key_store, ratchet_api, pins)
         encryptor = RatchetEncryptor(
             state_store,
             session_key_store,
@@ -180,6 +186,7 @@ class SelfSendRoundTripTest {
             locks,
             keys_api,
             pins,
+            address_directory,
         )
         val escrow = mockk<MessageEscrow>(relaxed = true)
         coEvery { escrow.fetch(any()) } returns null
@@ -194,6 +201,7 @@ class SelfSendRoundTripTest {
             pins,
             mockk(relaxed = true),
             escrow,
+            address_directory,
         )
     }
 
@@ -332,6 +340,20 @@ class SelfSendRoundTripTest {
 
     private suspend fun open(envelope: String, id: String): String =
         decryptor.try_decrypt(envelope, listOf(me), me, id)
+
+    @Test
+    fun `alias self copy needs no network`() = runTest {
+        build(signed_pq = false)
+        val alias = "new.user.alias@aster.cx"
+        session_key_store.put_user_email(me)
+        coEvery { ratchet_api.upload_address_bundle(any()) } returns AddressBundleUpload.Accepted(active = true)
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } throws java.io.IOException("offline")
+        val first = encryptor.encrypt_envelope(alias, listOf(alias), "one", allow_non_post_quantum = true)!!
+        val second = encryptor.encrypt_envelope(alias, listOf(alias), "two", allow_non_post_quantum = true)!!
+        assertEquals("one", decryptor.try_decrypt(first, listOf(alias), alias, "m1"))
+        assertEquals("two", decryptor.try_decrypt(second, listOf(alias), alias, "m2"))
+    }
 
     @Test
     fun `send to self then read`() = runTest {

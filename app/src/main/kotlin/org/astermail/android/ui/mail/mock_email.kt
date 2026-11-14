@@ -471,7 +471,7 @@ fun thread_message_trust_message(msg: org.astermail.android.mail.ThreadMessageDe
 }
 
 fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypted): ThreadMessage {
-    val ts = parse_iso_timestamp(msg.timestamp)
+    val ts = parse_iso_timestamp(msg.sealed_sent_at ?: msg.timestamp)
     val html = select_display_html(msg.body_text, msg.body_html)
     val display_body = select_display_body(msg.body_text, html)
     return ThreadMessage(
@@ -709,12 +709,12 @@ private fun localized_format(
     return format
 }
 
-private fun account_date_pattern(skeleton: String): String? {
+internal fun account_date_pattern(skeleton: String): String? {
     val preference = AsterTimePreferences.account_date_format ?: return null
     val with_year = skeleton.startsWith("y")
     val date_part = when (preference) {
         "DD/MM/YYYY" -> if (with_year) "dd/MM/yyyy" else "dd/MM"
-        "YYYY-MM-DD" -> if (with_year) "yyyy-MM-dd" else "MM-dd"
+        "YYYY-MM-DD" -> "yyyy-MM-dd"
         else -> if (with_year) "MM/dd/yyyy" else "MM/dd"
     }
     if (!skeleton.contains("d")) return null

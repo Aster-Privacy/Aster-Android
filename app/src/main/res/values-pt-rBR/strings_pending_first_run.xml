@@ -16,6 +16,9 @@
     <string name="recovery_codes_reminder_title">Salve seus códigos de recuperação</string>
     <string name="recovery_codes_reminder_body">O Aster criptografa seus e-mails com sua senha, então ninguém pode redefini-la por você. Os códigos de recuperação são a única forma de voltar aos seus e-mails criptografados.</string>
     <string name="recovery_codes_reminder_action">Obter códigos de recuperação</string>
+    <string name="recovery_codes_refresh_title">Substitua seus códigos de recuperação</string>
+    <string name="recovery_codes_refresh_body">Seus códigos de recuperação salvos usam um formato mais antigo e mais curto. Obtenha novos códigos e salve-os. Depois disso, os códigos antigos deixam de funcionar.</string>
+    <string name="recovery_codes_refresh_action">Obter novos códigos</string>
     <string name="recovery_phrase_migrate_title">Mude para códigos de recuperação</string>
     <string name="recovery_phrase_migrate_body">As frases de recuperação vão deixar de existir. Gere códigos de recuperação agora para continuar podendo recuperar sua conta.</string>
     <string name="recovery_phrase_migrate_action">Obter códigos</string>

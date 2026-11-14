@@ -219,6 +219,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.mail.AttachmentIntegrityException
 import org.astermail.android.mail.AttachmentKeyUnavailableException
 import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
@@ -489,8 +490,7 @@ internal fun proxy_external_urls(html: String, proxy_base: String): String {
     }
 }
 
-private const val INLINE_IMAGE_MAX_BYTES = 16 * 1024 * 1024
-private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 32 * 1024 * 1024
+private const val INLINE_IMAGE_TOTAL_BUDGET_BYTES = 48 * 1024 * 1024
 private const val TRANSPARENT_PIXEL_DATA_URI =
     "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 
@@ -547,7 +547,7 @@ internal fun inline_image_sources(
                 att.seq_num,
             )
         }.getOrNull() ?: continue
-        if (bytes.isEmpty() || bytes.size > INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
+        if (bytes.isEmpty() || bytes.size > org.astermail.android.mail.INLINE_IMAGE_MAX_BYTES || bytes.size > budget) continue
         budget -= bytes.size
         val key = InlineImageStore.content_key(used.first(), bytes)
         InlineImageStore.put(key, att.content_type, bytes)
@@ -599,15 +599,13 @@ fun MailDetailScreen(
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val detail_swipe = remember_detail_swipe_state(email_id, swipe_direction)
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
-    val remote_images_always = settings_state.preferences?.load_remote_images == "always" ||
-        settings_state.preferences?.block_external_content == false
-    val privacy_blocks_external =
-        (settings_state.preferences?.block_external_images ?: true) && !remote_images_always
+    val privacy_blocks_external = setting_blocks_remote_images(settings_state.preferences)
     val traffic_blocks_external = org.astermail.android.network.low_network_active()
     val block_external_images = privacy_blocks_external || traffic_blocks_external
     val blocked_for_traffic_only = traffic_blocks_external && !privacy_blocks_external
     val offer_always_allow_external =
         settings_state.preferences?.load_remote_images != "never"
+    val image_grant_allowed = allows_remote_image_grant(settings_state.preferences)
     val thread_state by mail_vm.thread_state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val reactions_enabled = settings_state.preferences?.reactions_enabled != false
@@ -630,7 +628,10 @@ fun MailDetailScreen(
     val identity_changes by mail_vm.identity_changes.collectAsStateWithLifecycle()
     val unauthenticated_message_ids by mail_vm.unauthenticated_message_ids.collectAsStateWithLifecycle()
     val identity_changed_senders = remember(identity_changes) {
-        identity_changes.mapNotNull { it.sender_email.trim().lowercase().takeIf { e -> e.isNotBlank() } }.toSet()
+        identity_changes.mapNotNull {
+            it.sender_email.takeIf { e -> e.isNotBlank() }
+                ?.let { e -> org.astermail.android.mail.ratchet.PinIdentity.canonical_id(e) }
+        }.toSet()
     }
     var reaction_picker_open by remember { mutableStateOf(false) }
     var left_after_unread by remember(email_id) { mutableStateOf(false) }
@@ -738,8 +739,8 @@ fun MailDetailScreen(
         }
     }
 
-    LaunchedEffect(reactions_enabled, thread_ghost_email) {
-        if (reactions_enabled && !thread_ghost_email.isNullOrBlank()) {
+    LaunchedEffect(reactions_enabled) {
+        if (reactions_enabled) {
             settings_vm.load_ghost_aliases()
         }
     }
@@ -766,14 +767,14 @@ fun MailDetailScreen(
         val options = mutableListOf<String>()
         if (my_email.isNotBlank()) options.add(my_email)
         settings_state.aliases
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
             .forEach { if (it.address !in options) options.add(it.address) }
         settings_state.custom_domain_addresses
-            .filter { it.is_enabled && it.address.contains('@') }
+            .filter { it.is_enabled && !it.decryption_failed && it.address.contains('@') }
             .forEach { if (it.address !in options) options.add(it.address) }
         settings_state.ghost_aliases
-            .filter { it.address.contains('@') }
-            .forEach { if (it.address !in options) options.add(it.address) }
+            .filter { it.is_enabled && !it.decryption_failed && it.decrypted_address.contains('@') }
+            .forEach { if (it.decrypted_address !in options) options.add(it.decrypted_address) }
         options.toList()
     }
     val reaction_sender_hashes = remember(
@@ -782,26 +783,52 @@ fun MailDetailScreen(
         settings_state.ghost_aliases,
     ) {
         val map = mutableMapOf<String, String>()
-        settings_state.aliases.forEach { map[it.address] = it.alias_address_hash }
-        settings_state.custom_domain_addresses.forEach { map[it.address] = it.local_part_hash }
+        settings_state.aliases
+            .filter { !it.decryption_failed }
+            .forEach { map[it.address] = it.alias_address_hash }
+        settings_state.custom_domain_addresses
+            .filter { !it.decryption_failed }
+            .forEach { map[it.address] = it.local_part_hash }
         settings_state.ghost_aliases.forEach { ghost ->
-            if (ghost.address.isNotBlank() && ghost.alias_address_hash.isNotBlank()) {
-                map[ghost.address] = ghost.alias_address_hash
+            if (!ghost.decryption_failed && ghost.decrypted_address.contains('@') &&
+                ghost.alias_address_hash.isNotBlank()
+            ) {
+                map[ghost.decrypted_address] = ghost.alias_address_hash
             }
         }
         map.toMap()
     }
-    val reaction_identity_for: (String) -> org.astermail.android.ui.compose.ReactionSenderIdentity =
+    val reaction_routing_tokens = remember(
+        settings_state.aliases,
+        settings_state.custom_domain_addresses,
+        settings_state.ghost_aliases,
+    ) {
+        org.astermail.android.ui.compose.reaction_routing_token_map(
+            aliases = settings_state.aliases,
+            custom_domain_addresses = settings_state.custom_domain_addresses,
+            ghost_aliases = settings_state.ghost_aliases,
+        )
+    }
+    val reaction_identity_for: (String) -> org.astermail.android.ui.compose.ReactionSenderIdentity? =
         { message_id ->
             val target = thread_state.messages.find { it.id == message_id }
-            org.astermail.android.ui.compose.resolve_reaction_sender_identity(
-                own_recipient_addresses = target?.let { it.to_addresses + it.cc_addresses }.orEmpty(),
-                message_sender_email = target?.sender_email.orEmpty(),
-                is_own_message = target?.raw_item?.item_type == "sent",
-                alias_options = reaction_sender_options,
-                alias_hash_map = reaction_sender_hashes,
-                user_email = my_email,
-            )
+            if (target == null) {
+                null
+            } else {
+                val item_type = target.raw_item.item_type ?: target.raw_item.metadata?.item_type ?: "received"
+                val is_received = item_type == "received"
+                org.astermail.android.ui.compose.resolve_reaction_sender_identity(
+                    own_recipient_addresses = target.to_addresses + target.cc_addresses,
+                    message_sender_email = target.sender_email,
+                    is_own_message = item_type == "sent",
+                    alias_options = reaction_sender_options,
+                    alias_hash_map = reaction_sender_hashes,
+                    user_email = my_email,
+                    delivered_to = if (is_received) extract_delivered_to(target.raw_headers) else null,
+                    routing_token = if (is_received) target.raw_item.routing_token else null,
+                    routing_token_map = reaction_routing_tokens,
+                )
+            }
         }
     val reaction_own_addresses = remember(reaction_sender_options) {
         reaction_sender_options.map { it.trim().lowercase() }.filter { it.isNotBlank() }.toSet()
@@ -830,6 +857,7 @@ fun MailDetailScreen(
                 is_trashed = is_trashed,
                 reactions_enabled = reactions_enabled,
                 is_own_address = { address -> address in reaction_own_addresses },
+                sender_resolved = reaction_identity_for(msg.id) != null,
                 require_encryption = require_encryption,
             )
         }
@@ -905,7 +933,8 @@ fun MailDetailScreen(
             result.onSuccess { (resolved_att, bytes) -> block(resolved_att, bytes) }
                 .onFailure { error ->
                     org.astermail.android.ui.common.app_toast.show(
-                        if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                        if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                        else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                         else context.getString(R.string.failed_to_download, att.filename),
                     )
                 }
@@ -1064,12 +1093,17 @@ fun MailDetailScreen(
 
     fun dispatch_reaction(message_id: String, emoji: String, allow_non_post_quantum: Boolean = false) {
         val identity = reaction_identity_for(message_id)
+        if (identity == null) {
+            show_toast(context.getString(R.string.cannot_react_bcc))
+            return
+        }
         mail_vm.send_reaction(
             message_id = message_id,
             emoji = emoji,
             sender_email = identity.email,
             sender_alias_hash = identity.alias_hash,
             own_addresses = reaction_own_addresses,
+            sender_resolved = true,
             hold_seconds = reaction_hold_seconds,
             require_encryption = require_encryption,
             allow_non_post_quantum = allow_non_post_quantum,
@@ -1359,18 +1393,14 @@ fun MailDetailScreen(
                             val msg = messages.lastOrNull()
                             if (msg != null) {
                                 val print_subject = email?.subject.orEmpty()
-                                val print_allow_external = !block_external_images ||
-                                    msg.id in allow_external_ids ||
-                                    is_aster_system_sender(msg)
-                                val print_tracking_protection = settings_state.preferences?.block_external_content != false
-                                val print_sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
-                                    clean_tracking_links = print_tracking_protection &&
-                                        settings_state.preferences?.block_tracking_links != false,
-                                    remove_tracking_pixels = print_tracking_protection &&
-                                        settings_state.preferences?.block_tracking_pixels != false,
-                                    block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
-                                    block_remote_css = settings_state.preferences?.block_remote_css != false,
+                                val print_allow_external = message_loads_remote_content(
+                                    blocked = block_external_images,
+                                    granted = msg.id in allow_external_ids,
+                                    grant_allowed = image_grant_allowed,
+                                    is_system_sender = is_aster_system_sender(msg),
                                 )
+                                val print_sanitize_options =
+                                    remote_content_sanitize_options(settings_state.preferences)
                                 scope.launch {
                                     print_email(
                                         context = context,
@@ -1640,8 +1670,14 @@ fun MailDetailScreen(
                             my_profile_pic = my_profile_pic,
                             is_first_card = is_first_card,
                             is_last_card = is_last_card,
-                            allow_external = !block_external_images || msg.id in allow_external_ids || is_system_sender,
+                            allow_external = message_loads_remote_content(
+                                blocked = block_external_images,
+                                granted = msg.id in allow_external_ids,
+                                grant_allowed = image_grant_allowed,
+                                is_system_sender = is_system_sender,
+                            ),
                             blocked_for_traffic = blocked_for_traffic_only,
+                            offer_load_once = image_grant_allowed,
                             offer_always_allow = offer_always_allow_external,
                             show_raw_headers = settings_state.preferences?.show_raw_headers == true,
                             on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
@@ -1659,7 +1695,7 @@ fun MailDetailScreen(
                             attachments_failed = msg.id in attachment_failure_ids,
                             on_retry_attachments = { mail_vm.retry_thread_attachments() },
                             identity_changed = identity_changed_senders.contains(
-                                msg.sender_email.trim().lowercase(),
+                                org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
                             ),
                             sender_unauthenticated = msg.id in unauthenticated_message_ids,
                             on_acknowledge_identity = {
@@ -1701,8 +1737,12 @@ fun MailDetailScreen(
                             on_image_click = { src -> lightbox_src = src },
                             on_unsubscribe = { info ->
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
+                                val unsubscribe_sender = resolve_unsubscribe_sender(
+                                    reaction_identity_for(msg.id),
+                                    thread_state.messages.find { it.id == msg.id }?.raw_item?.routing_token,
+                                )
                                 scope.launch {
-                                    val outcome = execute_unsubscribe(info) { request ->
+                                    val outcome = execute_unsubscribe(info, unsubscribe_sender) { request ->
                                         subscriptions_vm.proxy_unsubscribe(request)
                                     }
                                     val record_unsubscribed = {
@@ -1772,7 +1812,8 @@ fun MailDetailScreen(
                                         preview_bytes = bytes
                                     }.onFailure { error ->
                                         show_toast(
-                                            if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                                            else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
                                             else context.getString(R.string.failed_to_load_preview),
                                         )
                                     }
@@ -2532,6 +2573,7 @@ internal fun expanded_message(
     allow_external: Boolean = false,
     blocked_for_traffic: Boolean = false,
     offer_always_allow: Boolean = true,
+    offer_load_once: Boolean = true,
     on_load_external: () -> Unit = {},
     on_always_allow_external: () -> Unit = {},
     on_disable_low_network: () -> Unit = {},
@@ -2974,7 +3016,7 @@ internal fun expanded_message(
             } else {
                 external_content_banner(
                     counts = external_counts,
-                    on_allow_once = on_load_external,
+                    on_allow_once = if (offer_load_once) on_load_external else null,
                     on_always_allow = if (offer_always_allow) on_always_allow_external else null,
                     on_show_trackers = if (tracker_report.total > 0) ({ show_tracker_details = true }) else null,
                 )
@@ -4271,7 +4313,7 @@ internal fun tracker_details_dialog(
 @Composable
 internal fun external_content_banner(
     counts: ExternalContentCounts,
-    on_allow_once: () -> Unit,
+    on_allow_once: (() -> Unit)?,
     on_always_allow: (() -> Unit)?,
     on_show_trackers: (() -> Unit)? = null,
 ) {
@@ -4347,11 +4389,13 @@ internal fun external_content_banner(
             }
         }) else null,
     ) {
-        compact_banner_action(
-            label = stringResource(R.string.detail_external_load),
-            primary = true,
-            onClick = on_allow_once,
-        )
+        if (on_allow_once != null) {
+            compact_banner_action(
+                label = stringResource(R.string.detail_external_load),
+                primary = true,
+                onClick = on_allow_once,
+            )
+        }
         if (on_always_allow != null) {
             compact_banner_menu_action(
                 content_description = stringResource(R.string.more_options),
@@ -6588,13 +6632,7 @@ internal fun email_html_view(
         tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
     )
     val image_failed_label = stringResource(R.string.image_failed_placeholder)
-    val tracking_protection_on = settings_state.preferences?.block_external_content != false
-    val sanitize_options = EmailHtmlSanitizer.SanitizeOptions(
-        clean_tracking_links = tracking_protection_on && settings_state.preferences?.block_tracking_links != false,
-        remove_tracking_pixels = tracking_protection_on && settings_state.preferences?.block_tracking_pixels != false,
-        block_remote_fonts = settings_state.preferences?.block_remote_fonts != false,
-        block_remote_css = settings_state.preferences?.block_remote_css != false,
-    )
+    val sanitize_options = remote_content_sanitize_options(settings_state.preferences)
     val dyslexia_font = settings_state.preferences?.dyslexia_font == true
     val underline_links = settings_state.preferences?.underline_links == true
     val email_font_id = org.astermail.android.design.resolve_email_font_id(

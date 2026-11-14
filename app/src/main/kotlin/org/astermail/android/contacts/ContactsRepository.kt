@@ -123,7 +123,7 @@ class ContactsRepository @Inject constructor(
     private val pending_queue: PendingMailActionQueue?
         get() = pending_queue_provider?.get()
 
-    private fun current_account(): String? = session_key_store.get_user_id()?.takeIf { it.isNotBlank() }
+    fun current_account(): String? = session_key_store.get_user_id()?.takeIf { it.isNotBlank() }
 
     private fun is_online(): Boolean = network_probe?.invoke() ?: (pending_queue?.is_network_available() ?: true)
 

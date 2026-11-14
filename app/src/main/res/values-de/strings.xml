@@ -248,6 +248,7 @@
     <string name="no_body">(kein Inhalt)</string>
     <string name="attachment_unnamed">Anhang</string>
     <string name="attachment_locked">Dieser Anhang kann nicht geöffnet werden, weil sein Verschlüsselungsschlüssel auf diesem Gerät nicht verfügbar ist.</string>
+    <string name="attachment_content_mismatch">Dieser Anhang stimmt nicht mit der Nachricht überein, mit der er gesendet wurde, und wurde deshalb nicht geöffnet.</string>
     <string name="download_complete">Download abgeschlossen</string>
     <string name="cannot_decode_image">Bild kann nicht decodiert werden</string>
     <string name="no_app_to_open">Keine App zum Öffnen dieser Datei</string>
@@ -3030,11 +3031,11 @@
     <string name="alias_pinned_toast">Alias angeheftet</string>
     <string name="alias_unpinned_toast">Alias gelöst</string>
     <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätigen Sie die Änderung in Ihrem Posteingang und senden Sie die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
-    <string name="link_device_fingerprint_label">Prüfcode</string>
+    <string name="link_device_fingerprint_label">Gerätefingerabdruck</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
-    <string name="link_device_fingerprint_hint">Gib den Prüfcode oder Gerätefingerabdruck ein, den dein neues Gerät anzeigt. Wähle in der Desktop-App „Dieses Gerät überprüfen“, um ihn anzuzeigen.</string>
+    <string name="link_device_fingerprint_hint">Geben Sie den Gerätefingerabdruck ein, der in der App angezeigt wird, die Sie verknüpfen. Manche Apps nennen ihn Bestätigungscode.</string>
     <string name="link_device_error_invalid_keys">Das andere Gerät hat Schlüssel gesendet, die nicht verwendet werden können. Hole dir auf diesem Gerät einen neuen Code und versuche es dann erneut.</string>
-    <string name="link_device_error_codes_not_confirmed">Gib den vollständigen Prüfcode von deinem neuen Gerät ein, um das Gerät zu verknüpfen.</string>
+    <string name="link_device_error_codes_not_confirmed">Das stimmt nicht mit dem Gerät für diesen Verknüpfungscode überein. Vergleichen Sie jedes Zeichen mit der App, die Sie verknüpfen, und versuchen Sie es erneut. Wenn es weiterhin nicht übereinstimmt, verknüpfen Sie das Gerät nicht.</string>
     <string name="link_device_error_fingerprint_mismatch">Dieser Code stimmt nicht mit deinem neuen Gerät überein. Prüfe den Code auf deinem neuen Gerät und gib ihn erneut ein. Wenn er weiterhin nicht übereinstimmt, tippe auf Abbrechen.</string>
     <string name="restore">Wiederherstellen</string>
     <string name="contact_trash_confirm_message">Sie können Kontakte aus dem Papierkorb wiederherstellen.</string>
@@ -3156,9 +3157,9 @@
     <string name="shipping_status_exception">Zustellproblem</string>
     <string name="shipping_status_unknown">Sendungsupdate</string>
     <string name="inbox_arrives_on">Kommt am %1$s</string>
-    <string name="sender_verified_badge">Verifizierter Absender</string>
-    <string name="sender_verified_title">Verifizierter Absender</string>
-    <string name="sender_verified_message">Der Absender dieser E-Mail hat bestätigt, dass ihm %1$s gehört.</string>
+    <string name="sender_verified_badge">Verifizierte Domain</string>
+    <string name="sender_verified_title">Verifizierte Domain</string>
+    <string name="sender_verified_message">Die Server von Aster haben geprüft, dass dem Absender %1$s gehört.</string>
     <string name="password_recovery_email_title">E-Mail-Adresse zur Passwort-Wiederherstellung</string>
     <string name="recovery_email_step_desc">Fügen Sie eine E-Mail-Adresse hinzu, damit Sie wieder in Ihr Konto kommen, falls Sie Ihre Wiederherstellungscodes verlieren.</string>
     <string name="notifications_step_title">Benachrichtigungen aktivieren</string>
@@ -3563,4 +3564,11 @@
     <string name="sidebar_move_section_up">%1$s nach oben verschieben</string>
     <string name="sidebar_move_section_down">%1$s nach unten verschieben</string>
     <string name="contacts_pending_sync">Wartet auf Synchronisierung</string>
+    <string name="recovery_previous_password_placeholder">Vorheriges Passwort eingeben</string>
+    <string name="recovery_previous_password_body">Deine Verschlüsselungsschlüssel sind noch mit dem Passwort geschützt, das du vor dieser Zurücksetzung verwendet hast. Damit deine E-Mails lesbar bleiben, gib dieses vorherige Passwort ein. Deine Schlüssel bleiben gleich und werden ab jetzt mit deinem neuen Passwort geschützt.</string>
+    <string name="recovery_previous_password_required">Gib dein vorheriges Passwort ein oder tippe auf Ich weiß es nicht mehr.</string>
+    <string name="recovery_previous_password_incorrect">Dieses Passwort entsperrt deine Verschlüsselungsschlüssel nicht. Prüfe es und versuche es erneut.</string>
+    <string name="recovery_previous_password_forgot">Ich weiß es nicht mehr</string>
+    <string name="recovery_previous_password_use">Vorheriges Passwort eingeben</string>
+    <string name="recovery_previous_password_skipped_warning">Dein Passwort wird zurückgesetzt und deine Verschlüsselungsschlüssel bleiben erhalten, sind aber weiterhin mit deinem vorherigen Passwort gesperrt. Deine E-Mails sind erst lesbar, wenn du dieses Passwort über das Banner Daten wiederherstellen eingibst.</string>
 </resources>

@@ -48,6 +48,7 @@ import org.astermail.android.api.recovery.InitiateEmailRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryRequest
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery.RecoveryShareData
+import org.astermail.android.api.recovery.VerifierSaltsRequest
 import org.astermail.android.crypto.CryptoNative
 
 enum class RecoveryStep {
@@ -78,6 +79,9 @@ data class RecoveryUiState(
     val processing_status: String = "",
     val new_codes: List<String> = emptyList(),
     val review: RecoveryReview? = null,
+    val needs_previous_password: Boolean = false,
+    val previous_password_skipped: Boolean = false,
+    val keys_left_locked: Boolean = false,
 )
 
 @HiltViewModel
@@ -93,6 +97,7 @@ class RecoveryViewModel @Inject constructor(
     val state: StateFlow<RecoveryUiState> = _state.asStateFlow()
 
     internal var compute_dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
+    private var is_code_hash_optional = false
 
     private var recovery_token: String? = null
     private var decrypted_vault: ByteArray? = null
@@ -243,8 +248,23 @@ class RecoveryViewModel @Inject constructor(
                 val code_hash = withContext(compute_dispatcher) {
                     hash_recovery_code(normalized)
                 }
+                val salts = try {
+                    recovery_api.verifier_salts(VerifierSaltsRequest(email = user_email))
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+                val candidates = withContext(compute_dispatcher) {
+                    build_verifier_candidates(normalized, salts?.verifier_salts.orEmpty())
+                }
+                val omit_code_hash = candidates.isNotEmpty() && salts?.code_hash_optional == true
+                is_code_hash_optional = omit_code_hash
                 val response = recovery_api.initiate(
-                    InitiateRecoveryRequest(code_hash = code_hash, email = user_email),
+                    InitiateRecoveryRequest(
+                        code_hash = if (omit_code_hash) "" else code_hash,
+                        email = user_email,
+                        candidates = candidates,
+                    ),
                 )
                 recovery_token = response.recovery_token
                 had_recovery_email = !response.encrypted_recovery_email.isNullOrBlank()
@@ -264,10 +284,20 @@ class RecoveryViewModel @Inject constructor(
                     )
                     recovery_key.fill(0)
                 }
+                val needs_previous = withContext(compute_dispatcher) {
+                    decrypted_vault?.let { bytes ->
+                        runCatching {
+                            recovery_needs_previous_password(org.json.JSONObject(String(bytes, Charsets.UTF_8)))
+                        }.getOrDefault(false)
+                    } ?: false
+                }
 
                 _state.value = _state.value.copy(
                     step = RecoveryStep.password,
                     is_loading = false,
+                    needs_previous_password = needs_previous,
+                    previous_password_skipped = false,
+                    keys_left_locked = false,
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -279,7 +309,15 @@ class RecoveryViewModel @Inject constructor(
         }
     }
 
-    fun submit_new_password(password: String, confirm: String) {
+    fun skip_previous_password() {
+        _state.value = _state.value.copy(previous_password_skipped = true, error = null)
+    }
+
+    fun use_previous_password() {
+        _state.value = _state.value.copy(previous_password_skipped = false, error = null)
+    }
+
+    fun submit_new_password(password: String, confirm: String, previous_password: String = "") {
         if (_state.value.is_loading) return
         if (password.length < 12) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_password_min_length))
@@ -287,6 +325,11 @@ class RecoveryViewModel @Inject constructor(
         }
         if (password != confirm) {
             _state.value = _state.value.copy(error = ctx.getString(R.string.error_passwords_no_match))
+            return
+        }
+        val asks_previous = _state.value.needs_previous_password && !_state.value.previous_password_skipped
+        if (asks_previous && previous_password.isEmpty()) {
+            _state.value = _state.value.copy(error = ctx.getString(R.string.recovery_previous_password_required))
             return
         }
         val token = recovery_token
@@ -323,12 +366,14 @@ class RecoveryViewModel @Inject constructor(
                 val new_codes = generate_recovery_codes()
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
                 val password_chars = password.toCharArray()
+                val previous_chars = if (asks_previous) previous_password.toCharArray() else null
                 val updated_vault = try {
                     withContext(compute_dispatcher) {
-                        with_recovery_codes(vault_bytes, new_codes, password_chars)
+                        with_recovery_codes(vault_bytes, new_codes, password_chars, previous_chars)
                     }
                 } finally {
                     password_chars.fill('\u0000')
+                    previous_chars?.fill('\u0000')
                 }
 
                 val retry_plain = updated_vault.plain.copyOf()
@@ -352,8 +397,10 @@ class RecoveryViewModel @Inject constructor(
                 }
 
                 val shares = withContext(compute_dispatcher) {
+                    val verifier_salt = generate_verifier_salt()
+
                     new_codes.map { code ->
-                        generate_recovery_share(code, new_recovery_key)
+                        generate_recovery_share(code, new_recovery_key, verifier_salt)
                     }
                 }
 
@@ -407,11 +454,19 @@ class RecoveryViewModel @Inject constructor(
                     is_loading = false,
                     new_codes = new_codes,
                     processing_status = "",
+                    keys_left_locked = updated_vault.identity_locked,
                     review = RecoveryReview(
                         codes_remaining = new_codes.size,
                         second_factors_removed = true,
                         recovery_email_set = had_recovery_email,
                     ),
+                )
+            } catch (t: RecoveryPreviousPasswordIncorrect) {
+                _state.value = _state.value.copy(
+                    step = RecoveryStep.password,
+                    is_loading = false,
+                    error = ctx.getString(R.string.recovery_previous_password_incorrect),
+                    processing_status = "",
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -460,25 +515,27 @@ class RecoveryViewModel @Inject constructor(
         decrypted_vault = null
     }
 
-    private class UpdatedVault(val plain: ByteArray, val backup_plain: ByteArray, val vault_format: Int)
+    private class UpdatedVault(
+        val plain: ByteArray,
+        val backup_plain: ByteArray,
+        val vault_format: Int,
+        val identity_locked: Boolean,
+    )
 
-    private fun with_recovery_codes(vault_bytes: ByteArray, codes: List<String>, password: CharArray): UpdatedVault {
+    private fun with_recovery_codes(
+        vault_bytes: ByteArray,
+        codes: List<String>,
+        password: CharArray,
+        previous_password: CharArray?,
+    ): UpdatedVault {
         val backup_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
-        val unlocked_keys = read_unlocked_keys(backup_obj)
-        val vault_obj = strip_backup_fields(backup_obj)
-        val relocked_keys = relock_vault_keys(vault_obj, unlocked_keys, password)
-        val codes_array = org.json.JSONArray()
-        codes.forEach { codes_array.put(it) }
-        vault_obj.put("recovery_codes", codes_array)
-
-        val vault_format = stored_vault_format(vault_obj)
+        val resealed = reseal_recovery_vault(backup_obj, codes, password, previous_password)
 
         return UpdatedVault(
-            plain = vault_obj.toString().toByteArray(Charsets.UTF_8),
-            backup_plain = carry_backup_unlocked_keys(vault_obj, relocked_keys)
-                .toString()
-                .toByteArray(Charsets.UTF_8),
-            vault_format = vault_format,
+            plain = resealed.vault.toString().toByteArray(Charsets.UTF_8),
+            backup_plain = resealed.backup.toString().toByteArray(Charsets.UTF_8),
+            vault_format = stored_vault_format(resealed.vault),
+            identity_locked = resealed.identity_locked,
         )
     }
 
@@ -584,7 +641,11 @@ class RecoveryViewModel @Inject constructor(
         return VaultBackup(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
     }
 
-    private fun generate_recovery_share(code: String, recovery_key: ByteArray): RecoveryShareData {
+    private fun generate_recovery_share(
+        code: String,
+        recovery_key: ByteArray,
+        verifier_salt: ByteArray,
+    ): RecoveryShareData {
         val code_hash = hash_recovery_code(code)
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
@@ -594,10 +655,14 @@ class RecoveryViewModel @Inject constructor(
         derived.fill(0)
 
         return RecoveryShareData(
-            code_hash = code_hash,
+            code_hash = if (is_code_hash_optional) "" else code_hash,
             code_salt = base64_encode(salt),
             encrypted_recovery_key = base64_encode(encrypted),
             recovery_key_nonce = base64_encode(nonce),
+            verifier_salt = encode_verifier_field(verifier_salt),
+            code_verifier = encode_verifier_field(
+                derive_code_verifier(raw_recovery_code_hash(code), verifier_salt),
+            ),
         )
     }
 

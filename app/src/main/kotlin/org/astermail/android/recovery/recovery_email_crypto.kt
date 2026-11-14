@@ -28,6 +28,13 @@ import org.astermail.android.crypto.AesGcm
 
 private const val RECOVERY_EMAIL_KEY_SUFFIX = "astermail-recovery-email-v1"
 private const val RECOVERY_EMAIL_HASH_PREFIX = "aster-recovery-email-uniqueness-v1:"
+private const val MAX_RECOVERY_EMAIL_LENGTH = 254
+private const val MAX_RECOVERY_EMAIL_LOCAL_LENGTH = 64
+private val RECOVERY_EMAIL_PATTERN = Regex(
+    """[\p{L}\p{N}\p{M}.!#$%&'*+/=?^_`{|}~-]+""" +
+        """@[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?""" +
+        """(?:\.[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?)*""",
+)
 
 data class EncryptedRecoveryEmail(val ciphertext_b64: String, val nonce_b64: String)
 
@@ -107,3 +114,17 @@ fun open_recovery_email(
     }
     return null
 }
+
+fun is_valid_recovery_email(value: String?): Boolean {
+    if (value.isNullOrEmpty() || value.length > MAX_RECOVERY_EMAIL_LENGTH) return false
+    if (value.toByteArray(Charsets.UTF_8).size > MAX_RECOVERY_EMAIL_LENGTH) return false
+    if (value.indexOf('@') > MAX_RECOVERY_EMAIL_LOCAL_LENGTH) return false
+    return RECOVERY_EMAIL_PATTERN.matches(value)
+}
+
+fun open_recovery_email_for_backfill(
+    ciphertext_b64: String,
+    nonce_b64: String,
+    identity_keys: List<String>,
+): String? = open_recovery_email(ciphertext_b64, nonce_b64, identity_keys, emptyList())
+    ?.takeIf { is_valid_recovery_email(it) }

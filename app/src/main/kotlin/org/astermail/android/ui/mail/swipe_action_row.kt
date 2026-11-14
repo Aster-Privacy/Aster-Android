@@ -139,11 +139,11 @@ fun swipe_tone(color: Color, colors: AsterSemanticColors): Color {
 fun swipe_ink(surface: Color): Color =
     if (surface.luminance() > 0.5f) Color(0xFF14181F) else Color.White
 
-private class SwipeFaces(
-    var start_label: String,
-    var end_label: String,
-    var start_icon: ImageVector,
-    var end_icon: ImageVector,
+private data class SwipeFaces(
+    val start_label: String,
+    val end_label: String,
+    val start_icon: ImageVector,
+    val end_icon: ImageVector,
 )
 
 @Composable
@@ -170,9 +170,16 @@ fun swipe_action_row(
     val haptics = org.astermail.android.design.remember_haptic()
     var is_dismissed by remember { mutableStateOf(false) }
     val offset_x = remember { Animatable(0f) }
-    val faces = remember { SwipeFaces(start_label, end_label, start_icon, end_icon) }
+    val current_faces by rememberUpdatedState(SwipeFaces(start_label, end_label, start_icon, end_icon))
+    var shown_faces by remember { mutableStateOf<SwipeFaces?>(null) }
     val scope = rememberCoroutineScope()
     val current_removes_row by rememberUpdatedState(removes_row)
+    val current_start_action by rememberUpdatedState(start_action)
+    val current_end_action by rememberUpdatedState(end_action)
+    val current_on_swipe_start by rememberUpdatedState(on_swipe_start)
+    val current_on_swipe_end by rememberUpdatedState(on_swipe_end)
+    val current_haptic_enabled by rememberUpdatedState(haptic_enabled)
+    val current_list_scrolling by rememberUpdatedState(list_scrolling)
     val start_enabled = start_action != "none"
     val end_enabled = end_action != "none"
 
@@ -191,7 +198,7 @@ fun swipe_action_row(
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        if (is_dismissed || list_scrolling()) continue
+                        if (is_dismissed || current_list_scrolling()) continue
                         val limit = size.width.toFloat()
                         val commit_distance = limit * swipe_commit_fraction
                         val lower = if (end_enabled) -limit else 0f
@@ -219,6 +226,7 @@ fun swipe_action_row(
                                     if (axis == SwipeAxis.undecided) continue
                                     if (if (dx > 0f) !start_enabled else !end_enabled) break
                                     claimed = true
+                                    shown_faces = current_faces
                                     change.consume()
                                     position = (offset_x.value + dx - sign(dx) * claim_distance).coerceIn(lower, upper)
                                 } else {
@@ -230,7 +238,7 @@ fun swipe_action_row(
                                 val past = abs(target) >= commit_distance
                                 if (past != passed_commit) {
                                     passed_commit = past
-                                    if (haptic_enabled) {
+                                    if (current_haptic_enabled) {
                                         haptics(
                                             if (past) {
                                                 org.astermail.android.design.aster_haptic.gesture_threshold
@@ -252,25 +260,21 @@ fun swipe_action_row(
                             scope.launch { offset_x.animateTo(0f, tween(220)) }
                             continue
                         }
-                        val action = if (travelled > 0f) start_action else end_action
+                        val action = if (travelled > 0f) current_start_action else current_end_action
                         if (current_removes_row(action)) {
                             is_dismissed = true
                             scope.launch { offset_x.animateTo(sign(travelled) * limit, tween(180)) }
                         } else {
                             scope.launch { offset_x.animateTo(0f, tween(220)) }
                         }
-                        if (travelled > 0f) on_swipe_start() else on_swipe_end()
+                        if (travelled > 0f) current_on_swipe_start() else current_on_swipe_end()
                     }
                 }
             },
     ) {
         val travelled = offset_x.value
-        if (travelled == 0f) {
-            faces.start_label = start_label
-            faces.end_label = end_label
-            faces.start_icon = start_icon
-            faces.end_icon = end_icon
-        } else {
+        if (travelled != 0f) {
+            val faces = shown_faces ?: current_faces
             val towards_start = travelled > 0f
             val surface = swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors)
             val ink = swipe_ink(surface)
