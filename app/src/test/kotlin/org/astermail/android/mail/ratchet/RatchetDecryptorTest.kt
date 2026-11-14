@@ -37,7 +37,10 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.astermail.android.api.keys.KeysApi
+import org.astermail.android.api.keys.PublicKeyResponse
 import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
+import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetIdentityResponse
 import org.astermail.android.auth.AuthRepository
@@ -45,6 +48,20 @@ import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
+import org.bouncycastle.bcpg.ArmoredOutputStream
+import org.bouncycastle.bcpg.HashAlgorithmTags
+import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
+import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags
+import org.bouncycastle.bcpg.sig.KeyFlags
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
+import org.bouncycastle.openpgp.PGPSecretKey
+import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator
+import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
+import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -184,6 +201,7 @@ class RatchetDecryptorTest {
         plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
         identity_pins: RatchetIdentityPinStore = pin_store(),
         escrow: MessageEscrow = escrow_returning(null),
+        keys_api: KeysApi = mockk(relaxed = true),
     ): RatchetDecryptor = RatchetDecryptor(
         state_store,
         session_key_store,
@@ -195,6 +213,7 @@ class RatchetDecryptorTest {
         plaintext_cache,
         escrow,
         AddressIdentityDirectory(session_key_store, ratchet_api, identity_pins),
+        keys_api,
     )
 
     private fun escrow_returning(
@@ -1548,6 +1567,8 @@ class RatchetDecryptorTest {
         ratchet_api: RatchetApi,
         syncer: RatchetStateSyncer = mockk(relaxed = true),
         plaintext_cache: RatchetPlaintextCache = mockk(relaxed = true),
+        identity_pins: RatchetIdentityPinStore = pin_store(continuity = continuity),
+        keys_api: KeysApi = mockk(relaxed = true),
     ): String? {
         coEvery { syncer.fetch_from_server(any()) } returns null
         val enc = DoubleRatchet.encrypt(bootstrap.sender_state, plaintext)
@@ -1561,7 +1582,8 @@ class RatchetDecryptorTest {
             syncer,
             mockk(relaxed = true),
             plaintext_cache = plaintext_cache,
-            identity_pins = pin_store(continuity = continuity),
+            identity_pins = identity_pins,
+            keys_api = keys_api,
         )
         return decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "message-1")
     }
@@ -1651,5 +1673,289 @@ class RatchetDecryptorTest {
         assertEquals("restarted", result)
         assertEquals(2, session.saved.size)
         assertEquals(session.established_identity_b64, session.saved.last().remote_identity_key)
+    }
+
+    private val owner_passphrase = "decryptor-owner-fixture"
+
+    private class OwnerKey(val armored_public: String, val fingerprint: String, val armored_secret: String)
+
+    private fun owner_key(): OwnerKey {
+        val generator = Ed25519KeyPairGenerator()
+        generator.init(Ed25519KeyGenerationParameters(java.security.SecureRandom()))
+        val key_pair = BcPGPKeyPair(PublicKeyAlgorithmTags.EDDSA_LEGACY, generator.generateKeyPair(), java.util.Date())
+        val digests = BcPGPDigestCalculatorProvider()
+        val subpackets = PGPSignatureSubpacketGenerator()
+        subpackets.setKeyFlags(false, KeyFlags.CERTIFY_OTHER or KeyFlags.SIGN_DATA)
+        val secret = PGPSecretKey(
+            PGPSignature.DEFAULT_CERTIFICATION,
+            key_pair,
+            "Fixture <$sender_email>",
+            digests.get(HashAlgorithmTags.SHA1),
+            subpackets.generate(),
+            null,
+            BcPGPContentSignerBuilder(key_pair.publicKey.algorithm, HashAlgorithmTags.SHA256),
+            BcPBESecretKeyEncryptorBuilder(SymmetricKeyAlgorithmTags.AES_256, digests.get(HashAlgorithmTags.SHA256))
+                .build(owner_passphrase.toCharArray()),
+        )
+        val armored_public = armor { secret.publicKey.encode(it) }
+        return OwnerKey(
+            armored_public = armored_public,
+            fingerprint = PrekeyBindingVerifier.owner_fingerprint(armored_public)!!,
+            armored_secret = armor { secret.encode(it) },
+        )
+    }
+
+    private fun armor(write: (ArmoredOutputStream) -> Unit): String {
+        val out = java.io.ByteArrayOutputStream()
+        ArmoredOutputStream(out).use(write)
+        return out.toString(Charsets.UTF_8.name())
+    }
+
+    private fun binding_signed_by(owner: OwnerKey, identity_b64: String): String {
+        val armored = PrekeyBindingSigner.sign_cleartext(
+            armored_secret_key = owner.armored_secret,
+            passphrase = owner_passphrase.toCharArray(),
+            text = PrekeyBindingSigner.canonical_binding(identity_b64, "spk"),
+        )
+        return java.util.Base64.getEncoder().encodeToString(armored.toByteArray(Charsets.UTF_8))
+    }
+
+    private fun sender_publishing(directory_identity_b64: String, bundle_identity_b64: String, signature: String): RatchetApi {
+        val ratchet_api = directory_publishing(directory_identity_b64)
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns null
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns PrekeyBundleResponse(
+            user_id = "u_sender",
+            kem_identity_key = bundle_identity_b64,
+            signed_prekey = "spk",
+            signed_prekey_signature = signature,
+        )
+        return ratchet_api
+    }
+
+    private fun serving_owner_key(owner: OwnerKey): KeysApi {
+        val keys_api = mockk<KeysApi>(relaxed = true)
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse(username = "hello", public_key = owner.armored_public)
+        return keys_api
+    }
+
+    private fun bound_pins(owner_pin: String?, binding_verified: Boolean): RatchetIdentityPinStore {
+        val pins = pin_store(continuity = SenderIdentityContinuity.CHANGED)
+        every { pins.owner_key_pin(any()) } returns owner_pin
+        every { pins.is_prekey_binding_verified(any()) } returns binding_verified
+        return pins
+    }
+
+    private fun assert_refused(session: EstablishedSession, plaintext_cache: RatchetPlaintextCache, plaintext: String) {
+        assertEquals(1, session.saved.size)
+        assertEquals(session.established_identity_b64, session.saved.last().remote_identity_key)
+        coVerify { plaintext_cache.put("message-1", plaintext, false, true, any()) }
+    }
+
+    @Test
+    fun `a changed identity with a verified binding under the pinned owner key replaces a bound session`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val owner = owner_key()
+
+        val result = receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, binding_signed_by(owner, rotated_b64)),
+            identity_pins = bound_pins(owner.fingerprint, binding_verified = true),
+            keys_api = serving_owner_key(owner),
+        )
+
+        assertEquals("rotated", result)
+        assertEquals(rotated_b64, session.saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `a changed identity with a verified binding replaces a bound session that has no owner pin`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val owner = owner_key()
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, binding_signed_by(owner, rotated_b64)),
+            identity_pins = bound_pins(null, binding_verified = true),
+            keys_api = serving_owner_key(owner),
+        )
+
+        assertEquals(rotated_b64, session.saved.last().remote_identity_key)
+    }
+
+    @Test
+    fun `a changed identity signed by an owner key other than the pinned one is refused`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val pinned = owner_key()
+        val served = owner_key()
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        val result = receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, binding_signed_by(served, rotated_b64)),
+            plaintext_cache = plaintext_cache,
+            identity_pins = bound_pins(pinned.fingerprint, binding_verified = true),
+            keys_api = serving_owner_key(served),
+        )
+
+        assertEquals("rotated", result)
+        assert_refused(session, plaintext_cache, "rotated")
+    }
+
+    @Test
+    fun `a changed identity is refused when the bound sender bundle carries another identity`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val owner = owner_key()
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(
+                rotated_b64,
+                session.established_identity_b64,
+                binding_signed_by(owner, session.established_identity_b64),
+            ),
+            plaintext_cache = plaintext_cache,
+            identity_pins = bound_pins(null, binding_verified = true),
+            keys_api = serving_owner_key(owner),
+        )
+
+        assert_refused(session, plaintext_cache, "rotated")
+    }
+
+    @Test
+    fun `a changed identity with an unsigned bundle is refused once an owner key is pinned`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val owner = owner_key()
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, "legacy-signature"),
+            plaintext_cache = plaintext_cache,
+            identity_pins = bound_pins(owner.fingerprint, binding_verified = false),
+            keys_api = serving_owner_key(owner),
+        )
+
+        assert_refused(session, plaintext_cache, "rotated")
+    }
+
+    @Test
+    fun `a changed identity with a forged binding is refused for a bound sender`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val served = owner_key()
+        val forger = owner_key()
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, binding_signed_by(forger, rotated_b64)),
+            plaintext_cache = plaintext_cache,
+            identity_pins = bound_pins(null, binding_verified = true),
+            keys_api = serving_owner_key(served),
+        )
+
+        assert_refused(session, plaintext_cache, "rotated")
+    }
+
+    @Test
+    fun `a changed identity from a sender never bound or pinned still replaces the session`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val keys_api = mockk<KeysApi>(relaxed = true)
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(rotated_b64, rotated_b64, "legacy-signature"),
+            identity_pins = bound_pins(null, binding_verified = false),
+            keys_api = keys_api,
+        )
+
+        assertEquals(rotated_b64, session.saved.last().remote_identity_key)
+        coVerify(exactly = 0) { keys_api.get_recipient_public_key(any(), any()) }
+    }
+
+    @Test
+    fun `a changed identity without directory confirmation is refused even with a verified binding`() = runTest {
+        val session = established_session()
+        val rotated = fixture_for_receiver(session.receiver)
+        val rotated_b64 = RatchetCrypto.b64_encode(rotated.sender_identity_raw)
+        val owner = owner_key()
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+
+        receive_bootstrap(
+            session,
+            rotated,
+            "rotated",
+            SenderIdentityContinuity.CHANGED,
+            sender_publishing(session.established_identity_b64, rotated_b64, binding_signed_by(owner, rotated_b64)),
+            plaintext_cache = plaintext_cache,
+            identity_pins = bound_pins(owner.fingerprint, binding_verified = true),
+            keys_api = serving_owner_key(owner),
+        )
+
+        assert_refused(session, plaintext_cache, "rotated")
+    }
+
+    @Test
+    fun `a new identity replaces an established session only when the directory confirms it`() = runTest {
+        val confirmed_session = established_session()
+        val confirmed = fixture_for_receiver(confirmed_session.receiver)
+        val confirmed_b64 = RatchetCrypto.b64_encode(confirmed.sender_identity_raw)
+        receive_bootstrap(
+            confirmed_session,
+            confirmed,
+            "confirmed",
+            SenderIdentityContinuity.NEW,
+            directory_publishing(confirmed_b64),
+        )
+        assertEquals(confirmed_b64, confirmed_session.saved.last().remote_identity_key)
+
+        val unconfirmed_session = established_session()
+        val unconfirmed = fixture_for_receiver(unconfirmed_session.receiver)
+        val plaintext_cache = mockk<RatchetPlaintextCache>(relaxed = true)
+        receive_bootstrap(
+            unconfirmed_session,
+            unconfirmed,
+            "unconfirmed",
+            SenderIdentityContinuity.NEW,
+            directory_publishing(null),
+            plaintext_cache = plaintext_cache,
+        )
+        assert_refused(unconfirmed_session, plaintext_cache, "unconfirmed")
     }
 }

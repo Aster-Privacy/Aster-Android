@@ -28,7 +28,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
+import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.crypto.ratchet.RecoveryLane
@@ -54,6 +56,7 @@ class RatchetDecryptor @Inject constructor(
     private val plaintext_cache: RatchetPlaintextCache,
     private val escrow: MessageEscrow,
     private val address_directory: AddressIdentityDirectory,
+    private val keys_api: KeysApi,
 ) {
 
     private data class ReceiverKeySet(
@@ -454,7 +457,14 @@ class RatchetDecryptor @Inject constructor(
                 directory_confirms_identity(sender_email, identity_key)
             val unconfirmed_sender = continuity == SenderIdentityContinuity.CHANGED || (continuity == SenderIdentityContinuity.NEW && !directory_confirmed)
             if (!chained && state_loaded_locally &&
-                !bootstrap_may_replace_session(established_identity_key, identity_key, continuity, directory_confirmed)
+                !bootstrap_may_replace_session(
+                    conversation_id,
+                    sender_email,
+                    established_identity_key,
+                    identity_key,
+                    continuity,
+                    directory_confirmed,
+                )
             ) {
                 flag_sender_rotation(conversation_id, sender_email, identity_key)
                 cache_plaintext(message_id, resolved, unconfirmed_sender = true, binding = binding)
@@ -575,13 +585,103 @@ class RatchetDecryptor @Inject constructor(
     }
 
     private suspend fun bootstrap_may_replace_session(
+        conversation_id: String,
+        sender_email: String,
         established_identity_key: String?,
         bootstrap_identity_key: String,
         continuity: SenderIdentityContinuity,
         directory_confirmed: Boolean,
     ): Boolean {
         if (established_identity_key != null && established_identity_key == bootstrap_identity_key) return true
-        return continuity == SenderIdentityContinuity.KNOWN || directory_confirmed
+        return when (continuity) {
+            SenderIdentityContinuity.KNOWN -> true
+            SenderIdentityContinuity.NEW -> directory_confirmed
+            SenderIdentityContinuity.CHANGED -> directory_confirmed && (
+                is_unbound_sender(sender_email) ||
+                    sender_binding_vouches_for(conversation_id, sender_email, bootstrap_identity_key)
+                )
+        }
+    }
+
+    private fun is_unbound_sender(sender_email: String): Boolean {
+        val owner_pin = try {
+            identity_pins.owner_key_pin(sender_email)
+        } catch (_: Throwable) {
+            return false
+        }
+        if (!owner_pin.isNullOrBlank()) return false
+        return try {
+            !identity_pins.is_prekey_binding_verified(sender_email)
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private suspend fun sender_binding_vouches_for(
+        conversation_id: String,
+        sender_email: String,
+        identity_key: String,
+    ): Boolean {
+        val email = sender_email.trim().lowercase()
+        if (!email.contains('@') || identity_key.isBlank()) return false
+        val username = email.substringBefore('@')
+        val saved_owner = try {
+            identity_pins.owner_key_pin(sender_email)
+        } catch (_: Throwable) {
+            return false
+        }
+        val pinned_owner = saved_owner?.takeIf { it.isNotBlank() }
+        val candidates = sender_bundles(username, email, conversation_id).filter { bundle ->
+            bundle.kem_identity_key == identity_key &&
+                PrekeyBindingVerifier.is_pgp_signature(bundle.signed_prekey_signature)
+        }
+        if (candidates.isEmpty()) return false
+        val owner_key = try {
+            keys_api.get_recipient_public_key(username, email).public_key
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        if (owner_key.isNullOrBlank()) return false
+        val served_owner = PrekeyBindingVerifier.owner_fingerprint(owner_key) ?: return false
+        return candidates.any { bundle ->
+            val result = PrekeyBindingVerifier.verify_binding(
+                signature_block = bundle.signed_prekey_signature,
+                recipient_public_key_armored = owner_key,
+                kem_identity_key_b64 = bundle.kem_identity_key,
+                signed_prekey_b64 = bundle.signed_prekey,
+                pq_identity_key_b64 = bundle.pq_kem_public_key,
+            ).result
+            result == PrekeyBindingResult.VERIFIED &&
+                when (RatchetIdentityPinRules.decide_owner_key(pinned_owner, served_owner, result)) {
+                    OwnerKeyDecision.ACCEPT, OwnerKeyDecision.PIN_FIRST -> true
+                    OwnerKeyDecision.UNAVAILABLE, OwnerKeyDecision.UNTRUSTED -> false
+                }
+        }
+    }
+
+    private suspend fun sender_bundles(
+        username: String,
+        email: String,
+        conversation_id: String,
+    ): List<PrekeyBundleResponse> {
+        val resolved = try {
+            address_directory.resolve_recipient_bundle(username, email, conversation_id)?.bundle
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        if (resolved != null && resolved.address_scoped != true) return listOf(resolved)
+        val account = try {
+            ratchet_api.fetch_prekey_bundle(username, email)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+        return listOfNotNull(resolved, account?.takeIf { it.address_scoped != true })
     }
 
     private suspend fun directory_confirms_identity(sender_email: String, identity_key: String): Boolean {

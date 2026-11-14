@@ -202,6 +202,7 @@ class SelfSendRoundTripTest {
             mockk(relaxed = true),
             escrow,
             address_directory,
+            keys_api,
         )
     }
 
