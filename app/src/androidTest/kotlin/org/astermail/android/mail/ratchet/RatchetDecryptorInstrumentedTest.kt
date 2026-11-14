@@ -263,6 +263,7 @@ class RatchetDecryptorInstrumentedTest {
             mockk(relaxed = true),
             MessageEscrow(real_state_store, fake_ratchet_api),
             mockk(relaxed = true),
+            mockk(relaxed = true),
         )
 
         val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email)

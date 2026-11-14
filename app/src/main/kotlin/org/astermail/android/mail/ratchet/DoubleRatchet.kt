@@ -33,13 +33,23 @@ object DoubleRatchet {
     private const val max_skip = 1000
     private const val max_total_skipped = 2000
     private const val skipped_key_ttl_ms = 30L * 24 * 60 * 60 * 1000
+    const val max_header_version = 255
+
+    fun header_version(header: MessageHeader): Int {
+        val version = header.v ?: 1
+        if (version < 0 || version > max_header_version) {
+            throw IllegalStateException("invalid header version")
+        }
+        return version
+    }
 
     fun serialize_header_for_ad(header: MessageHeader): ByteArray {
+        val version = header_version(header)
         val dh_public = RatchetCrypto.b64_decode(header.dh_public)
         val total = ad_prefix.size + 1 + dh_public.size + 8
         val buf = ByteBuffer.allocate(total).order(ByteOrder.BIG_ENDIAN)
         buf.put(ad_prefix)
-        buf.put((header.v ?: 1).toByte())
+        buf.put(version.toByte())
         buf.put(dh_public)
         buf.putInt(header.previous_chain_length)
         buf.putInt(header.message_number)
@@ -58,7 +68,7 @@ object DoubleRatchet {
 
     fun decrypt(state: RatchetState, recipient: RatchetRecipientData): String {
         val header = recipient.header
-        val header_bound = (header.v ?: 1) >= 2
+        val header_bound = header_version(header) >= 2
         if (state.header_bound && !header_bound) {
             throw IllegalStateException("unbound header on a bound session")
         }
@@ -96,7 +106,7 @@ object DoubleRatchet {
 
     fun decrypt_with_message_key(recipient: RatchetRecipientData, message_key: ByteArray): String {
         val header = recipient.header
-        val ad = if ((header.v ?: 1) >= 2) serialize_header_for_ad(header) else null
+        val ad = if (header_version(header) >= 2) serialize_header_for_ad(header) else null
         val ciphertext = RatchetCrypto.b64_decode(recipient.ciphertext)
         val nonce = RatchetCrypto.b64_decode(recipient.nonce)
         val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, message_key.copyOfRange(0, 32), nonce, ad)
