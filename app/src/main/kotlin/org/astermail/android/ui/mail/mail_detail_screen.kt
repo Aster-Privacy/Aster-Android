@@ -955,12 +955,15 @@ fun MailDetailScreen(
         }
     }
     val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
+    val detail_grouping = mail_vm.is_conversation_grouping_enabled
     val expected_message_count = remember(
         email_id,
         api_item?.thread_message_count,
         inbox_state_for_folder.items,
         detail_count_corrections,
+        detail_grouping,
     ) {
+        if (!detail_grouping) return@remember 1
         val listed = inbox_state_for_folder.items.firstOrNull { it.id == email_id }
         val claimed = api_item?.thread_message_count ?: listed?.thread_message_count ?: 1
         val token = api_item?.thread_token ?: listed?.thread_token
