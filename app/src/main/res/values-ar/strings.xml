@@ -3084,6 +3084,7 @@
     <string name="checkout_payment_details">تفاصيل الدفع</string>
     <string name="checkout_best_value">أفضل قيمة</string>
     <string name="checkout_plan_recommended">موصى به</string>
+    <string name="plan_most_popular">الأكثر شيوعًا</string>
     <string name="checkout_continue">المتابعة إلى الدفع</string>
     <string name="checkout_money_back">ضمان استرداد المال خلال 30 يومًا</string>
     <string name="checkout_stripe_secure">محمي عبر Stripe</string>

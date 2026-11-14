@@ -3155,6 +3155,7 @@
     <string name="checkout_payment_details">Payment Details</string>
     <string name="checkout_best_value">Best Value</string>
     <string name="checkout_plan_recommended">Recommended</string>
+    <string name="plan_most_popular">Most popular</string>
     <string name="checkout_continue">Continue to checkout</string>
     <string name="checkout_money_back">30-day money-back guarantee</string>
     <string name="checkout_stripe_secure">Secured by Stripe</string>

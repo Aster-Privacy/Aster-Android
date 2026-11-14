@@ -2904,6 +2904,7 @@
     <string name="checkout_payment_details">भुगतान की जानकारी</string>
     <string name="checkout_best_value">सबसे किफ़ायती</string>
     <string name="checkout_plan_recommended">अनुशंसित</string>
+    <string name="plan_most_popular">सबसे लोकप्रिय</string>
     <string name="checkout_continue">चेकआउट पर जाएं</string>
     <string name="checkout_money_back">30 दिन की पैसे वापसी की गारंटी</string>
     <string name="checkout_stripe_secure">Stripe द्वारा सुरक्षित</string>

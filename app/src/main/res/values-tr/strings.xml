@@ -3012,6 +3012,7 @@
     <string name="checkout_payment_details">Ödeme Detayları</string>
     <string name="checkout_best_value">En İyi Değer</string>
     <string name="checkout_plan_recommended">Önerilen</string>
+    <string name="plan_most_popular">En popüler</string>
     <string name="checkout_continue">Ödemeye devam et</string>
     <string name="checkout_money_back">30 gün para iade garantisi</string>
     <string name="checkout_stripe_secure">Stripe ile güvende</string>

@@ -3031,6 +3031,7 @@
     <string name="checkout_payment_details">Detalles de pago</string>
     <string name="checkout_best_value">Mejor valor</string>
     <string name="checkout_plan_recommended">Recomendado</string>
+    <string name="plan_most_popular">Más popular</string>
     <string name="checkout_continue">Continuar al pago</string>
     <string name="checkout_money_back">Garantía de devolución de 30 días</string>
     <string name="checkout_stripe_secure">Protegido por Stripe</string>

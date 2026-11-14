@@ -23,18 +23,6 @@ package org.astermail.android.ui.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.Icon
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.semantics.Role
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Circle
-import compose.icons.tablericons.CircleCheck
-import org.astermail.android.billing.billing_interval_per_label
-import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.acrylic
-import org.astermail.android.ui.settings.detail.format_bytes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,9 +33,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -58,8 +50,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -68,6 +63,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Circle
+import compose.icons.tablericons.CircleCheck
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -75,6 +73,7 @@ import org.astermail.android.R
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.api.billing.SubscriptionResponse
 import org.astermail.android.billing.BillingViewModel
+import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
 import org.astermail.android.billing.open_billing_tab
 import org.astermail.android.billing.play_price_label
@@ -83,10 +82,14 @@ import org.astermail.android.billing.yearly_savings_percent
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.ui.settings.detail.aster_segmented
+import org.astermail.android.ui.settings.detail.format_bytes
+import org.astermail.android.ui.settings.detail.plan_feature_label
 import org.astermail.android.ui.settings.detail.switcher_option
 import org.astermail.android.ui.upgrade.upgrade_plan_display_name
 import org.astermail.android.ui.upgrade.upgrade_plans_split_by_period
@@ -360,6 +363,10 @@ fun RegisterPlanStep(
                     )
                     Spacer(Modifier.height(AsterSpacing.sm))
                 }
+                active_plan?.let { plan ->
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    signup_plan_highlights(plan.code)
+                }
             }
         }
 
@@ -471,11 +478,14 @@ private fun signup_plan_row(
                 if (is_recommended) {
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = stringResource(R.string.checkout_plan_recommended),
-                        color = colors.accent_blue,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        text = stringResource(R.string.plan_most_popular),
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
+                        modifier = Modifier
+                            .background(colors.accent_blue, RoundedCornerShape(50))
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
                     )
                 }
             }
@@ -507,6 +517,73 @@ private fun signup_plan_row(
                 fontSize = 12.sp,
                 maxLines = 1,
             )
+        }
+    }
+}
+
+internal fun signup_plan_highlight_rows(code: String): Pair<Int?, List<Int>> = when (code.lowercase()) {
+    "star" -> null to listOf(
+        R.string.settings_plan_bullet_star_storage,
+        R.string.settings_plan_bullet_star_aliases,
+        R.string.settings_plan_bullet_star_domains,
+        R.string.settings_plan_bullet_e2ee,
+        R.string.settings_plan_bullet_bridge_access,
+        R.string.settings_plan_bullet_priority_support,
+    )
+    "nova" -> R.string.settings_plan_lead_star to listOf(
+        R.string.settings_plan_bullet_nova_storage,
+        R.string.settings_plan_bullet_unlimited_aliases,
+        R.string.settings_plan_bullet_nova_domains,
+        R.string.settings_plan_bullet_nova_attachments,
+        R.string.settings_plan_bullet_protected_folders,
+        R.string.settings_plan_bullet_unlimited_templates,
+    )
+    else -> R.string.settings_plan_lead_nova to listOf(
+        R.string.settings_plan_bullet_supernova_storage,
+        R.string.settings_plan_bullet_unlimited_domains,
+        R.string.settings_plan_bullet_supernova_attachments,
+        R.string.settings_plan_bullet_receipt_tracking,
+        R.string.settings_plan_bullet_dedicated_support,
+        R.string.settings_plan_bullet_early_access,
+    )
+}
+
+@Composable
+private fun signup_plan_highlights(code: String) {
+    val colors = AsterMaterial.colors
+    val (lead, rows) = signup_plan_highlight_rows(code)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.xs),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+    ) {
+        lead?.let {
+            Text(
+                text = stringResource(it),
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        rows.forEach { res ->
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(
+                    imageVector = TablerIcons.CircleCheck,
+                    contentDescription = null,
+                    tint = colors.accent_blue,
+                    modifier = Modifier
+                        .padding(top = 1.dp)
+                        .size(18.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.sm))
+                Text(
+                    text = plan_feature_label(res),
+                    color = colors.text_primary,
+                    fontSize = 13.5.sp,
+                    lineHeight = 18.sp,
+                )
+            }
         }
     }
 }

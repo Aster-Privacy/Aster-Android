@@ -3012,6 +3012,7 @@
     <string name="checkout_payment_details">Betaalgegevens</string>
     <string name="checkout_best_value">Beste waarde</string>
     <string name="checkout_plan_recommended">Aanbevolen</string>
+    <string name="plan_most_popular">Meest gekozen</string>
     <string name="checkout_continue">Doorgaan naar afrekenen</string>
     <string name="checkout_money_back">30 dagen niet-goed-geldterug</string>
     <string name="checkout_stripe_secure">Beveiligd door Stripe</string>

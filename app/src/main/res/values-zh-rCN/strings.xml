@@ -2996,6 +2996,7 @@
     <string name="checkout_payment_details">付款详情</string>
     <string name="checkout_best_value">最超值</string>
     <string name="checkout_plan_recommended">推荐</string>
+    <string name="plan_most_popular">最受欢迎</string>
     <string name="checkout_continue">继续结账</string>
     <string name="checkout_money_back">30 天退款保证</string>
     <string name="checkout_stripe_secure">由 Stripe 保障</string>
