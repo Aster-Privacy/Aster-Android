@@ -291,6 +291,7 @@ fun DrawerContent(
     storage_used_fraction: Float = 0f,
     storage_label: String = "",
     user_email: String = "",
+    display_email: String = "",
     api_folder_items: List<drawer_folder_item> = emptyList(),
     api_label_items: List<drawer_label_item> = emptyList(),
     api_alias_items: List<drawer_alias_item> = emptyList(),
@@ -455,7 +456,7 @@ fun DrawerContent(
     ) {
         val current_account = accounts.firstOrNull { it.id == current_account_id }
         workspace_header(
-            current_address = current_workspace,
+            current_address = display_email.ifBlank { current_workspace },
             account_email = current_account?.email ?: user_email,
             account_name = current_account?.display_name.orEmpty(),
             profile_picture = current_account?.profile_picture,
@@ -922,6 +923,9 @@ fun DrawerContent(
             accounts = accounts,
             current_account_id = current_account_id,
             current_email = current_workspace.ifBlank { sheet_account?.email.orEmpty() },
+            current_display_email = display_email.ifBlank {
+                current_workspace.ifBlank { sheet_account?.email.orEmpty() }
+            },
             current_name = sheet_account?.display_name.orEmpty(),
             current_picture = sheet_account?.profile_picture,
             current_color = sheet_account?.profile_color,
@@ -2295,6 +2299,7 @@ internal fun workspace_switcher_sheet(
     accounts: List<StoredAccount>,
     current_account_id: String?,
     current_email: String,
+    current_display_email: String = current_email,
     current_name: String,
     current_picture: String?,
     current_color: String?,
@@ -2354,12 +2359,12 @@ internal fun workspace_switcher_sheet(
                     .padding(AsterSpacing.lg)
                     .testTag("profile_menu_card"),
             ) {
-                val identity_text = remember(current_name, current_email) {
+                val identity_text = remember(current_name, current_display_email) {
                     val name = current_name.trim()
-                    if (name.isBlank() || name.equals(current_email, ignoreCase = true)) {
-                        current_email
+                    if (name.isBlank() || name.equals(current_display_email, ignoreCase = true)) {
+                        current_display_email
                     } else {
-                        "$name <$current_email>"
+                        "$name <$current_display_email>"
                     }
                 }
                 Row(
@@ -2368,7 +2373,7 @@ internal fun workspace_switcher_sheet(
                         indication = null,
                         onClick = {},
                         onLongClick = {
-                            if (current_email.isNotBlank()) {
+                            if (current_display_email.isNotBlank()) {
                                 copy_action(
                                     email_clip_label,
                                     identity_text,
@@ -2419,7 +2424,7 @@ internal fun workspace_switcher_sheet(
                             }
                         }
                         Text(
-                            text = current_email,
+                            text = current_display_email,
                             color = colors.text_secondary,
                             fontSize = 13.sp,
                             maxLines = 1,
@@ -2428,13 +2433,13 @@ internal fun workspace_switcher_sheet(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                             ) {
-                                if (current_email.isNotBlank()) {
+                                if (current_display_email.isNotBlank()) {
                                     copy_action(
                                         email_clip_label,
-                                        current_email,
+                                        current_display_email,
                                         org.astermail.android.ui.common.copied_toast_text(
                                             copy_toast_context,
-                                            current_email,
+                                            current_display_email,
                                         ),
                                     )
                                 }
@@ -2663,7 +2668,7 @@ private fun workspace_header(
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = account_name.ifBlank { current_address.substringBefore('@') },
+                    text = account_name.ifBlank { account_email.substringBefore('@') },
                     color = colors.text_primary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,

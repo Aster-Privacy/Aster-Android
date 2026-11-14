@@ -96,7 +96,6 @@ import org.astermail.android.api.user.UpdateBadgePreferencesRequest
 import org.astermail.android.ui.common.current_user_avatar
 import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
-import org.astermail.android.ui.common.resolve_primary_sender_email
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterShapes
@@ -150,13 +149,7 @@ fun ProfileScreen(
     )
     val user = state.user
     val email = user?.email ?: live_account?.email ?: ""
-    val header_email = resolve_primary_sender_email(
-        state.default_sender_id,
-        email,
-        state.aliases,
-        state.ghost_aliases,
-        state.custom_domain_addresses,
-    )
+    val header_email = org.astermail.android.ui.common.remember_display_address(state, email)
     var display_name by remember { mutableStateOf(live_account?.display_name ?: user?.display_name ?: "") }
     LaunchedEffect(live_account?.display_name, user?.display_name) {
         val incoming = user?.display_name ?: live_account?.display_name ?: return@LaunchedEffect
