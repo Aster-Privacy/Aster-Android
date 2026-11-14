@@ -217,12 +217,9 @@ fun SettingsScreen(
                     ?: settings_state.user?.username
                     ?: "",
                 username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
-                email = org.astermail.android.ui.common.resolve_primary_sender_email(
-                    settings_state.default_sender_id,
+                email = org.astermail.android.ui.common.remember_display_address(
+                    settings_state,
                     settings_state.user?.email ?: live_account?.email ?: "",
-                    settings_state.aliases,
-                    settings_state.ghost_aliases,
-                    settings_state.custom_domain_addresses,
                 ),
                 subscription = settings_state.subscription,
                 profile_loading = (settings_state.user == null && live_account == null) ||

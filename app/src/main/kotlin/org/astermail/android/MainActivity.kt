@@ -2166,6 +2166,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         ?: accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }?.email
         ?: accounts_state.accounts.firstOrNull()?.email
         ?: ""
+    val display_email = org.astermail.android.ui.common.remember_display_address(settings_state, user_email)
 
     val folder_nodes = remember(settings_state.labels) {
         org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
@@ -2519,6 +2520,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 storage_used_fraction = storage_fraction,
                 storage_label = storage_label,
                 user_email = user_email,
+                display_email = display_email,
                 api_folder_items = api_folders,
                 api_label_items = api_labels,
                 api_alias_items = api_aliases,
