@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Gelen Kutusu</string>
+    <string name="rules_category_primary">Birincil</string>
     <string name="rules_category_important">Önemli</string>
     <string name="rules_category_promotions">İndirimler</string>
     <string name="rules_category_newsletters">Bültenler</string>

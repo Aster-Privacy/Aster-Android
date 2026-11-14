@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Posta in arrivo</string>
+    <string name="rules_category_primary">Principale</string>
     <string name="rules_category_important">Importante</string>
     <string name="rules_category_promotions">Promozioni</string>
     <string name="rules_category_newsletters">Newsletter</string>

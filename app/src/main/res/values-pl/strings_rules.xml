@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Odebrane</string>
+    <string name="rules_category_primary">Podstawowe</string>
     <string name="rules_category_important">Ważne</string>
     <string name="rules_category_promotions">Promocje</string>
     <string name="rules_category_newsletters">Newslettery</string>

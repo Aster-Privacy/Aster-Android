@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">收件箱</string>
+    <string name="rules_category_primary">主要</string>
     <string name="rules_category_important">重要</string>
     <string name="rules_category_promotions">促销</string>
     <string name="rules_category_newsletters">邮件通讯</string>

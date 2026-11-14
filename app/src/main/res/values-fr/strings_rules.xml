@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">Mo</string>
     <string name="rules_unit_gb">Go</string>
 
-    <string name="rules_category_primary">Boîte de réception</string>
+    <string name="rules_category_primary">Principal</string>
     <string name="rules_category_important">Avertissement important</string>
     <string name="rules_category_promotions">Bons plans</string>
     <string name="rules_category_newsletters">Lettres d\'information</string>

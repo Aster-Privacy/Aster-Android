@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">受信トレイ</string>
+    <string name="rules_category_primary">メイン</string>
     <string name="rules_category_important">重要</string>
     <string name="rules_category_promotions">セール</string>
     <string name="rules_category_newsletters">ニュースレター</string>
