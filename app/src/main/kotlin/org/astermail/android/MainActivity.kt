@@ -2842,6 +2842,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         }
                         ContactsScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
+                            search_back_enabled = !drawer_state.isOpen,
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
                             on_compose_to = { addresses ->
