@@ -42,7 +42,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -125,8 +124,8 @@ import org.astermail.android.ui.mail.inbox_card_selected_color
 import org.astermail.android.ui.mail.inbox_group_shape
 import org.astermail.android.ui.mail.inbox_group_split
 
-private val group_colors: List<String> =
-    org.astermail.android.ui.common.label_color_palette
+private val group_default_colors: List<String> =
+    org.astermail.android.ui.common.display_color_presets
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1262,7 +1261,7 @@ private fun new_group_dialog(
     var color by remember(existing?.id) {
         mutableStateOf(
             existing?.color?.takeIf { it.isNotBlank() }
-                ?: group_colors[existing_count % group_colors.size],
+                ?: group_default_colors[existing_count % group_default_colors.size],
         )
     }
     var icon by remember(existing?.id) { mutableStateOf(existing?.icon) }
@@ -1310,46 +1309,12 @@ private fun new_group_dialog(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    group_colors.forEachIndexed { index, hex ->
-                        val is_selected = hex.equals(color, ignoreCase = true)
-                        val swatch_label = stringResource(R.string.color_swatch_option, index + 1, group_colors.size)
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(parse_group_color(hex, colors.accent_blue))
-                                .then(
-                                    if (is_selected)
-                                        Modifier.border(2.dp, colors.text_primary, CircleShape)
-                                    else
-                                        Modifier.border(1.dp, colors.border_secondary, CircleShape)
-                                )
-                                .selectable(selected = is_selected, role = Role.RadioButton) { color = hex }
-                                .semantics { contentDescription = swatch_label },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (is_selected) {
-                                Icon(
-                                    imageVector = TablerIcons.Check,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        }
-                    }
-                    org.astermail.android.ui.common.custom_color_swatch(
-                        value = color,
-                        presets = group_colors,
-                        on_pick = { color = it },
-                        test_tag = "group_color_custom",
-                    )
-                }
+                org.astermail.android.ui.common.color_swatch_row(
+                    value = color,
+                    on_pick = { color = it },
+                    test_tag_prefix = "group_color_swatch",
+                    custom_test_tag = "group_color_custom",
+                )
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
                     text = stringResource(R.string.icon_label),

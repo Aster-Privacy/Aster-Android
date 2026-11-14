@@ -28,6 +28,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +42,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -65,6 +68,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -104,18 +108,88 @@ private val rainbow_stops = listOf(
 private fun rgb_color(rgb: Int): Color = Color(0xFF000000 or (rgb.toLong() and 0xFFFFFF))
 
 @Composable
+fun color_swatch_row(
+    value: String?,
+    on_pick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    presets: List<String> = display_color_presets,
+    max_swatch_size: Dp = 32.dp,
+    test_tag_prefix: String = "color_swatch",
+    custom_test_tag: String = "custom_color_swatch",
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val metrics = fit_swatch_row(
+            available = maxWidth.value,
+            count = presets.size + 1,
+            max_size = max_swatch_size.value,
+            max_gap = 10f,
+            min_gap = 4f,
+        )
+        val swatch_size = metrics.size.dp
+        val selected_hex = normalize_hex_color(value)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(metrics.gap.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            presets.forEachIndexed { index, hex ->
+                val normalized = normalize_hex_color(hex) ?: hex
+                val rgb = hex_to_rgb(normalized) ?: 0x3B82F6
+                val is_selected = selected_hex == normalized
+                val swatch_label = stringResource(R.string.color_swatch_option, index + 1, presets.size)
+                Box(
+                    modifier = Modifier
+                        .size(swatch_size)
+                        .clip(CircleShape)
+                        .background(rgb_color(rgb))
+                        .swatch_ring(is_selected)
+                        .selectable(selected = is_selected, role = Role.RadioButton) { on_pick(normalized) }
+                        .semantics { contentDescription = swatch_label }
+                        .testTag("${test_tag_prefix}_$normalized"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (is_selected) swatch_check(rgb, swatch_size)
+                }
+            }
+            custom_color_swatch(
+                value = value,
+                presets = presets,
+                on_pick = on_pick,
+                size = swatch_size,
+                test_tag = custom_test_tag,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Modifier.swatch_ring(is_selected: Boolean): Modifier {
+    val colors = AsterMaterial.colors
+    return border(
+        if (is_selected) 2.dp else 1.dp,
+        if (is_selected) colors.text_primary else colors.border_secondary,
+        CircleShape,
+    )
+}
+
+@Composable
+private fun swatch_check(fill_rgb: Int, swatch_size: Dp) {
+    Icon(
+        imageVector = TablerIcons.Check,
+        contentDescription = null,
+        tint = if (prefers_dark_text(fill_rgb)) Color.Black else Color.White,
+        modifier = Modifier.size(swatch_size * 0.5f),
+    )
+}
+
+@Composable
 fun custom_color_swatch(
     value: String?,
     presets: List<String>,
     on_pick: (String) -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 28.dp,
-    selected_border_width: Dp = 2.dp,
-    unselected_border_width: Dp = 1.dp,
-    show_check: Boolean = true,
     test_tag: String = "custom_color_swatch",
 ) {
-    val colors = AsterMaterial.colors
     val is_selected = is_custom_color(value, presets)
     val selected_rgb = if (is_selected) hex_to_rgb(value ?: "") else null
     var is_open by remember { mutableStateOf(false) }
@@ -124,31 +198,20 @@ fun custom_color_swatch(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .border(
-                if (is_selected) selected_border_width else unselected_border_width,
-                if (is_selected) colors.text_primary else colors.border_secondary,
-                CircleShape,
+            .then(
+                if (selected_rgb != null) {
+                    Modifier.background(rgb_color(selected_rgb))
+                } else {
+                    Modifier.background(Brush.sweepGradient(rainbow_stops))
+                }
             )
+            .swatch_ring(is_selected)
             .selectable(selected = is_selected, role = Role.RadioButton) { is_open = true }
             .semantics { contentDescription = label }
             .testTag(test_tag),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.size(size)) {
-            val radius = this.size.minDimension / 2f
-            drawCircle(Brush.sweepGradient(rainbow_stops, center), radius)
-            if (selected_rgb != null) {
-                drawCircle(rgb_color(selected_rgb), radius * 0.6f)
-            }
-        }
-        if (selected_rgb != null && show_check) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = if (prefers_dark_text(selected_rgb)) Color.Black else Color.White,
-                modifier = Modifier.size(size * 0.5f),
-            )
-        }
+        if (selected_rgb != null) swatch_check(selected_rgb, size)
     }
     if (is_open) {
         color_wheel_sheet(
@@ -175,7 +238,14 @@ fun color_wheel_sheet(
     val start_hex = normalize_hex_color(initial) ?: default_custom_color
     var hsv by remember { mutableStateOf(hex_to_hsv(start_hex) ?: hsv_color(0f, 0f, 1f)) }
     var hex_text by remember { mutableStateOf(start_hex) }
-    val hex_valid = normalize_hex_color(hex_text) != null
+    var hex_error by remember { mutableStateOf(false) }
+    var hex_focused by remember { mutableStateOf(false) }
+    val focus_manager = LocalFocusManager.current
+    val validate_hex = {
+        val valid = normalize_hex_color(hex_text) != null
+        hex_error = !valid
+        valid
+    }
     val current_hex = hsv_to_hex(hsv)
     val current_color = rgb_color(hsv_to_rgb(hsv))
     val close = { after: () -> Unit ->
@@ -212,6 +282,7 @@ fun color_wheel_sheet(
                 on_change = { hue, saturation ->
                     hsv = hsv.copy(hue = hue, saturation = saturation)
                     hex_text = hsv_to_hex(hsv)
+                    hex_error = false
                 },
                 modifier = Modifier.size(240.dp),
             )
@@ -229,6 +300,7 @@ fun color_wheel_sheet(
                 on_change = { value ->
                     hsv = hsv.copy(value = value)
                     hex_text = hsv_to_hex(hsv)
+                    hex_error = false
                 },
                 label = stringResource(R.string.color_brightness),
                 modifier = Modifier.fillMaxWidth(),
@@ -247,20 +319,35 @@ fun color_wheel_sheet(
                         .testTag("color_wheel_preview"),
                 )
                 Spacer(Modifier.width(AsterSpacing.md))
-                Box(modifier = Modifier.weight(1f).testTag("color_wheel_hex")) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { state ->
+                            if (hex_focused && !state.hasFocus) validate_hex()
+                            hex_focused = state.hasFocus
+                        }
+                        .testTag("color_wheel_hex"),
+                ) {
                     AsterTextField(
                         value = hex_text,
                         onValueChange = { text ->
                             val trimmed = text.take(7)
                             hex_text = trimmed
+                            hex_error = false
                             hex_to_hsv(trimmed)?.let { hsv = it }
                         },
                         label = stringResource(R.string.hex_color),
                         placeholder = stringResource(R.string.custom_theme_hex_placeholder),
-                        error_text = if (hex_valid) null else stringResource(R.string.custom_theme_hex_invalid),
+                        error_text = if (hex_error) stringResource(R.string.custom_theme_hex_invalid) else null,
                         keyboard_options = KeyboardOptions(
                             keyboardType = KeyboardType.Ascii,
                             imeAction = ImeAction.Done,
+                        ),
+                        keyboard_actions = KeyboardActions(
+                            onDone = {
+                                validate_hex()
+                                focus_manager.clearFocus()
+                            },
                         ),
                     )
                 }
@@ -277,8 +364,9 @@ fun color_wheel_sheet(
                 )
                 AsterButton(
                     label = stringResource(R.string.done),
-                    onClick = { close { on_done(current_hex) } },
-                    enabled = hex_valid,
+                    onClick = {
+                        if (validate_hex()) close { on_done(current_hex) }
+                    },
                     modifier = Modifier.weight(1f).testTag("color_wheel_done"),
                 )
             }

@@ -78,7 +78,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.aspectRatio
@@ -248,9 +247,6 @@ private val label_palette = listOf(
     Color(0xFFF97316),
     Color(0xFF6366F1),
 )
-
-private val label_color_presets: List<String> =
-    org.astermail.android.ui.common.label_color_palette
 
 private const val default_label_color = "#3b82f6"
 
@@ -1505,49 +1501,12 @@ private fun folder_color_dialog(
         cancel_label = stringResource(R.string.cancel),
         on_confirm = { on_confirm(selected_color) },
         extra_content = {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                label_color_presets.forEachIndexed { index, hex ->
-                    val swatch = parse_hex_color(hex)
-                    val is_selected = hex.equals(selected_color, ignoreCase = true)
-                    val swatch_label = stringResource(R.string.color_swatch_option, index + 1, label_color_presets.size)
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(swatch)
-                            .then(
-                                if (is_selected) {
-                                    Modifier.border(2.dp, colors.text_primary, CircleShape)
-                                } else {
-                                    Modifier.border(1.dp, colors.border_secondary, CircleShape)
-                                }
-                            )
-                            .selectable(selected = is_selected, role = Role.RadioButton) { selected_color = hex }
-                            .semantics { contentDescription = swatch_label }
-                            .testTag("folder_color_swatch_$hex"),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (is_selected) {
-                            Icon(
-                                imageVector = TablerIcons.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp),
-                            )
-                        }
-                    }
-                }
-                org.astermail.android.ui.common.custom_color_swatch(
-                    value = selected_color,
-                    presets = label_color_presets,
-                    on_pick = { selected_color = it },
-                    test_tag = "folder_color_custom",
-                )
-            }
+            org.astermail.android.ui.common.color_swatch_row(
+                value = selected_color,
+                on_pick = { selected_color = it },
+                test_tag_prefix = "folder_color_swatch",
+                custom_test_tag = "folder_color_custom",
+            )
         },
     )
 }
@@ -2137,47 +2096,12 @@ internal fun create_label_dialog(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(AsterSpacing.xs))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    label_color_presets.forEachIndexed { index, hex ->
-                        val swatch = parse_hex_color(hex)
-                        val is_selected = hex.equals(selected_color, ignoreCase = true)
-                        val swatch_label = stringResource(R.string.color_swatch_option, index + 1, label_color_presets.size)
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(swatch)
-                                .then(
-                                    if (is_selected)
-                                        Modifier.border(2.dp, colors.text_primary, CircleShape)
-                                    else
-                                        Modifier.border(1.dp, colors.border_secondary, CircleShape)
-                                )
-                                .selectable(selected = is_selected, role = Role.RadioButton) { selected_color = hex }
-                                .semantics { contentDescription = swatch_label },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (is_selected) {
-                                Icon(
-                                    imageVector = TablerIcons.Check,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        }
-                    }
-                    org.astermail.android.ui.common.custom_color_swatch(
-                        value = selected_color,
-                        presets = label_color_presets,
-                        on_pick = { selected_color = it },
-                        test_tag = "label_color_custom",
-                    )
-                }
+                org.astermail.android.ui.common.color_swatch_row(
+                    value = selected_color,
+                    on_pick = { selected_color = it },
+                    test_tag_prefix = "label_color_swatch",
+                    custom_test_tag = "label_color_custom",
+                )
 
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(

@@ -136,4 +136,37 @@ class ColorWheelMathTest {
         assertFalse(prefers_dark_text(0x1E3A8A))
         assertEquals(21.0, contrast_ratio(0xFFFFFF, 0x000000), 0.01)
     }
+
+    @Test
+    fun display_presets_are_the_eight_named_colors_in_order() {
+        assertEquals(
+            listOf("#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#3b82f6", "#a855f7", "#ec4899"),
+            display_color_presets,
+        )
+        assertFalse(is_custom_color("#3B82F6", display_color_presets))
+        assertTrue(is_custom_color("#6366f1", display_color_presets))
+        assertTrue(is_custom_color("#0ea5e9", display_color_presets))
+    }
+
+    @Test
+    fun swatch_row_keeps_full_size_when_it_fits() {
+        val metrics = fit_swatch_row(400f, 9, 32f, 10f, 6f)
+        assertEquals(32f, metrics.size, 0.001f)
+        assertEquals(10f, metrics.gap, 0.001f)
+    }
+
+    @Test
+    fun swatch_row_shrinks_to_fit_one_line_on_narrow_screens() {
+        val metrics = fit_swatch_row(260f, 9, 32f, 10f, 6f)
+        assertEquals(6f, metrics.gap, 0.001f)
+        assertTrue(metrics.size < 32f)
+        assertTrue(metrics.size * 9 + metrics.gap * 8 <= 260.001f)
+    }
+
+    @Test
+    fun invalid_hex_drafts_are_rejected() {
+        assertNull(normalize_hex_color("#12"))
+        assertNull(normalize_hex_color("#gggggg"))
+        assertNull(normalize_hex_color(""))
+    }
 }

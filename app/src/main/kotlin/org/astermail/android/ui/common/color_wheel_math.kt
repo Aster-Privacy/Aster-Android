@@ -110,6 +110,33 @@ fun wheel_offset(hue: Float, saturation: Float, radius: Float): Pair<Float, Floa
     return (cos(radians) * distance).toFloat() to (sin(radians) * distance).toFloat()
 }
 
+val display_color_presets: List<String> = listOf(
+    "#ef4444",
+    "#f97316",
+    "#eab308",
+    "#22c55e",
+    "#14b8a6",
+    "#3b82f6",
+    "#a855f7",
+    "#ec4899",
+)
+
+data class swatch_row_metrics(val size: Float, val gap: Float)
+
+fun fit_swatch_row(
+    available: Float,
+    count: Int,
+    max_size: Float,
+    max_gap: Float,
+    min_gap: Float,
+): swatch_row_metrics {
+    if (count <= 0 || available <= 0f) return swatch_row_metrics(0f, 0f)
+    val gaps = (count - 1).coerceAtLeast(0)
+    val gap = if (max_size * count + max_gap * gaps <= available) max_gap else min_gap
+    val size = ((available - gap * gaps) / count).coerceAtMost(max_size).coerceAtLeast(0f)
+    return swatch_row_metrics(size, gap)
+}
+
 fun is_custom_color(value: String?, presets: List<String>): Boolean {
     val normalized = normalize_hex_color(value) ?: return false
     return presets.none { normalize_hex_color(it) == normalized }
