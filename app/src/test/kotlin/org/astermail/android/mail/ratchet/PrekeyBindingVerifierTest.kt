@@ -21,7 +21,34 @@
 
 package org.astermail.android.mail.ratchet
 
+import java.io.ByteArrayOutputStream
+import java.math.BigInteger
+import java.security.SecureRandom
 import java.util.Base64
+import java.util.Date
+import org.bouncycastle.bcpg.ArmoredOutputStream
+import org.bouncycastle.bcpg.BCPGOutputStream
+import org.bouncycastle.bcpg.HashAlgorithmTags
+import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
+import org.bouncycastle.bcpg.PublicKeyPacket
+import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags
+import org.bouncycastle.bcpg.sig.KeyFlags
+import org.bouncycastle.crypto.generators.RSAKeyPairGenerator
+import org.bouncycastle.crypto.params.RSAKeyGenerationParameters
+import org.bouncycastle.openpgp.PGPKeyRingGenerator
+import org.bouncycastle.openpgp.PGPPublicKey
+import org.bouncycastle.openpgp.PGPPublicKeyRing
+import org.bouncycastle.openpgp.PGPSecretKeyRing
+import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPSignatureGenerator
+import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator
+import org.bouncycastle.openpgp.PGPUtil
+import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
+import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
+import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -204,6 +231,135 @@ gRKzSyjwC70dx0oKjgEArFHdfXOpF3N8dKZ+VbVNDbxDd7Mp5meU2ARKw0x1
         assertEquals(
             PrekeyBindingResult.UNVERIFIABLE,
             PrekeyBindingVerifier.verify(v1_signature, bob_public, ik, spk),
+        )
+    }
+
+    private val passphrase = "binding-test".toCharArray()
+
+    private fun rsa_pair(): BcPGPKeyPair {
+        val generator = RSAKeyPairGenerator()
+        generator.init(RSAKeyGenerationParameters(BigInteger.valueOf(65537), SecureRandom(), 2048, 12))
+        return BcPGPKeyPair(
+            PublicKeyPacket.VERSION_4,
+            PublicKeyAlgorithmTags.RSA_GENERAL,
+            generator.generateKeyPair(),
+            Date(),
+        )
+    }
+
+    private fun ring_with_subkey(subkey_flags: Int): PGPSecretKeyRing {
+        val master = rsa_pair()
+        val generator = PGPKeyRingGenerator(
+            PGPSignature.POSITIVE_CERTIFICATION,
+            master,
+            "owner <owner@astermail.org>",
+            BcPGPDigestCalculatorProvider().get(HashAlgorithmTags.SHA1),
+            PGPSignatureSubpacketGenerator().apply {
+                setKeyFlags(false, KeyFlags.SIGN_DATA or KeyFlags.CERTIFY_OTHER)
+            }.generate(),
+            null,
+            BcPGPContentSignerBuilder(master.publicKey.algorithm, HashAlgorithmTags.SHA256),
+            BcPBESecretKeyEncryptorBuilder(
+                SymmetricKeyAlgorithmTags.AES_256,
+                BcPGPDigestCalculatorProvider().get(HashAlgorithmTags.SHA256),
+            ).build(passphrase),
+        )
+        generator.addSubKey(
+            rsa_pair(),
+            PGPSignatureSubpacketGenerator().apply { setKeyFlags(false, subkey_flags) }.generate(),
+            null,
+        )
+        return generator.generateSecretKeyRing()
+    }
+
+    private fun armor(write: (ArmoredOutputStream) -> Unit): String {
+        val out = ByteArrayOutputStream()
+        ArmoredOutputStream(out).use(write)
+        return out.toString(Charsets.UTF_8.name())
+    }
+
+    private fun public_keys(ring: PGPSecretKeyRing): List<PGPPublicKey> = ring.publicKeys.asSequence().toList()
+
+    private fun public_ring(armored_text: String): PGPPublicKeyRing =
+        PGPPublicKeyRing(
+            PGPUtil.getDecoderStream(armored_text.byteInputStream(Charsets.UTF_8)),
+            BcKeyFingerprintCalculator(),
+        )
+
+    private fun signed_by_subkey(ring: PGPSecretKeyRing): String {
+        val subkey = ring.secretKeys.asSequence().drop(1).first()
+        val generator = PGPSignatureGenerator(
+            BcPGPContentSignerBuilder(subkey.publicKey.algorithm, HashAlgorithmTags.SHA256),
+        )
+        generator.init(
+            PGPSignature.CANONICAL_TEXT_DOCUMENT,
+            subkey.extractPrivateKey(
+                BcPBESecretKeyDecryptorBuilder(BcPGPDigestCalculatorProvider()).build(passphrase),
+            ),
+        )
+        generator.setHashedSubpackets(
+            PGPSignatureSubpacketGenerator().apply { setIssuerKeyID(false, subkey.keyID) }.generate(),
+        )
+        val text_bytes = PrekeyBindingSigner.canonical_binding(ik, spk).toByteArray(Charsets.UTF_8)
+        generator.update(text_bytes)
+
+        val out = ByteArrayOutputStream()
+        val armored = ArmoredOutputStream(out)
+        armored.beginClearText(HashAlgorithmTags.SHA256)
+        armored.write(text_bytes)
+        armored.write('\n'.code)
+        armored.endClearText()
+        val packets = BCPGOutputStream(armored)
+        generator.generate().encode(packets)
+        packets.flush()
+        armored.close()
+        return rewrap(out.toString(Charsets.UTF_8.name()).replace("\r\n", "\n"))
+    }
+
+    @Test
+    fun signature_from_a_bound_signing_subkey_of_the_owner_key_verifies() {
+        val ring = ring_with_subkey(KeyFlags.SIGN_DATA)
+        val owner_public = armor { PGPPublicKeyRing(public_keys(ring)).encode(it) }
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(signed_by_subkey(ring), owner_public, ik, spk),
+        )
+    }
+
+    @Test
+    fun signature_from_a_subkey_without_the_signing_flag_is_unverifiable() {
+        val ring = ring_with_subkey(KeyFlags.ENCRYPT_COMMS or KeyFlags.ENCRYPT_STORAGE)
+        val owner_public = armor { PGPPublicKeyRing(public_keys(ring)).encode(it) }
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(signed_by_subkey(ring), owner_public, ik, spk),
+        )
+    }
+
+    @Test
+    fun signature_from_a_subkey_the_owner_key_never_certified_is_unverifiable() {
+        val owner = ring_with_subkey(KeyFlags.SIGN_DATA)
+        val other = ring_with_subkey(KeyFlags.SIGN_DATA)
+        val grafted = PGPPublicKeyRing(listOf(public_keys(owner)[0], public_keys(other)[1]))
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(signed_by_subkey(other), armor { grafted.encode(it) }, ik, spk),
+        )
+    }
+
+    @Test
+    fun only_the_first_key_in_the_published_block_can_vouch_for_the_bundle() {
+        val alice = public_ring(alice_public)
+        val bob = public_ring(bob_public)
+        val alice_after_bob = armor { bob.encode(it); alice.encode(it) }
+        val alice_before_bob = armor { alice.encode(it); bob.encode(it) }
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(v1_signature, alice_after_bob, ik, spk),
+        )
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(v1_signature, alice_before_bob, ik, spk),
         )
     }
 
