@@ -2001,6 +2001,7 @@
     <string name="alias_check_failed">Impossible de vérifier la disponibilité. Vous pouvez quand même essayer de le créer.</string>
     <string name="csrf_unavailable">Cette session n\'est plus valide. Reconnectez-vous.</string>
     <string name="received_on_label">Reçu sur</string>
+    <string name="forwarded_by_label">Transféré par</string>
     <string name="auto_advance_label">Après archivage ou suppression</string>
     <string name="auto_advance_next">Aller à l\'e-mail suivant</string>
     <string name="auto_advance_previous">Aller à l\'e-mail précédent</string>

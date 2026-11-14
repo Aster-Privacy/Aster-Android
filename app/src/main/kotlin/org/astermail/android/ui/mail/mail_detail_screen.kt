@@ -2954,6 +2954,7 @@ internal fun expanded_message(
             }
             message_details_panel(
                 sender = details_sender,
+                forwarded_by = forwarding_address(msg.display_sender_email, msg.sender_email),
                 reply_to = details_reply_to,
                 is_encrypted = msg.is_e2e_encrypted,
                 pgp_encrypted = msg.pgp_encrypted,
@@ -4586,6 +4587,9 @@ private fun message_details_dialog(
                     stringResource(R.string.from_label),
                     if (from_name.equals(from_email, ignoreCase = true)) from_email else "$from_name <$from_email>",
                 )
+                forwarding_address(message.display_sender_email, message.sender_email)?.let {
+                    message_detail_row(stringResource(R.string.forwarded_by_label), it)
+                }
                 if (message.to_label.isNotBlank()) {
                     message_detail_row(stringResource(R.string.to_label), message.to_label)
                 }
@@ -4688,6 +4692,7 @@ internal fun message_details_panel(
     to_recipients: List<String> = emptyList(),
     cc_recipients: List<String> = emptyList(),
     bcc_recipients: List<String> = emptyList(),
+    forwarded_by: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val panel_context = LocalContext.current
@@ -4731,6 +4736,13 @@ internal fun message_details_panel(
             value = sender,
             on_long_click = { copy_address(sender) },
         )
+        if (forwarded_by != null) {
+            detail_meta_row(
+                label = stringResource(R.string.forwarded_by_label),
+                value = forwarded_by,
+                on_long_click = { copy_address(forwarded_by) },
+            )
+        }
         if (reply_to != null) {
             detail_meta_row(
                 label = stringResource(R.string.reply_to_label),

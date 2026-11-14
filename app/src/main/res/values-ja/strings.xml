@@ -1331,6 +1331,7 @@
     <string name="alias_check_failed">空き状況を確認できませんでした。作成を試すことはできます。</string>
     <string name="csrf_unavailable">このセッションは無効です。もう一度サインインしてください。</string>
     <string name="received_on_label">受信アドレス</string>
+    <string name="forwarded_by_label">転送元</string>
     <string name="auto_advance_label">アーカイブまたは削除後</string>
     <string name="auto_advance_next">次のメールへ移動</string>
     <string name="auto_advance_previous">前のメールへ移動</string>

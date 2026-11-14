@@ -4224,7 +4224,15 @@ class MailRepository @Inject constructor(
             ?: item.metadata
         val meta = decrypted_meta?.let { merge_server_flags(it, item) }
         val forwarding = envelope?.let {
-            org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
+            org.astermail.android.ui.mail.resolve_forwarding_display(
+                it.from_email,
+                it.raw_headers,
+                org.astermail.android.ui.mail.ForwardingAuthResults(
+                    dkim_result = item.dkim_result,
+                    dmarc_result = item.dmarc_result,
+                    sender_aligned = item.sender_aligned,
+                ),
+            )
         }
         return InboxItem(
             id = item.id,
@@ -4326,7 +4334,15 @@ class MailRepository @Inject constructor(
             ?: item.metadata
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
         val forwarding = envelope?.let {
-            org.astermail.android.ui.mail.resolve_forwarding_display(it.from_email, it.raw_headers)
+            org.astermail.android.ui.mail.resolve_forwarding_display(
+                it.from_email,
+                it.raw_headers,
+                org.astermail.android.ui.mail.ForwardingAuthResults(
+                    dkim_result = item.dkim_result,
+                    dmarc_result = item.dmarc_result,
+                    sender_aligned = item.sender_aligned,
+                ),
+            )
         }
         return ThreadMessageDecrypted(
             id = item.id,

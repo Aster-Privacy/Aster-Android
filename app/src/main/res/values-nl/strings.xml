@@ -1334,6 +1334,7 @@
     <string name="alias_check_failed">Beschikbaarheid kon niet worden gecontroleerd. Je kunt de alias toch proberen aan te maken.</string>
     <string name="csrf_unavailable">Deze sessie is beschadigd. Log opnieuw in.</string>
     <string name="received_on_label">Ontvangen op</string>
+    <string name="forwarded_by_label">Doorgestuurd door</string>
     <string name="auto_advance_label">Na archiveren of verwijderen</string>
     <string name="auto_advance_next">Naar volgende e-mail</string>
     <string name="auto_advance_previous">Naar vorige e-mail</string>

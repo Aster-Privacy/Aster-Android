@@ -230,4 +230,126 @@ class ForwardingAliasTest {
         assertEquals("John", displayed_sender_name(null, "John"))
         assertEquals(sl_alias, displayed_sender_email(null, sl_alias))
     }
+
+    @Test
+    fun reads_name_from_addy_original_from_header() {
+        val result = detect_forwarded_alias(
+            headers(
+                "X-AnonAddy-Original-From-Header" to "Jane Doe <jane@example.com>",
+                "X-AnonAddy-Original-Sender" to "jane@example.com",
+            ),
+            "shop@addy.io",
+        )
+        assertEquals("addy", result?.service)
+        assertEquals("Jane Doe", result?.original?.name)
+        assertEquals("jane@example.com", result?.original?.email)
+    }
+
+    @Test
+    fun accepts_addy_shared_domains() {
+        listOf("4wrd.cc", "mailer.me", "addymail.com").forEach { domain ->
+            val result = detect_forwarded_alias(
+                headers("X-AnonAddy-Original-Sender" to "jane@example.com"),
+                "shop@$domain",
+            )
+            assertEquals("jane@example.com", result?.original?.email)
+        }
+    }
+
+    @Test
+    fun ignores_lookalike_forwarder_domain() {
+        assertNull(
+            detect_forwarded_alias(
+                headers("X-AnonAddy-Original-Sender" to "jane@example.com"),
+                "shop@notaddy.io",
+            ),
+        )
+    }
+
+    @Test
+    fun rejects_addy_forward_when_dmarc_failed() {
+        assertNull(
+            detect_forwarded_alias(
+                headers(
+                    "X-AnonAddy-Original-From-Header" to "Bank <security@bank.example>",
+                    "X-AnonAddy-Authentication-Results" to "mx.addy.io; spf=fail; dmarc=fail (p=reject)",
+                ),
+                "shop@addy.io",
+            ),
+        )
+    }
+
+    @Test
+    fun rejects_conflicting_duplicate_headers() {
+        assertNull(
+            detect_forwarded_alias(
+                headers(
+                    "X-AnonAddy-Original-Sender" to "jane@example.com",
+                    "X-AnonAddy-Original-Sender" to "ceo@bank.example",
+                ),
+                "shop@addy.io",
+            ),
+        )
+    }
+
+    @Test
+    fun rejects_oversized_header() {
+        assertNull(
+            detect_forwarded_alias(
+                headers(
+                    "X-AnonAddy-Original-From-Header" to "${"a".repeat(1000)} <jane@example.com>",
+                ),
+                "shop@addy.io",
+            ),
+        )
+    }
+
+    @Test
+    fun does_not_resolve_when_forwarder_failed_authentication() {
+        assertNull(
+            resolve_forwarding_display(
+                "shop@addy.io",
+                headers("X-AnonAddy-Original-Sender" to "jane@example.com"),
+                ForwardingAuthResults(dkim_result = "fail", dmarc_result = "fail", sender_aligned = false),
+            ),
+        )
+    }
+
+    @Test
+    fun resolves_when_forwarder_authenticated() {
+        val result = resolve_forwarding_display(
+            "shop@addy.io",
+            headers("X-AnonAddy-Original-From-Header" to "Jane Doe <jane@example.com>"),
+            ForwardingAuthResults(dkim_result = "pass", dmarc_result = "pass", sender_aligned = true),
+        )
+        assertEquals("Jane Doe", result?.display_sender_name)
+        assertEquals("jane@example.com", result?.display_sender_email)
+    }
+
+    @Test
+    fun decodes_encoded_word_names() {
+        val parsed = parse_original_sender("=?UTF-8?B?Sm9zw6kgR2FyY8OtYQ==?= <jose@example.com>")
+        assertEquals("Jos\u00e9 Garc\u00eda", parsed?.name)
+        val quoted = parse_original_sender("=?ISO-8859-1?Q?Andr=E9_Smith?= <andre@example.com>")
+        assertEquals("Andr\u00e9 Smith", quoted?.name)
+    }
+
+    @Test
+    fun strips_control_and_bidi_characters() {
+        val parsed = parse_original_sender("Pay\u202epal\u0007 Team <team@example.com>")
+        assertEquals("Pay pal Team", parsed?.name)
+    }
+
+    @Test
+    fun caps_long_display_names() {
+        val parsed = parse_original_sender("${"n".repeat(300)} <long@example.com>")
+        assertEquals(128, parsed?.name?.length)
+    }
+
+    @Test
+    fun forwarding_address_returns_literal_from_only_when_forwarded() {
+        assertEquals("shop@addy.io", forwarding_address("jane@example.com", "shop@addy.io"))
+        assertNull(forwarding_address(null, "jane@example.com"))
+        assertNull(forwarding_address("Jane@example.com", "jane@example.com"))
+    }
 }

@@ -468,6 +468,7 @@
     <string name="failed_to_archive">Failed to archive</string>
     <string name="to_label_prefix">to %s</string>
     <string name="received_on_label">Received on</string>
+    <string name="forwarded_by_label">Forwarded by</string>
     <string name="reply_to_label">Reply to</string>
     <string name="view_security_details">View security details</string>
     <string name="security_details_title">Security details</string>
