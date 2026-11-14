@@ -97,6 +97,22 @@ class OptimisticSendsTest {
     }
 
     @Test
+    fun `nothing shows in a single message view when conversations are off`() {
+        val sends = listOf(send("p1", thread_token = "thread_1", reply_to_id = "msg_1"))
+
+        val shown = optimistic_sends_for_thread(
+            sends,
+            "user_1",
+            "thread_1",
+            "msg_1",
+            emptyList(),
+            conversation_grouping = false,
+        )
+
+        assertTrue(shown.isEmpty())
+    }
+
+    @Test
     fun `nothing shows without an open thread`() {
         val shown = optimistic_sends_for_thread(listOf(send("p1")), "user_1", "thread_1", null, emptyList())
 

@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemMetadata
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -264,6 +265,15 @@ class FolderRowCacheTest {
         assertTrue(base != folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 0))
         assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = "asc", custom_categories = 0))
         assertTrue(base != folder_cache_layout_signature(grouping = true, list_order = null, custom_categories = 1))
+    }
+
+    @Test
+    fun `layout signature remembers the conversation grouping choice`() {
+        assertEquals(false, folder_cache_layout_grouping(folder_cache_layout_signature(false, null, 0)))
+        assertEquals(true, folder_cache_layout_grouping(folder_cache_layout_signature(true, "asc", 7)))
+        assertNull(folder_cache_layout_grouping(null))
+        assertNull(folder_cache_layout_grouping(""))
+        assertNull(folder_cache_layout_grouping("odesc:c0"))
     }
 
     @Test

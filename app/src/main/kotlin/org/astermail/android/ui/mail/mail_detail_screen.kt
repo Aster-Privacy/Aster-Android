@@ -640,7 +640,14 @@ fun MailDetailScreen(
         mail_vm.set_reactions_enabled(reactions_enabled)
     }
 
-    LaunchedEffect(email_id) {
+    val detail_grouping = detail_conversation_grouping(
+        preference = settings_state.preferences?.conversation_grouping,
+        preferences_locked = settings_state.preferences_locked,
+        fallback = mail_vm.is_conversation_grouping_enabled,
+    )
+
+    LaunchedEffect(email_id, detail_grouping) {
+        mail_vm.set_conversation_grouping(detail_grouping)
         mail_vm.load_thread(email_id)
     }
 
@@ -944,8 +951,8 @@ fun MailDetailScreen(
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
     val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
     val thread_send_aliases by mail_vm.thread_send_aliases.collectAsStateWithLifecycle()
-    val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email) {
-        if (!thread_matches_email || optimistic_thread_messages.isEmpty()) {
+    val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email, detail_grouping) {
+        if (!detail_grouping || !thread_matches_email || optimistic_thread_messages.isEmpty()) {
             messages
         } else {
             val known = messages.mapTo(HashSet()) { it.id }
@@ -955,7 +962,6 @@ fun MailDetailScreen(
         }
     }
     val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
-    val detail_grouping = mail_vm.is_conversation_grouping_enabled
     val expected_message_count = remember(
         email_id,
         api_item?.thread_message_count,
@@ -969,7 +975,7 @@ fun MailDetailScreen(
         val token = api_item?.thread_token ?: listed?.thread_token
         corrected_thread_count(claimed.coerceAtLeast(1), token?.let { detail_count_corrections[it] })
     }
-    var thread_settled by remember(email_id) { mutableStateOf(false) }
+    var thread_settled by remember(email_id, detail_grouping) { mutableStateOf(false) }
     LaunchedEffect(email_id, thread_matches_email, thread_state.is_loading, messages.size) {
         if (thread_matches_email && !thread_state.is_loading && messages.isNotEmpty()) thread_settled = true
     }
@@ -983,7 +989,7 @@ fun MailDetailScreen(
         messages.size <= 1 &&
         messages.any { it.id == email_id }
     val layout_ready = thread_complete || single_message_open
-    var open_layout by remember(email_id) {
+    var open_layout by remember(email_id, detail_grouping) {
         mutableStateOf(
             if (layout_ready) initial_thread_layout(messages.map { it.id }, email_id) else null,
         )
