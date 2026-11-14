@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Lifetime</string>
     <string name="billing_lifetime_note">This plan never renews, and you never pay for it again. To change it, contact Aster support.</string>
     <string name="billing_lifetime_locked">You have a lifetime plan, so there is nothing to renew or pay for. To change it, contact Aster support.</string>
+    <string name="save_offer_title">A lower price instead</string>
+    <string name="save_offer_description">You can keep your plan and pay less for a while.</string>
+    <string name="save_offer_action">Keep my plan at %1$d%% off</string>
+    <string name="save_offer_hint">After the discount ends, your plan renews at its regular price. This offer is available once per account.</string>
+    <string name="save_offer_failed">We could not apply the discount. Try again.</string>
 </resources>

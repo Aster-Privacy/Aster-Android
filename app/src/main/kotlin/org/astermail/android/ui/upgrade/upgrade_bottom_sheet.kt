@@ -557,6 +557,16 @@ internal fun UpgradePlanCard(
                 color = colors.text_secondary,
                 fontSize = 15.sp,
             )
+            if (yearly_selected && price_label == null) {
+                Text(
+                    text = stringResource(
+                        R.string.checkout_term_per_month,
+                        org.astermail.android.billing.format_money(Math.round(amount_cents / 12.0), currency),
+                    ),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+            }
 
             Spacer(Modifier.height(AsterSpacing.sm))
 

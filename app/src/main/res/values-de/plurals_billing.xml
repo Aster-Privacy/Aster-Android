@@ -36,4 +36,12 @@
         <item quantity="one">%d Funktion vergleichen</item>
         <item quantity="other">Alle %d Funktionen vergleichen</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">Behalten Sie %1$s mit %2$d %% Rabatt für Ihre nächste Monatszahlung. Ihre E-Mails, Adressen und Einstellungen bleiben unverändert.</item>
+        <item quantity="other">Behalten Sie %1$s mit %2$d %% Rabatt für die nächsten %3$d Monatszahlungen. Ihre E-Mails, Adressen und Einstellungen bleiben unverändert.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">Ihr Rabatt ist aktiv. Sie zahlen für Ihre nächste Monatszahlung %1$d %% weniger.</item>
+        <item quantity="other">Ihr Rabatt ist aktiv. Sie zahlen für die nächsten %2$d Monatszahlungen %1$d %% weniger.</item>
+    </plurals>
 </resources>

@@ -779,8 +779,6 @@
     <string name="unlimited_aliases">Unbegrenzte Aliase</string>
     <string name="alias_page_indicator">Seite %1$d von %2$d</string>
     <string name="unlimited_domains">Unbegrenzte Domains</string>
-    <string name="cancel_subscription_title">Abonnement kündigen</string>
-    <string name="cancel_subscription_description">Ihr Tarif bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv. Danach wechseln Sie zum kostenlosen Tarif.</string>
     <string name="keep_plan">Tarif behalten</string>
     <string name="expires_format">Läuft ab am %s</string>
 

@@ -54,4 +54,16 @@
         <item quantity="many">Porównaj wszystkie %d funkcji</item>
         <item quantity="other">Porównaj wszystkie %d funkcji</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">Zachowaj %1$s z rabatem %2$d%% na następną płatność miesięczną. Poczta, adresy i ustawienia pozostają bez zmian.</item>
+        <item quantity="few">Zachowaj %1$s z rabatem %2$d%% na kolejne %3$d płatności miesięczne. Poczta, adresy i ustawienia pozostają bez zmian.</item>
+        <item quantity="many">Zachowaj %1$s z rabatem %2$d%% na kolejnych %3$d płatności miesięcznych. Poczta, adresy i ustawienia pozostają bez zmian.</item>
+        <item quantity="other">Zachowaj %1$s z rabatem %2$d%% na kolejnych %3$d płatności miesięcznych. Poczta, adresy i ustawienia pozostają bez zmian.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">Rabat jest aktywny. Za następną płatność miesięczną płacisz o %1$d%% mniej.</item>
+        <item quantity="few">Rabat jest aktywny. Przez kolejne %2$d płatności miesięczne płacisz o %1$d%% mniej.</item>
+        <item quantity="many">Rabat jest aktywny. Przez kolejnych %2$d płatności miesięcznych płacisz o %1$d%% mniej.</item>
+        <item quantity="other">Rabat jest aktywny. Przez kolejnych %2$d płatności miesięcznych płacisz o %1$d%% mniej.</item>
+    </plurals>
 </resources>

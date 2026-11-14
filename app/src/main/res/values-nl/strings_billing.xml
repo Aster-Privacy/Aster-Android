@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Levenslang</string>
     <string name="billing_lifetime_note">Dit abonnement wordt nooit verlengd en je betaalt er nooit meer voor. Neem contact op met Aster-support om het te wijzigen.</string>
     <string name="billing_lifetime_locked">Je hebt een levenslang abonnement, dus er valt niets te verlengen of te betalen. Neem contact op met Aster-support om het te wijzigen.</string>
+    <string name="save_offer_title">Een lagere prijs</string>
+    <string name="save_offer_description">U kunt uw abonnement houden en een tijdje minder betalen.</string>
+    <string name="save_offer_action">Abonnement houden met %1$d%% korting</string>
+    <string name="save_offer_hint">Na afloop van de korting wordt uw abonnement verlengd tegen de normale prijs. Deze aanbieding geldt één keer per account.</string>
+    <string name="save_offer_failed">De korting kon niet worden toegepast. Probeer het opnieuw.</string>
 </resources>

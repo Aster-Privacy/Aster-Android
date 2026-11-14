@@ -96,6 +96,7 @@ data class BillingUiState(
     val checkout_abandoned_interval: String? = null,
     val cancel_impact: org.astermail.android.api.billing.CancelImpactResponse? = null,
     val cancel_impact_loading: Boolean = false,
+    val save_offer: org.astermail.android.api.billing.SaveOfferStatusResponse? = null,
     val credits: org.astermail.android.api.billing.CreditBalanceResponse? = null,
     val academic: org.astermail.android.api.billing.AcademicDiscountStatusResponse? = null,
     val credit_packages: List<org.astermail.android.api.billing.CreditPackageItem> = emptyList(),
@@ -1282,6 +1283,81 @@ class BillingViewModel @Inject constructor(
                 _state.update { it.copy(cancel_impact_loading = false) }
             }
         }
+    }
+
+    fun load_save_offer() {
+        _state.update { it.copy(save_offer = null) }
+        refresh_save_offer()
+    }
+
+    private fun refresh_save_offer() {
+        viewModelScope.launch {
+            try {
+                val status = billing_api.get_save_offer()
+                _state.update { it.copy(save_offer = status) }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_save_offer failed", t)
+            }
+        }
+    }
+
+    fun accept_save_offer(reason: String?): Boolean {
+        if (_state.value.is_acting) {
+            _state.update { it.copy(error = ctx.getString(R.string.billing_action_in_progress), info = null) }
+            return false
+        }
+        if (blocks_lifetime_plan_change()) return false
+        if (is_play_subscriber()) {
+            _state.update { it.copy(error = ctx.getString(R.string.save_offer_failed), info = null) }
+            return false
+        }
+        val chosen_reason = reason?.takeIf { it in CANCEL_REASONS }
+        _state.update { it.copy(is_acting = true, acting_action = "save_offer", error = null, info = null) }
+        viewModelScope.launch {
+            try {
+                val accepted = billing_api.accept_save_offer(
+                    org.astermail.android.api.billing.AcceptSaveOfferRequest(cancel_reason = chosen_reason),
+                )
+                if (!accepted.applied) {
+                    _state.update {
+                        it.copy(
+                            is_acting = false,
+                            acting_action = null,
+                            error = ctx.getString(R.string.save_offer_failed),
+                        )
+                    }
+                    refresh_save_offer()
+                    return@launch
+                }
+                _state.update {
+                    it.copy(
+                        is_acting = false,
+                        acting_action = null,
+                        save_offer = null,
+                        info = ctx.resources.getQuantityString(
+                            R.plurals.save_offer_applied,
+                            accepted.months,
+                            accepted.percent_off,
+                            accepted.months,
+                        ),
+                    )
+                }
+                load_subscription()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        is_acting = false,
+                        acting_action = null,
+                        error = billing_error(t, ctx.getString(R.string.save_offer_failed)),
+                    )
+                }
+                refresh_save_offer()
+            }
+        }
+        return true
     }
 
     fun load_credits_and_discounts() {

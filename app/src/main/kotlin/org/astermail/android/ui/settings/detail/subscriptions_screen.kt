@@ -1482,9 +1482,13 @@ fun SubscriptionsScreen(
     }
 
     if (show_cancel_flow) {
-        LaunchedEffect(Unit) { billing_vm.load_cancel_impact() }
+        LaunchedEffect(Unit) {
+            billing_vm.load_cancel_impact()
+            if (!play_install) billing_vm.load_save_offer()
+        }
         cancel_subscription_flow(
             billing_state = billing_state,
+            plan_name = current_plan_name.orEmpty(),
             yearly_savings = if (offer_yearly_switch) yearly_savings else null,
             downgrade_offer_label = cancel_offer_label.takeIf { !play_install },
             on_switch_plan = {
@@ -1508,6 +1512,8 @@ fun SubscriptionsScreen(
                 resume_cancel_flow = false
                 billing_vm.clear_messages()
             },
+            on_accept_save_offer = { reason -> billing_vm.accept_save_offer(reason) },
+            on_decline_save_offer = { billing_vm.clear_messages() },
             on_confirm = { reason, reason_text -> billing_vm.cancel_subscription(reason, reason_text) },
         )
     }
@@ -1613,7 +1619,7 @@ private fun cancel_reason_label(reason: String): Int = when (reason) {
     else -> R.string.cancel_reason_other
 }
 
-private enum class CancelStep { reason, offer, impact, confirm }
+private enum class CancelStep { reason, save, offer, impact }
 
 private enum class CancelOffer { price, unused, missing, none }
 
@@ -1686,12 +1692,15 @@ private fun cancel_impact_lines(impact: org.astermail.android.api.billing.Cancel
 @Composable
 private fun cancel_subscription_flow(
     billing_state: org.astermail.android.billing.BillingUiState,
+    plan_name: String,
     yearly_savings: Int?,
     downgrade_offer_label: String?,
     on_switch_plan: () -> Unit,
     on_switch_yearly: () -> Unit,
     on_contact_support: () -> Unit,
     on_dismiss: () -> Unit,
+    on_accept_save_offer: (reason: String?) -> Boolean,
+    on_decline_save_offer: () -> Unit,
     on_confirm: (reason: String?, reason_text: String?) -> Boolean,
 ) {
     val colors = AsterMaterial.colors
@@ -1699,10 +1708,18 @@ private fun cancel_subscription_flow(
     var reason_text by remember { mutableStateOf("") }
     var step by remember { mutableStateOf(CancelStep.reason) }
     var submitted by remember { mutableStateOf(false) }
+    var save_terms by remember { mutableStateOf<org.astermail.android.billing.SaveOfferTerms?>(null) }
+    var save_submitted by remember { mutableStateOf(false) }
     val cancelling = billing_state.is_acting && billing_state.acting_action == "cancel"
+    val saving = billing_state.is_acting && billing_state.acting_action == "save_offer"
     LaunchedEffect(cancelling, billing_state.error) {
         if (submitted && !cancelling) {
             if (billing_state.error == null) on_dismiss() else submitted = false
+        }
+    }
+    LaunchedEffect(saving, billing_state.error) {
+        if (save_submitted && !saving) {
+            if (billing_state.error == null) on_dismiss() else save_submitted = false
         }
     }
     val impact = billing_state.cancel_impact
@@ -1715,7 +1732,43 @@ private fun cancel_subscription_flow(
         CancelOffer.none -> false
     }
     val continue_label = stringResource(R.string.billing_cancel_continue)
-    if (step == CancelStep.offer) {
+    val after_save_step = if (offer_available) CancelStep.offer else CancelStep.impact
+    val terms = save_terms
+    if (step == CancelStep.save && terms != null) {
+        val failure = if (save_submitted) null else billing_state.error
+        val still_eligible = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer) != null
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { if (!saving) on_dismiss() },
+            title = stringResource(R.string.save_offer_title),
+            message = pluralStringResource(R.plurals.save_offer_body, terms.months, plan_name, terms.percent_off, terms.months),
+            body = {
+                Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+                    Text(text = stringResource(R.string.save_offer_hint), color = colors.text_secondary, fontSize = 13.sp)
+                    if (failure != null) {
+                        Text(text = failure, color = colors.danger, fontSize = 13.sp)
+                    }
+                }
+            },
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = continue_label,
+                    onClick = {
+                        on_decline_save_offer()
+                        step = CancelStep.impact
+                    },
+                    enabled = !saving,
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogPrimaryButton(
+                    label = stringResource(R.string.save_offer_action, terms.percent_off),
+                    onClick = { save_submitted = on_accept_save_offer(reason) },
+                    enabled = !saving && still_eligible,
+                    is_loading = saving,
+                    modifier = Modifier.weight(1f),
+                )
+            },
+        )
+    } else if (step == CancelStep.offer) {
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = on_dismiss,
             title = when (offer) {
@@ -1772,8 +1825,9 @@ private fun cancel_subscription_flow(
             },
         )
     } else if (step == CancelStep.impact) {
+        val failure = if (submitted) null else billing_state.error
         org.astermail.android.design.components.AsterDialog(
-            on_dismiss = on_dismiss,
+            on_dismiss = { if (!cancelling) on_dismiss() },
             title = stringResource(R.string.cancel_impact_title),
             message = when {
                 billing_state.cancel_impact_loading -> stringResource(R.string.loading)
@@ -1781,11 +1835,14 @@ private fun cancel_subscription_flow(
                 lines.isEmpty() -> stringResource(R.string.cancel_impact_none)
                 else -> stringResource(R.string.cancel_impact_intro)
             },
-            body = if (lines.isEmpty()) {
+            body = if (lines.isEmpty() && failure == null) {
                 null
             } else {
                 {
                     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
+                        if (failure != null) {
+                            Text(text = failure, color = colors.danger, fontSize = 13.sp)
+                        }
                         lines.forEach { line ->
                             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
                                 Icon(
@@ -1802,14 +1859,16 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = continue_label,
-                    onClick = { step = CancelStep.confirm },
-                    enabled = !billing_state.cancel_impact_loading,
-                    modifier = Modifier.weight(1f),
-                )
-                org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.keep_plan),
                     onClick = on_dismiss,
+                    enabled = !cancelling,
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.cancel_subscription),
+                    onClick = { submitted = on_confirm(reason, reason_text) },
+                    enabled = !cancelling && !billing_state.cancel_impact_loading,
+                    is_loading = cancelling,
                     modifier = Modifier.weight(1f),
                 )
             },
@@ -1852,34 +1911,12 @@ private fun cancel_subscription_flow(
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
                     label = stringResource(R.string.next),
-                    onClick = { step = if (offer_available) CancelStep.offer else CancelStep.impact },
-                    modifier = Modifier.weight(1f),
-                )
-            },
-        )
-    } else {
-        val failure = if (submitted) null else billing_state.error
-        org.astermail.android.design.components.AsterDialog(
-            on_dismiss = { if (!cancelling) on_dismiss() },
-            title = stringResource(R.string.cancel_subscription_title),
-            message = stringResource(R.string.cancel_subscription_description),
-            body = if (failure == null) {
-                null
-            } else {
-                { Text(text = failure, color = colors.danger, fontSize = 13.sp) }
-            },
-            footer = {
-                org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.back),
-                    onClick = { step = CancelStep.impact },
-                    enabled = !cancelling,
-                    modifier = Modifier.weight(1f),
-                )
-                org.astermail.android.design.components.AsterDialogDestructiveButton(
-                    label = stringResource(R.string.cancel_subscription),
-                    onClick = { submitted = on_confirm(reason, reason_text) },
-                    enabled = !cancelling,
-                    is_loading = cancelling,
+                    onClick = {
+                        val offered = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer)
+                        save_terms = offered
+                        if (offered != null) on_decline_save_offer()
+                        step = if (offered != null) CancelStep.save else after_save_step
+                    },
                     modifier = Modifier.weight(1f),
                 )
             },

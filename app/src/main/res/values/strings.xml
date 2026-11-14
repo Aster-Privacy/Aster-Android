@@ -1234,8 +1234,6 @@
     <string name="unlimited_aliases">Unlimited aliases</string>
     <string name="alias_page_indicator">Page %1$d of %2$d</string>
     <string name="unlimited_domains">Unlimited domains</string>
-    <string name="cancel_subscription_title">Cancel subscription</string>
-    <string name="cancel_subscription_description">Your plan stays active until the end of the current billing period. After that, you move to the free plan.</string>
     <string name="keep_plan">Keep plan</string>
     <string name="expires_format">Expires %s</string>
 

@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">终身</string>
     <string name="billing_lifetime_note">此套餐永不续订，您无需再为其付费。如需更改，请联系 Aster 支持团队。</string>
     <string name="billing_lifetime_locked">您使用的是终身套餐，无需续订或付费。如需更改，请联系 Aster 支持团队。</string>
+    <string name="save_offer_title">改为享受更低价格</string>
+    <string name="save_offer_description">您可以保留当前方案，并在一段时间内少付一些。</string>
+    <string name="save_offer_action">以 %1$d%% 折扣保留方案</string>
+    <string name="save_offer_hint">折扣结束后，方案将按常规价格续订。每个账户只能使用一次此优惠。</string>
+    <string name="save_offer_failed">无法应用折扣。请重试。</string>
 </resources>

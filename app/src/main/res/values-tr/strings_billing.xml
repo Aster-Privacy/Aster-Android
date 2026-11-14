@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Ömür boyu</string>
     <string name="billing_lifetime_note">Bu plan hiçbir zaman yenilenmez ve bunun için bir daha ödeme yapmazsınız. Planı değiştirmek için Aster destek ekibiyle iletişime geçin.</string>
     <string name="billing_lifetime_locked">Ömür boyu planınız olduğu için yenilenecek veya ödenecek bir şey yok. Planı değiştirmek için Aster destek ekibiyle iletişime geçin.</string>
+    <string name="save_offer_title">Bunun yerine daha düşük bir fiyat</string>
+    <string name="save_offer_description">Planınızı koruyup bir süre daha az ödeyebilirsiniz.</string>
+    <string name="save_offer_action">Planımı %%%1$d indirimle koru</string>
+    <string name="save_offer_hint">İndirim bittiğinde planınız normal fiyatından yenilenir. Bu teklif her hesap için bir kez geçerlidir.</string>
+    <string name="save_offer_failed">İndirim uygulanamadı. Tekrar deneyin.</string>
 </resources>

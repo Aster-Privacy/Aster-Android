@@ -27,4 +27,10 @@
     <plurals name="billing_compare_all_features">
         <item quantity="other">%d개 기능 모두 비교</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="other">다음 %3$d번의 월 결제에 %2$d%% 할인을 받고 %1$s 요금제를 유지하세요. 메일, 주소, 설정은 그대로 유지됩니다.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="other">할인이 적용되었습니다. 다음 %2$d번의 월 결제가 %1$d%% 줄어듭니다.</item>
+    </plurals>
 </resources>

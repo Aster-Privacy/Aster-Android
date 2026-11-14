@@ -45,4 +45,12 @@
         <item quantity="many">Confronta tutte le %d funzioni</item>
         <item quantity="other">Confronta tutte le %d funzioni</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">Mantieni %1$s con il %2$d%% di sconto sul prossimo pagamento mensile. Email, indirizzi e impostazioni restano come sono.</item>
+        <item quantity="other">Mantieni %1$s con il %2$d%% di sconto sui prossimi %3$d pagamenti mensili. Email, indirizzi e impostazioni restano come sono.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">Lo sconto è attivo. Paghi il %1$d%% in meno sul prossimo pagamento mensile.</item>
+        <item quantity="other">Lo sconto è attivo. Paghi il %1$d%% in meno sui prossimi %2$d pagamenti mensili.</item>
+    </plurals>
 </resources>

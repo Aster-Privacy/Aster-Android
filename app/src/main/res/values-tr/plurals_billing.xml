@@ -36,4 +36,12 @@
         <item quantity="one">%d özelliği karşılaştır</item>
         <item quantity="other">%d özelliğin tümünü karşılaştır</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="one">%1$s planınızı sonraki aylık ödemenizde %%%2$d indirimle koruyun. E-postalarınız, adresleriniz ve ayarlarınız olduğu gibi kalır.</item>
+        <item quantity="other">%1$s planınızı sonraki %3$d aylık ödemede %%%2$d indirimle koruyun. E-postalarınız, adresleriniz ve ayarlarınız olduğu gibi kalır.</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="one">İndiriminiz etkin. Sonraki aylık ödemenizde %%%1$d daha az ödersiniz.</item>
+        <item quantity="other">İndiriminiz etkin. Sonraki %2$d aylık ödemede %%%1$d daha az ödersiniz.</item>
+    </plurals>
 </resources>

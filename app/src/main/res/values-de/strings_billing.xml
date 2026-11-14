@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Lebenslang</string>
     <string name="billing_lifetime_note">Dieser Tarif verlängert sich nie, und Sie zahlen nie wieder dafür. Um ihn zu ändern, wenden Sie sich an den Aster-Support.</string>
     <string name="billing_lifetime_locked">Sie haben einen lebenslangen Tarif, daher gibt es nichts zu verlängern oder zu bezahlen. Um ihn zu ändern, wenden Sie sich an den Aster-Support.</string>
+    <string name="save_offer_title">Stattdessen ein niedrigerer Preis</string>
+    <string name="save_offer_description">Sie können Ihren Tarif behalten und eine Zeit lang weniger zahlen.</string>
+    <string name="save_offer_action">Tarif mit %1$d %% Rabatt behalten</string>
+    <string name="save_offer_hint">Nach Ablauf des Rabatts verlängert sich Ihr Tarif zum regulären Preis. Dieses Angebot gilt einmal pro Konto.</string>
+    <string name="save_offer_failed">Der Rabatt konnte nicht angewendet werden. Versuchen Sie es erneut.</string>
 </resources>

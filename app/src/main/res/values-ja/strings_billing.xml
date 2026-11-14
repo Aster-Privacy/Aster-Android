@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">永久</string>
     <string name="billing_lifetime_note">このプランは更新されず、今後お支払いは発生しません。変更するには、Aster サポートにお問い合わせください。</string>
     <string name="billing_lifetime_locked">永久プランをご利用中のため、更新やお支払いは必要ありません。変更するには、Aster サポートにお問い合わせください。</string>
+    <string name="save_offer_title">代わりに割引価格で</string>
+    <string name="save_offer_description">プランをそのまま使い続けながら、しばらくの間お支払いを減らせます。</string>
+    <string name="save_offer_action">%1$d%% オフでプランを継続</string>
+    <string name="save_offer_hint">割引期間が終わると、プランは通常価格で更新されます。この特典は 1 アカウントにつき 1 回限りです。</string>
+    <string name="save_offer_failed">割引を適用できませんでした。もう一度お試しください。</string>
 </resources>

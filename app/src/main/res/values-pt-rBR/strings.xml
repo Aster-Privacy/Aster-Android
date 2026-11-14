@@ -777,8 +777,6 @@
     <string name="unlimited_aliases">Aliases ilimitados</string>
     <string name="alias_page_indicator">Página %1$d de %2$d</string>
     <string name="unlimited_domains">Domínios ilimitados</string>
-    <string name="cancel_subscription_title">Cancelar assinatura</string>
-    <string name="cancel_subscription_description">Seu plano permanece ativo até o final do período de cobrança atual. Depois disso, você passa para o plano gratuito.</string>
     <string name="keep_plan">Manter plano</string>
     <string name="expires_format">Expira em %s</string>
 

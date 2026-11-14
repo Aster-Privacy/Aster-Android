@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Vitalício</string>
     <string name="billing_lifetime_note">Este plano nunca é renovado e não volta a pagar por ele. Para o alterar, contacte o suporte da Aster.</string>
     <string name="billing_lifetime_locked">Tem um plano vitalício, por isso não há nada a renovar nem a pagar. Para o alterar, contacte o suporte da Aster.</string>
+    <string name="save_offer_title">Um preço mais baixo</string>
+    <string name="save_offer_description">Pode manter o seu plano e pagar menos durante algum tempo.</string>
+    <string name="save_offer_action">Manter o plano com %1$d%% de desconto</string>
+    <string name="save_offer_hint">Quando o desconto terminar, o plano é renovado ao preço normal. Esta oferta está disponível uma vez por conta.</string>
+    <string name="save_offer_failed">Não foi possível aplicar o desconto. Tente novamente.</string>
 </resources>

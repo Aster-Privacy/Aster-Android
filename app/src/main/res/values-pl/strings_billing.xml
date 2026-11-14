@@ -149,4 +149,9 @@
     <string name="billing_status_lifetime">Dożywotni</string>
     <string name="billing_lifetime_note">Ten plan nigdy się nie odnawia i nie płacisz za niego ponownie. Aby go zmienić, skontaktuj się z pomocą Aster.</string>
     <string name="billing_lifetime_locked">Masz plan dożywotni, więc nie ma niczego do odnowienia ani opłacenia. Aby go zmienić, skontaktuj się z pomocą Aster.</string>
+    <string name="save_offer_title">Niższa cena zamiast rezygnacji</string>
+    <string name="save_offer_description">Możesz zachować plan i przez jakiś czas płacić mniej.</string>
+    <string name="save_offer_action">Zachowaj plan z rabatem %1$d%%</string>
+    <string name="save_offer_hint">Po zakończeniu rabatu plan odnawia się w normalnej cenie. Ta oferta jest dostępna raz na konto.</string>
+    <string name="save_offer_failed">Nie udało się zastosować rabatu. Spróbuj ponownie.</string>
 </resources>

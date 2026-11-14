@@ -27,4 +27,10 @@
     <plurals name="billing_compare_all_features">
         <item quantity="other">比较全部 %d 项功能</item>
     </plurals>
+    <plurals name="save_offer_body">
+        <item quantity="other">保留 %1$s，接下来 %3$d 次月付享受 %2$d%% 折扣。您的邮件、地址和设置都保持不变。</item>
+    </plurals>
+    <plurals name="save_offer_applied">
+        <item quantity="other">折扣已生效。接下来 %2$d 次月付将减少 %1$d%%。</item>
+    </plurals>
 </resources>
