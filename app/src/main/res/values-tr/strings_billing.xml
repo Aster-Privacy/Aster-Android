@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">Ne kadar ekleyeceğinizi seçin</string>
     <string name="billing_support_subtitle">Ekibe mesaj gönderin</string>
     <string name="billing_trust_crypto">Kripto ödemeleri kendiliğinden yenilenmez ve iade edilmez. Planınız bitmeden önce Aster size hatırlatır.</string>
-    <string name="billing_cancel_continue">İptale devam et</string>
+    <string name="billing_cancel_now">Aboneliği iptal et</string>
+    <string name="billing_cancel_see_options">Planımı koruma seçeneklerini gör</string>
     <string name="billing_cancel_offer_title_price">Kalmanın daha ucuz bir yolu</string>
     <string name="billing_cancel_offer_body_price">Adresiniz, takma adlarınız ve postalarınız sizde kalır. Yalnızca fiyat değişir.</string>
     <string name="billing_cancel_offer_title_unused">Planınız sizin için neler yapıyor</string>

@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">选择要添加的容量</string>
     <string name="billing_support_subtitle">给团队留言</string>
     <string name="billing_trust_crypto">加密货币付款不会自动续订，也不可退款。Aster 会在套餐结束前提醒您。</string>
-    <string name="billing_cancel_continue">继续取消</string>
+    <string name="billing_cancel_now">取消订阅</string>
+    <string name="billing_cancel_see_options">查看保留套餐的方式</string>
     <string name="billing_cancel_offer_title_price">更省钱的留下方式</string>
     <string name="billing_cancel_offer_body_price">您的地址、别名和邮件保持不变，只有价格变化。</string>
     <string name="billing_cancel_offer_title_unused">您的套餐为您提供的功能</string>

@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">Wählen Sie aus, wie viel Sie hinzufügen möchten</string>
     <string name="billing_support_subtitle">Schreiben Sie dem Team</string>
     <string name="billing_trust_crypto">Kryptozahlungen verlängern sich nicht von selbst und sind nicht erstattbar. Aster erinnert Sie, bevor Ihr Tarif endet.</string>
-    <string name="billing_cancel_continue">Weiter zur Kündigung</string>
+    <string name="billing_cancel_now">Abo kündigen</string>
+    <string name="billing_cancel_see_options">Möglichkeiten zum Behalten ansehen</string>
     <string name="billing_cancel_offer_title_price">Ein günstigerer Weg zu bleiben</string>
     <string name="billing_cancel_offer_body_price">Sie behalten Ihre Adresse, Ihre Aliasse und Ihre E-Mails. Nur der Preis ändert sich.</string>
     <string name="billing_cancel_offer_title_unused">Das leistet Ihr Tarif für Sie</string>

@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">Wybierz, ile chcesz dodać</string>
     <string name="billing_support_subtitle">Napisz do zespołu</string>
     <string name="billing_trust_crypto">Płatności kryptowalutą nie odnawiają się same i nie podlegają zwrotowi. Aster przypomni Ci przed końcem planu.</string>
-    <string name="billing_cancel_continue">Kontynuuj anulowanie</string>
+    <string name="billing_cancel_now">Anuluj subskrypcję</string>
+    <string name="billing_cancel_see_options">Zobacz opcje zachowania planu</string>
     <string name="billing_cancel_offer_title_price">Tańszy sposób, by zostać</string>
     <string name="billing_cancel_offer_body_price">Zachowujesz adres, aliasy i pocztę. Zmienia się tylko cena.</string>
     <string name="billing_cancel_offer_title_unused">Co Twój plan dla Ciebie robi</string>

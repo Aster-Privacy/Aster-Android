@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">Kies hoeveel je wilt toevoegen</string>
     <string name="billing_support_subtitle">Stuur het team een bericht</string>
     <string name="billing_trust_crypto">Cryptobetalingen verlengen niet vanzelf en zijn niet terugbetaalbaar. Aster herinnert je eraan voordat je abonnement afloopt.</string>
-    <string name="billing_cancel_continue">Doorgaan met opzeggen</string>
+    <string name="billing_cancel_now">Abonnement opzeggen</string>
+    <string name="billing_cancel_see_options">Opties bekijken om mijn abonnement te houden</string>
     <string name="billing_cancel_offer_title_price">Een goedkopere manier om te blijven</string>
     <string name="billing_cancel_offer_body_price">Je houdt je adres, je aliassen en je mail. Alleen de prijs verandert.</string>
     <string name="billing_cancel_offer_title_unused">Wat je abonnement voor je doet</string>
