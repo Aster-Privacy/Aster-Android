@@ -81,6 +81,7 @@ class MailViewModelTest {
         every { context.getString(org.astermail.android.R.string.something_went_wrong) } returns
             "Something went wrong"
         repository = mockk(relaxed = true)
+        every { repository.is_conversation_grouping_enabled } returns true
         search_index_manager = mockk(relaxed = true)
         folder_cache_store = mockk(relaxed = true)
         every { folder_cache_store.cached_stats(any()) } returns null
@@ -1745,6 +1746,24 @@ class MailViewModelTest {
         val state = vm.thread_state.value
         assertEquals("thread api down", state.error)
         assertEquals(1, state.messages.size)
+    }
+
+    @Test
+    fun `load_thread with conversations off shows only the opened message`() = runTest {
+        every { repository.is_conversation_grouping_enabled } returns false
+        val item = fake_inbox_page(1).items[0]
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(item)
+        coEvery { repository.decrypt_single_thread_message(any()) } returns
+            thread_message("id_1", has_attachments = false)
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertEquals(listOf("id_1"), state.messages.map { it.id })
+        assertNull(state.error)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.fetch_thread(any()) }
     }
 
     private fun thread_message(id: String, has_attachments: Boolean) = ThreadMessageDecrypted(

@@ -243,6 +243,9 @@ class MailViewModel @Inject constructor(
         refresh()
     }
 
+    val is_conversation_grouping_enabled: Boolean
+        get() = repository.is_conversation_grouping_enabled
+
     fun set_conversation_grouping(enabled: Boolean) {
         if (!repository.set_conversation_grouping(enabled)) return
         on_list_layout_changed { refresh() }
@@ -2268,9 +2271,10 @@ class MailViewModel @Inject constructor(
         thread_open_started_at = android.os.SystemClock.elapsedRealtime()
         thread_open_painted.clear()
         val thread_gen = ++thread_load_generation
+        val grouping = repository.is_conversation_grouping_enabled
         thread_load_job = viewModelScope.launch(Dispatchers.IO + thread_load_failure_handler(thread_gen)) {
                 val seed_token = (cur_thread.item?.takeIf { it.id == item_id } ?: seed)?.thread_token
-                ?.takeIf { it.isNotBlank() }
+                ?.takeIf { grouping && it.isNotBlank() }
             if (!paint_cached_thread(item_id, seed_token, thread_gen)) {
                 paint_cached_bodies(item_id, thread_gen)
             }
@@ -2292,7 +2296,7 @@ class MailViewModel @Inject constructor(
             val item = item_result.getOrNull()?.let { apply_tag_override(it) }
             if (item != null) resume_failed_open(item_id)
             if (item != null) mark_reactions_seen(item)
-            val thread_token = item?.thread_token
+            val thread_token = item?.thread_token?.takeIf { grouping }
             if (thread_token != null) {
                 val fallback = listOf(message_from_item_safe(item))
                 val reusable = if (seed_token == thread_token) {
