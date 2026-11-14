@@ -208,7 +208,7 @@ private fun types_of(params: List<String>): List<String> =
     params
         .filter { it.uppercase(Locale.ROOT).startsWith("TYPE=") || !it.contains("=") }
         .flatMap { it.substringAfter("=").split(",") }
-        .map { it.trim().lowercase(Locale.ROOT) }
+        .map { it.trim().trim('"').trim().lowercase(Locale.ROOT) }
         .filter { it.isNotEmpty() }
 
 private fun param_value(params: List<String>, name: String): String =

@@ -23,6 +23,8 @@ package org.astermail.android.contacts
 
 import java.util.Locale
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
+import org.astermail.android.ui.contacts.ContactPostal
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -786,6 +788,19 @@ private fun build_csv_contact(
         is_favorite = is_favorite,
         groups = group_names,
         raw_json = if (raw.length() > 0) raw.toString() else "",
+    ).with_typed_fields(
+        emails = ordered_emails.map { (value, type) -> ContactEntry(value, type) },
+        phones = ordered_phones.map { (value, type) -> ContactEntry(value, type) },
+        addresses = address_entries.map { entry ->
+            ContactPostal(
+                street = entry.optString("street", ""),
+                city = entry.optString("city", ""),
+                region = entry.optString("state", ""),
+                postal_code = entry.optString("postal_code", ""),
+                country = entry.optString("country", ""),
+                type = entry.optString("type", ContactEntry.TYPE_HOME),
+            )
+        },
     )
 }
 
@@ -799,7 +814,8 @@ private fun order_work_second(entries: List<Pair<String, String>>): List<Pair<St
     val primary_index = entries.indices.firstOrNull { entries[it].second != "work" } ?: 0
     val work_index = entries.indices.firstOrNull { it != primary_index && entries[it].second == "work" }
     val rest = entries.filterIndexed { index, _ -> index != primary_index && index != work_index }
-    val work = if (work_index != null) entries[work_index] else rest.first().first to "work"
-    val remaining = if (work_index != null) rest else rest.drop(1)
-    return listOf(entries[primary_index], work) + remaining
+    if (work_index != null) return listOf(entries[primary_index], entries[work_index]) + rest
+    val untyped = rest.first()
+    val second = if (untyped.second == "other") untyped.first to "work" else untyped
+    return listOf(entries[primary_index], second) + rest.drop(1)
 }
