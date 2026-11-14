@@ -715,6 +715,73 @@ class ContactsViewModelTest {
     }
 
     @Test
+    fun `create_group from add to group adds every selected contact to the new group`() = runTest {
+        val ids = listOf("c_1", "c_2", "c_3", "c_4", "c_5")
+        coEvery { repository.fetch_contacts() } returns Result.success(
+            ids.mapIndexed { index, id -> fake_contact(id, "Person $index", "p$index@astermail.org") },
+        )
+        coEvery { repository.create_contact_group("Friends", "#6366f1") } returns
+            Result.success(CreateContactGroupResponse(id = "g_new"))
+        coEvery { repository.add_contact_to_group(any(), "g_new") } returns
+            Result.success(SuccessResponse(success = true))
+        coEvery { repository.list_contact_groups() } returns Result.success(
+            listOf(ContactGroup(id = "g_new", name = "Friends", color = "#6366f1", contact_count = 5)),
+        )
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        ids.forEach { vm.toggle_selection(it) }
+
+        var created = false
+        vm.create_group("Friends", "#6366f1", add_selection = true) { ok -> created = ok }
+        advanceUntilIdle()
+
+        assertTrue(created)
+        ids.forEach { id ->
+            coVerify(exactly = 1) { repository.add_contact_to_group(id, "g_new") }
+        }
+        assertTrue(vm.state.value.selected_ids.isEmpty())
+        assertFalse(vm.state.value.is_bulk_working)
+    }
+
+    @Test
+    fun `create_group without add_selection leaves the selection out of the group`() = runTest {
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(fake_contact("c_1")))
+        coEvery { repository.create_contact_group("Work", "#6366f1") } returns
+            Result.success(CreateContactGroupResponse(id = "g_1"))
+        coEvery { repository.list_contact_groups() } returns Result.success(emptyList())
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.toggle_selection("c_1")
+
+        vm.create_group("Work", "#6366f1")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { repository.add_contact_to_group(any(), any()) }
+        assertEquals(setOf("c_1"), vm.state.value.selected_ids)
+    }
+
+    @Test
+    fun `create_group keeps the selection when the group is not created`() = runTest {
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(fake_contact("c_1")))
+        coEvery { repository.create_contact_group("Friends", "#6366f1") } returns
+            Result.failure(RuntimeException("boom"))
+
+        vm.load_contacts()
+        advanceUntilIdle()
+        vm.toggle_selection("c_1")
+
+        var created = true
+        vm.create_group("Friends", "#6366f1", add_selection = true) { ok -> created = ok }
+        advanceUntilIdle()
+
+        assertFalse(created)
+        coVerify(exactly = 0) { repository.add_contact_to_group(any(), any()) }
+        assertEquals(setOf("c_1"), vm.state.value.selected_ids)
+    }
+
+    @Test
     fun `create_group rejects a blank name`() = runTest {
         var created = true
         vm.create_group("   ", "#6366f1") { ok -> created = ok }

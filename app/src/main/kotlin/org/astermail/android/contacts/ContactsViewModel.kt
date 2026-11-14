@@ -840,6 +840,7 @@ class ContactsViewModel @Inject constructor(
         name: String,
         color: String,
         icon: String? = null,
+        add_selection: Boolean = false,
         on_complete: ((Boolean) -> Unit)? = null,
     ) {
         val trimmed = name.trim()
@@ -847,16 +848,34 @@ class ContactsViewModel @Inject constructor(
             on_complete?.invoke(false)
             return
         }
+        val member_ids = if (add_selection) _state.value.selected_ids.toList() else emptyList()
         mutation_in_flight = true
         _state.value = _state.value.copy(is_bulk_working = true, error = null)
         viewModelScope.launch {
             val outcome = repository.create_contact_group(trimmed, color, icon)
+            val created_id = outcome.getOrNull()?.id
+            var last_failure: Throwable? = null
+            if (created_id != null && member_ids.isNotEmpty()) {
+                for (id in member_ids) {
+                    repository.add_contact_to_group(id, created_id).onFailure { t -> last_failure = t }
+                }
+            }
             mutation_in_flight = false
-            _state.value = _state.value.copy(is_bulk_working = false)
+            val member_failure = last_failure
+            _state.value = _state.value.copy(
+                is_bulk_working = false,
+                selected_ids = if (created_id != null && member_ids.isNotEmpty()) {
+                    emptySet()
+                } else {
+                    _state.value.selected_ids
+                },
+                error = member_failure?.let { friendly_error(it) },
+            )
             outcome.fold(
                 onSuccess = {
                     on_complete?.invoke(true)
                     load_groups()
+                    if (member_ids.isNotEmpty()) load_contacts()
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(error = friendly_error(t))

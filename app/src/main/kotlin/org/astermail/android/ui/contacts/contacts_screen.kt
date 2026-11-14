@@ -182,6 +182,7 @@ fun ContactsScreen(
     var show_empty_trash_confirm by remember { mutableStateOf(false) }
     var pending_forever_delete by remember { mutableStateOf<Contact?>(null) }
     var show_new_group by remember { mutableStateOf(false) }
+    var new_group_for_selection by remember { mutableStateOf(false) }
     var editing_group by remember { mutableStateOf<ContactGroup?>(null) }
     var show_group_picker by remember { mutableStateOf(false) }
     var merge_cluster by remember { mutableStateOf<DuplicateCluster?>(null) }
@@ -767,10 +768,15 @@ fun ContactsScreen(
         new_group_dialog(
             existing_count = ui_state.groups.size,
             is_busy = ui_state.is_bulk_working,
-            on_dismiss = { show_new_group = false },
-            on_create = { name, color, icon ->
+            on_dismiss = {
                 show_new_group = false
-                vm.create_group(name, color, icon) { ok ->
+                new_group_for_selection = false
+            },
+            on_create = { name, color, icon ->
+                val add_selection = new_group_for_selection
+                show_new_group = false
+                new_group_for_selection = false
+                vm.create_group(name, color, icon, add_selection = add_selection) { ok ->
                     if (ok) {
                         Toast.makeText(
                             context,
@@ -822,6 +828,7 @@ fun ContactsScreen(
             },
             on_new_group = {
                 show_group_picker = false
+                new_group_for_selection = true
                 show_new_group = true
             },
         )
