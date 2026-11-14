@@ -43,6 +43,7 @@ import org.astermail.android.api.ApiClient
 data class PublicKeyResponse(
     val username: String,
     val public_key: String,
+    val internal: Boolean = false,
 )
 
 @Serializable

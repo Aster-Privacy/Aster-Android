@@ -22,7 +22,7 @@
 package org.astermail.android.mail.ratchet
 
 import java.util.Locale
-import org.astermail.android.mail.is_internal_recipient
+import org.astermail.android.mail.is_aster_domain_recipient
 
 enum class PeerKind {
     BUILTIN,
@@ -50,7 +50,7 @@ object PinIdentity {
     }
 
     fun peer_kind(raw: String): PeerKind =
-        if (is_internal_recipient(raw)) PeerKind.BUILTIN else PeerKind.EXTERNAL
+        if (is_aster_domain_recipient(raw)) PeerKind.BUILTIN else PeerKind.EXTERNAL
 
     fun canonical_id(raw: String, kind: PeerKind): String {
         val lowered = raw.trim().lowercase(Locale.ROOT)
