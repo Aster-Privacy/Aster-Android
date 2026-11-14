@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">Выберите, сколько добавить</string>
     <string name="billing_support_subtitle">Напишите команде</string>
     <string name="billing_trust_crypto">Криптоплатежи не продлеваются автоматически и не возвращаются. Aster напомнит вам до окончания тарифа.</string>
-    <string name="billing_cancel_continue">Продолжить отмену</string>
+    <string name="billing_cancel_now">Отменить подписку</string>
+    <string name="billing_cancel_see_options">Посмотреть варианты сохранить тариф</string>
     <string name="billing_cancel_offer_title_price">Более дешёвый способ остаться</string>
     <string name="billing_cancel_offer_body_price">Адрес, псевдонимы и почта остаются с вами. Меняется только цена.</string>
     <string name="billing_cancel_offer_title_unused">Что вам даёт ваш тариф</string>

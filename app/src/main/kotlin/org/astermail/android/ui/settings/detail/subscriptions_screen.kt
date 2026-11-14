@@ -70,6 +70,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
+import org.astermail.android.billing.CancelStep
 import org.astermail.android.billing.is_resumable_crypto_invoice
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
@@ -1619,8 +1620,6 @@ private fun cancel_reason_label(reason: String): Int = when (reason) {
     else -> R.string.cancel_reason_other
 }
 
-private enum class CancelStep { reason, save, offer, impact }
-
 private enum class CancelOffer { price, unused, missing, none }
 
 private fun cancel_offer_for(reason: String?): CancelOffer = when (reason) {
@@ -1707,6 +1706,7 @@ private fun cancel_subscription_flow(
     var reason by remember { mutableStateOf<String?>(null) }
     var reason_text by remember { mutableStateOf("") }
     var step by remember { mutableStateOf(CancelStep.reason) }
+    var confirm_came_from by remember { mutableStateOf(CancelStep.reason) }
     var submitted by remember { mutableStateOf(false) }
     var save_terms by remember { mutableStateOf<org.astermail.android.billing.SaveOfferTerms?>(null) }
     var save_submitted by remember { mutableStateOf(false) }
@@ -1731,12 +1731,25 @@ private fun cancel_subscription_flow(
         CancelOffer.missing -> true
         CancelOffer.none -> false
     }
-    val continue_label = stringResource(R.string.billing_cancel_continue)
-    val after_save_step = if (offer_available) CancelStep.offer else CancelStep.impact
+    val cancel_now_label = stringResource(R.string.billing_cancel_now)
+    val has_save_offer = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer) != null
+    val retention_step = org.astermail.android.billing.retention_step_for(has_save_offer, offer_available)
+    val open_step = { target: CancelStep ->
+        if (target == CancelStep.save) {
+            save_terms = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer)
+        }
+        on_decline_save_offer()
+        step = target
+    }
+    val go_to_confirm = { from: CancelStep ->
+        on_decline_save_offer()
+        confirm_came_from = from
+        step = CancelStep.confirm
+    }
     val terms = save_terms
     if (step == CancelStep.save && terms != null) {
         val failure = if (save_submitted) null else billing_state.error
-        val still_eligible = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer) != null
+        val still_eligible = has_save_offer
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { if (!saving) on_dismiss() },
             title = stringResource(R.string.save_offer_title),
@@ -1751,11 +1764,8 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = continue_label,
-                    onClick = {
-                        on_decline_save_offer()
-                        step = CancelStep.impact
-                    },
+                    label = cancel_now_label,
+                    onClick = { go_to_confirm(CancelStep.save) },
                     enabled = !saving,
                     modifier = Modifier.weight(1f),
                 )
@@ -1813,8 +1823,8 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = continue_label,
-                    onClick = { step = CancelStep.impact },
+                    label = cancel_now_label,
+                    onClick = { go_to_confirm(CancelStep.offer) },
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
@@ -1824,7 +1834,7 @@ private fun cancel_subscription_flow(
                 )
             },
         )
-    } else if (step == CancelStep.impact) {
+    } else if (step == CancelStep.confirm) {
         val failure = if (submitted) null else billing_state.error
         org.astermail.android.design.components.AsterDialog(
             on_dismiss = { if (!cancelling) on_dismiss() },
@@ -1859,8 +1869,12 @@ private fun cancel_subscription_flow(
             },
             footer = {
                 org.astermail.android.design.components.AsterDialogOutlineButton(
-                    label = stringResource(R.string.keep_plan),
-                    onClick = on_dismiss,
+                    label = stringResource(R.string.back),
+                    onClick = {
+                        open_step(
+                            org.astermail.android.billing.step_before_confirm(confirm_came_from, has_save_offer, offer_available),
+                        )
+                    },
                     enabled = !cancelling,
                     modifier = Modifier.weight(1f),
                 )
@@ -1901,6 +1915,13 @@ private fun cancel_subscription_flow(
                         min_lines = 2,
                         max_lines = 4,
                     )
+                    if (retention_step != null) {
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                        cancel_offer_row(
+                            stringResource(R.string.billing_cancel_see_options),
+                            TablerIcons.Heart,
+                        ) { open_step(retention_step) }
+                    }
                 }
             },
             footer = {
@@ -1910,13 +1931,8 @@ private fun cancel_subscription_flow(
                     modifier = Modifier.weight(1f),
                 )
                 org.astermail.android.design.components.AsterDialogPrimaryButton(
-                    label = stringResource(R.string.next),
-                    onClick = {
-                        val offered = org.astermail.android.billing.save_offer_for(reason, billing_state.save_offer)
-                        save_terms = offered
-                        if (offered != null) on_decline_save_offer()
-                        step = if (offered != null) CancelStep.save else after_save_step
-                    },
+                    label = cancel_now_label,
+                    onClick = { go_to_confirm(CancelStep.reason) },
                     modifier = Modifier.weight(1f),
                 )
             },

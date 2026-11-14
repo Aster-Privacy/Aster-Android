@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">追加する容量を選択してください</string>
     <string name="billing_support_subtitle">チームにメッセージを送る</string>
     <string name="billing_trust_crypto">暗号資産での支払いは自動更新されず、返金もできません。プラン終了前に Aster がお知らせします。</string>
-    <string name="billing_cancel_continue">解約に進む</string>
+    <string name="billing_cancel_now">サブスクリプションを解約</string>
+    <string name="billing_cancel_see_options">プランを続ける方法を見る</string>
     <string name="billing_cancel_offer_title_price">もっと安く続ける方法</string>
     <string name="billing_cancel_offer_body_price">アドレス、エイリアス、メールはそのままです。変わるのは料金だけです。</string>
     <string name="billing_cancel_offer_title_unused">プランがあなたのためにしていること</string>

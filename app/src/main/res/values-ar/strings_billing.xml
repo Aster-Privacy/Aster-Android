@@ -91,7 +91,8 @@
     <string name="billing_addon_pick_size">اختر المقدار الذي تريد إضافته</string>
     <string name="billing_support_subtitle">أرسل رسالة إلى الفريق</string>
     <string name="billing_trust_crypto">مدفوعات العملات الرقمية لا تتجدد تلقائيًا ولا تُسترد. يذكّرك Aster قبل انتهاء خطتك.</string>
-    <string name="billing_cancel_continue">متابعة الإلغاء</string>
+    <string name="billing_cancel_now">إلغاء الاشتراك</string>
+    <string name="billing_cancel_see_options">عرض خيارات الاحتفاظ بخطتي</string>
     <string name="billing_cancel_offer_title_price">طريقة أرخص للبقاء</string>
     <string name="billing_cancel_offer_body_price">تحتفظ بعنوانك وأسمائك المستعارة وبريدك. يتغير السعر فقط.</string>
     <string name="billing_cancel_offer_title_unused">ما تقدمه خطتك لك</string>
