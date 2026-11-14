@@ -190,4 +190,45 @@ class RatchetMessageKeyOnlyTest {
         assertEquals("first", DoubleRatchet.decrypt(receiver, first))
         assertEquals(true, receiver.header_bound)
     }
+
+    @Test
+    fun `a header version outside one byte is refused before serializing`() {
+        val header = genuine_header()
+
+        for (version in listOf(-1, 256, 258, Int.MAX_VALUE, Int.MIN_VALUE)) {
+            assertTrue(runCatching { DoubleRatchet.serialize_header_for_ad(header.copy(v = version)) }.isFailure)
+        }
+        assertTrue(runCatching { DoubleRatchet.serialize_header_for_ad(header.copy(v = 255)) }.isSuccess)
+        assertTrue(runCatching { DoubleRatchet.serialize_header_for_ad(header.copy(v = 0)) }.isSuccess)
+    }
+
+    @Test
+    fun `a header version that wraps to a valid byte fails to decrypt and keeps the state`() {
+        val (sender, receiver) = session()
+        val genuine = bound_message(sender, "first")
+        val before = receiver.copy(skipped_message_keys = receiver.skipped_message_keys.toMutableList())
+
+        val wrapped = genuine.copy(header = genuine.header.copy(v = 258))
+
+        assertTrue(runCatching { DoubleRatchet.decrypt(receiver, wrapped) }.isFailure)
+        assertEquals(before, receiver)
+        assertEquals("first", DoubleRatchet.decrypt(receiver, genuine))
+    }
+
+    @Test
+    fun `a header version outside one byte fails to open under its message key`() {
+        val (sender, _) = session()
+        val sealed = DoubleRatchet.encrypt(sender, "keyed")
+        val recipient = RatchetRecipientData(
+            header = sealed.header.copy(v = 258),
+            ciphertext = RatchetCrypto.b64_encode(sealed.ciphertext),
+            nonce = RatchetCrypto.b64_encode(sealed.nonce),
+        )
+
+        assertTrue(runCatching { DoubleRatchet.decrypt_with_message_key(recipient, sealed.message_key) }.isFailure)
+        assertEquals(
+            "keyed",
+            DoubleRatchet.decrypt_with_message_key(recipient.copy(header = sealed.header), sealed.message_key),
+        )
+    }
 }
