@@ -70,6 +70,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.mirror_in_rtl
 
 internal enum class billing_hero_status { free, active, ending, attention }
@@ -391,12 +392,11 @@ internal fun billing_special_offer_card(
             icon = TablerIcons.Discount2,
             on_click = on_open,
             trailing = {
-                Text(
+                AsterPlanTag(
                     text = stringResource(R.string.save_percent, percent_off),
-                    color = colors.success,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    font_size = 12.sp,
+                    horizontal_padding = 9.dp,
+                    vertical_padding = 3.dp,
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Icon(

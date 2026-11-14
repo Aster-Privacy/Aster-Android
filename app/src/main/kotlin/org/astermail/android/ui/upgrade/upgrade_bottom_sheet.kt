@@ -72,6 +72,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.astermail.android.R
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.api.UpgradeEvent
 import org.astermail.android.api.UpgradeEventBus
 import org.astermail.android.api.billing.AvailablePlan
@@ -386,14 +387,14 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                     }
                     if (save_percent > 0) {
                         Spacer(Modifier.height(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.save_percent, save_percent),
-                            color = colors.accent_blue,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            AsterPlanTag(
+                                text = stringResource(R.string.save_percent, save_percent),
+                                font_size = 12.sp,
+                                horizontal_padding = 9.dp,
+                                vertical_padding = 3.dp,
+                            )
+                        }
                     }
                     Spacer(Modifier.height(AsterSpacing.lg))
                 }
