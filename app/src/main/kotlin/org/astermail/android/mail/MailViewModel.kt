@@ -207,6 +207,7 @@ class MailViewModel @Inject constructor(
                 thread_token = state.item?.thread_token,
                 item_id = state.item?.id,
                 server_messages = state.messages,
+                conversation_grouping = repository.is_conversation_grouping_enabled,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -695,6 +696,8 @@ class MailViewModel @Inject constructor(
     }
 
     init {
+        folder_cache_layout_grouping(runCatching { folder_cache_store.layout_signature() }.getOrNull())
+            ?.let { repository.set_conversation_grouping(it) }
         search_index_manager.add_read_overlay(index_read_overlay)
         prime_folder_cache(_inbox_state.value.current_folder)
         viewModelScope.launch {
@@ -2162,6 +2165,7 @@ class MailViewModel @Inject constructor(
 
     private fun refresh_thread_after_send() {
         send_guard_until = System.currentTimeMillis() + SEND_GUARD_WINDOW_MS
+        if (!repository.is_conversation_grouping_enabled) return
         val target_id = _thread_state.value.item?.id ?: return
         viewModelScope.launch {
             val before_ids = _thread_state.value.messages.map { it.id }.toSet()

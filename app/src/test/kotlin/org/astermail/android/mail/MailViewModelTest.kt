@@ -1766,6 +1766,61 @@ class MailViewModelTest {
         coVerify(exactly = 0) { repository.fetch_thread(any()) }
     }
 
+    @Test
+    fun `a new view model restores the saved conversation grouping before opening mail`() = runTest {
+        every { folder_cache_store.layout_signature() } returns
+            folder_cache_layout_signature(grouping = false, list_order = null, custom_categories = 0)
+
+        MailViewModel(
+            context,
+            repository,
+            search_index_manager,
+            folder_cache_store,
+            identity_pins,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
+        advanceUntilIdle()
+
+        verify { repository.set_conversation_grouping(false) }
+    }
+
+    @Test
+    fun `sending from a single message view with conversations off does not reload it as a thread`() = runTest {
+        val send_results = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 4)
+        every { repository.send_result_events } returns send_results
+        every { repository.is_conversation_grouping_enabled } returns false
+        vm = MailViewModel(
+            context,
+            repository,
+            search_index_manager,
+            folder_cache_store,
+            identity_pins,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
+        val item = fake_inbox_page(1).items[0]
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(item)
+        coEvery { repository.decrypt_single_thread_message(any()) } returns
+            thread_message("id_1", has_attachments = false)
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+        io.mockk.clearMocks(repository, answers = false, recordedCalls = true, childMocks = false, verificationMarks = true, exclusionRules = false)
+
+        send_results.tryEmit(Result.success(Unit))
+        advanceTimeBy(20_000L)
+        advanceUntilIdle()
+
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.fetch_single_message(any()) }
+        coVerify(exactly = 0) { repository.fetch_thread(any()) }
+        assertEquals(listOf("id_1"), vm.thread_state.value.messages.map { it.id })
+    }
+
     private fun thread_message(id: String, has_attachments: Boolean) = ThreadMessageDecrypted(
         id = id,
         sender_name = "Alice",
