@@ -149,7 +149,7 @@ fun reaction_restriction(
     if (normalize(sender_email).isEmpty()) return ReactionRestriction.no_recipient
     if (require_encryption) {
         val recipient = reaction_recipient(sender_email, to_addresses, user_email, is_own_address)
-        if (recipient != null && has_external_recipient(listOf(recipient))) {
+        if (recipient != null && !is_aster_domain_recipient(recipient)) {
             return ReactionRestriction.require_encryption
         }
     }

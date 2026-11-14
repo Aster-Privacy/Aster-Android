@@ -64,6 +64,7 @@ data class SimpleSendRequest(
     val forward_original_mail_id: String? = null,
     val suppress_branding: Boolean? = null,
     val recipient_bodies: Map<String, String>? = null,
+    val hosted_recipients: List<String>? = null,
 )
 
 @Serializable
@@ -177,6 +178,7 @@ data class QueueEmailRequest(
     val external_pgp_bodies: Map<String, String>? = null,
     val force_pgp: Boolean? = null,
     val pgp_recipients: List<String>? = null,
+    val hosted_recipients: List<String>? = null,
 )
 
 @Serializable

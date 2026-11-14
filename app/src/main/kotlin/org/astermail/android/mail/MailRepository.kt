@@ -312,10 +312,8 @@ val ASTER_INTERNAL_DOMAINS =
         ASTER_GHOST_ALIAS_DOMAIN,
     )
 
-fun is_internal_recipient(email: String): Boolean {
-    val normalized = email.trim().lowercase(java.util.Locale.ROOT)
-    return ASTER_INTERNAL_DOMAINS.any { normalized.endsWith("@$it") }
-}
+fun is_internal_recipient(email: String): Boolean =
+    is_aster_domain_recipient(email) || HostedRecipientDirectory.is_hosted(email)
 
 internal data class SubjectBundle(
     val subject: String?,
@@ -2385,6 +2383,7 @@ class MailRepository @Inject constructor(
     }
 
     fun clear_caches() {
+        HostedRecipientDirectory.clear()
         pbkdf2_key_cache.clear()
         identity_key_cache.clear()
         cached_kek_candidates?.forEach { it.fill(0) }
@@ -6092,14 +6091,47 @@ class MailRepository @Inject constructor(
 
     suspend fun recipient_lock_statuses(
         outside_recipients: List<String>,
-    ): Map<String, org.astermail.android.crypto.RecipientLockStatus> =
-        RecipientEncryptionRules.lookup_lock_statuses(
-            outside_recipients = outside_recipients,
-            now_ms = { System.currentTimeMillis() },
-            wait = { kotlinx.coroutines.delay(it) },
-            discover = { discover_keys_in_batches(it) },
-            encrypt_by_default = cached_encrypt_by_default(),
-        )
+    ): Map<String, org.astermail.android.crypto.RecipientLockStatus> {
+        classify_recipients(outside_recipients)
+        val (hosted, outside) = outside_recipients.partition { HostedRecipientDirectory.is_hosted(it) }
+        val found = if (outside.isEmpty()) {
+            emptyMap()
+        } else {
+            RecipientEncryptionRules.lookup_lock_statuses(
+                outside_recipients = outside,
+                now_ms = { System.currentTimeMillis() },
+                wait = { kotlinx.coroutines.delay(it) },
+                discover = { discover_keys_in_batches(it) },
+                encrypt_by_default = cached_encrypt_by_default(),
+            )
+        }
+        return found + hosted.associateWith { org.astermail.android.crypto.RecipientLockStatus.ENCRYPTED }
+    }
+
+    suspend fun classify_recipients(recipients: List<String>) {
+        val pending = recipients
+            .filter { HostedRecipientDirectory.needs_lookup(it) }
+            .map { HostedRecipientDirectory.normalize(it) }
+            .distinct()
+        if (pending.isEmpty()) return
+        coroutineScope {
+            pending.map { address ->
+                async {
+                    val username = HostedRecipientDirectory.lookup_username(address) ?: return@async
+                    val internal = try {
+                        keys_api.get_recipient_public_key(username, address).internal
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: org.astermail.android.api.ApiError.NotFoundError) {
+                        false
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (internal != null) HostedRecipientDirectory.record(address, internal)
+                }
+            }.awaitAll()
+        }
+    }
 
     fun prefetch_external_key_trust(recipients: List<String>) {
         val external = external_key_trust_candidates(recipients)
@@ -6221,6 +6253,7 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
     ): Result<SimpleSendResponse> = runCatching {
+        classify_recipients(to + cc + bcc)
         val is_mixed = has_mixed_recipients(to + cc + bcc)
         if (is_mixed && !expiry_password.isNullOrEmpty()) throw MixedRecipientsPasswordException()
         val require_encryption = has_external_recipient(to + cc + bcc) && require_encryption_enabled()
@@ -6342,6 +6375,7 @@ class MailRepository @Inject constructor(
                     is_e2e_encrypted = false,
                     internal_encrypted_body = sealed.first,
                     recipient_bodies = sealed.second.takeIf { it.isNotEmpty() },
+                    hosted_recipients = hosted_recipients_of(to + cc + bcc).takeIf { it.isNotEmpty() },
                     encrypted_envelope = encrypted_envelope,
                     envelope_nonce = envelope_nonce,
                     folder_token = sent_folder_token,
@@ -6559,6 +6593,8 @@ class MailRepository @Inject constructor(
                     sender_alias_hash = sender_alias_hash,
                     suppress_branding = suppress_branding,
                     recipient_bodies = recipient_bodies,
+                    hosted_recipients = hosted_recipients_of(to + cc + bcc)
+                        .takeIf { ratchet_body != null && it.isNotEmpty() },
                 ),
             )
         }
@@ -6676,7 +6712,7 @@ class MailRepository @Inject constructor(
         in_reply_to: String? = null,
         allow_non_post_quantum: Boolean = false,
     ): Result<String?> = runCatching {
-        if (has_external_recipient(listOf(recipient)) && require_encryption_enabled()) {
+        if (!is_aster_domain_recipient(recipient) && require_encryption_enabled()) {
             throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
         }
         val from_addr = sender_email ?: session_key_store.get_user_email() ?: ""
@@ -6700,7 +6736,7 @@ class MailRepository @Inject constructor(
             throw IllegalStateException(context.getString(R.string.send_sent_folder_unavailable))
         }
 
-        val internal = is_internal_recipient(recipient)
+        val internal = is_aster_domain_recipient(recipient)
         val resolved_group_id = message_group_id
             ?: if (internal) {
                 runCatching { mail_api.get_message(target_message_id).message_group_id }.getOrNull()
@@ -7388,6 +7424,7 @@ class MailRepository @Inject constructor(
         allow_non_post_quantum: Boolean = false,
     ): Result<String> = runCatching {
         val all_recipients = to + cc + bcc
+        classify_recipients(all_recipients)
         if (has_external_recipient(all_recipients) && require_encryption_enabled()) {
             throw EncryptionRequiredException(context.getString(R.string.send_requires_encryption))
         }
@@ -7518,6 +7555,7 @@ class MailRepository @Inject constructor(
             sender_display_name = sender_display_name?.takeIf { it.isNotBlank() },
             internal_encrypted_body = sealed.first,
             recipient_bodies = sealed.second,
+            hosted_recipients = hosted_recipients_of(to + cc + bcc),
         )
     }
 
