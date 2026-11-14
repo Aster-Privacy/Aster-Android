@@ -71,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -135,13 +136,14 @@ fun ContactsScreen(
     on_create_contact: () -> Unit,
     on_open_drawer: (() -> Unit)? = null,
     on_compose_to: ((List<String>) -> Unit)? = null,
+    search_back_enabled: Boolean = true,
     vm: ContactsViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
     val ui_state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var query by remember { mutableStateOf("") }
-    var filter_favorites by remember { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var filter_favorites by rememberSaveable { mutableStateOf(false) }
     var show_sync_confirm by remember { mutableStateOf(false) }
     var show_bulk_menu by remember { mutableStateOf(false) }
     var show_overflow_menu by remember { mutableStateOf(false) }
@@ -216,6 +218,7 @@ fun ContactsScreen(
         }
     }
 
+    BackHandler(enabled = search_back_enabled && !ui_state.is_selecting && query.isNotEmpty()) { query = "" }
     BackHandler(enabled = ui_state.is_selecting) { vm.clear_selection() }
 
     val filtered = remember(query, filter_favorites, ui_state.contacts) {
