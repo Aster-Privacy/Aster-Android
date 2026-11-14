@@ -6079,7 +6079,7 @@ class MailRepository @Inject constructor(
         external: List<String>,
     ): kotlinx.coroutines.Deferred<Result<List<RecipientKeyChange>>> = synchronized(key_trust_lookups) {
         val lookup_key = external.sorted()
-        key_trust_lookups[lookup_key]?.let { return@synchronized it }
+        key_trust_lookups[lookup_key]?.takeUnless { it.isCompleted }?.let { return@synchronized it }
         val generation = key_trust_generation
         val lookup = app_scope.async(start = kotlinx.coroutines.CoroutineStart.LAZY) {
             try {
