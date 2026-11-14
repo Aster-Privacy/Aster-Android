@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">Красный</string>
+    <string name="color_name_orange">Оранжевый</string>
+    <string name="color_name_yellow">Жёлтый</string>
+    <string name="color_name_green">Зелёный</string>
+    <string name="color_name_teal">Бирюзовый</string>
+    <string name="color_name_blue">Синий</string>
+    <string name="color_name_purple">Пурпурный</string>
+    <string name="color_name_pink">Розовый</string>
+    <string name="color_name_brown">Коричневый</string>
+    <string name="color_name_gray">Серый</string>
+</resources>

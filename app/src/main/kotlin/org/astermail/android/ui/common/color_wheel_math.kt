@@ -121,6 +121,22 @@ val display_color_presets: List<String> = listOf(
     "#ec4899",
 )
 
+private val preset_color_names: Map<String, String> = mapOf(
+    "#ef4444" to "red",
+    "#f97316" to "orange",
+    "#eab308" to "yellow",
+    "#22c55e" to "green",
+    "#14b8a6" to "teal",
+    "#3b82f6" to "blue",
+    "#a855f7" to "purple",
+    "#ec4899" to "pink",
+    "#8d5a3b" to "brown",
+    "#9aa0a6" to "gray",
+)
+
+fun preset_color_name(hex: String?): String? =
+    normalize_hex_color(hex)?.let { preset_color_names[it] }
+
 data class swatch_row_metrics(val size: Float, val gap: Float)
 
 fun fit_swatch_row(
@@ -135,6 +151,11 @@ fun fit_swatch_row(
     val gap = if (max_size * count + max_gap * gaps <= available) max_gap else min_gap
     val size = ((available - gap * gaps) / count).coerceAtMost(max_size).coerceAtLeast(0f)
     return swatch_row_metrics(size, gap)
+}
+
+fun swatch_cell_width(metrics: swatch_row_metrics, available: Float, count: Int): Float {
+    if (count <= 0 || available <= 0f) return 0f
+    return minOf(metrics.size + metrics.gap, available / count)
 }
 
 fun is_custom_color(value: String?, presets: List<String>): Boolean {

@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">Red</string>
+    <string name="color_name_orange">Orange</string>
+    <string name="color_name_yellow">Yellow</string>
+    <string name="color_name_green">Green</string>
+    <string name="color_name_teal">Teal</string>
+    <string name="color_name_blue">Blue</string>
+    <string name="color_name_purple">Purple</string>
+    <string name="color_name_pink">Pink</string>
+    <string name="color_name_brown">Brown</string>
+    <string name="color_name_gray">Gray</string>
+</resources>

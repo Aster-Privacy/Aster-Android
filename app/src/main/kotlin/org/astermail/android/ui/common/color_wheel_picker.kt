@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -49,6 +50,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -126,39 +128,75 @@ fun color_swatch_row(
             min_gap = 4f,
         )
         val swatch_size = metrics.size.dp
+        val cell_width = swatch_cell_width(metrics, maxWidth.value, presets.size + 1).dp
         val selected_hex = normalize_hex_color(value)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(metrics.gap.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             presets.forEachIndexed { index, hex ->
                 val normalized = normalize_hex_color(hex) ?: hex
                 val rgb = hex_to_rgb(normalized) ?: 0x3B82F6
                 val is_selected = selected_hex == normalized
-                val swatch_label = stringResource(R.string.color_swatch_option, index + 1, presets.size)
+                val name_res = preset_color_name_res(normalized)
+                val swatch_label = if (name_res != null) {
+                    stringResource(name_res)
+                } else {
+                    stringResource(R.string.color_swatch_option, index + 1, presets.size)
+                }
                 Box(
                     modifier = Modifier
-                        .size(swatch_size)
-                        .clip(CircleShape)
-                        .background(rgb_color(rgb))
-                        .swatch_ring(is_selected)
-                        .selectable(selected = is_selected, role = Role.RadioButton) { on_pick(normalized) }
+                        .width(cell_width)
+                        .swatch_target(swatch_size)
+                        .selectable(
+                            selected = is_selected,
+                            interactionSource = null,
+                            indication = ripple(bounded = false, radius = swatch_size / 2 + 4.dp),
+                            role = Role.RadioButton,
+                        ) { on_pick(normalized) }
                         .semantics { contentDescription = swatch_label }
                         .testTag("${test_tag_prefix}_$normalized"),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (is_selected) swatch_check(rgb, swatch_size)
+                    Box(
+                        modifier = Modifier
+                            .size(swatch_size)
+                            .clip(CircleShape)
+                            .background(rgb_color(rgb))
+                            .swatch_ring(is_selected),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (is_selected) swatch_check(rgb, swatch_size)
+                    }
                 }
             }
             custom_color_swatch(
                 value = value,
                 presets = presets,
                 on_pick = on_pick,
+                modifier = Modifier.width(cell_width),
                 size = swatch_size,
                 test_tag = custom_test_tag,
             )
         }
     }
+}
+
+private val min_swatch_target = 48.dp
+
+private fun Modifier.swatch_target(swatch_size: Dp): Modifier =
+    sizeIn(minWidth = min_swatch_target, minHeight = min_swatch_target)
+        .sizeIn(minWidth = swatch_size, minHeight = swatch_size)
+
+private fun preset_color_name_res(hex: String): Int? = when (preset_color_name(hex)) {
+    "red" -> R.string.color_name_red
+    "orange" -> R.string.color_name_orange
+    "yellow" -> R.string.color_name_yellow
+    "green" -> R.string.color_name_green
+    "teal" -> R.string.color_name_teal
+    "blue" -> R.string.color_name_blue
+    "purple" -> R.string.color_name_purple
+    "pink" -> R.string.color_name_pink
+    "brown" -> R.string.color_name_brown
+    "gray" -> R.string.color_name_gray
+    else -> null
 }
 
 @Composable
@@ -196,22 +234,33 @@ fun custom_color_swatch(
     val label = stringResource(R.string.custom_color)
     Box(
         modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .then(
-                if (selected_rgb != null) {
-                    Modifier.background(rgb_color(selected_rgb))
-                } else {
-                    Modifier.background(Brush.sweepGradient(rainbow_stops))
-                }
-            )
-            .swatch_ring(is_selected)
-            .selectable(selected = is_selected, role = Role.RadioButton) { is_open = true }
+            .swatch_target(size)
+            .selectable(
+                selected = is_selected,
+                interactionSource = null,
+                indication = ripple(bounded = false, radius = size / 2 + 4.dp),
+                role = Role.RadioButton,
+            ) { is_open = true }
             .semantics { contentDescription = label }
             .testTag(test_tag),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected_rgb != null) swatch_check(selected_rgb, size)
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .then(
+                    if (selected_rgb != null) {
+                        Modifier.background(rgb_color(selected_rgb))
+                    } else {
+                        Modifier.background(Brush.sweepGradient(rainbow_stops))
+                    }
+                )
+                .swatch_ring(is_selected),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected_rgb != null) swatch_check(selected_rgb, size)
+        }
     }
     if (is_open) {
         color_wheel_sheet(

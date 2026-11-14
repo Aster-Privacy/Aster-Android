@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">レッド</string>
+    <string name="color_name_orange">オレンジ</string>
+    <string name="color_name_yellow">イエロー</string>
+    <string name="color_name_green">グリーン</string>
+    <string name="color_name_teal">ティール</string>
+    <string name="color_name_blue">ブルー</string>
+    <string name="color_name_purple">パープル</string>
+    <string name="color_name_pink">ピンク</string>
+    <string name="color_name_brown">茶色</string>
+    <string name="color_name_gray">グレー</string>
+</resources>

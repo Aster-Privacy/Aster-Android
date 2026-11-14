@@ -164,6 +164,28 @@ class ColorWheelMathTest {
     }
 
     @Test
+    fun every_display_preset_has_a_color_name() {
+        assertEquals(
+            listOf("red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"),
+            display_color_presets.map { preset_color_name(it) },
+        )
+        assertEquals("blue", preset_color_name("#3B82F6"))
+        assertNull(preset_color_name("#123456"))
+        assertNull(preset_color_name(null))
+    }
+
+    @Test
+    fun swatch_cells_tile_the_row_without_overflow() {
+        val wide = fit_swatch_row(400f, 9, 32f, 10f, 4f)
+        assertEquals(42f, swatch_cell_width(wide, 400f, 9), 0.001f)
+        val narrow = fit_swatch_row(300f, 9, 32f, 10f, 4f)
+        val cell = swatch_cell_width(narrow, 300f, 9)
+        assertTrue(cell * 9 <= 300.001f)
+        assertTrue(cell >= narrow.size)
+        assertEquals(0f, swatch_cell_width(narrow, 0f, 9), 0.001f)
+    }
+
+    @Test
     fun invalid_hex_drafts_are_rejected() {
         assertNull(normalize_hex_color("#12"))
         assertNull(normalize_hex_color("#gggggg"))

@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">Czerwony</string>
+    <string name="color_name_orange">Pomarańczowy</string>
+    <string name="color_name_yellow">Żółty</string>
+    <string name="color_name_green">Zielony</string>
+    <string name="color_name_teal">Morski</string>
+    <string name="color_name_blue">Niebieski</string>
+    <string name="color_name_purple">Purpurowy</string>
+    <string name="color_name_pink">Różowy</string>
+    <string name="color_name_brown">Brązowy</string>
+    <string name="color_name_gray">Szary</string>
+</resources>
