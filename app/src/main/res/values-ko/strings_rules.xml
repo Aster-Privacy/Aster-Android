@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">받은편지함</string>
+    <string name="rules_category_primary">기본</string>
     <string name="rules_category_important">중요</string>
     <string name="rules_category_promotions">할인</string>
     <string name="rules_category_newsletters">뉴스레터</string>

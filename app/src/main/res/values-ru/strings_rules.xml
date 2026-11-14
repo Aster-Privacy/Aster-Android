@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">МБ</string>
     <string name="rules_unit_gb">ГБ</string>
 
-    <string name="rules_category_primary">Входящие</string>
+    <string name="rules_category_primary">Основные</string>
     <string name="rules_category_important">Важное</string>
     <string name="rules_category_promotions">Скидки</string>
     <string name="rules_category_newsletters">Рассылки</string>

@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">م.ب</string>
     <string name="rules_unit_gb">ج.ب</string>
 
-    <string name="rules_category_primary">البريد الوارد</string>
+    <string name="rules_category_primary">أساسي</string>
     <string name="rules_category_important">مهم</string>
     <string name="rules_category_promotions">الصفقات</string>
     <string name="rules_category_newsletters">النشرات</string>

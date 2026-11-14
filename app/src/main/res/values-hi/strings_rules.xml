@@ -30,7 +30,7 @@
     <string name="rules_unit_kb">KB</string>
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
-    <string name="rules_category_primary">इनबॉक्स</string>
+    <string name="rules_category_primary">प्राथमिक</string>
     <string name="rules_category_important">ज़रूरी</string>
     <string name="rules_category_promotions">ऑफ़र</string>
     <string name="rules_category_newsletters">न्यूज़लेटर</string>

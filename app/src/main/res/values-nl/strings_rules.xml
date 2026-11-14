@@ -34,7 +34,7 @@
     <string name="rules_unit_mb">MB</string>
     <string name="rules_unit_gb">GB</string>
 
-    <string name="rules_category_primary">Postvak IN</string>
+    <string name="rules_category_primary">Primair</string>
     <string name="rules_category_important">Belangrijk</string>
     <string name="rules_category_promotions">Aanbiedingen</string>
     <string name="rules_category_newsletters">Nieuwsbrieven</string>
