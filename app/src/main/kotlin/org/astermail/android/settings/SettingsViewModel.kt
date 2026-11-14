@@ -240,6 +240,7 @@ data class SettingsUiState(
     val twin_address: org.astermail.android.api.settings.TwinAddressResponse? = null,
     val twin_address_verified: Boolean = false,
     val aliases_loaded: Boolean = false,
+    val custom_domain_addresses_loaded: Boolean = false,
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -1445,7 +1446,10 @@ class SettingsViewModel @Inject constructor(
                     addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
                 }
                 prime_own_domain_address_avatars(decrypted)
-                _state.value = _state.value.copy(custom_domain_addresses = decrypted)
+                _state.value = _state.value.copy(
+                    custom_domain_addresses = decrypted,
+                    custom_domain_addresses_loaded = true,
+                )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) {

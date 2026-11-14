@@ -26,8 +26,23 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.astermail.android.api.settings.AliasInfo
+import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.astermail.android.settings.SettingsUiState
 import org.astermail.android.ui.compose.compose_seed_store
+
+fun display_sender_email(
+    default_sender_id: String?,
+    user_email: String,
+    aliases: List<AliasInfo>,
+    custom_domain_addresses: List<CustomDomainAddressInfo>,
+): String = resolve_primary_sender_email(
+    default_sender_id,
+    user_email,
+    aliases.filter { it.is_enabled && !it.decryption_failed },
+    emptyList(),
+    custom_domain_addresses.filter { it.is_enabled && !it.decryption_failed },
+)
 
 fun resolve_display_address(
     default_sender_id: String?,
@@ -35,12 +50,18 @@ fun resolve_display_address(
     resolved_sender: String,
     cached_sender: String,
     user_email: String,
+    senders_loaded: Boolean = false,
 ): String {
-    val points_elsewhere = !default_sender_id.isNullOrBlank() && default_sender_id != "primary"
-    val unresolved = points_elsewhere && resolved_sender.equals(user_email, ignoreCase = true)
+    val points_elsewhere = !default_sender_id.isNullOrBlank() &&
+        default_sender_id != "primary" &&
+        DISPLAY_EXCLUDED_PREFIXES.none { default_sender_id.startsWith(it) }
+    if (default_sender_loaded && !points_elsewhere) return user_email
+    val unresolved = points_elsewhere && !senders_loaded && resolved_sender.equals(user_email, ignoreCase = true)
     if (default_sender_loaded && !unresolved) return resolved_sender.ifBlank { user_email }
     return cached_sender.ifBlank { resolved_sender.ifBlank { user_email } }
 }
+
+private val DISPLAY_EXCLUDED_PREFIXES = listOf("ghost-", "external-")
 
 @Composable
 fun remember_display_address(state: SettingsUiState, user_email: String): String {
@@ -56,11 +77,10 @@ fun remember_display_address(state: SettingsUiState, user_email: String): String
             }
         }
     }
-    val resolved_sender = resolve_primary_sender_email(
+    val resolved_sender = display_sender_email(
         state.default_sender_id,
         user_email,
         state.aliases,
-        state.ghost_aliases,
         state.custom_domain_addresses,
     )
     return resolve_display_address(
@@ -69,5 +89,6 @@ fun remember_display_address(state: SettingsUiState, user_email: String): String
         resolved_sender = resolved_sender,
         cached_sender = cached_sender,
         user_email = user_email,
+        senders_loaded = state.aliases_loaded && state.custom_domain_addresses_loaded,
     )
 }

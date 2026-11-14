@@ -21,6 +21,7 @@
 package org.astermail.android.ui.common
 
 import org.astermail.android.api.settings.AliasInfo
+import org.astermail.android.api.settings.CustomDomainAddressInfo
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -64,5 +65,73 @@ class DisplayAddressTest {
         val alias = AliasInfo(id = "alias-1", encrypted_local_part = "info", domain = "astermail.org")
         val resolved = resolve_primary_sender_email("alias-1", user_email, listOf(alias), emptyList())
         assertEquals("info@astermail.org", resolve_display_address("alias-1", true, resolved, "", user_email))
+    }
+
+    @Test
+    fun ghost_default_sender_shows_account_address() {
+        val shown = resolve_display_address("ghost-1", true, user_email, "ghost@astermail.org", user_email)
+        assertEquals(user_email, shown)
+    }
+
+    @Test
+    fun external_default_sender_shows_account_address() {
+        val shown = resolve_display_address("external-1", true, user_email, "me@elsewhere.example", user_email)
+        assertEquals(user_email, shown)
+    }
+
+    private val aliases = listOf(
+        AliasInfo(id = "alias-1", encrypted_local_part = "shop", domain = "astermail.org"),
+        AliasInfo(id = "alias-2", encrypted_local_part = "old", domain = "astermail.org", is_enabled = false),
+        AliasInfo(id = "alias-3", encrypted_local_part = "", domain = "astermail.org", decryption_failed = true),
+    )
+    private val domains = listOf(
+        CustomDomainAddressInfo(id = "abc", domain_name = "example.com", encrypted_local_part = "info"),
+        CustomDomainAddressInfo(id = "def", domain_name = "example.com", encrypted_local_part = "sales", is_enabled = false),
+    )
+
+    private fun shown_once_loaded(default_sender_id: String, cached: String = "stale@astermail.org"): String =
+        resolve_display_address(
+            default_sender_id = default_sender_id,
+            default_sender_loaded = true,
+            resolved_sender = display_sender_email(default_sender_id, user_email, aliases, domains),
+            cached_sender = cached,
+            user_email = user_email,
+            senders_loaded = true,
+        )
+
+    @Test
+    fun custom_domain_default_sender_is_shown() {
+        assertEquals(custom, shown_once_loaded("abc"))
+        assertEquals(custom, shown_once_loaded("domain-abc"))
+    }
+
+    @Test
+    fun alias_default_sender_is_shown() {
+        assertEquals("shop@astermail.org", shown_once_loaded("alias-1"))
+    }
+
+    @Test
+    fun unset_default_sender_shows_account_address() {
+        assertEquals(user_email, shown_once_loaded("primary"))
+    }
+
+    @Test
+    fun disabled_alias_default_sender_shows_account_address() {
+        assertEquals(user_email, shown_once_loaded("alias-2"))
+    }
+
+    @Test
+    fun undecryptable_alias_default_sender_shows_account_address() {
+        assertEquals(user_email, shown_once_loaded("alias-3"))
+    }
+
+    @Test
+    fun disabled_domain_default_sender_shows_account_address() {
+        assertEquals(user_email, shown_once_loaded("domain-def"))
+    }
+
+    @Test
+    fun deleted_default_sender_shows_account_address_once_addresses_load() {
+        assertEquals(user_email, shown_once_loaded("alias-deleted"))
     }
 }
