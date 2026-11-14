@@ -38,6 +38,7 @@ import org.bouncycastle.crypto.params.RSAKeyGenerationParameters
 import org.bouncycastle.openpgp.PGPKeyRingGenerator
 import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPPublicKeyRing
+import org.bouncycastle.openpgp.PGPSecretKey
 import org.bouncycastle.openpgp.PGPSecretKeyRing
 import org.bouncycastle.openpgp.PGPSignature
 import org.bouncycastle.openpgp.PGPSignatureGenerator
@@ -236,14 +237,14 @@ gRKzSyjwC70dx0oKjgEArFHdfXOpF3N8dKZ+VbVNDbxDd7Mp5meU2ARKw0x1
 
     private val passphrase = "binding-test".toCharArray()
 
-    private fun rsa_pair(): BcPGPKeyPair {
+    private fun rsa_pair(created: Date = Date()): BcPGPKeyPair {
         val generator = RSAKeyPairGenerator()
         generator.init(RSAKeyGenerationParameters(BigInteger.valueOf(65537), SecureRandom(), 2048, 12))
         return BcPGPKeyPair(
             PublicKeyPacket.VERSION_4,
             PublicKeyAlgorithmTags.RSA_GENERAL,
             generator.generateKeyPair(),
-            Date(),
+            created,
         )
     }
 
@@ -286,19 +287,25 @@ gRKzSyjwC70dx0oKjgEArFHdfXOpF3N8dKZ+VbVNDbxDd7Mp5meU2ARKw0x1
             BcKeyFingerprintCalculator(),
         )
 
-    private fun signed_by_subkey(ring: PGPSecretKeyRing): String {
-        val subkey = ring.secretKeys.asSequence().drop(1).first()
+    private fun signed_by_subkey(ring: PGPSecretKeyRing): String =
+        signed_with(ring.secretKeys.asSequence().drop(1).first(), Date(), 0L)
+
+    private fun signed_with(signer: PGPSecretKey, created: Date, lifetime_seconds: Long): String {
         val generator = PGPSignatureGenerator(
-            BcPGPContentSignerBuilder(subkey.publicKey.algorithm, HashAlgorithmTags.SHA256),
+            BcPGPContentSignerBuilder(signer.publicKey.algorithm, HashAlgorithmTags.SHA256),
         )
         generator.init(
             PGPSignature.CANONICAL_TEXT_DOCUMENT,
-            subkey.extractPrivateKey(
+            signer.extractPrivateKey(
                 BcPBESecretKeyDecryptorBuilder(BcPGPDigestCalculatorProvider()).build(passphrase),
             ),
         )
         generator.setHashedSubpackets(
-            PGPSignatureSubpacketGenerator().apply { setIssuerKeyID(false, subkey.keyID) }.generate(),
+            PGPSignatureSubpacketGenerator().apply {
+                setIssuerKeyID(false, signer.keyID)
+                setSignatureCreationTime(false, created)
+                if (lifetime_seconds > 0L) setSignatureExpirationTime(false, lifetime_seconds)
+            }.generate(),
         )
         val text_bytes = PrekeyBindingSigner.canonical_binding(ik, spk).toByteArray(Charsets.UTF_8)
         generator.update(text_bytes)
@@ -382,6 +389,187 @@ gRKzSyjwC70dx0oKjgEArFHdfXOpF3N8dKZ+VbVNDbxDd7Mp5meU2ARKw0x1
         assertEquals(
             PrekeyBindingResult.UNVERIFIABLE,
             PrekeyBindingVerifier.verify(rewrap(truncated), alice_public, ik, spk),
+        )
+    }
+
+    private val day_ms = 24L * 60L * 60L * 1000L
+
+    private val day_seconds = 24L * 60L * 60L
+
+    private fun days_from_now(days: Double): Date =
+        Date(System.currentTimeMillis() + (days * day_ms).toLong())
+
+    private fun dated_ring(
+        created: Date,
+        primary_lifetime_seconds: Long,
+        subkey_lifetime_seconds: Long,
+    ): PGPSecretKeyRing {
+        val master = rsa_pair(created)
+        val generator = PGPKeyRingGenerator(
+            PGPSignature.POSITIVE_CERTIFICATION,
+            master,
+            "owner <owner@astermail.org>",
+            BcPGPDigestCalculatorProvider().get(HashAlgorithmTags.SHA1),
+            PGPSignatureSubpacketGenerator().apply {
+                setKeyFlags(false, KeyFlags.SIGN_DATA or KeyFlags.CERTIFY_OTHER)
+                if (primary_lifetime_seconds > 0L) setKeyExpirationTime(false, primary_lifetime_seconds)
+            }.generate(),
+            null,
+            BcPGPContentSignerBuilder(master.publicKey.algorithm, HashAlgorithmTags.SHA256),
+            BcPBESecretKeyEncryptorBuilder(
+                SymmetricKeyAlgorithmTags.AES_256,
+                BcPGPDigestCalculatorProvider().get(HashAlgorithmTags.SHA256),
+            ).build(passphrase),
+        )
+        generator.addSubKey(
+            rsa_pair(created),
+            PGPSignatureSubpacketGenerator().apply {
+                setKeyFlags(false, KeyFlags.SIGN_DATA)
+                if (subkey_lifetime_seconds > 0L) setKeyExpirationTime(false, subkey_lifetime_seconds)
+            }.generate(),
+            null,
+        )
+        return generator.generateSecretKeyRing()
+    }
+
+    private fun owner_public_of(ring: PGPSecretKeyRing): String =
+        armor { PGPPublicKeyRing(public_keys(ring)).encode(it) }
+
+    private fun primary_of(ring: PGPSecretKeyRing): PGPSecretKey = ring.secretKey
+
+    private fun subkey_of(ring: PGPSecretKeyRing): PGPSecretKey = ring.secretKeys.asSequence().drop(1).first()
+
+    @Test
+    fun signature_dated_more_than_a_day_ahead_is_unverifiable() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, 0L)
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(2.0), 0L),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_dated_a_few_hours_ahead_still_verifies() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, 0L)
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(0.25), 0L),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_made_after_the_primary_key_expired_is_unverifiable() {
+        val ring = dated_ring(days_from_now(-3.0), day_seconds, 0L)
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(-1.0), 0L),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_made_after_the_signing_subkey_expired_is_unverifiable() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, day_seconds)
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(
+                signed_with(subkey_of(ring), days_from_now(-1.0), 0L),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_older_than_the_signing_key_is_unverifiable() {
+        val ring = dated_ring(days_from_now(-1.0), 0L, 0L)
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(-2.0), 0L),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_past_its_own_expiration_is_unverifiable() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, 0L)
+        assertEquals(
+            PrekeyBindingResult.UNVERIFIABLE,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(-2.0), day_seconds),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun signature_within_its_own_expiration_verifies() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, 0L)
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(-1.0), 2L * day_seconds),
+                owner_public_of(ring),
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun keys_that_expired_after_signing_still_verify() {
+        val ring = dated_ring(days_from_now(-3.0), day_seconds, day_seconds)
+        val owner_public = owner_public_of(ring)
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(
+                signed_with(subkey_of(ring), days_from_now(-2.5), 0L),
+                owner_public,
+                ik,
+                spk,
+            ),
+        )
+        assertEquals(
+            PrekeyBindingResult.VERIFIED,
+            PrekeyBindingVerifier.verify(
+                signed_with(primary_of(ring), days_from_now(-2.5), 0L),
+                owner_public,
+                ik,
+                spk,
+            ),
+        )
+    }
+
+    @Test
+    fun a_forged_signature_dated_in_the_future_is_still_invalid() {
+        val ring = dated_ring(days_from_now(-3.0), 0L, 0L)
+        val text = armored(signed_with(primary_of(ring), days_from_now(2.0), 0L))
+        val tampered = text.replace("aster-ratchet-prekey-v1:" + ik, "aster-ratchet-prekey-v1:" + other_key())
+        assertTrue(tampered != text)
+        assertEquals(
+            PrekeyBindingResult.INVALID,
+            PrekeyBindingVerifier.verify(rewrap(tampered), owner_public_of(ring), other_key(), spk),
         )
     }
 }

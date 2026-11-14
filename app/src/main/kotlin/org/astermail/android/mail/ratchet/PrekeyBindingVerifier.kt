@@ -51,6 +51,7 @@ object PrekeyBindingVerifier {
     private const val signed_message_header = "-----BEGIN PGP SIGNED MESSAGE-----"
     private const val canonical_prefix_v1 = "aster-ratchet-prekey-v1:"
     private const val canonical_prefix_v2 = "aster-ratchet-prekey-v2:"
+    private const val future_allowance_ms = 24L * 60L * 60L * 1000L
 
     fun is_pgp_signature(value: String): Boolean = decode_signature_field(value) != null
 
@@ -88,6 +89,13 @@ object PrekeyBindingVerifier {
             signature.verify()
         }.getOrNull() ?: return PrekeyBindingResult.UNVERIFIABLE
         if (!signature_valid) return PrekeyBindingResult.INVALID
+
+        val primary = runCatching { owner_ring(recipient_public_key_armored).publicKey }.getOrNull()
+            ?: return PrekeyBindingResult.UNVERIFIABLE
+        val signed_in_time = runCatching {
+            signed_while_valid(signature, public_key, primary, System.currentTimeMillis())
+        }.getOrDefault(false)
+        if (!signed_in_time) return PrekeyBindingResult.UNVERIFIABLE
 
         val parts = when {
             signed_text.startsWith(canonical_prefix_v2) ->
@@ -143,6 +151,30 @@ object PrekeyBindingVerifier {
             ),
             BcKeyFingerprintCalculator(),
         )
+
+    private fun signed_while_valid(
+        signature: PGPSignature,
+        signing_key: PGPPublicKey,
+        primary: PGPPublicKey,
+        now_ms: Long,
+    ): Boolean {
+        val created_ms = signature.creationTime?.time ?: return false
+        if (created_ms <= 0L) return false
+        if (created_ms > now_ms + future_allowance_ms) return false
+        val signature_lifetime_seconds = signature.hashedSubPackets?.signatureExpirationTime ?: 0L
+        if (signature_lifetime_seconds > 0L && created_ms + signature_lifetime_seconds * 1000L <= now_ms) {
+            return false
+        }
+        if (!key_valid_at(primary, created_ms)) return false
+        return signing_key.keyID == primary.keyID || key_valid_at(signing_key, created_ms)
+    }
+
+    private fun key_valid_at(key: PGPPublicKey, at_ms: Long): Boolean {
+        val key_created_ms = key.creationTime.time
+        if (at_ms < key_created_ms) return false
+        val lifetime_seconds = key.validSeconds
+        return lifetime_seconds <= 0L || at_ms < key_created_ms + lifetime_seconds * 1000L
+    }
 
     private fun same_key(signed_b64: String, published_b64: String): Boolean {
         if (signed_b64 == published_b64) return true
