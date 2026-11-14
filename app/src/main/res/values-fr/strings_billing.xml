@@ -91,7 +91,7 @@
     <string name="billing_addon_pick_size">Choisissez la quantité à ajouter</string>
     <string name="billing_support_subtitle">Écrivez à l\'équipe</string>
     <string name="billing_trust_crypto">Les paiements en crypto ne se renouvellent pas seuls et ne sont pas remboursables. Aster vous prévient avant la fin de votre forfait.</string>
-    <string name="billing_cancel_now">Résilier l'abonnement</string>
+    <string name="billing_cancel_now">Résilier l\'abonnement</string>
     <string name="billing_cancel_see_options">Voir les options pour garder mon forfait</string>
     <string name="billing_cancel_offer_title_price">Une façon moins chère de rester</string>
     <string name="billing_cancel_offer_body_price">Vous gardez votre adresse, vos alias et votre courrier. Seul le prix change.</string>
