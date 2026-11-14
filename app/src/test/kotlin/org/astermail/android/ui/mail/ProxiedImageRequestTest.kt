@@ -106,4 +106,21 @@ class ProxiedImageRequestTest {
             mail_body_request_action("https", REMOTE_IMAGE_PROXY_HOST, REMOTE_IMAGE_PROXY_PATH, "https://example.com/a.png", false),
         )
     }
+
+    @Test
+    fun the_image_proxy_is_fetched_only_on_its_own_origin() {
+        val target = "https://example.com/a.png"
+        assertEquals(
+            MailBodyRequestAction.PROXY,
+            mail_body_request_action("https", REMOTE_IMAGE_PROXY_HOST, REMOTE_IMAGE_PROXY_PATH, target, true, port = 443),
+        )
+        assertEquals(
+            MailBodyRequestAction.BLOCK,
+            mail_body_request_action("https", REMOTE_IMAGE_PROXY_HOST, REMOTE_IMAGE_PROXY_PATH, target, true, port = 8443),
+        )
+        assertEquals(
+            MailBodyRequestAction.BLOCK,
+            mail_body_request_action("https", REMOTE_IMAGE_PROXY_HOST, REMOTE_IMAGE_PROXY_PATH, target, true, user_info = "a"),
+        )
+    }
 }

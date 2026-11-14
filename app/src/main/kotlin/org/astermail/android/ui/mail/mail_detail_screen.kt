@@ -7471,6 +7471,8 @@ internal fun email_html_view(
                     path = req_uri.path,
                     proxied_url = try { req_uri.getQueryParameter("url") } catch (_: Throwable) { null },
                     allow_external = allow_external_ref[0],
+                    port = req_uri.port,
+                    user_info = req_uri.encodedUserInfo,
                 )
                 if (request_action == MailBodyRequestAction.LOCAL) return null
                 if (request_action == MailBodyRequestAction.BLOCK) {

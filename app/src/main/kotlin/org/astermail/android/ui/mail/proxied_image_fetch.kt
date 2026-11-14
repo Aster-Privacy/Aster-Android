@@ -121,6 +121,8 @@ internal fun intercept_side_view_image(
         path = uri.path,
         proxied_url = runCatching { uri.getQueryParameter("url") }.getOrNull(),
         allow_external = allow_external,
+        port = uri.port,
+        user_info = uri.encodedUserInfo,
     )
     if (action == MailBodyRequestAction.LOCAL) return null
     if (action == MailBodyRequestAction.BLOCK || context == null) return empty_image_response(403, "Forbidden")
