@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">Способ оплаты по умолчанию обновлён</string>
     <string name="payment_method_removed">Способ оплаты удалён</string>
     <string name="session_expired_sign_in">Сеанс истёк. Войдите снова.</string>
+    <string name="vault_open_failed_notice">Не удалось разблокировать ваши ключи на этом устройстве, поэтому некоторые письма могут здесь не открыться. Чтобы восстановить ключи, войдите в Aster Mail в браузере, а затем снова войдите на этом устройстве.</string>
     <string name="could_not_start_checkout">Не удалось перейти к оплате</string>
     <string name="could_not_open_portal">Не удалось открыть портал оплаты</string>
     <string name="cancel_failed">Не удалось отменить подписку</string>
@@ -3070,6 +3071,7 @@
     <string name="link_device_fingerprint_hint">Введите отпечаток устройства, показанный в приложении, которое вы привязываете. В некоторых приложениях он называется кодом подтверждения.</string>
     <string name="link_device_error_invalid_keys">Другое устройство отправило ключи, которые нельзя использовать. Получите новый код на том устройстве и повторите попытку.</string>
     <string name="link_device_error_codes_not_confirmed">Это не совпадает с устройством для этого кода привязки. Сравните каждый символ с приложением, которое вы привязываете, и повторите попытку. Если совпадения по-прежнему нет, не привязывайте устройство.</string>
+    <string name="link_device_error_fingerprint_mismatch">Этот код не совпадает с кодом нового устройства. Проверьте код на новом устройстве и введите его ещё раз. Если он по-прежнему не совпадает, нажмите «Отмена».</string>
     <string name="restore">Восстановить</string>
     <string name="contact_trash_confirm_message">Контакты можно восстановить из корзины.</string>
     <string name="empty_contacts_trash_confirm_message">Удалить все контакты из корзины навсегда? Отменить это нельзя.</string>

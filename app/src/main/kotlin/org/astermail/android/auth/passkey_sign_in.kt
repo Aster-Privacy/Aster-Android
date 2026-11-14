@@ -67,6 +67,8 @@ class PasskeyAlreadyRegisteredException(cause: Throwable? = null) : Exception(ca
 
 private const val prf_eval_label = "aster-vault-prf-eval-v1"
 private const val prf_key_salt = "aster-vault-passphrase-key-v1"
+private const val prf_bound_key_salt = "aster-vault-passphrase-key-v2"
+private const val prf_bound_wrap_label = "aster-vault-prf-wrap-v2|"
 private const val prf_nonce_length = 12
 
 private val b64url_encoder = Base64.getUrlEncoder().withoutPadding()
@@ -126,22 +128,63 @@ fun prf_enabled_from(response_json: String): Boolean =
             ?.optBoolean("enabled", false) == true
     }.getOrDefault(false)
 
-private fun prf_key(prf_output: ByteArray): ByteArray =
-    hkdf_sha256(prf_output, prf_key_salt.toByteArray(Charsets.UTF_8), ByteArray(0), 32)
+private fun prf_key(prf_output: ByteArray, salt: String): ByteArray =
+    hkdf_sha256(prf_output, salt.toByteArray(Charsets.UTF_8), ByteArray(0), 32)
 
-fun encrypt_passphrase_with_prf(prf_output: ByteArray, passphrase: ByteArray): Pair<String, String> {
-    val key = prf_key(prf_output)
+private fun prf_bound_wrap_aad(credential_id: String): ByteArray {
+    val id = b64url_to_bytes(credential_id)
+    require(id.isNotEmpty())
+    return prf_bound_wrap_label.toByteArray(Charsets.UTF_8) + id
+}
+
+fun encrypt_passphrase_with_prf(
+    prf_output: ByteArray,
+    passphrase: ByteArray,
+    credential_id: String,
+): Pair<String, String> {
+    val aad = prf_bound_wrap_aad(credential_id)
+    val key = prf_key(prf_output, prf_bound_key_salt)
     val nonce = ByteArray(prf_nonce_length).also { SecureRandom().nextBytes(it) }
     try {
-        val encrypted = AesGcm.encrypt(key, nonce, passphrase)
+        val encrypted = AesGcm.encrypt(key, nonce, passphrase, aad)
         return b64_encoder.encodeToString(encrypted) to b64_encoder.encodeToString(nonce)
     } finally {
         key.fill(0)
     }
 }
 
-fun decrypt_passphrase_with_prf(prf_output: ByteArray, encrypted_b64: String, nonce_b64: String): ByteArray? {
-    val key = prf_key(prf_output)
+private fun decrypt_bound_passphrase_with_prf(
+    prf_output: ByteArray,
+    encrypted_b64: String,
+    nonce_b64: String,
+    credential_id: String,
+): ByteArray? {
+    val key = prf_key(prf_output, prf_bound_key_salt)
+    return try {
+        AesGcm.decrypt(
+            key,
+            b64_decoder.decode(nonce_b64),
+            b64_decoder.decode(encrypted_b64),
+            prf_bound_wrap_aad(credential_id),
+        )
+    } catch (_: Exception) {
+        null
+    } finally {
+        key.fill(0)
+    }
+}
+
+fun decrypt_passphrase_with_prf(
+    prf_output: ByteArray,
+    encrypted_b64: String,
+    nonce_b64: String,
+    credential_id: String? = null,
+): ByteArray? {
+    if (!credential_id.isNullOrBlank()) {
+        decrypt_bound_passphrase_with_prf(prf_output, encrypted_b64, nonce_b64, credential_id)
+            ?.let { return it }
+    }
+    val key = prf_key(prf_output, prf_key_salt)
     return try {
         AesGcm.decrypt(key, b64_decoder.decode(nonce_b64), b64_decoder.decode(encrypted_b64))
     } catch (_: Exception) {

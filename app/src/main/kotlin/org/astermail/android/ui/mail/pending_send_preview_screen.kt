@@ -114,6 +114,7 @@ fun pending_send_preview_screen(
             body_html = p.body_html,
             is_encrypted = true,
             item_type = "sent",
+            own_sealed = true,
             attachments = p.attachment_names.mapIndexed { index, filename ->
                 MessageAttachment(
                     id = "pending_attachment_$index",

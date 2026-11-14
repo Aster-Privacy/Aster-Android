@@ -66,20 +66,31 @@ internal fun classify_post_quantum_bundle(
     pq_capable: Boolean?,
     pq_prekey_pair: Pair<Int, ByteArray>?,
     pq_identity_raw: ByteArray?,
+    signature_covers_pq_identity: Boolean,
 ): PostQuantumRecipientStatus = when {
-    X3dh.supports_pq(pq_prekey_pair, pq_identity_raw) -> PostQuantumRecipientStatus.SUPPORTED
+    signature_covers_pq_identity && pq_identity_raw?.size == X3dh.ML_KEM_768_EK_LEN ->
+        PostQuantumRecipientStatus.SUPPORTED
+    X3dh.supports_pq(pq_prekey_pair, pq_identity_raw) -> PostQuantumRecipientStatus.UNSUPPORTED
     pq_capable == true -> PostQuantumRecipientStatus.DOWNGRADED
     else -> PostQuantumRecipientStatus.UNSUPPORTED
 }
 
-internal fun classify_prekey_bundle(bundle: PrekeyBundleResponse): PostQuantumRecipientStatus {
+internal fun classify_prekey_bundle(
+    bundle: PrekeyBundleResponse,
+    signature_covers_pq_identity: Boolean,
+): PostQuantumRecipientStatus {
     val pq_prekey_pair = bundle.pq_prekey?.let {
         runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
     }
     val pq_identity_raw = bundle.pq_kem_public_key
         ?.takeIf { it.isNotBlank() }
         ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
-    return classify_post_quantum_bundle(bundle.pq_capable, pq_prekey_pair, pq_identity_raw)
+    return classify_post_quantum_bundle(
+        bundle.pq_capable,
+        pq_prekey_pair,
+        pq_identity_raw,
+        signature_covers_pq_identity,
+    )
 }
 
 internal fun session_reused_for_send(
@@ -91,12 +102,38 @@ internal fun session_reused_for_send(
     return bundle == null || bundle.kem_identity_key == bootstrap.recipient_identity_key
 }
 
-internal fun session_post_quantum_status(bootstrap: BootstrapData): PostQuantumRecipientStatus =
-    if (bootstrap.pq_ciphertext != null && bootstrap.pq_key_id != null) {
+internal fun session_uses_unsigned_pq_prekey(bootstrap: BootstrapData): Boolean =
+    bootstrap.pq_ciphertext != null && bootstrap.pq_key_id != X3dh.PQ_IDENTITY_KEY_ID
+
+internal fun session_restarts_for_signed_pq_key(
+    bootstrap: BootstrapData,
+    advertised_pq_identity: String?,
+    signature_covers_pq_identity: Boolean,
+): Boolean =
+    signature_covers_pq_identity &&
+        !advertised_pq_identity.isNullOrBlank() &&
+        session_uses_unsigned_pq_prekey(bootstrap)
+
+internal fun session_post_quantum_status(
+    bootstrap: BootstrapData,
+    advertised_pq_identity: String?,
+    signature_covers_pq_identity: Boolean,
+): PostQuantumRecipientStatus =
+    if (signature_covers_pq_identity &&
+        bootstrap.pq_ciphertext != null &&
+        bootstrap.pq_key_id == X3dh.PQ_IDENTITY_KEY_ID &&
+        !advertised_pq_identity.isNullOrBlank() &&
+        advertised_pq_identity == bootstrap.recipient_pq_identity_key
+    ) {
         PostQuantumRecipientStatus.SUPPORTED
     } else {
         PostQuantumRecipientStatus.UNSUPPORTED
     }
+
+private class RecipientEncryption(
+    val data: RatchetRecipientData,
+    val post_quantum_signed: Boolean,
+)
 
 @Singleton
 class RatchetEncryptor @Inject constructor(
@@ -142,8 +179,8 @@ class RatchetEncryptor @Inject constructor(
                         ?.identity_public
                         ?: session_key_store.get_ratchet_identity_public_b64()
                     val sender_changed = bootstrap.sender_identity_key != sender_identity_public
-                    val bundle = if (sender_changed) {
-                        address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)?.bundle
+                    val entry = if (sender_changed) {
+                        address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
                     } else {
                         try {
                             address_directory.resolve_recipient_bundle(
@@ -151,25 +188,36 @@ class RatchetEncryptor @Inject constructor(
                                 recipient_email,
                                 conversation_id,
                                 bootstrap.recipient_identity_key,
-                            )?.bundle
+                            )
                         } catch (c: kotlinx.coroutines.CancellationException) {
                             throw c
                         } catch (t: Throwable) {
                             null
                         }
                     }
-                    if (session_reused_for_send(bootstrap, sender_identity_public, bundle)) {
-                        session_post_quantum_status(bootstrap)
+                    if (entry == null) return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
+                    val bundle = entry.bundle
+                    val covers = pq_binding_covered(conversation_id, username, recipient_email, entry)
+                    val renews = !session_reused_for_send(bootstrap, sender_identity_public, bundle) ||
+                        RecoveryLanePolicy.session_lacks_advertised_pq_key(bootstrap, bundle.pq_kem_public_key) ||
+                        session_restarts_for_signed_pq_key(bootstrap, bundle.pq_kem_public_key, covers)
+                    if (renews) {
+                        classify_prekey_bundle(bundle, covers)
                     } else {
-                        bundle?.let { classify_prekey_bundle(it) } ?: PostQuantumRecipientStatus.UNSUPPORTED
+                        session_post_quantum_status(bootstrap, bundle.pq_kem_public_key, covers)
                     }
                 } else {
-                    val bundle = address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
-                        ?.bundle
+                    val entry = address_directory.resolve_recipient_bundle(username, recipient_email, conversation_id)
                         ?: return@runCatching PostQuantumRecipientStatus.UNSUPPORTED
-                    classify_prekey_bundle(bundle)
+                    classify_prekey_bundle(
+                        entry.bundle,
+                        pq_binding_covered(conversation_id, username, recipient_email, entry),
+                    )
                 }
-            }.getOrNull() ?: continue
+            }.getOrElse {
+                if (it is CancellationException) throw it
+                PostQuantumRecipientStatus.UNSUPPORTED
+            }
             if (status == PostQuantumRecipientStatus.SUPPORTED) continue
             missing.add(recipient_email)
             if (status == PostQuantumRecipientStatus.DOWNGRADED) downgraded.add(recipient_email)
@@ -201,10 +249,11 @@ class RatchetEncryptor @Inject constructor(
         val own_address = AddressIdentity.normalize(sender_email)
 
         val per_recipient = mutableMapOf<String, RatchetRecipientData>()
+        val unsigned_recipients = mutableListOf<String>()
         for (recipient_email in recipients) {
             val required_identity = own_address_identity
                 ?.takeIf { AddressIdentity.normalize(recipient_email) == own_address }
-            val data = try {
+            val encryption = try {
                 encrypt_for_recipient(
                     sender_email,
                     sender_identity_public,
@@ -220,15 +269,13 @@ class RatchetEncryptor @Inject constructor(
             } catch (e: Throwable) {
                 throw RatchetEncryptionException(recipient_email, "ratchet encryption failed for recipient", e)
             } ?: throw RatchetEncryptionException(recipient_email, "no prekey bundle available for recipient")
-            per_recipient[recipient_email.lowercase(java.util.Locale.ROOT)] = data
+            val key = recipient_email.lowercase(java.util.Locale.ROOT)
+            per_recipient[key] = encryption.data
+            if (!encryption.post_quantum_signed) unsigned_recipients.add(key)
         }
 
-        if (!allow_non_post_quantum) {
-            val non_pq = per_recipient
-                .filterValues { it.pq_ciphertext == null || it.pq_key_id == null }
-                .keys
-                .toList()
-            if (non_pq.isNotEmpty()) throw PostQuantumUnavailableException(non_pq)
+        if (!allow_non_post_quantum && unsigned_recipients.isNotEmpty()) {
+            throw PostQuantumUnavailableException(unsigned_recipients)
         }
 
         val envelope = RatchetEnvelope(
@@ -240,6 +287,31 @@ class RatchetEncryptor @Inject constructor(
     }
 
     private val verifying_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private suspend fun pq_binding_signed(
+        conversation_id: String,
+        username: String,
+        recipient_email: String,
+        bundle: PrekeyBundleResponse,
+    ): Boolean = try {
+        verify_prekey_binding(conversation_id, username, recipient_email, bundle)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (t: Throwable) {
+        false
+    }
+
+    private suspend fun pq_binding_covered(
+        conversation_id: String,
+        username: String,
+        recipient_email: String,
+        resolved: ResolvedRecipientBundle,
+    ): Boolean = when (resolved.trust) {
+        DirectoryTrust.ENTRY, DirectoryTrust.ENDORSED -> true
+        DirectoryTrust.REPLACED, DirectoryTrust.INVALID -> false
+        DirectoryTrust.ACCOUNT, DirectoryTrust.DOWNGRADED ->
+            pq_binding_signed(conversation_id, username, recipient_email, resolved.bundle)
+    }
 
     private suspend fun verify_prekey_binding(
         conversation_id: String,
@@ -382,7 +454,7 @@ class RatchetEncryptor @Inject constructor(
         recipient_email: String,
         body: String,
         required_identity: String? = null,
-    ): RatchetRecipientData? {
+    ): RecipientEncryption? {
         val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
         val username = recipient_email.substringBefore('@')
 
@@ -486,7 +558,7 @@ class RatchetEncryptor @Inject constructor(
         recipient_email: String,
         body: String,
         required_identity: String? = null,
-    ): RatchetRecipientData? {
+    ): RecipientEncryption? {
         var state = state_store.load(conversation_id)
         if (state != null && state.bootstrap == null) {
             state = null
@@ -499,6 +571,7 @@ class RatchetEncryptor @Inject constructor(
 
         var bundle: PrekeyBundleResponse? = null
         var resolved: ResolvedRecipientBundle? = null
+        var session_pq_signed = false
 
         if (state != null) {
             val boot = state.bootstrap!!
@@ -517,9 +590,22 @@ class RatchetEncryptor @Inject constructor(
                 } catch (t: Throwable) {
                     null
                 }
-                bundle = resolved?.bundle
-                if (bundle != null && boot.recipient_identity_key != bundle.kem_identity_key) {
-                    recipient_changed = true
+                val advertised_entry = resolved
+                bundle = advertised_entry?.bundle
+                if (advertised_entry != null) {
+                    val advertised = advertised_entry.bundle
+                    recipient_changed =
+                        boot.recipient_identity_key != advertised.kem_identity_key ||
+                            RecoveryLanePolicy.session_lacks_advertised_pq_key(boot, advertised.pq_kem_public_key)
+                    if (!recipient_changed &&
+                        boot.pq_ciphertext != null &&
+                        !advertised.pq_kem_public_key.isNullOrBlank()
+                    ) {
+                        val covers = pq_binding_covered(conversation_id, username, recipient_email, advertised_entry)
+                        recipient_changed = session_restarts_for_signed_pq_key(boot, advertised.pq_kem_public_key, covers)
+                        session_pq_signed = session_post_quantum_status(boot, advertised.pq_kem_public_key, covers) ==
+                            PostQuantumRecipientStatus.SUPPORTED
+                    }
                 }
             }
             if (sender_changed || recipient_changed) {
@@ -531,6 +617,9 @@ class RatchetEncryptor @Inject constructor(
         var pq_ciphertext_b64: String? = null
         var pq_key_id: Int? = null
         var x3dh_version: Int? = null
+        var one_time_prekey_id: Int? = null
+        var signed_prekey_id: String? = null
+        var post_quantum_signed = false
 
         if (state == null) {
             val local_bundle = required_identity?.let { address_directory.local_address_bundle(recipient_email, it) }
@@ -576,6 +665,18 @@ class RatchetEncryptor @Inject constructor(
                 ?.takeIf { it.isNotBlank() }
                 ?.let { runCatching { RatchetCrypto.b64_decode(it) }.getOrNull() }
 
+            val negotiated_x3dh_version = X3dh.negotiated_sender_version(
+                resolved_bundle.x3dh_max_version,
+                identity_pins.highest_advertised_x3dh_version(conversation_id),
+            )
+            runCatching {
+                identity_pins.record_advertised_x3dh_version(conversation_id, negotiated_x3dh_version)
+            }
+
+            val one_time_prekey_pair = resolved_bundle.ec_one_time_prekey?.let {
+                runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
+            }
+
             val x3dh_result = X3dh.perform_sender(
                 sender_identity_jwk = sender_identity_jwk,
                 recipient_identity_raw = recipient_identity_raw,
@@ -583,7 +684,9 @@ class RatchetEncryptor @Inject constructor(
                 recipient_pq_prekey = pq_prekey_pair,
                 recipient_pq_identity = pq_identity_raw,
                 signature_covers_pq_identity = signature_covers_pq_identity,
-                x3dh_version = X3dh.negotiated_sender_version(resolved_bundle.x3dh_max_version),
+                x3dh_version = negotiated_x3dh_version,
+                recipient_one_time_prekey = one_time_prekey_pair,
+                advertised_x3dh_version = resolved_bundle.x3dh_max_version,
             )
 
             try {
@@ -598,6 +701,13 @@ class RatchetEncryptor @Inject constructor(
                     pq_key_id = x3dh_result.pq_key_id
                 }
                 x3dh_version = x3dh_result.x3dh_version.takeIf { it > X3dh.VERSION_LEGACY }
+                if (x3dh_result.x3dh_version >= X3dh.VERSION_ONE_TIME_BOUND) {
+                    one_time_prekey_id = x3dh_result.one_time_prekey_id
+                    signed_prekey_id = x3dh_result.signed_prekey_id
+                }
+                post_quantum_signed = signature_covers_pq_identity &&
+                    pq_ciphertext_b64 != null &&
+                    x3dh_result.pq_mode == X3dh.PqMode.IDENTITY
                 state.bootstrap = BootstrapData(
                     ephemeral_key = ephemeral_b64!!,
                     pq_ciphertext = pq_ciphertext_b64,
@@ -606,6 +716,8 @@ class RatchetEncryptor @Inject constructor(
                     recipient_identity_key = resolved_bundle.kem_identity_key,
                     recipient_pq_identity_key = resolved_bundle.pq_kem_public_key,
                     x3dh_version = x3dh_version,
+                    one_time_prekey_id = one_time_prekey_id,
+                    signed_prekey_id = signed_prekey_id,
                 )
             } finally {
                 x3dh_result.shared_secret.fill(0)
@@ -616,10 +728,18 @@ class RatchetEncryptor @Inject constructor(
             pq_ciphertext_b64 = boot.pq_ciphertext
             pq_key_id = boot.pq_key_id
             x3dh_version = boot.x3dh_version
+            if ((boot.x3dh_version ?: X3dh.VERSION_LEGACY) >= X3dh.VERSION_ONE_TIME_BOUND) {
+                one_time_prekey_id = boot.one_time_prekey_id
+                signed_prekey_id = boot.signed_prekey_id
+            }
+            post_quantum_signed = session_pq_signed
         }
 
         val recovery_keys = resolve_recovery_lane_keys(bundle, state.bootstrap)
             ?: return null
+        if (!RecoveryLanePolicy.lane_matches_body(pq_ciphertext_b64 != null, recovery_keys)) {
+            throw RecoveryLaneDowngradeException(recipient_email)
+        }
 
         val encrypted = DoubleRatchet.encrypt(state, body)
 
@@ -641,7 +761,7 @@ class RatchetEncryptor @Inject constructor(
         state_store.save(state)
         syncer.sync(conversation_id, state)
 
-        return RatchetRecipientData(
+        val data = RatchetRecipientData(
             ephemeral_key = ephemeral_b64,
             header = encrypted.header,
             ciphertext = RatchetCrypto.b64_encode(encrypted.ciphertext),
@@ -649,6 +769,8 @@ class RatchetEncryptor @Inject constructor(
             pq_ciphertext = pq_ciphertext_b64,
             pq_key_id = pq_key_id,
             x3dh_v = x3dh_version,
+            opk_id = one_time_prekey_id,
+            spk_id = signed_prekey_id,
             recovery = RecoveryLaneData(
                 v = recovery.v,
                 epk = recovery.epk,
@@ -658,6 +780,7 @@ class RatchetEncryptor @Inject constructor(
                 rid = recovery.rid,
             ),
         )
+        return RecipientEncryption(data, post_quantum_signed)
     }
 
     private fun resolve_recovery_lane_keys(
@@ -669,11 +792,11 @@ class RatchetEncryptor @Inject constructor(
             ?: return null
         if (identity_public.isBlank()) return null
 
-        val pq_identity_public = if (bundle != null) {
-            bundle.pq_kem_public_key
-        } else {
-            bootstrap?.recipient_pq_identity_key
-        }
+        val pq_identity_public = RecoveryLanePolicy.lane_pq_identity_key(
+            identity_public,
+            bundle?.pq_kem_public_key,
+            bootstrap,
+        )
 
         return RecoveryLane.RecipientKeys(identity_public, pq_identity_public)
     }

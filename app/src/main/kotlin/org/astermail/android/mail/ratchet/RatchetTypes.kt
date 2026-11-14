@@ -51,6 +51,8 @@ data class RatchetRecipientData(
     val pq_key_id: Int? = null,
     val x3dh_v: Int? = null,
     val recovery: RecoveryLaneData? = null,
+    val opk_id: Int? = null,
+    val spk_id: String? = null,
 )
 
 @Serializable
@@ -83,6 +85,8 @@ data class BootstrapData(
     val recipient_identity_key: String? = null,
     val recipient_pq_identity_key: String? = null,
     val x3dh_version: Int? = null,
+    val one_time_prekey_id: Int? = null,
+    val signed_prekey_id: String? = null,
 )
 
 @Serializable
@@ -103,6 +107,7 @@ data class RatchetState(
     var updated_at: Long = 0L,
     var bootstrap: BootstrapData? = null,
     var remote_identity_key: String? = null,
+    var header_bound: Boolean = false,
 )
 
 data class RatchetIdentity(

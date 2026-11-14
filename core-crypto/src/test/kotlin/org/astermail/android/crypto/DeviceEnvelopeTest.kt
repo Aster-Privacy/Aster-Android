@@ -22,6 +22,7 @@
 package org.astermail.android.crypto
 
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.X25519PrivateKeyParameters
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -31,6 +32,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceEnvelopeTest {
+
+    private class TestDevice {
+        val mlkem = RatchetCrypto.ml_kem_768_generate_keypair()
+        val x25519_sk: ByteArray = RatchetCrypto.random_bytes(32)
+        val recipient = DeviceEnvelope.DeviceRecipient(
+            ed25519_pk = Ed25519PrivateKeyParameters(RatchetCrypto.random_bytes(32), 0)
+                .generatePublicKey()
+                .encoded,
+            mlkem_pk = mlkem.public_key,
+            x25519_pk = X25519PrivateKeyParameters(x25519_sk, 0).generatePublicKey().encoded,
+        )
+
+        fun open(envelope: ByteArray, as_recipient: DeviceEnvelope.DeviceRecipient = recipient) =
+            DeviceEnvelope.open_secret_for_device(envelope, as_recipient, mlkem.secret_key, x25519_sk)
+    }
 
     private fun from_hex(value: String): ByteArray {
         val out = ByteArray(value.length / 2)
@@ -86,84 +102,195 @@ class DeviceEnvelopeTest {
 
     @Test
     fun seal_round_trips_through_device_keys() {
-        val mlkem = RatchetCrypto.ml_kem_768_generate_keypair()
-        val device_x25519_sk = RatchetCrypto.random_bytes(32)
-        val device_x25519_pk = X25519PrivateKeyParameters(device_x25519_sk, 0)
-            .generatePublicKey()
-            .encoded
         val plaintext = "correct horse battery staple".toByteArray(Charsets.UTF_8)
 
-        val envelope = DeviceEnvelope.seal_secret_for_device(
-            secret = plaintext,
-            device_mlkem_pk = mlkem.public_key,
-            device_x25519_pk = device_x25519_pk,
-        )
+        for (version in DeviceEnvelope.ENVELOPE_VERSIONS) {
+            val device = TestDevice()
+            val envelope = DeviceEnvelope.seal_secret_for_device(
+                secret = plaintext,
+                recipient = device.recipient,
+                version = version,
+            )
+            val header = if (version == DeviceEnvelope.ENVELOPE_V2) 4 else 0
 
-        assertEquals(
-            DeviceEnvelope.X25519_PK_BYTES +
-                DeviceEnvelope.MLKEM_768_CT_BYTES +
-                DeviceEnvelope.XNONCE_BYTES +
-                plaintext.size +
-                DeviceEnvelope.POLY1305_TAG_BYTES,
-            envelope.size,
-        )
-        assertTrue(envelope.size >= DeviceEnvelope.MIN_ENVELOPE_BYTES)
-        assertArrayEquals(
-            plaintext,
-            DeviceEnvelope.open_secret_for_device(envelope, mlkem.secret_key, device_x25519_sk),
-        )
+            assertEquals(
+                header +
+                    DeviceEnvelope.X25519_PK_BYTES +
+                    DeviceEnvelope.MLKEM_768_CT_BYTES +
+                    DeviceEnvelope.XNONCE_BYTES +
+                    plaintext.size +
+                    DeviceEnvelope.POLY1305_TAG_BYTES,
+                envelope.size,
+            )
+            assertEquals(
+                version == DeviceEnvelope.ENVELOPE_V2,
+                String(envelope.copyOfRange(0, 4), Charsets.US_ASCII) == "AEV2",
+            )
+            assertTrue(envelope.size >= DeviceEnvelope.MIN_ENVELOPE_BYTES)
+            assertArrayEquals(plaintext, device.open(envelope))
+        }
     }
 
     @Test
     fun seal_is_randomized_per_call() {
-        val mlkem = RatchetCrypto.ml_kem_768_generate_keypair()
-        val device_x25519_sk = RatchetCrypto.random_bytes(32)
-        val device_x25519_pk = X25519PrivateKeyParameters(device_x25519_sk, 0)
-            .generatePublicKey()
-            .encoded
+        val device = TestDevice()
         val plaintext = "pw".toByteArray(Charsets.UTF_8)
 
-        val first = DeviceEnvelope.seal_secret_for_device(plaintext, mlkem.public_key, device_x25519_pk)
-        val second = DeviceEnvelope.seal_secret_for_device(plaintext, mlkem.public_key, device_x25519_pk)
+        for (version in DeviceEnvelope.ENVELOPE_VERSIONS) {
+            val first = DeviceEnvelope.seal_secret_for_device(plaintext, device.recipient, version)
+            val second = DeviceEnvelope.seal_secret_for_device(plaintext, device.recipient, version)
 
-        assertNotEquals(to_hex(first), to_hex(second))
+            assertNotEquals(to_hex(first), to_hex(second))
+        }
     }
 
     @Test
     fun seal_rejects_wrong_sized_device_keys() {
-        val mlkem = RatchetCrypto.ml_kem_768_generate_keypair()
+        val device = TestDevice()
         val plaintext = "pw".toByteArray(Charsets.UTF_8)
-
-        assertThrows(DeviceEnvelope.InvalidDeviceKeyException::class.java) {
-            DeviceEnvelope.seal_secret_for_device(
-                plaintext,
+        val bad_recipients = listOf(
+            DeviceEnvelope.DeviceRecipient(
+                device.recipient.ed25519_pk,
                 ByteArray(DeviceEnvelope.MLKEM_768_PK_BYTES - 1),
-                ByteArray(32),
-            )
+                device.recipient.x25519_pk,
+            ),
+            DeviceEnvelope.DeviceRecipient(
+                device.recipient.ed25519_pk,
+                device.recipient.mlkem_pk,
+                ByteArray(31),
+            ),
+            DeviceEnvelope.DeviceRecipient(
+                ByteArray(31),
+                device.recipient.mlkem_pk,
+                device.recipient.x25519_pk,
+            ),
+        )
+
+        for (version in DeviceEnvelope.ENVELOPE_VERSIONS) {
+            for (recipient in bad_recipients) {
+                assertThrows(DeviceEnvelope.InvalidDeviceKeyException::class.java) {
+                    DeviceEnvelope.seal_secret_for_device(plaintext, recipient, version)
+                }
+            }
         }
-        assertThrows(DeviceEnvelope.InvalidDeviceKeyException::class.java) {
-            DeviceEnvelope.seal_secret_for_device(plaintext, mlkem.public_key, ByteArray(31))
+    }
+
+    @Test
+    fun seal_rejects_an_unsupported_version() {
+        val device = TestDevice()
+
+        for (version in listOf(0, 3)) {
+            assertThrows(IllegalArgumentException::class.java) {
+                DeviceEnvelope.seal_secret_for_device(
+                    "pw".toByteArray(Charsets.UTF_8),
+                    device.recipient,
+                    version,
+                )
+            }
         }
     }
 
     @Test
     fun tampered_envelope_fails_to_open() {
-        val mlkem = RatchetCrypto.ml_kem_768_generate_keypair()
-        val device_x25519_sk = RatchetCrypto.random_bytes(32)
-        val device_x25519_pk = X25519PrivateKeyParameters(device_x25519_sk, 0)
-            .generatePublicKey()
-            .encoded
+        for (version in DeviceEnvelope.ENVELOPE_VERSIONS) {
+            val device = TestDevice()
+            val envelope = DeviceEnvelope.seal_secret_for_device(
+                "hunter2".toByteArray(Charsets.UTF_8),
+                device.recipient,
+                version,
+            )
+            val header = if (version == DeviceEnvelope.ENVELOPE_V2) 4 else 0
+            val indices = listOf(
+                0,
+                header,
+                header + DeviceEnvelope.X25519_PK_BYTES,
+                header + DeviceEnvelope.MIN_ENVELOPE_BYTES - DeviceEnvelope.POLY1305_TAG_BYTES - 1,
+                envelope.size - 1,
+            )
 
-        val envelope = DeviceEnvelope.seal_secret_for_device(
-            "hunter2".toByteArray(Charsets.UTF_8),
-            mlkem.public_key,
-            device_x25519_pk,
-        )
-        envelope[envelope.size - 1] = (envelope[envelope.size - 1].toInt() xor 0x01).toByte()
+            for (index in indices) {
+                val tampered = envelope.copyOf()
+                tampered[index] = (tampered[index].toInt() xor 0x01).toByte()
 
-        assertThrows(Exception::class.java) {
-            DeviceEnvelope.open_secret_for_device(envelope, mlkem.secret_key, device_x25519_sk)
+                assertThrows("byte $index", Exception::class.java) { device.open(tampered) }
+            }
         }
+    }
+
+    @Test
+    fun v2_envelope_is_bound_to_the_device_signing_key() {
+        val device = TestDevice()
+        val plaintext = "pw".toByteArray(Charsets.UTF_8)
+        val swapped = DeviceEnvelope.DeviceRecipient(
+            ed25519_pk = Ed25519PrivateKeyParameters(RatchetCrypto.random_bytes(32), 0)
+                .generatePublicKey()
+                .encoded,
+            mlkem_pk = device.recipient.mlkem_pk,
+            x25519_pk = device.recipient.x25519_pk,
+        )
+        val v2 = DeviceEnvelope.seal_secret_for_device(
+            plaintext,
+            device.recipient,
+            DeviceEnvelope.ENVELOPE_V2,
+        )
+        val v1 = DeviceEnvelope.seal_secret_for_device(
+            plaintext,
+            device.recipient,
+            DeviceEnvelope.ENVELOPE_V1,
+        )
+
+        assertThrows(Exception::class.java) { device.open(v2, swapped) }
+        assertArrayEquals(plaintext, device.open(v1, swapped))
+    }
+
+    @Test
+    fun v2_envelope_with_its_header_stripped_fails_to_open() {
+        val device = TestDevice()
+        val v2 = DeviceEnvelope.seal_secret_for_device(
+            "pw".toByteArray(Charsets.UTF_8),
+            device.recipient,
+            DeviceEnvelope.ENVELOPE_V2,
+        )
+
+        assertThrows(Exception::class.java) { device.open(v2.copyOfRange(4, v2.size)) }
+    }
+
+    @Test
+    fun envelope_for_another_device_fails_to_open() {
+        val device = TestDevice()
+        val other = TestDevice()
+
+        for (version in DeviceEnvelope.ENVELOPE_VERSIONS) {
+            val envelope = DeviceEnvelope.seal_secret_for_device(
+                "pw".toByteArray(Charsets.UTF_8),
+                device.recipient,
+                version,
+            )
+
+            assertThrows(Exception::class.java) { other.open(envelope) }
+        }
+    }
+
+    @Test
+    fun short_envelope_fails_to_open() {
+        val device = TestDevice()
+
+        for (size in listOf(0, 3, 4 + DeviceEnvelope.MIN_ENVELOPE_BYTES - 1)) {
+            val short = ByteArray(size)
+            if (size >= 4) "AEV2".toByteArray(Charsets.US_ASCII).copyInto(short)
+
+            assertThrows(IllegalArgumentException::class.java) { device.open(short) }
+        }
+    }
+
+    @Test
+    fun choose_envelope_version_prefers_v2_only_when_offered() {
+        assertEquals(2, DeviceEnvelope.choose_envelope_version(listOf(1, 2)))
+        assertEquals(2, DeviceEnvelope.choose_envelope_version(listOf(2)))
+        assertEquals(1, DeviceEnvelope.choose_envelope_version(listOf(1)))
+        assertEquals(1, DeviceEnvelope.choose_envelope_version(emptyList()))
+        assertEquals(1, DeviceEnvelope.choose_envelope_version(null))
+        assertEquals(1, DeviceEnvelope.choose_envelope_version(listOf(3)))
     }
 
     @Test

@@ -27,11 +27,11 @@ import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.security.KeyStore
-import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import org.astermail.android.storage.LockKeyHolder
 import org.astermail.android.storage.SecurePrefs
 
 sealed class BiometricGatePreparation {
@@ -170,9 +170,9 @@ object BiometricUnlockGate {
     }
 
     fun complete_enroll(context: Context, cipher: Cipher): Boolean = try {
-        val token = ByteArray(TOKEN_BYTES).also { SecureRandom().nextBytes(it) }
+        val token = LockKeyHolder.current()?.takeIf { it.size == TOKEN_BYTES } ?: return false
         val ciphertext = cipher.doFinal(token)
-        prefs(context).edit()
+        val stored = prefs(context).edit()
             .putString(KEY_TOKEN_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
             .putString(KEY_TOKEN_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
             .putString(KEY_TOKEN_DIGEST, Base64.encodeToString(digest(token), Base64.NO_WRAP))
@@ -180,7 +180,7 @@ object BiometricUnlockGate {
             .remove(KEY_REBIND_PENDING)
             .commit()
         token.fill(0)
-        true
+        stored
     } catch (t: Throwable) {
         false
     }
@@ -190,7 +190,8 @@ object BiometricUnlockGate {
         val ciphertext = Base64.decode(p.getString(KEY_TOKEN_CIPHERTEXT, "") ?: "", Base64.NO_WRAP)
         val expected = Base64.decode(p.getString(KEY_TOKEN_DIGEST, "") ?: "", Base64.NO_WRAP)
         val token = cipher.doFinal(ciphertext)
-        val ok = constant_time_equals(digest(token), expected)
+        val ok = token.size == TOKEN_BYTES && constant_time_equals(digest(token), expected)
+        if (ok) LockKeyHolder.open(token)
         token.fill(0)
         ok
     } catch (t: Throwable) {

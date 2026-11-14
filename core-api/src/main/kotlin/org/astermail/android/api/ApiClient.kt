@@ -212,12 +212,7 @@ class ApiClient(
     val http: HttpClient = HttpClient(OkHttp) {
         engine {
             config {
-                val specs = if (allow_cleartext_for_test) {
-                    listOf(ConnectionSpec.CLEARTEXT, ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS)
-                } else {
-                    listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS)
-                }
-                connectionSpecs(specs)
+                connectionSpecs(api_connection_specs(allow_cleartext_for_test))
                 dns(DualStackDns)
                 retryOnConnectionFailure(true)
                 connectTimeout(java.time.Duration.ofMillis(4_000))
@@ -644,5 +639,12 @@ class ApiClient(
 
     fun close() = http.close()
 }
+
+internal fun api_connection_specs(allow_cleartext: Boolean): List<ConnectionSpec> =
+    if (allow_cleartext) {
+        listOf(ConnectionSpec.CLEARTEXT, ConnectionSpec.MODERN_TLS)
+    } else {
+        listOf(ConnectionSpec.MODERN_TLS)
+    }
 
 private fun HttpStatusCode.isSuccess(): Boolean = value in 200..299

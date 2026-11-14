@@ -136,6 +136,52 @@ class InboundAttachmentKeyTest {
     }
 
     @Test
+    fun an_unencrypted_envelope_never_replaces_a_sealed_key() {
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-mixed",
+            """{"attachment_keys":[{"seq":0,"key":"sealed-key"}]}""",
+        )
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-mixed",
+            """{"attachment_keys":[{"seq":0,"key":"swapped-key"}]}""",
+            unencrypted = true,
+        )
+
+        assertEquals("sealed-key", InboundAttachmentKeyStore.key("item-mixed", 0))
+    }
+
+    @Test
+    fun an_unencrypted_envelope_still_supplies_its_own_keys() {
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-plain",
+            """{"attachment_keys":[{"seq":0,"key":"server-key"}]}""",
+            unencrypted = true,
+        )
+
+        assertEquals("server-key", InboundAttachmentKeyStore.key("item-plain", 0))
+    }
+
+    @Test
+    fun a_sealed_envelope_replaces_an_unencrypted_key() {
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-upgrade",
+            """{"attachment_keys":[{"seq":0,"key":"server-key"}]}""",
+            unencrypted = true,
+        )
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-upgrade",
+            """{"attachment_keys":[{"seq":0,"key":"sealed-key"}]}""",
+        )
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-upgrade",
+            """{"attachment_keys":[{"seq":0,"key":"swapped-key"}]}""",
+            unencrypted = true,
+        )
+
+        assertEquals("sealed-key", InboundAttachmentKeyStore.key("item-upgrade", 0))
+    }
+
+    @Test
     fun clear_drops_every_entry() {
         InboundAttachmentKeyStore.register("item-1", 0, "k")
         InboundAttachmentKeyStore.clear()
@@ -183,11 +229,52 @@ class InboundAttachmentKeyTest {
     @Test
     fun imported_plaintext_with_a_key_and_zero_nonce_opens() {
         val payload = "%PDF-1.7 imported".toByteArray()
-        val key = ByteArray(32) { (it + 9).toByte() }
+        val key = b64(ByteArray(32) { (it + 9).toByte() })
+        InboundAttachmentKeyStore.register("item-import", 0, key)
 
-        val out = MailRepository.decrypt_attachment_bytes(b64(payload), b64(ByteArray(12)), b64(key))
+        val out = MailRepository.decrypt_attachment_bytes(
+            b64(payload),
+            b64(ByteArray(12)),
+            key,
+            "item-import",
+            0,
+        )
 
         assertArrayEquals(payload, out)
+    }
+
+    @Test
+    fun a_metadata_key_never_opens_zero_nonce_plaintext() {
+        val payload = "%PDF-1.7 swapped".toByteArray()
+        val key = b64(ByteArray(32) { (it + 9).toByte() })
+
+        try {
+            MailRepository.decrypt_attachment_bytes(b64(payload), b64(ByteArray(12)), key, "item-meta", 0)
+            fail("expected a decryption failure")
+        } catch (_: AttachmentKeyUnavailableException) {
+            fail("expected a decryption failure")
+        } catch (_: Exception) {
+        }
+    }
+
+    @Test
+    fun a_metadata_key_that_differs_from_the_envelope_key_never_opens_zero_nonce_plaintext() {
+        val payload = "%PDF-1.7 swapped".toByteArray()
+        InboundAttachmentKeyStore.register("item-mixed", 0, b64(ByteArray(32) { 4 }))
+
+        try {
+            MailRepository.decrypt_attachment_bytes(
+                b64(payload),
+                b64(ByteArray(12)),
+                b64(ByteArray(32) { 5 }),
+                "item-mixed",
+                0,
+            )
+            fail("expected a decryption failure")
+        } catch (_: AttachmentKeyUnavailableException) {
+            fail("expected a decryption failure")
+        } catch (_: Exception) {
+        }
     }
 
     @Test

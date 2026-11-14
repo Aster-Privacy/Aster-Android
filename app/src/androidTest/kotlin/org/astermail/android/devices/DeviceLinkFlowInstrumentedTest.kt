@@ -34,6 +34,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.TokenProvider
 import org.astermail.android.api.devices.DeviceCodeApiImpl
 import org.astermail.android.api.devices.DeviceLinkError
+import org.astermail.android.api.devices.PendingDevice
 import org.astermail.android.crypto.DeviceEnvelope
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.bouncycastle.crypto.params.X25519PrivateKeyParameters
@@ -84,13 +85,21 @@ class DeviceLinkFlowInstrumentedTest {
             .generatePublicKey()
             .encoded
         val ed25519_pk: ByteArray = RatchetCrypto.random_bytes(32)
+        val recipient = DeviceEnvelope.DeviceRecipient(ed25519_pk, mlkem.public_key, x25519_pk)
 
         fun open(envelope_b64: String): ByteArray = DeviceEnvelope.open_secret_for_device(
             DeviceEnvelope.base64url_decode(envelope_b64),
+            recipient,
             mlkem.secret_key,
             x25519_sk,
         )
     }
+
+    private fun pending_recipient(pending: PendingDevice) = DeviceEnvelope.DeviceRecipient(
+        DeviceEnvelope.base64url_decode(pending.ed25519_pk),
+        DeviceEnvelope.base64url_decode(pending.mlkem_pk),
+        DeviceEnvelope.base64url_decode(pending.x25519_pk),
+    )
 
     private fun enqueue_pending(device: FakeDevice, machine_name: String, device_type: String) {
         server.enqueue(
@@ -102,7 +111,8 @@ class DeviceLinkFlowInstrumentedTest {
                     {"ed25519_pk":"${DeviceEnvelope.base64url_encode(device.ed25519_pk)}",
                      "mlkem_pk":"${DeviceEnvelope.base64url_encode(device.mlkem.public_key)}",
                      "x25519_pk":"${DeviceEnvelope.base64url_encode(device.x25519_pk)}",
-                     "machine_name":"$machine_name","device_type":"$device_type"}
+                     "machine_name":"$machine_name","device_type":"$device_type",
+                     "envelope_versions":[1,2]}
                     """.trimIndent(),
                 ),
         )
@@ -136,8 +146,8 @@ class DeviceLinkFlowInstrumentedTest {
         val envelope = DeviceEnvelope.base64url_encode(
             DeviceEnvelope.seal_secret_for_device(
                 passphrase,
-                DeviceEnvelope.base64url_decode(pending.mlkem_pk),
-                DeviceEnvelope.base64url_decode(pending.x25519_pk),
+                pending_recipient(pending),
+                DeviceEnvelope.choose_envelope_version(pending.envelope_versions),
             ),
         )
         val confirmed = api.confirm_code("qeme-77et", envelope)
@@ -179,8 +189,8 @@ class DeviceLinkFlowInstrumentedTest {
             DeviceEnvelope.base64url_encode(
                 DeviceEnvelope.seal_secret_for_device(
                     passphrase,
-                    DeviceEnvelope.base64url_decode(pending.mlkem_pk),
-                    DeviceEnvelope.base64url_decode(pending.x25519_pk),
+                    pending_recipient(pending),
+                    DeviceEnvelope.choose_envelope_version(pending.envelope_versions),
                 ),
             ),
         )

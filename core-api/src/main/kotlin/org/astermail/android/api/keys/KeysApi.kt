@@ -329,6 +329,7 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             .getOrNull() ?: return false
         if (response.status.value !in 200..299) return false
         val body = runCatching { response.body<String>() }.getOrNull() ?: return false
+        BoundWriteSwitches.record(body)
         return parse_format_writes(body)
     }
 
@@ -342,6 +343,7 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
             .getOrNull() ?: return none
         if (response.status.value !in 200..299) return none
         val body = runCatching { response.body<String>() }.getOrNull() ?: return none
+        BoundWriteSwitches.record(body)
         return parse_account_key_capabilities(body)
     }
 
@@ -397,6 +399,35 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
         }.getOrNull() ?: return false
         return response.status.value in 200..299
     }
+}
+
+object BoundWriteSwitches {
+    const val FRESH_MS = 5 * 60 * 1000L
+
+    private class Snapshot(val vault: Boolean, val attachment: Boolean, val at_ms: Long)
+
+    @Volatile
+    private var snapshot: Snapshot? = null
+
+    fun record(body: String, now_ms: Long = System.currentTimeMillis()) {
+        val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
+        snapshot = Snapshot(
+            vault = json_boolean_true(element?.get("bound_vault_writes")),
+            attachment = json_boolean_true(element?.get("bound_attachment_writes")),
+            at_ms = now_ms,
+        )
+    }
+
+    fun vault(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.vault == true
+
+    fun attachment(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.attachment == true
+
+    fun clear() {
+        snapshot = null
+    }
+
+    private fun fresh(now_ms: Long): Snapshot? =
+        snapshot?.takeIf { now_ms >= it.at_ms && now_ms - it.at_ms < FRESH_MS }
 }
 
 fun parse_format_writes(body: String): Boolean {

@@ -62,6 +62,7 @@ import org.astermail.android.api.auth.ClientPgpKeyData
 import org.astermail.android.api.auth.DeleteAccountRequest
 import org.astermail.android.api.auth.EnrollPasswordV2Request
 import org.astermail.android.api.auth.LoginRequest
+import org.astermail.android.api.auth.LoginV3StartRequest
 import org.astermail.android.api.auth.LoginResponse
 import org.astermail.android.api.auth.LoginResult
 import org.astermail.android.api.auth.RefreshOutcome
@@ -69,6 +70,7 @@ import org.astermail.android.api.auth.RegisterRequest
 import org.astermail.android.api.auth.RotateLoginSaltRequest
 import org.astermail.android.api.auth.SessionRefresher
 import org.astermail.android.api.auth.TotpLoginVerifyRequest
+import org.astermail.android.api.keys.BoundWriteSwitches
 import org.astermail.android.api.keys.CurrentVaultResult
 import org.astermail.android.api.recovery.ConsumeInactiveKeySetRequest
 import org.astermail.android.api.recovery.FetchInactiveKeySetRequest
@@ -83,6 +85,7 @@ import org.astermail.android.crypto.PgpKeyGenerator
 import org.astermail.android.crypto.PgpKeyPairResult
 import org.bouncycastle.bcpg.ArmoredOutputStream
 import org.astermail.android.storage.AccountStore
+import org.astermail.android.storage.LockKeyHolder
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshotStore
 import org.astermail.android.storage.StoredAccount
@@ -104,6 +107,7 @@ data class TotpChallenge(
     val remember_me: Boolean,
     val user_hash: String = "",
     val login_enrollment: PendingLoginEnrollment? = null,
+    val login_v3_enroll_input: ByteArray? = null,
 )
 
 private const val UNAUTHORIZED_CHECK_COOLDOWN_MS = 10_000L
@@ -172,6 +176,13 @@ class AuthRepository @Inject constructor(
         _session_expired.value = false
     }
 
+    private val vault_open_notice = VaultOpenNotice()
+    val vault_open_failed: StateFlow<Boolean> = vault_open_notice.failed
+
+    fun consume_vault_open_failed() {
+        vault_open_notice.consume()
+    }
+
     private val unauthorized_check_running = java.util.concurrent.atomic.AtomicBoolean(false)
     @Volatile private var last_unauthorized_check_ms = 0L
 
@@ -188,10 +199,43 @@ class AuthRepository @Inject constructor(
         org.astermail.android.crypto.storage_rotation.StorageRekeyService(context, api_client, session_key_store)
     }
 
+    @Volatile
+    private var restore_deferred_by_lock = false
+
+    private fun secrets_locked(): Boolean =
+        !LockKeyHolder.is_open() &&
+            (session_key_store.has_sealed_values() || session_snapshot_store.has_sealed_values())
+
+    private suspend fun restore_first_candidate(excluded_id: String?): Boolean {
+        val candidates = runCatching {
+            account_store.get_all().filter { it.id != excluded_id && session_snapshot_store.has(it.id) }
+        }.getOrDefault(emptyList())
+        if (candidates.isEmpty()) return false
+        if (secrets_locked()) {
+            restore_deferred_by_lock = true
+            return false
+        }
+        for (candidate in candidates) {
+            if (runCatching { try_restore_session(candidate.id) }.getOrDefault(false)) return true
+        }
+        return false
+    }
+
+    private fun resume_after_unlock() {
+        if (_is_signed_in.value) {
+            background_scope.launch { runCatching { ensure_pgp_key_published() } }
+            return
+        }
+        if (!restore_deferred_by_lock) return
+        restore_deferred_by_lock = false
+        background_scope.launch { runCatching { restore_first_candidate(null) } }
+    }
+
     init {
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
         }
+        LockKeyHolder.add_open_listener { resume_after_unlock() }
         org.astermail.android.crypto.StorageKeyGate.install {
             storage_rekey_service.ensure_random_storage_key()
             val key = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
@@ -407,6 +451,16 @@ class AuthRepository @Inject constructor(
         password: String,
         captcha_token: String? = null,
         remember_me: Boolean = true,
+    ): Result<LoginOutcome> =
+        PasswordForms.first_accepted(password) { form ->
+            login_with_form(email, form, captcha_token, remember_me)
+        }
+
+    private suspend fun login_with_form(
+        email: String,
+        password: String,
+        captcha_token: String?,
+        remember_me: Boolean,
     ): Result<LoginOutcome> = runCatching {
         val normalized = normalize_email(email)
         val trusted_token = trusted_device_store.get_token(normalized)
@@ -430,13 +484,18 @@ class AuthRepository @Inject constructor(
         )
         val password_bytes = password.toByteArray(Charsets.UTF_8)
         val v1_bytes = derive_login_hash(password_bytes, salt_bytes)
+        var login_v3_input: ByteArray? = null
         val sign_in_proof = try {
-            LoginProof.select_sign_in_proof(
+            val selected = LoginProof.select_sign_in_proof(
                 v1_bytes,
                 kdf_version,
                 LoginProof.pin_keys(null, user_hash),
                 login_pins,
             )
+            if (salt_resp.login_v3 || salt_resp.login_v3_enroll) {
+                login_v3_input = runCatching { LoginV3.derive_input(v1_bytes) }.getOrNull()
+            }
+            selected
         } catch (refused: SecurityException) {
             password_bytes.fill(0)
             throw refused
@@ -450,7 +509,22 @@ class AuthRepository @Inject constructor(
         val integrity = PlayIntegrityLogin.fetch(context, user_hash)
 
         val login_result = try {
-            auth_api.login(
+            val v3_input = login_v3_input?.takeIf { salt_resp.login_v3 }
+            val v3_result = v3_input?.let { input ->
+                LoginV3.sign_in(
+                    auth_api,
+                    input,
+                    LoginV3StartRequest(
+                        user_hash = user_hash,
+                        captcha_token = captcha_token,
+                        remember_me = remember_me,
+                        integrity_token = integrity?.token,
+                        integrity_nonce = integrity?.nonce,
+                    ),
+                    trusted_token,
+                )
+            }
+            v3_result ?: auth_api.login(
                 LoginRequest(
                     user_hash = user_hash,
                     password_hash = password_hash_b64,
@@ -463,8 +537,13 @@ class AuthRepository @Inject constructor(
             )
         } catch (failed: Throwable) {
             login_enrollment?.wipe()
+            login_v3_input?.fill(0)
             throw failed
         }
+        val login_v3_enroll_input = login_v3_input?.takeIf {
+            login_enrollment == null && LoginV3.should_enroll(salt_resp.login_v3_enroll, salt_resp.login_v3)
+        }
+        if (login_v3_enroll_input == null) login_v3_input?.fill(0)
 
         when (login_result) {
             is LoginResult.TotpRequired -> {
@@ -479,6 +558,7 @@ class AuthRepository @Inject constructor(
                         remember_me = remember_me,
                         user_hash = user_hash,
                         login_enrollment = login_enrollment,
+                        login_v3_enroll_input = login_v3_enroll_input,
                     ),
                 )
             }
@@ -486,14 +566,22 @@ class AuthRepository @Inject constructor(
                 login_result.trusted_device_token?.takeIf { it.isNotBlank() }?.let { token ->
                     trusted_device_store.put_token(normalized, token)
                 }
-                complete_login(
-                    login_result.response,
-                    password_bytes,
-                    password_hash_bytes,
-                    salt_bytes,
-                    user_hash,
-                    login_enrollment,
-                )
+                val enroll_proof = login_v3_enroll_input?.let { password_hash_bytes.copyOf() }
+                try {
+                    complete_login(
+                        login_result.response,
+                        password_bytes,
+                        password_hash_bytes,
+                        salt_bytes,
+                        user_hash,
+                        login_enrollment,
+                    )
+                } catch (failed: Throwable) {
+                    login_v3_enroll_input?.fill(0)
+                    enroll_proof?.fill(0)
+                    throw failed
+                }
+                start_login_v3_enrollment(login_result.response.user_id, login_v3_enroll_input, enroll_proof)
                 LoginOutcome.Success
             }
         }
@@ -562,18 +650,28 @@ class AuthRepository @Inject constructor(
                 trusted_device_store.put_token(challenge.email, token)
             }
         }
-        complete_login(
-            outcome.response,
-            challenge.password_bytes,
-            challenge.password_hash_bytes,
-            challenge.salt_bytes,
-            challenge.user_hash,
-            challenge.login_enrollment,
-        )
+        val enroll_input = challenge.login_v3_enroll_input
+        val enroll_proof = enroll_input?.let { challenge.password_hash_bytes.copyOf() }
+        try {
+            complete_login(
+                outcome.response,
+                challenge.password_bytes,
+                challenge.password_hash_bytes,
+                challenge.salt_bytes,
+                challenge.user_hash,
+                challenge.login_enrollment,
+            )
+        } catch (failed: Throwable) {
+            enroll_input?.fill(0)
+            enroll_proof?.fill(0)
+            throw failed
+        }
+        start_login_v3_enrollment(outcome.response.user_id, enroll_input, enroll_proof)
     }
 
     private suspend fun backfill_server_recovery_email() {
         val user_id = session_key_store.get_user_id() ?: return
+        if (secrets_locked()) return
         if (!recovery_email_backfill_attempted_user_ids.add(user_id)) return
         val state = recovery_email_api.get_state()
         if (state.has_server_enc || !state.verified) return
@@ -749,9 +847,11 @@ class AuthRepository @Inject constructor(
                 if (login_enrollment != null && LoginSaltRule.needs_rotation(1, salt_bytes)) {
                     keep_for_rotation(password_bytes.copyOf())
                 }
+                vault_open_notice.report_opened()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (t: Throwable) {
+                vault_open_notice.report_failed()
                 if (BuildConfig.DEBUG) android.util.Log.w("AuthRepository", "vault decryption failed: ${t.javaClass.simpleName}")
             } finally {
                 password_bytes.fill(0)
@@ -904,6 +1004,27 @@ class AuthRepository @Inject constructor(
             } catch (_: Throwable) {
             } finally {
                 enrollment.wipe()
+            }
+        }
+    }
+
+    private fun start_login_v3_enrollment(user_id: String, input: ByteArray?, proof: ByteArray?) {
+        if (input == null || proof == null) {
+            input?.fill(0)
+            proof?.fill(0)
+            return
+        }
+        background_scope.launch {
+            try {
+                if (ensure_csrf_ready() && session_key_store.get_user_id() == user_id) {
+                    LoginV3.enroll(auth_api, input, proof)
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            } finally {
+                input.fill(0)
+                proof.fill(0)
             }
         }
     }
@@ -1202,7 +1323,11 @@ class AuthRepository @Inject constructor(
         )
         val vault_plaintext = vault_json.toByteArray(Charsets.UTF_8)
         val raw_password_bytes = password.toByteArray(Charsets.UTF_8)
-        val vault_envelope = CryptoNative.encrypt_vault_with_password(vault_plaintext, raw_password_bytes)
+        val vault_envelope = CryptoNative.encrypt_vault_with_password(
+            vault_plaintext,
+            raw_password_bytes,
+            bound = BoundWriteSwitches.vault(),
+        )
         raw_password_bytes.fill(0)
         vault_plaintext.fill(0)
 
@@ -1364,6 +1489,7 @@ class AuthRepository @Inject constructor(
 
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     suspend fun try_restore_session(account_id: String): Boolean {
+        if (secrets_locked()) return false
         mail_repository.pause_pending_drain()
         try {
             return restore_session_while_drain_paused(account_id)
@@ -1376,6 +1502,7 @@ class AuthRepository @Inject constructor(
         val restored = withContext(NonCancellable) {
             SessionRefreshGate.mutex.withLock {
                 if (!account_store.account_exists(account_id)) return@withLock false
+                if (secrets_locked()) return@withLock false
                 val snapshot = session_snapshot_store.load(account_id) ?: return@withLock false
                 if (!same_account(session_token_owner(snapshot.token_refresh, snapshot.token_access) ?: account_id, account_id)) {
                     return@withLock false
@@ -1498,13 +1625,14 @@ class AuthRepository @Inject constructor(
                 is CurrentVaultResult.Available -> server_vault.vault_kdf_iterations
                 else -> session_key_store.get_vault_kdf_iterations()
             }
+            var opened_iterations = VaultKdf.DEFAULT_ITERATIONS
             val vault_plain = try {
                 CryptoNative.unwrap_vault(
                     base64_decode(encrypted_vault_b64),
                     base64_decode(vault_nonce_b64),
                     current_password_bytes,
                     reported_iterations,
-                ).plaintext
+                ).also { opened_iterations = it.iterations }.plaintext
             } catch (cancelled: CancellationException) {
                 current_password_bytes.fill(0)
                 new_password_bytes.fill(0)
@@ -1580,6 +1708,7 @@ class AuthRepository @Inject constructor(
                 updated_vault_bytes,
                 new_password_bytes,
                 vault_iterations,
+                BoundWriteSwitches.vault(),
             )
             updated_vault_bytes.fill(0)
 
@@ -1606,10 +1735,16 @@ class AuthRepository @Inject constructor(
                     settings_api.change_password(request)
                 } catch (error: ApiError.Conflict) {
                     if (!org.astermail.android.crypto.storage_rotation.is_level2_not_admitted(error)) throw error
+                    if (opened_iterations == VaultKdf.LEVEL2_ITERATIONS) throw error
                     vault_iterations = VaultKdf.DEFAULT_ITERATIONS
                     val fallback_bytes = vault_obj.toString().toByteArray(Charsets.UTF_8)
                     new_envelope = try {
-                        CryptoNative.encrypt_vault_with_password(fallback_bytes, new_password_bytes, vault_iterations)
+                        CryptoNative.encrypt_vault_with_password(
+                            fallback_bytes,
+                            new_password_bytes,
+                            vault_iterations,
+                            BoundWriteSwitches.vault(),
+                        )
                     } finally {
                         fallback_bytes.fill(0)
                     }
@@ -1811,6 +1946,7 @@ class AuthRepository @Inject constructor(
         }
         current_id?.let { runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, it) } }
         if (remove_account) {
+            current_id?.let { runCatching { forget_deleted_account_device_recovery(context, it) } }
             val outbox_ids = runCatching {
                 current_id?.let { id -> database.pending_send_dao().get_for_account(id).map { it.id } }
             }.getOrNull()
@@ -1833,14 +1969,7 @@ class AuthRepository @Inject constructor(
                 runCatching { org.astermail.android.ui.drawer.folder_expansion_store.clear(context, current_id) }
             }
         }
-        val candidates = runCatching {
-            account_store.get_all()
-                .filter { it.id != current_id && session_snapshot_store.has(it.id) }
-        }.getOrDefault(emptyList())
-        for (candidate in candidates) {
-            val restored = runCatching { try_restore_session(candidate.id) }.getOrDefault(false)
-            if (restored) return@runCatching
-        }
+        if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
     }
@@ -1862,7 +1991,8 @@ class AuthRepository @Inject constructor(
         absorb_profile(profile)
         if (profile.pgp_uid_update_required &&
             !email.isNullOrBlank() &&
-            uid_update_attempted_for != email
+            uid_update_attempted_for != email &&
+            !secrets_locked()
         ) {
             uid_update_attempted_for = email
             val uid_updated = runCatching {
@@ -2444,6 +2574,7 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun try_refresh_vault_keys(): Boolean {
+        if (secrets_locked()) return false
         return try {
             val vault = auth_api.get_vault()
             session_key_store.put_encrypted_vault(
@@ -2554,11 +2685,7 @@ class AuthRepository @Inject constructor(
         runCatching {
             wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
         }
-        val candidates = account_store.get_all()
-            .filter { it.id != current_id && session_snapshot_store.has(it.id) }
-        for (candidate in candidates) {
-            if (try_restore_session(candidate.id)) return@runCatching
-        }
+        if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
     }
@@ -2646,6 +2773,7 @@ class AuthRepository @Inject constructor(
 
     private suspend fun ensure_pgp_key_published() {
         val user_id = session_key_store.get_user_id() ?: return
+        if (secrets_locked()) return
         if (!pgp_publish_attempted_user_ids.add(user_id)) return
 
         if (!is_pgp_private_key(session_key_store.get_identity_key())) {
@@ -2749,6 +2877,7 @@ class AuthRepository @Inject constructor(
         if (org.astermail.android.crypto.identity_addresses_for(account_email).size < 2) return@withContext
         val user_id = session_key_store.get_user_id() ?: return@withContext
         val attempt_key = "$user_id|${account_email.lowercase(Locale.ROOT)}"
+        if (secrets_locked()) return@withContext
         if (!pgp_address_heal_attempted.add(attempt_key)) return@withContext
 
         val healed = try {

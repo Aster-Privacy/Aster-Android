@@ -96,10 +96,32 @@ class LevelTwoVectorsTest {
     }
 
     @Test
-    fun vault_600k_aad_vector_needs_its_aad() {
+    fun vault_600k_aad_vector_opens_through_the_vault_reader() {
+        assertArrayEquals(
+            vault_plaintext,
+            CryptoNative.decrypt_vault_with_password(vault_600k_aad, vault_nonce, vault_password, 600000),
+        )
+    }
+
+    @Test
+    fun vault_600k_aad_vector_refuses_a_different_aad() {
+        val salt = vault_600k_aad.copyOfRange(0, 16)
+        val key = PasswordKdf.derive_aes_key(vault_password, salt, 600000)
         assertThrows(Exception::class.java) {
-            CryptoNative.decrypt_vault_with_password(vault_600k_aad, vault_nonce, vault_password, 600000)
+            AesGcm.decrypt(
+                key,
+                vault_nonce,
+                vault_600k_aad.copyOfRange(16, vault_600k_aad.size),
+                "aster-vault-v2".toByteArray(Charsets.UTF_8),
+            )
         }
+        assertThrows(Exception::class.java) {
+            AesGcm.decrypt(key, vault_nonce, vault_600k_aad.copyOfRange(16, vault_600k_aad.size))
+        }
+    }
+
+    @Test
+    fun vault_600k_aad_vector_needs_its_aad() {
         val salt = vault_600k_aad.copyOfRange(0, 16)
         val key = PasswordKdf.derive_aes_key(vault_password, salt, 600000)
         val plaintext = AesGcm.decrypt(
@@ -129,6 +151,40 @@ class LevelTwoVectorsTest {
         assertArrayEquals(
             vault_plaintext,
             CryptoNative.decrypt_vault_with_password(sealed.encrypted_vault, sealed.vault_nonce, vault_password, 600000),
+        )
+    }
+
+    @Test
+    fun vault_write_is_bound_only_when_asked() {
+        val salt_bytes = 16
+        val plain_form = CryptoNative.encrypt_vault_with_password(vault_plaintext, vault_password, 310000)
+        val bound_form = CryptoNative.encrypt_vault_with_password(vault_plaintext, vault_password, 310000, true)
+        fun open(envelope: CryptoNative.VaultEnvelope, aad: ByteArray?): ByteArray {
+            val salt = envelope.encrypted_vault.copyOfRange(0, salt_bytes)
+            val body = envelope.encrypted_vault.copyOfRange(salt_bytes, envelope.encrypted_vault.size)
+            val key = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                .generateSecret(
+                    javax.crypto.spec.PBEKeySpec(
+                        String(vault_password, Charsets.UTF_8).toCharArray(),
+                        salt,
+                        310000,
+                        256,
+                    ),
+                ).encoded
+            return AesGcm.decrypt(key, envelope.vault_nonce, body, aad)
+        }
+        assertArrayEquals(vault_plaintext, open(plain_form, null))
+        assertThrows(Exception::class.java) { open(plain_form, "aster-vault-v1".toByteArray(Charsets.UTF_8)) }
+        assertArrayEquals(vault_plaintext, open(bound_form, "aster-vault-v1".toByteArray(Charsets.UTF_8)))
+        assertThrows(Exception::class.java) { open(bound_form, null) }
+        assertArrayEquals(
+            vault_plaintext,
+            CryptoNative.decrypt_vault_with_password(
+                bound_form.encrypted_vault,
+                bound_form.vault_nonce,
+                vault_password,
+                310000,
+            ),
         )
     }
 

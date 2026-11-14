@@ -148,6 +148,46 @@ object PgpEncryptor {
         armored_signing_key: String,
         passphrase: CharArray,
     ): String? {
+        val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
+        return try {
+            sign_and_encrypt(
+                plaintext_bytes,
+                PGPLiteralData.UTF8,
+                Date(),
+                armored_public_keys,
+                armored_signing_key,
+                passphrase,
+                armor = true,
+            )?.toString(Charsets.UTF_8)
+        } finally {
+            plaintext_bytes.fill(0)
+        }
+    }
+
+    fun encrypt_and_sign_bytes_binary(
+        plaintext: ByteArray,
+        armored_public_keys: List<String>,
+        armored_signing_key: String,
+        passphrase: CharArray,
+    ): ByteArray? = sign_and_encrypt(
+        plaintext,
+        PGPLiteralData.BINARY,
+        Date(0),
+        armored_public_keys,
+        armored_signing_key,
+        passphrase,
+        armor = false,
+    )
+
+    private fun sign_and_encrypt(
+        plaintext_bytes: ByteArray,
+        format: Char,
+        modified: Date,
+        armored_public_keys: List<String>,
+        armored_signing_key: String,
+        passphrase: CharArray,
+        armor: Boolean,
+    ): ByteArray? {
         val recipients = armored_public_keys.mapNotNull { select_encryption_key(it) }
         if (recipients.isEmpty()) return null
 
@@ -164,21 +204,19 @@ object PgpEncryptor {
             )
             signer.init(PGPSignature.BINARY_DOCUMENT, private_key)
 
-            val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
             val literal = ByteArrayOutputStream()
             signer.generateOnePassVersion(false).encode(literal)
             val literal_generator = PGPLiteralDataGenerator()
             literal_generator.open(
                 literal,
-                PGPLiteralData.UTF8,
+                format,
                 PGPLiteralData.CONSOLE,
                 plaintext_bytes.size.toLong(),
-                Date(),
+                modified,
             ).use { it.write(plaintext_bytes) }
             literal_generator.close()
             signer.update(plaintext_bytes)
             signer.generate().encode(literal)
-            plaintext_bytes.fill(0)
 
             val encryptor_builder = JcePGPDataEncryptorBuilder(SymmetricKeyAlgorithmTags.AES_256)
                 .setWithIntegrityPacket(true)
@@ -193,15 +231,19 @@ object PgpEncryptor {
             }
 
             val payload = literal.toByteArray()
-            val armored_output = ByteArrayOutputStream()
+            val output = ByteArrayOutputStream()
             try {
-                ArmoredOutputStream(armored_output).use { armored ->
-                    encrypted_generator.open(armored, payload.size.toLong()).use { it.write(payload) }
+                if (armor) {
+                    ArmoredOutputStream(output).use { armored ->
+                        encrypted_generator.open(armored, payload.size.toLong()).use { it.write(payload) }
+                    }
+                } else {
+                    encrypted_generator.open(output, payload.size.toLong()).use { it.write(payload) }
                 }
             } finally {
                 payload.fill(0)
             }
-            armored_output.toString(Charsets.UTF_8.name())
+            output.toByteArray()
         } catch (_: Throwable) {
             null
         }

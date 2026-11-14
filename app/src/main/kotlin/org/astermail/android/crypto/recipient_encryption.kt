@@ -35,6 +35,7 @@ object RecipientEncryptionRules {
     const val DISCOVERY_BATCH_SIZE = 20
     const val LOOKUP_ATTEMPTS = 3
     const val LOOKUP_RETRY_STEP_MS = 2000L
+    private val OPPORTUNISTIC_KEY_SOURCES = setOf("aster", "autocrypt", "dane", "manual", "wkd")
 
     fun normalize(address: String): String = address.trim().lowercase()
 
@@ -56,18 +57,36 @@ object RecipientEncryptionRules {
         pgp_recipients: List<String>,
     ): Boolean = !(force_pgp == false && !require_encryption && pgp_recipients.none { it.isNotBlank() })
 
+    fun is_recipient_controlled_key(info: ExternalKeyInfo?, now_ms: Long): Boolean {
+        if (!has_key(info)) return false
+        if (!info!!.expires_at.isNullOrBlank() && !is_unexpired(info.expires_at, now_ms)) return false
+        return info.source?.trim()?.lowercase() in OPPORTUNISTIC_KEY_SOURCES
+    }
+
+    fun trusts_key_for_opportunistic(info: ExternalKeyInfo?, encrypt_by_default: Boolean, now_ms: Long): Boolean =
+        encrypt_by_default && is_recipient_controlled_key(info, now_ms)
+
+    fun will_encrypt_opportunistically(info: ExternalKeyInfo?, encrypt_by_default: Boolean, now_ms: Long): Boolean =
+        info?.will_encrypt == true || trusts_key_for_opportunistic(info, encrypt_by_default, now_ms)
+
     fun decide(
         info: ExternalKeyInfo?,
         force_pgp: Boolean?,
         require_encryption: Boolean,
         listed: Boolean,
+        encrypt_by_default: Boolean = false,
+        now_ms: Long = System.currentTimeMillis(),
     ): RecipientEncryption {
         val found = has_key(info)
         if (is_explicit(force_pgp, require_encryption, listed)) {
             return if (found) RecipientEncryption.ENCRYPT else RecipientEncryption.SERVER
         }
         if (force_pgp == false || !found) return RecipientEncryption.PLAIN
-        return if (info!!.will_encrypt) RecipientEncryption.ENCRYPT else RecipientEncryption.PLAIN
+        return if (will_encrypt_opportunistically(info, encrypt_by_default, now_ms)) {
+            RecipientEncryption.ENCRYPT
+        } else {
+            RecipientEncryption.PLAIN
+        }
     }
 
     fun recipients_failing_required_encryption(
@@ -97,18 +116,31 @@ object RecipientEncryptionRules {
     fun skipped_copies_throw(listed: Boolean, require_encryption: Boolean): Boolean =
         listed || require_encryption
 
-    fun is_expired(expires_at: String?, now_ms: Long): Boolean {
+    private fun expiry_millis(expires_at: String?): Long? {
         val raw = expires_at?.trim().orEmpty()
-        if (raw.isEmpty()) return false
-        val millis = runCatching { Instant.parse(raw).toEpochMilli() }
+        if (raw.isEmpty()) return null
+        return runCatching { Instant.parse(raw).toEpochMilli() }
             .recoverCatching { OffsetDateTime.parse(raw).toInstant().toEpochMilli() }
             .recoverCatching { ZonedDateTime.parse(raw).toInstant().toEpochMilli() }
-            .getOrNull() ?: return false
+            .getOrNull()
+    }
+
+    fun is_expired(expires_at: String?, now_ms: Long): Boolean {
+        val millis = expiry_millis(expires_at) ?: return false
         return millis <= now_ms
     }
 
-    fun lock_status_for(info: ExternalKeyInfo, now_ms: Long): RecipientLockStatus {
-        if (info.will_encrypt) return RecipientLockStatus.ENCRYPTED
+    private fun is_unexpired(expires_at: String?, now_ms: Long): Boolean {
+        val millis = expiry_millis(expires_at) ?: return false
+        return millis > now_ms
+    }
+
+    fun lock_status_for(
+        info: ExternalKeyInfo,
+        now_ms: Long,
+        encrypt_by_default: Boolean = false,
+    ): RecipientLockStatus {
+        if (will_encrypt_opportunistically(info, encrypt_by_default, now_ms)) return RecipientLockStatus.ENCRYPTED
         val key_present = info.found && info.public_key != null
         if (key_present && is_expired(info.expires_at, now_ms)) return RecipientLockStatus.KEY_INVALID
         if (key_present) return RecipientLockStatus.AVAILABLE
@@ -141,6 +173,7 @@ object RecipientEncryptionRules {
         outside_recipients: List<String>,
         discovered: List<ExternalKeyInfo>,
         now_ms: Long,
+        encrypt_by_default: Boolean = false,
     ): Map<String, RecipientLockStatus> {
         val by_address = discovered.associateBy { normalize(it.email) }
         return outside_recipients
@@ -148,7 +181,8 @@ object RecipientEncryptionRules {
             .filter { it.isNotEmpty() }
             .distinct()
             .associateWith { address ->
-                by_address[address]?.let { lock_status_for(it, now_ms) } ?: RecipientLockStatus.TRANSIT
+                by_address[address]?.let { lock_status_for(it, now_ms, encrypt_by_default) }
+                    ?: RecipientLockStatus.TRANSIT
             }
     }
 
@@ -157,6 +191,7 @@ object RecipientEncryptionRules {
         now_ms: () -> Long,
         wait: suspend (Long) -> Unit,
         discover: suspend (List<String>) -> List<ExternalKeyInfo>,
+        encrypt_by_default: Boolean = false,
     ): Map<String, RecipientLockStatus> {
         val targets = outside_recipients.map { normalize(it) }.filter { it.isNotEmpty() }.distinct()
         if (targets.isEmpty()) return emptyMap()
@@ -171,7 +206,9 @@ object RecipientEncryptionRules {
                 null
             }
             failed = result == null
-            if (!result.isNullOrEmpty()) return statuses_from_discovery(targets, result, now_ms())
+            if (!result.isNullOrEmpty()) {
+                return statuses_from_discovery(targets, result, now_ms(), encrypt_by_default)
+            }
         }
         val fallback = if (failed) RecipientLockStatus.UNKNOWN else RecipientLockStatus.TRANSIT
         return targets.associateWith { fallback }

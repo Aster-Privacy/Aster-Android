@@ -1,0 +1,23 @@
+{
+  "password": "correct horse battery staple 42",
+  "subject": "Web subject ✓",
+  "body": "<p>Web body</p>",
+  "attachment_filename": "web.txt",
+  "attachment_data": "ZnJvbSB3ZWI=",
+  "kdf_salt": "xfDP/Gem8kmLzJWNhMhdGw==",
+  "auth_proof": "PkCzo/7AdeZm/TB3k02+WpuV2+CEmPGufq731D/Nxsw=",
+  "bundle": {
+    "kem_ciphertext": "yCm46ANbMaSocubDDF4GBl5KpslRgUPvvA/f9dvqxsaAkS5pjXvsPdZpcDSVA5ZMOSqyEViaGa+C0a6TNNKiHP4q5phqVdtEQqI4O9FVKBk7OZ9m6lfBbq9qIwg5oB1qXHlhOxYNbVcIzdQjwSjXNsebFjOb43CEOc38fwr84ZvphIrZwoAQzFqry+ZrxcAci3uV6t9oxVIBi0R66DY1uSpxyXrOWa2Cc8K4Wsy6EUTVWdq2AtE4JAFdwk8thkNFgHRq+PW+i54vEVz1m2//urRRBbE0GRdz+96a6gUiM7BSg62H/LVfeJtuGnh0srrzH54od0zc3uF/MstbBT+/6NAz+zPVhOgChRBo41F6ckl9A14IYbCFAdcO8pcdeTPCHqJuk+Q8KtCDUFs97b07sFhlb8Ga8Z/XuNH0CQcQZadhopv8C3uHSk68oG4wcLXu2JFpRro2nkQ4x0Ue862dv9swLBt96uu4vIfIyonS9oXbMSM6fxOkgBixHoXEzcz6j+n7XMUAwOYcZG23rdF9bE982oGCvaCV09QIP7vCLy/YQxeu337MZ5lgk/1Jn7QyjOHXXz/1erZ5HfH/1TJOs9fndO7qkpI+BI4CG8p/3SC9mHfmaoW6orcasuAKmNPqFrWxlHyWnw0nzt00aOCcCZhE6a/QXAcflkIINYnsxbd6ektBQqBACWXgqI5MoT6yQwJ4bp4QH5bjWS+Ng+51GO4qssLtts7lyZKQ2AtrOhNX+Lfp9P0XMNma23MqR763etXQX4pcoKfKm+7ebqtl/RGJ944w8Xi2c6xvCPi4bSQ0e94SJLFe7KEzQDZZs74tlcJ2xDcP+29UOZOXtugZ+O0Vjb37Y1XBSAzyj+e7IpPYQY76Rbf0qD+2G9MhOeoh+VrlTUwtqEs36OUGzosnc7io9DhGQXcC4RIXXStjA2AUGXk/cvWtgf/OMONGaPYx1ExMQVLdApWKmcto5R/pHx1asv0cePE7cgdjyZuX71IuzfF9PrHmaZQm/QoBJznELyyMDF7Bh7EA9IKilTUMX0j+299R4FCdCtLgeVcUrJG+RDL2gA7GWdgaLYVF1EI9VEJIhGmEKFdC+RYEn4qelg4KZ9zd6yU0p04y8yZC7cd9p4F8QWwwnGO9ktJZPt5UdstG9hMUbV1qv7UHZT5z/efZMYcvXwQpqTrsjAlNZuqRgkWSOxm2u64iiCgU6gPre8J6Aja7YXuS7qkIN9mw/LNbbjtLeEtZXGmRHvK1ltPATlrnx6bIjmIUwa8cDeWqRn3iO8YmOmUAAZatiTQOM+TELKKY61cbBCRY31lTQ6BEH+9gI2kGgBcPq7cPK7LlepORXEQF3D1cSSjmPTE45CQMgy1KLk3wT7aHbP6xDZapKc3ZuisKZuuXnMeU7Q9a3ETPrXcVAPcEhZMnQN6l+xr45hcTxxnh2iXMOlkqLxE=",
+    "encrypted_kem_seed": "lzkVgrY7pWh65rhW3xLvgEjgTagFZEOj3iM3XbSO1Nq1ZOweLQW94SWLZZ7BNYFIOEHeeZ9Ef4Ou29FKp46DUBHzArZTHh/eZXzObmgxy3A=",
+    "kem_seed_nonce": "ZNt0ebNCEyRdASIZ",
+    "encrypted_subject": {
+      "ciphertext": "EW/WInV7KjKcSaviTz6FfdkTzP4zXHN+PwGxuz8HyQ==",
+      "nonce": "/9j1UJO4wmwiSHKD"
+    },
+    "encrypted_body": {
+      "ciphertext": "sUoGQzu35RDjP9uTngm+hWM9YF7CutgIirRkNQD1Jw==",
+      "nonce": "z0KCH5UJD1hGH7Nw"
+    },
+    "encrypted_attachments_bundle": "eyJjaXBoZXJ0ZXh0IjoiUGpwQlBHUWcrOGwxbi9iU2VFR1hFK0lWSUVJNWlUYis2c3Z0KzY3Rk5iUnM5dVh5SUpBR0xETWFqRGw0MGcwYUZLZzJ5ZTNCcitvaEFxdDlnOFJUVmFMd2hSV1hzSE5lZHp0MU8wNnNod3N6WXdvcmhaUlpPbkhab0dCUHNONmJZSkcreHR2NjBYRWhBOWpOVnpFa2pXcHJsQmZyZk1rY3VGeEpDeGU5R3FPSEdjNE1Ra2xRaGJjM1pncTJETzA3WnpBaUxPb05oQ2NvRTFEVHhkYjNPdGJpN1VRWFRzSDZBdmh3c2ZiZmpDS2xiWGRVVnhrdkVyTkIwdFJlQWcxUUh2OW5yREhxa0liaU1VQ2hvV1pMaVNqUVdSUVJMSy9HZzduM3ZzYWVPZDZQOVBkNlRLVHhXcmsySUJFcFBISllNT1N5akk2MjFRNjZ6VURsNHZLNmUyeTdBR0VrRkVMSG9nQkJ4WU1nNkFXNm5jcGl2UEprQzRKVlJZUzJuM1Z2WTVNQ1FYQlk1VDZoU2xRb25sTGNwRGVqK2J2UDhVcmIzbGZFQnhGciIsIm5vbmNlIjoiUDV4WUpOWGVEci9VMW1sbCJ9"
+  }
+}

@@ -1001,6 +1001,7 @@
     <string name="default_payment_updated">Método de pagamento padrão atualizado</string>
     <string name="payment_method_removed">Método de pagamento removido</string>
     <string name="session_expired_sign_in">Sua sessão expirou. Entre novamente.</string>
+    <string name="vault_open_failed_notice">Não foi possível desbloquear suas chaves neste dispositivo, então alguns e-mails podem não abrir aqui. Para reparar suas chaves, faça login no Aster Mail na web e depois faça login novamente neste dispositivo.</string>
     <string name="could_not_start_checkout">Não foi possível iniciar o checkout</string>
     <string name="could_not_open_portal">Não foi possível abrir o portal de cobrança</string>
     <string name="cancel_failed">Não foi possível cancelar a assinatura</string>
@@ -3051,6 +3052,7 @@
     <string name="link_device_fingerprint_hint">Digite a impressão digital do dispositivo mostrada no app que você está vinculando. Alguns apps a chamam de código de verificação.</string>
     <string name="link_device_error_invalid_keys">O outro dispositivo enviou chaves que não podem ser usadas. Gere um novo código nesse dispositivo e tente novamente.</string>
     <string name="link_device_error_codes_not_confirmed">Isso não corresponde ao dispositivo deste código de vinculação. Compare cada caractere com o app que você está vinculando e tente novamente. Se ainda não corresponder, não vincule o dispositivo.</string>
+    <string name="link_device_error_fingerprint_mismatch">Esse código não é igual ao do seu novo dispositivo. Confira o código no seu novo dispositivo e digite-o novamente. Se ainda não for igual, toque em Cancelar.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Você pode restaurar contatos da lixeira.</string>
     <string name="empty_contacts_trash_confirm_message">Excluir permanentemente todos os contatos da lixeira? Não é possível desfazer.</string>

@@ -1003,6 +1003,7 @@
     <string name="default_payment_updated">Método de pago predeterminado actualizado</string>
     <string name="payment_method_removed">Método de pago eliminado</string>
     <string name="session_expired_sign_in">Tu sesión ha caducado. Inicia sesión de nuevo.</string>
+    <string name="vault_open_failed_notice">No se pudieron desbloquear tus claves en este dispositivo, por lo que es posible que algunos correos no se abran aquí. Para reparar tus claves, inicia sesión en Aster Mail en la web y, después, vuelve a iniciar sesión en este dispositivo.</string>
     <string name="could_not_start_checkout">No se pudo iniciar el proceso de pago</string>
     <string name="could_not_open_portal">No se pudo abrir el portal de facturación</string>
     <string name="cancel_failed">No se pudo cancelar la suscripción</string>
@@ -3053,6 +3054,7 @@
     <string name="link_device_fingerprint_hint">Ingresa la huella digital del dispositivo que muestra la app que estás vinculando. Algunas apps la llaman código de verificación.</string>
     <string name="link_device_error_invalid_keys">El otro dispositivo envió claves que no se pueden usar. Obtén un código nuevo en ese dispositivo y vuelve a intentarlo.</string>
     <string name="link_device_error_codes_not_confirmed">Esto no coincide con el dispositivo de este código de vinculación. Compara cada carácter con la app que estás vinculando y vuelve a intentarlo. Si sigue sin coincidir, no vincules el dispositivo.</string>
+    <string name="link_device_error_fingerprint_mismatch">Ese código no coincide con tu nuevo dispositivo. Revisa el código en tu nuevo dispositivo e introdúcelo de nuevo. Si sigue sin coincidir, toca Cancelar.</string>
     <string name="restore">Restaurar</string>
     <string name="contact_trash_confirm_message">Puedes restaurar contactos desde la papelera.</string>
     <string name="empty_contacts_trash_confirm_message">¿Eliminar de forma permanente todos los contactos de la papelera? Esta acción no se puede deshacer.</string>

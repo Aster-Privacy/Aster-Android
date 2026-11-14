@@ -95,6 +95,7 @@ object RatchetStateMerge {
                 skipped_message_keys = if (keep_local_skipped) local_skipped else skipped,
                 updated_at = updated_at,
                 remote_identity_key = local.remote_identity_key ?: remote.remote_identity_key,
+                header_bound = local.header_bound || remote.header_bound,
             )
         }
 
@@ -120,6 +121,7 @@ object RatchetStateMerge {
             remote_identity_key = local.remote_identity_key ?: remote.remote_identity_key,
             skipped_message_keys = merged_skipped,
             updated_at = updated_at,
+            header_bound = local.header_bound || remote.header_bound,
         )
     }
 }

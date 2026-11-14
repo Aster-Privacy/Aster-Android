@@ -58,6 +58,7 @@ class RatchetBootstrapService @Inject constructor(
     private val encryption_api: EncryptionApi,
     @ApplicationContext private val context: Context,
     private val vault_updates: VaultUpdates,
+    private val state_store: RatchetStateStore,
 ) {
 
     private val in_flight = AtomicBoolean(false)
@@ -67,6 +68,31 @@ class RatchetBootstrapService @Inject constructor(
             store = SharedPrefsEnvelopeCapabilityStore(context),
             ratchet_api = ratchet_api,
         )
+    }
+
+    private val ec_one_time_prekey_store by lazy {
+        EcOneTimePrekeyStore(
+            storage = SessionEcOneTimeSecretStorage(session_key_store),
+            ratchet_api = ratchet_api,
+            sync_key_candidates = { state_store.state_encryption_key_candidates() },
+        )
+    }
+
+    private val ec_one_time_prekey_service by lazy {
+        EcOneTimePrekeyService(
+            store = ec_one_time_prekey_store,
+            ratchet_api = ratchet_api,
+            sync_key = { state_store.derive_state_encryption_key() },
+        )
+    }
+
+    private suspend fun replenish_ec_one_time_prekeys() {
+        try {
+            ec_one_time_prekey_service.replenish()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+        }
     }
 
     private data class LocalRatchetKeys(
@@ -179,6 +205,7 @@ class RatchetBootstrapService @Inject constructor(
 
             confirmed_user_ids.add(user_id)
             report_capability(user_id, keys.identity_public_b64, pq_public, force = needs_upload)
+            replenish_ec_one_time_prekeys()
             return if (needs_upload) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
         } finally {
             in_flight.set(false)
@@ -236,6 +263,7 @@ class RatchetBootstrapService @Inject constructor(
                 pq_public,
                 !session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank(),
                 force,
+                ec_one_time_prekey_store.storage_available(),
             )
         } catch (cancelled: CancellationException) {
             throw cancelled

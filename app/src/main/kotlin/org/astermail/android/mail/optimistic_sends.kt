@@ -129,6 +129,7 @@ fun build_optimistic_send_message(
         bcc_addresses = bcc.filter { it.isNotBlank() },
         has_attachments = has_attachments,
         subject = subject,
+        own_sealed = true,
     )
 }
 

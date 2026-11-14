@@ -215,7 +215,8 @@ class LinkDeviceViewModel @Inject constructor(
         ) {
             throw DeviceEnvelope.InvalidDeviceKeyException("bad device key size")
         }
-        if (DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk) != confirmed_fingerprint) {
+        val sealed_to = DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk)
+        if (!DeviceKeyFingerprint.matches(confirmed_fingerprint, sealed_to)) {
             throw DeviceEnvelope.InvalidDeviceKeyException("device keys do not match the typed fingerprint")
         }
 
@@ -224,8 +225,8 @@ class LinkDeviceViewModel @Inject constructor(
             return DeviceEnvelope.base64url_encode(
                 DeviceEnvelope.seal_secret_for_device(
                     secret = passphrase,
-                    device_mlkem_pk = mlkem_pk,
-                    device_x25519_pk = x25519_pk,
+                    recipient = DeviceEnvelope.DeviceRecipient(ed25519_pk, mlkem_pk, x25519_pk),
+                    version = DeviceEnvelope.choose_envelope_version(device.envelope_versions),
                 ),
             )
         } finally {

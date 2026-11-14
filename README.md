@@ -4,17 +4,17 @@
 
 This repository contains the native Android app for Aster Mail, published on Google Play.
 
-Aster Mail is a free, open-source, end-to-end encrypted mail service. Every message subject line and attachment is encrypted locally on your device. This means we have no way to read your email and we never will.
+Aster Mail is a free, end-to-end encrypted mail service with open-source apps. Every message, subject line, and attachment between Aster users is encrypted locally on your device, and mail to an outside address is encrypted on your device whenever the recipient publishes an OpenPGP key. This means we have no way to read that email and we never will.
 
 You can sign up at [astermail.org](https://astermail.org). A phone number and recovery email are not required.
 
 ## How it works
 
-All Aster-to-Aster messages are end-to-end encrypted using the standard OpenPGP (Ed25519 and Curve25519). Subject lines are also encrypted. This means that we cannot read your subject lines, unlike other providers. Aster-to-Aster messages also use ML-KEM-768 inside an X3DH and Double Ratchet protocol, which protects against store-now-decrypt-later attacks.
+All Aster-to-Aster messages are end-to-end encrypted with post-quantum encryption (ML-KEM-768 and P-256 ECDH) inside an X3DH and Double Ratchet protocol, which protects against store-now-decrypt-later attacks. The subject lines of these messages are encrypted too, so we can't read them. Mail you send outside Aster uses standard OpenPGP (Ed25519 and Curve25519) when the recipient publishes a key. Post-quantum protection applies only between Aster accounts.
 
-Your keys are yours, and they are fully portable. You can export them and use them with GPG or any OpenPGP client. Public keys are published through WKD and key servers automatically, so encrypting to other Aster users happens without any setup.
+Your keys are yours, and they are fully portable. You can export them and use them with GPG or any OpenPGP client. Encryption between Aster users needs no setup. To let people outside Aster find your public key, turn on **Publish to WKD** or **Publish to keyservers** in the encryption settings. Both are off by default.
 
-Aster runs on a zero-access architecture located in Germany. This means we store nothing we could hand over, even if we were compelled.
+Aster runs on a zero-access architecture located in Germany. Mail that arrives from outside Aster without OpenPGP encryption reaches our servers readable, and we encrypt it with your public key as soon as it arrives. Routing data such as sender and recipient addresses and timestamps stays visible to our servers, because mail can't be delivered without it.
 
 ## Getting started
 

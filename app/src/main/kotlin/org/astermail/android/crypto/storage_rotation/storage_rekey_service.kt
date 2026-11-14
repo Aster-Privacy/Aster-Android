@@ -195,7 +195,12 @@ class SessionVaultCodec(
         val pass = passphrase()
         val plain = vault.toString().toByteArray(Charsets.UTF_8)
         return try {
-            val envelope = CryptoNative.encrypt_vault_with_password(plain, pass, iterations)
+            val envelope = CryptoNative.encrypt_vault_with_password(
+                plain,
+                pass,
+                iterations,
+                org.astermail.android.api.keys.BoundWriteSwitches.vault(),
+            )
             SealedVault(encode_b64(envelope.encrypted_vault), encode_b64(envelope.vault_nonce), iterations)
         } finally {
             plain.fill(0)
@@ -442,9 +447,28 @@ class StorageRekeyService @Inject constructor(
             return@withContext reseal
         }
         if (!view.data_kek_random || !local_key_matches(view)) return@withContext reseal
+        val legacy_keys = StorageWriteKey.legacy_read_keys(session_key_store)
+        val legacy = try {
+            run_legacy_key_sweep(
+                view = view,
+                api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),
+                store = PrefsProgressStore(prefs, LEGACY_KEY_SWEEP_STEP + "_" + user_id),
+                legacy_keys = legacy_keys,
+                retire = { session_key_store.retire_legacy_storage_keys() },
+                still_current = { vault_rotator.server_storage_key_matches(expected) },
+                is_cancelled = is_cancelled,
+                gate = { check_rekey_gate(api) },
+            )
+        } finally {
+            legacy_keys.forEach { it.fill(0) }
+        }
+        val after_legacy = when (legacy.status) {
+            ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> legacy
+            else -> reseal
+        }
         val admitted = request_level2_admission(api)
         session_key_store.set_level2_admitted(admitted)
-        if (!admitted) return@withContext reseal
+        if (!admitted) return@withContext after_legacy
         run_vault_work_factor_step(
             admitted = admitted,
             password_ready = { is_unlocked() },
@@ -462,7 +486,7 @@ class StorageRekeyService @Inject constructor(
         )
         when (sweep.status) {
             ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> sweep
-            else -> reseal
+            else -> after_legacy
         }
     }
 

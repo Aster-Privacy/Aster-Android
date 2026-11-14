@@ -115,7 +115,49 @@ class X3dhSenderRoundTripTest {
         assertEquals(X3dh.VERSION_LEGACY, X3dh.negotiated_sender_version(0))
         assertEquals(X3dh.VERSION_LEGACY, X3dh.negotiated_sender_version(1))
         assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(2))
-        assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(3))
+        assertEquals(X3dh.VERSION_KEY_BOUND, X3dh.negotiated_sender_version(3))
+        assertEquals(X3dh.VERSION_KEY_BOUND, X3dh.negotiated_sender_version(99))
+    }
+
+    @Test
+    fun negotiation_never_drops_below_a_remembered_transcript_binding() {
+        assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(null, 2))
+        assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(1, 2))
+        assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(1, 3))
+        assertEquals(X3dh.VERSION_TRANSCRIPT_BOUND, X3dh.negotiated_sender_version(2, 3))
+        assertEquals(X3dh.VERSION_KEY_BOUND, X3dh.negotiated_sender_version(3, 2))
+        assertEquals(X3dh.VERSION_LEGACY, X3dh.negotiated_sender_version(1, 0))
+        assertEquals(X3dh.VERSION_LEGACY, X3dh.negotiated_sender_version(1, 1))
+    }
+
+    @Test
+    fun the_receive_floor_stops_at_transcript_binding() {
+        assertEquals(0, X3dh.receive_floor(0))
+        assertEquals(1, X3dh.receive_floor(1))
+        assertEquals(2, X3dh.receive_floor(2))
+        assertEquals(2, X3dh.receive_floor(3))
+    }
+
+    @Test
+    fun key_bound_round_trips_in_every_lane() {
+        val classical = send(X3dh.VERSION_KEY_BOUND)
+        assertEquals(X3dh.VERSION_KEY_BOUND, classical.x3dh_version)
+        assertArrayEquals(classical.shared_secret, receive(classical, X3dh.VERSION_KEY_BOUND))
+        assertFalse(classical.shared_secret.contentEquals(receive(classical, X3dh.VERSION_TRANSCRIPT_BOUND)))
+
+        val onetime = send(X3dh.VERSION_KEY_BOUND, pq_prekey = 7 to kem.public_key)
+        assertArrayEquals(onetime.shared_secret, receive(onetime, X3dh.VERSION_KEY_BOUND))
+        assertFalse(onetime.shared_secret.contentEquals(receive(onetime, X3dh.VERSION_TRANSCRIPT_BOUND)))
+
+        val identity = send(X3dh.VERSION_KEY_BOUND, pq_identity = kem.public_key, signature_covers_pq_identity = true)
+        assertArrayEquals(identity.shared_secret, receive(identity, X3dh.VERSION_KEY_BOUND))
+    }
+
+    @Test
+    fun an_unknown_sender_version_falls_back_to_legacy() {
+        val sent = send(7)
+        assertEquals(X3dh.VERSION_LEGACY, sent.x3dh_version)
+        assertArrayEquals(sent.shared_secret, receive(sent, null))
     }
 
     @Test

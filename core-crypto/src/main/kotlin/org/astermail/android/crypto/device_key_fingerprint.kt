@@ -73,4 +73,13 @@ object DeviceKeyFingerprint {
         if (hex.length != FINGERPRINT_HEX_CHARS) return null
         return hex.chunked(GROUP_CHARS).joinToString(" ")
     }
+
+    fun matches(typed: String, fingerprint: String): Boolean {
+        val expected = normalize(fingerprint) ?: return false
+        val actual = normalize(typed) ?: return false
+        return MessageDigest.isEqual(
+            actual.toByteArray(Charsets.US_ASCII),
+            expected.toByteArray(Charsets.US_ASCII),
+        )
+    }
 }

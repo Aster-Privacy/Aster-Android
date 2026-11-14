@@ -103,6 +103,7 @@ class LinkDeviceScreenInstrumentedTest {
         x25519_pk = DeviceEnvelope.base64url_encode(x25519_pk),
         machine_name = "adam-desktop",
         device_type = device_type,
+        envelope_versions = DeviceEnvelope.ENVELOPE_VERSIONS,
     )
 
     private fun session_store(with_passphrase: Boolean = true): SessionKeyStore {
@@ -148,9 +149,16 @@ class LinkDeviceScreenInstrumentedTest {
         compose.onNode(hasSetTextAction()).performTextInput(require_value(fingerprint))
     }
 
-    private fun open_envelope(envelope_b64: String): ByteArray =
+    private fun recipient_of(device: PendingDevice) = DeviceEnvelope.DeviceRecipient(
+        DeviceEnvelope.base64url_decode(device.ed25519_pk),
+        DeviceEnvelope.base64url_decode(device.mlkem_pk),
+        DeviceEnvelope.base64url_decode(device.x25519_pk),
+    )
+
+    private fun open_envelope(device: PendingDevice, envelope_b64: String): ByteArray =
         DeviceEnvelope.open_secret_for_device(
             DeviceEnvelope.base64url_decode(envelope_b64),
+            recipient_of(device),
             mlkem.secret_key,
             x25519_sk,
         )
@@ -171,7 +179,7 @@ class LinkDeviceScreenInstrumentedTest {
 
         assertEquals("QEME-77ET", api.verified_code)
         val envelope = require_value(api.confirmed_envelope)
-        assertArrayEquals(passphrase, open_envelope(envelope))
+        assertArrayEquals(passphrase, open_envelope(api.device, envelope))
     }
 
     @Test
@@ -209,6 +217,7 @@ class LinkDeviceScreenInstrumentedTest {
         assertThrows(Exception::class.java) {
             DeviceEnvelope.open_secret_for_device(
                 envelope,
+                recipient_of(api.device),
                 other_mlkem.secret_key,
                 other_x25519_sk,
             )

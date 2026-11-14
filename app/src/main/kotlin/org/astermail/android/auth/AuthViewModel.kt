@@ -272,6 +272,7 @@ class AuthViewModel @Inject constructor(
         if (is_pending_login_expired(cause) && !repository.is_signed_in.value) {
             challenge.password_bytes.fill(0)
             challenge.password_hash_bytes.fill(0)
+            challenge.login_v3_enroll_input?.fill(0)
             return AuthUiState.Error(map_error(cause), restart_login = true)
         }
         return failure_state(cause)
@@ -428,6 +429,7 @@ class AuthViewModel @Inject constructor(
         if (_ui_state.value == AuthUiState.Loading) return false
         challenge.password_bytes.fill(0)
         challenge.password_hash_bytes.fill(0)
+        challenge.login_v3_enroll_input?.fill(0)
         _ui_state.value = AuthUiState.Idle
         return true
     }

@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">Metodo di pagamento predefinito aggiornato</string>
     <string name="payment_method_removed">Metodo di pagamento rimosso</string>
     <string name="session_expired_sign_in">La tua sessione è scaduta. Accedi di nuovo.</string>
+    <string name="vault_open_failed_notice">Non è stato possibile sbloccare le tue chiavi su questo dispositivo, quindi alcune email potrebbero non aprirsi qui. Per riparare le chiavi, accedi ad Aster Mail sul web e poi accedi di nuovo su questo dispositivo.</string>
     <string name="could_not_start_checkout">Impossibile avviare il pagamento</string>
     <string name="could_not_open_portal">Impossibile aprire il portale di fatturazione</string>
     <string name="cancel_failed">Impossibile annullare l\'abbonamento</string>
@@ -3052,6 +3053,7 @@
     <string name="link_device_fingerprint_hint">Inserisci l\'impronta digitale del dispositivo mostrata nell\'app che stai collegando. Alcune app la chiamano codice di verifica.</string>
     <string name="link_device_error_invalid_keys">L\'altro dispositivo ha inviato chiavi non utilizzabili. Ottieni un nuovo codice su quel dispositivo, poi riprova.</string>
     <string name="link_device_error_codes_not_confirmed">Non corrisponde al dispositivo di questo codice di collegamento. Confronta ogni carattere con l\'app che stai collegando, poi riprova. Se continua a non corrispondere, non collegare il dispositivo.</string>
+    <string name="link_device_error_fingerprint_mismatch">Questo codice non corrisponde al nuovo dispositivo. Controlla il codice sul nuovo dispositivo e inseriscilo di nuovo. Se ancora non corrisponde, tocca Annulla.</string>
     <string name="restore">Ripristina</string>
     <string name="contact_trash_confirm_message">Puoi ripristinare i contatti dal cestino.</string>
     <string name="empty_contacts_trash_confirm_message">Eliminare definitivamente tutti i contatti nel cestino? L’operazione è irreversibile.</string>

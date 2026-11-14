@@ -58,6 +58,12 @@ object InboundAttachmentKeyStore {
         ): Boolean = size > MAX_ENTRIES
     }
 
+    private val unencrypted_ids = object : LinkedHashMap<String, Unit>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, Unit>?,
+        ): Boolean = size > MAX_ENTRIES
+    }
+
     private val lock = Any()
 
     fun register(mail_item_id: String?, seq_num: Int?, key: String?) {
@@ -72,11 +78,18 @@ object InboundAttachmentKeyStore {
         content_type: String?,
         content_id: String?,
         size: Long?,
+        unencrypted: Boolean = false,
     ) {
         if (mail_item_id.isNullOrBlank() || seq_num == null || key.isNullOrBlank()) return
         val id = entry_key(mail_item_id, seq_num)
         synchronized(lock) {
             if (sealed_items.containsKey(mail_item_id)) return
+            if (unencrypted) {
+                if (keys.get(id) != null && !unencrypted_ids.containsKey(id)) return
+                unencrypted_ids[id] = Unit
+            } else {
+                unencrypted_ids.remove(id)
+            }
             keys.put(id, key.toByteArray(Charsets.UTF_8))
             unreadable.remove(id)
             if (filename == null && content_type == null && content_id == null && size == null) {
@@ -93,7 +106,11 @@ object InboundAttachmentKeyStore {
         }
     }
 
-    fun register_from_envelope_json(mail_item_id: String?, envelope_json: String?) {
+    fun register_from_envelope_json(
+        mail_item_id: String?,
+        envelope_json: String?,
+        unencrypted: Boolean = false,
+    ) {
         if (mail_item_id.isNullOrBlank() || envelope_json.isNullOrBlank()) return
         runCatching {
             val root = org.json.JSONObject(envelope_json)
@@ -113,6 +130,7 @@ object InboundAttachmentKeyStore {
                     } else {
                         null
                     },
+                    unencrypted = unencrypted,
                 )
             }
         }
@@ -184,6 +202,7 @@ object InboundAttachmentKeyStore {
     fun clear() {
         synchronized(lock) {
             keys.clear()
+            unencrypted_ids.clear()
             sealed_items.clear()
             metas.clear()
             unreadable.clear()

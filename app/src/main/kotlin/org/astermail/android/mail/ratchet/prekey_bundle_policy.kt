@@ -22,7 +22,7 @@
 package org.astermail.android.mail.ratchet
 
 object PrekeyBundlePolicy {
-    const val require_verified_prekey_bundle: Boolean = false
+    const val require_verified_prekey_bundle: Boolean = true
 }
 
 class UnverifiedPrekeyBundleException(
@@ -42,9 +42,11 @@ fun prekey_bundle_needs_pgp_fallback(
     served_owner: String?,
 ): Boolean {
     if (!require_verified) return false
-    if (result != PrekeyBindingResult.UNSIGNED_LEGACY && result != PrekeyBindingResult.UNVERIFIABLE) return false
-    if (pinned_owner.isNullOrBlank()) return true
-    return !served_owner.isNullOrBlank() && served_owner.equals(pinned_owner, ignoreCase = true)
+    return when (result) {
+        PrekeyBindingResult.UNSIGNED_LEGACY -> owner_key_trusted(pinned_owner, served_owner)
+        PrekeyBindingResult.UNVERIFIABLE -> pinned_owner.isNullOrBlank()
+        else -> false
+    }
 }
 
 fun owner_key_trusted(pinned_owner: String?, served_owner: String?): Boolean {
@@ -60,7 +62,8 @@ suspend fun seal_internal_body(
 ): String? {
     return try {
         seal_ratchet()
-    } catch (_: UnverifiedPrekeyBundleException) {
+    } catch (e: RatchetEncryptionException) {
+        if (e !is UnverifiedPrekeyBundleException && e !is RecoveryLaneDowngradeException) throw e
         if (!allow_non_post_quantum) throw PostQuantumUnavailableException(recipients)
         seal_pgp()
     }

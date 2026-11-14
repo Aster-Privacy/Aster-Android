@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">Standaard betaalmethode bijgewerkt</string>
     <string name="payment_method_removed">Betaalmethode verwijderd</string>
     <string name="session_expired_sign_in">Je sessie is verlopen. Log opnieuw in.</string>
+    <string name="vault_open_failed_notice">Je sleutels konden op dit apparaat niet worden ontgrendeld, dus sommige e-mails kunnen hier mogelijk niet worden geopend. Als je je sleutels wilt herstellen, log je in bij Aster Mail op het web en log je daarna opnieuw in op dit apparaat.</string>
     <string name="could_not_start_checkout">Afrekenen kon niet worden gestart</string>
     <string name="could_not_open_portal">Factureringsportaal kon niet worden geopend</string>
     <string name="cancel_failed">Abonnement kon niet worden opgezegd</string>
@@ -3034,6 +3035,7 @@
     <string name="link_device_fingerprint_hint">Voer de apparaatvingerafdruk in die in de app staat die je koppelt. Sommige apps noemen dit een verificatiecode.</string>
     <string name="link_device_error_invalid_keys">Het andere apparaat heeft sleutels gestuurd die niet bruikbaar zijn. Vraag een nieuwe code aan op dat apparaat en probeer het opnieuw.</string>
     <string name="link_device_error_codes_not_confirmed">Dit komt niet overeen met het apparaat voor deze koppelcode. Vergelijk elk teken met de app die je koppelt en probeer het opnieuw. Als het nog steeds niet overeenkomt, koppel het apparaat dan niet.</string>
+    <string name="link_device_error_fingerprint_mismatch">Deze code komt niet overeen met je nieuwe apparaat. Controleer de code op je nieuwe apparaat en voer deze opnieuw in. Tik op Annuleren als de code nog steeds niet overeenkomt.</string>
     <string name="restore">Herstellen</string>
     <string name="contact_trash_confirm_message">Je kunt contacten herstellen uit de prullenbak.</string>
     <string name="empty_contacts_trash_confirm_message">Alle contacten in de prullenbak definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</string>

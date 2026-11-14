@@ -714,6 +714,17 @@ private fun AsterNavHost() {
         }
     }
 
+    val vault_open_failed_state by auth_gate.vault_open_failed.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(vault_open_failed_state, is_signed_in_state) {
+        if (!vault_open_failed_state || !is_signed_in_state) return@LaunchedEffect
+        auth_gate.consume_vault_open_failed()
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.vault_open_failed_notice),
+            android.widget.Toast.LENGTH_LONG,
+        ).show()
+    }
+
     val forced_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
     androidx.compose.runtime.LaunchedEffect(auth_gate) {
         auth_gate.forced_account_switch.collect {

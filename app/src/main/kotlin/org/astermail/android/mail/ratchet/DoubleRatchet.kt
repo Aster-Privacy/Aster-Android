@@ -57,13 +57,18 @@ object DoubleRatchet {
     }
 
     fun decrypt(state: RatchetState, recipient: RatchetRecipientData): String {
+        val header = recipient.header
+        val header_bound = (header.v ?: 1) >= 2
+        if (state.header_bound && !header_bound) {
+            throw IllegalStateException("unbound header on a bound session")
+        }
         try_skipped(state, recipient)?.let {
             state.updated_at = System.currentTimeMillis()
+            if (header_bound) state.header_bound = true
             return it
         }
 
         val work = clone_state(state)
-        val header = recipient.header
         if (work.dh_remote_public == null || header.dh_public != work.dh_remote_public) {
             skip_message_keys(work, header.previous_chain_length)
             dh_ratchet_step(work, header.dh_public)
@@ -82,6 +87,7 @@ object DoubleRatchet {
         work.chain_key_recv = RatchetCrypto.b64_encode(new_chain_key)
         work.recv_message_number += 1
         work.updated_at = System.currentTimeMillis()
+        if (header_bound) work.header_bound = true
         cleanup_old_skipped(work)
 
         commit_state(state, work)
@@ -264,5 +270,6 @@ object DoubleRatchet {
         target.skipped_message_keys.clear()
         target.skipped_message_keys.addAll(source.skipped_message_keys)
         target.updated_at = source.updated_at
+        target.header_bound = source.header_bound
     }
 }

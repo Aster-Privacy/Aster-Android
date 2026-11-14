@@ -55,15 +55,20 @@ class PgpStorageKeyWrapCrypto(private val passphrase_source: () -> ByteArray?) :
 
     override fun seal(data_kek: ByteArray, identity_private_key: String): ByteArray? {
         val public_key = AccountKey.public_key_armored(identity_private_key) ?: return null
-        return PgpEncryptor.encrypt_bytes_binary(data_kek, listOf(public_key))
+        return with_passphrase { chars ->
+            PgpEncryptor.encrypt_and_sign_bytes_binary(data_kek, listOf(public_key), identity_private_key, chars)
+        }
     }
 
-    override fun open(wrap: ByteArray, private_keys: List<String>): ByteArray? {
+    override fun open(wrap: ByteArray, private_keys: List<String>): ByteArray? =
+        with_passphrase { chars -> PgpDecryptor.decrypt_bytes_signed_by_own_keys(wrap, private_keys, chars) }
+
+    private fun <T> with_passphrase(block: (CharArray) -> T?): T? {
         val pass = passphrase_source() ?: return null
         val chars = passphrase_chars(pass)
         pass.fill(0)
         return try {
-            PgpDecryptor.decrypt_bytes_with_own_keys(wrap, private_keys, chars)
+            block(chars)
         } finally {
             chars.fill('\u0000')
         }
@@ -168,11 +173,38 @@ fun apply_side_copy_to_vault(vault: JSONObject, data_kek: ByteArray, now: String
     return true
 }
 
-fun needs_side_copy(wraps: List<StorageKeyWrap>, vault: JSONObject, identity_fingerprint: String): Boolean {
+fun needs_side_copy(
+    wraps: List<StorageKeyWrap>,
+    vault: JSONObject,
+    identity_fingerprint: String,
+    crypto: StorageKeyWrapCrypto,
+): Boolean {
     val key = vault_random_storage_key(vault) ?: return false
     val key_id = wrap_key_id(key)
-    key.fill(0)
-    return wraps.none { it.key_id == key_id && it.identity_fingerprint == identity_fingerprint }
+    val own_keys = vault_identity_key_materials(vault)
+    return try {
+        wraps.none { wrap ->
+            wrap.key_id == key_id && wrap.identity_fingerprint == identity_fingerprint &&
+                opens_to(wrap, own_keys, crypto, key)
+        }
+    } finally {
+        key.fill(0)
+    }
+}
+
+private fun opens_to(
+    wrap: StorageKeyWrap,
+    own_keys: List<String>,
+    crypto: StorageKeyWrapCrypto,
+    expected: ByteArray,
+): Boolean {
+    val bytes = decode_b64(wrap.wrap) ?: return false
+    val opened = runCatching { crypto.open(bytes, own_keys) }.getOrNull() ?: return false
+    return try {
+        MessageDigest.isEqual(opened, expected)
+    } finally {
+        opened.fill(0)
+    }
 }
 
 enum class SideCopyStore { STORED, CURRENT, SKIPPED, FAILED }
@@ -186,7 +218,7 @@ suspend fun store_side_copy(
 ): SideCopyStore {
     val identity = vault_identity_key(vault).takeIf { it.isNotBlank() } ?: return SideCopyStore.SKIPPED
     val fingerprint = runCatching { vault_identity_fingerprint(vault) }.getOrNull() ?: return SideCopyStore.SKIPPED
-    if (!force && !needs_side_copy(wraps, vault, fingerprint)) return SideCopyStore.CURRENT
+    if (!force && !needs_side_copy(wraps, vault, fingerprint, crypto)) return SideCopyStore.CURRENT
     val key = vault_random_storage_key(vault) ?: return SideCopyStore.SKIPPED
     val key_id = wrap_key_id(key)
     val sealed = try {

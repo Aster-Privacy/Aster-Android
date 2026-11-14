@@ -33,6 +33,8 @@ object InboundEnvelopeDecryptor {
     const val ECDH_MARKER: Byte = 0x02
     const val ECDH_COMPRESSED_MARKER: Byte = 0x03
     const val PQ_HYBRID_MARKER: Byte = 0x04
+    const val ECDH_BOUND_MARKER: Byte = 0x05
+    const val PQ_HYBRID_BOUND_MARKER: Byte = 0x06
 
     private const val EPH_KEY_LEN = 65
     private const val ML_KEM_CT_LEN = 1088
@@ -40,11 +42,29 @@ object InboundEnvelopeDecryptor {
 
     private val ECDH_INFO = "aster-inbound-v1".toByteArray(Charsets.UTF_8)
     private val PQ_HYBRID_INFO = "aster-inbound-pq-v1".toByteArray(Charsets.UTF_8)
+    private val ECDH_BOUND_INFO = "aster-inbound-v2".toByteArray(Charsets.UTF_8)
+    private val PQ_HYBRID_BOUND_INFO = "aster-inbound-pq-v2".toByteArray(Charsets.UTF_8)
+    private val BOUND_AAD_LABEL = "aster-inbound-v2".toByteArray(Charsets.UTF_8)
+    private const val OWNER_LEN = 16
+
+    private fun is_pq(marker: Byte) = marker == PQ_HYBRID_MARKER || marker == PQ_HYBRID_BOUND_MARKER
+
+    private fun is_bound(marker: Byte) = marker == ECDH_BOUND_MARKER || marker == PQ_HYBRID_BOUND_MARKER
+
+    fun owner_bytes(user_id: String?): ByteArray? {
+        val hex = user_id?.trim()?.replace("-", "") ?: return null
+        if (hex.length != OWNER_LEN * 2 || hex.any { it !in '0'..'9' && it !in 'a'..'f' && it !in 'A'..'F' }) return null
+        return ByteArray(OWNER_LEN) { index -> hex.substring(index * 2, index * 2 + 2).toInt(16).toByte() }
+    }
+
+    private fun bound_aad(enc: ByteArray, header_len: Int, owner: ByteArray): ByteArray =
+        BOUND_AAD_LABEL + enc[0] + owner + enc.copyOfRange(1, header_len)
 
     fun decrypt(
         encrypted_b64: String,
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>,
+        owner_user_id: String? = null,
     ): ByteArray? {
         if (nonce.size != 12) return null
 
@@ -52,43 +72,45 @@ object InboundEnvelopeDecryptor {
             android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
         }.getOrNull() ?: return null
 
-        return decrypt_bytes(enc, nonce, key_sets)
+        return decrypt_bytes(enc, nonce, key_sets, owner_user_id)
     }
 
     fun decrypt_bytes(
         enc: ByteArray,
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>,
+        owner_user_id: String? = null,
     ): ByteArray? {
         if (nonce.size != 12 || enc.isEmpty()) return null
 
         val marker = enc[0]
         val header_len = header_length(marker) ?: return null
         if (enc.size <= header_len) return null
+        val aad = if (is_bound(marker)) {
+            bound_aad(enc, header_len, owner_bytes(owner_user_id) ?: return null)
+        } else {
+            null
+        }
 
         for (key_set in key_sets) {
-            val plaintext = when (marker) {
-                PQ_HYBRID_MARKER -> key_set.pq_identity_secret_b64?.let { pq_secret ->
-                    decrypt_pq_hybrid(enc, nonce, key_set.identity_jwk, pq_secret)
+            val plaintext = if (is_pq(marker)) {
+                key_set.pq_identity_secret_b64?.let { pq_secret ->
+                    decrypt_pq_hybrid(enc, nonce, key_set.identity_jwk, pq_secret, aad)
                 }
-                else -> decrypt_ecdh(
-                    enc,
-                    nonce,
-                    key_set.identity_jwk,
-                    marker == ECDH_COMPRESSED_MARKER,
-                )
+            } else {
+                decrypt_ecdh(enc, nonce, key_set.identity_jwk, marker != ECDH_MARKER, aad)
             }
             if (plaintext != null) return plaintext
         }
 
-        if (marker != PQ_HYBRID_MARKER) return null
+        if (!is_pq(marker)) return null
 
         for ((identity_index, identity_set) in key_sets.withIndex()) {
             if (identity_set.identity_jwk.isBlank()) continue
             for ((pq_index, pq_set) in key_sets.withIndex()) {
                 if (pq_index == identity_index) continue
                 val pq_secret = pq_set.pq_identity_secret_b64 ?: continue
-                val plaintext = decrypt_pq_hybrid(enc, nonce, identity_set.identity_jwk, pq_secret)
+                val plaintext = decrypt_pq_hybrid(enc, nonce, identity_set.identity_jwk, pq_secret, aad)
                 if (plaintext != null) return plaintext
             }
         }
@@ -97,8 +119,8 @@ object InboundEnvelopeDecryptor {
     }
 
     fun header_length(marker: Byte): Int? = when (marker) {
-        ECDH_MARKER, ECDH_COMPRESSED_MARKER -> 1 + EPH_KEY_LEN
-        PQ_HYBRID_MARKER -> 1 + EPH_KEY_LEN + ML_KEM_CT_LEN
+        ECDH_MARKER, ECDH_COMPRESSED_MARKER, ECDH_BOUND_MARKER -> 1 + EPH_KEY_LEN
+        PQ_HYBRID_MARKER, PQ_HYBRID_BOUND_MARKER -> 1 + EPH_KEY_LEN + ML_KEM_CT_LEN
         else -> null
     }
 
@@ -107,6 +129,7 @@ object InboundEnvelopeDecryptor {
         nonce: ByteArray,
         identity_jwk: String,
         compressed: Boolean,
+        aad: ByteArray?,
     ): ByteArray? {
         var shared_secret: ByteArray? = null
         var aes_key: ByteArray? = null
@@ -118,11 +141,13 @@ object InboundEnvelopeDecryptor {
             val identity_private = RatchetCrypto.parse_p256_private_jwk(identity_jwk)
             shared_secret = RatchetCrypto.ecdh(identity_private, ephemeral_public)
             if (shared_secret.size < 32) return null
-            aes_key = RatchetCrypto.hkdf_sha256(shared_secret, ByteArray(0), ECDH_INFO, 32)
+            val info = if (aad == null) ECDH_INFO else ECDH_BOUND_INFO
+            aes_key = RatchetCrypto.hkdf_sha256(shared_secret, ByteArray(0), info, 32)
             plaintext = RatchetCrypto.aes_gcm_decrypt(
                 enc.copyOfRange(1 + EPH_KEY_LEN, enc.size),
                 aes_key,
                 nonce,
+                aad,
             )
             if (compressed) inflate_zlib(plaintext) else plaintext.copyOf()
         } catch (_: Throwable) {
@@ -139,6 +164,7 @@ object InboundEnvelopeDecryptor {
         nonce: ByteArray,
         identity_jwk: String,
         pq_identity_secret_b64: String,
+        aad: ByteArray?,
     ): ByteArray? {
         var ecdh_shared: ByteArray? = null
         var pq_secret: ByteArray? = null
@@ -164,12 +190,14 @@ object InboundEnvelopeDecryptor {
             ikm = ByteArray(64)
             System.arraycopy(ecdh_shared, 0, ikm, 0, 32)
             System.arraycopy(ml_kem_shared, 0, ikm, 32, 32)
-            aes_key = RatchetCrypto.hkdf_sha256(ikm, ByteArray(0), PQ_HYBRID_INFO, 32)
+            val info = if (aad == null) PQ_HYBRID_INFO else PQ_HYBRID_BOUND_INFO
+            aes_key = RatchetCrypto.hkdf_sha256(ikm, ByteArray(0), info, 32)
 
             plaintext = RatchetCrypto.aes_gcm_decrypt(
                 enc.copyOfRange(1 + EPH_KEY_LEN + ML_KEM_CT_LEN, enc.size),
                 aes_key,
                 nonce,
+                aad,
             )
             inflate_zlib(plaintext)
         } catch (_: Throwable) {

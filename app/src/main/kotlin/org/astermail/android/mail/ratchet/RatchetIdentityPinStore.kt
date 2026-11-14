@@ -420,6 +420,18 @@ class RatchetIdentityPinStore @Inject constructor(
         prefs.edit().putInt(scoped(scope, x3dh_key(conversation_id)), version).commit()
     }
 
+    fun highest_advertised_x3dh_version(conversation_id: String): Int {
+        if (conversation_id.isBlank()) return 0
+        return read_int(refresh_scope(), x3dh_advertised_key(conversation_id))
+    }
+
+    suspend fun record_advertised_x3dh_version(conversation_id: String, version: Int): Unit = mutex.withLock {
+        if (conversation_id.isBlank() || version <= 0) return@withLock
+        val scope = refresh_scope()
+        if (read_int(scope, x3dh_advertised_key(conversation_id)) >= version) return@withLock
+        prefs.edit().putInt(scoped(scope, x3dh_advertised_key(conversation_id)), version).commit()
+    }
+
     fun is_post_quantum_established(conversation_id: String): Boolean {
         if (conversation_id.isBlank()) return false
         return read_boolean(refresh_scope(), post_quantum_key(conversation_id))
@@ -672,6 +684,8 @@ class RatchetIdentityPinStore @Inject constructor(
     private fun post_quantum_key(conversation_id: String): String = "pq_$conversation_id"
 
     private fun x3dh_key(conversation_id: String): String = "x3dh_$conversation_id"
+
+    private fun x3dh_advertised_key(conversation_id: String): String = "x3dhadv_$conversation_id"
 
     private fun binding_key(recipient_email: String): String = "$binding_prefix$recipient_email"
 

@@ -269,25 +269,38 @@ data class ThreadMessage(
     val pending_send_at_ms: Long? = null,
     val sent_encryption_scope: org.astermail.android.crypto.SentEncryptionScope? = null,
     val is_trashed: Boolean = false,
+    val e2e_verified: Boolean = false,
+    val own_sealed: Boolean = false,
 )
+
+val ThreadMessage.is_own_copy: Boolean
+    get() = item_type == "sent" || item_type == "scheduled"
+
+val ThreadMessage.has_end_to_end_pgp: Boolean
+    get() = pgp_encrypted &&
+        (is_own_copy || pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID)
 
 val ThreadMessage.is_e2e_encrypted: Boolean
     get() {
-        if (sent_encryption_scope != null || pgp_encrypted) return true
-        if (has_recipient_key == true) return true
-        if (is_external) return false
-        if (item_type == "sent" || item_type == "scheduled") {
+        if (sent_encryption_scope != null || has_end_to_end_pgp) return true
+        if (item_type == "draft") return own_sealed
+        if (is_own_copy) {
             val recipients = to_addresses + cc_addresses + bcc_addresses
-            if (recipients.any { !org.astermail.android.mail.is_internal_recipient(it) }) return false
+            return own_sealed && recipients.all { org.astermail.android.mail.is_internal_recipient(it) }
         }
-        return true
+        return org.astermail.android.crypto.SentEncryptionEvidenceRules.shows_end_to_end(
+            scope = null,
+            is_external = is_external,
+            has_recipient_key = has_recipient_key == true,
+            e2e_verified = e2e_verified,
+        )
     }
 
 val ThreadMessage.reaches_outside_with_pgp: Boolean
     get() = sent_encryption_scope == org.astermail.android.crypto.SentEncryptionScope.OUTSIDE
 
 val ThreadMessage.shows_pgp_label: Boolean
-    get() = pgp_encrypted || reaches_outside_with_pgp
+    get() = has_end_to_end_pgp || reaches_outside_with_pgp
 
 enum class SenderAuthStatus { verified, failed, unknown }
 
@@ -498,6 +511,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         pending_send_at_ms = msg.pending_send_at_ms,
         sent_encryption_scope = msg.sent_encryption_scope,
         is_trashed = msg.is_trashed,
+        e2e_verified = msg.e2e_verified,
+        own_sealed = msg.own_sealed,
     )
 }
 

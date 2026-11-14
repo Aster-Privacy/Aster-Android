@@ -56,6 +56,7 @@ class EncryptionBadgeLabelTest {
         is_encrypted = true,
         is_external = is_external,
         has_recipient_key = has_recipient_key,
+        e2e_verified = true,
     )
 
     private fun render(messages: List<ThreadMessage>) {

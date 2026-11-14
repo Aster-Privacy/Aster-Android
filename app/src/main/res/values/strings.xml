@@ -1567,6 +1567,7 @@
     <string name="default_payment_updated">Default payment method updated</string>
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Your session has expired. Please sign in again.</string>
+    <string name="vault_open_failed_notice">Your keys couldn\'t be unlocked on this device, so some mail might not open here. To repair your keys, sign in to Aster Mail on the web, and then sign in on this device again.</string>
     <string name="could_not_start_checkout">Could not start checkout</string>
     <string name="could_not_open_portal">Could not open billing portal</string>
     <string name="cancel_failed">Could not cancel subscription</string>
@@ -2919,6 +2920,7 @@
     <string name="link_device_fingerprint_hint">Enter the device fingerprint shown in the app that you\'re linking. Some apps call it a verification code.</string>
     <string name="link_device_error_invalid_keys">The other device sent keys that cannot be used. Get a new code on that device, then try again.</string>
     <string name="link_device_error_codes_not_confirmed">This doesn\'t match the device for this linking code. Compare each character with the app that you\'re linking, then try again. If it still doesn\'t match, don\'t link the device.</string>
+    <string name="link_device_error_fingerprint_mismatch">That code doesn\'t match your new device. Check the code on your new device and enter it again. If it still doesn\'t match, tap Cancel.</string>
     <string name="alias_locked_title">Locked by a password change</string>
     <string name="alias_locked_body">This alias still receives mail, but its label was encrypted with your previous password, so this device can’t read it. If you remember the address, you can restore the label.</string>
     <string name="alias_restore_action">Restore this alias</string>

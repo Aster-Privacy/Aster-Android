@@ -1056,6 +1056,7 @@
     <string name="default_payment_updated">Moyen de paiement par défaut mis à jour</string>
     <string name="payment_method_removed">Moyen de paiement supprimé</string>
     <string name="session_expired_sign_in">Votre session a expiré. Veuillez vous reconnecter.</string>
+    <string name="vault_open_failed_notice">Vos clés n\'ont pas pu être déverrouillées sur cet appareil, et certains e-mails risquent de ne pas s\'ouvrir ici. Pour réparer vos clés, connectez-vous à Aster Mail sur le web, puis reconnectez-vous sur cet appareil.</string>
     <string name="could_not_start_checkout">Impossible de démarrer le paiement</string>
     <string name="could_not_open_portal">Impossible d\'ouvrir le portail de facturation</string>
     <string name="cancel_failed">Impossible d\'annuler l\'abonnement</string>
@@ -3081,6 +3082,7 @@
     <string name="link_device_fingerprint_hint">Entrez l\'empreinte de l\'appareil affichée dans l\'application que vous associez. Certaines applications l\'appellent code de vérification.</string>
     <string name="link_device_error_invalid_keys">L\'autre appareil a envoyé des clés inutilisables. Obtenez un nouveau code sur cet appareil, puis réessayez.</string>
     <string name="link_device_error_codes_not_confirmed">Cela ne correspond pas à l\'appareil de ce code d\'association. Comparez chaque caractère avec l\'application que vous associez, puis réessayez. Si cela ne correspond toujours pas, n\'associez pas l\'appareil.</string>
+    <string name="link_device_error_fingerprint_mismatch">Ce code ne correspond pas à votre nouvel appareil. Vérifiez le code sur votre nouvel appareil et saisissez-le de nouveau. S\'il ne correspond toujours pas, touchez Annuler.</string>
     <string name="restore">Restaurer</string>
     <string name="contact_trash_confirm_message">Vous pouvez restaurer des contacts depuis la corbeille.</string>
     <string name="empty_contacts_trash_confirm_message">Supprimer définitivement tous les contacts de la corbeille ? Cette action est irréversible.</string>

@@ -35,6 +35,18 @@ private const val salt_bytes = 32
 private const val auth_key_context = "astermail-folder-auth-v1"
 private const val encrypt_key_context = "astermail-folder-encrypt-v1"
 
+class folder_kdf_downgrade_exception :
+    IllegalStateException("folder password format downgrade refused")
+
+fun folder_salt_is_current(salt: ByteArray): Boolean = when (salt.size) {
+    salt_bytes -> true
+    salt_bytes_legacy -> false
+    else -> throw IllegalArgumentException("invalid folder password salt")
+}
+
+fun folder_salt_is_current(salt_base64: String): Boolean =
+    folder_salt_is_current(Base64.getMimeDecoder().decode(salt_base64))
+
 private fun hkdf_sha256(ikm: ByteArray, info: String, length: Int): ByteArray =
     hkdf_expand(ikm, ByteArray(32), info.toByteArray(Charsets.UTF_8), length)
 
@@ -97,9 +109,11 @@ fun prepare_folder_password(password: String): folder_password_material {
     return material
 }
 
-fun derive_folder_auth_hash(password: String, salt_base64: String): String {
+fun derive_folder_auth_hash(password: String, salt_base64: String, allow_legacy: Boolean): String {
     val salt = Base64.getMimeDecoder().decode(salt_base64)
-    val iterations = if (salt.size <= salt_bytes_legacy) pbkdf2_iterations_legacy else pbkdf2_iterations
+    val current = folder_salt_is_current(salt)
+    if (!current && !allow_legacy) throw folder_kdf_downgrade_exception()
+    val iterations = if (current) pbkdf2_iterations else pbkdf2_iterations_legacy
     val password_bytes = password.toByteArray(Charsets.UTF_8)
     val derived = pbkdf2_hmac_sha256(password_bytes, salt, iterations, 32)
     password_bytes.fill(0)

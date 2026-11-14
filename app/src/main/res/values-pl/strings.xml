@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">Domyślna metoda płatności zaktualizowana</string>
     <string name="payment_method_removed">Metoda płatności usunięta</string>
     <string name="session_expired_sign_in">Twoja sesja wygasła. Zaloguj się ponownie.</string>
+    <string name="vault_open_failed_notice">Nie udało się odblokować kluczy na tym urządzeniu, dlatego niektóre wiadomości mogą się tutaj nie otwierać. Aby naprawić klucze, zaloguj się do Aster Mail w przeglądarce, a potem zaloguj się ponownie na tym urządzeniu.</string>
     <string name="could_not_start_checkout">Nie udało się rozpocząć procesu płatności</string>
     <string name="could_not_open_portal">Nie udało się otworzyć portalu rozliczeń</string>
     <string name="cancel_failed">Nie udało się anulować subskrypcji</string>
@@ -3070,6 +3071,7 @@
     <string name="link_device_fingerprint_hint">Wprowadź odcisk urządzenia wyświetlony w aplikacji, którą łączysz. Niektóre aplikacje nazywają go kodem weryfikacyjnym.</string>
     <string name="link_device_error_invalid_keys">Drugie urządzenie wysłało klucze, których nie można użyć. Pobierz nowy kod na tamtym urządzeniu i spróbuj ponownie.</string>
     <string name="link_device_error_codes_not_confirmed">To nie zgadza się z urządzeniem dla tego kodu łączenia. Porównaj każdy znak z aplikacją, którą łączysz, i spróbuj ponownie. Jeśli nadal się nie zgadza, nie łącz urządzenia.</string>
+    <string name="link_device_error_fingerprint_mismatch">Ten kod nie pasuje do nowego urządzenia. Sprawdź kod na nowym urządzeniu i wpisz go ponownie. Jeśli nadal nie pasuje, kliknij Anuluj.</string>
     <string name="restore">Przywróć</string>
     <string name="contact_trash_confirm_message">Kontakty możesz przywrócić z kosza.</string>
     <string name="empty_contacts_trash_confirm_message">Trwale usunąć wszystkie kontakty z kosza? Tej operacji nie można cofnąć.</string>

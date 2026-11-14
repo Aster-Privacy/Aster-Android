@@ -176,6 +176,17 @@ class LinkDeviceFingerprintTest {
     }
 
     @Test
+    fun `fingerprint comparison rejects empty and short values`() {
+        val shown = "9B16 AF79 0A6A E2F2 55D3"
+        assertTrue(DeviceKeyFingerprint.matches(shown, shown))
+        assertTrue(DeviceKeyFingerprint.matches("9b16af790a6ae2f255d3", shown))
+        assertFalse(DeviceKeyFingerprint.matches("", shown))
+        assertFalse(DeviceKeyFingerprint.matches(shown, ""))
+        assertFalse(DeviceKeyFingerprint.matches("9B16", "9B16"))
+        assertFalse(DeviceKeyFingerprint.matches(shown, "9B16 AF79 0A6A E2F2 55D2"))
+    }
+
+    @Test
     fun `fingerprint input keeps only hex digits in groups of four`() {
         assertEquals("ABCD EF01 2345 6789 ABCD", DeviceKeyFingerprint.format_input("ab-cd ef01 2345 6789 abcd ffff"))
         assertEquals("ABCD EF01 2345 6789 ABCD", DeviceKeyFingerprint.normalize("abcd-ef01-2345-6789-abcd"))

@@ -2095,6 +2095,7 @@ class MailViewModel @Inject constructor(
                             id = item.id,
                             item_type = "draft",
                         ),
+                        own_sealed = envelope?.own_sealed == true,
                         to_addresses = addresses?.first ?: emptyList(),
                         cc_addresses = addresses?.second ?: emptyList(),
                         bcc_addresses = addresses?.third ?: emptyList(),

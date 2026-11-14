@@ -75,6 +75,94 @@ class StorageWriteKeyTest {
 
     private fun v2(): ByteArray = CryptoNative.derive_stretched_storage_key(passphrase.copyOf())
 
+    private val login_proof = ByteArray(32) { (it * 3 + 5).toByte() }
+
+    private fun signed_in_store(legacy_keks: List<String> = emptyList()): SessionKeyStore =
+        store(legacy_keks = legacy_keks).also { it.put(login_proof.copyOf()) }
+
+    private fun encoded(keys: List<ByteArray>): Set<String> = keys.map(StorageWriteKey::encode_key).toSet()
+
+    @Test
+    fun `before retirement old rows under the login proof and the unstretched key still open`() {
+        val store = signed_in_store()
+        val under_proof = seal("old contact".toByteArray(), login_proof)
+        val under_v1 = seal("old template".toByteArray(), v1())
+
+        val keys = StorageWriteKey.read_keys(store)
+
+        assertEquals("old contact", open_with_any(under_proof, keys)?.toString(Charsets.UTF_8))
+        assertEquals("old template", open_with_any(under_v1, keys)?.toString(Charsets.UTF_8))
+        assertFalse(store.legacy_storage_keys_retired())
+    }
+
+    @Test
+    fun `the legacy read keys are exactly the login proof and the unstretched key`() {
+        val legacy = encoded(StorageWriteKey.legacy_read_keys(signed_in_store()))
+
+        assertEquals(setOf(StorageWriteKey.encode_key(login_proof), StorageWriteKey.encode_key(v1())), legacy)
+    }
+
+    @Test
+    fun `read keys put every trusted key before any legacy key`() {
+        val earlier = ByteArray(32) { 9 }
+        val keys = StorageWriteKey.read_keys(signed_in_store(listOf(StorageWriteKey.encode_key(earlier))))
+            .map(StorageWriteKey::encode_key)
+
+        assertEquals(StorageWriteKey.encode_key(data_kek), keys[0])
+        assertEquals(StorageWriteKey.encode_key(earlier), keys[1])
+        assertEquals(setOf(StorageWriteKey.encode_key(login_proof), StorageWriteKey.encode_key(v1())), keys.drop(2).toSet())
+    }
+
+    @Test
+    fun `a retired account never reads with the login proof or the unstretched key`() {
+        val store = signed_in_store()
+        store.retire_legacy_storage_keys()
+
+        val reads = encoded(StorageWriteKey.read_keys(store))
+        val lookups = encoded(StorageWriteKey.lookup_keys(store))
+
+        assertTrue(store.legacy_storage_keys_retired())
+        assertTrue(StorageWriteKey.legacy_read_keys(store).isEmpty())
+        assertFalse(reads.contains(StorageWriteKey.encode_key(login_proof)))
+        assertFalse(reads.contains(StorageWriteKey.encode_key(v1())))
+        assertFalse(lookups.contains(StorageWriteKey.encode_key(v1())))
+        assertEquals(setOf(StorageWriteKey.encode_key(data_kek)), reads)
+    }
+
+    @Test
+    fun `a server forged row under the login proof is refused after retirement`() {
+        val store = signed_in_store()
+        val forged = seal("injected contact".toByteArray(), login_proof)
+        store.retire_legacy_storage_keys()
+
+        assertNull(open_with_any(forged, StorageWriteKey.read_keys(store)))
+        assertNull(open_with_any(forged, StorageWriteKey.lookup_keys(store)))
+    }
+
+    @Test
+    fun `a retired account still reads rows under its data key and earlier vault keys`() {
+        val earlier = ByteArray(32) { 9 }
+        val store = signed_in_store(listOf(StorageWriteKey.encode_key(earlier)))
+        val current = seal("current".toByteArray(), data_kek)
+        val older = seal("older".toByteArray(), earlier)
+        store.retire_legacy_storage_keys()
+
+        val keys = StorageWriteKey.read_keys(store)
+
+        assertEquals("current", open_with_any(current, keys)?.toString(Charsets.UTF_8))
+        assertEquals("older", open_with_any(older, keys)?.toString(Charsets.UTF_8))
+    }
+
+    @Test
+    fun `signing out forgets the retirement`() {
+        val store = signed_in_store()
+        store.retire_legacy_storage_keys()
+
+        store.clear()
+
+        assertFalse(store.legacy_storage_keys_retired())
+    }
+
     @Test
     fun `writer ciphertext opens with the data key and not with the password keys`() {
         val write_key = StorageWriteKey.write_key(store())

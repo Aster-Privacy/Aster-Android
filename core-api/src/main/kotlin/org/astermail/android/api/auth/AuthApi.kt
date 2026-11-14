@@ -150,6 +150,53 @@ data class GetSaltRequest(
 data class SaltResponse(
     val salt: String,
     val kdf_version: JsonElement? = null,
+    val login_v3: Boolean = false,
+    val login_v3_enroll: Boolean = false,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class LoginV3StartRequest(
+    val user_hash: String,
+    val credential_request: String = "",
+    val remember_me: Boolean? = null,
+    val captcha_token: String? = null,
+    @EncodeDefault val client_platform: String = "android",
+    val integrity_token: String? = null,
+    val integrity_nonce: String? = null,
+)
+
+@Serializable
+data class LoginV3StartResponse(
+    val state_id: String,
+    val credential_response: String,
+)
+
+@Serializable
+data class LoginV3FinishRequest(
+    val state_id: String,
+    val credential_finalization: String,
+)
+
+@Serializable
+data class EnrollPasswordV3StartRequest(
+    val registration_request: String,
+)
+
+@Serializable
+data class EnrollPasswordV3StartResponse(
+    val registration_response: String,
+)
+
+@Serializable
+data class EnrollPasswordV3FinishRequest(
+    val password_hash: String,
+    val registration_upload: String,
+)
+
+@Serializable
+data class EnrollPasswordV3FinishResponse(
+    val login_version: Int? = null,
 )
 
 @Serializable
@@ -325,6 +372,20 @@ interface AuthApi {
     suspend fun enroll_password_v2(request: EnrollPasswordV2Request): EnrollPasswordV2Response
     suspend fun rotate_login_salt(request: RotateLoginSaltRequest): RotateLoginSaltResponse
     suspend fun get_retired_login_salts(): RetiredLoginSaltsResponse = RetiredLoginSaltsResponse()
+    suspend fun login_v3_start(
+        request: LoginV3StartRequest,
+        trusted_device_token: String? = null,
+    ): LoginV3StartResponse? = null
+    suspend fun login_v3_finish(
+        request: LoginV3FinishRequest,
+        trusted_device_token: String? = null,
+    ): LoginResult = throw ApiError.NotFoundError
+    suspend fun enroll_password_v3_start(
+        request: EnrollPasswordV3StartRequest,
+    ): EnrollPasswordV3StartResponse = throw ApiError.NotFoundError
+    suspend fun enroll_password_v3_finish(
+        request: EnrollPasswordV3FinishRequest,
+    ): EnrollPasswordV3FinishResponse = throw ApiError.NotFoundError
 }
 
 class AuthApiImpl(private val client: ApiClient) : AuthApi {
@@ -341,11 +402,63 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
     override suspend fun login(request: LoginRequest, trusted_device_token: String?): LoginResult {
         val response = client.http.post("${client.base_url}$base/login") {
             contentType(ContentType.Application.Json)
-            if (!trusted_device_token.isNullOrBlank() && is_safe_cookie_value(trusted_device_token)) {
-                header(HttpHeaders.Cookie, "aster_td=$trusted_device_token")
-            }
+            trusted_device_cookie(trusted_device_token)?.let { header(HttpHeaders.Cookie, it) }
             setBody(request)
         }
+        return read_login_result(response)
+    }
+
+    override suspend fun login_v3_start(
+        request: LoginV3StartRequest,
+        trusted_device_token: String?,
+    ): LoginV3StartResponse? {
+        val response = client.http.post("${client.base_url}$base/login/v3/start") {
+            contentType(ContentType.Application.Json)
+            trusted_device_cookie(trusted_device_token)?.let { header(HttpHeaders.Cookie, it) }
+            setBody(request)
+        }
+        if (response.status.value in login_v3_unavailable_statuses) return null
+        return decode_or_throw(response)
+    }
+
+    override suspend fun login_v3_finish(
+        request: LoginV3FinishRequest,
+        trusted_device_token: String?,
+    ): LoginResult {
+        val response = client.http.post("${client.base_url}$base/login/v3/finish") {
+            contentType(ContentType.Application.Json)
+            trusted_device_cookie(trusted_device_token)?.let { header(HttpHeaders.Cookie, it) }
+            setBody(request)
+        }
+        return read_login_result(response)
+    }
+
+    override suspend fun enroll_password_v3_start(
+        request: EnrollPasswordV3StartRequest,
+    ): EnrollPasswordV3StartResponse {
+        val response = client.http.post("${client.base_url}$base/me/password-v3/start") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun enroll_password_v3_finish(
+        request: EnrollPasswordV3FinishRequest,
+    ): EnrollPasswordV3FinishResponse {
+        val response = client.http.post("${client.base_url}$base/me/password-v3/finish") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    private fun trusted_device_cookie(token: String?): String? =
+        token?.takeIf { it.isNotBlank() && is_safe_cookie_value(it) }?.let { "aster_td=$it" }
+
+    private suspend fun read_login_result(response: HttpResponse): LoginResult {
         if (!response_is_success(response.status.value)) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }
             throw client.map_http_status(response.status.value, body)
@@ -582,6 +695,8 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
     }
 
     private fun response_is_success(code: Int) = code in 200..299
+
+    private val login_v3_unavailable_statuses = setOf(404, 503)
 
     private fun is_safe_cookie_value(value: String): Boolean =
         value.all { it.code in 0x21..0x7e && it != ';' && it != ',' }

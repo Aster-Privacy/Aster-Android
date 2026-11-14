@@ -29,25 +29,51 @@ class PostQuantumDowngradeTest {
     private fun kem_key(): ByteArray = ByteArray(X3dh.ML_KEM_768_EK_LEN) { 7 }
 
     @Test
-    fun a_recipient_with_a_usable_one_time_key_is_supported() {
+    fun an_unsigned_one_time_key_is_unsupported() {
         val status = classify_post_quantum_bundle(
             pq_capable = true,
             pq_prekey_pair = 4 to kem_key(),
             pq_identity_raw = null,
+            signature_covers_pq_identity = true,
+        )
+
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, status)
+    }
+
+    @Test
+    fun an_identity_key_the_owner_did_not_sign_is_unsupported() {
+        val status = classify_post_quantum_bundle(
+            pq_capable = true,
+            pq_prekey_pair = 4 to kem_key(),
+            pq_identity_raw = kem_key(),
+            signature_covers_pq_identity = false,
+        )
+
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, status)
+    }
+
+    @Test
+    fun an_identity_key_the_owner_signed_is_supported() {
+        val status = classify_post_quantum_bundle(
+            pq_capable = null,
+            pq_prekey_pair = 4 to kem_key(),
+            pq_identity_raw = kem_key(),
+            signature_covers_pq_identity = true,
         )
 
         assertEquals(PostQuantumRecipientStatus.SUPPORTED, status)
     }
 
     @Test
-    fun a_recipient_with_only_an_identity_key_is_supported() {
+    fun a_signature_over_a_truncated_identity_key_is_a_downgrade() {
         val status = classify_post_quantum_bundle(
-            pq_capable = null,
+            pq_capable = true,
             pq_prekey_pair = null,
-            pq_identity_raw = kem_key(),
+            pq_identity_raw = ByteArray(32),
+            signature_covers_pq_identity = true,
         )
 
-        assertEquals(PostQuantumRecipientStatus.SUPPORTED, status)
+        assertEquals(PostQuantumRecipientStatus.DOWNGRADED, status)
     }
 
     @Test
@@ -56,6 +82,7 @@ class PostQuantumDowngradeTest {
             pq_capable = false,
             pq_prekey_pair = null,
             pq_identity_raw = null,
+            signature_covers_pq_identity = false,
         )
 
         assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, status)
@@ -67,6 +94,7 @@ class PostQuantumDowngradeTest {
             pq_capable = null,
             pq_prekey_pair = null,
             pq_identity_raw = null,
+            signature_covers_pq_identity = false,
         )
 
         assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, status)
@@ -78,6 +106,7 @@ class PostQuantumDowngradeTest {
             pq_capable = true,
             pq_prekey_pair = null,
             pq_identity_raw = null,
+            signature_covers_pq_identity = false,
         )
 
         assertEquals(PostQuantumRecipientStatus.DOWNGRADED, status)
@@ -89,6 +118,7 @@ class PostQuantumDowngradeTest {
             pq_capable = true,
             pq_prekey_pair = 4 to ByteArray(32),
             pq_identity_raw = ByteArray(32),
+            signature_covers_pq_identity = false,
         )
 
         assertEquals(PostQuantumRecipientStatus.DOWNGRADED, status)

@@ -149,6 +149,12 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     }
     val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
     if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
+        if (runCatching { entry.mail_repository().keys_locked() }.getOrDefault(false)) {
+            if (MailPollingWorker.show_generic(context, 1)) {
+                MailPollingWorker.note_push_notification_posted(context)
+            }
+            return PushResult.Shown
+        }
         if (
             MailPollingWorker.locked_push_needs_fetch(
                 MailPollingWorker.muted_notification_categories(context),

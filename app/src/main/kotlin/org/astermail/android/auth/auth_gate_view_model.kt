@@ -63,6 +63,12 @@ class AuthGateViewModel @Inject constructor(
         auth_repository.consume_session_expired()
     }
 
+    val vault_open_failed: StateFlow<Boolean> = auth_repository.vault_open_failed
+
+    fun consume_vault_open_failed() {
+        auth_repository.consume_vault_open_failed()
+    }
+
     fun recheck_session() {
         if (!auth_repository.is_signed_in.value) return
         viewModelScope.launch {

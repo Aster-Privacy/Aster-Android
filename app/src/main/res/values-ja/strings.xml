@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">デフォルトのお支払い方法を更新しました</string>
     <string name="payment_method_removed">お支払い方法を削除しました</string>
     <string name="session_expired_sign_in">セッションの有効期限が切れました。もう一度サインインしてください。</string>
+    <string name="vault_open_failed_notice">このデバイスで鍵のロックを解除できなかったため、一部のメールがここで開けない可能性があります。鍵を修復するには、ウェブ版のAster Mailにサインインしてから、このデバイスでもう一度サインインしてください。</string>
     <string name="could_not_start_checkout">チェックアウトを開始できませんでした</string>
     <string name="could_not_open_portal">請求ポータルを開けませんでした</string>
     <string name="cancel_failed">サブスクリプションをキャンセルできませんでした</string>
@@ -3020,6 +3021,7 @@
     <string name="link_device_fingerprint_hint">リンクするアプリに表示されているデバイスのフィンガープリントを入力してください。アプリによっては確認コードと表示されます。</string>
     <string name="link_device_error_invalid_keys">もう一方のデバイスから使用できない鍵が送信されました。そのデバイスで新しいコードを取得してから、もう一度お試しください。</string>
     <string name="link_device_error_codes_not_confirmed">このリンクコードのデバイスと一致しません。リンクするアプリの表示と 1 文字ずつ比べてから、もう一度お試しください。それでも一致しない場合は、デバイスをリンクしないでください。</string>
+    <string name="link_device_error_fingerprint_mismatch">このコードは新しいデバイスと一致しません。新しいデバイスのコードを確認して、もう一度入力してください。それでも一致しない場合は、キャンセルをタップしてください。</string>
     <string name="restore">復元</string>
     <string name="contact_trash_confirm_message">連絡先はゴミ箱から復元できます。</string>
     <string name="empty_contacts_trash_confirm_message">ゴミ箱内の連絡先をすべて完全に削除しますか？この操作は元に戻せません。</string>

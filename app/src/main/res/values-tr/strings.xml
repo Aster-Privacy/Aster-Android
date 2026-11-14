@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">Varsayılan ödeme yöntemi güncellendi</string>
     <string name="payment_method_removed">Ödeme yöntemi kaldırıldı</string>
     <string name="session_expired_sign_in">Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.</string>
+    <string name="vault_open_failed_notice">Anahtarlarınızın kilidi bu cihazda açılamadı, bu nedenle bazı e-postalar burada açılmayabilir. Anahtarlarınızı onarmak için web\'de Aster Mail\'de oturum açın, ardından bu cihazda yeniden oturum açın.</string>
     <string name="could_not_start_checkout">Ödeme başlatılamadı</string>
     <string name="could_not_open_portal">Faturalandırma portalı açılamadı</string>
     <string name="cancel_failed">Abonelik iptal edilemedi</string>
@@ -3034,6 +3035,7 @@
     <string name="link_device_fingerprint_hint">Bağladığınız uygulamada gösterilen cihaz parmak izini girin. Bazı uygulamalar buna doğrulama kodu der.</string>
     <string name="link_device_error_invalid_keys">Diğer cihaz kullanılamayan anahtarlar gönderdi. O cihazda yeni bir kod alın ve tekrar deneyin.</string>
     <string name="link_device_error_codes_not_confirmed">Bu, bu bağlama kodunun cihazıyla eşleşmiyor. Her karakteri bağladığınız uygulamayla karşılaştırın, ardından yeniden deneyin. Yine eşleşmiyorsa cihazı bağlamayın.</string>
+    <string name="link_device_error_fingerprint_mismatch">Bu kod yeni cihazınızla eşleşmiyor. Yeni cihazınızdaki kodu kontrol edip tekrar girin. Hâlâ eşleşmiyorsa İptal\'e dokunun.</string>
     <string name="restore">Geri yükle</string>
     <string name="contact_trash_confirm_message">Kişileri çöp kutusundan geri yükleyebilirsiniz.</string>
     <string name="empty_contacts_trash_confirm_message">Çöp kutusundaki tüm kişiler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.</string>

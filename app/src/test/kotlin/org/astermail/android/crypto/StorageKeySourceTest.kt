@@ -66,6 +66,7 @@ class StorageKeySourceTest {
         Triple("auth/recovery_code.kt", "PBEKeySpec", 2),
         Triple("auth/recovery_code.kt", "SecretKeyFactory", 2),
         Triple("security/AppLockStore.kt", "PasswordKdf.derive_aes_key", 1),
+        Triple("security/lock_key_wrap.kt", "PasswordKdf.derive_aes_key", 2),
         Triple("folders/folder_protection.kt", "pbkdf2_hmac", 3),
     )
 

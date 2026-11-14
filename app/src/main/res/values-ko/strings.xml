@@ -1002,6 +1002,7 @@
     <string name="default_payment_updated">기본 결제 수단이 업데이트되었습니다</string>
     <string name="payment_method_removed">결제 수단이 제거되었습니다</string>
     <string name="session_expired_sign_in">세션이 만료되었습니다. 다시 로그인해 주세요.</string>
+    <string name="vault_open_failed_notice">이 기기에서 키를 잠금 해제할 수 없어 일부 메일이 여기에서 열리지 않을 수 있습니다. 키를 복구하려면 웹에서 Aster Mail에 로그인한 다음 이 기기에서 다시 로그인하세요.</string>
     <string name="could_not_start_checkout">결제를 시작할 수 없습니다</string>
     <string name="could_not_open_portal">결제 포털을 열 수 없습니다</string>
     <string name="cancel_failed">구독을 취소할 수 없습니다</string>
@@ -3018,6 +3019,7 @@
     <string name="link_device_fingerprint_hint">연결하려는 앱에 표시된 기기 지문을 입력하세요. 일부 앱에서는 인증 코드라고 표시합니다.</string>
     <string name="link_device_error_invalid_keys">다른 기기가 사용할 수 없는 키를 보냈습니다. 해당 기기에서 새 코드를 받은 후 다시 시도하세요.</string>
     <string name="link_device_error_codes_not_confirmed">이 연결 코드의 기기와 일치하지 않습니다. 연결하려는 앱과 한 글자씩 비교한 다음 다시 시도하세요. 그래도 일치하지 않으면 기기를 연결하지 마세요.</string>
+    <string name="link_device_error_fingerprint_mismatch">이 코드는 새 기기와 일치하지 않습니다. 새 기기의 코드를 확인하고 다시 입력하세요. 그래도 일치하지 않으면 취소를 탭하세요.</string>
     <string name="restore">복원</string>
     <string name="contact_trash_confirm_message">휴지통에서 연락처를 복원할 수 있습니다.</string>
     <string name="empty_contacts_trash_confirm_message">휴지통의 모든 연락처를 영구적으로 삭제할까요? 되돌릴 수 없습니다.</string>

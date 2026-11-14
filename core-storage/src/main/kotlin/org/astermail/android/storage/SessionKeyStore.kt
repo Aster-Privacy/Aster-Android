@@ -39,7 +39,18 @@ class SessionKeyStore(context: Context? = null) {
     fun add_clear_listener(listener: () -> Unit) {
         clear_listeners.addIfAbsent(listener)
     }
-    private val prefs: SharedPreferences? = context?.let { SecurePrefs.open(it, prefs_name) }
+    private val prefs: SealedPrefs? = context?.let {
+        SealedPrefs(SecurePrefs.open(it, prefs_name), prefs_name) { name -> name in plain_names }
+    }
+
+    fun has_sealed_values(): Boolean = prefs?.has_sealed_values() ?: false
+
+    fun is_locked(): Boolean = !LockKeyHolder.is_open() && has_sealed_values()
+
+    fun seal_persisted(): Boolean = synchronized(lock) { prefs?.seal_all() ?: true }
+
+    fun unseal_persisted(lock_key: ByteArray? = null): Boolean =
+        synchronized(lock) { prefs?.unseal_all(lock_key) ?: true }
 
     private val vault_salt_prefs: SharedPreferences? =
         context?.getSharedPreferences(vault_salts_prefs_name, Context.MODE_PRIVATE)
@@ -113,6 +124,9 @@ class SessionKeyStore(context: Context? = null) {
     private var storage_kdf_version: Int? = null
 
     @Volatile
+    private var legacy_storage_keys_retired = false
+
+    @Volatile
     private var pending_reseal_passphrase: ByteArray? = null
 
     @Volatile
@@ -148,6 +162,13 @@ class SessionKeyStore(context: Context? = null) {
                 retired_login_salt_prefs?.getString(key_retired_login_salts, null),
             )
         }
+        load_persisted()
+        if (prefs != null) {
+            LockKeyHolder.add_open_listener { synchronized(lock) { load_persisted() } }
+        }
+    }
+
+    private fun load_persisted() {
         prefs?.let { p ->
             runCatching {
                 key_material = decode_b64_field(p, key_session_key)
@@ -186,6 +207,7 @@ class SessionKeyStore(context: Context? = null) {
                 }
                 data_kek = decode_b64_field(p, key_data_kek)
                 storage_kdf_version = if (p.contains(key_storage_kdf_version)) p.getInt(key_storage_kdf_version, 1) else null
+                legacy_storage_keys_retired = p.getBoolean(key_legacy_storage_keys_retired, false)
                 pending_reseal_passphrase = decode_b64_field(p, key_pending_reseal_pass)
                 ratchet_identity_jwk = p.getString(key_ratchet_identity_jwk, null)
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
@@ -291,6 +313,28 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun ec_one_time_storage_available(): Boolean = synchronized(lock) { prefs != null } && !is_locked()
+
+    fun put_ec_one_time_secret(key_id: Int, scalar: ByteArray): Boolean {
+        synchronized(lock) {
+            return prefs?.edit()?.putString("$key_ec_one_time_secret_prefix$key_id", encode_b64(scalar))?.commit()
+                ?: false
+        }
+    }
+
+    fun get_ec_one_time_secret(key_id: Int): ByteArray? {
+        synchronized(lock) {
+            val s = prefs?.getString("$key_ec_one_time_secret_prefix$key_id", null) ?: return null
+            return runCatching { decode_b64(s) }.getOrNull()
+        }
+    }
+
+    fun remove_ec_one_time_secret(key_id: Int) {
+        synchronized(lock) {
+            prefs?.edit()?.remove("$key_ec_one_time_secret_prefix$key_id")?.commit()
+        }
+    }
+
     fun has_ratchet_keys(): Boolean = synchronized(lock) {
         ratchet_identity_jwk != null &&
             ratchet_signed_prekey_jwk != null &&
@@ -349,6 +393,7 @@ class SessionKeyStore(context: Context? = null) {
         kdf_iterations: Int = default_vault_kdf_iterations,
     ) {
         synchronized(lock) {
+            if (prefs?.drops_write(key_enc_vault) == true) return
             val iterations = sanitize_vault_kdf_iterations(kdf_iterations)
             this.encrypted_vault = encrypted_vault_b64
             this.vault_nonce = vault_nonce_b64
@@ -572,6 +617,15 @@ class SessionKeyStore(context: Context? = null) {
 
     fun get_storage_kdf_version(): Int? = synchronized(lock) { storage_kdf_version }
 
+    fun retire_legacy_storage_keys() {
+        synchronized(lock) {
+            legacy_storage_keys_retired = true
+            prefs?.edit()?.putBoolean(key_legacy_storage_keys_retired, true)?.commit()
+        }
+    }
+
+    fun legacy_storage_keys_retired(): Boolean = legacy_storage_keys_retired
+
     fun get_data_kek(): ByteArray? {
         synchronized(lock) {
             return data_kek?.copyOf()
@@ -666,6 +720,7 @@ class SessionKeyStore(context: Context? = null) {
             data_kek = null
             level2_admitted = false
             storage_kdf_version = null
+            legacy_storage_keys_retired = false
             pending_reseal_passphrase?.fill(0)
             pending_reseal_passphrase = null
             ratchet_identity_jwk = null
@@ -692,6 +747,7 @@ class SessionKeyStore(context: Context? = null) {
 
     companion object {
         private const val prefs_name = "aster_session_keys_v1"
+        private val plain_names = setOf("user_id", "user_email")
         private const val vault_salts_prefs_name = "aster_vault_salts_v1"
         private const val key_vault_salts = "vault_salts"
         private const val retired_login_salts_prefs_name = "aster_retired_login_salts_v1"
@@ -717,6 +773,7 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_data_kek = "data_kek"
         private const val key_external_pgp_blob = "external_pgp_blob"
         private const val key_storage_kdf_version = "storage_kdf_version"
+        private const val key_legacy_storage_keys_retired = "legacy_storage_keys_retired"
         private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"
@@ -726,5 +783,6 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_ratchet_pq_identity_priv = "ratchet_pq_identity_secret"
         private const val key_ratchet_pq_identity_pub = "ratchet_pq_identity_pub"
         private const val key_pq_secret_prefix = "pq_secret_"
+        private const val key_ec_one_time_secret_prefix = "ec_one_time_secret_"
     }
 }

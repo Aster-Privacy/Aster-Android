@@ -21,6 +21,7 @@
 
 package org.astermail.android.crypto
 
+import java.security.MessageDigest
 import java.security.SecureRandom
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.bouncycastle.crypto.agreement.X25519Agreement
@@ -42,24 +43,39 @@ object DeviceEnvelope {
     const val MIN_ENVELOPE_BYTES =
         X25519_PK_BYTES + MLKEM_768_CT_BYTES + XNONCE_BYTES + POLY1305_TAG_BYTES
 
-    private const val ENROLL_INFO = "astermail-device-enroll-v1"
+    const val ENVELOPE_V1 = 1
+    const val ENVELOPE_V2 = 2
+    val ENVELOPE_VERSIONS: List<Int> = listOf(ENVELOPE_V1, ENVELOPE_V2)
+
+    private const val ENROLL_INFO_V1 = "astermail-device-enroll-v1"
+    private const val ENROLL_INFO_V2 = "astermail-device-enroll-v2"
+    private val ENVELOPE_V2_MAGIC = "AEV2".toByteArray(Charsets.US_ASCII)
 
     private val secure_random = SecureRandom()
 
     class InvalidDeviceKeyException(message: String) : IllegalArgumentException(message)
 
+    class DeviceRecipient(
+        val ed25519_pk: ByteArray,
+        val mlkem_pk: ByteArray,
+        val x25519_pk: ByteArray,
+    )
+
+    fun choose_envelope_version(offered: List<Int>?): Int =
+        if (offered?.contains(ENVELOPE_V2) == true) ENVELOPE_V2 else ENVELOPE_V1
+
     fun seal_secret_for_device(
         secret: ByteArray,
-        device_mlkem_pk: ByteArray,
-        device_x25519_pk: ByteArray,
+        recipient: DeviceRecipient,
+        version: Int,
     ): ByteArray {
         val eph_sk = ByteArray(X25519_PK_BYTES)
         secure_random.nextBytes(eph_sk)
         try {
             return seal_secret_for_device(
                 secret = secret,
-                device_mlkem_pk = device_mlkem_pk,
-                device_x25519_pk = device_x25519_pk,
+                recipient = recipient,
+                version = version,
                 eph_sk = eph_sk,
                 nonce = RatchetCrypto.random_bytes(XNONCE_BYTES),
             )
@@ -70,30 +86,39 @@ object DeviceEnvelope {
 
     internal fun seal_secret_for_device(
         secret: ByteArray,
-        device_mlkem_pk: ByteArray,
-        device_x25519_pk: ByteArray,
+        recipient: DeviceRecipient,
+        version: Int,
         eph_sk: ByteArray,
         nonce: ByteArray,
     ): ByteArray {
-        if (device_mlkem_pk.size != MLKEM_768_PK_BYTES) {
-            throw InvalidDeviceKeyException("ml-kem public key must be $MLKEM_768_PK_BYTES bytes")
+        require(version == ENVELOPE_V1 || version == ENVELOPE_V2) {
+            "unsupported envelope version"
         }
-        if (device_x25519_pk.size != X25519_PK_BYTES) {
-            throw InvalidDeviceKeyException("x25519 public key must be $X25519_PK_BYTES bytes")
-        }
+        require_recipient_key_sizes(recipient)
         require(nonce.size == XNONCE_BYTES) { "nonce must be $XNONCE_BYTES bytes" }
         require(secret.isNotEmpty()) { "secret must not be empty" }
 
-        val encapsulation = RatchetCrypto.ml_kem_768_encapsulate(device_mlkem_pk)
+        val encapsulation = RatchetCrypto.ml_kem_768_encapsulate(recipient.mlkem_pk)
         val ss_pq = encapsulation.shared_secret
         val eph_pk = x25519_public_key(eph_sk)
-        val ss_cl = x25519_agree(eph_sk, device_x25519_pk)
+        val ss_cl = x25519_agree(eph_sk, recipient.x25519_pk)
         val ikm = ss_pq + ss_cl
-        val shared_key = hkdf_sha256(ikm, nonce, ENROLL_INFO.toByteArray(Charsets.UTF_8), 32)
+        val transcript = if (version == ENVELOPE_V2) {
+            envelope_v2_transcript(recipient, eph_pk, encapsulation.ciphertext)
+        } else {
+            null
+        }
+        val shared_key = hkdf_sha256(ikm, nonce, envelope_info(transcript), 32)
 
         try {
-            val ciphertext = xchacha20_poly1305_encrypt(shared_key, nonce, secret)
-            return eph_pk + encapsulation.ciphertext + nonce + ciphertext
+            val ciphertext = xchacha20_poly1305_encrypt(
+                shared_key,
+                nonce,
+                secret,
+                envelope_aad(transcript),
+            )
+            val body = eph_pk + encapsulation.ciphertext + nonce + ciphertext
+            return if (transcript == null) body else ENVELOPE_V2_MAGIC + body
         } finally {
             zeroize(ss_pq, ss_cl, ikm, shared_key)
         }
@@ -101,31 +126,91 @@ object DeviceEnvelope {
 
     fun open_secret_for_device(
         envelope: ByteArray,
+        recipient: DeviceRecipient,
         device_mlkem_sk: ByteArray,
         device_x25519_sk: ByteArray,
     ): ByteArray {
-        require(envelope.size >= MIN_ENVELOPE_BYTES) { "envelope too short" }
+        val versioned = starts_with_magic(envelope)
+        val body = if (versioned) {
+            envelope.copyOfRange(ENVELOPE_V2_MAGIC.size, envelope.size)
+        } else {
+            envelope
+        }
+        require(body.size >= MIN_ENVELOPE_BYTES) { "envelope too short" }
 
         var offset = 0
-        val eph_pk = envelope.copyOfRange(offset, offset + X25519_PK_BYTES)
+        val eph_pk = body.copyOfRange(offset, offset + X25519_PK_BYTES)
         offset += X25519_PK_BYTES
-        val mlkem_ct = envelope.copyOfRange(offset, offset + MLKEM_768_CT_BYTES)
+        val mlkem_ct = body.copyOfRange(offset, offset + MLKEM_768_CT_BYTES)
         offset += MLKEM_768_CT_BYTES
-        val nonce = envelope.copyOfRange(offset, offset + XNONCE_BYTES)
+        val nonce = body.copyOfRange(offset, offset + XNONCE_BYTES)
         offset += XNONCE_BYTES
-        val ciphertext = envelope.copyOfRange(offset, envelope.size)
+        val ciphertext = body.copyOfRange(offset, body.size)
+        val transcript = if (versioned) {
+            envelope_v2_transcript(recipient, eph_pk, mlkem_ct)
+        } else {
+            null
+        }
 
         val ss_pq = RatchetCrypto.ml_kem_768_decapsulate(mlkem_ct, device_mlkem_sk)
         val ss_cl = x25519_agree(device_x25519_sk, eph_pk)
         val ikm = ss_pq + ss_cl
-        val shared_key = hkdf_sha256(ikm, nonce, ENROLL_INFO.toByteArray(Charsets.UTF_8), 32)
+        val shared_key = hkdf_sha256(ikm, nonce, envelope_info(transcript), 32)
 
         try {
-            return xchacha20_poly1305_decrypt(shared_key, nonce, ciphertext)
+            return xchacha20_poly1305_decrypt(
+                shared_key,
+                nonce,
+                ciphertext,
+                envelope_aad(transcript),
+            )
         } finally {
             zeroize(ss_pq, ss_cl, ikm, shared_key)
         }
     }
+
+    private fun require_recipient_key_sizes(recipient: DeviceRecipient) {
+        if (recipient.ed25519_pk.size != ED25519_PK_BYTES) {
+            throw InvalidDeviceKeyException("ed25519 public key must be $ED25519_PK_BYTES bytes")
+        }
+        if (recipient.mlkem_pk.size != MLKEM_768_PK_BYTES) {
+            throw InvalidDeviceKeyException("ml-kem public key must be $MLKEM_768_PK_BYTES bytes")
+        }
+        if (recipient.x25519_pk.size != X25519_PK_BYTES) {
+            throw InvalidDeviceKeyException("x25519 public key must be $X25519_PK_BYTES bytes")
+        }
+    }
+
+    private fun starts_with_magic(envelope: ByteArray): Boolean =
+        envelope.size >= ENVELOPE_V2_MAGIC.size &&
+            ENVELOPE_V2_MAGIC.indices.all { envelope[it] == ENVELOPE_V2_MAGIC[it] }
+
+    private fun envelope_v2_transcript(
+        recipient: DeviceRecipient,
+        eph_pk: ByteArray,
+        mlkem_ct: ByteArray,
+    ): ByteArray {
+        require_recipient_key_sizes(recipient)
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(ENROLL_INFO_V2.toByteArray(Charsets.UTF_8))
+        digest.update(ENVELOPE_V2_MAGIC)
+        digest.update(recipient.ed25519_pk)
+        digest.update(recipient.mlkem_pk)
+        digest.update(recipient.x25519_pk)
+        digest.update(eph_pk)
+        digest.update(mlkem_ct)
+        return digest.digest()
+    }
+
+    private fun envelope_info(transcript: ByteArray?): ByteArray =
+        if (transcript == null) {
+            ENROLL_INFO_V1.toByteArray(Charsets.UTF_8)
+        } else {
+            ENROLL_INFO_V2.toByteArray(Charsets.UTF_8) + transcript
+        }
+
+    private fun envelope_aad(transcript: ByteArray?): ByteArray? =
+        transcript?.let { ENVELOPE_V2_MAGIC + it }
 
     fun base64url_encode(bytes: ByteArray): String =
         java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
@@ -153,18 +238,21 @@ object DeviceEnvelope {
         key: ByteArray,
         nonce: ByteArray,
         plaintext: ByteArray,
-    ): ByteArray = xchacha20_poly1305(key, nonce, plaintext, encrypt = true)
+        aad: ByteArray? = null,
+    ): ByteArray = xchacha20_poly1305(key, nonce, plaintext, aad, encrypt = true)
 
     internal fun xchacha20_poly1305_decrypt(
         key: ByteArray,
         nonce: ByteArray,
         ciphertext: ByteArray,
-    ): ByteArray = xchacha20_poly1305(key, nonce, ciphertext, encrypt = false)
+        aad: ByteArray? = null,
+    ): ByteArray = xchacha20_poly1305(key, nonce, ciphertext, aad, encrypt = false)
 
     private fun xchacha20_poly1305(
         key: ByteArray,
         nonce: ByteArray,
         input: ByteArray,
+        aad: ByteArray?,
         encrypt: Boolean,
     ): ByteArray {
         require(key.size == 32) { "key must be 32 bytes" }
@@ -178,7 +266,7 @@ object DeviceEnvelope {
         try {
             cipher.init(
                 encrypt,
-                AEADParameters(KeyParameter(subkey), POLY1305_TAG_BYTES * 8, inner_nonce),
+                AEADParameters(KeyParameter(subkey), POLY1305_TAG_BYTES * 8, inner_nonce, aad),
             )
             val out = ByteArray(cipher.getOutputSize(input.size))
             val written = cipher.processBytes(input, 0, input.size, out, 0)

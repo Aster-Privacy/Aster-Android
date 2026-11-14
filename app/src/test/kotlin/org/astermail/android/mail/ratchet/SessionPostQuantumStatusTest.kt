@@ -31,15 +31,17 @@ class SessionPostQuantumStatusTest {
 
     private fun bootstrap(
         pq_ciphertext: String? = "ct",
-        pq_key_id: Int? = 3,
+        pq_key_id: Int? = X3dh.PQ_IDENTITY_KEY_ID,
         sender_identity_key: String? = "sender",
         recipient_identity_key: String? = "recipient",
+        recipient_pq_identity_key: String? = "pq",
     ) = BootstrapData(
         ephemeral_key = "eph",
         pq_ciphertext = pq_ciphertext,
         pq_key_id = pq_key_id,
         sender_identity_key = sender_identity_key,
         recipient_identity_key = recipient_identity_key,
+        recipient_pq_identity_key = recipient_pq_identity_key,
     )
 
     private fun bundle(kem_identity_key: String) = PrekeyBundleResponse(
@@ -50,10 +52,27 @@ class SessionPostQuantumStatusTest {
     )
 
     @Test
-    fun a_session_needs_both_the_ciphertext_and_the_key_id_to_count_as_post_quantum() {
-        assertEquals(PostQuantumRecipientStatus.SUPPORTED, session_post_quantum_status(bootstrap()))
-        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(pq_key_id = null)))
-        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(pq_ciphertext = null)))
+    fun a_session_counts_as_post_quantum_only_on_the_signed_identity_key() {
+        assertEquals(PostQuantumRecipientStatus.SUPPORTED, session_post_quantum_status(bootstrap(), "pq", true))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(), "pq", false))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(pq_key_id = 3), "pq", true))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(pq_key_id = null), "pq", true))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(pq_ciphertext = null), "pq", true))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(), "other", true))
+        assertEquals(PostQuantumRecipientStatus.UNSUPPORTED, session_post_quantum_status(bootstrap(), null, true))
+        assertEquals(
+            PostQuantumRecipientStatus.UNSUPPORTED,
+            session_post_quantum_status(bootstrap(recipient_pq_identity_key = null), null, true),
+        )
+    }
+
+    @Test
+    fun a_one_time_key_session_restarts_only_once_the_owner_signs_the_identity_key() {
+        assertTrue(session_restarts_for_signed_pq_key(bootstrap(pq_key_id = 3), "pq", true))
+        assertFalse(session_restarts_for_signed_pq_key(bootstrap(pq_key_id = 3), "pq", false))
+        assertFalse(session_restarts_for_signed_pq_key(bootstrap(pq_key_id = 3), null, true))
+        assertFalse(session_restarts_for_signed_pq_key(bootstrap(), "pq", true))
+        assertFalse(session_restarts_for_signed_pq_key(bootstrap(pq_ciphertext = null, pq_key_id = null), "pq", true))
     }
 
     @Test
