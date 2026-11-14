@@ -23,8 +23,10 @@ package org.astermail.android.mail.ratchet
 
 import java.io.ByteArrayInputStream
 import org.bouncycastle.bcpg.ArmoredInputStream
+import org.bouncycastle.bcpg.SignatureSubpacketTags
+import org.bouncycastle.bcpg.sig.KeyFlags
 import org.bouncycastle.openpgp.PGPPublicKey
-import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
+import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPSignature
 import org.bouncycastle.openpgp.PGPSignatureList
 import org.bouncycastle.openpgp.PGPUtil
@@ -130,16 +132,17 @@ object PrekeyBindingVerifier {
     fun owner_fingerprint(armored_public_key: String?): String? {
         if (armored_public_key.isNullOrBlank()) return null
         return runCatching {
-            val collection = PGPPublicKeyRingCollection(
-                PGPUtil.getDecoderStream(
-                    ByteArrayInputStream(armored_public_key.toByteArray(Charsets.UTF_8)),
-                ),
-                BcKeyFingerprintCalculator(),
-            )
-            val ring = collection.keyRings.asSequence().firstOrNull() ?: return@runCatching null
-            ring.publicKey.fingerprint.joinToString("") { "%02X".format(it) }
+            owner_ring(armored_public_key).publicKey.fingerprint.joinToString("") { "%02X".format(it) }
         }.getOrNull()?.takeIf { it.isNotEmpty() }
     }
+
+    private fun owner_ring(armored_public_key: String): PGPPublicKeyRing =
+        PGPPublicKeyRing(
+            PGPUtil.getDecoderStream(
+                ByteArrayInputStream(armored_public_key.toByteArray(Charsets.UTF_8)),
+            ),
+            BcKeyFingerprintCalculator(),
+        )
 
     private fun same_key(signed_b64: String, published_b64: String): Boolean {
         if (signed_b64 == published_b64) return true
@@ -189,12 +192,41 @@ object PrekeyBindingVerifier {
 
     private fun find_verifying_key(armored_public_key: String, key_id: Long): PGPPublicKey? {
         if (key_id == 0L) return null
-        val collection = PGPPublicKeyRingCollection(
-            PGPUtil.getDecoderStream(
-                ByteArrayInputStream(armored_public_key.toByteArray(Charsets.UTF_8)),
-            ),
-            BcKeyFingerprintCalculator(),
-        )
-        return collection.getPublicKey(key_id)
+        val ring = owner_ring(armored_public_key)
+        val primary = ring.publicKey
+        if (primary.keyID == key_id) return primary
+        val subkey = ring.getPublicKey(key_id) ?: return null
+        return subkey.takeIf { is_bound_signing_subkey(it, primary) }
+    }
+
+    private fun is_bound_signing_subkey(subkey: PGPPublicKey, primary: PGPPublicKey): Boolean {
+        if (has_valid_certification(subkey, primary, PGPSignature.SUBKEY_REVOCATION) { true }) {
+            return false
+        }
+        return has_valid_certification(subkey, primary, PGPSignature.SUBKEY_BINDING) { binding ->
+            val hashed = binding.hashedSubPackets
+            hashed == null ||
+                !hashed.hasSubpacket(SignatureSubpacketTags.KEY_FLAGS) ||
+                hashed.keyFlags and KeyFlags.SIGN_DATA != 0
+        }
+    }
+
+    private fun has_valid_certification(
+        subkey: PGPPublicKey,
+        primary: PGPPublicKey,
+        signature_type: Int,
+        accepts: (PGPSignature) -> Boolean,
+    ): Boolean {
+        val signatures = subkey.getSignaturesOfType(signature_type)
+        while (signatures.hasNext()) {
+            val candidate = signatures.next()
+            if (candidate.keyID != primary.keyID) continue
+            val valid = runCatching {
+                candidate.init(BcPGPContentVerifierBuilderProvider(), primary)
+                candidate.verifyCertification(primary, subkey)
+            }.getOrDefault(false)
+            if (valid && accepts(candidate)) return true
+        }
+        return false
     }
 }
