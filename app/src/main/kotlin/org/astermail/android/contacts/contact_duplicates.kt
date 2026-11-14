@@ -23,6 +23,8 @@ package org.astermail.android.contacts
 
 import java.util.Locale
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
+import org.astermail.android.ui.contacts.ContactPostal
 
 const val DUPLICATE_THRESHOLD = 70
 
@@ -213,5 +215,26 @@ fun merge_contacts(ordered: List<Contact>): Contact {
         notes = notes.joinToString("\n\n"),
         is_favorite = ordered.any { it.is_favorite },
         groups = groups.values.toList(),
+    ).with_typed_fields(
+        emails = merged_entries(ordered.flatMap { it.email_entries() }) { it.lowercase(Locale.ROOT) },
+        phones = merged_entries(ordered.flatMap { it.phone_entries() }) { value ->
+            normalize_phone(value).ifEmpty { value.filter { it.isDigit() }.ifEmpty { value } }
+        },
+        addresses = merged_addresses(ordered.flatMap { it.address_entries() }),
     )
+}
+
+private fun merged_entries(entries: List<ContactEntry>, key_of: (String) -> String): List<ContactEntry> {
+    val seen = mutableSetOf<String>()
+    return entries.filter { entry ->
+        val value = entry.value.trim()
+        value.isNotEmpty() && seen.add(key_of(value))
+    }
+}
+
+private fun merged_addresses(addresses: List<ContactPostal>): List<ContactPostal> {
+    val seen = mutableSetOf<String>()
+    return addresses.filter { address ->
+        !address.is_blank() && seen.add(address.lines().joinToString("|").trim().lowercase(Locale.ROOT))
+    }
 }

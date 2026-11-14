@@ -265,4 +265,20 @@ class device_contact_upload_test {
         } catch (_: CancellationException) {
         }
     }
+
+    @Test
+    fun a_csv_row_matching_a_stored_contact_adds_every_new_number() {
+        val csv = "First Name,E-mail 1 - Value,Phone 1 - Label,Phone 1 - Value,Phone 2 - Label,Phone 2 - Value,Phone 3 - Label,Phone 3 - Value\n" +
+            "Ana,ana@example.com,Mobile,+1 555 0101,Home,+1 555 0102,Other,+1 555 0103\n"
+        val incoming = parse_csv_contacts(csv)
+        val existing = listOf(stored("c1", "Ana", email = "ana@example.com"))
+
+        val plan = plan_contact_import(incoming, existing)
+
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(
+            listOf("+1 555 0101", "+1 555 0102", "+1 555 0103"),
+            plan.updates.single().phone_entries().map { it.value },
+        )
+    }
 }

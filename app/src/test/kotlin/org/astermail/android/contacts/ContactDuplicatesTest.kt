@@ -22,6 +22,7 @@
 package org.astermail.android.contacts
 
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.contacts.ContactEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -201,5 +202,35 @@ class ContactDuplicatesTest {
 
         assertEquals("Met at the summit.\n\nPrefers text.", merged.notes)
         assertTrue(merged.is_favorite)
+    }
+
+    @Test
+    fun `merge keeps every phone number from every contact`() {
+        val primary = contact("a", name = "Kofi Mensah", email = "kofi@example.com").with_typed_fields(
+            emails = listOf(ContactEntry("kofi@example.com", "home")),
+            phones = listOf(ContactEntry("+1 415 555 0101", "mobile"), ContactEntry("+1 415 555 0102", "home")),
+            addresses = emptyList(),
+        )
+        val secondary = contact("b", name = "Kofi Mensah").with_typed_fields(
+            emails = listOf(ContactEntry("kofi@work.example", "work"), ContactEntry("kofi@old.example", "other")),
+            phones = listOf(
+                ContactEntry("(415) 555-0101", "mobile"),
+                ContactEntry("+1 415 555 0103", "work"),
+                ContactEntry("+1 415 555 0104", "fax"),
+            ),
+            addresses = emptyList(),
+        )
+
+        val merged = merge_contacts(listOf(primary, secondary))
+
+        assertEquals(
+            listOf("+1 415 555 0101", "+1 415 555 0102", "+1 415 555 0103", "+1 415 555 0104"),
+            merged.phone_entries().map { it.value },
+        )
+        assertEquals(
+            listOf("kofi@example.com", "kofi@work.example", "kofi@old.example"),
+            merged.email_entries().map { it.value },
+        )
+        assertEquals("+1 415 555 0103", merged.work_phone)
     }
 }

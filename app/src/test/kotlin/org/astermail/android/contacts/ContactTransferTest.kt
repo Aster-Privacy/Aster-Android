@@ -489,4 +489,57 @@ class ContactTransferTest {
         assertEquals("home", raw.getJSONArray("email_entries").getJSONObject(0).getString("type"))
         assertEquals("work", raw.getJSONArray("email_entries").getJSONObject(1).getString("type"))
     }
+
+    @Test
+    fun `csv import keeps every phone number with its own type`() {
+        val csv = "First Name,Last Name,Mobile Phone,Home Phone,Other Phone,Business Fax\n" +
+            "Mira,Vance,+1 555 0101,+1 555 0102,+1 555 0103,+1 555 0104\n"
+
+        val result = parse_csv_contacts(csv).first()
+
+        assertEquals(
+            listOf(
+                ContactEntry("+1 555 0101", "mobile"),
+                ContactEntry("+1 555 0102", "home"),
+                ContactEntry("+1 555 0103", "other"),
+                ContactEntry("+1 555 0104", "fax"),
+            ),
+            result.phone_entries(),
+        )
+        assertEquals("+1 555 0101", result.phone)
+        assertEquals("", result.work_phone)
+    }
+
+    @Test
+    fun `csv import keeps every number from a labeled export`() {
+        val csv = "First Name,E-mail 1 - Value,Phone 1 - Label,Phone 1 - Value,Phone 2 - Label,Phone 2 - Value,Phone 3 - Label,Phone 3 - Value\n" +
+            "Mira,mira@example.com,Mobile,+1 555 0101 ::: +1 555 0105,Work,+1 555 0102,Home,+1 555 0103\n"
+
+        val result = parse_csv_contacts(csv).first()
+
+        assertEquals(
+            listOf("+1 555 0101", "+1 555 0102", "+1 555 0105", "+1 555 0103"),
+            result.phone_entries().map { it.value },
+        )
+        assertEquals("+1 555 0102", result.work_phone)
+    }
+
+    @Test
+    fun `vcard 4 quoted type lists keep the phone type`() {
+        val vcard = listOf(
+            "BEGIN:VCARD",
+            "VERSION:4.0",
+            "FN:Mira Vance",
+            "TEL;VALUE=uri;TYPE=\"voice,cell\":tel:+1-555-0101",
+            "TEL;VALUE=uri;TYPE=\"work,voice\":tel:+1-555-0102",
+            "TEL;VALUE=uri;TYPE=home:tel:+1-555-0103",
+            "END:VCARD",
+        ).joinToString("\n")
+
+        val phones = parse_vcards(vcard).first().phone_entries()
+
+        assertEquals(3, phones.size)
+        assertEquals(listOf("mobile", "work", "home"), phones.map { it.type })
+        assertTrue(phones.none { it.label.contains("\"") })
+    }
 }
