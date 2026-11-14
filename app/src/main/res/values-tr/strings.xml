@@ -1334,6 +1334,7 @@
     <string name="alias_check_failed">Kullanılabilirlik kontrol edilemedi. Yine de oluşturmayı deneyebilirsiniz.</string>
     <string name="csrf_unavailable">Bu oturum bozuk. Lütfen yeniden giriş yapın.</string>
     <string name="received_on_label">Alındığı adres</string>
+    <string name="forwarded_by_label">Yönlendiren</string>
     <string name="auto_advance_label">Arşivleme veya silme sonrası</string>
     <string name="auto_advance_next">Sonraki e-postaya git</string>
     <string name="auto_advance_previous">Önceki e-postaya git</string>

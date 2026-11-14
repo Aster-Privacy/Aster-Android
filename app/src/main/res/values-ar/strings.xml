@@ -1346,6 +1346,7 @@
     <string name="alias_check_failed">تعذر التحقق من التوفر. لا يزال بإمكانك محاولة إنشائه.</string>
     <string name="csrf_unavailable">لم تعد هذه الجلسة صالحة. يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="received_on_label">تم الاستلام على</string>
+    <string name="forwarded_by_label">أُعيد توجيهه بواسطة</string>
     <string name="auto_advance_label">بعد الأرشفة أو الحذف</string>
     <string name="auto_advance_next">الانتقال إلى البريد التالي</string>
     <string name="auto_advance_previous">الانتقال إلى البريد السابق</string>

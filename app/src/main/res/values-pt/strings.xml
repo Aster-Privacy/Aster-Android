@@ -1337,6 +1337,7 @@
     <string name="alias_check_failed">Não foi possível verificar a disponibilidade. Pode tentar criá-lo mesmo assim.</string>
     <string name="csrf_unavailable">Esta sessão é inválida. Inicie sessão novamente.</string>
     <string name="received_on_label">Recebido em</string>
+    <string name="forwarded_by_label">Reencaminhado por</string>
     <string name="auto_advance_label">Depois de arquivar ou eliminar</string>
     <string name="auto_advance_next">Ir para o próximo e-mail</string>
     <string name="auto_advance_previous">Ir para o e-mail anterior</string>

@@ -1340,6 +1340,7 @@
     <string name="alias_check_failed">Nie udało się sprawdzić dostępności. Nadal możesz spróbować go utworzyć.</string>
     <string name="csrf_unavailable">Ta sesja jest uszkodzona. Zaloguj się ponownie.</string>
     <string name="received_on_label">Odebrano na</string>
+    <string name="forwarded_by_label">Przekazane przez</string>
     <string name="auto_advance_label">Po archiwizacji lub usunięciu</string>
     <string name="auto_advance_next">Przejdź do następnej wiadomości</string>
     <string name="auto_advance_previous">Przejdź do poprzedniej wiadomości</string>
