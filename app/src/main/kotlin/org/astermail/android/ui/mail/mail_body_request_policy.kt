@@ -35,12 +35,16 @@ internal fun mail_body_request_action(
     path: String?,
     proxied_url: String?,
     allow_external: Boolean,
+    port: Int = -1,
+    user_info: String? = null,
 ): MailBodyRequestAction {
     if (host == MAIL_CONTENT_HOST) return MailBodyRequestAction.LOCAL
     if (scheme == "data" || scheme == "cid" || scheme == "about") return MailBodyRequestAction.LOCAL
     if (!allow_external) return MailBodyRequestAction.BLOCK
     if (scheme != "https") return MailBodyRequestAction.BLOCK
     if (host != REMOTE_IMAGE_PROXY_HOST) return MailBodyRequestAction.BLOCK
+    if (port != -1 && port != 443) return MailBodyRequestAction.BLOCK
+    if (!user_info.isNullOrEmpty()) return MailBodyRequestAction.BLOCK
     if (path != REMOTE_IMAGE_PROXY_PATH) return MailBodyRequestAction.BLOCK
     if (proxied_url.isNullOrBlank()) return MailBodyRequestAction.BLOCK
     return MailBodyRequestAction.PROXY
