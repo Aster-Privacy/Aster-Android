@@ -3589,4 +3589,7 @@
     <string name="recovery_previous_password_forgot">Non la ricordo</string>
     <string name="recovery_previous_password_use">Inserisci la password precedente</string>
     <string name="recovery_previous_password_skipped_warning">La password viene reimpostata e le chiavi di crittografia vengono conservate, ma restano bloccate con la password precedente. Non potrai leggere la posta finché non inserisci quella password dal banner Recupera dati.</string>
+    <string name="custom_color">Colore personalizzato</string>
+    <string name="color_brightness">Luminosità</string>
+    <string name="hex_color">Colore esadecimale</string>
 </resources>

@@ -3571,4 +3571,7 @@
     <string name="recovery_previous_password_forgot">Ich weiß es nicht mehr</string>
     <string name="recovery_previous_password_use">Vorheriges Passwort eingeben</string>
     <string name="recovery_previous_password_skipped_warning">Dein Passwort wird zurückgesetzt und deine Verschlüsselungsschlüssel bleiben erhalten, sind aber weiterhin mit deinem vorherigen Passwort gesperrt. Deine E-Mails sind erst lesbar, wenn du dieses Passwort über das Banner Daten wiederherstellen eingibst.</string>
+    <string name="custom_color">Eigene Farbe</string>
+    <string name="color_brightness">Helligkeit</string>
+    <string name="hex_color">Hex-Farbe</string>
 </resources>

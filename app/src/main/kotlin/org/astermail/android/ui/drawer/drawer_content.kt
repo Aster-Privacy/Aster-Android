@@ -1541,6 +1541,12 @@ private fun folder_color_dialog(
                         }
                     }
                 }
+                org.astermail.android.ui.common.custom_color_swatch(
+                    value = selected_color,
+                    presets = label_color_presets,
+                    on_pick = { selected_color = it },
+                    test_tag = "folder_color_custom",
+                )
             }
         },
     )
@@ -2165,6 +2171,12 @@ internal fun create_label_dialog(
                             }
                         }
                     }
+                    org.astermail.android.ui.common.custom_color_swatch(
+                        value = selected_color,
+                        presets = label_color_presets,
+                        on_pick = { selected_color = it },
+                        test_tag = "label_color_custom",
+                    )
                 }
 
                 Spacer(Modifier.height(AsterSpacing.md))

@@ -3589,4 +3589,7 @@
     <string name="recovery_previous_password_forgot">Não lembro</string>
     <string name="recovery_previous_password_use">Digitar minha senha anterior</string>
     <string name="recovery_previous_password_skipped_warning">Sua senha é redefinida e suas chaves de criptografia são mantidas, mas continuam bloqueadas com a senha anterior. Você não poderá ler seus e-mails até digitar essa senha no aviso Recuperar dados.</string>
+    <string name="custom_color">Cor personalizada</string>
+    <string name="color_brightness">Brilho</string>
+    <string name="hex_color">Cor hexadecimal</string>
 </resources>

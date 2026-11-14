@@ -3551,4 +3551,7 @@
     <string name="recovery_previous_password_forgot">기억나지 않음</string>
     <string name="recovery_previous_password_use">이전 비밀번호 입력하기</string>
     <string name="recovery_previous_password_skipped_warning">비밀번호는 재설정되고 암호화 키는 유지되지만, 이전 비밀번호로 잠긴 상태로 남습니다. 데이터 복구 배너에서 그 비밀번호를 입력할 때까지 메일을 읽을 수 없습니다.</string>
+    <string name="custom_color">사용자 지정 색상</string>
+    <string name="color_brightness">밝기</string>
+    <string name="hex_color">16진수 색상</string>
 </resources>

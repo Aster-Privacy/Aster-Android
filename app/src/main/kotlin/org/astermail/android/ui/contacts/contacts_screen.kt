@@ -1343,6 +1343,12 @@ private fun new_group_dialog(
                             }
                         }
                     }
+                    org.astermail.android.ui.common.custom_color_swatch(
+                        value = color,
+                        presets = group_colors,
+                        on_pick = { color = it },
+                        test_tag = "group_color_custom",
+                    )
                 }
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(

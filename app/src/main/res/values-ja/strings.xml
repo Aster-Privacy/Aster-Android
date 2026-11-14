@@ -3558,4 +3558,7 @@
     <string name="recovery_previous_password_forgot">覚えていません</string>
     <string name="recovery_previous_password_use">以前のパスワードを入力する</string>
     <string name="recovery_previous_password_skipped_warning">パスワードはリセットされ、暗号鍵は保持されますが、以前のパスワードでロックされたままです。「データを復元」バナーからそのパスワードを入力するまで、メールは読めません。</string>
+    <string name="custom_color">カスタムカラー</string>
+    <string name="color_brightness">明るさ</string>
+    <string name="hex_color">16進カラー</string>
 </resources>

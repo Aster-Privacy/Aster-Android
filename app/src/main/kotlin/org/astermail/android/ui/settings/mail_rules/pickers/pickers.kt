@@ -710,6 +710,16 @@ fun color_picker(
                         .clickable { on_pick(hex); on_dismiss() },
                 )
             }
+            org.astermail.android.ui.common.custom_color_swatch(
+                value = selected,
+                presets = palette,
+                on_pick = { on_pick(it); on_dismiss() },
+                size = 36.dp,
+                selected_border_width = 3.dp,
+                unselected_border_width = 0.dp,
+                show_check = false,
+                test_tag = "rule_color_custom",
+            )
         }
     }
 }

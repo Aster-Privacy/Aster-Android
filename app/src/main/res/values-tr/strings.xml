@@ -3570,4 +3570,7 @@
     <string name="recovery_previous_password_forgot">Hatırlamıyorum</string>
     <string name="recovery_previous_password_use">Önceki şifremi gir</string>
     <string name="recovery_previous_password_skipped_warning">Şifreniz sıfırlanır ve şifreleme anahtarlarınız korunur, ancak önceki şifrenizle kilitli kalır. Bu şifreyi Verileri kurtar başlığından girene kadar e-postalarınız okunamaz.</string>
+    <string name="custom_color">Özel renk</string>
+    <string name="color_brightness">Parlaklık</string>
+    <string name="hex_color">Onaltılık renk</string>
 </resources>

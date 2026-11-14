@@ -3590,4 +3590,7 @@
     <string name="recovery_previous_password_forgot">No la recuerdo</string>
     <string name="recovery_previous_password_use">Introducir mi contraseña anterior</string>
     <string name="recovery_previous_password_skipped_warning">Tu contraseña se restablece y tus claves de cifrado se conservan, pero siguen bloqueadas con tu contraseña anterior. No podrás leer tu correo hasta que introduzcas esa contraseña desde el aviso Recuperar datos.</string>
+    <string name="custom_color">Color personalizado</string>
+    <string name="color_brightness">Brillo</string>
+    <string name="hex_color">Color hexadecimal</string>
 </resources>

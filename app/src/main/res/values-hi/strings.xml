@@ -3462,4 +3462,7 @@
     <string name="recovery_previous_password_forgot">मुझे याद नहीं</string>
     <string name="recovery_previous_password_use">मेरा पिछला पासवर्ड डालें</string>
     <string name="recovery_previous_password_skipped_warning">आपका पासवर्ड रीसेट हो जाता है और आपकी एन्क्रिप्शन कुंजियां रखी जाती हैं, लेकिन वे आपके पिछले पासवर्ड से लॉक रहती हैं। जब तक आप डेटा पुनर्प्राप्त करें बैनर से वह पासवर्ड नहीं डालते, आपका मेल पढ़ा नहीं जा सकता।</string>
+    <string name="custom_color">कस्टम रंग</string>
+    <string name="color_brightness">चमक</string>
+    <string name="hex_color">हेक्स रंग</string>
 </resources>
