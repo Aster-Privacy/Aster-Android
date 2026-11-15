@@ -1821,6 +1821,84 @@ class MailViewModelTest {
         assertEquals(listOf("id_1"), vm.thread_state.value.messages.map { it.id })
     }
 
+    private fun shared_thread_page(): InboxPage {
+        val items = fake_inbox_page(2).items.map {
+            it.copy(thread_token = "thread_shared", thread_message_count = 2, is_read = false)
+        }
+        return InboxPage(items, has_more = false, next_cursor = null, total = items.size)
+    }
+
+    @Test
+    fun `opening a message with conversations off marks only that message read`() = runTest {
+        every { repository.is_conversation_grouping_enabled } returns false
+        stub_thread_read_sync()
+        coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(shared_thread_page())
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", "immediate")
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.single { it.id == "id_1" }.is_read)
+        assertFalse(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify { repository.mark_read("id_1", true, any()) }
+        coVerify(exactly = 0) { repository.mark_thread_read_all(any()) }
+        coVerify(exactly = 0) { repository.mark_read_bulk(any()) }
+    }
+
+    @Test
+    fun `opening a message with conversations on marks the rest of its conversation read`() = runTest {
+        stub_thread_read_sync()
+        coEvery { repository.mark_read(any(), any(), any()) } returns Result.success(Unit)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(shared_thread_page())
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.on_user_opened_mail("id_1", "immediate")
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.single { it.id == "id_2" }.is_read)
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify { repository.mark_thread_read_all("thread_shared") }
+        coVerify { repository.mark_read_bulk(listOf("id_2")) }
+    }
+
+    private fun unloaded_thread_page(): InboxPage {
+        val items = fake_inbox_page(1).items.map { it.copy(thread_message_count = 3) }
+        return InboxPage(items, has_more = false, next_cursor = null, total = items.size)
+    }
+
+    @Test
+    fun `trash with conversations off moves only the chosen message`() = runTest {
+        every { repository.is_conversation_grouping_enabled } returns false
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(unloaded_thread_page())
+        coEvery { repository.trash(any(), any(), any(), any()) } returns Result.success(Unit)
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.trash(listOf("id_1"))
+        advanceUntilIdle()
+
+        clear_dispatcher_records()
+        coVerify { repository.trash(eq(listOf("id_1")), any(), eq(emptyList()), eq(emptySet())) }
+    }
+
+    @Test
+    fun `trash with conversations on moves the whole conversation`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(unloaded_thread_page())
+        coEvery { repository.trash(any(), any(), any(), any()) } returns Result.success(Unit)
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.trash(listOf("id_1"))
+        advanceUntilIdle()
+
+        clear_dispatcher_records()
+        coVerify { repository.trash(eq(listOf("id_1")), any(), eq(listOf("thread_1")), eq(setOf("id_1"))) }
+    }
+
     private fun thread_message(id: String, has_attachments: Boolean) = ThreadMessageDecrypted(
         id = id,
         sender_name = "Alice",

@@ -2693,6 +2693,7 @@ class MailViewModel @Inject constructor(
     }
 
     private fun mark_thread_siblings_read(item_id: String, message_ids: Set<String>) {
+        if (!repository.is_conversation_grouping_enabled) return
         val synced = opened_synced_ids[item_id].orEmpty()
         val thread_token = find_item(item_id)?.thread_token?.takeIf { it.isNotBlank() }
         val thread_key = thread_token?.let { "thread:$it" }
@@ -3256,8 +3257,12 @@ class MailViewModel @Inject constructor(
             .filter { is_category_movable(it) }
         if (anchors.isEmpty()) return
         val anchor_ids = anchors.mapTo(HashSet()) { it.id }
-        val thread_tokens = anchors.mapNotNullTo(LinkedHashSet()) { anchor ->
-            anchor.thread_token?.takeIf { it.isNotBlank() }
+        val thread_tokens = if (repository.is_conversation_grouping_enabled) {
+            anchors.mapNotNullTo(LinkedHashSet()) { anchor ->
+                anchor.thread_token?.takeIf { it.isNotBlank() }
+            }
+        } else {
+            LinkedHashSet()
         }
         val mates = _inbox_state.value.items.filter { mate ->
             mate.id !in anchor_ids &&
@@ -4209,7 +4214,7 @@ class MailViewModel @Inject constructor(
     }
 
     private fun full_thread_targets(item_ids: Set<String>): Map<String, List<String>> {
-        if (item_ids.isEmpty()) return emptyMap()
+        if (item_ids.isEmpty() || !repository.is_conversation_grouping_enabled) return emptyMap()
         val known = _inbox_state.value.items +
             folder_cache.values.flatMap { it.items } +
             _search_state.value.all_items
