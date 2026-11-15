@@ -338,7 +338,6 @@ private const val PROFILE_TTL_MS = 60_000L
 private const val LIST_TTL_MS = 60_000L
 private const val MAX_ALIAS_WEBSITES = 10
 private const val IMPORT_BATCH_SIZE = 100
-private const val MAX_WEBSITE_URL_LENGTH = 200
 private const val ALIAS_RUN_POLL_MIN_MS = 1200L
 private const val ALIAS_RUN_POLL_MAX_MS = 8000L
 private const val ALIAS_RUN_POLL_MAX_FAILURES = 5
@@ -2115,7 +2114,7 @@ class SettingsViewModel @Inject constructor(
 
     fun add_alias_website(alias_id: String, website: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
-        val normalized = normalize_website_url(sanitize_alias_text(website))
+        val normalized = validate_alias_website_input(sanitize_alias_text(website))
         if (normalized == null) {
             _state.value = _state.value.copy(
                 action_result = context.getString(R.string.alias_website_invalid),
@@ -2139,27 +2138,7 @@ class SettingsViewModel @Inject constructor(
         update_alias_websites(alias_id, remaining.joinToString(", "))
     }
 
-    private fun normalize_website_url(raw: String): String? {
-        val cleaned = raw.replace(Regex("[\\x00-\\x1f\\x7f\\s]"), "")
-        if (cleaned.isEmpty()) return null
-        val with_scheme = if (Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:").containsMatchIn(cleaned)) {
-            cleaned
-        } else {
-            "https://$cleaned"
-        }
-        if (with_scheme.length > MAX_WEBSITE_URL_LENGTH) return null
-        return try {
-            val uri = java.net.URI(with_scheme)
-            val scheme = uri.scheme?.lowercase(java.util.Locale.ROOT)
-            if (scheme != "https" && scheme != "http") return null
-            val host = uri.host
-            if (host.isNullOrBlank() || !host.contains(".")) return null
-            with_scheme
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            null
-        }
-    }
+    private fun normalize_website_url(raw: String): String? = normalize_alias_website_url(raw)
 
     private fun split_websites_input(raw: String): List<String> {
         if (raw.isBlank()) return emptyList()

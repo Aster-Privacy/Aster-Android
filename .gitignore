@@ -38,6 +38,7 @@ _ui*.xml
 !/scripts/apk_verification.md
 !/scripts/check_fdroid_assets.sh
 !/scripts/sync_translations.py
+!/scripts/update_iana_tlds.py
 /.test_artifacts/
 /test_screenshots/
 /my-downloads/
