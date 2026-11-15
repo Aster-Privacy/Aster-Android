@@ -1978,6 +1978,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             kotlinx.coroutines.delay(220)
             settings_vm.load_labels()
             settings_vm.load_tags()
+            settings_vm.load_aliases()
+            settings_vm.load_custom_domain_addresses()
         }
     }
 
@@ -2344,31 +2346,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val api_aliases = remember(settings_state.aliases, settings_state.custom_domain_addresses) {
-        org.astermail.android.settings.order_sidebar_addresses(
-            settings_state.aliases
-                .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
-                .map { alias ->
-                    org.astermail.android.settings.sidebar_address_entry(
-                        item = drawer_alias_item(
-                            id = alias.id,
-                            address = alias.address,
-                            routing_token = alias.alias_address_hash.ifBlank { null },
-                        ),
-                        sidebar_order = alias.sidebar_order,
-                        sidebar_hidden = alias.sidebar_hidden,
-                    )
-                } + settings_state.custom_domain_addresses
-                .filter { it.is_enabled && !looks_encrypted(it.encrypted_local_part) }
-                .map { addr ->
-                    org.astermail.android.settings.sidebar_address_entry(
-                        item = drawer_alias_item(
-                            id = addr.id,
-                            address = addr.address,
-                        ),
-                        sidebar_order = addr.sidebar_order,
-                        sidebar_hidden = addr.sidebar_hidden,
-                    )
-                },
+        org.astermail.android.settings.sidebar_alias_items(
+            settings_state.aliases,
+            settings_state.custom_domain_addresses,
         )
     }
 
