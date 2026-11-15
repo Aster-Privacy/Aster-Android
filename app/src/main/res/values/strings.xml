@@ -3621,4 +3621,7 @@
     <string name="recovery_previous_password_forgot">I don\'t remember it</string>
     <string name="recovery_previous_password_use">Enter my previous password</string>
     <string name="recovery_previous_password_skipped_warning">Your password is reset and your encryption keys are kept, but they stay locked with your previous password. Your mail can\'t be read until you enter that password from the Recover data banner.</string>
+    <string name="custom_color">Custom color</string>
+    <string name="color_brightness">Brightness</string>
+    <string name="hex_color">Hex color</string>
 </resources>

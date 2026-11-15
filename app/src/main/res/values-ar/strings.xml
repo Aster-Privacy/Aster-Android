@@ -3653,4 +3653,7 @@
     <string name="recovery_previous_password_forgot">لا أتذكرها</string>
     <string name="recovery_previous_password_use">إدخال كلمة المرور السابقة</string>
     <string name="recovery_previous_password_skipped_warning">تتم إعادة تعيين كلمة المرور ويتم الاحتفاظ بمفاتيح التشفير، لكنها تبقى مقفلة بكلمة المرور السابقة. لا يمكن قراءة بريدك حتى تدخل كلمة المرور تلك من شريط استعادة البيانات.</string>
+    <string name="custom_color">لون مخصص</string>
+    <string name="color_brightness">السطوع</string>
+    <string name="hex_color">لون سداسي عشري</string>
 </resources>

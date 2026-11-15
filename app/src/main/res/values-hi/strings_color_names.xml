@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">लाल</string>
+    <string name="color_name_orange">नारंगी</string>
+    <string name="color_name_yellow">पीला</string>
+    <string name="color_name_green">हरा</string>
+    <string name="color_name_teal">मोरपंखी</string>
+    <string name="color_name_blue">नीला</string>
+    <string name="color_name_purple">बैंगनी</string>
+    <string name="color_name_pink">गुलाबी</string>
+    <string name="color_name_brown">भूरा</string>
+    <string name="color_name_gray">धूसर</string>
+</resources>

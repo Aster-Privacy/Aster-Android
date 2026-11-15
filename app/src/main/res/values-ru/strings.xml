@@ -3612,4 +3612,7 @@
     <string name="recovery_previous_password_forgot">Не помню</string>
     <string name="recovery_previous_password_use">Ввести прежний пароль</string>
     <string name="recovery_previous_password_skipped_warning">Пароль будет сброшен, а ключи шифрования сохранятся, но останутся заблокированными прежним паролем. Почту нельзя будет прочитать, пока вы не введёте этот пароль в баннере «Восстановить данные».</string>
+    <string name="custom_color">Свой цвет</string>
+    <string name="color_brightness">Яркость</string>
+    <string name="hex_color">Цвет в HEX</string>
 </resources>

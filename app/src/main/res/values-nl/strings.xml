@@ -3570,4 +3570,7 @@
     <string name="recovery_previous_password_forgot">Ik weet het niet meer</string>
     <string name="recovery_previous_password_use">Mijn vorige wachtwoord invoeren</string>
     <string name="recovery_previous_password_skipped_warning">Je wachtwoord wordt gereset en je versleutelingssleutels blijven behouden, maar ze blijven vergrendeld met je vorige wachtwoord. Je e-mail is pas leesbaar nadat je dat wachtwoord invoert via de banner Gegevens herstellen.</string>
+    <string name="custom_color">Aangepaste kleur</string>
+    <string name="color_brightness">Helderheid</string>
+    <string name="hex_color">Hexkleur</string>
 </resources>

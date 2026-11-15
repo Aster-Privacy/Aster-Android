@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">أحمر</string>
+    <string name="color_name_orange">برتقالي</string>
+    <string name="color_name_yellow">أصفر</string>
+    <string name="color_name_green">أخضر</string>
+    <string name="color_name_teal">أزرق مخضر</string>
+    <string name="color_name_blue">أزرق</string>
+    <string name="color_name_purple">أرجواني</string>
+    <string name="color_name_pink">وردي</string>
+    <string name="color_name_brown">بني</string>
+    <string name="color_name_gray">رمادي</string>
+</resources>

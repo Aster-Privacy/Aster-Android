@@ -1,0 +1,12 @@
+<resources>
+    <string name="color_name_red">Vermelho</string>
+    <string name="color_name_orange">Laranja</string>
+    <string name="color_name_yellow">Amarelo</string>
+    <string name="color_name_green">Verde</string>
+    <string name="color_name_teal">Verde-azulado</string>
+    <string name="color_name_blue">Azul</string>
+    <string name="color_name_purple">Roxo</string>
+    <string name="color_name_pink">Rosa</string>
+    <string name="color_name_brown">Marrom</string>
+    <string name="color_name_gray">Cinza</string>
+</resources>

@@ -39,7 +39,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -688,29 +687,15 @@ fun color_picker(
     on_pick: (String) -> Unit,
 ) {
     base_sheet(on_dismiss = on_dismiss, title = stringResource(R.string.mail_rules_pick_color)) {
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            palette.forEach { hex ->
-                val color = try { Color(android.graphics.Color.parseColor(hex)) } catch (_: Throwable) { Color.Gray }
-                val is_selected = hex.equals(selected, ignoreCase = true)
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(color, SquircleShape(999.dp))
-                        .border(
-                            if (is_selected) 3.dp else 0.dp,
-                            AsterMaterial.colors.text_primary,
-                            SquircleShape(999.dp),
-                        )
-                        .clickable { on_pick(hex); on_dismiss() },
-                )
-            }
-        }
+        org.astermail.android.ui.common.color_swatch_row(
+            value = selected,
+            on_pick = { on_pick(it); on_dismiss() },
+            modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            presets = palette,
+            max_swatch_size = 36.dp,
+            test_tag_prefix = "rule_color_swatch",
+            custom_test_tag = "rule_color_custom",
+        )
     }
 }
 

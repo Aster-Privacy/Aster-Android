@@ -3551,4 +3551,7 @@
     <string name="recovery_previous_password_forgot">我不记得了</string>
     <string name="recovery_previous_password_use">输入我之前的密码</string>
     <string name="recovery_previous_password_skipped_warning">你的密码已重置，加密密钥会保留，但仍由之前的密码锁定。在你通过“恢复数据”横幅输入该密码之前，将无法阅读邮件。</string>
+    <string name="custom_color">自定义颜色</string>
+    <string name="color_brightness">亮度</string>
+    <string name="hex_color">十六进制颜色</string>
 </resources>

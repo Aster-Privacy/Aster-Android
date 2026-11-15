@@ -3612,4 +3612,7 @@
     <string name="recovery_previous_password_forgot">Nie pamiętam go</string>
     <string name="recovery_previous_password_use">Wpisz moje poprzednie hasło</string>
     <string name="recovery_previous_password_skipped_warning">Hasło zostanie zresetowane, a klucze szyfrowania zachowane, ale pozostaną zablokowane poprzednim hasłem. Poczty nie da się odczytać, dopóki nie wpiszesz tego hasła w banerze Odzyskaj dane.</string>
+    <string name="custom_color">Własny kolor</string>
+    <string name="color_brightness">Jasność</string>
+    <string name="hex_color">Kolor szesnastkowy</string>
 </resources>

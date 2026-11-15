@@ -221,7 +221,7 @@ fun RuleEditorScreen(
     }
 
     var name by remember(existing) { mutableStateOf(existing?.name ?: "") }
-    var color_hex by remember(existing) { mutableStateOf(existing?.color ?: palette_colors.first()) }
+    var color_hex by remember(existing) { mutableStateOf(existing?.color ?: org.astermail.android.ui.common.default_custom_color) }
     var match_mode by remember(existing) { mutableStateOf(existing?.match_mode ?: MatchMode.ALL) }
     val conditions = remember(existing) {
         mutableStateListOf<Condition>().apply { existing?.conditions?.let { addAll(it) } }
@@ -868,7 +868,7 @@ fun RuleEditorScreen(
         active_sheet.pick_color -> color_picker(
             on_dismiss = { sheet = active_sheet.none },
             selected = color_hex,
-            palette = palette_colors,
+            palette = org.astermail.android.ui.common.display_color_presets,
             on_pick = { color_hex = it },
         )
         active_sheet.pick_match_mode -> options_picker(

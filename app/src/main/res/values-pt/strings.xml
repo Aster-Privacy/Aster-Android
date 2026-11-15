@@ -3589,4 +3589,7 @@
     <string name="recovery_previous_password_forgot">Não me lembro</string>
     <string name="recovery_previous_password_use">Introduzir a minha palavra-passe anterior</string>
     <string name="recovery_previous_password_skipped_warning">A sua palavra-passe é reposta e as suas chaves de encriptação são mantidas, mas continuam bloqueadas com a palavra-passe anterior. Não poderá ler o seu correio até introduzir essa palavra-passe a partir do aviso Recuperar dados.</string>
+    <string name="custom_color">Cor personalizada</string>
+    <string name="color_brightness">Brilho</string>
+    <string name="hex_color">Cor hexadecimal</string>
 </resources>
