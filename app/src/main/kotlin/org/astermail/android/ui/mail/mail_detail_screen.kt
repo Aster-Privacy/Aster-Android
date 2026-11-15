@@ -195,7 +195,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
-import org.astermail.android.looks_encrypted
 import org.astermail.android.labels.as_conversation_member
 import org.astermail.android.subscriptions.MailingListsViewModel
 import org.astermail.android.ui.common.TopToastState
@@ -2474,7 +2473,7 @@ fun MailDetailScreen(
         val folder_items = folder_nodes
             .map { node ->
                 val label = node.label
-                val readable = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                val readable = org.astermail.android.labels.readable_label_name(label)
                 label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
             }
         label_picker_sheet(

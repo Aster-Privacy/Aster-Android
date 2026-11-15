@@ -109,7 +109,8 @@ import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.parse_hex_color_safe
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.folders.is_folder_protected
-import org.astermail.android.looks_encrypted
+import org.astermail.android.labels.readable_label_name
+import org.astermail.android.labels.readable_tag_icon
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.ui.common.page_surface
 
@@ -136,8 +137,7 @@ internal fun detail_custom_folder(item: InboxItem, folders: List<LabelItem>): La
     folders.firstOrNull { label ->
         label.folder_type == "folder" &&
             label.label_token in item.labels &&
-            !label.encrypted_name.isNullOrBlank() &&
-            !looks_encrypted(label.encrypted_name)
+            readable_label_name(label) != null
     }
 
 internal fun detail_system_folder_id(item: InboxItem): String = when {
@@ -243,12 +243,7 @@ internal fun detail_folder_chip(data: detail_folder_chip_data, modifier: Modifie
 internal fun detail_label_chip(tag: TagItem, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
     val tag_color = parse_tag_color(tag.encrypted_color) ?: colors.accent_blue
-    val icon_name = tag.encrypted_icon.orEmpty()
-    val icon_vector = if (icon_name.isNotBlank() && !looks_encrypted(icon_name)) {
-        material_icon_from_name(icon_name)
-    } else {
-        null
-    }
+    val icon_vector = readable_tag_icon(tag)?.let { material_icon_from_name(it) }
     val shape = detail_chip_shape
     val background = chip_background(tag_color, colors.bg_primary, colors.is_dark)
     val content = chip_content(tag_color, background, colors.is_dark)
@@ -333,7 +328,7 @@ internal fun detail_subject_line(
             )
         }
         tags.forEachIndexed { index, tag ->
-            val has_icon = !tag.encrypted_icon.isNullOrBlank() && !looks_encrypted(tag.encrypted_icon)
+            val has_icon = readable_tag_icon(tag) != null
             add(
                 detail_inline_chip(
                     id = "tag_$index",

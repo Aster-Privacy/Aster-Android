@@ -1990,8 +1990,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         pending.pending_reveal_folder_tokens.value = null
         val node = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
             .firstOrNull { it.label.label_token in tokens } ?: return@LaunchedEffect
-        val readable_name = node.label.encrypted_name
-            ?.takeIf { it.isNotBlank() && !looks_encrypted(it) } ?: return@LaunchedEffect
+        val readable_name = org.astermail.android.labels.readable_label_name(node.label) ?: return@LaunchedEffect
         filter_kind = "folder"
         filter_value = node.label.label_token
         filter_name = readable_name
@@ -2204,7 +2203,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         drawer_context,
     ) { folder_nodes.map { node ->
         val label = node.label
-        val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+        val readable_name = org.astermail.android.labels.readable_label_name(label)
         val siblings = folder_index.sibling_group(label.id)
         val sibling_index = siblings.indexOfFirst { it.id == label.id }
         drawer_folder_item(
@@ -2236,14 +2235,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         .filter { it.depth < org.astermail.android.folders.max_folder_depth }
         .mapNotNull { node ->
             val label = node.label
-            val readable_name = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+            val readable_name = org.astermail.android.labels.readable_label_name(label)
                 ?: return@mapNotNull null
             org.astermail.android.ui.drawer.folder_parent_option(
                 token = label.label_token,
                 label = readable_name,
                 depth = node.depth,
                 path_label = folder_index.path(label.label_token)
-                    .filter { it.isNotBlank() && !looks_encrypted(it) }
+                    .filter { it.isNotBlank() }
                     .joinToString(" · "),
                 color = label.encrypted_color?.takeIf { it.startsWith("#") },
             )
@@ -2251,7 +2250,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     val quick_custom_folders = remember(folder_nodes) { folder_nodes
         .mapNotNull { node ->
-            val readable_name = node.label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+            val readable_name = org.astermail.android.labels.readable_label_name(node.label)
                 ?: return@mapNotNull null
             org.astermail.android.ui.mail.quick_folder_node(
                 id = node.label.label_token,
@@ -2305,7 +2304,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 val sibling_index = siblings.indexOfFirst { it.id == tag.id }
                 val color = parse_hex_color_safe(tag.encrypted_color)
                     ?: label_colors[idx % label_colors.size]
-                val icon = tag.encrypted_icon?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                val icon = org.astermail.android.labels.readable_tag_icon(tag)
                 drawer_label_item(
                     id = "tag:${tag.tag_token}",
                     label = org.astermail.android.labels.tag_display_name(tag, label_decrypt_failed),
@@ -2329,7 +2328,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 val own_color = label.encrypted_color?.takeIf { it.startsWith("#") }
                 val color = own_color?.let { parse_hex_color_safe(it) }
                     ?: label_colors[(from_tags.size + idx) % label_colors.size]
-                val icon = label.encrypted_icon?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                val icon = org.astermail.android.labels.readable_label_icon(label)
                 drawer_label_item(
                     id = "label:${label.label_token}",
                     label = label.encrypted_name.orEmpty(),
@@ -2414,8 +2413,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     androidx.compose.runtime.LaunchedEffect(locked_active_folder?.label_token) {
         val label = locked_active_folder ?: return@LaunchedEffect
-        val readable_name = label.encrypted_name
-            ?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+        val readable_name = org.astermail.android.labels.readable_label_name(label)
             ?: drawer_context.getString(R.string.folder_decrypt_failed)
         filter_kind = null
         filter_value = ""
@@ -3127,13 +3125,6 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             on_dismiss = { theme_vm_inbox.clear_first_run_setup() },
         )
     }
-}
-
-internal fun looks_encrypted(value: String?): Boolean {
-    if (value.isNullOrBlank()) return false
-    if (value.length < 20) return false
-    val base64_chars = value.count { it in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" }
-    return base64_chars.toFloat() / value.length > 0.85f
 }
 
 private fun is_detail_swipe(entry: androidx.navigation.NavBackStackEntry): Boolean =

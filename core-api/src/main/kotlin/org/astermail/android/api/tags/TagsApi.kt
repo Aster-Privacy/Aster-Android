@@ -51,6 +51,7 @@ data class TagItem(
     val created_at: String? = null,
     val updated_at: String? = null,
     val parent_token: String? = null,
+    val decryption_failed: Boolean = false,
 )
 
 @Serializable
