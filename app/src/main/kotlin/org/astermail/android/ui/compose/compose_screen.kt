@@ -5819,7 +5819,29 @@ private class RichBodyEditText(context: android.content.Context) : android.widge
         if (id == android.R.id.paste || id == android.R.id.pasteAsPlainText) {
             if (on_paste_clipboard?.invoke() == true) return true
         }
+        if (id == android.R.id.paste && paste_html_with_line_breaks()) return true
         return super.onTextContextMenuItem(id)
+    }
+
+    private fun paste_html_with_line_breaks(): Boolean {
+        val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+            as? android.content.ClipboardManager ?: return false
+        val clip = cm.primaryClip ?: return false
+        val pasted = android.text.SpannableStringBuilder()
+        for (i in 0 until clip.itemCount) {
+            val item = clip.getItemAt(i)
+            if (item.htmlText.isNullOrEmpty()) return false
+            val plain = item.text?.toString() ?: return false
+            if (pasted.isNotEmpty()) pasted.append('\n')
+            pasted.append(merge_paste_line_breaks(item.coerceToStyledText(context), plain))
+        }
+        if (pasted.isEmpty()) return false
+        val editable = text ?: return false
+        val start = minOf(selectionStart, selectionEnd).coerceIn(0, editable.length)
+        val end = maxOf(selectionStart, selectionEnd).coerceIn(0, editable.length)
+        editable.replace(start, end, pasted)
+        setSelection((start + pasted.length).coerceAtMost(editable.length))
+        return true
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
