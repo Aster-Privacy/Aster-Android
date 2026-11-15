@@ -48,6 +48,9 @@ private const val snoozed_page_size = 200
 private const val max_snoozed_pages = 50
 private const val index_removal_chunk = 500
 
+fun resumed_progress(known: Int, total: Int): Int =
+    if (known <= 0 || total <= 0) 0 else minOf(known, total)
+
 fun is_expired_mail(expires_at: String?, now_ms: Long): Boolean {
     val raw = expires_at?.trim().orEmpty()
     if (raw.isEmpty()) return false
@@ -162,8 +165,16 @@ class SearchIndexManager @Inject constructor(
     }
 
     private fun mark_full_build() {
-        runCatching { pause_prefs.edit().putLong(KEY_LAST_FULL_BUILD, System.currentTimeMillis()).apply() }
+        runCatching {
+            pause_prefs.edit()
+                .putLong(KEY_LAST_FULL_BUILD, System.currentTimeMillis())
+                .putBoolean(KEY_INDEX_COMPLETE, true)
+                .apply()
+        }
     }
+
+    private fun has_completed_build(): Boolean =
+        runCatching { pause_prefs.getBoolean(KEY_INDEX_COMPLETE, false) }.getOrDefault(false)
 
     private fun load_poisoned_ids(): MutableSet<String> {
         val recorded_at = runCatching { pause_prefs.getLong(KEY_POISONED_AT, 0L) }.getOrDefault(0L)
@@ -186,6 +197,7 @@ class SearchIndexManager @Inject constructor(
         runCatching {
             pause_prefs.edit()
                 .remove(KEY_LAST_FULL_BUILD)
+                .remove(KEY_INDEX_COMPLETE)
                 .remove(KEY_POISONED_IDS)
                 .remove(KEY_POISONED_AT)
                 .apply()
@@ -497,7 +509,8 @@ class SearchIndexManager @Inject constructor(
             val existing_ids = dao.get_all_ids().toHashSet()
             val start_ids = HashSet(existing_ids)
             val walked_ids = HashSet<String>()
-            val incremental = has_fresh_full_build()
+            val incremental = has_fresh_full_build() && existing_ids.isNotEmpty()
+            val quiet = incremental || (has_completed_build() && existing_ids.isNotEmpty())
             val poisoned_ids = load_poisoned_ids()
             val poisoned_before = poisoned_ids.size
             val poisoned_clock_reset = poisoned_ids.isEmpty()
@@ -507,8 +520,21 @@ class SearchIndexManager @Inject constructor(
             val build_budget_ms = 10 * 60 * 1000L
             var total_target = 0
             var processed = 0
+            var shown = 0
             val started_at = System.currentTimeMillis()
             var walk_complete = true
+            var caught_up = true
+            if (!quiet) {
+                total_target = count_index_target(page_size * max_pages)
+                shown = resumed_progress(start_ids.size, total_target)
+                if (shown > 0 && epoch.get() == my_epoch) {
+                    _index_progress.value = IndexProgress(
+                        indexed = shown,
+                        total = total_target,
+                        started_at_ms = started_at,
+                    )
+                }
+            }
             for (scope in index_scopes) {
                 var cursor: String? = null
                 var page = 0
@@ -524,7 +550,7 @@ class SearchIndexManager @Inject constructor(
                         is_spam = scope.is_spam,
                         skip_total = if (page > 0) true else null,
                     )
-                    if (page == 0 && response.total >= 0) {
+                    if (quiet && page == 0 && response.total >= 0) {
                         total_target += minOf(response.total, max_pages * page_size)
                     }
                     response.items.mapTo(walked_ids) { it.id }
@@ -566,10 +592,11 @@ class SearchIndexManager @Inject constructor(
                         }
                     }
                     processed += response.items.size
-                    if (epoch.get() == my_epoch) {
+                    if (!quiet && epoch.get() == my_epoch) {
+                        shown = maxOf(shown, processed)
                         _index_progress.value = IndexProgress(
-                            indexed = processed,
-                            total = maxOf(total_target, processed),
+                            indexed = shown,
+                            total = maxOf(total_target, shown),
                             started_at_ms = started_at,
                         )
                     }
@@ -577,11 +604,13 @@ class SearchIndexManager @Inject constructor(
                         scope_complete = true
                         break
                     }
+                    if (incremental && new_items.isEmpty()) break
                     if (response.next_cursor == null) break
                     cursor = response.next_cursor
                     page++
                 }
                 if (!scope_complete) walk_complete = false
+                if (!scope_complete && !incremental) caught_up = false
             }
             if (epoch.get() == my_epoch && poisoned_ids.size != poisoned_before) {
                 save_poisoned_ids(poisoned_ids, poisoned_clock_reset)
@@ -595,6 +624,8 @@ class SearchIndexManager @Inject constructor(
             if (epoch.get() == my_epoch && walk_complete) {
                 _index_ready.value = true
                 mark_full_build()
+            } else if (epoch.get() == my_epoch && incremental && caught_up) {
+                _index_ready.value = true
             }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
@@ -610,11 +641,29 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
+    private suspend fun count_index_target(cap: Int): Int {
+        var total = 0
+        for (scope in index_scopes) {
+            val response = mail_api.list_messages(
+                limit = 1,
+                cursor = null,
+                item_type = "received",
+                is_trashed = scope.is_trashed,
+                is_archived = scope.is_archived,
+                is_spam = scope.is_spam,
+                skip_total = null,
+            )
+            if (response.total > 0) total += minOf(response.total, cap)
+        }
+        return total
+    }
+
     private companion object {
         const val KEY_INDEX_PAUSED = "index_paused"
         const val KEY_WINDOW_ABSENCES = "window_absences"
         const val KEY_LAST_INBOX_SYNC = "last_inbox_sync"
         const val KEY_LAST_FULL_BUILD = "last_full_build"
+        const val KEY_INDEX_COMPLETE = "index_complete"
         const val KEY_POISONED_IDS = "poisoned_ids"
         const val KEY_POISONED_AT = "poisoned_at"
         const val FULL_BUILD_FRESH_MS = 6 * 60 * 60 * 1000L
