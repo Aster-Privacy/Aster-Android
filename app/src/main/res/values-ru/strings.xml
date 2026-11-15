@@ -1849,6 +1849,7 @@
     <string name="upgrade_resource_templates">шаблонов</string>
     <string name="upgrade_resource_signatures">подписей</string>
     <string name="upgrade_resource_filters">фильтров</string>
+    <string name="upgrade_resource_labels">папок и меток</string>
     <string name="upgrade_resource_generic">этой функции</string>
     <string name="storage_locked_title">Место закончилось</string>
     <string name="storage_locked_description">Входящие письма будут отклоняться, пока вы не освободите место или не добавите его.</string>

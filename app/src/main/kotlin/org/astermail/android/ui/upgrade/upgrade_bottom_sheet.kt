@@ -98,6 +98,7 @@ private fun limit_key_to_field(key: UpgradeLimitKey): String? = when (key) {
     UpgradeLimitKey.MaxEmailTemplates -> "max_email_templates"
     UpgradeLimitKey.MaxHtmlSignatures -> "max_html_signatures"
     UpgradeLimitKey.MaxCustomFilters -> "max_custom_filters"
+    UpgradeLimitKey.MaxLabels -> "max_labels"
     UpgradeLimitKey.Generic -> null
 }
 
@@ -109,6 +110,7 @@ private fun resource_label_for(key: UpgradeLimitKey, fallback: String?): String 
         UpgradeLimitKey.MaxEmailTemplates -> stringResource(R.string.upgrade_resource_templates)
         UpgradeLimitKey.MaxHtmlSignatures -> stringResource(R.string.upgrade_resource_signatures)
         UpgradeLimitKey.MaxCustomFilters -> stringResource(R.string.upgrade_resource_filters)
+        UpgradeLimitKey.MaxLabels -> stringResource(R.string.upgrade_resource_labels)
         UpgradeLimitKey.Generic -> fallback ?: stringResource(R.string.upgrade_resource_generic)
     }
 }

@@ -1737,6 +1737,7 @@
     <string name="upgrade_resource_templates">टेम्पलेट</string>
     <string name="upgrade_resource_signatures">हस्ताक्षर</string>
     <string name="upgrade_resource_filters">फ़िल्टर</string>
+    <string name="upgrade_resource_labels">फ़ोल्डर और लेबल</string>
     <string name="upgrade_resource_generic">यह सुविधा</string>
     <string name="storage_locked_title">स्टोरेज भर गया है</string>
     <string name="storage_locked_description">जब तक आप जगह खाली नहीं करते या स्टोरेज नहीं बढ़ाते, आने वाली मेल अस्वीकार होती रहेगी।</string>

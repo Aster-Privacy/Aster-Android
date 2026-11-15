@@ -1857,6 +1857,7 @@
     <string name="upgrade_resource_templates">القوالب</string>
     <string name="upgrade_resource_signatures">التواقيع</string>
     <string name="upgrade_resource_filters">عوامل التصفية</string>
+    <string name="upgrade_resource_labels">المجلدات والتصنيفات</string>
     <string name="upgrade_resource_generic">هذه الميزة</string>
     <string name="storage_locked_title">المساحة ممتلئة</string>
     <string name="storage_locked_description">سيتم رفض البريد الوارد حتى تحرّر مساحة أو تضيف تخزينًا.</string>

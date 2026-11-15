@@ -1842,6 +1842,7 @@
     <string name="upgrade_resource_templates">Vorlagen</string>
     <string name="upgrade_resource_signatures">Signaturen</string>
     <string name="upgrade_resource_filters">Filter</string>
+    <string name="upgrade_resource_labels">Ordner und Labels</string>
     <string name="upgrade_resource_generic">diese Funktion</string>
     <string name="storage_locked_title">Speicher ist voll</string>
     <string name="storage_locked_description">Eingehende E-Mails werden abgewiesen, bis Sie Platz schaffen oder Speicher hinzubuchen.</string>

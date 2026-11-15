@@ -1837,6 +1837,7 @@
     <string name="upgrade_resource_templates">模板</string>
     <string name="upgrade_resource_signatures">签名</string>
     <string name="upgrade_resource_filters">过滤器</string>
+    <string name="upgrade_resource_labels">文件夹和标签</string>
     <string name="upgrade_resource_generic">此功能</string>
     <string name="storage_locked_title">空间已满</string>
     <string name="storage_locked_description">在您释放空间或增加容量之前，收到的邮件将被拒收。</string>

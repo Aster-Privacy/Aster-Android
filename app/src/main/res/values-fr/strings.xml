@@ -1974,6 +1974,7 @@
     <string name="upgrade_resource_aliases">alias</string>
     <string name="upgrade_resource_domains">domaines</string>
     <string name="upgrade_resource_filters">filtres</string>
+    <string name="upgrade_resource_labels">dossiers et libellés</string>
     <string name="upgrade_resource_generic">cette fonctionnalité</string>
     <string name="upgrade_resource_signatures">signatures</string>
     <string name="upgrade_resource_templates">modèles</string>

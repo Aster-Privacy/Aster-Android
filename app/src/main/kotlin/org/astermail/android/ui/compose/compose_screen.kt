@@ -1239,6 +1239,9 @@ private fun compose_screen_content(
                         format_file_size(AttachmentLimits.total_max_bytes()),
                     )
             }
+            if (rejection != InlineImageRejection.TOO_MANY && AttachmentLimits.can_upgrade()) {
+                org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit("attachments", null)
+            }
             return@insert false
         }
         val et = body_editor_ref.value

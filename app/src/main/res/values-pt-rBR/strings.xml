@@ -1844,6 +1844,7 @@
     <string name="upgrade_resource_templates">modelos</string>
     <string name="upgrade_resource_signatures">assinaturas</string>
     <string name="upgrade_resource_filters">filtros</string>
+    <string name="upgrade_resource_labels">pastas e etiquetas</string>
     <string name="upgrade_resource_generic">este recurso</string>
     <string name="storage_locked_title">Espaço esgotado</string>
     <string name="storage_locked_description">As mensagens recebidas serão recusadas até você liberar espaço ou adicionar mais.</string>

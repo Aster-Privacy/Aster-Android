@@ -33,6 +33,7 @@ enum class UpgradeLimitKey {
     MaxEmailTemplates,
     MaxHtmlSignatures,
     MaxCustomFilters,
+    MaxLabels,
     Generic,
 }
 
@@ -64,6 +65,10 @@ object UpgradeStore {
         "mail rules" to UpgradeLimitKey.MaxCustomFilters,
         "mail rule" to UpgradeLimitKey.MaxCustomFilters,
         "rules" to UpgradeLimitKey.MaxCustomFilters,
+        "labels" to UpgradeLimitKey.MaxLabels,
+        "label" to UpgradeLimitKey.MaxLabels,
+        "folders" to UpgradeLimitKey.MaxLabels,
+        "folder" to UpgradeLimitKey.MaxLabels,
     )
 
     private val uncapped_resources = setOf("contacts", "contact")

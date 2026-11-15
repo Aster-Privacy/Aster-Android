@@ -1837,6 +1837,7 @@
     <string name="upgrade_resource_templates">テンプレート</string>
     <string name="upgrade_resource_signatures">署名</string>
     <string name="upgrade_resource_filters">フィルタ</string>
+    <string name="upgrade_resource_labels">フォルダとラベル</string>
     <string name="upgrade_resource_generic">この機能</string>
     <string name="storage_locked_title">容量がいっぱいです</string>
     <string name="storage_locked_description">空き容量を作るか容量を追加するまで、受信メールは拒否されます。</string>

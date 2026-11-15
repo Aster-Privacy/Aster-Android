@@ -983,7 +983,8 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         if (response.status.value !in 200..299) {
-            throw client.map_http_status(response.status.value, "")
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
         }
     }
 
