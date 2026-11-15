@@ -114,12 +114,12 @@ function detect_by_script(text) {
 const STOPWORDS = {
   en: ["the", "and", "you", "your", "for", "with", "this", "that", "have", "from", "please", "will", "not", "are", "was", "been", "our", "we", "can", "if"],
   de: ["und", "der", "die", "das", "sie", "ist", "nicht", "mit", "für", "ein", "eine", "auf", "wir", "ihre", "haben", "bitte", "wird", "auch", "dass", "von"],
-  es: ["que", "los", "las", "una", "por", "para", "con", "del", "está", "como", "más", "pero", "este", "esta", "sus", "puede", "hemos", "gracias", "ser", "todo", "hola", "puedes", "tus", "tenemos", "nunca", "además", "muy", "también", "desde", "hasta", "cuando", "donde", "porque", "estamos", "somos", "tienen", "saludo", "usted"],
+  es: ["que", "los", "las", "una", "por", "para", "con", "del", "está", "como", "más", "pero", "este", "esta", "sus", "puede", "hemos", "gracias", "ser", "todo", "hola", "puedes", "tus", "tenemos", "nunca", "ademas", "además", "muy", "también", "tambien", "desde", "hasta", "cuando", "donde", "porque", "estamos", "somos", "tienen", "saludo", "usted"],
   fr: ["les", "des", "une", "vous", "pour", "avec", "dans", "sur", "est", "pas", "votre", "nous", "que", "qui", "plus", "être", "cette", "sont", "merci", "par"],
-  it: ["che", "non", "per", "con", "una", "sono", "questo", "come", "della", "dei", "alla", "più", "tuo", "vostro", "grazie", "essere", "anche", "nella", "delle", "gli"],
+  it: ["che", "non", "per", "con", "una", "sono", "questo", "come", "della", "dei", "alla", "più", "tuo", "vostro", "grazie", "essere", "anche", "nella", "delle", "gli", "il", "è", "sarà", "dalle", "alle", "nostro", "nostra", "ogni", "viene", "gentile", "cordiali", "saluti", "ciao", "questa", "siamo", "abbiamo", "molto", "tutti", "ancora", "perché", "presso"],
   nl: ["een", "het", "van", "niet", "voor", "met", "aan", "zijn", "wij", "uw", "dat", "dit", "maar", "ook", "worden", "heeft", "kunt", "bedankt", "onze", "naar"],
   pl: ["nie", "jest", "się", "oraz", "dla", "przez", "jako", "tego", "które", "wszystkie", "twoje", "proszę", "można", "będzie", "jeśli", "aby", "przy", "tym", "już"],
-  pt: ["que", "não", "para", "com", "uma", "por", "seu", "sua", "está", "como", "mais", "você", "isso", "pelo", "obrigado", "ser", "nós", "são", "das", "dos", "esta", "este", "todo", "pode"],
+  pt: ["que", "não", "para", "com", "uma", "por", "seu", "sua", "está", "como", "mais", "você", "isso", "pelo", "obrigado", "ser", "nós", "são", "das", "dos", "esta", "este", "todo", "pode", "os", "até", "olá", "tudo", "vou", "também", "muito", "obrigada", "seus", "suas", "ao", "às", "é", "nosso", "nossa", "vocês", "então", "hoje", "amanhã", "abraços", "em", "já", "onde", "neste", "nesta", "deste", "desta", "nisso", "vosso", "vossa", "vossos", "vossas", "agradeço", "boa", "bom", "pela", "pelos", "pelas", "foi", "tem", "têm", "há", "estou", "estão", "ainda", "agora", "depois", "lhe", "fazer", "gostaria", "desde", "porque"],
   tr: ["için", "bir", "ile", "olan", "daha", "veya", "bu", "ve", "size", "olarak", "sonra", "kadar", "üzere", "değil", "gibi", "lütfen", "sizin", "her", "çok", "var"],
 };
 
@@ -139,6 +139,20 @@ const DISCRIMINATIVE_STOPWORDS = (function () {
   return discriminative;
 })();
 
+const ORTHOGRAPHY_MARKERS = [
+  { language: "pt", pattern: /[ãõ]/ },
+  { language: "es", pattern: /ñ/ },
+];
+
+function token_language(token) {
+  const stopword = DISCRIMINATIVE_STOPWORDS.get(token);
+  if (stopword) return stopword;
+  for (const marker of ORTHOGRAPHY_MARKERS) {
+    if (marker.pattern.test(token)) return marker.language;
+  }
+  return null;
+}
+
 const TOKEN_SPLIT = /[^\p{L}]+/u;
 
 function detect_by_stopwords(text) {
@@ -146,7 +160,7 @@ function detect_by_stopwords(text) {
   if (tokens.length < 8) return null;
   const scores = new Map();
   for (const token of tokens) {
-    const language = DISCRIMINATIVE_STOPWORDS.get(token);
+    const language = token_language(token);
     if (language) scores.set(language, (scores.get(language) || 0) + 1);
   }
   let top_language = null;
