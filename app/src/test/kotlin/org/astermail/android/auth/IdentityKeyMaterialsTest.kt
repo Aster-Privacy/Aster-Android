@@ -395,4 +395,31 @@ class IdentityKeyMaterialsTest {
         assertTrue(pgp_keys_locked(stale, null, unlocks))
         assertFalse(pgp_keys_locked(null, null, unlocks))
     }
+
+    @Test
+    fun retiring_an_identity_key_puts_it_first_in_previous_keys() {
+        val v = vault("live", listOf("prev_1", "prev_2"))
+
+        retire_identity_key_into_history(v, "live")
+
+        assertEquals(listOf("live", "prev_1", "prev_2"), json_strings(v.optJSONArray("previous_keys")))
+        assertFalse(v.has("legacy_identity_keys"))
+    }
+
+    @Test
+    fun retiring_past_the_limit_moves_overflow_into_legacy_keys() {
+        val existing = (1..MAX_PREVIOUS_IDENTITY_KEYS).map { "prev_$it" }
+        val v = vault("live", existing, listOf("old_legacy"))
+
+        retire_identity_key_into_history(v, "live")
+
+        val previous = json_strings(v.optJSONArray("previous_keys"))
+        assertEquals(MAX_PREVIOUS_IDENTITY_KEYS, previous.size)
+        assertEquals("live", previous.first())
+        assertEquals(
+            listOf("prev_$MAX_PREVIOUS_IDENTITY_KEYS", "old_legacy"),
+            json_strings(v.optJSONArray("legacy_identity_keys")),
+        )
+        assertTrue(vault_identity_key_materials(v).containsAll(existing + "live" + "old_legacy"))
+    }
 }
