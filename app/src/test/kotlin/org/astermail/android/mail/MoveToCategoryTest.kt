@@ -69,6 +69,7 @@ class MoveToCategoryTest {
         every { context.getString(R.string.metadata_undecryptable_change) } returns "Cannot open details"
         every { context.getString(R.string.undo) } returns "Undo"
         repository = mockk(relaxed = true)
+        every { repository.is_conversation_grouping_enabled } returns true
         val folder_cache_store = mockk<FolderCacheStore>(relaxed = true)
         every { folder_cache_store.cached_stats(any()) } returns null
         every { repository.send_result_events } returns kotlinx.coroutines.flow.MutableSharedFlow()
@@ -288,6 +289,31 @@ class MoveToCategoryTest {
         )
         assertEquals("primary", item().category)
         assertTrue(item().raw_item.metadata?.category_pinned == true)
+    }
+
+    @Test
+    fun `moving a message with conversations off pins only that message`() = runTest {
+        every { repository.is_conversation_grouping_enabled } returns false
+        load(
+            deal("a-new", thread = "thread-a", timestamp = "2026-09-30T09:00:00Z"),
+            deal("a-old", thread = "thread-a", timestamp = "2026-09-29T09:00:00Z"),
+        )
+        var thread_lookups = 0
+        coEvery { repository.category_thread_targets(any()) } answers {
+            thread_lookups += 1
+            Result.success(
+                listOf(MailItem(id = "older-a", item_type = "received", encrypted_metadata = "b", metadata_nonce = "n")),
+            )
+        }
+        val calls = record_writes()
+
+        vm.move_to_category("a-new", "primary")
+        advanceUntilIdle()
+
+        assertEquals(listOf(Triple("a-new", "primary", true)), calls)
+        assertEquals("primary", item("a-new").category)
+        assertEquals("promotions", item("a-old").category)
+        assertEquals(0, thread_lookups)
     }
 
     @Test
