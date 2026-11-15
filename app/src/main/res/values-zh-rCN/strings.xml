@@ -3237,6 +3237,7 @@
     <string name="review_no_recovery_email">没有恢复邮箱。</string>
     <string name="review_recovery_email_kept">您的恢复邮箱仍已设置。</string>
     <string name="review_security_desc">您的密码已更改，账户已恢复。</string>
+    <string name="recovered_account_address">你的账户地址是 %1$s。请使用此地址登录。</string>
     <string name="review_security_title">检查您的安全设置</string>
     <string name="review_two_step_off">两步验证已关闭。</string>
     <string name="send_reset_link">发送重置链接</string>

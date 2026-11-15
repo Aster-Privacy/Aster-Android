@@ -3295,6 +3295,7 @@
     <string name="review_no_recovery_email">Brak adresu odzyskiwania.</string>
     <string name="review_recovery_email_kept">Adres odzyskiwania jest nadal ustawiony.</string>
     <string name="review_security_desc">Hasło zostało zmienione, a konto odzyskane.</string>
+    <string name="recovered_account_address">Adres Twojego konta to %1$s. Użyj tego adresu, aby się zalogować.</string>
     <string name="review_security_title">Sprawdź zabezpieczenia</string>
     <string name="review_two_step_off">Weryfikacja dwuetapowa jest wyłączona.</string>
     <string name="send_reset_link">Wyślij link resetujący</string>

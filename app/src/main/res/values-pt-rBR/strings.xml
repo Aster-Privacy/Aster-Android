@@ -3273,6 +3273,7 @@
     <string name="review_no_recovery_email">Sem e-mail de recuperação.</string>
     <string name="review_recovery_email_kept">Seu e-mail de recuperação continua configurado.</string>
     <string name="review_security_desc">Sua senha foi alterada e sua conta foi recuperada.</string>
+    <string name="recovered_account_address">O endereço da sua conta é %1$s. Use este endereço para entrar.</string>
     <string name="review_security_title">Revise sua segurança</string>
     <string name="review_two_step_off">A verificação em duas etapas está desativada.</string>
     <string name="send_reset_link">Enviar link de redefinição</string>

@@ -3256,6 +3256,7 @@
     <string name="review_no_recovery_email">Keine Wiederherstellungs-E-Mail.</string>
     <string name="review_recovery_email_kept">Ihre Wiederherstellungs-E-Mail ist weiterhin festgelegt.</string>
     <string name="review_security_desc">Ihr Passwort wurde geändert und Ihr Konto wurde wiederhergestellt.</string>
+    <string name="recovered_account_address">Ihre Kontoadresse lautet %1$s. Verwenden Sie diese Adresse zum Anmelden.</string>
     <string name="review_security_title">Sicherheit überprüfen</string>
     <string name="review_two_step_off">Die zweistufige Verifizierung ist deaktiviert.</string>
     <string name="send_reset_link">Link zum Zurücksetzen senden</string>
