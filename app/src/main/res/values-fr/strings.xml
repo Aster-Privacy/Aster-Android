@@ -3303,6 +3303,7 @@
     <string name="review_no_recovery_email">Aucun e-mail de récupération.</string>
     <string name="review_recovery_email_kept">Votre e-mail de récupération est toujours défini.</string>
     <string name="review_security_desc">Votre mot de passe a été modifié et votre compte a été récupéré.</string>
+    <string name="recovered_account_address">L\'adresse de votre compte est %1$s. Utilisez cette adresse pour vous connecter.</string>
     <string name="review_security_title">Vérifiez votre sécurité</string>
     <string name="review_two_step_off">La vérification en deux étapes est désactivée.</string>
     <string name="send_reset_link">Envoyer le lien de réinitialisation</string>

@@ -194,6 +194,7 @@
     <string name="recovery_codes_print_note">Each code works once. Keep these codes private. Anyone with a code and your email address can reset your password.</string>
     <string name="codes_copied">Codes copied.</string>
     <string name="i_saved_these_codes">I saved these codes</string>
+    <string name="recovered_account_address">Your account address is %1$s. Use this address to sign in.</string>
     <string name="review_security_title">Review your security</string>
     <string name="review_security_desc">Your password was changed and your account was recovered.</string>
     <string name="review_devices_signed_out">Other devices were signed out.</string>

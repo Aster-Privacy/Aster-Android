@@ -82,7 +82,19 @@ data class RecoveryUiState(
     val needs_previous_password: Boolean = false,
     val previous_password_skipped: Boolean = false,
     val keys_left_locked: Boolean = false,
+    val account_address: String = "",
 )
+
+internal fun parse_recovered_account_address(value: String?): String? {
+    val trimmed = value?.trim()?.lowercase(java.util.Locale.ROOT).orEmpty()
+    val at_index = trimmed.lastIndexOf('@')
+    if (at_index <= 0 || at_index == trimmed.length - 1) return null
+    val username = trimmed.substring(0, at_index)
+    val domain = trimmed.substring(at_index + 1)
+    if (domain != "astermail.org" && domain != "aster.cx") return null
+    if (username.any { it.isWhitespace() || it == '@' }) return null
+    return "$username@$domain"
+}
 
 @HiltViewModel
 class RecoveryViewModel @Inject constructor(
@@ -268,6 +280,8 @@ class RecoveryViewModel @Inject constructor(
                 )
                 recovery_token = response.recovery_token
                 had_recovery_email = !response.encrypted_recovery_email.isNullOrBlank()
+                _state.value = _state.value.copy(account_address = "")
+                adopt_recovered_address(response.account_address)
 
                 withContext(compute_dispatcher) {
                     val recovery_key = decrypt_recovery_key_with_code(
@@ -420,7 +434,7 @@ class RecoveryViewModel @Inject constructor(
                     vault_kdf_iterations = VaultKdf.to_server(VaultKdf.LEVEL2_ITERATIONS),
                 )
                 try {
-                    recovery_api.complete(complete_request)
+                    adopt_recovered_address(recovery_api.complete(complete_request).account_address)
                 } catch (error: ApiError.Conflict) {
                     if (!is_level2_not_admitted(error)) throw error
                     val fallback = withContext(compute_dispatcher) {
@@ -431,12 +445,14 @@ class RecoveryViewModel @Inject constructor(
                             org.astermail.android.api.keys.BoundWriteSwitches.vault(),
                         )
                     }
-                    recovery_api.complete(
-                        complete_request.copy(
-                            new_encrypted_vault = base64_encode(fallback.encrypted_vault),
-                            new_vault_nonce = base64_encode(fallback.vault_nonce),
-                            vault_kdf_iterations = null,
-                        ),
+                    adopt_recovered_address(
+                        recovery_api.complete(
+                            complete_request.copy(
+                                new_encrypted_vault = base64_encode(fallback.encrypted_vault),
+                                new_vault_nonce = base64_encode(fallback.vault_nonce),
+                                vault_kdf_iterations = null,
+                            ),
+                        ).account_address,
                     )
                 } finally {
                     retry_plain.fill(0)
@@ -538,6 +554,14 @@ class RecoveryViewModel @Inject constructor(
             identity_locked = resealed.identity_locked,
         )
     }
+
+    private fun adopt_recovered_address(value: String?) {
+        val address = parse_recovered_account_address(value) ?: return
+        user_email = address
+        _state.value = _state.value.copy(account_address = address, email = address)
+    }
+
+    fun sign_in_email(): String = _state.value.account_address.ifBlank { _state.value.email }
 
     fun go_to_review_security() {
         _state.value = _state.value.copy(

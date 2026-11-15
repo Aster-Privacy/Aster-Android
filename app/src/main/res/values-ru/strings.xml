@@ -3295,6 +3295,7 @@
     <string name="review_no_recovery_email">Резервный адрес не указан.</string>
     <string name="review_recovery_email_kept">Резервный адрес по-прежнему указан.</string>
     <string name="review_security_desc">Пароль изменен, аккаунт восстановлен.</string>
+    <string name="recovered_account_address">Адрес вашего аккаунта: %1$s. Используйте этот адрес для входа.</string>
     <string name="review_security_title">Проверьте безопасность</string>
     <string name="review_two_step_off">Двухэтапная аутентификация отключена.</string>
     <string name="send_reset_link">Отправить ссылку для сброса</string>

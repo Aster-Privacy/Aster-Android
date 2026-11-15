@@ -3237,6 +3237,7 @@
     <string name="review_no_recovery_email">복구 이메일이 없습니다.</string>
     <string name="review_recovery_email_kept">복구 이메일이 그대로 설정되어 있습니다.</string>
     <string name="review_security_desc">비밀번호가 변경되었고 계정이 복구되었습니다.</string>
+    <string name="recovered_account_address">계정 주소는 %1$s입니다. 이 주소로 로그인하세요.</string>
     <string name="review_security_title">보안 검토</string>
     <string name="review_two_step_off">2단계 인증이 꺼져 있습니다.</string>
     <string name="send_reset_link">재설정 링크 보내기</string>

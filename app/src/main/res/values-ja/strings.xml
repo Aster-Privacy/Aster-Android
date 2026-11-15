@@ -3244,6 +3244,7 @@
     <string name="review_no_recovery_email">復旧用メールは設定されていません。</string>
     <string name="review_recovery_email_kept">復旧用メールは設定されたままです。</string>
     <string name="review_security_desc">パスワードが変更され、アカウントが復元されました。</string>
+    <string name="recovered_account_address">アカウントのアドレスは %1$s です。サインインにはこのアドレスを使用してください。</string>
     <string name="review_security_title">セキュリティを確認する</string>
     <string name="review_two_step_off">2 段階認証はオフです。</string>
     <string name="send_reset_link">リセットリンクを送信</string>

@@ -124,6 +124,7 @@ private const val HELP_CENTER_URL = "https://astermail.org/help"
 fun ForgotPasswordScreen(
     on_back: () -> Unit,
     on_submit: (email: String) -> Unit,
+    on_sign_in: (email: String) -> Unit = { on_back() },
     start_with_code: Boolean = false,
     view_model: RecoveryViewModel = hiltViewModel(),
 ) {
@@ -259,7 +260,8 @@ fun ForgotPasswordScreen(
                         )
                         RecoveryStep.review_security -> review_security_step(
                             review = state.review,
-                            on_sign_in = on_back,
+                            account_address = state.account_address,
+                            on_sign_in = { on_sign_in(view_model.sign_in_email()) },
                         )
                     }
                 }
@@ -1229,12 +1231,23 @@ private fun review_row(text: String) {
 @Composable
 private fun review_security_step(
     review: org.astermail.android.auth.RecoveryReview?,
+    account_address: String,
     on_sign_in: () -> Unit,
 ) {
     recovery_step_header(
         title = stringResource(R.string.review_security_title),
         description = stringResource(R.string.review_security_desc),
     )
+
+    if (account_address.isNotBlank()) {
+        Spacer(Modifier.height(AsterSpacing.lg))
+        Text(
+            text = stringResource(R.string.recovered_account_address, account_address),
+            color = AsterMaterial.colors.text_primary,
+            fontSize = 15.sp,
+            lineHeight = 22.sp,
+        )
+    }
 
     Spacer(Modifier.height(AsterSpacing.xl))
 

@@ -3255,6 +3255,7 @@
     <string name="review_no_recovery_email">Geen herstel-e-mail.</string>
     <string name="review_recovery_email_kept">Je herstel-e-mail is nog ingesteld.</string>
     <string name="review_security_desc">Je wachtwoord is gewijzigd en je account is hersteld.</string>
+    <string name="recovered_account_address">Je accountadres is %1$s. Gebruik dit adres om in te loggen.</string>
     <string name="review_security_title">Controleer je beveiliging</string>
     <string name="review_two_step_off">Verificatie in twee stappen staat uit.</string>
     <string name="send_reset_link">Herstellink sturen</string>

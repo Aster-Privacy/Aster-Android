@@ -3147,6 +3147,7 @@
     <string name="review_no_recovery_email">कोई रिकवरी ईमेल नहीं।</string>
     <string name="review_recovery_email_kept">आपका रिकवरी ईमेल अब भी सेट है।</string>
     <string name="review_security_desc">आपका पासवर्ड बदल दिया गया और आपका खाता रिकवर हो गया।</string>
+    <string name="recovered_account_address">आपके खाते का पता %1$s है। साइन इन करने के लिए इसी पते का उपयोग करें।</string>
     <string name="review_security_title">अपनी सुरक्षा जांचें</string>
     <string name="review_two_step_off">2-चरणीय सत्यापन बंद है।</string>
     <string name="send_reset_link">रीसेट लिंक भेजें</string>

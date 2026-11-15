@@ -3335,6 +3335,7 @@
     <string name="review_no_recovery_email">لا يوجد بريد استرداد.</string>
     <string name="review_recovery_email_kept">لا يزال بريد الاسترداد مفعّلًا.</string>
     <string name="review_security_desc">تم تغيير كلمة المرور واسترداد حسابك.</string>
+    <string name="recovered_account_address">عنوان حسابك هو %1$s. استخدم هذا العنوان لتسجيل الدخول.</string>
     <string name="review_security_title">راجع أمان حسابك</string>
     <string name="review_two_step_off">التحقق بخطوتين معطّل.</string>
     <string name="send_reset_link">إرسال رابط إعادة التعيين</string>

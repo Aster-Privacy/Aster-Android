@@ -68,6 +68,7 @@ data class InitiateRecoveryResponse(
     val recovery_token: String,
     val encrypted_recovery_email: String? = null,
     val recovery_email_nonce: String? = null,
+    val account_address: String? = null,
 )
 
 @Serializable
@@ -126,6 +127,7 @@ data class RecoveryEmailReencryption(
 @Serializable
 data class CompleteRecoveryResponse(
     val success: Boolean,
+    val account_address: String? = null,
 )
 
 @Serializable

@@ -3255,6 +3255,7 @@
     <string name="review_no_recovery_email">Kurtarma e-postası yok.</string>
     <string name="review_recovery_email_kept">Kurtarma e-postanız hâlâ ayarlı.</string>
     <string name="review_security_desc">Parolanız değiştirildi ve hesabınız kurtarıldı.</string>
+    <string name="recovered_account_address">Hesap adresiniz %1$s. Oturum açmak için bu adresi kullanın.</string>
     <string name="review_security_title">Güvenliğinizi gözden geçirin</string>
     <string name="review_two_step_off">İki adımlı doğrulama kapalı.</string>
     <string name="send_reset_link">Sıfırlama bağlantısı gönder</string>

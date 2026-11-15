@@ -1027,6 +1027,20 @@ private fun AsterNavHost() {
             ForgotPasswordScreen(
                 on_back = { pop_once(nav_controller) },
                 on_submit = { _ -> pop_once(nav_controller) },
+                on_sign_in = { email ->
+                    if (email.isBlank()) {
+                        pop_once(nav_controller)
+                    } else {
+                        val came_from_sign_in =
+                            nav_controller.previousBackStackEntry?.destination?.route == routes.sign_in_with_email
+                        nav_controller.navigate(routes.sign_in_for(email)) {
+                            popUpTo(if (came_from_sign_in) routes.sign_in_with_email else routes.forgot_password) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                },
             )
         }
         composable(routes.inbox) {

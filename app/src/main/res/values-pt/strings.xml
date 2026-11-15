@@ -3274,6 +3274,7 @@
     <string name="review_no_recovery_email">Sem e-mail de recuperação.</string>
     <string name="review_recovery_email_kept">O seu e-mail de recuperação continua definido.</string>
     <string name="review_security_desc">A sua palavra-passe foi alterada e a sua conta foi recuperada.</string>
+    <string name="recovered_account_address">O endereço da sua conta é %1$s. Utilize este endereço para iniciar sessão.</string>
     <string name="review_security_title">Reveja a sua segurança</string>
     <string name="review_two_step_off">A verificação em dois passos está desativada.</string>
     <string name="send_reset_link">Enviar ligação de reposição</string>
