@@ -126,6 +126,13 @@ internal fun build_email_print_body(
 private fun print_meta_row(label: String, value: String): String =
     "<tr><th>${escape_print_text(label)}</th><td>${escape_print_text(value)}</td></tr>"
 
+internal const val PRINT_OVERRIDE_STYLE =
+    "<style>:root{color-scheme:light only;}" +
+        "html,body{height:auto!important;min-height:0!important;max-height:none!important;" +
+        "overflow:visible!important;position:static!important;background:#fff!important;}" +
+        ".aster-print-body{overflow:visible!important;height:auto!important;}" +
+        ".aster-print-body img{max-width:100%!important;height:auto;}</style>"
+
 internal fun build_email_print_html(
     msg: ThreadMessage,
     subject: String,
@@ -162,7 +169,9 @@ internal fun build_email_print_html(
         append("</table></header><hr class=\"aster-print-rule\"/>")
         append("<div class=\"aster-print-body\">")
         append(body_html)
-        append("</div></body></html>")
+        append("</div>")
+        append(PRINT_OVERRIDE_STYLE)
+        append("</body></html>")
     }
 }
 

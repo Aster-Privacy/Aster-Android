@@ -93,6 +93,21 @@ class EmailPrintDocumentTest {
     }
 
     @Test
+    fun print_overrides_follow_the_email_styles_so_the_whole_body_prints() {
+        val clipping_body = "<style>html,body{height:100%!important;overflow:hidden!important}</style><p>END_MARKER</p>"
+        val html = build_email_print_html(message(), "Long", "today", labels, clipping_body)
+        val email_style = html.indexOf("overflow:hidden!important")
+        val override = html.indexOf(PRINT_OVERRIDE_STYLE)
+        assertTrue(email_style >= 0)
+        assertTrue(override > email_style)
+        assertTrue(override > html.indexOf("END_MARKER"))
+        assertTrue(PRINT_OVERRIDE_STYLE.contains("overflow:visible!important"))
+        assertTrue(PRINT_OVERRIDE_STYLE.contains("height:auto!important"))
+        assertTrue(PRINT_OVERRIDE_STYLE.contains("color-scheme:light only"))
+        assertTrue(html.endsWith(PRINT_OVERRIDE_STYLE + "</body></html>"))
+    }
+
+    @Test
     fun recipients_fall_back_to_the_to_label_and_empty_cc_is_omitted() {
         val html = build_email_print_html(message(to = emptyList(), to_label = "Team"), "Hi", "today", labels, "")
 
