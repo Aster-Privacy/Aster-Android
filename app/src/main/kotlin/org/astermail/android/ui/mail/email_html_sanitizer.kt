@@ -669,7 +669,7 @@ object EmailHtmlSanitizer {
     private val html_open_regex = Regex("<html\\b[^>]*>", RegexOption.IGNORE_CASE)
     private val style_or_title_block_regex = Regex("<(style|title)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE)
     private val document_shell_tag_regex = Regex("</?(head|meta|link|title|base|style)\\b[^>]*>", RegexOption.IGNORE_CASE)
-    private val mso_conditional_regex = Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val mso_conditional_regex = Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?--!?>", RegexOption.IGNORE_CASE)
     private val mso_downlevel_open_regex = Regex("<!--\\[if\\s!mso\\]><!-->\\s*", RegexOption.IGNORE_CASE)
     private val mso_downlevel_close_regex = Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
     private val mso_downlevel_empty_regex = Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE)
