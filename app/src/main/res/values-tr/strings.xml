@@ -1841,6 +1841,7 @@
     <string name="upgrade_resource_templates">şablon</string>
     <string name="upgrade_resource_signatures">imza</string>
     <string name="upgrade_resource_filters">filtre</string>
+    <string name="upgrade_resource_labels">klasör ve etiket</string>
     <string name="upgrade_resource_generic">bu özellik</string>
     <string name="storage_locked_title">Depolama doldu</string>
     <string name="storage_locked_description">Yer açana veya depolama ekleyene kadar gelen postalar reddedilecek.</string>

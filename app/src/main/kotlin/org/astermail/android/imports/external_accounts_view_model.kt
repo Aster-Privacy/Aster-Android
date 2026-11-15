@@ -182,6 +182,8 @@ class ExternalAccountsViewModel @Inject constructor(
                 _state.value = _state.value.copy(authorize_url = response.authorize_url)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
+            } catch (limit: org.astermail.android.api.ApiError.PlanLimitExceeded) {
+                _state.value = _state.value.copy(connecting_provider = null)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.OAUTH_FAILED)
             } finally {
@@ -290,6 +292,8 @@ class ExternalAccountsViewModel @Inject constructor(
                 trigger_sync(token)
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (limit: org.astermail.android.api.ApiError.PlanLimitExceeded) {
+                _state.value = _state.value.copy(manual_submitting = false)
             } catch (t: Throwable) {
                 _state.value = _state.value.copy(manual_submitting = false, error = ExternalAccountsError.MANUAL_FAILED)
             } finally {

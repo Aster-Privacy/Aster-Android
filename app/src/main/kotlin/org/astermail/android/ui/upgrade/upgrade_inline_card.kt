@@ -73,6 +73,7 @@ fun UpgradeInlineCard(
         UpgradeLimitKey.MaxEmailTemplates -> "max_email_templates"
         UpgradeLimitKey.MaxHtmlSignatures -> "max_html_signatures"
         UpgradeLimitKey.MaxCustomFilters -> "max_custom_filters"
+        UpgradeLimitKey.MaxLabels -> "max_labels"
         UpgradeLimitKey.Generic -> return
     }
     val info = limits[field] ?: return

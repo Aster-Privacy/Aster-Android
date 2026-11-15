@@ -1964,6 +1964,7 @@
     <string name="upgrade_resource_templates">templates</string>
     <string name="upgrade_resource_signatures">signatures</string>
     <string name="upgrade_resource_filters">filters</string>
+    <string name="upgrade_resource_labels">folders and labels</string>
     <string name="upgrade_resource_generic">this feature</string>
     <string name="storage_locked_title">Storage is full</string>
     <string name="storage_locked_description">Incoming mail will be rejected until you free up space or add storage.</string>

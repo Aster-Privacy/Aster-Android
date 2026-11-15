@@ -1837,6 +1837,7 @@
     <string name="upgrade_resource_templates">템플릿</string>
     <string name="upgrade_resource_signatures">서명</string>
     <string name="upgrade_resource_filters">필터</string>
+    <string name="upgrade_resource_labels">폴더 및 라벨</string>
     <string name="upgrade_resource_generic">이 기능</string>
     <string name="storage_locked_title">저장 공간이 가득 찼습니다</string>
     <string name="storage_locked_description">공간을 확보하거나 저장 공간을 추가할 때까지 수신 메일이 거부됩니다.</string>

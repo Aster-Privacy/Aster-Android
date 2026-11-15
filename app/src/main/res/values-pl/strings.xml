@@ -1849,6 +1849,7 @@
     <string name="upgrade_resource_templates">szablonów</string>
     <string name="upgrade_resource_signatures">podpisów</string>
     <string name="upgrade_resource_filters">filtrów</string>
+    <string name="upgrade_resource_labels">folderów i etykiet</string>
     <string name="upgrade_resource_generic">tej funkcji</string>
     <string name="storage_locked_title">Brak miejsca</string>
     <string name="storage_locked_description">Przychodzące wiadomości będą odrzucane, dopóki nie zwolnisz miejsca lub go nie dokupisz.</string>

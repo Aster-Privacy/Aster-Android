@@ -1841,6 +1841,7 @@
     <string name="upgrade_resource_templates">sjablonen</string>
     <string name="upgrade_resource_signatures">handtekeningen</string>
     <string name="upgrade_resource_filters">filters</string>
+    <string name="upgrade_resource_labels">mappen en labels</string>
     <string name="upgrade_resource_generic">deze functie</string>
     <string name="storage_locked_title">Opslag is vol</string>
     <string name="storage_locked_description">Inkomende mail wordt geweigerd tot je ruimte vrijmaakt of opslag bijkoopt.</string>

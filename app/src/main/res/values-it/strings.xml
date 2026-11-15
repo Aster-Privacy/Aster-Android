@@ -1845,6 +1845,7 @@
     <string name="upgrade_resource_templates">modelli</string>
     <string name="upgrade_resource_signatures">firme</string>
     <string name="upgrade_resource_filters">filtri</string>
+    <string name="upgrade_resource_labels">cartelle ed etichette</string>
     <string name="upgrade_resource_generic">questa funzione</string>
     <string name="storage_locked_title">Spazio esaurito</string>
     <string name="storage_locked_description">La posta in arrivo verrà respinta finché non liberi spazio o ne aggiungi.</string>

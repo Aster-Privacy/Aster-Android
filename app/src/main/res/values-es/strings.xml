@@ -1846,6 +1846,7 @@
     <string name="upgrade_resource_templates">plantillas</string>
     <string name="upgrade_resource_signatures">firmas</string>
     <string name="upgrade_resource_filters">filtros</string>
+    <string name="upgrade_resource_labels">carpetas y etiquetas</string>
     <string name="upgrade_resource_generic">esta función</string>
     <string name="storage_locked_title">Almacenamiento lleno</string>
     <string name="storage_locked_description">El correo entrante se rechazará hasta que liberes espacio o amplíes el almacenamiento.</string>

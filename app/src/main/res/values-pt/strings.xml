@@ -1845,6 +1845,7 @@
     <string name="upgrade_resource_templates">modelos</string>
     <string name="upgrade_resource_signatures">assinaturas</string>
     <string name="upgrade_resource_filters">filtros</string>
+    <string name="upgrade_resource_labels">pastas e etiquetas</string>
     <string name="upgrade_resource_generic">esta funcionalidade</string>
     <string name="storage_locked_title">O armazenamento está cheio</string>
     <string name="storage_locked_description">O correio recebido será rejeitado até libertar espaço ou adicionar armazenamento.</string>
