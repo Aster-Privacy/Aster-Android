@@ -36,7 +36,7 @@ import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 import org.json.JSONArray
 import org.json.JSONObject
 
-const val MAX_PREVIOUS_IDENTITY_KEYS = 10
+const val MAX_PREVIOUS_IDENTITY_KEYS = 32
 const val MAX_LEGACY_IDENTITY_KEYS = 32
 
 data class RecoveredIdentityKeys(
@@ -83,6 +83,17 @@ fun replace_vault_identity_key(vault: JSONObject, identity_key: String) {
         vault.put("legacy_identity_keys", JSONArray(unique_non_empty(retained).take(MAX_LEGACY_IDENTITY_KEYS)))
     }
     vault.put("identity_key", identity_key)
+}
+
+fun retire_identity_key_into_history(vault: JSONObject, retired_identity_key: String) {
+    if (retired_identity_key.isEmpty()) return
+    val ordered = unique_non_empty(listOf(retired_identity_key) + json_strings(vault.optJSONArray("previous_keys")))
+    val kept = ordered.take(MAX_PREVIOUS_IDENTITY_KEYS)
+    val overflow = ordered.drop(kept.size)
+    vault.put("previous_keys", JSONArray(kept))
+    if (overflow.isEmpty()) return
+    val legacy = unique_non_empty(overflow + json_strings(vault.optJSONArray("legacy_identity_keys")))
+    vault.put("legacy_identity_keys", JSONArray(legacy.take(MAX_LEGACY_IDENTITY_KEYS)))
 }
 
 private fun read_secret_ring(armored: String): PGPSecretKeyRing =

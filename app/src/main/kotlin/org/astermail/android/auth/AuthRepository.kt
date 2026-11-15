@@ -1663,13 +1663,7 @@ class AuthRepository @Inject constructor(
 
             val current_identity = vault_obj.optString("identity_private_key", "")
             if (current_identity.isNotBlank()) {
-                val previous = vault_obj.optJSONArray("previous_keys") ?: org.json.JSONArray()
-                val rotated = org.json.JSONArray().put(current_identity)
-                for (i in 0 until previous.length()) {
-                    if (rotated.length() >= 10) break
-                    rotated.put(previous.getString(i))
-                }
-                vault_obj.put("previous_keys", rotated)
+                retire_identity_key_into_history(vault_obj, current_identity)
             }
 
             val old_pgp_passphrase = passphrase_chars(current_password_bytes)
