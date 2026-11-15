@@ -371,7 +371,7 @@ fun extract_email_details(
     locale: Locale = Locale.getDefault(),
 ): EmailExtractionResult {
     val clean_subject = decode_basic_entities(subject)
-    val clean_text = normalize_email_text(body_text, body_html)
+    val clean_text = own_message_text(clean_subject, body_text, body_html)
     val is_purchase = is_purchase_email(clean_subject, clean_text)
     val is_shipping = is_shipping_email(clean_subject, clean_text)
     return EmailExtractionResult(

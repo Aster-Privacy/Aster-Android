@@ -53,6 +53,7 @@ import org.astermail.android.mail.extraction.detect_shipping_status
 import org.astermail.android.mail.extraction.extract_estimated_delivery
 import org.astermail.android.mail.extraction.is_purchase_email
 import org.astermail.android.mail.extraction.is_shipping_email
+import org.astermail.android.mail.extraction.own_preview_text
 
 internal class inbox_order_hint(
     val is_shipping: Boolean,
@@ -69,8 +70,9 @@ private val inbox_order_cache = object : LinkedHashMap<String, inbox_order_cache
         size > inbox_order_cache_limit
 }
 
-internal fun detect_inbox_order_hint(subject: String, preview: String): inbox_order_hint? {
-    if (subject.isBlank() && preview.isBlank()) return null
+internal fun detect_inbox_order_hint(subject: String, full_preview: String): inbox_order_hint? {
+    if (subject.isBlank() && full_preview.isBlank()) return null
+    val preview = own_preview_text(subject, full_preview)
     val shipping = is_shipping_email(subject, preview)
     val purchase = !shipping && is_purchase_email(subject, preview)
     if (!shipping && !purchase) return null
