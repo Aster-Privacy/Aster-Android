@@ -8072,6 +8072,10 @@ internal fun is_server_rejection(err: Throwable): Boolean = when (err) {
 }
 
 private const val SENDER_NOT_AUTHORIZED_CODE = "SENDER_NOT_AUTHORIZED"
+internal const val ALIAS_SENDING_DISABLED_CODE = "ALIAS_SENDING_DISABLED"
+
+internal fun is_alias_sending_disabled(err: Throwable): Boolean =
+    err is org.astermail.android.api.ApiError.ForbiddenError && err.code == ALIAS_SENDING_DISABLED_CODE
 private const val GENERIC_FORBIDDEN_CODE = "FORBIDDEN"
 
 private val legacy_sender_refusal_details = setOf(
@@ -8108,6 +8112,7 @@ enum class SendFailureReason(val code: String) {
     WEAK_PASSWORD("weak_password"),
     ENCRYPTION("encryption"),
     SENDER_REFUSED("sender_refused"),
+    SENDING_DISABLED("sending_disabled"),
     REJECTED("rejected"),
     CONNECTION("connection"),
     ATTACHMENT("attachment"),
@@ -8145,6 +8150,7 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
         SendFailureReason.POST_QUANTUM
     has_cause(err) { it is org.astermail.android.mail.ratchet.RatchetIdentityPinException } ->
         SendFailureReason.IDENTITY_CHANGED
+    has_cause(err) { is_alias_sending_disabled(it) } -> SendFailureReason.SENDING_DISABLED
     has_cause(err) { is_sender_refusal(it) } -> SendFailureReason.SENDER_REFUSED
     server_rejection_cause(err) != null -> SendFailureReason.REJECTED
     is_transient_send_cause(err) || has_retryable_api_cause(err) -> SendFailureReason.CONNECTION

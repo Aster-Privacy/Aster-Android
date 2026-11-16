@@ -3556,4 +3556,17 @@
     <string name="custom_color">自定义颜色</string>
     <string name="color_brightness">亮度</string>
     <string name="hex_color">十六进制颜色</string>
+    <string name="alias_sending_tab">发送</string>
+    <string name="alias_sending_disabled_title">已停用发送的别名</string>
+    <string name="alias_sending_disabled_description">关闭某个别名的发送功能后，将不会再从该别名发出邮件。该别名仍会接收邮件。</string>
+    <string name="alias_sending_empty">你还没有别名或域名地址。</string>
+    <string name="alias_sending_no_match">没有与搜索匹配的别名。</string>
+    <string name="alias_sending_allowed">允许发送</string>
+    <string name="alias_sending_disabled">已停用发送</string>
+    <string name="alias_sending_allow_a11y">允许从 %1$s 发送</string>
+    <string name="alias_sending_update_failed">无法更新此别名的发送设置。请重试。</string>
+    <string name="reply_from_mismatch_banner">这封邮件是通过 %1$s 收到的，但你的回复将从 %2$s 发送。</string>
+    <string name="reply_from_mismatch_send_from">从 %1$s 发送</string>
+    <string name="reply_from_mismatch_dismiss">关闭</string>
+    <string name="error_alias_sending_disabled">已停用从此别名发送。请先启用。</string>
 </resources>

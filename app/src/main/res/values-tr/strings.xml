@@ -3575,4 +3575,17 @@
     <string name="custom_color">Özel renk</string>
     <string name="color_brightness">Parlaklık</string>
     <string name="hex_color">Onaltılık renk</string>
+    <string name="alias_sending_tab">Gönderme</string>
+    <string name="alias_sending_disabled_title">Gönderimi kapalı takma adlar</string>
+    <string name="alias_sending_disabled_description">Bir takma addan e-posta gönderilmesini durdurmak için gönderimi kapatın. Takma ad e-posta almaya devam eder.</string>
+    <string name="alias_sending_empty">Henüz takma adınız veya alan adı adresiniz yok.</string>
+    <string name="alias_sending_no_match">Aramanızla eşleşen takma ad yok.</string>
+    <string name="alias_sending_allowed">Gönderime izin verildi</string>
+    <string name="alias_sending_disabled">Gönderim kapalı</string>
+    <string name="alias_sending_allow_a11y">%1$s adresinden gönderime izin ver</string>
+    <string name="alias_sending_update_failed">Bu takma adın gönderim ayarı güncellenemedi. Tekrar deneyin.</string>
+    <string name="reply_from_mismatch_banner">Bu e-posta %1$s adresine geldi, ancak yanıtınız %2$s adresinden gönderilecek.</string>
+    <string name="reply_from_mismatch_send_from">%1$s adresinden gönder</string>
+    <string name="reply_from_mismatch_dismiss">Kapat</string>
+    <string name="error_alias_sending_disabled">Bu takma addan gönderim kapalı. Önce etkinleştirin.</string>
 </resources>

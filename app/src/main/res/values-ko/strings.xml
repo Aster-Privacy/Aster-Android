@@ -3556,4 +3556,17 @@
     <string name="custom_color">사용자 지정 색상</string>
     <string name="color_brightness">밝기</string>
     <string name="hex_color">16진수 색상</string>
+    <string name="alias_sending_tab">보내기</string>
+    <string name="alias_sending_disabled_title">보내기가 꺼진 별칭</string>
+    <string name="alias_sending_disabled_description">별칭의 보내기를 끄면 해당 별칭에서 메일이 발송되지 않습니다. 별칭은 계속 메일을 받습니다.</string>
+    <string name="alias_sending_empty">아직 별칭이나 도메인 주소가 없습니다.</string>
+    <string name="alias_sending_no_match">검색과 일치하는 별칭이 없습니다.</string>
+    <string name="alias_sending_allowed">보내기 허용됨</string>
+    <string name="alias_sending_disabled">보내기 꺼짐</string>
+    <string name="alias_sending_allow_a11y">%1$s에서 보내기 허용</string>
+    <string name="alias_sending_update_failed">이 별칭의 보내기 설정을 업데이트하지 못했습니다. 다시 시도하세요.</string>
+    <string name="reply_from_mismatch_banner">이 이메일은 %1$s(으)로 받았지만 답장은 %2$s에서 보내집니다.</string>
+    <string name="reply_from_mismatch_send_from">%1$s에서 보내기</string>
+    <string name="reply_from_mismatch_dismiss">닫기</string>
+    <string name="error_alias_sending_disabled">이 별칭에서 보내기가 꺼져 있습니다. 먼저 켜세요.</string>
 </resources>

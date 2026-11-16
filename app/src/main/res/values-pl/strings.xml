@@ -3617,4 +3617,17 @@
     <string name="custom_color">Własny kolor</string>
     <string name="color_brightness">Jasność</string>
     <string name="hex_color">Kolor szesnastkowy</string>
+    <string name="alias_sending_tab">Wysyłanie</string>
+    <string name="alias_sending_disabled_title">Aliasy z wyłączonym wysyłaniem</string>
+    <string name="alias_sending_disabled_description">Wyłącz wysyłanie dla aliasu, aby nie wychodziła z niego żadna poczta. Alias nadal odbiera pocztę.</string>
+    <string name="alias_sending_empty">Nie masz jeszcze aliasów ani adresów domenowych.</string>
+    <string name="alias_sending_no_match">Żaden alias nie pasuje do wyszukiwania.</string>
+    <string name="alias_sending_allowed">Wysyłanie dozwolone</string>
+    <string name="alias_sending_disabled">Wysyłanie wyłączone</string>
+    <string name="alias_sending_allow_a11y">Zezwól na wysyłanie z %1$s</string>
+    <string name="alias_sending_update_failed">Nie udało się zaktualizować wysyłania dla tego aliasu. Spróbuj ponownie.</string>
+    <string name="reply_from_mismatch_banner">Ten e-mail został odebrany na %1$s, ale odpowiedź zostanie wysłana z %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Wyślij z %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Zamknij</string>
+    <string name="error_alias_sending_disabled">Wysyłanie z tego aliasu jest wyłączone. Najpierw je włącz.</string>
 </resources>

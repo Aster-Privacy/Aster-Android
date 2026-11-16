@@ -241,6 +241,13 @@ data class SettingsUiState(
     val twin_address_verified: Boolean = false,
     val aliases_loaded: Boolean = false,
     val custom_domain_addresses_loaded: Boolean = false,
+    val ghost_aliases_settled: Boolean = false,
+    val aliases_settled: Boolean = false,
+    val custom_domain_addresses_settled: Boolean = false,
+    val sending_blocked_alias_ids: Set<String> = emptySet(),
+    val sending_blocked_domain_address_ids: Set<String> = emptySet(),
+    val sending_blocks_loaded: Boolean = false,
+    val sending_block_pending_ids: Set<String> = emptySet(),
     val expanded_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
@@ -1351,6 +1358,7 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         if (!force && last_aliases_load_ms != 0L && now - last_aliases_load_ms < LIST_TTL_MS) return
         last_aliases_load_ms = now
+        load_sending_blocks()
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, aliases_loading = true, error = null)
             try {
@@ -1400,6 +1408,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     aliases = decrypted,
                     aliases_loaded = true,
+                    aliases_settled = true,
                     max_aliases = max_aliases,
                     is_loading = false,
                     aliases_loading = false,
@@ -1411,6 +1420,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_loading = false,
                     aliases_loading = false,
+                    aliases_settled = true,
                     error = user_facing_error(t),
                 )
             }
@@ -1448,9 +1458,11 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     custom_domain_addresses = decrypted,
                     custom_domain_addresses_loaded = true,
+                    custom_domain_addresses_settled = true,
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(custom_domain_addresses_settled = true) }
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_custom_domain_addresses failed", t)
                 }
@@ -1774,6 +1786,78 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                 )
+            }
+        }
+    }
+
+    fun load_sending_blocks() {
+        viewModelScope.launch {
+            try {
+                apply_sending_blocks(settings_api.get_sending_blocks())
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SettingsVM", "load_sending_blocks failed", t)
+                }
+            }
+        }
+    }
+
+    private fun apply_sending_blocks(response: org.astermail.android.api.settings.SendingBlocksResponse) {
+        _state.update { s ->
+            s.copy(
+                sending_blocked_alias_ids = response.alias_ids.toSet(),
+                sending_blocked_domain_address_ids = response.domain_address_ids.toSet(),
+                sending_blocks_loaded = true,
+            )
+        }
+    }
+
+    fun set_sending_disabled(kind: String, id: String, disabled: Boolean) {
+        if (id in _state.value.sending_block_pending_ids) return
+        val previous_aliases = _state.value.sending_blocked_alias_ids
+        val previous_domain = _state.value.sending_blocked_domain_address_ids
+        _state.update { s ->
+            val toggle: (Set<String>) -> Set<String> = { ids -> if (disabled) ids + id else ids - id }
+            s.copy(
+                sending_blocked_alias_ids = if (kind == org.astermail.android.api.settings.sending_block_kind_alias) {
+                    toggle(s.sending_blocked_alias_ids)
+                } else {
+                    s.sending_blocked_alias_ids
+                },
+                sending_blocked_domain_address_ids = if (kind == org.astermail.android.api.settings.sending_block_kind_domain_address) {
+                    toggle(s.sending_blocked_domain_address_ids)
+                } else {
+                    s.sending_blocked_domain_address_ids
+                },
+                sending_block_pending_ids = s.sending_block_pending_ids + id,
+            )
+        }
+        viewModelScope.launch {
+            try {
+                val response = settings_api.update_sending_blocks(
+                    org.astermail.android.api.settings.UpdateSendingBlocksRequest(
+                        changes = listOf(
+                            org.astermail.android.api.settings.SendingBlockChange(
+                                kind = kind,
+                                id = id,
+                                sending_disabled = disabled,
+                            ),
+                        ),
+                    ),
+                )
+                apply_sending_blocks(response)
+                _state.update { s -> s.copy(sending_block_pending_ids = s.sending_block_pending_ids - id) }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        sending_blocked_alias_ids = previous_aliases,
+                        sending_blocked_domain_address_ids = previous_domain,
+                        sending_block_pending_ids = s.sending_block_pending_ids - id,
+                        action_result = context.getString(R.string.alias_sending_update_failed),
+                    )
+                }
             }
         }
     }
@@ -6168,11 +6252,16 @@ class SettingsViewModel @Inject constructor(
                 val response = ghost_alias_api.list_ghost_aliases()
                 val decrypted = response.aliases.map { with_ghost_alias_hash(decrypt_ghost_alias(it)) }
                 prime_own_ghost_avatars(decrypted)
-                _state.value = _state.value.copy(ghost_aliases = decrypted, is_loading = false)
+                _state.value = _state.value.copy(
+                    ghost_aliases = decrypted,
+                    ghost_aliases_settled = true,
+                    is_loading = false,
+                )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     is_loading = false,
+                    ghost_aliases_settled = true,
                     error = user_facing_error(t),
                 )
             }

@@ -159,6 +159,7 @@ private fun tab_labels_computed(): List<String> = listOf(
     stringResource(R.string.aliases_tab_directories),
     stringResource(R.string.ghost_aliases),
     stringResource(R.string.aliases_tab_preferences),
+    stringResource(R.string.alias_sending_tab),
 )
 
 @Composable
@@ -223,6 +224,10 @@ fun AliasesScreen(
             1 -> vm.load_directories()
             2 -> vm.load_ghost_aliases()
             3 -> vm.load_alias_preferences()
+            4 -> {
+                vm.load_custom_domain_addresses()
+                vm.load_sending_blocks()
+            }
         }
     }
 
@@ -380,6 +385,9 @@ fun AliasesScreen(
                         state = state,
                         premium_domains_allowed = premium_domains_allowed,
                     )
+                }
+                4 -> tab_scroll {
+                    alias_sending_tab(vm = vm, state = state)
                 }
             }
         }

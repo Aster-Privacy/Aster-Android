@@ -3658,4 +3658,17 @@
     <string name="custom_color">لون مخصص</string>
     <string name="color_brightness">السطوع</string>
     <string name="hex_color">لون سداسي عشري</string>
+    <string name="alias_sending_tab">الإرسال</string>
+    <string name="alias_sending_disabled_title">الأسماء المستعارة المعطّل إرسالها</string>
+    <string name="alias_sending_disabled_description">أوقف الإرسال لاسم مستعار حتى لا تخرج منه أي رسائل. يظل الاسم المستعار يستقبل البريد.</string>
+    <string name="alias_sending_empty">ليس لديك أسماء مستعارة أو عناوين نطاق بعد.</string>
+    <string name="alias_sending_no_match">لا توجد أسماء مستعارة تطابق بحثك.</string>
+    <string name="alias_sending_allowed">الإرسال مسموح</string>
+    <string name="alias_sending_disabled">الإرسال معطّل</string>
+    <string name="alias_sending_allow_a11y">السماح بالإرسال من %1$s</string>
+    <string name="alias_sending_update_failed">تعذّر تحديث الإرسال لهذا الاسم المستعار. حاول مرة أخرى.</string>
+    <string name="reply_from_mismatch_banner">تم استلام هذه الرسالة على %1$s، لكن ردك سيُرسل من %2$s.</string>
+    <string name="reply_from_mismatch_send_from">الإرسال من %1$s</string>
+    <string name="reply_from_mismatch_dismiss">إغلاق</string>
+    <string name="error_alias_sending_disabled">الإرسال من هذا الاسم المستعار معطّل. فعّله أولاً.</string>
 </resources>

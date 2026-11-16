@@ -3575,4 +3575,17 @@
     <string name="custom_color">Aangepaste kleur</string>
     <string name="color_brightness">Helderheid</string>
     <string name="hex_color">Hexkleur</string>
+    <string name="alias_sending_tab">Verzenden</string>
+    <string name="alias_sending_disabled_title">Aliassen met verzenden uitgeschakeld</string>
+    <string name="alias_sending_disabled_description">Schakel verzenden uit voor een alias om te voorkomen dat er mail vanaf wordt verstuurd. De alias blijft mail ontvangen.</string>
+    <string name="alias_sending_empty">Je hebt nog geen aliassen of domeinadressen.</string>
+    <string name="alias_sending_no_match">Geen aliassen komen overeen met je zoekopdracht.</string>
+    <string name="alias_sending_allowed">Verzenden toegestaan</string>
+    <string name="alias_sending_disabled">Verzenden uitgeschakeld</string>
+    <string name="alias_sending_allow_a11y">Verzenden vanaf %1$s toestaan</string>
+    <string name="alias_sending_update_failed">Kan verzenden voor deze alias niet bijwerken. Probeer het opnieuw.</string>
+    <string name="reply_from_mismatch_banner">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Verzenden vanaf %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Sluiten</string>
+    <string name="error_alias_sending_disabled">Verzenden vanaf deze alias is uitgeschakeld. Schakel het eerst in.</string>
 </resources>

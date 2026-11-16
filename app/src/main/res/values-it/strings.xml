@@ -3594,4 +3594,17 @@
     <string name="custom_color">Colore personalizzato</string>
     <string name="color_brightness">Luminosità</string>
     <string name="hex_color">Colore esadecimale</string>
+    <string name="alias_sending_tab">Invio</string>
+    <string name="alias_sending_disabled_title">Alias con invio disattivato</string>
+    <string name="alias_sending_disabled_description">Disattiva l\'invio per un alias per impedire che la posta parta da esso. L\'alias continua a ricevere posta.</string>
+    <string name="alias_sending_empty">Non hai ancora alias o indirizzi di dominio.</string>
+    <string name="alias_sending_no_match">Nessun alias corrisponde alla ricerca.</string>
+    <string name="alias_sending_allowed">Invio consentito</string>
+    <string name="alias_sending_disabled">Invio disattivato</string>
+    <string name="alias_sending_allow_a11y">Consenti l\'invio da %1$s</string>
+    <string name="alias_sending_update_failed">Impossibile aggiornare l\'invio per questo alias. Riprova.</string>
+    <string name="reply_from_mismatch_banner">Questa email è stata ricevuta su %1$s, ma la risposta verrà inviata da %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Invia da %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Ignora</string>
+    <string name="error_alias_sending_disabled">L\'invio da questo alias è disattivato. Attivalo prima.</string>
 </resources>
