@@ -79,6 +79,8 @@ import compose.icons.tablericons.Search
 import compose.icons.tablericons.X
 import kotlinx.coroutines.launch
 import org.astermail.android.R
+import org.astermail.android.api.preferences.EMOJI_SKIN_TONE_DEFAULT
+import org.astermail.android.api.preferences.apply_emoji_skin_tone
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDragHandle
@@ -126,6 +128,8 @@ internal fun emoji_search(entries: List<emoji_entry>, query: String): List<emoji
 fun reaction_picker_sheet(
     on_close: () -> Unit,
     on_pick: (String) -> Unit,
+    skin_tone: String = EMOJI_SKIN_TONE_DEFAULT,
+    on_skin_tone: ((String) -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -170,9 +174,10 @@ fun reaction_picker_sheet(
     }
     val pick: (String) -> Unit = { glyph ->
         RecentEmojiStore.record(context, glyph)
+        val toned = apply_emoji_skin_tone(glyph, skin_tone)
         scope.launch {
             sheet_state.hide()
-            on_pick(glyph)
+            on_pick(toned)
         }
     }
 
@@ -202,15 +207,31 @@ fun reaction_picker_sheet(
                 query = query,
                 on_query = { query = it },
             )
+            if (on_skin_tone != null) {
+                skin_tone_swatch_row(
+                    selected = skin_tone,
+                    on_select = on_skin_tone,
+                    swatch_size = 36.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.md)
+                        .padding(bottom = AsterSpacing.xs),
+                )
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(emoji_grid_height),
             ) {
                 if (searching) {
-                    emoji_search_results(results = results, on_pick = pick)
+                    emoji_search_results(results = results, skin_tone = skin_tone, on_pick = pick)
                 } else {
-                    emoji_section_grid(sections = sections, grid_state = grid_state, on_pick = pick)
+                    emoji_section_grid(
+                        sections = sections,
+                        grid_state = grid_state,
+                        skin_tone = skin_tone,
+                        on_pick = pick,
+                    )
                 }
             }
         }
@@ -335,6 +356,7 @@ private fun emoji_search_field(query: String, on_query: (String) -> Unit) {
 private fun emoji_section_grid(
     sections: List<emoji_section>,
     grid_state: LazyGridState,
+    skin_tone: String,
     on_pick: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -369,14 +391,14 @@ private fun emoji_section_grid(
                 key = { "${section.id}_${it.glyph}" },
                 contentType = { "emoji" },
             ) { entry ->
-                emoji_cell(glyph = entry.glyph, on_pick = on_pick)
+                emoji_cell(glyph = entry.glyph, skin_tone = skin_tone, on_pick = on_pick)
             }
         }
     }
 }
 
 @Composable
-private fun emoji_search_results(results: List<emoji_entry>, on_pick: (String) -> Unit) {
+private fun emoji_search_results(results: List<emoji_entry>, skin_tone: String, on_pick: (String) -> Unit) {
     val colors = AsterMaterial.colors
     if (results.isEmpty()) {
         Box(
@@ -406,13 +428,14 @@ private fun emoji_search_results(results: List<emoji_entry>, on_pick: (String) -
             key = { "result_${it.glyph}" },
             contentType = { "emoji" },
         ) { entry ->
-            emoji_cell(glyph = entry.glyph, on_pick = on_pick)
+            emoji_cell(glyph = entry.glyph, skin_tone = skin_tone, on_pick = on_pick)
         }
     }
 }
 
 @Composable
-private fun emoji_cell(glyph: String, on_pick: (String) -> Unit) {
+private fun emoji_cell(glyph: String, skin_tone: String, on_pick: (String) -> Unit) {
+    val shown = remember(glyph, skin_tone) { apply_emoji_skin_tone(glyph, skin_tone) }
     Box(
         modifier = Modifier
             .height(emoji_cell_size)
@@ -422,6 +445,6 @@ private fun emoji_cell(glyph: String, on_pick: (String) -> Unit) {
             .testTag("emoji_cell"),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = glyph, fontSize = 28.sp, maxLines = 1)
+        Text(text = shown, fontSize = 28.sp, maxLines = 1)
     }
 }
