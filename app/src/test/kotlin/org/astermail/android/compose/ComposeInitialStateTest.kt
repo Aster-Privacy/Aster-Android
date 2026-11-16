@@ -154,6 +154,51 @@ class ComposeInitialStateTest {
     }
 
     @Test
+    fun forward_from_sent_starts_from_the_sending_alias() {
+        val sent = compose_thread_message(
+            id = "msg_sent",
+            sender_email = "work@astermail.org",
+            to_addresses = listOf("peer@example.com"),
+            subject = "Quarterly plan",
+            timestamp = "2026-08-28T11:00:00Z",
+            is_sent = true,
+        )
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_sent", mode = "forward"),
+            identity = identity,
+            thread = compose_thread_snapshot(item_id = "msg_sent", messages = listOf(incoming, sent)),
+        )
+        assertEquals("work@astermail.org", state.from_address)
+    }
+
+    @Test
+    fun forward_of_a_thread_message_starts_from_its_receiving_alias() {
+        val later = compose_thread_message(
+            id = "msg_2",
+            sender_email = "sender@example.com",
+            to_addresses = listOf("me@astermail.org"),
+            subject = "Re: Quarterly plan",
+            timestamp = "2026-08-28T12:00:00Z",
+        )
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_1", mode = "forward"),
+            identity = identity,
+            thread = compose_thread_snapshot(item_id = "msg_1", messages = listOf(incoming, later)),
+        )
+        assertEquals("work@astermail.org", state.from_address)
+    }
+
+    @Test
+    fun forward_falls_back_to_the_primary_when_the_alias_is_gone() {
+        val state = build_compose_initial_state(
+            args = compose_screen_args(reply_to = "msg_1", mode = "forward"),
+            identity = identity.copy(alias_options = listOf("me@astermail.org")),
+            thread = thread,
+        )
+        assertEquals("me@astermail.org", state.from_address)
+    }
+
+    @Test
     fun later_data_does_not_change_a_complete_state() {
         val modes = listOf("new", "reply", "reply_all", "forward")
         modes.forEach { mode ->
