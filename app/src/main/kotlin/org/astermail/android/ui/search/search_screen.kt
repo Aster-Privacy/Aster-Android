@@ -475,8 +475,8 @@ fun SearchScreen(
         org.astermail.android.folders.filter_locked_items(visible_results)
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
-    val result_threads = remember(filtered, grouping_enabled) {
-        search_result_threads(filtered, grouping_enabled, context_for_prefs)
+    val result_threads = remember(filtered, grouping_enabled, settings_state.tags) {
+        search_result_threads(filtered, grouping_enabled, context_for_prefs, settings_state.tags)
     }
     val thread_index = remember(visible_corpus, grouping_enabled) {
         if (grouping_enabled) search_thread_index(visible_corpus) else emptyMap()

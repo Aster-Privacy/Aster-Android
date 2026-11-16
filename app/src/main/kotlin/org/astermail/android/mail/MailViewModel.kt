@@ -3493,6 +3493,7 @@ class MailViewModel @Inject constructor(
             )
         }
         patch_cached_tag_tokens(setOf(item_id), tag_token)
+        val prev_search_tags = patch_search_tags(setOf(item_id), tag_token, add = true)
         set_tag_override(item_id, tag_token, true)
         viewModelScope.launch {
             repository.add_tag_to_item(item_id, tag_token).fold(
@@ -3504,6 +3505,7 @@ class MailViewModel @Inject constructor(
                 onFailure = {
                     clear_tag_override(item_id, tag_token)
                     patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
+                    restore_search_tags(prev_search_tags, listOf(item_id))
                     if (prev_inbox_item != null) {
                         _inbox_state.value = _inbox_state.value.copy(
                             items = _inbox_state.value.items.map {
@@ -3547,6 +3549,7 @@ class MailViewModel @Inject constructor(
             )
         }
         patch_cached_tag_tokens(setOf(item_id), tag_token, add = false)
+        val prev_search_tags = patch_search_tags(setOf(item_id), tag_token, add = false)
         set_tag_override(item_id, tag_token, false)
         viewModelScope.launch {
             repository.remove_tag_from_item(item_id, tag_token).fold(
@@ -3558,6 +3561,7 @@ class MailViewModel @Inject constructor(
                 onFailure = {
                     clear_tag_override(item_id, tag_token)
                     patch_cached_tag_tokens(setOf(item_id), tag_token)
+                    restore_search_tags(prev_search_tags, listOf(item_id))
                     if (prev_inbox_item != null) {
                         _inbox_state.value = _inbox_state.value.copy(
                             items = _inbox_state.value.items.map {
@@ -3617,6 +3621,9 @@ class MailViewModel @Inject constructor(
         if (thread_item != null && thread_item.id in id_set) {
             _thread_state.value = thread.copy(item = thread_item.copy(labels = next(thread_item.labels)))
         }
+        patch_search_labels(
+            _search_state.value.all_items.filter { it.id in id_set }.associate { it.id to next(it.labels) },
+        )
     }
 
     private fun revert_move_labels(items: List<InboxItem>) {
@@ -3631,6 +3638,7 @@ class MailViewModel @Inject constructor(
         if (thread_item != null && restored != null) {
             _thread_state.value = thread.copy(item = thread_item.copy(labels = restored))
         }
+        patch_search_labels(by_id)
     }
 
     fun move_to_folder_bulk(item_ids: List<String>, folder_token: String, display_name: String) {
@@ -3642,6 +3650,7 @@ class MailViewModel @Inject constructor(
             current_folder in all_mail_folder_ids
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in id_set }
+        val search_before = _search_state.value.all_items.filter { it.id in id_set }
         val from_label = folder_label_token(current_folder)
         var search_removed: List<InboxItem> = emptyList()
         apply_move_labels(id_set, folder_token, from_label)
@@ -3672,6 +3681,9 @@ class MailViewModel @Inject constructor(
                     load_stats(force = true)
                 } else {
                     revert_move_labels(removed_items.filter { it.id in failed_ids })
+                    patch_search_labels(
+                        search_before.filter { it.id in failed_ids }.associate { it.id to it.labels },
+                    )
                     if (!stays_visible) {
                         undo_local_restore(removed_items.filter { it.id in failed_ids })
                         undo_search_restore(search_removed.filter { it.id in failed_ids })
@@ -3799,6 +3811,7 @@ class MailViewModel @Inject constructor(
         )
         val prev_thread_item = patch_thread_item_tag(id_set, tag_token, add = true)
         patch_cached_tag_tokens(id_set, tag_token)
+        val prev_search_tags = patch_search_tags(id_set, tag_token, add = true)
         id_set.forEach { set_tag_override(it, tag_token, true) }
         viewModelScope.launch {
             val failed_ids = repository.add_tag_bulk(ids, tag_token)
@@ -3810,6 +3823,7 @@ class MailViewModel @Inject constructor(
                 failed_ids.forEach { clear_tag_override(it, tag_token) }
                 restore_thread_item_tags(prev_thread_item, failed_ids)
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token, add = false)
+                restore_search_tags(prev_search_tags, failed_ids)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
                         val prev = prev_items[it.id]
@@ -3839,6 +3853,7 @@ class MailViewModel @Inject constructor(
         )
         val prev_thread_item = patch_thread_item_tag(id_set, tag_token, add = false)
         patch_cached_tag_tokens(id_set, tag_token, add = false)
+        val prev_search_tags = patch_search_tags(id_set, tag_token, add = false)
         id_set.forEach { set_tag_override(it, tag_token, false) }
         viewModelScope.launch {
             val failed_ids = repository.remove_tag_bulk(ids, tag_token)
@@ -3850,6 +3865,7 @@ class MailViewModel @Inject constructor(
                 failed_ids.forEach { clear_tag_override(it, tag_token) }
                 restore_thread_item_tags(prev_thread_item, failed_ids)
                 patch_cached_tag_tokens(failed_ids.toSet(), tag_token)
+                restore_search_tags(prev_search_tags, failed_ids)
                 _inbox_state.value = _inbox_state.value.copy(
                     items = _inbox_state.value.items.map {
                         val prev = prev_items[it.id]
@@ -4069,6 +4085,27 @@ class MailViewModel @Inject constructor(
             val stats = s.stats ?: return@update s
             s.copy(stats = stats.copy(unread = (stats.unread - unread_removed).coerceAtLeast(0)))
         }
+    }
+
+    private fun patch_search_tags(ids: Set<String>, tag_token: String, add: Boolean): Map<String, List<String>> {
+        val current = _search_state.value.all_items
+        val previous = current.filter { it.id in ids }.associate { it.id to it.tag_tokens }
+        val next = with_tag_token(current, ids, tag_token, add)
+        if (next !== current) _search_state.value = _search_state.value.copy(all_items = next)
+        return previous
+    }
+
+    private fun restore_search_tags(previous: Map<String, List<String>>, ids: Collection<String>) {
+        val wanted = ids.toSet()
+        val current = _search_state.value.all_items
+        val next = with_restored_tag_tokens(current, previous.filterKeys { it in wanted })
+        if (next !== current) _search_state.value = _search_state.value.copy(all_items = next)
+    }
+
+    private fun patch_search_labels(labels_by_id: Map<String, List<String>>) {
+        val current = _search_state.value.all_items
+        val next = with_folder_labels(current, labels_by_id)
+        if (next !== current) _search_state.value = _search_state.value.copy(all_items = next)
     }
 
     private fun patch_cached_tag_tokens(ids: Set<String>, tag_token: String, add: Boolean = true) {

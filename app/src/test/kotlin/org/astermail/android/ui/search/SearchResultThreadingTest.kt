@@ -22,6 +22,7 @@
 package org.astermail.android.ui.search
 
 import io.mockk.mockk
+import org.astermail.android.api.tags.TagItem
 import org.astermail.android.mail.InboxItem
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -47,6 +48,23 @@ class SearchResultThreadingTest {
     private fun older(token: String? = thread_token) = item(older_id, token, "2026-07-31T10:00:00Z")
 
     private fun newer(token: String? = thread_token) = item(newer_id, token, "2026-07-31T18:00:00Z")
+
+    @Test
+    fun result_rows_show_the_labels_the_message_carries() {
+        val orders = TagItem(
+            id = "id_orders",
+            tag_token = "orders_token",
+            encrypted_name = "Orders",
+            name_nonce = "nonce_orders",
+            encrypted_color = null,
+            encrypted_icon = null,
+        )
+        val labeled = older(token = null).copy(tag_tokens = listOf("orders_token"))
+
+        val threads = search_result_threads(listOf(labeled), grouping_enabled = false, tags = listOf(orders))
+
+        assertEquals(listOf("Orders"), threads[0].newest.label_names)
+    }
 
     @Test
     fun messages_sharing_a_thread_token_collapse_into_one_row() {
