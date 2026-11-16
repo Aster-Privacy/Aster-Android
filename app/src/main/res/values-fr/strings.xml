@@ -3623,4 +3623,17 @@
     <string name="custom_color">Couleur personnalisée</string>
     <string name="color_brightness">Luminosité</string>
     <string name="hex_color">Couleur hexadécimale</string>
+    <string name="alias_sending_tab">Envoi</string>
+    <string name="alias_sending_disabled_title">Alias dont l\'envoi est désactivé</string>
+    <string name="alias_sending_disabled_description">Désactivez l\'envoi pour un alias afin qu\'aucun e-mail ne parte depuis celui-ci. L\'alias continue de recevoir des e-mails.</string>
+    <string name="alias_sending_empty">Vous n\'avez pas encore d\'alias ni d\'adresse de domaine.</string>
+    <string name="alias_sending_no_match">Aucun alias ne correspond à votre recherche.</string>
+    <string name="alias_sending_allowed">Envoi autorisé</string>
+    <string name="alias_sending_disabled">Envoi désactivé</string>
+    <string name="alias_sending_allow_a11y">Autoriser l\'envoi depuis %1$s</string>
+    <string name="alias_sending_update_failed">Impossible de mettre à jour l\'envoi pour cet alias. Réessayez.</string>
+    <string name="reply_from_mismatch_banner">Cet e-mail a été reçu sur %1$s, mais votre réponse sera envoyée depuis %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Envoyer depuis %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Ignorer</string>
+    <string name="error_alias_sending_disabled">L\'envoi depuis cet alias est désactivé. Activez-le d\'abord.</string>
 </resources>

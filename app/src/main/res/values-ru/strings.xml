@@ -3617,4 +3617,17 @@
     <string name="custom_color">Свой цвет</string>
     <string name="color_brightness">Яркость</string>
     <string name="hex_color">Цвет в HEX</string>
+    <string name="alias_sending_tab">Отправка</string>
+    <string name="alias_sending_disabled_title">Псевдонимы с отключённой отправкой</string>
+    <string name="alias_sending_disabled_description">Отключите отправку для псевдонима, чтобы с него не уходили письма. Псевдоним продолжит получать почту.</string>
+    <string name="alias_sending_empty">У вас пока нет псевдонимов или адресов домена.</string>
+    <string name="alias_sending_no_match">Нет псевдонимов, соответствующих поиску.</string>
+    <string name="alias_sending_allowed">Отправка разрешена</string>
+    <string name="alias_sending_disabled">Отправка отключена</string>
+    <string name="alias_sending_allow_a11y">Разрешить отправку с %1$s</string>
+    <string name="alias_sending_update_failed">Не удалось обновить отправку для этого псевдонима. Повторите попытку.</string>
+    <string name="reply_from_mismatch_banner">Это письмо получено на %1$s, но ваш ответ будет отправлен с %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Отправить с %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Закрыть</string>
+    <string name="error_alias_sending_disabled">Отправка с этого псевдонима отключена. Сначала включите её.</string>
 </resources>

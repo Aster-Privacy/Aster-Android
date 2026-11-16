@@ -3595,4 +3595,17 @@
     <string name="custom_color">Color personalizado</string>
     <string name="color_brightness">Brillo</string>
     <string name="hex_color">Color hexadecimal</string>
+    <string name="alias_sending_tab">Envío</string>
+    <string name="alias_sending_disabled_title">Alias con envío desactivado</string>
+    <string name="alias_sending_disabled_description">Desactiva el envío de un alias para que no salga correo desde él. El alias sigue recibiendo correo.</string>
+    <string name="alias_sending_empty">Todavía no tienes alias ni direcciones de dominio.</string>
+    <string name="alias_sending_no_match">Ningún alias coincide con tu búsqueda.</string>
+    <string name="alias_sending_allowed">Envío permitido</string>
+    <string name="alias_sending_disabled">Envío desactivado</string>
+    <string name="alias_sending_allow_a11y">Permitir el envío desde %1$s</string>
+    <string name="alias_sending_update_failed">No se pudo actualizar el envío de este alias. Inténtalo de nuevo.</string>
+    <string name="reply_from_mismatch_banner">Este correo se recibió en %1$s, pero tu respuesta se enviará desde %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Enviar desde %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Descartar</string>
+    <string name="error_alias_sending_disabled">El envío desde este alias está desactivado. Actívalo primero.</string>
 </resources>

@@ -53,6 +53,7 @@ fun failed_send_dialog(mail_vm: MailViewModel) {
             org.astermail.android.mail.SendFailureReason.WEAK_PASSWORD -> stringResource(R.string.message_password_too_weak)
             org.astermail.android.mail.SendFailureReason.ENCRYPTION -> stringResource(R.string.outbox_failed_reason_encryption)
             org.astermail.android.mail.SendFailureReason.SENDER_REFUSED -> stringResource(R.string.outbox_failed_reason_sender_refused)
+            org.astermail.android.mail.SendFailureReason.SENDING_DISABLED -> stringResource(R.string.error_alias_sending_disabled)
             org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
             org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
             org.astermail.android.mail.SendFailureReason.ATTACHMENT -> stringResource(R.string.outbox_failed_reason_attachment)

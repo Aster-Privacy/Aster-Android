@@ -41,6 +41,7 @@ class ServerCodeErrorTest {
             "CLIENT_UPGRADE_REQUIRED",
             "ALIAS_REENCRYPTION_INCOMPLETE",
             "SENDER_NOT_AUTHORIZED",
+            "ALIAS_SENDING_DISABLED",
         )
         val seen = mutableSetOf<Int>()
         for (code in codes) {

@@ -144,14 +144,8 @@ fun resolve_live_received_on_alias(
 ): String? {
     if (!is_thread_compose(reply_to, mode)) return null
     if (!thread.covers(reply_to)) return null
-    val message = thread.messages.firstOrNull { it.id == reply_to }
-        ?: thread.messages.filterNot { it.is_sent }.maxByOrNull { it.timestamp }
-        ?: thread.messages.lastOrNull()
-        ?: return null
-    val recipients = listOfNotNull(message.delivered_to) +
-        message.to_addresses +
-        message.cc_addresses
-    return compute_received_on_alias(recipients, alias_options, user_email)
+    val message = target_thread_message(reply_to, thread) ?: return null
+    return expected_sender_address(message, alias_options, user_email)
 }
 
 fun build_compose_initial_state(
@@ -178,10 +172,7 @@ fun build_compose_initial_state(
         val newest = thread.messages.firstOrNull { it.id == args.reply_to }
             ?: thread.messages.filterNot { it.is_sent }.lastOrNull()
             ?: thread.messages.lastOrNull()
-        val recipients = listOfNotNull(newest?.delivered_to) +
-            (newest?.to_addresses ?: emptyList()) +
-            (newest?.cc_addresses ?: emptyList())
-        compute_received_on_alias(recipients, alias_options, user_email)
+        expected_sender_address(newest, alias_options, user_email)
     }
 
     val from_resolution = resolve_from_alias_tiered(

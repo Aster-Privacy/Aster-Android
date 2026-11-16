@@ -456,6 +456,27 @@ data class UpdateAliasPreferencesRequest(
 )
 
 @Serializable
+data class SendingBlocksResponse(
+    val alias_ids: List<String> = emptyList(),
+    val domain_address_ids: List<String> = emptyList(),
+)
+
+@Serializable
+data class SendingBlockChange(
+    val kind: String,
+    val id: String,
+    val sending_disabled: Boolean,
+)
+
+@Serializable
+data class UpdateSendingBlocksRequest(
+    val changes: List<SendingBlockChange>,
+)
+
+const val sending_block_kind_alias = "alias"
+const val sending_block_kind_domain_address = "domain_address"
+
+@Serializable
 data class CreateAliasRequest(
     val encrypted_local_part: String,
     val local_part_nonce: String,
@@ -816,6 +837,8 @@ interface SettingsApi {
     suspend fun delete_directory(directory_id: String)
     suspend fun get_alias_preferences(): AliasPreferences
     suspend fun update_alias_preferences(request: UpdateAliasPreferencesRequest)
+    suspend fun get_sending_blocks(): SendingBlocksResponse
+    suspend fun update_sending_blocks(request: UpdateSendingBlocksRequest): SendingBlocksResponse
     suspend fun list_smtp_tokens(): ListSmtpTokensResponse
     suspend fun create_smtp_token(request: CreateSmtpTokenRequest): CreateSmtpTokenResponse
     suspend fun revoke_smtp_token(token_id: String)
@@ -1404,6 +1427,20 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
+    }
+
+    override suspend fun get_sending_blocks(): SendingBlocksResponse {
+        val response = client.http.get("${client.base_url}/api/addresses/v1/aliases/sending-blocks")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_sending_blocks(request: UpdateSendingBlocksRequest): SendingBlocksResponse {
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/aliases/sending-blocks") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     private suspend inline fun <reified T> decode_or_throw(response: HttpResponse): T {

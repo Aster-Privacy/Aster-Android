@@ -334,6 +334,19 @@ class SendFailureClassificationTest {
     }
 
     @Test
+    fun `a disabled alias is named and never retried`() {
+        val err = ApiError.ForbiddenError("Sending from this alias is disabled", "ALIAS_SENDING_DISABLED")
+
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.SENDING_DISABLED, send_failure_reason_for(err))
+        assertEquals(
+            SendFailureReason.SENDING_DISABLED,
+            send_failure_reason_for(IllegalStateException("send failed", err)),
+        )
+        assertEquals(SendFailureReason.SENDING_DISABLED, SendFailureReason.from_code("sending_disabled"))
+    }
+
+    @Test
     fun `a sender refusal from a server without the dedicated code is still named`() {
         val err = ApiError.ForbiddenError("Address hash required for non-primary sender ", "FORBIDDEN")
 

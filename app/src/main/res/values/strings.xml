@@ -3626,4 +3626,17 @@
     <string name="custom_color">Custom color</string>
     <string name="color_brightness">Brightness</string>
     <string name="hex_color">Hex color</string>
+    <string name="alias_sending_tab">Sending</string>
+    <string name="alias_sending_disabled_title">Sending disabled aliases</string>
+    <string name="alias_sending_disabled_description">Turn off sending for an alias to stop mail from going out from it. The alias still receives mail.</string>
+    <string name="alias_sending_empty">You have no aliases or domain addresses yet.</string>
+    <string name="alias_sending_no_match">No aliases match your search.</string>
+    <string name="alias_sending_allowed">Sending allowed</string>
+    <string name="alias_sending_disabled">Sending disabled</string>
+    <string name="alias_sending_allow_a11y">Allow sending from %1$s</string>
+    <string name="alias_sending_update_failed">Couldn\'t update sending for this alias. Try again.</string>
+    <string name="reply_from_mismatch_banner">This email was received on %1$s, but your reply is set to send from %2$s.</string>
+    <string name="reply_from_mismatch_send_from">Send from %1$s</string>
+    <string name="reply_from_mismatch_dismiss">Dismiss</string>
+    <string name="error_alias_sending_disabled">Sending from this alias is disabled. First enable it.</string>
 </resources>
