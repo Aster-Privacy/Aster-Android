@@ -87,8 +87,35 @@ data class ContactsUiState(
     val import_done: Int = 0,
     val import_total: Int = 0,
     val pending_ids: Set<String> = emptySet(),
+    val contacts_loaded: Boolean = false,
+    val groups_loaded: Boolean = false,
+    val groups_load_failed: Boolean = false,
+    val group_memberships: Map<String, Set<String>>? = null,
+    val group_memberships_failed: Boolean = false,
 ) {
     val is_selecting: Boolean get() = selected_ids.isNotEmpty()
+
+    private val active_by_id: Map<String, Contact> by lazy { contacts.associateBy { it.id } }
+
+    val memberships_ready: Boolean get() = group_memberships != null && contacts_loaded
+
+    fun group_by_id(group_id: String): ContactGroup? = groups.firstOrNull { it.id == group_id }
+
+    fun group_member_ids(group_id: String): Set<String> {
+        val ids = group_memberships?.get(group_id) ?: return emptySet()
+        return ids.filterTo(LinkedHashSet()) { it in active_by_id }
+    }
+
+    fun group_member_count(group: ContactGroup): Int =
+        if (memberships_ready) group_member_ids(group.id).size else group.contact_count
+
+    fun group_members(group_id: String): List<Contact> =
+        group_member_ids(group_id)
+            .mapNotNull { active_by_id[it] }
+            .sortedWith(
+                compareBy<Contact, String>(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.email } }
+                    .thenBy { it.email },
+            )
 
     val duplicate_count: Int get() = count_duplicate_contacts(duplicate_clusters)
 
@@ -107,11 +134,13 @@ class ContactsViewModel @Inject constructor(
     private var list_in_flight = false
     private var mutation_in_flight = false
     private var groups_in_flight = false
+    private var groups_reload_pending = false
 
     init {
         viewModelScope.launch {
             org.astermail.android.contacts.sync.ContactSyncAccounts.remote_updated.collect {
                 load_contacts(quiet = true)
+                if (_state.value.groups_loaded) load_groups()
             }
         }
         viewModelScope.launch {
@@ -136,7 +165,10 @@ class ContactsViewModel @Inject constructor(
                     val expired = contacts.filter { is_trash_expired(it.deleted_at) }
                     val expired_ids = expired.map { it.id }.toSet()
                     val kept = contacts.filterNot { it.id in expired_ids }
-                    _state.value = with_contacts(_state.value, kept).copy(is_loading = false)
+                    _state.value = with_contacts(_state.value, kept).copy(
+                        is_loading = false,
+                        contacts_loaded = true,
+                    )
                     if (expired_ids.isNotEmpty()) {
                         launch { repository.bulk_delete_contacts(expired_ids.toList()) }
                     }
@@ -798,17 +830,96 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun load_groups() {
-        if (groups_in_flight) return
+        if (groups_in_flight) {
+            groups_reload_pending = true
+            return
+        }
         groups_in_flight = true
+        groups_reload_pending = false
         viewModelScope.launch {
-            val outcome = repository.list_contact_groups()
-            groups_in_flight = false
-            outcome.fold(
-                onSuccess = { groups ->
-                    _state.value = _state.value.copy(groups = groups)
-                },
-                onFailure = { },
+            val groups_call = async { repository.list_contact_groups() }
+            val memberships_call = async { repository.list_group_memberships() }
+            val groups = groups_call.await()
+            val memberships = memberships_call.await()
+            val current = _state.value
+            _state.value = current.copy(
+                groups = groups.getOrNull() ?: current.groups,
+                groups_loaded = current.groups_loaded || groups.isSuccess,
+                groups_load_failed = groups.isFailure,
+                group_memberships = memberships.getOrNull() ?: current.group_memberships,
+                group_memberships_failed = memberships.isFailure,
             )
+            groups_in_flight = false
+            if (groups_reload_pending) load_groups()
+        }
+    }
+
+    fun add_contacts_to_group(
+        group_id: String,
+        contact_ids: Collection<String>,
+        on_complete: ((Int) -> Unit)? = null,
+    ) {
+        val ids = contact_ids.distinct()
+        if (ids.isEmpty() || mutation_in_flight) {
+            on_complete?.invoke(0)
+            return
+        }
+        mutation_in_flight = true
+        _state.value = _state.value.copy(is_bulk_working = true, error = null)
+        viewModelScope.launch {
+            val outcome = repository.add_contacts_to_group(group_id, ids)
+            mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    val current = _state.value
+                    _state.value = current.copy(
+                        is_bulk_working = false,
+                        group_memberships = current.group_memberships?.let { map ->
+                            map + (group_id to (map[group_id].orEmpty() + ids))
+                        },
+                    )
+                    on_complete?.invoke(ids.size)
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(is_bulk_working = false, error = friendly_error(t))
+                    on_complete?.invoke(0)
+                },
+            )
+            load_groups()
+            load_contacts(quiet = true)
+        }
+    }
+
+    fun remove_contact_from_group(
+        group_id: String,
+        contact_id: String,
+        on_complete: ((Boolean) -> Unit)? = null,
+    ) {
+        if (mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        mutation_in_flight = true
+        viewModelScope.launch {
+            val outcome = repository.remove_contact_from_group(contact_id, group_id)
+            mutation_in_flight = false
+            outcome.fold(
+                onSuccess = {
+                    val current = _state.value
+                    _state.value = current.copy(
+                        group_memberships = current.group_memberships?.let { map ->
+                            map + (group_id to (map[group_id].orEmpty() - contact_id))
+                        },
+                    )
+                    on_complete?.invoke(true)
+                },
+                onFailure = { t ->
+                    _state.value = _state.value.copy(error = friendly_error(t))
+                    on_complete?.invoke(false)
+                },
+            )
+            load_groups()
+            load_contacts(quiet = true)
         }
     }
 
@@ -917,7 +1028,10 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun delete_group(group_id: String, on_complete: ((Boolean) -> Unit)? = null) {
-        if (mutation_in_flight) return
+        if (mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
         mutation_in_flight = true
         viewModelScope.launch {
             val outcome = repository.delete_contact_group(group_id)
@@ -926,6 +1040,7 @@ class ContactsViewModel @Inject constructor(
                 onSuccess = {
                     _state.value = _state.value.copy(
                         groups = _state.value.groups.filter { it.id != group_id },
+                        group_memberships = _state.value.group_memberships?.minus(group_id),
                     )
                     on_complete?.invoke(true)
                 },

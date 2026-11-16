@@ -3588,4 +3588,20 @@
     <string name="reply_from_mismatch_send_from">%1$s adresinden gönder</string>
     <string name="reply_from_mismatch_dismiss">Kapat</string>
     <string name="error_alias_sending_disabled">Bu takma addan gönderim kapalı. Önce etkinleştirin.</string>
+    <string name="open_group_description">%1$s grubunu aç, %2$s</string>
+    <string name="group_empty_title">Bu grupta kişi yok</string>
+    <string name="group_empty_hint">Bu gruba kişi eklemek için Üye ekle\'ye dokunun.</string>
+    <string name="add_members">Üye ekle</string>
+    <string name="add_members_count">%1$d ekle</string>
+    <string name="add_members_none_left">Tüm kişileriniz zaten bu grupta.</string>
+    <string name="remove_from_group">Gruptan çıkar</string>
+    <string name="remove_from_group_message">%1$s, %2$s grubundan çıkarılsın mı? Kişi adres defterinizde kalır.</string>
+    <string name="removed_from_group">Gruptan çıkarıldı</string>
+    <string name="email_group">Gruba yaz</string>
+    <string name="group_load_failed">Bu grup yüklenemiyor. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="group_deleted">Grup silindi</string>
+    <plurals name="members_added">
+        <item quantity="one">%d kişi eklendi</item>
+        <item quantity="other">%d kişi eklendi</item>
+    </plurals>
 </resources>

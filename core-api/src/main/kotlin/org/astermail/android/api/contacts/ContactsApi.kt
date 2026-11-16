@@ -173,6 +173,28 @@ data class CreateContactGroupResponse(
 )
 
 @Serializable
+data class GroupMembershipEntry(
+    val group_id: String,
+    val contact_id: String,
+)
+
+@Serializable
+data class ListGroupMembershipsResponse(
+    val memberships: List<GroupMembershipEntry> = emptyList(),
+)
+
+@Serializable
+data class GroupMembersRequest(
+    val contact_ids: List<String>,
+)
+
+@Serializable
+data class GroupMembersResponse(
+    val success: Boolean = false,
+    val changed: Long = 0,
+)
+
+@Serializable
 data class SuccessResponse(
     val success: Boolean = false,
 )
@@ -215,6 +237,10 @@ interface ContactsApi {
     suspend fun delete_contact_group(group_id: String): SuccessResponse
     suspend fun add_contact_to_group(contact_id: String, group_id: String): SuccessResponse
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): SuccessResponse
+    suspend fun list_group_memberships(): ListGroupMembershipsResponse =
+        throw UnsupportedOperationException("list_group_memberships")
+    suspend fun add_contacts_to_group(group_id: String, request: GroupMembersRequest): GroupMembersResponse =
+        throw UnsupportedOperationException("add_contacts_to_group")
     suspend fun import_contacts(request: ImportContactsRequest): ImportContactsResponse
 }
 
@@ -357,6 +383,23 @@ class ContactsApiImpl(private val client: ApiClient) : ContactsApi {
     override suspend fun remove_contact_from_group(contact_id: String, group_id: String): SuccessResponse {
         val response = client.http.delete("${client.base_url}$base/$contact_id/groups/$group_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_group_memberships(): ListGroupMembershipsResponse {
+        val response = client.http.get("${client.base_url}$base/groups/memberships")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun add_contacts_to_group(
+        group_id: String,
+        request: GroupMembersRequest,
+    ): GroupMembersResponse {
+        val response = client.http.post("${client.base_url}$base/groups/$group_id/members") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }
