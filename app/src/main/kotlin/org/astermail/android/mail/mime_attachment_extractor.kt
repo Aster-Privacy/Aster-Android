@@ -65,6 +65,7 @@ object MimeAttachmentExtractor {
     private val QUOTED_ESCAPE = Regex("\\\\(.)")
     private val QP_SOFT_BREAK = Regex("=[ \\t]*\\r?\\n")
     private val QP_TRAILING_SPACE = Regex("[ \\t]+(?=\\r?\\n)")
+    private val QP_HARD_BREAK = Regex("\\r?\\n")
     private val CONTROL_CHARS = Regex("[\\u0000-\\u001f\\u007f]")
     private val SIMPLE_SUBTYPE = Regex("^[a-z0-9]{1,8}$")
 
@@ -245,7 +246,8 @@ object MimeAttachmentExtractor {
 
     private fun quoted_printable_decode(input: String): ByteArray {
         val unfolded = QP_SOFT_BREAK.replace(input, "")
-        return escaped_to_bytes(QP_TRAILING_SPACE.replace(unfolded, ""), '=', underscore_is_space = false)
+        val hard_breaks = QP_HARD_BREAK.replace(QP_TRAILING_SPACE.replace(unfolded, ""), "\r\n")
+        return escaped_to_bytes(hard_breaks, '=', underscore_is_space = false)
     }
 
     private fun decode_part_bytes(body: String, encoding: String): ByteArray = when (encoding) {

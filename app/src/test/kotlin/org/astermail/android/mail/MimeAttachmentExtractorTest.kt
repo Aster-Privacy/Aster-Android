@@ -163,6 +163,29 @@ class MimeAttachmentExtractorTest {
     }
 
     @Test
+    fun quoted_printable_hard_breaks_become_crlf_after_lf_normalization() {
+        val raw =
+            "Content-Type: multipart/mixed; boundary=t\n\n" +
+                "--t\n" +
+                "Content-Type: text/plain\n\nbody\n" +
+                "--t\n" +
+                "Content-Type: text/plain; charset=utf-8\n" +
+                "Content-Transfer-Encoding: quoted-printable\n" +
+                "Content-Disposition: attachment; filename=\"notes.txt\"\n\n" +
+                "caf=C3=A9 =3D cr=C3=A8me  \n" +
+                "line two with a soft=\n" +
+                " break\n" +
+                "--t--\n"
+
+        val parts = MimeAttachmentExtractor.extract(raw)
+
+        assertEquals(
+            "café = crème\r\nline two with a soft break",
+            String(parts[0].data, Charsets.UTF_8),
+        )
+    }
+
+    @Test
     fun plain_bodies_without_attachments_yield_nothing() {
         assertTrue(MimeAttachmentExtractor.extract("Hello there").isEmpty())
         assertTrue(
