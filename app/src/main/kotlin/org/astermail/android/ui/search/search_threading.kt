@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.search
 
+import org.astermail.android.api.tags.TagItem
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.ui.mail.ThreadRow
 import org.astermail.android.ui.mail.flat_thread_rows
@@ -31,8 +32,9 @@ internal fun search_result_threads(
     items: List<InboxItem>,
     grouping_enabled: Boolean,
     context: android.content.Context? = null,
+    tags: List<TagItem> = emptyList(),
 ): List<ThreadRow> {
-    val emails = items.distinctBy { it.id }.map { inbox_item_to_email(it, context = context) }
+    val emails = items.distinctBy { it.id }.map { inbox_item_to_email(it, tags, context = context) }
     val rows = if (grouping_enabled) group_by_thread(emails) else flat_thread_rows(emails)
     return rows.sortedWith(
         compareByDescending<ThreadRow> { it.newest.received_at }.thenByDescending { it.thread_id },

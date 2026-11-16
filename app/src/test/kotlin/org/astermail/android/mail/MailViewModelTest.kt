@@ -3444,4 +3444,70 @@ class MailViewModelTest {
         assertEquals(listOf("id_1"), deleted)
         assertEquals(1, vm.inbox_state.value.items.size)
     }
+
+    private suspend fun index_search_results(tags: Map<String, List<String>>) {
+        val items = fake_inbox_page(tags.size).items.mapIndexed { index, item ->
+            val id = tags.keys.elementAt(index)
+            item.copy(id = id, thread_token = "", tag_tokens = tags.getValue(id))
+        }
+        coEvery { repository.fetch_all_for_search(any()) } returns Result.success(items)
+        vm.build_search_index()
+    }
+
+    private fun search_tags(id: String): List<String> =
+        vm.search_state.value.all_items.first { it.id == id }.tag_tokens
+
+    @Test
+    fun `labeling selected search results shows the label on every result`() = runTest {
+        index_search_results(mapOf("s1" to emptyList(), "s2" to listOf("tag_b"), "s3" to emptyList()))
+        advanceUntilIdle()
+        coEvery { repository.add_tag_bulk(any(), "tag_a") } returns emptySet()
+
+        vm.apply_tag_bulk(listOf("s1", "s2"), "tag_a", "Receipts")
+
+        assertEquals(listOf("tag_a"), search_tags("s1"))
+        assertEquals(listOf("tag_b", "tag_a"), search_tags("s2"))
+        assertEquals(emptyList<String>(), search_tags("s3"))
+        advanceUntilIdle()
+        assertEquals(listOf("tag_a"), search_tags("s1"))
+        coVerify { repository.add_tag_bulk(listOf("s1", "s2"), "tag_a") }
+    }
+
+    @Test
+    fun `removing a label from selected search results clears it in place`() = runTest {
+        index_search_results(mapOf("s1" to listOf("tag_a"), "s2" to listOf("tag_a", "tag_b")))
+        advanceUntilIdle()
+        coEvery { repository.remove_tag_bulk(any(), "tag_a") } returns emptySet()
+
+        vm.remove_tag_bulk(listOf("s1", "s2"), "tag_a", "Receipts")
+
+        assertEquals(emptyList<String>(), search_tags("s1"))
+        assertEquals(listOf("tag_b"), search_tags("s2"))
+        advanceUntilIdle()
+        assertEquals(listOf("tag_b"), search_tags("s2"))
+    }
+
+    @Test
+    fun `a failed search result label reverts only the failed results`() = runTest {
+        index_search_results(mapOf("s1" to emptyList(), "s2" to listOf("tag_a")))
+        advanceUntilIdle()
+        coEvery { repository.add_tag_bulk(any(), "tag_a") } returns setOf("s1", "s2")
+
+        vm.apply_tag_bulk(listOf("s1", "s2"), "tag_a", "Receipts")
+        advanceUntilIdle()
+
+        assertEquals(emptyList<String>(), search_tags("s1"))
+        assertEquals(listOf("tag_a"), search_tags("s2"))
+    }
+
+    @Test
+    fun `labeling one search result updates it in place`() = runTest {
+        index_search_results(mapOf("s1" to emptyList()))
+        advanceUntilIdle()
+        coEvery { repository.add_tag_to_item("s1", "tag_a") } returns Result.success(Unit)
+
+        vm.apply_tag("s1", "tag_a", "Receipts")
+
+        assertEquals(listOf("tag_a"), search_tags("s1"))
+    }
 }
