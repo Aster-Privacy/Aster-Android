@@ -58,6 +58,7 @@ data class LabelItem(
     val unread_count: Long? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
+    val decryption_failed: Boolean = false,
 )
 
 @Serializable

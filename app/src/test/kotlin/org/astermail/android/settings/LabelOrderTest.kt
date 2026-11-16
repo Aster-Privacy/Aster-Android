@@ -98,7 +98,7 @@ class LabelOrderTest {
                 label("readable", name = "Invoice"),
                 label("blank", name = ""),
                 label("null_name", name = null),
-                label("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA=="),
+                label("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==").copy(decryption_failed = true),
             ),
         )
         assertEquals(listOf("readable"), rows.map { it.id })
@@ -127,7 +127,7 @@ class LabelOrderTest {
                 tag("b", sort_order = 1),
                 tag("a", sort_order = 0),
                 tag("blank", name = "", sort_order = 2),
-                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 3),
+                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 3).copy(decryption_failed = true),
             ),
         )
         assertEquals(listOf("a", "b", "blank", "encrypted"), rows.map { it.id })
@@ -139,7 +139,7 @@ class LabelOrderTest {
         assertFalse(tag_name_readable(tag("blank", name = "")))
         assertFalse(
             tag_name_readable(
-                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA=="),
+                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==").copy(decryption_failed = true),
             ),
         )
     }
@@ -150,7 +150,7 @@ class LabelOrderTest {
         assertEquals(
             "Unknown",
             tag_display_name(
-                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA=="),
+                tag("encrypted", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==").copy(decryption_failed = true),
                 "Unknown",
             ),
         )

@@ -795,8 +795,7 @@ fun InboxScreen(
                         label.folder_type == "folder" &&
                             label.label_token in item.labels &&
                             !org.astermail.android.folders.requires_unlock(label) &&
-                            !label.encrypted_name.isNullOrBlank() &&
-                            !org.astermail.android.looks_encrypted(label.encrypted_name)
+                            org.astermail.android.labels.readable_label_name(label) != null
                     }
                     if (custom != null) {
                         list_folder_chip(
@@ -3015,9 +3014,7 @@ fun InboxScreen(
             val folder_items = folder_nodes
                 .map { node ->
                     val label = node.label
-                    val readable = label.encrypted_name?.takeIf {
-                        it.isNotBlank() && !org.astermail.android.looks_encrypted(it)
-                    }
+                    val readable = org.astermail.android.labels.readable_label_name(label)
                     label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
                 }
             label_picker_sheet(

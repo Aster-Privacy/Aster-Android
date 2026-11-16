@@ -4984,7 +4984,7 @@ class SettingsViewModel @Inject constructor(
             val previous_orders = previous_folder_orders(previous, order_entries)
             _state.value = _state.value.copy(
                 labels = apply_folder_orders(previous, order_entries)
-                    .map { if (it.id == label_id) it.copy(encrypted_name = trimmed) else it },
+                    .map { if (it.id == label_id) it.copy(encrypted_name = trimmed, decryption_failed = false) else it },
             )
             try {
                 val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
@@ -5254,7 +5254,7 @@ class SettingsViewModel @Inject constructor(
             val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
-                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed) else it },
+                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed, decryption_failed = false) else it },
             )
             try {
                 val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
@@ -6557,32 +6557,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun decrypt_tag(tag: TagItem): TagItem {
-        val identity_key = session_key_store.get_identity_key() ?: return tag.copy(encrypted_name = "")
+        val identity_key = session_key_store.get_identity_key()
+            ?: return org.astermail.android.labels.tag_after_decryption(tag) { _, _ -> null }
         val all_keys = buildList {
             add(identity_key)
             session_key_store.get_previous_keys()?.forEach { add(it) }
         }
-        return try {
-            val name = if (tag.encrypted_name.isNotBlank() && tag.name_nonce.isNotBlank()) {
-                decrypt_tag_field_with_fallback(tag.encrypted_name, tag.name_nonce, all_keys) ?: ""
-            } else tag.encrypted_name
-
-            val enc_color = tag.encrypted_color
-            val c_nonce = tag.color_nonce
-            val color = if (!enc_color.isNullOrBlank() && !c_nonce.isNullOrBlank()) {
-                decrypt_tag_field_with_fallback(enc_color, c_nonce, all_keys)
-            } else enc_color
-
-            val enc_icon = tag.encrypted_icon
-            val i_nonce = tag.icon_nonce
-            val icon = if (!enc_icon.isNullOrBlank() && !i_nonce.isNullOrBlank()) {
-                decrypt_tag_field_with_fallback(enc_icon, i_nonce, all_keys)
-            } else enc_icon
-
-            tag.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            tag.copy(encrypted_name = "")
+        return org.astermail.android.labels.tag_after_decryption(tag) { ciphertext, nonce ->
+            decrypt_tag_field_with_fallback(ciphertext, nonce, all_keys)
         }
     }
 
@@ -6667,34 +6649,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun decrypt_label(label: LabelItem): LabelItem {
-        val identity_key = session_key_store.get_identity_key() ?: return label.copy(encrypted_name = null)
+        val identity_key = session_key_store.get_identity_key()
+            ?: return org.astermail.android.labels.label_after_decryption(label) { _, _ -> null }
         val all_keys = buildList {
             add(identity_key)
             session_key_store.get_previous_keys()?.forEach { add(it) }
         }
-        return try {
-            val enc_name = label.encrypted_name
-            val n_nonce = label.name_nonce
-            val name = if (!enc_name.isNullOrBlank() && !n_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_name, n_nonce, all_keys)
-            } else enc_name
-
-            val enc_color = label.encrypted_color
-            val c_nonce = label.color_nonce
-            val color = if (!enc_color.isNullOrBlank() && !c_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_color, c_nonce, all_keys)
-            } else enc_color
-
-            val enc_icon = label.encrypted_icon
-            val i_nonce = label.icon_nonce
-            val icon = if (!enc_icon.isNullOrBlank() && !i_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_icon, i_nonce, all_keys)
-            } else enc_icon
-
-            label.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            label.copy(encrypted_name = null)
+        return org.astermail.android.labels.label_after_decryption(label) { ciphertext, nonce ->
+            decrypt_label_field_with_fallback(ciphertext, nonce, all_keys)
         }
     }
 
