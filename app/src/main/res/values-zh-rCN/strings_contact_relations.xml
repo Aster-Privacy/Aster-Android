@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">关系</string>
+    <string name="contact_add_relation">添加关系</string>
+    <string name="contact_remove_relation">移除关系</string>
+    <string name="contact_relation_type">关系类型</string>
+    <string name="contact_relation_name">姓名</string>
+    <string name="contact_entry_label">标签</string>
+    <string name="relation_friend">朋友</string>
+    <string name="relation_manager">经理</string>
+    <string name="relation_partner">伴侣</string>
+    <string name="relation_assistant">助理</string>
+    <string name="relation_spouse">配偶</string>
+    <string name="relation_relative">亲属</string>
+    <string name="relation_child">子女</string>
+    <string name="relation_mother">母亲</string>
+    <string name="relation_father">父亲</string>
+    <string name="relation_brother">兄弟</string>
+    <string name="relation_sister">姐妹</string>
+    <string name="relation_custom">自定义</string>
+    <string name="relation_parent">父母</string>
+    <string name="relation_sibling">兄弟姐妹</string>
+    <string name="contact_add_social_link">添加自定义链接</string>
+    <string name="contact_remove_social_link">移除链接</string>
+    <string name="contact_social_link_value">URL 或用户名</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
+</resources>

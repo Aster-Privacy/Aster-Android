@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">Relacje</string>
+    <string name="contact_add_relation">Dodaj relację</string>
+    <string name="contact_remove_relation">Usuń relację</string>
+    <string name="contact_relation_type">Typ relacji</string>
+    <string name="contact_relation_name">Imię i nazwisko</string>
+    <string name="contact_entry_label">Etykieta</string>
+    <string name="relation_friend">Przyjaciel</string>
+    <string name="relation_manager">Przełożony</string>
+    <string name="relation_partner">Partner</string>
+    <string name="relation_assistant">Asystent</string>
+    <string name="relation_spouse">Małżonek</string>
+    <string name="relation_relative">Krewny</string>
+    <string name="relation_child">Dziecko</string>
+    <string name="relation_mother">Matka</string>
+    <string name="relation_father">Ojciec</string>
+    <string name="relation_brother">Brat</string>
+    <string name="relation_sister">Siostra</string>
+    <string name="relation_custom">Niestandardowa</string>
+    <string name="relation_parent">Rodzic</string>
+    <string name="relation_sibling">Rodzeństwo</string>
+    <string name="contact_add_social_link">Dodaj własny link</string>
+    <string name="contact_remove_social_link">Usuń link</string>
+    <string name="contact_social_link_value">URL lub nazwa użytkownika</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
+</resources>

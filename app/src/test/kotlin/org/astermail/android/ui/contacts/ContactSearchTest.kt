@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.contacts.ContactRelation
+import org.astermail.android.contacts.ContactSocial
+import org.astermail.android.contacts.RelationKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -76,5 +79,31 @@ class ContactSearchTest {
         assertEquals(ContactsEmptyReason.no_match, contacts_empty_reason("a", false))
         assertEquals(ContactsEmptyReason.no_favorites, contacts_empty_reason(" ", true))
         assertEquals(ContactsEmptyReason.no_favorites_match, contacts_empty_reason("a", true))
+    }
+
+    @Test
+    fun `query matches relation values labels and kind names`() {
+        val contact = Contact(
+            id = "r",
+            name = "Relation Android Sync",
+            email = "r@example.com",
+            relations = listOf(
+                ContactRelation(RelationKind.MOTHER, "Ana Lima"),
+                ContactRelation(RelationKind.CUSTOM, "Rui", "Godparent"),
+            ),
+        )
+        val names: (ContactRelation) -> String = { if (it.kind == RelationKind.MOTHER) "Mutter" else it.label }
+        assertTrue(contact_matches_query(contact, "ana lima", names))
+        assertTrue(contact_matches_query(contact, "godpar", names))
+        assertTrue(contact_matches_query(contact, "mutter", names))
+        assertFalse(contact_matches_query(contact, "father", names))
+    }
+
+    @Test
+    fun `query matches custom social links`() {
+        val contact = Contact(id = "s", name = "Social", email = "s@example.com", social_networks = listOf(ContactSocial.custom("Fediverse", "https://social.example/@q")))
+        assertTrue(contact_matches_query(contact, "fediverse"))
+        assertTrue(contact_matches_query(contact, "social.example"))
+        assertFalse(contact_matches_query(contact, "nothing"))
     }
 }

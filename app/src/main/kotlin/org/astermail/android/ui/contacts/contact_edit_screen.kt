@@ -148,6 +148,14 @@ fun ContactEditScreen(
     var twitter by rememberSaveable { mutableStateOf(source?.twitter.orEmpty()) }
     var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
     var notes by rememberSaveable { mutableStateOf(source?.notes.orEmpty()) }
+    var relations by rememberSaveable(stateSaver = editable_relation_list_saver) {
+        mutableStateOf(initial_relation_rows(source))
+    }
+    var relations_touched by rememberSaveable { mutableStateOf(false) }
+    var socials by rememberSaveable(stateSaver = editable_social_list_saver) {
+        mutableStateOf(initial_social_rows(source))
+    }
+    var socials_touched by rememberSaveable { mutableStateOf(false) }
     var avatar_url by rememberSaveable { mutableStateOf(source?.avatar_url.orEmpty()) }
     var loaded_contact_id by rememberSaveable { mutableStateOf<String?>(null) }
     var show_email_errors by rememberSaveable { mutableStateOf(false) }
@@ -168,6 +176,10 @@ fun ContactEditScreen(
             twitter = source.twitter
             linkedin = source.linkedin
             notes = source.notes
+            relations = initial_relation_rows(source)
+            relations_touched = false
+            socials = initial_social_rows(source)
+            socials_touched = false
             avatar_url = source.avatar_url
         }
     }
@@ -249,6 +261,8 @@ fun ContactEditScreen(
                         is_favorite = source?.is_favorite ?: false,
                         groups = source?.groups ?: emptyList(),
                         raw_json = source?.raw_json.orEmpty(),
+                        relations = if (relations_touched) relations.map { it.to_relation() } else source?.relations,
+                        social_networks = if (socials_touched) socials.map { it.to_social() } else source?.social_networks,
                     ).with_typed_fields(
                         emails = emails.map { it.to_entry() },
                         phones = phones.map { it.to_entry() },
@@ -400,6 +414,23 @@ fun ContactEditScreen(
                 FormField(stringResource(R.string.website), website, keyboard_type = KeyboardType.Uri) { website = it }
                 FormField(stringResource(R.string.twitter), twitter) { twitter = it }
                 FormField(stringResource(R.string.linkedin), linkedin) { linkedin = it }
+                ContactSocialRows(
+                    socials = socials,
+                    on_change = {
+                        socials = it
+                        socials_touched = true
+                    },
+                )
+            }
+
+            FormSection(icon = TablerIcons.Users, title = stringResource(R.string.contact_relations)) {
+                ContactRelationRows(
+                    relations = relations,
+                    on_change = {
+                        relations = it
+                        relations_touched = true
+                    },
+                )
             }
 
             FormSection(icon = TablerIcons.Notes, title = stringResource(R.string.notes)) {
@@ -508,6 +539,12 @@ private fun initial_phone_rows(source: Contact?): List<EditableEntry> =
 
 private fun initial_postal_rows(source: Contact?): List<EditablePostal> =
     source?.address_entries()?.map { EditablePostal.of(it) } ?: emptyList()
+
+private fun initial_relation_rows(source: Contact?): List<EditableRelation> =
+    source?.relations.orEmpty().map { EditableRelation.of(it) }
+
+private fun initial_social_rows(source: Contact?): List<EditableSocial> =
+    source?.social_networks.orEmpty().map { EditableSocial.of(it) }
 
 private val contact_email_regex = Regex("""^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$""")
 

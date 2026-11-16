@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">İlişkiler</string>
+    <string name="contact_add_relation">İlişki ekle</string>
+    <string name="contact_remove_relation">İlişkiyi kaldır</string>
+    <string name="contact_relation_type">İlişki türü</string>
+    <string name="contact_relation_name">Ad</string>
+    <string name="contact_entry_label">Etiket</string>
+    <string name="relation_friend">Arkadaş</string>
+    <string name="relation_manager">Yönetici</string>
+    <string name="relation_partner">Partner</string>
+    <string name="relation_assistant">Asistan</string>
+    <string name="relation_spouse">Eş</string>
+    <string name="relation_relative">Akraba</string>
+    <string name="relation_child">Çocuk</string>
+    <string name="relation_mother">Anne</string>
+    <string name="relation_father">Baba</string>
+    <string name="relation_brother">Erkek kardeş</string>
+    <string name="relation_sister">Kız kardeş</string>
+    <string name="relation_custom">Özel</string>
+    <string name="relation_parent">Ebeveyn</string>
+    <string name="relation_sibling">Kardeş</string>
+    <string name="contact_add_social_link">Özel bağlantı ekle</string>
+    <string name="contact_remove_social_link">Bağlantıyı kaldır</string>
+    <string name="contact_social_link_value">URL veya kullanıcı adı</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
+</resources>

@@ -251,7 +251,7 @@ private fun CustomLabelField(label: String, on_change: (String) -> Unit) {
 }
 
 @Composable
-private fun AddRowButton(label: String, on_click: () -> Unit) {
+internal fun AddRowButton(label: String, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     Row(
         modifier = Modifier

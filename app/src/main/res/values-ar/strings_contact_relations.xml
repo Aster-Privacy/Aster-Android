@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">العلاقات</string>
+    <string name="contact_add_relation">إضافة علاقة</string>
+    <string name="contact_remove_relation">إزالة العلاقة</string>
+    <string name="contact_relation_type">نوع العلاقة</string>
+    <string name="contact_relation_name">الاسم</string>
+    <string name="contact_entry_label">التسمية</string>
+    <string name="relation_friend">صديق</string>
+    <string name="relation_manager">مدير</string>
+    <string name="relation_partner">شريك</string>
+    <string name="relation_assistant">مساعد</string>
+    <string name="relation_spouse">الزوج أو الزوجة</string>
+    <string name="relation_relative">قريب</string>
+    <string name="relation_child">ابن أو ابنة</string>
+    <string name="relation_mother">الأم</string>
+    <string name="relation_father">الأب</string>
+    <string name="relation_brother">أخ</string>
+    <string name="relation_sister">أخت</string>
+    <string name="relation_custom">مخصص</string>
+    <string name="relation_parent">أحد الوالدين</string>
+    <string name="relation_sibling">شقيق أو شقيقة</string>
+    <string name="contact_add_social_link">إضافة رابط مخصص</string>
+    <string name="contact_remove_social_link">إزالة الرابط</string>
+    <string name="contact_social_link_value">رابط أو اسم مستخدم</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
+</resources>

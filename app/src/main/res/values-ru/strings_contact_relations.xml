@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">Связи</string>
+    <string name="contact_add_relation">Добавить связь</string>
+    <string name="contact_remove_relation">Удалить связь</string>
+    <string name="contact_relation_type">Тип связи</string>
+    <string name="contact_relation_name">Имя</string>
+    <string name="contact_entry_label">Метка</string>
+    <string name="relation_friend">Друг</string>
+    <string name="relation_manager">Руководитель</string>
+    <string name="relation_partner">Партнер</string>
+    <string name="relation_assistant">Ассистент</string>
+    <string name="relation_spouse">Супруг</string>
+    <string name="relation_relative">Родственник</string>
+    <string name="relation_child">Ребенок</string>
+    <string name="relation_mother">Мать</string>
+    <string name="relation_father">Отец</string>
+    <string name="relation_brother">Брат</string>
+    <string name="relation_sister">Сестра</string>
+    <string name="relation_custom">Свой вариант</string>
+    <string name="relation_parent">Родитель</string>
+    <string name="relation_sibling">Брат или сестра</string>
+    <string name="contact_add_social_link">Добавить свою ссылку</string>
+    <string name="contact_remove_social_link">Удалить ссылку</string>
+    <string name="contact_social_link_value">URL или имя пользователя</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
+</resources>

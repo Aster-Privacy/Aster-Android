@@ -23,6 +23,12 @@ package org.astermail.android.contacts.sync
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.astermail.android.contacts.ContactRelation
+import org.astermail.android.contacts.RELATIONS_KEY
+import org.astermail.android.contacts.RelationKind
+import org.astermail.android.contacts.decode_contact_relations
+import org.astermail.android.contacts.normalize_relations
+import org.astermail.android.contacts.relations_json_array
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -95,7 +101,7 @@ data class ContactCard(
         phones = normalize_entries(phones, PHONE_TYPES, dedupe_case_insensitive = false),
         addresses = normalize_addresses(addresses),
         websites = normalize_entries(websites, WEBSITE_TYPES, dedupe_case_insensitive = true),
-        relations = normalize_entries(relations, RELATION_TYPES, dedupe_case_insensitive = false),
+        relations = normalize_relations(relations.map { it.to_relation() }).map { it.to_card_entry() },
         messengers = normalize_entries(messengers, MESSENGER_TYPES, dedupe_case_insensitive = false),
         dates = normalize_entries(dates, DATE_TYPES, dedupe_case_insensitive = false),
         starred = starred,
@@ -107,13 +113,15 @@ data class ContactCard(
         val PHONE_TYPES = listOf("mobile", "home", "personal", "work", "fax", "pager", "other")
         val ADDRESS_TYPES = listOf("home", "work", "other")
         val WEBSITE_TYPES = listOf("private", "work", "blog", "other")
-        val RELATION_TYPES = listOf(
-            "assistant", "manager", "spouse", "partner", "child", "parent", "sibling", "friend", "other",
-        )
         val MESSENGER_TYPES = listOf("signal", "matrix", "telegram", "whatsapp", "xmpp", "other")
         val DATE_TYPES = listOf("anniversary", "graduation", "wedding", "other")
     }
 }
+
+fun CardEntry.to_relation(): ContactRelation =
+    ContactRelation(RelationKind.from_id(type) ?: RelationKind.CUSTOM, value, label)
+
+fun ContactRelation.to_card_entry(): CardEntry = CardEntry(value, kind.id, label)
 
 private fun normalize_type(type: String, allowed: List<String>): String {
     val lowered = type.trim().lowercase(java.util.Locale.ROOT)
@@ -316,7 +324,7 @@ fun contact_card_from_json_object(obj: JSONObject): ContactCard {
         phones = phones,
         addresses = addresses,
         websites = websites,
-        relations = obj.entries("related_people"),
+        relations = decode_contact_relations(obj).map { it.to_card_entry() },
         messengers = obj.entries("instant_messengers"),
         dates = obj.entries("date_entries"),
         starred = obj.optBoolean("is_favorite", false),
@@ -417,7 +425,10 @@ fun write_card_field(obj: JSONObject, card: ContactCard, field: CardField, avata
                 if (social.length() == 0) obj.remove("social_links")
             }
         }
-        CardField.RELATIONS -> obj.put("related_people", entries_array(card.relations))
+        CardField.RELATIONS -> obj.put(
+            RELATIONS_KEY,
+            relations_json_array(obj.opt(RELATIONS_KEY) as? JSONArray, card.relations.map { it.to_relation() }),
+        )
         CardField.MESSENGERS -> obj.put("instant_messengers", entries_array(card.messengers))
         CardField.DATES -> obj.put("date_entries", entries_array(card.dates))
         CardField.STARRED -> obj.put("is_favorite", card.starred)

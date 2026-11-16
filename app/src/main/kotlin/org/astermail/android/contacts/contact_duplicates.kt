@@ -215,6 +215,16 @@ fun merge_contacts(ordered: List<Contact>): Contact {
         notes = notes.joinToString("\n\n"),
         is_favorite = ordered.any { it.is_favorite },
         groups = groups.values.toList(),
+        relations = if (ordered.all { it.relations == null }) {
+            null
+        } else {
+            ordered.fold(emptyList()) { merged, contact -> merge_relations(merged, contact.relations.orEmpty()) }
+        },
+        social_networks = if (ordered.all { it.social_networks == null }) {
+            null
+        } else {
+            ordered.fold(emptyList()) { merged, contact -> merge_socials(merged, contact.social_networks.orEmpty()) }
+        },
     ).with_typed_fields(
         emails = merged_entries(ordered.flatMap { it.email_entries() }) { it.lowercase(Locale.ROOT) },
         phones = merged_entries(ordered.flatMap { it.phone_entries() }) { value ->

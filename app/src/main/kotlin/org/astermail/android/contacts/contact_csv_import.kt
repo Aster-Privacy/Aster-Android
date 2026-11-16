@@ -244,22 +244,6 @@ private val DATE_TYPES = mapOf(
     "wedding" to "wedding",
 )
 
-private val RELATION_TYPES = mapOf(
-    "assistant" to "assistant",
-    "manager" to "manager",
-    "supervisor" to "manager",
-    "spouse" to "spouse",
-    "partner" to "partner",
-    "child" to "child",
-    "parent" to "parent",
-    "father" to "parent",
-    "mother" to "parent",
-    "sibling" to "sibling",
-    "brother" to "sibling",
-    "sister" to "sibling",
-    "friend" to "friend",
-)
-
 private val MESSENGER_TYPES = mapOf(
     "signal" to "signal",
     "matrix" to "matrix",
@@ -497,6 +481,13 @@ private fun social_host_of(url: String): String? {
 
 private fun <T> MutableMap<String, T>.slot(key: String, create: () -> T): T = getOrPut(key, create)
 
+private fun csv_relation(label: String, value: String): ContactRelation =
+    if (label.equals("supervisor", ignoreCase = true)) {
+        ContactRelation(RelationKind.MANAGER, value)
+    } else {
+        relation_from_label(label, value)
+    }
+
 private fun typed_entries(entries: List<Pair<String, String>>): JSONArray {
     val array = JSONArray()
     for ((value, type) in entries) array.put(JSONObject().put("value", value).put("type", type))
@@ -710,13 +701,14 @@ private fun build_csv_contact(
         }
     }
 
-    val related_people = mutableListOf<Pair<String, String>>()
+    val related_people = mutableListOf<ContactRelation>()
     for (slot in relations.values) {
-        val label = clean_label(slot.label ?: slot.implied_type)
+        val label = (slot.label ?: slot.implied_type ?: "").replace(Regex("^\\*\\s*"), "").trim()
         for (person in slot.values) {
-            related_people.add(person to mapped_type(RELATION_TYPES, listOf(label), "other"))
+            related_people.add(csv_relation(label, person))
         }
     }
+    val clean_relations = normalize_relations(related_people)
 
     val instant_messengers = mutableListOf<Pair<String, String>>()
     for (slot in messengers.values) {
@@ -757,7 +749,7 @@ private fun build_csv_contact(
     if (address_entries.isNotEmpty()) raw.put("address_entries", JSONArray(address_entries))
     if (website_entries.isNotEmpty()) raw.put("websites", typed_entries(website_entries))
     if (date_entries.isNotEmpty()) raw.put("date_entries", typed_entries(date_entries))
-    if (related_people.isNotEmpty()) raw.put("related_people", typed_entries(related_people))
+    if (clean_relations.isNotEmpty()) raw.put(RELATIONS_KEY, relations_json_array(null, clean_relations))
     if (instant_messengers.isNotEmpty()) raw.put("instant_messengers", typed_entries(instant_messengers))
     if (social_links.has("github")) {
         raw.put("social_links", JSONObject().put("github", social_links.getString("github")))
@@ -788,6 +780,7 @@ private fun build_csv_contact(
         is_favorite = is_favorite,
         groups = group_names,
         raw_json = if (raw.length() > 0) raw.toString() else "",
+        relations = clean_relations.takeIf { it.isNotEmpty() },
     ).with_typed_fields(
         emails = ordered_emails.map { (value, type) -> ContactEntry(value, type) },
         phones = ordered_phones.map { (value, type) -> ContactEntry(value, type) },
