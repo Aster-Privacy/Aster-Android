@@ -60,6 +60,8 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.contacts.ImportContactItem
 import org.astermail.android.api.contacts.ImportContactsRequest
 import org.astermail.android.api.contacts.ImportContactsResponse
+import org.astermail.android.api.contacts.GroupMembersRequest
+import org.astermail.android.api.contacts.GroupMembershipEntry
 import org.astermail.android.api.contacts.SuccessResponse
 import org.astermail.android.api.contacts.UpdateContactRequest
 import org.astermail.android.api.contacts.UpdateContactResponse
@@ -94,6 +96,11 @@ data class ContactGroup(
 
 private const val DEFAULT_GROUP_COLOR = "#4f46e5"
 
+private const val GROUP_MEMBERS_BATCH = 500
+
+internal fun group_membership_map(entries: List<GroupMembershipEntry>): Map<String, Set<String>> =
+    entries.groupBy({ it.group_id }, { it.contact_id }).mapValues { it.value.toSet() }
+
 class ContactUndecryptableException : IllegalStateException("failed to decrypt contact")
 
 @Singleton
@@ -113,6 +120,9 @@ class ContactsRepository @Inject constructor(
     private val resolved_ids = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     private val cache_writes = java.util.concurrent.atomic.AtomicLong(0)
+
+    @Volatile
+    private var membership_cache: Pair<String, Map<String, Set<String>>>? = null
 
     private val cache_dao: ContactCacheDao?
         get() = cache_dao_provider?.get()
@@ -977,6 +987,7 @@ class ContactsRepository @Inject constructor(
         }
 
     suspend fun clear_cache(account_id: String) {
+        if (membership_cache?.first == account_id) membership_cache = null
         runCatching { cache_dao?.clear_for_account(account_id) }
         runCatching { group_cache_dao?.clear_for_account(account_id) }
         resolved_ids.clear()
@@ -1039,6 +1050,31 @@ class ContactsRepository @Inject constructor(
 
     suspend fun remove_contact_from_group(contact_id: String, group_id: String): Result<SuccessResponse> = runCatching {
         contacts_api.remove_contact_from_group(contact_id, group_id)
+    }
+
+    suspend fun list_group_memberships(): Result<Map<String, Set<String>>> = runCatching {
+        val account = current_account()
+        val cached = membership_cache?.takeIf { it.first == account }?.second
+        if (!is_online() && cached != null) return@runCatching cached
+        val response = try {
+            contacts_api.list_group_memberships()
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (t: Throwable) {
+            if (cached != null && is_transient_failure(t)) return@runCatching cached
+            throw t
+        }
+        val map = group_membership_map(response.memberships)
+        if (account != null && current_account() == account) membership_cache = account to map
+        map
+    }
+
+    suspend fun add_contacts_to_group(group_id: String, contact_ids: List<String>): Result<Int> = runCatching {
+        var changed = 0L
+        contact_ids.distinct().chunked(GROUP_MEMBERS_BATCH).forEach { batch ->
+            changed += contacts_api.add_contacts_to_group(group_id, GroupMembersRequest(batch)).changed
+        }
+        changed.toInt()
     }
 
     suspend fun fetch_raw_changes(since: Long, limit: Int, full: Boolean = false): RawContactChanges {

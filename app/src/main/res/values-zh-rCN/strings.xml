@@ -3569,4 +3569,19 @@
     <string name="reply_from_mismatch_send_from">从 %1$s 发送</string>
     <string name="reply_from_mismatch_dismiss">关闭</string>
     <string name="error_alias_sending_disabled">已停用从此别名发送。请先启用。</string>
+    <string name="open_group_description">打开群组 %1$s，%2$s</string>
+    <string name="group_empty_title">此群组中没有联系人</string>
+    <string name="group_empty_hint">要向此群组添加联系人，请轻点“添加成员”。</string>
+    <string name="add_members">添加成员</string>
+    <string name="add_members_count">添加 %1$d 个</string>
+    <string name="add_members_none_left">你的所有联系人都已在此群组中。</string>
+    <string name="remove_from_group">从群组中移除</string>
+    <string name="remove_from_group_message">要将 %1$s 从 %2$s 中移除吗？该联系人仍保留在你的通讯录中。</string>
+    <string name="removed_from_group">已从群组中移除</string>
+    <string name="email_group">给群组写邮件</string>
+    <string name="group_load_failed">无法加载此群组。请检查你的网络连接，然后重试。</string>
+    <string name="group_deleted">群组已删除</string>
+    <plurals name="members_added">
+        <item quantity="other">已添加 %d 个联系人</item>
+    </plurals>
 </resources>

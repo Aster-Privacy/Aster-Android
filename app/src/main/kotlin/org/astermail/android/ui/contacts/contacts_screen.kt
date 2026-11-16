@@ -82,6 +82,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -133,6 +134,7 @@ fun ContactsScreen(
     on_back: () -> Unit = {},
     on_open_contact: (String) -> Unit,
     on_create_contact: () -> Unit,
+    on_open_group: (String) -> Unit = {},
     on_open_drawer: (() -> Unit)? = null,
     on_compose_to: ((List<String>) -> Unit)? = null,
     search_back_enabled: Boolean = true,
@@ -558,7 +560,10 @@ fun ContactsScreen(
                 groups_pane(
                     groups = filtered_groups,
                     query = query.trim(),
+                    is_loading = !ui_state.groups_loaded && ui_state.groups.isEmpty(),
+                    count_of = { ui_state.group_member_count(it) },
                     modifier = Modifier.weight(1f),
+                    on_open = { on_open_group(it.id) },
                     on_edit = { editing_group = it },
                     on_delete = { pending_group_delete = it },
                 )
@@ -819,6 +824,7 @@ fun ContactsScreen(
     if (show_group_picker) {
         group_picker_dialog(
             groups = ui_state.groups,
+            count_of = { ui_state.group_member_count(it) },
             on_dismiss = { show_group_picker = false },
             on_pick = { group ->
                 show_group_picker = false
@@ -883,11 +889,11 @@ private fun letter_of(name: String): String {
     return if (first.isLetter()) first.toString() else "#"
 }
 
-private fun parse_group_color(value: String, fallback: Color): Color =
+internal fun parse_group_color(value: String, fallback: Color): Color =
     runCatching { Color(android.graphics.Color.parseColor(value)) }.getOrDefault(fallback)
 
 @Composable
-private fun group_glyph(
+internal fun group_glyph(
     color: String,
     icon: String?,
     modifier: Modifier = Modifier,
@@ -1149,12 +1155,21 @@ private fun trash_pane(
 private fun groups_pane(
     groups: List<ContactGroup>,
     query: String,
+    is_loading: Boolean,
+    count_of: (ContactGroup) -> Int,
     modifier: Modifier = Modifier,
+    on_open: (ContactGroup) -> Unit,
     on_edit: (ContactGroup) -> Unit,
     on_delete: (ContactGroup) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    if (groups.isEmpty() && is_loading) {
+        Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = colors.accent_blue)
+        }
+        return
+    }
     if (groups.isEmpty()) {
         Column(
             modifier = modifier
@@ -1196,11 +1211,21 @@ private fun groups_pane(
         contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp),
     ) {
         itemsIndexed(groups, key = { _, group -> group.id }) { index, group ->
+            val count = count_of(group)
+            val members_label = context.resources.getQuantityString(
+                R.plurals.group_members_plural,
+                count,
+                count,
+            )
+            val open_label = stringResource(R.string.open_group_description, group.name, members_label)
             Row(
                 modifier = contact_card_modifier(
                     is_first = index == 0,
                     is_last = index == groups.size - 1,
                 )
+                    .clickable(role = Role.Button) { on_open(group) }
+                    .semantics { contentDescription = open_label }
+                    .testTag("contact_group_row_" + group.id)
                     .defaultMinSize(minHeight = contact_row_min_height)
                     .padding(
                         horizontal = inbox_card_content_padding,
@@ -1209,13 +1234,19 @@ private fun groups_pane(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    modifier = Modifier.size(contact_row_avatar_size),
+                    modifier = Modifier
+                        .size(contact_row_avatar_size)
+                        .clearAndSetSemantics { },
                     contentAlignment = Alignment.Center,
                 ) {
                     group_glyph(color = group.color, icon = group.icon)
                 }
                 Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clearAndSetSemantics { },
+                ) {
                     Text(
                         text = group.name,
                         color = colors.text_primary,
@@ -1225,11 +1256,7 @@ private fun groups_pane(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = context.resources.getQuantityString(
-                            R.plurals.group_members_plural,
-                            group.contact_count,
-                            group.contact_count,
-                        ),
+                        text = members_label,
                         color = colors.text_muted,
                         fontSize = 13.sp,
                     )
@@ -1253,7 +1280,7 @@ private fun groups_pane(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun new_group_dialog(
+internal fun new_group_dialog(
     existing_count: Int,
     is_busy: Boolean,
     on_dismiss: () -> Unit,
@@ -1354,6 +1381,7 @@ private fun new_group_dialog(
 @Composable
 private fun group_picker_dialog(
     groups: List<ContactGroup>,
+    count_of: (ContactGroup) -> Int,
     on_dismiss: () -> Unit,
     on_pick: (ContactGroup) -> Unit,
     on_new_group: () -> Unit,
@@ -1390,11 +1418,12 @@ private fun group_picker_dialog(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        val count = count_of(group)
                         Text(
                             text = context.resources.getQuantityString(
                                 R.plurals.group_members_plural,
-                                group.contact_count,
-                                group.contact_count,
+                                count,
+                                count,
                             ),
                             color = colors.text_muted,
                             fontSize = 12.sp,
@@ -1617,11 +1646,11 @@ private fun favorites_strip(
     }
 }
 
-private val contact_row_avatar_size = 44.dp
-private val contact_row_min_height = 72.dp
+internal val contact_row_avatar_size = 44.dp
+internal val contact_row_min_height = 72.dp
 
 @Composable
-private fun section_letter_header(letter: String, is_first_group: Boolean) {
+internal fun section_letter_header(letter: String, is_first_group: Boolean) {
     val colors = AsterMaterial.colors
     Text(
         text = letter,
@@ -1640,7 +1669,7 @@ private fun section_letter_header(letter: String, is_first_group: Boolean) {
 }
 
 @Composable
-private fun contact_card_modifier(
+internal fun contact_card_modifier(
     is_first: Boolean,
     is_last: Boolean,
     is_selected: Boolean = false,
@@ -1662,7 +1691,7 @@ private fun contact_card_modifier(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ContactRow(
+internal fun ContactRow(
     contact: Contact,
     is_selected: Boolean,
     is_selecting: Boolean,
@@ -1671,6 +1700,8 @@ private fun ContactRow(
     is_last: Boolean,
     on_click: () -> Unit,
     on_toggle_selection: () -> Unit,
+    avatar_toggles_selection: Boolean = true,
+    long_click_label: String? = null,
 ) {
     val colors = AsterMaterial.colors
     Row(
@@ -1678,6 +1709,7 @@ private fun ContactRow(
             .combinedClickable(
                 onClick = on_click,
                 onLongClick = on_toggle_selection,
+                onLongClickLabel = long_click_label,
             )
             .defaultMinSize(minHeight = contact_row_min_height)
             .padding(
@@ -1689,8 +1721,15 @@ private fun ContactRow(
         Box(
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable(onClick = on_toggle_selection)
-                .semantics { contentDescription = contact.name },
+                .then(
+                    if (avatar_toggles_selection) {
+                        Modifier
+                            .clickable(onClick = on_toggle_selection)
+                            .semantics { contentDescription = contact.name }
+                    } else {
+                        Modifier
+                    },
+                ),
             contentAlignment = Alignment.Center,
         ) {
             if (is_selected) {

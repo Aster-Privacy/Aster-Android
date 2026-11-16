@@ -610,6 +610,7 @@ private object routes {
     const val contacts = "contacts"
     const val mailing_lists = "mailing_lists"
     const val contact_detail = "contact_detail/{contact_id}"
+    const val contact_group = "contact_group/{group_id}"
     const val contact_edit_new = "contact_edit"
     const val contact_edit = "contact_edit/{contact_id}"
 
@@ -639,6 +640,7 @@ private object routes {
     fun domain_bimi_for(domain_id: String) =
         "settings_domain_bimi/" + android.net.Uri.encode(domain_id)
     fun contact_detail_for(contact_id: String) = "contact_detail/$contact_id"
+    fun contact_group_for(group_id: String) = "contact_group/" + android.net.Uri.encode(group_id)
     fun contact_edit_for(contact_id: String) = "contact_edit/$contact_id"
 }
 
@@ -1392,12 +1394,37 @@ private fun AsterNavHost() {
             ContactsScreen(
                 on_back = { pop_once(nav_controller) },
                 on_open_contact = { id -> navigate_once(nav_controller, routes.contact_detail_for(id)) },
+                on_open_group = { id -> navigate_once(nav_controller, routes.contact_group_for(id)) },
                 on_create_contact = { navigate_once(nav_controller, routes.contact_edit_new) },
                 on_compose_to = { addresses ->
                     context.startActivity(
                         ComposeActivity.intent_for(context, prefill_to = addresses.joinToString(",")),
                     )
                 },
+            )
+        }
+        composable(
+            route = routes.contact_group,
+            arguments = listOf(navArgument("group_id") { type = NavType.StringType }),
+        ) { entry ->
+            val group_id = entry.arguments?.getString("group_id").orEmpty()
+            val contacts_entry = remember(entry) {
+                try { nav_controller.getBackStackEntry(routes.contacts) } catch (_: Throwable) {
+                    try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+                }
+            }
+            val shared_contacts_vm: org.astermail.android.contacts.ContactsViewModel =
+                if (contacts_entry != null) hiltViewModel(contacts_entry) else hiltViewModel()
+            org.astermail.android.ui.contacts.ContactGroupScreen(
+                group_id = group_id,
+                on_back = { pop_entry(nav_controller, entry) },
+                on_open_contact = { id -> navigate_once(nav_controller, routes.contact_detail_for(id)) },
+                on_compose_to = { addresses ->
+                    context.startActivity(
+                        ComposeActivity.intent_for(context, prefill_to = addresses.joinToString(",")),
+                    )
+                },
+                vm = shared_contacts_vm,
             )
         }
         composable(
@@ -2858,6 +2885,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             search_back_enabled = !drawer_state.isOpen,
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
+                            on_open_group = { id -> navigate_once(nav_controller, routes.contact_group_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
                             on_compose_to = { addresses ->
                                 drawer_context.startActivity(

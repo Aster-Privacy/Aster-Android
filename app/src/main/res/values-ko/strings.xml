@@ -3569,4 +3569,19 @@
     <string name="reply_from_mismatch_send_from">%1$s에서 보내기</string>
     <string name="reply_from_mismatch_dismiss">닫기</string>
     <string name="error_alias_sending_disabled">이 별칭에서 보내기가 꺼져 있습니다. 먼저 켜세요.</string>
+    <string name="open_group_description">그룹 %1$s 열기, %2$s</string>
+    <string name="group_empty_title">이 그룹에 연락처가 없습니다</string>
+    <string name="group_empty_hint">이 그룹에 연락처를 추가하려면 구성원 추가를 탭하세요.</string>
+    <string name="add_members">구성원 추가</string>
+    <string name="add_members_count">%1$d명 추가</string>
+    <string name="add_members_none_left">모든 연락처가 이미 이 그룹에 있습니다.</string>
+    <string name="remove_from_group">그룹에서 제거</string>
+    <string name="remove_from_group_message">%2$s에서 %1$s을(를) 제거할까요? 연락처는 주소록에 남아 있습니다.</string>
+    <string name="removed_from_group">그룹에서 제거됨</string>
+    <string name="email_group">그룹에 메일 쓰기</string>
+    <string name="group_load_failed">이 그룹을 불러올 수 없습니다. 연결을 확인하고 다시 시도하세요.</string>
+    <string name="group_deleted">그룹이 삭제됨</string>
+    <plurals name="members_added">
+        <item quantity="other">연락처 %d개를 추가했습니다</item>
+    </plurals>
 </resources>

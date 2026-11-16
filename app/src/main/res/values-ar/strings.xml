@@ -3671,4 +3671,24 @@
     <string name="reply_from_mismatch_send_from">الإرسال من %1$s</string>
     <string name="reply_from_mismatch_dismiss">إغلاق</string>
     <string name="error_alias_sending_disabled">الإرسال من هذا الاسم المستعار معطّل. فعّله أولاً.</string>
+    <string name="open_group_description">فتح المجموعة %1$s، %2$s</string>
+    <string name="group_empty_title">لا توجد جهات اتصال في هذه المجموعة</string>
+    <string name="group_empty_hint">لإضافة جهات اتصال إلى هذه المجموعة، انقر على إضافة أعضاء.</string>
+    <string name="add_members">إضافة أعضاء</string>
+    <string name="add_members_count">إضافة %1$d</string>
+    <string name="add_members_none_left">كل جهات اتصالك موجودة بالفعل في هذه المجموعة.</string>
+    <string name="remove_from_group">إزالة من المجموعة</string>
+    <string name="remove_from_group_message">هل تريد إزالة %1$s من %2$s؟ تبقى جهة الاتصال في دفتر العناوين.</string>
+    <string name="removed_from_group">تمت الإزالة من المجموعة</string>
+    <string name="email_group">مراسلة المجموعة</string>
+    <string name="group_load_failed">تعذر تحميل هذه المجموعة. تحقق من اتصالك وحاول مرة أخرى.</string>
+    <string name="group_deleted">تم حذف المجموعة</string>
+    <plurals name="members_added">
+        <item quantity="zero">لم تتم إضافة أي جهة اتصال</item>
+        <item quantity="one">تمت إضافة جهة اتصال واحدة</item>
+        <item quantity="two">تمت إضافة جهتي اتصال</item>
+        <item quantity="few">تمت إضافة %d جهات اتصال</item>
+        <item quantity="many">تمت إضافة %d جهة اتصال</item>
+        <item quantity="other">تمت إضافة %d جهة اتصال</item>
+    </plurals>
 </resources>

@@ -3630,4 +3630,22 @@
     <string name="reply_from_mismatch_send_from">Wyślij z %1$s</string>
     <string name="reply_from_mismatch_dismiss">Zamknij</string>
     <string name="error_alias_sending_disabled">Wysyłanie z tego aliasu jest wyłączone. Najpierw je włącz.</string>
+    <string name="open_group_description">Otwórz grupę %1$s, %2$s</string>
+    <string name="group_empty_title">Brak kontaktów w tej grupie</string>
+    <string name="group_empty_hint">Aby dodać kontakty do tej grupy, kliknij Dodaj członków.</string>
+    <string name="add_members">Dodaj członków</string>
+    <string name="add_members_count">Dodaj %1$d</string>
+    <string name="add_members_none_left">Wszystkie Twoje kontakty są już w tej grupie.</string>
+    <string name="remove_from_group">Usuń z grupy</string>
+    <string name="remove_from_group_message">Usunąć %1$s z grupy %2$s? Kontakt pozostanie w książce adresowej.</string>
+    <string name="removed_from_group">Usunięto z grupy</string>
+    <string name="email_group">Napisz do grupy</string>
+    <string name="group_load_failed">Nie można wczytać tej grupy. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="group_deleted">Grupa usunięta</string>
+    <plurals name="members_added">
+        <item quantity="one">Dodano %d kontakt</item>
+        <item quantity="few">Dodano %d kontakty</item>
+        <item quantity="many">Dodano %d kontaktów</item>
+        <item quantity="other">Dodano %d kontaktu</item>
+    </plurals>
 </resources>
