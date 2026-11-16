@@ -535,6 +535,16 @@ internal fun inline_image_sources(
         val used = aliases.filter { it in referenced }
         if (used.isEmpty()) continue
         if (used.all { resolved.containsKey(it) }) continue
+        val local = org.astermail.android.mail.DecryptedMimeAttachments.bytes_for(att.id)
+        if (local != null) {
+            if (local.isEmpty() || local.size > org.astermail.android.mail.INLINE_IMAGE_MAX_BYTES || local.size > budget) continue
+            budget -= local.size
+            val local_key = InlineImageStore.content_key(used.first(), local)
+            InlineImageStore.put(local_key, att.content_type, local)
+            val local_url = InlineImageStore.url_for(local_key)
+            used.forEach { alias -> resolved.putIfAbsent(alias, local_url) }
+            continue
+        }
         val data = att.encrypted_data
         val nonce = att.data_nonce
         if (data.isNullOrBlank() || nonce.isNullOrBlank()) continue

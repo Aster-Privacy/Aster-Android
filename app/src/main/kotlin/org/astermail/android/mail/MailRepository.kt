@@ -2400,6 +2400,7 @@ class MailRepository @Inject constructor(
         clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
+        DecryptedMimeAttachments.clear()
     }
 
     fun clear_account_data() {
@@ -4256,7 +4257,8 @@ class MailRepository @Inject constructor(
             is_encrypted = item.encrypted_envelope != null &&
                 envelope?.is_unauthenticated != true &&
                 envelope?.is_unconfirmed_sender != true,
-            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
+            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false) ||
+                DecryptedMimeAttachments.has(item.id),
             is_trashed = is_message_trashed(item.is_trashed, meta?.is_trashed),
             is_archived = (meta?.is_archived ?: false) || (item.is_archived ?: false),
             is_spam = (meta?.is_spam ?: false) || (item.is_spam ?: false),
@@ -4360,7 +4362,8 @@ class MailRepository @Inject constructor(
             to_addresses = envelope?.to?.map { it.second } ?: emptyList(),
             cc_addresses = envelope?.cc?.map { it.second } ?: emptyList(),
             bcc_addresses = envelope?.bcc?.map { it.second } ?: emptyList(),
-            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false),
+            has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false) ||
+                DecryptedMimeAttachments.has(item.id),
             raw_headers = envelope?.raw_headers ?: emptyList(),
             is_undecryptable = envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank(),
             is_sealed_to_missing_keys = envelope == null && keys_missing,
@@ -4455,6 +4458,7 @@ class MailRepository @Inject constructor(
                                 own_result.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
                             own_sealed = envelope_own_seal_verified
                             if (MimeParser.looks_like_mime(pgp_plaintext)) {
+                                DecryptedMimeAttachments.keep_from_plaintext(message_id, pgp_plaintext)
                                 val mime = MimeParser.parse(pgp_plaintext)
                                 return DecryptedEnvelope(
                                     subject = "",
@@ -5087,7 +5091,9 @@ class MailRepository @Inject constructor(
     }
 
     suspend fun find_messages_with_attachments(mail_item_ids: List<String>): List<String> {
-        return probe_messages_with_attachments(mail_item_ids).getOrDefault(emptyList())
+        val server = probe_messages_with_attachments(mail_item_ids).getOrDefault(emptyList())
+        val local = mail_item_ids.filter { DecryptedMimeAttachments.has(it) }
+        return (server + local).distinct()
     }
 
     suspend fun fetch_attachment_metas_for_messages(
@@ -5114,6 +5120,10 @@ class MailRepository @Inject constructor(
                         mail_item_id = att.mail_item_id,
                         seq_num = att.seq_num,
                     )
+                }
+            }.let { server ->
+                mail_item_ids.distinct().associateWith { id ->
+                    DecryptedMimeAttachments.merge_into(id, server[id].orEmpty())
                 }
             }.filterValues { it.isNotEmpty() }.let { Result.success(it) }
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
@@ -5181,7 +5191,7 @@ class MailRepository @Inject constructor(
                     seq_num = att.seq_num,
                 )
             }
-            Result.success(resolved)
+            Result.success(DecryptedMimeAttachments.merge_into(mail_item_id, resolved))
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
             throw t
         } catch (t: Throwable) {
@@ -5214,6 +5224,7 @@ class MailRepository @Inject constructor(
     suspend fun fetch_attachment(
         attachment_id: String,
     ): Result<org.astermail.android.ui.mail.MessageAttachment> {
+        DecryptedMimeAttachments.attachment_for(attachment_id)?.let { return Result.success(it) }
         return try {
             val att = mail_api.get_attachment(attachment_id)
             val meta = resolve_single_attachment_meta(att)
@@ -5241,6 +5252,9 @@ class MailRepository @Inject constructor(
     suspend fun download_attachment(
         attachment_id: String,
     ): Result<Pair<org.astermail.android.ui.mail.MessageAttachment, ByteArray>> {
+        val local = DecryptedMimeAttachments.attachment_for(attachment_id)
+        val local_bytes = DecryptedMimeAttachments.bytes_for(attachment_id)
+        if (local != null && local_bytes != null) return Result.success(local to local_bytes)
         return try {
             val att = mail_api.get_attachment(attachment_id)
             val meta = resolve_single_attachment_meta(att)
@@ -5978,6 +5992,9 @@ class MailRepository @Inject constructor(
                 },
             )
             verify_with_outside_sender_key(armored, envelope.from_email, allow_external_pgp, settled)
+        }
+        if (pgp_fields.body_text != body_text) {
+            DecryptedMimeAttachments.keep_from_plaintext(message_id, pgp_fields.body_text)
         }
         body_text = pgp_fields.body_text
         body_html = pgp_fields.body_html
