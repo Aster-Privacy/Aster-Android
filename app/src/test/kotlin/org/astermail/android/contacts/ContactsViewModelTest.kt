@@ -57,6 +57,7 @@ class ContactsViewModelTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
         repository = mockk(relaxed = true)
+        coEvery { repository.list_group_memberships() } returns Result.success(emptyMap())
         context = mockk(relaxed = true)
         every { context.getString(org.astermail.android.R.string.error_no_connection) } returns
             "Could not connect to the server. Check your internet connection."
