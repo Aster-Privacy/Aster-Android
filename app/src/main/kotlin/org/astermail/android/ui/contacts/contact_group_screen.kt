@@ -22,6 +22,8 @@
 package org.astermail.android.ui.contacts
 
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,11 +59,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -222,15 +225,8 @@ fun ContactGroupScreen(
                     modifier = Modifier.testTag("back"),
                 )
                 if (group != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clearAndSetSemantics { },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        group_glyph(color = group.color, icon = group.icon)
-                    }
-                    Spacer(Modifier.width(AsterSpacing.sm))
+                    group_avatar(color = group.color, icon = group.icon, size = 40.dp)
+                    Spacer(Modifier.width(AsterSpacing.md))
                 }
                 Column(
                     modifier = Modifier
@@ -258,13 +254,6 @@ fun ContactGroupScreen(
                     }
                 }
                 if (group != null) {
-                    AsterIconButton(
-                        icon = TablerIcons.Mail,
-                        content_description = stringResource(R.string.email_group),
-                        onClick = { on_compose_to(member_emails) },
-                        enabled = member_emails.isNotEmpty(),
-                        modifier = Modifier.testTag("contact_group_compose"),
-                    )
                     Box {
                         AsterIconButton(
                             icon = TablerIcons.DotsVertical,
@@ -274,13 +263,13 @@ fun ContactGroupScreen(
                         )
                         aster_menu(expanded = show_menu, on_dismiss = { show_menu = false }) {
                             aster_menu_item(
-                                label = add_members_label,
-                                icon = TablerIcons.UserPlus,
-                                enabled = ui_state.memberships_ready,
-                                test_tag = "contact_group_menu_add",
+                                label = stringResource(R.string.email_group),
+                                icon = TablerIcons.Mail,
+                                enabled = member_emails.isNotEmpty(),
+                                test_tag = "contact_group_compose",
                                 on_click = {
                                     show_menu = false
-                                    show_add = true
+                                    on_compose_to(member_emails)
                                 },
                             )
                             aster_menu_item(
@@ -587,18 +576,31 @@ private fun add_members_dialog(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 320.dp)
+                            .heightIn(max = 340.dp)
+                            .clip(SquircleShape(AsterRadius.lg))
+                            .background(colors.text_primary.copy(alpha = 0.04f))
+                            .border(
+                                width = 1.dp,
+                                color = colors.text_primary.copy(alpha = 0.08f),
+                                shape = SquircleShape(AsterRadius.lg),
+                            )
+                            .padding(6.dp)
                             .testTag("add_members_list"),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         itemsIndexed(candidates, key = { _, contact -> contact.id }) { _, contact ->
                             val checked = contact.id in picked_set
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clip(SquircleShape(AsterRadius.sm))
+                                    .background(
+                                        if (checked) colors.accent_blue.copy(alpha = 0.12f) else Color.Transparent,
+                                    )
                                     .clickable(role = Role.Checkbox, enabled = !is_busy) {
                                         picked = if (checked) picked - contact.id else picked + contact.id
                                     }
-                                    .padding(vertical = AsterSpacing.xs)
+                                    .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs)
                                     .testTag("add_members_row_" + contact.id),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {

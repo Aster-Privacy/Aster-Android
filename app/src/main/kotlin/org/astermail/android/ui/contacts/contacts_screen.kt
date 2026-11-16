@@ -87,6 +87,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -919,6 +920,34 @@ internal fun group_glyph(
 }
 
 @Composable
+internal fun group_avatar(
+    color: String,
+    icon: String?,
+    size: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val tint = parse_group_color(color, colors.accent_blue)
+    val vector = org.astermail.android.ui.common.label_icon_or_null(icon) ?: TablerIcons.Users
+    val glyph_tint = if (colors.is_dark) androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f) else tint
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(tint.copy(alpha = if (colors.is_dark) 0.22f else 0.14f))
+            .clearAndSetSemantics { },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = vector,
+            contentDescription = null,
+            tint = glyph_tint,
+            modifier = Modifier.size(size * 0.5f),
+        )
+    }
+}
+
+@Composable
 private fun FilterChip(
     label: String,
     active: Boolean,
@@ -1233,14 +1262,11 @@ private fun groups_pane(
                     ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(contact_row_avatar_size)
-                        .clearAndSetSemantics { },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    group_glyph(color = group.color, icon = group.icon)
-                }
+                group_avatar(
+                    color = group.color,
+                    icon = group.icon,
+                    size = contact_row_avatar_size,
+                )
                 Spacer(Modifier.width(AsterSpacing.md))
                 Column(
                     modifier = Modifier
