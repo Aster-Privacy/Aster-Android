@@ -3605,4 +3605,5 @@
         <item quantity="one">%d Kontakt hinzugefügt</item>
         <item quantity="other">%d Kontakte hinzugefügt</item>
     </plurals>
+    <string name="body_index_status">Nachrichtentext wird für die Suche indexiert: %1$d von %2$d</string>
 </resources>

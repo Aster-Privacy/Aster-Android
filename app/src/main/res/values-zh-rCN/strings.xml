@@ -3584,4 +3584,5 @@
     <plurals name="members_added">
         <item quantity="other">已添加 %d 个联系人</item>
     </plurals>
+    <string name="body_index_status">正在为搜索索引邮件正文：%1$d / %2$d</string>
 </resources>

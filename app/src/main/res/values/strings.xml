@@ -3655,4 +3655,5 @@
         <item quantity="one">%d contact added</item>
         <item quantity="other">%d contacts added</item>
     </plurals>
+    <string name="body_index_status" tools:ignore="PluralsCandidate">Indexing message text for search: %1$d of %2$d</string>
 </resources>

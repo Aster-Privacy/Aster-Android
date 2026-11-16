@@ -5411,6 +5411,11 @@ class MailViewModel @Inject constructor(
     private val search_attachment_cache =
         java.util.concurrent.ConcurrentHashMap<String, List<org.astermail.android.ui.search.SearchAttachment>>()
 
+    internal suspend fun search_body_hits(terms: List<String>): Map<String, Set<String>> =
+        search_index_manager.body_hits(terms)
+
+    val body_index_progress get() = search_index_manager.body_index_progress
+
     internal suspend fun search_attachment_types(
         item_ids: List<String>,
     ): Map<String, List<org.astermail.android.ui.search.SearchAttachment>> = kotlinx.coroutines.withContext(Dispatchers.IO) {

@@ -758,4 +758,28 @@ class SearchQueryRulesTest {
             build_advanced_operators(ops, fields.copy(scope = "sent"), null, false),
         )
     }
+
+    @Test
+    fun a_term_found_only_in_the_message_body_matches() {
+        val parsed = parse_query("quetzal hello")
+        val with_body = env.copy(body_hits = mapOf("quetzal" to setOf("1")))
+
+        assertFalse(matches_item(item(), parsed, env = env))
+        assertTrue(matches_item(item(), parsed, env = with_body))
+        assertFalse(matches_item(item(), parse_query("quetzal missing"), env = with_body))
+    }
+
+    @Test
+    fun a_negated_word_in_the_message_body_excludes_the_mail() {
+        val parsed = parse_query("hello -quetzal")
+        val with_body = env.copy(body_hits = mapOf("quetzal" to setOf("1")))
+
+        assertTrue(matches_item(item(), parsed, env = env))
+        assertFalse(matches_item(item(), parsed, env = with_body))
+    }
+
+    @Test
+    fun body_search_terms_include_plain_and_negated_words() {
+        assertEquals(listOf("cafe", "quetzal"), body_search_terms(parse_query("Café -quetzal from:a@b.c")))
+    }
 }

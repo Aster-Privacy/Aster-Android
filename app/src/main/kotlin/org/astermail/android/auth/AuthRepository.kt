@@ -1394,6 +1394,7 @@ class AuthRepository @Inject constructor(
                     database.decrypted_mail_dao().clear_all()
                     database.folder_row_dao().clear_all()
                     database.message_body_dao().clear_all()
+                    database.message_body_index_dao().clear_all()
                     database.thread_snapshot_dao().clear_all()
                 }
             }
@@ -1795,6 +1796,7 @@ class AuthRepository @Inject constructor(
                 database.decrypted_mail_dao().clear_all()
                 database.folder_row_dao().clear_all()
                 database.message_body_dao().clear_all()
+                database.message_body_index_dao().clear_all()
                 database.thread_snapshot_dao().clear_all()
                 session_key_store.get_user_email()?.let { trusted_device_store.clear(it) }
 
@@ -1933,6 +1935,7 @@ class AuthRepository @Inject constructor(
         runCatching { database.decrypted_mail_dao().clear_all() }
         runCatching { database.folder_row_dao().clear_all() }
         runCatching { database.message_body_dao().clear_all() }
+        runCatching { database.message_body_index_dao().clear_all() }
         runCatching { database.thread_snapshot_dao().clear_all() }
         current_id?.let { id ->
             runCatching { database.contact_cache_dao().clear_for_account(id) }
@@ -2660,6 +2663,7 @@ class AuthRepository @Inject constructor(
         database.decrypted_mail_dao().clear_all()
         database.folder_row_dao().clear_all()
         database.message_body_dao().clear_all()
+        database.message_body_index_dao().clear_all()
         database.thread_snapshot_dao().clear_all()
         current_email?.let { trusted_device_store.clear(it) }
         if (current_id != null) {
@@ -3306,6 +3310,7 @@ class AuthRepository @Inject constructor(
                     database.decrypted_mail_dao().clear_all()
                     database.folder_row_dao().clear_all()
                     database.message_body_dao().clear_all()
+                    database.message_body_index_dao().clear_all()
                     database.thread_snapshot_dao().clear_all()
                 } != null
             }.getOrDefault(false)

@@ -34,7 +34,7 @@ import org.astermail.android.storage.contacts.ContactGroupCacheEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 23
+const val aster_database_version = 24
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -160,6 +160,35 @@ const val create_contact_group_cache =
         "`position` INTEGER NOT NULL, " +
         "PRIMARY KEY(`account_id`, `id`))"
 
+const val create_message_body_index =
+    "CREATE TABLE IF NOT EXISTS `message_body_index` (" +
+        "`doc_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+        "`message_id` TEXT NOT NULL, " +
+        "`body` TEXT NOT NULL, " +
+        "`received_at` INTEGER NOT NULL, " +
+        "`indexed_at` INTEGER NOT NULL)"
+
+const val create_message_body_index_id =
+    "CREATE UNIQUE INDEX IF NOT EXISTS `index_message_body_index_message_id` ON `message_body_index` (`message_id`)"
+
+const val create_message_body_index_received =
+    "CREATE INDEX IF NOT EXISTS `index_message_body_index_received_at` ON `message_body_index` (`received_at`)"
+
+const val create_message_body_fts =
+    "CREATE VIRTUAL TABLE IF NOT EXISTS `message_body_fts` USING FTS4(" +
+        "`body` TEXT NOT NULL, tokenize=unicode61, content=`message_body_index`, prefix=`2,3`)"
+
+val create_message_body_fts_triggers: List<String> = listOf(
+    "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_message_body_fts_BEFORE_UPDATE " +
+        "BEFORE UPDATE ON `message_body_index` BEGIN DELETE FROM `message_body_fts` WHERE `docid`=OLD.`rowid`; END",
+    "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_message_body_fts_BEFORE_DELETE " +
+        "BEFORE DELETE ON `message_body_index` BEGIN DELETE FROM `message_body_fts` WHERE `docid`=OLD.`rowid`; END",
+    "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_message_body_fts_AFTER_UPDATE " +
+        "AFTER UPDATE ON `message_body_index` BEGIN INSERT INTO `message_body_fts`(`docid`, `body`) VALUES (NEW.`rowid`, NEW.`body`); END",
+    "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_message_body_fts_AFTER_INSERT " +
+        "AFTER INSERT ON `message_body_index` BEGIN INSERT INTO `message_body_fts`(`docid`, `body`) VALUES (NEW.`rowid`, NEW.`body`); END",
+)
+
 private fun sender_auth_columns(table: String): List<schema_column> = listOf(
     schema_column(table, "spf_result", "TEXT"),
     schema_column(table, "dkim_result", "TEXT"),
@@ -213,6 +242,12 @@ val migration_statements: Map<Int, List<String>> = mapOf(
     17 to listOf(create_thread_snapshot_cache),
     18 to listOf(create_pending_mail_action),
     22 to listOf(create_contact_cache, create_contact_group_cache),
+    24 to listOf(
+        create_message_body_index,
+        create_message_body_index_id,
+        create_message_body_index_received,
+        create_message_body_fts,
+    ) + create_message_body_fts_triggers,
 )
 
 private fun has_table(db: SupportSQLiteDatabase, table: String): Boolean =
@@ -260,6 +295,8 @@ private fun step_migration(to_version: Int): Migration = object : Migration(to_v
         PendingMailActionEntity::class,
         ContactCacheEntity::class,
         ContactGroupCacheEntity::class,
+        MessageBodyIndexEntity::class,
+        MessageBodyFtsEntity::class,
     ],
     version = aster_database_version,
     exportSchema = false,
@@ -273,6 +310,7 @@ abstract class AsterDatabase : RoomDatabase() {
     abstract fun pending_mail_action_dao(): PendingMailActionDao
     abstract fun contact_cache_dao(): ContactCacheDao
     abstract fun contact_group_cache_dao(): ContactGroupCacheDao
+    abstract fun message_body_index_dao(): MessageBodyIndexDao
 
     companion object {
         val migration_1_2 = step_migration(2)
@@ -297,6 +335,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_20_21 = step_migration(21)
         val migration_21_22 = step_migration(22)
         val migration_22_23 = step_migration(23)
+        val migration_23_24 = step_migration(24)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -321,6 +360,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_20_21,
             migration_21_22,
             migration_22_23,
+            migration_23_24,
         )
     }
 }
