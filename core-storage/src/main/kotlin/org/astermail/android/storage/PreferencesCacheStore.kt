@@ -97,7 +97,13 @@ class PreferencesCacheStore(context: Context? = null) {
 
     fun write_tags(account_key: String?, payload: String) {
         val key = tag_entry_key(account_key) ?: return
-        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+        val legacy_key = legacy_tag_entry_key(account_key)
+        runCatching {
+            prefs?.edit()?.apply {
+                putString(key, payload)
+                if (legacy_key != null) remove(legacy_key)
+            }?.apply()
+        }
     }
 
     fun read_storage(account_key: String?): String? {
@@ -128,6 +134,7 @@ class PreferencesCacheStore(context: Context? = null) {
         val signature_key = signature_entry_key(account_key)
         val alias_key = alias_entry_key(account_key)
         val tag_key = tag_entry_key(account_key)
+        val legacy_tag_key = legacy_tag_entry_key(account_key)
         val twin_key = twin_entry_key(account_key)
         val storage_key = storage_entry_key(account_key)
         runCatching {
@@ -138,6 +145,7 @@ class PreferencesCacheStore(context: Context? = null) {
                 if (signature_key != null) remove(signature_key)
                 if (alias_key != null) remove(alias_key)
                 if (tag_key != null) remove(tag_key)
+                if (legacy_tag_key != null) remove(legacy_tag_key)
                 if (twin_key != null) remove(twin_key)
                 if (storage_key != null) remove(storage_key)
                 if (limits_key != null) remove(limits_key)
@@ -179,6 +187,12 @@ class PreferencesCacheStore(context: Context? = null) {
         return "$tag_key_prefix$id"
     }
 
+    private fun legacy_tag_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$legacy_tag_key_prefix$id"
+    }
+
     private fun alias_entry_key(account_key: String?): String? {
         val id = account_key?.trim().orEmpty()
         if (id.isEmpty()) return null
@@ -210,7 +224,8 @@ class PreferencesCacheStore(context: Context? = null) {
         const val badge_prefs_key_prefix = "badge_prefs_json_"
         const val signature_key_prefix = "signatures_json_"
         const val alias_key_prefix = "alias_prefs_json_"
-        const val tag_key_prefix = "tags_json_"
+        const val tag_key_prefix = "tags_v2_json_"
+        const val legacy_tag_key_prefix = "tags_json_"
         const val twin_key_prefix = "twin_address_json_"
         const val storage_key_prefix = "storage_json_"
         const val limits_key_prefix = "plan_limits_json_"
