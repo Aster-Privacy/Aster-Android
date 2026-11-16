@@ -23,4 +23,9 @@
     <string name="contact_add_social_link">कस्टम लिंक जोड़ें</string>
     <string name="contact_remove_social_link">लिंक हटाएं</string>
     <string name="contact_social_link_value">URL या हैंडल</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
 </resources>

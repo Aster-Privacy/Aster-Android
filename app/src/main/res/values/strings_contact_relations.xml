@@ -23,9 +23,9 @@
     <string name="contact_add_social_link">Add custom link</string>
     <string name="contact_remove_social_link">Remove link</string>
     <string name="contact_social_link_value">URL or handle</string>
-    <string name="social_github" translatable="false">GitHub</string>
-    <string name="social_instagram" translatable="false">Instagram</string>
-    <string name="social_facebook" translatable="false">Facebook</string>
-    <string name="social_mastodon" translatable="false">Mastodon</string>
-    <string name="social_bluesky" translatable="false">Bluesky</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
 </resources>

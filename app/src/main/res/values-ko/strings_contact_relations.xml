@@ -23,4 +23,9 @@
     <string name="contact_add_social_link">사용자 지정 링크 추가</string>
     <string name="contact_remove_social_link">링크 삭제</string>
     <string name="contact_social_link_value">URL 또는 핸들</string>
+    <string name="social_github">GitHub</string>
+    <string name="social_instagram">Instagram</string>
+    <string name="social_facebook">Facebook</string>
+    <string name="social_mastodon">Mastodon</string>
+    <string name="social_bluesky">Bluesky</string>
 </resources>
