@@ -2084,6 +2084,16 @@
     <string name="relative_dates_subtitle">Show Yesterday and the time of day on recent messages instead of the date</string>
     <string name="relative_dates_info_title">Relative dates</string>
     <string name="relative_dates_info_desc">When this is on, today’s messages show the time they arrived and yesterday’s messages show as Yesterday. Turn it off to always show the date in the message list and the date and time in the message itself.</string>
+    <string name="emoji_skin_tone">Emoji skin tone</string>
+    <string name="emoji_skin_tone_subtitle">Skin tone for people and hand emoji in reactions and the emoji picker</string>
+    <string name="emoji_skin_tone_info_title">Emoji skin tone</string>
+    <string name="emoji_skin_tone_info_desc">Choose the skin tone you want for people and hand emoji. Your choice applies to the emoji picker and to the reactions you send, and it syncs to all your devices. Emoji that have no skin tones stay the same.</string>
+    <string name="skin_tone_default">Default</string>
+    <string name="skin_tone_light">Light</string>
+    <string name="skin_tone_medium_light">Medium-light</string>
+    <string name="skin_tone_medium">Medium</string>
+    <string name="skin_tone_medium_dark">Medium-dark</string>
+    <string name="skin_tone_dark">Dark</string>
     <string name="show_alias_indicators">Show alias indicators</string>
     <string name="show_alias_indicators_subtitle">Mark messages that arrived through one of your aliases</string>
     <string name="show_sender_pictures">Sender pictures</string>

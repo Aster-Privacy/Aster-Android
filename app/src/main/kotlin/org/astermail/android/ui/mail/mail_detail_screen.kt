@@ -1943,6 +1943,9 @@ fun MailDetailScreen(
                 run {
                     reaction_quick_picker(
                         visible = reaction_picker_open && latest_restriction == null,
+                        skin_tone = settings_state.preferences?.emoji_skin_tone
+                            ?: org.astermail.android.api.preferences.EMOJI_SKIN_TONE_DEFAULT,
+                        on_skin_tone = { settings_vm.set_emoji_skin_tone(it) },
                         on_pick = { emoji ->
                             reaction_picker_open = false
                             val blocked = reaction_restriction_for(react_target)
@@ -3560,7 +3563,12 @@ private fun thread_draft_chip(
 }
 
 @Composable
-private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
+private fun reaction_quick_picker(
+    visible: Boolean,
+    skin_tone: String,
+    on_skin_tone: (String) -> Unit,
+    on_pick: (String) -> Unit,
+) {
     val colors = AsterMaterial.colors
     val picker_reduce_motion = aster_reduce_motion()
     var picker_sheet_open by remember { mutableStateOf(false) }
@@ -3592,7 +3600,10 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            quick_reaction_emoji.forEach { emoji ->
+            quick_reaction_emoji.forEach { base ->
+                val emoji = remember(base, skin_tone) {
+                    org.astermail.android.api.preferences.apply_emoji_skin_tone(base, skin_tone)
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -3631,6 +3642,8 @@ private fun reaction_quick_picker(visible: Boolean, on_pick: (String) -> Unit) {
                 picker_sheet_open = false
                 on_pick(emoji)
             },
+            skin_tone = skin_tone,
+            on_skin_tone = on_skin_tone,
         )
     }
 }

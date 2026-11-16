@@ -6221,6 +6221,13 @@ class SettingsViewModel @Inject constructor(
         save_preferences(updated)
     }
 
+    fun set_emoji_skin_tone(tone: String) {
+        val current = _state.value.preferences ?: return
+        val next = org.astermail.android.api.preferences.normalize_emoji_skin_tone(tone)
+        if (next == current.emoji_skin_tone) return
+        save_preferences(current.copy(emoji_skin_tone = next))
+    }
+
     fun set_sidebar_item_hidden(id: String, hidden: Boolean) {
         val current = _state.value.preferences ?: return
         val next_hidden = org.astermail.android.api.preferences.set_sidebar_item_hidden(

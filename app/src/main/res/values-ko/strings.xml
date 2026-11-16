@@ -1917,6 +1917,16 @@
     <string name="relative_dates_subtitle">최근 메시지에 날짜 대신 \'어제\'와 시각을 표시합니다</string>
     <string name="relative_dates_info_title">상대 날짜</string>
     <string name="relative_dates_info_desc">켜면 오늘 받은 메시지에는 도착 시각이, 어제 받은 메시지에는 \'어제\'가 표시됩니다. 끄면 메시지 목록에는 항상 날짜가, 메시지 안에는 날짜와 시각이 표시됩니다.</string>
+    <string name="emoji_skin_tone">이모티콘 피부톤</string>
+    <string name="emoji_skin_tone_subtitle">반응과 이모티콘 선택기에서 사람 및 손 이모티콘에 사용할 피부톤</string>
+    <string name="emoji_skin_tone_info_title">이모티콘 피부톤</string>
+    <string name="emoji_skin_tone_info_desc">사람 및 손 이모티콘에 사용할 피부톤을 선택하세요. 선택한 피부톤은 이모티콘 선택기와 보내는 반응에 적용되며 모든 기기에 동기화됩니다. 피부톤이 없는 이모티콘은 그대로 유지됩니다.</string>
+    <string name="skin_tone_default">기본</string>
+    <string name="skin_tone_light">밝은 톤</string>
+    <string name="skin_tone_medium_light">약간 밝은 톤</string>
+    <string name="skin_tone_medium">중간 톤</string>
+    <string name="skin_tone_medium_dark">약간 어두운 톤</string>
+    <string name="skin_tone_dark">어두운 톤</string>
     <string name="show_alias_indicators">별칭 표시 보기</string>
     <string name="show_alias_indicators_subtitle">별칭으로 도착한 메시지에 표시합니다</string>
     <string name="show_message_size_subtitle">받은 편지함 목록에서 각 이메일의 크기를 표시합니다</string>

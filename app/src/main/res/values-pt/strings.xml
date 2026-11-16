@@ -1925,6 +1925,16 @@
     <string name="relative_dates_subtitle">Mostrar Ontem e a hora nas mensagens recentes em vez da data</string>
     <string name="relative_dates_info_title">Datas relativas</string>
     <string name="relative_dates_info_desc">Quando esta opção está ativa, as mensagens de hoje mostram a hora e as de ontem mostram Ontem. Desative-a para mostrar sempre a data na lista de mensagens e a data e a hora na própria mensagem.</string>
+    <string name="emoji_skin_tone">Tom de pele dos emojis</string>
+    <string name="emoji_skin_tone_subtitle">Tom de pele para emojis de pessoas e mãos nas reações e no seletor de emojis</string>
+    <string name="emoji_skin_tone_info_title">Tom de pele dos emojis</string>
+    <string name="emoji_skin_tone_info_desc">Escolha o tom de pele para emojis de pessoas e mãos. A sua escolha aplica-se ao seletor de emojis e às reações que envia, e é sincronizada com todos os seus dispositivos. Os emojis sem tons de pele ficam iguais.</string>
+    <string name="skin_tone_default">Predefinido</string>
+    <string name="skin_tone_light">Claro</string>
+    <string name="skin_tone_medium_light">Claro médio</string>
+    <string name="skin_tone_medium">Médio</string>
+    <string name="skin_tone_medium_dark">Escuro médio</string>
+    <string name="skin_tone_dark">Escuro</string>
     <string name="show_alias_indicators">Mostrar indicadores de alias</string>
     <string name="show_alias_indicators_subtitle">Marcar mensagens que chegaram através de um dos seus aliases</string>
     <string name="show_message_size_subtitle">Mostrar o tamanho de cada e-mail na lista da caixa de entrada</string>

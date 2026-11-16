@@ -1922,6 +1922,16 @@
     <string name="relative_dates_subtitle">Bei neuen Nachrichten Gestern und die Uhrzeit statt des Datums anzeigen</string>
     <string name="relative_dates_info_title">Relative Datumsangaben</string>
     <string name="relative_dates_info_desc">Wenn diese Option aktiviert ist, zeigen heutige Nachrichten die Uhrzeit und gestrige Nachrichten Gestern an. Deaktivieren Sie sie, um in der Nachrichtenliste immer das Datum und in der Nachricht selbst Datum und Uhrzeit anzuzeigen.</string>
+    <string name="emoji_skin_tone">Emoji-Hautton</string>
+    <string name="emoji_skin_tone_subtitle">Hautton für Personen- und Hand-Emojis in Reaktionen und in der Emoji-Auswahl</string>
+    <string name="emoji_skin_tone_info_title">Emoji-Hautton</string>
+    <string name="emoji_skin_tone_info_desc">Wähle den Hautton für Personen- und Hand-Emojis. Deine Auswahl gilt für die Emoji-Auswahl und für die Reaktionen, die du sendest, und wird mit allen deinen Geräten synchronisiert. Emojis ohne Hauttöne bleiben unverändert.</string>
+    <string name="skin_tone_default">Standard</string>
+    <string name="skin_tone_light">Hell</string>
+    <string name="skin_tone_medium_light">Mittelhell</string>
+    <string name="skin_tone_medium">Mittel</string>
+    <string name="skin_tone_medium_dark">Mitteldunkel</string>
+    <string name="skin_tone_dark">Dunkel</string>
     <string name="show_alias_indicators">Alias-Kennzeichnung anzeigen</string>
     <string name="show_alias_indicators_subtitle">Nachrichten kennzeichnen, die über einen Ihrer Aliasse eingegangen sind</string>
     <string name="show_message_size_subtitle">Die Größe jeder E-Mail in der Posteingangsliste anzeigen</string>

@@ -97,6 +97,7 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.settings.settings_search_anchor
 import org.astermail.android.translation.TranslationAssets
 import org.astermail.android.translation.TranslationDownloadPolicy
 import org.astermail.android.translation.language_display_name
@@ -138,6 +139,45 @@ private fun behavior_toggle(
 }
 
 @Composable
+private fun emoji_skin_tone_row(selected: String, on_select: (String) -> Unit) {
+    val colors = AsterMaterial.colors
+    val title = stringResource(R.string.emoji_skin_tone)
+    val subtitle = stringResource(R.string.emoji_skin_tone_subtitle)
+    Column(
+        modifier = Modifier
+            .settings_search_anchor(title, subtitle)
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            androidx.compose.foundation.layout.Spacer(Modifier.size(AsterSpacing.xs))
+            info_dialog_button(
+                title = stringResource(R.string.emoji_skin_tone_info_title),
+                description = stringResource(R.string.emoji_skin_tone_info_desc),
+            )
+        }
+        Text(
+            text = subtitle,
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+        org.astermail.android.ui.mail.skin_tone_swatch_row(
+            selected = selected,
+            on_select = on_select,
+            modifier = Modifier.padding(top = AsterSpacing.sm),
+        )
+    }
+}
+
+@Composable
 fun BehaviorScreen(
     on_back: () -> Unit,
     on_open: (id: String) -> Unit,
@@ -172,6 +212,9 @@ fun BehaviorScreen(
     var inbox_page_size by remember(prefs_loaded) { mutableIntStateOf(prefs?.inbox_page_size ?: 50) }
     var show_message_size by remember(prefs_loaded) { mutableStateOf(prefs?.show_message_size ?: false) }
     var relative_dates by remember(prefs_loaded) { mutableStateOf(prefs?.relative_dates != false) }
+    var emoji_skin_tone by remember(prefs_loaded) {
+        mutableStateOf(prefs?.emoji_skin_tone ?: org.astermail.android.api.preferences.EMOJI_SKIN_TONE_DEFAULT)
+    }
     var show_alias_indicators by remember(prefs_loaded) { mutableStateOf(prefs?.show_alias_indicators ?: true) }
     var show_profile_pictures by remember(prefs_loaded) { mutableStateOf(prefs?.show_profile_pictures ?: true) }
     var show_email_preview by remember(prefs_loaded) { mutableStateOf(prefs?.show_email_preview != false) }
@@ -256,6 +299,7 @@ fun BehaviorScreen(
                 inbox_page_size = prefs.inbox_page_size
                 show_message_size = prefs.show_message_size
                 relative_dates = prefs.relative_dates
+                emoji_skin_tone = prefs.emoji_skin_tone
                 show_alias_indicators = prefs.show_alias_indicators
                 show_profile_pictures = prefs.show_profile_pictures
                 show_email_preview = prefs.show_email_preview
@@ -329,6 +373,7 @@ fun BehaviorScreen(
                 inbox_page_size = inbox_page_size.coerceIn(10, 100),
                 show_message_size = show_message_size,
                 relative_dates = relative_dates,
+                emoji_skin_tone = org.astermail.android.api.preferences.normalize_emoji_skin_tone(emoji_skin_tone),
                 show_alias_indicators = show_alias_indicators,
                 show_profile_pictures = show_profile_pictures,
                 show_email_preview = show_email_preview,
@@ -452,6 +497,11 @@ fun BehaviorScreen(
                     info_title = stringResource(R.string.relative_dates_info_title),
                     info_description = stringResource(R.string.relative_dates_info_desc),
                     on_change = { relative_dates = it; save_trigger++ },
+                )
+                settings_row_gap(modifier = Modifier)
+                emoji_skin_tone_row(
+                    selected = emoji_skin_tone,
+                    on_select = { emoji_skin_tone = it; save_trigger++ },
                 )
                 settings_row_gap(modifier = Modifier)
                 behavior_toggle(

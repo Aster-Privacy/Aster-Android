@@ -112,7 +112,10 @@ fun merge_decrypted_preferences(
         normalize_order_preferences(
             json.decodeFromJsonElement(UserPreferences.serializer(), merged),
         ),
-    )
+    ).let { prefs ->
+        val tone = normalize_emoji_skin_tone(prefs.emoji_skin_tone)
+        if (tone == prefs.emoji_skin_tone) prefs else prefs.copy(emoji_skin_tone = tone)
+    }
 }
 
 fun rebase_preferences_changes(
