@@ -21,6 +21,7 @@
 
 package org.astermail.android.contacts
 
+import androidx.compose.ui.graphics.Color
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -41,6 +42,7 @@ import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.contacts.GroupViewBody
 import org.astermail.android.ui.contacts.group_add_candidates
+import org.astermail.android.ui.contacts.group_avatar_colors
 import org.astermail.android.ui.contacts.group_view_body
 import org.astermail.android.ui.contacts.group_view_is_gone
 import org.junit.After
@@ -330,5 +332,15 @@ class ContactGroupMembersTest {
 
         assertEquals(1201, result.getOrNull())
         assertEquals(listOf(500, 500, 201), requests.map { it.contact_ids.size })
+    }
+
+    @Test
+    fun `group avatar is a solid group color with a white icon`() {
+        val tint = Color(0xFF3B82F6)
+
+        val avatar = group_avatar_colors(tint)
+
+        assertEquals(tint, avatar.background)
+        assertEquals(Color.White, avatar.icon)
     }
 }

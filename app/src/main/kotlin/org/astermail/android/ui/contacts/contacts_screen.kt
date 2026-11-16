@@ -919,6 +919,11 @@ internal fun group_glyph(
     }
 }
 
+internal data class GroupAvatarColors(val background: Color, val icon: Color)
+
+internal fun group_avatar_colors(tint: Color): GroupAvatarColors =
+    GroupAvatarColors(background = tint, icon = Color.White)
+
 @Composable
 internal fun group_avatar(
     color: String,
@@ -928,20 +933,20 @@ internal fun group_avatar(
 ) {
     val colors = AsterMaterial.colors
     val tint = parse_group_color(color, colors.accent_blue)
+    val avatar_colors = group_avatar_colors(tint)
     val vector = org.astermail.android.ui.common.label_icon_or_null(icon) ?: TablerIcons.Users
-    val glyph_tint = if (colors.is_dark) androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f) else tint
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(tint.copy(alpha = if (colors.is_dark) 0.22f else 0.14f))
+            .background(avatar_colors.background)
             .clearAndSetSemantics { },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = vector,
             contentDescription = null,
-            tint = glyph_tint,
+            tint = avatar_colors.icon,
             modifier = Modifier.size(size * 0.5f),
         )
     }
