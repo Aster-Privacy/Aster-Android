@@ -21,12 +21,19 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.contacts.ContactRelation
+import org.astermail.android.contacts.relation_matches
+import org.astermail.android.contacts.social_matches
 import org.astermail.android.ui.search.fold_text
 
 private const val PHONE_QUERY_MIN_DIGITS = 3
 private const val PHONE_QUERY_PUNCTUATION = "+-(). "
 
-internal fun contact_matches_query(contact: Contact, query: String): Boolean {
+internal fun contact_matches_query(
+    contact: Contact,
+    query: String,
+    relation_name: (ContactRelation) -> String = { it.label.ifEmpty { it.kind.english } },
+): Boolean {
     val needle = fold_text(query.trim())
     if (needle.isEmpty()) return true
     val text_fields = sequenceOf(
@@ -37,6 +44,8 @@ internal fun contact_matches_query(contact: Contact, query: String): Boolean {
         contact.title,
     ) + contact.emails.asSequence().map { it.value }
     if (text_fields.any { fold_text(it).contains(needle) }) return true
+    if (contact.relation_entries().any { relation_matches(it, relation_name(it), needle, ::fold_text) }) return true
+    if (contact.social_entries().any { social_matches(it, it.label.ifEmpty { it.type }, needle, ::fold_text) }) return true
     val is_phone_query = needle.all { it.isDigit() || it in PHONE_QUERY_PUNCTUATION }
     val needle_digits = needle.filter { it.isDigit() }
     if (!is_phone_query || needle_digits.length < PHONE_QUERY_MIN_DIGITS) return false

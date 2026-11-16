@@ -89,6 +89,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.astermail.android.contacts.ContactsViewModel
+import org.astermail.android.contacts.safe_social_url
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
@@ -455,9 +458,27 @@ fun ContactDetailScreen(
                 }
             }
 
+            val relation_rows = contact.relation_entries()
+            if (relation_rows.isNotEmpty()) {
+                val relation_names = relation_kind_names()
+                detail_section(stringResource(R.string.contact_relations)) {
+                    relation_rows.forEachIndexed { index, relation ->
+                        if (index > 0) detail_row_divider()
+                        val kind_name = relation_display_name(relation, relation_names)
+                        DetailRow(
+                            label = kind_name,
+                            value = relation.value,
+                            a11y_text = "$kind_name: ${relation.value}",
+                        )
+                    }
+                }
+            }
+
+            val social_rows = contact.social_entries()
             val has_social = contact.website.isNotBlank() ||
                 contact.twitter.isNotBlank() ||
-                contact.linkedin.isNotBlank()
+                contact.linkedin.isNotBlank() ||
+                social_rows.isNotEmpty()
             if (has_social) {
                 fun open_contact_url(url: String) {
                     val uri = Uri.parse(url)
@@ -506,6 +527,22 @@ fun ContactDetailScreen(
                             contact.linkedin,
                             on_open = url?.let { { open_contact_url(it) } },
                             on_copy = copy_value,
+                        )
+                    }
+                    val social_names = social_type_names()
+                    val has_fixed_social = contact.website.isNotBlank() ||
+                        contact.twitter.isNotBlank() ||
+                        contact.linkedin.isNotBlank()
+                    social_rows.forEachIndexed { index, social ->
+                        if (index > 0 || has_fixed_social) detail_row_divider()
+                        val url = safe_social_url(social)
+                        val name = social_display_name(social, social_names)
+                        DetailRow(
+                            label = name,
+                            value = social.value,
+                            on_open = url?.let { { open_contact_url(it) } },
+                            on_copy = copy_value,
+                            a11y_text = "$name: ${social.value}",
                         )
                     }
                 }
@@ -662,12 +699,20 @@ private fun DetailRow(
     value: String,
     on_open: (() -> Unit)? = null,
     on_copy: ((String) -> Unit)? = null,
+    a11y_text: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val interactive = on_open != null
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (a11y_text != null) {
+                    Modifier.semantics(mergeDescendants = true) { contentDescription = a11y_text }
+                } else {
+                    Modifier
+                },
+            )
             .then(
                 if (interactive) {
                     Modifier.combinedClickable(

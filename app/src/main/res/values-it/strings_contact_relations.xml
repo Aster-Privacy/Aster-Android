@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">Relazioni</string>
+    <string name="contact_add_relation">Aggiungi relazione</string>
+    <string name="contact_remove_relation">Rimuovi relazione</string>
+    <string name="contact_relation_type">Tipo di relazione</string>
+    <string name="contact_relation_name">Nome</string>
+    <string name="contact_entry_label">Etichetta</string>
+    <string name="relation_friend">Amico</string>
+    <string name="relation_manager">Responsabile</string>
+    <string name="relation_partner">Partner</string>
+    <string name="relation_assistant">Assistente</string>
+    <string name="relation_spouse">Coniuge</string>
+    <string name="relation_relative">Parente</string>
+    <string name="relation_child">Figlio</string>
+    <string name="relation_mother">Madre</string>
+    <string name="relation_father">Padre</string>
+    <string name="relation_brother">Fratello</string>
+    <string name="relation_sister">Sorella</string>
+    <string name="relation_custom">Personalizzato</string>
+    <string name="relation_parent">Genitore</string>
+    <string name="relation_sibling">Fratello o sorella</string>
+    <string name="contact_add_social_link">Aggiungi link personalizzato</string>
+    <string name="contact_remove_social_link">Rimuovi link</string>
+    <string name="contact_social_link_value">URL o nome utente</string>
+</resources>

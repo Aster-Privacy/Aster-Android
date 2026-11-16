@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">관계</string>
+    <string name="contact_add_relation">관계 추가</string>
+    <string name="contact_remove_relation">관계 삭제</string>
+    <string name="contact_relation_type">관계 유형</string>
+    <string name="contact_relation_name">이름</string>
+    <string name="contact_entry_label">라벨</string>
+    <string name="relation_friend">친구</string>
+    <string name="relation_manager">관리자</string>
+    <string name="relation_partner">파트너</string>
+    <string name="relation_assistant">비서</string>
+    <string name="relation_spouse">배우자</string>
+    <string name="relation_relative">친척</string>
+    <string name="relation_child">자녀</string>
+    <string name="relation_mother">어머니</string>
+    <string name="relation_father">아버지</string>
+    <string name="relation_brother">형제</string>
+    <string name="relation_sister">자매</string>
+    <string name="relation_custom">사용자 지정</string>
+    <string name="relation_parent">부모</string>
+    <string name="relation_sibling">형제자매</string>
+    <string name="contact_add_social_link">사용자 지정 링크 추가</string>
+    <string name="contact_remove_social_link">링크 삭제</string>
+    <string name="contact_social_link_value">URL 또는 핸들</string>
+</resources>

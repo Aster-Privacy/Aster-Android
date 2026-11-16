@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">関係</string>
+    <string name="contact_add_relation">関係を追加</string>
+    <string name="contact_remove_relation">関係を削除</string>
+    <string name="contact_relation_type">関係の種類</string>
+    <string name="contact_relation_name">名前</string>
+    <string name="contact_entry_label">ラベル</string>
+    <string name="relation_friend">友人</string>
+    <string name="relation_manager">上司</string>
+    <string name="relation_partner">パートナー</string>
+    <string name="relation_assistant">アシスタント</string>
+    <string name="relation_spouse">配偶者</string>
+    <string name="relation_relative">親族</string>
+    <string name="relation_child">子</string>
+    <string name="relation_mother">母</string>
+    <string name="relation_father">父</string>
+    <string name="relation_brother">兄弟</string>
+    <string name="relation_sister">姉妹</string>
+    <string name="relation_custom">カスタム</string>
+    <string name="relation_parent">親</string>
+    <string name="relation_sibling">きょうだい</string>
+    <string name="contact_add_social_link">カスタムリンクを追加</string>
+    <string name="contact_remove_social_link">リンクを削除</string>
+    <string name="contact_social_link_value">URL またはハンドル</string>
+</resources>

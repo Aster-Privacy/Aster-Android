@@ -927,6 +927,20 @@ class OfflineContactsRepositoryTest {
     }
 
     @Test
+    fun `offline relation edit merges with a remote social edit`() {
+        val base = """{"first_name":"A","related_people":[{"value":"Sam","type":"friend"}]}"""
+        val local = """{"first_name":"A","related_people":[{"value":"Sam","type":"friend"},{"value":"Ana","type":"parent","relation":"mother"}]}"""
+        val remote = """{"first_name":"A","related_people":[{"value":"Sam","type":"friend"}],""" +
+            """"social_networks":[{"value":"https://ada.dev","type":"other","label":"Blog"}]}"""
+
+        val merged = JSONObject(merge_contact_json(base, local, remote))
+
+        assertEquals(2, merged.getJSONArray("related_people").length())
+        assertEquals("mother", merged.getJSONArray("related_people").getJSONObject(1).getString("relation"))
+        assertEquals("Blog", merged.getJSONArray("social_networks").getJSONObject(0).getString("label"))
+    }
+
+    @Test
     fun `merge keeps coupled fields together`() {
         val base = """{"emails":["a@x.org"],"email_entries":[{"value":"a@x.org"}]}"""
         val local = """{"emails":["b@x.org"],"email_entries":[{"value":"b@x.org"}]}"""

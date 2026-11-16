@@ -32,6 +32,8 @@ import android.provider.ContactsContract.CommonDataKinds.Relation
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
 import android.provider.ContactsContract.CommonDataKinds.Website
+import org.astermail.android.contacts.relation_from_device_type
+import org.astermail.android.contacts.relation_to_device_type
 import java.util.Locale
 
 data class DeviceDataRow(
@@ -218,25 +220,11 @@ fun device_rows_for_group(card: ContactCard, group: DeviceGroup, labels: DeviceL
             )
         }
         DeviceGroup.RELATION -> card.relations.map {
-            when (it.type) {
-                "sibling" -> row(
-                    Relation.NAME to it.value,
-                    Relation.TYPE to Relation.TYPE_CUSTOM,
-                    Relation.LABEL to labels.sibling,
-                )
-                else -> row(
-                    Relation.NAME to it.value,
-                    Relation.TYPE to when (it.type) {
-                        "assistant" -> Relation.TYPE_ASSISTANT
-                        "manager" -> Relation.TYPE_MANAGER
-                        "spouse" -> Relation.TYPE_SPOUSE
-                        "partner" -> Relation.TYPE_PARTNER
-                        "child" -> Relation.TYPE_CHILD
-                        "parent" -> Relation.TYPE_PARENT
-                        "friend" -> Relation.TYPE_FRIEND
-                        else -> Relation.TYPE_RELATIVE
-                    },
-                )
+            val (type, label) = relation_to_device_type(it.to_relation(), labels.sibling)
+            if (label == null) {
+                row(Relation.NAME to it.value, Relation.TYPE to type)
+            } else {
+                row(Relation.NAME to it.value, Relation.TYPE to type, Relation.LABEL to label)
             }
         }
         DeviceGroup.IM -> card.messengers.map {
@@ -402,22 +390,12 @@ fun contact_card_from_device_rows(
             )
         },
         relations = of(Relation.CONTENT_ITEM_TYPE).map {
-            CardEntry(
+            relation_from_device_type(
+                it.int(Relation.TYPE) ?: 0,
+                it.text(Relation.LABEL),
                 it.text(Relation.NAME),
-                when (it.int(Relation.TYPE)) {
-                    Relation.TYPE_ASSISTANT -> "assistant"
-                    Relation.TYPE_MANAGER -> "manager"
-                    Relation.TYPE_SPOUSE -> "spouse"
-                    Relation.TYPE_PARTNER, Relation.TYPE_DOMESTIC_PARTNER -> "partner"
-                    Relation.TYPE_CHILD -> "child"
-                    Relation.TYPE_PARENT, Relation.TYPE_FATHER, Relation.TYPE_MOTHER -> "parent"
-                    Relation.TYPE_BROTHER, Relation.TYPE_SISTER -> "sibling"
-                    Relation.TYPE_FRIEND -> "friend"
-                    Relation.TYPE_CUSTOM ->
-                        if (it.text(Relation.LABEL).matches_label(labels.sibling, "sibling")) "sibling" else "other"
-                    else -> "other"
-                },
-            )
+                labels.sibling,
+            ).to_card_entry()
         },
         messengers = of(Im.CONTENT_ITEM_TYPE).map {
             val custom = it.text(Im.CUSTOM_PROTOCOL).lowercase(Locale.ROOT)

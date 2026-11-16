@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.contacts.ContactRelation
+import org.astermail.android.contacts.ContactSocial
+
 data class Contact(
     val id: String,
     val name: String,
@@ -49,7 +52,13 @@ data class Contact(
     val emails: List<ContactEntry> = emptyList(),
     val phones: List<ContactEntry> = emptyList(),
     val addresses: List<ContactPostal> = emptyList(),
+    val relations: List<ContactRelation>? = null,
+    val social_networks: List<ContactSocial>? = null,
 ) {
+    fun social_entries(): List<ContactSocial> = social_networks.orEmpty().filter { it.value.isNotBlank() }
+
+    fun relation_entries(): List<ContactRelation> = relations.orEmpty().filter { it.value.isNotBlank() }
+
     val has_typed_fields: Boolean get() = emails.isNotEmpty() || phones.isNotEmpty() || addresses.isNotEmpty()
 
     fun email_entries(): List<ContactEntry> = emails.ifEmpty {

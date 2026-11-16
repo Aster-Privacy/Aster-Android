@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">संबंध</string>
+    <string name="contact_add_relation">संबंध जोड़ें</string>
+    <string name="contact_remove_relation">संबंध हटाएं</string>
+    <string name="contact_relation_type">संबंध का प्रकार</string>
+    <string name="contact_relation_name">नाम</string>
+    <string name="contact_entry_label">लेबल</string>
+    <string name="relation_friend">मित्र</string>
+    <string name="relation_manager">प्रबंधक</string>
+    <string name="relation_partner">साथी</string>
+    <string name="relation_assistant">सहायक</string>
+    <string name="relation_spouse">जीवनसाथी</string>
+    <string name="relation_relative">रिश्तेदार</string>
+    <string name="relation_child">संतान</string>
+    <string name="relation_mother">माँ</string>
+    <string name="relation_father">पिता</string>
+    <string name="relation_brother">भाई</string>
+    <string name="relation_sister">बहन</string>
+    <string name="relation_custom">कस्टम</string>
+    <string name="relation_parent">अभिभावक</string>
+    <string name="relation_sibling">भाई-बहन</string>
+    <string name="contact_add_social_link">कस्टम लिंक जोड़ें</string>
+    <string name="contact_remove_social_link">लिंक हटाएं</string>
+    <string name="contact_social_link_value">URL या हैंडल</string>
+</resources>

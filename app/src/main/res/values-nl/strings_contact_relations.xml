@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_relations">Relaties</string>
+    <string name="contact_add_relation">Relatie toevoegen</string>
+    <string name="contact_remove_relation">Relatie verwijderen</string>
+    <string name="contact_relation_type">Type relatie</string>
+    <string name="contact_relation_name">Naam</string>
+    <string name="contact_entry_label">Label</string>
+    <string name="relation_friend">Vriend</string>
+    <string name="relation_manager">Manager</string>
+    <string name="relation_partner">Partner</string>
+    <string name="relation_assistant">Assistent</string>
+    <string name="relation_spouse">Echtgenoot</string>
+    <string name="relation_relative">Familielid</string>
+    <string name="relation_child">Kind</string>
+    <string name="relation_mother">Moeder</string>
+    <string name="relation_father">Vader</string>
+    <string name="relation_brother">Broer</string>
+    <string name="relation_sister">Zus</string>
+    <string name="relation_custom">Aangepast</string>
+    <string name="relation_parent">Ouder</string>
+    <string name="relation_sibling">Broer of zus</string>
+    <string name="contact_add_social_link">Aangepaste link toevoegen</string>
+    <string name="contact_remove_social_link">Link verwijderen</string>
+    <string name="contact_social_link_value">URL of gebruikersnaam</string>
+</resources>

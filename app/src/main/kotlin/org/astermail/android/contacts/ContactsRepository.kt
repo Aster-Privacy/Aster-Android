@@ -1562,7 +1562,7 @@ class ContactsRepository @Inject constructor(
                     addresses = card.addresses.map {
                         ContactPostal(it.street, it.city, it.state, it.postal_code, it.country, it.type, it.label)
                     },
-                )
+                ).copy(relations = decode_contact_relations(obj), social_networks = decode_contact_socials(obj))
             }
         } catch (_: Throwable) {
             null
@@ -1599,6 +1599,8 @@ class ContactsRepository @Inject constructor(
         if (social.length() > 0) obj.put("social_links", social) else obj.remove("social_links")
 
         if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday) else obj.remove("birthday")
+        write_contact_relations(obj, contact.relations)
+        write_contact_socials(obj, contact.social_networks)
         if (contact.notes.isNotBlank()) obj.put("notes", contact.notes) else obj.remove("notes")
         if (contact.avatar_url.isNotBlank()) {
             obj.put("avatar_url", contact.avatar_url)

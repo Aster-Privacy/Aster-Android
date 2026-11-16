@@ -189,6 +189,20 @@ private fun split_vcard_value(value: String, separator: Char = ';'): List<String
     return parts.map { unescape_vcard(it) }
 }
 
+private data class PendingRelation(
+    val group: String,
+    val value: String,
+    val types: List<String>,
+    val resolved: ContactRelation?,
+)
+
+private data class PendingSocial(
+    val group: String,
+    val value: String,
+    val tokens: List<String>,
+    val from_url: Boolean,
+)
+
 private data class VcardLine(val group: String, val key: String, val params: List<String>, val value: String)
 
 private fun parse_line(line: String): VcardLine? {
@@ -209,6 +223,16 @@ private fun types_of(params: List<String>): List<String> =
         .filter { it.uppercase(Locale.ROOT).startsWith("TYPE=") || !it.contains("=") }
         .flatMap { it.substringAfter("=").split(",") }
         .map { it.trim().trim('"').trim().lowercase(Locale.ROOT) }
+        .filter { it.isNotEmpty() }
+
+private fun raw_types_of(params: List<String>): List<String> =
+    params
+        .filter {
+            val name = it.substringBefore("=").trim().uppercase(Locale.ROOT)
+            !it.contains("=") || name == "TYPE" || name == "X-SERVICE-TYPE"
+        }
+        .flatMap { it.substringAfter("=").split(",") }
+        .map { it.trim().trim('"').trim() }
         .filter { it.isNotEmpty() }
 
 private fun param_value(params: List<String>, name: String): String =
@@ -274,12 +298,30 @@ fun contact_to_vcard(contact: Contact): String {
             escape_vcard(postal.country)
         push_typed("ADR", type_param, label, value)
     }
+    for (relation in normalize_relations(contact.relations.orEmpty())) {
+        item += 1
+        val type_param = relation_vcard_type(relation.kind)?.let { ";TYPE=$it" }.orEmpty()
+        push("item$item.RELATED$type_param;VALUE=text:${escape_vcard(relation.value)}")
+        relation_vcard_label(relation)?.let { push("item$item.X-ABLabel:${escape_vcard(it)}") }
+    }
     if (contact.website.isNotBlank()) push_raw("URL", contact.website)
     if (contact.twitter.isNotBlank()) {
         push("X-SOCIALPROFILE;TYPE=TWITTER:${escape_vcard(contact.twitter)}")
     }
     if (contact.linkedin.isNotBlank()) {
         push("X-SOCIALPROFILE;TYPE=LINKEDIN:${escape_vcard(contact.linkedin)}")
+    }
+    for (social in normalize_socials(contact.social_networks.orEmpty())) {
+        if (social.type == "twitter" && social.value == contact.twitter.trim()) continue
+        if (social.type == "linkedin" && social.value == contact.linkedin.trim()) continue
+        if (!social.is_custom) {
+            push("X-SOCIALPROFILE;TYPE=${social.type}:${escape_vcard(social.value)}")
+            continue
+        }
+        item += 1
+        val token = social_vcard_type_token(social.label.ifEmpty { social.type }).ifEmpty { SOCIAL_TYPE_OTHER }
+        push("item$item.X-SOCIALPROFILE;TYPE=$token:${escape_vcard(social.value)}")
+        if (social.label.isNotEmpty()) push("item$item.X-ABLabel:${escape_vcard(social.label)}")
     }
     if (contact.groups.isNotEmpty()) {
         push("CATEGORIES:${contact.groups.joinToString(",") { escape_vcard(it) }}")
@@ -385,6 +427,8 @@ fun parse_vcards(raw_text: String): List<Contact> {
     var phones = mutableListOf<PendingEntry>()
     var postals = mutableListOf<PendingPostal>()
     var ab_labels = mutableMapOf<String, String>()
+    var relations = mutableListOf<PendingRelation>()
+    var socials = mutableListOf<PendingSocial>()
 
     fun flush() {
         val fields = current ?: return
@@ -401,6 +445,25 @@ fun parse_vcards(raw_text: String): List<Contact> {
             val (type, label) = resolve_type(it.types, label_for(it.group), VcardKind.ADDRESS)
             it.postal.copy(type = type, label = label)
         }
+        val typed_relations = normalize_relations(
+            relations.mapNotNull {
+                it.resolved ?: relation_from_vcard(it.value, it.types, label_for(it.group))
+            },
+        )
+        val resolved_socials = mutableListOf<ContactSocial>()
+        for (pending in socials) {
+            val label = if (pending.group.isEmpty()) null else label_for(pending.group)
+            val social = if (pending.from_url) {
+                social_from_vcard_url(pending.value, pending.tokens, label)
+            } else {
+                social_from_vcard_profile(pending.value, pending.tokens, label)
+            }
+            when {
+                social != null -> resolved_socials.add(social)
+                pending.from_url && fields["website"].isNullOrBlank() -> fields["website"] = pending.value
+            }
+        }
+        val typed_socials = merge_socials(emptyList(), resolved_socials)
         val first_email = typed_emails.firstOrNull()?.value.orEmpty()
         val name = fields["name"].orEmpty().ifBlank { first_email }
         if (name.isBlank() && first_email.isBlank()) return
@@ -428,6 +491,8 @@ fun parse_vcards(raw_text: String): List<Contact> {
                 profile_color = fields["profile_color"].orEmpty(),
                 is_favorite = fields["is_favorite"] == "true",
                 groups = groups.toList(),
+                relations = typed_relations.takeIf { it.isNotEmpty() },
+                social_networks = typed_socials.takeIf { it.isNotEmpty() },
             ).with_typed_fields(typed_emails, typed_phones, typed_addresses),
         )
     }
@@ -441,6 +506,8 @@ fun parse_vcards(raw_text: String): List<Contact> {
             phones = mutableListOf()
             postals = mutableListOf()
             ab_labels = mutableMapOf()
+            relations = mutableListOf()
+            socials = mutableListOf()
             continue
         }
         if (trimmed.equals("END:VCARD", ignoreCase = true)) {
@@ -475,6 +542,9 @@ fun parse_vcards(raw_text: String): List<Contact> {
             "EMAIL" -> emails.add(PendingEntry(parsed.group, value.removePrefix("mailto:"), types))
             "TEL" -> phones.add(PendingEntry(parsed.group, value.removePrefix("tel:"), types))
             "X-ABLABEL" -> if (parsed.group.isNotEmpty()) ab_labels[parsed.group] = value
+            "RELATED", "X-ABRELATEDNAMES", "X-ASTER-RELATED" ->
+                relations.add(PendingRelation(parsed.group, value, types, null))
+            "X-ANDROID-CUSTOM" -> relation_from_android_custom(split_vcard_value(parsed.value))?.let { relations.add(PendingRelation(parsed.group, it.value, emptyList(), it)) }
             "ORG" -> fields["company"] = split_vcard_value(parsed.value).firstOrNull().orEmpty().trim()
             "TITLE" -> fields["title"] = value
             "BDAY" -> fields["birthday"] = ContactDates.normalize(
@@ -495,11 +565,22 @@ fun parse_vcards(raw_text: String): List<Contact> {
                 )
                 if (!postal.is_blank()) postals.add(PendingPostal(parsed.group, postal, types))
             }
-            "URL" -> if (fields["website"].isNullOrBlank()) fields["website"] = parsed.value.trim()
+            "URL" -> {
+                val raw_tokens = raw_types_of(parsed.params)
+                val url = parsed.value.trim()
+                when {
+                    parsed.group.isNotEmpty() || social_from_vcard_url(url, raw_tokens, null) != null ->
+                        socials.add(PendingSocial(parsed.group, url, raw_tokens, true))
+                    fields["website"].isNullOrBlank() -> fields["website"] = url
+                }
+            }
             "X-SOCIALPROFILE" -> {
                 when {
-                    types.contains("twitter") -> fields["twitter"] = value
-                    types.contains("linkedin") -> fields["linkedin"] = value
+                    types.contains("twitter") && fields["twitter"].isNullOrBlank() -> fields["twitter"] = value
+                    types.contains("linkedin") && fields["linkedin"].isNullOrBlank() -> fields["linkedin"] = value
+                    else -> {
+                        socials.add(PendingSocial(parsed.group, value, raw_types_of(parsed.params), false))
+                    }
                 }
             }
             "IMPP" -> Unit
@@ -543,8 +624,15 @@ private fun escape_csv(value: String): String {
 }
 
 fun contacts_to_csv(contacts: List<Contact>): String {
-    val rows = contacts.map { contact ->
+    val contact_relations = contacts.map { normalize_relations(it.relations.orEmpty()) }
+    val relation_columns = contact_relations.maxOfOrNull { it.size } ?: 0
+    val headers = CSV_HEADERS + (1..relation_columns).flatMap { listOf("Relation $it - Label", "Relation $it - Value") }
+    val rows = contacts.mapIndexed { index, contact ->
         val (first, last) = split_name(contact.name)
+        val relation_cells = (0 until relation_columns).flatMap { slot ->
+            val relation = contact_relations[index].getOrNull(slot)
+            if (relation == null) listOf("", "") else listOf(relation_csv_label(relation), relation.value)
+        }
         listOf(
             first,
             last,
@@ -561,10 +649,10 @@ fun contacts_to_csv(contacts: List<Contact>): String {
             contact.birthday,
             contact.notes,
             if (contact.is_favorite) "true" else "false",
-        )
+        ) + relation_cells
     }
     return (
-        listOf(CSV_HEADERS.joinToString(",") { escape_csv(it) }) +
+        listOf(headers.joinToString(",") { escape_csv(it) }) +
             rows.map { row -> row.joinToString(",") { escape_csv(it) } }
         ).joinToString("\r\n")
 }

@@ -221,10 +221,14 @@ fun ContactsScreen(
     BackHandler(enabled = search_back_enabled && !ui_state.is_selecting && query.isNotEmpty()) { query = "" }
     BackHandler(enabled = ui_state.is_selecting) { vm.clear_selection() }
 
-    val filtered = remember(query, filter_favorites, ui_state.contacts) {
+    val relation_names = relation_kind_names()
+    val relation_name: (org.astermail.android.contacts.ContactRelation) -> String = { relation ->
+        relation_display_name(relation, relation_names)
+    }
+    val filtered = remember(query, filter_favorites, ui_state.contacts, relation_names) {
         ui_state.contacts
             .filter { if (filter_favorites) it.is_favorite else true }
-            .filter { contact_matches_query(it, query) }
+            .filter { contact_matches_query(it, query, relation_name) }
             .sortedBy { it.name.uppercase() }
     }
 
@@ -237,8 +241,8 @@ fun ContactsScreen(
         if (q.isEmpty()) ui_state.groups else ui_state.groups.filter { it.name.lowercase().contains(q) }
     }
 
-    val filtered_trash = remember(query, ui_state.trashed_contacts) {
-        ui_state.trashed_contacts.filter { contact_matches_query(it, query) }
+    val filtered_trash = remember(query, ui_state.trashed_contacts, relation_names) {
+        ui_state.trashed_contacts.filter { contact_matches_query(it, query, relation_name) }
     }
 
     val on_compose_selection: () -> Unit = {

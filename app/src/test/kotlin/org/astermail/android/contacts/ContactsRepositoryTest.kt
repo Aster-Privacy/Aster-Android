@@ -679,6 +679,105 @@ class ContactsRepositoryTest {
         assertTrue(summary.last_failure is ApiError.NotFoundError)
     }
 
+    private val relation_raw = """{"first_name":"Relation","last_name":"Android Sync","emails":["r@example.com"],""" +
+        """"related_people":[{"value":"Ana Lima","type":"parent","relation":"mother","x_extra":1},""" +
+        """{"value":"Rui","type":"other","label":"Godparent"},{"value":"Sam","type":"friend"},{"value":"Zed","type":"Godsibling"}],""" +
+        """"social_networks":[{"value":"ada","type":"github"},{"value":"https://ada.dev","type":"other","label":"Blog","x_keep":"y"}]}"""
+
+    private fun relation_item(id: String): ContactItem {
+        val (data, nonce) = encrypt_contact_json(relation_raw)
+        return ContactItem(id = id, encrypted_data = data, data_nonce = nonce)
+    }
+
+    @Test
+    fun `fetch_contact decodes relations and social links from the encrypted payload`() = runTest {
+        coEvery { contacts_api.get_contact("c_rel") } returns relation_item("c_rel")
+        val contact = repo.fetch_contact("c_rel").getOrThrow()
+        assertEquals(
+            listOf(
+                ContactRelation(RelationKind.MOTHER, "Ana Lima"),
+                ContactRelation(RelationKind.CUSTOM, "Rui", "Godparent"),
+                ContactRelation(RelationKind.FRIEND, "Sam"),
+                ContactRelation(RelationKind.CUSTOM, "Zed", "Godsibling"),
+            ),
+            contact.relations,
+        )
+        assertEquals(listOf(ContactSocial("github", "ada"), ContactSocial.custom("Blog", "https://ada.dev")), contact.social_networks)
+    }
+
+    @Test
+    fun `trash and restore keep relations and social links byte identical`() = runTest {
+        coEvery { contacts_api.get_contact("c_rel") } returns relation_item("c_rel")
+        val captured = mutableListOf<org.astermail.android.api.contacts.UpdateContactRequest>()
+        coEvery { contacts_api.update_contact(eq("c_rel"), capture(captured)) } returns
+            org.astermail.android.api.contacts.UpdateContactResponse(success = true)
+        val original = org.json.JSONObject(relation_raw)
+        val contact = repo.fetch_contact("c_rel").getOrThrow()
+
+        assertTrue(repo.trash_contact(contact).isSuccess)
+        assertTrue(repo.restore_contact(contact).isSuccess)
+
+        assertEquals(2, captured.size)
+        for (request in captured) {
+            val json = decrypt_request_json(request.encrypted_data, request.data_nonce)
+            assertEquals(original.getJSONArray("related_people").toString(), json.getJSONArray("related_people").toString())
+            assertEquals(original.getJSONArray("social_networks").toString(), json.getJSONArray("social_networks").toString())
+        }
+    }
+
+    @Test
+    fun `relations and social links travel only inside the ciphertext`() = runTest {
+        val captured = slot<org.astermail.android.api.contacts.CreateContactRequest>()
+        coEvery { contacts_api.create_contact(capture(captured)) } returns CreateContactResponse(id = "c_new", success = true)
+        val contact = Contact(
+            id = "",
+            name = "Relation Android Sync",
+            email = "sync@example.com",
+            relations = listOf(
+                ContactRelation(RelationKind.MOTHER, "Ana Lima"),
+                ContactRelation(RelationKind.CUSTOM, "Rui", "Godparent"),
+                ContactRelation(RelationKind.FRIEND, "Sam"),
+            ),
+            social_networks = listOf(ContactSocial.custom("Fediverse", "https://social.example/@quiet")),
+        )
+        assertTrue(repo.create_contact(contact).isSuccess)
+
+        val request = captured.captured
+        val outside = listOf(
+            request.contact_token,
+            request.integrity_hash.orEmpty(),
+            request.name_search_token.orEmpty(),
+            request.email_search_token.orEmpty(),
+            request.company_search_token.orEmpty(),
+            request.toString(),
+        ).joinToString("|")
+        for (secret in listOf("Ana Lima", "Godparent", "Sam", "Fediverse", "social.example", "related_people", "social_networks")) {
+            assertFalse(secret, outside.contains(secret))
+        }
+        val json = decrypt_request_json(request.encrypted_data, request.data_nonce)
+        val related = json.getJSONArray("related_people")
+        assertEquals(3, related.length())
+        assertEquals("parent", related.getJSONObject(0).getString("type"))
+        assertEquals("mother", related.getJSONObject(0).getString("relation"))
+        assertEquals("Godparent", related.getJSONObject(1).getString("label"))
+        assertEquals("Fediverse", json.getJSONArray("social_networks").getJSONObject(0).getString("label"))
+    }
+
+    @Test
+    fun `a payload encrypted with another key fails without partial relations`() = runTest {
+        val key = ByteArray(32) { 7 }
+        val nonce = ByteArray(12) { 1 }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
+        val data = java.util.Base64.getEncoder().encodeToString(cipher.doFinal(relation_raw.toByteArray()))
+        coEvery { contacts_api.get_contact("c_wrong") } returns ContactItem(
+            id = "c_wrong",
+            encrypted_data = data,
+            data_nonce = java.util.Base64.getEncoder().encodeToString(nonce),
+        )
+        assertTrue(repo.fetch_contact("c_wrong").isFailure)
+    }
+
     private companion object {
         const val DECRYPT_THREAD = "contacts-decrypt-test"
     }
