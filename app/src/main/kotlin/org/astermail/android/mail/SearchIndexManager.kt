@@ -42,6 +42,7 @@ import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
 import org.astermail.android.storage.search.InboxWindowRow
+import org.astermail.android.storage.search.MessageBodyIndexDao
 
 private const val armored_prefix = "-----BEGIN PGP MESSAGE"
 private const val snoozed_page_size = 200
@@ -105,6 +106,15 @@ class SearchIndexManager @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
     private val dao: DecryptedMailDao by lazy { db_provider.get().decrypted_mail_dao() }
+    private val body_dao: MessageBodyIndexDao by lazy { db_provider.get().message_body_index_dao() }
+
+    private val _body_index_progress = MutableStateFlow<IndexProgress?>(null)
+    val body_index_progress: StateFlow<IndexProgress?> = _body_index_progress.asStateFlow()
+
+    @Volatile
+    private var body_backfill_job: Job? = null
+
+    private val body_failed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     private val _index_ready = MutableStateFlow(false)
     val index_ready: StateFlow<Boolean> = _index_ready.asStateFlow()
@@ -122,6 +132,82 @@ class SearchIndexManager @Inject constructor(
     init {
         scope.launch {
             _index_paused.value = pause_prefs.getBoolean(KEY_INDEX_PAUSED, false)
+        }
+        scope.launch {
+            index_ready.collect { ready -> if (ready) start_body_backfill() }
+        }
+    }
+
+    fun start_body_backfill() {
+        if (_index_paused.value) return
+        if (body_backfill_job?.isActive == true) return
+        val started_epoch = epoch.get()
+        body_backfill_job = scope.launch {
+            try {
+                run_body_backfill(started_epoch)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                if (org.astermail.android.BuildConfig.DEBUG) {
+                    android.util.Log.w("SearchIndexManager", "body index backfill stopped", error)
+                }
+            } finally {
+                withContext(NonCancellable) { _body_index_progress.value = null }
+            }
+        }
+    }
+
+    private fun on_unmetered_network(): Boolean {
+        val manager = context.getSystemService(android.net.ConnectivityManager::class.java) ?: return false
+        return runCatching {
+            val network = manager.activeNetwork ?: return false
+            val caps = manager.getNetworkCapabilities(network) ?: return false
+            body_backfill_allowed(
+                on_wifi = caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI),
+                on_ethernet = caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET),
+            )
+        }.getOrDefault(false)
+    }
+
+    private suspend fun publish_body_progress(started_at: Long) {
+        val total = body_dao.cached_mail_count()
+        val indexed = body_dao.indexed_cached_count()
+        _body_index_progress.value = if (total == 0 || indexed + body_failed_ids.size >= total) {
+            null
+        } else {
+            IndexProgress(indexed = indexed, total = total, started_at_ms = started_at)
+        }
+    }
+
+    private suspend fun run_body_backfill(started_epoch: Int) {
+        val started_at = System.currentTimeMillis()
+        while (epoch.get() == started_epoch && !_index_paused.value) {
+            if (!on_unmetered_network()) {
+                _body_index_progress.value = null
+                delay(BODY_BACKFILL_NETWORK_RECHECK_MS)
+                continue
+            }
+            val rows = body_dao.unindexed_rows(body_failed_ids.take(BODY_BACKFILL_SKIP_LIMIT), BODY_BACKFILL_BATCH)
+            if (rows.isEmpty()) return
+            publish_body_progress(started_at)
+            for ((thread_token, members) in rows.groupBy { it.thread_token.orEmpty() }) {
+                if (epoch.get() != started_epoch || _index_paused.value || !on_unmetered_network()) break
+                val ids = members.map { it.id }
+                val result = kotlinx.coroutines.withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) {
+                    repository.index_thread_bodies(thread_token, ids)
+                }
+                if (result?.isSuccess != true) body_failed_ids.addAll(ids)
+                delay(BODY_BACKFILL_PAUSE_MS)
+            }
+            publish_body_progress(started_at)
+        }
+    }
+
+    suspend fun body_hits(terms: Collection<String>): Map<String, Set<String>> = withContext(Dispatchers.IO) {
+        terms.filter { it.isNotBlank() }.distinct().associateWith { term ->
+            val expression = body_match_expression(term) ?: return@associateWith emptySet()
+            runCatching { body_dao.match_ids(expression, body_search_match_limit).toHashSet() }
+                .getOrDefault(emptySet())
         }
     }
 
@@ -219,11 +305,13 @@ class SearchIndexManager @Inject constructor(
         _index_paused.value = true
         pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, true).apply()
         build_job?.cancel()
+        body_backfill_job?.cancel()
     }
 
     fun resume_indexing() {
         _index_paused.value = false
         pause_prefs.edit().putBoolean(KEY_INDEX_PAUSED, false).apply()
+        if (_index_ready.value) start_body_backfill()
         if (is_building || build_job?.isActive == true) return
         build_job = scope.launch { build_index_background() }
     }
@@ -239,6 +327,35 @@ class SearchIndexManager @Inject constructor(
             if (epoch.get() == my_epoch && !_index_ready.value) {
                 _index_ready.value = dao.count() > 0
             }
+            index_arrivals(items, my_epoch)
+        }
+    }
+
+    private val arrival_mutex = Mutex()
+
+    private suspend fun index_arrivals(items: List<InboxItem>, my_epoch: Int) {
+        if (_index_paused.value) return
+        if (org.astermail.android.api.network.low_network_state.extend_timeouts()) return
+        val candidates = items.asSequence()
+            .filterNot { it.is_undecryptable }
+            .filter { !it.thread_token.isNullOrBlank() }
+            .take(BODY_ARRIVAL_WINDOW)
+            .toList()
+        if (candidates.isEmpty() || !arrival_mutex.tryLock()) return
+        try {
+            val indexed = runCatching { body_dao.indexed_among(candidates.map { it.id }).toHashSet() }
+                .getOrDefault(emptySet())
+            val missing = candidates.filterNot { it.id in indexed || it.id in body_failed_ids }
+            for ((thread_token, members) in missing.groupBy { it.thread_token!! }.entries.take(BODY_ARRIVAL_THREADS)) {
+                if (epoch.get() != my_epoch) return
+                val ids = members.map { it.id }
+                val result = kotlinx.coroutines.withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) {
+                    repository.index_thread_bodies(thread_token, ids)
+                }
+                if (result?.isSuccess != true) body_failed_ids.addAll(ids)
+            }
+        } finally {
+            arrival_mutex.unlock()
         }
     }
 
@@ -449,7 +566,10 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun mark_restored(ids: List<String>) = dao.mark_restored(ids)
 
-    suspend fun remove_items(ids: List<String>) = dao.remove_items(ids)
+    suspend fun remove_items(ids: List<String>) {
+        dao.remove_items(ids)
+        ids.chunked(index_removal_chunk).forEach { runCatching { body_dao.delete_ids(it) } }
+    }
 
     suspend fun add_tag_token(ids: List<String>, token: String) {
         if (ids.isEmpty() || token.isBlank()) return
@@ -473,9 +593,13 @@ class SearchIndexManager @Inject constructor(
 
     suspend fun clear() {
         build_job?.cancel()
+        body_backfill_job?.cancel()
         mutex.withLock {
             epoch.incrementAndGet()
             dao.clear_all()
+            runCatching { body_dao.clear_all() }
+            body_failed_ids.clear()
+            _body_index_progress.value = null
             forget_build_state()
             _index_ready.value = false
             _index_progress.value = null
@@ -659,6 +783,13 @@ class SearchIndexManager @Inject constructor(
     }
 
     private companion object {
+        const val BODY_BACKFILL_BATCH = 40
+        const val BODY_ARRIVAL_WINDOW = 25
+        const val BODY_ARRIVAL_THREADS = 10
+        const val BODY_BACKFILL_SKIP_LIMIT = 900
+        const val BODY_BACKFILL_PAUSE_MS = 400L
+        const val BODY_BACKFILL_FETCH_TIMEOUT_MS = 20_000L
+        const val BODY_BACKFILL_NETWORK_RECHECK_MS = 30_000L
         const val KEY_INDEX_PAUSED = "index_paused"
         const val KEY_WINDOW_ABSENCES = "window_absences"
         const val KEY_LAST_INBOX_SYNC = "last_inbox_sync"

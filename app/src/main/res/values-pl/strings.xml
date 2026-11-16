@@ -3648,4 +3648,5 @@
         <item quantity="many">Dodano %d kontaktów</item>
         <item quantity="other">Dodano %d kontaktu</item>
     </plurals>
+    <string name="body_index_status">Indeksowanie treści wiadomości do wyszukiwania: %1$d z %2$d</string>
 </resources>

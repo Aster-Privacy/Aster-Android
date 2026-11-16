@@ -3584,4 +3584,5 @@
     <plurals name="members_added">
         <item quantity="other">연락처 %d개를 추가했습니다</item>
     </plurals>
+    <string name="body_index_status">검색을 위해 메시지 본문 색인 중: %2$d개 중 %1$d개</string>
 </resources>

@@ -178,6 +178,15 @@ object InboundAttachmentKeyStore {
         }
     }
 
+    fun filenames(mail_item_id: String?): List<String> {
+        if (mail_item_id.isNullOrBlank()) return emptyList()
+        val prefix = "$mail_item_id:"
+        return synchronized(lock) {
+            val sealed = sealed_items[mail_item_id]?.values?.mapNotNull { it.filename }
+            sealed ?: metas.entries.filter { it.key.startsWith(prefix) }.mapNotNull { it.value.filename }
+        }.filter { it.isNotBlank() }.distinct()
+    }
+
     fun mark_unreadable(mail_item_id: String?, seq_num: Int?) {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return
         synchronized(lock) {

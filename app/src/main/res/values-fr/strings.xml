@@ -3652,4 +3652,5 @@
         <item quantity="one">%d contact ajouté</item>
         <item quantity="other">%d contacts ajoutés</item>
     </plurals>
+    <string name="body_index_status">Indexation du texte des messages pour la recherche : %1$d sur %2$d</string>
 </resources>

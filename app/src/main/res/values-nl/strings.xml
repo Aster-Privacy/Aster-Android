@@ -3604,4 +3604,5 @@
         <item quantity="one">%d contact toegevoegd</item>
         <item quantity="other">%d contacten toegevoegd</item>
     </plurals>
+    <string name="body_index_status">Berichttekst wordt geïndexeerd voor zoeken: %1$d van %2$d</string>
 </resources>

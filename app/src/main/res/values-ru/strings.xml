@@ -3648,4 +3648,5 @@
         <item quantity="many">Добавлено %d контактов</item>
         <item quantity="other">Добавлено %d контакта</item>
     </plurals>
+    <string name="body_index_status">Индексация текста писем для поиска: %1$d из %2$d</string>
 </resources>

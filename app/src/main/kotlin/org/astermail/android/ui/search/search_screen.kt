@@ -395,7 +395,10 @@ fun SearchScreen(
         }
         value = null
         if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
-        val base_env = current_search_env(search_labels)
+        val body_terms = body_search_terms(parsed)
+        val base_env = current_search_env(search_labels).let { env ->
+            if (body_terms.isEmpty()) env else env.copy(body_hits = mail_vm.search_body_hits(body_terms))
+        }
         val env = if (parsed.operators.any { needs_attachment_details(it) }) {
             val untyped = parsed.copy(operators = parsed.operators.filterNot { needs_attachment_details(it) })
             val candidate_ids = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
@@ -737,6 +740,19 @@ fun SearchScreen(
                         .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
                 )
             }
+        }
+
+        val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
+        val body_status = body_progress
+        if (has_query && body_status != null && body_status.total > 0 && !search_state.is_indexing && !index_paused) {
+            Text(
+                text = stringResource(R.string.body_index_status, body_status.indexed, body_status.total),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
+            )
         }
 
         if (has_query && search_state.is_partial && !search_state.is_indexing && !index_paused) {

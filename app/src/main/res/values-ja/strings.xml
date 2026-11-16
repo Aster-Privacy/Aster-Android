@@ -3591,4 +3591,5 @@
     <plurals name="members_added">
         <item quantity="other">%d 件の連絡先を追加しました</item>
     </plurals>
+    <string name="body_index_status">検索用にメッセージ本文をインデックス中: %1$d / %2$d</string>
 </resources>

@@ -580,6 +580,7 @@ class MailRepository @Inject constructor(
     private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
     private val identity_pins_provider: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>? = null,
     private val address_directory_provider: dagger.Lazy<org.astermail.android.mail.ratchet.AddressIdentityDirectory>? = null,
+    private val body_index_dao_provider: dagger.Lazy<org.astermail.android.storage.search.MessageBodyIndexDao>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -972,7 +973,28 @@ class MailRepository @Inject constructor(
         runCatching { thread_snapshot_dao.clear_all() }
     }
 
+    suspend fun store_body_index(messages: List<ThreadMessageDecrypted>, processed_ids: Collection<String> = emptyList()) {
+        val dao = body_index_dao_provider?.get() ?: return
+        val now = System.currentTimeMillis()
+        val rows = body_index_rows(messages, InboundAttachmentKeyStore::filenames, now)
+        val seen = rows.mapTo(HashSet()) { it.message_id }
+        val placeholders = placeholder_index_rows(processed_ids.filterNot { it in seen }, now)
+        runCatching { dao.replace_all(rows + placeholders) }
+    }
+
+    suspend fun index_thread_bodies(thread_token: String, expected_ids: Collection<String>): Result<Int> = runCatching {
+        val response = mail_api.get_thread_messages(thread_token)
+        withContext(Dispatchers.IO) {
+            val decrypted = response.messages.distinctBy { it.id }.map { msg ->
+                async { decrypt_thread_message(msg) }
+            }.awaitAll()
+            store_body_index(decrypted, expected_ids)
+            decrypted.size
+        }
+    }
+
     private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {
+        store_body_index(messages)
         val now = System.currentTimeMillis()
         val rows = messages.filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
             .filterNot { it.body_text.isBlank() && it.body_html.isNullOrBlank() }

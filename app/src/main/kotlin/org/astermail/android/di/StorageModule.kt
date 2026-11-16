@@ -44,6 +44,7 @@ import org.astermail.android.storage.contacts.ContactGroupCacheDao
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.MessageBodyDao
+import org.astermail.android.storage.search.MessageBodyIndexDao
 import org.astermail.android.storage.search.ThreadSnapshotDao
 
 @Module
@@ -57,6 +58,11 @@ object StorageModule {
     @Provides
     @Singleton
     fun provide_message_body_dao(database: AsterDatabase): MessageBodyDao = database.message_body_dao()
+
+    @Provides
+    @Singleton
+    fun provide_message_body_index_dao(database: AsterDatabase): MessageBodyIndexDao =
+        database.message_body_index_dao()
 
     @Provides
     @Singleton

@@ -3691,4 +3691,5 @@
         <item quantity="many">تمت إضافة %d جهة اتصال</item>
         <item quantity="other">تمت إضافة %d جهة اتصال</item>
     </plurals>
+    <string name="body_index_status">جارٍ فهرسة نصوص الرسائل للبحث: %1$d من %2$d</string>
 </resources>

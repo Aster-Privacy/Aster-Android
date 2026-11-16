@@ -29,12 +29,16 @@ import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.DecryptedMailEntity
 import org.astermail.android.storage.search.FolderRowEntity
 import org.astermail.android.storage.search.MessageBodyEntity
+import org.astermail.android.storage.search.MessageBodyIndexEntity
 import org.astermail.android.storage.search.ThreadSnapshotEntity
 import org.astermail.android.storage.search.aster_database_version
 import org.astermail.android.storage.search.create_contact_cache
 import org.astermail.android.storage.search.create_contact_group_cache
 import org.astermail.android.storage.search.create_folder_row_cache
 import org.astermail.android.storage.search.create_message_body_cache
+import org.astermail.android.storage.search.create_message_body_fts
+import org.astermail.android.storage.search.create_message_body_fts_triggers
+import org.astermail.android.storage.search.create_message_body_index
 import org.astermail.android.storage.search.create_pending_mail_action
 import org.astermail.android.storage.search.create_thread_snapshot_cache
 import org.astermail.android.storage.search.migration_columns
@@ -163,6 +167,25 @@ class AsterDatabaseMigrationCoverageTest {
     fun every_thread_snapshot_column_is_created_by_the_thread_snapshot_migration() {
         val expected = entity_columns(ThreadSnapshotEntity::class.java).sorted()
         val actual = created_columns(create_thread_snapshot_cache, thread_snapshot_table).sorted()
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun the_message_body_search_tables_are_created_by_their_migration_step() {
+        val statements = migration_statements.getValue(24)
+
+        assertTrue(statements.contains(create_message_body_index))
+        assertTrue(statements.contains(create_message_body_fts))
+        assertTrue(statements.containsAll(create_message_body_fts_triggers))
+        assertTrue(create_message_body_fts.contains("content=`message_body_index`"))
+        assertEquals(4, create_message_body_fts_triggers.size)
+    }
+
+    @Test
+    fun every_message_body_index_column_is_created_by_its_migration() {
+        val expected = entity_columns(MessageBodyIndexEntity::class.java).sorted()
+        val actual = created_columns(create_message_body_index, "message_body_index").sorted()
 
         assertEquals(expected, actual)
     }

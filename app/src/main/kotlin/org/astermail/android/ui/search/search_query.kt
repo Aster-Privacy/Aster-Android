@@ -157,7 +157,16 @@ internal data class SearchEnv(
     val zone: ZoneId,
     val labels: SearchLabelIndex = NO_SEARCH_LABELS,
     val attachments: Map<String, List<SearchAttachment>> = emptyMap(),
+    val body_hits: Map<String, Set<String>> = emptyMap(),
 )
+
+internal fun body_search_terms(parsed: ParsedQuery): List<String> =
+    (parsed.terms + parsed.operators.filter { it.key == TEXT_OPERATOR_KEY }.map { fold_text(it.value) })
+        .filter { it.isNotBlank() }
+        .distinct()
+
+private fun body_holds(item: InboxItem, term: String, env: SearchEnv): Boolean =
+    env.body_hits[term]?.contains(item.id) == true
 
 internal fun search_local_day(
     now: Long = System.currentTimeMillis(),
@@ -533,7 +542,9 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
     "label" -> matches_label(item, op.value, env.labels)
     "filename" -> item.has_attachments &&
         env.attachments[item.id].orEmpty().any { fold_text(it.filename).contains(fold_text(op.value)) }
-    TEXT_OPERATOR_KEY -> item_haystack(item).contains(fold_text(op.value))
+    TEXT_OPERATOR_KEY -> fold_text(op.value).let { term ->
+        item_haystack(item).contains(term) || body_holds(item, term, env)
+    }
     else -> null
 }
 
@@ -581,5 +592,5 @@ internal fun matches_item(
 
     val haystack = item_haystack(item)
 
-    return parsed.terms.all { haystack.contains(it) }
+    return parsed.terms.all { haystack.contains(it) || body_holds(item, it, env) }
 }

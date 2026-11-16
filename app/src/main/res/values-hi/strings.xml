@@ -3496,4 +3496,5 @@
         <item quantity="one">%d संपर्क जोड़ा गया</item>
         <item quantity="other">%d संपर्क जोड़े गए</item>
     </plurals>
+    <string name="body_index_status">खोज के लिए संदेश टेक्स्ट इंडेक्स हो रहा है: %2$d में से %1$d</string>
 </resources>

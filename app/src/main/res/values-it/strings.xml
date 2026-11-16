@@ -3623,4 +3623,5 @@
         <item quantity="one">%d contatto aggiunto</item>
         <item quantity="other">%d contatti aggiunti</item>
     </plurals>
+    <string name="body_index_status">Indicizzazione del testo dei messaggi per la ricerca: %1$d di %2$d</string>
 </resources>
