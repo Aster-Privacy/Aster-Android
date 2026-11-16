@@ -2422,6 +2422,41 @@
     <string name="alias_pin_invalid_sender">Введите корректный адрес электронной почты</string>
     <string name="alias_pin_blocked">Заблокирован</string>
     <string name="alias_sender_unknown">Неизвестный отправитель</string>
+    <string name="alias_sender_add_from_contacts">Добавить из контактов</string>
+    <string name="alias_sender_pick_title">Добавить отправителей из контактов</string>
+    <string name="alias_sender_pick_description">Выберите, кто может писать на этот адрес. Каждый выбранный контакт попадает в белый список, и его можно удалить в любой момент.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">Выбрано: %1$d</item>
+        <item quantity="few">Выбрано: %1$d</item>
+        <item quantity="many">Выбрано: %1$d</item>
+        <item quantity="other">Выбрано: %1$d</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Уже добавлен</string>
+    <string name="alias_sender_pick_blocked">Заблокирован</string>
+    <string name="alias_sender_pick_no_contacts_title">Нет контактов с адресом эл. почты</string>
+    <string name="alias_sender_pick_no_contacts_description">Здесь появятся контакты, сохраненные с адресом эл. почты.</string>
+    <string name="alias_sender_pick_all_added">Все ваши контакты уже в этом списке.</string>
+    <string name="alias_sender_pick_limit">За один раз можно добавить не более %1$d отправителей.</string>
+    <string name="alias_sender_pick_submit">Добавить отправителей</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">Добавить отправителей (%1$d)</item>
+        <item quantity="few">Добавить отправителей (%1$d)</item>
+        <item quantity="many">Добавить отправителей (%1$d)</item>
+        <item quantity="other">Добавить отправителей (%1$d)</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">Добавлено отправителей: %1$d</item>
+        <item quantity="few">Добавлено отправителей: %1$d</item>
+        <item quantity="many">Добавлено отправителей: %1$d</item>
+        <item quantity="other">Добавлено отправителей: %1$d</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">Добавлено отправителей: %1$d из %2$d. Остальные по-прежнему выбраны, чтобы можно было повторить попытку.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">Адресов: %1$d</item>
+        <item quantity="few">Адресов: %1$d</item>
+        <item quantity="many">Адресов: %1$d</item>
+        <item quantity="other">Адресов: %1$d</item>
+    </plurals>
     <string name="alias_rules_title">Правила</string>
     <string name="alias_rules_description">Выполнять действие, если входящее письмо соответствует условиям.</string>
     <string name="alias_rule_add">Добавить правило</string>

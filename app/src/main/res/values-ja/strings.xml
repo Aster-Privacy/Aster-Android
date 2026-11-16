@@ -2399,6 +2399,29 @@
     <string name="alias_pin_invalid_sender">有効なメールアドレスを入力してください</string>
     <string name="alias_pin_blocked">ブロック中</string>
     <string name="alias_sender_unknown">不明な送信者</string>
+    <string name="alias_sender_add_from_contacts">連絡先から追加</string>
+    <string name="alias_sender_pick_title">連絡先から送信者を追加</string>
+    <string name="alias_sender_pick_description">このアドレスに送信できる相手を選択します。選んだ連絡先は許可リストに追加され、いつでも削除できます。</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="other">%1$d件選択中</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">追加済み</string>
+    <string name="alias_sender_pick_blocked">ブロック中</string>
+    <string name="alias_sender_pick_no_contacts_title">メールアドレスのある連絡先がありません</string>
+    <string name="alias_sender_pick_no_contacts_description">メールアドレス付きで保存した連絡先がここに表示されます。</string>
+    <string name="alias_sender_pick_all_added">すべての連絡先がすでにこのリストにあります。</string>
+    <string name="alias_sender_pick_limit">一度に追加できる送信者は%1$d件までです。</string>
+    <string name="alias_sender_pick_submit">送信者を追加</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="other">%1$d件の送信者を追加</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="other">%1$d件の送信者を追加しました</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">%2$d件中%1$d件の送信者を追加しました。残りは選択されたままなので、もう一度お試しください。</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="other">%1$d件のアドレス</item>
+    </plurals>
     <string name="alias_rules_title">ルール</string>
     <string name="alias_rules_description">受信メールが一致したときに処理を実行します。</string>
     <string name="alias_rule_add">ルールを追加</string>

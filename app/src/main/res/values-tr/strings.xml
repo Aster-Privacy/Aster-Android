@@ -2406,6 +2406,33 @@
     <string name="alias_pin_invalid_sender">Geçerli bir e-posta adresi girin</string>
     <string name="alias_pin_blocked">Engellendi</string>
     <string name="alias_sender_unknown">Bilinmeyen gönderen</string>
+    <string name="alias_sender_add_from_contacts">Kişilerden ekle</string>
+    <string name="alias_sender_pick_title">Kişilerden gönderen ekle</string>
+    <string name="alias_sender_pick_description">Bu adrese kimlerin gönderebileceğini seçin. Seçtiğiniz her kişi izin listesine eklenir ve istediğiniz zaman kaldırabilirsiniz.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">%1$d seçildi</item>
+        <item quantity="other">%1$d seçildi</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Zaten eklendi</string>
+    <string name="alias_sender_pick_blocked">Engellendi</string>
+    <string name="alias_sender_pick_no_contacts_title">E-posta adresi olan kişi yok</string>
+    <string name="alias_sender_pick_no_contacts_description">E-posta adresiyle kaydettiğiniz kişiler burada görünür.</string>
+    <string name="alias_sender_pick_all_added">Tüm kişileriniz zaten bu listede.</string>
+    <string name="alias_sender_pick_limit">Tek seferde en fazla %1$d gönderen ekleyebilirsiniz.</string>
+    <string name="alias_sender_pick_submit">Gönderenleri ekle</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">%1$d göndereni ekle</item>
+        <item quantity="other">%1$d göndereni ekle</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">%1$d gönderen eklendi</item>
+        <item quantity="other">%1$d gönderen eklendi</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">%2$d gönderenden %1$d tanesi eklendi. Kalanlar seçili kalır, böylece yeniden deneyebilirsiniz.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">%1$d adres</item>
+        <item quantity="other">%1$d adres</item>
+    </plurals>
     <string name="alias_rules_title">Kurallar</string>
     <string name="alias_rules_description">Gelen posta eşleştiğinde bir eylem çalıştırın.</string>
     <string name="alias_rule_add">Kural ekle</string>

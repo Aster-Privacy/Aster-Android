@@ -2659,6 +2659,33 @@
     <string name="alias_pin_invalid_sender">Enter a valid email address</string>
     <string name="alias_pin_blocked">Blocked</string>
     <string name="alias_sender_unknown">Unknown sender</string>
+    <string name="alias_sender_add_from_contacts">Add from contacts</string>
+    <string name="alias_sender_pick_title">Add senders from contacts</string>
+    <string name="alias_sender_pick_description">Choose who can send to this address. Each contact you pick is added to the allowlist, and you can remove it at any time.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Already added</string>
+    <string name="alias_sender_pick_blocked">Blocked</string>
+    <string name="alias_sender_pick_no_contacts_title">No contacts with an email address</string>
+    <string name="alias_sender_pick_no_contacts_description">Contacts you save with an email address appear here.</string>
+    <string name="alias_sender_pick_all_added">All of your contacts are already on this list.</string>
+    <string name="alias_sender_pick_limit">You can add up to %1$d senders at a time.</string>
+    <string name="alias_sender_pick_submit">Add senders</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">Add %1$d sender</item>
+        <item quantity="other">Add %1$d senders</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">Added %1$d sender</item>
+        <item quantity="other">Added %1$d senders</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">Added %1$d of %2$d senders. The rest are still selected, so you can try again.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">%1$d address</item>
+        <item quantity="other">%1$d addresses</item>
+    </plurals>
     <string name="alias_rules_title">Rules</string>
     <string name="alias_rules_description">Run an action when incoming mail matches.</string>
     <string name="alias_rule_add">Add rule</string>

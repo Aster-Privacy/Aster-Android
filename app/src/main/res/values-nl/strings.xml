@@ -2406,6 +2406,33 @@
     <string name="alias_pin_invalid_sender">Voer een geldig e-mailadres in</string>
     <string name="alias_pin_blocked">Geblokkeerd</string>
     <string name="alias_sender_unknown">Onbekende afzender</string>
+    <string name="alias_sender_add_from_contacts">Toevoegen uit contacten</string>
+    <string name="alias_sender_pick_title">Afzenders uit contacten toevoegen</string>
+    <string name="alias_sender_pick_description">Kies wie naar dit adres mag sturen. Elk gekozen contact komt op de toegestane lijst en je kunt het altijd weer verwijderen.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">%1$d geselecteerd</item>
+        <item quantity="other">%1$d geselecteerd</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Al toegevoegd</string>
+    <string name="alias_sender_pick_blocked">Geblokkeerd</string>
+    <string name="alias_sender_pick_no_contacts_title">Geen contacten met een e-mailadres</string>
+    <string name="alias_sender_pick_no_contacts_description">Contacten die je met een e-mailadres opslaat, verschijnen hier.</string>
+    <string name="alias_sender_pick_all_added">Al je contacten staan al op deze lijst.</string>
+    <string name="alias_sender_pick_limit">Je kunt maximaal %1$d afzenders tegelijk toevoegen.</string>
+    <string name="alias_sender_pick_submit">Afzenders toevoegen</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">%1$d afzender toevoegen</item>
+        <item quantity="other">%1$d afzenders toevoegen</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">%1$d afzender toegevoegd</item>
+        <item quantity="other">%1$d afzenders toegevoegd</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">%1$d van %2$d afzenders toegevoegd. De rest blijft geselecteerd, zodat je het opnieuw kunt proberen.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">%1$d adres</item>
+        <item quantity="other">%1$d adressen</item>
+    </plurals>
     <string name="alias_rules_title">Regels</string>
     <string name="alias_rules_description">Voer een actie uit als inkomende mail overeenkomt.</string>
     <string name="alias_rule_add">Regel toevoegen</string>

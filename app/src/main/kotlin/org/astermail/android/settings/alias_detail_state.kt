@@ -31,6 +31,7 @@ data class DecryptedAliasPin(
     val id: String,
     val sender: String,
     val is_blocked: Boolean,
+    val sender_hash: String = "",
 )
 
 data class DecryptedAliasContact(

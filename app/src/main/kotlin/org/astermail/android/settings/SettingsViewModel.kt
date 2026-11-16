@@ -378,6 +378,7 @@ class SettingsViewModel @Inject constructor(
     val account_store: org.astermail.android.storage.AccountStore,
     @ApplicationContext private val context: Context,
     private val external_pgp_key_store_provider: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>? = null,
+    private val contacts_repository_provider: dagger.Lazy<org.astermail.android.contacts.ContactsRepository>? = null,
 ) : ViewModel() {
 
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -1956,6 +1957,7 @@ class SettingsViewModel @Inject constructor(
                         sender = decrypt_alias_text(pin.encrypted_sender, pin.sender_nonce)
                             ?: context.getString(R.string.alias_sender_unknown),
                         is_blocked = pin.is_blocked,
+                        sender_hash = pin.sender_hash,
                     )
                 }
             }
@@ -2323,6 +2325,80 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    suspend fun load_alias_pick_contacts(): Result<List<org.astermail.android.ui.contacts.Contact>> {
+        val repository = contacts_repository_provider?.get()
+            ?: return Result.failure(IllegalStateException("contacts unavailable"))
+        return try {
+            repository.fetch_contacts()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            Result.failure(t)
+        }
+    }
+
+    fun alias_pick_statuses(
+        contacts: List<org.astermail.android.ui.contacts.Contact>,
+        pins: List<DecryptedAliasPin>,
+    ): Map<String, PickEmailStatus> =
+        resolve_pick_statuses(contact_pick_addresses(contacts), pins, ::sha256_base64)
+
+    fun add_alias_pins_from_contacts(
+        alias_id: String,
+        addresses: List<String>,
+        on_done: (BulkAddResult) -> Unit,
+    ) {
+        val cleaned = addresses.map(::sanitize_alias_text).filter(::is_valid_email).distinct().take(MAX_CONTACT_PICK)
+        if (cleaned.isEmpty()) {
+            _state.value = _state.value.copy(
+                action_result = context.getString(R.string.alias_pin_invalid_sender),
+            )
+            on_done(BulkAddResult(emptyList(), addresses))
+            return
+        }
+        update_alias_detail(alias_id) { it.copy(busy = true) }
+        viewModelScope.launch {
+            val result = try {
+                add_senders_in_batches(cleaned) { address ->
+                    val (encrypted, nonce) = encrypt_alias_field(address)
+                    alias_detail_api.add_pin(
+                        alias_id,
+                        AddPinRequest(
+                            sender_hash = sha256_base64(address),
+                            encrypted_sender = encrypted,
+                            sender_nonce = nonce,
+                            is_blocked = false,
+                        ),
+                    )
+                    true
+                }
+            } finally {
+                update_alias_detail(alias_id) { it.copy(busy = false) }
+            }
+            if (result.added.isNotEmpty()) {
+                try {
+                    reload_alias_pins(alias_id)
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                }
+            }
+            val message = if (result.failed.isEmpty()) {
+                context.resources.getQuantityString(
+                    R.plurals.alias_sender_pick_added,
+                    result.added.size,
+                    result.added.size,
+                )
+            } else {
+                context.getString(
+                    R.string.alias_sender_pick_partial,
+                    result.added.size,
+                    cleaned.size,
+                )
+            }
+            _state.value = _state.value.copy(action_result = message)
+            on_done(result)
+        }
+    }
+
     fun delete_alias_pin(alias_id: String, pin_id: String) {
         val previous = _state.value.alias_details[alias_id]?.pins.orEmpty()
         update_alias_detail(alias_id) { it.copy(pins = it.pins.filterNot { pin -> pin.id == pin_id }) }
@@ -2349,6 +2425,7 @@ class SettingsViewModel @Inject constructor(
                     sender = decrypt_alias_text(pin.encrypted_sender, pin.sender_nonce)
                         ?: context.getString(R.string.alias_sender_unknown),
                     is_blocked = pin.is_blocked,
+                    sender_hash = pin.sender_hash,
                 )
             }
         }
