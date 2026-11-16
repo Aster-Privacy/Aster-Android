@@ -2422,6 +2422,41 @@
     <string name="alias_pin_invalid_sender">Wprowadź prawidłowy adres e-mail</string>
     <string name="alias_pin_blocked">Zablokowany</string>
     <string name="alias_sender_unknown">Nieznany nadawca</string>
+    <string name="alias_sender_add_from_contacts">Dodaj z kontaktów</string>
+    <string name="alias_sender_pick_title">Dodaj nadawców z kontaktów</string>
+    <string name="alias_sender_pick_description">Wybierz, kto może pisać na ten adres. Każdy wybrany kontakt trafia na listę dozwolonych i możesz go usunąć w dowolnym momencie.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">Zaznaczono: %1$d</item>
+        <item quantity="few">Zaznaczono: %1$d</item>
+        <item quantity="many">Zaznaczono: %1$d</item>
+        <item quantity="other">Zaznaczono: %1$d</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Już dodano</string>
+    <string name="alias_sender_pick_blocked">Zablokowano</string>
+    <string name="alias_sender_pick_no_contacts_title">Brak kontaktów z adresem e-mail</string>
+    <string name="alias_sender_pick_no_contacts_description">Tutaj pojawią się kontakty zapisane z adresem e-mail.</string>
+    <string name="alias_sender_pick_all_added">Wszystkie Twoje kontakty są już na tej liście.</string>
+    <string name="alias_sender_pick_limit">Możesz dodać naraz maksymalnie %1$d nadawców.</string>
+    <string name="alias_sender_pick_submit">Dodaj nadawców</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">Dodaj nadawców (%1$d)</item>
+        <item quantity="few">Dodaj nadawców (%1$d)</item>
+        <item quantity="many">Dodaj nadawców (%1$d)</item>
+        <item quantity="other">Dodaj nadawców (%1$d)</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">Dodano nadawców: %1$d</item>
+        <item quantity="few">Dodano nadawców: %1$d</item>
+        <item quantity="many">Dodano nadawców: %1$d</item>
+        <item quantity="other">Dodano nadawców: %1$d</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">Dodano nadawców: %1$d z %2$d. Pozostali są nadal zaznaczeni, więc możesz spróbować ponownie.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">Adresy: %1$d</item>
+        <item quantity="few">Adresy: %1$d</item>
+        <item quantity="many">Adresy: %1$d</item>
+        <item quantity="other">Adresy: %1$d</item>
+    </plurals>
     <string name="alias_rules_title">Reguły</string>
     <string name="alias_rules_description">Wykonaj działanie, gdy przychodząca wiadomość spełnia warunek.</string>
     <string name="alias_rule_add">Dodaj regułę</string>

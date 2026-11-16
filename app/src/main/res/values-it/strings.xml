@@ -2414,6 +2414,37 @@
     <string name="alias_pin_invalid_sender">Inserisci un indirizzo email valido</string>
     <string name="alias_pin_blocked">Bloccato</string>
     <string name="alias_sender_unknown">Mittente sconosciuto</string>
+    <string name="alias_sender_add_from_contacts">Aggiungi dai contatti</string>
+    <string name="alias_sender_pick_title">Aggiungi mittenti dai contatti</string>
+    <string name="alias_sender_pick_description">Scegli chi può scrivere a questo indirizzo. Ogni contatto scelto viene aggiunto alla lista consentiti e puoi rimuoverlo in qualsiasi momento.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">%1$d selezionato</item>
+        <item quantity="many">%1$d selezionati</item>
+        <item quantity="other">%1$d selezionati</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Già aggiunto</string>
+    <string name="alias_sender_pick_blocked">Bloccato</string>
+    <string name="alias_sender_pick_no_contacts_title">Nessun contatto con indirizzo email</string>
+    <string name="alias_sender_pick_no_contacts_description">I contatti che salvi con un indirizzo email appaiono qui.</string>
+    <string name="alias_sender_pick_all_added">Tutti i tuoi contatti sono già in questa lista.</string>
+    <string name="alias_sender_pick_limit">Puoi aggiungere fino a %1$d mittenti alla volta.</string>
+    <string name="alias_sender_pick_submit">Aggiungi mittenti</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">Aggiungi %1$d mittente</item>
+        <item quantity="many">Aggiungi %1$d mittenti</item>
+        <item quantity="other">Aggiungi %1$d mittenti</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">%1$d mittente aggiunto</item>
+        <item quantity="many">%1$d mittenti aggiunti</item>
+        <item quantity="other">%1$d mittenti aggiunti</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">Aggiunti %1$d mittenti su %2$d. Gli altri restano selezionati, così puoi riprovare.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">%1$d indirizzo</item>
+        <item quantity="many">%1$d indirizzi</item>
+        <item quantity="other">%1$d indirizzi</item>
+    </plurals>
     <string name="alias_rules_title">Regole</string>
     <string name="alias_rules_description">Esegui un\'azione quando la posta in arrivo corrisponde.</string>
     <string name="alias_rule_add">Aggiungi regola</string>

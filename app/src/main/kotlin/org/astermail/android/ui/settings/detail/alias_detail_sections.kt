@@ -240,6 +240,21 @@ internal fun alias_sender_pinning_section(
             enabled = !detail.busy,
             on_add = { vm.add_alias_pin(alias_id, it) },
         )
+        if (detail.pin_mode == SENDER_PIN_MODE_ALLOWLIST) {
+            var picker_open by remember { mutableStateOf(false) }
+            alias_add_from_contacts_button(
+                enabled = !detail.busy,
+                on_click = { picker_open = true },
+            )
+            if (picker_open) {
+                alias_contact_pick_dialog(
+                    alias_id = alias_id,
+                    pins = detail.pins,
+                    vm = vm,
+                    on_dismiss = { picker_open = false },
+                )
+            }
+        }
     }
 }
 

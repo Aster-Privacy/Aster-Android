@@ -2443,6 +2443,37 @@
     <string name="alias_pin_invalid_sender">Saisissez une adresse e-mail valide</string>
     <string name="alias_pin_blocked">Bloqué</string>
     <string name="alias_sender_unknown">Expéditeur inconnu</string>
+    <string name="alias_sender_add_from_contacts">Ajouter depuis les contacts</string>
+    <string name="alias_sender_pick_title">Ajouter des expéditeurs depuis les contacts</string>
+    <string name="alias_sender_pick_description">Choisissez qui peut écrire à cette adresse. Chaque contact choisi est ajouté à la liste d’autorisation, et vous pouvez le retirer à tout moment.</string>
+    <plurals name="alias_sender_pick_selected">
+        <item quantity="one">%1$d sélectionné</item>
+        <item quantity="many">%1$d sélectionnés</item>
+        <item quantity="other">%1$d sélectionnés</item>
+    </plurals>
+    <string name="alias_sender_pick_already_added">Déjà ajouté</string>
+    <string name="alias_sender_pick_blocked">Bloqué</string>
+    <string name="alias_sender_pick_no_contacts_title">Aucun contact avec une adresse e-mail</string>
+    <string name="alias_sender_pick_no_contacts_description">Les contacts que vous enregistrez avec une adresse e-mail apparaissent ici.</string>
+    <string name="alias_sender_pick_all_added">Tous vos contacts figurent déjà dans cette liste.</string>
+    <string name="alias_sender_pick_limit">Vous pouvez ajouter jusqu’à %1$d expéditeurs à la fois.</string>
+    <string name="alias_sender_pick_submit">Ajouter des expéditeurs</string>
+    <plurals name="alias_sender_pick_submit_count">
+        <item quantity="one">Ajouter %1$d expéditeur</item>
+        <item quantity="many">Ajouter %1$d expéditeurs</item>
+        <item quantity="other">Ajouter %1$d expéditeurs</item>
+    </plurals>
+    <plurals name="alias_sender_pick_added">
+        <item quantity="one">%1$d expéditeur ajouté</item>
+        <item quantity="many">%1$d expéditeurs ajoutés</item>
+        <item quantity="other">%1$d expéditeurs ajoutés</item>
+    </plurals>
+    <string name="alias_sender_pick_partial">%1$d expéditeurs sur %2$d ajoutés. Les autres restent sélectionnés pour que vous puissiez réessayer.</string>
+    <plurals name="alias_sender_pick_address_count">
+        <item quantity="one">%1$d adresse</item>
+        <item quantity="many">%1$d adresses</item>
+        <item quantity="other">%1$d adresses</item>
+    </plurals>
     <string name="alias_rules_title">Règles</string>
     <string name="alias_rules_description">Exécuter une action quand un message correspond.</string>
     <string name="alias_rule_add">Ajouter une règle</string>
