@@ -3851,4 +3851,56 @@ class MailViewModelTest {
         assertFalse(vm.inbox_state.value.stats_refreshing)
         assertEquals(7, vm.inbox_state.value.stats?.unread)
     }
+
+    @Test
+    fun `process start after a long background marks the list count stale until the list lands`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+
+        val list_gate = kotlinx.coroutines.CompletableDeferred<Result<InboxPage>>()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers { list_gate.await() }
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        runCurrent()
+
+        assertTrue(list_count_refreshing(vm.inbox_state.value))
+
+        clock += 2_500L
+        list_gate.complete(Result.success(fake_inbox_page(3)))
+        advanceUntilIdle()
+
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+        assertEquals(3, vm.inbox_state.value.items.size)
+    }
+
+    @Test
+    fun `a failed list refresh after a long background stops marking the count stale`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.failure(java.io.IOException("offline"))
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        advanceUntilIdle()
+
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+        assertEquals(3, vm.inbox_state.value.items.size)
+    }
 }

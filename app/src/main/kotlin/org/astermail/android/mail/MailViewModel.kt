@@ -136,6 +136,7 @@ data class InboxUiState(
     val list_loaded_at: Long = 0L,
     val stats_loaded_at: Long = 0L,
     val stats_refreshing: Boolean = false,
+    val list_stale_since: Long = 0L,
     val cache_pending: Boolean = false,
     val read_filter: ListReadFilter = ListReadFilter.all,
 )
@@ -1174,7 +1175,9 @@ class MailViewModel @Inject constructor(
         foreground_refresh_at_ms = now
         val s = _inbox_state.value
         refresh_stats_after_return(stale = true)
-        if (s.initial || s.is_loading || s.is_loading_more || s.is_refreshing) return
+        if (s.is_loading_more) return
+        _inbox_state.update { it.copy(list_stale_since = now) }
+        if (s.initial || s.is_loading || s.is_refreshing) return
         silent_revalidate(s.current_folder)
         retry_resume_revalidate(s.current_folder)
         val thread = _thread_state.value
@@ -1954,6 +1957,10 @@ class MailViewModel @Inject constructor(
                     filtered_list_time = System.currentTimeMillis()
                 }
                 search_index_manager.ensure_index_built()
+            }
+            result.onFailure {
+                if (coroutineContext[Job]?.isActive == false) return@onFailure
+                _inbox_state.update { it.copy(list_stale_since = 0L) }
             }
         }
     }
@@ -6866,3 +6873,8 @@ internal fun send_result_message_for(error: Throwable): SendResultMessage = when
         SendResultMessage(R.string.sent_copy_attachments_missing, error.failed_count)
     else -> SendResultMessage(R.string.send_problem_failed_message, null)
 }
+
+internal fun list_count_refreshing(state: InboxUiState): Boolean =
+    state.list_stale_since > 0L &&
+        state.list_loaded_at < state.list_stale_since &&
+        state.error == null
