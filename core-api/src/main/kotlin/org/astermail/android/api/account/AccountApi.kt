@@ -41,12 +41,23 @@ data class AccountStatusResponse(
 )
 
 @Serializable
+data class SuspensionStatusResponse(
+    val suspended: Boolean = false,
+    val session_scope: String? = null,
+    val suspended_at: String? = null,
+    val deletion_eligible_at: String? = null,
+    val appeal_url: String? = null,
+    val export_available: Boolean = false,
+)
+
+@Serializable
 data class CancelDeletionResponse(
     val success: Boolean = false,
 )
 
 interface AccountApi {
     suspend fun get_status(): AccountStatusResponse
+    suspend fun get_suspension(): SuspensionStatusResponse
     suspend fun cancel_deletion(): CancelDeletionResponse
 }
 
@@ -55,6 +66,9 @@ class AccountApiImpl(private val client: ApiClient) : AccountApi {
 
     override suspend fun get_status(): AccountStatusResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/status"))
+
+    override suspend fun get_suspension(): SuspensionStatusResponse =
+        decode_or_throw(client.http.get("${client.base_url}$base/suspension"))
 
     override suspend fun cancel_deletion(): CancelDeletionResponse {
         client.fetch_csrf_if_needed()

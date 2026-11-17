@@ -2776,6 +2776,7 @@
     <string name="suspended_since_with_deletion">Bu hesap %1$s tarihinden itibaren kullanılamıyor. %2$s tarihinden itibaren silinmek üzere değerlendirilebilir.</string>
     <string name="suspended_since">Bu hesap %1$s tarihinden itibaren kullanılamıyor.</string>
     <string name="suspended_title">Bu hesap askıya alındı</string>
+    <string name="suspended_limited_access">Bu hesap askıya alınmışken itiraz başlatabilir, verilerinizi indirebilir veya oturumu kapatabilirsiniz.</string>
     <string name="suspended_appeal_hint">Bunun bir hata olduğunu düşünüyorsanız itiraz gönderebilirsiniz. Aster her itirazı inceler ve e-postayla yanıt verir.</string>
     <string name="suspended_download_hint">Verilerinizin bir kopyasını yine de indirebilirsiniz. Postanızın şifresi yalnızca bu cihazda çözülür, bu nedenle dışa aktarılan dosyayı başka kimse okuyamaz.</string>
     <string name="suspended_download">Verilerinizi indirin</string>

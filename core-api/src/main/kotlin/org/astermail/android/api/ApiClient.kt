@@ -551,7 +551,9 @@ class ApiClient(
                 detail.ifBlank { "forbidden" },
                 server_code,
                 parse_error_details(body),
-            )
+            ).also {
+                if (server_code == ACCOUNT_SUSPENDED_CODE) AuthEventBus.emit_suspended()
+            }
             404 -> ApiError.NotFoundError
             413 -> ApiError.AttachmentTooLarge(detail.ifBlank { "attachment too large" })
             422 -> ApiError.ValidationError(

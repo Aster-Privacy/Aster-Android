@@ -35,6 +35,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ACCOUNT_SUSPENDED_CODE
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.AuthEventBus
+import org.astermail.android.api.account.SuspensionStatusResponse
 import org.astermail.android.api.account.AccountApi
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
@@ -53,24 +55,32 @@ class SuspendedAccountViewModel @Inject constructor(
         val deletion_eligible_at: Instant? = null,
         val is_signing_out: Boolean = false,
         val profile: UserInfo? = null,
+        val appeal_url: String? = DEFAULT_APPEAL_URL,
     )
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            AuthEventBus.suspended.collect { if (!_state.value.visible) check() }
+        }
+    }
+
     fun check() {
         if (_state.value.is_signing_out) return
         viewModelScope.launch(Dispatchers.IO) {
-            val outcome = runCatching { account_api.get_status() }
+            val outcome = runCatching { load_suspension() }
             if (_state.value.is_signing_out) return@launch
             outcome.fold(
                 onSuccess = { status ->
-                    _state.value = if (status.status == "suspended") {
+                    _state.value = if (status.suspended) {
                         _state.value.copy(
                             visible = true,
                             suspended_at = parse_instant(status.suspended_at),
                             deletion_eligible_at = parse_instant(status.deletion_eligible_at),
                             profile = load_profile(),
+                            appeal_url = safe_appeal_url(status.appeal_url),
                         )
                     } else {
                         UiState()
@@ -100,6 +110,19 @@ class SuspendedAccountViewModel @Inject constructor(
         _state.value = UiState()
     }
 
+    private suspend fun load_suspension(): SuspensionStatusResponse =
+        try {
+            account_api.get_suspension()
+        } catch (missing: ApiError.NotFoundError) {
+            val status = account_api.get_status()
+            SuspensionStatusResponse(
+                suspended = status.status == "suspended",
+                suspended_at = status.suspended_at,
+                deletion_eligible_at = status.deletion_eligible_at,
+                appeal_url = DEFAULT_APPEAL_URL,
+            )
+        }
+
     private suspend fun load_profile(): UserInfo? = runCatching { auth_api.me() }.getOrNull()
 
     private fun parse_instant(raw: String?): Instant? =
@@ -107,4 +130,11 @@ class SuspendedAccountViewModel @Inject constructor(
 
     private fun is_suspended_error(t: Throwable): Boolean =
         t is ApiError.ForbiddenError && t.code == ACCOUNT_SUSPENDED_CODE
+
+    companion object {
+        const val DEFAULT_APPEAL_URL = "https://astermail.org/appeal"
+
+        fun safe_appeal_url(raw: String?): String? =
+            raw?.trim()?.takeIf { it.startsWith("https://") }
+    }
 }
