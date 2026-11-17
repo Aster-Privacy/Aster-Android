@@ -21,19 +21,17 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.ui.common.remember_image_picker
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -185,23 +183,19 @@ fun ContactEditScreen(
     }
 
     val photo_scope = rememberCoroutineScope()
-    val photo_picker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia(),
-    ) { uri ->
-        if (uri != null) {
-            photo_scope.launch {
-                val encoded = withContext(Dispatchers.IO) {
-                    runCatching { encode_contact_photo(context, uri) }.getOrNull()
-                }
-                if (encoded == null) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.photo_too_large),
-                        Toast.LENGTH_LONG,
-                    ).show()
-                } else {
-                    avatar_url = encoded
-                }
+    val photo_picker = remember_image_picker { uri ->
+        photo_scope.launch {
+            val encoded = withContext(Dispatchers.IO) {
+                runCatching { encode_contact_photo(context, uri) }.getOrNull()
+            }
+            if (encoded == null) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.photo_too_large),
+                    Toast.LENGTH_LONG,
+                ).show()
+            } else {
+                avatar_url = encoded
             }
         }
     }
@@ -347,11 +341,7 @@ fun ContactEditScreen(
                             stringResource(R.string.change_photo)
                         },
                         onClick = {
-                            photo_picker.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
-                                ),
-                            )
+                            photo_picker.launch()
                         },
                     )
                     if (avatar_url.isNotBlank()) {

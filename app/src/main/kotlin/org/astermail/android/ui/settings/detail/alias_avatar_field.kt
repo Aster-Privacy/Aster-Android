@@ -21,10 +21,8 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.remember_image_picker
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,8 +63,7 @@ internal fun alias_avatar_field(
     var working by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
+    val picker = remember_image_picker { uri: Uri ->
         scope.launch {
             working = true
             failed = false
@@ -103,7 +100,7 @@ internal fun alias_avatar_field(
                 },
                 onClick = {
                     failed = false
-                    picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    picker.launch()
                 },
                 enabled = !locked && !working,
                 is_loading = working,

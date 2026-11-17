@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">Wüste</string>
     <string name="profile_picture_credit">Foto: %1$s. Zugeschnitten und skaliert.</string>
     <string name="profile_picture_remove_hint">Stattdessen deine Initialen anzeigen</string>
+    <string name="image_picker_unavailable">Auf deinem Gerät ist keine App zum Auswählen von Fotos vorhanden.</string>
 </resources>

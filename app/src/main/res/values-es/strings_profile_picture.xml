@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">Desierto</string>
     <string name="profile_picture_credit">Foto: %1$s. Recortada y redimensionada.</string>
     <string name="profile_picture_remove_hint">Mostrar tus iniciales en su lugar</string>
+    <string name="image_picker_unavailable">Tu dispositivo no tiene una app para elegir fotos.</string>
 </resources>

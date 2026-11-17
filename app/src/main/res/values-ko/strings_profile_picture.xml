@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">사막</string>
     <string name="profile_picture_credit">사진: %1$s. 자르고 크기를 조정했습니다.</string>
     <string name="profile_picture_remove_hint">대신 이니셜을 표시합니다</string>
+    <string name="image_picker_unavailable">기기에 사진을 선택할 수 있는 앱이 없습니다.</string>
 </resources>
