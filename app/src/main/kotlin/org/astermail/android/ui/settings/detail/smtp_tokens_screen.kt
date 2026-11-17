@@ -97,19 +97,26 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         if (state.smtp_token_created != null) show_create = false
     }
 
+    val is_locked = plan_state.limits?.plan_code == "free" && !plan_state.is_loading
+    val addresses = state.custom_domain_addresses
+        .filterNot { it.decryption_failed || it.encrypted_local_part.isBlank() }
+    val body = smtp_tokens_body(
+        addresses_known = addresses.isNotEmpty() || state.custom_domain_addresses_settled,
+        has_addresses = addresses.isNotEmpty(),
+        has_tokens = state.smtp_tokens.isNotEmpty(),
+        loaded = state.smtp_tokens_loaded,
+        load_failed = state.smtp_tokens_load_failed,
+    )
+
     var show_load_placeholder by remember { mutableStateOf(false) }
-    LaunchedEffect(state.smtp_tokens_loading, state.smtp_tokens.isEmpty()) {
-        if (state.smtp_tokens_loading && state.smtp_tokens.isEmpty()) {
+    LaunchedEffect(body == SmtpTokensBody.placeholder) {
+        if (body == SmtpTokensBody.placeholder) {
             delay(smtp_placeholder_defer_ms)
-            show_load_placeholder = state.smtp_tokens_loading
+            show_load_placeholder = true
         } else {
             show_load_placeholder = false
         }
     }
-
-    val is_locked = plan_state.limits?.plan_code == "free" && !plan_state.is_loading
-    val addresses = state.custom_domain_addresses
-        .filterNot { it.decryption_failed || it.encrypted_local_part.isBlank() }
     val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
 
     detail_scaffold(title = stringResource(R.string.settings_smtp_tokens), on_back = on_back) {
@@ -136,7 +143,11 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                 )
             }
 
-            addresses.isEmpty() -> notice_card(
+            body == SmtpTokensBody.placeholder && addresses.isEmpty() -> {
+                if (show_load_placeholder) preferences_load_placeholder()
+            }
+
+            body == SmtpTokensBody.no_domain -> notice_card(
                 title = stringResource(R.string.smtp_tokens_no_domain_title),
                 body = stringResource(R.string.smtp_tokens_no_domain_description),
             )
@@ -158,12 +169,33 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                     )
                 }
 
-                if (show_load_placeholder) {
+                if (body == SmtpTokensBody.placeholder) {
                     v_gap(AsterSpacing.md)
-                    preferences_load_placeholder()
-                } else if (state.smtp_tokens.isEmpty() && state.smtp_tokens_loading) {
-                    v_gap(AsterSpacing.md)
-                } else if (state.smtp_tokens.isEmpty()) {
+                    if (show_load_placeholder) preferences_load_placeholder()
+                } else if (body == SmtpTokensBody.error) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = AsterSpacing.xl),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.failed_to_load),
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                        )
+                        v_gap(AsterSpacing.sm)
+                        Text(
+                            text = stringResource(R.string.retry),
+                            color = colors.accent_blue,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier
+                                .clickable { vm.load_smtp_tokens(force = true) }
+                                .padding(AsterSpacing.sm),
+                        )
+                    }
+                } else if (body == SmtpTokensBody.empty) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -341,6 +373,23 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
 }
 
 private const val smtp_placeholder_defer_ms = 180L
+
+internal enum class SmtpTokensBody { placeholder, no_domain, error, empty, list }
+
+internal fun smtp_tokens_body(
+    addresses_known: Boolean,
+    has_addresses: Boolean,
+    has_tokens: Boolean,
+    loaded: Boolean,
+    load_failed: Boolean,
+): SmtpTokensBody = when {
+    !addresses_known -> SmtpTokensBody.placeholder
+    !has_addresses -> SmtpTokensBody.no_domain
+    has_tokens -> SmtpTokensBody.list
+    load_failed -> SmtpTokensBody.error
+    loaded -> SmtpTokensBody.empty
+    else -> SmtpTokensBody.placeholder
+}
 
 private fun format_smtp_last_used(raw: String?): String? {
     if (raw.isNullOrBlank()) return null

@@ -3750,4 +3750,132 @@ class SettingsViewModelTest {
         assertTrue(observed != dispatcher)
         assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
     }
+
+    private fun smtp_body_now(): org.astermail.android.ui.settings.detail.SmtpTokensBody {
+        val s = vm.state.value
+        return org.astermail.android.ui.settings.detail.smtp_tokens_body(
+            addresses_known = true,
+            has_addresses = true,
+            has_tokens = s.smtp_tokens.isNotEmpty(),
+            loaded = s.smtp_tokens_loaded,
+            load_failed = s.smtp_tokens_load_failed,
+        )
+    }
+
+    @Test
+    fun `smtp tokens show no empty state before the first load finishes`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
+
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+        vm.load_smtp_tokens()
+        runCurrent()
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+
+        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        advanceUntilIdle()
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.empty, smtp_body_now())
+    }
+
+    @Test
+    fun `smtp token load failure shows an error instead of the empty state`() = runTest {
+        coEvery { settings_api.list_smtp_tokens() } throws java.io.IOException("offline")
+
+        vm.load_smtp_tokens()
+        advanceUntilIdle()
+
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.error, smtp_body_now())
+    }
+
+    @Test
+    fun `smtp tokens wait for custom domain addresses before showing the no domain notice`() {
+        val body = org.astermail.android.ui.settings.detail.smtp_tokens_body(
+            addresses_known = false,
+            has_addresses = false,
+            has_tokens = false,
+            loaded = false,
+            load_failed = false,
+        )
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, body)
+    }
+
+    @Test
+    fun `reopening smtp tokens keeps the cached rows while it revalidates`() = runTest {
+        val rows = listOf(
+            org.astermail.android.api.settings.SmtpTokenRow(id = "t1", bound_address = "a@example.com"),
+            org.astermail.android.api.settings.SmtpTokenRow(id = "t2", bound_address = "b@example.com"),
+        )
+        coEvery { settings_api.list_smtp_tokens() } returns
+            org.astermail.android.api.settings.ListSmtpTokensResponse(rows)
+        vm.load_smtp_tokens()
+        advanceUntilIdle()
+
+        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
+        vm.load_smtp_tokens()
+        runCurrent()
+
+        assertEquals(listOf("t1", "t2"), vm.state.value.smtp_tokens.map { it.id })
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.list, smtp_body_now())
+        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(rows.take(1)))
+        advanceUntilIdle()
+        assertEquals(listOf("t1"), vm.state.value.smtp_tokens.map { it.id })
+        coVerify(exactly = 2) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `smtp token prefetch and screen open share one request`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
+
+        vm.prefetch_smtp_tokens()
+        runCurrent()
+        vm.load_smtp_tokens()
+        runCurrent()
+        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        advanceUntilIdle()
+        vm.prefetch_smtp_tokens()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `smtp tokens from a previous account are dropped on account switch`() = runTest {
+        coEvery { settings_api.list_smtp_tokens() } returns org.astermail.android.api.settings.ListSmtpTokensResponse(
+            listOf(org.astermail.android.api.settings.SmtpTokenRow(id = "t1")),
+        )
+        vm.load_smtp_tokens()
+        advanceUntilIdle()
+
+        vm.reset_for_account_switch()
+
+        assertTrue(vm.state.value.smtp_tokens.isEmpty())
+        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+    }
+
+    @Test
+    fun `opening smtp tokens during the settings prefetch shares one request`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
+
+        vm.load_smtp_tokens()
+        runCurrent()
+        vm.load_smtp_tokens()
+        runCurrent()
+        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `smtp tokens report loading as soon as a load starts`() {
+        coEvery { settings_api.list_smtp_tokens() } returns
+            org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList())
+
+        vm.load_smtp_tokens()
+
+        assertTrue(vm.state.value.smtp_tokens_loading)
+    }
 }

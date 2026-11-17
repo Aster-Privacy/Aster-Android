@@ -184,6 +184,10 @@ fun SettingsScreen(
         settings_vm.load_ghost_aliases()
         settings_vm.load_custom_domain_addresses()
     }
+    val has_custom_domain_addresses = settings_state.custom_domain_addresses.isNotEmpty()
+    LaunchedEffect(has_custom_domain_addresses) {
+        if (has_custom_domain_addresses) settings_vm.prefetch_smtp_tokens()
+    }
 
     Column(
         modifier = Modifier
