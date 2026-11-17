@@ -231,6 +231,8 @@ data class SettingsUiState(
     val directories_loading: Boolean = false,
     val smtp_tokens: List<org.astermail.android.api.settings.SmtpTokenRow> = emptyList(),
     val smtp_tokens_loading: Boolean = false,
+    val smtp_tokens_loaded: Boolean = false,
+    val smtp_tokens_load_failed: Boolean = false,
     val smtp_token_creating: Boolean = false,
     val smtp_token_created: org.astermail.android.api.settings.CreateSmtpTokenResponse? = null,
     val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
@@ -966,6 +968,9 @@ class SettingsViewModel @Inject constructor(
         last_aliases_load_ms = 0L
         last_mail_rules_load_ms = 0L
         last_domain_addresses_load_ms = 0L
+        last_smtp_tokens_load_ms = 0L
+        smtp_tokens_job?.cancel()
+        smtp_tokens_job = null
         last_storage_load_ms = 0L
         last_labels_load_ms.clear()
         _state.value = SettingsUiState()
@@ -2993,16 +2998,43 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_smtp_tokens() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(smtp_tokens_loading = true)
+    private var smtp_tokens_job: kotlinx.coroutines.Job? = null
+    private var last_smtp_tokens_load_ms = 0L
+
+    fun prefetch_smtp_tokens() {
+        val loaded_recently = _state.value.smtp_tokens_loaded &&
+            System.currentTimeMillis() - last_smtp_tokens_load_ms in 0 until LIST_TTL_MS
+        if (loaded_recently || smtp_tokens_job?.isActive == true) return
+        load_smtp_tokens()
+    }
+
+    fun load_smtp_tokens(force: Boolean = false) {
+        if (smtp_tokens_job?.isActive == true) {
+            if (!force) return
+            smtp_tokens_job?.cancel()
+        }
+        val gen = account_generation
+        _state.update { it.copy(smtp_tokens_loading = true) }
+        smtp_tokens_job = viewModelScope.launch {
             try {
                 val response = settings_api.list_smtp_tokens()
-                val decrypted = response.tokens.map { decrypt_smtp_token(it) }
-                _state.value = _state.value.copy(smtp_tokens = decrypted, smtp_tokens_loading = false)
+                val decrypted = withContext(default_dispatcher) {
+                    response.tokens.map { decrypt_smtp_token(it) }
+                }
+                if (gen != account_generation) return@launch
+                last_smtp_tokens_load_ms = System.currentTimeMillis()
+                _state.update {
+                    it.copy(
+                        smtp_tokens = decrypted,
+                        smtp_tokens_loading = false,
+                        smtp_tokens_loaded = true,
+                        smtp_tokens_load_failed = false,
+                    )
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(smtp_tokens_loading = false)
+                if (gen != account_generation) return@launch
+                _state.update { it.copy(smtp_tokens_loading = false, smtp_tokens_load_failed = true) }
             }
         }
     }
@@ -3022,7 +3054,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 )
                 _state.value = _state.value.copy(smtp_token_creating = false, smtp_token_created = response)
-                load_smtp_tokens()
+                load_smtp_tokens(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(smtp_token_creating = false, action_result = user_facing_error(t))
