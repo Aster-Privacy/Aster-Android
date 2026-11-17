@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">你已达到此设备上的账户数量上限</string>
+    <string name="install_limit_message">此设备已创建了可创建的最多免费账户。要继续，请登录你已有的账户，或升级你的某个账户以创建更多账户。</string>
+    <string name="install_limit_sign_in">登录</string>
+    <string name="install_limit_upgrade">升级</string>
+    <string name="install_limit_upgrade_hint">登录后，你可以在“账单”中选择套餐。</string>
+    <string name="registration_extended_wait">正在确认你的注册。这可能需要最多一分钟。</string>
+</resources>

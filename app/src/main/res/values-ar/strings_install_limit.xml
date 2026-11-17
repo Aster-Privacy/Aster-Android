@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">لقد بلغت الحد الأقصى للحسابات على هذا الجهاز</string>
+    <string name="install_limit_message">أنشأ هذا الجهاز بالفعل أكبر عدد ممكن من الحسابات المجانية. للمتابعة، سجّل الدخول إلى حساب لديك بالفعل، أو قم بترقية أحد حساباتك لإنشاء المزيد.</string>
+    <string name="install_limit_sign_in">تسجيل الدخول</string>
+    <string name="install_limit_upgrade">ترقية</string>
+    <string name="install_limit_upgrade_hint">بعد تسجيل الدخول، يمكنك اختيار خطة من الفوترة.</string>
+    <string name="registration_extended_wait">جارٍ تأكيد التسجيل. قد يستغرق ذلك دقيقة واحدة.</string>
+</resources>

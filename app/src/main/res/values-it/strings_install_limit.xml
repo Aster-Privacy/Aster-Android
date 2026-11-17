@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Hai raggiunto il limite di account su questo dispositivo</string>
+    <string name="install_limit_message">Questo dispositivo ha già creato il numero massimo di account gratuiti. Per continuare, accedi a un account che hai già oppure passa a un piano superiore con uno dei tuoi account per crearne altri.</string>
+    <string name="install_limit_sign_in">Accedi</string>
+    <string name="install_limit_upgrade">Esegui l\'upgrade</string>
+    <string name="install_limit_upgrade_hint">Dopo l\'accesso, puoi scegliere un piano in Fatturazione.</string>
+    <string name="registration_extended_wait">Conferma della registrazione in corso. Può richiedere fino a un minuto.</string>
+</resources>

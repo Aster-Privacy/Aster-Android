@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Você atingiu o limite de contas neste dispositivo</string>
+    <string name="install_limit_message">Este dispositivo já criou o número máximo de contas gratuitas. Para continuar, entre em uma conta que você já tem ou faça upgrade de uma das suas contas para criar mais.</string>
+    <string name="install_limit_sign_in">Entrar</string>
+    <string name="install_limit_upgrade">Fazer upgrade</string>
+    <string name="install_limit_upgrade_hint">Depois de entrar, você pode escolher um plano em Cobrança.</string>
+    <string name="registration_extended_wait">Confirmando seu cadastro. Isso pode levar até um minuto.</string>
+</resources>

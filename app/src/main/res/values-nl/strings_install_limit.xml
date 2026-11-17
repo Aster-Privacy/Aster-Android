@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Je hebt de accountlimiet op dit apparaat bereikt</string>
+    <string name="install_limit_message">Op dit apparaat zijn al zoveel gratis accounts aangemaakt als mogelijk is. Log in bij een account dat je al hebt om verder te gaan, of upgrade een van je accounts om er meer aan te maken.</string>
+    <string name="install_limit_sign_in">Inloggen</string>
+    <string name="install_limit_upgrade">Upgraden</string>
+    <string name="install_limit_upgrade_hint">Nadat je bent ingelogd, kun je een abonnement kiezen bij Facturering.</string>
+    <string name="registration_extended_wait">Je registratie wordt bevestigd. Dit kan tot een minuut duren.</string>
+</resources>

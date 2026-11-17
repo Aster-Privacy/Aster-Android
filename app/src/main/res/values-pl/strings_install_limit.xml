@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Osiągnięto limit kont na tym urządzeniu</string>
+    <string name="install_limit_message">Na tym urządzeniu utworzono już maksymalną liczbę bezpłatnych kont. Aby kontynuować, zaloguj się na istniejące konto lub ulepsz jedno ze swoich kont, aby utworzyć kolejne.</string>
+    <string name="install_limit_sign_in">Zaloguj się</string>
+    <string name="install_limit_upgrade">Ulepsz</string>
+    <string name="install_limit_upgrade_hint">Po zalogowaniu możesz wybrać plan w sekcji Rozliczenia.</string>
+    <string name="registration_extended_wait">Potwierdzanie rejestracji. Może to potrwać do minuty.</string>
+</resources>

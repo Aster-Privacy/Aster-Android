@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Vous avez atteint la limite de comptes sur cet appareil</string>
+    <string name="install_limit_message">Cet appareil a déjà créé le nombre maximal de comptes gratuits. Pour continuer, connectez-vous à un compte existant ou passez l\'un de vos comptes à une offre supérieure pour en créer d\'autres.</string>
+    <string name="install_limit_sign_in">Se connecter</string>
+    <string name="install_limit_upgrade">Mettre à niveau</string>
+    <string name="install_limit_upgrade_hint">Une fois connecté, vous pouvez choisir une offre dans Facturation.</string>
+    <string name="registration_extended_wait">Confirmation de votre inscription. Cela peut prendre jusqu\'à une minute.</string>
+</resources>

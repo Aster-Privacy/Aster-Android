@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Bu cihazdaki hesap sınırına ulaştınız</string>
+    <string name="install_limit_message">Bu cihazda oluşturulabilecek en fazla sayıda ücretsiz hesap zaten oluşturuldu. Devam etmek için mevcut bir hesabınızda oturum açın veya daha fazla hesap oluşturmak için hesaplarınızdan birini yükseltin.</string>
+    <string name="install_limit_sign_in">Oturum aç</string>
+    <string name="install_limit_upgrade">Yükselt</string>
+    <string name="install_limit_upgrade_hint">Oturum açtıktan sonra Faturalandırma bölümünden bir plan seçebilirsiniz.</string>
+    <string name="registration_extended_wait">Kaydınız onaylanıyor. Bu işlem bir dakika kadar sürebilir.</string>
+</resources>
