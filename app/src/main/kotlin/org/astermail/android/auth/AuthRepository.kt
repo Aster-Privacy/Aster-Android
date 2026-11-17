@@ -1251,6 +1251,10 @@ class AuthRepository @Inject constructor(
         return upload_recovery_backup(pending)
     }
 
+    private val registration_extension: RegistrationExtension by lazy {
+        locate_registration_extension(context, api_client)
+    }
+
     suspend fun check_username_availability(username: String, domain: String): Result<Boolean> =
         runCatching { auth_api.check_username_availability(username, domain) }
 
@@ -1357,7 +1361,7 @@ class AuthRepository @Inject constructor(
         }
         recovery_key.fill(0)
 
-        val register_resp = auth_api.register(
+        val register_request =
             RegisterRequest(
                 username = username,
                 display_name = display_name?.trim()?.takeIf { it.isNotEmpty() },
@@ -1380,8 +1384,14 @@ class AuthRepository @Inject constructor(
                 recovery_key_salt = vault_backup.salt,
                 recovery_shares = recovery_shares,
                 vault_format = MASTER_KEY_VAULT_FORMAT,
-            ),
-        )
+            )
+        val register_resp = try {
+            registration_extension.around_register(RegistrationWaitState::set) { extras ->
+                auth_api.register(register_request, extras)
+            }
+        } finally {
+            RegistrationWaitState.set(false)
+        }
 
         val access = register_resp.access_token
             ?: throw ApiError.UnknownError(context.getString(R.string.error_generic))

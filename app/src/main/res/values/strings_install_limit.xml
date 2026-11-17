@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">You\'ve reached the account limit on this device</string>
+    <string name="install_limit_message">This device has already created the most free accounts it can. To continue, sign in to an account you already have, or upgrade one of your accounts to create more.</string>
+    <string name="install_limit_sign_in">Sign in</string>
+    <string name="install_limit_upgrade">Upgrade</string>
+    <string name="install_limit_upgrade_hint">After you sign in, you can choose a plan in Billing.</string>
+    <string name="registration_extended_wait">Confirming your sign-up. This can take up to a minute.</string>
+</resources>

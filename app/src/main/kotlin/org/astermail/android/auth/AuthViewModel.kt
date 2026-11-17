@@ -46,6 +46,7 @@ sealed interface AuthUiState {
         val restart_login: Boolean = false,
         val username_taken: Boolean = false,
         val passkey_settings: Boolean = false,
+        val install_limit: Boolean = false,
     ) : AuthUiState
     data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
@@ -62,6 +63,8 @@ class AuthViewModel @Inject constructor(
 
     private val _ui_state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val ui_state: StateFlow<AuthUiState> = _ui_state.asStateFlow()
+
+    val registration_extended_wait: StateFlow<Boolean> = RegistrationWaitState.extended_wait
 
     private val _is_checking_username = MutableStateFlow(false)
     val is_checking_username: StateFlow<Boolean> = _is_checking_username.asStateFlow()
@@ -356,6 +359,7 @@ class AuthViewModel @Inject constructor(
                     _ui_state.value = AuthUiState.Error(
                         message = map_error(t),
                         username_taken = org.astermail.android.is_username_taken(t),
+                        install_limit = is_install_account_limit(t),
                     )
                 },
             )

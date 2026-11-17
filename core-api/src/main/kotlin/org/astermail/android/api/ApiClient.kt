@@ -82,6 +82,7 @@ sealed class ApiError(message: String) : Exception(message) {
     data class ForbiddenError(
         val detail: String = "forbidden",
         val code: String? = null,
+        val details: Map<String, String> = emptyMap(),
     ) : ApiError(detail)
     data class PlanLimitExceeded(val detail: String, val resource: String?) : ApiError(detail)
     data class StorageQuotaExceeded(val detail: String) : ApiError(detail)
@@ -107,6 +108,11 @@ sealed class ApiError(message: String) : Exception(message) {
     data class UpgradeRequired(
         val detail: String = "upgrade required",
         val code: String? = null,
+    ) : ApiError(detail)
+    data class PreconditionRequired(
+        val detail: String = "precondition required",
+        val code: String? = null,
+        val details: Map<String, String> = emptyMap(),
     ) : ApiError(detail)
 }
 
@@ -541,7 +547,11 @@ class ApiClient(
                 if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             402 -> ApiError.PaymentRequired(detail)
-            403 -> ApiError.ForbiddenError(detail.ifBlank { "forbidden" }, server_code)
+            403 -> ApiError.ForbiddenError(
+                detail.ifBlank { "forbidden" },
+                server_code,
+                parse_error_details(body),
+            )
             404 -> ApiError.NotFoundError
             413 -> ApiError.AttachmentTooLarge(detail.ifBlank { "attachment too large" })
             422 -> ApiError.ValidationError(
@@ -551,6 +561,11 @@ class ApiClient(
             )
             409 -> ApiError.Conflict(detail.ifBlank { "conflict" }, server_code)
             426 -> ApiError.UpgradeRequired(detail.ifBlank { "upgrade required" }, server_code).also { ClientUpdateNotice.note(it) }
+            428 -> ApiError.PreconditionRequired(
+                detail.ifBlank { "precondition required" },
+                server_code,
+                parse_error_details(body),
+            )
             429 -> ApiError.RateLimited(
                 detail = detail,
                 resets_at = parse_error_resets_at(body),

@@ -69,6 +69,7 @@ fun RegisterScreen(
     on_sign_in: () -> Unit,
     on_terms_click: () -> Unit,
     on_privacy_click: () -> Unit,
+    on_upgrade: () -> Unit = on_sign_in,
     view_model: AuthViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -79,6 +80,7 @@ fun RegisterScreen(
     val recovery_backup_failed by view_model.recovery_backup_failed.collectAsStateWithLifecycle()
     val is_retrying_recovery_backup by view_model.is_retrying_recovery_backup.collectAsStateWithLifecycle()
     val is_checking_username by view_model.is_checking_username.collectAsStateWithLifecycle()
+    val extended_wait by view_model.registration_extended_wait.collectAsStateWithLifecycle()
 
     LaunchedEffect(recovery_codes) {
         if (recovery_codes != null && state.step.value == RegisterStep.generating) {
@@ -91,7 +93,11 @@ fun RegisterScreen(
         val failure = auth_state as? AuthUiState.Error
         if (failure != null && state.step.value == RegisterStep.generating) {
             state.captcha_token.value = null
-            state.step.value = if (failure.username_taken) RegisterStep.email else RegisterStep.password
+            state.step.value = when {
+                failure.install_limit -> RegisterStep.install_limit
+                failure.username_taken -> RegisterStep.email
+                else -> RegisterStep.password
+            }
         }
     }
 
@@ -120,7 +126,7 @@ fun RegisterScreen(
     }
 
     val is_loading = auth_state is AuthUiState.Loading
-    val error_message = (auth_state as? AuthUiState.Error)?.message
+    val error_message = (auth_state as? AuthUiState.Error)?.takeIf { !it.install_limit }?.message
     val username_error_message = (auth_state as? AuthUiState.Error)?.takeIf { it.username_taken }?.message
     val previous_step = previous_register_step(state.step.value)
     val can_go_back = state.step.value == RegisterStep.email || previous_step != null
@@ -131,6 +137,10 @@ fun RegisterScreen(
             RegisterStep.password -> {
                 view_model.reset_state()
                 state.step.value = RegisterStep.email
+            }
+            RegisterStep.install_limit -> {
+                view_model.reset_state()
+                state.step.value = RegisterStep.password
             }
             else -> previous_register_step(state.step.value)?.let { state.step.value = it }
         }
@@ -189,7 +199,7 @@ fun RegisterScreen(
                         on_terms_click = on_terms_click,
                         on_privacy_click = on_privacy_click,
                     )
-                    RegisterStep.generating -> RegisterGeneratingStep()
+                    RegisterStep.generating -> RegisterGeneratingStep(extended_wait = extended_wait)
                     RegisterStep.recovery_key -> RegisterRecoveryStep(
                         codes = recovery_codes.orEmpty(),
                         account_email = "${state.username.value.trim().trim('.')}@${state.email_domain.value}",
@@ -203,6 +213,17 @@ fun RegisterScreen(
                     )
                     RegisterStep.plan -> RegisterPlanStep(
                         on_continue = { on_registered(null) },
+                    )
+                    RegisterStep.install_limit -> InstallAccountLimitScreen(
+                        on_sign_in = {
+                            view_model.reset_state()
+                            on_sign_in()
+                        },
+                        on_upgrade = {
+                            view_model.reset_state()
+                            on_upgrade()
+                        },
+                        on_back = handle_back,
                     )
                 }
             }
@@ -224,7 +245,7 @@ private fun register_progress_header(
         label = "register_progress",
     )
     val header_alpha by animateFloatAsState(
-        targetValue = if (step == RegisterStep.generating) 0f else 1f,
+        targetValue = if (step == RegisterStep.generating || step == RegisterStep.install_limit) 0f else 1f,
         animationSpec = tween(durationMillis = 300),
         label = "register_header_alpha",
     )

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Вы достигли лимита аккаунтов на этом устройстве</string>
+    <string name="install_limit_message">На этом устройстве уже создано максимальное количество бесплатных аккаунтов. Чтобы продолжить, войдите в существующий аккаунт или улучшите тариф одного из своих аккаунтов, чтобы создать больше.</string>
+    <string name="install_limit_sign_in">Войти</string>
+    <string name="install_limit_upgrade">Улучшить</string>
+    <string name="install_limit_upgrade_hint">После входа вы можете выбрать тариф в разделе «Оплата».</string>
+    <string name="registration_extended_wait">Подтверждаем регистрацию. Это может занять до минуты.</string>
+</resources>

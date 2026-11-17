@@ -362,6 +362,8 @@ interface AuthApi {
     suspend fun initiate_webauthn_assertion(request: WebAuthnAssertionInitiateRequest): WebAuthnAssertionOptions
     suspend fun verify_webauthn_assertion(request: WebAuthnAssertionVerifyRequest): TotpVerifyOutcome
     suspend fun register(request: RegisterRequest): RegisterResponse
+    suspend fun register(request: RegisterRequest, extras: RegistrationExtras): RegisterResponse =
+        register(request)
     suspend fun check_username_availability(username: String, domain: String): Boolean
     suspend fun refresh(refresh_token: String?): RefreshResponse
     suspend fun logout()
@@ -580,10 +582,18 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
         return null
     }
 
-    override suspend fun register(request: RegisterRequest): RegisterResponse {
+    override suspend fun register(request: RegisterRequest): RegisterResponse =
+        register(request, RegistrationExtras.none)
+
+    override suspend fun register(request: RegisterRequest, extras: RegistrationExtras): RegisterResponse {
         val response = client.http.post("${client.base_url}$base/register") {
             contentType(ContentType.Application.Json)
-            setBody(request)
+            extras.headers.forEach { (name, value) -> header(name, value) }
+            if (extras.fields.isEmpty()) {
+                setBody(request)
+            } else {
+                setBody(registration_body(client.json, request, extras))
+            }
         }
         val body: RegisterResponse = decode_or_throw(response)
         client.set_csrf(body.csrf_token)

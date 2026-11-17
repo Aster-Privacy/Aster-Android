@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Atingiu o limite de contas neste dispositivo</string>
+    <string name="install_limit_message">Este dispositivo já criou o número máximo de contas gratuitas. Para continuar, inicie sessão numa conta que já tenha ou atualize uma das suas contas para criar mais.</string>
+    <string name="install_limit_sign_in">Iniciar sessão</string>
+    <string name="install_limit_upgrade">Atualizar</string>
+    <string name="install_limit_upgrade_hint">Depois de iniciar sessão, pode escolher um plano em Faturação.</string>
+    <string name="registration_extended_wait">A confirmar o seu registo. Isto pode demorar até um minuto.</string>
+</resources>

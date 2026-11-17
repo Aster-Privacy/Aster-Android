@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">आप इस डिवाइस पर खातों की सीमा तक पहुँच गए हैं</string>
+    <string name="install_limit_message">इस डिवाइस पर पहले ही जितने मुफ़्त खाते बनाए जा सकते हैं, उतने बन चुके हैं। जारी रखने के लिए, अपने किसी मौजूदा खाते में साइन इन करें, या और खाते बनाने के लिए अपने किसी खाते को अपग्रेड करें।</string>
+    <string name="install_limit_sign_in">साइन इन करें</string>
+    <string name="install_limit_upgrade">अपग्रेड करें</string>
+    <string name="install_limit_upgrade_hint">साइन इन करने के बाद, आप बिलिंग में कोई प्लान चुन सकते हैं।</string>
+    <string name="registration_extended_wait">आपके साइन-अप की पुष्टि हो रही है। इसमें एक मिनट तक लग सकता है।</string>
+</resources>

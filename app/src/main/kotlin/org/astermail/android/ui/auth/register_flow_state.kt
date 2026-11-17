@@ -36,6 +36,7 @@ enum class RegisterStep {
     generating,
     recovery_key,
     plan,
+    install_limit,
 }
 
 class RegisterFlowState(
@@ -106,6 +107,7 @@ fun remember_register_flow_state(): RegisterFlowState {
 
 fun previous_register_step(step: RegisterStep): RegisterStep? = when (step) {
     RegisterStep.password -> RegisterStep.email
+    RegisterStep.install_limit -> RegisterStep.password
     RegisterStep.email,
     RegisterStep.generating,
     RegisterStep.recovery_key,
@@ -114,7 +116,7 @@ fun previous_register_step(step: RegisterStep): RegisterStep? = when (step) {
 }
 
 fun step_progress(step: RegisterStep): Float {
-    val order = RegisterStep.values()
-    val idx = order.indexOf(step)
+    val order = RegisterStep.values().filter { it != RegisterStep.install_limit }
+    val idx = order.indexOf(step).coerceAtLeast(0)
     return (idx + 1).toFloat() / order.size.toFloat()
 }

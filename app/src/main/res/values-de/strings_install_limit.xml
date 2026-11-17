@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">Du hast das Kontolimit auf diesem Gerät erreicht</string>
+    <string name="install_limit_message">Auf diesem Gerät wurden bereits so viele kostenlose Konten erstellt wie möglich. Um fortzufahren, melde dich bei einem bestehenden Konto an oder führe für eines deiner Konten ein Upgrade durch, um weitere zu erstellen.</string>
+    <string name="install_limit_sign_in">Anmelden</string>
+    <string name="install_limit_upgrade">Upgraden</string>
+    <string name="install_limit_upgrade_hint">Nach der Anmeldung kannst du unter Abrechnung einen Tarif auswählen.</string>
+    <string name="registration_extended_wait">Deine Registrierung wird bestätigt. Das kann bis zu einer Minute dauern.</string>
+</resources>

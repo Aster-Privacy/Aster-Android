@@ -995,6 +995,13 @@ private fun AsterNavHost() {
                         launchSingleTop = true
                     }
                 },
+                on_upgrade = {
+                    pending.pending_open_billing.value = true
+                    nav_controller.navigate(routes.sign_in) {
+                        popUpTo(routes.register) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
                 on_terms_click = {
                     try {
                         context.startActivity(

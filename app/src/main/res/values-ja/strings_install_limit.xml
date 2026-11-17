@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="install_limit_title">このデバイスで作成できるアカウント数の上限に達しました</string>
+    <string name="install_limit_message">このデバイスでは、作成できる無料アカウントの上限数がすでに作成されています。続けるには、既存のアカウントにサインインするか、いずれかのアカウントをアップグレードしてアカウントを追加で作成してください。</string>
+    <string name="install_limit_sign_in">サインイン</string>
+    <string name="install_limit_upgrade">アップグレード</string>
+    <string name="install_limit_upgrade_hint">サインイン後、「請求」でプランを選択できます。</string>
+    <string name="registration_extended_wait">登録を確認しています。最大で1分ほどかかる場合があります。</string>
+</resources>

@@ -43,7 +43,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 
 @Composable
-fun RegisterGeneratingStep() {
+fun RegisterGeneratingStep(extended_wait: Boolean = false) {
     val colors = AsterMaterial.colors
     Box(
         modifier = Modifier
@@ -69,7 +69,9 @@ fun RegisterGeneratingStep() {
             )
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
-                text = stringResource(R.string.creating_encryption_keys),
+                text = stringResource(
+                    if (extended_wait) R.string.registration_extended_wait else R.string.creating_encryption_keys,
+                ),
                 color = colors.text_tertiary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,

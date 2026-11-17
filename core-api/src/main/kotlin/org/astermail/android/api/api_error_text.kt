@@ -85,6 +85,7 @@ fun server_supplied_detail(t: Throwable): String? {
         is ApiError.PlanLimitExceeded,
         is ApiError.StorageQuotaExceeded,
         is ApiError.UpgradeRequired,
+        is ApiError.PreconditionRequired,
         ApiError.InvalidCredentials,
         ApiError.NetworkError,
         ApiError.UnauthorizedError,
