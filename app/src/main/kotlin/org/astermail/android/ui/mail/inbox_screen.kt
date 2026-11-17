@@ -2820,6 +2820,8 @@ fun InboxScreen(
                         folder_title = display_title ?: folder_display_name(current_folder),
                         search_scoped = org.astermail.android.mail.search_scope_query(current_folder) != null,
                         unread_count = folder_count,
+                        unread_count_refreshing = inbox_state.stats_refreshing &&
+                            folder_count_from_stats(current_folder, categories_enabled && category_unread.isNotEmpty()),
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
                         on_enter_select_mode = {
@@ -3385,6 +3387,7 @@ internal fun inbox_top_bar(
     folder_title: String,
     search_scoped: Boolean = false,
     unread_count: Int,
+    unread_count_refreshing: Boolean = false,
     on_open_drawer: () -> Unit,
     on_open_search: () -> Unit,
     on_enter_select_mode: () -> Unit,
@@ -3448,12 +3451,18 @@ internal fun inbox_top_bar(
                             .widthIn(max = 180.dp),
                     )
                     if (unread_count > 0) {
+                        val count_alpha by animateFloatAsState(
+                            targetValue = if (unread_count_refreshing) STALE_COUNT_ALPHA else 1f,
+                            animationSpec = tween(180),
+                            label = "unread_count_alpha",
+                        )
                         Spacer(Modifier.width(6.dp))
                         Text(
                             text = unread_count.toString(),
                             color = colors.accent_blue,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
+                            modifier = Modifier.graphicsLayer { alpha = count_alpha },
                         )
                     }
                     Spacer(Modifier.width(2.dp))
@@ -5093,3 +5102,11 @@ internal fun filtered_load_more_wanted(
 
 internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
     is_loading_more && !removal_quiet
+
+private const val STALE_COUNT_ALPHA = 0.35f
+
+internal fun folder_count_from_stats(folder: String, category_counts: Boolean): Boolean = when (folder) {
+    "inbox" -> !category_counts
+    "drafts", "scheduled" -> true
+    else -> false
+}
