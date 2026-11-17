@@ -8,14 +8,18 @@ on:
     paths:
       - 'fastlane/metadata/**'
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   validate-metadata:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - uses: ashutoshgngwr/validate-fastlane-supply-metadata@c8857fdbbd3e00f9a5cbe8604bcecfa95ce8fef8 # v2.1.0
         with:
           fastlaneDir: ./fastlane/metadata/android
