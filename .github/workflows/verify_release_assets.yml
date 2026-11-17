@@ -17,12 +17,13 @@ on:
         description: release tag to check, for example v0.6.156
         required: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: check required assets
         env:
