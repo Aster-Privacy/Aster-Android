@@ -529,10 +529,16 @@ class MailViewModel @Inject constructor(
             repository.reaction_holds.undo(target.reaction_mail_item_id)
             return
         }
+        val my_email = target.reactor_email
+        val removed = _message_reactions.value[message_id].orEmpty().filter {
+            it.emoji == emoji &&
+                (it.is_own || (my_email.isNotBlank() && it.reactor_email.equals(my_email, ignoreCase = true)))
+        }
+        val removed_ids = removed.map { it.reaction_mail_item_id }.toSet()
         _message_reactions.update { current ->
             current + (
                 message_id to current[message_id].orEmpty()
-                    .filter { it.reaction_mail_item_id != target.reaction_mail_item_id }
+                    .filter { it.reaction_mail_item_id !in removed_ids }
             )
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -540,11 +546,8 @@ class MailViewModel @Inject constructor(
             if (error != null) {
                 _message_reactions.update { current ->
                     val bucket = current[message_id].orEmpty()
-                    if (bucket.any { it.reaction_mail_item_id == target.reaction_mail_item_id }) {
-                        current
-                    } else {
-                        current + (message_id to (bucket + target))
-                    }
+                    val present = bucket.map { it.reaction_mail_item_id }.toSet()
+                    current + (message_id to (bucket + removed.filter { it.reaction_mail_item_id !in present }))
                 }
             }
             kotlinx.coroutines.withContext(Dispatchers.Main) {

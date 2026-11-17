@@ -288,6 +288,13 @@ class ReactionRestrictionTest {
     }
 
     @Test
+    fun copies_of_one_own_reaction_count_once_toward_the_own_limit() {
+        val copy = reaction(0, is_own = true)
+        val reactions = listOf(copy, copy.copy(reaction_mail_item_id = "reaction_0_inbox"))
+        assertNull(restriction(sender_email = me, reactions = reactions))
+    }
+
+    @Test
     fun own_limit_is_two() {
         assertEquals(2, MAX_OWN_REACTIONS)
     }

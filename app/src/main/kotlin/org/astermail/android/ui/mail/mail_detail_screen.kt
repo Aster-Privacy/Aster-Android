@@ -225,6 +225,7 @@ import org.astermail.android.mail.DecryptedReaction
 import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
+import org.astermail.android.mail.group_reaction_chips
 import org.astermail.android.mail.strip_non_rendered_blocks
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.TranslationDownloadPolicy
@@ -3669,14 +3670,7 @@ private fun reaction_chip_row(
         )
     }
     val groups = remember(reactions, my_email) {
-        reactions.groupBy { it.emoji }
-            .map { (emoji, list) ->
-                Triple(
-                    emoji,
-                    list.size,
-                    list.any { it.is_own || it.reactor_email.equals(my_email, ignoreCase = true) },
-                )
-            }
+        group_reaction_chips(reactions, my_email)
     }
     FlowRow(
         modifier = Modifier

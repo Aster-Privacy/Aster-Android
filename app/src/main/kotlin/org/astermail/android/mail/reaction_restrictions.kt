@@ -145,7 +145,9 @@ fun reaction_restriction(
     if (reactions.map { it.emoji }.filter { it.isNotBlank() }.toSet().size >= MAX_REACTION_EMOJIS) {
         return ReactionRestriction.too_many_emojis
     }
-    if (reactions.count { it.is_own } >= MAX_OWN_REACTIONS) return ReactionRestriction.reaction_limit
+    if (reactions.filter { it.is_own }.map { it.emoji }.toSet().size >= MAX_OWN_REACTIONS) {
+        return ReactionRestriction.reaction_limit
+    }
     if (normalize(sender_email).isEmpty()) return ReactionRestriction.no_recipient
     if (require_encryption) {
         val recipient = reaction_recipient(sender_email, to_addresses, user_email, is_own_address)
