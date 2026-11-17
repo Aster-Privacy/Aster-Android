@@ -98,10 +98,14 @@ import org.astermail.android.ui.settings.detail.ExportScreen
 import org.astermail.android.design.mirror_in_rtl
 
 private const val TERMS_URL = "https://astermail.org/terms"
-private const val APPEAL_URL = "https://astermail.org/appeal"
-
-internal fun appeal_url_for(address: String): String =
-    if (address.isBlank()) APPEAL_URL else "$APPEAL_URL?address=${Uri.encode(address)}"
+internal fun appeal_url_for(
+    address: String,
+    base: String = SuspendedAccountViewModel.DEFAULT_APPEAL_URL,
+): String {
+    if (address.isBlank()) return base
+    val separator = if (base.contains('?')) '&' else '?'
+    return "$base${separator}address=${Uri.encode(address)}"
+}
 
 @Composable
 fun SuspendedAccountGate(
@@ -238,6 +242,15 @@ fun SuspendedAccountGate(
                 )
             }
 
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(R.string.suspended_limited_access),
+                color = colors.text_tertiary,
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                modifier = Modifier.testTag("suspended_limited_access"),
+            )
+
             Spacer(Modifier.height(16.dp))
 
             Row(
@@ -290,16 +303,18 @@ fun SuspendedAccountGate(
 
             Spacer(Modifier.height(24.dp))
 
-            action_row(
-                title = stringResource(R.string.suspended_start_appeal),
-                hint = stringResource(R.string.suspended_appeal_hint),
-                background = card,
-                enabled = !state.is_signing_out,
-                tag = "suspended_start_appeal",
-                onClick = { open_url(context, appeal_url_for(account_email)) },
-            )
+            state.appeal_url?.let { appeal_base ->
+                action_row(
+                    title = stringResource(R.string.suspended_start_appeal),
+                    hint = stringResource(R.string.suspended_appeal_hint),
+                    background = card,
+                    enabled = !state.is_signing_out,
+                    tag = "suspended_start_appeal",
+                    onClick = { open_url(context, appeal_url_for(account_email, appeal_base)) },
+                )
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
+            }
 
             action_row(
                 title = stringResource(R.string.suspended_download),

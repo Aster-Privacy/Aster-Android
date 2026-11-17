@@ -38,4 +38,15 @@ object AuthEventBus {
     fun emit_unauthorized() {
         _unauthorized.tryEmit(Unit)
     }
+
+    private val _suspended = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    val suspended: SharedFlow<Unit> = _suspended.asSharedFlow()
+
+    fun emit_suspended() {
+        _suspended.tryEmit(Unit)
+    }
 }

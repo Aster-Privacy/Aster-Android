@@ -2765,6 +2765,7 @@
     <string name="suspended_since_with_deletion">このアカウントは %1$s に利用できなくなりました。%2$s 以降、削除の対象になる場合があります。</string>
     <string name="suspended_since">このアカウントは %1$s に利用できなくなりました。</string>
     <string name="suspended_title">このアカウントは停止されています</string>
+    <string name="suspended_limited_access">このアカウントが停止されている間は、異議申し立て、データのダウンロード、サインアウトのみ行えます。</string>
     <string name="suspended_appeal_hint">誤りだと思われる場合は、異議申し立てを送信できます。Aster はすべての異議申し立てを確認し、メールで返信します。</string>
     <string name="suspended_download_hint">データのコピーは引き続きダウンロードできます。メールはこのデバイス上でのみ復号されるため、エクスポートを他の人が読むことはできません。</string>
     <string name="suspended_download">データをダウンロード</string>

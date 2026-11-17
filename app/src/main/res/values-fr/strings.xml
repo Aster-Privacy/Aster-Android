@@ -2819,6 +2819,7 @@
     <string name="suspended_since_with_deletion">Ce compte est indisponible depuis le %1$s. À partir du %2$s, il pourra être supprimé.</string>
     <string name="suspended_since">Ce compte est indisponible depuis le %1$s.</string>
     <string name="suspended_title">Ce compte est suspendu</string>
+    <string name="suspended_limited_access">Tant que ce compte est suspendu, vous pouvez faire appel, télécharger vos données ou vous déconnecter.</string>
     <string name="suspended_appeal_hint">Si vous pensez qu\'il s\'agit d\'une erreur, vous pouvez faire appel. Aster examine chaque appel et répond par e-mail.</string>
     <string name="suspended_download_hint">Vous pouvez toujours télécharger une copie de vos données. Vos e-mails sont déchiffrés uniquement sur cet appareil, donc personne d\'autre ne peut lire l\'export.</string>
     <string name="suspended_download">Télécharger vos données</string>
