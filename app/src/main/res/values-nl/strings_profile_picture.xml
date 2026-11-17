@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">Woestijn</string>
     <string name="profile_picture_credit">Foto: %1$s. Bijgesneden en geschaald.</string>
     <string name="profile_picture_remove_hint">Toon in plaats daarvan je initialen</string>
+    <string name="image_picker_unavailable">Je apparaat heeft geen app om foto\'s te kiezen.</string>
 </resources>

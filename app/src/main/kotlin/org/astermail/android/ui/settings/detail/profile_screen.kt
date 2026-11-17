@@ -21,14 +21,13 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.remember_image_picker
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -171,8 +170,7 @@ fun ProfileScreen(
     var show_photo_sheet by rememberSaveable { mutableStateOf(false) }
     val photo_busy = photo_uploading || photo_removing
 
-    val image_picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
+    val image_picker = remember_image_picker { uri: Uri ->
         scope.launch {
             photo_uploading = true
             photo_failed = false
@@ -226,11 +224,7 @@ fun ProfileScreen(
             on_dismiss = { show_photo_sheet = false },
             on_upload = {
                 photo_failed = false
-                image_picker.launch(
-                    androidx.activity.result.PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly,
-                    ),
-                )
+                image_picker.launch()
             },
             on_remove = {
                 if (!photo_busy) {

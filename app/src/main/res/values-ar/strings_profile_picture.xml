@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">الصحراء</string>
     <string name="profile_picture_credit">الصورة: %1$s. تم اقتصاصها وتغيير حجمها.</string>
     <string name="profile_picture_remove_hint">إظهار الأحرف الأولى من اسمك بدلًا منها</string>
+    <string name="image_picker_unavailable">لا يحتوي جهازك على تطبيق لاختيار الصور.</string>
 </resources>

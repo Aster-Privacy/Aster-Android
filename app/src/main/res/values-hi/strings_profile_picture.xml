@@ -20,4 +20,5 @@
     <string name="profile_picture_cat_desert">रेगिस्तान</string>
     <string name="profile_picture_credit">फ़ोटो: %1$s. क्रॉप और रीसाइज़ की गई।</string>
     <string name="profile_picture_remove_hint">इसके बजाय अपने नाम के पहले अक्षर दिखाएं</string>
+    <string name="image_picker_unavailable">आपके डिवाइस में फ़ोटो चुनने के लिए कोई ऐप नहीं है।</string>
 </resources>

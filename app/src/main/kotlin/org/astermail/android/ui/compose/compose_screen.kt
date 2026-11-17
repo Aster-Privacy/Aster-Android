@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.compose
 
+import org.astermail.android.ui.common.remember_multiple_image_picker
 import org.astermail.android.ui.mail.with_account_week_start
 import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
@@ -1459,9 +1460,7 @@ private fun compose_screen_content(
         scope.launch { attach_uris(uris) }
     }
 
-    val image_picker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-    ) { uris ->
+    val image_picker = remember_multiple_image_picker { uris ->
         scope.launch { attach_uris(uris) }
     }
 
@@ -3268,11 +3267,7 @@ private fun compose_screen_content(
             },
             on_pick_photo = {
                 show_attach_sheet = false
-                image_picker.launch(
-                    androidx.activity.result.PickVisualMediaRequest(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly,
-                    ),
-                )
+                image_picker.launch()
             },
         )
     }

@@ -22,6 +22,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.ui.common.remember_image_picker
 import android.graphics.Bitmap
 import android.graphics.RectF
 import android.os.Build
@@ -127,9 +128,6 @@ import org.astermail.android.ui.theme.remote_theme_store
 import org.astermail.android.ui.theme.ThemeBackground
 import org.astermail.android.ui.theme.ThemeCategory
 import org.astermail.android.ui.theme.no_theme_background
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -668,8 +666,8 @@ private fun your_photo_section(
     var editor_source by remember { mutableStateOf<Bitmap?>(null) }
     var editor_crop by remember { mutableStateOf<RectF?>(null) }
     var editor_new_source by remember { mutableStateOf(false) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri == null || importing || committing) return@rememberLauncherForActivityResult
+    val launcher = remember_image_picker { uri ->
+        if (importing || committing) return@remember_image_picker
         importing = true
         error = null
         scope.launch {
@@ -761,7 +759,7 @@ private fun your_photo_section(
         val message_color = if (error != null) error_text else local_library_palette.current.muted_text
         val choose = {
             if (!importing && !committing) {
-                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                launcher.launch()
             }
         }
         val current = meta
