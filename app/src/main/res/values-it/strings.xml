@@ -2843,6 +2843,7 @@
     <string name="error_folder_password_not_set">Questa cartella non ha una password.</string>
     <string name="error_image_too_large">Questa immagine è troppo grande. Scegli una foto più piccola.</string>
     <string name="error_invalid_2fa_code">Questo codice non è corretto. Controlla l\'app di autenticazione e riprova.</string>
+    <string name="error_totp_code_replayed">Questo codice è appena stato usato. Attendi che l\'app di autenticazione mostri un nuovo codice e riprova.</string>
     <string name="error_passkey_unavailable">Questo dispositivo non ha trovato nessuna passkey per questo account. Verifica che il gestore di password che contiene la tua passkey sia attivo per le passkey nelle impostazioni di Android, oppure usa la tua app di autenticazione.</string>
     <string name="error_passkey_no_provider">Le passkey non sono configurate su questo dispositivo. Attiva un gestore di password per le passkey nelle impostazioni di Android, oppure usa la tua app di autenticazione.</string>
     <string name="passkey_open_settings">Impostazioni passkey</string>

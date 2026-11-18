@@ -2860,6 +2860,7 @@
     <string name="error_folder_password_not_set">Ten folder nie ma hasła.</string>
     <string name="error_image_too_large">Ten obraz jest za duży. Wybierz mniejsze zdjęcie.</string>
     <string name="error_invalid_2fa_code">Ten kod jest nieprawidłowy. Sprawdź aplikację uwierzytelniającą i spróbuj ponownie.</string>
+    <string name="error_totp_code_replayed">Ten kod został właśnie użyty. Poczekaj, aż aplikacja uwierzytelniająca wyświetli nowy kod, i spróbuj ponownie.</string>
     <string name="error_passkey_unavailable">To urządzenie nie znalazło klucza dostępu dla tego konta. Sprawdź, czy menedżer haseł, w którym jest Twój klucz dostępu, jest włączony dla kluczy dostępu w ustawieniach Androida, albo użyj aplikacji uwierzytelniającej.</string>
     <string name="error_passkey_no_provider">Klucze dostępu nie są skonfigurowane na tym urządzeniu. Włącz menedżer haseł dla kluczy dostępu w ustawieniach Androida albo użyj aplikacji uwierzytelniającej.</string>
     <string name="passkey_open_settings">Ustawienia kluczy dostępu</string>

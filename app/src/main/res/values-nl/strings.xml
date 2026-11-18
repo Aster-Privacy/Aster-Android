@@ -2826,6 +2826,7 @@
     <string name="error_folder_password_not_set">Deze map heeft geen wachtwoord.</string>
     <string name="error_image_too_large">Deze afbeelding is te groot. Kies een kleinere foto.</string>
     <string name="error_invalid_2fa_code">Deze code klopt niet. Controleer je authenticator-app en probeer het opnieuw.</string>
+    <string name="error_totp_code_replayed">Deze code is zojuist gebruikt. Wacht tot je authenticator-app een nieuwe code toont en probeer het opnieuw.</string>
     <string name="error_passkey_unavailable">Dit apparaat heeft geen toegangssleutel voor dit account gevonden. Controleer of de wachtwoordbeheerder met je toegangssleutel aan staat voor toegangssleutels in de Android-instellingen, of gebruik je authenticator-app.</string>
     <string name="error_passkey_no_provider">Toegangssleutels zijn niet ingesteld op dit apparaat. Zet in de Android-instellingen een wachtwoordbeheerder aan voor toegangssleutels, of gebruik je authenticator-app.</string>
     <string name="passkey_open_settings">Instellingen voor toegangssleutels</string>

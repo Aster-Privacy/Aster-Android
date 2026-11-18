@@ -2827,6 +2827,7 @@
     <string name="error_folder_password_not_set">Dieser Ordner hat kein Passwort.</string>
     <string name="error_image_too_large">Dieses Bild ist zu groß. Wählen Sie ein kleineres Foto.</string>
     <string name="error_invalid_2fa_code">Dieser Code ist nicht korrekt. Sehen Sie in Ihrer Authenticator-App nach und versuchen Sie es erneut.</string>
+    <string name="error_totp_code_replayed">Dieser Code wurde gerade verwendet. Warten Sie, bis Ihre Authenticator-App einen neuen Code anzeigt, und versuchen Sie es erneut.</string>
     <string name="error_passkey_unavailable">Dieses Gerät hat keinen Passkey für dieses Konto gefunden. Prüfen Sie, ob der Passwort-Manager mit Ihrem Passkey in den Android-Einstellungen für Passkeys aktiviert ist, oder nutzen Sie Ihre Authenticator-App.</string>
     <string name="error_passkey_no_provider">Auf diesem Gerät sind keine Passkeys eingerichtet. Aktivieren Sie in den Android-Einstellungen einen Passwort-Manager für Passkeys, oder nutzen Sie Ihre Authenticator-App.</string>
     <string name="passkey_open_settings">Passkey-Einstellungen</string>

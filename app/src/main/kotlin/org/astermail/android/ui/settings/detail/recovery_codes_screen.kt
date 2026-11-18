@@ -269,7 +269,10 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                     show_rotate_confirm = true
                                 }
                             }
-                            .onFailure { error = vm.error_text(it) }
+                            .onFailure {
+                                if (org.astermail.android.is_rejected_second_factor_code(it)) totp_code = ""
+                                error = vm.error_text(it)
+                            }
                     }
                 },
                 enabled = !is_verifying &&

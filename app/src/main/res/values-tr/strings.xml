@@ -2826,6 +2826,7 @@
     <string name="error_folder_password_not_set">Bu klasörün parolası yok.</string>
     <string name="error_image_too_large">Bu görüntü çok büyük. Daha küçük bir fotoğraf seçin.</string>
     <string name="error_invalid_2fa_code">Bu kod doğru değil. Kimlik doğrulama uygulamanızı kontrol edip tekrar deneyin.</string>
+    <string name="error_totp_code_replayed">Bu kod az önce kullanıldı. Kimlik doğrulayıcı uygulamanız yeni bir kod gösterene kadar bekleyip tekrar deneyin.</string>
     <string name="error_passkey_unavailable">Bu cihaz bu hesap için bir geçiş anahtarı bulamadı. Geçiş anahtarınızı tutan parola yöneticisinin Android ayarlarında geçiş anahtarları için açık olduğundan emin olun ya da kimlik doğrulama uygulamanızı kullanın.</string>
     <string name="error_passkey_no_provider">Bu cihazda geçiş anahtarları ayarlanmamış. Android ayarlarında geçiş anahtarları için bir parola yöneticisini açın ya da kimlik doğrulama uygulamanızı kullanın.</string>
     <string name="passkey_open_settings">Geçiş anahtarı ayarları</string>

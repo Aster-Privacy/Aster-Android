@@ -2894,6 +2894,7 @@
     <string name="error_folder_password_not_set">هذا المجلد غير محمي بكلمة مرور.</string>
     <string name="error_image_too_large">هذه الصورة كبيرة جدًا. اختر صورة أصغر.</string>
     <string name="error_invalid_2fa_code">هذا الرمز غير صحيح. تحقق من تطبيق المصادقة وحاول مرة أخرى.</string>
+    <string name="error_totp_code_replayed">تم استخدام هذا الرمز للتو. انتظر حتى يعرض تطبيق المصادقة رمزًا جديدًا ثم حاول مرة أخرى.</string>
     <string name="error_passkey_unavailable">لم يعثر هذا الجهاز على مفتاح مرور لهذا الحساب. تأكد من تفعيل مدير كلمات المرور الذي يحفظ مفتاح المرور لمفاتيح المرور في إعدادات Android، أو استخدم تطبيق المصادقة.</string>
     <string name="error_passkey_no_provider">مفاتيح المرور غير معدّة على هذا الجهاز. فعّل مدير كلمات مرور لمفاتيح المرور في إعدادات Android، أو استخدم تطبيق المصادقة.</string>
     <string name="passkey_open_settings">إعدادات مفاتيح المرور</string>

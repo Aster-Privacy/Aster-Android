@@ -79,4 +79,22 @@ class ServerCodeErrorTest {
         assertNull(ApiError.ForbiddenError("nope").code)
         assertNull(ApiError.Conflict("nope").code)
     }
+
+    @Test
+    fun tells_a_wrong_authenticator_code_apart_from_a_wrong_password() {
+        assertEquals(R.string.error_invalid_2fa_code, validation_code_string_res("INVALID_TWO_FACTOR_CODE"))
+        assertEquals(R.string.error_totp_code_replayed, validation_code_string_res("TOTP_CODE_REPLAYED"))
+        assertEquals(R.string.error_2fa_code_required, validation_code_string_res("TOTP_REQUIRED"))
+        assertNull(validation_code_string_res("INVALID_CREDENTIALS"))
+        assertNull(validation_code_string_res(null))
+    }
+
+    @Test
+    fun clears_the_code_entry_only_when_the_code_was_refused() {
+        assertTrue(is_rejected_second_factor_code(ApiError.ValidationError(listOf("x"), "INVALID_TWO_FACTOR_CODE")))
+        assertTrue(is_rejected_second_factor_code(ApiError.ValidationError(listOf("x"), "TOTP_CODE_REPLAYED")))
+        assertFalse(is_rejected_second_factor_code(ApiError.ValidationError(listOf("x"), "TOTP_REQUIRED")))
+        assertFalse(is_rejected_second_factor_code(ApiError.InvalidCredentials))
+        assertFalse(is_rejected_second_factor_code(ApiError.ForbiddenError("nope", "INVALID_TWO_FACTOR_CODE")))
+    }
 }
