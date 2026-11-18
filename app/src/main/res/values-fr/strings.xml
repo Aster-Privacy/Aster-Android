@@ -2872,6 +2872,7 @@
     <string name="error_folder_password_not_set">Ce dossier n\'a pas de mot de passe.</string>
     <string name="error_image_too_large">Cette image est trop volumineuse. Choisissez une photo plus petite.</string>
     <string name="error_invalid_2fa_code">Ce code n\'est pas correct. Vérifiez votre application d\'authentification, puis réessayez.</string>
+    <string name="error_totp_code_replayed">Ce code vient d\'être utilisé. Attendez que votre application d\'authentification affiche un nouveau code, puis réessayez.</string>
     <string name="error_passkey_unavailable">Cet appareil n\'a trouvé aucune clé d\'accès pour ce compte. Vérifiez que le gestionnaire de mots de passe qui contient votre clé d\'accès est activé pour les clés d\'accès dans les paramètres Android, ou utilisez votre application d\'authentification.</string>
     <string name="error_passkey_no_provider">Les clés d\'accès ne sont pas configurées sur cet appareil. Activez un gestionnaire de mots de passe pour les clés d\'accès dans les paramètres Android, ou utilisez votre application d\'authentification.</string>
     <string name="passkey_open_settings">Paramètres des clés d\'accès</string>

@@ -2811,6 +2811,7 @@
     <string name="error_folder_password_not_set">이 폴더에는 비밀번호가 없습니다.</string>
     <string name="error_image_too_large">이미지가 너무 큽니다. 더 작은 사진을 선택하세요.</string>
     <string name="error_invalid_2fa_code">코드가 올바르지 않습니다. 인증 앱을 확인한 후 다시 시도하세요.</string>
+    <string name="error_totp_code_replayed">이 코드는 방금 사용되었습니다. 인증 앱에 새 코드가 표시될 때까지 기다린 후 다시 시도하세요.</string>
     <string name="error_passkey_unavailable">이 기기에서 이 계정의 패스키를 찾지 못했습니다. 패스키가 저장된 비밀번호 관리자가 Android 설정에서 패스키용으로 켜져 있는지 확인하거나 인증 앱을 사용하세요.</string>
     <string name="error_passkey_no_provider">이 기기에 패스키가 설정되어 있지 않습니다. Android 설정에서 패스키용 비밀번호 관리자를 켜거나 인증 앱을 사용하세요.</string>
     <string name="passkey_open_settings">패스키 설정</string>

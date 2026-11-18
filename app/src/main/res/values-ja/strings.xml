@@ -2813,6 +2813,7 @@
     <string name="error_folder_password_not_set">このフォルダにはパスワードが設定されていません。</string>
     <string name="error_image_too_large">この画像はサイズが大きすぎます。もっと小さい写真を選んでください。</string>
     <string name="error_invalid_2fa_code">このコードは正しくありません。認証アプリを確認して、もう一度お試しください。</string>
+    <string name="error_totp_code_replayed">このコードは使用済みです。認証アプリに新しいコードが表示されるのを待ってから、もう一度お試しください。</string>
     <string name="error_passkey_unavailable">この端末でこのアカウントのパスキーが見つかりませんでした。パスキーを保存しているパスワード マネージャーが Android の設定でパスキー用に有効になっていることを確認するか、認証アプリを使用してください。</string>
     <string name="error_passkey_no_provider">この端末ではパスキーが設定されていません。Android の設定でパスキー用のパスワード マネージャーを有効にするか、認証アプリを使用してください。</string>
     <string name="passkey_open_settings">パスキーの設定</string>

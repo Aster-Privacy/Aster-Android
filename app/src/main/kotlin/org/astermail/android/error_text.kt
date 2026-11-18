@@ -54,6 +54,7 @@ fun localized_server_code(context: Context, t: Throwable): String? {
 
 private val validation_code_strings = mapOf(
     "INVALID_TWO_FACTOR_CODE" to R.string.error_invalid_2fa_code,
+    "TOTP_CODE_REPLAYED" to R.string.error_totp_code_replayed,
     "TWO_FACTOR_CODE_REQUIRED" to R.string.error_2fa_code_required,
     "ACCOUNT_PASSWORD_REQUIRED" to R.string.error_account_password_required,
     "INVALID_BACKUP_CODE" to R.string.error_invalid_backup_code,
@@ -73,6 +74,13 @@ private val validation_code_strings = mapOf(
     "TAG_PARENT_CYCLE" to R.string.error_tag_parent_cycle,
     "TAG_PARENT_TOO_DEEP" to R.string.error_tag_parent_too_deep,
 )
+
+fun validation_code_string_res(code: String?): Int? = code?.let { validation_code_strings[it] }
+
+fun is_rejected_second_factor_code(t: Throwable): Boolean =
+    t is ApiError.ValidationError && t.code in rejected_second_factor_codes
+
+private val rejected_second_factor_codes = setOf("INVALID_TWO_FACTOR_CODE", "TOTP_CODE_REPLAYED")
 
 private fun send_refusal_message(
     context: Context,
@@ -143,7 +151,7 @@ fun localized_api_error(context: Context, t: Throwable, fallback: String): Strin
     }
     if (t is ApiError.ValidationError) {
         send_refusal_message(context, t.code, t.details)?.let { return it }
-        validation_code_strings[t.code]?.let { return context.getString(it) }
+        validation_code_string_res(t.code)?.let { return context.getString(it) }
     }
     if (t is ApiError.RateLimited) {
         send_refusal_message(context, t.code, t.details)?.let { return it }

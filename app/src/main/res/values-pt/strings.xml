@@ -2843,6 +2843,7 @@
     <string name="error_folder_password_not_set">Esta pasta não tem palavra-passe.</string>
     <string name="error_image_too_large">Essa imagem é demasiado grande. Escolha uma fotografia mais pequena.</string>
     <string name="error_invalid_2fa_code">Esse código não está correto. Verifique a sua aplicação de autenticação e tente novamente.</string>
+    <string name="error_totp_code_replayed">Esse código acabou de ser utilizado. Aguarde até a sua aplicação de autenticação mostrar um novo código e tente novamente.</string>
     <string name="error_passkey_unavailable">Este dispositivo não encontrou nenhuma chave de acesso para esta conta. Confirme que o gestor de palavras-passe que guarda a sua chave de acesso está ativado para chaves de acesso nas definições do Android, ou use a sua aplicação de autenticação.</string>
     <string name="error_passkey_no_provider">As chaves de acesso não estão configuradas neste dispositivo. Ative um gestor de palavras-passe para chaves de acesso nas definições do Android, ou use a sua aplicação de autenticação.</string>
     <string name="passkey_open_settings">Definições de chaves de acesso</string>

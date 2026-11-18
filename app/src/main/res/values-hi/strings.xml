@@ -2770,6 +2770,7 @@
     <string name="error_folder_password_not_set">इस फ़ोल्डर पर कोई पासवर्ड नहीं लगा है।</string>
     <string name="error_image_too_large">वह तस्वीर बहुत बड़ी है। कोई छोटी तस्वीर चुनें।</string>
     <string name="error_invalid_2fa_code">वह कोड सही नहीं है। अपना प्रमाणक ऐप देखें और फिर से कोशिश करें।</string>
+    <string name="error_totp_code_replayed">वह कोड अभी-अभी इस्तेमाल हुआ है। अपने ऑथेंटिकेटर ऐप पर नया कोड आने तक रुकें, फिर से कोशिश करें।</string>
     <string name="error_passkey_unavailable">इस डिवाइस को इस खाते के लिए कोई पासकी नहीं मिली। पक्का करें कि जिस पासवर्ड मैनेजर में आपकी पासकी है, वह Android सेटिंग में पासकी के लिए चालू है, या अपने प्रमाणक ऐप का उपयोग करें।</string>
     <string name="error_passkey_no_provider">इस डिवाइस पर पासकी सेट नहीं हैं। Android सेटिंग में पासकी के लिए कोई पासवर्ड मैनेजर चालू करें, या अपने प्रमाणक ऐप का उपयोग करें।</string>
     <string name="passkey_open_settings">पासकी सेटिंग</string>

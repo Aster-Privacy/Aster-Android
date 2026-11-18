@@ -3074,6 +3074,7 @@
     <string name="error_folder_password_not_set">This folder doesn\'t have a password.</string>
     <string name="error_image_too_large">That image is too large. Choose a smaller photo.</string>
     <string name="error_invalid_2fa_code">That code isn\'t correct. Check your authenticator app and try again.</string>
+    <string name="error_totp_code_replayed">That code was just used. Wait for your authenticator app to show a new code, then try again.</string>
     <string name="error_passkey_unavailable">This device didn\'t find a passkey for this account. Make sure the password manager that holds your passkey is turned on for passkeys in Android settings, or use your authenticator app.</string>
     <string name="error_passkey_no_provider">Passkeys aren\'t set up on this device. To use one, turn on a password manager for passkeys in Android settings, or use your authenticator app.</string>
     <string name="passkey_open_settings">Passkey settings</string>
