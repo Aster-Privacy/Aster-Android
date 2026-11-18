@@ -27,6 +27,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -124,6 +125,23 @@ data class DeleteSubscriptionsResult(
 )
 
 @Serializable
+data class EncryptedSubscriptionCache(
+    val encrypted_subscriptions: String? = null,
+    val subscriptions_nonce: String? = null,
+)
+
+@Serializable
+data class SaveEncryptedSubscriptionCacheRequest(
+    val encrypted_subscriptions: String,
+    val subscriptions_nonce: String,
+)
+
+@Serializable
+data class SaveEncryptedSubscriptionCacheResult(
+    val success: Boolean = false,
+)
+
+@Serializable
 data class TrackSubscriptionRequest(
     val sender_email: String,
     val sender_name: String? = null,
@@ -156,10 +174,13 @@ interface SubscriptionsApi {
     suspend fun reactivate(subscription_id: String): UnsubscribeResult
     suspend fun delete(subscription_id: String): UnsubscribeResult
     suspend fun delete_senders(request: DeleteSubscriptionsRequest): DeleteSubscriptionsResult
+    suspend fun get_encrypted_cache(): EncryptedSubscriptionCache
+    suspend fun save_encrypted_cache(request: SaveEncryptedSubscriptionCacheRequest): SaveEncryptedSubscriptionCacheResult
 }
 
 class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
     private val base = "/api/mail/v1/subscriptions"
+    private val cache_path = "/api/settings/v1/preferences/subscriptions"
 
     override suspend fun list(
         limit: Int?,
@@ -238,6 +259,22 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
 
     override suspend fun delete_senders(request: DeleteSubscriptionsRequest): DeleteSubscriptionsResult {
         val response = client.http.post("${client.base_url}$base/delete") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun get_encrypted_cache(): EncryptedSubscriptionCache {
+        val response = client.http.get("${client.base_url}$cache_path")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun save_encrypted_cache(
+        request: SaveEncryptedSubscriptionCacheRequest,
+    ): SaveEncryptedSubscriptionCacheResult {
+        val response = client.http.put("${client.base_url}$cache_path") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

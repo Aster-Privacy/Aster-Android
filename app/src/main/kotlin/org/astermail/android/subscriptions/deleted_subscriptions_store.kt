@@ -25,6 +25,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import org.astermail.android.mail.MailRepository
@@ -106,7 +107,10 @@ class DeletedSubscriptionsStore @Inject constructor(
         decode_deleted_subscriptions(prefs()?.getString(account_key(), null))
     }
 
-    fun record_deleted(sender_emails: Collection<String>, deleted_at: String = Instant.now().toString()) {
+    fun record_deleted(
+        sender_emails: Collection<String>,
+        deleted_at: String = Instant.now().truncatedTo(ChronoUnit.MILLIS).toString(),
+    ) {
         if (sender_emails.isEmpty()) return
         synchronized(lock) {
             val store = prefs() ?: return
@@ -117,6 +121,13 @@ class DeletedSubscriptionsStore @Inject constructor(
                 deleted_at,
             )
             store.edit().putString(key, encode_deleted_subscriptions(merged)).apply()
+        }
+    }
+
+    fun replace_all(tombstones: Map<String, String>) {
+        synchronized(lock) {
+            val store = prefs() ?: return
+            store.edit().putString(account_key(), encode_deleted_subscriptions(tombstones)).apply()
         }
     }
 

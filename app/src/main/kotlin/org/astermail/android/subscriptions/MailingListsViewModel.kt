@@ -70,6 +70,7 @@ class MailingListsViewModel @Inject constructor(
     private val scanner: SubscriptionScanner,
     private val unsubscribed_store: UnsubscribedSendersStore,
     private val deleted_store: DeletedSubscriptionsStore,
+    private val cache_sync: SubscriptionCacheSync,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -106,7 +107,7 @@ class MailingListsViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
         load_job = viewModelScope.launch {
             try {
-                val tombstones = deleted_store.tombstones()
+                val tombstones = cache_sync.sync_tombstones()
                 val items = load_all_subscriptions().filterNot {
                     is_deleted_subscription(tombstones, it.sender_email, it.last_received)
                 }
@@ -162,7 +163,7 @@ class MailingListsViewModel @Inject constructor(
                 val discovered = withTimeoutOrNull(SCAN_TIMEOUT_MS) {
                     scanner.scan(force_full = force_full)
                 }.orEmpty().let { found ->
-                    val tombstones = deleted_store.tombstones()
+                    val tombstones = cache_sync.sync_tombstones()
                     found.filterNot { is_deleted_subscription(tombstones, it.sender_email, it.last_received) }
                 }
                 val track_deadline = SystemClock.elapsedRealtime() + TRACK_BUDGET_MS
@@ -336,6 +337,7 @@ class MailingListsViewModel @Inject constructor(
                     api.delete_senders(DeleteSubscriptionsRequest(chunk))
                 }
                 deleted_store.record_deleted(senders)
+                cache_sync.sync_tombstones()
                 _state.value = _state.value.copy(
                     items = _state.value.items.filterNot { it.id in ids },
                     message = context.resources.getQuantityString(
