@@ -2885,6 +2885,7 @@
     <string name="wkd_unpublish_failed">공개 키가 아직 Web Key Directory에 있습니다. 다시 시도하면 삭제됩니다.</string>
     <string name="text_color">글자 색</string>
     <string name="highlight_color">강조 색</string>
+    <string name="remove_highlight">강조 제거</string>
     <string name="clear_formatting">서식 지우기</string>
     <string name="signature_add_formatting">서식 추가</string>
     <string name="alias_directory_separator_hint">디렉터리 이름 앞에는 마침표, 슬래시, 더하기 기호, 우물 정 기호를 사용할 수 있습니다.</string>

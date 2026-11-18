@@ -2918,6 +2918,7 @@
     <string name="wkd_unpublish_failed">Tu clave pública sigue en el Web Key Directory. Otro intento debería quitarla.</string>
     <string name="text_color">Color del texto</string>
     <string name="highlight_color">Color de resaltado</string>
+    <string name="remove_highlight">Quitar resaltado</string>
     <string name="clear_formatting">Borrar formato</string>
     <string name="signature_add_formatting">Añadir formato</string>
     <string name="alias_directory_separator_hint">Un punto, una barra, un signo más o una almohadilla funcionan antes del nombre del directorio.</string>

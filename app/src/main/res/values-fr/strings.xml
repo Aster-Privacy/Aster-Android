@@ -2946,6 +2946,7 @@
     <string name="wkd_unpublish_failed">Votre clé publique est toujours dans le Web Key Directory. Un autre essai devrait la retirer.</string>
     <string name="text_color">Couleur du texte</string>
     <string name="highlight_color">Couleur de surlignage</string>
+    <string name="remove_highlight">Supprimer le surlignage</string>
     <string name="clear_formatting">Effacer la mise en forme</string>
     <string name="signature_add_formatting">Ajouter une mise en forme</string>
     <string name="alias_directory_separator_hint">Un point, une barre oblique, un signe plus ou un dièse fonctionnent avant le nom du répertoire.</string>

@@ -3147,6 +3147,7 @@
     <string name="wkd_unpublish_failed">Your public key is still in the Web Key Directory. Another attempt should remove it.</string>
     <string name="text_color">Text color</string>
     <string name="highlight_color">Highlight color</string>
+    <string name="remove_highlight">Remove highlight</string>
     <string name="clear_formatting">Clear formatting</string>
     <string name="signature_add_formatting">Add formatting</string>
     <string name="translate_confirm_title">Turn on translation?</string>

@@ -121,6 +121,8 @@ internal fun normalize_signature_link(raw: String): String? =
 
 private fun js_string(value: String): String = org.json.JSONObject.quote(value)
 
+internal const val remove_highlight_script = "window.aster_unhighlight()"
+
 class signature_editor_controller {
     internal var editor_view: android.webkit.WebView? = null
 
@@ -147,6 +149,8 @@ class signature_editor_controller {
         if (!hex_color_pattern.matches(hex)) return
         run("window.aster_color('back',${js_string(hex)})")
     }
+
+    fun remove_background_color() = run(remove_highlight_script)
 
     fun insert_link(url: String) {
         val normalized = normalize_signature_link(url) ?: return
@@ -183,7 +187,7 @@ private class signature_editor_bridge(private val on_html: (String) -> Unit) {
     }
 }
 
-private const val signature_editor_script = """
+internal const val signature_editor_script = """
 (function(){
   var ed=document.getElementById('aster_signature_editor');
   if(!ed){return;}
@@ -218,6 +222,93 @@ private const val signature_editor_script = """
   };
   window.aster_link=function(url){ed.focus();try{document.execCommand('createLink',false,url);}catch(e){}push();};
   window.aster_clear=function(){ed.focus();try{document.execCommand('removeFormat',false,null);}catch(e){}push();};
+  var content_selector='img,br,hr,table,video';
+  function is_lit(el){
+    if(el.tagName==='MARK'){return true;}
+    var s=el.style;
+    if(!s){return false;}
+    return s.getPropertyValue('background-color').trim()!==''||s.getPropertyValue('background').trim()!=='';
+  }
+  function unwrap(el){
+    var p=el.parentNode;
+    if(!p){return;}
+    while(el.firstChild){p.insertBefore(el.firstChild,el);}
+    p.removeChild(el);
+  }
+  function strip_one(el){
+    if(el.tagName==='MARK'){unwrap(el);return;}
+    el.style.removeProperty('background-color');
+    el.style.removeProperty('background');
+    if(!(el.getAttribute('style')||'').trim()){el.removeAttribute('style');}
+    if(el.tagName==='SPAN'&&el.attributes.length===0){unwrap(el);}
+  }
+  function strip_all(node){
+    var list=node.querySelectorAll('*');
+    for(var i=list.length-1;i>=0;i--){if(is_lit(list[i])){strip_one(list[i]);}}
+  }
+  function has_content(node){
+    if((node.textContent||'').length>0){return true;}
+    if(node.nodeType===1&&node.matches(content_selector)){return true;}
+    return !!(node.querySelector&&node.querySelector(content_selector));
+  }
+  function element_of(node){return node.nodeType===1?node:node.parentNode;}
+  function lit_ancestors(node){
+    var out=[];
+    for(var el=element_of(node);el&&el!==ed&&ed.contains(el);el=el.parentNode){if(is_lit(el)){out.push(el);}}
+    return out;
+  }
+  window.aster_unhighlight=function(){
+    ed.focus();
+    var sel=window.getSelection();
+    if(!sel||sel.rangeCount===0){return;}
+    var range=sel.getRangeAt(0);
+    var common=range.commonAncestorContainer;
+    if(common!==ed&&!ed.contains(common)){return;}
+    if(range.collapsed){
+      var around=lit_ancestors(range.startContainer);
+      for(var a=0;a<around.length;a++){strip_one(around[a]);}
+      push();
+      return;
+    }
+    var lit=lit_ancestors(common);
+    var top=lit.length?lit[lit.length-1]:null;
+    var selected=range.extractContents();
+    var output=selected;
+    var first=null;
+    var last=null;
+    if(top&&top.parentNode){
+      var after_range=document.createRange();
+      after_range.setStart(range.startContainer,range.startOffset);
+      after_range.setEnd(top,top.childNodes.length);
+      var after=after_range.extractContents();
+      var path=[];
+      for(var el=element_of(common);el;el=el.parentNode){path.unshift(el);if(el===top){break;}}
+      output=document.createDocumentFragment();
+      var holder=output;
+      for(var k=0;k<path.length;k++){var copy=path[k].cloneNode(false);holder.appendChild(copy);holder=copy;}
+      holder.appendChild(selected);
+      strip_all(output);
+      var parent=top.parentNode;
+      if(has_content(after)){var tail=top.cloneNode(false);tail.appendChild(after);parent.insertBefore(tail,top.nextSibling);}
+      first=output.firstChild;
+      last=output.lastChild;
+      parent.insertBefore(output,top.nextSibling);
+      if(!has_content(top)){parent.removeChild(top);}
+    }else{
+      strip_all(output);
+      first=output.firstChild;
+      last=output.lastChild;
+      range.insertNode(output);
+    }
+    if(first){
+      var next=document.createRange();
+      next.setStartBefore(first);
+      next.setEndAfter(last);
+      sel.removeAllRanges();
+      sel.addRange(next);
+    }
+    push();
+  };
 })();
 """
 
@@ -419,6 +510,11 @@ fun signature_format_toolbar(
                 controller.set_background_color(hex)
                 highlight_open = false
             },
+            remove_label = stringResource(R.string.remove_highlight),
+            on_remove = {
+                controller.remove_background_color()
+                highlight_open = false
+            },
         )
     }
 
@@ -460,6 +556,8 @@ private fun signature_color_dialog(
     title: String,
     on_dismiss: () -> Unit,
     on_pick: (String) -> Unit,
+    remove_label: String? = null,
+    on_remove: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val swatch_ring_color = if (colors.is_dark) {
@@ -475,6 +573,19 @@ private fun signature_color_dialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
+                if (remove_label != null && on_remove != null) {
+                    Text(
+                        text = remove_label,
+                        color = colors.text_primary,
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(AsterShapes.control)
+                            .border(1.dp, swatch_ring_color, AsterShapes.control)
+                            .clickable(onClick = on_remove)
+                            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                    )
+                }
                 signature_preset_colors.chunked(8).forEach { row ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),

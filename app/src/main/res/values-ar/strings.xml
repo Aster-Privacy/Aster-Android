@@ -2968,6 +2968,7 @@
     <string name="wkd_unpublish_failed">لا يزال مفتاحك العام في Web Key Directory. من المرجّح أن تزيله المحاولة التالية.</string>
     <string name="text_color">لون النص</string>
     <string name="highlight_color">لون التمييز</string>
+    <string name="remove_highlight">إزالة التمييز</string>
     <string name="clear_formatting">مسح التنسيق</string>
     <string name="signature_add_formatting">إضافة تنسيق</string>
     <string name="alias_directory_separator_hint">يمكن استخدام نقطة أو شرطة مائلة أو علامة زائد أو علامة رقم قبل اسم الدليل.</string>

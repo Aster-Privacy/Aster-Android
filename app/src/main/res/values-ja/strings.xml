@@ -2887,6 +2887,7 @@
     <string name="wkd_unpublish_failed">公開鍵はまだ Web Key Directory に残っています。もう一度お試しください。</string>
     <string name="text_color">文字の色</string>
     <string name="highlight_color">蛍光ペンの色</string>
+    <string name="remove_highlight">ハイライトを解除</string>
     <string name="clear_formatting">書式をクリア</string>
     <string name="signature_add_formatting">書式を追加</string>
     <string name="alias_directory_separator_hint">ディレクトリ名の前には、ドット、スラッシュ、プラス記号、番号記号のいずれも使えます。</string>

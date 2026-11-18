@@ -2934,6 +2934,7 @@
     <string name="wkd_unpublish_failed">Klucz publiczny nadal jest w Web Key Directory. Spróbuj ponownie, aby go usunąć.</string>
     <string name="text_color">Kolor tekstu</string>
     <string name="highlight_color">Kolor podświetlenia</string>
+    <string name="remove_highlight">Usuń podświetlenie</string>
     <string name="clear_formatting">Wyczyść formatowanie</string>
     <string name="signature_add_formatting">Dodaj formatowanie</string>
     <string name="alias_directory_separator_hint">Przed nazwą katalogu możesz użyć kropki, ukośnika, znaku plus lub krzyżyka.</string>

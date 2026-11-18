@@ -2900,6 +2900,7 @@
     <string name="wkd_unpublish_failed">Genel anahtarınız hâlâ Web Key Directory üzerinde. Bir kez daha denemek genellikle yeterli olur.</string>
     <string name="text_color">Metin rengi</string>
     <string name="highlight_color">Vurgu rengi</string>
+    <string name="remove_highlight">Vurguyu kaldır</string>
     <string name="clear_formatting">Biçimlendirmeyi temizle</string>
     <string name="signature_add_formatting">Biçimlendirme ekle</string>
     <string name="alias_directory_separator_hint">Dizin adından önce nokta, eğik çizgi, artı işareti veya kare işareti kullanabilirsiniz.</string>
