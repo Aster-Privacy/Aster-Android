@@ -460,11 +460,15 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
     }
 
-    private fun hydrate_cached_preferences() {
-        val raw = preferences_cache.read(cache_account_key()) ?: return
-        val cached = runCatching {
+    private fun read_cached_preferences(): UserPreferences? {
+        val raw = preferences_cache.read(cache_account_key()) ?: return null
+        return runCatching {
             cached_preferences_json.decodeFromString(UserPreferences.serializer(), raw)
-        }.getOrNull() ?: return
+        }.getOrNull()
+    }
+
+    private fun hydrate_cached_preferences() {
+        val cached = read_cached_preferences() ?: return
         _state.value = _state.value.copy(preferences = cached)
         apply_preferences_to_theme_store(cached)
     }
@@ -5809,10 +5813,9 @@ class SettingsViewModel @Inject constructor(
                             is_loading = false,
                         )
                     } else {
-                        prefs_load_succeeded = true
+                        val fallback = last_synced_preferences ?: read_cached_preferences()
+                        prefs_load_succeeded = fallback != null
                         last_preferences_load_ms = System.currentTimeMillis()
-                        last_preferences_load_ms = System.currentTimeMillis()
-                        val fallback = _state.value.preferences
                         _state.value = _state.value.copy(
                             preferences = fallback ?: UserPreferences(),
                             preferences_authoritative = fallback != null,
@@ -5933,16 +5936,17 @@ class SettingsViewModel @Inject constructor(
 
     fun load_signature() {
         ensure_signatures_hydrated()
+        val known = _signatures.value.associateBy { it.id }
         viewModelScope.launch {
             try {
                 val list = signatures_api.list_signatures()
                 val decrypted = list.signatures.map { sig ->
                     val name = try {
                         decrypt_signature_field(sig.encrypted_name, sig.name_nonce)
-                    } catch (_: Throwable) { "" }
+                    } catch (_: Throwable) { known[sig.id]?.name.orEmpty() }
                     val content = try {
                         decrypt_signature_field(sig.encrypted_content, sig.content_nonce)
-                    } catch (_: Throwable) { "" }
+                    } catch (_: Throwable) { known[sig.id]?.content.orEmpty() }
                     DecryptedSignature(
                         id = sig.id,
                         name = name,
@@ -6188,7 +6192,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun save_preferences(prefs: UserPreferences) {
-        if (!prefs_load_succeeded) {
+        val load_confirmed = prefs_load_succeeded
+        if (!load_confirmed && !account_uses_encrypted_prefs) {
             _state.value = _state.value.copy(
                 save_status = SaveStatus.ERROR,
                 error = context.getString(R.string.preferences_locked_retry),
@@ -6201,8 +6206,10 @@ class SettingsViewModel @Inject constructor(
         val baseline = last_synced_preferences
         failed_preferences_save = null
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
-        persist_cached_preferences(prefs)
-        apply_low_network_preference(prefs)
+        if (load_confirmed) {
+            persist_cached_preferences(prefs)
+            apply_low_network_preference(prefs)
+        }
         save_preferences_job = viewModelScope.launch {
             try {
                 val identity_key = await_identity_key()
@@ -6215,18 +6222,29 @@ class SettingsViewModel @Inject constructor(
                         val server_prefs = decrypt_preferences_after_key_load(fresh_enc, fresh_nonce, identity_key, baseline)
                         if (server_prefs != null) {
                             to_save = rebase_preferences_changes(prefs_json, server_prefs, baseline, prefs)
+                        } else if (!load_confirmed) {
+                            failed_preferences_save = prefs
+                            _state.value = _state.value.copy(
+                                save_status = SaveStatus.ERROR,
+                                preferences_locked = true,
+                                error = context.getString(R.string.preferences_locked_retry),
+                            )
+                            report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
+                            return@launch
                         }
                     }
                     val payload = encode_preferences_preserving_unknown(prefs_json, to_save, last_preferences_raw_json)
                     preferences_api.save_encrypted_preferences(encrypt_preferences_payload(payload, identity_key))
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
+                    prefs_load_succeeded = true
                     persist_cached_preferences(to_save)
                     apply_low_network_preference(to_save)
                     mirror_synced_preferences(to_save)
                     _state.value = _state.value.copy(
                         preferences = to_save,
                         preferences_authoritative = true,
+                        preferences_locked = false,
                         save_status = SaveStatus.SAVED,
                     )
                 } else if (account_uses_encrypted_prefs) {
