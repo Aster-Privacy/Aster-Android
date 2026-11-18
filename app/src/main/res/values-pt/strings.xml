@@ -3667,4 +3667,15 @@
         <item quantity="other">%d contactos adicionados</item>
     </plurals>
     <string name="body_index_status">A indexar o texto das mensagens para pesquisa: %1$d de %2$d</string>
+    <string name="delete_selected_subscriptions">Eliminar (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">Eliminar %d subscrição?</item>
+        <item quantity="other">Eliminar %d subscrições?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">Não pode restaurar as entradas eliminadas. Se um remetente lhe enviar um email novamente, volta a aparecer nesta lista.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">%d subscrição eliminada</item>
+        <item quantity="other">%d subscrições eliminadas</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Não foi possível eliminar as subscrições selecionadas</string>
 </resources>

@@ -3536,4 +3536,15 @@
         <item quantity="other">%d संपर्क जोड़े गए</item>
     </plurals>
     <string name="body_index_status">खोज के लिए संदेश टेक्स्ट इंडेक्स हो रहा है: %2$d में से %1$d</string>
+    <string name="delete_selected_subscriptions">हटाएं (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">%d सदस्यता हटाएं?</item>
+        <item quantity="other">%d सदस्यताएं हटाएं?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">हटाई गई एंट्री को वापस नहीं लाया जा सकता। अगर कोई भेजने वाला आपको फिर से ईमेल करता है, तो वह इस सूची में फिर से दिखेगा।</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">%d सदस्यता हटाई गई</item>
+        <item quantity="other">%d सदस्यताएं हटाई गईं</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">चुनी गई सदस्यताएं हटाई नहीं जा सकीं</string>
 </resources>

@@ -113,6 +113,17 @@ data class BulkUnsubscribeResult(
 )
 
 @Serializable
+data class DeleteSubscriptionsRequest(
+    val sender_emails: List<String>,
+)
+
+@Serializable
+data class DeleteSubscriptionsResult(
+    val success: Boolean = false,
+    val deleted: Long = 0,
+)
+
+@Serializable
 data class TrackSubscriptionRequest(
     val sender_email: String,
     val sender_name: String? = null,
@@ -144,6 +155,7 @@ interface SubscriptionsApi {
     suspend fun track_subscription(request: TrackSubscriptionRequest): TrackSubscriptionResponse
     suspend fun reactivate(subscription_id: String): UnsubscribeResult
     suspend fun delete(subscription_id: String): UnsubscribeResult
+    suspend fun delete_senders(request: DeleteSubscriptionsRequest): DeleteSubscriptionsResult
 }
 
 class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
@@ -220,6 +232,15 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
     override suspend fun delete(subscription_id: String): UnsubscribeResult {
         val response = client.http.delete("${client.base_url}$base/$subscription_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun delete_senders(request: DeleteSubscriptionsRequest): DeleteSubscriptionsResult {
+        val response = client.http.post("${client.base_url}$base/delete") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
         }
         return decode_or_throw(response)
     }

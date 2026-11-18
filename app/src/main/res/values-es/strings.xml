@@ -3668,4 +3668,15 @@
         <item quantity="other">%d contactos añadidos</item>
     </plurals>
     <string name="body_index_status">Indexando el texto de los mensajes para la búsqueda: %1$d de %2$d</string>
+    <string name="delete_selected_subscriptions">Eliminar (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">¿Eliminar %d suscripción?</item>
+        <item quantity="other">¿Eliminar %d suscripciones?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">No puedes restaurar las entradas eliminadas. Si un remitente vuelve a escribirte, aparecerá de nuevo en esta lista.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">Se eliminó %d suscripción</item>
+        <item quantity="other">Se eliminaron %d suscripciones</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">No se pudieron eliminar las suscripciones seleccionadas</string>
 </resources>
