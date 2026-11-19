@@ -527,11 +527,15 @@ internal fun select_display_html(body_text: String, body_html: String?): String?
 private val PATCH_MARKER = Regex("^(?:diff --git |@@ -\\d)", RegexOption.MULTILINE)
 
 internal fun select_display_body(body_text: String, html: String?): String = when {
-    body_text.isBlank() && html != null -> strip_html_simple(html)
+    body_text.isBlank() && html != null -> org.astermail.android.mail.html_to_plain_text(html)
     body_text.contains(PGP_ARMOR_MARKER) || PATCH_MARKER.containsMatchIn(body_text) -> body_text
-    org.astermail.android.mail.looks_like_html_body(body_text) -> strip_html_simple(body_text)
+    org.astermail.android.mail.looks_like_html_body(body_text) -> org.astermail.android.mail.html_to_plain_text(body_text)
+    html != null && is_flattened_copy_of(body_text, html) -> org.astermail.android.mail.html_to_plain_text(html)
     else -> body_text
 }
+
+private fun is_flattened_copy_of(body_text: String, html: String): Boolean =
+    !body_text.contains('\n') && body_text == org.astermail.android.mail.strip_body_html(html)
 
 fun thread_message_with_attachments(
     msg: ThreadMessage,
