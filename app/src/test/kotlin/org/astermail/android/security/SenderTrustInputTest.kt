@@ -47,6 +47,28 @@ class SenderTrustInputTest {
     }
 
     @Test
+    fun official_address_delivered_inside_aster_is_trusted_when_the_signature_check_fails() {
+        val delivered = SenderTrustMessage(
+            sender_name = "Aster Mail",
+            sender_email = "hello@astermail.org",
+            is_external = false,
+            sender_verification = "invalid",
+        )
+
+        assertNull(evaluate_sender_trust(sender_trust_input(delivered, context)).warning)
+        assertEquals(
+            SenderWarningKind.home_brand_name,
+            evaluate_sender_trust(sender_trust_input(delivered.copy(is_external = true), context)).warning?.kind,
+        )
+        assertEquals(
+            SenderWarningKind.home_brand_name,
+            evaluate_sender_trust(
+                sender_trust_input(delivered.copy(sender_email = "aster-help@astermail.org"), context),
+            ).warning?.kind,
+        )
+    }
+
+    @Test
     fun rewritten_shown_sender_drops_internal_and_verified_status() {
         val input = sender_trust_input(
             SenderTrustMessage(

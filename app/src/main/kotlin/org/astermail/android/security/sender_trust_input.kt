@@ -89,6 +89,7 @@ fun sender_trust_input(
         is_internal = !is_rewritten &&
             message.is_external == false &&
             message.sender_verification != "invalid",
+        internal_route = !is_rewritten && message.is_external == false,
         own_addresses = context.own_addresses,
         contacts = context.contacts,
     )
@@ -105,6 +106,7 @@ internal data class SenderTrustCacheKey(
     val sender_verified: Boolean?,
     val sender_verified_domain: String?,
     val is_internal: Boolean,
+    val internal_route: Boolean,
 )
 
 internal class SenderTrustResultCache(
@@ -140,6 +142,7 @@ internal class SenderTrustResultCache(
             sender_verified = input.sender_verified,
             sender_verified_domain = input.sender_verified_domain,
             is_internal = input.is_internal,
+            internal_route = input.internal_route,
         )
     }
 
