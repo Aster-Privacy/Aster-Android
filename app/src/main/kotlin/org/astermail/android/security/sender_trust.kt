@@ -51,6 +51,7 @@ data class SenderTrustInput(
     val sender_verified: Boolean? = null,
     val sender_verified_domain: String? = null,
     val is_internal: Boolean = false,
+    val internal_route: Boolean = false,
     val own_addresses: List<String> = emptyList(),
     val contacts: List<SenderTrustContact> = emptyList(),
 )
@@ -1347,6 +1348,7 @@ private fun find_warning(
     parsed: ParsedAddress,
     auth_state: SenderAuthState,
     personal: PersonalContext,
+    internal_route: Boolean = false,
 ): SenderWarning? {
     val trusted_auth = auth_state == SenderAuthState.internal || auth_state == SenderAuthState.authenticated
     if (trusted_auth && address_key(parsed) in personal.own_keys) return null
@@ -1415,7 +1417,7 @@ private fun find_warning(
     val claim = name_claim(name, true)
     val home = match_brand_name(claim, sender_trust_data.home_names)
     if (home != null && (reads_as_lookalike(home, claim) || home.solo || claim.has_home_generic)) {
-        val trusted = is_official_home_address(parsed) && trusted_auth
+        val trusted = is_official_home_address(parsed) && (trusted_auth || internal_route)
         return if (trusted) null else SenderWarning(SenderWarningKind.home_brand_name, sender_trust_data.home_first_name)
     }
 
@@ -1574,12 +1576,12 @@ fun evaluate_sender_trust(input: SenderTrustInput): SenderTrust {
     } else {
         capped_display_name(input.name, sender_trust_data.max_name_length + max_address_length)
     }
-    var found_warning = find_warning(base_name, parsed, auth_state, personal)
+    var found_warning = find_warning(base_name, parsed, auth_state, personal, input.internal_route)
     val checked = arrayListOf(base_name)
     for (other in listOf(whole_name, enclosed_plain(whole_name))) {
         if (found_warning != null || other in checked) continue
         checked.add(other)
-        found_warning = find_warning(other, parsed, auth_state, personal)
+        found_warning = find_warning(other, parsed, auth_state, personal, input.internal_route)
     }
     val warning = found_warning
     val hide_name = warning != null &&
