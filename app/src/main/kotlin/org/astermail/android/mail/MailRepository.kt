@@ -5413,7 +5413,7 @@ class MailRepository @Inject constructor(
 
         val body_text = when {
             !text.isNullOrBlank() -> text!!
-            html != null -> strip_html(html!!)
+            html != null -> html_to_plain_text(html!!)
             else -> ""
         }
 
@@ -5437,8 +5437,6 @@ class MailRepository @Inject constructor(
         }
         return result
     }
-
-    private fun strip_html(html: String): String = strip_body_html(html)
 
     private fun clean_preview(body_text: String, body_html: String?): String =
         clean_body_preview(body_text, body_html)
