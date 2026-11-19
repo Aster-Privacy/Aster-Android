@@ -62,10 +62,7 @@ class RatchetBundlePublishPolicyTest {
     fun an_unsigned_published_bundle_is_signed_again() {
         val digest = java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 7 })
         val signed = java.util.Base64.getEncoder().encodeToString(
-            "-----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA512
-
-binding".toByteArray(Charsets.UTF_8),
+            "-----BEGIN PGP SIGNED MESSAGE-----\nHash: SHA512\n\nbinding".toByteArray(Charsets.UTF_8),
         )
         assertTrue(published_bundle_needs_signature(PublishedRatchetBundleView(identity, spk, pq, digest)))
         assertTrue(published_bundle_needs_signature(PublishedRatchetBundleView(identity, spk, pq, "")))
