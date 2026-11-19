@@ -59,8 +59,27 @@ class SentCopyEncryptionBadgeTest {
     )
 
     @Test
-    fun sent_copy_to_internal_recipients_is_end_to_end() {
-        assertTrue(sent(listOf("alice@astermail.org"), cc = listOf("bob@aster.cx")).is_e2e_encrypted)
+    fun sent_copy_to_internal_recipients_without_evidence_is_not_end_to_end() {
+        assertFalse(sent(listOf("alice@astermail.org"), cc = listOf("bob@aster.cx")).is_e2e_encrypted)
+        assertFalse(sent(listOf("alice@astermail.org"), item_type = "scheduled").is_e2e_encrypted)
+    }
+
+    @Test
+    fun message_this_device_is_sending_keeps_the_internal_badge() {
+        val sending = sent(listOf("alice@astermail.org"), cc = listOf("bob@aster.cx"))
+            .copy(id = "${org.astermail.android.mail.OPTIMISTIC_SEND_ID_PREFIX}1")
+        val outside = sent(listOf("bob@example.com")).copy(id = "${org.astermail.android.mail.OPTIMISTIC_SEND_ID_PREFIX}2")
+
+        assertTrue(sending.is_e2e_encrypted)
+        assertFalse(sending.copy(own_sealed = false).is_e2e_encrypted)
+        assertFalse(outside.is_e2e_encrypted)
+    }
+
+    @Test
+    fun sent_copy_with_a_verified_sealed_body_is_end_to_end() {
+        assertTrue(
+            sent(listOf("alice@astermail.org"), cc = listOf("bob@aster.cx"), e2e_verified = true).is_e2e_encrypted,
+        )
     }
 
     @Test
@@ -100,9 +119,6 @@ class SentCopyEncryptionBadgeTest {
     @Test
     fun sent_copy_not_sealed_on_this_account_is_not_end_to_end() {
         assertFalse(sent(listOf("alice@astermail.org"), own_sealed = false).is_e2e_encrypted)
-        assertFalse(
-            sent(listOf("alice@astermail.org"), own_sealed = false, e2e_verified = true).is_e2e_encrypted,
-        )
     }
 
     @Test

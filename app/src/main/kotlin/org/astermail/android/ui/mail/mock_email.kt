@@ -284,7 +284,7 @@ val ThreadMessage.is_e2e_encrypted: Boolean
     get() {
         if (sent_encryption_scope != null || has_end_to_end_pgp) return true
         if (item_type == "draft") return own_sealed
-        if (is_own_copy) {
+        if (is_own_copy && org.astermail.android.mail.is_optimistic_send_id(id)) {
             val recipients = to_addresses + cc_addresses + bcc_addresses
             return own_sealed && recipients.all { org.astermail.android.mail.is_internal_recipient(it) }
         }
