@@ -2916,6 +2916,7 @@
     <string name="wkd_unpublish_failed">Sua chave pública ainda está no Web Key Directory. Outra tentativa deve removê-la.</string>
     <string name="text_color">Cor do texto</string>
     <string name="highlight_color">Cor de destaque</string>
+    <string name="remove_highlight">Remover destaque</string>
     <string name="clear_formatting">Limpar formatação</string>
     <string name="signature_add_formatting">Adicionar formatação</string>
     <string name="alias_directory_separator_hint">Um ponto, uma barra, um sinal de mais ou uma cerquilha funcionam antes do nome do diretório.</string>

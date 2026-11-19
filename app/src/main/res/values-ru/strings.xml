@@ -2934,6 +2934,7 @@
     <string name="wkd_unpublish_failed">Публичный ключ всё ещё в Web Key Directory. Повторная попытка обычно помогает.</string>
     <string name="text_color">Цвет текста</string>
     <string name="highlight_color">Цвет выделения</string>
+    <string name="remove_highlight">Убрать выделение</string>
     <string name="clear_formatting">Очистить форматирование</string>
     <string name="signature_add_formatting">Добавить форматирование</string>
     <string name="alias_directory_separator_hint">Перед именем каталога можно поставить точку, косую черту, плюс или знак номера.</string>

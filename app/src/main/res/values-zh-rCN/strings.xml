@@ -2885,6 +2885,7 @@
     <string name="wkd_unpublish_failed">您的公钥仍在 Web Key Directory 中。请再试一次以将其移除。</string>
     <string name="text_color">文字颜色</string>
     <string name="highlight_color">高亮颜色</string>
+    <string name="remove_highlight">移除高亮</string>
     <string name="clear_formatting">清除格式</string>
     <string name="signature_add_formatting">添加格式</string>
     <string name="alias_directory_separator_hint">目录名称前可以使用点、斜杠、加号或井号。</string>

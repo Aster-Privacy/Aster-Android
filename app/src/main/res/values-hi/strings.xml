@@ -2847,6 +2847,7 @@
     <string name="wkd_unpublish_failed">आपकी सार्वजनिक कुंजी अब भी Web Key Directory में है। एक बार और कोशिश करने पर हट जानी चाहिए।</string>
     <string name="text_color">टेक्स्ट का रंग</string>
     <string name="highlight_color">हाइलाइट का रंग</string>
+    <string name="remove_highlight">हाइलाइट हटाएं</string>
     <string name="clear_formatting">फ़ॉर्मैटिंग हटाएं</string>
     <string name="signature_add_formatting">फ़ॉर्मैटिंग जोड़ें</string>
     <string name="translate_confirm_title">अनुवाद चालू करें?</string>

@@ -2901,6 +2901,7 @@
     <string name="wkd_unpublish_failed">Ihr öffentlicher Schlüssel ist weiterhin im Web Key Directory. Ein erneuter Versuch entfernt ihn meist.</string>
     <string name="text_color">Textfarbe</string>
     <string name="highlight_color">Hervorhebungsfarbe</string>
+    <string name="remove_highlight">Hervorhebung entfernen</string>
     <string name="clear_formatting">Formatierung entfernen</string>
     <string name="signature_add_formatting">Formatierung hinzufügen</string>
     <string name="alias_directory_separator_hint">Ein Punkt, Schrägstrich, Pluszeichen oder Rautezeichen funktioniert vor dem Verzeichnisnamen.</string>
