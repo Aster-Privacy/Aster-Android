@@ -57,6 +57,13 @@ fun failed_send_dialog(mail_vm: MailViewModel) {
             org.astermail.android.mail.SendFailureReason.REJECTED -> stringResource(R.string.outbox_failed_reason_rejected)
             org.astermail.android.mail.SendFailureReason.CONNECTION -> stringResource(R.string.outbox_failed_reason_connection)
             org.astermail.android.mail.SendFailureReason.ATTACHMENT -> stringResource(R.string.outbox_failed_reason_attachment)
+            org.astermail.android.mail.SendFailureReason.RECIPIENT_NOT_FOUND -> stringResource(
+                R.string.recipient_not_on_aster,
+                open_failed_send.recipients
+                    .filter { org.astermail.android.mail.is_existence_checkable(it) }
+                    .ifEmpty { open_failed_send.recipients }
+                    .joinToString(", "),
+            )
             org.astermail.android.mail.SendFailureReason.OTHER -> stringResource(R.string.send_problem_failed_message)
         }
         val subject_text = open_failed_send.subject.ifBlank { stringResource(R.string.no_subject) }

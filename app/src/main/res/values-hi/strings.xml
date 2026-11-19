@@ -334,6 +334,7 @@
     <string name="attachment_prepare_failed">भेजा नहीं जा सका: "%1$s" तैयार नहीं हो सका। संदेश नहीं भेजा गया।</string>
     <string name="e2e_keys_not_ready">भेजा नहीं जा सका: एन्क्रिप्शन कुंजियां अभी तैयार नहीं हैं। संदेश नहीं भेजा गया।</string>
     <string name="e2e_recipient_key_missing">भेजा नहीं जा सका: किसी प्राप्तकर्ता के पास एन्क्रिप्शन कुंजी नहीं है। संदेश नहीं भेजा गया।</string>
+    <string name="recipient_not_on_aster">कोई भी Aster Mail खाता %1$s का उपयोग नहीं करता। वर्तनी जांचें, फिर दोबारा कोशिश करें। आपका ड्राफ़्ट सहेज लिया गया है।</string>
     <string name="no_body">(कोई मुख्य भाग नहीं)</string>
     <string name="attachment_unnamed">अटैचमेंट</string>
     <string name="attachment_locked">यह अटैचमेंट नहीं खुल सकता, क्योंकि इसकी एन्क्रिप्शन कुंजी इस डिवाइस पर उपलब्ध नहीं है।</string>

@@ -1790,6 +1790,23 @@ private fun compose_screen_content(
         recipient_lock_statuses = recipient_lock_statuses.mapValues { (address, status) -> found[address] ?: status }
     }
 
+    var unregistered_aster_chips by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val aster_chip_addresses = remember(to_chips, cc_chips, bcc_chips) {
+        (to_chips + cc_chips + bcc_chips)
+            .map { it.trim().lowercase() }
+            .filter { org.astermail.android.mail.is_existence_checkable(it) }
+            .distinct()
+    }
+    LaunchedEffect(aster_chip_addresses) {
+        unregistered_aster_chips = unregistered_aster_chips.intersect(aster_chip_addresses.toSet())
+        if (aster_chip_addresses.isEmpty()) return@LaunchedEffect
+        kotlinx.coroutines.delay(KEY_TRUST_PREFETCH_DELAY_MS)
+        val missing = runCatching {
+            mail_vm.find_unregistered_aster_addresses(aster_chip_addresses, from_alias)
+        }.getOrElse { if (it is kotlinx.coroutines.CancellationException) throw it else emptyList() }
+        unregistered_aster_chips = missing.map { it.trim().lowercase() }.toSet()
+    }
+
     val lifecycle_owner_for_draft = androidx.lifecycle.compose.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner_for_draft) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -2329,12 +2346,31 @@ private fun compose_screen_content(
                         sender_email = snap_from,
                     )
                 } ?: org.astermail.android.mail.ratchet.PostQuantumCoverage()
-                if (coverage.missing.isNotEmpty()) {
-                    is_sending = false
-                    send_lock.set(false)
-                    post_quantum_downgraded = coverage.downgraded
-                    post_quantum_missing = coverage.missing
-                    return@launch
+                val gate = org.astermail.android.mail.post_quantum_send_gate(coverage) { missing ->
+                    kotlinx.coroutines.withTimeoutOrNull(POST_QUANTUM_COVERAGE_TIMEOUT_MS) {
+                        mail_vm.find_unregistered_aster_addresses(missing, snap_from)
+                    } ?: emptyList()
+                }
+                when (gate) {
+                    is org.astermail.android.mail.PostQuantumSendGate.NotOnAster -> {
+                        is_sending = false
+                        send_lock.set(false)
+                        unregistered_aster_chips = unregistered_aster_chips +
+                            gate.recipients.map { it.trim().lowercase() }
+                        send_error = context.getString(
+                            R.string.recipient_not_on_aster,
+                            gate.recipients.joinToString(", "),
+                        )
+                        return@launch
+                    }
+                    is org.astermail.android.mail.PostQuantumSendGate.Prompt -> {
+                        is_sending = false
+                        send_lock.set(false)
+                        post_quantum_downgraded = gate.coverage.downgraded
+                        post_quantum_missing = gate.coverage.missing
+                        return@launch
+                    }
+                    org.astermail.android.mail.PostQuantumSendGate.Proceed -> Unit
                 }
             }
 
@@ -2706,6 +2742,7 @@ private fun compose_screen_content(
                     chips = to_chips,
                     show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
                     lock_status_for = ::chip_lock_status,
+                    hide_lock_for = { it.trim().lowercase() in unregistered_aster_chips },
                     pgp_override = pgp_override,
                     on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                     input = to_input,
@@ -2752,6 +2789,7 @@ private fun compose_screen_content(
                         chips = cc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
                         lock_status_for = ::chip_lock_status,
+                        hide_lock_for = { it.trim().lowercase() in unregistered_aster_chips },
                         pgp_override = pgp_override,
                         on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                         input = cc_input,
@@ -2786,6 +2824,7 @@ private fun compose_screen_content(
                         chips = bcc_chips,
                         show_encryption_indicator = settings_state.preferences?.show_encryption_indicators != false,
                         lock_status_for = ::chip_lock_status,
+                        hide_lock_for = { it.trim().lowercase() in unregistered_aster_chips },
                         pgp_override = pgp_override,
                         on_toggle_pgp = { pgp_override = RecipientEncryptionRules.toggle_override(pgp_override) },
                         input = bcc_input,
@@ -3801,6 +3840,7 @@ private fun chip_input(
     focus_requester: androidx.compose.ui.focus.FocusRequester? = null,
     show_encryption_indicator: Boolean = true,
     lock_status_for: (String) -> RecipientLockStatus = { RecipientLockStatus.TRANSIT },
+    hide_lock_for: (String) -> Boolean = { false },
     pgp_override: Boolean? = null,
     on_toggle_pgp: () -> Unit = {},
 ) {
@@ -3844,7 +3884,7 @@ private fun chip_input(
             chips.forEachIndexed { idx, chip ->
                 recipient_chip(
                     text = chip,
-                    show_encryption_indicator = show_encryption_indicator,
+                    show_encryption_indicator = show_encryption_indicator && !hide_lock_for(chip),
                     lock_status = lock_status_for(chip),
                     pgp_override = pgp_override,
                     on_toggle_pgp = on_toggle_pgp,

@@ -35,7 +35,7 @@ data class DraftAttachmentFile(
     val mime_type: String,
 )
 
-class E2eEncryptionException(message: String, cause: Throwable? = null) :
+open class E2eEncryptionException(message: String, cause: Throwable? = null) :
     IllegalStateException(message, cause)
 
 class AttachmentPrepareException(message: String, cause: Throwable? = null) :

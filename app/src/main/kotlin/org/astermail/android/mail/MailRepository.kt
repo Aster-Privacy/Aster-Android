@@ -6222,12 +6222,34 @@ class MailRepository @Inject constructor(
     ): PostQuantumCoverage {
         val from_addr = sender_email ?: session_key_store.get_user_email() ?: return PostQuantumCoverage()
         if (from_addr.isBlank()) return PostQuantumCoverage()
-        val internal_recipients = recipients.filter { is_internal_recipient(it) }
+        val internal_recipients = post_quantum_candidates(recipients)
         if (internal_recipients.isEmpty()) return PostQuantumCoverage()
         if (!ensure_ratchet_keys_ready()) return PostQuantumCoverage()
         return runCatching {
             ratchet_encryptor.check_post_quantum_coverage(from_addr, internal_recipients)
         }.getOrDefault(PostQuantumCoverage())
+    }
+
+    suspend fun find_unregistered_aster_addresses(
+        recipients: List<String>,
+        sender_email: String? = null,
+    ): List<String> {
+        val candidates = recipients.filterNot { is_own_address(it, sender_email) }
+        if (candidates.isEmpty()) return emptyList()
+        return collect_unregistered_aster_addresses(candidates) { username, email ->
+            keys_api.get_recipient_public_key(username, email)
+        }
+    }
+
+    private suspend fun not_on_aster_failure(error: Throwable, recipients: List<String>, from_addr: String): Throwable? {
+        val missing = runCatching {
+            recipients_not_on_aster_for_failure(error, recipients) { find_unregistered_aster_addresses(it, from_addr) }
+        }.getOrElse { if (it is CancellationException) throw it else emptyList() }
+        if (missing.isEmpty()) return null
+        return RecipientNotOnAsterException(
+            missing,
+            context.getString(R.string.recipient_not_on_aster, missing.joinToString(", ")),
+        )
     }
 
     private val last_known_require_encryption = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
@@ -6669,14 +6691,16 @@ class MailRepository @Inject constructor(
                 seal_pgp = { seal_internal_body_with_pgp(from_addr, recipients, wrapped) },
             )
         } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
-            throw t
+            throw not_on_aster_failure(t, recipients, from_addr) ?: t
         } catch (t: org.astermail.android.mail.ratchet.RatchetIdentityPinException) {
             throw IllegalStateException(context.getString(R.string.e2e_identity_changed_blocked), t)
         } catch (t: org.astermail.android.mail.ratchet.RecipientPublicKeyMissingException) {
-            throw E2eEncryptionException(context.getString(R.string.e2e_recipient_key_missing), t)
+            throw not_on_aster_failure(t, recipients, from_addr)
+                ?: E2eEncryptionException(context.getString(R.string.e2e_recipient_key_missing), t)
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
+            throw not_on_aster_failure(t, recipients, from_addr)
+                ?: E2eEncryptionException(context.getString(R.string.e2e_encryption_failed), t)
         }
         return encrypted ?: throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
     }
@@ -8153,6 +8177,7 @@ enum class SendFailureReason(val code: String) {
     REJECTED("rejected"),
     CONNECTION("connection"),
     ATTACHMENT("attachment"),
+    RECIPIENT_NOT_FOUND("recipient_not_found"),
     OTHER("other"),
     ;
 
@@ -8181,6 +8206,7 @@ private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean)
 }
 
 internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
+    has_cause(err) { it is RecipientNotOnAsterException } -> SendFailureReason.RECIPIENT_NOT_FOUND
     has_cause(err) { it is WeakMessagePasswordException } -> SendFailureReason.WEAK_PASSWORD
     has_cause(err) { it is EncryptionRequiredException } -> SendFailureReason.ENCRYPTION
     has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
