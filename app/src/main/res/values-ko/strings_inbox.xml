@@ -13,7 +13,5 @@
     <string name="inbox_a11y_state_read">읽음</string>
     <string name="inbox_a11y_state_unread">읽지 않음</string>
     <string name="copy_code">코드 복사</string>
-    <string name="copy_subject">제목 복사</string>
     <string name="code_copied">코드를 복사했습니다</string>
-    <string name="subject_copied">제목을 복사했습니다</string>
 </resources>

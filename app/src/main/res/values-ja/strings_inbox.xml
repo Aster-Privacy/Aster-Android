@@ -13,7 +13,5 @@
     <string name="inbox_a11y_state_read">既読</string>
     <string name="inbox_a11y_state_unread">未読</string>
     <string name="copy_code">コードをコピー</string>
-    <string name="copy_subject">件名をコピー</string>
     <string name="code_copied">コードをコピーしました</string>
-    <string name="subject_copied">件名をコピーしました</string>
 </resources>
