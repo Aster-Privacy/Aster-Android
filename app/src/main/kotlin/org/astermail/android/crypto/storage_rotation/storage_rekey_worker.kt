@@ -42,18 +42,34 @@ val STORAGE_REKEY_RETRY_DELAYS_SECS = longArrayOf(60, 300, 900)
 fun storage_rekey_retry_delay(attempt: Int): Long? =
     STORAGE_REKEY_RETRY_DELAYS_SECS.getOrNull(attempt)
 
+const val STORAGE_REKEY_RETIRE_WAIT_SECS = 6 * 3600L
+
+const val STORAGE_REKEY_RETIRE_MAX_ATTEMPTS = 2
+
+const val STORAGE_REKEY_RETIRE_MAX_WAIT_SECS = 7 * 24 * 3600L
+
+fun storage_rekey_retire_wait(retire_attempt: Int): Long {
+    if (retire_attempt < STORAGE_REKEY_RETIRE_MAX_ATTEMPTS) return STORAGE_REKEY_RETIRE_WAIT_SECS
+    val doublings = (retire_attempt - STORAGE_REKEY_RETIRE_MAX_ATTEMPTS + 1).coerceAtMost(8)
+    return (STORAGE_REKEY_RETIRE_WAIT_SECS shl doublings).coerceAtMost(STORAGE_REKEY_RETIRE_MAX_WAIT_SECS)
+}
+
 fun should_retry_storage_rekey(result: ResealRunResult): Boolean =
     result.status == ResealRunStatus.INTERRUPTED || result.status == ResealRunStatus.FAILED
 
-data class StorageRekeyNextRun(val attempt: Int, val delay_secs: Long)
+data class StorageRekeyNextRun(val attempt: Int, val delay_secs: Long, val retire_attempt: Int = 0)
 
-fun storage_rekey_next_run(result: ResealRunResult, attempt: Int): StorageRekeyNextRun? {
+fun storage_rekey_next_run(result: ResealRunResult, attempt: Int, retire_attempt: Int = 0): StorageRekeyNextRun? {
     if (result.status == ResealRunStatus.DEFERRED) {
         val wait = (result.retry_after_secs ?: REKEY_NOT_ADMITTED_WAIT_SECS).coerceAtLeast(REKEY_RETRY_AFTER_MIN_SECS)
-        return StorageRekeyNextRun(0, wait)
+        return StorageRekeyNextRun(0, wait, retire_attempt)
     }
     if (!should_retry_storage_rekey(result)) return null
-    return storage_rekey_retry_delay(attempt)?.let { StorageRekeyNextRun(attempt + 1, it) }
+    if (result.status == ResealRunStatus.INTERRUPTED && result.reason == LEGACY_KEY_RETIRE_PENDING) {
+        val next_attempt = (retire_attempt + 1).coerceAtMost(STORAGE_REKEY_RETIRE_MAX_ATTEMPTS + 8)
+        return StorageRekeyNextRun(attempt, storage_rekey_retire_wait(retire_attempt), next_attempt)
+    }
+    return storage_rekey_retry_delay(attempt)?.let { StorageRekeyNextRun(attempt + 1, it, retire_attempt) }
 }
 
 class StorageRekeyWorker(
@@ -63,6 +79,7 @@ class StorageRekeyWorker(
 
     override suspend fun doWork(): Result {
         val attempt = inputData.getInt(KEY_ATTEMPT, 0)
+        val retire_attempt = inputData.getInt(KEY_RETIRE_ATTEMPT, 0)
         val service = try {
             EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -81,8 +98,8 @@ class StorageRekeyWorker(
             ResealRunResult(ResealRunStatus.FAILED, StepCounts(), "error")
         }
         if (!isStopped) {
-            storage_rekey_next_run(result, attempt)?.let { next ->
-                schedule(context, next.attempt, next.delay_secs, ExistingWorkPolicy.APPEND_OR_REPLACE)
+            storage_rekey_next_run(result, attempt, retire_attempt)?.let { next ->
+                schedule(context, next.attempt, next.retire_attempt, next.delay_secs, ExistingWorkPolicy.APPEND_OR_REPLACE)
             }
         }
         return Result.success()
@@ -97,19 +114,26 @@ class StorageRekeyWorker(
     companion object {
         private const val WORK_NAME = "storage_rekey"
         private const val KEY_ATTEMPT = "attempt"
+        private const val KEY_RETIRE_ATTEMPT = "retire_attempt"
 
         fun enqueue(context: Context) {
-            schedule(context, 0, 0, ExistingWorkPolicy.KEEP)
+            schedule(context, 0, 0, 0, ExistingWorkPolicy.KEEP)
         }
 
-        private fun schedule(context: Context, attempt: Int, delay_secs: Long, policy: ExistingWorkPolicy) {
+        private fun schedule(
+            context: Context,
+            attempt: Int,
+            retire_attempt: Int,
+            delay_secs: Long,
+            policy: ExistingWorkPolicy,
+        ) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
             val request = OneTimeWorkRequestBuilder<StorageRekeyWorker>()
                 .setConstraints(constraints)
                 .setInitialDelay(delay_secs, TimeUnit.SECONDS)
-                .setInputData(workDataOf(KEY_ATTEMPT to attempt))
+                .setInputData(workDataOf(KEY_ATTEMPT to attempt, KEY_RETIRE_ATTEMPT to retire_attempt))
                 .build()
             runCatching {
                 WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, policy, request)

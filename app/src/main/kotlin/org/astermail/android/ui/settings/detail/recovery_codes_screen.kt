@@ -75,6 +75,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
+import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.auth.used_recovery_codes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
@@ -90,6 +91,9 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.RecoveryRotationPhase
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.host_activity
+import org.astermail.android.settings.is_key_check_cancelled
+import org.astermail.android.settings.key_check_error_text
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.print_recovery_codes
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -236,9 +240,11 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                     is_verifying = true
                     error = null
                     scope.launch {
+                        val host = context.host_activity() ?: context
                         val result = vm.verify_recovery_step_up(
                             password,
                             totp_code.trim().ifBlank { null },
+                            get_credential = { json -> request_passkey_json(host, json) },
                         )
                         is_verifying = false
                         result
@@ -271,7 +277,10 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                             }
                             .onFailure {
                                 if (org.astermail.android.is_rejected_second_factor_code(it)) totp_code = ""
-                                error = vm.error_text(it)
+                                error = when {
+                                    is_key_check_cancelled(it) -> null
+                                    else -> key_check_error_text(context, it) ?: vm.error_text(it)
+                                }
                             }
                     }
                 },

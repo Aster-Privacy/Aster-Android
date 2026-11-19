@@ -113,7 +113,7 @@ class SessionEnvelopeV2Crypto(private val store: SessionKeyStore) : EnvelopeV2Cr
     override fun open_v1(sealed_b64: String): ByteArray? {
         val passphrase = store.get_passphrase() ?: return null
         return try {
-            SentMailResealCrypto.open(sealed_b64, passphrase)
+            SentMailResealCrypto.open(sealed_b64, passphrase, store::is_login_salt)
         } finally {
             passphrase.fill(0)
         }

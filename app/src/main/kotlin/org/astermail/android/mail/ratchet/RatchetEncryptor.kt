@@ -145,6 +145,7 @@ class RatchetEncryptor @Inject constructor(
     private val keys_api: KeysApi,
     private val identity_pins: RatchetIdentityPinStore,
     private val address_directory: AddressIdentityDirectory,
+    private val sender_key_heal: RatchetSenderKeyHeal,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -154,11 +155,21 @@ class RatchetEncryptor @Inject constructor(
 
     internal var require_verified_prekey_bundle: Boolean = PrekeyBundlePolicy.require_verified_prekey_bundle
 
-    fun owner_key_matches_pin(recipient_email: String, armored_public_key: String): Boolean =
-        owner_key_trusted(
+    internal var now_ms: () -> Long = { System.currentTimeMillis() }
+
+    private val owner_keys_pinned_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    fun owner_key_matches_pin(recipient_email: String, armored_public_key: String): Boolean {
+        val pinned_at = owner_keys_pinned_at[recipient_email.lowercase(java.util.Locale.ROOT)]
+        if (owner_key_pinned_during_send(pinned_at, now_ms())) {
+            android.util.Log.w("AsterRatchet", "fallback key was first pinned during this send")
+            return false
+        }
+        return owner_key_trusted(
             identity_pins.owner_key_pin(recipient_email),
             PrekeyBindingVerifier.owner_fingerprint(armored_public_key),
         )
+    }
 
     suspend fun check_post_quantum_coverage(
         sender_email: String,
@@ -230,6 +241,7 @@ class RatchetEncryptor @Inject constructor(
         recipients: List<String>,
         body: String,
         allow_non_post_quantum: Boolean = false,
+        without_one_time: Boolean = false,
     ): String? {
         if (recipients.isEmpty()) return null
         session_key_store.get_ratchet_identity_public_b64()
@@ -261,6 +273,7 @@ class RatchetEncryptor @Inject constructor(
                     recipient_email,
                     body,
                     required_identity,
+                    without_one_time,
                 )
             } catch (e: RatchetEncryptionException) {
                 throw e
@@ -369,6 +382,7 @@ class RatchetEncryptor @Inject constructor(
                 if (!identity_pins.pin_owner_key_if_absent(recipient_email, served_owner.orEmpty())) {
                     throw RatchetEncryptionException(recipient_email, "recipient owner key pin unavailable")
                 }
+                owner_keys_pinned_at[recipient_email.lowercase(java.util.Locale.ROOT)] = now_ms()
                 runCatching { identity_pins.record_prekey_binding_verified(recipient_email) }
             }
             OwnerKeyDecision.UNAVAILABLE -> throw RatchetEncryptionException(
@@ -411,10 +425,10 @@ class RatchetEncryptor @Inject constructor(
                 "recipient prekey bundle carries no identity key",
             )
         }
-        when (identity_pins.evaluate(conversation_id, bundle.kem_identity_key)) {
+        when (identity_pins.evaluate(conversation_id, recipient_email, bundle.kem_identity_key)) {
             IdentityPinOutcome.UNCHANGED -> Unit
             IdentityPinOutcome.FIRST_CONTACT ->
-                identity_pins.pin_if_absent(conversation_id, bundle.kem_identity_key)
+                identity_pins.pin_if_absent(conversation_id, recipient_email, bundle.kem_identity_key)
             IdentityPinOutcome.CHANGED -> {
                 runCatching {
                     identity_pins.flag_identity_change(
@@ -454,9 +468,14 @@ class RatchetEncryptor @Inject constructor(
         recipient_email: String,
         body: String,
         required_identity: String? = null,
+        without_one_time: Boolean = false,
     ): RecipientEncryption? {
         val conversation_id = X3dh.derive_conversation_id(sender_email, recipient_email)
         val username = recipient_email.substringBefore('@')
+
+        val heal_sender_jwk: suspend () -> String? = {
+            healed_sender_jwk(sender_email, sender_identity_public, sender_identity_jwk)
+        }
 
         return conversation_locks.with_lock(conversation_id) {
             encrypt_for_recipient_locked(
@@ -467,6 +486,8 @@ class RatchetEncryptor @Inject constructor(
                 recipient_email,
                 body,
                 required_identity,
+                heal_sender_jwk,
+                without_one_time,
             )
         }
     }
@@ -558,6 +579,8 @@ class RatchetEncryptor @Inject constructor(
         recipient_email: String,
         body: String,
         required_identity: String? = null,
+        heal_sender_jwk: suspend () -> String? = { null },
+        without_one_time: Boolean = false,
     ): RecipientEncryption? {
         var state = state_store.load(conversation_id)
         if (state != null && state.bootstrap == null) {
@@ -677,6 +700,20 @@ class RatchetEncryptor @Inject constructor(
                 runCatching { it.key_id to RatchetCrypto.b64_decode(it.public_key) }.getOrNull()
             }
 
+            if (local_bundle == null && negotiated_x3dh_version >= X3dh.VERSION_TRANSCRIPT_BOUND) {
+                val offered = (resolved_bundle.x3dh_max_version ?: 0) >= X3dh.VERSION_ONE_TIME_BOUND &&
+                    X3dh.usable_one_time_prekey(one_time_prekey_pair) != null
+                val verdict = judge_one_time_prekey_offer(
+                    store = identity_pins,
+                    peer_tag = one_time_prekey_peer_tag(recipient_identity_raw),
+                    offered = offered,
+                    now_ms = System.currentTimeMillis(),
+                )
+                if (verdict == OneTimePrekeyVerdict.WITHHELD && !without_one_time) {
+                    throw OneTimePrekeyWithheldException(recipient_email)
+                }
+            }
+
             val x3dh_result = X3dh.perform_sender(
                 sender_identity_jwk = sender_identity_jwk,
                 recipient_identity_raw = recipient_identity_raw,
@@ -744,11 +781,20 @@ class RatchetEncryptor @Inject constructor(
         val encrypted = DoubleRatchet.encrypt(state, body)
 
         val recovery = try {
-            RecoveryLane.seal(
+            seal_lane_with_heal(
                 RatchetCrypto.b64_encode(encrypted.message_key),
                 conversation_id,
                 sender_identity_public,
                 recovery_keys,
+                sender_identity_jwk,
+                RecoveryLane.Transcript(
+                    dh_public = encrypted.header.dh_public,
+                    previous_chain_length = encrypted.header.previous_chain_length,
+                    message_number = encrypted.header.message_number,
+                    nonce = RatchetCrypto.b64_encode(encrypted.nonce),
+                    sent_at = System.currentTimeMillis(),
+                ),
+                heal_sender_jwk,
             )
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -771,16 +817,69 @@ class RatchetEncryptor @Inject constructor(
             x3dh_v = x3dh_version,
             opk_id = one_time_prekey_id,
             spk_id = signed_prekey_id,
-            recovery = RecoveryLaneData(
-                v = recovery.v,
-                epk = recovery.epk,
-                kem_ct = recovery.kem_ct,
-                ciphertext = recovery.ciphertext,
-                nonce = recovery.nonce,
-                rid = recovery.rid,
-            ),
+            recovery = recovery?.let {
+                RecoveryLaneData(
+                    v = it.v,
+                    epk = it.epk,
+                    kem_ct = it.kem_ct,
+                    ciphertext = it.ciphertext,
+                    nonce = it.nonce,
+                    rid = it.rid,
+                    sct = it.sct,
+                    snonce = it.snonce,
+                    t = it.t,
+                )
+            },
         )
         return RecipientEncryption(data, post_quantum_signed)
+    }
+
+    private suspend fun seal_lane_with_heal(
+        message_key: String,
+        conversation_id: String,
+        sender_identity_public: String,
+        recipient: RecoveryLane.RecipientKeys,
+        sender_identity_jwk: String,
+        transcript: RecoveryLane.Transcript,
+        heal_sender_jwk: suspend () -> String?,
+    ): RecoveryLane.Data? {
+        val seal = { identity_jwk: String ->
+            RecoveryLane.seal(message_key, conversation_id, sender_identity_public, recipient, identity_jwk, transcript)
+        }
+        try {
+            return seal(sender_identity_jwk)
+        } catch (_: RecoveryLane.SenderKeyMissingException) {
+        }
+        val healed = heal_sender_jwk() ?: return null
+        return try {
+            seal(healed)
+        } catch (_: RecoveryLane.SenderKeyMissingException) {
+            null
+        }
+    }
+
+    private suspend fun healed_sender_jwk(
+        sender_email: String,
+        sender_identity_public: String,
+        sender_identity_jwk: String,
+    ): String? {
+        val healed = try {
+            sender_key_heal.heal()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            false
+        }
+        if (!healed) return null
+        val reloaded = try {
+            address_directory.resolve_sender_identity(sender_email)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        } ?: return null
+        if (reloaded.identity_public != sender_identity_public || reloaded.identity_jwk == sender_identity_jwk) return null
+        return reloaded.identity_jwk
     }
 
     private fun resolve_recovery_lane_keys(

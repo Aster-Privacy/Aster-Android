@@ -40,6 +40,14 @@ class HostedRecipientDirectoryTest {
     fun reset_after() = HostedRecipientDirectory.clear()
 
     @Test
+    fun an_outside_address_with_a_pinned_key_stays_outside() {
+        assertFalse(HostedRecipientDirectory.classify(server_internal = true, pinned_external_key = "abcd"))
+        assertTrue(HostedRecipientDirectory.classify(server_internal = true, pinned_external_key = null))
+        assertTrue(HostedRecipientDirectory.classify(server_internal = true, pinned_external_key = " "))
+        assertFalse(HostedRecipientDirectory.classify(server_internal = false, pinned_external_key = null))
+    }
+
+    @Test
     fun custom_domain_address_is_external_until_looked_up() {
         assertFalse(is_internal_recipient("lucas@example-domain.de"))
         assertTrue(HostedRecipientDirectory.needs_lookup("lucas@example-domain.de"))

@@ -36,6 +36,7 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
 import org.astermail.android.api.ratchet.PlaintextEscrowEntry
 import org.astermail.android.api.ratchet.RatchetApi
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 
 data class EscrowedPlaintext(
@@ -59,11 +60,6 @@ class MessageEscrow @Inject constructor(
 
     private val background = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun upload_in_background(dedupe_key: String, plaintext: String) {
-        if (dedupe_key.isBlank() || plaintext.isEmpty()) return
-        background.launch { runCatching { upload(dedupe_key, plaintext) } }
-    }
-
     fun upload_bound_in_background(
         dedupe_key: String,
         plaintext: String,
@@ -77,16 +73,6 @@ class MessageEscrow @Inject constructor(
         }
     }
 
-    suspend fun upload(dedupe_key: String, plaintext: String): Boolean {
-        if (dedupe_key.isBlank() || plaintext.isEmpty()) return false
-        val plaintext_bytes = plaintext.toByteArray(Charsets.UTF_8)
-        if (plaintext_bytes.size > max_plaintext_bytes) {
-            plaintext_bytes.fill(0)
-            return false
-        }
-        return post_sealed(dedupe_key, plaintext_bytes, aad_for(dedupe_key))
-    }
-
     suspend fun upload_bound(
         dedupe_key: String,
         plaintext: String,
@@ -98,8 +84,9 @@ class MessageEscrow @Inject constructor(
         if (plaintext.toByteArray(Charsets.UTF_8).size > max_plaintext_bytes) return false
         val payload = encode_bound_payload(sender, conversation_id, plaintext, unconfirmed_sender)
         val bound = post_sealed(bound_key(dedupe_key), payload, bound_aad_for(dedupe_key))
-        val legacy = upload(dedupe_key, plaintext)
-        return bound && legacy
+        if (!bound || org.astermail.android.api.keys.BoundWriteSwitches.escrow()) return bound
+        post_sealed(dedupe_key, plaintext.toByteArray(Charsets.UTF_8), aad_for(dedupe_key))
+        return true
     }
 
     private suspend fun post_sealed(row_key: String, payload: ByteArray, aad: ByteArray): Boolean {
@@ -181,13 +168,17 @@ class MessageEscrow @Inject constructor(
         val bases = state_store.master_key_candidates()
         try {
             for (base in bases) {
+                if (StorageWriteKey.is_public_mail_kek(base)) continue
                 val escrow_key = derive_escrow_key(base)
                 val opened = try {
                     open_bytes(ciphertext, escrow_key, nonce, aad)
                 } finally {
                     escrow_key.fill(0)
                 }
-                if (opened != null) return opened
+                if (opened != null) {
+                    state_store.note_master_key_use(base)
+                    return opened
+                }
             }
             return null
         } finally {

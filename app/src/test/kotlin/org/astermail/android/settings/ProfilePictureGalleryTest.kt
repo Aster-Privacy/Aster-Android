@@ -22,6 +22,7 @@
 package org.astermail.android.settings
 
 import java.io.IOException
+import java.net.URI
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
@@ -355,11 +356,26 @@ class ProfilePictureGalleryTest {
 
     @Test
     fun thumb_url_shape() {
-        assertEquals("https://aster-wallpapers.pages.dev/thumb/x.webp", gallery_thumb_url("x"))
+        assertEquals("https://app.astermail.org/gallery/thumb/x.webp", gallery_thumb_url("x"))
     }
 
     @Test
     fun full_url_shape() {
-        assertEquals("https://aster-wallpapers.pages.dev/full/x.webp", gallery_full_url("x"))
+        assertEquals("https://app.astermail.org/gallery/full/x.webp", gallery_full_url("x"))
+    }
+
+    @Test
+    fun gallery_loads_from_the_app_origin() {
+        val urls = listOf(
+            "$profile_picture_gallery_base_url/manifest.json",
+            gallery_thumb_url("x"),
+            gallery_full_url("x"),
+        )
+        for (url in urls) {
+            val uri = URI(url)
+            assertEquals(url, "https", uri.scheme)
+            assertEquals(url, "app.astermail.org", uri.host)
+            assertTrue(url, uri.path.startsWith("/gallery/"))
+        }
     }
 }

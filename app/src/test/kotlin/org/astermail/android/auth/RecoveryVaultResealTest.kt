@@ -151,4 +151,32 @@ class RecoveryVaultResealTest {
         assertEquals(expected, pgp_key_identity(vault_identity_key(skipped.vault)))
         assertEquals(expected, pgp_key_identity(vault_identity_key(repaired.vault)))
     }
+
+    @Test
+    fun recovery_records_the_new_backup_generation_in_both_vault_copies() {
+        val vault = JSONObject().put(RecoveryBackupVaultFields.GENERATION, 4L)
+        val backup = JSONObject().put(RecoveryBackupVaultFields.GENERATION, 4L)
+        val stamped = stamp_recovered_vault(
+            RecoveryVaultReseal(vault, backup, identity_locked = false),
+            RecoveryBackupBinding("user-1", 5L),
+            format_v2 = true,
+        )
+        assertEquals(5L, RecoveryBackupVaultFields.generation(stamped.vault))
+        assertTrue(RecoveryBackupVaultFields.format_v2(stamped.vault))
+        assertEquals(5L, RecoveryBackupVaultFields.generation(stamped.backup))
+        assertTrue(RecoveryBackupVaultFields.format_v2(stamped.backup))
+    }
+
+    @Test
+    fun recovery_never_lowers_a_recorded_backup_generation() {
+        val vault = JSONObject().put(RecoveryBackupVaultFields.GENERATION, 9L)
+        val stamped = stamp_recovered_vault(
+            RecoveryVaultReseal(vault, JSONObject(), identity_locked = false),
+            RecoveryBackupBinding("user-1", 5L),
+            format_v2 = false,
+        )
+        assertEquals(9L, RecoveryBackupVaultFields.generation(stamped.vault))
+        assertFalse(RecoveryBackupVaultFields.format_v2(stamped.vault))
+        assertEquals(5L, RecoveryBackupVaultFields.generation(stamped.backup))
+    }
 }

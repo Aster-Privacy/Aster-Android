@@ -51,7 +51,7 @@ data class IdentityChange(
 class RatchetIdentityPinStore @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
     private val session_key_store: SessionKeyStore,
-) {
+) : OneTimePrekeyPeerStore {
 
     private val prefs = SecurePrefs.open(context, prefs_name)
     private val mutex = Mutex()
@@ -113,20 +113,27 @@ class RatchetIdentityPinStore @Inject constructor(
         }
     }
 
-    fun evaluate(conversation_id: String, identity_key_b64: String): IdentityPinOutcome {
+    fun evaluate(conversation_id: String, peer_email: String, identity_key_b64: String): IdentityPinOutcome {
         if (conversation_id.isBlank() || identity_key_b64.isBlank()) return IdentityPinOutcome.CHANGED
         val current = fingerprint(identity_key_b64) ?: return IdentityPinOutcome.CHANGED
         val scope = refresh_scope()
-        val stored = read_string(scope, pin_key(conversation_id)) ?: return IdentityPinOutcome.FIRST_CONTACT
-        return if (stored == current) IdentityPinOutcome.UNCHANGED else IdentityPinOutcome.CHANGED
+        val pinned = read_string(scope, pin_key(conversation_id))
+        val contact = contact_of(peer_email)
+        val remembered = if (contact == null) emptyList() else read_history(scope, contact)
+        return RatchetIdentityPinRules.outgoing_outcome(remembered, pinned, current)
     }
 
-    suspend fun pin_if_absent(conversation_id: String, identity_key_b64: String): Unit = mutex.withLock {
+    suspend fun pin_if_absent(
+        conversation_id: String,
+        peer_email: String,
+        identity_key_b64: String,
+    ): Unit = mutex.withLock {
         if (conversation_id.isBlank()) return@withLock
         val current = fingerprint(identity_key_b64) ?: return@withLock
         val scope = refresh_scope()
         if (read_string(scope, pin_key(conversation_id)) != null) return@withLock
         prefs.edit().putString(scoped(scope, pin_key(conversation_id)), current).commit()
+        contact_of(peer_email)?.let { append_history(scope, it, current) }
     }
 
     suspend fun flag_identity_change(
@@ -138,7 +145,11 @@ class RatchetIdentityPinStore @Inject constructor(
         if (conversation_id.isBlank()) return@withLock
         val current = fingerprint(identity_key_b64) ?: return@withLock
         val scope = refresh_scope()
-        val stored = read_string(scope, pin_key(conversation_id)) ?: return@withLock
+        val pinned = read_string(scope, pin_key(conversation_id))
+        val remembered = contact_of(peer_email)?.let { read_history(scope, it) }.orEmpty()
+        val stored = (listOfNotNull(pinned) + remembered.asReversed())
+            .firstOrNull { it.isNotBlank() }
+            ?: return@withLock
         if (stored == current) return@withLock
         synchronized(pending_guard) {
             val updated = pending.value.filterNot { it.conversation_id == conversation_id } +
@@ -219,10 +230,13 @@ class RatchetIdentityPinStore @Inject constructor(
     suspend fun remember_sender_identity(sender_email: String, sender_identity_key_b64: String): Unit = mutex.withLock {
         val contact = contact_of(sender_email) ?: return@withLock
         val current = fingerprint(sender_identity_key_b64) ?: return@withLock
-        val scope = refresh_scope()
-        val existing = read_history(scope, contact) ?: return@withLock
-        val saved = runCatching { remembered_fingerprints(scope, contact.id) }.getOrNull() ?: return@withLock
-        if (existing.lastOrNull() == current && saved == existing) return@withLock
+        append_history(refresh_scope(), contact, current)
+    }
+
+    private fun append_history(scope: String, contact: PinContact, current: String) {
+        val existing = read_history(scope, contact) ?: return
+        val saved = runCatching { remembered_fingerprints(scope, contact.id) }.getOrNull() ?: return
+        if (existing.lastOrNull() == current && saved == existing) return
         val updated = RatchetIdentityPinRules.remember_fingerprint(existing, current, max_remembered_identities)
         prefs.edit().putString(scoped(scope, history_key(contact.id)), updated.joinToString(separator)).commit()
     }
@@ -408,6 +422,44 @@ class RatchetIdentityPinStore @Inject constructor(
         prefs.edit().putString(scoped(scope, bootstrap_key(conversation_id)), updated.joinToString(separator)).commit()
     }
 
+    fun lane_sender_pin(sender_email: String): LaneSenderPin {
+        val contact = contact_of(sender_email) ?: return LaneSenderPin.UNREADABLE
+        return runCatching {
+            if (prefs.getString(scoped(refresh_scope(), lane_sender_key(contact.id)), null) == lane_pinned_value) {
+                LaneSenderPin.PINNED
+            } else {
+                LaneSenderPin.UNPINNED
+            }
+        }.getOrDefault(LaneSenderPin.UNREADABLE)
+    }
+
+    suspend fun pin_lane_sender(sender_email: String): Unit = mutex.withLock {
+        val contact = contact_of(sender_email) ?: return@withLock
+        prefs.edit().putString(scoped(refresh_scope(), lane_sender_key(contact.id)), lane_pinned_value).commit()
+    }
+
+    suspend fun claim_lane_nonce(
+        sender_email: String,
+        conversation_id: String,
+        snonce: String,
+        message_id: String,
+        sent_at: Long,
+        vault_record: LaneReplayRecord? = LaneReplay.EMPTY,
+    ): LaneReplayClaim? {
+        if (conversation_id.isBlank() || snonce.isBlank() || message_id.isBlank()) return null
+        val contact = contact_of(sender_email) ?: return null
+        val key = LaneReplay.key(conversation_id, snonce)
+        val message = LaneReplay.message(message_id)
+        return mutex.withLock {
+            val scope = refresh_scope()
+            val stored = prefs.getString(scoped(scope, lane_replay_key(contact.id)), null)
+            if (vault_record == null && stored == null) return@withLock null
+            val claim = LaneReplay.claim(LaneReplay.merge(stored, vault_record ?: LaneReplay.EMPTY), key, message, sent_at)
+            prefs.edit().putString(scoped(scope, lane_replay_key(contact.id)), claim.record.to_json().toString()).commit()
+            claim
+        }
+    }
+
     fun highest_x3dh_version(conversation_id: String): Int {
         if (conversation_id.isBlank()) return 0
         return read_int(refresh_scope(), x3dh_key(conversation_id))
@@ -430,6 +482,17 @@ class RatchetIdentityPinStore @Inject constructor(
         val scope = refresh_scope()
         if (read_int(scope, x3dh_advertised_key(conversation_id)) >= version) return@withLock
         prefs.edit().putInt(scoped(scope, x3dh_advertised_key(conversation_id)), version).commit()
+    }
+
+    override suspend fun one_time_prekey_grace_at(peer_tag: String): Long? = mutex.withLock {
+        if (peer_tag.isBlank()) return@withLock null
+        val key = scoped(refresh_scope(), one_time_prekey_key(peer_tag))
+        if (prefs.contains(key)) prefs.getLong(key, 0L) else null
+    }
+
+    override suspend fun record_one_time_prekey_grace_at(peer_tag: String, grace_at: Long): Unit = mutex.withLock {
+        if (peer_tag.isBlank()) return@withLock
+        prefs.edit().putLong(scoped(refresh_scope(), one_time_prekey_key(peer_tag)), grace_at).commit()
     }
 
     fun is_post_quantum_established(conversation_id: String): Boolean {
@@ -679,6 +742,10 @@ class RatchetIdentityPinStore @Inject constructor(
 
     private fun bootstrap_key(conversation_id: String): String = "boot_$conversation_id"
 
+    private fun lane_sender_key(contact_id: String): String = "lanepin_$contact_id"
+
+    private fun lane_replay_key(contact_id: String): String = "lanereplay_$contact_id"
+
     private fun history_key(normalized_email: String): String = "$history_prefix$normalized_email"
 
     private fun post_quantum_key(conversation_id: String): String = "pq_$conversation_id"
@@ -686,6 +753,7 @@ class RatchetIdentityPinStore @Inject constructor(
     private fun x3dh_key(conversation_id: String): String = "x3dh_$conversation_id"
 
     private fun x3dh_advertised_key(conversation_id: String): String = "x3dhadv_$conversation_id"
+    private fun one_time_prekey_key(peer_tag: String): String = "opk_$peer_tag"
 
     private fun binding_key(recipient_email: String): String = "$binding_prefix$recipient_email"
 
@@ -702,6 +770,7 @@ class RatchetIdentityPinStore @Inject constructor(
         private const val prefs_name = "aster_ratchet_identity_pins"
         private const val separator = "|"
         private const val max_tracked_bootstraps = 64
+        private const val lane_pinned_value = "1"
         private const val max_remembered_identities = 16
         private const val pending_key = "pending_identity_changes"
         private const val max_pending_changes = 50

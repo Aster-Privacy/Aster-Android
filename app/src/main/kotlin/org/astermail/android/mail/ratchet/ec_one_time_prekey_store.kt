@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.api.ratchet.PqSecretResponse
+import org.astermail.android.api.ratchet.ResealEcPrekeySecretRequest
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SessionKeyStore
@@ -97,7 +98,20 @@ class EcOneTimePrekeyStore(
     private val ratchet_api: RatchetApi,
     private val sync_key_candidates: () -> List<ByteArray>,
     private val now_ms: () -> Long = { System.currentTimeMillis() },
+    private val prekey_seal: () -> PrekeySeal = { PrekeySeal.NONE },
+    private val prekey_writes: () -> Boolean = { org.astermail.android.api.keys.BoundWriteSwitches.prekey() },
 ) {
+
+    fun new_format_writes(): Boolean = prekey_writes()
+
+    fun wrap_for_older_apps(scalar: ByteArray): WrappedEcOneTimeSecret? {
+        val candidates = runCatching { sync_key_candidates() }.getOrNull() ?: return null
+        return try {
+            EcOneTimeSecretWrap.wrap(scalar, candidates.firstOrNull { !RatchetStateStore.is_public_state_key(it) })
+        } finally {
+            candidates.forEach { it.fill(0) }
+        }
+    }
 
     private val missed_at = ConcurrentHashMap<Int, Long>()
 
@@ -182,11 +196,32 @@ class EcOneTimePrekeyStore(
 
     private suspend fun fetch_remote(key_id: Int): ByteArray? {
         val response: PqSecretResponse = ratchet_api.fetch_ec_prekey_secret(key_id) ?: return null
-        val candidates = sync_key_candidates()
-        return try {
-            EcOneTimeSecretWrap.unwrap(response.encrypted_secret, response.secret_nonce, candidates)
+        val seal = prekey_seal()
+        try {
+            val opened = open_prekey_secret_row(seal, PrekeySealKind.EC, key_id, response, sync_key_candidates)
+                ?: return null
+            val plain = opened.plain
+            if (plain.size != EC_ONE_TIME_SCALAR_LEN) {
+                plain.fill(0)
+                return null
+            }
+            if (opened.legacy && prekey_writes()) reseal_remote(seal, key_id, plain)
+            return plain
         } finally {
-            candidates.forEach { it.fill(0) }
+            seal.wipe()
+        }
+    }
+
+    private suspend fun reseal_remote(seal: PrekeySeal, key_id: Int, plain: ByteArray) {
+        val sealed = seal.seal(PrekeySealKind.EC, key_id, plain) ?: return
+        try {
+            ratchet_api.put_ec_prekey_secret(
+                key_id,
+                ResealEcPrekeySecretRequest(sealed.encrypted_secret, sealed.secret_nonce),
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
         }
     }
 }

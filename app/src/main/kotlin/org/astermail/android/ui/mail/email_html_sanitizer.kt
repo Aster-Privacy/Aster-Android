@@ -687,13 +687,16 @@ object EmailHtmlSanitizer {
     private val data_html_uri_regex = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
     private val vbscript_uri_regex = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
     private val data_uri_regex = Regex("^\\s*data\\s*:", RegexOption.IGNORE_CASE)
-    private val css_expression_regex = Regex("expression\\s*\\(", RegexOption.IGNORE_CASE)
-    private val css_javascript_regex = Regex("javascript\\s*:", RegexOption.IGNORE_CASE)
-    private val css_vbscript_regex = Regex("vbscript\\s*:", RegexOption.IGNORE_CASE)
+    private const val css_escape_tail = """(?:\r\n|[ \t\r\n\u000C])?"""
+    private const val css_open_paren = """(?:\(|\\0{0,4}28$css_escape_tail|\\\()"""
+    private const val css_colon = """(?::|\\0{0,4}3a$css_escape_tail|\\:)"""
+    private val css_expression_regex = Regex("""expression\s*$css_open_paren""", RegexOption.IGNORE_CASE)
+    private val css_javascript_regex = Regex("""javascript\s*$css_colon""", RegexOption.IGNORE_CASE)
+    private val css_vbscript_regex = Regex("""vbscript\s*$css_colon""", RegexOption.IGNORE_CASE)
     private val css_import_regex = Regex("@import\\b[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_behavior_regex = Regex("behavior\\s*:[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_moz_binding_regex = Regex("-moz-binding\\s*:[^;]*;?", RegexOption.IGNORE_CASE)
-    private val css_fixed_position_regex = Regex("position\\s*:\\s*(fixed|sticky)", RegexOption.IGNORE_CASE)
+    private val css_out_of_flow_position_regex = Regex("position\\s*:\\s*(-[a-z]+-)?(fixed|sticky|absolute)", RegexOption.IGNORE_CASE)
     private val css_charset_regex = Regex("@charset\\b[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_namespace_regex = Regex("@namespace\\b[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_document_regex = Regex("@document\\b[^;]*;?", RegexOption.IGNORE_CASE)
@@ -873,7 +876,7 @@ object EmailHtmlSanitizer {
         out = out.replace(css_import_regex, "")
         out = out.replace(css_behavior_regex, "")
         out = out.replace(css_moz_binding_regex, "")
-        out = out.replace(css_fixed_position_regex, "position: relative")
+        out = out.replace(css_out_of_flow_position_regex, "position: static")
         return out
     }
 
@@ -905,7 +908,7 @@ object EmailHtmlSanitizer {
         out = out.replace(css_webkit_image_set_regex, "none")
         out = out.replace(css_cross_fade_regex, "none")
         out = strip_dark_mode_media(out)
-        out = out.replace(css_fixed_position_regex, "position: relative")
+        out = out.replace(css_out_of_flow_position_regex, "position: static")
         out = out.replace(css_closing_tag_regex, """<\\/$1""")
         return out
     }

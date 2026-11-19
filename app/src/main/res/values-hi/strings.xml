@@ -955,7 +955,7 @@
     <string name="disabling">बंद हो रहा है…</string>
     <string name="disable_two_factor">दो-चरणीय प्रमाणीकरण बंद करें</string>
     <string name="generate_new_backup_codes_section">नए बैकअप कोड बनाएं</string>
-    <string name="generate_backup_codes_description">अपने प्रमाणक ऐप का मौजूदा कोड डालें। आपके पिछले बैकअप कोड बेकार हो जाएंगे।</string>
+    <string name="generate_backup_codes_description">अपना पासवर्ड और अपने प्रमाणक ऐप का मौजूदा कोड डालें। आपके पिछले बैकअप कोड काम करना बंद कर देंगे।</string>
     <string name="generating">बन रहा है…</string>
     <string name="generate_codes">कोड बनाएं</string>
     <string name="two_factor_enabled_title">दो-चरणीय प्रमाणीकरण चालू हुआ</string>
@@ -1535,6 +1535,7 @@
     <string name="enter_account_password">अपने खाते का पासवर्ड डालें</string>
     <string name="something_went_wrong">कुछ गड़बड़ हो गई</string>
     <string name="preferences_locked_retry">आपकी सेटिंग अभी अनलॉक नहीं हो सकीं। डिफ़ॉल्ट दिखाए जा रहे हैं, फिर से कोशिश करने के लिए पीछे जाकर दोबारा खोलें।</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail अभी भी इस आइटम को अनलॉक कर रहा है, इसलिए आपका बदलाव सहेजा नहीं गया। थोड़ी देर में फिर से कोशिश करें।</string>
     <string name="name_cannot_be_empty">नाम खाली नहीं हो सकता</string>
     <string name="session_revoked">सत्र रद्द हुआ</string>
     <string name="failed_revoke_session">सत्र रद्द नहीं हो सका</string>
@@ -2607,6 +2608,9 @@
     <string name="folder_locked">फ़ोल्डर लॉक हुआ</string>
     <string name="folder_unlocked">फ़ोल्डर अनलॉक हुआ</string>
     <string name="folder_lock_set">फ़ोल्डर पर लॉक लगाया गया</string>
+    <string name="folder_relock_required">इस फ़ोल्डर को किसी दूसरे डिवाइस पर फिर से लॉक किया गया है. इसे यहां खोलने के लिए, लॉक हटाएं और फिर से लगाएं.</string>
+    <string name="folder_protection_unavailable">इस डिवाइस पर फ़ोल्डर सुरक्षा की जानकारी नहीं पढ़ी जा सकी. साइन आउट करके फिर से साइन इन करें, फिर दोबारा कोशिश करें.</string>
+    <string name="folder_lock_set_unconfirmed">फ़ोल्डर पर लॉक लगाया गया. फ़ोल्डर खोलने के लिए पासवर्ड डालें.</string>
     <string name="folder_lock_removed">फ़ोल्डर का लॉक हटाया गया</string>
     <string name="folder_notifications_muted">इस फ़ोल्डर की सूचनाएं बंद कर दी गईं</string>
     <string name="folder_notifications_unmuted">इस फ़ोल्डर की सूचनाएं चालू हैं</string>
@@ -2793,8 +2797,11 @@
     <string name="folder_name_taken">इस नाम का फ़ोल्डर पहले से मौजूद है।</string>
     <string name="generate_ghost_alias_message">Aster एक बेतरतीब पता बनाता है जो आपके इनबॉक्स में फ़ॉरवर्ड करता है। अपने बाकी पतों पर असर डाले बिना इसे कभी भी खत्म कर दें।</string>
     <string name="hardware_key_remove_confirm">आप इस सुरक्षा कुंजी से अब साइन इन नहीं कर पाएंगे।</string>
-    <string name="hardware_key_remove_last_title">अपनी आखिरी सुरक्षा कुंजी हटाएं?</string>
-    <string name="hardware_key_remove_last_description">यह आपके खाते का आखिरी दूसरा फ़ैक्टर है। इसे हटाने के लिए अपना पासवर्ड डालें।</string>
+    <string name="hardware_key_remove_last_title">यह सुरक्षा कुंजी हटाएं?</string>
+    <string name="hardware_key_remove_last_description">इस सुरक्षा कुंजी को हटाने के लिए अपना पासवर्ड डालें।</string>
+    <string name="passkey_add_reauth_description">पासकी जोड़ने के लिए अपना पासवर्ड डालें।</string>
+    <string name="totp_setup_reauth_description">दो-चरणीय सत्यापन सेट अप करने के लिए अपना पासवर्ड डालें।</string>
+    <string name="reauth_key_check_failed">आपकी पासकी या सुरक्षा कुंजी की जांच नहीं हो सकी। फिर से कोशिश करें।</string>
     <string name="image_insert_failed">वह तस्वीर जोड़ी नहीं जा सकी। हो सकता है वह बहुत बड़ी हो या उसका प्रारूप समर्थित न हो।</string>
     <string name="invalid_recipient_address">“%1$s” कोई मान्य ईमेल पता नहीं है</string>
     <string name="label_name_taken">इस नाम का लेबल पहले से मौजूद है।</string>
@@ -3388,6 +3395,11 @@
     <string name="contact_sync_settings_title">संपर्कों तक पहुंच की अनुमति दें</string>
     <string name="contact_sync_settings_message">अपने संपर्क सिंक करने के लिए, सेटिंग खोलें पर टैप करें, अनुमतियां &gt; संपर्क पर जाएं, और अनुमति दें चुनें।</string>
     <string name="contact_sync_open_settings">सेटिंग खोलें</string>
+    <string name="contact_sync_all_details_title">संपर्क की सभी जानकारी सिंक करें</string>
+    <string name="contact_sync_all_details_subtitle">यह विकल्प बंद होने पर, Aster आपके फ़ोन के Contacts ऐप में सिर्फ़ नाम और ईमेल पते जोड़ता है।</string>
+    <string name="contact_sync_all_details_confirm_title">संपर्क की सभी जानकारी सिंक करें?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster आपके फ़ोन के Contacts ऐप में फ़ोन नंबर, पते, जन्मदिन, नोट, फ़ोटो और अन्य जानकारी भी जोड़ता है। जिन दूसरे ऐप के पास आपके संपर्कों का ऐक्सेस है, वे यह जानकारी पढ़ सकते हैं।</string>
+    <string name="contact_sync_all_details_confirm">सभी जानकारी सिंक करें</string>
     <string name="contact_sync_label_sibling">भाई या बहन</string>
     <string name="contact_sync_label_graduation">ग्रेजुएशन</string>
     <string name="contact_sync_label_wedding">शादी</string>
@@ -3538,6 +3550,16 @@
         <item quantity="other">%d संपर्क जोड़े गए</item>
     </plurals>
     <string name="body_index_status">खोज के लिए संदेश टेक्स्ट इंडेक्स हो रहा है: %2$d में से %1$d</string>
+    <string name="mail_key_upgrade_title">आपके सहेजे गए मेल अपडेट हो रहे हैं</string>
+    <string name="mail_key_upgrade_running">Aster Mail आपके सहेजे गए संदेशों को आपकी मौजूदा कुंजियों से फिर से एन्क्रिप्ट कर रहा है। पूरा होने तक यह विंडो खुली रखें।</string>
+    <string name="mail_key_upgrade_failed">Aster Mail आपके सहेजे गए संदेशों को अपडेट करना पूरा नहीं कर सका। आपका मेल नहीं बदला है। अपना कनेक्शन जांचें, फिर दोबारा कोशिश करें।</string>
+    <string name="mail_key_upgrade_retry">फिर से कोशिश करें</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d संदेश जांचा गया</item>
+        <item quantity="other">%d संदेश जांचे गए</item>
+    </plurals>
+    <string name="account_link_confirm_title">यह खाता लिंक करें?</string>
+    <string name="account_link_confirm_message">%1$s इस डिवाइस पर %2$s का उपयोग करना चाहता है। केवल तभी पुष्टि करें जब आपने यह %1$s में शुरू किया हो।</string>
     <string name="delete_selected_subscriptions">हटाएं (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">%d सदस्यता हटाएं?</item>
@@ -3549,4 +3571,5 @@
         <item quantity="other">%d सदस्यताएं हटाई गईं</item>
     </plurals>
     <string name="delete_subscriptions_failed">चुनी गई सदस्यताएं हटाई नहीं जा सकीं</string>
+    <string name="attachment_unverified">असत्यापित अटैचमेंट</string>
 </resources>

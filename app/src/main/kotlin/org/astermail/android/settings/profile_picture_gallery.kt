@@ -22,6 +22,8 @@
 package org.astermail.android.settings
 
 import android.content.Context
+import coil.ImageLoader
+import coil.imageLoader
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +36,14 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.CookieJar
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.astermail.android.AsterApplication
 import org.astermail.android.security.LockdownStore
 
-const val profile_picture_gallery_base_url = "https://aster-wallpapers.pages.dev"
+const val profile_picture_gallery_base_url = "https://app.astermail.org/gallery"
 
 val profile_picture_gallery_categories: List<String> = listOf(
     "space",
@@ -116,18 +121,40 @@ fun gallery_categories_present(items: List<GalleryItem>): List<String> {
     return profile_picture_gallery_categories.filter { it in present }
 }
 
+private fun gallery_origin_only(base_url: String): Interceptor {
+    val base = base_url.toHttpUrl()
+    return Interceptor { chain ->
+        val url = chain.request().url
+        if (url.scheme != base.scheme || url.host != base.host || url.port != base.port) {
+            throw IOException("gallery host not allowed")
+        }
+        chain.proceed(chain.request().newBuilder().removeHeader("Authorization").build())
+    }
+}
+
+private fun gallery_http_builder(base_url: String): OkHttpClient.Builder = OkHttpClient.Builder()
+    .cookieJar(CookieJar.NO_COOKIES)
+    .followRedirects(false)
+    .followSslRedirects(false)
+    .connectTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
+    .callTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
+    .addInterceptor(gallery_origin_only(base_url))
+
+fun gallery_thumb_client(
+    shared: OkHttpClient,
+    base_url: String = profile_picture_gallery_base_url,
+): OkHttpClient = gallery_http_builder(base_url)
+    .dns(shared.dns)
+    .dispatcher(shared.dispatcher)
+    .connectionPool(shared.connectionPool)
+    .build()
+
 class ProfilePictureGallery(
     private val base_url: String = profile_picture_gallery_base_url,
     private val is_available: () -> Boolean,
     client: OkHttpClient? = null,
 ) {
-    private val http: OkHttpClient = client ?: OkHttpClient.Builder()
-        .cookieJar(CookieJar.NO_COOKIES)
-        .followRedirects(false)
-        .followSslRedirects(false)
-        .connectTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
-        .callTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
-        .build()
+    private val http: OkHttpClient = client ?: gallery_http_builder(base_url).build()
 
     private val mutex = Mutex()
     private var cached: List<GalleryItem>? = null
@@ -189,6 +216,22 @@ object profile_picture_gallery_holder {
 
     @Volatile
     private var instance: ProfilePictureGallery? = null
+
+    @Volatile
+    private var thumb_loader: ImageLoader? = null
+
+    fun image_loader(context: Context): ImageLoader {
+        thumb_loader?.let { return it }
+        val app = context.applicationContext
+        val shared_loader = app.imageLoader
+        val shared_client = (app as? AsterApplication)?.image_http_client ?: return shared_loader
+        return synchronized(this) {
+            thumb_loader ?: shared_loader.newBuilder()
+                .okHttpClient(gallery_thumb_client(shared_client))
+                .build()
+                .also { thumb_loader = it }
+        }
+    }
 
     fun get(context: Context): ProfilePictureGallery {
         instance?.let { return it }

@@ -28,7 +28,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.AesGcm
-import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.PasswordKdf
 import org.astermail.android.crypto.VaultKdf
 import org.astermail.android.crypto.storage_rotation.is_level2_not_admitted
@@ -43,7 +42,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
-import org.astermail.android.api.recovery.CompleteRecoveryRequest
 import org.astermail.android.api.recovery.InitiateEmailRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryRequest
 import org.astermail.android.api.recovery.RecoveryApi
@@ -109,10 +107,14 @@ class RecoveryViewModel @Inject constructor(
     val state: StateFlow<RecoveryUiState> = _state.asStateFlow()
 
     internal var compute_dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
+    internal var recovery_backup_floors: RecoveryBackupFloors = RecoveryBackupFloors.of(application)
     private var is_code_hash_optional = false
 
     private var recovery_token: String? = null
     private var decrypted_vault: ByteArray? = null
+    private var backup_user_id: String = ""
+    private var backup_format_v2: Boolean = false
+    private var vault_write_count: Long? = null
     private var user_email: String = ""
     private var had_recovery_email: Boolean = false
     private var cooldown_job: Job? = null
@@ -279,6 +281,7 @@ class RecoveryViewModel @Inject constructor(
                     ),
                 )
                 recovery_token = response.recovery_token
+                vault_write_count = response.vault_write_count
                 had_recovery_email = !response.encrypted_recovery_email.isNullOrBlank()
                 _state.value = _state.value.copy(account_address = "")
                 adopt_recovered_address(response.account_address)
@@ -290,13 +293,30 @@ class RecoveryViewModel @Inject constructor(
                         base64_decode(response.recovery_key_nonce),
                         base64_decode(response.code_salt),
                     )
-                    decrypted_vault = decrypt_vault_backup(
-                        base64_decode(response.encrypted_vault_backup),
-                        base64_decode(response.vault_backup_nonce),
-                        base64_decode(response.recovery_key_salt),
-                        recovery_key,
+                    val opened = try {
+                        recovery_backup_floors.open_for_recovery(
+                            base64_decode(response.encrypted_vault_backup),
+                            base64_decode(response.vault_backup_nonce),
+                            base64_decode(response.recovery_key_salt),
+                            recovery_key,
+                            user_email,
+                        )
+                    } finally {
+                        recovery_key.fill(0)
+                    }
+                    val plan = plan_recovery_backup(
+                        opened,
+                        runCatching { org.json.JSONObject(String(opened.plain, Charsets.UTF_8)) }.getOrNull(),
+                        recovery_backup_floors,
+                        user_email,
                     )
-                    recovery_key.fill(0)
+                    if (plan == null) {
+                        opened.plain.fill(0)
+                        throw RecoveryBackupStaleException()
+                    }
+                    decrypted_vault = opened.plain
+                    backup_user_id = plan.user_id
+                    backup_format_v2 = plan.format_v2
                 }
                 val needs_previous = withContext(compute_dispatcher) {
                     decrypted_vault?.let { bytes ->
@@ -379,11 +399,26 @@ class RecoveryViewModel @Inject constructor(
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_generating_codes))
                 val new_codes = generate_recovery_codes()
                 val new_recovery_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val recovered_vault = runCatching { org.json.JSONObject(String(vault_bytes, Charsets.UTF_8)) }.getOrNull()
+                val format_v2 = backup_format_v2
+                val backup_binding = recovery_backup_floors.next_binding(
+                    backup_user_id,
+                    user_email,
+                    RecoveryBackupVaultFields.generation(recovered_vault),
+                )
                 val password_chars = password.toCharArray()
                 val previous_chars = if (asks_previous) previous_password.toCharArray() else null
                 val updated_vault = try {
                     withContext(compute_dispatcher) {
-                        with_recovery_codes(vault_bytes, new_codes, password_chars, previous_chars)
+                        recovery_upload_vault(
+                            vault_bytes,
+                            new_codes,
+                            password_chars,
+                            previous_chars,
+                            vault_write_count,
+                            backup_binding,
+                            format_v2,
+                        )
                     }
                 } finally {
                     password_chars.fill('\u0000')
@@ -391,18 +426,19 @@ class RecoveryViewModel @Inject constructor(
                 }
 
                 val retry_plain = updated_vault.plain.copyOf()
+                val bound_write = org.astermail.android.api.keys.BoundWriteSwitches.refresh_for_vault_write()
                 val (new_envelope, backup) = try {
                     val envelope = withContext(compute_dispatcher) {
                         CryptoNative.encrypt_vault_with_password(
                             updated_vault.plain,
                             password_bytes,
                             VaultKdf.LEVEL2_ITERATIONS,
-                            org.astermail.android.api.keys.BoundWriteSwitches.vault(),
+                            bound_write,
                         )
                     }
                     _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_creating_backup))
                     val sealed_backup = withContext(compute_dispatcher) {
-                        encrypt_vault_backup(updated_vault.backup_plain, new_recovery_key)
+                        encrypt_vault_backup(updated_vault.backup_plain, new_recovery_key, backup_binding, format_v2)
                     }
                     envelope to sealed_backup
                 } finally {
@@ -419,22 +455,21 @@ class RecoveryViewModel @Inject constructor(
                 }
 
                 _state.value = _state.value.copy(processing_status = ctx.getString(R.string.status_saving_credentials))
-                val complete_request = CompleteRecoveryRequest(
+                val complete_request = recovery_complete_request(
                     recovery_token = token,
-                    new_password_hash = base64_encode(new_password_hash),
-                    new_password_hash_v2 = base64_encode(new_password_hash_v2),
-                    new_password_salt = base64_encode(new_salt),
-                    new_encrypted_vault = base64_encode(new_envelope.encrypted_vault),
-                    new_vault_nonce = base64_encode(new_envelope.vault_nonce),
-                    new_recovery_shares = shares,
-                    new_encrypted_vault_backup = backup.encrypted_data,
-                    new_vault_backup_nonce = backup.nonce,
-                    new_recovery_key_salt = backup.salt,
-                    vault_format = updated_vault.vault_format,
+                    password_hash = base64_encode(new_password_hash),
+                    password_hash_v2 = base64_encode(new_password_hash_v2),
+                    password_salt = base64_encode(new_salt),
+                    encrypted_vault = base64_encode(new_envelope.encrypted_vault),
+                    vault_nonce = base64_encode(new_envelope.vault_nonce),
+                    shares = shares,
+                    backup = backup,
+                    vault = updated_vault,
                     vault_kdf_iterations = VaultKdf.to_server(VaultKdf.LEVEL2_ITERATIONS),
                 )
                 try {
                     adopt_recovered_address(recovery_api.complete(complete_request).account_address)
+                    org.astermail.android.crypto.VaultBindingFloor.note_written(new_envelope.bound, encrypted_vault = new_envelope.encrypted_vault)
                 } catch (error: ApiError.Conflict) {
                     if (!is_level2_not_admitted(error)) throw error
                     val fallback = withContext(compute_dispatcher) {
@@ -442,7 +477,7 @@ class RecoveryViewModel @Inject constructor(
                             retry_plain,
                             password_bytes,
                             VaultKdf.DEFAULT_ITERATIONS,
-                            org.astermail.android.api.keys.BoundWriteSwitches.vault(),
+                            bound_write,
                         )
                     }
                     adopt_recovered_address(
@@ -454,10 +489,15 @@ class RecoveryViewModel @Inject constructor(
                             ),
                         ).account_address,
                     )
+                    org.astermail.android.crypto.VaultBindingFloor.note_written(fallback.bound, encrypted_vault = fallback.encrypted_vault)
                 } finally {
                     retry_plain.fill(0)
                 }
 
+                if (format_v2) {
+                    recovery_backup_floors.raise(backup_binding.user_id, backup_binding.generation, user_email)
+                    recovery_backup_floors.mark_v2(backup_binding.user_id, user_email)
+                }
                 remember_login_salt(new_salt)
                 new_password_hash.fill(0)
                 new_password_hash_v2.fill(0)
@@ -529,30 +569,8 @@ class RecoveryViewModel @Inject constructor(
         recovery_token = null
         decrypted_vault?.fill(0)
         decrypted_vault = null
-    }
-
-    private class UpdatedVault(
-        val plain: ByteArray,
-        val backup_plain: ByteArray,
-        val vault_format: Int,
-        val identity_locked: Boolean,
-    )
-
-    private fun with_recovery_codes(
-        vault_bytes: ByteArray,
-        codes: List<String>,
-        password: CharArray,
-        previous_password: CharArray?,
-    ): UpdatedVault {
-        val backup_obj = org.json.JSONObject(String(vault_bytes, Charsets.UTF_8))
-        val resealed = reseal_recovery_vault(backup_obj, codes, password, previous_password)
-
-        return UpdatedVault(
-            plain = resealed.vault.toString().toByteArray(Charsets.UTF_8),
-            backup_plain = resealed.backup.toString().toByteArray(Charsets.UTF_8),
-            vault_format = stored_vault_format(resealed.vault),
-            identity_locked = resealed.identity_locked,
-        )
+        backup_user_id = ""
+        vault_write_count = null
     }
 
     private fun adopt_recovered_address(value: String?) {
@@ -642,27 +660,14 @@ class RecoveryViewModel @Inject constructor(
         return decrypted
     }
 
-    private fun decrypt_vault_backup(
-        encrypted: ByteArray,
-        nonce: ByteArray,
-        salt: ByteArray,
+    private fun encrypt_vault_backup(
+        vault: ByteArray,
         recovery_key: ByteArray,
-    ): ByteArray {
-        val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
-        val decrypted = AesGcm.decrypt(derived, nonce, encrypted)
-        derived.fill(0)
-        return decrypted
-    }
-
-    data class VaultBackup(val encrypted_data: String, val nonce: String, val salt: String)
-
-    private fun encrypt_vault_backup(vault: ByteArray, recovery_key: ByteArray): VaultBackup {
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
-        val derived = hkdf_sha256(recovery_key, salt, HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
-        val encrypted = AesGcm.encrypt(derived, nonce, vault)
-        derived.fill(0)
-        return VaultBackup(base64_encode(encrypted), base64_encode(nonce), base64_encode(salt))
+        binding: RecoveryBackupBinding,
+        format_v2: Boolean,
+    ): RecoveryBackupFields {
+        val sealed = seal_vault_backup(vault, recovery_key, binding, format_v2)
+        return RecoveryBackupFields(base64_encode(sealed.encrypted_data), base64_encode(sealed.nonce), base64_encode(sealed.salt))
     }
 
     private fun generate_recovery_share(
@@ -690,9 +695,9 @@ class RecoveryViewModel @Inject constructor(
         )
     }
 
-    private fun remember_login_salt(salt: ByteArray) {
+    private suspend fun remember_login_salt(salt: ByteArray) = withContext(Dispatchers.IO) {
         runCatching {
-            val email = user_email.takeIf { it.isNotBlank() } ?: return
+            val email = user_email.takeIf { it.isNotBlank() } ?: return@runCatching
             val keys = LoginSaltRule.record_keys(
                 runCatching { CryptoNative.hash_email(email) }.getOrNull(),
                 runCatching { CryptoNative.hash_email_keeping_dots(email) }.getOrNull(),
@@ -710,6 +715,5 @@ class RecoveryViewModel @Inject constructor(
     companion object {
         private const val RESEND_COOLDOWN_SECONDS = 60
         private const val PBKDF2_ITERATIONS = 310000
-        private const val HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
     }
 }

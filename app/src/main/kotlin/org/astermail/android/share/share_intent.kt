@@ -29,10 +29,15 @@ import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import java.io.File
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import org.astermail.android.billing.AttachmentLimits
+import org.astermail.android.ui.mail.SHARED_ATTACHMENTS_DIR_NAME
+import org.astermail.android.ui.mail.SHARED_IMPORTS_DIR_NAME
+import org.astermail.android.ui.mail.fit_attachment_name
 
-private const val share_cache_dir_name = "shared_attachments"
 private const val share_cache_ttl_ms = 24L * 60 * 60 * 1000
+private val held_share_imports: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
 data class SharePayload(
     val to: List<String> = emptyList(),
@@ -209,10 +214,7 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
     if (size > AttachmentLimits.max_bytes()) return AttachmentImport.TooLarge(name, size)
     val mime = resolver.getType(uri) ?: guess_mime_from_name(name)
     name = ensure_extension(name, mime)
-    val target_dir = File(context.cacheDir, share_cache_dir_name)
-    if (!target_dir.exists() && !target_dir.mkdirs()) return AttachmentImport.Failed(name)
-    prune_share_cache(target_dir)
-    val target = File(target_dir, System.nanoTime().toString() + "_" + name)
+    val target = share_import_target(context.cacheDir, name) ?: return AttachmentImport.Failed(name)
     val limit = AttachmentLimits.max_bytes()
     val copy_result = runCatching {
         resolver.openInputStream(uri)?.use { input ->
@@ -220,23 +222,23 @@ fun import_shared_attachment(context: Context, uri: Uri): AttachmentImport {
         }
     }.getOrNull()
     if (copy_result is BoundedCopyResult.Exceeded) {
-        target.delete()
+        discard_share_import(target)
         return AttachmentImport.TooLarge(name, maxOf(size, limit + 1))
     }
     val copied = (copy_result as? BoundedCopyResult.Copied)?.bytes ?: -1L
     if (copied < 0) {
-        target.delete()
+        discard_share_import(target)
         return AttachmentImport.Failed(name)
     }
     if (copied > limit) {
-        target.delete()
+        discard_share_import(target)
         return AttachmentImport.TooLarge(name, copied)
     }
     val provider_uri = runCatching {
         FileProvider.getUriForFile(context, context.packageName + ".fileprovider", target)
     }.getOrNull()
     if (provider_uri == null) {
-        target.delete()
+        discard_share_import(target)
         return AttachmentImport.Failed(name)
     }
     return AttachmentImport.Imported(
@@ -280,11 +282,44 @@ private fun sanitize_file_name(raw: String): String {
     return if (safe.length > 120) safe.takeLast(120) else safe
 }
 
-private fun prune_share_cache(dir: File) {
-    val cutoff = System.currentTimeMillis() - share_cache_ttl_ms
-    runCatching {
-        dir.listFiles()?.forEach { file ->
-            if (file.isFile && file.lastModified() < cutoff) file.delete()
-        }
+internal fun share_import_target(cache_dir: File, name: String, now_ms: Long = System.currentTimeMillis()): File? {
+    val root = File(File(cache_dir, SHARED_ATTACHMENTS_DIR_NAME), SHARED_IMPORTS_DIR_NAME)
+    if (!root.exists() && !root.mkdirs()) return null
+    prune_share_imports(root, now_ms)
+    val holder = File(root, UUID.randomUUID().toString())
+    if (!holder.mkdirs()) return null
+    holder.setLastModified(now_ms)
+    held_share_imports.add(holder.name)
+    return File(holder, fit_attachment_name(name))
+}
+
+fun release_share_imports(uris: Collection<Uri>) {
+    release_share_import_holders(uris.mapNotNull { uri -> share_import_holder_name(uri.pathSegments.orEmpty()) })
+}
+
+internal fun share_import_holder_name(path_segments: List<String>): String? {
+    if (path_segments.size != 4) return null
+    if (path_segments[0] != SHARED_ATTACHMENTS_DIR_NAME || path_segments[1] != SHARED_IMPORTS_DIR_NAME) return null
+    return path_segments[2]
+}
+
+internal fun release_share_import_holders(names: Collection<String>) {
+    held_share_imports.removeAll(names.toSet())
+}
+
+private fun discard_share_import(target: File) {
+    val holder = target.parentFile
+    target.delete()
+    if (holder != null) {
+        holder.delete()
+        release_share_import_holders(listOf(holder.name))
+    }
+}
+
+private fun prune_share_imports(root: File, now_ms: Long) {
+    val cutoff = now_ms - share_cache_ttl_ms
+    root.listFiles()?.forEach { entry ->
+        if (entry.name in held_share_imports) return@forEach
+        if (entry.lastModified() < cutoff) runCatching { entry.deleteRecursively() }
     }
 }

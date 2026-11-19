@@ -70,6 +70,8 @@ android {
             resValue("string", "contact_sync_account_type", "org.astermail.android.debug.contacts")
         }
         release {
+            isDebuggable = false
+            isJniDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             if (System.getenv("ASTER_UNSIGNED") != "1" && !is_fdroid_build) {

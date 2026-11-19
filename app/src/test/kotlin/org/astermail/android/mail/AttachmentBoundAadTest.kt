@@ -79,15 +79,10 @@ class AttachmentBoundAadTest {
     }
 
     @Test
-    fun writes_the_unbound_form_while_the_switch_is_off() {
-        assertArrayEquals(seal(null), MailRepository.seal_attachment_bytes(plaintext, key, nonce, 3, false))
-    }
-
-    @Test
-    fun writes_the_shared_bound_vector_when_the_switch_is_on() {
+    fun writes_the_shared_bound_vector() {
         assertArrayEquals(
             java.util.Base64.getDecoder().decode(bound_vector),
-            MailRepository.seal_attachment_bytes(plaintext, key, nonce, 3, true),
+            MailRepository.seal_attachment_bytes(plaintext, key, nonce, 3),
         )
     }
 

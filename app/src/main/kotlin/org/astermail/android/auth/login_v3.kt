@@ -32,6 +32,7 @@ import org.astermail.android.api.auth.EnrollPasswordV3StartRequest
 import org.astermail.android.api.auth.LoginResult
 import org.astermail.android.api.auth.LoginV3FinishRequest
 import org.astermail.android.api.auth.LoginV3StartRequest
+import org.astermail.android.crypto.AuthSaltCollisionException
 import org.astermail.android.crypto.hkdf_sha256
 import org.astermail.android.crypto.opaque.LoginV3Client
 import org.astermail.android.crypto.opaque.LoginV3Start
@@ -46,6 +47,12 @@ object LoginV3 {
         hkdf_sha256(v1_proof, ByteArray(input_bytes), input_info, input_bytes)
 
     fun should_enroll(offered: Boolean, enrolled: Boolean): Boolean = offered && !enrolled
+
+    fun require_offered(seen_on_device: Boolean, offered: Boolean) {
+        if (seen_on_device && !offered) {
+            throw AuthSaltCollisionException("server offered the older login for an account that signs in with login v3")
+        }
+    }
 
     suspend fun sign_in(
         auth_api: AuthApi,

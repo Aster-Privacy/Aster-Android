@@ -23,15 +23,18 @@ package org.astermail.android.api.recovery
 
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.security.StepUpKeyAssertion
 
 @Serializable
 data class InitiateRecoveryRequest(
@@ -69,6 +72,7 @@ data class InitiateRecoveryResponse(
     val encrypted_recovery_email: String? = null,
     val recovery_email_nonce: String? = null,
     val account_address: String? = null,
+    val vault_write_count: Long? = null,
 )
 
 @Serializable
@@ -116,6 +120,7 @@ data class CompleteRecoveryRequest(
     val new_recovery_email: RecoveryEmailReencryption? = null,
     val vault_format: Int? = null,
     val vault_kdf_iterations: Int? = null,
+    val vault_generation: Long? = null,
 )
 
 @Serializable
@@ -177,6 +182,7 @@ data class CodesStatusResponse(
 data class VerifyCodesStepUpRequest(
     val password_hash: String,
     val totp_code: String? = null,
+    val hardware_key_assertion: StepUpKeyAssertion? = null,
 )
 
 @Serializable
@@ -368,6 +374,9 @@ class RecoveryApiImpl(private val client: ApiClient) : RecoveryApi {
     ): VerifyCodesStepUpResponse {
         val response = client.http.post("${client.base_url}$base/codes/verify-step-up") {
             contentType(ContentType.Application.Json)
+            if (request.hardware_key_assertion != null) {
+                header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            }
             setBody(request)
         }
         return decode_or_throw(response)

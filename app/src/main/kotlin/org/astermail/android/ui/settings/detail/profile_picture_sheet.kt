@@ -875,6 +875,7 @@ private fun gallery_tile(
         ) {
             AsyncImage(
                 model = request,
+                imageLoader = remember(context) { profile_picture_gallery_holder.image_loader(context) },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

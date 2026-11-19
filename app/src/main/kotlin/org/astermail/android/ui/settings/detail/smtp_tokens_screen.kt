@@ -21,8 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.content.ClipData
-
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -59,6 +57,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.api.settings.SmtpTokenRow
+import org.astermail.android.api.settings.SmtpTokenSettings
 import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -68,7 +67,9 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
-import org.astermail.android.ui.common.write_to_clipboard
+import org.astermail.android.ui.common.secure_screen
+import org.astermail.android.ui.common.write_sensitive_to_clipboard
+import org.astermail.android.util.schedule_sensitive_clipboard_clear
 
 @Composable
 fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
@@ -117,7 +118,6 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
             show_load_placeholder = false
         }
     }
-    val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
 
     detail_scaffold(title = stringResource(R.string.settings_smtp_tokens), on_back = on_back) {
         if (!is_locked) {
@@ -251,44 +251,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     val created = state.smtp_token_created
     if (created != null) {
-        val settings = created.smtp_settings
-        val all_text = buildString {
-            appendLine(context.getString(R.string.smtp_token_host) + ": " + settings.host)
-            appendLine(context.getString(R.string.smtp_token_port) + ": " + settings.port)
-            appendLine(context.getString(R.string.smtp_token_security) + ": " + settings.security)
-            appendLine(context.getString(R.string.smtp_token_username) + ": " + settings.username)
-            append(context.getString(R.string.smtp_token_password) + ": " + settings.password)
-        }
-        AsterAlertDialog(
-            on_dismiss = { vm.clear_created_smtp_token() },
-            title = stringResource(R.string.smtp_token_ready_title),
-            message = stringResource(R.string.smtp_token_ready_description),
-            confirm_label = stringResource(R.string.done),
-            on_confirm = { vm.clear_created_smtp_token() },
-            extra_content = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    smtp_setting_row(stringResource(R.string.smtp_token_host), settings.host)
-                    smtp_setting_row(stringResource(R.string.smtp_token_port), settings.port.toString())
-                    smtp_setting_row(stringResource(R.string.smtp_token_security), settings.security)
-                    smtp_setting_row(stringResource(R.string.smtp_token_username), settings.username)
-                    smtp_setting_row(stringResource(R.string.smtp_token_password), settings.password)
-                    v_gap(AsterSpacing.sm)
-                    AsterButton(
-                        label = stringResource(R.string.smtp_token_copy_all),
-                        onClick = {
-                            if (write_to_clipboard(context, ClipData.newPlainText(clipboard_label, all_text))) {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    context.getString(R.string.copied_to_clipboard),
-                                    android.widget.Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-        )
+        smtp_token_created_dialog(created.smtp_settings, on_done = { vm.clear_created_smtp_token() })
     }
 
     val revoke_target = pending_revoke
@@ -306,6 +269,52 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
             },
         )
     }
+}
+
+@Composable
+internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () -> Unit) {
+    val context = LocalContext.current
+    val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
+    secure_screen()
+    val all_text = buildString {
+        appendLine(context.getString(R.string.smtp_token_host) + ": " + settings.host)
+        appendLine(context.getString(R.string.smtp_token_port) + ": " + settings.port)
+        appendLine(context.getString(R.string.smtp_token_security) + ": " + settings.security)
+        appendLine(context.getString(R.string.smtp_token_username) + ": " + settings.username)
+        append(context.getString(R.string.smtp_token_password) + ": " + settings.password)
+    }
+    AsterAlertDialog(
+        on_dismiss = on_done,
+        title = stringResource(R.string.smtp_token_ready_title),
+        message = stringResource(R.string.smtp_token_ready_description),
+        confirm_label = stringResource(R.string.done),
+        on_confirm = on_done,
+        secure = true,
+        extra_content = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                smtp_setting_row(stringResource(R.string.smtp_token_host), settings.host)
+                smtp_setting_row(stringResource(R.string.smtp_token_port), settings.port.toString())
+                smtp_setting_row(stringResource(R.string.smtp_token_security), settings.security)
+                smtp_setting_row(stringResource(R.string.smtp_token_username), settings.username)
+                smtp_setting_row(stringResource(R.string.smtp_token_password), settings.password)
+                v_gap(AsterSpacing.sm)
+                AsterButton(
+                    label = stringResource(R.string.smtp_token_copy_all),
+                    onClick = {
+                        if (write_sensitive_to_clipboard(context, clipboard_label, all_text)) {
+                            schedule_sensitive_clipboard_clear(context)
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.copied_to_clipboard),
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+    )
 }
 
 @Composable

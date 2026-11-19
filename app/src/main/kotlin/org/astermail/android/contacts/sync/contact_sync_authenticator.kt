@@ -32,6 +32,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import org.astermail.android.MainActivity
+import org.astermail.android.notifications.contact_sync_launch
 
 class ContactSyncAuthenticator(private val context: Context) : AbstractAccountAuthenticator(context) {
     private fun unsupported(): Bundle = Bundle().apply {
@@ -48,9 +49,13 @@ class ContactSyncAuthenticator(private val context: Context) : AbstractAccountAu
         requiredFeatures: Array<out String>?,
         options: Bundle?,
     ): Bundle {
+        val caller_uid = options?.getInt(AccountManager.KEY_CALLER_UID, -1) ?: -1
         val intent = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            .putExtra(MainActivity.EXTRA_OPEN_CONTACT_SYNC, true)
+        if (contact_sync_launch.caller_allowed(caller_uid, android.os.Process.myUid())) {
+            intent.putExtra(MainActivity.EXTRA_OPEN_CONTACT_SYNC, true)
+                .putExtra(contact_sync_launch.EXTRA_NONCE, contact_sync_launch.issue())
+        }
         return Bundle().apply { putParcelable(AccountManager.KEY_INTENT, intent) }
     }
 

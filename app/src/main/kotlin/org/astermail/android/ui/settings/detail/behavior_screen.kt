@@ -88,6 +88,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.astermail.android.R
+import org.astermail.android.contacts.sync.ContactFieldScope
 import org.astermail.android.contacts.sync.ContactSyncAccounts
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.ui.theme.ThemeViewModel
@@ -953,6 +954,8 @@ private fun phone_contacts_sync_section() {
     var show_disclosure by remember { mutableStateOf(false) }
     var show_off_confirm by remember { mutableStateOf(false) }
     var show_settings_prompt by remember { mutableStateOf(false) }
+    var show_all_details_confirm by remember { mutableStateOf(false) }
+    val field_scope by remember { ContactSyncAccounts.field_scope_flow(context) }.collectAsStateWithLifecycle()
     var pending_enable by remember { mutableStateOf(false) }
     val setup_requested by ContactSyncAccounts.setup_requested.collectAsStateWithLifecycle()
     val section_requester = remember { BringIntoViewRequester() }
@@ -966,6 +969,10 @@ private fun phone_contacts_sync_section() {
 
     fun apply(value: Boolean) {
         scope.launch(Dispatchers.IO) { ContactSyncAccounts.set_enabled(context, value) }
+    }
+
+    fun apply_scope(value: ContactFieldScope) {
+        scope.launch(Dispatchers.IO) { ContactSyncAccounts.set_field_scope(context, value) }
     }
 
     val lifecycle_owner = LocalLifecycleOwner.current
@@ -1006,6 +1013,31 @@ private fun phone_contacts_sync_section() {
             subtitle = stringResource(R.string.contact_sync_subtitle),
             checked = enabled == true && permitted,
             on_change = { on -> if (on) show_disclosure = true else show_off_confirm = true },
+        )
+        if (enabled == true && permitted) {
+            settings_row_gap(modifier = Modifier)
+            behavior_toggle(
+                title = stringResource(R.string.contact_sync_all_details_title),
+                subtitle = stringResource(R.string.contact_sync_all_details_subtitle),
+                checked = field_scope == ContactFieldScope.ALL,
+                on_change = { on ->
+                    if (on) show_all_details_confirm = true else apply_scope(ContactFieldScope.NAMES_AND_EMAILS)
+                },
+            )
+        }
+    }
+
+    if (show_all_details_confirm) {
+        AsterAlertDialog(
+            on_dismiss = { show_all_details_confirm = false },
+            title = stringResource(R.string.contact_sync_all_details_confirm_title),
+            message = stringResource(R.string.contact_sync_all_details_confirm_message),
+            confirm_label = stringResource(R.string.contact_sync_all_details_confirm),
+            cancel_label = stringResource(R.string.cancel),
+            on_confirm = {
+                show_all_details_confirm = false
+                apply_scope(ContactFieldScope.ALL)
+            },
         )
     }
 

@@ -404,4 +404,34 @@ class EnvelopeCapabilityReporterTest {
 
         assertEquals(2, api.requests.size)
     }
+
+    @Test
+    fun reports_the_ratchet_sync_and_recovery_backup_versions() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = true)
+
+        assertEquals(3, api.requests[0].ratchet_sync_version)
+        assertEquals(2, api.requests[0].recovery_backup_version)
+        assertEquals(3, store.last_reported[user_id]?.ratchet_sync_version)
+        assertEquals(2, store.last_reported[user_id]?.recovery_backup_version)
+    }
+
+    @Test
+    fun reports_again_when_the_saved_report_predates_the_sync_versions() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+        reporter(store, api, now = { 1_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = true)
+        store.last_reported[user_id] = store.last_reported.getValue(user_id)
+            .copy(ratchet_sync_version = 0, recovery_backup_version = 0)
+
+        reporter(store, api, now = { 2_000L })
+            .report_if_due(user_id, identity, pq_identity, holds_pq_identity_secret = true)
+
+        assertEquals(2, api.requests.size)
+        assertEquals(3, api.requests[1].ratchet_sync_version)
+    }
 }

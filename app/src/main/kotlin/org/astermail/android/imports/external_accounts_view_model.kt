@@ -131,12 +131,14 @@ class ExternalAccountsViewModel @Inject constructor(
                         val keys = read_keys()
                         try {
                             res.accounts.mapNotNull { acct ->
-                                decrypt_account_data_with_keys(
-                                    encrypted_account_data = acct.encrypted_account_data,
-                                    account_data_nonce = acct.account_data_nonce,
-                                    integrity_hash = acct.integrity_hash,
-                                    keys = keys,
-                                )?.let { acct.account_token to it }
+                                StorageWriteKey.open_noting_constants(session_keys, keys) { subset ->
+                                    decrypt_account_data_with_keys(
+                                        encrypted_account_data = acct.encrypted_account_data,
+                                        account_data_nonce = acct.account_data_nonce,
+                                        integrity_hash = acct.integrity_hash,
+                                        keys = subset,
+                                    )
+                                }?.let { acct.account_token to it }
                             }.toMap()
                         } finally {
                             keys.forEach { it.fill(0) }

@@ -69,6 +69,8 @@ class DraftAccountKeyWriterTest {
         every { session_key_store.get_passphrase() } answers { "draft passphrase".toByteArray(Charsets.UTF_8) }
         every { session_key_store.get_data_kek() } returns null
         every { session_key_store.get_decrypt_keks() } answers { decrypt_keks }
+        every { session_key_store.get_password_salt() } answers { ByteArray(16) { 3 } }
+        every { session_key_store.get_retired_password_salts() } returns emptyList()
         every { session_key_store.has_account_write_kek(AccountDataWriter.DRAFT_CONTEXT) } answers { has_write_key }
         every { session_key_store.get_account_write_kek(AccountDataWriter.DRAFT_CONTEXT) } answers {
             if (has_write_key) draft_key.copyOf() else null
@@ -111,6 +113,20 @@ class DraftAccountKeyWriterTest {
             javax.crypto.spec.GCMParameterSpec(128, decode(sealed.second)),
         )
         return String(cipher.doFinal(decode(sealed.first)), Charsets.UTF_8)
+    }
+
+    private fun opens_with_identity_material(material: String, sealed: Pair<String, String>): Boolean {
+        val key = java.security.MessageDigest.getInstance("SHA-256")
+            .digest((material + "astermail-envelope-v1").toByteArray(Charsets.UTF_8))
+        return runCatching {
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(
+                javax.crypto.Cipher.DECRYPT_MODE,
+                javax.crypto.spec.SecretKeySpec(key, "AES"),
+                javax.crypto.spec.GCMParameterSpec(128, decode(sealed.second)),
+            )
+            String(cipher.doFinal(decode(sealed.first)), Charsets.UTF_8) == json
+        }.getOrDefault(false)
     }
 
     private fun is_legacy_passphrase_format(sealed: Pair<String, String>): Boolean =
@@ -163,5 +179,34 @@ class DraftAccountKeyWriterTest {
         val opened = repo.decrypt_envelope_identity_key(sealed.first, decode(sealed.second))
 
         assertEquals(json, String(opened, Charsets.UTF_8))
+    }
+
+    @Test
+    fun never_writes_a_draft_under_a_placeholder_identity_key() = runBlocking {
+        has_write_key = false
+        every { session_key_store.get_passphrase() } returns null
+        every { session_key_store.mail_legacy_retired() } returns false
+        for (material in listOf("null", "", " Undefined ")) {
+            every { session_key_store.get_identity_key() } returns material
+
+            val outcome = runCatching { repo.encrypt_draft_envelope(json) }
+
+            assertTrue(
+                "a draft under '$material' should be refused, got ${outcome.getOrNull()}",
+                outcome.exceptionOrNull() is IllegalStateException,
+            )
+            assertEquals("no key material available", outcome.exceptionOrNull()?.message)
+        }
+    }
+
+    @Test
+    fun still_writes_a_legacy_draft_under_a_real_identity_key() = runBlocking {
+        has_write_key = false
+        every { session_key_store.get_passphrase() } returns null
+        every { session_key_store.mail_legacy_retired() } returns false
+
+        val sealed = repo.encrypt_draft_envelope(json)
+
+        assertTrue(opens_with_identity_material("draft_identity_key", sealed))
     }
 }

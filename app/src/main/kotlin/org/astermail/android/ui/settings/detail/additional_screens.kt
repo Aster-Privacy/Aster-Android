@@ -25,9 +25,10 @@ import compose.icons.TablerIcons
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.auto_mirrored
-import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.write_sensitive_to_clipboard
 import org.astermail.android.ui.common.write_to_clipboard
+import org.astermail.android.util.schedule_sensitive_clipboard_clear
 import compose.icons.tablericons.*
 
 import android.content.ClipData
@@ -1919,6 +1920,15 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     }
 }
 
+internal fun copy_claim_link(context: Context, url: String, toast: String) {
+    if (!write_sensitive_to_clipboard(context, toast, url)) {
+        show_copy_failed_toast(context)
+        return
+    }
+    schedule_sensitive_clipboard_clear(context)
+    Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
+}
+
 @Composable
 fun KidsReservedScreen(on_back: () -> Unit) {
     val vm: SettingsViewModel = shared_settings_view_model()
@@ -1929,11 +1939,6 @@ fun KidsReservedScreen(on_back: () -> Unit) {
     var release_target by remember { mutableStateOf<org.astermail.android.api.family.ReservedAddress?>(null) }
 
     LaunchedEffect(Unit) { vm.load_reserved_addresses() }
-
-    fun copy_to_clipboard(text: String, label: String) {
-        val copied = write_to_clipboard(context, ClipData.newPlainText(label, text))
-        show_copy_result_toast(context, text, copied)
-    }
 
     detail_scaffold(title = stringResource(R.string.kids_reserved_addresses), on_back = on_back) {
         section_label(stringResource(R.string.kids_reserved_subtitle))
@@ -2039,7 +2044,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                                     label = stringResource(R.string.kids_copy_link),
                                     onClick = {
                                         r.claim_url?.let { url ->
-                                            copy_to_clipboard(url, context.getString(R.string.kids_link_copied))
+                                            copy_claim_link(context, url, context.getString(R.string.kids_link_copied))
                                         }
                                     },
                                 )
@@ -2048,7 +2053,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                                     onClick = {
                                         vm.regenerate_reservation_link(r.id) { new_url ->
                                             if (new_url != null) {
-                                                copy_to_clipboard(new_url, context.getString(R.string.kids_link_regenerated))
+                                                copy_claim_link(context, new_url, context.getString(R.string.kids_link_regenerated))
                                             } else {
                                                 Toast.makeText(context, context.getString(R.string.kids_action_failed), Toast.LENGTH_SHORT).show()
                                             }

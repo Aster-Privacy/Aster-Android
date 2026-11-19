@@ -97,6 +97,20 @@ class LoginV3VectorTest {
     }
 
     @Test
+    fun multiplication_is_linear_for_full_width_and_tiny_scalars() {
+        val random = java.security.SecureRandom()
+        val point = Ristretto255.multiply(Ristretto255.base_point, BigInteger.valueOf(7))
+        val scalars = listOf(BigInteger.ZERO, BigInteger.ONE, Ristretto255.group_order.subtract(BigInteger.ONE)) +
+            List(4) { BigInteger(256, random).mod(Ristretto255.group_order) }
+        for (a in scalars) for (b in scalars.take(3)) {
+            val combined = Ristretto255.multiply(point, a.add(b))
+            val separate = Ristretto255.add(Ristretto255.multiply(point, a), Ristretto255.multiply(point, b))
+            assertEquals(hex(Ristretto255.encode(separate)), hex(Ristretto255.encode(combined)))
+        }
+        assertEquals(true, Ristretto255.is_identity(Ristretto255.multiply(point, BigInteger.ZERO)))
+    }
+
+    @Test
     fun the_registration_request_matches_the_shared_vector() {
         val start = LoginV3Client.registration_start(password, bytes("registration_start_seed"))
         assertEquals(vector.getValue("registration_request"), hex(start.message))

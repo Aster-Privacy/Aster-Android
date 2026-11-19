@@ -34,6 +34,8 @@ import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
 
+class OpenedAccountKey(val key: ByteArray, val serial: Long)
+
 object AccountKey {
 
     const val LENGTH = 32
@@ -41,6 +43,7 @@ object AccountKey {
     const val TOKEN_VERSION = 2
     private const val legacy_token_version = 1
     private const val max_serial = 9_007_199_254_740_991L
+    const val LEGACY_SERIAL = 0L
     private val fingerprint_pattern = Regex("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
     val DATA_CONTEXTS = listOf(
@@ -79,7 +82,10 @@ object AccountKey {
             }
         }
 
-    fun parse_token_payload(plaintext: String, owner_fingerprints: List<String>): ByteArray? {
+    fun parse_token_payload(plaintext: String, owner_fingerprints: List<String>): ByteArray? =
+        parse_token_entry(plaintext, owner_fingerprints)?.key
+
+    fun parse_token_entry(plaintext: String, owner_fingerprints: List<String>): OpenedAccountKey? {
         val payload = runCatching { Json.parseToJsonElement(plaintext) }.getOrNull() as? JsonObject
             ?: return null
         val type = payload["type"] as? JsonPrimitive ?: return null
@@ -87,7 +93,7 @@ object AccountKey {
         val key = payload["key"] as? JsonPrimitive ?: return null
         if (!type.isString || type.content != TOKEN_TYPE) return null
         if (version.isString) return null
-        when (version.content) {
+        val serial_value = when (version.content) {
             TOKEN_VERSION.toString() -> {
                 val owner = payload["owner"] as? JsonPrimitive ?: return null
                 val serial = payload["serial"] as? JsonPrimitive ?: return null
@@ -95,10 +101,11 @@ object AccountKey {
                 val owners = owner_fingerprints.map { it.trim().lowercase() }
                 if (owner.content !in owners) return null
                 if (serial.isString) return null
-                val serial_value = serial.content.toLongOrNull() ?: return null
-                if (serial_value < 1 || serial_value > max_serial) return null
+                val value = serial.content.toLongOrNull() ?: return null
+                if (value < 1 || value > max_serial) return null
+                value
             }
-            legacy_token_version.toString() -> Unit
+            legacy_token_version.toString() -> LEGACY_SERIAL
             else -> return null
         }
         if (!key.isString) return null
@@ -108,7 +115,7 @@ object AccountKey {
             decoded.fill(0)
             return null
         }
-        return decoded
+        return OpenedAccountKey(decoded, serial_value)
     }
 
     fun build_token_payload(account_key: ByteArray, owner: String, serial: Long): String {
@@ -164,12 +171,18 @@ object AccountKey {
         armored_token: String,
         own_private_keys: List<String>,
         passphrase: CharArray,
-    ): ByteArray? {
+    ): ByteArray? = open_token_entry(armored_token, own_private_keys, passphrase)?.key
+
+    fun open_token_entry(
+        armored_token: String,
+        own_private_keys: List<String>,
+        passphrase: CharArray,
+    ): OpenedAccountKey? {
         val candidates = own_private_keys.filter { it.contains("-----BEGIN PGP") }
         if (candidates.isEmpty()) return null
         val plaintext = PgpDecryptor.decrypt_signed_by_own_keys(armored_token, candidates, passphrase)
             ?: return null
-        return parse_token_payload(plaintext, candidates.mapNotNull { primary_fingerprint(it) })
+        return parse_token_entry(plaintext, candidates.mapNotNull { primary_fingerprint(it) })
     }
 
     private fun hkdf_sha256(ikm: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {

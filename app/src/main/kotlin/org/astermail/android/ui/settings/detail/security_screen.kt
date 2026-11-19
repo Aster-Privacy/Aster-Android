@@ -551,7 +551,7 @@ fun SecurityScreen(
                                 settings_row_gap()
                                 hardware_key_row(
                                     key = key,
-                                    on_delete = { vm.delete_hardware_key(key.id) },
+                                    on_delete = { vm.start_hardware_key_removal(key.id) },
                                     on_rename = { new_name -> vm.rename_hardware_key(key.id, new_name) },
                                     colors = colors,
                                 )
@@ -574,13 +574,7 @@ fun SecurityScreen(
                     ),
                     icon = TablerIcons.Plus,
                     on_click = if (state.is_adding_passkey) null else {
-                        {
-                            val host = context.host_activity() ?: context
-                            vm.add_passkey(
-                                create_credential = { json -> create_passkey_json(host, json) },
-                                get_credential = { json -> request_passkey_json(host, json) },
-                            )
-                        }
+                        { vm.start_add_passkey() }
                     },
                 )
             }
@@ -1048,37 +1042,40 @@ private fun vanguard_section(
     }
 
     state.hardware_key_step_up_id?.let { step_up_key_id ->
-        var step_up_password by remember(step_up_key_id) { mutableStateOf("") }
-        AsterAlertDialog(
-            on_dismiss = { vm.dismiss_hardware_key_step_up() },
+        reauth_dialog(
             title = stringResource(R.string.hardware_key_remove_last_title),
             message = stringResource(R.string.hardware_key_remove_last_description),
             confirm_label = stringResource(R.string.remove),
-            cancel_label = stringResource(R.string.cancel),
+            prompt = state.hardware_key_step_up,
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
-            confirm_enabled = step_up_password.isNotBlank() && !state.hardware_key_step_up_busy,
-            is_busy = state.hardware_key_step_up_busy,
-            dismiss_on_confirm = false,
-            on_confirm = { vm.delete_hardware_key(step_up_key_id, step_up_password) },
-            extra_content = {
-                Column {
-                    state.hardware_key_step_up_error?.let {
-                        Text(
-                            text = it,
-                            color = colors.danger,
-                            fontSize = 13.sp,
-                        )
-                        Spacer(Modifier.height(AsterSpacing.md))
-                    }
-                    org.astermail.android.design.components.AsterTextField(
-                        value = step_up_password,
-                        onValueChange = { step_up_password = it },
-                        singleLine = true,
-                        placeholder = stringResource(R.string.enter_your_password),
-                        visual_transformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+            on_dismiss = { vm.dismiss_hardware_key_step_up() },
+            on_confirm = { password, code ->
+                val host = lock_context.host_activity() ?: lock_context
+                vm.delete_hardware_key(
+                    key_id = step_up_key_id,
+                    password = password,
+                    totp_code = code,
+                    get_credential = { json -> request_passkey_json(host, json) },
+                )
+            },
+        )
+    }
+
+    state.passkey_reauth?.let { prompt ->
+        reauth_dialog(
+            title = stringResource(R.string.confirm_its_you),
+            message = stringResource(R.string.passkey_add_reauth_description),
+            confirm_label = stringResource(R.string.continue_action),
+            prompt = prompt,
+            on_dismiss = { vm.dismiss_passkey_reauth() },
+            on_confirm = { password, code ->
+                val host = lock_context.host_activity() ?: lock_context
+                vm.add_passkey(
+                    password = password,
+                    totp_code = code,
+                    create_credential = { json -> create_passkey_json(host, json) },
+                    get_credential = { json -> request_passkey_json(host, json) },
+                )
             },
         )
     }

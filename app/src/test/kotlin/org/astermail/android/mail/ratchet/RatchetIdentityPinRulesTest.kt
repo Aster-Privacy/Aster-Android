@@ -187,6 +187,18 @@ class RatchetIdentityPinRulesTest {
     }
 
     @Test
+    fun `a new conversation from a remembered address with another key is changed`() {
+        assertEquals(
+            SenderIdentityContinuity.CHANGED,
+            RatchetIdentityPinRules.stored_continuity(listOf("fp-a"), null, true, "fp-c"),
+        )
+        assertEquals(
+            SenderIdentityContinuity.KNOWN,
+            RatchetIdentityPinRules.stored_continuity(listOf("fp-a"), null, true, "fp-a"),
+        )
+    }
+
+    @Test
     fun `a sender with no history and no pin is new`() {
         assertEquals(SenderIdentityContinuity.NEW, RatchetIdentityPinRules.continuity(emptyList(), null, "fp-a"))
         assertEquals(SenderIdentityContinuity.NEW, RatchetIdentityPinRules.continuity(emptyList(), "", "fp-a"))
@@ -202,6 +214,34 @@ class RatchetIdentityPinRulesTest {
         assertEquals(
             listOf("fp-b", "fp-c"),
             RatchetIdentityPinRules.remember_fingerprint(listOf("fp-a", "fp-b"), "fp-c", 2),
+        )
+    }
+
+    @Test
+    fun outgoing_outcome_consults_the_contact_history_without_a_conversation_pin() {
+        assertEquals(
+            IdentityPinOutcome.CHANGED,
+            RatchetIdentityPinRules.outgoing_outcome(listOf("fp-a"), null, "fp-b"),
+        )
+        assertEquals(
+            IdentityPinOutcome.FIRST_CONTACT,
+            RatchetIdentityPinRules.outgoing_outcome(listOf("fp-a"), null, "fp-a"),
+        )
+        assertEquals(
+            IdentityPinOutcome.FIRST_CONTACT,
+            RatchetIdentityPinRules.outgoing_outcome(emptyList(), null, "fp-a"),
+        )
+        assertEquals(
+            IdentityPinOutcome.CHANGED,
+            RatchetIdentityPinRules.outgoing_outcome(null, null, "fp-a"),
+        )
+        assertEquals(
+            IdentityPinOutcome.UNCHANGED,
+            RatchetIdentityPinRules.outgoing_outcome(listOf("fp-x"), "fp-a", "fp-a"),
+        )
+        assertEquals(
+            IdentityPinOutcome.CHANGED,
+            RatchetIdentityPinRules.outgoing_outcome(listOf("fp-a"), "fp-b", "fp-a"),
         )
     }
 }

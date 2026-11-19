@@ -71,12 +71,16 @@ class ContactSyncAdapter(context: Context) : AbstractThreadedSyncAdapter(context
             override fun save(since: Long) = ContactSyncAccounts.save_since(app, account, since)
         }
         val options = ContactSyncOptions(
-            override_too_many_deletions = extras.getBoolean(ContentResolver.SYNC_EXTRAS_OVERRIDE_TOO_MANY_DELETIONS),
+            override_too_many_deletions = honors_deletion_override(
+                extras.getBoolean(ContentResolver.SYNC_EXTRAS_OVERRIDE_TOO_MANY_DELETIONS),
+                android.os.Build.VERSION.SDK_INT,
+            ),
             discard_local_deletions = extras.getBoolean(ContentResolver.SYNC_EXTRAS_DISCARD_LOCAL_DELETIONS),
         )
+        val scope = ContactSyncAccounts.field_scope(app)
         session.use { active ->
             val engine = ContactSyncEngine(
-                device = DeviceContactsStore(provider, account, labels),
+                device = DeviceContactsStore(provider, account, labels, scope),
                 remote = RepositoryContactSyncRemote(active.repository),
                 cursor = cursor,
                 ensure_active = {
@@ -84,6 +88,7 @@ class ContactSyncAdapter(context: Context) : AbstractThreadedSyncAdapter(context
                     active.ensure_active()
                 },
                 now_iso = { Instant.now().toString() },
+                scope = scope,
             )
             try {
                 val stats = runBlocking { engine.sync(options) }

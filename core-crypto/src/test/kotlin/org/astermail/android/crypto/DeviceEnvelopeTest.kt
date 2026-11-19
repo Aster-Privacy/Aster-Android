@@ -44,8 +44,17 @@ class DeviceEnvelopeTest {
             x25519_pk = X25519PrivateKeyParameters(x25519_sk, 0).generatePublicKey().encoded,
         )
 
-        fun open(envelope: ByteArray, as_recipient: DeviceEnvelope.DeviceRecipient = recipient) =
-            DeviceEnvelope.open_secret_for_device(envelope, as_recipient, mlkem.secret_key, x25519_sk)
+        fun open(
+            envelope: ByteArray,
+            as_recipient: DeviceEnvelope.DeviceRecipient = recipient,
+            required_version: Int? = null,
+        ) = DeviceEnvelope.open_secret_for_device(
+            envelope,
+            as_recipient,
+            mlkem.secret_key,
+            x25519_sk,
+            required_version,
+        )
     }
 
     private fun from_hex(value: String): ByteArray {
@@ -291,6 +300,54 @@ class DeviceEnvelopeTest {
         assertEquals(1, DeviceEnvelope.choose_envelope_version(emptyList()))
         assertEquals(1, DeviceEnvelope.choose_envelope_version(null))
         assertEquals(1, DeviceEnvelope.choose_envelope_version(listOf(3)))
+    }
+
+    @Test
+    fun a_peer_that_offers_v2_gets_v2_even_when_the_server_drops_the_offer() {
+        assertEquals(
+            DeviceEnvelope.ENVELOPE_V2,
+            DeviceEnvelope.choose_link_envelope_version(emptyList(), listOf(1, 2)),
+        )
+        assertEquals(
+            DeviceEnvelope.ENVELOPE_V2,
+            DeviceEnvelope.choose_link_envelope_version(null, listOf(2)),
+        )
+    }
+
+    @Test
+    fun a_peer_that_offers_only_v1_gets_v1() {
+        assertEquals(
+            DeviceEnvelope.ENVELOPE_V1,
+            DeviceEnvelope.choose_link_envelope_version(listOf(1, 2), listOf(1)),
+        )
+    }
+
+    @Test
+    fun a_peer_that_offers_nothing_known_is_refused() {
+        assertThrows(DeviceEnvelope.InvalidDeviceKeyException::class.java) {
+            DeviceEnvelope.choose_link_envelope_version(listOf(1, 2), listOf(7))
+        }
+    }
+
+    @Test
+    fun links_without_a_peer_offer_keep_the_v1_floor() {
+        assertEquals(1, DeviceEnvelope.choose_link_envelope_version(emptyList(), null))
+        assertEquals(1, DeviceEnvelope.choose_link_envelope_version(null, null))
+        assertEquals(2, DeviceEnvelope.choose_link_envelope_version(listOf(1, 2), null))
+    }
+
+    @Test
+    fun an_opener_that_asked_for_v2_refuses_a_v1_envelope() {
+        val device = TestDevice()
+        val secret = "linked secret".toByteArray(Charsets.UTF_8)
+        val v1 = DeviceEnvelope.seal_secret_for_device(secret, device.recipient, DeviceEnvelope.ENVELOPE_V1)
+        val v2 = DeviceEnvelope.seal_secret_for_device(secret, device.recipient, DeviceEnvelope.ENVELOPE_V2)
+
+        assertThrows(DeviceEnvelope.InvalidDeviceKeyException::class.java) {
+            device.open(v1, required_version = DeviceEnvelope.ENVELOPE_V2)
+        }
+        assertArrayEquals(secret, device.open(v2, required_version = DeviceEnvelope.ENVELOPE_V2))
+        assertArrayEquals(secret, device.open(v1))
     }
 
     @Test

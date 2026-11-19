@@ -327,11 +327,12 @@ class ContactsViewModel @Inject constructor(
                     on_progress = { done -> _state.value = _state.value.copy(import_done = done) },
                 )
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)
+                val pending_updates = plan.updates.filterNot { repository.is_constant_sealed(it.id) }
                 var merged = 0
-                for (update in plan.updates) {
+                for (update in pending_updates) {
                     if (repository.update_contact(update.id, update).isSuccess) merged++
                 }
-                if (account_id != null && merged == plan.updates.size) {
+                if (account_id != null && merged == pending_updates.size) {
                     baseline.save(account_id, device_entry_keys(device_contacts))
                 }
                 val imported = upload.imported
@@ -418,7 +419,7 @@ class ContactsViewModel @Inject constructor(
                     }
                 }
                 var merged = 0
-                for (update in plan.updates) {
+                for (update in plan.updates.filterNot { repository.is_constant_sealed(it.id) }) {
                     if (repository.update_contact(update.id, update).isSuccess) merged++
                 }
                 _state.value = _state.value.copy(import_done = 0, import_total = 0)

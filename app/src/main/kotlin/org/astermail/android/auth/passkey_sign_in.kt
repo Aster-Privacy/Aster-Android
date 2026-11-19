@@ -76,7 +76,7 @@ private val b64url_decoder = Base64.getUrlDecoder()
 private val b64_encoder = Base64.getEncoder()
 private val b64_decoder = Base64.getDecoder()
 
-private fun b64url_to_bytes(value: String): ByteArray =
+internal fun b64url_to_bytes(value: String): ByteArray =
     b64url_decoder.decode(value.trim().trimEnd('=').replace('+', '-').replace('/', '_'))
 
 private fun b64url_to_standard(value: String): String = b64_encoder.encodeToString(b64url_to_bytes(value))
@@ -174,16 +174,46 @@ private fun decrypt_bound_passphrase_with_prf(
     }
 }
 
+class PrfWrapOpen(val passphrase: ByteArray, val bound: Boolean)
+
+fun open_prf_wrap(
+    prf_output: ByteArray,
+    encrypted_b64: String,
+    nonce_b64: String,
+    credential_id: String?,
+    markers: PrfBoundMarkers,
+): PrfWrapOpen? {
+    if (!credential_id.isNullOrBlank()) {
+        decrypt_bound_passphrase_with_prf(prf_output, encrypted_b64, nonce_b64, credential_id)?.let {
+            markers.remember(credential_id)
+            return PrfWrapOpen(it, bound = true)
+        }
+        if (markers.is_bound(credential_id)) return null
+    }
+    return decrypt_unbound_passphrase_with_prf(prf_output, encrypted_b64, nonce_b64)
+        ?.let { PrfWrapOpen(it, bound = false) }
+}
+
 fun decrypt_passphrase_with_prf(
     prf_output: ByteArray,
     encrypted_b64: String,
     nonce_b64: String,
     credential_id: String? = null,
+    bound_seen: Boolean = false,
 ): ByteArray? {
     if (!credential_id.isNullOrBlank()) {
         decrypt_bound_passphrase_with_prf(prf_output, encrypted_b64, nonce_b64, credential_id)
             ?.let { return it }
+        if (bound_seen) return null
     }
+    return decrypt_unbound_passphrase_with_prf(prf_output, encrypted_b64, nonce_b64)
+}
+
+private fun decrypt_unbound_passphrase_with_prf(
+    prf_output: ByteArray,
+    encrypted_b64: String,
+    nonce_b64: String,
+): ByteArray? {
     val key = prf_key(prf_output, prf_key_salt)
     return try {
         AesGcm.decrypt(key, b64_decoder.decode(nonce_b64), b64_decoder.decode(encrypted_b64))
@@ -212,13 +242,13 @@ fun assertion_request_json(options: WebAuthnAssertionOptions): String {
         .toString()
 }
 
-fun assertion_verify_request(
-    response_json: String,
-    options: WebAuthnAssertionOptions,
-    challenge: TotpChallenge,
-    trust_device: Boolean,
-    device_label: String?,
-): WebAuthnAssertionVerifyRequest {
+class ParsedAssertion(
+    val raw_id: String,
+    val credential_id: String,
+    val response: WebAuthnAssertionData,
+)
+
+fun parse_assertion_response(response_json: String): ParsedAssertion {
     val parsed = JSONObject(response_json)
     val inner = parsed.optJSONObject("response")
         ?: throw PasskeyFailedException()
@@ -239,14 +269,29 @@ fun assertion_verify_request(
     if (raw_id.isBlank() || authenticator_data.isBlank() || client_data_json.isBlank() || signature.isBlank()) {
         throw PasskeyFailedException()
     }
-    return WebAuthnAssertionVerifyRequest(
-        id = credential_id,
+    return ParsedAssertion(
         raw_id = raw_id,
+        credential_id = credential_id,
         response = WebAuthnAssertionData(
             authenticator_data = authenticator_data,
             client_data_json = client_data_json,
             signature = signature,
         ),
+    )
+}
+
+fun assertion_verify_request(
+    response_json: String,
+    options: WebAuthnAssertionOptions,
+    challenge: TotpChallenge,
+    trust_device: Boolean,
+    device_label: String?,
+): WebAuthnAssertionVerifyRequest {
+    val parsed = parse_assertion_response(response_json)
+    return WebAuthnAssertionVerifyRequest(
+        id = parsed.credential_id,
+        raw_id = parsed.raw_id,
+        response = parsed.response,
         challenge_token = options.challenge_token,
         pending_login_token = challenge.pending_login_token,
         trust_device = trust_device,

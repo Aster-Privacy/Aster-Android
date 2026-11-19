@@ -54,12 +54,9 @@ object LoginSaltRule {
         salt: ByteArray,
         kdf_version: Int,
         recorded_salt: ByteArray?,
-        check: LoginSaltCheck,
-        account_seen_before: Boolean,
     ): Boolean {
         if (!is_legacy_v1(kdf_version, salt)) return true
-        if (recorded_salt != null) return AuthSaltGuard.constant_time_equals(salt, recorded_salt)
-        return check == LoginSaltCheck.sign_in && account_seen_before
+        return recorded_salt != null && AuthSaltGuard.constant_time_equals(salt, recorded_salt)
     }
 
     fun require_v1_proof_allowed(
@@ -67,9 +64,8 @@ object LoginSaltRule {
         kdf_version: Int,
         recorded_salt: ByteArray?,
         check: LoginSaltCheck,
-        account_seen_before: Boolean,
     ) {
-        if (!is_v1_proof_allowed(salt, kdf_version, recorded_salt, check, account_seen_before)) {
+        if (!is_v1_proof_allowed(salt, kdf_version, recorded_salt)) {
             throw LegacyLoginSaltException(check)
         }
     }

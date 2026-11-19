@@ -149,8 +149,8 @@ private class FakeVaultCodec : DeviceRecoveryVaultCodec {
         passphrase: ByteArray,
     ): ByteArray? = runCatching { Base64.getDecoder().decode(encrypted_vault) }.getOrNull()
 
-    override fun derive_storage_key(passphrase: ByteArray): String =
-        Base64.getEncoder().encodeToString(ByteArray(32) { 9 })
+    override fun password_storage_keys(passphrase: ByteArray, kdf_version: Int): List<String> =
+        listOf(Base64.getEncoder().encodeToString(ByteArray(32) { 9 }))
 }
 
 private class CommitCall(

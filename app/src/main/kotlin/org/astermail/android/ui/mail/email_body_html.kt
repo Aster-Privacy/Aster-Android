@@ -333,6 +333,7 @@ $color_scheme_meta
 <style>
 html{height:auto!important;min-height:0!important;background-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{height:auto!important;min-height:0!important;margin:0;overflow-x:auto;overflow-y:auto}
+html>body>div#m{position:relative!important;overflow-y:clip!important;transform:translate(0,0)!important}
 *{box-sizing:border-box}
 [height="100%"],[height='100%']{height:auto!important}
 [style*="height:100%"],[style*="height: 100%"],[style*="height:100vh"],[style*="height: 100vh"],[style*="height:100dvh"],[style*="height: 100dvh"]{height:auto!important;min-height:0!important}

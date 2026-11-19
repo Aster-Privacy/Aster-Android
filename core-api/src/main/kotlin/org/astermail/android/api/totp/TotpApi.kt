@@ -28,10 +28,12 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.security.ReauthProofRequest
 
 @Serializable
 data class TotpStatusResponse(
@@ -71,14 +73,17 @@ data class TotpDisableRequest(
 data class TotpDisableResponse(val success: Boolean = false)
 
 @Serializable
-data class TotpRegenerateBackupCodesRequest(val code: String)
+data class TotpRegenerateBackupCodesRequest(
+    val code: String,
+    val password_hash: String? = null,
+)
 
 @Serializable
 data class TotpRegenerateBackupCodesResponse(val backup_codes: List<String> = emptyList())
 
 interface TotpApi {
     suspend fun status(): TotpStatusResponse
-    suspend fun initiate_setup(): TotpSetupInitiateResponse
+    suspend fun initiate_setup(proof: ReauthProofRequest): TotpSetupInitiateResponse
     suspend fun verify_setup(request: TotpSetupVerifyRequest): TotpSetupVerifyResponse
     suspend fun disable(request: TotpDisableRequest): TotpDisableResponse
     suspend fun regenerate_backup_codes(
@@ -92,11 +97,12 @@ class TotpApiImpl(private val client: ApiClient) : TotpApi {
     override suspend fun status(): TotpStatusResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/status"))
 
-    override suspend fun initiate_setup(): TotpSetupInitiateResponse {
+    override suspend fun initiate_setup(proof: ReauthProofRequest): TotpSetupInitiateResponse {
         val response = client.http.post("${client.base_url}$base/setup/initiate") {
             contentType(ContentType.Application.Json)
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            setBody("{}")
+            setBody(proof)
         }
         return decode_or_throw(response)
     }

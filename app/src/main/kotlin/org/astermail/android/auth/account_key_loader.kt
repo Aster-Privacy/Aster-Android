@@ -51,7 +51,8 @@ class AccountKeyLoader(
         if (session_key_store.account_kek_generation() != generation) return 0
         val current = existing ?: create_if_absent(identity_key, generation) ?: return 0
         if (session_key_store.account_kek_generation() != generation) return 0
-        val history = keys_api.get_account_key_token_history()
+        val history_or_null = keys_api.get_account_key_token_history_or_null()
+        val history = history_or_null.orEmpty()
         val own_keys = buildList {
             add(identity_key)
             session_key_store.get_previous_keys()?.let { addAll(it) }
@@ -61,18 +62,23 @@ class AccountKeyLoader(
         val chars = passphrase_chars(passphrase)
         passphrase.fill(0)
         var write_keks: Map<String, ByteArray>? = null
+        var write_serial = AccountKey.LEGACY_SERIAL
+        var highest_serial = session_key_store.account_key_serial_floor()
         try {
             val keks = LinkedHashSet<String>()
             val seen = HashSet<String>()
             for (token in tokens) {
-                val account_key = AccountKey.open_token(token, own_keys, chars) ?: continue
+                val opened = AccountKey.open_token_entry(token, own_keys, chars) ?: continue
+                val account_key = opened.key
                 try {
+                    highest_serial = maxOf(highest_serial, opened.serial)
                     if (token == current.token && write_keks == null) {
+                        write_serial = opened.serial
                         write_keks = AccountKey.DATA_CONTEXTS.associateWith {
                             AccountKey.derive_context_key(account_key, it)
                         }
                     }
-                    val id = java.security.MessageDigest.getInstance("SHA-256")
+                    val id = MessageDigest.getInstance("SHA-256")
                         .digest(account_key)
                         .joinToString("") { "%02x".format(it) }
                     if (!seen.add(id)) continue
@@ -83,7 +89,16 @@ class AccountKeyLoader(
             }
             if (seen.isEmpty()) return 0
             if (!session_key_store.put_account_keks(keks.toList(), generation)) return 0
-            write_keks?.let { session_key_store.put_account_write_keks(it, generation, ticket) }
+            session_key_store.raise_account_key_serial_floor(highest_serial, generation)
+            val current_keks = write_keks
+            if (
+                write_serial >= highest_serial &&
+                current_keks != null &&
+                session_key_store.put_account_write_keks(current_keks, generation, ticket) &&
+                history_or_null != null
+            ) {
+                session_key_store.complete_account_key_load(ticket, generation)
+            }
             return seen.size
         } finally {
             write_keks?.values?.forEach { it.fill(0) }

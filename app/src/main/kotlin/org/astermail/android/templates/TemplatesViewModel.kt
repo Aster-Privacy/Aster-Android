@@ -35,14 +35,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
-import org.astermail.android.api.templates.CreateTemplateRequest
 import org.astermail.android.api.templates.TemplateItem
 import org.astermail.android.api.templates.TemplatesApi
-import org.astermail.android.api.templates.UpdateTemplateRequest
 import org.astermail.android.auth.open_with_storage_key_candidates
-import org.astermail.android.crypto.CryptoNative
+import org.astermail.android.crypto.FieldFormat
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.storage.SessionKeyStore
+
+const val TEMPLATE_FIELD_KIND = FieldFormat.KIND_TEMPLATE
+const val TEMPLATE_FIELD_NAME = "name"
+const val TEMPLATE_FIELD_CATEGORY = "category"
+const val TEMPLATE_FIELD_CONTENT = "content"
 
 data class DecryptedTemplate(
     val id: String,
@@ -121,9 +124,11 @@ class TemplatesViewModel @Inject constructor(
         try {
             return template_load_outcome(
                 items.map { item ->
-                    decrypt(item, key) ?: run {
+                    decrypt(item, key)?.also { StorageWriteKey.note_if_public(session_key_store, key) } ?: run {
                         val keys = fallback_keys ?: fallback_template_keys(key).also { fallback_keys = it }
-                        open_with_storage_key_candidates(keys) { candidate -> decrypt(item, candidate) }
+                        open_with_storage_key_candidates(keys) { candidate ->
+                            decrypt(item, candidate)?.also { StorageWriteKey.note_if_public(session_key_store, candidate) }
+                        }
                     }
                 },
             )
@@ -189,36 +194,7 @@ class TemplatesViewModel @Inject constructor(
                 withContext(Dispatchers.Default) {
                     val key = org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
                     try {
-                    val name_field = encrypt_to_b64(draft.name, key)
-                    val category_field = encrypt_to_b64(draft.category, key)
-                    val content_field = encrypt_to_b64(draft.content, key)
-
-                    if (draft.id.isBlank()) {
-                        api.create(
-                            CreateTemplateRequest(
-                                encrypted_name = name_field.first,
-                                name_nonce = name_field.second,
-                                encrypted_category = category_field.first,
-                                category_nonce = category_field.second,
-                                encrypted_content = content_field.first,
-                                content_nonce = content_field.second,
-                                sort_order = draft.sort_order,
-                            ),
-                        )
-                    } else {
-                        api.update(
-                            draft.id,
-                            UpdateTemplateRequest(
-                                encrypted_name = name_field.first,
-                                name_nonce = name_field.second,
-                                encrypted_category = category_field.first,
-                                category_nonce = category_field.second,
-                                encrypted_content = content_field.first,
-                                content_nonce = content_field.second,
-                                sort_order = draft.sort_order,
-                            ),
-                        )
-                    }
+                        store_template(api, key, draft)
                     } finally {
                         key.fill(0)
                     }
@@ -266,17 +242,35 @@ class TemplatesViewModel @Inject constructor(
     private fun decrypt(item: TemplateItem, key: ByteArray): DecryptedTemplate? = runCatching {
         DecryptedTemplate(
             id = item.id,
-            name = decrypt_b64_to_string(item.encrypted_name, item.name_nonce, key),
-            category = decrypt_b64_to_string(item.encrypted_category, item.category_nonce, key),
-            content = decrypt_b64_to_string(item.encrypted_content, item.content_nonce, key),
+            name = decrypt_b64_to_string(item.encrypted_name, item.name_nonce, key, TEMPLATE_FIELD_NAME, item.id),
+            category = decrypt_b64_to_string(
+                item.encrypted_category,
+                item.category_nonce,
+                key,
+                TEMPLATE_FIELD_CATEGORY,
+                item.id,
+            ),
+            content = decrypt_b64_to_string(
+                item.encrypted_content,
+                item.content_nonce,
+                key,
+                TEMPLATE_FIELD_CONTENT,
+                item.id,
+            ),
             sort_order = item.sort_order,
         )
     }.getOrNull()
 
-    private fun decrypt_b64_to_string(ct_b64: String, nonce_b64: String, key: ByteArray): String {
+    private fun decrypt_b64_to_string(
+        ct_b64: String,
+        nonce_b64: String,
+        key: ByteArray,
+        field: String,
+        record_id: String,
+    ): String {
         val ct = decode_b64_flex(ct_b64)
         val nonce = decode_b64_flex(nonce_b64)
-        val plain = CryptoNative.decrypt_field(ct, nonce, key)
+        val plain = FieldFormat.decrypt(ct, nonce, key, TEMPLATE_FIELD_KIND, field, record_id)
         return String(plain, Charsets.UTF_8)
     }
 
@@ -284,12 +278,6 @@ class TemplatesViewModel @Inject constructor(
         return runCatching { Base64.decode(input, Base64.DEFAULT) }
             .recoverCatching { Base64.decode(input, Base64.URL_SAFE or Base64.NO_PADDING) }
             .getOrThrow()
-    }
-
-    private fun encrypt_to_b64(plaintext: String, key: ByteArray): Pair<String, String> {
-        val field = CryptoNative.encrypt_field(plaintext.toByteArray(Charsets.UTF_8), key)
-        return Base64.encodeToString(field.ciphertext, Base64.NO_WRAP) to
-            Base64.encodeToString(field.nonce, Base64.NO_WRAP)
     }
 
     private fun next_order(): Int = (_state.value.items.maxOfOrNull { it.sort_order } ?: 0) + 1

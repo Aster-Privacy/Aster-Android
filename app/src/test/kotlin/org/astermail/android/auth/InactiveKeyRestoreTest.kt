@@ -41,7 +41,7 @@ class InactiveKeyRestoreTest {
             .put("data_kek", "archived")
             .put("vault_format", MASTER_KEY_VAULT_FORMAT)
 
-        assertEquals(listOf("archived", "derived"), harvest_storage_keks(old_vault, "derived"))
+        assertEquals(listOf("archived", "derived"), harvest_storage_keks(old_vault) { listOf("derived") })
     }
 
     @Test
@@ -57,7 +57,7 @@ class InactiveKeyRestoreTest {
 
         assertEquals(
             listOf("archived", "older", "oldest", "derived"),
-            harvest_storage_keks(old_vault, "derived"),
+            harvest_storage_keks(old_vault) { listOf("derived") },
         )
     }
 
@@ -65,19 +65,55 @@ class InactiveKeyRestoreTest {
     fun skips_the_derived_key_when_the_archived_vault_uses_an_unsupported_kdf() {
         val old_vault = JSONObject()
             .put("data_kek", "archived")
-            .put("kdf_version", SUPPORTED_STORAGE_KDF_VERSION + 1)
+            .put("kdf_version", ROTATABLE_STORAGE_KDF_VERSION + 1)
 
-        assertEquals(listOf("archived"), harvest_storage_keks(old_vault, "derived"))
+        assertEquals(listOf("archived"), harvest_storage_keks(old_vault) { listOf("derived") })
+    }
+
+    @Test
+    fun harvests_the_stretched_and_legacy_keys_for_a_stretched_archived_vault() {
+        val old_vault = JSONObject()
+            .put("data_kek", "archived")
+            .put("kdf_version", ROTATABLE_STORAGE_KDF_VERSION)
+        val asked = mutableListOf<Int>()
+
+        val harvested = harvest_storage_keks(old_vault) { version ->
+            asked.add(version)
+            encoded_password_storage_keys("pw".toByteArray(), version, derive = { _, v -> ByteArray(32) { (v ?: 0).toByte() } })
+        }
+
+        assertEquals(listOf(ROTATABLE_STORAGE_KDF_VERSION), asked)
+        assertEquals(
+            listOf(
+                "archived",
+                java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 2 }),
+                java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 1 }),
+            ),
+            harvested,
+        )
+    }
+
+    @Test
+    fun encodes_only_the_legacy_key_for_a_legacy_vault() {
+        val versions = mutableListOf<Int?>()
+
+        val keys = encoded_password_storage_keys("pw".toByteArray(), SUPPORTED_STORAGE_KDF_VERSION, derive = { _, v ->
+            versions.add(v)
+            ByteArray(32) { 7 }
+        })
+
+        assertEquals(listOf<Int?>(SUPPORTED_STORAGE_KDF_VERSION), versions)
+        assertEquals(listOf(java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 7 })), keys)
     }
 
     @Test
     fun harvests_only_the_derived_key_for_a_legacy_archived_vault() {
-        assertEquals(listOf("derived"), harvest_storage_keks(JSONObject(), "derived"))
+        assertEquals(listOf("derived"), harvest_storage_keks(JSONObject()) { listOf("derived") })
     }
 
     @Test
     fun harvests_nothing_when_no_key_is_available() {
-        assertTrue(harvest_storage_keks(JSONObject(), null).isEmpty())
+        assertTrue(harvest_storage_keks(JSONObject()).isEmpty())
     }
 
     @Test

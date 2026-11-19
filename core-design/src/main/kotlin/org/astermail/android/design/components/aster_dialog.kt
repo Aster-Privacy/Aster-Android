@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
@@ -143,6 +144,14 @@ private fun dialog_slide(progress: Float) = dialog_slide_from * (1f - progress)
 private val dialog_properties = DialogProperties(
     dismissOnBackPress = true,
     dismissOnClickOutside = false,
+    usePlatformDefaultWidth = false,
+    decorFitsSystemWindows = false,
+)
+
+private val secure_dialog_properties = DialogProperties(
+    dismissOnBackPress = true,
+    dismissOnClickOutside = false,
+    securePolicy = SecureFlagPolicy.SecureOn,
     usePlatformDefaultWidth = false,
     decorFitsSystemWindows = false,
 )
@@ -297,6 +306,7 @@ fun AsterAlertDialog(
     extra_content: @Composable (() -> Unit)? = null,
     secondary_label: String? = null,
     on_secondary: (() -> Unit)? = null,
+    secure: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
@@ -329,7 +339,7 @@ fun AsterAlertDialog(
             on_confirm()
         }
     }
-    Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
+    Dialog(onDismissRequest = start_dismiss, properties = if (secure) secure_dialog_properties else dialog_properties) {
         prepare_dialog_window()
         dialog_scrim(progress = scrim_progress, on_dismiss = { if (!is_busy) start_dismiss() }) {
         Surface(

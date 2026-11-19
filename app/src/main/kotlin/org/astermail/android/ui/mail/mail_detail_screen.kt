@@ -195,7 +195,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
-import org.astermail.android.looks_encrypted
 import org.astermail.android.labels.as_conversation_member
 import org.astermail.android.subscriptions.MailingListsViewModel
 import org.astermail.android.ui.common.TopToastState
@@ -2488,7 +2487,7 @@ fun MailDetailScreen(
         val folder_items = folder_nodes
             .map { node ->
                 val label = node.label
-                val readable = label.encrypted_name?.takeIf { it.isNotBlank() && !looks_encrypted(it) }
+                val readable = org.astermail.android.labels.readable_label_name(label)
                 label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
             }
         label_picker_sheet(
@@ -8076,6 +8075,16 @@ private fun attachment_chip(
                         fontSize = 10.sp,
                     )
                 }
+                if (attachment.is_unverified) {
+                    Text(
+                        text = stringResource(R.string.attachment_unverified),
+                        color = colors.warning,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         Spacer(Modifier.width(12.dp))
@@ -8170,8 +8179,8 @@ internal fun display_filename(raw: String): String = strip_bidi_controls(raw)
 internal fun sanitize_filename(raw: String): String {
     val without_bidi = strip_bidi_controls(raw)
     val base = without_bidi.substringAfterLast('/').substringAfterLast('\\')
-    val cleaned = base.replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1f]"), "_").trim().trimStart('.')
-    return cleaned.ifBlank { "attachment" }.take(200)
+    val cleaned = base.replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]"), "_").trim().trimStart('.')
+    return fit_attachment_name(cleaned.ifBlank { "attachment" })
 }
 
 private fun open_attachment_externally(
@@ -8261,17 +8270,13 @@ private suspend fun save_attachment_to_storage(
             @Suppress("DEPRECATION")
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             dir.mkdirs()
-            val file = java.io.File(dir, safe_name)
-            if (!file.canonicalPath.startsWith(dir.canonicalPath + java.io.File.separator)) {
-                return@withContext null
-            }
-            file.writeBytes(bytes)
+            val file = write_download_file(dir, safe_name, bytes) ?: return@withContext null
             val uri = androidx.core.content.FileProvider.getUriForFile(
                 context,
                 context.packageName + ".fileprovider",
                 file,
             )
-            show_download_notification(context, safe_name, uri, mime)
+            show_download_notification(context, file.name, uri, mime)
             saved_attachment(uri, mime)
         }
     } catch (cancelled: CancellationException) {
@@ -8306,9 +8311,7 @@ private fun share_attachment(
     val safe_name = sanitize_filename(filename)
     val mime = safe_view_mime(safe_name, content_type)
     val uri = runCatching {
-        val dir = java.io.File(context.cacheDir, "shared_attachments").apply { mkdirs() }
-        val target = java.io.File(dir, System.nanoTime().toString() + "_" + safe_name)
-        target.writeBytes(bytes)
+        val target = write_share_file(context.cacheDir, safe_name, bytes)
         androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".fileprovider", target)
     }.getOrNull() ?: return false
     val send = Intent(Intent.ACTION_SEND).apply {
@@ -8367,6 +8370,17 @@ private fun attachment_options_sheet(
                 ),
                 modifier = Modifier.padding(horizontal = AsterSpacing.xl, vertical = AsterSpacing.xs),
             )
+            if (attachment.is_unverified) {
+                Text(
+                    text = stringResource(R.string.attachment_unverified),
+                    color = colors.warning,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = AsterSpacing.xl, end = AsterSpacing.xl, bottom = AsterSpacing.xs),
+                )
+            }
             AsterDivider()
             sheet_row(stringResource(R.string.open), colors.text_primary, TablerIcons.ExternalLink) {
                 on_close()
@@ -8530,6 +8544,19 @@ private fun attachment_preview_dialog(
                     stringResource(R.string.open_with),
                     "attachment_viewer_open",
                     open_externally,
+                )
+            }
+            if (attachment.is_unverified) {
+                Text(
+                    text = stringResource(R.string.attachment_unverified),
+                    color = colors.warning,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
 

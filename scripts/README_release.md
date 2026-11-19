@@ -62,7 +62,9 @@ That contract sets three hard rules for every release:
   app's identity on every channel, so the key is never rotated.
 - The fdroid APK must be reproducible from the tagged source. Build it from the tag inside
   `registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie`, the image F-Droid's own pipeline
-  uses, with nothing in `core-crypto/src/main/jniLibs`, and never apply any post-processing. A
+  uses, with nothing in `core-crypto/src/main/jniLibs`, and never apply any post-processing. The
+  script pins that image by digest. When F-Droid moves the tag, update the digest on purpose, and
+  make sure any `ASTER_FDROID_IMAGE` override also names a digest. A
   Windows build is not reproducible: R8 writes `META-INF/services` entries with CRLF line endings
   on Windows, which is why the 0.6.170 fdroid asset had to be rebuilt and replaced. The script
   fails the release if any text asset or `META-INF/services` entry carries CRLF.

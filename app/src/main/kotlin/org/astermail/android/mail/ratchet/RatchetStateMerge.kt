@@ -26,6 +26,7 @@ import org.astermail.android.crypto.ratchet.RatchetCrypto
 object RatchetStateMerge {
 
     private const val MAX_MERGED_SKIPPED_KEYS = 1000
+    private const val MAX_RETIRED_SEND_CATCH_UP = 1000
 
     private fun skipped_key_id(key: SkippedMessageKey): String =
         "${key.dh_public}:${key.message_number}"
@@ -49,6 +50,9 @@ object RatchetStateMerge {
             .takeLast(MAX_MERGED_SKIPPED_KEYS)
             .toMutableList()
     }
+
+    fun shares_epoch(a: RatchetState, b: RatchetState): Boolean =
+        a.conversation_id == b.conversation_id && same_epoch(a, b)
 
     private fun same_epoch(a: RatchetState, b: RatchetState): Boolean =
         a.dh_keypair.public_key == b.dh_keypair.public_key &&
@@ -123,5 +127,19 @@ object RatchetStateMerge {
             updated_at = updated_at,
             header_bound = local.header_bound || remote.header_bound,
         )
+    }
+
+    fun merge_retired(local: RatchetState, remote: RatchetState): RatchetState {
+        if (local.conversation_id != remote.conversation_id) return local
+        return local.copy(
+            skipped_message_keys = merge_skipped_keys(local.skipped_message_keys, emptyList()),
+        )
+    }
+
+    fun retired_send_target(local: RatchetState, remote: RatchetState): Int {
+        val current = local.send_message_number
+        if (local.chain_key_send == null || !shares_epoch(local, remote)) return current
+        val target = remote.send_message_number
+        return if (target > current && target - current <= MAX_RETIRED_SEND_CATCH_UP) target else current
     }
 }

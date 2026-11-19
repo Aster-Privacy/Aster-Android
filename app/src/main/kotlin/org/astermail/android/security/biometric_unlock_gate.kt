@@ -33,6 +33,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import org.astermail.android.storage.LockKeyHolder
 import org.astermail.android.storage.SecurePrefs
+import org.astermail.android.storage.StrongBoxKeys
 
 sealed class BiometricGatePreparation {
     data class Enroll(val cipher: Cipher) : BiometricGatePreparation()
@@ -65,7 +66,14 @@ object BiometricUnlockGate {
         return store.getKey(KEY_ALIAS, null) as? SecretKey
     }
 
-    private fun create_key(): SecretKey {
+    private fun create_key(context: Context): SecretKey =
+        StrongBoxKeys.create(
+            available = StrongBoxKeys.available(context),
+            probe = { key -> StrongBoxKeys.starts_operation(key) },
+            discard = { delete_key() },
+        ) { strongbox -> create_key_with(strongbox) }
+
+    private fun create_key_with(strongbox: Boolean): SecretKey {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE)
         val spec = KeyGenParameterSpec.Builder(
             KEY_ALIAS,
@@ -76,6 +84,7 @@ object BiometricUnlockGate {
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(true)
             .setRandomizedEncryptionRequired(true)
+            .let { StrongBoxKeys.request(it, strongbox) }
             .build()
         generator.init(spec)
         return generator.generateKey()
@@ -162,7 +171,7 @@ object BiometricUnlockGate {
     fun prepare_enroll(context: Context): BiometricGatePreparation = try {
         drop_binding(context, rebind_pending = false)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, create_key())
+        cipher.init(Cipher.ENCRYPT_MODE, create_key(context))
         BiometricGatePreparation.Enroll(cipher)
     } catch (t: Throwable) {
         delete_key()

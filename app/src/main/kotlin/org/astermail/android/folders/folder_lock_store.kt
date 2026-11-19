@@ -227,6 +227,9 @@ object folder_lock_store {
         protected_folder_ids.mapNotNull { folder_token_by_id[it] }.toSet()
 
     @Synchronized
+    fun known_protected_tokens(): Set<String>? = if (folders_known) protected_tokens() else null
+
+    @Synchronized
     fun set_active_folder_token(token: String) {
         if (active_folder_token == token) return
         val previous = active_folder_token

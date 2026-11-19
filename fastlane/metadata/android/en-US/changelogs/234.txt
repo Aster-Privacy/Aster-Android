@@ -1,0 +1,13 @@
+What's new:
+
+- Search finds words anywhere in your messages.
+- Open a contact group to see and manage its members.
+- Each alias has its own sending switch.
+- Attachments in an older format show an Unverified attachment label.
+
+Fixed:
+
+- If people can't send you encrypted mail, opening the app updates your encryption details.
+- Line breaks stay in place in pasted text and sent messages.
+- Long alias, label, folder, and tag names show in full.
+- Each reaction is counted once.

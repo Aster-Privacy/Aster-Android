@@ -672,7 +672,7 @@
     <string name="disabling">Отключение...</string>
     <string name="disable_two_factor">Отключить двухфакторную аутентификацию</string>
     <string name="generate_new_backup_codes_section">Сгенерировать новые резервные коды</string>
-    <string name="generate_backup_codes_description">Введите текущий код из приложения-аутентификатора. Предыдущие резервные коды будут аннулированы.</string>
+    <string name="generate_backup_codes_description">Введите пароль и текущий код из приложения-аутентификатора. Предыдущие резервные коды перестанут работать.</string>
     <string name="generating">Генерация...</string>
     <string name="generate_codes">Сгенерировать коды</string>
     <string name="two_factor_enabled_title">Двухфакторная аутентификация включена</string>
@@ -1823,6 +1823,7 @@
     <string name="totp_code_required_label">Код из приложения или резервный код</string>
     <string name="totp_code_required_error">Введите 6-значный код из приложения аутентификации или один из резервных кодов</string>
     <string name="preferences_locked_retry">Сейчас не удалось разблокировать ваши настройки. Показаны значения по умолчанию. Вернитесь назад и откройте их снова.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail ещё разблокирует этот элемент, поэтому ваше изменение не сохранено. Повторите попытку через мгновение.</string>
     <string name="plan_name_star">Отметить звёздочкой</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Сверхновая</string>
@@ -2698,6 +2699,9 @@
     <string name="folder_locked">Папка заблокирована</string>
     <string name="folder_unlocked">Папка разблокирована</string>
     <string name="folder_lock_set">Блокировка папки установлена</string>
+    <string name="folder_relock_required">Эта папка была повторно заблокирована на другом устройстве. Чтобы открыть её здесь, снимите блокировку и установите её снова.</string>
+    <string name="folder_protection_unavailable">Не удалось прочитать данные защиты папки на этом устройстве. Выйдите из аккаунта, войдите снова и повторите попытку.</string>
+    <string name="folder_lock_set_unconfirmed">Блокировка папки установлена. Введите пароль, чтобы открыть папку.</string>
     <string name="folder_lock_removed">Блокировка папки снята</string>
     <string name="folder_notifications_muted">Уведомления для этой папки отключены</string>
     <string name="folder_notifications_unmuted">Уведомления для этой папки включены</string>
@@ -2882,8 +2886,11 @@
     <string name="failed_to_move_items">Не удалось переместить</string>
     <string name="folder_name_taken">Папка с таким именем уже существует.</string>
     <string name="hardware_key_remove_confirm">Вы больше не сможете входить с этим ключом безопасности.</string>
-    <string name="hardware_key_remove_last_title">Удалить последний ключ безопасности?</string>
-    <string name="hardware_key_remove_last_description">Это последний второй фактор в вашей учетной записи. Чтобы удалить его, введите пароль.</string>
+    <string name="hardware_key_remove_last_title">Удалить этот ключ безопасности?</string>
+    <string name="hardware_key_remove_last_description">Чтобы удалить этот ключ безопасности, введите пароль.</string>
+    <string name="passkey_add_reauth_description">Чтобы добавить ключ доступа, введите пароль.</string>
+    <string name="totp_setup_reauth_description">Чтобы настроить двухфакторную аутентификацию, введите пароль.</string>
+    <string name="reauth_key_check_failed">Не удалось проверить ключ доступа или ключ безопасности. Повторите попытку.</string>
     <string name="image_insert_failed">Не удалось добавить это изображение. Возможно, оно слишком большое или в неподдерживаемом формате.</string>
     <string name="invalid_recipient_address">«%1$s» не является корректным адресом электронной почты</string>
     <string name="label_name_taken">Метка с таким именем уже существует.</string>
@@ -3544,6 +3551,11 @@
     <string name="contact_sync_settings_title">Разрешите доступ к контактам</string>
     <string name="contact_sync_settings_message">Чтобы синхронизировать контакты, нажмите «Открыть настройки», перейдите в раздел «Разрешения» &gt; «Контакты» и выберите «Разрешить».</string>
     <string name="contact_sync_open_settings">Открыть настройки</string>
+    <string name="contact_sync_all_details_title">Синхронизировать все данные контактов</string>
+    <string name="contact_sync_all_details_subtitle">Если параметр выключен, Aster добавляет в приложение «Контакты» на телефоне только имена и адреса электронной почты.</string>
+    <string name="contact_sync_all_details_confirm_title">Синхронизировать все данные контактов?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster также добавит в приложение «Контакты» на телефоне номера телефонов, адреса, дни рождения, заметки, фото и другие данные. Другие приложения с доступом к контактам смогут прочитать эти данные.</string>
+    <string name="contact_sync_all_details_confirm">Синхронизировать все данные</string>
     <string name="contact_sync_label_sibling">Брат или сестра</string>
     <string name="contact_sync_label_graduation">Выпускной</string>
     <string name="contact_sync_label_wedding">Свадьба</string>
@@ -3698,6 +3710,18 @@
         <item quantity="other">Добавлено %d контакта</item>
     </plurals>
     <string name="body_index_status">Индексация текста писем для поиска: %1$d из %2$d</string>
+    <string name="mail_key_upgrade_title">Обновление сохранённой почты</string>
+    <string name="mail_key_upgrade_running">Aster Mail повторно шифрует ваши сохранённые сообщения текущими ключами. Не закрывайте это окно до завершения.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail не удалось завершить обновление сохранённых сообщений. Ваша почта не изменилась. Проверьте подключение и повторите попытку.</string>
+    <string name="mail_key_upgrade_retry">Повторить</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">Проверено сообщений: %d</item>
+        <item quantity="few">Проверено сообщений: %d</item>
+        <item quantity="many">Проверено сообщений: %d</item>
+        <item quantity="other">Проверено сообщений: %d</item>
+    </plurals>
+    <string name="account_link_confirm_title">Связать этот аккаунт?</string>
+    <string name="account_link_confirm_message">%1$s хочет использовать %2$s на этом устройстве. Подтвердите, только если вы сами начали это в %1$s.</string>
     <string name="delete_selected_subscriptions">Удалить (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">Удалить %d подписку?</item>
@@ -3713,4 +3737,5 @@
         <item quantity="other">Удалено %d подписки</item>
     </plurals>
     <string name="delete_subscriptions_failed">Не удалось удалить выбранные подписки</string>
+    <string name="attachment_unverified">Непроверенное вложение</string>
 </resources>

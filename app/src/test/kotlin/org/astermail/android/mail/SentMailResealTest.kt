@@ -56,6 +56,19 @@ class SentMailResealTest {
     }
 
     @Test
+    fun refuses_a_copy_whose_salt_is_a_login_salt() {
+        val sealed = SentMailResealCrypto.seal("{\"subject\":\"hi\"}".toByteArray(), old_pass)
+        val salt = Base64.getDecoder().decode(sealed).copyOfRange(0, 16)
+
+        assertNull(SentMailResealCrypto.open(sealed, old_pass) { it.contentEquals(salt) })
+        assertFalse(SentMailResealCrypto.opens_with(sealed, old_pass) { it.contentEquals(salt) })
+        assertArrayEquals(
+            "{\"subject\":\"hi\"}".toByteArray(),
+            SentMailResealCrypto.open(sealed, old_pass) { false },
+        )
+    }
+
+    @Test
     fun sentinel_nonce_is_the_single_one_byte() {
         assertTrue(SentMailResealCrypto.is_sentinel_nonce(SentMailResealCrypto.sentinel_nonce_b64()))
         assertFalse(SentMailResealCrypto.is_sentinel_nonce(Base64.getEncoder().encodeToString(ByteArray(12))))

@@ -28,6 +28,7 @@ import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.StorageWriteKey
 import org.json.JSONObject
 
 const val ESCROW_HKDF_SALT = "Aster_Mail_Plaintext_Escrow"
@@ -142,7 +143,7 @@ fun gcm_seal(key: ByteArray, plaintext: ByteArray, aad: ByteArray? = null): Seal
 fun open_with_any(keys: MutableList<ByteArray>, ciphertext: ByteArray, nonce: ByteArray, aad: ByteArray? = null): ByteArray? {
     for (i in keys.indices) {
         val opened = gcm_open(keys[i], ciphertext, nonce, aad) ?: continue
-        if (i > 0) keys.add(0, keys.removeAt(i))
+        if (i > 0 && !StorageWriteKey.is_public_mail_kek(keys[i])) keys.add(0, keys.removeAt(i))
         return opened
     }
     return null
@@ -154,6 +155,7 @@ fun collect_old_storage_raws(view: VaultKeyView, extra: List<ByteArray> = emptyL
     fun consider(raw: ByteArray?) {
         if (raw == null) return
         val rejected = raw.size != RESEAL_KEY_LENGTH ||
+            StorageWriteKey.is_public_mail_kek(raw) ||
             (current != null && MessageDigest.isEqual(raw, current)) ||
             out.any { MessageDigest.isEqual(it, raw) }
         if (rejected) {
@@ -172,6 +174,7 @@ fun collect_old_storage_raws(view: VaultKeyView, extra: List<ByteArray> = emptyL
 class ResealKeys(
     private val new_raw: ByteArray,
     private val old_raws: List<ByteArray>,
+    private val held_raws: List<ByteArray> = emptyList(),
 ) {
     val key_id: String = storage_key_id(new_raw)
     val new_aes: ByteArray = new_raw
@@ -180,6 +183,7 @@ class ResealKeys(
     val old_aes: MutableList<ByteArray> = old_raws.toMutableList()
     val old_escrow: MutableList<ByteArray> = old_raws.map(::derive_escrow_key).toMutableList()
     val old_ratchet: MutableList<ByteArray> = old_raws.map(::derive_ratchet_key).toMutableList()
+    val held_escrow: List<ByteArray> = held_raws.map(::derive_escrow_key)
     private val hmac_cache = HashMap<String, ByteArray>()
     private val old_hmac_cache = HashMap<String, List<ByteArray>>()
     private val metadata_cache = HashMap<String, ByteArray>()
@@ -208,12 +212,14 @@ class ResealKeys(
         new_ratchet.fill(0)
         old_escrow.forEach { it.fill(0) }
         old_ratchet.forEach { it.fill(0) }
+        held_escrow.forEach { it.fill(0) }
         hmac_cache.values.forEach { it.fill(0) }
         old_hmac_cache.values.forEach { list -> list.forEach { it.fill(0) } }
         metadata_cache.values.forEach { it.fill(0) }
         old_metadata_cache.values.forEach { list -> list.forEach { it.fill(0) } }
         new_raw.fill(0)
         old_raws.forEach { it.fill(0) }
+        held_raws.forEach { it.fill(0) }
     }
 }
 
@@ -224,7 +230,7 @@ fun build_reseal_keys(view: VaultKeyView, extra_old: List<ByteArray> = emptyList
         raw.fill(0)
         return null
     }
-    return ResealKeys(raw, collect_old_storage_raws(view, extra_old))
+    return ResealKeys(raw, collect_old_storage_raws(view, extra_old), StorageWriteKey.public_mail_kek_raws())
 }
 
 fun opens_under_new(keys: ResealKeys, ciphertext_b64: String?, nonce_b64: String?): Boolean {

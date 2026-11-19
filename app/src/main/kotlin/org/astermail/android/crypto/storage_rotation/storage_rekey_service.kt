@@ -24,8 +24,10 @@ package org.astermail.android.crypto.storage_rotation
 import android.content.Context
 import android.content.SharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Collections
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,10 +35,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiClient
+import org.astermail.android.api.ratchet.RatchetApiImpl
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.crypto.VaultKdf
+import org.astermail.android.crypto.sync_format_readiness
+import org.astermail.android.folders.FOLDER_KEY_PINS_FIELD
+import org.astermail.android.folders.merge_folder_key_pins
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
+import org.astermail.android.mail.vault_has_shared_scheduled_snapshot
+import org.astermail.android.mail.vault_marks_mail_legacy_retired
+import org.astermail.android.mail.vault_scheduled_untagged
+import org.astermail.android.mail.ratchet.vault_prekey_seal_key
+import org.astermail.android.mail.ratchet.vault_prekey_seal_migrated
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import kotlinx.serialization.json.JsonObject
@@ -129,8 +140,38 @@ fun storage_password_keys(
     }
 }
 
+fun note_vault_written(sealed: SealedVault) {
+    org.astermail.android.crypto.VaultBindingFloor.note_written(
+        sealed.bound,
+        encrypted_vault = decode_b64(sealed.encrypted_vault),
+    )
+}
+
+fun absorb_vault_markers(store: SessionKeyStore, vault: JSONObject) {
+    if (vault_marks_mail_legacy_retired(vault)) {
+        store.get_user_id()?.takeIf { it.isNotBlank() }?.let(store::pin_mail_legacy_retired)
+    }
+    merge_folder_key_pins(vault.opt(FOLDER_KEY_PINS_FIELD))?.let { pins ->
+        for (folder_id in pins.keys()) store.raise_folder_key_pin(folder_id, pins.getInt(folder_id))
+    }
+    store.absorb_scheduled_untagged_snapshot(
+        vault_scheduled_untagged(vault),
+        replace = vault_has_shared_scheduled_snapshot(vault),
+    )
+    store.mark_key_pins_restored_from_vault()
+}
+
 fun absorb_rotated_vault(store: SessionKeyStore, vault: JSONObject, sealed: SealedVault) {
     store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
+    absorb_retired_marker(store, vault)
+    absorb_vault_markers(store, vault)
+    vault_prekey_seal_key(vault)?.let { key ->
+        try {
+            store.put_prekey_seal(key, vault_prekey_seal_migrated(vault))
+        } finally {
+            key.fill(0)
+        }
+    }
     val data_kek = vault.optString("data_kek", "")
     val incoming = ArrayList<String>()
     if (data_kek.isNotBlank()) {
@@ -157,7 +198,7 @@ fun local_storage_keys(store: SessionKeyStore): LocalStorageKeys {
     val data_kek = store.get_data_kek()
     val encoded = data_kek?.takeIf { it.size == RESEAL_KEY_LENGTH }?.let(::encode_b64)
     data_kek?.fill(0)
-    return LocalStorageKeys(encoded, store.get_legacy_keks().orEmpty())
+    return LocalStorageKeys(encoded, store.get_legacy_keks().orEmpty(), store.retired_storage_key_hashes())
 }
 
 class SessionVaultCodec(
@@ -172,7 +213,17 @@ class SessionVaultCodec(
 
     override fun encrypt(vault: JSONObject): SealedVault? = encrypt_at(vault, VaultKdf.DEFAULT_ITERATIONS)
 
-    override fun decrypt_at(encrypted_vault: String, vault_nonce: String, iterations: Int): JSONObject? {
+    override suspend fun before_write() {
+        org.astermail.android.api.keys.BoundWriteSwitches.refresh_for_vault_write()
+    }
+
+    override fun decrypt_at(encrypted_vault: String, vault_nonce: String, iterations: Int): JSONObject? =
+        open(encrypted_vault, vault_nonce, iterations, null)
+
+    override fun decrypt_sealed(sealed: SealedVault): JSONObject? =
+        open(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations, allow_unbound = !sealed.bound)
+
+    private fun open(encrypted_vault: String, vault_nonce: String, iterations: Int, allow_unbound: Boolean?): JSONObject? {
         val pass = passphrase()
         val plain = try {
             CryptoNative.decrypt_vault_with_password(
@@ -180,6 +231,7 @@ class SessionVaultCodec(
                 decode_b64(vault_nonce) ?: return null,
                 pass,
                 iterations,
+                allow_unbound,
             )
         } finally {
             pass.fill(0)
@@ -201,7 +253,7 @@ class SessionVaultCodec(
                 iterations,
                 org.astermail.android.api.keys.BoundWriteSwitches.vault(),
             )
-            SealedVault(encode_b64(envelope.encrypted_vault), encode_b64(envelope.vault_nonce), iterations)
+            SealedVault(encode_b64(envelope.encrypted_vault), encode_b64(envelope.vault_nonce), iterations, envelope.bound)
         } finally {
             plain.fill(0)
             pass.fill(0)
@@ -233,7 +285,10 @@ fun session_vault_updater(
     codec = SessionVaultCodec(store, passphrase_source),
     user_id = { store.get_user_id() },
     lock = VaultWriteLock.mutex,
-    on_vault_changed = { vault, sealed -> absorb_rotated_vault(store, vault, sealed) },
+    on_vault_changed = { vault, sealed ->
+        if (!sealed.from_server) note_vault_written(sealed)
+        absorb_rotated_vault(store, vault, sealed)
+    },
     local_keys = { local_storage_keys(store) },
 )
 
@@ -258,6 +313,13 @@ class VaultUpdates @Inject constructor(
     )
 }
 
+internal fun constants_sweep_due(
+    prefs_available: Boolean,
+    done: Boolean,
+    use_pending: Boolean,
+    first_in_process: Boolean,
+): Boolean = if (prefs_available) !done || use_pending else first_in_process
+
 @Singleton
 class StorageRekeyService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -268,8 +330,9 @@ class StorageRekeyService @Inject constructor(
         runCatching { SecurePrefs.open(context, PROGRESS_PREFS_NAME) }.getOrNull()
     }
 
-    private val healed_users = java.util.Collections.synchronizedSet(HashSet<String>())
-    private val side_copied = java.util.Collections.synchronizedSet(HashSet<String>())
+    private val healed_users = Collections.synchronizedSet(HashSet<String>())
+    private val side_copied = Collections.synchronizedSet(HashSet<String>())
+    private val constant_sweep_users = Collections.synchronizedSet(HashSet<String>())
 
     companion object {
         @Volatile private var backup_builder: RecoveryBackupBuilder? = null
@@ -367,13 +430,29 @@ class StorageRekeyService @Inject constructor(
         val marker_key = BACKUP_REFRESH_KEY_PREFIX + user_id
         if (prefs?.getString(marker_key, null) == key_id) return
         val updater = session_vault_updater(api, session_key_store)
-        val result = runCatching { refresh_recovery_backup(api, { updater.latest() }, builder) }.getOrNull()
+        sync_format_readiness.install_api_if_absent { RatchetApiImpl(api_client) }
+        sync_format_readiness.current(user_id)
+        val result = try {
+            refresh_recovery_backup(
+                api = api,
+                load = { updater.latest() },
+                update = { edit -> vault_recorded(updater.update(edit = edit)) },
+                builder = builder,
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
         when (result) {
             BackupRefresh.REFRESHED, BackupRefresh.NO_CODES, BackupRefresh.CODES_CHANGED ->
                 prefs?.edit()?.putString(marker_key, key_id)?.apply()
             else -> Unit
         }
     }
+
+    private fun vault_recorded(outcome: VaultUpdateOutcome): Boolean =
+        outcome is VaultUpdateOutcome.Written || outcome is VaultUpdateOutcome.Unchanged
 
     private fun outcome_vault(outcome: StorageVaultOutcome): JSONObject? = when (outcome) {
         is StorageVaultOutcome.Rotated -> outcome.vault
@@ -387,7 +466,10 @@ class StorageRekeyService @Inject constructor(
         codec = SessionVaultCodec(session_key_store),
         user_id = { session_key_store.get_user_id() },
         lock = VaultWriteLock.mutex,
-        on_vault_changed = { vault, sealed -> absorb_rotated_vault(session_key_store, vault, sealed) },
+        on_vault_changed = { vault, sealed ->
+            if (!sealed.from_server) note_vault_written(sealed)
+            absorb_rotated_vault(session_key_store, vault, sealed)
+        },
         local_keys = { local_storage_keys(session_key_store) },
         upgrade_on_rotation = true,
     )
@@ -447,14 +529,16 @@ class StorageRekeyService @Inject constructor(
             return@withContext reseal
         }
         if (!view.data_kek_random || !local_key_matches(view)) return@withContext reseal
-        val legacy_keys = StorageWriteKey.legacy_read_keys(session_key_store)
-        val legacy = try {
+        val legacy_keys = StorageWriteKey.sweep_keys(session_key_store)
+        val legacy = if (legacy_keys == null) {
+            ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts(), LEGACY_KEY_RETIRE_PENDING)
+        } else try {
             run_legacy_key_sweep(
                 view = view,
                 api = GatedResealApi(api, sleep = { delay(it) }, is_cancelled = is_cancelled),
                 store = PrefsProgressStore(prefs, LEGACY_KEY_SWEEP_STEP + "_" + user_id),
                 legacy_keys = legacy_keys,
-                retire = { session_key_store.retire_legacy_storage_keys() },
+                retire = { StorageWriteKey.retire_legacy_keys(session_key_store, legacy_keys) },
                 still_current = { vault_rotator.server_storage_key_matches(expected) },
                 is_cancelled = is_cancelled,
                 gate = { check_rekey_gate(api) },
@@ -462,10 +546,21 @@ class StorageRekeyService @Inject constructor(
         } finally {
             legacy_keys.forEach { it.fill(0) }
         }
-        val after_legacy = when (legacy.status) {
-            ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> legacy
-            else -> reseal
+        val constants_done_key = PUBLIC_CONSTANT_SWEEP_STEP + "_done_" + user_id
+        val sweep_prefs = prefs
+        val constants_due = constants_sweep_due(
+            prefs_available = sweep_prefs != null,
+            done = sweep_prefs?.getBoolean(constants_done_key, false) == true,
+            use_pending = session_key_store.public_constant_use_pending(),
+            first_in_process = sweep_prefs == null && constant_sweep_users.add(user_id),
+        )
+        if (constants_due) {
+            val use_seq = session_key_store.public_constant_use_seq()
+            prefs?.edit()?.putBoolean(constants_done_key, true)?.apply()
+            session_key_store.clear_public_constant_use(use_seq)
         }
+        val after_legacy = if (legacy.status in INCOMPLETE_SWEEP_STATUSES) legacy else reseal
+        runCatching { publish_retired_marker(api, vault) }
         val admitted = request_level2_admission(api)
         session_key_store.set_level2_admitted(admitted)
         if (!admitted) return@withContext after_legacy
@@ -487,6 +582,15 @@ class StorageRekeyService @Inject constructor(
         when (sweep.status) {
             ResealRunStatus.INTERRUPTED, ResealRunStatus.DEFERRED, ResealRunStatus.FAILED -> sweep
             else -> after_legacy
+        }
+    }
+
+    private suspend fun publish_retired_marker(api: ResealApi, vault: JSONObject) {
+        if (!session_key_store.legacy_storage_keys_retired()) return
+        val local = session_key_store.retired_storage_key_hashes()
+        if (!vault_lacks_retired_marker(vault, local)) return
+        session_vault_updater(api, session_key_store).update { draft ->
+            if (vault_lacks_retired_marker(draft.vault, local)) VaultEdit.CHANGED else VaultEdit.UNCHANGED
         }
     }
 

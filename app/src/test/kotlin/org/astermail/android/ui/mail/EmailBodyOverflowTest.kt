@@ -90,6 +90,26 @@ class EmailBodyOverflowTest {
         assertFalse(css.contains("overflow-x:hidden"))
     }
 
+    @Test
+    fun positioned_content_stays_inside_the_message_column() {
+        val css = style_block(render("<div style=\"position:absolute;top:-400px\">Overlay</div><p>Body</p>"))
+
+        assertTrue(css.contains("html>body>div#m{position:relative!important;overflow-y:clip!important;"))
+        assertFalse(css.contains("html>body>div#m{position:relative!important;overflow-x"))
+    }
+
+    @Test
+    fun the_message_column_holds_fixed_content_without_clipping_its_width() {
+        val document = render(EmailHtmlSanitizer.sanitize("<div style=\"position:fixed;top:0\">Banner</div><p>Body</p>"))
+        val css = style_block(document)
+        val column = css.substringAfter("html>body>div#m{").substringBefore("}")
+
+        assertTrue(column.contains("transform:translate(0,0)!important"))
+        assertFalse(column.contains("contain:paint"))
+        assertFalse(column.contains("overflow-x"))
+        assertFalse(document.contains("position:fixed"))
+    }
+
     private val order_note = "Thanks for your order. Your package ships within two business days."
 
     @Test

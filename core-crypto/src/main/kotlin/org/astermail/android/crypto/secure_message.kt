@@ -22,9 +22,6 @@
 package org.astermail.android.crypto
 
 import org.astermail.android.crypto.ratchet.RatchetCrypto
-import org.bouncycastle.crypto.digests.SHA256Digest
-import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator
-import org.bouncycastle.crypto.params.KeyParameter
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
@@ -51,6 +48,7 @@ data class SealedSecureMessage(
     val encrypted_subject: SecureMessageField,
     val encrypted_body: SecureMessageField,
     val attachments_bundle: String?,
+    val kdf_version: Int = SecureMessageKdf.V1,
 )
 
 class OpenedSecureMessage(
@@ -60,7 +58,7 @@ class OpenedSecureMessage(
 )
 
 object SecureMessageCrypto {
-    const val PBKDF2_ITERATIONS = 310000
+    const val PBKDF2_ITERATIONS = SecureMessageKdf.PBKDF2_ITERATIONS
     const val SALT_BYTES = 16
     const val KEM_SEED_BYTES = 64
     const val NONCE_BYTES = 12
@@ -88,15 +86,10 @@ object SecureMessageCrypto {
 
     private fun utf8(text: String): ByteArray = text.toByteArray(Charsets.UTF_8)
 
-    private fun derive_raw_material(password: String, salt: ByteArray): RawMaterial {
+    private fun derive_raw_material(password: String, salt: ByteArray, kdf_version: Int): RawMaterial {
         val password_bytes = utf8(password)
         val derived = try {
-            val generator = PKCS5S2ParametersGenerator(SHA256Digest())
-            generator.init(password_bytes, salt, PBKDF2_ITERATIONS)
-            val parameters = generator.generateDerivedMacParameters(
-                (KDF_KEY_BYTES + AUTH_VERIFIER_BYTES) * 8,
-            ) as KeyParameter
-            parameters.key
+            SecureMessageKdf.derive(password_bytes, salt, kdf_version)
         } finally {
             password_bytes.fill(0)
         }
@@ -132,8 +125,12 @@ object SecureMessageCrypto {
     private fun decrypt_field(key: ByteArray, field: SecureMessageField, aad: ByteArray): ByteArray =
         AesGcm.decrypt(key, unb64(field.nonce), unb64(field.ciphertext), aad)
 
-    fun derive_auth_proof(password: String, kdf_salt: String): String {
-        val material = derive_raw_material(password, unb64(kdf_salt))
+    fun derive_auth_proof(
+        password: String,
+        kdf_salt: String,
+        kdf_version: Int = SecureMessageKdf.V1,
+    ): String {
+        val material = derive_raw_material(password, unb64(kdf_salt), kdf_version)
         material.kdf_key.fill(0)
         val proof = b64(sha256(material.auth_verifier))
         material.auth_verifier.fill(0)
@@ -145,10 +142,11 @@ object SecureMessageCrypto {
         subject: String,
         body: String,
         attachments: List<SecureMessageAttachment> = emptyList(),
+        kdf_version: Int = SecureMessageKdf.write_version(),
     ): SealedSecureMessage {
         require(password.isNotEmpty()) { "a message password is required" }
         val salt = RatchetCrypto.random_bytes(SALT_BYTES)
-        val material = derive_raw_material(password, salt)
+        val material = derive_raw_material(password, salt, kdf_version)
         val auth_proof = b64(sha256(material.auth_verifier))
         material.auth_verifier.fill(0)
 
@@ -172,6 +170,7 @@ object SecureMessageCrypto {
                 encrypted_subject = encrypt_field(content_key, utf8(subject), field_aad(FIELD_SUBJECT)),
                 encrypted_body = encrypt_field(content_key, utf8(body), field_aad(FIELD_BODY)),
                 attachments_bundle = seal_attachments(content_key, attachments),
+                kdf_version = kdf_version,
             )
         } finally {
             kem_seed.fill(0)
@@ -235,8 +234,9 @@ object SecureMessageCrypto {
         encrypted_subject: SecureMessageField,
         encrypted_body: SecureMessageField,
         attachments_bundle: String?,
+        kdf_version: Int = SecureMessageKdf.V1,
     ): OpenedSecureMessage {
-        val material = derive_raw_material(password, unb64(kdf_salt))
+        val material = derive_raw_material(password, unb64(kdf_salt), kdf_version)
         material.auth_verifier.fill(0)
         val content_key = try {
             val kem_seed = AesGcm.decrypt(
@@ -338,7 +338,6 @@ object SecureMessage {
 
     const val PLACEHOLDER = "[secure message]"
 
-    private const val PBKDF2_ITERATIONS = 310_000
     private const val SALT_BYTES = 16
     private const val KEM_SEED_BYTES = 64
     private const val NONCE_BYTES = 12
@@ -358,16 +357,19 @@ object SecureMessage {
         val encrypted_subject: Field,
         val encrypted_body: Field,
         val attachments_bundle: String?,
+        val kdf_version: Int = SecureMessageKdf.V1,
     )
 
     class PasswordMaterial(val kdf_key: ByteArray, val auth_verifier: ByteArray)
 
-    fun derive_password_material(password: String, salt: ByteArray): PasswordMaterial {
+    fun derive_password_material(
+        password: String,
+        salt: ByteArray,
+        kdf_version: Int = SecureMessageKdf.V1,
+    ): PasswordMaterial {
         val password_bytes = password.toByteArray(Charsets.UTF_8)
-        val generator = PKCS5S2ParametersGenerator(SHA256Digest())
         try {
-            generator.init(password_bytes, salt, PBKDF2_ITERATIONS)
-            val derived = (generator.generateDerivedMacParameters(KEY_BYTES * 2 * 8) as KeyParameter).key
+            val derived = SecureMessageKdf.derive(password_bytes, salt, kdf_version)
             try {
                 return PasswordMaterial(
                     kdf_key = derived.copyOfRange(0, KEY_BYTES),
@@ -396,9 +398,10 @@ object SecureMessage {
         body: String,
         attachments: List<Attachment> = emptyList(),
         random: SecureRandom = SecureRandom(),
+        kdf_version: Int = SecureMessageKdf.write_version(),
     ): Sealed {
         val salt = random_bytes(random, SALT_BYTES)
-        val material = derive_password_material(password, salt)
+        val material = derive_password_material(password, salt, kdf_version)
         val kem_seed = random_bytes(random, KEM_SEED_BYTES)
         val keypair = RatchetCrypto.ml_kem_768_keypair_from_seed(kem_seed)
         val encapsulation = RatchetCrypto.ml_kem_768_encapsulate(keypair.public_key)
@@ -426,6 +429,7 @@ object SecureMessage {
                     random,
                 ),
                 attachments_bundle = seal_attachments(content_key, attachments, random),
+                kdf_version = kdf_version,
             )
         } finally {
             content_key.fill(0)

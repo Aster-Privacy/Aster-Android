@@ -36,6 +36,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.auth.WebAuthnAssertionOptions
 
 @Serializable
 data class LoginAlertStatus(
@@ -55,18 +56,12 @@ data class HardwareKey(
     @SerialName("registered_at") val created_at: String = "",
     @SerialName("last_used") val last_used_at: String? = null,
 ) {
-    val display_name: String get() = name?.takeIf { it.isNotBlank() } ?: ""
+    val display_name: String get() = name?.takeIf { it.isNotBlank() && !it.startsWith("an1:") } ?: ""
 }
 
 @Serializable
 data class HardwareKeysResponse(
     val keys: List<HardwareKey> = emptyList(),
-)
-
-@Serializable
-data class DeleteHardwareKeyRequest(
-    val password_hash: String? = null,
-    val totp_code: String? = null,
 )
 
 @Serializable
@@ -187,13 +182,10 @@ interface SecurityApi {
     suspend fun get_login_alerts(): LoginAlertStatus
     suspend fun set_login_alerts(request: SetLoginAlertRequest): LoginAlertStatus
     suspend fun list_hardware_keys(): HardwareKeysResponse
-    suspend fun delete_hardware_key(
-        key_id: String,
-        password_hash: String? = null,
-        totp_code: String? = null,
-    )
+    suspend fun delete_hardware_key(key_id: String, proof: ReauthProofRequest?)
     suspend fun rename_hardware_key(key_id: String, name: String): RenameHardwareKeyResponse
-    suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions
+    suspend fun initiate_passkey_registration(proof: ReauthProofRequest): PasskeyRegistrationOptions
+    suspend fun step_up_assertion_options(): WebAuthnAssertionOptions
     suspend fun complete_passkey_registration(
         request: PasskeyRegistrationCompleteRequest,
     ): PasskeyRegistrationCompleteResponse
@@ -225,21 +217,13 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
     override suspend fun list_hardware_keys(): HardwareKeysResponse =
         decode_or_throw(client.http.get("${client.base_url}$base/auth/hardware-keys"))
 
-    override suspend fun delete_hardware_key(
-        key_id: String,
-        password_hash: String?,
-        totp_code: String?,
-    ) {
+    override suspend fun delete_hardware_key(key_id: String, proof: ReauthProofRequest?) {
         val response = client.http.delete("${client.base_url}$base/auth/hardware-keys/$key_id") {
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
-            if (password_hash != null) {
+            if (proof != null) {
                 contentType(ContentType.Application.Json)
-                setBody(
-                    DeleteHardwareKeyRequest(
-                        password_hash = password_hash,
-                        totp_code = totp_code?.takeIf { it.isNotBlank() },
-                    ),
-                )
+                setBody(proof)
             }
         }
         if (response.status.value !in 200..299) {
@@ -257,8 +241,18 @@ class SecurityApiImpl(private val client: ApiClient) : SecurityApi {
         return decode_or_throw(response)
     }
 
-    override suspend fun initiate_passkey_registration(): PasskeyRegistrationOptions {
+    override suspend fun initiate_passkey_registration(proof: ReauthProofRequest): PasskeyRegistrationOptions {
         val response = client.http.post("${client.base_url}$base/auth/hardware-keys/register/initiate") {
+            contentType(ContentType.Application.Json)
+            header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(proof)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun step_up_assertion_options(): WebAuthnAssertionOptions {
+        val response = client.http.post("${client.base_url}$base/auth/hardware-keys/step-up/options") {
             header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }

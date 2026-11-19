@@ -32,6 +32,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
+import org.astermail.android.crypto.FieldFormat
 
 const val STORAGE_REKEY_PATH = "/core/v1/auth/me/storage-rekey"
 const val USER_REKEY_PATH = "/core/v1/auth/me/rekey"
@@ -182,6 +183,42 @@ fun reseal_field(keys: ResealKeys, ciphertext: String?, nonce: String?): ResealR
             sealed.plaintext.fill(0)
         }
     }
+}
+
+class FieldBinding(val kind: String, val field: String, val record_id: String?) {
+    fun candidates(): List<ByteArray?> = FieldFormat.candidates(kind, field, record_id)
+
+    fun write_aad(opened_with: ByteArray?): ByteArray? = when {
+        opened_with != null -> opened_with
+        FieldFormat.write_version() == FieldFormat.V2 -> FieldFormat.aad(kind, field, record_id)
+        else -> null
+    }
+}
+
+fun reseal_bound_field(
+    keys: ResealKeys,
+    ciphertext_b64: String?,
+    nonce_b64: String?,
+    binding: FieldBinding,
+): ResealResult {
+    if (ciphertext_b64.isNullOrEmpty() || nonce_b64.isNullOrEmpty()) return ResealResult.Absent
+    val ciphertext = decode_b64(ciphertext_b64) ?: return ResealResult.Unreadable
+    val nonce = decode_b64(nonce_b64) ?: return ResealResult.Unreadable
+    val candidates = binding.candidates()
+    for (aad in candidates) {
+        val opened = gcm_open(keys.new_aes, ciphertext, nonce, aad) ?: continue
+        opened.fill(0)
+        return ResealResult.Current
+    }
+    for (aad in candidates) {
+        val plaintext = open_with_any(keys.old_aes, ciphertext, nonce, aad) ?: continue
+        try {
+            return ResealResult.Sealed(seal_under_new(keys, plaintext, binding.write_aad(aad)))
+        } finally {
+            plaintext.fill(0)
+        }
+    }
+    return ResealResult.Unreadable
 }
 
 fun tally_untouched(ctx: ResealContext, results: List<ResealResult>) {

@@ -39,6 +39,24 @@ class ProxiedImageRequestTest {
     }
 
     @Test
+    fun the_token_is_sent_only_to_the_image_proxy() {
+        val others = listOf(
+            "https://example.com/a.png",
+            "https://example.com/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "http://app.astermail.org/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org:8443/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://user:pass@app.astermail.org/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org/api/mail/v1/messages?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org/api/images/v1/proxy",
+            "https://app.astermail.org.example.com/api/images/v1/proxy?url=x",
+            "not a url",
+        )
+        for (other in others) {
+            assertNull(other, proxied_image_request(other, "token-123"))
+        }
+    }
+
+    @Test
     fun an_expired_token_is_refreshed_once() {
         val sent = mutableListOf<String?>()
         val closed = mutableListOf<Int>()
@@ -83,6 +101,53 @@ class ProxiedImageRequestTest {
         assertEquals(401, result)
         assertEquals(listOf<String?>("old"), sent)
         assertEquals(200, fetch_with_one_token_refresh("old", { 200 }, { it }, {}, { error("unused") }))
+    }
+
+    @Test
+    fun the_token_is_attached_only_to_the_image_proxy() {
+        val refused = listOf(
+            "https://example.com/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "http://app.astermail.org/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org:8443/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://user:pass@app.astermail.org/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org@example.com/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org.example.com/api/images/v1/proxy?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org/api/images/v1/proxy/../../auth/me?url=x",
+            "https://app.astermail.org/api/auth/me?url=https%3A%2F%2Fexample.com%2Fa.png",
+            "https://app.astermail.org/api/images/v1/proxy",
+            "https://app.astermail.org/api/images/v1/proxy?url=",
+            "not a url",
+        )
+        for (candidate in refused) {
+            assertNull(candidate, proxied_image_request(candidate, "tok"))
+        }
+        assertEquals("Bearer tok", proxied_image_request(url, "tok")?.header("Authorization"))
+        assertEquals(
+            "Bearer tok",
+            proxied_image_request("https://app.astermail.org:443/api/images/v1/proxy?url=x", "tok")?.header("Authorization"),
+        )
+    }
+
+    @Test
+    fun a_redirect_away_from_the_image_proxy_is_not_followed() {
+        val refused = listOf(
+            "https://example.com/a.png",
+            "//example.com/api/images/v1/proxy?url=x",
+            "http://app.astermail.org/api/images/v1/proxy?url=x",
+            "https://app.astermail.org:8443/api/images/v1/proxy?url=x",
+            "https://a@app.astermail.org/api/images/v1/proxy?url=x",
+            "/api/auth/me",
+            "/api/images/v1/proxy",
+            "",
+            null,
+        )
+        for (location in refused) {
+            assertNull(location, proxy_redirect_target(url, location))
+        }
+        assertEquals(
+            "https://app.astermail.org/api/images/v1/proxy?url=y",
+            proxy_redirect_target(url, "/api/images/v1/proxy?url=y"),
+        )
     }
 
     @Test

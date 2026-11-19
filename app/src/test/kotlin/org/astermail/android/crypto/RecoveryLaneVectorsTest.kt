@@ -76,7 +76,7 @@ class RecoveryLaneVectorsTest {
 
         for (index in 0 until cases.length()) {
             val case = cases.getJSONObject(index)
-            val opened = RecoveryLane.open(
+            val opened = RecoveryLane.open_unauthenticated(
                 lane_data(case),
                 case.getString("conversation_id"),
                 case.getString("sender_identity_public"),
@@ -90,12 +90,207 @@ class RecoveryLaneVectorsTest {
     }
 
     @Test
-    fun rejects_every_vector_under_a_tampered_conversation_id() {
+    fun keeps_older_vectors_out_of_the_sender_bound_opener() {
         val cases = vectors.getJSONArray("cases")
 
         for (index in 0 until cases.length()) {
             val case = cases.getJSONObject(index)
             val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                RecoveryLane.Transcript("", 0, 0, "", 1L),
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun opens_every_sender_bound_vector_through_both_parts() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+        assertEquals(2, cases.length())
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val bound = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                transcript(case),
+            )
+            val legacy = RecoveryLane.open_unauthenticated(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+            )
+
+            assertEquals(case.getString("name"), case.getString("plaintext"), bound)
+            assertEquals(case.getString("name"), case.getString("plaintext"), legacy)
+        }
+    }
+
+    @Test
+    fun carries_the_send_time_in_every_sender_bound_vector() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            assertEquals(case.getString("name"), transcript(case).sent_at, lane_data(case).sent_at)
+        }
+    }
+
+    @Test
+    fun rejects_a_sender_bound_vector_under_another_send_time() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val moved = transcript(case).let { it.copy(sent_at = it.sent_at + 1) }
+            val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                moved,
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun keeps_sender_bound_vectors_out_of_the_older_opener() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                null,
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun opens_every_older_sender_bound_vector_without_a_transcript() {
+        val cases = vectors.getJSONArray("legacy_sender_bound_cases")
+        assertEquals(2, cases.length())
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val data = lane_data(case)
+            val opened = RecoveryLane.open(
+                data,
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                null,
+            )
+
+            assertNull(case.getString("name"), data.sent_at)
+            assertEquals(case.getString("name"), case.getString("plaintext"), opened)
+        }
+    }
+
+    @Test
+    fun rejects_an_older_sender_bound_vector_for_another_sender_key() {
+        val cases = vectors.getJSONArray("legacy_sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("recipient_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                null,
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun rejects_a_sender_bound_vector_for_another_sender_key() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("recipient_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                transcript(case),
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun rejects_a_sender_bound_vector_with_an_altered_sender_part() {
+        val case = vectors.getJSONArray("sender_bound_cases").getJSONObject(0)
+        val lane = lane_data(case)
+        val sct = java.util.Base64.getDecoder().decode(lane.sct)
+        sct[0] = (sct[0].toInt() xor 0xff).toByte()
+
+        val opened = RecoveryLane.open(
+            lane.copy(sct = java.util.Base64.getEncoder().encodeToString(sct)),
+            case.getString("conversation_id"),
+            case.getString("sender_identity_public"),
+            own_keys(case),
+            case.getString("recipient_pq_identity_public"),
+            transcript(case),
+        )
+
+        assertNull(opened)
+    }
+
+    @Test
+    fun rejects_a_sender_bound_vector_under_another_ratchet_header() {
+        val cases = vectors.getJSONArray("sender_bound_cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val moved = transcript(case).let { it.copy(message_number = it.message_number + 1) }
+            val opened = RecoveryLane.open(
+                lane_data(case),
+                case.getString("conversation_id"),
+                case.getString("sender_identity_public"),
+                own_keys(case),
+                case.getString("recipient_pq_identity_public"),
+                moved,
+            )
+
+            assertNull(case.getString("name"), opened)
+        }
+    }
+
+    @Test
+    fun rejects_every_vector_under_a_tampered_conversation_id() {
+        val cases = vectors.getJSONArray("cases")
+
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val opened = RecoveryLane.open_unauthenticated(
                 lane_data(case),
                 case.getString("conversation_id") + "-tampered",
                 case.getString("sender_identity_public"),
@@ -111,7 +306,7 @@ class RecoveryLaneVectorsTest {
     fun rejects_a_vector_signed_for_a_different_sender() {
         val case = vectors.getJSONArray("cases").getJSONObject(0)
 
-        val opened = RecoveryLane.open(
+        val opened = RecoveryLane.open_unauthenticated(
             lane_data(case),
             case.getString("conversation_id"),
             "another-sender-identity",
@@ -131,6 +326,20 @@ class RecoveryLaneVectorsTest {
             ciphertext = lane.getString("ciphertext"),
             nonce = lane.getString("nonce"),
             rid = lane.getString("rid"),
+            sct = lane.optString("sct").ifEmpty { null },
+            snonce = lane.optString("snonce").ifEmpty { null },
+            t = if (lane.has("t")) lane.getLong("t") else null,
+        )
+    }
+
+    private fun transcript(case: JSONObject): RecoveryLane.Transcript {
+        val entry = case.getJSONObject("transcript")
+        return RecoveryLane.Transcript(
+            dh_public = entry.getString("dh_public"),
+            previous_chain_length = entry.getInt("previous_chain_length"),
+            message_number = entry.getInt("message_number"),
+            nonce = entry.getString("nonce"),
+            sent_at = entry.getLong("sent_at"),
         )
     }
 

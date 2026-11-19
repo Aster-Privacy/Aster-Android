@@ -63,5 +63,6 @@ fun build_secure_message_payload(
         encrypted_subject = field_payload(sealed.encrypted_subject),
         encrypted_body = field_payload(sealed.encrypted_body),
         attachments_bundle = sealed.attachments_bundle,
+        kdf_version = sealed.kdf_version,
     )
 }

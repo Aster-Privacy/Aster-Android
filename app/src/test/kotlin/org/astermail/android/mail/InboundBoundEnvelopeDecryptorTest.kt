@@ -128,6 +128,22 @@ class InboundBoundEnvelopeDecryptorTest {
     }
 
     @Test
+    fun bound_envelopes_open_when_legacy_markers_are_refused() {
+        for (name in listOf("ecdh_bound", "pq_hybrid_bound")) {
+            assertArrayEquals(
+                expected_plaintext(),
+                InboundEnvelopeDecryptor.decrypt_bytes(
+                    envelope(name),
+                    nonce(name),
+                    listOf(key_set()),
+                    owner(),
+                    legacy_markers = false,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun a_bound_envelope_does_not_open_for_another_account() {
         assertNull(open("ecdh_bound", envelope("ecdh_bound"), other_owner))
         assertNull(open("pq_hybrid_bound", envelope("pq_hybrid_bound"), other_owner))

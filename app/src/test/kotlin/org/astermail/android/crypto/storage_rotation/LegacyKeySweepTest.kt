@@ -24,6 +24,7 @@ package org.astermail.android.crypto.storage_rotation
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonElement
 import org.astermail.android.auth.STORAGE_REKEY_DONE
+import org.astermail.android.crypto.StorageWriteKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -50,10 +51,13 @@ class LegacyKeySweepTest {
         }
     }
 
-    private class Retirement {
+    private class Retirement(private val step: RecordingStep? = null, private val committed: Boolean = true) {
         var count = 0
-        fun retire() {
+        var runs_before_retire = -1
+        fun retire(): Boolean {
             count += 1
+            runs_before_retire = step?.runs ?: -1
+            return committed
         }
     }
 
@@ -92,6 +96,43 @@ class LegacyKeySweepTest {
         assertEquals(1, step.runs)
         assertTrue(step.saw_legacy_key)
         assertEquals(1, retirement.count)
+    }
+
+    @Test
+    fun the_keys_are_retired_only_after_the_sweep_finishes() = runBlocking {
+        val step = RecordingStep(StepResult.DONE)
+        val retirement = Retirement(step)
+        val result = sweep(step, retirement)
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertEquals(1, retirement.count)
+        assertEquals(1, retirement.runs_before_retire)
+    }
+
+    @Test
+    fun the_public_constants_are_never_offered_as_old_keys() = runBlocking {
+        val retirement = Retirement()
+        val constants = StorageWriteKey.public_mail_kek_raws()
+        val seen = ArrayList<ByteArray>()
+        val capturing = object : ResealStep {
+            override val name = "capturing"
+            override suspend fun run(ctx: ResealContext): StepResult {
+                ctx.keys.old_aes.forEach { seen.add(it.copyOf()) }
+                return StepResult.DONE
+            }
+        }
+        val result = run_legacy_key_sweep(
+            view = done_view(),
+            api = QuietApi(),
+            store = MemoryProgressStore(),
+            legacy_keys = constants,
+            retire = retirement::retire,
+            sleep = {},
+            steps = listOf(capturing),
+            gate = null,
+        )
+        assertEquals(ResealRunStatus.DONE, result.status)
+        assertTrue(constants.none { c -> seen.any { it.contentEquals(c) } })
+        assertTrue(seen.isEmpty())
     }
 
     @Test
@@ -149,6 +190,17 @@ class LegacyKeySweepTest {
         sweep(step, retirement, legacy_keys = listOf(ByteArray(32) { 7 }, legacy_key.copyOf()))
         assertTrue(step.saw_legacy_key)
         assertEquals(1, retirement.count)
+    }
+
+    @Test
+    fun a_retirement_that_cannot_be_saved_runs_again_later() = runBlocking {
+        val step = RecordingStep(StepResult.DONE)
+        val retirement = Retirement(committed = false)
+        val result = sweep(step, retirement)
+        assertEquals(ResealRunStatus.INTERRUPTED, result.status)
+        assertEquals(LEGACY_KEY_RETIRE_PENDING, result.reason)
+        assertEquals(1, retirement.count)
+        assertTrue(should_retry_storage_rekey(result))
     }
 
     private companion object {

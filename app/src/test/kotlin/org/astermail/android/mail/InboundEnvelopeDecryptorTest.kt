@@ -109,6 +109,21 @@ class InboundEnvelopeDecryptorTest {
     }
 
     @Test
+    fun legacy_markers_are_refused_once_the_floor_is_set() {
+        for (name in listOf("ecdh_compressed", "pq_hybrid")) {
+            val block = vectors.getJSONObject(name)
+            assertNull(
+                InboundEnvelopeDecryptor.decrypt(
+                    block.getString("envelope_b64"),
+                    decode(block.getString("nonce_b64")),
+                    listOf(real_key_set()),
+                    legacy_markers = false,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun decrypts_a_marker_0x04_envelope_through_the_production_path() {
         val block = vectors.getJSONObject("pq_hybrid")
 

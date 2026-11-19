@@ -25,17 +25,16 @@ import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.ReorderLabelEntry
 import org.astermail.android.api.tags.ReorderTagEntry
 import org.astermail.android.api.tags.TagItem
-import org.astermail.android.looks_encrypted
 
 const val LABEL_FOLDER_TYPE = "label"
 
 fun label_rows(labels: List<LabelItem>): List<LabelItem> = labels
     .filter { it.folder_type == LABEL_FOLDER_TYPE }
-    .filter { !it.encrypted_name.isNullOrBlank() && !looks_encrypted(it.encrypted_name) }
+    .filter { readable_label_name(it) != null }
     .sortedWith(compareBy({ it.sort_order }, { it.created_at.orEmpty() }, { it.label_token }))
 
 fun tag_name_readable(tag: TagItem): Boolean =
-    tag.encrypted_name.isNotBlank() && !looks_encrypted(tag.encrypted_name)
+    !tag.decryption_failed && tag.encrypted_name.isNotBlank()
 
 fun tag_rows(tags: List<TagItem>): List<TagItem> = tags
     .sortedWith(compareBy({ it.sort_order }, { it.created_at.orEmpty() }, { it.tag_token }))

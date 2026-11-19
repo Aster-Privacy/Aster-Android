@@ -21,6 +21,8 @@
 
 package org.astermail.android.auth
 
+import java.util.Base64
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.crypto.storage_rotation.VaultEdit
 import org.json.JSONArray
 import org.json.JSONObject
@@ -46,6 +48,15 @@ class MissingIdentityKeyInstallTest {
         return (0 until array.length()).map { array.getJSONObject(it).getString("k") }
     }
 
+    private fun missing_identity_keks(): List<String> =
+        StorageWriteKey.public_mail_kek_raws().map { key ->
+            try {
+                Base64.getEncoder().encodeToString(key)
+            } finally {
+                key.fill(0)
+            }
+        }.sorted()
+
     private class CountingGenerator(private val result: String?) {
         var calls = 0
         fun generate(): String? {
@@ -55,12 +66,17 @@ class MissingIdentityKeyInstallTest {
     }
 
     @Test
-    fun `missing identity keks match the web derivation for every account data context`() {
+    fun `the shared constant set holds the web derivation for every account data context`() {
         val keks = missing_identity_keks()
 
-        assertEquals(11, keks.size)
-        assertEquals("WKk77GlgzyLDRiwNmKtEtEX85tjGtdOENdEryQSIXqw=", keks.first())
-        assertEquals("GNbUVg+Tah//5+O3y8zjDBgwM0SfByzozJ/wMJpQikk=", keks.last())
+        assertEquals(
+            StorageWriteKey.PUBLIC_CONSTANT_CONTEXTS.toSet().size * StorageWriteKey.UNSET_IDENTITY_MATERIALS.size,
+            keks.size,
+        )
+        for (web in listOf("WKk77GlgzyLDRiwNmKtEtEX85tjGtdOENdEryQSIXqw=", "GNbUVg+Tah//5+O3y8zjDBgwM0SfByzozJ/wMJpQikk=")) {
+            assertTrue(web in keks)
+            assertTrue(StorageWriteKey.is_public_mail_kek(Base64.getDecoder().decode(web)))
+        }
     }
 
     @Test
@@ -74,9 +90,8 @@ class MissingIdentityKeyInstallTest {
         assertEquals("ZGF0YS1rZWs=", vault.getString("data_kek"))
         assertEquals(listOf("b2xkLWlkZW50aXR5"), json_strings(vault.optJSONArray("legacy_identity_keys")))
         val keks = legacy_kek_values(vault)
-        assertTrue(keks.containsAll(missing_identity_keks()))
-        assertTrue(keks.contains("ZXhpc3Rpbmc="))
-        assertEquals(keks.size, keks.toSet().size)
+        assertEquals(listOf("ZXhpc3Rpbmc="), keks)
+        assertTrue(keks.none { it in missing_identity_keks() })
     }
 
     @Test
@@ -100,7 +115,20 @@ class MissingIdentityKeyInstallTest {
         assertEquals(VaultEdit.CHANGED, edit.apply(vault))
         assertEquals(new_key, edit.installed_key)
         assertEquals(new_key, vault.getString("identity_key"))
-        assertTrue(legacy_kek_values(vault).containsAll(missing_identity_keks()))
+        assertTrue(legacy_kek_values(vault).none { it in missing_identity_keks() })
+    }
+
+    @Test
+    fun `install leaves constants already in the vault alone`() {
+        val vault = keyless_vault()
+        val existing = missing_identity_keks().take(2)
+        val array = JSONArray()
+        existing.forEach { array.put(JSONObject().put("k", it).put("added_at", "2026-01-01T00:00:00Z")) }
+        vault.put("legacy_keks", array)
+
+        install_identity_key_into_vault(vault, new_key, added_at)
+
+        assertEquals(existing, legacy_kek_values(vault))
     }
 
     @Test

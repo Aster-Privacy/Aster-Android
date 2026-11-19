@@ -672,7 +672,7 @@
     <string name="disabling">جارٍ التعطيل...</string>
     <string name="disable_two_factor">تعطيل المصادقة الثنائية</string>
     <string name="generate_new_backup_codes_section">إنشاء رموز احتياطية جديدة</string>
-    <string name="generate_backup_codes_description">أدخل رمزاً حالياً من تطبيق المصادقة. سيتم إبطال الرموز الاحتياطية السابقة.</string>
+    <string name="generate_backup_codes_description">أدخل كلمة السر ورمزاً حالياً من تطبيق المصادقة. ستتوقف الرموز الاحتياطية السابقة عن العمل.</string>
     <string name="generating">جارٍ الإنشاء...</string>
     <string name="generate_codes">إنشاء الرموز</string>
     <string name="two_factor_enabled_title">تم تفعيل المصادقة الثنائية</string>
@@ -1831,6 +1831,7 @@
     <string name="totp_code_required_label">رمز المصادقة أو رمز احتياطي</string>
     <string name="totp_code_required_error">أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة، أو أحد رموزك الاحتياطية</string>
     <string name="preferences_locked_retry">تعذّر فتح إعداداتك الآن. يتم عرض الإعدادات الافتراضية، ارجع ثم افتح مجددًا للمحاولة.</string>
+    <string name="encrypted_edit_locked_retry">لا يزال Aster Mail يفتح هذا العنصر، لذلك لم يتم حفظ تغييرك. حاول مرة أخرى بعد لحظات.</string>
     <string name="plan_name_star">تمييز بنجمة</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">المستعر الأعظم</string>
@@ -2726,6 +2727,9 @@
     <string name="folder_locked">تم قفل المجلد</string>
     <string name="folder_unlocked">تم إلغاء قفل المجلد</string>
     <string name="folder_lock_set">تم تعيين قفل المجلد</string>
+    <string name="folder_relock_required">تم قفل هذا المجلد مرة أخرى على جهاز آخر. لفتحه هنا، أزل القفل ثم عيّنه مرة أخرى.</string>
+    <string name="folder_protection_unavailable">تعذّرت قراءة تفاصيل حماية المجلد على هذا الجهاز. سجّل الخروج ثم سجّل الدخول مرة أخرى، ثم حاول مجددًا.</string>
+    <string name="folder_lock_set_unconfirmed">تم تعيين قفل المجلد. أدخل كلمة المرور لفتح المجلد.</string>
     <string name="folder_lock_removed">تمت إزالة قفل المجلد</string>
     <string name="folder_notifications_muted">تم كتم الإشعارات لهذا المجلد</string>
     <string name="folder_notifications_unmuted">الإشعارات مفعّلة لهذا المجلد</string>
@@ -2916,8 +2920,11 @@
     <string name="failed_to_move_items">تعذّر النقل</string>
     <string name="folder_name_taken">يوجد مجلد بهذا الاسم بالفعل.</string>
     <string name="hardware_key_remove_confirm">لن تتمكّن من تسجيل الدخول بمفتاح الأمان هذا بعد الآن.</string>
-    <string name="hardware_key_remove_last_title">هل تريد إزالة آخر مفتاح أمان لديك؟</string>
-    <string name="hardware_key_remove_last_description">هذا هو آخر عامل تحقق ثانٍ في حسابك. لإزالته، أدخل كلمة السر.</string>
+    <string name="hardware_key_remove_last_title">هل تريد إزالة مفتاح الأمان هذا؟</string>
+    <string name="hardware_key_remove_last_description">لإزالة مفتاح الأمان هذا، أدخل كلمة السر.</string>
+    <string name="passkey_add_reauth_description">لإضافة مفتاح مرور، أدخل كلمة السر.</string>
+    <string name="totp_setup_reauth_description">لإعداد المصادقة الثنائية، أدخل كلمة السر.</string>
+    <string name="reauth_key_check_failed">تعذّر التحقق من مفتاح المرور أو مفتاح الأمان. حاول مرة أخرى.</string>
     <string name="image_insert_failed">تعذّرت إضافة هذه الصورة. ربما تكون كبيرة جدًا أو بتنسيق غير مدعوم.</string>
     <string name="invalid_recipient_address">«%1$s» ليس عنوان بريد إلكتروني صالحًا</string>
     <string name="label_name_taken">يوجد تصنيف بهذا الاسم بالفعل.</string>
@@ -3592,6 +3599,11 @@
     <string name="contact_sync_settings_title">السماح بالوصول إلى جهات الاتصال</string>
     <string name="contact_sync_settings_message">لمزامنة جهات اتصالك، اضغط على فتح الإعدادات، وانتقل إلى الأذونات &gt; جهات الاتصال، واختر السماح.</string>
     <string name="contact_sync_open_settings">فتح الإعدادات</string>
+    <string name="contact_sync_all_details_title">مزامنة جميع تفاصيل جهات الاتصال</string>
+    <string name="contact_sync_all_details_subtitle">عند إيقاف هذا الخيار، يضيف Aster الأسماء وعناوين البريد الإلكتروني فقط إلى تطبيق جهات الاتصال في هاتفك.</string>
+    <string name="contact_sync_all_details_confirm_title">هل تريد مزامنة جميع تفاصيل جهات الاتصال؟</string>
+    <string name="contact_sync_all_details_confirm_message">يضيف Aster أيضًا أرقام الهواتف والعناوين وأعياد الميلاد والملاحظات والصور وتفاصيل أخرى إلى تطبيق جهات الاتصال في هاتفك. يمكن للتطبيقات الأخرى التي لديها إذن الوصول إلى جهات اتصالك قراءة هذه التفاصيل.</string>
+    <string name="contact_sync_all_details_confirm">مزامنة جميع التفاصيل</string>
     <string name="contact_sync_label_sibling">أخ أو أخت</string>
     <string name="contact_sync_label_graduation">تخرج</string>
     <string name="contact_sync_label_wedding">زفاف</string>
@@ -3749,6 +3761,20 @@
         <item quantity="other">تمت إضافة %d جهة اتصال</item>
     </plurals>
     <string name="body_index_status">جارٍ فهرسة نصوص الرسائل للبحث: %1$d من %2$d</string>
+    <string name="mail_key_upgrade_title">جارٍ تحديث بريدك المحفوظ</string>
+    <string name="mail_key_upgrade_running">يعيد Aster Mail تشفير رسائلك المحفوظة باستخدام مفاتيحك الحالية. أبقِ هذه النافذة مفتوحة حتى تنتهي العملية.</string>
+    <string name="mail_key_upgrade_failed">تعذّر على Aster Mail إكمال تحديث رسائلك المحفوظة. لم يتغير بريدك. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
+    <string name="mail_key_upgrade_retry">إعادة المحاولة</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="zero">تم فحص %d رسالة</item>
+        <item quantity="one">تم فحص رسالة واحدة (%d)</item>
+        <item quantity="two">تم فحص %d رسالة</item>
+        <item quantity="few">تم فحص %d رسالة</item>
+        <item quantity="many">تم فحص %d رسالة</item>
+        <item quantity="other">تم فحص %d رسالة</item>
+    </plurals>
+    <string name="account_link_confirm_title">ربط هذا الحساب؟</string>
+    <string name="account_link_confirm_message">يريد %1$s استخدام %2$s على هذا الجهاز. أكّد فقط إذا بدأت ذلك في %1$s.</string>
     <string name="delete_selected_subscriptions">حذف (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="zero">حذف %d اشتراك؟</item>
@@ -3768,4 +3794,5 @@
         <item quantity="other">تم حذف %d اشتراك</item>
     </plurals>
     <string name="delete_subscriptions_failed">تعذر حذف الاشتراكات المحددة</string>
+    <string name="attachment_unverified">مرفق لم يتم التحقق منه</string>
 </resources>

@@ -672,7 +672,7 @@
     <string name="disabling">禁用中...</string>
     <string name="disable_two_factor">禁用两步验证</string>
     <string name="generate_new_backup_codes_section">生成新的备份代码</string>
-    <string name="generate_backup_codes_description">输入验证器应用中的当前代码。您之前的备份代码将失效。</string>
+    <string name="generate_backup_codes_description">输入密码和验证器应用中的当前代码。您之前的备份代码将无法再使用。</string>
     <string name="generating">生成中...</string>
     <string name="generate_codes">生成代码</string>
     <string name="two_factor_enabled_title">两步验证已启用</string>
@@ -1811,6 +1811,7 @@
     <string name="totp_code_required_label">验证器代码或备份代码</string>
     <string name="totp_code_required_error">请输入验证器应用中的 6 位验证码，或任一备份代码</string>
     <string name="preferences_locked_retry">暂时无法解锁您的设置。当前显示默认值，返回后重新打开可再试。</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail 仍在解锁此项目，因此您的更改未保存。请稍后再试。</string>
     <string name="plan_name_star">加星标</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
@@ -2657,6 +2658,9 @@
     <string name="folder_locked">已锁定文件夹</string>
     <string name="folder_unlocked">已解锁文件夹</string>
     <string name="folder_lock_set">已设置文件夹锁</string>
+    <string name="folder_relock_required">此文件夹已在另一台设备上重新锁定。要在此处打开，请移除锁定后重新设置。</string>
+    <string name="folder_protection_unavailable">无法在此设备上读取文件夹保护信息。请退出登录后重新登录，然后重试。</string>
+    <string name="folder_lock_set_unconfirmed">已设置文件夹锁。输入密码以打开文件夹。</string>
     <string name="folder_lock_removed">已移除文件夹锁</string>
     <string name="folder_notifications_muted">已静音此文件夹的通知</string>
     <string name="folder_notifications_unmuted">已开启此文件夹的通知</string>
@@ -2833,8 +2837,11 @@
     <string name="failed_to_move_items">无法移动</string>
     <string name="folder_name_taken">已存在同名文件夹。</string>
     <string name="hardware_key_remove_confirm">您将无法再使用此安全密钥登录。</string>
-    <string name="hardware_key_remove_last_title">移除最后一个安全密钥？</string>
-    <string name="hardware_key_remove_last_description">这是账户上最后一个双重验证方式。若要移除，请输入密码。</string>
+    <string name="hardware_key_remove_last_title">移除此安全密钥？</string>
+    <string name="hardware_key_remove_last_description">若要移除此安全密钥，请输入密码。</string>
+    <string name="passkey_add_reauth_description">若要添加通行密钥，请输入密码。</string>
+    <string name="totp_setup_reauth_description">若要设置双重验证，请输入密码。</string>
+    <string name="reauth_key_check_failed">无法验证您的通行密钥或安全密钥。请重试。</string>
     <string name="image_insert_failed">无法添加该图片。它可能太大或格式不受支持。</string>
     <string name="invalid_recipient_address">“%1$s”不是有效的邮箱地址</string>
     <string name="label_name_taken">已存在同名标签。</string>
@@ -3474,6 +3481,11 @@
     <string name="contact_sync_settings_title">允许访问联系人</string>
     <string name="contact_sync_settings_message">要同步联系人，请点按“打开设置”，前往“权限”&gt;“通讯录”，然后选择“允许”。</string>
     <string name="contact_sync_open_settings">打开设置</string>
+    <string name="contact_sync_all_details_title">同步所有联系人详细信息</string>
+    <string name="contact_sync_all_details_subtitle">关闭此选项后，Aster 只会将姓名和电子邮件地址添加到手机的“通讯录”应用。</string>
+    <string name="contact_sync_all_details_confirm_title">要同步所有联系人详细信息吗？</string>
+    <string name="contact_sync_all_details_confirm_message">Aster 还会将电话号码、地址、生日、备注、照片和其他详细信息添加到手机的“通讯录”应用。可以访问你的联系人的其他应用能够读取这些信息。</string>
+    <string name="contact_sync_all_details_confirm">同步所有详细信息</string>
     <string name="contact_sync_label_sibling">兄弟姐妹</string>
     <string name="contact_sync_label_graduation">毕业</string>
     <string name="contact_sync_label_wedding">婚礼</string>
@@ -3622,6 +3634,15 @@
         <item quantity="other">已添加 %d 个联系人</item>
     </plurals>
     <string name="body_index_status">正在为搜索索引邮件正文：%1$d / %2$d</string>
+    <string name="mail_key_upgrade_title">正在更新已保存的邮件</string>
+    <string name="mail_key_upgrade_running">Aster Mail 正在使用你当前的密钥重新加密已保存的邮件。请在完成前保持此窗口打开。</string>
+    <string name="mail_key_upgrade_failed">Aster Mail 未能完成已保存邮件的更新。你的邮件没有任何改动。请检查网络连接，然后重试。</string>
+    <string name="mail_key_upgrade_retry">重试</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="other">已检查 %d 封邮件</item>
+    </plurals>
+    <string name="account_link_confirm_title">关联此帐户？</string>
+    <string name="account_link_confirm_message">%1$s 想在此设备上使用 %2$s。仅当你在 %1$s 中发起此操作时才确认。</string>
     <string name="delete_selected_subscriptions">删除 (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="other">要删除 %d 个订阅吗?</item>
@@ -3631,4 +3652,5 @@
         <item quantity="other">已删除 %d 个订阅</item>
     </plurals>
     <string name="delete_subscriptions_failed">无法删除所选订阅</string>
+    <string name="attachment_unverified">未验证的附件</string>
 </resources>

@@ -45,6 +45,7 @@ class RatchetStateSyncerTest {
     private val conversation_id = "conv-sync"
     private val device_key = ByteArray(32) { it.toByte() }
     private val foreign_key = ByteArray(32) { (it + 100).toByte() }
+    private val sync_key = ByteArray(32) { (it + 50).toByte() }
 
     private val state_store = mockk<RatchetStateStore>(relaxed = true)
     private val ratchet_api = mockk<RatchetApi>(relaxed = true)
@@ -58,8 +59,10 @@ class RatchetStateSyncerTest {
         every { Base64.decode(any<String>(), any()) } answers {
             java.util.Base64.getDecoder().decode(firstArg<String>())
         }
-        every { state_store.derive_state_encryption_key() } answers { device_key.copyOf() }
-        every { state_store.state_encryption_key_candidates() } answers { listOf(device_key.copyOf()) }
+        every { state_store.derive_sync_keys() } answers {
+            RatchetSyncKeys(sync_key.copyOf(), device_key.copyOf(), "user-1")
+        }
+        every { state_store.retired_state_key_candidates() } returns emptyList()
         coEvery { state_store.sync_floor(any()) } returns 0L
         coEvery { state_store.load(any()) } returns null
     }

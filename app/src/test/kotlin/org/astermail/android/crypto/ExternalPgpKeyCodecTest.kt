@@ -359,6 +359,64 @@ class ExternalPgpKeyCodecTest {
         assertTrue(encrypt_id in later.decryption_keys.keys)
     }
 
+    private fun ring_with_primary_revocation(signed_by_primary: Boolean): Pair<ByteArray, Long> {
+        java.security.Security.addProvider(BouncyCastleProvider())
+        val primary = rsa_pair()
+        val encrypt = rsa_pair()
+        val sign = rsa_pair()
+        val other = rsa_pair()
+        val checksum = JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1)
+        val generator = PGPKeyRingGenerator(
+            PGPSignature.POSITIVE_CERTIFICATION,
+            primary,
+            "Outside Owner <owner@astermail.org>",
+            checksum,
+            flags(KeyFlags.CERTIFY_OTHER),
+            null,
+            signer_builder(primary.publicKey.algorithm),
+            null,
+        )
+        generator.addSubKey(encrypt, flags(KeyFlags.ENCRYPT_COMMS or KeyFlags.ENCRYPT_STORAGE), null)
+        generator.addSubKey(sign, flags(KeyFlags.SIGN_DATA), null, signer_builder(sign.publicKey.algorithm))
+        val ring = generator.generateSecretKeyRing()
+        val signer = if (signed_by_primary) primary else other
+        val revoker = org.bouncycastle.openpgp.PGPSignatureGenerator(
+            signer_builder(signer.publicKey.algorithm),
+            signer.publicKey,
+        )
+        revoker.init(PGPSignature.KEY_REVOCATION, signer.privateKey)
+        revoker.setHashedSubpackets(
+            PGPSignatureSubpacketGenerator().apply {
+                setSignatureCreationTime(false, Date())
+                setRevocationReason(false, 2.toByte(), "")
+            }.generate(),
+        )
+        val existing = ring.secretKey
+        val revocation = revoker.generateCertification(existing.publicKey)
+        val revoked_public = org.bouncycastle.openpgp.PGPPublicKey.addCertification(existing.publicKey, revocation)
+        val replaced = org.bouncycastle.openpgp.PGPSecretKey.replacePublicKey(existing, revoked_public)
+        val updated = org.bouncycastle.openpgp.PGPSecretKeyRing.insertSecretKey(ring, replaced)
+        return updated.encoded to encrypt.keyID
+    }
+
+    @Test
+    fun a_revoked_primary_key_never_signs() {
+        val (ring, encrypt_id) = ring_with_primary_revocation(signed_by_primary = true)
+        val unlocked = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint_of(ring)))
+        assertTrue(unlocked.revoked)
+        assertNull(unlocked.signing_key)
+        assertFalse(unlocked.can_sign(System.currentTimeMillis()))
+        assertTrue(encrypt_id in unlocked.decryption_keys.keys)
+    }
+
+    @Test
+    fun a_revocation_from_another_key_does_not_revoke_the_primary() {
+        val (ring, _) = ring_with_primary_revocation(signed_by_primary = false)
+        val unlocked = require_present(ExternalPgpKeyCodec.parse_unlocked(ring, fingerprint_of(ring)))
+        assertFalse(unlocked.revoked)
+        assertTrue(unlocked.can_sign(System.currentTimeMillis()))
+    }
+
     @Test
     fun the_external_key_is_limited_to_inbound_item_types() {
         assertTrue(ExternalPgpKeyCodec.allows_item_type("received"))
@@ -382,8 +440,9 @@ class ExternalPgpKeyCodecTest {
         assertTrue(ExternalPgpKeyCodec.is_primary_sender("Alice <Alice@AsterMail.org>", " alice@astermail.org "))
         assertFalse(ExternalPgpKeyCodec.is_primary_sender("alias@astermail.org", "alice@astermail.org"))
         assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@example.com", "alice@astermail.org"))
-        assertTrue(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", null))
-        assertTrue(ExternalPgpKeyCodec.is_primary_sender("", ""))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", null))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("alice@astermail.org", " "))
+        assertFalse(ExternalPgpKeyCodec.is_primary_sender("", ""))
         assertTrue(ExternalPgpKeyCodec.is_primary_sender("a.lice+news@astermail.org", "alice@astermail.org"))
     }
 }

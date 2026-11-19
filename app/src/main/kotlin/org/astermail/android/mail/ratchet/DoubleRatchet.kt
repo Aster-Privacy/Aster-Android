@@ -183,6 +183,23 @@ object DoubleRatchet {
         )
     }
 
+    fun advance_send_chain(state: RatchetState, target: Int) {
+        val start = state.send_message_number
+        val chain_send_b64 = state.chain_key_send ?: return
+        if (target <= start || target - start > max_skip) return
+        var chain_key = RatchetCrypto.b64_decode(chain_send_b64)
+        repeat(target - start) {
+            val (next_chain_key, message_key) = kdf_chain(chain_key)
+            message_key.fill(0)
+            chain_key.fill(0)
+            chain_key = next_chain_key
+        }
+        state.chain_key_send = RatchetCrypto.b64_encode(chain_key)
+        state.send_message_number = target
+        state.updated_at = System.currentTimeMillis()
+        chain_key.fill(0)
+    }
+
     data class EncryptResult(
         val header: MessageHeader,
         val ciphertext: ByteArray,

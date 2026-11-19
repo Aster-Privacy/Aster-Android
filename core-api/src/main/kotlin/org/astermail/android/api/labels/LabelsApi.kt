@@ -58,6 +58,7 @@ data class LabelItem(
     val unread_count: Long? = null,
     val created_at: String? = null,
     val updated_at: String? = null,
+    val decryption_failed: Boolean = false,
 )
 
 @Serializable
@@ -162,6 +163,7 @@ data class SetFolderPasswordRequest(
     val password_salt: String,
     val encrypted_folder_key: String,
     val folder_key_nonce: String,
+    val folder_key_version: Int,
 )
 
 @Serializable
@@ -176,6 +178,7 @@ data class VerifyFolderPasswordResponse(
     val folder_key_nonce: String? = null,
     val unlock_token: String? = null,
     val unlock_expires_at: String? = null,
+    val folder_key_version: Int? = null,
 )
 
 @Serializable

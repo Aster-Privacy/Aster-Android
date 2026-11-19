@@ -187,6 +187,7 @@ class SelfSendRoundTripTest {
             keys_api,
             pins,
             address_directory,
+            mockk<RatchetSenderKeyHeal>(relaxed = true),
         )
         val escrow = mockk<MessageEscrow>(relaxed = true)
         coEvery { escrow.fetch(any()) } returns null
@@ -203,6 +204,7 @@ class SelfSendRoundTripTest {
             escrow,
             address_directory,
             keys_api,
+            MemoryLaneReplayVault(),
         )
     }
 

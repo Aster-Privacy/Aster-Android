@@ -226,7 +226,10 @@ class LinkDeviceViewModel @Inject constructor(
                 DeviceEnvelope.seal_secret_for_device(
                     secret = passphrase,
                     recipient = DeviceEnvelope.DeviceRecipient(ed25519_pk, mlkem_pk, x25519_pk),
-                    version = DeviceEnvelope.choose_envelope_version(device.envelope_versions),
+                    version = DeviceEnvelope.choose_link_envelope_version(
+                        server_offered = device.envelope_versions,
+                        peer_offered = null,
+                    ),
                 ),
             )
         } finally {

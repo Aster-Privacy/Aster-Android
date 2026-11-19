@@ -39,6 +39,9 @@ data class RecoveryLaneData(
     val ciphertext: String,
     val nonce: String,
     val rid: String,
+    val sct: String? = null,
+    val snonce: String? = null,
+    val t: Long? = null,
 )
 
 @Serializable

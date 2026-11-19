@@ -37,6 +37,9 @@ interface StorageVaultCodec {
     fun decrypt_at(encrypted_vault: String, vault_nonce: String, iterations: Int): JSONObject? =
         decrypt(encrypted_vault, vault_nonce)
     fun encrypt_at(vault: JSONObject, iterations: Int): SealedVault? = encrypt(vault)
+    fun decrypt_sealed(sealed: SealedVault): JSONObject? =
+        decrypt_at(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
+    suspend fun before_write() {}
     fun password_keys(vault: JSONObject): List<ByteArray>
     fun generate_key(): ByteArray
     fun fingerprints(vault: JSONObject): List<String>

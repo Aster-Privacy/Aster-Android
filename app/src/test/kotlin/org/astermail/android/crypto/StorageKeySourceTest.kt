@@ -67,18 +67,15 @@ class StorageKeySourceTest {
         Triple("auth/recovery_code.kt", "SecretKeyFactory", 2),
         Triple("security/AppLockStore.kt", "PasswordKdf.derive_aes_key", 1),
         Triple("security/lock_key_wrap.kt", "PasswordKdf.derive_aes_key", 2),
-        Triple("folders/folder_protection.kt", "pbkdf2_hmac", 3),
+        Triple("folders/folder_protection.kt", "pbkdf2_hmac", 2),
     )
 
     private val legacy_readers = listOf(
-        Triple("auth/AuthRepository.kt", "CryptoNative.derive_storage_key", 3),
-        Triple("auth/AuthRepository.kt", "derive_storage_key", 4),
-        Triple("auth/AuthRepository.kt", "password_storage_key", 1),
+        Triple("auth/AuthRepository.kt", "CryptoNative.derive_storage_key", 1),
+        Triple("auth/AuthRepository.kt", "derive_storage_key", 2),
         Triple("auth/AuthRepository.kt", "storage_password_keys", 1),
         Triple("auth/VaultMasterKeyUpgrade.kt", "derive_storage_key", 2),
-        Triple("auth/VaultMasterKeyUpgrade.kt", "password_storage_key", 1),
-        Triple("auth/device_recovery.kt", "CryptoNative.derive_storage_key", 1),
-        Triple("auth/device_recovery.kt", "derive_storage_key", 4),
+        Triple("auth/VaultMasterKeyUpgrade.kt", "password_storage_key", 2),
         Triple("auth/stretched_storage_keys.kt", "derive_storage_key", 2),
         Triple("auth/stretched_storage_keys.kt", "derive_storage_key_for_version", 2),
         Triple("crypto/storage_write_key.kt", "CryptoNative.derive_storage_key", 1),

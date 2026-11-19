@@ -76,7 +76,7 @@ object CryptoNative {
         return verifier.verifySignature(signature)
     }
 
-    data class VaultEnvelope(val encrypted_vault: ByteArray, val vault_nonce: ByteArray)
+    data class VaultEnvelope(val encrypted_vault: ByteArray, val vault_nonce: ByteArray, val bound: Boolean = false)
 
     fun encrypt_vault_with_password(
         plaintext: ByteArray,
@@ -89,20 +89,32 @@ object CryptoNative {
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
         val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
+        val sealed_bound = bound
         val ciphertext = try {
-            AesGcm.encrypt(key_bytes, nonce, plaintext, if (bound) vault_aad else null)
+            AesGcm.encrypt(key_bytes, nonce, plaintext, if (sealed_bound) vault_aad else null)
         } finally {
             key_bytes.fill(0)
         }
-        return VaultEnvelope(encrypted_vault = salt + ciphertext, vault_nonce = nonce)
+        return VaultEnvelope(encrypted_vault = salt + ciphertext, vault_nonce = nonce, bound = sealed_bound)
     }
+
+    class OpenedVault(val plaintext: ByteArray, val bound: Boolean)
 
     fun decrypt_vault_with_password(
         encrypted_vault: ByteArray,
         vault_nonce: ByteArray,
         password: ByteArray,
         iterations: Int = vault_iterations,
-    ): ByteArray {
+        allow_unbound: Boolean? = null,
+    ): ByteArray = open_vault_with_password(encrypted_vault, vault_nonce, password, iterations, allow_unbound).plaintext
+
+    fun open_vault_with_password(
+        encrypted_vault: ByteArray,
+        vault_nonce: ByteArray,
+        password: ByteArray,
+        iterations: Int = vault_iterations,
+        allow_unbound: Boolean? = null,
+    ): OpenedVault {
         require(encrypted_vault.size > vault_salt_bytes) { "encrypted_vault too short" }
         require(vault_nonce.size == gcm_nonce_bytes) { "vault_nonce must be $gcm_nonce_bytes bytes" }
         val salt = encrypted_vault.copyOfRange(0, vault_salt_bytes)
@@ -110,9 +122,10 @@ object CryptoNative {
         val key_bytes = pbkdf2(password, salt, VaultKdf.require_allowed(iterations))
         try {
             return try {
-                AesGcm.decrypt(key_bytes, vault_nonce, ciphertext, vault_aad)
-            } catch (_: javax.crypto.AEADBadTagException) {
-                AesGcm.decrypt(key_bytes, vault_nonce, ciphertext)
+                OpenedVault(AesGcm.decrypt(key_bytes, vault_nonce, ciphertext, vault_aad), bound = true)
+            } catch (bound_failure: javax.crypto.AEADBadTagException) {
+                if (!(allow_unbound ?: VaultBindingFloor.allow_unbound(encrypted_vault))) throw bound_failure
+                OpenedVault(AesGcm.decrypt(key_bytes, vault_nonce, ciphertext), bound = false)
             }
         } finally {
             key_bytes.fill(0)
@@ -121,13 +134,14 @@ object CryptoNative {
 
     private val vault_aad = "aster-vault-v1".toByteArray(Charsets.UTF_8)
 
-    class UnwrappedVault(val plaintext: ByteArray, val iterations: Int)
+    class UnwrappedVault(val plaintext: ByteArray, val iterations: Int, val bound: Boolean = false)
 
     fun unwrap_vault(
         encrypted_vault: ByteArray,
         vault_nonce: ByteArray,
         password: ByteArray,
         reported_iterations: Int?,
+        allow_unbound: Boolean? = null,
     ): UnwrappedVault {
         val first = if (reported_iterations == VaultKdf.LEVEL2_ITERATIONS) {
             VaultKdf.LEVEL2_ITERATIONS
@@ -135,32 +149,47 @@ object CryptoNative {
             VaultKdf.DEFAULT_ITERATIONS
         }
         val second = if (first == VaultKdf.LEVEL2_ITERATIONS) VaultKdf.DEFAULT_ITERATIONS else VaultKdf.LEVEL2_ITERATIONS
-        return try {
-            UnwrappedVault(decrypt_vault_with_password(encrypted_vault, vault_nonce, password, first), first)
+        val unwrapped = try {
+            open_at(encrypted_vault, vault_nonce, password, first, allow_unbound)
         } catch (primary: Exception) {
             try {
-                UnwrappedVault(decrypt_vault_with_password(encrypted_vault, vault_nonce, password, second), second)
+                open_at(encrypted_vault, vault_nonce, password, second, allow_unbound)
             } catch (_: Exception) {
                 throw primary
             }
         }
+        VaultBindingFloor.note_opened(unwrapped.bound)
+        return unwrapped
     }
 
-    @Deprecated("Use encrypt_vault_with_password / decrypt_vault_with_password (matches web client format)")
-    fun encrypt_vault(plaintext: ByteArray, password_hash: ByteArray): ByteArray {
-        val key_bytes = ensure_key_bytes(password_hash)
-        val nonce = ByteArray(gcm_nonce_bytes)
-        secure_random.nextBytes(nonce)
-        return nonce + AesGcm.encrypt(key_bytes, nonce, plaintext)
+    fun unwrap_vault_after_password_sign_in(
+        encrypted_vault: ByteArray,
+        vault_nonce: ByteArray,
+        password: ByteArray,
+        reported_iterations: Int?,
+    ): UnwrappedVault {
+        val opened = try {
+            unwrap_vault(encrypted_vault, vault_nonce, password, reported_iterations)
+        } catch (bound_failure: Exception) {
+            try {
+                unwrap_vault(encrypted_vault, vault_nonce, password, reported_iterations, allow_unbound = true)
+            } catch (_: Exception) {
+                throw bound_failure
+            }
+        }
+        if (!opened.bound) VaultBindingFloor.admit_after_password_sign_in(encrypted_vault)
+        return opened
     }
 
-    @Deprecated("Use decrypt_vault_with_password (matches web client format)")
-    fun decrypt_vault(ciphertext: ByteArray, password_hash: ByteArray): ByteArray {
-        require(ciphertext.size > gcm_nonce_bytes) { "ciphertext too short" }
-        val key_bytes = ensure_key_bytes(password_hash)
-        val nonce = ciphertext.copyOfRange(0, gcm_nonce_bytes)
-        val payload = ciphertext.copyOfRange(gcm_nonce_bytes, ciphertext.size)
-        return AesGcm.decrypt(key_bytes, nonce, payload)
+    private fun open_at(
+        encrypted_vault: ByteArray,
+        vault_nonce: ByteArray,
+        password: ByteArray,
+        iterations: Int,
+        allow_unbound: Boolean?,
+    ): UnwrappedVault {
+        val opened = open_vault_with_password(encrypted_vault, vault_nonce, password, iterations, allow_unbound)
+        return UnwrappedVault(opened.plaintext, iterations, opened.bound)
     }
 
     private const val storage_key_info = "aster-storage-encryption-key-v1"
@@ -223,10 +252,20 @@ object CryptoNative {
 
     data class EncryptedField(val ciphertext: ByteArray, val nonce: ByteArray)
 
-    fun encrypt_field(plaintext: ByteArray, storage_key: ByteArray): EncryptedField {
-        require(storage_key.size == storage_key_bytes) { "storage_key must be $storage_key_bytes bytes" }
+    fun random_field_nonce(): ByteArray {
         val nonce = ByteArray(gcm_nonce_bytes)
         secure_random.nextBytes(nonce)
+        return nonce
+    }
+
+    fun require_field_inputs(storage_key: ByteArray, nonce: ByteArray) {
+        require(storage_key.size == storage_key_bytes) { "storage_key must be $storage_key_bytes bytes" }
+        require(nonce.size == gcm_nonce_bytes) { "nonce must be $gcm_nonce_bytes bytes" }
+    }
+
+    fun encrypt_field(plaintext: ByteArray, storage_key: ByteArray): EncryptedField {
+        require(storage_key.size == storage_key_bytes) { "storage_key must be $storage_key_bytes bytes" }
+        val nonce = random_field_nonce()
         return EncryptedField(
             ciphertext = AesGcm.encrypt(storage_key, nonce, plaintext),
             nonce = nonce,
@@ -288,13 +327,6 @@ object CryptoNative {
 
     private fun pbkdf2(password: ByteArray, salt: ByteArray, iterations: Int): ByteArray {
         return PasswordKdf.derive_aes_key(password, salt, iterations, derived_key_bits)
-    }
-
-    private fun ensure_key_bytes(key: ByteArray): ByteArray {
-        return when (key.size) {
-            16, 24, 32 -> key
-            else -> MessageDigest.getInstance("SHA-256").digest(key)
-        }
     }
 }
 

@@ -63,10 +63,17 @@ object LevelTwoEnvelope {
         return null
     }
 
-    fun open_raw_with_store(sealed_b64: String?, nonce: ByteArray?, store: SessionKeyStore): ByteArray? {
+    fun open_raw_with_store(
+        sealed_b64: String?,
+        nonce: ByteArray?,
+        store: SessionKeyStore,
+        on_constant: () -> Unit = {},
+    ): ByteArray? {
         val keys = read_keys(store)
         return try {
-            open_raw_b64(sealed_b64, nonce, keys)
+            StorageWriteKey.open_noting_constants(store, keys, on_constant) { subset ->
+                open_raw_b64(sealed_b64, nonce, subset)
+            }
         } finally {
             keys.forEach { it.fill(0) }
         }
@@ -76,7 +83,8 @@ object LevelTwoEnvelope {
         val seen = mutableSetOf<String>()
         val out = mutableListOf<ByteArray>()
         val candidates = listOfNotNull(store.get_data_kek()) +
-            store.get_decrypt_keks().mapNotNull(StorageWriteKey::decode_key)
+            store.get_decrypt_keks().mapNotNull(StorageWriteKey::decode_legacy_key) +
+            StorageWriteKey.public_mail_kek_raws()
         for (key in candidates) {
             if (key.size != StorageWriteKey.KEY_LENGTH || !seen.add(StorageWriteKey.encode_key(key))) {
                 key.fill(0)
@@ -93,10 +101,10 @@ object LevelTwoEnvelope {
         return EnvelopeV2.open(blob, keys)
     }
 
-    fun open_with_store(sealed_b64: String?, store: SessionKeyStore): ByteArray? {
+    fun open_with_store(sealed_b64: String?, store: SessionKeyStore, on_constant: () -> Unit = {}): ByteArray? {
         val keys = read_keys(store)
         return try {
-            open_b64(sealed_b64, keys)
+            StorageWriteKey.open_noting_constants(store, keys, on_constant) { subset -> open_b64(sealed_b64, subset) }
         } finally {
             keys.forEach { it.fill(0) }
         }

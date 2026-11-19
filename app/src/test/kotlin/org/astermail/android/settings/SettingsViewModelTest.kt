@@ -21,23 +21,44 @@
 
 package org.astermail.android.settings
 
+import android.content.Context
+import android.util.Log
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
+import java.io.IOException
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Base64
+import javax.crypto.Cipher
+import javax.crypto.Mac
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import kotlin.coroutines.ContinuationInterceptor
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.astermail.android.R
+import org.astermail.android.api.ApiError
+import org.astermail.android.api.aliases.AliasDetailApi
 import org.astermail.android.api.auth.AuthApi
 import org.astermail.android.api.auth.UserInfo
 import org.astermail.android.api.autoforward.AutoForwardApi
@@ -48,36 +69,83 @@ import org.astermail.android.api.developer.ApiKeyListResponse
 import org.astermail.android.api.developer.DeveloperApi
 import org.astermail.android.api.developer.WebhookInfo
 import org.astermail.android.api.developer.WebhookListResponse
+import org.astermail.android.api.encryption.EncryptionApi
+import org.astermail.android.api.family.FamilyApi
+import org.astermail.android.api.ghost.CreateGhostAliasResponse
 import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.ghost.GhostAliasApi
 import org.astermail.android.api.ghost.GhostAliasListResponse
+import org.astermail.android.api.keys.KeysApi
+import org.astermail.android.api.labels.BulkReorderLabelsRequest
+import org.astermail.android.api.labels.BulkReorderLabelsResponse
+import org.astermail.android.api.labels.CreateLabelRequest
 import org.astermail.android.api.labels.CreateLabelResponse
+import org.astermail.android.api.labels.DeleteLabelResponse
 import org.astermail.android.api.labels.LabelItem
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.api.labels.LabelsListResponse
 import org.astermail.android.api.labels.ReferralInfoResponse
-import org.astermail.android.api.tags.TagsApi
+import org.astermail.android.api.labels.UpdateLabelRequest
+import org.astermail.android.api.mail_rules.MailRulesApi
+import org.astermail.android.api.preferences.EncryptedPreferencesResponse
 import org.astermail.android.api.preferences.PreferencesApi
+import org.astermail.android.api.preferences.PreferencesSaveResult
+import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
+import org.astermail.android.api.preferences.SaveVersionedPreferencesRequest
+import org.astermail.android.api.preferences.VersionedEncryptedPreferences
 import org.astermail.android.api.preferences.UserPreferences
+import org.astermail.android.api.recovery.RecoveryApi
+import org.astermail.android.api.recovery_email.RecoveryEmailApi
+import org.astermail.android.api.recovery_email.RecoveryEmailStateResponse
+import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.AliasListResponse
-import org.astermail.android.api.settings.TwinAddressResponse
-import org.astermail.android.api.settings.DeletedAliasInfo
-import org.astermail.android.api.settings.ListDeletedAliasesResponse
+import org.astermail.android.api.settings.AllDomainAddressesResponse
 import org.astermail.android.api.settings.BlockedSenderInfo
 import org.astermail.android.api.settings.BlockedSendersResponse
+import org.astermail.android.api.settings.CheckAliasAvailabilityRequest
+import org.astermail.android.api.settings.CheckAliasAvailabilityResponse
+import org.astermail.android.api.settings.CreateAliasRequest
+import org.astermail.android.api.settings.CreateAliasResponse
+import org.astermail.android.api.settings.CustomDomainAddressInfo
+import org.astermail.android.api.settings.DeletedAliasInfo
+import org.astermail.android.api.settings.ListDeletedAliasesResponse
+import org.astermail.android.api.settings.ListSmtpTokensResponse
+import org.astermail.android.api.settings.NormalizeAliasRequest
+import org.astermail.android.api.settings.NormalizeAliasResponse
+import org.astermail.android.api.settings.RekeyAliasesRequest
+import org.astermail.android.api.settings.RekeyAliasesResponse
 import org.astermail.android.api.settings.SecurityStatusResponse
 import org.astermail.android.api.settings.SessionInfo
 import org.astermail.android.api.settings.SessionListResponse
 import org.astermail.android.api.settings.SettingsApi
+import org.astermail.android.api.settings.SmtpTokenRow
 import org.astermail.android.api.settings.StorageOverview
 import org.astermail.android.api.settings.SubscriptionInfo
+import org.astermail.android.api.settings.TwinAddressResponse
+import org.astermail.android.api.settings.UpdateAliasRequest
+import org.astermail.android.api.signatures.ListSignaturesResponse
+import org.astermail.android.api.signatures.Signature
+import org.astermail.android.api.signatures.SignaturesApi
 import org.astermail.android.api.subscriptions.SubscriptionsApi
+import org.astermail.android.api.tags.BulkReorderTagsRequest
+import org.astermail.android.api.tags.BulkReorderTagsResponse
+import org.astermail.android.api.tags.TagItem
+import org.astermail.android.api.tags.TagsApi
+import org.astermail.android.api.tags.TagsListResponse
+import org.astermail.android.api.tags.UpdateTagRequest
 import org.astermail.android.api.user.UpdateDisplayNameResponse
 import org.astermail.android.api.user.UserApi
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.storage.AccountStore
+import org.astermail.android.storage.ArchivedBlob
+import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.TextSize
+import org.astermail.android.storage.ThemeMode
+import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
+import org.astermail.android.ui.settings.detail.SmtpTokensBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -95,40 +163,40 @@ class SettingsViewModelTest {
     private lateinit var user_api: UserApi
     private lateinit var settings_api: SettingsApi
     private lateinit var labels_api: LabelsApi
-    private lateinit var family_api: org.astermail.android.api.family.FamilyApi
+    private lateinit var family_api: FamilyApi
     private lateinit var tags_api: TagsApi
     private lateinit var preferences_api: PreferencesApi
-    private lateinit var signatures_api: org.astermail.android.api.signatures.SignaturesApi
+    private lateinit var signatures_api: SignaturesApi
     private lateinit var ghost_alias_api: GhostAliasApi
     private lateinit var auto_forward_api: AutoForwardApi
     private lateinit var developer_api: DeveloperApi
     private lateinit var subscriptions_api: SubscriptionsApi
-    private lateinit var recovery_email_api: org.astermail.android.api.recovery_email.RecoveryEmailApi
-    private lateinit var security_api: org.astermail.android.api.security.SecurityApi
-    private lateinit var encryption_api: org.astermail.android.api.encryption.EncryptionApi
-    private lateinit var alias_detail_api: org.astermail.android.api.aliases.AliasDetailApi
-    private lateinit var recovery_api: org.astermail.android.api.recovery.RecoveryApi
-    private lateinit var mail_rules_api: org.astermail.android.api.mail_rules.MailRulesApi
-    private lateinit var keys_api: org.astermail.android.api.keys.KeysApi
+    private lateinit var recovery_email_api: RecoveryEmailApi
+    private lateinit var security_api: SecurityApi
+    private lateinit var encryption_api: EncryptionApi
+    private lateinit var alias_detail_api: AliasDetailApi
+    private lateinit var recovery_api: RecoveryApi
+    private lateinit var mail_rules_api: MailRulesApi
+    private lateinit var keys_api: KeysApi
     private lateinit var auth_repository: AuthRepository
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var token_store: TokenStore
-    private lateinit var account_store: org.astermail.android.storage.AccountStore
-    private lateinit var preferences_cache: org.astermail.android.storage.PreferencesCacheStore
-    private lateinit var theme_store: org.astermail.android.storage.ThemeStore
-    private lateinit var context: android.content.Context
+    private lateinit var account_store: AccountStore
+    private lateinit var preferences_cache: PreferencesCacheStore
+    private lateinit var theme_store: ThemeStore
+    private lateinit var context: Context
     private lateinit var vm: SettingsViewModel
 
     private val test_data_kek = ByteArray(32) { (it + 1).toByte() }
 
     private fun blocked_senders_hmac_key(): ByteArray =
-        java.security.MessageDigest.getInstance("SHA-256")
+        MessageDigest.getInstance("SHA-256")
             .digest(test_data_kek + "blocked-senders-hmac-v1".toByteArray(Charsets.UTF_8))
 
     private fun hmac_b64(key: ByteArray, data: ByteArray): String {
-        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-        mac.init(javax.crypto.spec.SecretKeySpec(key, "HmacSHA256"))
-        return java.util.Base64.getEncoder().encodeToString(mac.doFinal(data))
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(key, "HmacSHA256"))
+        return Base64.getEncoder().encodeToString(mac.doFinal(data))
     }
 
     private fun blocked_sender_token(address: String, is_domain: Boolean = false): String {
@@ -143,13 +211,13 @@ class SettingsViewModelTest {
         val token = blocked_sender_token(address, is_domain)
         val payload = """{"email":"$address","is_domain":$is_domain}"""
         val nonce = ByteArray(12) { (address[it % address.length].code + it).toByte() }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
-            javax.crypto.Cipher.ENCRYPT_MODE,
-            javax.crypto.spec.SecretKeySpec(test_data_kek, "AES"),
-            javax.crypto.spec.GCMParameterSpec(128, nonce),
+            Cipher.ENCRYPT_MODE,
+            SecretKeySpec(test_data_kek, "AES"),
+            GCMParameterSpec(128, nonce),
         )
-        val encoder = java.util.Base64.getEncoder()
+        val encoder = Base64.getEncoder()
         val encrypted = encoder.encodeToString(cipher.doFinal(payload.toByteArray(Charsets.UTF_8)))
         val nonce_b64 = encoder.encodeToString(nonce)
         return BlockedSenderInfo(
@@ -170,19 +238,19 @@ class SettingsViewModelTest {
         Dispatchers.setMain(dispatcher)
         io.mockk.mockkStatic(android.util.Base64::class)
         every { android.util.Base64.encodeToString(any(), any()) } answers {
-            java.util.Base64.getEncoder().encodeToString(firstArg())
+            Base64.getEncoder().encodeToString(firstArg())
         }
         every { android.util.Base64.decode(any<String>(), any()) } answers {
-            java.util.Base64.getDecoder().decode(firstArg<String>())
+            Base64.getDecoder().decode(firstArg<String>())
         }
-        io.mockk.mockkStatic(android.util.Log::class)
-        every { android.util.Log.i(any(), any()) } returns 0
-        every { android.util.Log.w(any(), any<String>()) } returns 0
-        every { android.util.Log.w(any(), any<String>(), any()) } returns 0
-        every { android.util.Log.w(any(), any<Throwable>()) } returns 0
-        every { android.util.Log.e(any(), any()) } returns 0
-        every { android.util.Log.e(any(), any(), any()) } returns 0
-        every { android.util.Log.d(any(), any()) } returns 0
+        io.mockk.mockkStatic(Log::class)
+        every { Log.i(any(), any()) } returns 0
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.w(any(), any<String>(), any()) } returns 0
+        every { Log.w(any(), any<Throwable>()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
+        every { Log.d(any(), any()) } returns 0
         auth_api = mockk(relaxed = true)
         user_api = mockk(relaxed = true)
         settings_api = mockk(relaxed = true)
@@ -208,27 +276,27 @@ class SettingsViewModelTest {
         token_store = mockk(relaxed = true)
         account_store = mockk(relaxed = true)
         preferences_cache = mockk(relaxed = true)
-        every { auth_repository.is_signed_in } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { auth_repository.is_signed_in } returns MutableStateFlow(false)
         theme_store = mockk(relaxed = true)
         every { theme_store.theme_mode } returns
-            kotlinx.coroutines.flow.MutableStateFlow(org.astermail.android.storage.ThemeMode.system)
+            MutableStateFlow(ThemeMode.system)
         every { theme_store.text_size } returns
-            kotlinx.coroutines.flow.MutableStateFlow(org.astermail.android.storage.TextSize.default_size)
-        every { theme_store.color_theme } returns kotlinx.coroutines.flow.MutableStateFlow("aster")
-        every { theme_store.custom_theme_seed } returns kotlinx.coroutines.flow.MutableStateFlow("")
+            MutableStateFlow(TextSize.default_size)
+        every { theme_store.color_theme } returns MutableStateFlow("aster")
+        every { theme_store.custom_theme_seed } returns MutableStateFlow("")
         every { theme_store.custom_theme_overrides } returns
-            kotlinx.coroutines.flow.MutableStateFlow(emptyMap())
-        every { theme_store.font_choice } returns kotlinx.coroutines.flow.MutableStateFlow("default")
-        every { theme_store.high_contrast } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.reduce_transparency } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.reduce_motion } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.compact_mode } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.text_spacing } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.underline_links } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.dyslexia_font } returns kotlinx.coroutines.flow.MutableStateFlow(false)
-        every { theme_store.haptic_enabled } returns kotlinx.coroutines.flow.MutableStateFlow(true)
+            MutableStateFlow(emptyMap())
+        every { theme_store.font_choice } returns MutableStateFlow("default")
+        every { theme_store.high_contrast } returns MutableStateFlow(false)
+        every { theme_store.reduce_transparency } returns MutableStateFlow(false)
+        every { theme_store.reduce_motion } returns MutableStateFlow(false)
+        every { theme_store.compact_mode } returns MutableStateFlow(false)
+        every { theme_store.text_spacing } returns MutableStateFlow(false)
+        every { theme_store.underline_links } returns MutableStateFlow(false)
+        every { theme_store.dyslexia_font } returns MutableStateFlow(false)
+        every { theme_store.haptic_enabled } returns MutableStateFlow(true)
         context = mockk(relaxed = true)
-        every { context.getString(org.astermail.android.R.string.something_went_wrong) } returns
+        every { context.getString(R.string.something_went_wrong) } returns
             "Something went wrong"
         vm = SettingsViewModel(
             auth_api = auth_api,
@@ -264,7 +332,7 @@ class SettingsViewModelTest {
 
     @After
     fun teardown() {
-        io.mockk.unmockkStatic(android.util.Log::class)
+        io.mockk.unmockkStatic(Log::class)
         io.mockk.unmockkStatic(android.util.Base64::class)
         Dispatchers.resetMain()
     }
@@ -301,7 +369,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_profile error sets error message`() = runTest {
-        coEvery { auth_api.me() } throws org.astermail.android.api.ApiError.UnknownError("unauthorized")
+        coEvery { auth_api.me() } throws ApiError.UnknownError("unauthorized")
 
         vm.load_profile()
         advanceUntilIdle()
@@ -392,7 +460,7 @@ class SettingsViewModelTest {
     @Test
     fun `revoke_session rechecks the local session after a failure`() = runTest {
         coEvery { settings_api.revoke_session("s1") } throws
-            org.astermail.android.api.ApiError.UnauthorizedError
+            ApiError.UnauthorizedError
 
         vm.revoke_session("s1")
         advanceUntilIdle()
@@ -519,7 +587,7 @@ class SettingsViewModelTest {
         assertFalse(vm.state.value.recovery_email_known)
 
         coEvery { recovery_email_api.get_state() } returns
-            org.astermail.android.api.recovery_email.RecoveryEmailStateResponse(exists = true)
+            RecoveryEmailStateResponse(exists = true)
         vm.refresh_recovery_email_presence()
         advanceUntilIdle()
 
@@ -529,7 +597,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `failed recovery email check leaves presence unknown`() = runTest {
-        coEvery { recovery_email_api.get_state() } throws java.io.IOException("offline")
+        coEvery { recovery_email_api.get_state() } throws IOException("offline")
         vm.refresh_recovery_email_presence()
         advanceUntilIdle()
 
@@ -555,7 +623,7 @@ class SettingsViewModelTest {
         val passphrase = ByteArray(32) { it.toByte() }
         every { session_key_store.get_passphrase() } returns passphrase
         coEvery { ghost_alias_api.create_ghost_alias(any()) } returns
-            org.astermail.android.api.ghost.CreateGhostAliasResponse(
+            CreateGhostAliasResponse(
                 id = "ga1",
                 success = true,
                 expires_at = "2026-07-01T00:00:00Z",
@@ -668,7 +736,7 @@ class SettingsViewModelTest {
         coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(emptyList())
         every { session_key_store.get_identity_key() } returns null
 
-        vm.create_label(org.astermail.android.api.labels.CreateLabelRequest(
+        vm.create_label(CreateLabelRequest(
             label_token = "lt_new", encrypted_name = "enc", name_nonce = "n",
         ))
         advanceUntilIdle()
@@ -680,7 +748,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences populates defaults when no encrypted data`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+            EncryptedPreferencesResponse()
 
         vm.load_preferences()
         advanceUntilIdle()
@@ -792,7 +860,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_aliases settles its own loading flag while another load is still running`() = runTest {
-        val never = kotlinx.coroutines.CompletableDeferred<LabelsListResponse>()
+        val never = CompletableDeferred<LabelsListResponse>()
         coEvery { labels_api.list_labels(include_counts = any(), folder_type = any()) } coAnswers { never.await() }
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
         every { session_key_store.get_identity_key() } returns null
@@ -820,8 +888,8 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_twin_address keeps a finished alias load settled`() = runTest {
-        val alias_gate = kotlinx.coroutines.CompletableDeferred<AliasListResponse>()
-        val twin_gate = kotlinx.coroutines.CompletableDeferred<TwinAddressResponse>()
+        val alias_gate = CompletableDeferred<AliasListResponse>()
+        val twin_gate = CompletableDeferred<TwinAddressResponse>()
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } coAnswers { alias_gate.await() }
         coEvery { settings_api.get_twin_address() } coAnswers { twin_gate.await() }
         every { session_key_store.get_identity_key() } returns null
@@ -861,14 +929,14 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_custom_domain_addresses recovers directory records without modifying server records`() = runTest {
-        val encoder = java.util.Base64.getEncoder()
+        val encoder = Base64.getEncoder()
         val local_part = "merchant.finance"
         val bytes = local_part.toByteArray(Charsets.UTF_8)
-        val directory_address = org.astermail.android.api.settings.CustomDomainAddressInfo(
+        val directory_address = CustomDomainAddressInfo(
             id = "directory-address",
             domain_name = "custom.example",
             encrypted_local_part = encoder.encodeToString(bytes),
-            local_part_hash = encoder.encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(bytes)),
+            local_part_hash = encoder.encodeToString(MessageDigest.getInstance("SHA-256").digest(bytes)),
         )
         val encrypted_alias = sealed_alias("encrypted", "regular", "", domain = "custom.example")
         val encrypted_address = directory_address.copy(
@@ -879,7 +947,7 @@ class SettingsViewModelTest {
         )
         val invalid_address = directory_address.copy(id = "invalid-address", local_part_hash = "")
         coEvery { settings_api.list_all_domain_addresses() } returns
-            org.astermail.android.api.settings.AllDomainAddressesResponse(listOf(directory_address, encrypted_address, invalid_address))
+            AllDomainAddressesResponse(listOf(directory_address, encrypted_address, invalid_address))
 
         vm.load_custom_domain_addresses(force = true)
         advanceUntilIdle()
@@ -893,7 +961,7 @@ class SettingsViewModelTest {
         assertTrue(addresses[2].decryption_failed)
         coVerify(exactly = 0) { settings_api.create_domain_address(any(), any()) }
         coVerify(exactly = 0) { settings_api.update_domain_address(any(), any(), any()) }
-        coVerify(exactly = 0) { settings_api.delete_domain_address(any(), any()) }
+        coVerify(exactly = 0) { settings_api.delete_domain_address(any(), any(), any()) }
         coVerify(exactly = 0) { settings_api.normalize_alias(any(), any()) }
     }
 
@@ -919,13 +987,13 @@ class SettingsViewModelTest {
             AliasListResponse(listOf(current)),
         )
         coEvery { settings_api.normalize_alias(any(), any()) } returns
-            org.astermail.android.api.settings.NormalizeAliasResponse(status = "merged", alias_id = "a2")
+            NormalizeAliasResponse(status = "merged", alias_id = "a2")
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
         advanceUntilIdle()
 
-        val request = io.mockk.slot<org.astermail.android.api.settings.NormalizeAliasRequest>()
+        val request = slot<NormalizeAliasRequest>()
         coVerify(exactly = 1) { settings_api.normalize_alias("a1", capture(request)) }
         coVerify(exactly = 0) { settings_api.normalize_alias("a2", any()) }
         assertEquals("jesper.floymo", request.captured.local_part)
@@ -943,8 +1011,8 @@ class SettingsViewModelTest {
             sealed_alias("a5", "no.hash", ""),
             AliasInfo(
                 id = "a6",
-                encrypted_local_part = java.util.Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
-                local_part_nonce = java.util.Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
+                encrypted_local_part = Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
+                local_part_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
                 routing_address_hash = routing_hash_of("x.y@aster.cx"),
                 domain = "aster.cx",
             ),
@@ -982,7 +1050,7 @@ class SettingsViewModelTest {
         val legacy = sealed_alias("a1", "jesper.floymo", routing_hash_of("jesper.floymo@aster.cx"))
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(legacy))
         coEvery { settings_api.normalize_alias(any(), any()) } returns
-            org.astermail.android.api.settings.NormalizeAliasResponse(status = "conflict", alias_id = "a1")
+            NormalizeAliasResponse(status = "conflict", alias_id = "a1")
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -994,9 +1062,9 @@ class SettingsViewModelTest {
     @Test
     fun `create and availability send the legacy routing hash only for dotted addresses`() = runTest {
         coEvery { settings_api.check_alias_availability(any()) } returns
-            org.astermail.android.api.settings.CheckAliasAvailabilityResponse(available = false)
+            CheckAliasAvailabilityResponse(available = false)
         coEvery { settings_api.create_alias(any()) } returns
-            org.astermail.android.api.settings.CreateAliasResponse(id = "new", success = true)
+            CreateAliasResponse(id = "new", success = true)
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(emptyList())
         every { session_key_store.get_identity_key() } returns null
 
@@ -1005,26 +1073,26 @@ class SettingsViewModelTest {
         vm.create_alias_now("Jesper.Floymo", "aster.cx")
         advanceUntilIdle()
 
-        val checks = mutableListOf<org.astermail.android.api.settings.CheckAliasAvailabilityRequest>()
+        val checks = mutableListOf<CheckAliasAvailabilityRequest>()
         coVerify(exactly = 2) { settings_api.check_alias_availability(capture(checks)) }
         assertEquals(routing_hash_of("jesper.floymo@aster.cx"), checks[0].legacy_routing_address_hash)
         assertEquals(routing_hash_of("jesperfloymo@aster.cx"), checks[0].routing_address_hash)
         assertEquals(null, checks[1].legacy_routing_address_hash)
-        val created = io.mockk.slot<org.astermail.android.api.settings.CreateAliasRequest>()
+        val created = slot<CreateAliasRequest>()
         coVerify { settings_api.create_alias(capture(created)) }
         assertEquals(routing_hash_of("jesper.floymo@aster.cx"), created.captured.legacy_routing_address_hash)
     }
 
     private fun routing_hash_of(address: String): String =
-        java.util.Base64.getEncoder().encodeToString(
-            java.security.MessageDigest.getInstance("SHA-256")
+        Base64.getEncoder().encodeToString(
+            MessageDigest.getInstance("SHA-256")
                 .digest(address.toByteArray(Charsets.UTF_8)),
         )
 
     private fun orphaned_alias(routing_hash: String): AliasInfo = AliasInfo(
         id = "a1",
-        encrypted_local_part = java.util.Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
-        local_part_nonce = java.util.Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
+        encrypted_local_part = Base64.getEncoder().encodeToString(ByteArray(24) { 7 }),
+        local_part_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 3 }),
         routing_address_hash = routing_hash,
         orphaned_by_key_rotation = true,
         domain = "astermail.org",
@@ -1036,7 +1104,7 @@ class SettingsViewModelTest {
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns
             AliasListResponse(listOf(alias))
         coEvery { settings_api.rekey_aliases(any()) } returns
-            org.astermail.android.api.settings.RekeyAliasesResponse(success = true, aliases_updated = 1)
+            RekeyAliasesResponse(success = true, aliases_updated = 1)
         every { session_key_store.get_identity_key() } returns null
 
         vm.load_aliases()
@@ -1048,7 +1116,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(SettingsViewModel.AliasRestoreResult.Restored, outcome)
-        val request = io.mockk.slot<org.astermail.android.api.settings.RekeyAliasesRequest>()
+        val request = slot<RekeyAliasesRequest>()
         coVerify { settings_api.rekey_aliases(capture(request)) }
         val entry = request.captured.re_encrypted_aliases.single()
         assertEquals("a1", entry.id)
@@ -1113,7 +1181,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_deleted_aliases populates and decrypts trash`() = runTest {
-        val encoded = java.util.Base64.getEncoder()
+        val encoded = Base64.getEncoder()
             .encodeToString("myalias".toByteArray())
         val deleted = listOf(
             DeletedAliasInfo(
@@ -1137,7 +1205,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `restore_deleted_alias removes from trash`() = runTest {
-        val encoded = java.util.Base64.getEncoder()
+        val encoded = Base64.getEncoder()
             .encodeToString("myalias".toByteArray())
         coEvery { settings_api.list_deleted_aliases() } returns
             ListDeletedAliasesResponse(
@@ -1166,7 +1234,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `empty_deleted_aliases clears trash`() = runTest {
-        val encoded = java.util.Base64.getEncoder()
+        val encoded = Base64.getEncoder()
             .encodeToString("myalias".toByteArray())
         coEvery { settings_api.list_deleted_aliases() } returns
             ListDeletedAliasesResponse(
@@ -1243,7 +1311,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_sessions error sets error message`() = runTest {
-        coEvery { settings_api.list_sessions() } throws org.astermail.android.api.ApiError.UnknownError("network error")
+        coEvery { settings_api.list_sessions() } throws ApiError.UnknownError("network error")
 
         vm.load_sessions()
         advanceUntilIdle()
@@ -1316,7 +1384,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_blocked_senders error sets error message`() = runTest {
-        coEvery { settings_api.list_blocked_senders() } throws org.astermail.android.api.ApiError.UnknownError("timeout")
+        coEvery { settings_api.list_blocked_senders() } throws ApiError.UnknownError("timeout")
 
         vm.load_blocked_senders()
         advanceUntilIdle()
@@ -1393,7 +1461,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_storage error sets error message`() = runTest {
-        coEvery { settings_api.get_storage_overview() } throws org.astermail.android.api.ApiError.UnknownError("storage unavailable")
+        coEvery { settings_api.get_storage_overview() } throws ApiError.UnknownError("storage unavailable")
 
         vm.load_storage()
         advanceUntilIdle()
@@ -1405,7 +1473,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_subscription error sets error message`() = runTest {
-        coEvery { settings_api.get_subscription() } throws org.astermail.android.api.ApiError.UnknownError("no subscription")
+        coEvery { settings_api.get_subscription() } throws ApiError.UnknownError("no subscription")
 
         vm.load_subscription()
         advanceUntilIdle()
@@ -1428,7 +1496,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_aliases error sets error message`() = runTest {
-        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws org.astermail.android.api.ApiError.UnknownError("alias error")
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } throws ApiError.UnknownError("alias error")
 
         vm.load_aliases()
         advanceUntilIdle()
@@ -1493,7 +1561,7 @@ class SettingsViewModelTest {
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery {
-            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+            settings_api.update_alias("a1", UpdateAliasRequest(never_inbox = true))
         } returns true
 
         vm.load_aliases()
@@ -1506,7 +1574,7 @@ class SettingsViewModelTest {
         assertTrue(updated.never_inbox)
         assertEquals(null, updated.delivery_folder_token)
         coVerify {
-            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+            settings_api.update_alias("a1", UpdateAliasRequest(never_inbox = true))
         }
     }
 
@@ -1520,7 +1588,7 @@ class SettingsViewModelTest {
         coEvery {
             settings_api.update_alias(
                 "a1",
-                org.astermail.android.api.settings.UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
+                UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
             )
         } returns true
 
@@ -1536,7 +1604,7 @@ class SettingsViewModelTest {
         coVerify {
             settings_api.update_alias(
                 "a1",
-                org.astermail.android.api.settings.UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
+                UpdateAliasRequest(delivery_folder_token = "dG9rZW4="),
             )
         }
     }
@@ -1555,7 +1623,7 @@ class SettingsViewModelTest {
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery {
-            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = false))
+            settings_api.update_alias("a1", UpdateAliasRequest(never_inbox = false))
         } returns true
 
         vm.load_aliases()
@@ -1643,7 +1711,7 @@ class SettingsViewModelTest {
         coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(aliases)
         every { session_key_store.get_identity_key() } returns null
         coEvery {
-            settings_api.update_alias("a1", org.astermail.android.api.settings.UpdateAliasRequest(never_inbox = true))
+            settings_api.update_alias("a1", UpdateAliasRequest(never_inbox = true))
         } throws RuntimeException("server error")
 
         vm.load_aliases()
@@ -1676,7 +1744,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_ghost_aliases error sets error message`() = runTest {
-        coEvery { ghost_alias_api.list_ghost_aliases() } throws org.astermail.android.api.ApiError.UnknownError("ghost error")
+        coEvery { ghost_alias_api.list_ghost_aliases() } throws ApiError.UnknownError("ghost error")
 
         vm.load_ghost_aliases()
         advanceUntilIdle()
@@ -1728,7 +1796,7 @@ class SettingsViewModelTest {
     fun `expire_ghost_alias_now reports the cooldown when the server refuses`() = runTest {
         val reason = "Ghost aliases can only be expired 30 days after creation."
         coEvery { ghost_alias_api.expire_ghost_alias(any()) } throws
-            org.astermail.android.api.ApiError.ForbiddenError(reason, "FORBIDDEN")
+            ApiError.ForbiddenError(reason, "FORBIDDEN")
 
         assertEquals(SettingsViewModel.GhostExpireOutcome.Cooldown(reason), vm.expire_ghost_alias_now("g1"))
         coVerify(exactly = 0) { ghost_alias_api.list_ghost_aliases() }
@@ -1736,7 +1804,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `expire_ghost_alias_now treats other errors as failures`() = runTest {
-        every { context.getString(org.astermail.android.R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
+        every { context.getString(R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
         coEvery { ghost_alias_api.expire_ghost_alias(any()) } throws RuntimeException("boom")
 
         assertEquals(SettingsViewModel.GhostExpireOutcome.Failed("Couldn't update ghost alias"), vm.expire_ghost_alias_now("g1"))
@@ -1744,7 +1812,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `extend_ghost_alias_now falls back to the ghost failure text`() = runTest {
-        every { context.getString(org.astermail.android.R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
+        every { context.getString(R.string.ghost_action_failed) } returns "Couldn't update ghost alias"
         coEvery { ghost_alias_api.extend_ghost_alias(any()) } throws RuntimeException("boom")
 
         assertEquals("Couldn't update ghost alias", vm.extend_ghost_alias_now("g1"))
@@ -1752,7 +1820,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_forwarding_rules error sets error message`() = runTest {
-        coEvery { auto_forward_api.list_rules() } throws org.astermail.android.api.ApiError.UnknownError("rules error")
+        coEvery { auto_forward_api.list_rules() } throws ApiError.UnknownError("rules error")
 
         vm.load_forwarding_rules()
         advanceUntilIdle()
@@ -1790,7 +1858,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `create_forwarding_rule error sets error status`() = runTest {
-        coEvery { auto_forward_api.create_rule(any()) } throws org.astermail.android.api.ApiError.UnknownError("invalid target")
+        coEvery { auto_forward_api.create_rule(any()) } throws ApiError.UnknownError("invalid target")
 
         vm.create_forwarding_rule("bad", false)
         advanceUntilIdle()
@@ -1852,7 +1920,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_labels error sets error message`() = runTest {
-        coEvery { labels_api.list_labels(any(), any()) } throws org.astermail.android.api.ApiError.UnknownError("labels error")
+        coEvery { labels_api.list_labels(any(), any()) } throws ApiError.UnknownError("labels error")
 
         vm.load_labels()
         advanceUntilIdle()
@@ -1889,7 +1957,7 @@ class SettingsViewModelTest {
     fun `create_label does not reload when success is false`() = runTest {
         coEvery { labels_api.create_label(any()) } returns CreateLabelResponse(success = false)
 
-        vm.create_label(org.astermail.android.api.labels.CreateLabelRequest(
+        vm.create_label(CreateLabelRequest(
             label_token = "lt_new", encrypted_name = "enc", name_nonce = "n",
         ))
         advanceUntilIdle()
@@ -1902,7 +1970,7 @@ class SettingsViewModelTest {
     fun `create_label error does not reload`() = runTest {
         coEvery { labels_api.create_label(any()) } throws RuntimeException("error")
 
-        vm.create_label(org.astermail.android.api.labels.CreateLabelRequest(
+        vm.create_label(CreateLabelRequest(
             label_token = "lt_new", encrypted_name = "enc", name_nonce = "n",
         ))
         advanceUntilIdle()
@@ -1912,7 +1980,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `create_folder sends parent_token and sort_order and encrypts the name`() = runTest {
-        val request_slot = io.mockk.slot<org.astermail.android.api.labels.CreateLabelRequest>()
+        val request_slot = slot<CreateLabelRequest>()
         every { session_key_store.get_identity_key() } returns "test-identity-key"
         coEvery { labels_api.create_label(capture(request_slot)) } returns
             CreateLabelResponse(id = "srv", label_token = "srv_tok", success = true)
@@ -1938,7 +2006,7 @@ class SettingsViewModelTest {
         every { session_key_store.get_identity_key() } returns "test-identity-key"
         coEvery { labels_api.create_label(any()) } returns
             CreateLabelResponse(id = "srv_id", label_token = "srv_tok", success = true)
-        coEvery { labels_api.delete_label(any(), any()) } returns org.astermail.android.api.labels.DeleteLabelResponse(status = "deleted")
+        coEvery { labels_api.delete_label(any(), any()) } returns DeleteLabelResponse(status = "deleted")
 
         vm.create_folder(name = "Receipts")
         advanceUntilIdle()
@@ -1960,7 +2028,7 @@ class SettingsViewModelTest {
         vm.load_labels()
         advanceUntilIdle()
         coEvery { labels_api.delete_label("l1", null) } throws
-            org.astermail.android.api.ApiError.UnknownError("folder is locked")
+            ApiError.UnknownError("folder is locked")
 
         vm.delete_label("l1")
         advanceUntilIdle()
@@ -1969,7 +2037,7 @@ class SettingsViewModelTest {
         assertEquals(1, vm.state.value.labels.size)
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_folders() {
+    private suspend fun TestScope.seed_folders() {
         val labels = listOf(
             LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Alpha", sort_order = 0),
             LabelItem(id = "l2", label_token = "lt2", encrypted_name = "Beta", sort_order = 1),
@@ -1991,9 +2059,9 @@ class SettingsViewModelTest {
     fun `move_folder swaps sibling sort orders and persists via bulk reorder`() = runTest {
         seed_folders()
         val request_slot =
-            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+            slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(request_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+            BulkReorderLabelsResponse(updated = 2)
 
         vm.move_folder("l2", -1)
         advanceUntilIdle()
@@ -2041,14 +2109,14 @@ class SettingsViewModelTest {
         assertEquals(1, by_id["l2"]?.sort_order)
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_named_folders(labels: List<LabelItem>) {
+    private suspend fun TestScope.seed_named_folders(labels: List<LabelItem>) {
         coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(labels)
         every { session_key_store.get_identity_key() } returns "test-identity-key"
         vm.load_labels()
         advanceUntilIdle()
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_unsorted_folders() {
+    private suspend fun TestScope.seed_unsorted_folders() {
         seed_named_folders(
             listOf(
                 LabelItem(id = "z", label_token = "ltz", encrypted_name = "Zulu", sort_order = 0),
@@ -2061,7 +2129,7 @@ class SettingsViewModelTest {
         )
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_sorted_folders() {
+    private suspend fun TestScope.seed_sorted_folders() {
         seed_named_folders(
             listOf(
                 LabelItem(id = "l1", label_token = "lt1", encrypted_name = "Alpha", sort_order = 0),
@@ -2074,12 +2142,12 @@ class SettingsViewModelTest {
     @Test
     fun `sort_folders_a_z sends only changed entries in one request`() = runTest {
         seed_unsorted_folders()
-        every { context.getString(org.astermail.android.R.string.folders_sorted_a_to_z) } returns
+        every { context.getString(R.string.folders_sorted_a_to_z) } returns
             "Folders sorted A to Z"
         val request_slot =
-            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+            slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(request_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 5)
+            BulkReorderLabelsResponse(updated = 5)
 
         vm.sort_folders_a_z()
         advanceUntilIdle()
@@ -2122,13 +2190,13 @@ class SettingsViewModelTest {
     @Test
     fun `create_folder without sort_order inserts alphabetically into a sorted group`() = runTest {
         seed_sorted_folders()
-        val create_slot = io.mockk.slot<org.astermail.android.api.labels.CreateLabelRequest>()
+        val create_slot = slot<CreateLabelRequest>()
         coEvery { labels_api.create_label(capture(create_slot)) } returns
             CreateLabelResponse(id = "srv", label_token = "srv_tok", success = true)
         val reorder_slot =
-            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+            slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(reorder_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 1)
+            BulkReorderLabelsResponse(updated = 1)
 
         vm.create_folder(name = "Amber")
         advanceUntilIdle()
@@ -2144,7 +2212,7 @@ class SettingsViewModelTest {
     @Test
     fun `create_folder without sort_order appends to an unsorted group`() = runTest {
         seed_unsorted_folders()
-        val create_slot = io.mockk.slot<org.astermail.android.api.labels.CreateLabelRequest>()
+        val create_slot = slot<CreateLabelRequest>()
         coEvery { labels_api.create_label(capture(create_slot)) } returns
             CreateLabelResponse(id = "srv", label_token = "srv_tok", success = true)
 
@@ -2159,9 +2227,9 @@ class SettingsViewModelTest {
     fun `rename_folder re-sorts a sorted group`() = runTest {
         seed_sorted_folders()
         val reorder_slot =
-            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+            slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(reorder_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+            BulkReorderLabelsResponse(updated = 2)
 
         vm.rename_folder("l1", "Zed")
         advanceUntilIdle()
@@ -2186,9 +2254,9 @@ class SettingsViewModelTest {
     fun `set_folder_parent places the folder alphabetically among its new siblings`() = runTest {
         seed_sorted_folders()
         val reorder_slot =
-            io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+            slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(reorder_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+            BulkReorderLabelsResponse(updated = 2)
 
         vm.set_folder_parent("l2", "lt1")
         advanceUntilIdle()
@@ -2196,7 +2264,7 @@ class SettingsViewModelTest {
         assertEquals(mapOf("l2" to 0, "c1" to 1), reorder_slot.captured.labels.associate { it.id to it.sort_order })
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_label_rows() {
+    private suspend fun TestScope.seed_label_rows() {
         val labels = listOf(
             LabelItem(id = "f1", label_token = "ftk1", encrypted_name = "Inbox", folder_type = "folder"),
             LabelItem(id = "b", label_token = "ltb", encrypted_name = "Bank", folder_type = "label", sort_order = 1),
@@ -2213,9 +2281,9 @@ class SettingsViewModelTest {
     @Test
     fun `move_label_row reorders labels and persists via bulk reorder`() = runTest {
         seed_label_rows()
-        val request_slot = io.mockk.slot<org.astermail.android.api.labels.BulkReorderLabelsRequest>()
+        val request_slot = slot<BulkReorderLabelsRequest>()
         coEvery { labels_api.bulk_reorder_labels(capture(request_slot)) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+            BulkReorderLabelsResponse(updated = 2)
 
         vm.move_label_row("c", -1)
         advanceUntilIdle()
@@ -2233,7 +2301,7 @@ class SettingsViewModelTest {
     fun `move_label_row leaves folders untouched`() = runTest {
         seed_label_rows()
         coEvery { labels_api.bulk_reorder_labels(any()) } returns
-            org.astermail.android.api.labels.BulkReorderLabelsResponse(updated = 2)
+            BulkReorderLabelsResponse(updated = 2)
 
         vm.move_label_row("b", -1)
         advanceUntilIdle()
@@ -2268,17 +2336,17 @@ class SettingsViewModelTest {
         )
     }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.seed_tag_rows() {
+    private suspend fun TestScope.seed_tag_rows() {
         val tags = listOf(
-            org.astermail.android.api.tags.TagItem(
+            TagItem(
                 id = "t2", tag_token = "tk2", encrypted_name = "Beta", name_nonce = "", sort_order = 1,
             ),
-            org.astermail.android.api.tags.TagItem(
+            TagItem(
                 id = "t1", tag_token = "tk1", encrypted_name = "Alpha", name_nonce = "", sort_order = 0,
             ),
         )
         coEvery { tags_api.list_tags(any()) } returns
-            org.astermail.android.api.tags.TagsListResponse(tags = tags)
+            TagsListResponse(tags = tags)
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         every { session_key_store.get_previous_keys() } returns null
         vm.load_tags()
@@ -2288,9 +2356,9 @@ class SettingsViewModelTest {
     @Test
     fun `move_tag persists a single bulk reorder request`() = runTest {
         seed_tag_rows()
-        val request_slot = io.mockk.slot<org.astermail.android.api.tags.BulkReorderTagsRequest>()
+        val request_slot = slot<BulkReorderTagsRequest>()
         coEvery { tags_api.bulk_reorder_tags(capture(request_slot)) } returns
-            org.astermail.android.api.tags.BulkReorderTagsResponse(updated = 2)
+            BulkReorderTagsResponse(updated = 2)
 
         vm.move_tag("t2", -1)
         advanceUntilIdle()
@@ -2340,7 +2408,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences keeps prefs when encrypted blob present but identity key missing`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+            EncryptedPreferencesResponse()
         coEvery { preferences_api.get_preferences() } returns
             UserPreferences(conversation_grouping = false, swipe_right_action = "star")
         vm.load_preferences(force = true)
@@ -2349,7 +2417,7 @@ class SettingsViewModelTest {
         assertEquals("star", vm.state.value.preferences?.swipe_right_action)
 
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob", preferences_nonce = "nonce",
             )
         every { session_key_store.get_identity_key() } returns null
@@ -2365,7 +2433,7 @@ class SettingsViewModelTest {
     @Test
     fun `first load with encrypted blob and no identity key still populates prefs so screen is not stuck loading`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
@@ -2411,7 +2479,7 @@ class SettingsViewModelTest {
     @Test
     fun `save_preferences never overwrites a server blob this device cannot decrypt`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
@@ -2462,30 +2530,30 @@ class SettingsViewModelTest {
     }
 
     private fun test_prefs_key(identity_key: String): ByteArray =
-        java.security.MessageDigest.getInstance("SHA-256")
+        MessageDigest.getInstance("SHA-256")
             .digest((identity_key + "astermail-preferences-v1").toByteArray(Charsets.UTF_8))
 
     private fun encrypt_test_blob(json_str: String, identity_key: String): Pair<String, String> {
-        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
-            javax.crypto.Cipher.ENCRYPT_MODE,
-            javax.crypto.spec.SecretKeySpec(test_prefs_key(identity_key), "AES"),
-            javax.crypto.spec.GCMParameterSpec(128, nonce),
+            Cipher.ENCRYPT_MODE,
+            SecretKeySpec(test_prefs_key(identity_key), "AES"),
+            GCMParameterSpec(128, nonce),
         )
         val ct = cipher.doFinal(json_str.toByteArray(Charsets.UTF_8))
-        return java.util.Base64.getEncoder().encodeToString(ct) to
-            java.util.Base64.getEncoder().encodeToString(nonce)
+        return Base64.getEncoder().encodeToString(ct) to
+            Base64.getEncoder().encodeToString(nonce)
     }
 
     private fun decrypt_test_blob(encrypted_b64: String, nonce_b64: String, identity_key: String): String {
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
-            javax.crypto.Cipher.DECRYPT_MODE,
-            javax.crypto.spec.SecretKeySpec(test_prefs_key(identity_key), "AES"),
-            javax.crypto.spec.GCMParameterSpec(128, java.util.Base64.getDecoder().decode(nonce_b64)),
+            Cipher.DECRYPT_MODE,
+            SecretKeySpec(test_prefs_key(identity_key), "AES"),
+            GCMParameterSpec(128, Base64.getDecoder().decode(nonce_b64)),
         )
-        return String(cipher.doFinal(java.util.Base64.getDecoder().decode(encrypted_b64)), Charsets.UTF_8)
+        return String(cipher.doFinal(Base64.getDecoder().decode(encrypted_b64)), Charsets.UTF_8)
     }
 
     @Test
@@ -2494,7 +2562,7 @@ class SettingsViewModelTest {
         val server_json = """{"theme":"dark","haptic_enabled":false,"web_only_setting":"keep_me"}"""
         val (blob, nonce) = encrypt_test_blob(server_json, identity_key)
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = blob,
                 preferences_nonce = nonce,
             )
@@ -2534,7 +2602,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         every { session_key_store.get_identity_key() } returns identity_key
-        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        val request = slot<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
 
         val shown = fresh_vm.state.value.preferences!!
@@ -2588,36 +2656,36 @@ class SettingsViewModelTest {
     }
 
     private fun aes_gcm(mode: Int, key: ByteArray, nonce: ByteArray, input: ByteArray): ByteArray {
-        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
             mode,
-            javax.crypto.spec.SecretKeySpec(key, "AES"),
-            javax.crypto.spec.GCMParameterSpec(128, nonce),
+            SecretKeySpec(key, "AES"),
+            GCMParameterSpec(128, nonce),
         )
         return cipher.doFinal(input)
     }
 
     private fun encrypt_with_raw_key(json_str: String, key: ByteArray): Pair<String, String> {
-        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
-        val ct = aes_gcm(javax.crypto.Cipher.ENCRYPT_MODE, key, nonce, json_str.toByteArray(Charsets.UTF_8))
-        return java.util.Base64.getEncoder().encodeToString(ct) to
-            java.util.Base64.getEncoder().encodeToString(nonce)
+        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val ct = aes_gcm(Cipher.ENCRYPT_MODE, key, nonce, json_str.toByteArray(Charsets.UTF_8))
+        return Base64.getEncoder().encodeToString(ct) to
+            Base64.getEncoder().encodeToString(nonce)
     }
 
     private fun decrypt_with_raw_key(encrypted_b64: String, nonce_b64: String, key: ByteArray): String =
         String(
             aes_gcm(
-                javax.crypto.Cipher.DECRYPT_MODE,
+                Cipher.DECRYPT_MODE,
                 key,
-                java.util.Base64.getDecoder().decode(nonce_b64),
-                java.util.Base64.getDecoder().decode(encrypted_b64),
+                Base64.getDecoder().decode(nonce_b64),
+                Base64.getDecoder().decode(encrypted_b64),
             ),
             Charsets.UTF_8,
         )
 
     private fun server_blob(blob: Pair<String, String>) {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = blob.first,
                 preferences_nonce = blob.second,
             )
@@ -2631,15 +2699,60 @@ class SettingsViewModelTest {
         coEvery { keys_api.get_account_key_format_writes() } returns format_writes
     }
 
-    private fun kotlinx.coroutines.test.TestScope.save_and_capture(
+    private fun TestScope.save_and_capture(
         target: SettingsViewModel,
-    ): org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest {
-        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+    ): SaveEncryptedPreferencesRequest {
+        val request = slot<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
         target.save_preferences(target.state.value.preferences!!.copy(show_aster_branding = false))
         advanceUntilIdle()
         assertEquals(SaveStatus.SAVED, target.state.value.save_status)
         return request.captured
+    }
+
+    @Test
+    fun `preferences under a public constant stay readable but only the edited field is saved`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        every { session_key_store.get_previous_keys() } returns emptyList()
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        server_blob(encrypt_with_raw_key("""{"theme":"dark","web_only_setting":"from_constant"}""", constant))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals("dark", target.state.value.preferences?.theme)
+
+        val request = save_and_capture(target)
+
+        val written = decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+        assertFalse(
+            "values that opened under a public constant must not be saved under the account key",
+            written.contains("\"theme\":\"dark\"") || written.contains("from_constant"),
+        )
+    }
+
+    @Test
+    fun `preferences under a placeholder previous key are not saved again unedited`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        every { session_key_store.get_previous_keys() } returns listOf("undefined")
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        server_blob(encrypt_test_blob("""{"theme":"dark","web_only_setting":"from_placeholder"}""", "undefined"))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals("dark", target.state.value.preferences?.theme)
+
+        val request = save_and_capture(target)
+
+        val written = decrypt_test_blob(request.encrypted_preferences, request.preferences_nonce, identity_key)
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+        assertFalse(
+            "values that opened under a placeholder key must not be saved under the account key",
+            written.contains("\"theme\":\"dark\"") || written.contains("from_placeholder"),
+        )
     }
 
     @Test
@@ -2712,7 +2825,7 @@ class SettingsViewModelTest {
     fun `load reads preferences written with the account key`() = runTest {
         every { session_key_store.get_identity_key() } returns "user_identity_key"
         every { session_key_store.get_decrypt_keks() } returns
-            listOf(java.util.Base64.getEncoder().encodeToString(account_prefs_key))
+            listOf(Base64.getEncoder().encodeToString(account_prefs_key))
         server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", account_prefs_key))
         val target = new_vm()
         advanceUntilIdle()
@@ -2733,13 +2846,1044 @@ class SettingsViewModelTest {
         assertEquals(false, target.state.value.preferences?.show_aster_branding)
     }
 
+    private fun public_constant(context: String): ByteArray =
+        MessageDigest.getInstance("SHA-256").digest(("undefined" + context).toByteArray(Charsets.UTF_8))
+
+    @Test
+    fun `load still reads preferences sealed under a public constant`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", public_constant("astermail-envelope-v1")))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+    }
+
+    @Test
+    fun `load still reads preferences sealed under a preferences context constant`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", public_constant("astermail-preferences-v1")))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+    }
+
+    private fun lost_key_blob(): Pair<String, String> =
+        encrypt_with_raw_key("""{"show_aster_branding":false}""", ByteArray(32) { 99 })
+
+    private fun lost_key_field(): Pair<String, String> {
+        val encoder = Base64.getEncoder()
+        return encoder.encodeToString(ByteArray(40) { (it + 3).toByte() }) to
+            encoder.encodeToString(ByteArray(12) { (it + 5).toByte() })
+    }
+
+    private fun cached_copy() {
+        every { preferences_cache.read("user_1") } returns
+            Json { encodeDefaults = true }.encodeToString(
+                UserPreferences.serializer(),
+                UserPreferences(show_aster_branding = false),
+            )
+    }
+
+    private fun vault_ready(ready: Boolean) {
+        every { session_key_store.account_key_load_pending() } returns false
+        every { session_key_store.account_keys_ready() } returns ready
+        every { session_key_store.get_data_kek() } returns ByteArray(32) { 1 }
+        every { session_key_store.get_user_id() } returns "user_1"
+        every { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) } returns true
+    }
+
+    @Test
+    fun `save archives a well formed blob that no key opens then saves`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(true)
+        val blob = lost_key_blob()
+        cached_copy()
+        server_blob(blob)
+        coEvery { preferences_api.save_encrypted_preferences(any()) } returns Unit
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertFalse(target.state.value.preferences_locked)
+
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        coVerifyOrder {
+            preferences_cache.archive_unreadable(any(), "preferences", "${blob.first}.${blob.second}", any(), any(), any(), any())
+            preferences_api.save_encrypted_preferences(any())
+        }
+    }
+
+    @Test
+    fun `save refuses after an unconfirmed load even with account keys loaded`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(true)
+        every { preferences_cache.read(any()) } returns null
+        server_blob(lost_key_blob())
+        coEvery { preferences_api.save_encrypted_preferences(any()) } returns Unit
+        val target = new_vm()
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        assertTrue(target.state.value.preferences_locked)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `save refuses after an unconfirmed load when the server copy comes back empty`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(true)
+        every { preferences_cache.read(any()) } returns null
+        server_blob(lost_key_blob())
+        coEvery { preferences_api.save_encrypted_preferences(any()) } returns Unit
+        val target = new_vm()
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+
+        coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        assertTrue(target.state.value.preferences_locked)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+    }
+
+    @Test
+    fun `save after an unconfirmed load keeps server values for fields the user left alone`() = runTest {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        every { preferences_cache.read(any()) } returns
+            Json { encodeDefaults = true }.encodeToString(
+                UserPreferences.serializer(),
+                UserPreferences(show_aster_branding = false),
+            )
+        server_blob(encrypt_test_blob("""{"show_aster_branding":true,"web_only_setting":"keep_me"}""", identity_key))
+        val target = new_vm()
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+
+        every { session_key_store.get_identity_key() } returns identity_key
+        val request = slot<SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+        val shown = target.state.value.preferences!!
+        target.save_preferences(shown.copy(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        assertTrue(written, written.contains("\"load_remote_images\":\"always\""))
+        assertTrue(written, written.contains("\"web_only_setting\":\"keep_me\""))
+        assertFalse(written, written.contains("\"show_aster_branding\":false"))
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+    }
+
+    private fun TestScope.locked_vm_showing_a_cached_copy(identity_key: String): SettingsViewModel {
+        every { session_key_store.get_identity_key() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        every { preferences_cache.read(any()) } returns
+            Json { encodeDefaults = true }.encodeToString(
+                UserPreferences.serializer(),
+                UserPreferences(show_aster_branding = false),
+            )
+        server_blob(encrypt_test_blob("""{"show_aster_branding":true,"web_only_setting":"keep_me"}""", identity_key))
+        val target = new_vm()
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+        return target
+    }
+
+    @Test
+    fun `retry after a save that failed without keys keeps the edit`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = locked_vm_showing_a_cached_copy(identity_key)
+        val request = slot<SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        target.save_preferences(target.state.value.preferences!!.copy(load_remote_images = "always"))
+        advanceUntilIdle()
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+
+        every { session_key_store.get_identity_key() } returns identity_key
+        target.retry_preferences_save()
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        assertTrue(written, written.contains("\"load_remote_images\":\"always\""))
+        assertFalse(written, written.contains("\"show_aster_branding\":false"))
+        assertEquals("always", target.state.value.preferences?.load_remote_images)
+    }
+
+    @Test
+    fun `a second save that replaces an unconfirmed first save keeps both edits`() = runTest {
+        val identity_key = "user_identity_key"
+        val target = locked_vm_showing_a_cached_copy(identity_key)
+        val request = slot<SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+
+        val first = target.state.value.preferences!!.copy(load_remote_images = "always")
+        target.save_preferences(first)
+        every { session_key_store.get_identity_key() } returns identity_key
+        target.save_preferences(target.state.value.preferences!!.copy(compact_mode = true))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        val written = decrypt_test_blob(request.captured.encrypted_preferences, request.captured.preferences_nonce, identity_key)
+        assertTrue(written, written.contains("\"load_remote_images\":\"always\""))
+        assertTrue(written, written.contains("\"compact_mode\":true"))
+        assertFalse(written, written.contains("\"show_aster_branding\":false"))
+    }
+
+    @Test
+    fun `save refuses when the key load ended without keys`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(false)
+        cached_copy()
+        server_blob(lost_key_blob())
+        val target = new_vm()
+        advanceUntilIdle()
+
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `save refuses when the archive cannot be written`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(true)
+        every { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) } returns false
+        cached_copy()
+        server_blob(lost_key_blob())
+        val target = new_vm()
+        advanceUntilIdle()
+
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+    }
+
+    private suspend fun TestScope.seed_lost_key_tag(): Pair<String, String> {
+        val field = lost_key_field()
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.get_previous_keys() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        coEvery { tags_api.list_tags(any()) } returns TagsListResponse(
+            tags = listOf(
+                TagItem(
+                    id = "t1",
+                    tag_token = "tk1",
+                    encrypted_name = field.first,
+                    name_nonce = field.second,
+                    encrypted_color = field.first,
+                    color_nonce = field.second,
+                ),
+            ),
+        )
+        vm.load_tags()
+        advanceUntilIdle()
+        return field
+    }
+
+    @Test
+    fun `tag rename archives an unreadable name before writing`() = runTest {
+        vault_ready(true)
+        val field = seed_lost_key_tag()
+
+        vm.rename_tag("t1", "Fresh")
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            preferences_cache.archive_unreadable(any(), "tag", "${field.first}.${field.second}", "t1:name", any(), any(), any())
+            tags_api.update_tag("t1", any())
+        }
+    }
+
+    @Test
+    fun `tag rename and recolor refuse when the key load ended without keys`() = runTest {
+        vault_ready(false)
+        seed_lost_key_tag()
+
+        vm.rename_tag("t1", "Fresh")
+        vm.recolor_tag("t1", "#ff0000")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { tags_api.update_tag(any(), any()) }
+        coVerify(exactly = 0) { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    private suspend fun TestScope.seed_lost_key_label(): Pair<String, String> {
+        val field = lost_key_field()
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.get_previous_keys() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(
+            listOf(
+                LabelItem(
+                    id = "l1",
+                    label_token = "lt1",
+                    encrypted_name = field.first,
+                    name_nonce = field.second,
+                    folder_type = "folder",
+                ),
+            ),
+        )
+        vm.load_labels()
+        advanceUntilIdle()
+        return field
+    }
+
+    @Test
+    fun `folder rename archives an unreadable name before writing`() = runTest {
+        vault_ready(true)
+        val field = seed_lost_key_label()
+
+        vm.rename_folder("l1", "Fresh")
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            preferences_cache.archive_unreadable(any(), "label", "${field.first}.${field.second}", "l1:name", any(), any(), any())
+            labels_api.update_label("l1", any())
+        }
+    }
+
+    @Test
+    fun `folder rename refuses when the key load ended without keys`() = runTest {
+        vault_ready(false)
+        seed_lost_key_label()
+
+        vm.rename_folder("l1", "Fresh")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.update_label(any(), any()) }
+    }
+
+    private fun lost_key_recovery_state() {
+        val field = lost_key_field()
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_previous_keys() } returns null
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        coEvery { recovery_email_api.get_state() } returns
+            RecoveryEmailStateResponse(
+                encrypted_email = field.first,
+                email_nonce = field.second,
+                exists = true,
+            )
+    }
+
+    @Test
+    fun `recovery email save archives an unreadable address before writing`() = runTest {
+        vault_ready(true)
+        lost_key_recovery_state()
+
+        vm.save_recovery_email("new@example.com", null, null) { "" }
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            preferences_cache.archive_unreadable(any(), "recovery_email", any(), any(), any(), any(), any())
+            recovery_email_api.save(any())
+        }
+    }
+
+    @Test
+    fun `recovery email save refuses when the key load ended without keys`() = runTest {
+        vault_ready(false)
+        lost_key_recovery_state()
+
+        vm.save_recovery_email("new@example.com", null, null) { "" }
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { recovery_email_api.save(any()) }
+    }
+
+    @Test
+    fun `save that starts before the key load finishes does not replace an unread blob`() = runTest {
+        var pending = true
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(false)
+        every { session_key_store.account_key_load_pending() } answers { pending }
+        coEvery { session_key_store.await_account_key_load(any()) } answers { pending = false }
+        server_blob(lost_key_blob())
+        val target = new_vm()
+        advanceUntilIdle()
+        pending = true
+
+        target.save_preferences(UserPreferences(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `tag rename reports the locked edit message`() = runTest {
+        every { context.getString(R.string.encrypted_edit_locked_retry) } returns "locked_edit"
+        vault_ready(false)
+        seed_lost_key_tag()
+
+        vm.rename_tag("t1", "Fresh")
+        advanceUntilIdle()
+
+        assertEquals("locked_edit", vm.state.value.action_result)
+    }
+
+    private fun archived_preferences(json: String, key: ByteArray): ArchivedBlob {
+        val sealed = encrypt_with_raw_key(json, key)
+        return ArchivedBlob("archive_k1", "preferences", "", "${sealed.first}.${sealed.second}", 5L)
+    }
+
+    private fun versioned_server(
+        blob: Pair<String, String>,
+        result: PreferencesSaveResult = PreferencesSaveResult.SAVED,
+    ): MutableList<SaveVersionedPreferencesRequest> {
+        server_blob(blob)
+        coEvery { preferences_api.get_versioned_encrypted_preferences() } returns
+            VersionedEncryptedPreferences(blob.first, blob.second, 3)
+        val saved = mutableListOf<SaveVersionedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences_if_version(capture(saved)) } returns result
+        return saved
+    }
+
+    private fun restore_setup(
+        archive: ArchivedBlob,
+        server_json: String = """{"load_remote_images":"always"}""",
+        result: PreferencesSaveResult = PreferencesSaveResult.SAVED,
+    ): MutableList<SaveVersionedPreferencesRequest> {
+        val identity_key = "user_identity_key"
+        every { session_key_store.get_identity_key() } returns identity_key
+        every { session_key_store.get_decrypt_keks() } returns
+            listOf(Base64.getEncoder().encodeToString(account_prefs_key))
+        every { preferences_cache.list_archived(any(), any()) } returns emptyList()
+        every { preferences_cache.list_archived("user_1", "preferences") } returns listOf(archive)
+        every { preferences_cache.drop_archived(any()) } returns true
+        return versioned_server(encrypt_test_blob(server_json, identity_key), result)
+    }
+
+    private fun baseline_target(json: String): String =
+        Base64.getEncoder().encodeToString(json.toByteArray(Charsets.UTF_8))
+
+    @Test
+    fun `load restores an archived blob that opens after the key load`() = runTest {
+        vault_ready(true)
+        val saved = restore_setup(
+            archived_preferences("""{"show_aster_branding":false,"load_remote_images":"never"}""", account_prefs_key),
+        )
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertEquals("always", target.state.value.preferences?.load_remote_images)
+        assertEquals(1, saved.size)
+        assertEquals(3, saved[0].expected_version)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        val written = decrypt_test_blob(saved[0].encrypted_preferences, saved[0].preferences_nonce, "user_identity_key")
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+        assertTrue(written.contains("\"load_remote_images\":\"always\""))
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_k1") }
+    }
+
+    @Test
+    fun `load keeps an archived blob that still does not open`() = runTest {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `load leaves the archive alone when the key load ended without keys`() = runTest {
+        vault_ready(false)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", account_prefs_key))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `load drops a folder name archive once it opens`() = runTest {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        val label_key = MessageDigest.getInstance("SHA-256")
+            .digest("user_identity_keyastermail-labels-v1".toByteArray(Charsets.UTF_8))
+        val sealed = encrypt_with_raw_key("Receipts", label_key)
+        val rename = sealed_rename()
+        val lost = lost_key_field()
+        every { preferences_cache.list_archived("user_1", "label") } returns listOf(
+            ArchivedBlob("archive_l1", "label", "l1:name", "${sealed.first}.${sealed.second}", 3L),
+            ArchivedBlob("archive_l2", "label", "l2:name", "${lost.first}.${lost.second}", 4L),
+        )
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(
+            labels = listOf(
+                LabelItem(id = "l1", label_token = "lt1", encrypted_name = rename.first, name_nonce = rename.second),
+                LabelItem(id = "l2", label_token = "lt2", encrypted_name = lost.first, name_nonce = lost.second),
+            ),
+        )
+        new_vm()
+        advanceUntilIdle()
+
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_l1") }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l2") }
+        coVerify(exactly = 0) { labels_api.update_label(any(), any()) }
+    }
+
+    private fun label_field_key(): ByteArray = MessageDigest.getInstance("SHA-256")
+        .digest("user_identity_keyastermail-labels-v1".toByteArray(Charsets.UTF_8))
+
+    private fun tag_field_key(): ByteArray = MessageDigest.getInstance("SHA-256")
+        .digest("user_identity_keyastermail-tags-v1".toByteArray(Charsets.UTF_8))
+
+    private fun sealed_rename(): Pair<String, String> = encrypt_with_raw_key("Bills", label_field_key())
+
+    private fun label_archive_setup(): ArchivedBlob {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        val sealed = encrypt_with_raw_key("Receipts", label_field_key())
+        val archive = ArchivedBlob("archive_l1", "label", "l1:name", "${sealed.first}.${sealed.second}", 3L)
+        every { preferences_cache.list_archived("user_1", "label") } returns listOf(archive)
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(
+            labels = listOf(LabelItem(id = "l1", label_token = "lt1")),
+        )
+        return archive
+    }
+
+    @Test
+    fun `load never writes back an archived folder name sealed under a public constant`() = runTest {
+        label_archive_setup()
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val sealed = encrypt_with_raw_key("Forged", constant)
+        every { preferences_cache.list_archived("user_1", "label") } returns listOf(
+            ArchivedBlob("archive_l1", "label", "l1:name", "${sealed.first}.${sealed.second}", 3L),
+        )
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.update_label(any(), any()) }
+    }
+
+    @Test
+    fun `load never restores archived preferences sealed under a public constant`() = runTest {
+        vault_ready(true)
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val saved = restore_setup(archived_preferences("""{"show_aster_branding":false}""", constant))
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertTrue("archived preferences under a public constant must not be saved", saved.isEmpty())
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+    }
+
+    @Test
+    fun `load writes an archived folder name back when the folder has none`() = runTest {
+        label_archive_setup()
+        val request = slot<UpdateLabelRequest>()
+        coEvery { labels_api.update_label("l1", capture(request)) } returns Unit
+        new_vm()
+        advanceUntilIdle()
+
+        assertTrue(request.isCaptured)
+        assertEquals(
+            "Receipts",
+            decrypt_with_raw_key(request.captured.encrypted_name!!, request.captured.name_nonce!!, label_field_key()),
+        )
+        assertEquals(null, request.captured.encrypted_color)
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_l1") }
+    }
+
+    @Test
+    fun `load keeps a folder name archive when the write back fails`() = runTest {
+        label_archive_setup()
+        coEvery { labels_api.update_label(any(), any()) } throws RuntimeException("offline")
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { labels_api.update_label("l1", any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l1") }
+    }
+
+    @Test
+    fun `load keeps a folder name archive while the folder list cannot be fetched`() = runTest {
+        label_archive_setup()
+        coEvery { labels_api.list_labels(any(), any()) } throws RuntimeException("offline")
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.update_label(any(), any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l1") }
+    }
+
+    @Test
+    fun `load writes an archived tag name back when the tag has none`() = runTest {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        val sealed = encrypt_with_raw_key("Travel", tag_field_key())
+        every { preferences_cache.list_archived("user_1", "tag") } returns listOf(
+            ArchivedBlob("archive_t1", "tag", "t1:name", "${sealed.first}.${sealed.second}", 3L),
+        )
+        coEvery { tags_api.list_tags(any()) } returns TagsListResponse(
+            tags = listOf(TagItem(id = "t1", tag_token = "tt1", encrypted_name = "", name_nonce = "")),
+        )
+        val request = slot<UpdateTagRequest>()
+        coEvery { tags_api.update_tag("t1", capture(request)) } returns Unit
+        new_vm()
+        advanceUntilIdle()
+
+        assertTrue(request.isCaptured)
+        assertEquals(
+            "Travel",
+            decrypt_with_raw_key(request.captured.encrypted_name!!, request.captured.name_nonce!!, tag_field_key()),
+        )
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_t1") }
+    }
+
+    @Test
+    fun `restore keeps a setting the user reset to its default`() = runTest {
+        vault_ready(true)
+        val sealed = encrypt_with_raw_key("""{"show_aster_branding":false,"compact_mode":true}""", account_prefs_key)
+        val archive = ArchivedBlob(
+            "archive_k1",
+            "preferences",
+            baseline_target("""{"show_aster_branding":false}"""),
+            "${sealed.first}.${sealed.second}",
+            5L,
+        )
+        val saved = restore_setup(archive, """{"show_aster_branding":true,"load_remote_images":"always"}""")
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        assertEquals(true, target.state.value.preferences?.compact_mode)
+        assertEquals(1, saved.size)
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_k1") }
+    }
+
+    @Test
+    fun `restore keeps the archive when the versioned save conflicts`() = runTest {
+        vault_ready(true)
+        restore_setup(
+            archived_preferences("""{"show_aster_branding":false}""", account_prefs_key),
+            result = PreferencesSaveResult.CONFLICT,
+        )
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `restore keeps the archive when the save fails`() = runTest {
+        vault_ready(true)
+        restore_setup(
+            archived_preferences("""{"show_aster_branding":false}""", account_prefs_key),
+            result = PreferencesSaveResult.FAILED,
+        )
+        coEvery { preferences_api.save_encrypted_preferences(any()) } throws RuntimeException("offline")
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `restore leaves a newer edit from another device alone`() = runTest {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", account_prefs_key))
+        val newer = encrypt_test_blob("""{"load_remote_images":"always","compact_mode":true}""", "user_identity_key")
+        coEvery { preferences_api.get_versioned_encrypted_preferences() } returns
+            VersionedEncryptedPreferences(newer.first, newer.second, 4)
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences_if_version(any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `keys that finish after the preferences load still restore the archive`() = runTest {
+        val ready_events = MutableStateFlow(0L)
+        every { session_key_store.account_keys_ready_events() } returns ready_events
+        vault_ready(false)
+        val saved = restore_setup(archived_preferences("""{"show_aster_branding":false}""", account_prefs_key))
+        val target = new_vm()
+        advanceUntilIdle()
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+
+        every { session_key_store.account_keys_ready() } returns true
+        ready_events.value = 1L
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertEquals(1, saved.size)
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_k1") }
+    }
+
+    @Test
+    fun `a key load that finishes before the watcher starts still restores the archive`() = runTest {
+        advanceUntilIdle()
+        val ready_events = MutableStateFlow(0L)
+        every { session_key_store.account_keys_ready_events() } returns ready_events
+        vault_ready(true)
+        val server_json = """{"load_remote_images":"always"}"""
+        val saved = restore_setup(archived_preferences("""{"show_aster_branding":false}""", account_prefs_key), server_json)
+        val blob = encrypt_test_blob(server_json, "user_identity_key")
+        coEvery { preferences_api.get_encrypted_preferences() } answers {
+            ready_events.value = 1L
+            EncryptedPreferencesResponse(encrypted_preferences = blob.first, preferences_nonce = blob.second)
+        }
+        coEvery { preferences_api.get_versioned_encrypted_preferences() } returns null andThen
+            VersionedEncryptedPreferences(blob.first, blob.second, 3)
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertEquals(1, saved.size)
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_k1") }
+    }
+
+    @Test
+    fun `a recovery email archive alone does not reload on every key event`() = runTest {
+        advanceUntilIdle()
+        val ready_events = MutableStateFlow(0L)
+        every { session_key_store.account_keys_ready_events() } returns ready_events
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", account_prefs_key))
+        every { preferences_cache.list_archived("user_1", "preferences") } returns emptyList()
+        val lost = lost_key_field()
+        every { preferences_cache.list_archived("user_1", "recovery_email") } returns listOf(
+            ArchivedBlob("archive_r1", "recovery_email", "", "${lost.first}.${lost.second}", 3L),
+        )
+        new_vm()
+        advanceUntilIdle()
+        io.mockk.clearMocks(preferences_api, answers = false, childMocks = false, exclusionRules = false)
+
+        ready_events.value = 1L
+        advanceUntilIdle()
+        ready_events.value = 2L
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { preferences_api.get_encrypted_preferences() }
+        coVerify(exactly = 0) { recovery_email_api.save(any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_r1") }
+    }
+
+    @Test
+    fun `restore does not bring back a tag color the user cleared`() = runTest {
+        advanceUntilIdle()
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        val sealed = encrypt_with_raw_key("#ff0000", tag_field_key())
+        every { preferences_cache.list_archived("user_1", "tag") } returns listOf(
+            ArchivedBlob(
+                "archive_tc",
+                "tag",
+                "t1:color",
+                "${sealed.first}.${sealed.second}",
+                3L,
+                replaced_with_blank = true,
+            ),
+        )
+        coEvery { tags_api.list_tags(any()) } returns TagsListResponse(
+            tags = listOf(TagItem(id = "t1", tag_token = "tt1", encrypted_name = "", name_nonce = "", encrypted_color = "", color_nonce = "")),
+        )
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { tags_api.update_tag(any(), any()) }
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_tc") }
+    }
+
+    @Test
+    fun `clearing an unreadable tag color records the clear with the archive`() = runTest {
+        vault_ready(true)
+        val field = seed_lost_key_tag()
+
+        vm.recolor_tag("t1", "")
+        advanceUntilIdle()
+
+        verify(exactly = 1) {
+            preferences_cache.archive_unreadable(any(), "tag", "${field.first}.${field.second}", "t1:color", any(), true, any())
+        }
+    }
+
+    @Test
+    fun `restore skips the write when the folder changed after it was read`() = runTest {
+        advanceUntilIdle()
+        label_archive_setup()
+        coEvery { labels_api.list_labels(false, any()) } returnsMany listOf(
+            LabelsListResponse(labels = listOf(LabelItem(id = "l1", label_token = "lt1"))),
+            LabelsListResponse(
+                labels = listOf(
+                    LabelItem(id = "l1", label_token = "lt1", encrypted_name = "bmV3bmFtZQ==", name_nonce = "bm9uY2Vub25jZQ=="),
+                ),
+            ),
+        )
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.update_label(any(), any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l1") }
+    }
+
+    @Test
+    fun `an unreadable field from the previous account is not archived after a switch`() = runTest {
+        vault_ready(true)
+        val field = seed_lost_key_tag()
+
+        vm.reset_for_account_switch()
+        every { session_key_store.get_user_id() } returns "user_2"
+        vm.recolor_tag("t1", "#00ff00")
+        advanceUntilIdle()
+
+        verify(exactly = 0) {
+            preferences_cache.archive_unreadable(any(), "tag", "${field.first}.${field.second}", any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `save records the shown settings with the archived blob`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        vault_ready(true)
+        cached_copy()
+        server_blob(lost_key_blob())
+        coEvery { preferences_api.save_encrypted_preferences(any()) } returns Unit
+        val target_slot = slot<String>()
+        val baseline_slot = slot<String>()
+        every {
+            preferences_cache.archive_unreadable(any(), "preferences", any(), capture(target_slot), any(), any(), capture(baseline_slot))
+        } returns true
+        val target = new_vm()
+        advanceUntilIdle()
+        val shown = target.state.value.preferences!!
+
+        target.save_preferences(shown.copy(load_remote_images = "always"))
+        advanceUntilIdle()
+
+        assertTrue(baseline_slot.isCaptured)
+        assertEquals("", target_slot.captured)
+        assertTrue(baseline_slot.captured.isNotEmpty())
+        val recorded = Json { ignoreUnknownKeys = true }.decodeFromString(
+            UserPreferences.serializer(),
+            String(Base64.getDecoder().decode(baseline_slot.captured), Charsets.UTF_8),
+        )
+        assertEquals(shown, recorded)
+    }
+
+    @Test
+    fun `restore rebases on the baseline stored beside the archive`() = runTest {
+        vault_ready(true)
+        val sealed = encrypt_with_raw_key("""{"show_aster_branding":false,"compact_mode":true}""", account_prefs_key)
+        val archive = ArchivedBlob(
+            "archive_k1",
+            "preferences",
+            "",
+            "${sealed.first}.${sealed.second}",
+            5L,
+            baseline = baseline_target("""{"show_aster_branding":false}"""),
+        )
+        val saved = restore_setup(archive, """{"show_aster_branding":true,"load_remote_images":"always"}""")
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertEquals(true, target.state.value.preferences?.show_aster_branding)
+        assertEquals(true, target.state.value.preferences?.compact_mode)
+        assertEquals(1, saved.size)
+        verify(exactly = 1) { preferences_cache.drop_archived("archive_k1") }
+    }
+
+    private fun three_label_archives_setup() {
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        every { preferences_cache.list_archived("user_1", "label") } returns (1..3).map { i ->
+            val sealed = encrypt_with_raw_key("Folder $i", label_field_key())
+            ArchivedBlob("archive_l$i", "label", "l$i:name", "${sealed.first}.${sealed.second}", i.toLong())
+        }
+        coEvery { labels_api.list_labels(any(), any()) } returns LabelsListResponse(
+            labels = (1..3).map { i -> LabelItem(id = "l$i", label_token = "lt$i") },
+        )
+        coEvery { labels_api.update_label(any(), any()) } returns Unit
+    }
+
+    @Test
+    fun `restore lists the folders once before writing several archives`() = runTest {
+        advanceUntilIdle()
+        three_label_archives_setup()
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 3) { labels_api.update_label(any(), any()) }
+        coVerify(exactly = 2) { labels_api.list_labels(false, any()) }
+        (1..3).forEach { i -> verify(exactly = 1) { preferences_cache.drop_archived("archive_l$i") } }
+    }
+
+    @Test
+    fun `restore writes only the folders unchanged at the read before the writes`() = runTest {
+        advanceUntilIdle()
+        three_label_archives_setup()
+        coEvery { labels_api.list_labels(false, any()) } returnsMany listOf(
+            LabelsListResponse(labels = (1..3).map { i -> LabelItem(id = "l$i", label_token = "lt$i") }),
+            LabelsListResponse(
+                labels = listOf(
+                    LabelItem(id = "l1", label_token = "lt1"),
+                    LabelItem(id = "l2", label_token = "lt2", encrypted_name = "bmV3bmFtZQ==", name_nonce = "bm9uY2Vub25jZQ=="),
+                    LabelItem(id = "l3", label_token = "lt3"),
+                ),
+            ),
+        )
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { labels_api.update_label("l1", any()) }
+        coVerify(exactly = 0) { labels_api.update_label("l2", any()) }
+        coVerify(exactly = 1) { labels_api.update_label("l3", any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l2") }
+    }
+
+    @Test
+    fun `restore lists the folders again before each chunk of writes`() = runTest {
+        advanceUntilIdle()
+        vault_ready(true)
+        restore_setup(archived_preferences("""{"show_aster_branding":false}""", ByteArray(32) { 99 }))
+        every { preferences_cache.list_archived("user_1", "label") } returns (1..10).map { i ->
+            val sealed = encrypt_with_raw_key("Folder $i", label_field_key())
+            ArchivedBlob("archive_l$i", "label", "l$i:name", "${sealed.first}.${sealed.second}", i.toLong())
+        }
+        val blank = LabelsListResponse(labels = (1..10).map { i -> LabelItem(id = "l$i", label_token = "lt$i") })
+        val filled = LabelsListResponse(
+            labels = (1..10).map { i ->
+                if (i == 1) {
+                    LabelItem(id = "l1", label_token = "lt1", encrypted_name = "bmV3bmFtZQ==", name_nonce = "bm9uY2Vub25jZQ==")
+                } else {
+                    LabelItem(id = "l$i", label_token = "lt$i")
+                }
+            },
+        )
+        coEvery { labels_api.list_labels(any(), any()) } returns blank
+        coEvery { labels_api.list_labels(false, any()) } returnsMany listOf(blank, blank, filled)
+        coEvery { labels_api.update_label(any(), any()) } returns Unit
+        new_vm()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { labels_api.update_label("l1", any()) }
+        (2..10).forEach { i -> coVerify(exactly = 1) { labels_api.update_label("l$i", any()) } }
+        coVerify(exactly = 3) { labels_api.list_labels(false, any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived("archive_l1") }
+    }
+
+    private suspend fun TestScope.seed_lost_key_signature() {
+        val field = lost_key_field()
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        every { session_key_store.get_decrypt_keks() } returns emptyList()
+        coEvery { signatures_api.list_signatures() } returns ListSignaturesResponse(
+            signatures = listOf(
+                Signature(
+                    id = "s1",
+                    encrypted_name = field.first,
+                    name_nonce = field.second,
+                    encrypted_content = field.first,
+                    content_nonce = field.second,
+                    is_default = true,
+                ),
+            ),
+        )
+        vm.load_signature()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `signature edit refuses when the key load ended without keys`() = runTest {
+        vault_ready(false)
+        seed_lost_key_signature()
+
+        vm.update_signature("s1", "Work", "Regards", null, null, null)
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
+        coVerify(exactly = 0) { signatures_api.update_signature(any(), any()) }
+        coVerify(exactly = 0) { preferences_cache.archive_unreadable(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `signature edit keeps the archive when the update fails and retries once`() = runTest {
+        vault_ready(true)
+        seed_lost_key_signature()
+        coEvery { signatures_api.update_signature(any(), any()) } throws RuntimeException("offline")
+
+        vm.update_signature("s1", "Work", "Regards", null, null, null)
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
+        verify(exactly = 1) { preferences_cache.archive_unreadable(any(), "signature", any(), "s1:name", any(), any(), any()) }
+        verify(exactly = 1) { preferences_cache.archive_unreadable(any(), "signature", any(), "s1:content", any(), any(), any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+
+        coEvery { signatures_api.update_signature(any(), any()) } returns mockk(relaxed = true)
+        vm.update_signature("s1", "Work", "Regards", null, null, null)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { signatures_api.update_signature("s1", any()) }
+        verify(exactly = 2) { preferences_cache.archive_unreadable(any(), "signature", any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { preferences_cache.drop_archived(any()) }
+    }
+
+    @Test
+    fun `signature edit archives unreadable fields before writing`() = runTest {
+        vault_ready(true)
+        seed_lost_key_signature()
+
+        vm.update_signature("s1", "Work", "Regards", null, null, null)
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            preferences_cache.archive_unreadable(any(), "signature", any(), "s1:name", any(), any(), any())
+            preferences_cache.archive_unreadable(any(), "signature", any(), "s1:content", any(), any(), any())
+            signatures_api.update_signature("s1", any())
+        }
+    }
+
     @Test
     fun `load waits for the account key load before giving up`() = runTest {
         var keks = emptyList<String>()
         every { session_key_store.get_identity_key() } returns "user_identity_key"
         every { session_key_store.get_decrypt_keks() } answers { keks }
         coEvery { session_key_store.await_account_key_load(any()) } answers {
-            keks = listOf(java.util.Base64.getEncoder().encodeToString(account_prefs_key))
+            keks = listOf(Base64.getEncoder().encodeToString(account_prefs_key))
         }
         server_blob(encrypt_with_raw_key("""{"show_aster_branding":false}""", account_prefs_key))
         val target = new_vm()
@@ -2890,7 +4034,7 @@ class SettingsViewModelTest {
     @Test
     fun `plaintext save preserves web-only keys from the raw load`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+            EncryptedPreferencesResponse()
         coEvery { preferences_api.get_preferences_raw() } returns
             """{"theme":"dark","web_only_setting":"keep_me"}"""
         every { session_key_store.get_identity_key() } returns null
@@ -2929,7 +4073,7 @@ class SettingsViewModelTest {
         advanceUntilIdle()
         assertEquals("dark", vm.state.value.preferences?.theme)
 
-        val body = io.mockk.slot<String>()
+        val body = slot<String>()
         coEvery { preferences_api.save_preferences_raw(capture(body)) } returns Unit
 
         vm.save_preferences(vm.state.value.preferences!!.copy(theme = "light"))
@@ -2943,7 +4087,7 @@ class SettingsViewModelTest {
     @Test
     fun `save_preferences refuses and never writes when encrypted account has no identity key`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
@@ -2993,7 +4137,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences marks authoritative after a successful plaintext load`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse()
+            EncryptedPreferencesResponse()
         coEvery { preferences_api.get_preferences() } returns
             UserPreferences(conversation_grouping = false)
 
@@ -3006,7 +4150,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences stays non-authoritative when encrypted blob present but identity key missing`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
@@ -3052,7 +4196,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences recovers from the cached copy after a decrypt failure`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
-            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+            EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
@@ -3091,7 +4235,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_preferences error sets error message`() = runTest {
-        coEvery { preferences_api.get_encrypted_preferences() } throws org.astermail.android.api.ApiError.UnknownError("prefs error")
+        coEvery { preferences_api.get_encrypted_preferences() } throws ApiError.UnknownError("prefs error")
 
         vm.load_preferences(force = true)
         advanceUntilIdle()
@@ -3114,7 +4258,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_api_keys error sets error message`() = runTest {
-        coEvery { developer_api.list_api_keys() } throws org.astermail.android.api.ApiError.UnknownError("api keys error")
+        coEvery { developer_api.list_api_keys() } throws ApiError.UnknownError("api keys error")
 
         vm.load_api_keys()
         advanceUntilIdle()
@@ -3304,7 +4448,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `load_profile clears previous error`() = runTest {
-        coEvery { auth_api.me() } throws org.astermail.android.api.ApiError.UnknownError("first error")
+        coEvery { auth_api.me() } throws ApiError.UnknownError("first error")
         vm.load_profile()
         advanceUntilIdle()
         assertEquals("first error", vm.state.value.error)
@@ -3534,12 +4678,12 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences does not restart an in-flight load`() = runTest {
         val api = mockk<PreferencesApi>(relaxed = true)
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.preferences.EncryptedPreferencesResponse>()
+        val gate = CompletableDeferred<EncryptedPreferencesResponse>()
         var cancelled = false
         coEvery { api.get_encrypted_preferences() } coAnswers {
             try {
                 gate.await()
-            } catch (e: kotlinx.coroutines.CancellationException) {
+            } catch (e: CancellationException) {
                 cancelled = true
                 throw e
             }
@@ -3550,7 +4694,7 @@ class SettingsViewModelTest {
 
         fresh_vm.load_preferences()
         advanceUntilIdle()
-        gate.complete(org.astermail.android.api.preferences.EncryptedPreferencesResponse())
+        gate.complete(EncryptedPreferencesResponse())
         advanceUntilIdle()
 
         coVerify(exactly = 1) { api.get_encrypted_preferences() }
@@ -3563,7 +4707,7 @@ class SettingsViewModelTest {
     @Test
     fun `forced load_preferences restarts an in-flight load`() = runTest {
         val api = mockk<PreferencesApi>(relaxed = true)
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.preferences.EncryptedPreferencesResponse>()
+        val gate = CompletableDeferred<EncryptedPreferencesResponse>()
         coEvery { api.get_encrypted_preferences() } coAnswers { gate.await() }
         coEvery { api.get_preferences_raw() } returns """{"theme":"dark"}"""
         val fresh_vm = preferences_vm(api)
@@ -3571,7 +4715,7 @@ class SettingsViewModelTest {
 
         fresh_vm.load_preferences(force = true)
         advanceUntilIdle()
-        gate.complete(org.astermail.android.api.preferences.EncryptedPreferencesResponse())
+        gate.complete(EncryptedPreferencesResponse())
         advanceUntilIdle()
 
         coVerify(exactly = 2) { api.get_encrypted_preferences() }
@@ -3581,7 +4725,7 @@ class SettingsViewModelTest {
     @Test
     fun `load_preferences after account switch fetches while previous load is in flight`() = runTest {
         val api = mockk<PreferencesApi>(relaxed = true)
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.preferences.EncryptedPreferencesResponse>()
+        val gate = CompletableDeferred<EncryptedPreferencesResponse>()
         coEvery { api.get_encrypted_preferences() } coAnswers { gate.await() }
         coEvery { api.get_preferences_raw() } returns """{"theme":"dark"}"""
         val fresh_vm = preferences_vm(api)
@@ -3590,7 +4734,7 @@ class SettingsViewModelTest {
         fresh_vm.reset_for_account_switch()
         fresh_vm.load_preferences()
         advanceUntilIdle()
-        gate.complete(org.astermail.android.api.preferences.EncryptedPreferencesResponse())
+        gate.complete(EncryptedPreferencesResponse())
         advanceUntilIdle()
 
         coVerify(exactly = 2) { api.get_encrypted_preferences() }
@@ -3599,12 +4743,12 @@ class SettingsViewModelTest {
     }
 
     private fun sidebar_layout_of(written: String): Pair<List<String>, List<String>> {
-        val obj = kotlinx.serialization.json.Json.parseToJsonElement(written).jsonObject
+        val obj = Json.parseToJsonElement(written).jsonObject
         fun list(key: String) = obj.getValue(key).jsonArray.map { it.jsonPrimitive.content }
         return list("sidebar_section_order") to list("sidebar_hidden_items")
     }
 
-    private fun kotlinx.coroutines.test.TestScope.sidebar_vm(
+    private fun TestScope.sidebar_vm(
         identity_key: String,
         server_json: String,
     ): SettingsViewModel {
@@ -3623,7 +4767,7 @@ class SettingsViewModelTest {
             """{"sidebar_section_order":["mail","calendar","folders","labels","aliases"],""" +
                 """"sidebar_hidden_items":["future_item"],"web_only_setting":"keep_me"}""",
         )
-        val requests = mutableListOf<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        val requests = mutableListOf<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(requests)) } returns Unit
 
         target.move_sidebar_section("folders", -1)
@@ -3672,7 +4816,7 @@ class SettingsViewModelTest {
                 identity_key,
             ),
         )
-        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        val request = slot<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
 
         target.move_sidebar_section("labels", -1)
@@ -3691,7 +4835,7 @@ class SettingsViewModelTest {
             identity_key,
             """{"sidebar_section_order":["aliases","labels"],"sidebar_hidden_items":["sent","folders"]}""",
         )
-        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        val request = slot<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
 
         target.reset_sidebar_layout()
@@ -3715,7 +4859,7 @@ class SettingsViewModelTest {
             identity_key,
             """{"sidebar_section_order":["aliases","calendar","labels","mail"],"sidebar_hidden_items":["calendar_tasks","spam"]}""",
         )
-        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        val request = slot<SaveEncryptedPreferencesRequest>()
         coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
 
         target.reset_sidebar_layout()
@@ -3790,7 +4934,7 @@ class SettingsViewModelTest {
     fun `recovery code rotation server error ends in failed with a message`() = runTest {
         every { session_key_store.get_recovery_codes() } returns old_recovery_codes
         coEvery { auth_repository.rotate_recovery_codes(any()) } throws
-            org.astermail.android.api.ApiError.ServerError(500)
+            ApiError.ServerError(500)
         coEvery { auth_repository.sync_recovery_codes() } returns old_recovery_codes
 
         vm.start_recovery_codes_rotation("token-1")
@@ -3806,7 +4950,7 @@ class SettingsViewModelTest {
     fun `recovery code rotation keeps codes the server already saved`() = runTest {
         every { session_key_store.get_recovery_codes() } returns old_recovery_codes
         coEvery { auth_repository.rotate_recovery_codes(any()) } throws
-            org.astermail.android.api.ApiError.NetworkError
+            ApiError.NetworkError
         coEvery { auth_repository.sync_recovery_codes() } returns new_recovery_codes
 
         vm.start_recovery_codes_rotation("token-1")
@@ -3820,10 +4964,10 @@ class SettingsViewModelTest {
     @Test
     fun `an expired step up token asks for the password again`() = runTest {
         every { session_key_store.get_recovery_codes() } returns old_recovery_codes
-        every { context.getString(org.astermail.android.R.string.recovery_step_up_description) } returns
+        every { context.getString(R.string.recovery_step_up_description) } returns
             "Confirm your password"
         coEvery { auth_repository.rotate_recovery_codes(any()) } throws
-            org.astermail.android.api.ApiError.ForbiddenError("step-up required", "STEP_UP_REQUIRED")
+            ApiError.ForbiddenError("step-up required", "STEP_UP_REQUIRED")
 
         vm.start_recovery_codes_rotation("spent")
         advanceUntilIdle()
@@ -3838,7 +4982,7 @@ class SettingsViewModelTest {
     @Test
     fun `recovery code rotation timeout never leaves the screen loading`() = runTest {
         every { session_key_store.get_recovery_codes() } returns old_recovery_codes
-        every { context.getString(org.astermail.android.R.string.error_timeout) } returns "Timed out"
+        every { context.getString(R.string.error_timeout) } returns "Timed out"
         coEvery { auth_repository.rotate_recovery_codes(any()) } coAnswers {
             kotlinx.coroutines.delay(SettingsViewModel.RECOVERY_ROTATION_TIMEOUT_MS * 2)
             new_recovery_codes
@@ -3879,9 +5023,9 @@ class SettingsViewModelTest {
         val worker = StandardTestDispatcher(testScheduler, name = "recovery-worker")
         vm.default_dispatcher = worker
         every { session_key_store.get_recovery_codes() } returns old_recovery_codes
-        var observed: kotlin.coroutines.ContinuationInterceptor? = null
+        var observed: ContinuationInterceptor? = null
         coEvery { auth_repository.rotate_recovery_codes(any()) } coAnswers {
-            observed = kotlin.coroutines.coroutineContext[kotlin.coroutines.ContinuationInterceptor]
+            observed = kotlin.coroutines.coroutineContext[ContinuationInterceptor]
             new_recovery_codes
         }
 
@@ -3893,7 +5037,7 @@ class SettingsViewModelTest {
         assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
     }
 
-    private fun smtp_body_now(): org.astermail.android.ui.settings.detail.SmtpTokensBody {
+    private fun smtp_body_now(): SmtpTokensBody {
         val s = vm.state.value
         return org.astermail.android.ui.settings.detail.smtp_tokens_body(
             addresses_known = true,
@@ -3906,27 +5050,27 @@ class SettingsViewModelTest {
 
     @Test
     fun `smtp tokens show no empty state before the first load finishes`() = runTest {
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        val gate = CompletableDeferred<ListSmtpTokensResponse>()
         coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
 
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+        assertEquals(SmtpTokensBody.placeholder, smtp_body_now())
         vm.load_smtp_tokens()
         runCurrent()
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+        assertEquals(SmtpTokensBody.placeholder, smtp_body_now())
 
-        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        gate.complete(ListSmtpTokensResponse(emptyList()))
         advanceUntilIdle()
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.empty, smtp_body_now())
+        assertEquals(SmtpTokensBody.empty, smtp_body_now())
     }
 
     @Test
     fun `smtp token load failure shows an error instead of the empty state`() = runTest {
-        coEvery { settings_api.list_smtp_tokens() } throws java.io.IOException("offline")
+        coEvery { settings_api.list_smtp_tokens() } throws IOException("offline")
 
         vm.load_smtp_tokens()
         advanceUntilIdle()
 
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.error, smtp_body_now())
+        assertEquals(SmtpTokensBody.error, smtp_body_now())
     }
 
     @Test
@@ -3938,28 +5082,28 @@ class SettingsViewModelTest {
             loaded = false,
             load_failed = false,
         )
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, body)
+        assertEquals(SmtpTokensBody.placeholder, body)
     }
 
     @Test
     fun `reopening smtp tokens keeps the cached rows while it revalidates`() = runTest {
         val rows = listOf(
-            org.astermail.android.api.settings.SmtpTokenRow(id = "t1", bound_address = "a@example.com"),
-            org.astermail.android.api.settings.SmtpTokenRow(id = "t2", bound_address = "b@example.com"),
+            SmtpTokenRow(id = "t1", bound_address = "a@example.com"),
+            SmtpTokenRow(id = "t2", bound_address = "b@example.com"),
         )
         coEvery { settings_api.list_smtp_tokens() } returns
-            org.astermail.android.api.settings.ListSmtpTokensResponse(rows)
+            ListSmtpTokensResponse(rows)
         vm.load_smtp_tokens()
         advanceUntilIdle()
 
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        val gate = CompletableDeferred<ListSmtpTokensResponse>()
         coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
         vm.load_smtp_tokens()
         runCurrent()
 
         assertEquals(listOf("t1", "t2"), vm.state.value.smtp_tokens.map { it.id })
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.list, smtp_body_now())
-        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(rows.take(1)))
+        assertEquals(SmtpTokensBody.list, smtp_body_now())
+        gate.complete(ListSmtpTokensResponse(rows.take(1)))
         advanceUntilIdle()
         assertEquals(listOf("t1"), vm.state.value.smtp_tokens.map { it.id })
         coVerify(exactly = 2) { settings_api.list_smtp_tokens() }
@@ -3967,14 +5111,14 @@ class SettingsViewModelTest {
 
     @Test
     fun `smtp token prefetch and screen open share one request`() = runTest {
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        val gate = CompletableDeferred<ListSmtpTokensResponse>()
         coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
 
         vm.prefetch_smtp_tokens()
         runCurrent()
         vm.load_smtp_tokens()
         runCurrent()
-        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        gate.complete(ListSmtpTokensResponse(emptyList()))
         advanceUntilIdle()
         vm.prefetch_smtp_tokens()
         advanceUntilIdle()
@@ -3984,8 +5128,8 @@ class SettingsViewModelTest {
 
     @Test
     fun `smtp tokens from a previous account are dropped on account switch`() = runTest {
-        coEvery { settings_api.list_smtp_tokens() } returns org.astermail.android.api.settings.ListSmtpTokensResponse(
-            listOf(org.astermail.android.api.settings.SmtpTokenRow(id = "t1")),
+        coEvery { settings_api.list_smtp_tokens() } returns ListSmtpTokensResponse(
+            listOf(SmtpTokenRow(id = "t1")),
         )
         vm.load_smtp_tokens()
         advanceUntilIdle()
@@ -3993,19 +5137,19 @@ class SettingsViewModelTest {
         vm.reset_for_account_switch()
 
         assertTrue(vm.state.value.smtp_tokens.isEmpty())
-        assertEquals(org.astermail.android.ui.settings.detail.SmtpTokensBody.placeholder, smtp_body_now())
+        assertEquals(SmtpTokensBody.placeholder, smtp_body_now())
     }
 
     @Test
     fun `opening smtp tokens during the settings prefetch shares one request`() = runTest {
-        val gate = kotlinx.coroutines.CompletableDeferred<org.astermail.android.api.settings.ListSmtpTokensResponse>()
+        val gate = CompletableDeferred<ListSmtpTokensResponse>()
         coEvery { settings_api.list_smtp_tokens() } coAnswers { gate.await() }
 
         vm.load_smtp_tokens()
         runCurrent()
         vm.load_smtp_tokens()
         runCurrent()
-        gate.complete(org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList()))
+        gate.complete(ListSmtpTokensResponse(emptyList()))
         advanceUntilIdle()
 
         coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
@@ -4014,7 +5158,7 @@ class SettingsViewModelTest {
     @Test
     fun `smtp tokens report loading as soon as a load starts`() {
         coEvery { settings_api.list_smtp_tokens() } returns
-            org.astermail.android.api.settings.ListSmtpTokensResponse(emptyList())
+            ListSmtpTokensResponse(emptyList())
 
         vm.load_smtp_tokens()
 

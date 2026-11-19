@@ -64,7 +64,23 @@ object InboundAttachmentKeyStore {
         ): Boolean = size > MAX_ENTRIES
     }
 
+    private val own_authored_ids = object : LinkedHashMap<String, Unit>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, Unit>?,
+        ): Boolean = size > MAX_ENTRIES
+    }
+
     private val lock = Any()
+
+    fun note_own_authored(mail_item_id: String?) {
+        if (mail_item_id.isNullOrBlank()) return
+        synchronized(lock) { own_authored_ids[mail_item_id] = Unit }
+    }
+
+    fun is_own_authored(mail_item_id: String?): Boolean {
+        if (mail_item_id.isNullOrBlank()) return false
+        return synchronized(lock) { own_authored_ids.containsKey(mail_item_id) }
+    }
 
     fun register(mail_item_id: String?, seq_num: Int?, key: String?) {
         register(mail_item_id, seq_num, key, null, null, null, null)
@@ -215,6 +231,7 @@ object InboundAttachmentKeyStore {
             sealed_items.clear()
             metas.clear()
             unreadable.clear()
+            own_authored_ids.clear()
         }
     }
 

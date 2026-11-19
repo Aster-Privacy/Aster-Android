@@ -19,21 +19,35 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-package org.astermail.android.folders
+package org.astermail.android.security
 
-import android.content.Context
+internal class AppLockDisableSteps(
+    val unseal: () -> Boolean,
+    val reseal: () -> Unit,
+    val close_key: () -> Unit,
+    val reopen_key: () -> Unit,
+    val write_marker: (Boolean) -> Boolean,
+    val clear_pin: () -> Boolean,
+)
 
-object folder_kdf_pins {
-    private const val prefs_name = "folder_kdf_pins"
-
-    fun is_pinned(context: Context, folder_id: String): Boolean =
-        runCatching {
-            context.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).getBoolean(folder_id, false)
-        }.getOrDefault(false)
-
-    fun pin(context: Context, folder_id: String) {
-        runCatching {
-            context.getSharedPreferences(prefs_name, Context.MODE_PRIVATE).edit().putBoolean(folder_id, true).apply()
-        }
+internal fun run_app_lock_disable(steps: AppLockDisableSteps): Boolean {
+    if (!steps.unseal()) {
+        steps.reseal()
+        return false
     }
+    steps.close_key()
+    if (!steps.unseal()) {
+        steps.reopen_key()
+        return false
+    }
+    if (!steps.write_marker(false)) {
+        steps.reopen_key()
+        return false
+    }
+    if (!steps.clear_pin()) {
+        steps.write_marker(true)
+        steps.reopen_key()
+        return false
+    }
+    return true
 }

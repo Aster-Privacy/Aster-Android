@@ -63,6 +63,15 @@ data class ResealRunResult(
 )
 
 const val LEGACY_KEY_SWEEP_STEP = "legacy_key_sweep"
+const val PUBLIC_CONSTANT_SWEEP_STEP = "public_constant_sweep"
+
+val INCOMPLETE_SWEEP_STATUSES = setOf(
+    ResealRunStatus.INTERRUPTED,
+    ResealRunStatus.DEFERRED,
+    ResealRunStatus.FAILED,
+)
+
+const val LEGACY_KEY_RETIRE_PENDING = "legacy_key_retire_pending"
 
 fun needs_storage_reseal(view: VaultKeyView?): Boolean =
     view != null && view.data_kek_random && view.storage_rekey_state == STORAGE_REKEY_PENDING
@@ -72,7 +81,7 @@ suspend fun run_legacy_key_sweep(
     api: ResealApi,
     store: ProgressStore,
     legacy_keys: List<ByteArray>,
-    retire: () -> Unit,
+    retire: () -> Boolean,
     still_current: (suspend () -> Boolean)? = null,
     sleep: suspend (Long) -> Unit = { delay(it) },
     is_cancelled: () -> Boolean = { false },
@@ -93,8 +102,9 @@ suspend fun run_legacy_key_sweep(
         gate = gate,
         sweep = true,
     )
-    if (result.status == ResealRunStatus.DONE) retire()
-    return result
+    if (result.status != ResealRunStatus.DONE) return result
+    if (runCatching { retire() }.getOrDefault(false)) return result
+    return ResealRunResult(ResealRunStatus.INTERRUPTED, result.counts, LEGACY_KEY_RETIRE_PENDING)
 }
 
 suspend fun run_storage_reseal(

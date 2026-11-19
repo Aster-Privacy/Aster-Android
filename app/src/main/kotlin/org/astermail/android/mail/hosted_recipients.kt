@@ -48,6 +48,9 @@ object HostedRecipientDirectory {
         return !entries.containsKey(address)
     }
 
+    fun classify(server_internal: Boolean, pinned_external_key: String?): Boolean =
+        server_internal && pinned_external_key.isNullOrBlank()
+
     fun record(email: String, internal: Boolean) {
         val address = normalize(email)
         if (address.isEmpty() || is_aster_domain_recipient(address)) return

@@ -380,6 +380,7 @@ object PgpDecryptor {
     }
 
     private fun read_literal(literal: PGPLiteralData, tracker: SignatureTracker): ByteArray {
+        tracker.note_literal()
         val out = ByteArrayOutputStream()
         val buffer = ByteArray(1 shl 16)
         var total = 0L
@@ -407,8 +408,17 @@ object PgpDecryptor {
 
     private class SignatureTracker(private val keys: PGPPublicKeyRingCollection?) {
         private var one_pass: PGPOnePassSignature? = null
+        private var signing_key: org.bouncycastle.openpgp.PGPPublicKey? = null
+        private var signing_primary: org.bouncycastle.openpgp.PGPPublicKey? = null
         private var saw_signature = false
         private var verified: Boolean? = null
+        private var key_usable = true
+        private var literal_count = 0
+
+        fun note_literal() {
+            literal_count += 1
+            if (literal_count > 1) throw IllegalStateException("pgp message carries more than one literal packet")
+        }
 
         fun begin(list: PGPOnePassSignatureList) {
             if (list.isEmpty) return
@@ -423,6 +433,8 @@ object PgpDecryptor {
                     key,
                 )
                 one_pass = candidate
+                signing_key = key
+                signing_primary = runCatching { key_rings.getPublicKeyRing(candidate.keyID)?.publicKey }.getOrNull()
             }
         }
 
@@ -435,12 +447,26 @@ object PgpDecryptor {
             if (!list.isEmpty) saw_signature = true
             val active = one_pass ?: return
             if (list.isEmpty) return
-            verified = runCatching { active.verify(list[0]) }.getOrDefault(false)
+            val signature = list[0]
+            verified = runCatching { active.verify(signature) }.getOrDefault(false)
+            val key = signing_key
+            if (verified == true && key != null) {
+                key_usable = PgpKeyValidity.usable_at(
+                    created_at_ms = key.creationTime.time,
+                    valid_seconds = key.validSeconds,
+                    revoked = runCatching {
+                        PgpKeyValidity.key_revoked_at(signing_primary ?: key, key, signature.creationTime.time)
+                    }.getOrDefault(true),
+                    primary_valid_until_ms = signing_primary?.let { PgpKeyValidity.expiry_ms(it.creationTime.time, it.validSeconds) },
+                    at_ms = signature.creationTime.time,
+                ) && runCatching { PgpKeyValidity.signs_data(signing_primary ?: key, key) }.getOrDefault(false)
+            }
         }
 
         fun result(): PgpSignatureStatus = when {
             !saw_signature -> PgpSignatureStatus.NONE
-            verified == true -> PgpSignatureStatus.VALID
+            verified == true && key_usable -> PgpSignatureStatus.VALID
+            verified == true -> PgpSignatureStatus.UNVERIFIED
             verified == false -> PgpSignatureStatus.INVALID
             else -> PgpSignatureStatus.UNVERIFIED
         }

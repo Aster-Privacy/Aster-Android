@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail.ratchet
 
+import org.astermail.android.crypto.StorageWriteKey
 import android.content.Context
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -88,7 +89,7 @@ class RatchetStateStore @Inject constructor(
     }
 
     fun write_master_key(): ByteArray? =
-        org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+        StorageWriteKey.write_key(session_key_store)
 
     fun state_encryption_key_candidates(): List<ByteArray> =
         master_key_candidates().map { master ->
@@ -99,13 +100,40 @@ class RatchetStateStore @Inject constructor(
             }
         }
 
-    private fun derive_state_key(master: ByteArray): ByteArray =
-        RatchetCrypto.hkdf_sha256(
-            ikm = master,
-            salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
-            info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
-            length = 32,
-        )
+    fun derive_sync_keys(): RatchetSyncKeys? {
+        val user_id = session_key_store.get_user_id()?.takeIf { it.isNotEmpty() } ?: return null
+        val master = write_master_key() ?: return null
+        return try {
+            RatchetSyncKeys(derive_sync_state_key(master), derive_state_key(master), user_id)
+        } finally {
+            master.fill(0)
+        }
+    }
+
+    fun retired_state_key_candidates(): List<ByteArray> {
+        val current = write_master_key()
+        return try {
+            master_key_candidates().flatMap { master ->
+                try {
+                    if (current != null && master.contentEquals(current)) {
+                        emptyList()
+                    } else if (StorageWriteKey.is_public_mail_kek(master)) {
+                        emptyList()
+                    } else {
+                        listOf(derive_sync_state_key(master), derive_state_key(master))
+                    }
+                } finally {
+                    master.fill(0)
+                }
+            }
+        } finally {
+            current?.fill(0)
+        }
+    }
+
+    private fun derive_sync_state_key(master: ByteArray): ByteArray = sync_state_key_from_master(master)
+
+    private fun derive_state_key(master: ByteArray): ByteArray = state_key_from_master(master)
 
     fun master_key_candidates(): List<ByteArray> {
         val candidates = mutableListOf<ByteArray>()
@@ -118,9 +146,13 @@ class RatchetStateStore @Inject constructor(
             }
             candidates.add(key)
         }
-        offer(org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store))
-        org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store).forEach { offer(it) }
+        offer(StorageWriteKey.write_key(session_key_store))
+        StorageWriteKey.read_keys(session_key_store).forEach { offer(it) }
         return candidates
+    }
+
+    fun note_master_key_use(master: ByteArray) {
+        StorageWriteKey.note_if_public(session_key_store, master)
     }
 
     private fun key_for(conversation_id: String): String = "ratchet_state_$conversation_id"
@@ -129,5 +161,43 @@ class RatchetStateStore @Inject constructor(
 
     companion object {
         private const val prefs_name = "aster_ratchet_state_v1"
+
+        fun sync_state_key_from_master(master: ByteArray): ByteArray =
+            RatchetCrypto.hkdf_sha256(
+                ikm = master,
+                salt = "Aster Mail_Ratchet_State_Sync".toByteArray(Charsets.UTF_8),
+                info = "ratchet_state_sync_key_v3".toByteArray(Charsets.UTF_8),
+                length = 32,
+            )
+
+        fun state_key_from_master(master: ByteArray): ByteArray =
+            RatchetCrypto.hkdf_sha256(
+                ikm = master,
+                salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+                info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+                length = 32,
+            )
+
+        fun is_public_state_key(key: ByteArray): Boolean =
+            StorageWriteKey.public_mail_kek_raws().any { raw ->
+                val derived = listOf(state_key_from_master(raw), sync_state_key_from_master(raw))
+                try {
+                    derived.any { java.security.MessageDigest.isEqual(it, key) }
+                } finally {
+                    derived.forEach { it.fill(0) }
+                    raw.fill(0)
+                }
+            }
+    }
+}
+
+class RatchetSyncKeys(
+    val state_key: ByteArray,
+    val compat_key: ByteArray,
+    val user_id: String,
+) {
+    fun wipe() {
+        state_key.fill(0)
+        compat_key.fill(0)
     }
 }

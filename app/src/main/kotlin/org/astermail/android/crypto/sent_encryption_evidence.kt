@@ -22,6 +22,9 @@
 
 package org.astermail.android.crypto
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.json.JSONObject
 
 data class SentEncryptionEvidence(
@@ -34,6 +37,7 @@ enum class SentEncryptionScope { INTERNAL, OUTSIDE }
 
 object SentEncryptionEvidenceRules {
     const val FIELD = "sent_encryption"
+    const val LEGACY_UNVERIFIED_FIELD = "legacy_unverified"
     private const val MAX_RECIPIENT_COUNT = 100_000
 
     fun normalize_address(value: String): String {
@@ -113,6 +117,16 @@ object SentEncryptionEvidenceRules {
 
     fun scope_from_envelope_json(envelope_json: String): SentEncryptionScope? =
         scope(runCatching { read(JSONObject(envelope_json)) }.getOrNull())
+
+    fun is_legacy_unverified(envelope_json: String): Boolean = runCatching {
+        (Json.parseToJsonElement(envelope_json) as? JsonObject)?.containsKey(LEGACY_UNVERIFIED_FIELD) == true
+    }.getOrDefault(false)
+
+    fun mark_legacy_unverified(plaintext: ByteArray): ByteArray? = runCatching {
+        (Json.parseToJsonElement(String(plaintext, Charsets.UTF_8)) as? JsonObject)?.let { parsed ->
+            JsonObject(parsed + (LEGACY_UNVERIFIED_FIELD to JsonPrimitive(true))).toString().toByteArray(Charsets.UTF_8)
+        }
+    }.getOrNull()
 
     fun shows_end_to_end(
         scope: SentEncryptionScope?,

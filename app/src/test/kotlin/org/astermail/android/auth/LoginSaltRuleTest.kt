@@ -58,39 +58,42 @@ class LoginSaltRuleTest {
     fun `matching record allows a short v1 salt`() {
         val records = FakeRecords().apply { put(listOf("hash_a"), short_salt) }
         val recorded = records.find(listOf("hash_a"))
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, recorded, LoginSaltCheck.sign_in, false))
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, recorded, LoginSaltCheck.step_up, false))
+        assertTrue(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, recorded))
     }
 
     @Test
-    fun `mismatched record refuses a short v1 salt even for a known account`() {
+    fun `mismatched record refuses a short v1 salt`() {
         val records = FakeRecords().apply { put(listOf("hash_a"), short_salt) }
         val recorded = records.find(listOf("hash_a"))
-        assertFalse(LoginSaltRule.is_v1_proof_allowed(other_short_salt, 1, recorded, LoginSaltCheck.sign_in, true))
+        assertFalse(LoginSaltRule.is_v1_proof_allowed(other_short_salt, 1, recorded))
         val error = refused {
-            LoginSaltRule.require_v1_proof_allowed(other_short_salt, 1, recorded, LoginSaltCheck.sign_in, true)
+            LoginSaltRule.require_v1_proof_allowed(other_short_salt, 1, recorded, LoginSaltCheck.sign_in)
         }
         assertEquals(LoginSaltCheck.sign_in, error?.check)
     }
 
     @Test
-    fun `no record and a saved account allows sign in`() {
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.sign_in, true))
+    fun `no record refuses sign in even for an account saved on this device`() {
+        assertFalse(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, null))
+        val error = refused {
+            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.sign_in)
+        }
+        assertEquals(LoginSaltCheck.sign_in, error?.check)
     }
 
     @Test
-    fun `no record and an unknown account refuses sign in`() {
+    fun `no record refuses sign in for an unknown account`() {
         val error = refused {
-            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.sign_in, false)
+            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.sign_in)
         }
         assertEquals(LoginSaltCheck.sign_in, error?.check)
     }
 
     @Test
     fun `step up without a record is refused`() {
-        assertFalse(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.step_up, true))
+        assertFalse(LoginSaltRule.is_v1_proof_allowed(short_salt, 1, null))
         val error = refused {
-            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.step_up, true)
+            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.step_up)
         }
         assertEquals(LoginSaltCheck.step_up, error?.check)
     }
@@ -99,23 +102,21 @@ class LoginSaltRuleTest {
     fun `kdf v2 is allowed at any salt length`() {
         for (length in listOf(1, 8, 16, 31, 32, 64)) {
             val salt = ByteArray(length) { it.toByte() }
-            assertTrue(LoginSaltRule.is_v1_proof_allowed(salt, 2, null, LoginSaltCheck.sign_in, false))
-            assertTrue(LoginSaltRule.is_v1_proof_allowed(salt, 2, null, LoginSaltCheck.step_up, false))
-            assertTrue(LoginSaltRule.is_v1_proof_allowed(salt, 2, other_short_salt, LoginSaltCheck.step_up, false))
+            assertTrue(LoginSaltRule.is_v1_proof_allowed(salt, 2, null))
+            assertTrue(LoginSaltRule.is_v1_proof_allowed(salt, 2, other_short_salt))
         }
     }
 
     @Test
     fun `a 32 byte salt is unaffected`() {
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(current_salt, 1, null, LoginSaltCheck.sign_in, false))
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(current_salt, 1, null, LoginSaltCheck.step_up, false))
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(current_salt, 1, short_salt, LoginSaltCheck.step_up, false))
-        assertTrue(LoginSaltRule.is_v1_proof_allowed(ByteArray(48), 1, null, LoginSaltCheck.sign_in, false))
+        assertTrue(LoginSaltRule.is_v1_proof_allowed(current_salt, 1, null))
+        assertTrue(LoginSaltRule.is_v1_proof_allowed(current_salt, 1, short_salt))
+        assertTrue(LoginSaltRule.is_v1_proof_allowed(ByteArray(48), 1, null))
     }
 
     @Test
     fun `a 31 byte salt still counts as short`() {
-        assertFalse(LoginSaltRule.is_v1_proof_allowed(ByteArray(31), 1, null, LoginSaltCheck.sign_in, false))
+        assertFalse(LoginSaltRule.is_v1_proof_allowed(ByteArray(31), 1, null))
     }
 
     @Test
@@ -128,7 +129,7 @@ class LoginSaltRuleTest {
     @Test
     fun `refusal is an auth salt collision`() {
         val error = refused {
-            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.step_up, false)
+            LoginSaltRule.require_v1_proof_allowed(short_salt, 1, null, LoginSaltCheck.step_up)
         }
         assertTrue(error is AuthSaltCollisionException)
     }

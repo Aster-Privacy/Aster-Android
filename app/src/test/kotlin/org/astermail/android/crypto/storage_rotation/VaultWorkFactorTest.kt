@@ -126,7 +126,10 @@ class VaultWorkFactorTest {
         assertEquals(listOf<Int?>(VaultKdf.LEVEL2_ITERATIONS), server.sent_iterations)
         assertEquals(listOf<String?>(before), server.sent_hashes)
         assertEquals(VaultKdf.LEVEL2_ITERATIONS, server.stored_iterations)
-        assertEquals(vault.toString(), server.vault.toString())
+        assertEquals(
+            JSONObject(vault.toString()).put(VAULT_GENERATION_FIELD, 1).toString(),
+            server.vault.toString(),
+        )
         assertNull(read_work_factor_backoff(store.load()!!))
         assertFalse(step_done(store))
 
