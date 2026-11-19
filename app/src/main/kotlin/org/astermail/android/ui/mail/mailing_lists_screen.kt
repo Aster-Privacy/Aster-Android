@@ -173,6 +173,7 @@ fun MailingListsScreen(
     var selected_ids by remember { mutableStateOf(emptySet<String>()) }
     var confirm_single by remember { mutableStateOf<MailingListSubscription?>(null) }
     var confirm_bulk by remember { mutableStateOf<List<String>>(emptyList()) }
+    var confirm_delete by remember { mutableStateOf<List<String>>(emptyList()) }
 
     val blocked_pending = settings_state.blocked_senders.isEmpty() &&
         (!blocked_requested || settings_state.blocked_senders_loading)
@@ -191,6 +192,8 @@ fun MailingListsScreen(
     }
     val visible = if (show_unsubscribed) unsubscribed else active
     val visible_ids = remember(visible) { visible.map { it.id }.toSet() }
+    val latest_visible = androidx.compose.runtime.rememberUpdatedState(visible)
+    val latest_visible_ids = androidx.compose.runtime.rememberUpdatedState(visible_ids)
     LaunchedEffect(visible_ids) {
         if (selected_ids.any { it !in visible_ids }) selected_ids = selected_ids intersect visible_ids
     }
@@ -231,12 +234,12 @@ fun MailingListsScreen(
             item_y >= entry.offset && item_y < entry.offset + entry.size
         } ?: return null
         val key = entry.key as? String ?: return null
-        return key.takeIf { it in visible_ids }
+        return key.takeIf { it in latest_visible_ids.value }
     }
 
     fun subscription_index_at_offset(y: Float): Int? {
         val id = subscription_id_at_offset(y) ?: return null
-        val idx = visible.indexOfFirst { it.id == id }
+        val idx = latest_visible.value.indexOfFirst { it.id == id }
         return if (idx >= 0) idx else null
     }
 
@@ -257,7 +260,7 @@ fun MailingListsScreen(
         val hi = maxOf(anchor, idx)
         val target = LinkedHashSet(drag_pre_selected)
         for (i in lo..hi) {
-            visible.getOrNull(i)?.id?.let { target.add(it) }
+            latest_visible.value.getOrNull(i)?.id?.let { target.add(it) }
         }
         if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -347,7 +350,7 @@ fun MailingListsScreen(
                                 if (selected_ids.isEmpty()) continue
                                 if ((change.position - down.position).getDistance() < drag_start_slop) continue
                                 if (!drag_started) {
-                                    val anchor_index = visible.indexOfFirst { it.id == anchor_id }
+                                    val anchor_index = latest_visible.value.indexOfFirst { it.id == anchor_id }
                                     if (anchor_index < 0) continue
                                     drag_anchor_index.intValue = anchor_index
                                     drag_last_index.intValue = anchor_index
@@ -452,11 +455,7 @@ fun MailingListsScreen(
                         selection_active = selected_ids.isNotEmpty(),
                         haptic_enabled = haptic_enabled,
                         on_toggle_select = {
-                            selected_ids = if (item.id in selected_ids) {
-                                selected_ids - item.id
-                            } else {
-                                selected_ids + item.id
-                            }
+                            selected_ids = toggle_subscription_selection(selected_ids, item.id)
                         },
                         on_open = { on_search_sender(item.sender_email) },
                         on_action = {
@@ -521,16 +520,12 @@ fun MailingListsScreen(
             subscription_select_bar(
                 count = selected_ids.size,
                 is_unsubscribed_tab = show_unsubscribed,
-                on_clear = { selected_ids = emptySet() },
-                on_select_all = { selected_ids = visible_ids },
-                on_action = {
-                    val ids = selected_ids.toList()
-                    if (show_unsubscribed) {
-                        selected_ids = emptySet()
-                        ids.forEach { vm.reactivate(it) }
-                    } else {
-                        confirm_bulk = ids
-                    }
+                on_action = { action ->
+                    val result = reduce_subscription_selection(selected_ids, visible_ids, action)
+                    selected_ids = result.selected
+                    result.reactivate_request.forEach { vm.reactivate(it) }
+                    if (result.unsubscribe_request.isNotEmpty()) confirm_bulk = result.unsubscribe_request
+                    if (result.delete_request.isNotEmpty()) confirm_delete = result.delete_request
                 },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -568,6 +563,23 @@ fun MailingListsScreen(
                 vm.bulk_unsubscribe(pending)
                 selected_ids = emptySet()
                 confirm_bulk = emptyList()
+            },
+        )
+    }
+
+    if (confirm_delete.isNotEmpty()) {
+        val pending = confirm_delete
+        AsterAlertDialog(
+            on_dismiss = { confirm_delete = emptyList() },
+            title = pluralStringResource(R.plurals.delete_subscriptions_title, pending.size, pending.size),
+            message = stringResource(R.string.delete_subscriptions_body),
+            confirm_label = stringResource(R.string.delete),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = DialogConfirmStyle.destructive,
+            on_confirm = {
+                vm.delete(pending)
+                selected_ids = emptySet()
+                confirm_delete = emptyList()
             },
         )
     }
@@ -1076,9 +1088,7 @@ private fun row_action_button(
 private fun subscription_select_bar(
     count: Int,
     is_unsubscribed_tab: Boolean,
-    on_clear: () -> Unit,
-    on_select_all: () -> Unit,
-    on_action: () -> Unit,
+    on_action: (subscription_bar_action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -1101,26 +1111,31 @@ private fun subscription_select_bar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                select_bar_action(
-                    icon = TablerIcons.X,
-                    label = stringResource(R.string.clear),
-                    on_click = on_clear,
-                )
-                select_bar_action(
-                    icon = TablerIcons.Checks,
-                    label = stringResource(R.string.select_all),
-                    on_click = on_select_all,
-                )
-                select_bar_action(
-                    icon = if (is_unsubscribed_tab) TablerIcons.ArrowBackUp.auto_mirrored() else TablerIcons.Ban,
-                    label = if (is_unsubscribed_tab) {
-                        stringResource(R.string.reactivate_selected, count)
-                    } else {
-                        stringResource(R.string.unsubscribe_selected, count)
-                    },
-                    tint = if (is_unsubscribed_tab) colors.text_primary else colors.danger,
-                    on_click = on_action,
-                )
+                subscription_bar_actions(is_unsubscribed_tab).forEach { action ->
+                    select_bar_action(
+                        icon = when (action) {
+                            subscription_bar_action.deselect -> TablerIcons.X
+                            subscription_bar_action.select_all -> TablerIcons.Checks
+                            subscription_bar_action.unsubscribe -> TablerIcons.Ban
+                            subscription_bar_action.reactivate -> TablerIcons.ArrowBackUp.auto_mirrored()
+                            subscription_bar_action.delete -> TablerIcons.Trash
+                        },
+                        label = when (action) {
+                            subscription_bar_action.unsubscribe,
+                            subscription_bar_action.reactivate,
+                            subscription_bar_action.delete,
+                            -> stringResource(action.label_res, count)
+                            else -> stringResource(action.label_res)
+                        },
+                        tint = when (action) {
+                            subscription_bar_action.unsubscribe,
+                            subscription_bar_action.delete,
+                            -> colors.danger
+                            else -> colors.text_primary
+                        },
+                        on_click = { on_action(action) },
+                    )
+                }
             }
         }
     }

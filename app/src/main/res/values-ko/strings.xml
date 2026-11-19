@@ -3621,4 +3621,13 @@
         <item quantity="other">연락처 %d개를 추가했습니다</item>
     </plurals>
     <string name="body_index_status">검색을 위해 메시지 본문 색인 중: %2$d개 중 %1$d개</string>
+    <string name="delete_selected_subscriptions">삭제 (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="other">구독 %d개를 삭제하시겠습니까?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">삭제한 항목은 복원할 수 없습니다. 발신자가 다시 메일을 보내면 이 목록에 다시 표시됩니다.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="other">구독 %d개를 삭제했습니다</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">선택한 구독을 삭제할 수 없습니다</string>
 </resources>

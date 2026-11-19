@@ -3696,4 +3696,15 @@
         <item quantity="other">%d contacts added</item>
     </plurals>
     <string name="body_index_status" tools:ignore="PluralsCandidate">Indexing message text for search: %1$d of %2$d</string>
+    <string name="delete_selected_subscriptions">Delete (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">Delete %d subscription?</item>
+        <item quantity="other">Delete %d subscriptions?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">You can\'t restore deleted entries. If a sender emails you again, it appears in this list again.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">Deleted %d subscription</item>
+        <item quantity="other">Deleted %d subscriptions</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Can\'t delete the selected subscriptions</string>
 </resources>

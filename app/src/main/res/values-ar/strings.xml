@@ -3748,4 +3748,23 @@
         <item quantity="other">تمت إضافة %d جهة اتصال</item>
     </plurals>
     <string name="body_index_status">جارٍ فهرسة نصوص الرسائل للبحث: %1$d من %2$d</string>
+    <string name="delete_selected_subscriptions">حذف (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="zero">حذف %d اشتراك؟</item>
+        <item quantity="one">حذف اشتراك واحد؟</item>
+        <item quantity="two">حذف اشتراكين؟</item>
+        <item quantity="few">حذف %d اشتراكات؟</item>
+        <item quantity="many">حذف %d اشتراكًا؟</item>
+        <item quantity="other">حذف %d اشتراك؟</item>
+    </plurals>
+    <string name="delete_subscriptions_body">لا يمكنك استعادة الإدخالات المحذوفة. إذا راسلك المرسل مرة أخرى، فسيظهر في هذه القائمة من جديد.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="zero">تم حذف %d اشتراك</item>
+        <item quantity="one">تم حذف اشتراك واحد</item>
+        <item quantity="two">تم حذف اشتراكين</item>
+        <item quantity="few">تم حذف %d اشتراكات</item>
+        <item quantity="many">تم حذف %d اشتراكًا</item>
+        <item quantity="other">تم حذف %d اشتراك</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">تعذر حذف الاشتراكات المحددة</string>
 </resources>

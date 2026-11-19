@@ -3697,4 +3697,19 @@
         <item quantity="other">Добавлено %d контакта</item>
     </plurals>
     <string name="body_index_status">Индексация текста писем для поиска: %1$d из %2$d</string>
+    <string name="delete_selected_subscriptions">Удалить (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">Удалить %d подписку?</item>
+        <item quantity="few">Удалить %d подписки?</item>
+        <item quantity="many">Удалить %d подписок?</item>
+        <item quantity="other">Удалить %d подписки?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">Удаленные записи нельзя восстановить. Если отправитель снова напишет вам, он снова появится в этом списке.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">Удалена %d подписка</item>
+        <item quantity="few">Удалено %d подписки</item>
+        <item quantity="many">Удалено %d подписок</item>
+        <item quantity="other">Удалено %d подписки</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Не удалось удалить выбранные подписки</string>
 </resources>

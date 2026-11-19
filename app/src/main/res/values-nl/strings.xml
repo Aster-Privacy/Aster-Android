@@ -3645,4 +3645,15 @@
         <item quantity="other">%d contacten toegevoegd</item>
     </plurals>
     <string name="body_index_status">Berichttekst wordt geïndexeerd voor zoeken: %1$d van %2$d</string>
+    <string name="delete_selected_subscriptions">Verwijderen (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">%d abonnement verwijderen?</item>
+        <item quantity="other">%d abonnementen verwijderen?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">Je kunt verwijderde items niet herstellen. Als een afzender je opnieuw mailt, verschijnt die weer in deze lijst.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">%d abonnement verwijderd</item>
+        <item quantity="other">%d abonnementen verwijderd</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Kan de geselecteerde abonnementen niet verwijderen</string>
 </resources>

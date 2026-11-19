@@ -3697,4 +3697,19 @@
         <item quantity="other">Dodano %d kontaktu</item>
     </plurals>
     <string name="body_index_status">Indeksowanie treści wiadomości do wyszukiwania: %1$d z %2$d</string>
+    <string name="delete_selected_subscriptions">Usuń (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">Usunąć %d subskrypcję?</item>
+        <item quantity="few">Usunąć %d subskrypcje?</item>
+        <item quantity="many">Usunąć %d subskrypcji?</item>
+        <item quantity="other">Usunąć %d subskrypcji?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">Usuniętych wpisów nie można przywrócić. Jeśli nadawca napisze do Ciebie ponownie, znów pojawi się na tej liście.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">Usunięto %d subskrypcję</item>
+        <item quantity="few">Usunięto %d subskrypcje</item>
+        <item quantity="many">Usunięto %d subskrypcji</item>
+        <item quantity="other">Usunięto %d subskrypcji</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Nie można usunąć wybranych subskrypcji</string>
 </resources>

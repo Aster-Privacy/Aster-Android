@@ -3621,4 +3621,13 @@
         <item quantity="other">已添加 %d 个联系人</item>
     </plurals>
     <string name="body_index_status">正在为搜索索引邮件正文：%1$d / %2$d</string>
+    <string name="delete_selected_subscriptions">删除 (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="other">要删除 %d 个订阅吗?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">已删除的条目无法恢复。如果发件人再次给你发送邮件,它会重新出现在此列表中。</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="other">已删除 %d 个订阅</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">无法删除所选订阅</string>
 </resources>

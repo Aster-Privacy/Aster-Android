@@ -3628,4 +3628,13 @@
         <item quantity="other">%d 件の連絡先を追加しました</item>
     </plurals>
     <string name="body_index_status">検索用にメッセージ本文をインデックス中: %1$d / %2$d</string>
+    <string name="delete_selected_subscriptions">削除 (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="other">%d 件の購読を削除しますか?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">削除した項目は復元できません。送信者から再びメールが届くと、このリストに再び表示されます。</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="other">%d 件の購読を削除しました</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">選択した購読を削除できませんでした</string>
 </resources>

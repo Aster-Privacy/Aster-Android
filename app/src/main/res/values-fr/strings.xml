@@ -3697,4 +3697,15 @@
         <item quantity="other">%d contacts ajoutés</item>
     </plurals>
     <string name="body_index_status">Indexation du texte des messages pour la recherche : %1$d sur %2$d</string>
+    <string name="delete_selected_subscriptions">Supprimer (%1$d)</string>
+    <plurals name="delete_subscriptions_title">
+        <item quantity="one">Supprimer %d abonnement ?</item>
+        <item quantity="other">Supprimer %d abonnements ?</item>
+    </plurals>
+    <string name="delete_subscriptions_body">Vous ne pouvez pas restaurer les entrées supprimées. Si un expéditeur vous écrit à nouveau, il réapparaît dans cette liste.</string>
+    <plurals name="subscriptions_deleted_count">
+        <item quantity="one">%d abonnement supprimé</item>
+        <item quantity="other">%d abonnements supprimés</item>
+    </plurals>
+    <string name="delete_subscriptions_failed">Impossible de supprimer les abonnements sélectionnés</string>
 </resources>

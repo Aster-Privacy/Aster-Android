@@ -36,7 +36,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.subscriptions.BulkUnsubscribeRequest
+import org.astermail.android.api.subscriptions.DeleteSubscriptionsRequest
 import org.astermail.android.api.subscriptions.MailingListStats
 import org.astermail.android.api.subscriptions.MailingListSubscription
 import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
@@ -61,12 +63,33 @@ data class MailingListsState(
 )
 
 internal const val BULK_UNSUBSCRIBE_LIMIT = 50
+internal const val DELETE_SUBSCRIPTIONS_LIMIT = 500
+
+internal fun is_missing_delete_endpoint(error: Throwable): Boolean =
+    error is ApiError.NotFoundError || (error is ApiError.ServerError && error.code == 405)
+
+internal suspend fun delete_subscription_senders(
+    senders: List<String>,
+    delete_chunk: suspend (List<String>) -> Unit,
+): Boolean {
+    try {
+        senders.chunked(DELETE_SUBSCRIPTIONS_LIMIT).forEach { delete_chunk(it) }
+        return true
+    } catch (e: CancellationException) {
+        throw e
+    } catch (t: Throwable) {
+        if (is_missing_delete_endpoint(t)) return false
+        throw t
+    }
+}
 
 @HiltViewModel
 class MailingListsViewModel @Inject constructor(
     private val api: SubscriptionsApi,
     private val scanner: SubscriptionScanner,
     private val unsubscribed_store: UnsubscribedSendersStore,
+    private val deleted_store: DeletedSubscriptionsStore,
+    private val cache_sync: SubscriptionCacheSync,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -103,7 +126,10 @@ class MailingListsViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
         load_job = viewModelScope.launch {
             try {
-                val items = load_all_subscriptions()
+                val tombstones = cache_sync.sync_tombstones()
+                val items = load_all_subscriptions().filterNot {
+                    is_deleted_subscription(tombstones, it.sender_email, it.last_received)
+                }
                 if (items.size < subscription_page_size * max_subscription_pages) {
                     unsubscribed_store.replace_confirmed(
                         items.filter { it.status == "unsubscribed" }.map { it.sender_email },
@@ -155,7 +181,10 @@ class MailingListsViewModel @Inject constructor(
             try {
                 val discovered = withTimeoutOrNull(SCAN_TIMEOUT_MS) {
                     scanner.scan(force_full = force_full)
-                }.orEmpty()
+                }.orEmpty().let { found ->
+                    val tombstones = cache_sync.sync_tombstones()
+                    found.filterNot { is_deleted_subscription(tombstones, it.sender_email, it.last_received) }
+                }
                 val track_deadline = SystemClock.elapsedRealtime() + TRACK_BUDGET_MS
                 for (sender in discovered) {
                     if (SystemClock.elapsedRealtime() > track_deadline) break
@@ -310,6 +339,44 @@ class MailingListsViewModel @Inject constructor(
                 )
             } finally {
                 _state.value = _state.value.copy(pending_ids = _state.value.pending_ids - subscription_id)
+            }
+        }
+    }
+
+    fun delete(requested_ids: List<String>) {
+        val targets = _state.value.items
+            .filter { it.id in requested_ids.toSet() && it.id !in _state.value.pending_ids }
+        if (targets.isEmpty()) return
+        val ids = targets.map { it.id }.toSet()
+        val senders = targets.map { normalize_sender_email(it.sender_email) }.filter { it.contains('@') }.distinct()
+        _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + ids)
+        viewModelScope.launch {
+            try {
+                delete_subscription_senders(senders) { chunk ->
+                    api.delete_senders(DeleteSubscriptionsRequest(chunk))
+                }
+                deleted_store.record_deleted(senders)
+                cache_sync.sync_tombstones()
+                _state.value = _state.value.copy(
+                    items = _state.value.items.filterNot { it.id in ids },
+                    message = context.resources.getQuantityString(
+                        R.plurals.subscriptions_deleted_count,
+                        ids.size,
+                        ids.size,
+                    ),
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                _state.value = _state.value.copy(
+                    error = org.astermail.android.localized_api_error(
+                        context,
+                        t,
+                        context.getString(R.string.delete_subscriptions_failed),
+                    ),
+                )
+            } finally {
+                _state.value = _state.value.copy(pending_ids = _state.value.pending_ids - ids)
             }
         }
     }
