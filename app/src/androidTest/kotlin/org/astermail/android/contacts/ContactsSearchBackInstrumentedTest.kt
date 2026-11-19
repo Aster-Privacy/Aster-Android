@@ -72,6 +72,7 @@ class ContactsSearchBackInstrumentedTest {
         every { repository.pending_contact_ids } returns MutableStateFlow(emptySet())
         coEvery { repository.fetch_contacts(any()) } returns Result.success(contacts)
         coEvery { repository.list_contact_groups() } returns Result.success(emptyList())
+        coEvery { repository.list_group_memberships() } returns Result.success(emptyMap())
         coEvery { repository.trash_contact(any()) } returns Result.success(Unit)
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         return ContactsViewModel(repository, context)
