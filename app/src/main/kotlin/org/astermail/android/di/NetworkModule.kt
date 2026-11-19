@@ -222,11 +222,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provide_keys_api(client: ApiClient): KeysApi = KeysApiImpl(client)
+    fun provide_keys_api(client: ApiClient): KeysApi = KeysApiImpl(client).also { api ->
+        org.astermail.android.api.keys.BoundWriteSwitches.bind_refresher { api.get_account_key_capabilities() }
+        org.astermail.android.crypto.FieldFormat.write_source = { org.astermail.android.api.keys.BoundWriteSwitches.field() }
+    }
 
     @Provides
     @Singleton
-    fun provide_ratchet_api(client: ApiClient): RatchetApi = RatchetApiImpl(client)
+    fun provide_ratchet_api(client: ApiClient): RatchetApi = RatchetApiImpl(client).also { api ->
+        org.astermail.android.crypto.sync_format_readiness.install_api(api)
+        org.astermail.android.crypto.stored_key_readiness.install { api.fetch_stored_key_readiness() }
+    }
 
     @Provides
     @Singleton

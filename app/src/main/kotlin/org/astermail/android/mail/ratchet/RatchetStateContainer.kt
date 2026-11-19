@@ -35,12 +35,24 @@ sealed class RatchetStateContainerResult {
     object Unbound : RatchetStateContainerResult()
 }
 
+data class RatchetStateHeader(val epoch: Long, val sync_version: Long)
+
+class RatchetStatePayload(
+    val header: RatchetStateHeader,
+    val header_bytes: ByteArray,
+    val ciphertext: ByteArray,
+)
+
 object RatchetStateContainer {
 
     private const val bound_aad_prefix = "aster-ratchet-state-v2:"
     private const val state_field = "state"
     private const val conversation_field = "conversation_id"
     private const val version_field = "sync_version"
+    private const val sync_aad_label = "aster-ratchet-state-v3"
+    private const val max_header_value = 9_007_199_254_740_991L
+    private val header_magic = byteArrayOf(0x41, 0x52, 0x53, 0x03)
+    val header_length = header_magic.size + 16
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -51,7 +63,51 @@ object RatchetStateContainer {
     fun bound_aad(conversation_id: String): ByteArray =
         (bound_aad_prefix + conversation_id).toByteArray(Charsets.UTF_8)
 
-    fun next_version(floor: Long, now_ms: Long): Long = maxOf(now_ms, floor + 1)
+    fun encode_header(header: RatchetStateHeader): ByteArray {
+        require(header.epoch in 0..max_header_value && header.sync_version in 0..max_header_value) {
+            "ratchet state header out of range"
+        }
+        return java.nio.ByteBuffer.allocate(header_length)
+            .put(header_magic)
+            .putLong(header.epoch)
+            .putLong(header.sync_version)
+            .array()
+    }
+
+    fun split_payload(bytes: ByteArray): RatchetStatePayload? {
+        if (bytes.size <= header_length) return null
+        for (i in header_magic.indices) {
+            if (bytes[i] != header_magic[i]) return null
+        }
+        val buffer = java.nio.ByteBuffer.wrap(bytes, header_magic.size, 16)
+        val epoch = buffer.long
+        val sync_version = buffer.long
+        if (epoch !in 0..max_header_value || sync_version !in 0..max_header_value) return null
+        return RatchetStatePayload(
+            header = RatchetStateHeader(epoch, sync_version),
+            header_bytes = bytes.copyOfRange(0, header_length),
+            ciphertext = bytes.copyOfRange(header_length, bytes.size),
+        )
+    }
+
+    fun sync_aad(user_id: String, conversation_id: String, header_bytes: ByteArray): ByteArray {
+        val label = sync_aad_label.toByteArray(Charsets.UTF_8)
+        val user = user_id.toByteArray(Charsets.UTF_8)
+        val conversation = conversation_id.toByteArray(Charsets.UTF_8)
+        return java.nio.ByteBuffer.allocate(label.size + 4 + user.size + 4 + conversation.size + header_bytes.size)
+            .put(label)
+            .putInt(user.size)
+            .put(user)
+            .putInt(conversation.size)
+            .put(conversation)
+            .put(header_bytes)
+            .array()
+    }
+
+    fun header_matches(header: RatchetStateHeader, state: RatchetState, sync_version: Long?): Boolean =
+        sync_version == header.sync_version && state.epoch.toLong() == header.epoch
+
+    fun next_version(floor: Long, server_version: Long = 0L): Long = maxOf(floor, server_version) + 1
 
     fun state_fingerprint(state: RatchetState): Int =
         json.encodeToString(RatchetState.serializer(), state).hashCode()

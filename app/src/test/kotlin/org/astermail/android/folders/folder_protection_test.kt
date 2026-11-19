@@ -72,7 +72,7 @@ class folder_protection_test {
 
     @Test
     fun new_folder_passwords_use_the_current_format() {
-        val material = prepare_folder_password("hunter2")
+        val material = prepare_folder_password("hunter2", "6f1c2b0e-7c55-4e5b-9a55-0e6c7b1d2a11", bound = true)
         assertTrue(folder_salt_is_current(material.password_salt))
         assertFalse(folder_salt_is_current("AAECAwQFBgcICQoLDA0ODw=="))
     }

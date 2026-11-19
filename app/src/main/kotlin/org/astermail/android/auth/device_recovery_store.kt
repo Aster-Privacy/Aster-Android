@@ -33,6 +33,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import org.astermail.android.crypto.AES_GCM_TAG_BITS
+import org.astermail.android.storage.StrongBoxKeys
 import org.json.JSONObject
 
 private const val DEVICE_RECOVERY_DIR = "device_recovery"
@@ -246,7 +247,9 @@ class KeystoreDeviceRecoveryKey(private val key: SecretKey) : DeviceRecoveryKey 
     }
 }
 
-class KeystoreDeviceRecoveryKeyProvider : DeviceRecoveryKeyProvider {
+class KeystoreDeviceRecoveryKeyProvider(
+    private val strongbox_available: Boolean = false,
+) : DeviceRecoveryKeyProvider {
     @Synchronized
     override fun load(create: Boolean): DeviceRecoveryKeyLoad {
         val store = runCatching { keystore() }.getOrNull() ?: return DeviceRecoveryKeyLoad.Unavailable
@@ -271,7 +274,11 @@ class KeystoreDeviceRecoveryKeyProvider : DeviceRecoveryKeyProvider {
 
     private fun keystore(): KeyStore = KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
 
-    private fun generate_key(): SecretKey {
+    private fun generate_key(): SecretKey = StrongBoxKeys.create(
+        available = strongbox_available,
+        probe = StrongBoxKeys::round_trips,
+        discard = { StrongBoxKeys.delete_key(DEVICE_RECOVERY_KEY_ALIAS) },
+    ) { strongbox ->
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE)
         val spec = KeyGenParameterSpec.Builder(
             DEVICE_RECOVERY_KEY_ALIAS,
@@ -281,8 +288,9 @@ class KeystoreDeviceRecoveryKeyProvider : DeviceRecoveryKeyProvider {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
             .setRandomizedEncryptionRequired(true)
+            .let { StrongBoxKeys.request(it, strongbox) }
             .build()
         generator.init(spec)
-        return generator.generateKey()
+        generator.generateKey()
     }
 }

@@ -672,7 +672,7 @@
     <string name="disabling">비활성화 중...</string>
     <string name="disable_two_factor">2단계 인증 비활성화</string>
     <string name="generate_new_backup_codes_section">새 백업 코드 생성</string>
-    <string name="generate_backup_codes_description">인증 앱의 현재 코드를 입력하세요. 이전 백업 코드가 무효화됩니다.</string>
+    <string name="generate_backup_codes_description">비밀번호와 인증 앱의 현재 코드를 입력하세요. 이전 백업 코드는 더 이상 작동하지 않습니다.</string>
     <string name="generating">생성 중...</string>
     <string name="generate_codes">코드 생성</string>
     <string name="two_factor_enabled_title">2단계 인증이 활성화되었습니다</string>
@@ -1811,6 +1811,7 @@
     <string name="totp_code_required_label">인증 앱 코드 또는 백업 코드</string>
     <string name="totp_code_required_error">인증 앱의 6자리 코드나 백업 코드 중 하나를 입력하세요</string>
     <string name="preferences_locked_retry">지금은 설정을 열 수 없습니다. 기본값을 표시합니다. 뒤로 갔다가 다시 열어 보세요.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail이 아직 이 항목의 잠금을 해제하는 중이라 변경 사항이 저장되지 않았습니다. 잠시 후 다시 시도하세요.</string>
     <string name="plan_name_star">별표</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">초신성</string>
@@ -2657,6 +2658,9 @@
     <string name="folder_locked">폴더가 잠겼습니다</string>
     <string name="folder_unlocked">폴더 잠금이 해제되었습니다</string>
     <string name="folder_lock_set">폴더 잠금이 설정되었습니다</string>
+    <string name="folder_relock_required">이 폴더는 다른 기기에서 다시 잠겼습니다. 여기에서 열려면 잠금을 해제한 후 다시 설정하세요.</string>
+    <string name="folder_protection_unavailable">이 기기에서 폴더 보호 정보를 읽을 수 없습니다. 로그아웃 후 다시 로그인한 다음 다시 시도하세요.</string>
+    <string name="folder_lock_set_unconfirmed">폴더 잠금이 설정되었습니다. 폴더를 열려면 비밀번호를 입력하세요.</string>
     <string name="folder_lock_removed">폴더 잠금이 해제되었습니다</string>
     <string name="folder_notifications_muted">이 폴더의 알림을 음소거했습니다</string>
     <string name="folder_notifications_unmuted">이 폴더의 알림을 켰습니다</string>
@@ -2833,8 +2837,11 @@
     <string name="failed_to_move_items">이동할 수 없습니다</string>
     <string name="folder_name_taken">같은 이름의 폴더가 이미 있습니다.</string>
     <string name="hardware_key_remove_confirm">이 보안 키로는 더 이상 로그인할 수 없습니다.</string>
-    <string name="hardware_key_remove_last_title">마지막 보안 키를 제거할까요?</string>
-    <string name="hardware_key_remove_last_description">계정에 남은 마지막 2단계 인증 수단입니다. 제거하려면 비밀번호를 입력하십시오.</string>
+    <string name="hardware_key_remove_last_title">이 보안 키를 제거할까요?</string>
+    <string name="hardware_key_remove_last_description">이 보안 키를 제거하려면 비밀번호를 입력하십시오.</string>
+    <string name="passkey_add_reauth_description">패스키를 추가하려면 비밀번호를 입력하십시오.</string>
+    <string name="totp_setup_reauth_description">2단계 인증을 설정하려면 비밀번호를 입력하십시오.</string>
+    <string name="reauth_key_check_failed">패스키 또는 보안 키를 확인할 수 없습니다. 다시 시도하십시오.</string>
     <string name="image_insert_failed">해당 이미지를 추가하지 못했습니다. 파일이 너무 크거나 지원되지 않는 형식일 수 있습니다.</string>
     <string name="invalid_recipient_address">“%1$s”은(는) 유효한 이메일 주소가 아닙니다</string>
     <string name="label_name_taken">같은 이름의 라벨이 이미 있습니다.</string>
@@ -3474,6 +3481,11 @@
     <string name="contact_sync_settings_title">연락처 접근 허용</string>
     <string name="contact_sync_settings_message">연락처를 동기화하려면 설정 열기를 탭하고 권한 &gt; 연락처로 이동한 다음 허용을 선택하세요.</string>
     <string name="contact_sync_open_settings">설정 열기</string>
+    <string name="contact_sync_all_details_title">모든 연락처 세부 정보 동기화</string>
+    <string name="contact_sync_all_details_subtitle">이 옵션이 꺼져 있으면 Aster는 휴대전화의 연락처 앱에 이름과 이메일 주소만 추가합니다.</string>
+    <string name="contact_sync_all_details_confirm_title">모든 연락처 세부 정보를 동기화할까요?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster가 휴대전화의 연락처 앱에 전화번호, 주소, 생일, 메모, 사진 및 기타 세부 정보도 추가합니다. 연락처에 접근할 수 있는 다른 앱은 이 정보를 읽을 수 있습니다.</string>
+    <string name="contact_sync_all_details_confirm">모든 세부 정보 동기화</string>
     <string name="contact_sync_label_sibling">형제자매</string>
     <string name="contact_sync_label_graduation">졸업</string>
     <string name="contact_sync_label_wedding">결혼</string>
@@ -3622,6 +3634,15 @@
         <item quantity="other">연락처 %d개를 추가했습니다</item>
     </plurals>
     <string name="body_index_status">검색을 위해 메시지 본문 색인 중: %2$d개 중 %1$d개</string>
+    <string name="mail_key_upgrade_title">저장된 메일 업데이트 중</string>
+    <string name="mail_key_upgrade_running">Aster Mail이 저장된 메시지를 현재 키로 다시 암호화하고 있습니다. 완료될 때까지 이 창을 열어 두세요.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail이 저장된 메시지 업데이트를 완료하지 못했습니다. 메일은 변경되지 않았습니다. 연결을 확인한 후 다시 시도하세요.</string>
+    <string name="mail_key_upgrade_retry">다시 시도</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="other">메시지 %d개 확인됨</item>
+    </plurals>
+    <string name="account_link_confirm_title">이 계정을 연결할까요?</string>
+    <string name="account_link_confirm_message">%1$s에서 이 기기의 %2$s 계정을 사용하려고 합니다. %1$s에서 직접 시작한 경우에만 확인하세요.</string>
     <string name="delete_selected_subscriptions">삭제 (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="other">구독 %d개를 삭제하시겠습니까?</item>
@@ -3631,4 +3652,5 @@
         <item quantity="other">구독 %d개를 삭제했습니다</item>
     </plurals>
     <string name="delete_subscriptions_failed">선택한 구독을 삭제할 수 없습니다</string>
+    <string name="attachment_unverified">확인되지 않은 첨부 파일</string>
 </resources>

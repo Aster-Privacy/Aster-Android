@@ -49,7 +49,12 @@ object InboundEnvelopeDecryptor {
 
     private fun is_pq(marker: Byte) = marker == PQ_HYBRID_MARKER || marker == PQ_HYBRID_BOUND_MARKER
 
-    private fun is_bound(marker: Byte) = marker == ECDH_BOUND_MARKER || marker == PQ_HYBRID_BOUND_MARKER
+    fun is_owner_bound(marker: Byte) = marker == ECDH_BOUND_MARKER || marker == PQ_HYBRID_BOUND_MARKER
+
+    fun marker_of(encrypted_b64: String): Byte? =
+        runCatching { android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT) }
+            .getOrNull()
+            ?.firstOrNull()
 
     fun owner_bytes(user_id: String?): ByteArray? {
         val hex = user_id?.trim()?.replace("-", "") ?: return null
@@ -65,6 +70,7 @@ object InboundEnvelopeDecryptor {
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>,
         owner_user_id: String? = null,
+        legacy_markers: Boolean = true,
     ): ByteArray? {
         if (nonce.size != 12) return null
 
@@ -72,7 +78,7 @@ object InboundEnvelopeDecryptor {
             android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
         }.getOrNull() ?: return null
 
-        return decrypt_bytes(enc, nonce, key_sets, owner_user_id)
+        return decrypt_bytes(enc, nonce, key_sets, owner_user_id, legacy_markers)
     }
 
     fun decrypt_bytes(
@@ -80,13 +86,15 @@ object InboundEnvelopeDecryptor {
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>,
         owner_user_id: String? = null,
+        legacy_markers: Boolean = true,
     ): ByteArray? {
         if (nonce.size != 12 || enc.isEmpty()) return null
 
         val marker = enc[0]
+        if (!legacy_markers && !is_owner_bound(marker)) return null
         val header_len = header_length(marker) ?: return null
         if (enc.size <= header_len) return null
-        val aad = if (is_bound(marker)) {
+        val aad = if (is_owner_bound(marker)) {
             bound_aad(enc, header_len, owner_bytes(owner_user_id) ?: return null)
         } else {
             null

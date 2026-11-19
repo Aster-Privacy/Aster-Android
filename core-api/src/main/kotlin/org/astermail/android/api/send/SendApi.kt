@@ -132,6 +132,7 @@ data class SecureMessagePayload(
     val encrypted_subject: SecureMessageFieldPayload,
     val encrypted_body: SecureMessageFieldPayload,
     val attachments_bundle: String? = null,
+    val kdf_version: Int = 1,
 )
 
 @Serializable

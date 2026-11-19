@@ -24,7 +24,6 @@ package org.astermail.android.folders
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Mac
-import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.hkdf_sha256 as hkdf_expand
 import javax.crypto.spec.SecretKeySpec
 
@@ -79,49 +78,107 @@ data class folder_password_material(
     val password_salt: String,
     val encrypted_folder_key: String,
     val folder_key_nonce: String,
+    val folder_key_version: Int,
 )
 
-fun prepare_folder_password(password: String): folder_password_material {
-    val random = SecureRandom()
-    val salt = ByteArray(salt_bytes).also { random.nextBytes(it) }
-    val password_bytes = password.toByteArray(Charsets.UTF_8)
-    val derived = pbkdf2_hmac_sha256(password_bytes, salt, pbkdf2_iterations, 32)
-    password_bytes.fill(0)
+class folder_derived_keys(val password_hash: String, val encryption_key: ByteArray)
 
-    val auth_key = hkdf_sha256(derived, auth_key_context, 32)
-    val encryption_key = hkdf_sha256(derived, encrypt_key_context, 32)
-    derived.fill(0)
-
-    val folder_key = ByteArray(32).also { random.nextBytes(it) }
-    val nonce = ByteArray(12).also { random.nextBytes(it) }
-    val encrypted = AesGcm.encrypt(encryption_key, nonce, folder_key)
-    folder_key.fill(0)
-    encryption_key.fill(0)
-
-    val encoder = Base64.getEncoder()
-    val material = folder_password_material(
-        password_hash = encoder.encodeToString(auth_key),
-        password_salt = encoder.encodeToString(salt),
-        encrypted_folder_key = encoder.encodeToString(encrypted),
-        folder_key_nonce = encoder.encodeToString(nonce),
-    )
-    auth_key.fill(0)
-    return material
-}
-
-fun derive_folder_auth_hash(password: String, salt_base64: String, allow_legacy: Boolean): String {
-    val salt = Base64.getMimeDecoder().decode(salt_base64)
-    val current = folder_salt_is_current(salt)
-    if (!current && !allow_legacy) throw folder_kdf_downgrade_exception()
-    val iterations = if (current) pbkdf2_iterations else pbkdf2_iterations_legacy
+private fun derive_folder_key_pair(password: String, salt: ByteArray, iterations: Int): folder_derived_keys {
     val password_bytes = password.toByteArray(Charsets.UTF_8)
     val derived = pbkdf2_hmac_sha256(password_bytes, salt, iterations, 32)
     password_bytes.fill(0)
-
     val auth_key = hkdf_sha256(derived, auth_key_context, 32)
+    val encryption_key = hkdf_sha256(derived, encrypt_key_context, 32)
     derived.fill(0)
-
-    val encoded = Base64.getEncoder().encodeToString(auth_key)
+    val password_hash = Base64.getEncoder().encodeToString(auth_key)
     auth_key.fill(0)
-    return encoded
+    return folder_derived_keys(password_hash, encryption_key)
+}
+
+fun prepare_folder_password(password: String, folder_id: String, bound: Boolean): folder_password_material {
+    val random = SecureRandom()
+    val salt = ByteArray(salt_bytes).also { random.nextBytes(it) }
+    val keys = derive_folder_key_pair(password, salt, pbkdf2_iterations)
+    val folder_key = ByteArray(32).also { random.nextBytes(it) }
+    val nonce = ByteArray(12).also { random.nextBytes(it) }
+    val encrypted = try {
+        wrap_folder_key(folder_key, keys.encryption_key, nonce, folder_id.takeIf { bound })
+    } finally {
+        folder_key.fill(0)
+        keys.encryption_key.fill(0)
+    }
+    val encoder = Base64.getEncoder()
+    return folder_password_material(
+        password_hash = keys.password_hash,
+        password_salt = encoder.encodeToString(salt),
+        encrypted_folder_key = encoder.encodeToString(encrypted),
+        folder_key_nonce = encoder.encodeToString(nonce),
+        folder_key_version = if (bound) FOLDER_KEY_VERSION_BOUND else FOLDER_KEY_VERSION_LEGACY,
+    )
+}
+
+fun derive_folder_keys(password: String, salt_base64: String, allow_legacy: Boolean): folder_derived_keys {
+    val salt = Base64.getMimeDecoder().decode(salt_base64)
+    val current = folder_salt_is_current(salt)
+    if (!current && !allow_legacy) throw folder_kdf_downgrade_exception()
+    return derive_folder_key_pair(password, salt, if (current) pbkdf2_iterations else pbkdf2_iterations_legacy)
+}
+
+fun derive_folder_auth_hash(password: String, salt_base64: String, allow_legacy: Boolean): String {
+    val keys = derive_folder_keys(password, salt_base64, allow_legacy)
+    keys.encryption_key.fill(0)
+    return keys.password_hash
+}
+
+fun accept_folder_unlock(
+    folder_id: String,
+    pin: Int,
+    salt_base64: String,
+    folder_key_version: Int?,
+    encrypted_folder_key: String?,
+    folder_key_nonce: String?,
+    encryption_key: ByteArray,
+    bound_writes_ready: Boolean,
+): Int {
+    val salt_current = folder_salt_is_current(salt_base64)
+    val format = required_folder_key_format(
+        pin,
+        parse_folder_key_version(folder_key_version),
+        salt_current,
+    )
+    if (format.bound) {
+        if (encrypted_folder_key.isNullOrBlank() || folder_key_nonce.isNullOrBlank()) {
+            throw folder_kdf_downgrade_exception()
+        }
+        val decoder = Base64.getMimeDecoder()
+        unwrap_folder_key(
+            decoder.decode(encrypted_folder_key),
+            encryption_key,
+            decoder.decode(folder_key_nonce),
+            folder_id,
+        ).fill(0)
+    }
+    return folder_pin_level_after_unlock(format, salt_current, bound_writes_ready)
+}
+
+fun folder_wrap_proves_password(
+    folder_id: String,
+    salt_base64: String,
+    folder_key_version: Int?,
+    encrypted_folder_key: String?,
+    folder_key_nonce: String?,
+    encryption_key: ByteArray,
+): Boolean {
+    if (!runCatching { folder_salt_is_current(salt_base64) }.getOrDefault(false)) return false
+    if (encrypted_folder_key.isNullOrBlank() || folder_key_nonce.isNullOrBlank()) return false
+    val version = runCatching { parse_folder_key_version(folder_key_version) }.getOrNull() ?: return false
+    val decoder = Base64.getMimeDecoder()
+    return runCatching {
+        unwrap_folder_key(
+            decoder.decode(encrypted_folder_key),
+            encryption_key,
+            decoder.decode(folder_key_nonce),
+            if (version >= FOLDER_KEY_VERSION_BOUND) folder_id else null,
+        ).fill(0)
+    }.isSuccess
 }

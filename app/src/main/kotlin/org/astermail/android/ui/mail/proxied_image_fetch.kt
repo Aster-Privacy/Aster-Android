@@ -27,6 +27,7 @@ import android.webkit.WebResourceResponse
 import dagger.hilt.android.EntryPointAccessors
 import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.astermail.android.AsterApplication
@@ -50,11 +51,34 @@ private fun side_view_image_client(): OkHttpClient {
     }
 }
 
+internal fun is_image_proxy_url(url: String): Boolean {
+    val parsed = url.toHttpUrlOrNull() ?: return false
+    return parsed.isHttps &&
+        parsed.host == REMOTE_IMAGE_PROXY_HOST &&
+        parsed.port == 443 &&
+        parsed.username.isEmpty() &&
+        parsed.password.isEmpty() &&
+        parsed.encodedPath == REMOTE_IMAGE_PROXY_PATH &&
+        !parsed.queryParameter("url").isNullOrBlank()
+}
+
 internal fun proxied_image_request(url: String, access_token: String?): Request? {
     val token = access_token?.trim()
     if (token.isNullOrEmpty()) return null
+    if (!is_image_proxy_url(url)) return null
+    val target = url.toHttpUrlOrNull() ?: return null
+    val action = mail_body_request_action(
+        scheme = target.scheme,
+        host = target.host,
+        path = target.encodedPath,
+        proxied_url = target.queryParameter("url"),
+        allow_external = true,
+        port = target.port,
+        user_info = target.username + target.password,
+    )
+    if (action != MailBodyRequestAction.PROXY) return null
     return Request.Builder()
-        .url(url)
+        .url(target)
         .header("Authorization", "Bearer $token")
         .build()
 }

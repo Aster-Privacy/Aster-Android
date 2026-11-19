@@ -82,6 +82,8 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.twofactor.TwoFactorMode
 import org.astermail.android.twofactor.TwoFactorViewModel
 import org.astermail.android.twofactor.render_qr_code
+import org.astermail.android.settings.host_activity
+import org.astermail.android.auth.request_passkey_json
 
 @Composable
 fun TwoFactorScreen(
@@ -113,6 +115,7 @@ fun TwoFactorScreen(
 
         when (state.mode) {
             TwoFactorMode.Idle -> idle_panel(state, vm)
+            TwoFactorMode.SetupReauth -> setup_reauth_panel(state, vm)
             TwoFactorMode.Setup -> setup_panel(state, vm)
             TwoFactorMode.SetupComplete -> backup_codes_panel(
                 title = stringResource(R.string.two_factor_enabled_title),
@@ -311,6 +314,37 @@ private fun setup_panel(state: org.astermail.android.twofactor.TwoFactorUiState,
 }
 
 @Composable
+private fun setup_reauth_panel(state: org.astermail.android.twofactor.TwoFactorUiState, vm: TwoFactorViewModel) {
+    val context = LocalContext.current
+    section_label(stringResource(R.string.confirm_its_you))
+    Text(
+        text = stringResource(R.string.totp_setup_reauth_description),
+        color = AsterMaterial.colors.text_tertiary,
+        fontSize = 13.sp,
+    )
+    v_gap(AsterSpacing.md)
+    AsterTextField(
+        value = state.password_input,
+        onValueChange = { vm.update_password(it) },
+        label = stringResource(R.string.password),
+        placeholder = stringResource(R.string.password_dots),
+        visual_transformation = PasswordVisualTransformation(),
+        content_type = ContentType.Password,
+        keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
+    )
+    v_gap(AsterSpacing.lg)
+    AsterButton(
+        label = stringResource(R.string.continue_action),
+        onClick = {
+            val host = context.host_activity() ?: context
+            vm.confirm_setup_reauth(get_credential = { json -> request_passkey_json(host, json) })
+        },
+    )
+    v_gap(AsterSpacing.sm)
+    AsterSecondaryButton(label = stringResource(R.string.cancel), onClick = { vm.cancel_action() })
+}
+
+@Composable
 private fun disable_panel(state: org.astermail.android.twofactor.TwoFactorUiState, vm: TwoFactorViewModel) {
     section_label(stringResource(R.string.confirm_disable))
     Text(
@@ -355,6 +389,16 @@ private fun regenerate_panel(state: org.astermail.android.twofactor.TwoFactorUiS
         text = stringResource(R.string.generate_backup_codes_description),
         color = AsterMaterial.colors.text_tertiary,
         fontSize = 13.sp,
+    )
+    v_gap(AsterSpacing.md)
+    AsterTextField(
+        value = state.password_input,
+        onValueChange = { vm.update_password(it) },
+        label = stringResource(R.string.password),
+        placeholder = stringResource(R.string.password_dots),
+        visual_transformation = PasswordVisualTransformation(),
+        content_type = ContentType.Password,
+        keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password),
     )
     v_gap(AsterSpacing.md)
     AsterTextField(

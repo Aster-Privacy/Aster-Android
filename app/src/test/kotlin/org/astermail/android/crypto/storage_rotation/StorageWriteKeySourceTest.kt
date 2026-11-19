@@ -44,9 +44,10 @@ class StorageWriteKeySourceTest {
     @Test
     fun `ratchet state uploads seal only under the data kek`() {
         val path = "mail/ratchet/RatchetStateStore.kt"
-        assert_has(path, Regex("""fun write_master_key\(\): ByteArray\? =\s*org\.astermail\.android\.crypto\.StorageWriteKey\.write_key\(session_key_store\)"""))
+        assert_has(path, Regex("""fun write_master_key\(\): ByteArray\? =\s*StorageWriteKey\.write_key\(session_key_store\)"""))
         assert_has(path, Regex("""fun derive_state_encryption_key\(\): ByteArray\? \{\s*val master = write_master_key\(\) \?: return null"""))
-        assert_has("mail/ratchet/RatchetStateSyncer.kt", Regex("""val key = state_store\.derive_state_encryption_key\(\) \?: return false"""))
+        assert_has(path, Regex("""fun derive_sync_keys\(\): RatchetSyncKeys\? \{\s*val user_id = .+\s*val master = write_master_key\(\) \?: return null"""))
+        assert_has("mail/ratchet/RatchetStateSyncer.kt", Regex("""val keys = state_store\.derive_sync_keys\(\) \?: return false"""))
     }
 
     @Test
@@ -59,8 +60,8 @@ class StorageWriteKeySourceTest {
     @Test
     fun `metadata patches encrypt only under the data kek`() {
         val path = "mail/MailRepository.kt"
-        assert_has(path, Regex("""val write_master = org\.astermail\.android\.crypto\.StorageWriteKey\.write_key\(session_key_store\)"""))
-        assert_has(path, Regex("""MetadataKeySet\(source, keys, write_master != null\)"""))
+        assert_has(path, Regex("""val write_master = StorageWriteKey\.write_key\(session_key_store\)"""))
+        assert_has(path, Regex("""MetadataKeySet\(source, keys, write_master != null, public_indices\)"""))
         assert_has(path, Regex("""private fun metadata_write_key\(\): ByteArray\? \{\s*val set = metadata_key_set\(\)\s*return if \(set\.has_write_key\) set\.keys\.firstOrNull\(\) else null"""))
         assert_has(path, Regex("""private fun metadata_key\(\): ByteArray\? = metadata_write_key\(\)"""))
     }

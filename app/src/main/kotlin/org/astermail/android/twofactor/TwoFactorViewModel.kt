@@ -34,16 +34,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.totp.TotpApi
 import org.astermail.android.api.totp.TotpDisableRequest
 import org.astermail.android.api.totp.TotpRegenerateBackupCodesRequest
 import org.astermail.android.api.totp.TotpSetupVerifyRequest
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.settings.ReauthPrompt
+import org.astermail.android.settings.Reauthorized
+import org.astermail.android.settings.reauthorize
 import org.astermail.android.util.latest_code_input
 import org.astermail.android.util.normalize_digits
 
 enum class TwoFactorMode {
     Idle,
+    SetupReauth,
     Setup,
     SetupComplete,
     Disable,
@@ -70,6 +75,7 @@ data class TwoFactorUiState(
 @HiltViewModel
 class TwoFactorViewModel @Inject constructor(
     private val totp_api: TotpApi,
+    private val security_api: SecurityApi,
     private val auth_repository: AuthRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -100,25 +106,40 @@ class TwoFactorViewModel @Inject constructor(
 
     fun start_setup() {
         if (_state.value.is_busy) return
+        _state.value = _state.value.copy(
+            mode = TwoFactorMode.SetupReauth,
+            password_input = "",
+            code_input = "",
+            error = null,
+        )
+    }
+
+    fun confirm_setup_reauth(get_credential: suspend (String) -> String) {
+        val s = _state.value
+        if (s.is_busy) return
+        _state.value = s.copy(is_busy = true, error = null)
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_busy = true, error = null)
-            val outcome = runCatching { totp_api.initiate_setup() }
-            _state.value = outcome.fold(
-                onSuccess = {
-                    _state.value.copy(
-                        is_busy = false,
-                        mode = TwoFactorMode.Setup,
-                        setup_secret = it.secret,
-                        setup_otpauth_uri = it.otpauth_uri,
-                        setup_token = it.setup_token,
-                        code_input = "",
-                    )
-                },
-                onFailure = {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    _state.value.copy(is_busy = false, error = readable(it))
-                },
-            )
+            val outcome = reauthorize(
+                context = context,
+                prompt = ReauthPrompt(busy = true),
+                password = s.password_input,
+                totp_code = null,
+                derive_password_hash = { auth_repository.derive_password_hash_b64(it) },
+                load_key_options = { security_api.step_up_assertion_options() },
+                get_credential = get_credential,
+            ) { proof -> totp_api.initiate_setup(proof) }
+            _state.value = when (outcome) {
+                is Reauthorized.Done -> _state.value.copy(
+                    is_busy = false,
+                    mode = TwoFactorMode.Setup,
+                    setup_secret = outcome.value.secret,
+                    setup_otpauth_uri = outcome.value.otpauth_uri,
+                    setup_token = outcome.value.setup_token,
+                    code_input = "",
+                    password_input = "",
+                )
+                is Reauthorized.Retry -> _state.value.copy(is_busy = false, error = outcome.prompt.error)
+            }
         }
     }
 
@@ -227,6 +248,7 @@ class TwoFactorViewModel @Inject constructor(
         _state.value = _state.value.copy(
             mode = TwoFactorMode.Regenerate,
             code_input = "",
+            password_input = "",
             error = null,
         )
     }
@@ -234,6 +256,10 @@ class TwoFactorViewModel @Inject constructor(
     fun confirm_regenerate() {
         val s = _state.value
         if (s.is_busy) return
+        if (s.password_input.isBlank()) {
+            _state.value = s.copy(error = context.getString(R.string.enter_account_password))
+            return
+        }
         if (!is_six_digit_code(s.code_input.trim())) {
             _state.value = s.copy(error = context.getString(R.string.enter_six_digit_code))
             return
@@ -241,8 +267,11 @@ class TwoFactorViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = s.copy(is_busy = true, error = null)
             val outcome = runCatching {
+                val derived = withContext(Dispatchers.Default) {
+                    auth_repository.derive_password_hash_b64(s.password_input)
+                } ?: throw org.astermail.android.api.ApiError.UnauthorizedError
                 totp_api.regenerate_backup_codes(
-                    TotpRegenerateBackupCodesRequest(code = s.code_input.trim()),
+                    TotpRegenerateBackupCodesRequest(code = s.code_input.trim(), password_hash = derived),
                 )
             }
             _state.value = outcome.fold(
@@ -253,6 +282,7 @@ class TwoFactorViewModel @Inject constructor(
                         backup_codes = it.backup_codes,
                         backup_codes_remaining = it.backup_codes.size,
                         code_input = "",
+                        password_input = "",
                     )
                 },
                 onFailure = {

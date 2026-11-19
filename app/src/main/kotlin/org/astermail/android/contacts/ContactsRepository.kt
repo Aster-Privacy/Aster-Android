@@ -119,6 +119,8 @@ class ContactsRepository @Inject constructor(
 
     private val resolved_ids = java.util.concurrent.ConcurrentHashMap<String, String>()
 
+    private val constant_sealed_ids: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
     private val cache_writes = java.util.concurrent.atomic.AtomicLong(0)
 
     @Volatile
@@ -138,6 +140,13 @@ class ContactsRepository @Inject constructor(
     private fun is_online(): Boolean = network_probe?.invoke() ?: (pending_queue?.is_network_available() ?: true)
 
     fun resolve_contact_id(contact_id: String): String = resolved_ids[contact_id] ?: contact_id
+
+    fun is_constant_sealed(contact_id: String): Boolean =
+        contact_id in constant_sealed_ids || resolve_contact_id(contact_id) in constant_sealed_ids
+
+    private fun note_contact_seal(contact_id: String, under_constant: Boolean) {
+        if (under_constant) constant_sealed_ids.add(contact_id) else constant_sealed_ids.remove(contact_id)
+    }
 
     val pending_contact_ids: Flow<Set<String>>
         get() {
@@ -924,8 +933,11 @@ class ContactsRepository @Inject constructor(
 
     private suspend fun search_contacts_online(query: String, field: String, limit: Int?): List<Contact> {
         val keys = StorageWriteKey.lookup_keys(session_key_store)
-        val tokens = try {
-            keys.map { generate_search_token(query, it) }.distinct()
+        val tokens: List<String>
+        val constant_tokens: List<String>
+        try {
+            tokens = keys.filterNot(StorageWriteKey::is_public_mail_kek).map { generate_search_token(query, it) }.distinct()
+            constant_tokens = keys.filter(StorageWriteKey::is_public_mail_kek).map { generate_search_token(query, it) }.distinct()
         } finally {
             keys.forEach { it.fill(0) }
         }
@@ -934,6 +946,12 @@ class ContactsRepository @Inject constructor(
         for (token in tokens) {
             if (limit != null && items.size >= limit) break
             contacts_api.search_contacts(token, field, limit).items.forEach { items.putIfAbsent(it.id, it) }
+        }
+        if (items.isEmpty()) {
+            for (token in constant_tokens) {
+                if (limit != null && items.size >= limit) break
+                contacts_api.search_contacts(token, field, limit).items.forEach { items.putIfAbsent(it.id, it) }
+            }
         }
         val found = decrypt_contacts(items.values.toList())
         return if (limit != null) found.take(limit) else found
@@ -1250,7 +1268,11 @@ class ContactsRepository @Inject constructor(
             for (key in keys) {
                 if (ih != null && dv != null && !verify_integrity_hash(encrypted_data, data_nonce, ih, dv, key)) continue
                 val opened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
-                if (opened != null) return opened
+                if (opened != null) {
+                    StorageWriteKey.note_if_public(session_key_store, key)
+                    note_contact_seal(item.id, StorageWriteKey.is_public_mail_kek(key))
+                    return opened
+                }
             }
             return null
         } finally {
@@ -1263,16 +1285,26 @@ class ContactsRepository @Inject constructor(
         val data_nonce = item.data_nonce ?: return null
         val ciphertext = android.util.Base64.decode(encrypted_data, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(data_nonce, android.util.Base64.DEFAULT)
-        val plaintext = decrypt_with_candidates(ciphertext, nonce) ?: return null
+        val plaintext = decrypt_with_candidates(ciphertext, nonce) { under_constant ->
+            note_contact_seal(item.id, under_constant)
+        } ?: return null
         val json_str = String(plaintext, Charsets.UTF_8)
         plaintext.fill(0)
         return parse_contact_json(item.id, json_str)
     }
 
-    private fun decrypt_with_candidates(ciphertext: ByteArray, nonce: ByteArray): ByteArray? {
-        for (key in read_key_candidates()) {
+    private fun decrypt_with_candidates(
+        ciphertext: ByteArray,
+        nonce: ByteArray,
+        on_open: (Boolean) -> Unit = {},
+    ): ByteArray? {
+        for ((key, under_placeholder) in read_key_candidates()) {
             try {
-                return aes_gcm_decrypt(ciphertext, key, nonce)
+                val opened = aes_gcm_decrypt(ciphertext, key, nonce)
+                StorageWriteKey.note_if_public(session_key_store, key)
+                if (under_placeholder) session_key_store.note_public_constant_use()
+                on_open(under_placeholder || StorageWriteKey.is_public_mail_kek(key))
+                return opened
             } catch (_: Throwable) {
             } finally {
                 key.fill(0)
@@ -1281,20 +1313,29 @@ class ContactsRepository @Inject constructor(
         return null
     }
 
-    private fun read_key_candidates(): Sequence<ByteArray> = sequence {
+    private fun read_key_candidates(): Sequence<Pair<ByteArray, Boolean>> = sequence {
         val identity_keys = buildList {
             session_key_store.get_identity_key()?.let { add(it) }
             session_key_store.get_previous_keys()?.forEach { add(it) }
         }
-        for (identity_key in identity_keys) {
+        val (secret_keys, placeholder_keys) = identity_keys.partition { org.astermail.android.mail.is_secret_identity_key(it) }
+        for (identity_key in secret_keys) {
             for (version in ENVELOPE_VERSIONS) {
                 val material = (identity_key + version).toByteArray(Charsets.UTF_8)
                 val digest = MessageDigest.getInstance("SHA-256").digest(material)
                 material.fill(0)
-                yield(digest)
+                yield(digest to false)
             }
         }
-        StorageWriteKey.read_keys(session_key_store).forEach { yield(it) }
+        StorageWriteKey.read_keys(session_key_store).forEach { yield(it to false) }
+        for (identity_key in placeholder_keys) {
+            for (version in ENVELOPE_VERSIONS) {
+                val material = (identity_key + version).toByteArray(Charsets.UTF_8)
+                val digest = MessageDigest.getInstance("SHA-256").digest(material)
+                material.fill(0)
+                yield(digest to true)
+            }
+        }
     }
 
     private data class GroupPayload(

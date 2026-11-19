@@ -21,8 +21,11 @@
 package org.astermail.android.crypto.storage_rotation
 
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.astermail.android.auth.RecoveryBackupVaultFields
+import org.astermail.android.auth.recovery_backup_binding_of
 import org.json.JSONObject
 
 const val RECOVERY_BACKUP_PATH = "/core/v1/recovery/backup"
@@ -76,10 +79,12 @@ suspend fun heal_storage_key_from_side_copy(
     }
 }
 
-enum class BackupRefresh { REFRESHED, NO_CODES, CODES_CHANGED, UPGRADE_REQUIRED, FAILED }
+enum class BackupRefresh { REFRESHED, VAULT_NOT_RECORDED, NO_CODES, CODES_CHANGED, UPGRADE_REQUIRED, FAILED }
 
 fun interface RecoveryBackupBuilder {
     fun build(vault: JSONObject): JsonObject?
+
+    fun saved(built: JsonObject) = Unit
 }
 
 fun vault_recovery_codes(vault: JSONObject): List<String> {
@@ -96,17 +101,42 @@ fun refresh_backup_body(built: JsonObject, expected_vault_sha256: String): JsonO
             ),
     )
 
+fun stamp_refreshed_backup(vault: JSONObject, built: JsonObject): VaultEdit {
+    val encoded = (built["encrypted_vault_backup"] as? JsonPrimitive)?.content ?: return VaultEdit.UNCHANGED
+    val bytes = runCatching { java.util.Base64.getMimeDecoder().decode(encoded) }.getOrNull() ?: return VaultEdit.UNCHANGED
+    val binding = recovery_backup_binding_of(bytes) ?: return VaultEdit.UNCHANGED
+    val generation = RecoveryBackupVaultFields.generation(vault)
+    val format_v2 = RecoveryBackupVaultFields.format_v2(vault)
+    if (binding.generation <= generation && format_v2) return VaultEdit.UNCHANGED
+    RecoveryBackupVaultFields.stamp(vault, binding, format_v2 = true)
+    return VaultEdit.CHANGED
+}
+
+private inline fun <T> attempt(block: () -> T): T? =
+    try {
+        block()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        null
+    }
+
 suspend fun refresh_recovery_backup(
     api: ResealApi,
     load: suspend () -> VaultDraft?,
+    update: suspend (suspend (VaultDraft) -> VaultEdit) -> Boolean = { true },
     builder: RecoveryBackupBuilder,
 ): BackupRefresh {
     repeat(MAX_VAULT_CONFLICT_RETRIES + 1) {
-        val draft = runCatching { load() }.getOrNull() ?: return BackupRefresh.FAILED
+        val draft = attempt { load() } ?: return BackupRefresh.FAILED
         if (vault_recovery_codes(draft.vault).isEmpty()) return BackupRefresh.NO_CODES
-        val built = runCatching { builder.build(draft.vault) }.getOrNull() ?: return BackupRefresh.FAILED
+        val built = attempt { builder.build(draft.vault) } ?: return BackupRefresh.FAILED
         val reply = api.post(RECOVERY_BACKUP_PATH, refresh_backup_body(built, draft.snapshot.vault_sha256))
-        if (!reply.error) return BackupRefresh.REFRESHED
+        if (!reply.error) {
+            attempt { builder.saved(built) }
+            val recorded = attempt { update { latest -> stamp_refreshed_backup(latest.vault, built) } } ?: false
+            return if (recorded) BackupRefresh.REFRESHED else BackupRefresh.VAULT_NOT_RECORDED
+        }
         when {
             reply.code == RECOVERY_CODES_CHANGED_CODE -> return BackupRefresh.CODES_CHANGED
             reply.status == 426 || reply.code == UPGRADE_REQUIRED_CODE -> return BackupRefresh.UPGRADE_REQUIRED

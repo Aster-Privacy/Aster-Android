@@ -98,7 +98,14 @@ class SenderAttachmentLinkInstrumentedTest {
         assertEquals("book.epub", meta!!.filename)
         assertEquals("application/epub+zip", meta.content_type)
 
-        val decrypted = repo.decrypt_attachment_data(body.encrypted_data, body.data_nonce, meta.session_key)
+        assertEquals(0, body.seq_num)
+        val decrypted = repo.decrypt_attachment_data(
+            body.encrypted_data,
+            body.data_nonce,
+            meta.session_key,
+            mail_item_id = "sent_1",
+            seq_num = body.seq_num,
+        )
         assertArrayEquals("12.5MB attachment bytes must round-trip", raw_bytes, decrypted)
     }
 }

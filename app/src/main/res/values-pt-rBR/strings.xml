@@ -671,7 +671,7 @@
     <string name="disabling">Desativando...</string>
     <string name="disable_two_factor">Desativar a autenticação de dois fatores</string>
     <string name="generate_new_backup_codes_section">Gerar novos códigos de backup</string>
-    <string name="generate_backup_codes_description">Digite um código atual do seu aplicativo autenticador. Seus códigos de backup anteriores serão invalidados.</string>
+    <string name="generate_backup_codes_description">Digite sua senha e um código atual do seu aplicativo autenticador. Seus códigos de backup anteriores deixam de funcionar.</string>
     <string name="generating">Gerando...</string>
     <string name="generate_codes">Gerar códigos</string>
     <string name="two_factor_enabled_title">Autenticação de dois fatores ativada</string>
@@ -1818,6 +1818,7 @@
     <string name="totp_code_required_label">Código do autenticador ou de backup</string>
     <string name="totp_code_required_error">Digite o código de 6 dígitos do seu app autenticador ou um dos códigos de backup</string>
     <string name="preferences_locked_retry">Não foi possível desbloquear suas configurações agora. Mostrando os padrões. Volte e abra de novo para tentar novamente.</string>
+    <string name="encrypted_edit_locked_retry">O Aster Mail ainda está desbloqueando este item, então sua alteração não foi salva. Tente novamente em instantes.</string>
     <string name="plan_name_star">Estrela</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
@@ -2683,6 +2684,9 @@
     <string name="folder_locked">Pasta bloqueada</string>
     <string name="folder_unlocked">Pasta desbloqueada</string>
     <string name="folder_lock_set">Bloqueio de pasta definido</string>
+    <string name="folder_relock_required">Esta pasta foi bloqueada novamente em outro dispositivo. Para abri-la aqui, remova o bloqueio e defina-o novamente.</string>
+    <string name="folder_protection_unavailable">Não foi possível ler os dados de proteção da pasta neste dispositivo. Saia, entre novamente e tente de novo.</string>
+    <string name="folder_lock_set_unconfirmed">Bloqueio de pasta definido. Digite a senha para abrir a pasta.</string>
     <string name="folder_lock_removed">Bloqueio de pasta removido</string>
     <string name="folder_notifications_muted">Notificações silenciadas para esta pasta</string>
     <string name="folder_notifications_unmuted">Notificações ativadas para esta pasta</string>
@@ -2864,8 +2868,11 @@
     <string name="failed_to_move_items">Não foi possível mover</string>
     <string name="folder_name_taken">Já existe uma pasta com esse nome.</string>
     <string name="hardware_key_remove_confirm">Você não vai mais conseguir entrar com esta chave de segurança.</string>
-    <string name="hardware_key_remove_last_title">Remover sua última chave de segurança?</string>
-    <string name="hardware_key_remove_last_description">Este é o último segundo fator da sua conta. Para removê-lo, digite sua senha.</string>
+    <string name="hardware_key_remove_last_title">Remover esta chave de segurança?</string>
+    <string name="hardware_key_remove_last_description">Para remover esta chave de segurança, digite sua senha.</string>
+    <string name="passkey_add_reauth_description">Para adicionar uma chave de acesso, digite sua senha.</string>
+    <string name="totp_setup_reauth_description">Para configurar a autenticação de dois fatores, digite sua senha.</string>
+    <string name="reauth_key_check_failed">Não foi possível verificar sua chave de acesso ou chave de segurança. Tente novamente.</string>
     <string name="image_insert_failed">Não foi possível adicionar essa imagem. Ela pode ser grande demais ou estar em um formato incompatível.</string>
     <string name="invalid_recipient_address">“%1$s” não é um endereço de e-mail válido</string>
     <string name="label_name_taken">Já existe uma etiqueta com esse nome.</string>
@@ -3519,6 +3526,11 @@
     <string name="contact_sync_settings_title">Permitir acesso aos contatos</string>
     <string name="contact_sync_settings_message">Para sincronizar seus contatos, toque em Abrir Configurações, acesse Permissões &gt; Contatos e escolha Permitir.</string>
     <string name="contact_sync_open_settings">Abrir Configurações</string>
+    <string name="contact_sync_all_details_title">Sincronizar todos os detalhes dos contatos</string>
+    <string name="contact_sync_all_details_subtitle">Quando esta opção está desativada, o Aster adiciona apenas nomes e endereços de e-mail ao app Contatos do celular.</string>
+    <string name="contact_sync_all_details_confirm_title">Sincronizar todos os detalhes dos contatos?</string>
+    <string name="contact_sync_all_details_confirm_message">O Aster também adiciona números de telefone, endereços, aniversários, notas, fotos e outros detalhes ao app Contatos do celular. Outros apps com acesso aos seus contatos podem ler esses detalhes.</string>
+    <string name="contact_sync_all_details_confirm">Sincronizar todos os detalhes</string>
     <string name="contact_sync_label_sibling">Irmão ou irmã</string>
     <string name="contact_sync_label_graduation">Formatura</string>
     <string name="contact_sync_label_wedding">Casamento</string>
@@ -3669,6 +3681,16 @@
         <item quantity="other">%d contatos adicionados</item>
     </plurals>
     <string name="body_index_status">Indexando o texto das mensagens para a pesquisa: %1$d de %2$d</string>
+    <string name="mail_key_upgrade_title">Atualizando seus e-mails salvos</string>
+    <string name="mail_key_upgrade_running">O Aster Mail está criptografando novamente suas mensagens salvas com suas chaves atuais. Mantenha esta janela aberta até terminar.</string>
+    <string name="mail_key_upgrade_failed">O Aster Mail não conseguiu concluir a atualização das suas mensagens salvas. Seus e-mails não foram alterados. Verifique sua conexão e tente novamente.</string>
+    <string name="mail_key_upgrade_retry">Tentar novamente</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d mensagem verificada</item>
+        <item quantity="other">%d mensagens verificadas</item>
+    </plurals>
+    <string name="account_link_confirm_title">Vincular esta conta?</string>
+    <string name="account_link_confirm_message">%1$s quer usar %2$s neste dispositivo. Confirme apenas se você iniciou isso no %1$s.</string>
     <string name="delete_selected_subscriptions">Excluir (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">Excluir %d inscrição?</item>
@@ -3680,4 +3702,5 @@
         <item quantity="other">%d inscrições excluídas</item>
     </plurals>
     <string name="delete_subscriptions_failed">Não foi possível excluir as inscrições selecionadas</string>
+    <string name="attachment_unverified">Anexo não verificado</string>
 </resources>

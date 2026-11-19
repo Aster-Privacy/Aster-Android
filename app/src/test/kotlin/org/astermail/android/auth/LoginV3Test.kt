@@ -81,6 +81,18 @@ class LoginV3Test {
     }
 
     @Test
+    fun an_account_seen_on_login_v3_refuses_the_older_login() {
+        LoginV3.require_offered(seen_on_device = false, offered = false)
+        LoginV3.require_offered(seen_on_device = false, offered = true)
+        LoginV3.require_offered(seen_on_device = true, offered = true)
+        try {
+            LoginV3.require_offered(seen_on_device = true, offered = false)
+            fail("older login accepted for a login v3 account")
+        } catch (expected: org.astermail.android.crypto.AuthSaltCollisionException) {
+        }
+    }
+
+    @Test
     fun enrollment_runs_only_when_offered_and_not_yet_enrolled() {
         assertTrue(LoginV3.should_enroll(offered = true, enrolled = false))
         assertFalse(LoginV3.should_enroll(offered = true, enrolled = true))

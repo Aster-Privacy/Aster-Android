@@ -47,6 +47,7 @@ fun escrow_aad_modes(message_id: String): List<ByteArray?> {
 sealed class EscrowOpen {
     object Current : EscrowOpen()
     object Unreadable : EscrowOpen()
+    object Held : EscrowOpen()
     class Stale(val plaintext: ByteArray, val aad: ByteArray?) : EscrowOpen()
 }
 
@@ -64,6 +65,13 @@ fun open_escrow_row(keys: ResealKeys, message_id: String, ciphertext_b64: String
     for (aad in modes) {
         val stale = open_with_any(keys.old_escrow, ciphertext, nonce, aad)
         if (stale != null) return EscrowOpen.Stale(stale, aad)
+    }
+    for (aad in modes) {
+        for (key in keys.held_escrow) {
+            val held = gcm_open(key, ciphertext, nonce, aad) ?: continue
+            held.fill(0)
+            return EscrowOpen.Held
+        }
     }
     return EscrowOpen.Unreadable
 }
@@ -104,6 +112,10 @@ val escrow_step: ResealStep = object : ResealStep {
                     EscrowOpen.Unreadable -> {
                         ctx.counts.unreadable += 1
                         unreadable.add(message_id)
+                        continue
+                    }
+                    EscrowOpen.Held -> {
+                        ctx.counts.unreadable += 1
                         continue
                     }
                     is EscrowOpen.Stale -> try {

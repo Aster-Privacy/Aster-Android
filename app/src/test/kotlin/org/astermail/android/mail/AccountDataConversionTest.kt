@@ -50,6 +50,8 @@ import org.astermail.android.api.preferences.SaveVersionedPreferencesRequest
 import org.astermail.android.api.preferences.VersionedEncryptedPreferences
 import org.astermail.android.crypto.AccountDataWriter
 import org.astermail.android.crypto.AesGcm
+import org.astermail.android.crypto.EnvelopeV2
+import org.astermail.android.crypto.PasswordKdf
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpEncryptor
 import org.astermail.android.crypto.PgpKeyGenerator
@@ -285,6 +287,50 @@ class AccountDataConversionTest {
         assertEquals(0, listing_cursors.size)
     }
 
+    private val login_salt = ByteArray(16) { (it * 3 + 5).toByte() }
+    private val old_password = "previous account password"
+
+    private fun login_salted_item(id: String): Pair<MailItem, ByteArray> {
+        val key = PasswordKdf.derive_aes_key(old_password.toByteArray(Charsets.UTF_8), login_salt, 310000)
+        val iv = ByteArray(12) { (it + 40).toByte() }
+        val sealed = AesGcm.encrypt(key, iv, envelope_json.toByteArray(Charsets.UTF_8))
+        val item = MailItem(
+            id = id,
+            encrypted_envelope = b64(login_salt + iv + sealed),
+            envelope_nonce = SentMailResealCrypto.sentinel_nonce_b64(),
+        )
+        return item to key
+    }
+
+    @Test
+    fun password_recovery_reseals_a_login_salted_item_whose_key_the_vault_holds() = runBlocking {
+        val (item, key) = login_salted_item("sent-login")
+        every { session_key_store.is_login_salt(any()) } answers { firstArg<ByteArray>().contentEquals(login_salt) }
+        every { session_key_store.get_legacy_keks() } returns listOf(b64(key))
+        pages = mutableListOf(page(item))
+
+        val summary = conversion.recover_sent_mail_with_password("account-1", old_password)
+
+        assertEquals(1, summary?.converted)
+        val (id, request) = sent_writes.single()
+        assertEquals("sent-login", id)
+        assertEquals(envelope_json.dropLast(1) + ""","legacy_unverified":true}""", open_sealed(request.encrypted_envelope))
+        assertFalse(Base64.getDecoder().decode(request.encrypted_envelope).copyOfRange(0, 16).contentEquals(login_salt))
+    }
+
+    @Test
+    fun password_recovery_refuses_a_login_salted_item_whose_key_the_vault_does_not_hold() = runBlocking {
+        val (item, _) = login_salted_item("sent-login")
+        every { session_key_store.is_login_salt(any()) } answers { firstArg<ByteArray>().contentEquals(login_salt) }
+        every { session_key_store.get_legacy_keks() } returns listOf(b64(ByteArray(32) { 9 }))
+        pages = mutableListOf(page(item))
+
+        val summary = conversion.recover_sent_mail_with_password("account-1", old_password)
+
+        assertTrue(sent_writes.isEmpty())
+        assertEquals(1, summary?.unreadable)
+    }
+
     @Test
     fun reseals_the_exact_envelope_plaintext_and_records_completion() = runBlocking {
         val item = sentinel_item("sent-1")
@@ -358,9 +404,8 @@ class AccountDataConversionTest {
     }
 
     @Test
-    fun converts_all_three_attachment_meta_forms_and_skips_sealed_rows() = runBlocking {
-        status = status_of(remaining_attachments = 3)
-        val plain = b64(meta_json.toByteArray(Charsets.UTF_8))
+    fun converts_signed_pgp_and_password_meta_and_skips_sealed_rows() = runBlocking {
+        status = status_of(remaining_attachments = 2)
         val old_meta = meta_json.replace("plan.pdf", "old.pdf")
         val armored = PgpEncryptor.encrypt_and_sign(
             old_meta,
@@ -371,7 +416,6 @@ class AccountDataConversionTest {
         val pgp = b64(armored.toByteArray(Charsets.UTF_8))
         val password = password_envelope(meta_json.replace("plan.pdf", "envelope.pdf"))
         attachments["sent-1"] = listOf(
-            attachment("att-plain", plain),
             attachment("att-pgp", pgp),
             attachment("att-password", password),
             attachment("att-sealed", pgp, b64(ByteArray(12))),
@@ -380,20 +424,38 @@ class AccountDataConversionTest {
 
         val summary = conversion.run("account-1")!!
 
-        assertEquals(3, summary.converted)
+        assertEquals(2, summary.converted)
         assertEquals(0, summary.skipped + summary.unreadable + summary.failed)
-        assertEquals(listOf("att-plain", "att-pgp", "att-password"), attachment_writes.map { it.first })
+        assertEquals(listOf("att-pgp", "att-password"), attachment_writes.map { it.first })
         val opened = attachment_writes.map { open_sealed(it.second.encrypted_meta)!! }
-        assertEquals(meta_json, opened[0])
         assertEquals(
-            listOf("plan.pdf", "old.pdf", "envelope.pdf"),
+            listOf("old.pdf", "envelope.pdf"),
             opened.map { AccountDataConversion.parse_object(it)!!["filename"].toString().trim('"') },
         )
         assertEquals(
-            listOf(plain, pgp, password).map { sha256_hex_of_b64(it) },
+            listOf(pgp, password).map { sha256_hex_of_b64(it) },
             attachment_writes.map { it.second.expected_meta_sha256 },
         )
         assertTrue(progress.contains(ConversionProgressRequest(sent_mail_done = true)))
+    }
+
+    @Test
+    fun never_reseals_attachment_meta_that_opens_only_in_plain_text_or_unsigned() = runBlocking {
+        status = status_of(remaining_attachments = 2)
+        val forged = meta_json.replace("plan.pdf", "invoice.pdf")
+        val plain = b64(forged.toByteArray(Charsets.UTF_8))
+        val unsigned = b64(PgpEncryptor.encrypt_to_keys(forged, listOf(own_key.armored_public_key))!!.toByteArray(Charsets.UTF_8))
+        attachments["sent-1"] = listOf(
+            attachment("att-plain", plain),
+            attachment("att-unsigned", unsigned),
+        )
+        pages = mutableListOf(page(MailItem(id = "sent-1", has_attachments = true)))
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals("rows that open only in plain text or unsigned must not be resealed", emptyList<String>(), attachment_writes.map { it.first })
+        assertEquals(2, summary.unreadable)
+        assertEquals(0, summary.converted)
     }
 
     @Test
@@ -402,7 +464,7 @@ class AccountDataConversionTest {
         val plain = b64(meta_json.toByteArray(Charsets.UTF_8))
         attachments["sent-1"] = listOf(
             attachment("att-marker", plain, LevelTwoEnvelope.meta_marker_b64()),
-            attachment("att-legacy", plain),
+            attachment("att-legacy", password_envelope(meta_json)),
         )
         pages = mutableListOf(page(MailItem(id = "sent-1", has_attachments = true)))
 
@@ -410,6 +472,79 @@ class AccountDataConversionTest {
 
         assertEquals(1, summary.converted)
         assertEquals(listOf("att-legacy"), attachment_writes.map { it.first })
+    }
+
+    private fun shared_constant_sealed(text: String, context: String): String {
+        val key = MessageDigest.getInstance("SHA-256").digest(("undefined" + context).toByteArray(Charsets.UTF_8))
+        val salt = ByteArray(16) { (it + 60).toByte() }
+        val iv = ByteArray(12) { (it + 20).toByte() }
+        return b64(salt + iv + AesGcm.encrypt(key, iv, text.toByteArray(Charsets.UTF_8)))
+    }
+
+    @Test
+    fun marks_attachment_meta_opened_under_any_shared_constant_as_unverified() = runBlocking {
+        status = status_of(remaining_attachments = 3)
+        attachments["sent-1"] = listOf(
+            attachment("att-tags", shared_constant_sealed(meta_json, "astermail-tags-v1")),
+            attachment("att-calendar", shared_constant_sealed(meta_json, "astermail-calendar-v2")),
+            attachment("att-envelope", shared_constant_sealed(meta_json, "astermail-envelope-v1")),
+        )
+        pages = mutableListOf(page(MailItem(id = "sent-1", has_attachments = true)))
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(3, summary.converted)
+        assertEquals(listOf("att-tags", "att-calendar", "att-envelope"), attachment_writes.map { it.first })
+        for ((id, request) in attachment_writes) {
+            assertEquals(id, meta_json.dropLast(1) + ""","legacy_unverified":true}""", open_sealed(request.encrypted_meta))
+        }
+    }
+
+    @Test
+    fun marks_a_sent_envelope_opened_under_a_shared_constant_as_unverified() = runBlocking {
+        pages = mutableListOf(
+            page(sentinel_item("sent-1", envelope = shared_constant_sealed(envelope_json, "astermail-draft-v2"))),
+        )
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(1, summary.converted)
+        assertEquals(envelope_json.dropLast(1) + ""","legacy_unverified":true}""", open_sealed(sent_writes.single().second.encrypted_envelope))
+    }
+
+    private fun level_two_constant_sealed(text: String, context: String): String {
+        val key = MessageDigest.getInstance("SHA-256").digest(("undefined" + context).toByteArray(Charsets.UTF_8))
+        return b64(EnvelopeV2.seal(text.toByteArray(Charsets.UTF_8), key))
+    }
+
+    @Test
+    fun marks_a_level_two_sent_envelope_under_a_shared_constant_as_unverified() = runBlocking {
+        pages = mutableListOf(
+            page(
+                MailItem(
+                    id = "sent-1",
+                    encrypted_envelope = level_two_constant_sealed(envelope_json, "astermail-tags-v1"),
+                    envelope_nonce = LevelTwoEnvelope.marker_b64(),
+                ),
+            ),
+        )
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(1, summary.converted)
+        assertEquals(envelope_json.dropLast(1) + ""","legacy_unverified":true}""", open_sealed(sent_writes.single().second.encrypted_envelope))
+    }
+
+    @Test
+    fun marks_level_two_attachment_meta_under_a_shared_constant_as_unverified() = runBlocking {
+        status = status_of(remaining_attachments = 1)
+        attachments["sent-1"] = listOf(attachment("att-v2", level_two_constant_sealed(meta_json, "astermail-calendar-v2")))
+        pages = mutableListOf(page(MailItem(id = "sent-1", has_attachments = true)))
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(1, summary.converted)
+        assertEquals(meta_json.dropLast(1) + ""","legacy_unverified":true}""", open_sealed(attachment_writes.single().second.encrypted_meta))
     }
 
     @Test
@@ -504,6 +639,37 @@ class AccountDataConversionTest {
 
         assertTrue(preferences_saves.isEmpty())
         assertTrue(progress.isEmpty())
+    }
+
+    @Test
+    fun never_converts_preferences_sealed_under_a_public_constant() = runBlocking {
+        status = status_of(sent_mail_done_at = "2026-09-01T00:00:00Z", preferences_done_at = null)
+        has_preferences_key = true
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val nonce = ByteArray(12) { 6 }
+        val sealed = AesGcm.encrypt(constant, nonce, preferences_json.toByteArray(Charsets.UTF_8))
+        stored_preferences = VersionedEncryptedPreferences(b64(sealed), b64(nonce), 3)
+
+        conversion.run("account-1")
+
+        assertTrue(preferences_saves.isEmpty())
+        assertTrue(progress.isEmpty())
+    }
+
+    @Test
+    fun never_converts_preferences_sealed_under_a_placeholder_previous_key() = runBlocking {
+        status = status_of(sent_mail_done_at = "2026-09-01T00:00:00Z", preferences_done_at = null)
+        has_preferences_key = true
+        previous_keys = listOf(old_key.armored_private_key, "undefined")
+        val placeholder_key = MessageDigest.getInstance("SHA-256")
+            .digest(("undefined" + AccountDataWriter.PREFERENCES_CONTEXT).toByteArray(Charsets.UTF_8))
+        val nonce = ByteArray(12) { 4 }
+        val sealed = AesGcm.encrypt(placeholder_key, nonce, preferences_json.toByteArray(Charsets.UTF_8))
+        stored_preferences = VersionedEncryptedPreferences(b64(sealed), b64(nonce), 3)
+
+        conversion.run("account-1")
+
+        assertTrue("preferences under a placeholder key must not be converted", preferences_saves.isEmpty())
     }
 
     @Test

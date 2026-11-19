@@ -49,23 +49,39 @@ class AppLockStore @Inject constructor(
 
     private companion object {
         const val PREFS_NAME = "aster_app_lock"
+        const val PRESENCE_PREFS_NAME = "aster_app_lock_presence"
+        const val KEY_PRESENCE_MARKER = "configured"
         const val KEY_PIN_HASH = "pin_hash"
         const val KEY_PIN_SALT = "pin_salt"
         const val KEY_PIN_TYPE = "pin_type"
         const val KEY_PIN_DIGITS = "pin_digits"
         const val KEY_LOCK_KEY_WRAP = "lock_key_wrap"
         const val KEY_LOCKOUT_COUNT = "lockout_count"
-        const val KEY_LOCKOUT_UNTIL = "lockout_until_ms"
-        const val KEY_LOCKOUT_UNTIL_ELAPSED = "lockout_until_elapsed_ms"
-        const val MAX_ATTEMPTS = 5
-        const val BASE_LOCKOUT_MS = 5L * 60 * 1000
-        const val MAX_LOCKOUT_MS = 60L * 60 * 1000
+        const val KEY_LEGACY_LOCKOUT_UNTIL = "lockout_until_ms"
+        const val KEY_LEGACY_LOCKOUT_UNTIL_ELAPSED = "lockout_until_elapsed_ms"
+        const val KEY_LOCKOUT_DURATION = "lockout_duration_ms"
+        const val KEY_LOCKOUT_STARTED_ELAPSED = "lockout_started_elapsed_ms"
+        const val KEY_LOCKOUT_BOOT_COUNT = "lockout_boot_count"
+        const val KEY_LOCKOUT_BOOT_WALL = "lockout_boot_wall_ms"
+        val LOCKOUT_KEYS = listOf(
+            KEY_LOCKOUT_COUNT,
+            KEY_LEGACY_LOCKOUT_UNTIL,
+            KEY_LEGACY_LOCKOUT_UNTIL_ELAPSED,
+            KEY_LOCKOUT_DURATION,
+            KEY_LOCKOUT_STARTED_ELAPSED,
+            KEY_LOCKOUT_BOOT_COUNT,
+            KEY_LOCKOUT_BOOT_WALL,
+        )
         const val PBKDF2_ITERATIONS = 310_000
         const val HASH_KEY_BITS = 256
     }
 
     private val prefs: SharedPreferences by lazy {
         org.astermail.android.storage.SecurePrefs.open(context, PREFS_NAME)
+    }
+
+    private val presence_prefs: SharedPreferences by lazy {
+        context.getSharedPreferences(PRESENCE_PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     @Volatile private var session_unlocked = false
@@ -118,7 +134,32 @@ class AppLockStore @Inject constructor(
     private val _config_version = MutableStateFlow(0)
     val config_version: StateFlow<Int> = _config_version.asStateFlow()
 
-    fun is_configured(): Boolean = prefs.contains(KEY_PIN_HASH)
+    private fun marker_present(): Boolean =
+        runCatching { presence_prefs.getBoolean(KEY_PRESENCE_MARKER, false) }.getOrDefault(false)
+
+    private fun write_marker(present: Boolean): Boolean =
+        runCatching {
+            presence_prefs.edit().apply {
+                if (present) putBoolean(KEY_PRESENCE_MARKER, true) else remove(KEY_PRESENCE_MARKER)
+            }.commit()
+        }.getOrDefault(false)
+
+    fun presence(): AppLockPresence {
+        val has_pin_hash = prefs.contains(KEY_PIN_HASH)
+        val marker = marker_present()
+        if (AppLockPresenceRule.should_write_marker(has_pin_hash, marker)) write_marker(true)
+        return AppLockPresenceRule.resolve(has_pin_hash, marker)
+    }
+
+    fun is_configured(): Boolean = AppLockPresenceRule.requires_lock(presence())
+
+    fun forget_unverifiable_lock(signed_in: Boolean) {
+        if (!AppLockPresenceRule.may_forget_marker(presence(), signed_in)) return
+        if (!write_marker(false)) return
+        session_unlocked = false
+        _is_locked.value = false
+        _config_version.value += 1
+    }
 
     fun is_store_open(): Boolean = org.astermail.android.storage.SecurePrefs.is_open(PREFS_NAME)
 
@@ -157,11 +198,59 @@ class AppLockStore @Inject constructor(
     }
 
     private fun lockout_remaining_ms(): Long {
-        val wall_remaining = prefs.getLong(KEY_LOCKOUT_UNTIL, 0L) - System.currentTimeMillis()
-        val elapsed_remaining = prefs.getLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L) - android.os.SystemClock.elapsedRealtime()
-        val elapsed_bounded = if (elapsed_remaining in 1..MAX_LOCKOUT_MS) elapsed_remaining else 0L
-        return maxOf(wall_remaining, elapsed_bounded).coerceAtLeast(0L)
+        val now = android.os.SystemClock.elapsedRealtime()
+        val stored = load_lockout(now)
+        val anchored = PinLockout.anchored(stored, now, boot_count(), System.currentTimeMillis())
+        if (anchored != stored) save_lockout(anchored)
+        return PinLockout.remaining_ms(anchored, now)
     }
+
+    private fun boot_count(): Int =
+        runCatching {
+            android.provider.Settings.Global.getInt(
+                context.contentResolver,
+                android.provider.Settings.Global.BOOT_COUNT,
+                PinLockoutState.UNKNOWN_BOOT_COUNT,
+            )
+        }.getOrDefault(PinLockoutState.UNKNOWN_BOOT_COUNT)
+
+    private fun load_lockout(now_elapsed_ms: Long): PinLockoutState {
+        val attempts = prefs.getInt(KEY_LOCKOUT_COUNT, 0)
+        if (prefs.contains(KEY_LOCKOUT_DURATION)) {
+            return PinLockoutState(
+                failed_attempts = attempts,
+                duration_ms = prefs.getLong(KEY_LOCKOUT_DURATION, 0L),
+                started_elapsed_ms = prefs.getLong(KEY_LOCKOUT_STARTED_ELAPSED, 0L),
+                boot_count = prefs.getInt(KEY_LOCKOUT_BOOT_COUNT, PinLockoutState.UNKNOWN_BOOT_COUNT),
+                boot_wall_ms = prefs.getLong(KEY_LOCKOUT_BOOT_WALL, PinLockoutState.UNKNOWN_BOOT_WALL),
+            )
+        }
+        val migrated = PinLockout.from_legacy_deadlines(
+            failed_attempts = attempts,
+            wall_deadline_ms = prefs.getLong(KEY_LEGACY_LOCKOUT_UNTIL, 0L),
+            elapsed_deadline_ms = prefs.getLong(KEY_LEGACY_LOCKOUT_UNTIL_ELAPSED, 0L),
+            now_wall_ms = System.currentTimeMillis(),
+            now_elapsed_ms = now_elapsed_ms,
+            boot_count = boot_count(),
+        )
+        save_lockout(migrated)
+        return migrated
+    }
+
+    private fun save_lockout(state: PinLockoutState) {
+        prefs.edit()
+            .putInt(KEY_LOCKOUT_COUNT, state.failed_attempts)
+            .putLong(KEY_LOCKOUT_DURATION, state.duration_ms)
+            .putLong(KEY_LOCKOUT_STARTED_ELAPSED, state.started_elapsed_ms)
+            .putInt(KEY_LOCKOUT_BOOT_COUNT, state.boot_count)
+            .putLong(KEY_LOCKOUT_BOOT_WALL, state.boot_wall_ms)
+            .remove(KEY_LEGACY_LOCKOUT_UNTIL)
+            .remove(KEY_LEGACY_LOCKOUT_UNTIL_ELAPSED)
+            .commit()
+    }
+
+    private fun clear_lockout(editor: SharedPreferences.Editor): SharedPreferences.Editor =
+        editor.apply { LOCKOUT_KEYS.forEach { remove(it) } }
 
     fun failed_attempt_count(): Int = prefs.getInt(KEY_LOCKOUT_COUNT, 0)
 
@@ -177,11 +266,12 @@ class AppLockStore @Inject constructor(
             putString(KEY_PIN_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
             putString(KEY_PIN_TYPE, pin_type)
             if (digits != null) putInt(KEY_PIN_DIGITS, digits) else remove(KEY_PIN_DIGITS)
-            putInt(KEY_LOCKOUT_COUNT, 0)
-            putLong(KEY_LOCKOUT_UNTIL, 0L)
-            putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L)
+            clear_lockout(this)
         }.commit()
-        if (stored) LockKeyHolder.open(lock_key)
+        if (stored) {
+            write_marker(true)
+            LockKeyHolder.open(lock_key)
+        }
         lock_key.fill(0)
         runCatching { BiometricUnlockGate.reset(context) }
         _config_version.value += 1
@@ -197,8 +287,7 @@ class AppLockStore @Inject constructor(
         val candidate = hash_pin(pin, salt)
         val ok = constant_time_equals(stored, candidate)
         if (ok) {
-            prefs.edit().putInt(KEY_LOCKOUT_COUNT, 0).putLong(KEY_LOCKOUT_UNTIL, 0L)
-                .putLong(KEY_LOCKOUT_UNTIL_ELAPSED, 0L).apply()
+            clear_lockout(prefs.edit()).commit()
             runCatching { open_lock_key(pin) }
             if (unlock_session) mark_session_unlocked()
         } else {
@@ -209,23 +298,21 @@ class AppLockStore @Inject constructor(
 
     fun disable(): Boolean {
         val lock_key = LockKeyHolder.current()
-        try {
-            if (!unseal_stores(lock_key)) return false
-            LockKeyHolder.close()
-            if (!unseal_stores(lock_key)) return false
+        val disabled = try {
+            run_app_lock_disable(
+                AppLockDisableSteps(
+                    unseal = { unseal_stores(lock_key) },
+                    reseal = { seal_stores() },
+                    close_key = { LockKeyHolder.close() },
+                    reopen_key = { lock_key?.let { LockKeyHolder.open(it) } },
+                    write_marker = { write_marker(it) },
+                    clear_pin = { clear_pin_settings() },
+                ),
+            )
         } finally {
             lock_key?.fill(0)
         }
-        prefs.edit().apply {
-            remove(KEY_LOCK_KEY_WRAP)
-            remove(KEY_PIN_HASH)
-            remove(KEY_PIN_SALT)
-            remove(KEY_PIN_TYPE)
-            remove(KEY_PIN_DIGITS)
-            remove(KEY_LOCKOUT_COUNT)
-            remove(KEY_LOCKOUT_UNTIL)
-            remove(KEY_LOCKOUT_UNTIL_ELAPSED)
-        }.apply()
+        if (!disabled) return false
         runCatching { BiometricUnlockGate.reset(context) }
         session_unlocked = false
         _is_locked.value = false
@@ -233,19 +320,21 @@ class AppLockStore @Inject constructor(
         return true
     }
 
+    private fun clear_pin_settings(): Boolean =
+        runCatching {
+            prefs.edit().apply {
+                remove(KEY_LOCK_KEY_WRAP)
+                remove(KEY_PIN_HASH)
+                remove(KEY_PIN_SALT)
+                remove(KEY_PIN_TYPE)
+                remove(KEY_PIN_DIGITS)
+                clear_lockout(this)
+            }.commit()
+        }.getOrDefault(false)
+
     private fun record_failed_attempt() {
-        val count = prefs.getInt(KEY_LOCKOUT_COUNT, 0) + 1
-        val over = (count - MAX_ATTEMPTS).coerceAtMost(20)
-        val lockout_ms = if (over >= 0) {
-            minOf(BASE_LOCKOUT_MS shl over, MAX_LOCKOUT_MS)
-        } else 0L
-        val until = if (lockout_ms > 0) System.currentTimeMillis() + lockout_ms else 0L
-        val until_elapsed = if (lockout_ms > 0) android.os.SystemClock.elapsedRealtime() + lockout_ms else 0L
-        prefs.edit()
-            .putInt(KEY_LOCKOUT_COUNT, count)
-            .putLong(KEY_LOCKOUT_UNTIL, until)
-            .putLong(KEY_LOCKOUT_UNTIL_ELAPSED, until_elapsed)
-            .commit()
+        val now = android.os.SystemClock.elapsedRealtime()
+        save_lockout(PinLockout.after_failure(load_lockout(now), now, boot_count(), System.currentTimeMillis()))
     }
 
     private fun hash_pin(pin: String, salt: ByteArray): ByteArray =

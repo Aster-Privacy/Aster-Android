@@ -26,9 +26,12 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.keys.PublicKeyResponse
@@ -49,6 +52,7 @@ import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
 import org.astermail.android.api.ratchet.PrekeyBundleResponse
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.crypto.ratchet.RecoveryLane
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -69,6 +73,7 @@ class RatchetEncryptorIdentityPinTest {
     private lateinit var syncer: RatchetStateSyncer
     private lateinit var keys_api: KeysApi
     private lateinit var identity_pins: RatchetIdentityPinStore
+    private lateinit var sender_key_heal: RatchetSenderKeyHeal
 
     private lateinit var recipient_identity_b64: String
     private lateinit var bundle: PrekeyBundleResponse
@@ -120,6 +125,7 @@ class RatchetEncryptorIdentityPinTest {
         syncer = mockk(relaxed = true)
         keys_api = mockk(relaxed = true)
         identity_pins = mockk(relaxed = true)
+        sender_key_heal = mockk(relaxed = true)
 
         coEvery { state_store.load(any()) } returns null
         every { session_key_store.get_ratchet_identity_public_b64() } returns
@@ -167,11 +173,12 @@ class RatchetEncryptorIdentityPinTest {
         keys_api,
         identity_pins,
         account_only_directory(),
+        sender_key_heal,
     )
 
     @Test
     fun `swapped prekey bundle identity blocks the send`() = runTest {
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.CHANGED
 
         var thrown: Throwable? = null
@@ -196,7 +203,7 @@ class RatchetEncryptorIdentityPinTest {
 
     @Test
     fun `first contact bundle is pinned and sent`() = runTest {
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.FIRST_CONTACT
 
         val envelope = new_encryptor().encrypt_envelope(
@@ -207,12 +214,12 @@ class RatchetEncryptorIdentityPinTest {
         )
 
         assertNotNull(envelope)
-        coVerify(exactly = 1) { identity_pins.pin_if_absent(conversation_id, recipient_identity_b64) }
+        coVerify(exactly = 1) { identity_pins.pin_if_absent(conversation_id, any(), recipient_identity_b64) }
     }
 
     @Test
     fun `pinned identity that still matches is sent`() = runTest {
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
 
         val envelope = new_encryptor().encrypt_envelope(
@@ -272,7 +279,7 @@ class RatchetEncryptorIdentityPinTest {
     private fun serve_bundle(signature: String) {
         bundle = bundle.copy(signed_prekey_signature = signature)
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
     }
 
@@ -333,7 +340,7 @@ class RatchetEncryptorIdentityPinTest {
 
         assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
         coVerify(exactly = 0) { state_store.save(any()) }
-        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any()) }
+        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any(), any()) }
     }
 
     @Test
@@ -355,7 +362,7 @@ class RatchetEncryptorIdentityPinTest {
 
         assertTrue(send().exceptionOrNull() is UnverifiedPrekeyBundleException)
         coVerify(exactly = 0) { state_store.save(any()) }
-        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any()) }
+        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any(), any()) }
         coVerify(exactly = 0) { identity_pins.pin_owner_key_if_absent(any(), any()) }
     }
 
@@ -455,7 +462,7 @@ class RatchetEncryptorIdentityPinTest {
 
     @Test
     fun `reused session sends the x3dh version its synced bootstrap was created with`() = runTest {
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
         val saved = slot<RatchetState>()
         coEvery { state_store.save(capture(saved)) } returns Unit
@@ -476,7 +483,7 @@ class RatchetEncryptorIdentityPinTest {
     fun `bundle advertising transcript binding bootstraps with x3dh version 2`() = runTest {
         bundle = bundle.copy(x3dh_max_version = 2)
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
         val saved = slot<RatchetState>()
         coEvery { state_store.save(capture(saved)) } returns Unit
@@ -494,7 +501,7 @@ class RatchetEncryptorIdentityPinTest {
     fun `bundle advertising only version 1 keeps the legacy x3dh`() = runTest {
         bundle = bundle.copy(x3dh_max_version = 1)
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
         val saved = slot<RatchetState>()
         coEvery { state_store.save(capture(saved)) } returns Unit
@@ -502,5 +509,70 @@ class RatchetEncryptorIdentityPinTest {
         val first = send().getOrThrow()
         assertNull(recipient_x3dh_version(first!!))
         assertNull(saved.captured.bootstrap?.x3dh_version)
+    }
+
+    private fun recipient_lane(envelope: String): RecoveryLaneData? {
+        val parsed = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+            .decodeFromString(RatchetEnvelope.serializer(), envelope)
+        return parsed.recipients.values.single().recovery
+    }
+
+    private suspend fun open_session_then_damage_sender_key(): String {
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
+            IdentityPinOutcome.UNCHANGED
+        val saved = slot<RatchetState>()
+        coEvery { state_store.save(capture(saved)) } returns Unit
+        assertNotNull(send().getOrThrow())
+        coEvery { state_store.load(conversation_id) } answers { saved.captured }
+        val good_jwk = session_key_store.get_ratchet_identity_jwk()!!
+        every { session_key_store.get_ratchet_identity_jwk() } returns "{\"kty\":\"EC\"}"
+        return good_jwk
+    }
+
+    @Test
+    fun `a damaged sender identity key is healed before the recovery lane is sealed`() = runTest {
+        val good_jwk = open_session_then_damage_sender_key()
+        coEvery { sender_key_heal.heal() } answers {
+            every { session_key_store.get_ratchet_identity_jwk() } returns good_jwk
+            true
+        }
+
+        val lane = recipient_lane(send().getOrThrow()!!)
+
+        coVerify(exactly = 1) { sender_key_heal.heal() }
+        assertNotNull(lane?.sct)
+        assertTrue((lane?.t ?: 0L) > 0L)
+    }
+
+    @Test
+    fun `a sender identity key that cannot be healed sends without a recovery lane`() = runTest {
+        open_session_then_damage_sender_key()
+        coEvery { sender_key_heal.heal() } returns false
+        mockkObject(RecoveryLane)
+        try {
+            val envelope = send().getOrThrow()
+
+            assertNotNull(envelope)
+            assertNull(recipient_lane(envelope!!))
+            coVerify(exactly = 1) { sender_key_heal.heal() }
+            verify(exactly = 0) { RecoveryLane.seal_unbound(any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(RecoveryLane)
+        }
+    }
+
+    @Test
+    fun `a heal that returns the same damaged key sends without a recovery lane`() = runTest {
+        open_session_then_damage_sender_key()
+        coEvery { sender_key_heal.heal() } returns true
+        mockkObject(RecoveryLane)
+        try {
+            val envelope = send().getOrThrow()
+
+            assertNull(recipient_lane(envelope!!))
+            verify(exactly = 0) { RecoveryLane.seal_unbound(any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(RecoveryLane)
+        }
     }
 }

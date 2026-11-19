@@ -315,8 +315,7 @@ fun SearchScreen(
     val label_index = remember(settings_state.labels, settings_state.tags) {
         SearchLabelIndex(
             settings_state.labels.mapNotNull { label ->
-                label.encrypted_name
-                    ?.takeIf { it.isNotBlank() && !org.astermail.android.looks_encrypted(it) }
+                org.astermail.android.labels.readable_label_name(label)
                     ?.let { SearchLabelEntry(it, label.label_token) }
             } + settings_state.tags
                 .filter { org.astermail.android.labels.tag_name_readable(it) }
@@ -940,9 +939,7 @@ fun SearchScreen(
         val folder_items = folder_nodes
             .map { node ->
                 val label = node.label
-                val readable = label.encrypted_name?.takeIf {
-                    it.isNotBlank() && !org.astermail.android.looks_encrypted(it)
-                }
+                val readable = org.astermail.android.labels.readable_label_name(label)
                 label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
             }
         org.astermail.android.ui.mail.label_picker_sheet(

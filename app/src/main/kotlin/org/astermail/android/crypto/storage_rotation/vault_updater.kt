@@ -32,6 +32,15 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.auth.MASTER_KEY_VAULT_FORMAT
 import org.astermail.android.auth.stored_vault_format
 import org.astermail.android.crypto.VaultKdf
+import org.astermail.android.folders.FOLDER_KEY_PINS_FIELD
+import org.astermail.android.folders.merge_folder_key_pins
+import org.astermail.android.mail.LEGACY_SCHEDULED_UNTAGGED_FIELD
+import org.astermail.android.mail.MAIL_LEGACY_RETIRED_FIELD
+import org.astermail.android.mail.SCHEDULED_UNTAGGED_FIELD
+import org.astermail.android.mail.earliest_scheduled_untagged
+import org.astermail.android.mail.merge_mail_legacy_retired_marker
+import org.astermail.android.mail.ratchet.LaneReplay
+import org.astermail.android.storage.RetiredStorageKeys
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -53,6 +62,8 @@ data class SealedVault(
     val encrypted_vault: String,
     val vault_nonce: String,
     val kdf_iterations: Int = VaultKdf.DEFAULT_ITERATIONS,
+    val bound: Boolean = false,
+    val from_server: Boolean = false,
 )
 
 fun is_level2_not_admitted(error: Throwable?): Boolean =
@@ -66,7 +77,11 @@ fun parse_vault_kdf_iterations(data: JsonObject?): Int? {
     return value.toInt()
 }
 
-class LocalStorageKeys(val data_kek: String?, val legacy_keks: List<String>) {
+class LocalStorageKeys(
+    val data_kek: String?,
+    val legacy_keks: List<String>,
+    val retired_hashes: Collection<String> = emptyList(),
+) {
     companion object {
         val NONE = LocalStorageKeys(null, emptyList())
     }
@@ -103,6 +118,15 @@ fun preserve_vault_fields(
     for (field in server_fields) {
         if (!next.has(field)) next.put(field, server.get(field))
     }
+    merge_mail_legacy_retired_marker(server.opt(MAIL_LEGACY_RETIRED_FIELD), next.opt(MAIL_LEGACY_RETIRED_FIELD))
+        ?.let { next.put(MAIL_LEGACY_RETIRED_FIELD, it) }
+    merge_folder_key_pins(server.opt(FOLDER_KEY_PINS_FIELD), next.opt(FOLDER_KEY_PINS_FIELD))
+        ?.let { next.put(FOLDER_KEY_PINS_FIELD, it) }
+    earliest_scheduled_untagged(server.opt(SCHEDULED_UNTAGGED_FIELD), next.opt(SCHEDULED_UNTAGGED_FIELD))
+        ?.let { next.put(SCHEDULED_UNTAGGED_FIELD, it) }
+    if (server.has(LEGACY_SCHEDULED_UNTAGGED_FIELD)) {
+        next.put(LEGACY_SCHEDULED_UNTAGGED_FIELD, server.get(LEGACY_SCHEDULED_UNTAGGED_FIELD))
+    }
     val displaced = ArrayList<String>()
     if (!allow_storage_key_change) {
         next.optString("data_kek", "").takeIf { it.isNotBlank() }?.let(displaced::add)
@@ -115,22 +139,29 @@ fun preserve_vault_fields(
     local.data_kek?.takeIf { it.isNotBlank() }?.let(displaced::add)
     displaced.addAll(local.legacy_keks.filter { it.isNotBlank() })
     val current = next.optString("data_kek", "")
+    val retired = local.retired_hashes.toSet()
     val merged = JSONArray()
     val seen = HashSet<String>()
     for (entry in legacy_entries(server) + legacy_entries(next)) {
         val value = entry.optString("k", "")
-        if (value == current || !seen.add(value)) continue
+        if (value == current || !seen.add(value) || RetiredStorageKeys.is_retired(value, retired)) continue
         merged.put(entry)
     }
     for (value in displaced) {
-        if (value == current || !seen.add(value)) continue
+        if (value == current || !seen.add(value) || RetiredStorageKeys.is_retired(value, retired)) continue
         merged.put(JSONObject().put("k", value).put("added_at", now))
     }
     if (merged.length() > 0 || server.has("legacy_keks") || next.has("legacy_keks")) {
         next.put("legacy_keks", merged)
     }
+    merge_retired_marker(next, listOf(vault_retired_hashes(server), local.retired_hashes))
+    if (server.has(LANE_REPLAY_FIELD) || next.has(LANE_REPLAY_FIELD)) {
+        next.put(LANE_REPLAY_FIELD, LaneReplay.merge_maps(next.opt(LANE_REPLAY_FIELD), server.opt(LANE_REPLAY_FIELD)))
+    }
     return next
 }
+
+const val LANE_REPLAY_FIELD = "lane_replay"
 
 class VaultUpdater(
     private val api: ResealApi,
@@ -192,11 +223,10 @@ class VaultUpdater(
         user: String,
         iterations: Int,
     ): Pair<CasWrite, SealedVault?> {
+        codec.before_write()
         val sealed = runCatching { codec.encrypt_at(next, iterations) }.getOrNull()
             ?: return CasWrite.ENCRYPT_FAILED to null
-        val roundtrip = runCatching {
-            codec.decrypt_at(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
-        }.getOrNull()
+        val roundtrip = runCatching { codec.decrypt_sealed(sealed) }.getOrNull()
         if (roundtrip == null || !same_key_fields(roundtrip, next)) return CasWrite.ROUNDTRIP_FAILED to null
         val fingerprints = runCatching { codec.fingerprints(next) }.getOrDefault(emptyList())
         val body = json_object(
@@ -226,11 +256,12 @@ class VaultUpdater(
         val snapshot = fetch_snapshot() ?: return@withLock VaultWorkFactor.SKIPPED
         if (snapshot.vault_kdf_iterations == VaultKdf.LEVEL2_ITERATIONS) return@withLock VaultWorkFactor.CURRENT
         val server = decrypt_snapshot(snapshot) ?: return@withLock VaultWorkFactor.SKIPPED
-        val (result, sealed) = write_with_cas(server, snapshot, user, VaultKdf.LEVEL2_ITERATIONS)
+        val next = stamp_vault_generation(JSONObject(server.toString()), server)
+        val (result, sealed) = write_with_cas(next, snapshot, user, VaultKdf.LEVEL2_ITERATIONS)
         when (result) {
             CasWrite.WRITTEN -> {
                 val written = sealed ?: return@withLock VaultWorkFactor.SKIPPED
-                on_vault_changed(server, written)
+                on_vault_changed(next, written)
                 VaultWorkFactor.UPGRADED
             }
             CasWrite.CONFLICT -> VaultWorkFactor.CONFLICT
@@ -244,11 +275,10 @@ class VaultUpdater(
         edit: suspend (VaultDraft) -> VaultEdit,
     ): VaultUpdateOutcome = lock.withLock { update_locked(allow_storage_key_change, edit) }
 
-    private fun seal_for_send(next: JSONObject, iterations: Int): SealedVault? {
+    private suspend fun seal_for_send(next: JSONObject, iterations: Int): SealedVault? {
+        codec.before_write()
         val sealed = runCatching { codec.encrypt_at(next, iterations) }.getOrNull() ?: return null
-        val roundtrip = runCatching {
-            codec.decrypt_at(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
-        }.getOrNull()
+        val roundtrip = runCatching { codec.decrypt_sealed(sealed) }.getOrNull()
         if (roundtrip == null || !same_key_fields(roundtrip, next)) return null
         return sealed
     }
@@ -267,6 +297,7 @@ class VaultUpdater(
             VaultEdit.CHANGED -> Unit
         }
         preserve_vault_fields(server, next, local_keys(), false, now())
+        stamp_vault_generation(next, server)
         val sealed = seal_for_send(next, snapshot.vault_kdf_iterations)
             ?: return@withLock VaultUpdateOutcome.Failed("roundtrip_failed")
         if (!send(next, sealed, snapshot)) return@withLock VaultUpdateOutcome.Failed("write_failed")
@@ -288,13 +319,19 @@ class VaultUpdater(
                 VaultEdit.UNCHANGED -> {
                     on_vault_changed(
                         server,
-                        SealedVault(snapshot.encrypted_vault, snapshot.vault_nonce, snapshot.vault_kdf_iterations),
+                        SealedVault(
+                            snapshot.encrypted_vault,
+                            snapshot.vault_nonce,
+                            snapshot.vault_kdf_iterations,
+                            from_server = true,
+                        ),
                     )
                     return VaultUpdateOutcome.Unchanged(server)
                 }
                 VaultEdit.CHANGED -> Unit
             }
             preserve_vault_fields(server, next, local_keys(), allow_storage_key_change, now())
+            stamp_vault_generation(next, server)
             val iterations = target_iterations(snapshot, allow_storage_key_change)
             var (result, sealed) = write_with_cas(next, snapshot, user, iterations)
             if (

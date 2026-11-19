@@ -21,6 +21,7 @@
 package org.astermail.android.crypto.opaque
 
 import java.math.BigInteger
+import java.security.SecureRandom
 
 internal const val RISTRETTO_ELEMENT_LEN = 32
 internal const val RISTRETTO_SCALAR_LEN = 32
@@ -188,15 +189,49 @@ internal object Ristretto255 {
         return RistrettoElement(mul(e, f), mul(g, h), mul(f, g), mul(e, h))
     }
 
-    fun multiply(element: RistrettoElement, scalar: BigInteger): RistrettoElement {
-        val k = scalar.mod(group_order)
-        var result = identity
-        for (bit in k.bitLength() - 1 downTo 0) {
-            result = add(result, result)
-            if (k.testBit(bit)) result = add(result, element)
+    fun multiply(
+        element: RistrettoElement,
+        scalar: BigInteger,
+        random: SecureRandom = blinding_random,
+    ): RistrettoElement {
+        val k = blinded_scalar(scalar.mod(group_order), random)
+        var low = identity
+        var high = element
+        for (bit in LADDER_BITS - 1 downTo 0) {
+            val mask = select_mask(k.shiftRight(bit).toInt() and 1)
+            val swapped_low = select(low, high, mask)
+            val swapped_high = select(high, low, mask)
+            val sum = add(swapped_low, swapped_high)
+            val doubled = add(swapped_low, swapped_low)
+            low = select(doubled, sum, mask)
+            high = select(sum, doubled, mask)
         }
-        return result
+        return low
     }
+
+    fun blinded_scalar(k: BigInteger, random: SecureRandom = blinding_random): BigInteger =
+        k.add(group_order.multiply(BigInteger(BLINDING_BITS, random)))
+
+    private fun select_mask(bit: Int): BigInteger = full_mask.multiply(BigInteger.valueOf(bit.toLong()))
+
+    private fun select_value(when_clear: BigInteger, when_set: BigInteger, mask: BigInteger): BigInteger =
+        when_clear.xor(when_clear.xor(when_set).and(mask))
+
+    private fun select(when_clear: RistrettoElement, when_set: RistrettoElement, mask: BigInteger): RistrettoElement =
+        RistrettoElement(
+            select_value(when_clear.x, when_set.x, mask),
+            select_value(when_clear.y, when_set.y, mask),
+            select_value(when_clear.z, when_set.z, mask),
+            select_value(when_clear.t, when_set.t, mask),
+        )
+
+    private const val BLINDING_BITS = 64
+
+    private const val LADDER_BITS = 256 + BLINDING_BITS
+
+    private val full_mask: BigInteger = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE)
+
+    private val blinding_random = SecureRandom()
 
     fun scalar_from_wide_bytes(bytes: ByteArray): BigInteger = le_to_integer(bytes).mod(group_order)
 

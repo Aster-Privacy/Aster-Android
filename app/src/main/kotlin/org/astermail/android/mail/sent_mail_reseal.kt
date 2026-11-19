@@ -58,10 +58,15 @@ object SentMailResealCrypto {
         return decoded.contentEquals(INLINE_SENTINEL)
     }
 
-    fun open(sealed_b64: String, passphrase: ByteArray): ByteArray? {
+    fun open(
+        sealed_b64: String,
+        passphrase: ByteArray,
+        refused_salt: (ByteArray) -> Boolean = { false },
+    ): ByteArray? {
         val data = runCatching { Base64.getDecoder().decode(sealed_b64.trim()) }.getOrNull() ?: return null
         if (data.size <= SALT_LENGTH + NONCE_LENGTH) return null
         val salt = data.copyOfRange(0, SALT_LENGTH)
+        if (refused_salt(salt)) return null
         val nonce = data.copyOfRange(SALT_LENGTH, SALT_LENGTH + NONCE_LENGTH)
         val ciphertext = data.copyOfRange(SALT_LENGTH + NONCE_LENGTH, data.size)
         val key = PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
@@ -91,8 +96,12 @@ object SentMailResealCrypto {
         return String(decoded, Charsets.UTF_8).trimStart().startsWith(PGP_MESSAGE_HEADER)
     }
 
-    fun opens_with(sealed_b64: String, passphrase: ByteArray): Boolean {
-        val plaintext = open(sealed_b64, passphrase) ?: return false
+    fun opens_with(
+        sealed_b64: String,
+        passphrase: ByteArray,
+        refused_salt: (ByteArray) -> Boolean = { false },
+    ): Boolean {
+        val plaintext = open(sealed_b64, passphrase, refused_salt) ?: return false
         plaintext.fill(0)
         return true
     }
@@ -169,9 +178,9 @@ class SentMailResealer @Inject constructor(
         if (sealed.isNullOrBlank() || !SentMailResealCrypto.is_sentinel_nonce(item.envelope_nonce)) {
             return reseal_converted_item_meta(item, old_passphrase, new_passphrase)
         }
-        val plaintext = SentMailResealCrypto.open(sealed, old_passphrase)
+        val plaintext = SentMailResealCrypto.open(sealed, old_passphrase, ::is_login_salt)
         if (plaintext == null) {
-            return if (SentMailResealCrypto.opens_with(sealed, new_passphrase)) Outcome.SKIPPED else Outcome.UNREADABLE
+            return if (SentMailResealCrypto.opens_with(sealed, new_passphrase, ::is_login_salt)) Outcome.SKIPPED else Outcome.UNREADABLE
         }
         val (resealed, resealed_nonce) = try {
             reseal_plaintext(plaintext, new_passphrase, SentMailResealCrypto.sentinel_nonce_b64())
@@ -201,6 +210,8 @@ class SentMailResealer @Inject constructor(
         return if (meta != null) Outcome.REWRITTEN else Outcome.FAILED
     }
 
+    private fun is_login_salt(salt: ByteArray): Boolean = session_key_store?.is_login_salt(salt) == true
+
     private fun may_have_attachments(item: MailItem): Boolean =
         item.has_attachments == true || (item.attachment_count ?: 0) > 0
 
@@ -229,9 +240,9 @@ class SentMailResealer @Inject constructor(
                 if (SentMailResealCrypto.is_pgp_armored_b64(attachment.encrypted_meta)) continue
                 if (legacy_only && !AccountDataConversion.is_legacy_meta_nonce(attachment.meta_nonce)) continue
                 if (opens_as_level2(attachment.encrypted_meta)) continue
-                val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase)
+                val plaintext = SentMailResealCrypto.open(attachment.encrypted_meta, old_passphrase, ::is_login_salt)
                 if (plaintext == null) {
-                    if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase)) continue
+                    if (SentMailResealCrypto.opens_with(attachment.encrypted_meta, new_passphrase, ::is_login_salt)) continue
                     return null
                 }
                 val (resealed, resealed_nonce) = try {

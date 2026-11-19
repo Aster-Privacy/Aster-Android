@@ -31,6 +31,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.astermail.android.crypto.FieldFormat
 
 const val PROFILE_NOTES_HMAC_INFO = "profile-notes-hmac-v1"
 const val RATCHET_STATES_PATH = "/crypto/v1/ratchet/states"
@@ -60,13 +61,13 @@ private class RatchetOpened(val plaintext: ByteArray, val bound: Boolean, val de
 
 private class AddressOwner(val key: String, val base: String)
 
-private class SealedPair(val ciphertext_field: String, val nonce_field: String)
+private class SealedPair(val ciphertext_field: String, val nonce_field: String, val label: String)
 
 private class StaleFieldValue(val row: JsonObject, val sealed: SealedValue)
 
-private val NAME_PAIR = SealedPair("encrypted_name", "name_nonce")
-private val CONTENT_PAIR = SealedPair("encrypted_content", "content_nonce")
-private val CATEGORY_PAIR = SealedPair("encrypted_category", "category_nonce")
+private val NAME_PAIR = SealedPair("encrypted_name", "name_nonce", "name")
+private val CONTENT_PAIR = SealedPair("encrypted_content", "content_nonce", "content")
+private val CATEGORY_PAIR = SealedPair("encrypted_category", "category_nonce", "category")
 
 private val EMPTY_OBJECT = JsonObject(emptyMap())
 
@@ -767,11 +768,25 @@ val contact_extras_step: ResealStep = object : ResealStep {
     }
 }
 
-private fun plan_pairs(ctx: ResealContext, row: JsonObject, pairs: List<SealedPair>): JsonObject {
+private fun plan_pairs(
+    ctx: ResealContext,
+    row: JsonObject,
+    pairs: List<SealedPair>,
+    field_kind: String? = null,
+): JsonObject {
     val body = LinkedHashMap<String, JsonElement>()
     val results = ArrayList<ResealResult>()
     for (pair in pairs) {
-        val result = reseal_field(ctx.keys, row.str(pair.ciphertext_field), row.str(pair.nonce_field))
+        val result = if (field_kind == null) {
+            reseal_field(ctx.keys, row.str(pair.ciphertext_field), row.str(pair.nonce_field))
+        } else {
+            reseal_bound_field(
+                ctx.keys,
+                row.str(pair.ciphertext_field),
+                row.str(pair.nonce_field),
+                FieldBinding(field_kind, pair.label, row.str("id")),
+            )
+        }
         results.add(result)
         if (result is ResealResult.Sealed) {
             body[pair.ciphertext_field] = JsonPrimitive(result.value.ciphertext)
@@ -796,6 +811,7 @@ private fun editable_rows_step(
     list_path: String,
     list_key: String,
     pairs: List<SealedPair>,
+    field_kind: String? = null,
 ): ResealStep = object : ResealStep {
     override val name: String = step_name
 
@@ -805,7 +821,7 @@ private fun editable_rows_step(
         val before = incomplete_count(ctx)
         val rows = collect_id_pages(ctx, list_path, list_key, "${step_name}_list", true)
         for (row in rows) {
-            val body = plan_pairs(ctx, row, pairs)
+            val body = plan_pairs(ctx, row, pairs, field_kind)
             if (body.isEmpty()) continue
             val item_path = "$list_path/${url_component(row.str("id") ?: "undefined")}"
             write_if_unchanged(
@@ -833,6 +849,7 @@ val templates_step: ResealStep = editable_rows_step(
     "/mail/v1/templates",
     "templates",
     listOf(NAME_PAIR, CATEGORY_PAIR, CONTENT_PAIR),
+    FieldFormat.KIND_TEMPLATE,
 )
 
 val sync_sources_step: ResealStep = object : ResealStep {

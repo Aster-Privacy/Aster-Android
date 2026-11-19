@@ -778,6 +778,61 @@ class ContactsRepositoryTest {
         assertTrue(repo.fetch_contact("c_wrong").isFailure)
     }
 
+    private fun contact_item_sealed_with(id: String, first_name: String, key: ByteArray): ContactItem {
+        val json = """{"first_name":"$first_name","last_name":"Smith","emails":["${first_name.lowercase()}@astermail.org"],"is_favorite":false}"""
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(128, nonce))
+        val ciphertext = cipher.doFinal(json.toByteArray(Charsets.UTF_8))
+        return ContactItem(
+            id = id,
+            encrypted_data = java.util.Base64.getEncoder().encodeToString(ciphertext),
+            data_nonce = java.util.Base64.getEncoder().encodeToString(nonce),
+        )
+    }
+
+    private fun constant_sealed_report(id: String): Boolean {
+        val method = ContactsRepository::class.java.methods.firstOrNull { it.name == "is_constant_sealed" }
+        assertTrue("the repository must report which contacts opened under a public key", method != null)
+        return method!!.invoke(repo, id) as Boolean
+    }
+
+    @Test
+    fun `contacts that open under a public constant stay readable and are reported`() = runTest {
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = null) } returns ListContactsResponse(
+            items = listOf(
+                contact_item_sealed_with("c_const", "Mallory", constant),
+                contact_item_sealed_with("c_own", "Alice", derive_test_key()),
+            ),
+            has_more = false,
+            next_cursor = null,
+        )
+
+        val contacts = repo.fetch_contacts().getOrThrow()
+
+        assertEquals(listOf("Mallory Smith", "Alice Smith"), contacts.map { it.name })
+        assertTrue("a contact under a public constant must be reported", constant_sealed_report("c_const"))
+        assertFalse("a contact under the account key must not be reported", constant_sealed_report("c_own"))
+    }
+
+    @Test
+    fun `contacts that open under a placeholder previous key are reported`() = runTest {
+        every { session_key_store.get_previous_keys() } returns listOf("undefined")
+        val placeholder = MessageDigest.getInstance("SHA-256")
+            .digest("undefinedastermail-envelope-v1".toByteArray(Charsets.UTF_8))
+        coEvery { contacts_api.list_contacts(limit = 100, cursor = null) } returns ListContactsResponse(
+            items = listOf(contact_item_sealed_with("c_placeholder", "Trent", placeholder)),
+            has_more = false,
+            next_cursor = null,
+        )
+
+        val contacts = repo.fetch_contacts().getOrThrow()
+
+        assertEquals(listOf("Trent Smith"), contacts.map { it.name })
+        assertTrue("a contact under a placeholder key must be reported", constant_sealed_report("c_placeholder"))
+    }
+
     private companion object {
         const val DECRYPT_THREAD = "contacts-decrypt-test"
     }

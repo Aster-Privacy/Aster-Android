@@ -85,6 +85,142 @@ class ContactsViewModelTest {
         email = email,
     )
 
+    private val updated_ids = java.util.Collections.synchronizedList(mutableListOf<String>())
+
+    private fun import_file_over(existing: Contact, mark_constant_sealed: Boolean) {
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(existing))
+        coEvery { repository.update_contact(any(), any()) } answers {
+            updated_ids.add(firstArg())
+            Result.success(Unit)
+        }
+        if (mark_constant_sealed) {
+            val method = ContactsRepository::class.java.methods.firstOrNull { it.name == "is_constant_sealed" }
+            if (method != null) every { method.invoke(repository, existing.id) } returns true
+        }
+        val vcard = listOf(
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            "FN:Alice Smith",
+            "N:Smith;Alice;;;",
+            "EMAIL;TYPE=HOME:alice@astermail.org",
+            "EMAIL;TYPE=WORK:alice@work.example",
+            "END:VCARD",
+            "",
+        ).joinToString("\r\n")
+        val resolver = mockk<android.content.ContentResolver>(relaxed = true)
+        val uri = mockk<android.net.Uri>(relaxed = true)
+        every { context.contentResolver } returns resolver
+        every { resolver.query(uri, any(), any(), any(), any()) } returns null
+        every { uri.lastPathSegment } returns "contacts.vcf"
+        every { resolver.openInputStream(uri) } answers { vcard.toByteArray(Charsets.UTF_8).inputStream() }
+        vm.import_contacts_from_file(context, uri)
+    }
+
+    private fun device_cursor(columns: List<String>, rows: List<List<Any?>>): android.database.Cursor {
+        val cursor = mockk<android.database.Cursor>(relaxed = true)
+        var position = -1
+        every { cursor.getColumnIndex(any()) } answers { columns.indexOf(firstArg<String>()) }
+        every { cursor.moveToNext() } answers { position++; position < rows.size }
+        every { cursor.getString(any()) } answers { rows[position][firstArg<Int>()]?.toString() }
+        every { cursor.getInt(any()) } answers { (rows[position][firstArg<Int>()] as? Int) ?: 0 }
+        every { cursor.isNull(any()) } answers { rows[position][firstArg<Int>()] == null }
+        return cursor
+    }
+
+    private fun sync_device_over(existing: Contact, saved_baselines: MutableList<Set<String>>) {
+        coEvery { repository.fetch_contacts() } returns Result.success(listOf(existing))
+        every { repository.current_account() } returns "account_1"
+        every { repository.is_constant_sealed(existing.id) } returns true
+        coEvery { repository.update_contact(any(), any()) } answers {
+            updated_ids.add(firstArg())
+            Result.success(Unit)
+        }
+        val app_context = mockk<android.content.Context>(relaxed = true)
+        val prefs = mockk<android.content.SharedPreferences>(relaxed = true)
+        val editor = mockk<android.content.SharedPreferences.Editor>(relaxed = true)
+        every { context.applicationContext } returns app_context
+        every { app_context.getSharedPreferences(any(), any()) } returns prefs
+        every { prefs.getStringSet(any(), any()) } returns emptySet()
+        every { prefs.edit() } returns editor
+        every { editor.putStringSet(any(), any()) } answers {
+            saved_baselines.add(secondArg<Set<String>>().toSet())
+            editor
+        }
+        val resolver = mockk<android.content.ContentResolver>(relaxed = true)
+        every { context.contentResolver } returns resolver
+        val email_type = android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE
+        every { resolver.query(any(), any(), any(), any(), any()) } answers {
+            val projection = secondArg<Array<String>?>().orEmpty().toList()
+            when {
+                android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY in projection -> device_cursor(
+                    listOf("_id", android.provider.ContactsContract.Contacts.DISPLAY_NAME_PRIMARY, "photo_id"),
+                    listOf(listOf("7", "Alice Smith", null)),
+                )
+                android.provider.ContactsContract.Data.MIMETYPE in projection -> device_cursor(
+                    listOf("contact_id", android.provider.ContactsContract.Data.MIMETYPE, "data1", "data2"),
+                    listOf(
+                        listOf("7", email_type, "alice@astermail.org", 1),
+                        listOf("7", email_type, "alice@work.example", 2),
+                    ),
+                )
+                else -> device_cursor(listOf("contact_id"), listOf(listOf("7")))
+            }
+        }
+        vm.sync_device_contacts(context)
+    }
+
+    private fun kotlinx.coroutines.test.TestScope.await_sync() {
+        repeat(500) {
+            advanceUntilIdle()
+            if (!vm.state.value.is_syncing) return
+            Thread.sleep(10)
+        }
+    }
+
+    @Test
+    fun `a device sync that skips only sealed contacts still records the device baseline`() = runTest {
+        val saved_baselines = java.util.Collections.synchronizedList(mutableListOf<Set<String>>())
+        sync_device_over(fake_contact(), saved_baselines)
+        await_sync()
+
+        assertFalse(vm.state.value.is_syncing)
+        assertTrue("a sealed contact must not be merged", updated_ids.isEmpty())
+        assertEquals(
+            "the device baseline must be saved when every pending merge went through",
+            1,
+            saved_baselines.size,
+        )
+        assertTrue(saved_baselines.single().isNotEmpty())
+    }
+
+    private fun kotlinx.coroutines.test.TestScope.await_transfer() {
+        repeat(500) {
+            advanceUntilIdle()
+            if (!vm.state.value.is_transferring) return
+            Thread.sleep(10)
+        }
+    }
+
+    @Test
+    fun `importing a file merges new entries into a stored contact`() = runTest {
+        import_file_over(fake_contact(), mark_constant_sealed = false)
+        await_transfer()
+
+        assertEquals(listOf("c_1"), updated_ids)
+    }
+
+    @Test
+    fun `importing a file never merges into a contact sealed under a public key`() = runTest {
+        import_file_over(fake_contact(), mark_constant_sealed = true)
+        await_transfer()
+
+        assertFalse(vm.state.value.is_transferring)
+        assertTrue(
+            "an automatic merge must not reseal a contact that opened under a public key",
+            updated_ids.isEmpty(),
+        )
+    }
+
     @Test
     fun `initial state has correct defaults`() {
         val state = vm.state.value

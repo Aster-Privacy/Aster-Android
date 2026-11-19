@@ -89,7 +89,42 @@ object StorageModule {
     @Provides
     @Singleton
     fun provide_session_key_store(@ApplicationContext context: Context): SessionKeyStore =
-        SessionKeyStore(context).also { it.add_clear_listener { org.astermail.android.crypto.PgpDecryptor.clear_caches() } }
+        SessionKeyStore(context).also { store ->
+            store.add_clear_listener { org.astermail.android.crypto.PgpDecryptor.clear_caches() }
+            org.astermail.android.crypto.VaultBindingFloor.bind_account_source { store.get_user_id() }
+            org.astermail.android.crypto.VaultBindingFloor.bind_store(
+                SecureVaultBindingFloorStore(
+                    prefs = {
+                        runCatching {
+                            org.astermail.android.storage.SecurePrefs.open(context, SecureVaultBindingFloorStore.PREFS_NAME)
+                        }.getOrNull()
+                    },
+                    backup = {
+                        runCatching {
+                            context.getSharedPreferences(SecureVaultBindingFloorStore.BACKUP_PREFS_NAME, Context.MODE_PRIVATE)
+                        }.getOrNull()
+                    },
+                ),
+            )
+            org.astermail.android.mail.InboundMarkerFloor.bind(
+                account = { store.get_user_id() },
+                floor_store = org.astermail.android.mail.SecureInboundMarkerFloorStore {
+                    runCatching {
+                        org.astermail.android.storage.SecurePrefs.open(
+                            context,
+                            org.astermail.android.mail.SecureInboundMarkerFloorStore.PREFS_NAME,
+                        )
+                    }.getOrNull()
+                },
+            )
+            org.astermail.android.crypto.BoundFieldRecords.bind(
+                SecureBoundFieldRecordStore {
+                    runCatching {
+                        org.astermail.android.storage.SecurePrefs.open(context, SecureBoundFieldRecordStore.PREFS_NAME)
+                    }.getOrNull()
+                },
+            )
+        }
 
     @Provides
     @Singleton
@@ -118,8 +153,24 @@ object StorageModule {
     @Singleton
     fun provide_database(@ApplicationContext context: Context): AsterDatabase {
         val meta = runCatching { SecurePrefs.open(context, db_meta_prefs) }.getOrNull()
-            ?: return build_in_memory_database(context)
-        val database_exists = runCatching { context.getDatabasePath(db_name).exists() }.getOrDefault(false)
+        val database_file = runCatching { context.getDatabasePath(db_name) }.getOrNull()
+        database_file?.let { file -> runCatching { restore_set_aside_database(file) } }
+        val found_database = runCatching { database_file?.exists() == true }.getOrDefault(false)
+        val plaintext_action = if (found_database) {
+            plaintext_database_action(
+                runCatching { meta?.getBoolean(key_sqlcipher_migrated, false) }.getOrNull(),
+                runCatching { database_file?.let { read_database_header(it) } }.getOrNull(),
+            )
+        } else {
+            PlaintextDatabaseAction.KEEP
+        }
+        if (plaintext_action == PlaintextDatabaseAction.KEEP_AND_USE_MEMORY) return build_in_memory_database(context)
+        val set_aside = plaintext_action == PlaintextDatabaseAction.SET_ASIDE &&
+            database_file != null && runCatching { set_aside_database(database_file) }.getOrDefault(false)
+        if (plaintext_action == PlaintextDatabaseAction.SET_ASIDE && !set_aside) return build_in_memory_database(context)
+        if (meta == null) return build_in_memory_database(context)
+        val database_exists = found_database &&
+            runCatching { context.getDatabasePath(db_name).exists() }.getOrDefault(false)
         val key_material_readable = meta !is org.astermail.android.storage.InMemoryPrefs &&
             !org.astermail.android.storage.SecurePrefs.was_key_material_lost(context)
         if (database_exists && !key_material_readable) {
@@ -129,43 +180,105 @@ object StorageModule {
             runCatching { context.deleteDatabase(db_name) }
         }
         val passphrase = db_passphrase(meta) ?: return build_in_memory_database(context)
-        return try {
-            val db = build_mail_database(context, passphrase)
-            runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
-            runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
-            db
-        } catch (first_error: Throwable) {
-            if (org.astermail.android.BuildConfig.DEBUG) {
-                android.util.Log.e("StorageModule", "encrypted db open failed, retrying fresh", first_error)
-            }
-            val failures = meta.getInt(key_db_open_failures, 0) + 1
-            runCatching { meta.edit().putInt(key_db_open_failures, failures).commit() }
-            if (!should_reset_database(
-                    database_exists,
-                    meta.getBoolean(key_sqlcipher_migrated, false),
-                    failures,
-                )
-            ) {
-                return build_in_memory_database(context)
-            }
-            runCatching { context.deleteDatabase(db_name) }
+        return open_encrypted_database(
+            meta = meta,
+            database_file = database_file,
+            database_exists = database_exists,
+            reset = { context.deleteDatabase(db_name) },
+            build = { build_mail_database(context, passphrase) },
+            fallback = { build_in_memory_database(context) },
+            on_error = { message, error ->
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.e("StorageModule", message, error)
+            },
+        )
+    }
+
+    fun <T> open_encrypted_database(
+        meta: SharedPreferences,
+        database_file: java.io.File?,
+        database_exists: Boolean,
+        reset: () -> Unit,
+        build: () -> T,
+        fallback: () -> T,
+        on_error: (String, Throwable) -> Unit = { _, _ -> },
+    ): T = try {
+        build().also { mark_database_opened(meta, database_file) }
+    } catch (first_error: Throwable) {
+        on_error("encrypted db open failed, retrying fresh", first_error)
+        val failures = meta.getInt(key_db_open_failures, 0) + 1
+        runCatching { meta.edit().putInt(key_db_open_failures, failures).commit() }
+        if (!should_reset_database(database_exists, meta.getBoolean(key_sqlcipher_migrated, false), failures)) {
+            fallback()
+        } else {
+            runCatching { reset() }
             try {
-                val db = build_mail_database(context, passphrase)
-                runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
-                runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
-                db
+                build().also { mark_database_opened(meta, database_file) }
             } catch (second_error: Throwable) {
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.e(
-                        "StorageModule",
-                        "encrypted db unavailable, falling back to in-memory (unencrypted, non-persistent)",
-                        second_error,
-                    )
-                }
-                build_in_memory_database(context)
+                on_error("encrypted db unavailable, falling back to in-memory (unencrypted, non-persistent)", second_error)
+                fallback()
             }
         }
     }
+
+    private fun mark_database_opened(meta: SharedPreferences, database_file: java.io.File?) {
+        runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
+        runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
+        database_file?.let { file -> runCatching { discard_set_aside_database(file) } }
+    }
+
+    fun is_plaintext_sqlite_header(header: ByteArray?): Boolean =
+        header != null && header.size >= plaintext_sqlite_header.size &&
+            plaintext_sqlite_header.indices.all { header[it] == plaintext_sqlite_header[it] }
+
+    enum class PlaintextDatabaseAction { KEEP, KEEP_AND_USE_MEMORY, SET_ASIDE }
+
+    fun plaintext_database_action(sqlcipher_migrated: Boolean?, header: ByteArray?): PlaintextDatabaseAction = when {
+        !is_plaintext_sqlite_header(header) -> PlaintextDatabaseAction.KEEP
+        sqlcipher_migrated == null -> PlaintextDatabaseAction.KEEP_AND_USE_MEMORY
+        sqlcipher_migrated -> PlaintextDatabaseAction.KEEP
+        else -> PlaintextDatabaseAction.SET_ASIDE
+    }
+
+    fun set_aside_database(file: java.io.File): Boolean {
+        database_files(file).forEach { (source, target) ->
+            if (!source.exists()) return@forEach
+            target.delete()
+            if (!source.renameTo(target)) return false
+        }
+        return !file.exists()
+    }
+
+    fun restore_set_aside_database(file: java.io.File) {
+        if (file.exists()) return
+        database_files(file).forEach { (source, target) ->
+            if (target.exists() && !source.exists()) target.renameTo(source)
+        }
+    }
+
+    fun discard_set_aside_database(file: java.io.File) {
+        database_files(file).forEach { (_, target) -> target.delete() }
+    }
+
+    private fun database_files(file: java.io.File): List<Pair<java.io.File, java.io.File>> =
+        listOf("", "-wal", "-shm", "-journal").map { suffix ->
+            java.io.File(file.path + suffix) to java.io.File(file.path + set_aside_suffix + suffix)
+        }
+
+    private const val set_aside_suffix = ".set_aside"
+
+    private fun read_database_header(file: java.io.File): ByteArray =
+        file.inputStream().use { input ->
+            val header = ByteArray(plaintext_sqlite_header.size)
+            var read = 0
+            while (read < header.size) {
+                val count = input.read(header, read, header.size - read)
+                if (count < 0) break
+                read += count
+            }
+            header.copyOf(read)
+        }
+
+    private val plaintext_sqlite_header = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 
     fun should_reset_database(
         database_exists: Boolean,

@@ -125,6 +125,24 @@ object RatchetIdentityPinRules {
         return if (known) SenderIdentityContinuity.KNOWN else SenderIdentityContinuity.CHANGED
     }
 
+    fun outgoing_outcome(
+        remembered_fingerprints: List<String>?,
+        pinned_fingerprint: String?,
+        current_fingerprint: String?,
+    ): IdentityPinOutcome {
+        if (current_fingerprint.isNullOrBlank()) return IdentityPinOutcome.CHANGED
+        val pinned = pinned_fingerprint?.takeIf { it.isNotBlank() }
+        if (pinned != null) {
+            return if (pinned == current_fingerprint) IdentityPinOutcome.UNCHANGED else IdentityPinOutcome.CHANGED
+        }
+        val remembered = remembered_fingerprints ?: return IdentityPinOutcome.CHANGED
+        return if (remembered.isEmpty() || current_fingerprint in remembered) {
+            IdentityPinOutcome.FIRST_CONTACT
+        } else {
+            IdentityPinOutcome.CHANGED
+        }
+    }
+
     fun merge_remembered(lists: List<List<String>>, limit: Int): List<String> =
         lists.flatten().filter { it.isNotBlank() }.asReversed().distinct().asReversed().takeLast(limit)
 

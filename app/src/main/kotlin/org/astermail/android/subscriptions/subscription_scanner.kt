@@ -216,6 +216,7 @@ class SubscriptionScanner @Inject constructor(
                     item.encrypted_envelope,
                     item.envelope_nonce,
                     item.id,
+                    received_at = item.created_at,
                 )
                 val envelope = decrypt_result.envelope
                 if (envelope == null) {

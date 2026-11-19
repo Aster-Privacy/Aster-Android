@@ -161,6 +161,33 @@ class PgpBodyFieldsTest {
     }
 
     @Test
+    fun a_plain_html_part_beside_a_decrypted_text_part_is_dropped() {
+        val resolved = resolve_pgp_body_fields(
+            fields(armored_stub, "<p>Written by someone else</p>"),
+        ) {
+            PgpDecryptionResult("Hello", PgpSignatureStatus.VALID)
+        }
+
+        assertTrue(resolved.pgp_encrypted)
+        assertEquals(PgpSignatureStatus.VALID, resolved.pgp_signature)
+        assertEquals("Hello", resolved.body_text)
+        assertNull(resolved.body_html)
+    }
+
+    @Test
+    fun an_armored_html_part_that_fails_beside_a_decrypted_text_part_is_dropped() {
+        var calls = 0
+        val resolved = resolve_pgp_body_fields(fields(armored_stub, armored_stub)) {
+            calls += 1
+            if (calls == 1) PgpDecryptionResult("Hello", PgpSignatureStatus.NONE) else null
+        }
+
+        assertTrue(resolved.pgp_encrypted)
+        assertEquals("Hello", resolved.body_text)
+        assertNull(resolved.body_html)
+    }
+
+    @Test
     fun armored_html_that_decrypts_is_marked_encrypted() {
         val resolved = resolve_pgp_body_fields(fields("", armored_stub)) {
             PgpDecryptionResult("<p>Hello</p>", PgpSignatureStatus.NONE)
@@ -168,6 +195,52 @@ class PgpBodyFieldsTest {
 
         assertTrue(resolved.pgp_encrypted)
         assertEquals("<p>Hello</p>", resolved.body_html)
+    }
+
+    @Test
+    fun a_plain_text_part_beside_a_decrypted_html_part_is_replaced() {
+        val resolved = resolve_pgp_body_fields(fields("Written by someone else", armored_stub)) {
+            PgpDecryptionResult("<p>Hello</p><p>there</p>", PgpSignatureStatus.VALID)
+        }
+
+        assertTrue(resolved.pgp_encrypted)
+        assertEquals("<p>Hello</p><p>there</p>", resolved.body_html)
+        assertFalse(resolved.body_text.contains("someone else"))
+        assertTrue(resolved.body_text.contains("Hello"))
+    }
+
+    @Test
+    fun an_armored_text_part_that_fails_beside_a_decrypted_html_part_is_replaced() {
+        var calls = 0
+        val resolved = resolve_pgp_body_fields(fields(armored_stub, armored_stub)) {
+            calls += 1
+            if (calls == 1) null else PgpDecryptionResult("<p>Hello</p>", PgpSignatureStatus.NONE)
+        }
+
+        assertTrue(resolved.pgp_encrypted)
+        assertEquals("Hello", resolved.body_text)
+        assertEquals("<p>Hello</p>", resolved.body_html)
+    }
+
+    @Test
+    fun a_decrypted_mime_html_part_moves_to_the_text_slot() {
+        val mime = "Content-Type: text/html; charset=utf-8\r\n\r\n<p>Hello</p>"
+        val resolved = resolve_pgp_body_fields(fields("Written by someone else", armored_stub)) {
+            PgpDecryptionResult(mime, PgpSignatureStatus.NONE)
+        }
+
+        assertTrue(resolved.pgp_encrypted)
+        assertEquals(mime, resolved.body_text)
+        assertNull(resolved.body_html)
+    }
+
+    @Test
+    fun an_html_part_that_does_not_decrypt_stays_visible_and_unmarked() {
+        val resolved = resolve_pgp_body_fields(fields("Hello", armored_stub)) { null }
+
+        assertFalse(resolved.pgp_encrypted)
+        assertEquals("Hello", resolved.body_text)
+        assertEquals(armored_stub, resolved.body_html)
     }
 
     @Test

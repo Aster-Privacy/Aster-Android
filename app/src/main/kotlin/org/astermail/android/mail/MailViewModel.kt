@@ -561,8 +561,11 @@ class MailViewModel @Inject constructor(
         is_reaction_limit_error(error) -> context.getString(R.string.cannot_react_limit)
         error is org.astermail.android.api.ApiError.RateLimited &&
             error.detail.isNotBlank() && error.detail != "rate limited" -> error.detail
-        (error is IllegalStateException || error is E2eEncryptionException || error is EncryptionRequiredException) &&
-            !error.message.isNullOrBlank() -> error.message.orEmpty()
+        (
+            error is IllegalStateException || error is E2eEncryptionException ||
+                error is EncryptionRequiredException || error is ExternalKeyChangedException ||
+                error is ExternalKeyPinUnavailableException
+            ) && !error.message.isNullOrBlank() -> error.message.orEmpty()
         else -> org.astermail.android.localized_api_error(context, error, context.getString(fallback))
     }
 
@@ -2123,7 +2126,11 @@ class MailViewModel @Inject constructor(
                 },
                 onFailure = { t ->
                     _thread_state.value = ThreadUiState(
-                        error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
+                        error = if (t is DraftDecryptionException) {
+                            context.getString(R.string.decrypt_failed_title)
+                        } else {
+                            org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
+                        },
                     )
                 },
             )
@@ -5721,7 +5728,11 @@ class MailViewModel @Inject constructor(
 
     suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
-    ): Result<List<RecipientKeyChange>> = repository.verified_external_key_fingerprint_changes(recipients)
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
+    ): Result<List<RecipientKeyChange>> =
+        repository.verified_external_key_fingerprint_changes(recipients, force_pgp, pgp_recipients, ack_scope)
 
     suspend fun recipient_lock_statuses(
         outside_recipients: List<String>,
@@ -5733,7 +5744,8 @@ class MailViewModel @Inject constructor(
 
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,
-    ): Boolean = repository.acknowledge_external_key_fingerprint_change(change)
+        ack_scope: String? = null,
+    ): Boolean = repository.acknowledge_external_key_fingerprint_change(change, ack_scope)
 
     suspend fun send_email(
         to: List<String>,
@@ -5752,6 +5764,7 @@ class MailViewModel @Inject constructor(
         allow_non_post_quantum: Boolean = false,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
     ): Result<org.astermail.android.api.send.SimpleSendResponse> = repository.durable_async {
         val result = repository.send_email(
             to = to,
@@ -5770,6 +5783,7 @@ class MailViewModel @Inject constructor(
             allow_non_post_quantum = allow_non_post_quantum,
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
+            ack_scope = ack_scope,
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
@@ -5916,6 +5930,7 @@ class MailViewModel @Inject constructor(
         reply_to_id: String? = null,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -5937,6 +5952,7 @@ class MailViewModel @Inject constructor(
             reply_to_id = reply_to_id,
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
+            ack_scope = ack_scope,
         )
     }
 

@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -63,6 +64,29 @@ class SessionKeyStore(context: Context? = null) {
 
     @Volatile
     private var retired_login_salts: List<String> = emptyList()
+
+    private val pin_context: Context? = context?.applicationContext ?: context
+
+    private val mail_legacy_retired_file = KeyPinFile(pin_context, mail_legacy_retired_prefs_name)
+
+    private val mail_legacy_retired_prefs: SharedPreferences?
+        get() = mail_legacy_retired_file.prefs
+
+    private val mail_legacy_retired_owners = HashSet<String>()
+
+    private val folder_key_pin_file = KeyPinFile(pin_context, folder_key_pins_prefs_name)
+
+    private val folder_key_pin_prefs: SharedPreferences?
+        get() = folder_key_pin_file.prefs
+
+    private val scheduled_untagged_file = KeyPinFile(pin_context, scheduled_untagged_prefs_name)
+
+    private val scheduled_untagged_snapshots = HashMap<String, ScheduledUntaggedSnapshot>()
+
+    private val legacy_folder_kdf_pin_prefs: SharedPreferences? =
+        context?.getSharedPreferences(legacy_folder_kdf_pins_prefs_name, Context.MODE_PRIVATE)
+
+    private val folder_key_pins = HashMap<String, Int>()
 
     @Volatile
     private var key_material: ByteArray? = null
@@ -104,6 +128,9 @@ class SessionKeyStore(context: Context? = null) {
     private var account_keks: List<String>? = null
 
     @Volatile
+    private var account_key_serial_floor = 0L
+
+    @Volatile
     private var level2_admitted = false
 
     @Volatile
@@ -119,12 +146,25 @@ class SessionKeyStore(context: Context? = null) {
 
     private val account_load_pending = MutableStateFlow(false)
 
+    private var account_keys_ready_ticket: AccountKeyLoadTicket? = null
+
+    private val account_keys_ready_count = MutableStateFlow(0L)
+
     @Volatile
     private var data_kek: ByteArray? = null
     private var storage_kdf_version: Int? = null
 
     @Volatile
     private var legacy_storage_keys_retired = false
+
+    @Volatile
+    private var retired_storage_key_hashes: List<String> = emptyList()
+
+    @Volatile
+    private var prekey_seal_key: ByteArray? = null
+
+    @Volatile
+    private var prekey_seal_migrated = false
 
     @Volatile
     private var pending_reseal_passphrase: ByteArray? = null
@@ -205,9 +245,16 @@ class SessionKeyStore(context: Context? = null) {
                 if (!saved_account_keks.isNullOrBlank()) {
                     account_keks = saved_account_keks.split("\n").filter { it.isNotBlank() }
                 }
+                account_key_serial_floor = p.getString(key_account_key_serial_floor, null)?.toLongOrNull() ?: 0L
                 data_kek = decode_b64_field(p, key_data_kek)
                 storage_kdf_version = if (p.contains(key_storage_kdf_version)) p.getInt(key_storage_kdf_version, 1) else null
                 legacy_storage_keys_retired = p.getBoolean(key_legacy_storage_keys_retired, false)
+                retired_storage_key_hashes = p.getString(key_retired_storage_key_hashes, null)
+                    ?.split("\n")
+                    ?.filter { it.isNotBlank() }
+                    ?: emptyList()
+                prekey_seal_key = decode_b64_field(p, key_prekey_seal_key)?.takeIf { it.size == 32 }
+                prekey_seal_migrated = p.getBoolean(key_prekey_seal_migrated, false)
                 pending_reseal_passphrase = decode_b64_field(p, key_pending_reseal_pass)
                 ratchet_identity_jwk = p.getString(key_ratchet_identity_jwk, null)
                 ratchet_identity_public_b64 = p.getString(key_ratchet_identity_pub, null)
@@ -437,10 +484,156 @@ class SessionKeyStore(context: Context? = null) {
         }
     }
 
+    fun pin_mail_legacy_retired(owner_id: String) {
+        if (owner_id.isBlank()) return
+        synchronized(lock) {
+            if (!mail_legacy_retired_owners.add(owner_id)) return
+            mail_legacy_retired_file.readable()
+            val saved = runCatching { mail_legacy_retired_prefs?.edit()?.putBoolean(owner_id, true)?.commit() == true }
+                .getOrDefault(false)
+            if (!saved && pin_context != null) android.util.Log.w("SessionKeyStore", "retirement pin kept in memory only")
+        }
+    }
+
+    fun mail_legacy_retired(): Boolean {
+        synchronized(lock) {
+            if (!mail_legacy_retired_file.readable()) return true
+            val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return any_mail_legacy_retired()
+            if (owner_id in mail_legacy_retired_owners) return true
+            val pinned = runCatching { mail_legacy_retired_prefs?.getBoolean(owner_id, false) == true }
+                .getOrDefault(false)
+            if (pinned) mail_legacy_retired_owners.add(owner_id)
+            return pinned
+        }
+    }
+
+    private fun any_mail_legacy_retired(): Boolean {
+        if (mail_legacy_retired_owners.isNotEmpty()) return true
+        return runCatching { mail_legacy_retired_prefs?.all?.values?.any { it == true } == true }
+            .getOrDefault(false)
+    }
+
+    fun key_pins_readable(): Boolean = synchronized(lock) {
+        mail_legacy_retired_file.readable() && folder_key_pin_file.readable() && scheduled_untagged_file.readable()
+    }
+
+    fun mark_key_pins_restored_from_vault() {
+        synchronized(lock) {
+            mail_legacy_retired_file.restore()
+            folder_key_pin_file.restore()
+            scheduled_untagged_file.restore()
+        }
+    }
+
+    fun folder_key_pin_known(folder_id: String): Int? {
+        synchronized(lock) {
+            if (!folder_key_pin_file.readable()) return null
+            return recorded_folder_key_pin(folder_id)
+        }
+    }
+
+    fun folder_key_pin(folder_id: String): Int = folder_key_pin_known(folder_id) ?: max_folder_key_pin
+
+    private fun recorded_folder_key_pin(folder_id: String): Int {
+        val key = folder_id.lowercase(java.util.Locale.ROOT)
+        val stored = runCatching { folder_key_pin_prefs?.getInt(key, 0) ?: 0 }.getOrDefault(0)
+        val legacy = runCatching {
+            val p = legacy_folder_kdf_pin_prefs
+            p != null && (p.getBoolean(folder_id, false) || p.getBoolean(key, false))
+        }.getOrDefault(false)
+        return maxOf(folder_key_pins[key] ?: 0, stored, if (legacy) 1 else 0)
+    }
+
+    fun raise_folder_key_pin(folder_id: String, level: Int): Boolean {
+        if (folder_id.isBlank() || level !in 1..max_folder_key_pin) return false
+        val key = folder_id.lowercase(java.util.Locale.ROOT)
+        synchronized(lock) {
+            if (recorded_folder_key_pin(folder_id) >= level) return false
+            folder_key_pins[key] = level
+            if (pin_context == null) return true
+            folder_key_pin_file.readable()
+            val saved = runCatching { folder_key_pin_prefs?.edit()?.putInt(key, level)?.commit() == true }
+                .getOrDefault(false)
+            if (!saved) android.util.Log.w("SessionKeyStore", "folder pin kept in memory only")
+            return saved
+        }
+    }
+
+    fun scheduled_untagged_snapshot(): ScheduledUntaggedSnapshot? {
+        synchronized(lock) {
+            val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return ScheduledUntaggedSnapshot.EMPTY
+            if (!scheduled_untagged_file.readable()) return ScheduledUntaggedSnapshot.EMPTY
+            return recorded_scheduled_untagged(owner_id)
+        }
+    }
+
+    fun put_scheduled_untagged_snapshot(snapshot: ScheduledUntaggedSnapshot): ScheduledUntaggedSnapshot {
+        synchronized(lock) {
+            val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return ScheduledUntaggedSnapshot.EMPTY
+            if (!scheduled_untagged_file.readable()) return ScheduledUntaggedSnapshot.EMPTY
+            recorded_scheduled_untagged(owner_id)?.let { return it }
+            store_scheduled_untagged(owner_id, snapshot)
+            return snapshot
+        }
+    }
+
+    fun absorb_scheduled_untagged_snapshot(snapshot: ScheduledUntaggedSnapshot?, replace: Boolean) {
+        if (snapshot == null) return
+        synchronized(lock) {
+            val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return
+            if (!replace && recorded_scheduled_untagged(owner_id) != null) return
+            store_scheduled_untagged(owner_id, snapshot)
+        }
+    }
+
+    private fun recorded_scheduled_untagged(owner_id: String): ScheduledUntaggedSnapshot? {
+        scheduled_untagged_snapshots[owner_id]?.let { return it }
+        val raw = runCatching { scheduled_untagged_file.prefs?.getString(owner_id, null) }.getOrNull() ?: return null
+        val shared = runCatching { ScheduledUntaggedSnapshot.from_json(org.json.JSONObject(raw)) }.getOrNull()
+        if (shared != null) {
+            scheduled_untagged_snapshots[owner_id] = shared
+            return shared
+        }
+        val listed = runCatching { snapshot_id_list(org.json.JSONArray(raw)) }.getOrNull()
+        if (listed == null) {
+            scheduled_untagged_snapshots[owner_id] = ScheduledUntaggedSnapshot.EMPTY
+            return ScheduledUntaggedSnapshot.EMPTY
+        }
+        val migrated = ScheduledUntaggedSnapshot.taken_at(listed, System.currentTimeMillis())
+        store_scheduled_untagged(owner_id, migrated)
+        return migrated
+    }
+
+    private fun store_scheduled_untagged(owner_id: String, snapshot: ScheduledUntaggedSnapshot) {
+        scheduled_untagged_snapshots[owner_id] = snapshot
+        if (pin_context == null) return
+        scheduled_untagged_file.readable()
+        val saved = runCatching {
+            scheduled_untagged_file.prefs?.edit()
+                ?.putString(owner_id, snapshot.to_json().toString())
+                ?.commit() == true
+        }.getOrDefault(false)
+        if (!saved) android.util.Log.w("SessionKeyStore", "scheduled snapshot kept in memory only")
+    }
+
     fun get_retired_password_salts(): List<ByteArray> {
         synchronized(lock) {
             val owner_id = user_id ?: return emptyList()
             return RetiredLoginSalts.salts_for(retired_login_salts, owner_id)
+        }
+    }
+
+    fun is_login_salt(salt: ByteArray): Boolean {
+        if (salt.isEmpty()) return false
+        synchronized(lock) {
+            if (password_salt?.let { java.security.MessageDigest.isEqual(it, salt) } == true) return true
+            val owner_id = user_id ?: return false
+            val retired = RetiredLoginSalts.salts_for(retired_login_salts, owner_id)
+            try {
+                return retired.any { java.security.MessageDigest.isEqual(it, salt) }
+            } finally {
+                retired.forEach { it.fill(0) }
+            }
         }
     }
 
@@ -504,7 +697,7 @@ class SessionKeyStore(context: Context? = null) {
 
     fun get_legacy_keks(): List<String>? {
         synchronized(lock) {
-            return legacy_keks?.toList()
+            return legacy_keks?.let { RetiredStorageKeys.not_retired(it, retired_storage_key_hashes) }
         }
     }
 
@@ -520,6 +713,24 @@ class SessionKeyStore(context: Context? = null) {
             account_keks = keys.toList()
             prefs?.edit()
                 ?.putString(key_account_keks, keys.joinToString("\n"))
+                ?.commit()
+            return true
+        }
+    }
+
+    fun account_key_serial_floor(): Long {
+        synchronized(lock) {
+            return account_key_serial_floor
+        }
+    }
+
+    fun raise_account_key_serial_floor(serial: Long, generation: Long): Boolean {
+        synchronized(lock) {
+            if (generation != account_kek_generation) return false
+            if (serial <= account_key_serial_floor) return true
+            account_key_serial_floor = serial
+            prefs?.edit()
+                ?.putString(key_account_key_serial_floor, serial.toString())
                 ?.commit()
             return true
         }
@@ -543,6 +754,68 @@ class SessionKeyStore(context: Context? = null) {
     fun finish_account_key_load(ticket: AccountKeyLoadTicket) {
         synchronized(lock) {
             if (ticket.seq == account_load_seq) account_load_pending.value = false
+            if (ticket.seq == account_load_seq && ticket.write_epoch == account_write_epoch && account_keys_ready_ticket == ticket) {
+                account_keys_ready_count.value = account_keys_ready_count.value + 1
+            }
+        }
+    }
+
+    fun account_keys_ready_events(): StateFlow<Long> = account_keys_ready_count
+
+    fun account_key_load_pending(): Boolean = account_load_pending.value
+
+    fun complete_account_key_load(ticket: AccountKeyLoadTicket, generation: Long): Boolean {
+        synchronized(lock) {
+            if (generation != account_kek_generation) return false
+            if (ticket.seq != account_load_seq || ticket.write_epoch != account_write_epoch) return false
+            account_keys_ready_ticket = ticket
+            return true
+        }
+    }
+
+    fun account_keys_ready(): Boolean {
+        synchronized(lock) {
+            val ticket = account_keys_ready_ticket ?: return false
+            return !account_load_pending.value &&
+                ticket.seq == account_load_seq &&
+                ticket.write_epoch == account_write_epoch
+        }
+    }
+
+    private val constant_use_prefs: SharedPreferences? =
+        context?.getSharedPreferences(constant_use_prefs_name, Context.MODE_PRIVATE)
+
+    private val constant_use_pending = HashSet<String>()
+
+    @Volatile
+    private var constant_use_seq: Long = 0
+
+    fun note_public_constant_use() {
+        synchronized(lock) {
+            val id = user_id ?: return
+            constant_use_seq += 1
+            if (constant_use_pending.add(id)) {
+                constant_use_prefs?.edit()?.putBoolean(constant_use_prefix + id, true)?.apply()
+            }
+        }
+    }
+
+    fun public_constant_use_pending(): Boolean {
+        synchronized(lock) {
+            val id = user_id ?: return false
+            return id in constant_use_pending ||
+                runCatching { constant_use_prefs?.getBoolean(constant_use_prefix + id, false) }.getOrNull() == true
+        }
+    }
+
+    fun public_constant_use_seq(): Long = constant_use_seq
+
+    fun clear_public_constant_use(seen_seq: Long) {
+        synchronized(lock) {
+            if (seen_seq != constant_use_seq) return
+            val id = user_id ?: return
+            constant_use_pending.remove(id)
+            constant_use_prefs?.edit()?.remove(constant_use_prefix + id)?.apply()
         }
     }
 
@@ -585,7 +858,10 @@ class SessionKeyStore(context: Context? = null) {
 
     fun get_decrypt_keks(): List<String> {
         synchronized(lock) {
-            return (legacy_keks.orEmpty() + account_keks.orEmpty()).distinct()
+            return RetiredStorageKeys.not_retired(
+                (legacy_keks.orEmpty() + account_keks.orEmpty()).distinct(),
+                retired_storage_key_hashes,
+            )
         }
     }
 
@@ -617,14 +893,47 @@ class SessionKeyStore(context: Context? = null) {
 
     fun get_storage_kdf_version(): Int? = synchronized(lock) { storage_kdf_version }
 
-    fun retire_legacy_storage_keys() {
+    fun retire_legacy_storage_keys(key_hashes: List<String>): Boolean {
         synchronized(lock) {
+            val merged = (retired_storage_key_hashes + key_hashes.filter { it.isNotBlank() }).distinct()
+            val committed = prefs?.let { store ->
+                runCatching {
+                    store.edit()
+                        .putString(key_retired_storage_key_hashes, merged.joinToString("\n"))
+                        .putBoolean(key_legacy_storage_keys_retired, true)
+                        .commit()
+                }.getOrDefault(false)
+            } ?: true
+            if (!committed) return false
+            retired_storage_key_hashes = merged
             legacy_storage_keys_retired = true
-            prefs?.edit()?.putBoolean(key_legacy_storage_keys_retired, true)?.commit()
+            return true
         }
     }
 
     fun legacy_storage_keys_retired(): Boolean = legacy_storage_keys_retired
+
+    fun retired_storage_key_hashes(): List<String> = retired_storage_key_hashes
+
+    fun put_prekey_seal(key: ByteArray?, migrated: Boolean) {
+        synchronized(lock) {
+            val editor = prefs?.edit()
+            if (key != null && key.size == 32) {
+                prekey_seal_key?.fill(0)
+                prekey_seal_key = key.copyOf()
+                editor?.putString(key_prekey_seal_key, encode_b64(key))
+            }
+            if (migrated && !prekey_seal_migrated) {
+                prekey_seal_migrated = true
+                editor?.putBoolean(key_prekey_seal_migrated, true)
+            }
+            editor?.commit()
+        }
+    }
+
+    fun get_prekey_seal_key(): ByteArray? = synchronized(lock) { prekey_seal_key?.copyOf() }
+
+    fun prekey_seal_migrated(): Boolean = prekey_seal_migrated
 
     fun get_data_kek(): ByteArray? {
         synchronized(lock) {
@@ -712,15 +1021,21 @@ class SessionKeyStore(context: Context? = null) {
             previous_keys = null
             legacy_keks = null
             account_keks = null
+            account_key_serial_floor = 0L
             account_kek_generation += 1
             drop_account_write_keks_locked()
             account_load_seq += 1
             account_load_pending.value = false
+            account_keys_ready_ticket = null
             data_kek?.fill(0)
             data_kek = null
             level2_admitted = false
             storage_kdf_version = null
             legacy_storage_keys_retired = false
+            retired_storage_key_hashes = emptyList()
+            prekey_seal_key?.fill(0)
+            prekey_seal_key = null
+            prekey_seal_migrated = false
             pending_reseal_passphrase?.fill(0)
             pending_reseal_passphrase = null
             ratchet_identity_jwk = null
@@ -749,9 +1064,16 @@ class SessionKeyStore(context: Context? = null) {
         private const val prefs_name = "aster_session_keys_v1"
         private val plain_names = setOf("user_id", "user_email")
         private const val vault_salts_prefs_name = "aster_vault_salts_v1"
+        private const val constant_use_prefs_name = "aster_constant_use_v1"
+        private const val constant_use_prefix = "pending_"
         private const val key_vault_salts = "vault_salts"
         private const val retired_login_salts_prefs_name = "aster_retired_login_salts_v1"
         private const val key_retired_login_salts = "retired_login_salts"
+        const val mail_legacy_retired_prefs_name = "aster_mail_legacy_retired_secure"
+        const val folder_key_pins_prefs_name = "aster_folder_key_pins_secure"
+        const val scheduled_untagged_prefs_name = "aster_scheduled_untagged_secure"
+        private const val legacy_folder_kdf_pins_prefs_name = "folder_kdf_pins"
+        const val max_folder_key_pin = 2
         private const val key_session_key = "session_key"
         private const val key_passphrase = "passphrase"
         private const val key_identity = "identity_key"
@@ -770,10 +1092,14 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_previous_keys = "previous_keys"
         private const val key_legacy_keks = "legacy_keks"
         private const val key_account_keks = "account_keks"
+        private const val key_account_key_serial_floor = "account_key_serial_floor"
         private const val key_data_kek = "data_kek"
         private const val key_external_pgp_blob = "external_pgp_blob"
         private const val key_storage_kdf_version = "storage_kdf_version"
         private const val key_legacy_storage_keys_retired = "legacy_storage_keys_retired"
+        private const val key_retired_storage_key_hashes = "retired_storage_key_hashes"
+        private const val key_prekey_seal_key = "prekey_seal_key"
+        private const val key_prekey_seal_migrated = "prekey_seal_migrated"
         private const val key_pending_reseal_pass = "pending_reseal_pass"
         private const val key_ratchet_identity_jwk = "ratchet_identity_jwk"
         private const val key_ratchet_identity_pub = "ratchet_identity_pub"
@@ -784,5 +1110,53 @@ class SessionKeyStore(context: Context? = null) {
         private const val key_ratchet_pq_identity_pub = "ratchet_pq_identity_pub"
         private const val key_pq_secret_prefix = "pq_secret_"
         private const val key_ec_one_time_secret_prefix = "ec_one_time_secret_"
+    }
+}
+
+private class KeyPinFile(private val context: Context?, private val name: String) {
+    val prefs: SharedPreferences? by lazy {
+        context?.let { runCatching { SecurePrefs.open(it, name) }.getOrNull() }
+    }
+
+    private val meta: SharedPreferences? by lazy {
+        context?.let { runCatching { it.getSharedPreferences(key_pin_meta_prefs_name, Context.MODE_PRIVATE) }.getOrNull() }
+    }
+
+    @Volatile private var trusted: Boolean? = null
+
+    @Volatile private var restored_in_memory = false
+
+    fun readable(): Boolean {
+        if (context == null || restored_in_memory) return true
+        trusted?.let { return it }
+        val result = runCatching { inspect() }.getOrDefault(false)
+        if (result) trusted = true
+        return result
+    }
+
+    fun restore() {
+        val sealed = runCatching { seal() }.getOrDefault(false)
+        if (sealed) trusted = true else restored_in_memory = true
+    }
+
+    private fun writable(): SharedPreferences? = prefs?.takeIf { it !is InMemoryPrefs }
+
+    private fun inspect(): Boolean {
+        val p = writable() ?: return false
+        if (p.contains(key_pin_sentinel)) return true
+        if (meta?.getBoolean(name, false) == true) return false
+        return seal()
+    }
+
+    private fun seal(): Boolean {
+        val p = writable() ?: return false
+        if (!p.edit().putString(key_pin_sentinel, "1").commit()) return false
+        meta?.edit()?.putBoolean(name, true)?.commit()
+        return true
+    }
+
+    private companion object {
+        const val key_pin_meta_prefs_name = "aster_key_pin_files_v1"
+        const val key_pin_sentinel = "__key_pin_file"
     }
 }

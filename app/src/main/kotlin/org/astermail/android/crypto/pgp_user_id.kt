@@ -86,8 +86,8 @@ fun add_address_to_pgp_key(
     return encode_with_public_key(ring, master, updated_public)
 }
 
-fun pgp_key_user_emails(armored_key: String): List<String> = try {
-    val master = if (armored_key.contains("PRIVATE KEY BLOCK")) {
+private fun read_master_public_key(armored_key: String): PGPPublicKey =
+    if (armored_key.contains("PRIVATE KEY BLOCK")) {
         read_secret_ring(armored_key).publicKey
     } else {
         PGPPublicKeyRing(
@@ -95,9 +95,17 @@ fun pgp_key_user_emails(armored_key: String): List<String> = try {
             BcKeyFingerprintCalculator(),
         ).publicKey
     }
-    user_ids_of(master).map { user_id_email(it) }
+
+fun pgp_key_user_emails(armored_key: String): List<String> = try {
+    user_ids_of(read_master_public_key(armored_key)).map { user_id_email(it) }
 } catch (_: Throwable) {
     emptyList()
+}
+
+fun pgp_key_fingerprint(armored_key: String): String? = try {
+    read_master_public_key(armored_key).fingerprint.joinToString("") { "%02x".format(it) }
+} catch (_: Throwable) {
+    null
 }
 
 fun account_addresses_missing_from_pgp_key(armored_key: String, account_email: String): List<String> {

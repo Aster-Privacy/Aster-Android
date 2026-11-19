@@ -1402,6 +1402,7 @@ private fun compose_screen_content(
         var running_total = attachments.sumOf { it.size } + inline_images.sumOf { it.size }
         var running_count = attachments.size + inline_images.size
         val accepted = mutableListOf<AttachmentItem>()
+        val rejected = mutableListOf<Uri>()
         var error: String? = null
         for (uri in uris) {
             val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -1443,9 +1444,11 @@ private fun compose_screen_content(
                             accepted.add(AttachmentItem(item.uri, item.name, item.size, item.mime_type))
                         }
                     }
+                    if (accepted.lastOrNull()?.uri != item.uri) rejected.add(item.uri)
                 }
             }
         }
+        org.astermail.android.share.release_share_imports(rejected)
         if (accepted.isNotEmpty()) attachments = attachments + accepted
         if (error != null) send_error = error
     }
@@ -1836,6 +1839,9 @@ private fun compose_screen_content(
         lifecycle_owner_for_draft.lifecycle.addObserver(observer)
         onDispose { lifecycle_owner_for_draft.lifecycle.removeObserver(observer) }
     }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { org.astermail.android.share.release_share_imports(attachments.map { it.uri }) }
+    }
 
     val footer_secured_by_plain = stringResource(R.string.compose_footer_secured_by_plain)
     val quote_forwarded_label = stringResource(R.string.compose_quote_forwarded_message)
@@ -2062,6 +2068,7 @@ private fun compose_screen_content(
                 allow_non_post_quantum = allow_non_post_quantum,
                 force_pgp = snapshot_force_pgp,
                 pgp_recipients = snapshot_pgp_recipients,
+                ack_scope = draft_session_id,
             )
             result.fold(
                 onSuccess = { resp ->
@@ -2321,7 +2328,12 @@ private fun compose_screen_content(
                 val changes = kotlinx.coroutines.withTimeoutOrNull(
                     KEY_TRUST_LOOKUP_TIMEOUT_MS,
                 ) {
-                    mail_vm.verified_external_key_fingerprint_changes(snap_to + snap_cc + snap_bcc)
+                    mail_vm.verified_external_key_fingerprint_changes(
+                        snap_to + snap_cc + snap_bcc,
+                        snap_force_pgp,
+                        snap_pgp_recipients,
+                        ack_scope = draft_session_id,
+                    )
                 }?.getOrNull()
                 if (changes == null) {
                     is_sending = false
@@ -2455,6 +2467,7 @@ private fun compose_screen_content(
                     reply_to_id = if (mode == "reply" || mode == "reply_all") reply_to?.takeIf { it.isNotBlank() } else null,
                     force_pgp = snap_force_pgp,
                     pgp_recipients = snap_pgp_recipients,
+                    ack_scope = draft_session_id,
                 )
                 is_sending = false
                 send_lock.set(false)
@@ -3219,6 +3232,7 @@ private fun compose_screen_content(
                                     .clip(CircleShape)
                                     .clickable {
                                         attachments = attachments.filterIndexed { i, _ -> i != idx }
+                                        org.astermail.android.share.release_share_imports(listOf(att.uri))
                                     }
                                     .testTag("remove_attachment_$idx"),
                                 contentAlignment = Alignment.Center,
@@ -3611,7 +3625,7 @@ private fun compose_screen_content(
             key_trust_context.getString(
                 R.string.key_trust_change_detail,
                 change.email,
-                change.prior_fingerprint,
+                change.prior_fingerprint.ifEmpty { key_trust_context.getString(R.string.unknown) },
                 change.new_fingerprint,
             )
         }
@@ -3643,10 +3657,14 @@ private fun compose_screen_content(
                         onClick = {
                             key_trust_changes = emptyList()
                             scope.launch {
-                                for (change in pending_changes) {
-                                    mail_vm.acknowledge_external_key_fingerprint_change(change)
+                                val results = pending_changes.map { change ->
+                                    mail_vm.acknowledge_external_key_fingerprint_change(change, draft_session_id)
                                 }
-                                do_send(skip_from_guard = true, allow_key_change = true)
+                                if (results.all { it }) {
+                                    do_send(skip_from_guard = true, allow_key_change = true)
+                                } else {
+                                    send_error = key_trust_context.getString(R.string.send_key_check_failed)
+                                }
                             }
                         },
                     ) {

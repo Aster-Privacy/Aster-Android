@@ -29,8 +29,10 @@ object RecoveryLane {
     const val VERSION = 1
 
     private const val LANE_LABEL = "aster.ratchet.recovery.lane.v1"
+    private const val SENDER_LANE_LABEL = "aster.ratchet.recovery.lane.sender.v1"
     private const val NONCE_BYTES = 12
     private const val LANE_KEY_BYTES = 32
+    private const val MAX_SAFE_INTEGER = 9_007_199_254_740_991L
 
     data class Data(
         val v: Int,
@@ -39,7 +41,16 @@ object RecoveryLane {
         val ciphertext: String,
         val nonce: String,
         val rid: String,
-    )
+        val sct: String? = null,
+        val snonce: String? = null,
+        val t: Long? = null,
+    ) {
+        val sent_at: Long?
+            get() = t?.takeIf { it in 1..MAX_SAFE_INTEGER }
+
+        val has_sender_proof: Boolean
+            get() = !sct.isNullOrEmpty() && !snonce.isNullOrEmpty()
+    }
 
     data class RecipientKeys(
         val identity_public: String,
@@ -52,25 +63,23 @@ object RecoveryLane {
         val pq_identity_secret: String? = null,
     )
 
+    private class LaneSecrets(val dh_secret: ByteArray, val pq_secret: ByteArray?) {
+        fun with_static(static_secret: ByteArray?): List<ByteArray> =
+            listOfNotNull(dh_secret, static_secret, pq_secret)
+
+        fun wipe() {
+            dh_secret.fill(0)
+            pq_secret?.fill(0)
+        }
+    }
+
     fun can_seal(recipient: RecipientKeys?): Boolean =
         recipient != null && recipient.identity_public.isNotBlank()
 
     fun is_post_quantum(recipient: RecipientKeys): Boolean =
         !recipient.pq_identity_public.isNullOrBlank()
 
-    private fun build_binding_info(
-        conversation_id: String,
-        sender_identity_public: String,
-        recipient_identity_public: String,
-        recipient_pq_identity_public: String,
-    ): ByteArray {
-        val parts = listOf(
-            LANE_LABEL,
-            conversation_id,
-            sender_identity_public,
-            recipient_identity_public,
-            recipient_pq_identity_public,
-        )
+    private fun frame_and_digest(parts: List<String>): ByteArray {
         val framed = ByteArrayOutputStream()
         for (part in parts) {
             val bytes = part.toByteArray(Charsets.UTF_8)
@@ -80,10 +89,65 @@ object RecoveryLane {
         return RatchetCrypto.sha256(framed.toByteArray())
     }
 
-    private fun lane_salt(): ByteArray =
-        RatchetCrypto.sha256(LANE_LABEL.toByteArray(Charsets.UTF_8))
+    private fun build_binding_info(
+        conversation_id: String,
+        sender_identity_public: String,
+        recipient_identity_public: String,
+        recipient_pq_identity_public: String,
+    ): ByteArray = frame_and_digest(
+        listOf(
+            LANE_LABEL,
+            conversation_id,
+            sender_identity_public,
+            recipient_identity_public,
+            recipient_pq_identity_public,
+        ),
+    )
 
-    private fun derive_lane_key(secrets: List<ByteArray>, info: ByteArray): ByteArray {
+    data class Transcript(
+        val dh_public: String,
+        val previous_chain_length: Int,
+        val message_number: Int,
+        val nonce: String,
+        val sent_at: Long,
+    )
+
+    class SenderKeyMissingException : IllegalStateException("recovery lane needs the sender identity key")
+
+    private fun build_sender_binding_info(
+        conversation_id: String,
+        sender_identity_public: String,
+        recipient_identity_public: String,
+        recipient_pq_identity_public: String,
+        epk: String,
+        kem_ct: String,
+        transcript: Transcript?,
+    ): ByteArray = frame_and_digest(
+        listOf(
+            SENDER_LANE_LABEL,
+            conversation_id,
+            sender_identity_public,
+            recipient_identity_public,
+            recipient_pq_identity_public,
+            epk,
+            kem_ct,
+        ) + if (transcript == null) {
+            emptyList()
+        } else {
+            listOf(
+                transcript.dh_public,
+                transcript.previous_chain_length.toString(),
+                transcript.message_number.toString(),
+                transcript.nonce,
+                transcript.sent_at.toString(),
+            )
+        },
+    )
+
+    private fun lane_salt(label: String): ByteArray =
+        RatchetCrypto.sha256(label.toByteArray(Charsets.UTF_8))
+
+    private fun derive_lane_key(secrets: List<ByteArray>, info: ByteArray, label: String): ByteArray {
         val concatenated = ByteArray(secrets.sumOf { it.size })
         var offset = 0
         for (secret in secrets) {
@@ -91,9 +155,71 @@ object RecoveryLane {
             offset += secret.size
         }
         return try {
-            RatchetCrypto.hkdf_sha256(concatenated, lane_salt(), info, LANE_KEY_BYTES)
+            RatchetCrypto.hkdf_sha256(concatenated, lane_salt(label), info, LANE_KEY_BYTES)
         } finally {
             concatenated.fill(0)
+        }
+    }
+
+    private fun static_agreement(identity_jwk: String, peer_identity_public: String): ByteArray =
+        RatchetCrypto.ecdh(
+            RatchetCrypto.parse_p256_private_jwk(identity_jwk),
+            RatchetCrypto.parse_p256_public_raw(RatchetCrypto.b64_decode(peer_identity_public)),
+        )
+
+    private fun sender_static_agreement(identity_jwk: String, peer_identity_public: String): ByteArray {
+        val own_private = try {
+            RatchetCrypto.parse_p256_private_jwk(identity_jwk)
+        } catch (_: Throwable) {
+            throw SenderKeyMissingException()
+        }
+        return RatchetCrypto.ecdh(
+            own_private,
+            RatchetCrypto.parse_p256_public_raw(RatchetCrypto.b64_decode(peer_identity_public)),
+        )
+    }
+
+    private fun seal_with_key(
+        plaintext: String,
+        secrets: List<ByteArray>,
+        info: ByteArray,
+        label: String,
+    ): Pair<String, String> {
+        val key = derive_lane_key(secrets, info, label)
+        return try {
+            val nonce = RatchetCrypto.random_bytes(NONCE_BYTES)
+            val ciphertext = RatchetCrypto.aes_gcm_encrypt(
+                plaintext.toByteArray(Charsets.UTF_8),
+                key,
+                nonce,
+                info,
+            )
+            RatchetCrypto.b64_encode(ciphertext) to RatchetCrypto.b64_encode(nonce)
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private fun open_with_key(
+        ciphertext: String,
+        nonce: String,
+        secrets: List<ByteArray>,
+        info: ByteArray,
+        label: String,
+    ): String {
+        val key = derive_lane_key(secrets, info, label)
+        return try {
+            String(
+                RatchetCrypto.aes_gcm_decrypt(
+                    RatchetCrypto.b64_decode(ciphertext),
+                    key,
+                    RatchetCrypto.b64_decode(nonce),
+                    info,
+                ),
+                Charsets.UTF_8,
+            )
+        } finally {
+            key.fill(0)
         }
     }
 
@@ -102,19 +228,39 @@ object RecoveryLane {
         conversation_id: String,
         sender_identity_public: String,
         recipient: RecipientKeys,
+        sender_identity_jwk: String?,
+        transcript: Transcript,
     ): Data {
+        if (sender_identity_jwk.isNullOrBlank()) throw SenderKeyMissingException()
+        require(transcript.sent_at in 1..MAX_SAFE_INTEGER) { "recovery lane needs a send time" }
+        return seal_parts(plaintext, conversation_id, sender_identity_public, recipient, sender_identity_jwk to transcript)
+    }
+
+    fun seal_unbound(
+        plaintext: String,
+        conversation_id: String,
+        sender_identity_public: String,
+        recipient: RecipientKeys,
+    ): Data = seal_parts(plaintext, conversation_id, sender_identity_public, recipient, null)
+
+    private fun seal_parts(
+        plaintext: String,
+        conversation_id: String,
+        sender_identity_public: String,
+        recipient: RecipientKeys,
+        sender_part: Pair<String, Transcript>?,
+    ): Data {
+        val recipient_pq_public = recipient.pq_identity_public.orEmpty()
         val info = build_binding_info(
             conversation_id,
             sender_identity_public,
             recipient.identity_public,
-            recipient.pq_identity_public.orEmpty(),
+            recipient_pq_public,
         )
 
         val ephemeral = RatchetCrypto.generate_p256_keypair()
         val recipient_identity =
             RatchetCrypto.parse_p256_public_raw(RatchetCrypto.b64_decode(recipient.identity_public))
-        val dh_secret = RatchetCrypto.ecdh(ephemeral.private_key, recipient_identity)
-
         val encapsulation = if (is_post_quantum(recipient)) {
             RatchetCrypto.ml_kem_768_encapsulate(
                 RatchetCrypto.b64_decode(recipient.pq_identity_public!!),
@@ -122,36 +268,115 @@ object RecoveryLane {
         } else {
             null
         }
+        val secrets = LaneSecrets(
+            RatchetCrypto.ecdh(ephemeral.private_key, recipient_identity),
+            encapsulation?.shared_secret,
+        )
+        var static_secret: ByteArray? = null
 
-        var lane_key: ByteArray? = null
         return try {
-            lane_key = derive_lane_key(
-                if (encapsulation != null) listOf(dh_secret, encapsulation.shared_secret) else listOf(dh_secret),
-                info,
-            )
-            val nonce = RatchetCrypto.random_bytes(NONCE_BYTES)
-            val ciphertext = RatchetCrypto.aes_gcm_encrypt(
-                plaintext.toByteArray(Charsets.UTF_8),
-                lane_key,
-                nonce,
-                info,
-            )
-            Data(
+            val epk = RatchetCrypto.b64_encode(ephemeral.public_raw)
+            val kem_ct = encapsulation?.let { RatchetCrypto.b64_encode(it.ciphertext) }
+            val (ciphertext, nonce) = seal_with_key(plaintext, secrets.with_static(null), info, LANE_LABEL)
+            val lane = Data(
                 v = VERSION,
-                epk = RatchetCrypto.b64_encode(ephemeral.public_raw),
-                kem_ct = encapsulation?.let { RatchetCrypto.b64_encode(it.ciphertext) },
-                ciphertext = RatchetCrypto.b64_encode(ciphertext),
-                nonce = RatchetCrypto.b64_encode(nonce),
+                epk = epk,
+                kem_ct = kem_ct,
+                ciphertext = ciphertext,
+                nonce = nonce,
                 rid = recipient.identity_public,
             )
+            if (sender_part == null) return lane
+
+            static_secret = sender_static_agreement(sender_part.first, recipient.identity_public)
+            val sender_info = build_sender_binding_info(
+                conversation_id,
+                sender_identity_public,
+                recipient.identity_public,
+                recipient_pq_public,
+                epk,
+                kem_ct.orEmpty(),
+                sender_part.second,
+            )
+            val (sct, snonce) = seal_with_key(
+                plaintext,
+                secrets.with_static(static_secret),
+                sender_info,
+                SENDER_LANE_LABEL,
+            )
+            lane.copy(sct = sct, snonce = snonce, t = sender_part.second.sent_at)
         } finally {
-            dh_secret.fill(0)
-            encapsulation?.shared_secret?.fill(0)
-            lane_key?.fill(0)
+            secrets.wipe()
+            static_secret?.fill(0)
         }
     }
 
+    private fun recover_secrets(data: Data, own_keys: OwnKeys): LaneSecrets? {
+        if (data.kem_ct != null && own_keys.pq_identity_secret.isNullOrBlank()) return null
+        val dh_secret = RatchetCrypto.ecdh(
+            RatchetCrypto.parse_p256_private_jwk(own_keys.identity_jwk),
+            RatchetCrypto.parse_p256_public_raw(RatchetCrypto.b64_decode(data.epk)),
+        )
+        if (data.kem_ct == null) return LaneSecrets(dh_secret, null)
+
+        val pq_secret_key = RatchetCrypto.b64_decode(own_keys.pq_identity_secret!!)
+        return try {
+            LaneSecrets(
+                dh_secret,
+                RatchetCrypto.ml_kem_768_decapsulate(RatchetCrypto.b64_decode(data.kem_ct), pq_secret_key),
+            )
+        } catch (t: Throwable) {
+            dh_secret.fill(0)
+            throw t
+        } finally {
+            pq_secret_key.fill(0)
+        }
+    }
+
+    private fun own_pq_binding(data: Data, own_pq_identity_public: String): String =
+        if (data.kem_ct != null) own_pq_identity_public else ""
+
     fun open(
+        data: Data,
+        conversation_id: String,
+        sender_identity_public: String,
+        own_keys: OwnKeys,
+        own_pq_identity_public: String,
+        transcript: Transcript?,
+    ): String? {
+        if (data.v != VERSION || !data.has_sender_proof) return null
+
+        var secrets: LaneSecrets? = null
+        var static_secret: ByteArray? = null
+
+        return try {
+            secrets = recover_secrets(data, own_keys) ?: return null
+            static_secret = static_agreement(own_keys.identity_jwk, sender_identity_public)
+            val sender_info = build_sender_binding_info(
+                conversation_id,
+                sender_identity_public,
+                own_keys.identity_public,
+                own_pq_binding(data, own_pq_identity_public),
+                data.epk,
+                data.kem_ct.orEmpty(),
+                transcript,
+            )
+            open_with_key(
+                data.sct!!,
+                data.snonce!!,
+                secrets.with_static(static_secret),
+                sender_info,
+                SENDER_LANE_LABEL,
+            )
+        } catch (_: Throwable) {
+            null
+        } finally {
+            secrets?.wipe()
+            static_secret?.fill(0)
+        }
+    }
+
+    fun open_unauthenticated(
         data: Data,
         conversation_id: String,
         sender_identity_public: String,
@@ -160,54 +385,21 @@ object RecoveryLane {
     ): String? {
         if (data.v != VERSION) return null
 
-        val info = build_binding_info(
-            conversation_id,
-            sender_identity_public,
-            own_keys.identity_public,
-            if (data.kem_ct != null) own_pq_identity_public else "",
-        )
-
-        var dh_secret: ByteArray? = null
-        var pq_secret: ByteArray? = null
-        var pq_secret_key: ByteArray? = null
-        var lane_key: ByteArray? = null
+        var secrets: LaneSecrets? = null
 
         return try {
-            val identity_private = RatchetCrypto.parse_p256_private_jwk(own_keys.identity_jwk)
-            val ephemeral_public =
-                RatchetCrypto.parse_p256_public_raw(RatchetCrypto.b64_decode(data.epk))
-            dh_secret = RatchetCrypto.ecdh(identity_private, ephemeral_public)
-
-            if (data.kem_ct != null) {
-                if (own_keys.pq_identity_secret.isNullOrBlank()) return null
-                pq_secret_key = RatchetCrypto.b64_decode(own_keys.pq_identity_secret)
-                pq_secret = RatchetCrypto.ml_kem_768_decapsulate(
-                    RatchetCrypto.b64_decode(data.kem_ct),
-                    pq_secret_key,
-                )
-            }
-
-            lane_key = derive_lane_key(
-                if (pq_secret != null) listOf(dh_secret, pq_secret) else listOf(dh_secret),
-                info,
+            secrets = recover_secrets(data, own_keys) ?: return null
+            val info = build_binding_info(
+                conversation_id,
+                sender_identity_public,
+                own_keys.identity_public,
+                own_pq_binding(data, own_pq_identity_public),
             )
-
-            String(
-                RatchetCrypto.aes_gcm_decrypt(
-                    RatchetCrypto.b64_decode(data.ciphertext),
-                    lane_key,
-                    RatchetCrypto.b64_decode(data.nonce),
-                    info,
-                ),
-                Charsets.UTF_8,
-            )
+            open_with_key(data.ciphertext, data.nonce, secrets.with_static(null), info, LANE_LABEL)
         } catch (_: Throwable) {
             null
         } finally {
-            dh_secret?.fill(0)
-            pq_secret?.fill(0)
-            pq_secret_key?.fill(0)
-            lane_key?.fill(0)
+            secrets?.wipe()
         }
     }
 }

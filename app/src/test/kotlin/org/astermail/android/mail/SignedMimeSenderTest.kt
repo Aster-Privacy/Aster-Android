@@ -43,9 +43,9 @@ class SignedMimeSenderTest {
     }
 
     @Test
-    fun blank_primary_counts_as_primary() {
-        assertTrue(MailRepository.sender_may_sign_outbound(primary, null))
-        assertTrue(MailRepository.sender_may_sign_outbound(primary, " "))
+    fun an_unknown_primary_address_signs_nothing() {
+        assertFalse(MailRepository.sender_may_sign_outbound(primary, null))
+        assertFalse(MailRepository.sender_may_sign_outbound(primary, " "))
     }
 
     @Test

@@ -22,7 +22,6 @@
 package org.astermail.android.crypto
 
 import java.security.SecureRandom
-import org.astermail.android.api.keys.ExternalKeyInfo
 
 sealed interface ClientPgpCopyOutcome {
     data class Copies(val copies: Map<String, String>) : ClientPgpCopyOutcome
@@ -38,28 +37,11 @@ object ClientPgpCopies {
     private const val ARMOR_HEADER = "-----BEGIN PGP MESSAGE-----"
     private val random = SecureRandom()
 
-    fun encrypts_for(info: ExternalKeyInfo?): Boolean =
-        info != null && info.found && !info.public_key.isNullOrBlank() && info.will_encrypt
-
     fun outside_recipients(addresses: List<String>, is_internal: (String) -> Boolean): List<String> {
         val seen = HashSet<String>()
         return addresses
             .map { it.trim() }
             .filter { it.isNotEmpty() && !is_internal(it) && seen.add(it.lowercase()) }
-    }
-
-    fun recipient_keys(
-        recipients: List<String>,
-        discovered: List<ExternalKeyInfo>,
-    ): Map<String, String>? {
-        val by_address = discovered.associateBy { it.email.trim().lowercase() }
-        val keys = LinkedHashMap<String, String>()
-        for (recipient in recipients) {
-            val info = by_address[recipient.lowercase()]
-            if (!encrypts_for(info)) return null
-            keys[recipient] = info!!.public_key!!
-        }
-        return keys
     }
 
     fun build_signed_mime_entity(mime: ByteArray, signature: String, micalg: String): ByteArray {

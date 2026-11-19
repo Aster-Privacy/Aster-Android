@@ -165,8 +165,9 @@ class RatchetStateContainerTest {
 
     @Test
     fun `each write moves the version past the highest one seen`() {
-        assertEquals(1_000L, RatchetStateContainer.next_version(floor = 10L, now_ms = 1_000L))
-        assertEquals(2_001L, RatchetStateContainer.next_version(floor = 2_000L, now_ms = 1_000L))
+        assertEquals(11L, RatchetStateContainer.next_version(floor = 10L))
+        assertEquals(41L, RatchetStateContainer.next_version(floor = 10L, server_version = 40L))
+        assertEquals(2_001L, RatchetStateContainer.next_version(floor = 2_000L, server_version = 1_000L))
     }
 
     @Test

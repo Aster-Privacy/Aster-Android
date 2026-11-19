@@ -708,7 +708,7 @@
     <string name="disabling">Désactivation…</string>
     <string name="disable_two_factor">Désactiver l\'authentification à deux facteurs</string>
     <string name="generate_new_backup_codes_section">Générer de nouveaux codes de secours</string>
-    <string name="generate_backup_codes_description">Entrez un code actuel de votre application d\'authentification. Vos codes de secours précédents seront invalidés.</string>
+    <string name="generate_backup_codes_description">Saisissez votre mot de passe et un code actuel de votre application d\'authentification. Vos codes de secours précédents ne fonctionneront plus.</string>
     <string name="generating">Génération…</string>
     <string name="generate_codes">Générer les codes</string>
     <string name="two_factor_enabled_title">Authentification à deux facteurs activée</string>
@@ -2259,6 +2259,7 @@
     <string name="totp_code_required_label">Code d\'authentification ou de secours</string>
     <string name="totp_code_required_error">Saisissez le code à 6 chiffres de votre application d\'authentification, ou l\'un de vos codes de secours</string>
     <string name="preferences_locked_retry">Impossible de déverrouiller vos réglages pour l\'instant. Valeurs par défaut affichées, revenez en arrière puis rouvrez.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail déverrouille encore cet élément, votre modification n\'a donc pas été enregistrée. Réessayez dans un instant.</string>
     <string name="ghost_alias_limit_reached">Limite d\'alias fantômes atteinte pour ce mois</string>
     <string name="ghost_extend_confirm_message">Prolonger %s de 30 jours ?</string>
     <string name="ghost_expire_confirm_message">Faire expirer %s maintenant ? Les messages envoyés à cette adresse n\'arriveront plus.</string>
@@ -2713,6 +2714,9 @@
     <string name="folder_locked">Dossier verrouillé</string>
     <string name="folder_unlocked">Dossier déverrouillé</string>
     <string name="folder_lock_set">Verrouillage du dossier activé</string>
+    <string name="folder_relock_required">Ce dossier a été verrouillé à nouveau sur un autre appareil. Pour l\'ouvrir ici, supprimez le verrouillage puis définissez-le à nouveau.</string>
+    <string name="folder_protection_unavailable">Impossible de lire les données de protection du dossier sur cet appareil. Déconnectez-vous, reconnectez-vous, puis réessayez.</string>
+    <string name="folder_lock_set_unconfirmed">Verrouillage du dossier activé. Saisissez le mot de passe pour ouvrir le dossier.</string>
     <string name="folder_lock_removed">Verrouillage du dossier supprimé</string>
     <string name="folder_notifications_muted">Notifications désactivées pour ce dossier</string>
     <string name="folder_notifications_unmuted">Notifications activées pour ce dossier</string>
@@ -2894,8 +2898,11 @@
     <string name="failed_to_move_items">Échec du déplacement</string>
     <string name="folder_name_taken">Un dossier portant ce nom existe déjà.</string>
     <string name="hardware_key_remove_confirm">Vous ne pourrez plus vous connecter avec cette clé de sécurité.</string>
-    <string name="hardware_key_remove_last_title">Supprimer votre dernière clé de sécurité ?</string>
-    <string name="hardware_key_remove_last_description">Il s\'agit du dernier deuxième facteur de votre compte. Pour le supprimer, saisissez votre mot de passe.</string>
+    <string name="hardware_key_remove_last_title">Supprimer cette clé de sécurité ?</string>
+    <string name="hardware_key_remove_last_description">Pour supprimer cette clé de sécurité, saisissez votre mot de passe.</string>
+    <string name="passkey_add_reauth_description">Pour ajouter une clé d\'accès, saisissez votre mot de passe.</string>
+    <string name="totp_setup_reauth_description">Pour configurer l\'authentification à deux facteurs, saisissez votre mot de passe.</string>
+    <string name="reauth_key_check_failed">Impossible de vérifier votre clé d\'accès ou votre clé de sécurité. Réessayez.</string>
     <string name="image_insert_failed">Impossible d\'ajouter cette image. Elle est peut-être trop volumineuse ou dans un format non pris en charge.</string>
     <string name="invalid_recipient_address">« %1$s » n\'est pas une adresse e-mail valide</string>
     <string name="label_name_taken">Un libellé portant ce nom existe déjà.</string>
@@ -3548,6 +3555,11 @@
     <string name="contact_sync_settings_title">Autoriser l\'accès aux contacts</string>
     <string name="contact_sync_settings_message">Pour synchroniser vos contacts, touchez Ouvrir les paramètres, accédez à Autorisations &gt; Contacts, puis choisissez Autoriser.</string>
     <string name="contact_sync_open_settings">Ouvrir les paramètres</string>
+    <string name="contact_sync_all_details_title">Synchroniser toutes les coordonnées</string>
+    <string name="contact_sync_all_details_subtitle">Lorsque cette option est désactivée, Aster ajoute uniquement les noms et les adresses e-mail à l\'app Contacts de votre téléphone.</string>
+    <string name="contact_sync_all_details_confirm_title">Synchroniser toutes les coordonnées ?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster ajoute aussi les numéros de téléphone, adresses, anniversaires, notes, photos et autres informations à l\'app Contacts de votre téléphone. Les autres apps ayant accès à vos contacts peuvent lire ces informations.</string>
+    <string name="contact_sync_all_details_confirm">Tout synchroniser</string>
     <string name="contact_sync_label_sibling">Frère ou sœur</string>
     <string name="contact_sync_label_graduation">Remise de diplôme</string>
     <string name="contact_sync_label_wedding">Mariage</string>
@@ -3698,6 +3710,16 @@
         <item quantity="other">%d contacts ajoutés</item>
     </plurals>
     <string name="body_index_status">Indexation du texte des messages pour la recherche : %1$d sur %2$d</string>
+    <string name="mail_key_upgrade_title">Mise à jour de vos e-mails enregistrés</string>
+    <string name="mail_key_upgrade_running">Aster Mail chiffre à nouveau vos messages enregistrés avec vos clés actuelles. Gardez cette fenêtre ouverte jusqu\'à la fin.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail n\'a pas pu terminer la mise à jour de vos messages enregistrés. Vos e-mails n\'ont pas été modifiés. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="mail_key_upgrade_retry">Réessayer</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d message vérifié</item>
+        <item quantity="other">%d messages vérifiés</item>
+    </plurals>
+    <string name="account_link_confirm_title">Associer ce compte ?</string>
+    <string name="account_link_confirm_message">%1$s souhaite utiliser %2$s sur cet appareil. Confirmez uniquement si vous avez lancé cette action dans %1$s.</string>
     <string name="delete_selected_subscriptions">Supprimer (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">Supprimer %d abonnement ?</item>
@@ -3709,4 +3731,5 @@
         <item quantity="other">%d abonnements supprimés</item>
     </plurals>
     <string name="delete_subscriptions_failed">Impossible de supprimer les abonnements sélectionnés</string>
+    <string name="attachment_unverified">Pièce jointe non vérifiée</string>
 </resources>

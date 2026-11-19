@@ -55,7 +55,7 @@ fun ec_one_time_key_id_from_bytes(bytes: ByteArray): Int {
 class EcOneTimePrekeyService(
     private val store: EcOneTimePrekeyStore,
     private val ratchet_api: RatchetApi,
-    private val sync_key: () -> ByteArray?,
+    private val prekey_seal: () -> PrekeySeal,
     private val now_ms: () -> Long = { System.currentTimeMillis() },
     private val random_key_id: () -> Int = { ec_one_time_key_id_from_bytes(RatchetCrypto.random_bytes(4)) },
 ) {
@@ -83,11 +83,15 @@ class EcOneTimePrekeyService(
         return null
     }
 
-    private fun generate(key_id: Int, wrapping_key: ByteArray): EcPrekeyUpload? {
+    private fun generate(key_id: Int, seal: PrekeySeal): EcPrekeyUpload? {
         val pair = RatchetCrypto.generate_p256_keypair()
         val scalar = RatchetCrypto.private_to_raw_d(pair.private_key)
         return try {
-            val wrapped = EcOneTimeSecretWrap.wrap(scalar, wrapping_key) ?: return null
+            val wrapped = if (store.new_format_writes()) {
+                seal.seal(PrekeySealKind.EC, key_id, scalar)
+            } else {
+                store.wrap_for_older_apps(scalar)
+            } ?: return null
             if (!store.save(key_id, scalar)) return null
             EcPrekeyUpload(
                 key_id = key_id,
@@ -103,7 +107,7 @@ class EcOneTimePrekeyService(
     suspend fun replenish(): Int {
         if (!in_progress.compareAndSet(false, true)) return 0
         val saved_ids = mutableListOf<Int>()
-        var wrapping_key: ByteArray? = null
+        var seal: PrekeySeal? = null
         try {
             if (now_ms() < not_accepted_until) return 0
             if (!store.storage_available()) return 0
@@ -116,12 +120,14 @@ class EcOneTimePrekeyService(
             }
             if (wanted <= 0) return 0
 
-            wrapping_key = sync_key() ?: return 0
+            val current = prekey_seal()
+            seal = current
+            if (!current.has_key()) return 0
             val taken = mutableSetOf<Int>()
             val prekeys = mutableListOf<EcPrekeyUpload>()
             for (index in 0 until wanted) {
                 val key_id = allocate_key_id(taken) ?: break
-                val prekey = generate(key_id, wrapping_key) ?: break
+                val prekey = generate(key_id, current) ?: break
                 saved_ids.add(key_id)
                 prekeys.add(prekey)
             }
@@ -139,7 +145,7 @@ class EcOneTimePrekeyService(
             saved_ids.forEach { store.discard_local(it) }
             return 0
         } finally {
-            wrapping_key?.fill(0)
+            seal?.wipe()
             in_progress.set(false)
         }
     }

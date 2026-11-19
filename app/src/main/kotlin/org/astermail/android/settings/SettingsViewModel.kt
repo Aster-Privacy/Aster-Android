@@ -33,7 +33,9 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.crypto.AesGcm
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -100,11 +102,15 @@ import org.astermail.android.folders.resort_after_rename
 import org.astermail.android.folders.restore_folder_orders
 import org.astermail.android.folders.sort_folder_tree_a_z
 import org.astermail.android.api.tags.CreateTagRequest
+import org.astermail.android.labels.tag_name_readable
+import org.astermail.android.recovery.open_recovery_email
 import org.astermail.android.api.tags.TagItem
 import org.astermail.android.api.tags.TagsApi
 import org.astermail.android.api.tags.UpdateTagRequest
 import org.astermail.android.api.preferences.PreferencesApi
+import org.astermail.android.api.preferences.PreferencesSaveResult
 import org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest
+import org.astermail.android.api.preferences.SaveVersionedPreferencesRequest
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.preferences.effective_theme_values
 import org.astermail.android.api.preferences.encode_preferences_preserving_unknown
@@ -118,12 +124,12 @@ import kotlinx.serialization.json.put
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
 import org.astermail.android.api.recovery_email.RecoveryEmailError
-import org.astermail.android.api.recovery_email.RemoveRecoveryEmailRequest
 import org.astermail.android.api.recovery_email.SaveRecoveryEmailRequest
 import org.astermail.android.api.security.AuditEvent
 import org.astermail.android.api.security.HardwareKey
 import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.security.SetLoginAlertRequest
+import org.astermail.android.api.security.StepUpKeyAssertion
 import org.astermail.android.api.security.TrustedDevice
 import org.astermail.android.api.settings.AddDomainRequest
 import org.astermail.android.api.settings.AliasDirectory
@@ -164,6 +170,7 @@ import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.user.Badge
 import org.astermail.android.api.user.UserApi
 import org.astermail.android.auth.AuthRepository
+import org.astermail.android.storage.ArchivedBlob
 import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.TextSize
@@ -264,8 +271,8 @@ data class SettingsUiState(
     val hardware_keys_load_failed: Boolean = false,
     val is_adding_passkey: Boolean = false,
     val hardware_key_step_up_id: String? = null,
-    val hardware_key_step_up_error: String? = null,
-    val hardware_key_step_up_busy: Boolean = false,
+    val hardware_key_step_up: ReauthPrompt = ReauthPrompt(),
+    val passkey_reauth: ReauthPrompt? = null,
     val trusted_devices: List<TrustedDevice> = emptyList(),
     val trusted_devices_load_failed: Boolean = false,
     val audit_events: List<AuditEvent> = emptyList(),
@@ -384,6 +391,9 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     internal var default_dispatcher: CoroutineDispatcher = Dispatchers.Default
+    internal var bound_folder_writes_ready: suspend () -> Boolean = {
+        org.astermail.android.crypto.stored_key_readiness.is_ready(session_key_store.get_user_id())
+    }
 
     internal var io_dispatcher: CoroutineDispatcher = Dispatchers.IO
 
@@ -392,7 +402,7 @@ class SettingsViewModel @Inject constructor(
     private var last_subscription_load_ms = 0L
     private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
-        java.util.concurrent.ConcurrentHashMap<String, Boolean>(),
+        ConcurrentHashMap<String, Boolean>(),
     )
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
@@ -417,9 +427,10 @@ class SettingsViewModel @Inject constructor(
     private var last_mail_rules_load_ms = 0L
     private var last_domain_addresses_load_ms = 0L
     private var last_storage_load_ms = 0L
-    private val last_labels_load_ms = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val last_labels_load_ms = ConcurrentHashMap<String, Long>()
     private var save_preferences_job: kotlinx.coroutines.Job? = null
     private var prefs_load_succeeded = false
+    private var pending_edit_baseline: UserPreferences? = null
     private var twin_address_job: kotlinx.coroutines.Job? = null
     private var twin_address_generation = 0
     private var account_generation = 0
@@ -447,6 +458,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_twin_address()
         hydrate_cached_storage()
         load_preferences()
+        watch_account_key_readiness()
         viewModelScope.launch {
             org.astermail.android.billing.SubscriptionEvents.changed.collect { load_subscription(force = true) }
         }
@@ -949,6 +961,7 @@ class SettingsViewModel @Inject constructor(
         twin_address_job?.cancel()
         twin_address_job = null
         account_generation++
+        unreadable_fields.clear()
         recovery_rotation_job = null
         recovery_outdated_epoch++
         tags_load_job?.cancel()
@@ -960,6 +973,7 @@ class SettingsViewModel @Inject constructor(
         pending_tag_mutations = 0
         tags_reload_deferred = false
         prefs_load_succeeded = false
+        pending_edit_baseline = null
         account_uses_encrypted_prefs = false
         last_preferences_raw_json = null
         last_synced_preferences = null
@@ -3521,9 +3535,13 @@ class SettingsViewModel @Inject constructor(
 
     fun delete_domain_address(address_id: String, domain_name: String) {
         val domain_id = resolve_domain_id(domain_name) ?: return
+        val address = _state.value.custom_domain_addresses
+            .firstOrNull { it.id == address_id }
+            ?.takeUnless { it.decryption_failed || it.encrypted_local_part.isBlank() }
+            ?.address
         viewModelScope.launch {
             try {
-                settings_api.delete_domain_address(domain_id, address_id)
+                settings_api.delete_domain_address(domain_id, address_id, address)
                 _state.update { s -> s.copy(custom_domain_addresses = s.custom_domain_addresses.filter { it.id != address_id }) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -3670,7 +3688,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = security_api.list_hardware_keys()
-                _state.update { it.copy(hardware_keys = response.keys, hardware_keys_load_failed = false) }
+                val keys = open_hardware_key_names(response.keys)
+                _state.update { it.copy(hardware_keys = keys, hardware_keys_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(hardware_keys_load_failed = it.hardware_keys.isEmpty()) }
@@ -3679,60 +3698,77 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun delete_hardware_key(key_id: String, password: String? = null, totp_code: String? = null) {
+    fun start_hardware_key_removal(key_id: String) {
+        _state.update { it.copy(hardware_key_step_up_id = key_id, hardware_key_step_up = ReauthPrompt()) }
+    }
+
+    fun delete_hardware_key(
+        key_id: String,
+        password: String,
+        totp_code: String?,
+        get_credential: suspend (String) -> String,
+    ) {
+        val prompt = _state.value.hardware_key_step_up
+        if (prompt.busy) return
+        _state.update { it.copy(hardware_key_step_up = prompt.copy(busy = true, error = null)) }
         viewModelScope.launch {
-            _state.update { it.copy(hardware_key_step_up_busy = password != null, hardware_key_step_up_error = null) }
-            try {
-                val password_hash = password?.takeIf { it.isNotBlank() }?.let {
-                    auth_repository.derive_password_hash_b64(it)
-                }
-                if (password != null && password_hash == null) {
-                    _state.update { it.copy(
-                        hardware_key_step_up_busy = false,
-                        hardware_key_step_up_error = context.getString(R.string.incorrect_password),
-                    ) }
-                    return@launch
-                }
-                security_api.delete_hardware_key(key_id, password_hash, totp_code)
-                _state.update { it.copy(
+            val outcome = reauthorize(
+                context = context,
+                prompt = prompt,
+                password = password,
+                totp_code = totp_code,
+                derive_password_hash = { auth_repository.derive_password_hash_b64(it) },
+                load_key_options = { security_api.step_up_assertion_options() },
+                get_credential = get_credential,
+            ) { proof -> security_api.delete_hardware_key(key_id, proof) }
+            when (outcome) {
+                is Reauthorized.Done -> _state.update { it.copy(
                     hardware_keys = it.hardware_keys.filter { k -> k.id != key_id },
                     hardware_key_step_up_id = null,
-                    hardware_key_step_up_busy = false,
-                    hardware_key_step_up_error = null,
+                    hardware_key_step_up = ReauthPrompt(),
                 ) }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                val code = (t as? ApiError.ValidationError)?.code
-                val message = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))
-                if (code == "STEP_UP_REQUIRED") {
-                    _state.update { it.copy(
-                        hardware_key_step_up_id = key_id,
-                        hardware_key_step_up_busy = false,
-                        hardware_key_step_up_error = null,
-                    ) }
-                    return@launch
-                }
-                if (password != null) {
-                    _state.update { it.copy(
-                        hardware_key_step_up_busy = false,
-                        hardware_key_step_up_error = message,
-                    ) }
-                    return@launch
-                }
-                _state.value = _state.value.copy(action_result = message, hardware_key_step_up_busy = false)
+                is Reauthorized.Retry -> _state.update { it.copy(hardware_key_step_up = outcome.prompt) }
             }
         }
     }
 
+    fun start_add_passkey() {
+        if (_state.value.is_adding_passkey) return
+        _state.update { it.copy(passkey_reauth = ReauthPrompt()) }
+    }
+
+    fun dismiss_passkey_reauth() {
+        _state.update { it.copy(passkey_reauth = null) }
+    }
+
     fun add_passkey(
+        password: String,
+        totp_code: String?,
         create_credential: suspend (String) -> String,
         get_credential: suspend (String) -> String,
     ) {
-        if (_state.value.is_adding_passkey) return
-        _state.update { it.copy(is_adding_passkey = true) }
+        val prompt = _state.value.passkey_reauth ?: ReauthPrompt()
+        if (_state.value.is_adding_passkey || prompt.busy) return
+        _state.update { it.copy(passkey_reauth = prompt.copy(busy = true, error = null)) }
         viewModelScope.launch {
+            val reauthorized = reauthorize(
+                context = context,
+                prompt = prompt,
+                password = password,
+                totp_code = totp_code,
+                derive_password_hash = { auth_repository.derive_password_hash_b64(it) },
+                load_key_options = { security_api.step_up_assertion_options() },
+                get_credential = get_credential,
+            ) { proof -> security_api.initiate_passkey_registration(proof) }
+            val options = when (reauthorized) {
+                is Reauthorized.Retry -> {
+                    _state.update { it.copy(passkey_reauth = reauthorized.prompt) }
+                    return@launch
+                }
+                is Reauthorized.Done -> reauthorized.value
+            }
+            _state.update { it.copy(passkey_reauth = null, is_adding_passkey = true) }
             try {
-                val options = security_api.initiate_passkey_registration()
                 val response_json = try {
                     create_credential(org.astermail.android.auth.registration_request_json(options))
                 } catch (first: org.astermail.android.auth.PasskeyFailedException) {
@@ -3816,6 +3852,7 @@ class SettingsViewModel @Inject constructor(
                     prf_nonce = nonce,
                 ),
             )
+            org.astermail.android.auth.SharedPrefsPrfBoundMarkers(context).remember(registration.credential_id)
             return true
         } finally {
             passphrase.fill(0)
@@ -3825,9 +3862,29 @@ class SettingsViewModel @Inject constructor(
     fun dismiss_hardware_key_step_up() {
         _state.update { it.copy(
             hardware_key_step_up_id = null,
-            hardware_key_step_up_error = null,
-            hardware_key_step_up_busy = false,
+            hardware_key_step_up = ReauthPrompt(),
         ) }
+    }
+
+    private suspend fun open_hardware_key_names(keys: List<HardwareKey>): List<HardwareKey> {
+        if (keys.none { org.astermail.android.auth.is_sealed_passkey_name(it.name) }) return keys
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val name_keys = org.astermail.android.auth.passkey_name_keys(
+                session_key_store.get_data_kek(),
+                session_key_store.get_decrypt_keks(),
+            )
+            try {
+                keys.map { key ->
+                    if (org.astermail.android.auth.is_sealed_passkey_name(key.name)) {
+                        key.copy(name = org.astermail.android.auth.open_passkey_name(key.name, name_keys))
+                    } else {
+                        key
+                    }
+                }
+            } finally {
+                name_keys.forEach { it.fill(0) }
+            }
+        }
     }
 
     fun rename_hardware_key(key_id: String, name: String) {
@@ -4332,9 +4389,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun step_up_key(get_credential: suspend (String) -> String): suspend () -> StepUpKeyAssertion =
+        { collect_step_up_assertion({ security_api.step_up_assertion_options() }, get_credential) }
+
     suspend fun verify_recovery_step_up(
         password: String,
         totp_code: String?,
+        get_credential: suspend (String) -> String,
     ): Result<org.astermail.android.api.recovery.VerifyCodesStepUpResponse> {
         return try {
             val hash = auth_repository.derive_password_hash_b64(password)
@@ -4343,11 +4404,11 @@ class SettingsViewModel @Inject constructor(
                         context.getString(R.string.session_unavailable_sign_in_again),
                     ),
                 )
-            val response = recovery_api.verify_step_up(
-                org.astermail.android.api.recovery.VerifyCodesStepUpRequest(
-                    password_hash = hash,
-                    totp_code = totp_code?.takeIf { it.isNotBlank() },
-                ),
+            val response = verify_codes_with_reauth(
+                recovery_api = recovery_api,
+                password_hash = hash,
+                totp_code = totp_code,
+                key_assertion = step_up_key(get_credential),
             )
             Result.success(response)
         } catch (t: Throwable) {
@@ -4553,14 +4614,7 @@ class SettingsViewModel @Inject constructor(
                 val enc = response.encrypted_email
                 val nonce = response.email_nonce
                 val address = if (!enc.isNullOrBlank() && !nonce.isNullOrBlank() && !identity_key.isNullOrBlank()) {
-                    withContext(default_dispatcher) {
-                        org.astermail.android.recovery.open_recovery_email(
-                            enc,
-                            nonce,
-                            listOf(identity_key) + session_key_store.get_previous_keys().orEmpty(),
-                            session_key_store.get_decrypt_keks(),
-                        )
-                    }
+                    withContext(default_dispatcher) { open_recovery_email_noting(enc, nonce, identity_key) }
                 } else {
                     null
                 }
@@ -4588,7 +4642,43 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun save_recovery_email(email: String, password: String?, totp_code: String?) {
+    private fun open_recovery_email_noting(enc: String, nonce: String, identity_key: String): String? {
+        val identity_keys = listOf(identity_key) + session_key_store.get_previous_keys().orEmpty()
+        val decrypt_keks = session_key_store.get_decrypt_keks()
+        open_recovery_email(
+            enc,
+            nonce,
+            identity_keys,
+            StorageWriteKey.real_decrypt_keks(decrypt_keks),
+        )?.let { return it }
+        val opened = open_recovery_email(
+            enc,
+            nonce,
+            identity_keys,
+            StorageWriteKey.with_public_fallback(decrypt_keks),
+        )
+        if (opened != null) session_key_store.note_public_constant_use()
+        return opened
+    }
+
+    private suspend fun guard_recovery_email_overwrite(identity_key: String) {
+        val current = recovery_email_api.get_state()
+        val enc = current.encrypted_email
+        val nonce = current.email_nonce
+        if (enc.isNullOrBlank() || nonce.isNullOrBlank() || !is_sealed_preferences_blob(enc, nonce)) return
+        val readable = withContext(default_dispatcher) { open_recovery_email_noting(enc, nonce, identity_key) }
+        if (readable != null) return
+        if (!release_overwrite(archive_kind_recovery_email, enc, nonce)) {
+            throw IllegalStateException("recovery email not readable")
+        }
+    }
+
+    fun save_recovery_email(
+        email: String,
+        password: String?,
+        totp_code: String?,
+        get_credential: suspend (String) -> String,
+    ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             val normalized = email.trim().lowercase(java.util.Locale.ROOT)
@@ -4601,10 +4691,12 @@ class SettingsViewModel @Inject constructor(
                 }
                 val identity_key = session_key_store.get_identity_key()
                     ?: throw IllegalStateException("no identity key")
+                guard_recovery_email_overwrite(identity_key)
                 val encrypted = encrypt_recovery_email(normalized, identity_key)
                 val email_hash = hash_recovery_email(normalized)
-                recovery_email_api.save(
-                    SaveRecoveryEmailRequest(
+                save_recovery_email_with_reauth(
+                    recovery_email_api = recovery_email_api,
+                    request = SaveRecoveryEmailRequest(
                         encrypted_email = encrypted.ciphertext_b64,
                         email_nonce = encrypted.nonce_b64,
                         email_hash = email_hash,
@@ -4612,6 +4704,7 @@ class SettingsViewModel @Inject constructor(
                         password_hash = password_hash,
                         totp_code = totp_code?.ifBlank { null },
                     ),
+                    key_assertion = step_up_key(get_credential),
                 )
                 _state.value = _state.value.copy(
                     recovery_email_address = normalized,
@@ -4633,7 +4726,7 @@ class SettingsViewModel @Inject constructor(
                     save_status = SaveStatus.ERROR,
                     recovery_email_step_up_required =
                         needs_step_up || _state.value.recovery_email_step_up_required,
-                    error = if (needs_step_up) null else recovery_email_error_message(t),
+                    error = if (needs_step_up || is_key_check_cancelled(t)) null else recovery_email_error_message(t),
                 )
             }
         }
@@ -4656,17 +4749,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun remove_recovery_email(password: String, totp_code: String?) {
+    fun remove_recovery_email(
+        password: String,
+        totp_code: String?,
+        get_credential: suspend (String) -> String,
+    ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(save_status = SaveStatus.SAVING, error = null)
             try {
                 val password_hash = auth_repository.derive_password_hash_b64(password)
                     ?: throw IllegalStateException(context.getString(R.string.something_went_wrong))
-                recovery_email_api.remove(
-                    RemoveRecoveryEmailRequest(
-                        password_hash = password_hash,
-                        totp_code = totp_code?.ifBlank { null },
-                    ),
+                remove_recovery_email_with_reauth(
+                    recovery_email_api = recovery_email_api,
+                    password_hash = password_hash,
+                    totp_code = totp_code,
+                    key_assertion = step_up_key(get_credential),
                 )
                 _state.value = _state.value.copy(
                     recovery_email_address = null,
@@ -4684,13 +4781,14 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
-                    error = recovery_email_error_message(t),
+                    error = if (is_key_check_cancelled(t)) null else recovery_email_error_message(t),
                 )
             }
         }
     }
 
     private fun recovery_email_error_message(t: Throwable): String {
+        key_check_error_text(context, t)?.let { return it }
         (t as? RecoveryEmailError)?.let { error ->
             return when (error.code) {
                 RecoveryEmailApiImpl.STEP_UP_REQUIRED ->
@@ -4880,30 +4978,87 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private suspend fun folder_writes_ready(): Boolean = try {
+        bound_folder_writes_ready()
+    } catch (t: Throwable) {
+        if (t is kotlinx.coroutines.CancellationException) throw t
+        false
+    }
+
+    private suspend fun known_folder_key_pin(label_id: String): Int? {
+        withContext(io_dispatcher) { session_key_store.folder_key_pin_known(label_id) }?.let { return it }
+        try {
+            auth_repository.restore_key_pins_from_vault()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+        }
+        return withContext(io_dispatcher) { session_key_store.folder_key_pin_known(label_id) }
+    }
+
     fun unlock_folder(
         label_id: String,
         password: String,
         on_result: (Boolean) -> Unit,
     ) {
         viewModelScope.launch {
+            var message: Int? = null
             val ok = try {
                 val salt = _state.value.labels.firstOrNull { it.id == label_id }?.password_salt
                     ?: labels_api.get_label(label_id).password_salt
+                val pin = if (salt.isNullOrBlank()) null else known_folder_key_pin(label_id)
                 if (salt.isNullOrBlank()) {
                     false
+                } else if (pin == null) {
+                    message = R.string.folder_protection_unavailable
+                    false
                 } else {
-                    val allow_legacy = !org.astermail.android.folders.folder_kdf_pins.is_pinned(context, label_id)
-                    val password_hash = withContext(Dispatchers.Default) {
-                        org.astermail.android.folders.derive_folder_auth_hash(password, salt, allow_legacy)
+                    val keys = withContext(Dispatchers.Default) {
+                        org.astermail.android.folders.derive_folder_keys(
+                            password,
+                            salt,
+                            org.astermail.android.folders.folder_pin_allows_legacy_salt(pin),
+                        )
                     }
-                    val response = labels_api.verify_folder_password(
-                        label_id,
-                        VerifyFolderPasswordRequest(password_hash = password_hash),
-                    )
-                    if (response.verified) {
-                        if (org.astermail.android.folders.folder_salt_is_current(salt)) {
-                            org.astermail.android.folders.folder_kdf_pins.pin(context, label_id)
+                    val response = try {
+                        labels_api.verify_folder_password(
+                            label_id,
+                            VerifyFolderPasswordRequest(password_hash = keys.password_hash),
+                        )
+                    } catch (t: Throwable) {
+                        keys.encryption_key.fill(0)
+                        throw t
+                    }
+                    val level = try {
+                        when {
+                            !response.verified -> null
+                            org.astermail.android.folders.folder_wrap_below_pin(pin, response.folder_key_version) -> {
+                                val proven = org.astermail.android.folders.folder_wrap_proves_password(
+                                    folder_id = label_id,
+                                    salt_base64 = salt,
+                                    folder_key_version = response.folder_key_version,
+                                    encrypted_folder_key = response.encrypted_folder_key,
+                                    folder_key_nonce = response.folder_key_nonce,
+                                    encryption_key = keys.encryption_key,
+                                )
+                                if (proven) message = R.string.folder_relock_required
+                                null
+                            }
+                            else -> org.astermail.android.folders.accept_folder_unlock(
+                                folder_id = label_id,
+                                pin = pin,
+                                salt_base64 = salt,
+                                folder_key_version = response.folder_key_version,
+                                encrypted_folder_key = response.encrypted_folder_key,
+                                folder_key_nonce = response.folder_key_nonce,
+                                encryption_key = keys.encryption_key,
+                                bound_writes_ready = folder_writes_ready(),
+                            )
                         }
+                    } finally {
+                        keys.encryption_key.fill(0)
+                    }
+                    if (level != null) {
+                        if (level > pin) auth_repository.record_folder_key_pin(label_id, level)
                         org.astermail.android.folders.folder_lock_store.mark_unlocked(
                             folder_id = label_id,
                             unlock_token = response.unlock_token,
@@ -4915,12 +5070,13 @@ class SettingsViewModel @Inject constructor(
                             action_result = context.getString(R.string.folder_unlocked),
                         )
                     }
-                    response.verified
+                    level != null
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 false
             }
+            message?.let { _state.value = _state.value.copy(action_result = context.getString(it)) }
             on_result(ok)
         }
     }
@@ -5171,6 +5327,10 @@ class SettingsViewModel @Inject constructor(
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_label, label_id, "name")) {
+                report_locked_write()
+                return@launch
+            }
             val previous = _state.value.labels
             val old_name = previous.firstOrNull { it.id == label_id }?.encrypted_name
             val order_entries = if (old_name?.trim() != trimmed) {
@@ -5181,7 +5341,7 @@ class SettingsViewModel @Inject constructor(
             val previous_orders = previous_folder_orders(previous, order_entries)
             _state.value = _state.value.copy(
                 labels = apply_folder_orders(previous, order_entries)
-                    .map { if (it.id == label_id) it.copy(encrypted_name = trimmed) else it },
+                    .map { if (it.id == label_id) it.copy(encrypted_name = trimmed, decryption_failed = false) else it },
             )
             try {
                 val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
@@ -5243,6 +5403,10 @@ class SettingsViewModel @Inject constructor(
 
     fun recolor_folder(label_id: String, color: String) {
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_label, label_id, "color", color.isBlank())) {
+                report_locked_write()
+                return@launch
+            }
             val previous = _state.value.labels
             _state.value = _state.value.copy(
                 labels = previous.map { if (it.id == label_id) it.copy(encrypted_color = color) else it },
@@ -5312,27 +5476,49 @@ class SettingsViewModel @Inject constructor(
 
     fun set_folder_lock(label_id: String, password: String, on_result: (Boolean) -> Unit) {
         viewModelScope.launch {
+            var pins_unreadable = false
+            var unconfirmed = false
             val ok = try {
-                val material = withContext(Dispatchers.Default) {
-                    org.astermail.android.folders.prepare_folder_password(password)
-                }
-                labels_api.set_folder_password(
-                    label_id,
-                    SetFolderPasswordRequest(
-                        password_hash = material.password_hash,
-                        password_salt = material.password_salt,
-                        encrypted_folder_key = material.encrypted_folder_key,
-                        folder_key_nonce = material.folder_key_nonce,
-                    ),
-                )
-                org.astermail.android.folders.folder_kdf_pins.pin(context, label_id)
-                org.astermail.android.folders.open_folder_unlock_session(label_id) {
-                    labels_api.verify_folder_password(
+                val pin = known_folder_key_pin(label_id)
+                if (pin == null) {
+                    pins_unreadable = true
+                    false
+                } else {
+                    val ready = folder_writes_ready()
+                    val bound = org.astermail.android.folders.folder_writes_bound(pin, ready)
+                    val material = withContext(Dispatchers.Default) {
+                        org.astermail.android.folders.prepare_folder_password(password, label_id, bound)
+                    }
+                    labels_api.set_folder_password(
                         label_id,
-                        VerifyFolderPasswordRequest(password_hash = material.password_hash),
+                        SetFolderPasswordRequest(
+                            password_hash = material.password_hash,
+                            password_salt = material.password_salt,
+                            encrypted_folder_key = material.encrypted_folder_key,
+                            folder_key_nonce = material.folder_key_nonce,
+                            folder_key_version = material.folder_key_version,
+                        ),
                     )
+                    auth_repository.record_folder_key_pin(
+                        label_id,
+                        org.astermail.android.folders.folder_pin_level_for_write(ready, pin),
+                    )
+                    val opened = org.astermail.android.folders.open_folder_unlock_session(label_id) {
+                        val response = labels_api.verify_folder_password(
+                            label_id,
+                            VerifyFolderPasswordRequest(password_hash = material.password_hash),
+                        )
+                        val same_wrap = org.astermail.android.folders.folder_wrap_matches(
+                            material.encrypted_folder_key,
+                            material.folder_key_nonce,
+                            response.encrypted_folder_key,
+                            response.folder_key_nonce,
+                        )
+                        if (same_wrap) response else response.copy(verified = false)
+                    }
+                    unconfirmed = !opened
+                    true
                 }
-                true
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 false
@@ -5340,11 +5526,15 @@ class SettingsViewModel @Inject constructor(
             if (ok) {
                 load_labels(force = true)
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.folder_lock_set),
+                    action_result = context.getString(
+                        if (unconfirmed) R.string.folder_lock_set_unconfirmed else R.string.folder_lock_set,
+                    ),
                 )
             } else {
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_update_folder),
+                    action_result = context.getString(
+                        if (pins_unreadable) R.string.folder_protection_unavailable else R.string.failed_update_folder,
+                    ),
                 )
             }
             on_result(ok)
@@ -5353,21 +5543,63 @@ class SettingsViewModel @Inject constructor(
 
     fun remove_folder_lock(label_id: String, password: String, on_result: (Boolean) -> Unit) {
         viewModelScope.launch {
+            var pins_unreadable = false
             val ok = try {
                 val salt = _state.value.labels.firstOrNull { it.id == label_id }?.password_salt
                     ?: labels_api.get_label(label_id).password_salt
+                val pin = if (salt.isNullOrBlank()) null else known_folder_key_pin(label_id)
                 if (salt.isNullOrBlank()) {
                     false
+                } else if (pin == null) {
+                    pins_unreadable = true
+                    false
                 } else {
-                    val allow_legacy = !org.astermail.android.folders.folder_kdf_pins.is_pinned(context, label_id)
-                    val password_hash = withContext(Dispatchers.Default) {
-                        org.astermail.android.folders.derive_folder_auth_hash(password, salt, allow_legacy)
+                    val keys = withContext(default_dispatcher) {
+                        org.astermail.android.folders.derive_folder_keys(
+                            password,
+                            salt,
+                            org.astermail.android.folders.folder_pin_allows_legacy_salt(pin),
+                        )
                     }
-                    labels_api.remove_folder_password(
-                        label_id,
-                        RemoveFolderPasswordRequest(password_hash = password_hash),
-                    )
-                    true
+                    val verified = try {
+                        val response = labels_api.verify_folder_password(
+                            label_id,
+                            VerifyFolderPasswordRequest(password_hash = keys.password_hash),
+                        )
+                        response.verified && if (
+                            org.astermail.android.folders.folder_wrap_below_pin(pin, response.folder_key_version)
+                        ) {
+                            org.astermail.android.folders.folder_wrap_proves_password(
+                                folder_id = label_id,
+                                salt_base64 = salt,
+                                folder_key_version = response.folder_key_version,
+                                encrypted_folder_key = response.encrypted_folder_key,
+                                folder_key_nonce = response.folder_key_nonce,
+                                encryption_key = keys.encryption_key,
+                            )
+                        } else {
+                            org.astermail.android.folders.accept_folder_unlock(
+                                folder_id = label_id,
+                                pin = pin,
+                                salt_base64 = salt,
+                                folder_key_version = response.folder_key_version,
+                                encrypted_folder_key = response.encrypted_folder_key,
+                                folder_key_nonce = response.folder_key_nonce,
+                                encryption_key = keys.encryption_key,
+                                bound_writes_ready = folder_writes_ready(),
+                            )
+                            true
+                        }
+                    } finally {
+                        keys.encryption_key.fill(0)
+                    }
+                    if (verified) {
+                        labels_api.remove_folder_password(
+                            label_id,
+                            RemoveFolderPasswordRequest(password_hash = keys.password_hash),
+                        )
+                    }
+                    verified
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -5381,7 +5613,9 @@ class SettingsViewModel @Inject constructor(
                 )
             } else {
                 _state.value = _state.value.copy(
-                    action_result = context.getString(R.string.failed_update_folder),
+                    action_result = context.getString(
+                        if (pins_unreadable) R.string.folder_protection_unavailable else R.string.failed_update_folder,
+                    ),
                 )
             }
             on_result(ok)
@@ -5446,12 +5680,20 @@ class SettingsViewModel @Inject constructor(
         val trimmed = name.trim()
         if (trimmed.isBlank()) return
         val target = _state.value.tags.firstOrNull { it.id == tag_id } ?: return
-        if (!org.astermail.android.labels.tag_name_readable(target)) return
+        if (!tag_name_readable(target) &&
+            !unreadable_fields.containsKey(field_key(archive_kind_tag, tag_id, "name"))
+        ) {
+            return
+        }
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_tag, tag_id, "name")) {
+                report_locked_write()
+                return@launch
+            }
             val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
-                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed) else it },
+                tags = previous.map { if (it.id == tag_id) it.copy(encrypted_name = trimmed, decryption_failed = false) else it },
             )
             try {
                 val identity_key = session_key_store.get_identity_key() ?: throw IllegalStateException("no identity key")
@@ -5479,6 +5721,10 @@ class SettingsViewModel @Inject constructor(
 
     fun recolor_tag(tag_id: String, color: String) {
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_tag, tag_id, "color", color.isBlank())) {
+                report_locked_write()
+                return@launch
+            }
             val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
@@ -5510,6 +5756,10 @@ class SettingsViewModel @Inject constructor(
 
     fun set_tag_icon(tag_id: String, icon: String?) {
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_tag, tag_id, "icon", icon.isNullOrBlank())) {
+                report_locked_write()
+                return@launch
+            }
             val gen = begin_tag_mutation()
             val previous = _state.value.tags
             _state.value = _state.value.copy(
@@ -5626,6 +5876,10 @@ class SettingsViewModel @Inject constructor(
 
     fun set_label_icon(label_id: String, icon: String?) {
         viewModelScope.launch {
+            if (!release_field_overwrite(archive_kind_label, label_id, "icon", icon.isNullOrBlank())) {
+                report_locked_write()
+                return@launch
+            }
             val previous = _state.value.labels
             _state.value = _state.value.copy(
                 labels = previous.map { if (it.id == label_id) it.copy(encrypted_icon = icon) else it },
@@ -5787,19 +6041,23 @@ class SettingsViewModel @Inject constructor(
                         )
                         return@launch
                     }
+                    var opened_with: String = identity_key
                     var decrypted = withContext(default_dispatcher) {
                         decrypt_preferences_after_key_load(enc, nonce, identity_key, _state.value.preferences)
                     }
                     if (decrypted == null && auth_repository.try_refresh_vault_keys()) {
                         val refreshed_key = await_identity_key()
                         if (!refreshed_key.isNullOrBlank()) {
+                            opened_with = refreshed_key
                             decrypted = withContext(default_dispatcher) {
                                 decrypt_preferences_after_key_load(enc, nonce, refreshed_key, _state.value.preferences)
                             }
                         }
                     }
                     if (decrypted != null) {
+                        decrypted = restore_archived_settings(opened_with, decrypted, enc.orEmpty(), nonce.orEmpty())
                         prefs_load_succeeded = true
+                        pending_edit_baseline = null
                         last_preferences_load_ms = System.currentTimeMillis()
                         last_preferences_load_ms = System.currentTimeMillis()
                         last_synced_preferences = decrypted
@@ -5815,6 +6073,7 @@ class SettingsViewModel @Inject constructor(
                     } else {
                         val fallback = last_synced_preferences ?: read_cached_preferences()
                         prefs_load_succeeded = fallback != null
+                        if (fallback != null) pending_edit_baseline = null
                         last_preferences_load_ms = System.currentTimeMillis()
                         _state.value = _state.value.copy(
                             preferences = fallback ?: UserPreferences(),
@@ -5831,6 +6090,7 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     val prefs = load_plaintext_preferences()
                     prefs_load_succeeded = true
+                    pending_edit_baseline = null
                     last_preferences_load_ms = System.currentTimeMillis()
                     last_synced_preferences = prefs
                     persist_cached_preferences(prefs)
@@ -5941,12 +6201,18 @@ class SettingsViewModel @Inject constructor(
             try {
                 val list = signatures_api.list_signatures()
                 val decrypted = list.signatures.map { sig ->
-                    val name = try {
-                        decrypt_signature_field(sig.encrypted_name, sig.name_nonce)
-                    } catch (_: Throwable) { known[sig.id]?.name.orEmpty() }
-                    val content = try {
-                        decrypt_signature_field(sig.encrypted_content, sig.content_nonce)
-                    } catch (_: Throwable) { known[sig.id]?.content.orEmpty() }
+                    val name = open_tracked(archive_kind_signature, sig.id, "name", sig.encrypted_name, sig.name_nonce) {
+                        runCatching { decrypt_signature_field(sig.encrypted_name, sig.name_nonce) }.getOrNull()
+                    } ?: known[sig.id]?.name.orEmpty()
+                    val content = open_tracked(
+                        archive_kind_signature,
+                        sig.id,
+                        "content",
+                        sig.encrypted_content,
+                        sig.content_nonce,
+                    ) {
+                        runCatching { decrypt_signature_field(sig.encrypted_content, sig.content_nonce) }.getOrNull()
+                    } ?: known[sig.id]?.content.orEmpty()
                     DecryptedSignature(
                         id = sig.id,
                         name = name,
@@ -6046,6 +6312,10 @@ class SettingsViewModel @Inject constructor(
                     report_signature_too_large()
                     return@launch
                 }
+                if (!release_signature_overwrite(id, name, content)) {
+                    report_signature_locked()
+                    return@launch
+                }
                 val name_enc = name?.let { encrypt_signature_field(it) }
                 val content_enc = content?.let { encrypt_signature_field(it) }
                 signatures_api.update_signature(
@@ -6112,6 +6382,10 @@ class SettingsViewModel @Inject constructor(
             try {
                 val existing_id = default_signature_id
                 if (existing_id != null) {
+                    if (!release_signature_overwrite(existing_id, null, content)) {
+                        report_signature_locked()
+                        return@launch
+                    }
                     val enc = encrypt_signature_field(content)
                     signatures_api.update_signature(
                         existing_id,
@@ -6149,11 +6423,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun decrypt_signature_field(ciphertext_b64: String, nonce_b64: String): String {
+    private fun decrypt_signature_field(
+        ciphertext_b64: String,
+        nonce_b64: String,
+        on_constant: () -> Unit = {},
+    ): String {
         if (ciphertext_b64.isBlank() || nonce_b64.isBlank()) return ""
         val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
-        val opened = open_with_storage_keys(ciphertext, nonce)
+        val opened = open_with_storage_keys(ciphertext, nonce, on_constant)
             ?: throw IllegalStateException("signature decryption failed")
         return String(opened, Charsets.UTF_8)
     }
@@ -6172,6 +6450,397 @@ class SettingsViewModel @Inject constructor(
         } finally {
             key.fill(0)
         }
+    }
+
+    private fun vault_fully_loaded(): Boolean =
+        session_key_store.account_keys_ready() && has_data_kek()
+
+    private fun has_data_kek(): Boolean {
+        val key = session_key_store.get_data_kek() ?: return false
+        key.fill(0)
+        return true
+    }
+
+    private fun release_overwrite(kind: String, encrypted_b64: String, nonce_b64: String, baseline: String = ""): Boolean {
+        if (!vault_fully_loaded()) return false
+        return preferences_cache.archive_unreadable(cache_account_key(), kind, "$encrypted_b64.$nonce_b64", baseline = baseline)
+    }
+
+    private fun encode_archive_baseline(prefs: UserPreferences): String =
+        android.util.Base64.encodeToString(
+            prefs_json.encodeToString(UserPreferences.serializer(), prefs).toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_WRAP,
+        )
+
+    private fun decode_archive_baseline(blob: ArchivedBlob): UserPreferences? {
+        val encoded = blob.baseline.ifBlank { blob.target }
+        if (encoded.isBlank()) return null
+        return runCatching {
+            val raw = String(android.util.Base64.decode(encoded, android.util.Base64.DEFAULT), Charsets.UTF_8)
+            prefs_json.decodeFromString(UserPreferences.serializer(), raw)
+        }.getOrNull()
+    }
+
+    private suspend fun restore_archived_settings(
+        identity_key: String,
+        current: UserPreferences,
+        loaded_enc: String,
+        loaded_nonce: String,
+    ): UserPreferences {
+        if (!vault_fully_loaded()) return current
+        val account = cache_account_key() ?: return current
+        restore_opened_field_archives(account, identity_key)
+        val opened = withContext(default_dispatcher) {
+            preferences_cache.list_archived(account, archive_kind_preferences).mapNotNull { blob ->
+                open_archived_preferences(blob.payload, identity_key)?.let { blob to it }
+            }
+        }
+        if (opened.isEmpty()) return current
+        if (preferences_constant_sealed) return current
+        val newest = opened.maxWith(compareBy<Pair<ArchivedBlob, UserPreferences>>({ it.first.archived_ms }, { it.first.key }))
+        val baseline = decode_archive_baseline(newest.first) ?: UserPreferences()
+        val restored = rebase_preferences_changes(prefs_json, newest.second, baseline, current)
+        try {
+            if (restored != current) {
+                val server = preferences_api.get_versioned_encrypted_preferences() ?: return current
+                val version = server.preferences_version ?: return current
+                if (server.encrypted_preferences != loaded_enc || server.preferences_nonce != loaded_nonce) return current
+                val payload = encode_preferences_preserving_unknown(prefs_json, restored, last_preferences_raw_json)
+                val sealed = encrypt_preferences_payload(payload, identity_key)
+                val result = preferences_api.save_encrypted_preferences_if_version(
+                    SaveVersionedPreferencesRequest(
+                        encrypted_preferences = sealed.encrypted_preferences,
+                        preferences_nonce = sealed.preferences_nonce,
+                        expected_version = version,
+                    ),
+                )
+                if (result != PreferencesSaveResult.SAVED) return current
+                last_preferences_raw_json = payload
+            }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            return current
+        }
+        opened.forEach { preferences_cache.drop_archived(it.first.key) }
+        return restored
+    }
+
+    private fun open_archived_preferences(payload: String, identity_key: String): UserPreferences? {
+        val parts = payload.split('.')
+        if (parts.size != 2) return null
+        return runCatching {
+            val ciphertext = android.util.Base64.decode(parts[0], android.util.Base64.DEFAULT)
+            val nonce = android.util.Base64.decode(parts[1], android.util.Base64.DEFAULT)
+            var opened_under_constant = false
+            open_preferences(ciphertext, nonce, identity_key) { opened_under_constant = true }
+                ?.takeUnless { opened_under_constant }
+                ?.let { plaintext ->
+                    merge_decrypted_preferences(prefs_json, String(plaintext, Charsets.UTF_8), null)
+                }
+        }.getOrNull()
+    }
+
+    private fun open_field_payload(kind: String, payload: String, identity_key: String, identity_keys: List<String>): String? {
+        val parts = payload.split('.')
+        if (parts.size != 2) return null
+        var opened_under_constant = false
+        val mark_constant = { opened_under_constant = true }
+        val secret_keys = identity_keys.filter { org.astermail.android.mail.is_secret_identity_key(it) }
+        val opened = runCatching {
+            when (kind) {
+                archive_kind_tag -> decrypt_tag_field_with_fallback(parts[0], parts[1], secret_keys, mark_constant)
+                archive_kind_label -> decrypt_label_field_with_fallback(parts[0], parts[1], secret_keys, mark_constant)
+                archive_kind_recovery_email -> open_recovery_email_noting(parts[0], parts[1], identity_key)
+                else -> decrypt_signature_field(parts[0], parts[1], mark_constant)
+            }
+        }.getOrNull()
+        return opened.takeUnless { opened_under_constant }
+    }
+
+    private suspend fun restore_opened_field_archives(account: String, identity_key: String) {
+        val identity_keys = listOf(identity_key) + session_key_store.get_previous_keys().orEmpty()
+        for (kind in field_archive_kinds) {
+            val opened = withContext(default_dispatcher) {
+                preferences_cache.list_archived(account, kind).mapNotNull { blob ->
+                    open_field_payload(kind, blob.payload, identity_key, identity_keys)?.let { blob to it }
+                }
+            }
+            if (opened.isEmpty()) continue
+            try {
+                if (restore_field_kind(kind, opened, identity_key, identity_keys)) reload_field_kind(kind)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+            }
+        }
+    }
+
+    private suspend fun current_archive_fields(kind: String): Map<String, Pair<String?, String?>> = when (kind) {
+        archive_kind_tag -> tags_api.list_tags(include_counts = false).tags.flatMap { tag ->
+            listOf(
+                "${tag.id}:name" to (tag.encrypted_name to tag.name_nonce),
+                "${tag.id}:color" to (tag.encrypted_color to tag.color_nonce),
+                "${tag.id}:icon" to (tag.encrypted_icon to tag.icon_nonce),
+            )
+        }.toMap()
+        archive_kind_label -> labels_api.list_labels(include_counts = false).labels.flatMap { label ->
+            listOf(
+                "${label.id}:name" to (label.encrypted_name to label.name_nonce),
+                "${label.id}:color" to (label.encrypted_color to label.color_nonce),
+                "${label.id}:icon" to (label.encrypted_icon to label.icon_nonce),
+            )
+        }.toMap()
+        archive_kind_signature -> signatures_api.list_signatures().signatures.flatMap { sig ->
+            listOf(
+                "${sig.id}:name" to (sig.encrypted_name to sig.name_nonce),
+                "${sig.id}:content" to (sig.encrypted_content to sig.content_nonce),
+            )
+        }.toMap()
+        archive_kind_recovery_email -> recovery_email_api.get_state().let { state ->
+            mapOf("" to (state.encrypted_email to state.email_nonce))
+        }
+        else -> emptyMap()
+    }
+
+    private fun archived_field_state(
+        kind: String,
+        encrypted: String?,
+        nonce: String?,
+        identity_key: String,
+        identity_keys: List<String>,
+    ): ArchivedFieldState {
+        if (encrypted.isNullOrBlank() || nonce.isNullOrBlank()) return ArchivedFieldState.MISSING
+        val opened = open_field_payload(kind, "$encrypted.$nonce", identity_key, identity_keys)
+            ?: return ArchivedFieldState.UNREADABLE
+        return if (opened.isBlank()) ArchivedFieldState.MISSING else ArchivedFieldState.PRESENT
+    }
+
+    private suspend fun restore_field_kind(
+        kind: String,
+        opened: List<Pair<ArchivedBlob, String>>,
+        identity_key: String,
+        identity_keys: List<String>,
+    ): Boolean {
+        val fields = current_archive_fields(kind)
+        val states = HashMap<String, ArchivedFieldState>()
+        val candidates = mutableListOf<Pair<ArchivedBlob, String>>()
+        val newest_first = opened.sortedWith(
+            compareByDescending<Pair<ArchivedBlob, String>> { it.first.archived_ms }.thenByDescending { it.first.key },
+        )
+        for ((blob, value) in newest_first) {
+            val current = fields[blob.target] ?: continue
+            val state = states.getOrPut(blob.target) {
+                withContext(default_dispatcher) {
+                    archived_field_state(kind, current.first, current.second, identity_key, identity_keys)
+                }
+            }
+            when (state) {
+                ArchivedFieldState.PRESENT -> preferences_cache.drop_archived(blob.key)
+                ArchivedFieldState.UNREADABLE -> Unit
+                ArchivedFieldState.MISSING -> {
+                    if (value.isBlank() || blob.replaced_with_blank) {
+                        preferences_cache.drop_archived(blob.key)
+                    } else if (kind != archive_kind_recovery_email) {
+                        candidates += blob to value
+                    }
+                }
+            }
+        }
+        if (candidates.isEmpty()) return false
+        val written = HashSet<String>()
+        for (chunk in candidates.chunked(archive_write_chunk)) {
+            val fresh = relist_archive_fields(kind) ?: break
+            for ((blob, value) in chunk) {
+                when {
+                    blob.target in written -> preferences_cache.drop_archived(blob.key)
+                    fresh[blob.target] != fields[blob.target] -> Unit
+                    write_back_field(kind, blob.target, value, identity_key) -> {
+                        preferences_cache.drop_archived(blob.key)
+                        written += blob.target
+                    }
+                }
+            }
+        }
+        return written.isNotEmpty()
+    }
+
+    private suspend fun relist_archive_fields(kind: String): Map<String, Pair<String?, String?>>? = try {
+        current_archive_fields(kind)
+    } catch (t: Throwable) {
+        if (t is kotlinx.coroutines.CancellationException) throw t
+        null
+    }
+
+    private suspend fun write_back_field(kind: String, target: String, value: String, identity_key: String): Boolean {
+        val split = target.lastIndexOf(':')
+        if (split <= 0) return false
+        val id = target.substring(0, split)
+        val field = target.substring(split + 1)
+        return try {
+            when (kind) {
+                archive_kind_tag -> {
+                    val sealed = withContext(default_dispatcher) {
+                        encrypt_field_with_version(value, identity_key, TAG_VERSION_CURRENT)
+                    }
+                    val request = when (field) {
+                        "name" -> UpdateTagRequest(encrypted_name = sealed.ciphertext_b64, name_nonce = sealed.nonce_b64)
+                        "color" -> UpdateTagRequest(encrypted_color = sealed.ciphertext_b64, color_nonce = sealed.nonce_b64)
+                        "icon" -> UpdateTagRequest(encrypted_icon = sealed.ciphertext_b64, icon_nonce = sealed.nonce_b64)
+                        else -> return false
+                    }
+                    tags_api.update_tag(id, request)
+                }
+                archive_kind_label -> {
+                    val sealed = withContext(default_dispatcher) {
+                        encrypt_field_with_version(value, identity_key, FOLDER_VERSION_CURRENT)
+                    }
+                    val request = when (field) {
+                        "name" -> UpdateLabelRequest(encrypted_name = sealed.ciphertext_b64, name_nonce = sealed.nonce_b64)
+                        "color" -> UpdateLabelRequest(encrypted_color = sealed.ciphertext_b64, color_nonce = sealed.nonce_b64)
+                        "icon" -> UpdateLabelRequest(encrypted_icon = sealed.ciphertext_b64, icon_nonce = sealed.nonce_b64)
+                        else -> return false
+                    }
+                    labels_api.update_label(id, request)
+                }
+                archive_kind_signature -> {
+                    val sealed = encrypt_signature_field(value)
+                    val request = when (field) {
+                        "name" -> org.astermail.android.api.signatures.UpdateSignatureRequest(encrypted_name = sealed.ciphertext_b64, name_nonce = sealed.nonce_b64)
+                        "content" -> org.astermail.android.api.signatures.UpdateSignatureRequest(encrypted_content = sealed.ciphertext_b64, content_nonce = sealed.nonce_b64)
+                        else -> return false
+                    }
+                    signatures_api.update_signature(id, request)
+                }
+                else -> return false
+            }
+            true
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            false
+        }
+    }
+
+    private fun reload_field_kind(kind: String) {
+        when (kind) {
+            archive_kind_tag -> load_tags()
+            archive_kind_label -> load_labels(force = true)
+            archive_kind_signature -> load_signature()
+        }
+    }
+
+    private fun watch_account_key_readiness() {
+        val events = runCatching { session_key_store.account_keys_ready_events() }.getOrNull() ?: return
+        var seen = runCatching { events.value }.getOrNull() ?: return
+        viewModelScope.launch {
+            try {
+                events.collect { count ->
+                    if (count != seen) {
+                        seen = count
+                        restore_after_key_load()
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+            }
+        }
+    }
+
+    private fun restore_after_key_load() {
+        val running = load_preferences_job
+        if (running?.isActive == true) {
+            viewModelScope.launch {
+                running.join()
+                restore_after_key_load()
+            }
+            return
+        }
+        if (!prefs_load_succeeded || !account_uses_encrypted_prefs) return
+        val account = cache_account_key() ?: return
+        val pending = (listOf(archive_kind_preferences) + field_archive_kinds - archive_kind_recovery_email).any { kind ->
+            preferences_cache.list_archived(account, kind).isNotEmpty()
+        }
+        if (pending) load_preferences(force = true)
+    }
+
+    private val unreadable_fields = ConcurrentHashMap<String, String>()
+
+    private fun field_key(kind: String, id: String, field: String): String =
+        "${cache_account_key().orEmpty()}$field_key_separator$kind:$id:$field"
+
+    private fun open_tracked(
+        kind: String,
+        id: String,
+        field: String,
+        encrypted_b64: String,
+        nonce_b64: String,
+        open: () -> String?,
+    ): String? {
+        val opened = open()
+        if (opened != null) {
+            unreadable_fields.remove(field_key(kind, id, field))
+        } else if (is_sealed_preferences_blob(encrypted_b64, nonce_b64)) {
+            unreadable_fields[field_key(kind, id, field)] = "$encrypted_b64.$nonce_b64"
+        }
+        return opened
+    }
+
+    private fun track_skipped_field(
+        kind: String,
+        id: String,
+        field: String,
+        encrypted_b64: String?,
+        nonce_b64: String?,
+        open: (Pair<String, String>) -> String?,
+    ) {
+        if (encrypted_b64.isNullOrBlank() || nonce_b64.isNullOrBlank()) return
+        try {
+            open_tracked(kind, id, field, encrypted_b64, nonce_b64) { open(encrypted_b64 to nonce_b64) }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+        }
+    }
+
+    private fun release_field_overwrite(
+        kind: String,
+        id: String,
+        field: String,
+        replaced_with_blank: Boolean = false,
+    ): Boolean {
+        val key = field_key(kind, id, field)
+        val payload = unreadable_fields[key] ?: return true
+        if (!vault_fully_loaded()) return false
+        val account = cache_account_key() ?: return false
+        if (
+            !preferences_cache.archive_unreadable(
+                account,
+                kind,
+                payload,
+                "$id:$field",
+                replaced_with_blank = replaced_with_blank,
+            )
+        ) {
+            return false
+        }
+        unreadable_fields.remove(key, payload)
+        return true
+    }
+
+    private fun release_signature_overwrite(id: String, name: String?, content: String?): Boolean {
+        if (name != null && !release_field_overwrite(archive_kind_signature, id, "name", name.isBlank())) return false
+        if (content != null && !release_field_overwrite(archive_kind_signature, id, "content", content.isBlank())) return false
+        return true
+    }
+
+    private fun report_signature_locked() {
+        _state.value = _state.value.copy(
+            save_status = SaveStatus.ERROR,
+            error = context.getString(R.string.encrypted_edit_locked_retry),
+        )
+    }
+
+    private fun report_locked_write() {
+        _state.value = _state.value.copy(
+            action_result = context.getString(R.string.encrypted_edit_locked_retry),
+        )
     }
 
     fun report_preferences_locked() {
@@ -6204,6 +6873,9 @@ class SettingsViewModel @Inject constructor(
         load_preferences_job?.cancel()
         save_preferences_job?.cancel()
         val baseline = last_synced_preferences
+        val edit_reference = baseline ?: (pending_edit_baseline ?: _state.value.preferences).also {
+            pending_edit_baseline = it
+        }
         failed_preferences_save = null
         _state.value = _state.value.copy(preferences = prefs, save_status = SaveStatus.SAVING)
         if (load_confirmed) {
@@ -6218,26 +6890,34 @@ class SettingsViewModel @Inject constructor(
                     val fresh = preferences_api.get_encrypted_preferences()
                     val fresh_enc = fresh.encrypted_preferences
                     val fresh_nonce = fresh.preferences_nonce
+                    if (!load_confirmed && (fresh_enc.isNullOrBlank() || fresh_nonce.isNullOrBlank())) {
+                        refuse_unconfirmed_preferences_save(prefs)
+                        return@launch
+                    }
                     if (!fresh_enc.isNullOrBlank() && !fresh_nonce.isNullOrBlank()) {
                         val server_prefs = decrypt_preferences_after_key_load(fresh_enc, fresh_nonce, identity_key, baseline)
-                        if (server_prefs != null) {
-                            to_save = rebase_preferences_changes(prefs_json, server_prefs, baseline, prefs)
+                        if (server_prefs != null && preferences_constant_sealed) {
+                            to_save = rebase_preferences_changes(prefs_json, UserPreferences(), edit_reference ?: server_prefs, prefs)
+                        } else if (server_prefs != null) {
+                            to_save = rebase_preferences_changes(prefs_json, server_prefs, edit_reference, prefs)
                         } else if (!load_confirmed) {
-                            failed_preferences_save = prefs
-                            _state.value = _state.value.copy(
-                                save_status = SaveStatus.ERROR,
-                                preferences_locked = true,
-                                error = context.getString(R.string.preferences_locked_retry),
-                            )
-                            report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
+                            refuse_unconfirmed_preferences_save(prefs)
                             return@launch
+                        } else if (is_sealed_preferences_blob(fresh_enc, fresh_nonce)) {
+                            val archived_baseline = encode_archive_baseline(edit_reference ?: UserPreferences())
+                            if (!release_overwrite(archive_kind_preferences, fresh_enc, fresh_nonce, archived_baseline)) {
+                                throw IllegalStateException("preferences not readable")
+                            }
                         }
                     }
-                    val payload = encode_preferences_preserving_unknown(prefs_json, to_save, last_preferences_raw_json)
+                    val unknown_source = if (preferences_constant_sealed) null else last_preferences_raw_json
+                    val payload = encode_preferences_preserving_unknown(prefs_json, to_save, unknown_source)
                     preferences_api.save_encrypted_preferences(encrypt_preferences_payload(payload, identity_key))
+                    preferences_constant_sealed = false
                     last_preferences_raw_json = payload
                     last_synced_preferences = to_save
                     prefs_load_succeeded = true
+                    pending_edit_baseline = null
                     persist_cached_preferences(to_save)
                     apply_low_network_preference(to_save)
                     mirror_synced_preferences(to_save)
@@ -6270,6 +6950,7 @@ class SettingsViewModel @Inject constructor(
                         preferences_api.save_preferences(prefs)
                     }
                     last_synced_preferences = prefs
+                    pending_edit_baseline = null
                     persist_cached_preferences(prefs)
                     mirror_synced_preferences(prefs)
                     _state.value = _state.value.copy(
@@ -6293,6 +6974,16 @@ class SettingsViewModel @Inject constructor(
                 report_preference_save_failure(message)
             }
         }
+    }
+
+    private fun refuse_unconfirmed_preferences_save(pending: UserPreferences) {
+        failed_preferences_save = pending
+        _state.value = _state.value.copy(
+            save_status = SaveStatus.ERROR,
+            preferences_locked = true,
+            error = context.getString(R.string.preferences_locked_retry),
+        )
+        report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
     }
 
     fun retry_preferences_save() {
@@ -6780,39 +7471,38 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun decrypt_tag(tag: TagItem): TagItem {
-        val identity_key = session_key_store.get_identity_key() ?: return tag.copy(encrypted_name = "")
+        val identity_key = session_key_store.get_identity_key()
+            ?: return org.astermail.android.labels.tag_after_decryption(tag) { _, _ -> null }
         val all_keys = buildList {
             add(identity_key)
             session_key_store.get_previous_keys()?.forEach { add(it) }
         }
-        return try {
-            val name = if (tag.encrypted_name.isNotBlank() && tag.name_nonce.isNotBlank()) {
-                decrypt_tag_field_with_fallback(tag.encrypted_name, tag.name_nonce, all_keys) ?: ""
-            } else tag.encrypted_name
-
-            val enc_color = tag.encrypted_color
-            val c_nonce = tag.color_nonce
-            val color = if (!enc_color.isNullOrBlank() && !c_nonce.isNullOrBlank()) {
-                decrypt_tag_field_with_fallback(enc_color, c_nonce, all_keys)
-            } else enc_color
-
-            val enc_icon = tag.encrypted_icon
-            val i_nonce = tag.icon_nonce
-            val icon = if (!enc_icon.isNullOrBlank() && !i_nonce.isNullOrBlank()) {
-                decrypt_tag_field_with_fallback(enc_icon, i_nonce, all_keys)
-            } else enc_icon
-
-            tag.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            tag.copy(encrypted_name = "")
+        val opened = org.astermail.android.labels.tag_after_decryption(tag) { ciphertext, nonce ->
+            val field = when {
+                ciphertext == tag.encrypted_name && nonce == tag.name_nonce -> "name"
+                ciphertext == tag.encrypted_color && nonce == tag.color_nonce -> "color"
+                else -> "icon"
+            }
+            open_tracked(archive_kind_tag, tag.id, field, ciphertext, nonce) {
+                decrypt_tag_field_with_fallback(ciphertext, nonce, all_keys)
+            }
         }
+        if (opened.decryption_failed) {
+            track_skipped_field(archive_kind_tag, tag.id, "color", tag.encrypted_color, tag.color_nonce) {
+                decrypt_tag_field_with_fallback(it.first, it.second, all_keys)
+            }
+            track_skipped_field(archive_kind_tag, tag.id, "icon", tag.encrypted_icon, tag.icon_nonce) {
+                decrypt_tag_field_with_fallback(it.first, it.second, all_keys)
+            }
+        }
+        return opened
     }
 
     private fun decrypt_tag_field_with_fallback(
         ciphertext_b64: String,
         nonce_b64: String,
         identity_keys: List<String>,
+        on_constant: () -> Unit = {},
     ): String? {
         val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
@@ -6829,22 +7519,16 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
             }
         }
-        val legacy_keks = session_key_store.get_decrypt_keks()
-        for (kek_b64 in legacy_keks) {
-            try {
-                val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
-                if (raw_key.size == 32) {
-                    try {
-                        val result = aes_gcm_decrypt(ciphertext, raw_key, nonce)
-                        return String(result, Charsets.UTF_8)
-                    } finally {
-                        raw_key.fill(0)
-                    }
-                }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-            }
+        val opened_legacy = StorageWriteKey.open_with_decrypt_keks(
+            session_key_store.get_decrypt_keks(),
+            on_constant = {
+                session_key_store.note_public_constant_use()
+                on_constant()
+            },
+        ) { key ->
+            runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
         }
+        if (opened_legacy != null) return String(opened_legacy, Charsets.UTF_8)
         return null
     }
 
@@ -6852,6 +7536,7 @@ class SettingsViewModel @Inject constructor(
         ciphertext_b64: String,
         nonce_b64: String,
         identity_keys: List<String>,
+        on_constant: () -> Unit = {},
     ): String? {
         val ciphertext = android.util.Base64.decode(ciphertext_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
@@ -6870,55 +7555,45 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
-        val legacy_keks = session_key_store.get_decrypt_keks()
-        for (kek_b64 in legacy_keks) {
-            try {
-                val raw_key = android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT)
-                if (raw_key.size == 32) {
-                    try {
-                        val result = aes_gcm_decrypt(ciphertext, raw_key, nonce)
-                        return String(result, Charsets.UTF_8)
-                    } finally {
-                        raw_key.fill(0)
-                    }
-                }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-            }
+        val opened_legacy = StorageWriteKey.open_with_decrypt_keks(
+            session_key_store.get_decrypt_keks(),
+            on_constant = {
+                session_key_store.note_public_constant_use()
+                on_constant()
+            },
+        ) { key ->
+            runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
         }
+        if (opened_legacy != null) return String(opened_legacy, Charsets.UTF_8)
         return null
     }
 
     private fun decrypt_label(label: LabelItem): LabelItem {
-        val identity_key = session_key_store.get_identity_key() ?: return label.copy(encrypted_name = null)
+        val identity_key = session_key_store.get_identity_key()
+            ?: return org.astermail.android.labels.label_after_decryption(label) { _, _ -> null }
         val all_keys = buildList {
             add(identity_key)
             session_key_store.get_previous_keys()?.forEach { add(it) }
         }
-        return try {
-            val enc_name = label.encrypted_name
-            val n_nonce = label.name_nonce
-            val name = if (!enc_name.isNullOrBlank() && !n_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_name, n_nonce, all_keys)
-            } else enc_name
-
-            val enc_color = label.encrypted_color
-            val c_nonce = label.color_nonce
-            val color = if (!enc_color.isNullOrBlank() && !c_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_color, c_nonce, all_keys)
-            } else enc_color
-
-            val enc_icon = label.encrypted_icon
-            val i_nonce = label.icon_nonce
-            val icon = if (!enc_icon.isNullOrBlank() && !i_nonce.isNullOrBlank()) {
-                decrypt_label_field_with_fallback(enc_icon, i_nonce, all_keys)
-            } else enc_icon
-
-            label.copy(encrypted_name = name, encrypted_color = color, encrypted_icon = icon)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            label.copy(encrypted_name = null)
+        val opened = org.astermail.android.labels.label_after_decryption(label) { ciphertext, nonce ->
+            val field = when {
+                ciphertext == label.encrypted_name && nonce == label.name_nonce -> "name"
+                ciphertext == label.encrypted_color && nonce == label.color_nonce -> "color"
+                else -> "icon"
+            }
+            open_tracked(archive_kind_label, label.id, field, ciphertext, nonce) {
+                decrypt_label_field_with_fallback(ciphertext, nonce, all_keys)
+            }
         }
+        if (opened.decryption_failed) {
+            track_skipped_field(archive_kind_label, label.id, "color", label.encrypted_color, label.color_nonce) {
+                decrypt_label_field_with_fallback(it.first, it.second, all_keys)
+            }
+            track_skipped_field(archive_kind_label, label.id, "icon", label.encrypted_icon, label.icon_nonce) {
+                decrypt_label_field_with_fallback(it.first, it.second, all_keys)
+            }
+        }
+        return opened
     }
 
     private fun decrypt_tag_field(
@@ -7270,17 +7945,25 @@ class SettingsViewModel @Inject constructor(
         org.astermail.android.crypto.StorageKeyGate.await_write_key(session_key_store)
 
     private fun storage_read_keys(): List<ByteArray> =
-        org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store)
+        StorageWriteKey.read_keys(session_key_store)
 
     private fun storage_lookup_keys(): List<ByteArray> =
-        org.astermail.android.crypto.StorageWriteKey.lookup_keys(session_key_store)
+        StorageWriteKey.lookup_keys(session_key_store)
 
-    private fun open_with_storage_keys(ciphertext: ByteArray, nonce: ByteArray): ByteArray? {
+    private fun open_with_storage_keys(
+        ciphertext: ByteArray,
+        nonce: ByteArray,
+        on_constant: () -> Unit = {},
+    ): ByteArray? {
         val keys = storage_read_keys()
         try {
             for (key in keys) {
                 val opened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
-                if (opened != null) return opened
+                if (opened != null) {
+                    StorageWriteKey.note_if_public(session_key_store, key)
+                    if (StorageWriteKey.is_public_mail_kek(key)) on_constant()
+                    return opened
+                }
             }
             return null
         } finally {
@@ -7298,6 +7981,9 @@ class SettingsViewModel @Inject constructor(
     private var last_preferences_raw_json: String? = null
 
     @Volatile
+    private var preferences_constant_sealed: Boolean = false
+
+    @Volatile
     private var last_synced_preferences: UserPreferences? = null
     private var failed_preferences_save: UserPreferences? = null
 
@@ -7309,9 +7995,11 @@ class SettingsViewModel @Inject constructor(
     ): UserPreferences {
         val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
         val nonce = android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT)
-        val plaintext = open_preferences(ciphertext, nonce, identity_key)
+        var opened_under_constant = false
+        val plaintext = open_preferences(ciphertext, nonce, identity_key) { opened_under_constant = true }
             ?: throw IllegalStateException("preferences not readable")
         val json_str = String(plaintext, Charsets.UTF_8)
+        preferences_constant_sealed = opened_under_constant
         last_preferences_raw_json = json_str
         return merge_decrypted_preferences(prefs_json, json_str, previous)
     }
@@ -7330,8 +8018,36 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun open_preferences(ciphertext: ByteArray, nonce: ByteArray, identity_key: String): ByteArray? {
+    private fun open_preferences(
+        ciphertext: ByteArray,
+        nonce: ByteArray,
+        identity_key: String,
+        on_constant: () -> Unit = {},
+    ): ByteArray? {
         val sources = (listOf(identity_key) + session_key_store.get_previous_keys().orEmpty()).distinct()
+        val (secret_sources, placeholder_sources) =
+            sources.partition { org.astermail.android.mail.is_secret_identity_key(it) }
+        open_preferences_with_sources(ciphertext, nonce, secret_sources)?.let { return it }
+        StorageWriteKey.open_with_decrypt_keks(
+            session_key_store.get_decrypt_keks(),
+            on_constant = {
+                session_key_store.note_public_constant_use()
+                on_constant()
+            },
+        ) { key ->
+            runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
+        }?.let { return it }
+        val opened = open_preferences_with_sources(ciphertext, nonce, placeholder_sources) ?: return null
+        session_key_store.note_public_constant_use()
+        on_constant()
+        return opened
+    }
+
+    private fun open_preferences_with_sources(
+        ciphertext: ByteArray,
+        nonce: ByteArray,
+        sources: List<String>,
+    ): ByteArray? {
         for (source in sources) {
             val key = MessageDigest.getInstance("SHA-256")
                 .digest((source + PREFERENCES_KEY_SUFFIX).toByteArray(Charsets.UTF_8))
@@ -7340,16 +8056,6 @@ class SettingsViewModel @Inject constructor(
             } catch (_: Throwable) {
             } finally {
                 key.fill(0)
-            }
-        }
-        for (kek_b64 in session_key_store.get_decrypt_keks()) {
-            val raw = runCatching { android.util.Base64.decode(kek_b64, android.util.Base64.DEFAULT) }.getOrNull()
-                ?: continue
-            try {
-                if (raw.size == 32) return aes_gcm_decrypt(ciphertext, raw, nonce)
-            } catch (_: Throwable) {
-            } finally {
-                raw.fill(0)
             }
         }
         return null
@@ -7538,4 +8244,26 @@ internal fun apply_default_signature_content(
         alias_id = null,
         placement = null,
     )
+}
+
+private const val archive_kind_preferences = "preferences"
+private const val archive_kind_tag = "tag"
+private const val archive_kind_label = "label"
+private const val archive_kind_recovery_email = "recovery_email"
+private const val archive_kind_signature = "signature"
+private const val archive_write_chunk = 8
+private enum class ArchivedFieldState { MISSING, PRESENT, UNREADABLE }
+private const val field_key_separator = "|"
+
+private val field_archive_kinds = listOf(
+    archive_kind_tag,
+    archive_kind_label,
+    archive_kind_recovery_email,
+    archive_kind_signature,
+)
+
+internal fun is_sealed_preferences_blob(encrypted_b64: String, nonce_b64: String): Boolean {
+    val ciphertext = runCatching { android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT) }.getOrNull()
+    val nonce = runCatching { android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT) }.getOrNull()
+    return ciphertext != null && nonce != null && nonce.size == 12 && ciphertext.size >= 16
 }

@@ -243,9 +243,17 @@ object SecurePrefs {
     @Synchronized
     private fun master_key(context: Context): MasterKey {
         cached_master_key?.let { return it }
-        val built = MasterKey.Builder(context, master_key_alias)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        val built = StrongBoxKeys.create(
+            available = StrongBoxKeys.available(context),
+            fresh = StrongBoxKeys.has_key(master_key_alias) == false,
+            probe = { StrongBoxKeys.stored_key(master_key_alias)?.let(StrongBoxKeys::round_trips) == true },
+            discard = { StrongBoxKeys.delete_key(master_key_alias) },
+        ) { strongbox ->
+            MasterKey.Builder(context, master_key_alias)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .setRequestStrongBoxBacked(strongbox)
+                .build()
+        }
         cached_master_key = built
         return built
     }

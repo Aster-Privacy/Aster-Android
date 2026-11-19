@@ -302,6 +302,40 @@ class EmailHtmlSanitizerTest {
         assertTrue(out.contains("h1{margin:0}"))
     }
 
+    @Test
+    fun fixed_and_sticky_positions_become_static() {
+        val pinned = Regex("position\\s*:\\s*(-[a-z]+-)?(fixed|sticky)", RegexOption.IGNORE_CASE)
+        listOf("fixed", "sticky", "-webkit-sticky", "FIXED", " fixed ").forEach { value ->
+            val inline = EmailHtmlSanitizer.sanitize("<div style=\"position:$value;top:0\">a</div>")
+            val block = sanitize_style(".a{position :$value;top:0}")
+            listOf(inline, block).forEach { out ->
+                assertFalse(out, pinned.containsMatchIn(out))
+                assertTrue(out, out.contains("position: static"))
+            }
+        }
+        val escaped = sanitize_style(".a{position:\\66 ixed;top:0}")
+        assertFalse(escaped, pinned.containsMatchIn(escaped))
+    }
+
+    @Test
+    fun absolute_overlays_become_static() {
+        val absolute = Regex("position\\s*:\\s*(-[a-z]+-)?absolute", RegexOption.IGNORE_CASE)
+        listOf("absolute", "ABSOLUTE", " absolute ", "absolute!important").forEach { value ->
+            val inline = EmailHtmlSanitizer.sanitize(
+                "<div style=\"position:$value;top:0;left:0;width:100%;height:100%;z-index:9999\">a</div>",
+            )
+            val block = sanitize_style(".overlay{position :$value;inset:0;z-index:9999}")
+            listOf(inline, block).forEach { out ->
+                assertFalse(out, absolute.containsMatchIn(out))
+                assertTrue(out, out.contains("position: static"))
+            }
+        }
+        val escaped = sanitize_style(".overlay{position:\\61 bsolute;inset:0}")
+        assertFalse(escaped, absolute.containsMatchIn(escaped))
+        val relative = EmailHtmlSanitizer.sanitize("<div style=\"position:relative;top:2px\">a</div>")
+        assertTrue(relative, relative.contains("relative"))
+    }
+
     private fun sanitize_style(css: String): String =
         EmailHtmlSanitizer.sanitize("""<html><head><style>$css</style></head><body><p>hi</p></body></html>""")
 

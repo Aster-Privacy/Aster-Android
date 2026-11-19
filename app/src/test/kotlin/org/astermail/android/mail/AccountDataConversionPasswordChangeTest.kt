@@ -263,6 +263,16 @@ class AccountDataConversionPasswordChangeTest {
     }
 
     @Test
+    fun does_not_open_mail_sealed_under_a_login_salt() = runBlocking {
+        every { session_key_store.is_login_salt(any()) } returns true
+        pages = mutableListOf(page(sentinel_item("sent-1")))
+        queued_statuses.addAll(listOf(status_of(remaining_sent = 1), status_of(remaining_sent = 1)))
+
+        assertEquals(PasswordChangeConversion.INCOMPLETE, convert())
+        assertTrue(sent_writes.isEmpty())
+    }
+
+    @Test
     fun is_incomplete_when_the_fresh_status_still_has_items() = runBlocking {
         pages = mutableListOf(page(sentinel_item("sent-1")))
         queued_statuses.addAll(listOf(status_of(remaining_sent = 1), status_of(remaining_attachments = 1)))

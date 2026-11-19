@@ -405,23 +405,60 @@ class KeysApiImpl(private val client: ApiClient) : KeysApi {
 object BoundWriteSwitches {
     const val FRESH_MS = 5 * 60 * 1000L
 
-    private class Snapshot(val vault: Boolean, val attachment: Boolean, val at_ms: Long)
+    private class Snapshot(
+        val vault: Boolean,
+        val field: Boolean,
+        val prekey: Boolean,
+        val escrow: Boolean,
+        val at_ms: Long,
+    )
 
     @Volatile
     private var snapshot: Snapshot? = null
+
+    @Volatile
+    private var refresher: (suspend () -> Unit)? = null
+
+    const val REFRESH_TIMEOUT_MS = 5_000L
+
+    fun bind_refresher(fetch: (suspend () -> Unit)?) {
+        refresher = fetch
+    }
+
+    suspend fun refresh_for_vault_write(
+        now: () -> Long = { System.currentTimeMillis() },
+        timeout_ms: Long = REFRESH_TIMEOUT_MS,
+    ): Boolean {
+        val fetch = refresher
+        if (fetch != null) {
+            try {
+                kotlinx.coroutines.withTimeoutOrNull(timeout_ms) { fetch() }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+            }
+        }
+        return vault(now())
+    }
 
     fun record(body: String, now_ms: Long = System.currentTimeMillis()) {
         val element = runCatching { Json.parseToJsonElement(body) }.getOrNull() as? JsonObject
         snapshot = Snapshot(
             vault = json_boolean_true(element?.get("bound_vault_writes")),
-            attachment = json_boolean_true(element?.get("bound_attachment_writes")),
+            field = json_boolean_true(element?.get("bound_field_writes")),
+            prekey = json_boolean_true(element?.get("bound_prekey_writes")),
+            escrow = json_boolean_true(element?.get("bound_escrow_writes")),
             at_ms = now_ms,
         )
     }
 
     fun vault(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.vault == true
 
-    fun attachment(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.attachment == true
+    fun field(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.field == true
+
+    fun prekey(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.prekey == true
+
+    fun escrow(now_ms: Long = System.currentTimeMillis()): Boolean = fresh(now_ms)?.escrow == true
 
     fun clear() {
         snapshot = null

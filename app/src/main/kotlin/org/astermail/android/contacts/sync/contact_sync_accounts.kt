@@ -57,6 +57,7 @@ object ContactSyncAccounts {
     private const val PREF_ENABLED = "enabled"
     private const val PREF_LINKED = "linked_ids"
     private const val PREF_DECLINED = "declined_ids"
+    private const val PREF_FIELD_SCOPE = "field_scope"
     private const val PERIODIC_SECONDS = 4L * 60L * 60L
 
     private const val WATCH_SETTLE_MS = 500L
@@ -64,6 +65,7 @@ object ContactSyncAccounts {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val enabled_state = MutableStateFlow<Boolean?>(null)
+    private val field_scope_state = MutableStateFlow<ContactFieldScope?>(null)
     private val local_changes = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -96,9 +98,27 @@ object ContactSyncAccounts {
         return enabled_state.asStateFlow()
     }
 
+    fun field_scope(context: Context): ContactFieldScope =
+        field_scope_state.value ?: prefs(context).let {
+            ContactFieldScope.resolve(it.getString(PREF_FIELD_SCOPE, null), it.getBoolean(PREF_ENABLED, false))
+        }.also { field_scope_state.value = it }
+
+    fun field_scope_flow(context: Context): StateFlow<ContactFieldScope?> {
+        field_scope(context)
+        return field_scope_state.asStateFlow()
+    }
+
+    fun set_field_scope(context: Context, scope: ContactFieldScope) {
+        prefs(context).edit().putString(PREF_FIELD_SCOPE, scope.key).commit()
+        field_scope_state.value = scope
+        request_sync_all(context, manual = true)
+    }
+
     fun set_enabled(context: Context, enabled: Boolean) {
+        val scope = field_scope(context)
         prefs(context).edit()
             .putBoolean(PREF_ENABLED, enabled)
+            .putString(PREF_FIELD_SCOPE, scope.key)
             .remove(PREF_DECLINED)
             .remove(PREF_LINKED)
             .commit()

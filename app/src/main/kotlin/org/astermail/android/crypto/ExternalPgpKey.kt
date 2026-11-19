@@ -36,16 +36,12 @@ import org.astermail.android.api.encryption.ExternalPgpKeyInfo
 import org.astermail.android.storage.SessionKeyStore
 import org.bouncycastle.bcpg.PublicKeyAlgorithmTags
 import org.bouncycastle.bcpg.SecretKeyPacket
-import org.bouncycastle.bcpg.SignatureSubpacketTags
-import org.bouncycastle.bcpg.sig.KeyFlags
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openpgp.PGPPrivateKey
 import org.bouncycastle.openpgp.PGPPublicKey
 import org.bouncycastle.openpgp.PGPSecretKey
 import org.bouncycastle.openpgp.PGPSecretKeyRing
-import org.bouncycastle.openpgp.PGPSignature
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
-import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider
 
 class UnlockedExternalPgpKey(
     val fingerprint: String,
@@ -76,7 +72,7 @@ object ExternalPgpKeyCodec {
 
     fun is_primary_sender(from: String, primary_email: String?): Boolean {
         val primary = primary_email?.trim().orEmpty()
-        if (primary.isEmpty()) return true
+        if (primary.isEmpty()) return false
         val address = from.substringAfterLast('<', from).substringBefore('>').trim()
         return org.astermail.android.crypto.ratchet.AddressIdentity.same_canonical_address(address, primary)
     }
@@ -164,7 +160,7 @@ object ExternalPgpKeyCodec {
                 if (secret_key.publicKey.isEncryptionKey) decryption[secret_key.keyID] = private_key
                 if (secret_key.isSigningKey &&
                     is_signing_algorithm(secret_key) &&
-                    is_currently_valid(secret_key.publicKey, now_ms) &&
+                    is_currently_valid(primary, secret_key.publicKey, now_ms) &&
                     may_sign(ring, secret_key.publicKey)
                 ) {
                     if (secret_key.isMasterKey) primary_signing = private_key
@@ -181,7 +177,7 @@ object ExternalPgpKeyCodec {
                 decryption_keys = decryption,
                 signing_key = signing,
                 expires_at_ms = expires_at_ms,
-                revoked = primary.hasRevocation(),
+                revoked = PgpKeyValidity.key_revoked_at(primary, primary, now_ms),
             )
         } catch (_: Throwable) {
             null
@@ -202,56 +198,21 @@ object ExternalPgpKeyCodec {
         }
     }
 
-    private fun is_currently_valid(key: PGPPublicKey, now_ms: Long): Boolean {
-        if (key.hasRevocation()) return false
-        val valid_seconds = key.validSeconds
-        if (valid_seconds <= 0) return true
-        return now_ms < key.creationTime.time + valid_seconds * 1000
-    }
+    private fun is_currently_valid(primary: PGPPublicKey, key: PGPPublicKey, now_ms: Long): Boolean =
+        PgpKeyValidity.usable_at(
+            created_at_ms = key.creationTime.time,
+            valid_seconds = key.validSeconds,
+            revoked = PgpKeyValidity.key_revoked_at(primary, key, now_ms),
+            primary_valid_until_ms = if (key.isMasterKey) {
+                null
+            } else {
+                PgpKeyValidity.expiry_ms(primary.creationTime.time, primary.validSeconds)
+            },
+            at_ms = now_ms,
+        )
 
-    private fun may_sign(ring: PGPSecretKeyRing, key: PGPPublicKey): Boolean {
-        val primary = ring.publicKey
-        val flags = key_flags(primary, key)
-        if (flags != null && flags and KeyFlags.SIGN_DATA == 0) return false
-        return key.isMasterKey || has_valid_back_signature(primary, key)
-    }
-
-    private fun key_flags(primary: PGPPublicKey, key: PGPPublicKey): Int? {
-        val self_signatures = key.signatures.asSequence()
-            .filterIsInstance<PGPSignature>()
-            .filter { it.keyID == primary.keyID }
-            .filter { signature ->
-                if (key.isMasterKey) {
-                    signature.isCertification || signature.signatureType == PGPSignature.DIRECT_KEY
-                } else {
-                    signature.signatureType == PGPSignature.SUBKEY_BINDING
-                }
-            }
-            .filter { it.hashedSubPackets?.hasSubpacket(SignatureSubpacketTags.KEY_FLAGS) == true }
-        return self_signatures.maxByOrNull { it.creationTime }?.hashedSubPackets?.keyFlags
-    }
-
-    private fun has_valid_back_signature(primary: PGPPublicKey, subkey: PGPPublicKey): Boolean =
-        subkey.getSignaturesOfType(PGPSignature.SUBKEY_BINDING).asSequence()
-            .filterIsInstance<PGPSignature>()
-            .filter { it.keyID == primary.keyID }
-            .flatMap { binding ->
-                listOfNotNull(binding.hashedSubPackets, binding.unhashedSubPackets)
-                    .asSequence()
-                    .flatMap { packets ->
-                        runCatching { packets.embeddedSignatures.toList() }.getOrDefault(emptyList()).asSequence()
-                    }
-            }
-            .filter { it.signatureType == PGPSignature.PRIMARYKEY_BINDING }
-            .any { embedded ->
-                runCatching {
-                    embedded.init(
-                        JcaPGPContentVerifierBuilderProvider().setProvider(BouncyCastleProvider.PROVIDER_NAME),
-                        subkey,
-                    )
-                    embedded.verifyCertification(primary, subkey)
-                }.getOrDefault(false)
-            }
+    private fun may_sign(ring: PGPSecretKeyRing, key: PGPPublicKey): Boolean =
+        PgpKeyValidity.signs_data(ring.publicKey, key)
 
     private fun is_signing_algorithm(secret_key: PGPSecretKey): Boolean =
         when (secret_key.publicKey.algorithm) {

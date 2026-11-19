@@ -24,7 +24,6 @@ package org.astermail.android.auth
 
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.PasswordKdf
-import org.astermail.android.crypto.hkdf_sha256
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -32,7 +31,6 @@ const val MAX_BACKUP_UNLOCKED_KEYS = 16
 const val BACKUP_UNLOCKED_KEYS_FIELD = "unlocked_keys"
 
 private const val RECOVERY_CODE_PBKDF2_ITERATIONS = 310000
-private const val RECOVERY_VAULT_HKDF_INFO = "Aster Mail_Recovery_Vault_v1"
 
 data class CodeRestoreResult(
     val restored: Int = 0,
@@ -167,15 +165,10 @@ fun open_recovery_vault_backup(
         code_key.fill(0)
     }
 
-    val backup_key = try {
-        hkdf_sha256(recovery_key, recovery_key_salt, RECOVERY_VAULT_HKDF_INFO.toByteArray(Charsets.UTF_8), 32)
+    val plain = try {
+        read_vault_backup(encrypted_vault_backup, vault_backup_nonce, recovery_key_salt, recovery_key).plain
     } finally {
         recovery_key.fill(0)
-    }
-    val plain = try {
-        AesGcm.decrypt(backup_key, vault_backup_nonce, encrypted_vault_backup)
-    } finally {
-        backup_key.fill(0)
     }
 
     try {

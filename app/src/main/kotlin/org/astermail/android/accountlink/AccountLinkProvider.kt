@@ -20,8 +20,11 @@
 //
 package org.astermail.android.accountlink
 
+import android.app.PendingIntent
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
@@ -35,6 +38,7 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import org.astermail.android.MainActivity
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
@@ -72,10 +76,15 @@ class AccountLinkProvider : ContentProvider() {
         return when (method) {
             METHOD_ACCOUNTS -> list_accounts(entry)
             METHOD_LINK -> link_account(
+                app,
                 entry,
-                code = extras?.getString(EXTRA_CODE).orEmpty(),
-                account_id = extras?.getString(EXTRA_ACCOUNT_ID).orEmpty(),
-                binding_tag = extras?.getString(EXTRA_BINDING_TAG).orEmpty(),
+                AccountLinkRequest(
+                    code = extras?.getString(EXTRA_CODE).orEmpty(),
+                    account_id = extras?.getString(EXTRA_ACCOUNT_ID).orEmpty(),
+                    binding_tag = extras?.getString(EXTRA_BINDING_TAG).orEmpty(),
+                    caller = callingPackage.orEmpty(),
+                    peer_envelope_versions = extras?.getIntArray(EXTRA_ENVELOPE_VERSIONS)?.toList(),
+                ),
             )
             else -> error_bundle(ERROR_UNKNOWN_METHOD)
         }
@@ -105,23 +114,27 @@ class AccountLinkProvider : ContentProvider() {
     }
 
     private fun link_account(
+        app: Context,
         entry: AccountLinkEntryPoint,
-        code: String,
-        account_id: String,
-        binding_tag: String,
+        request: AccountLinkRequest,
     ): Bundle {
+        val code = request.code
+        val account_id = request.account_id
+        val binding_tag = request.binding_tag
+        val peer_envelope_versions = request.peer_envelope_versions
         if (code.isBlank() || account_id.isBlank()) return error_bundle(ERROR_BAD_REQUEST)
         if (!entry.account_store().account_exists(account_id)) return error_bundle(ERROR_NO_ACCOUNT)
+        if (!AccountLinkApprovals.shared.consume(request)) return confirm_required(app, entry, request)
         val is_current = entry.account_store().get_current_id() == account_id
         return try {
             if (is_current) {
                 val passphrase = entry.session_key_store().get_passphrase() ?: return error_bundle(ERROR_LOCKED)
-                confirm(entry.device_code_api(), code, passphrase, binding_tag)
+                confirm(entry.device_code_api(), code, passphrase, binding_tag, peer_envelope_versions)
             } else {
                 val snapshot = entry.session_snapshot_store().load(account_id) ?: return error_bundle(ERROR_NO_ACCOUNT)
                 val passphrase = snapshot.passphrase ?: return error_bundle(ERROR_LOCKED)
                 with_snapshot_client(entry.session_snapshot_store(), account_id, snapshot) { client ->
-                    confirm(DeviceCodeApiImpl(client), code, passphrase, binding_tag)
+                    confirm(DeviceCodeApiImpl(client), code, passphrase, binding_tag, peer_envelope_versions)
                 }
             }
             Bundle().apply { putBoolean(KEY_OK, true) }
@@ -129,6 +142,7 @@ class AccountLinkProvider : ContentProvider() {
             error_bundle(
                 when (t) {
                     is DeviceLinkBinding.BindingMismatchException -> ERROR_BINDING
+                    is DeviceEnvelope.InvalidDeviceKeyException -> ERROR_BINDING
                     is DeviceLinkError.CodeNotFound -> ERROR_CODE_NOT_FOUND
                     is DeviceLinkError.PlanUpgradeRequired -> ERROR_PLAN
                     is ApiError.UnauthorizedError, is ApiError.ForbiddenError -> ERROR_SESSION
@@ -138,17 +152,41 @@ class AccountLinkProvider : ContentProvider() {
         }
     }
 
+    private fun confirm_required(app: Context, entry: AccountLinkEntryPoint, request: AccountLinkRequest): Bundle {
+        val email = entry.account_store().get_all().firstOrNull { it.id == request.account_id }?.email.orEmpty()
+        val id = AccountLinkApprovals.shared.open(request, AccountLinkPrompt(caller_label(app, request.caller), email))
+        val intent = Intent(app, MainActivity::class.java)
+        intent.putExtra(MainActivity.EXTRA_ACCOUNT_LINK_REQUEST, id)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val pending = PendingIntent.getActivity(
+            app,
+            id.hashCode(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ONE_SHOT,
+        )
+        return error_bundle(ERROR_CONFIRM_REQUIRED).apply { putParcelable(KEY_CONFIRM_INTENT, pending) }
+    }
+
+    private fun caller_label(app: Context, caller: String): String {
+        val pm = app.packageManager
+        return runCatching { pm.getApplicationLabel(pm.getApplicationInfo(caller, 0)).toString() }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?: caller
+    }
+
     private fun confirm(
         api: DeviceCodeApi,
         code: String,
         passphrase: ByteArray,
         binding_tag: String,
+        peer_envelope_versions: List<Int>?,
     ) {
         try {
             runBlocking {
                 val pending = api.verify_code(code)
                 verify_binding(pending, code, binding_tag)
-                val envelope = seal_for(pending, passphrase)
+                val envelope = seal_for(pending, passphrase, peer_envelope_versions)
                 api.confirm_code(code, envelope)
             }
         } finally {
@@ -169,7 +207,11 @@ class AccountLinkProvider : ContentProvider() {
         )
     }
 
-    private fun seal_for(pending: PendingDevice, passphrase: ByteArray): String {
+    private fun seal_for(
+        pending: PendingDevice,
+        passphrase: ByteArray,
+        peer_envelope_versions: List<Int>?,
+    ): String {
         val ed25519_pk = DeviceEnvelope.base64url_decode(pending.ed25519_pk)
         val mlkem_pk = DeviceEnvelope.base64url_decode(pending.mlkem_pk)
         val x25519_pk = DeviceEnvelope.base64url_decode(pending.x25519_pk)
@@ -179,7 +221,10 @@ class AccountLinkProvider : ContentProvider() {
         val sealed = DeviceEnvelope.seal_secret_for_device(
             secret = passphrase,
             recipient = DeviceEnvelope.DeviceRecipient(ed25519_pk, mlkem_pk, x25519_pk),
-            version = DeviceEnvelope.choose_envelope_version(pending.envelope_versions),
+            version = DeviceEnvelope.choose_link_envelope_version(
+                server_offered = pending.envelope_versions,
+                peer_offered = peer_envelope_versions,
+            ),
         )
         return DeviceEnvelope.base64url_encode(sealed)
     }
@@ -274,6 +319,7 @@ class AccountLinkProvider : ContentProvider() {
         const val EXTRA_CODE = "code"
         const val EXTRA_ACCOUNT_ID = "account_id"
         const val EXTRA_BINDING_TAG = "binding_tag"
+        const val EXTRA_ENVELOPE_VERSIONS = "envelope_versions"
         const val KEY_ACCOUNTS = "accounts"
         const val KEY_ID = "id"
         const val KEY_EMAIL = "email"
@@ -284,11 +330,13 @@ class AccountLinkProvider : ContentProvider() {
         const val KEY_IS_CURRENT = "is_current"
         const val KEY_OK = "ok"
         const val KEY_ERROR = "error"
+        const val KEY_CONFIRM_INTENT = "confirm_intent"
         const val ERROR_FORBIDDEN = "forbidden"
         const val ERROR_UNKNOWN_METHOD = "unknown_method"
         const val ERROR_BAD_REQUEST = "bad_request"
         const val ERROR_NO_ACCOUNT = "no_account"
         const val ERROR_LOCKED = "locked"
+        const val ERROR_CONFIRM_REQUIRED = "confirm_required"
         const val ERROR_CODE_NOT_FOUND = "code_not_found"
         const val ERROR_BINDING = "binding_mismatch"
         const val ERROR_PLAN = "plan"

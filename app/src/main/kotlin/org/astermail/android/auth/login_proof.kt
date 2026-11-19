@@ -25,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import org.astermail.android.crypto.AuthSaltCollisionException
+import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.hkdf_sha256
 
 interface LoginPinSource {
@@ -70,6 +71,20 @@ object LoginProof {
         user_hash?.takeIf { it.isNotBlank() }?.let(::user_hash_pin_key),
     )
 
+    fun account_pin_keys(
+        user_id: String?,
+        email: String?,
+        hash_dotless: (String) -> String = CryptoNative::hash_email,
+        hash_dotted: (String) -> String = CryptoNative::hash_email_keeping_dots,
+    ): List<String> {
+        val address = email?.trim()?.takeIf { it.isNotEmpty() }
+            ?: return pin_keys(user_id, null)
+        return (
+            pin_keys(user_id, hash_dotless(address)) +
+                pin_keys(null, hash_dotted(address))
+            ).distinct()
+    }
+
     fun choose_proof(kdf_version: Int, pinned: Boolean): LoginProofChoice {
         if (kdf_version == 2) return LoginProofChoice.v2
         if (pinned) throw AuthSaltCollisionException("server offered the older login proof for a pinned account")
@@ -99,6 +114,40 @@ object LoginProof {
     }
 
     fun remove_pins(entries: List<String>, keys: List<String>): List<String> = entries.filter { it !in keys }
+
+    private const val owner_separator = "="
+
+    private fun is_valid_owner_id(user_id: String): Boolean =
+        user_id.isNotEmpty() && user_id.length <= 128 &&
+            !user_id.contains(owner_separator) && user_id.none { it.isWhitespace() || it.isISOControl() }
+
+    fun parse_owners(stored: String?): List<String> {
+        if (stored.isNullOrEmpty()) return emptyList()
+        return stored.split(pin_separator)
+            .filter { entry ->
+                val split = entry.indexOf(owner_separator)
+                split > 0 && is_valid_owner_id(entry.substring(0, split)) && is_valid_pin_entry(entry.substring(split + 1))
+            }
+            .distinct()
+            .takeLast(max_pinned_accounts * 2)
+    }
+
+    fun add_owner(owners: List<String>, user_id: String, keys: List<String>): List<String> {
+        if (!is_valid_owner_id(user_id)) return owners
+        val fresh = keys.filter(::is_valid_pin_entry).distinct().map { "$user_id$owner_separator$it" }
+        if (fresh.isEmpty()) return owners
+        return (owners.filter { it !in fresh } + fresh).takeLast(max_pinned_accounts * 2)
+    }
+
+    fun owned_keys(owners: List<String>, user_id: String?): List<String> {
+        val prefix = user_id?.takeIf(::is_valid_owner_id)?.let { "$it$owner_separator" } ?: return emptyList()
+        return owners.filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) }
+    }
+
+    fun remove_owner(owners: List<String>, user_id: String?): List<String> {
+        val prefix = user_id?.takeIf(::is_valid_owner_id)?.let { "$it$owner_separator" } ?: return owners
+        return owners.filterNot { it.startsWith(prefix) }
+    }
 
     fun is_pinned(entries: List<String>, keys: List<String>): Boolean = keys.any { it in entries }
 

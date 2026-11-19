@@ -278,4 +278,16 @@ class RatchetStateMergeTest {
 
         assertEquals("root-key-epoch-9", RatchetStateMerge.merge(local, remote, remote_versioned = true).root_key)
     }
+
+    @Test
+    fun keeps_the_sender_identity_when_a_newer_epoch_lacks_it() {
+        val local = state().copy(remote_identity_key = "sender-identity", header_bound = true)
+        val newer = state(root_key = "root-key-epoch-2", epoch = 1)
+
+        for (merged in listOf(RatchetStateMerge.merge(local, newer), RatchetStateMerge.merge(newer, local))) {
+            assertEquals("root-key-epoch-2", merged.root_key)
+            assertEquals("sender-identity", merged.remote_identity_key)
+            assertEquals(true, merged.header_bound)
+        }
+    }
 }

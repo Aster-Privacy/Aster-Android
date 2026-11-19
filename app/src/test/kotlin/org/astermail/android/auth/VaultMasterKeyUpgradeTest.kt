@@ -100,6 +100,28 @@ class VaultMasterKeyUpgradeTest {
         assertEquals(encode(outgoing), keks.getJSONObject(0).getString("k"))
     }
 
+    private fun fake_password_key(passphrase: ByteArray, kdf_version: Int?): ByteArray =
+        ByteArray(32) { (passphrase[0] + (kdf_version ?: 1) * 10).toByte() }
+
+    @Test
+    fun `password change on a legacy vault keeps only the legacy password key`() {
+        val vault_obj = JSONObject().put("data_kek", encode(ByteArray(32) { 1 }))
+        retain_password_storage_keys(vault_obj, byteArrayOf(5), ::encode, ::fake_password_key)
+        assertEquals(listOf(encode(fake_password_key(byteArrayOf(5), 1))), legacy_values(vault_obj))
+    }
+
+    @Test
+    fun `password change on a stretched vault keeps the stretched key first and the legacy key`() {
+        val vault_obj = JSONObject()
+            .put("data_kek", encode(ByteArray(32) { 1 }))
+            .put("kdf_version", 2)
+        retain_password_storage_keys(vault_obj, byteArrayOf(5), ::encode, ::fake_password_key)
+        assertEquals(
+            listOf(encode(fake_password_key(byteArrayOf(5), 2)), encode(fake_password_key(byteArrayOf(5), 1))),
+            legacy_values(vault_obj),
+        )
+    }
+
     @Test
     fun `password key equal to the data key is not duplicated`() {
         val key = ByteArray(32) { 3 }

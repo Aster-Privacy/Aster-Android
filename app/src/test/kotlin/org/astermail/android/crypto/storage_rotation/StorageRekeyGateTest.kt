@@ -290,4 +290,87 @@ class StorageRekeyGateTest {
         )
         assertEquals(MAX_VAULT_CONFLICT_RETRIES + 1, api.calls.size)
     }
+
+    @Test
+    fun a_backup_refresh_records_the_new_generation_in_the_vault() = runBlocking {
+        val sealed = org.astermail.android.auth.seal_vault_backup(
+            "{}".toByteArray(),
+            ByteArray(32) { 7 },
+            org.astermail.android.auth.RecoveryBackupBinding("user-1", 5L),
+            true,
+        )
+        val built = json_object(
+            "recovery_share" to "share",
+            "encrypted_vault_backup" to java.util.Base64.getEncoder().encodeToString(sealed.encrypted_data),
+        )
+        val stored = vault_with_codes().put(org.astermail.android.auth.RecoveryBackupVaultFields.GENERATION, 4L)
+        val edits = mutableListOf<VaultEdit>()
+        val api = ScriptedApi(ApiReply(200))
+        val result = refresh_recovery_backup(
+            api = api,
+            load = { draft(vault_with_codes(), "s") },
+            update = { edit ->
+                edits += edit(draft(stored, "s2"))
+                true
+            },
+            builder = { built },
+        )
+        assertEquals(BackupRefresh.REFRESHED, result)
+        assertEquals(listOf(VaultEdit.CHANGED), edits)
+        assertEquals(5L, org.astermail.android.auth.RecoveryBackupVaultFields.generation(stored))
+        assertTrue(org.astermail.android.auth.RecoveryBackupVaultFields.format_v2(stored))
+    }
+
+    private fun v2_built_backup(): JsonObject {
+        val sealed = org.astermail.android.auth.seal_vault_backup(
+            "{}".toByteArray(),
+            ByteArray(32) { 7 },
+            org.astermail.android.auth.RecoveryBackupBinding("user-1", 5L),
+            true,
+        )
+        return json_object(
+            "recovery_share" to "share",
+            "encrypted_vault_backup" to java.util.Base64.getEncoder().encodeToString(sealed.encrypted_data),
+        )
+    }
+
+    @Test
+    fun a_refresh_whose_vault_stamp_is_rejected_is_retried_later() = runBlocking {
+        val built = v2_built_backup()
+        val result = refresh_recovery_backup(
+            api = ScriptedApi(ApiReply(200)),
+            load = { draft(vault_with_codes(), "s") },
+            update = { false },
+            builder = { built },
+        )
+        assertEquals("VAULT_NOT_RECORDED", result.name)
+    }
+
+    @Test
+    fun a_refresh_whose_vault_stamp_throws_is_retried_later() = runBlocking {
+        val built = v2_built_backup()
+        val result = refresh_recovery_backup(
+            api = ScriptedApi(ApiReply(200)),
+            load = { draft(vault_with_codes(), "s") },
+            update = { throw IllegalStateException("vault write failed") },
+            builder = { built },
+        )
+        assertEquals("VAULT_NOT_RECORDED", result.name)
+    }
+
+    @Test
+    fun a_cancelled_vault_stamp_cancels_the_refresh() = runBlocking {
+        val built = v2_built_backup()
+        val outcome = try {
+            refresh_recovery_backup(
+                api = ScriptedApi(ApiReply(200)),
+                load = { draft(vault_with_codes(), "s") },
+                update = { throw kotlinx.coroutines.CancellationException("stopped") },
+                builder = { built },
+            ).name
+        } catch (_: kotlinx.coroutines.CancellationException) {
+            "CANCELLED"
+        }
+        assertEquals("CANCELLED", outcome)
+    }
 }

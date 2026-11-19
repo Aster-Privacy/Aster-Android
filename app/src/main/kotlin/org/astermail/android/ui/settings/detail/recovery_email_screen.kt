@@ -50,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
+import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
@@ -79,6 +81,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.host_activity
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.util.ascii_digits
 import org.astermail.android.util.latest_code_input
@@ -98,8 +101,8 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     var email by rememberSaveable { mutableStateOf("") }
     var show_step_up by rememberSaveable { mutableStateOf(false) }
     var step_up_is_remove by rememberSaveable { mutableStateOf(false) }
-    var step_up_password by rememberSaveable { mutableStateOf("") }
-    var step_up_code by rememberSaveable { mutableStateOf("") }
+    var step_up_password by remember { mutableStateOf("") }
+    var step_up_code by remember { mutableStateOf("") }
     var resend_pending by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.recovery_email_address) {
@@ -263,7 +266,12 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                             step_up_code = ""
                             show_step_up = true
                         } else {
-                            vm.save_recovery_email(email, null, null)
+                            vm.save_recovery_email(
+                                email,
+                                null,
+                                null,
+                                get_credential = { json -> request_passkey_json(context.host_activity() ?: context, json) },
+                            )
                         }
                     }
                 },
@@ -287,7 +295,12 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
                     step_up_code = ""
                     show_step_up = true
                 } else {
-                    vm.save_recovery_email(email, null, null)
+                    vm.save_recovery_email(
+                        email,
+                        null,
+                        null,
+                        get_credential = { json -> request_passkey_json(context.host_activity() ?: context, json) },
+                    )
                 }
             },
             enabled = email.trim().contains("@") && state.save_status != SaveStatus.SAVING,
@@ -325,10 +338,12 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             is_busy = state.save_status == SaveStatus.SAVING,
             on_confirm = {
                 val code = if (totp_on) step_up_code else null
+                val host = context.host_activity() ?: context
+                val get_credential: suspend (String) -> String = { json -> request_passkey_json(host, json) }
                 if (step_up_is_remove) {
-                    vm.remove_recovery_email(step_up_password, code)
+                    vm.remove_recovery_email(step_up_password, code, get_credential = get_credential)
                 } else {
-                    vm.save_recovery_email(email, step_up_password, code)
+                    vm.save_recovery_email(email, step_up_password, code, get_credential = get_credential)
                 }
             },
             extra_content = {

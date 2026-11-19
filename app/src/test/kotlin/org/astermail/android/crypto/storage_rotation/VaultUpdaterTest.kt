@@ -124,6 +124,48 @@ class VaultUpdaterTest {
         return (0 until array.length()).map { array.getJSONObject(it).getString("k") }
     }
 
+    private class OrderedCodec(val events: MutableList<String>) : StorageVaultCodec {
+        private val inner = Codec()
+        override suspend fun before_write() {
+            events.add("refresh")
+        }
+        override fun decrypt(encrypted_vault: String, vault_nonce: String): JSONObject? =
+            inner.decrypt(encrypted_vault, vault_nonce)
+        override fun encrypt(vault: JSONObject): SealedVault {
+            events.add("seal")
+            return inner.encrypt(vault)
+        }
+        override fun password_keys(vault: JSONObject): List<ByteArray> = emptyList()
+        override fun generate_key(): ByteArray = inner.generate_key()
+        override fun fingerprints(vault: JSONObject): List<String> = emptyList()
+    }
+
+    @Test
+    fun every_vault_write_refreshes_the_bound_write_switch_before_sealing() = runBlocking {
+        val server = Server(rotated_vault())
+        val events = mutableListOf<String>()
+        val updater = VaultUpdater(
+            api = server,
+            codec = OrderedCodec(events),
+            user_id = { "user-1" },
+            lock = Mutex(),
+            on_vault_changed = { _, _ -> },
+            now = { now },
+        )
+        updater.update { draft ->
+            draft.vault.put("identity_key", "next")
+            VaultEdit.CHANGED
+        }
+        updater.replace_through(
+            edit = { draft ->
+                draft.vault.put("identity_key", "replaced")
+                VaultEdit.CHANGED
+            },
+            send = { _, _, _ -> true },
+        )
+        assertEquals(listOf("refresh", "seal", "refresh", "seal"), events)
+    }
+
     @Test
     fun an_old_format_vault_from_another_device_keeps_the_server_random_storage_key() = runBlocking {
         val server = Server(rotated_vault())
@@ -174,6 +216,92 @@ class VaultUpdaterTest {
 
         assertFalse(next.has("data_kek"))
         assertEquals(listOf(local_kek, older_kek), legacy_values(next))
+    }
+
+    @Test
+    fun a_retired_key_from_the_server_is_not_carried_into_the_next_vault() {
+        val retired_key = ByteArray(32) { 13 }
+        val retired_kek = encode_b64(retired_key)
+        val server = rotated_vault()
+        server.put(
+            "legacy_keks",
+            JSONArray()
+                .put(JSONObject().put("k", retired_kek).put("added_at", now))
+                .put(JSONObject().put("k", older_kek).put("added_at", now)),
+        )
+        val next = JSONObject(server.toString())
+        next.remove("legacy_keks")
+        val hashes = listOf(org.astermail.android.storage.RetiredStorageKeys.hash(retired_key))
+
+        preserve_vault_fields(server, next, LocalStorageKeys(random_kek, listOf(retired_kek), hashes), false, now)
+
+        assertEquals(listOf(older_kek), legacy_values(next))
+    }
+
+    @Test
+    fun local_storage_keys_carry_the_retired_hashes_of_the_device() {
+        val retired_key = ByteArray(32) { 13 }
+        val store = org.astermail.android.storage.SessionKeyStore(null)
+        store.retire_legacy_storage_keys(listOf(org.astermail.android.storage.RetiredStorageKeys.hash(retired_key)))
+        store.put_legacy_keks(listOf(encode_b64(retired_key), older_kek))
+
+        val local = local_storage_keys(store)
+
+        assertEquals(listOf(older_kek), local.legacy_keks)
+        assertEquals(store.retired_storage_key_hashes(), local.retired_hashes.toList())
+        val server = rotated_vault().put(
+            "legacy_keks",
+            JSONArray().put(JSONObject().put("k", encode_b64(retired_key)).put("added_at", now)),
+        )
+        val next = JSONObject(server.toString())
+        preserve_vault_fields(server, next, local, false, now)
+        assertEquals(listOf(older_kek), legacy_values(next))
+    }
+
+    @Test
+    fun a_vault_write_keeps_lane_replay_records_from_both_sides() {
+        val server = JSONObject().put("identity_key", "identity").put(
+            LANE_REPLAY_FIELD,
+            JSONObject()
+                .put("a@aster.cx", record(5, "k1" to 7L))
+                .put("b@aster.cx", record(0, "k3" to 9L)),
+        )
+        val next = JSONObject().put("identity_key", "identity").put(
+            LANE_REPLAY_FIELD,
+            JSONObject().put("a@aster.cx", record(3, "k2" to 8L)),
+        )
+
+        preserve_vault_fields(server, next, LocalStorageKeys(null, emptyList()), false, now)
+
+        val merged = next.getJSONObject(LANE_REPLAY_FIELD)
+        val first = merged.getJSONObject("a@aster.cx")
+        assertEquals(5L, first.getLong("f"))
+        assertEquals(setOf("k1", "k2"), keys_of(first))
+        assertEquals(setOf("k3"), keys_of(merged.getJSONObject("b@aster.cx")))
+    }
+
+    @Test
+    fun a_vault_write_without_lane_replay_records_adds_none() {
+        val server = JSONObject().put("identity_key", "identity")
+        val next = JSONObject(server.toString())
+
+        preserve_vault_fields(server, next, LocalStorageKeys(null, emptyList()), false, now)
+
+        assertFalse(next.has(LANE_REPLAY_FIELD))
+    }
+
+    private fun record(floor: Long, vararg entries: Pair<String, Long>): JSONObject = JSONObject()
+        .put("f", floor)
+        .put(
+            "e",
+            JSONArray().apply {
+                entries.forEach { (k, t) -> put(JSONObject().put("k", k).put("m", "m_$k").put("t", t)) }
+            },
+        )
+
+    private fun keys_of(record: JSONObject): Set<String> {
+        val entries = record.getJSONArray("e")
+        return (0 until entries.length()).map { entries.getJSONObject(it).getString("k") }.toSet()
     }
 
     @Test
@@ -362,5 +490,64 @@ class VaultUpdaterTest {
         assertTrue(outcome is VaultUpdateOutcome.Failed)
         assertEquals(listOf(VaultKdf.LEVEL2_ITERATIONS), server.put_iterations)
         assertEquals(0, server.puts)
+    }
+
+    private fun retired_hash(fill: Int): String =
+        org.astermail.android.storage.RetiredStorageKeys.hash(ByteArray(32) { fill.toByte() })
+
+    @Test
+    fun a_device_retirement_is_written_into_the_next_vault() {
+        val server = rotated_vault()
+        val next = JSONObject(server.toString())
+
+        preserve_vault_fields(server, next, LocalStorageKeys(random_kek, emptyList(), listOf(retired_hash(13))), false, now)
+
+        assertEquals(listOf(retired_hash(13)), vault_retired_hashes(next))
+    }
+
+    @Test
+    fun the_retirement_marker_survives_a_write_that_drops_it() {
+        val server = rotated_vault().put(RETIRED_STORAGE_KEYS_FIELD, JSONArray().put(retired_hash(13)))
+        val next = JSONObject(server.toString()).put(RETIRED_STORAGE_KEYS_FIELD, JSONArray().put(retired_hash(14)))
+        val dropped = JSONObject(server.toString())
+        dropped.remove(RETIRED_STORAGE_KEYS_FIELD)
+
+        preserve_vault_fields(server, next, LocalStorageKeys.NONE, false, now)
+        preserve_vault_fields(server, dropped, LocalStorageKeys.NONE, false, now)
+
+        assertEquals(setOf(retired_hash(13), retired_hash(14)), vault_retired_hashes(next).toSet())
+        assertEquals(listOf(retired_hash(13)), vault_retired_hashes(dropped))
+    }
+
+    @Test
+    fun a_fresh_sign_in_keeps_the_keys_retired_by_another_session() {
+        val retired_key = ByteArray(32) { 13 }
+        val store = org.astermail.android.storage.SessionKeyStore(null)
+        store.put_legacy_keks(listOf(encode_b64(retired_key), older_kek))
+        val vault = rotated_vault().put(RETIRED_STORAGE_KEYS_FIELD, JSONArray().put(retired_hash(13)))
+
+        absorb_rotated_vault(store, vault, SealedVault(encode_b64(vault.toString().toByteArray(Charsets.UTF_8)), "bm9uY2U="))
+
+        assertTrue(store.legacy_storage_keys_retired())
+        assertEquals(listOf(retired_hash(13)), store.retired_storage_key_hashes())
+        val kept = store.get_legacy_keks().orEmpty()
+        assertFalse(encode_b64(retired_key) in kept)
+        assertTrue(older_kek in kept)
+        assertEquals(emptyList<ByteArray>(), org.astermail.android.crypto.StorageWriteKey.sweep_keys(store))
+        assertFalse(vault_lacks_retired_marker(vault, store.retired_storage_key_hashes()))
+    }
+
+    @Test
+    fun malformed_retirement_entries_are_ignored() {
+        val store = org.astermail.android.storage.SessionKeyStore(null)
+        val vault = rotated_vault().put(
+            RETIRED_STORAGE_KEYS_FIELD,
+            JSONArray().put("short").put(7).put(encode_b64(ByteArray(16))),
+        )
+
+        assertEquals(emptyList<String>(), vault_retired_hashes(vault))
+        assertFalse(absorb_retired_marker(store, vault))
+        assertFalse(store.legacy_storage_keys_retired())
+        assertTrue(vault_lacks_retired_marker(vault, listOf(retired_hash(13))))
     }
 }

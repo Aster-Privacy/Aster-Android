@@ -672,7 +672,7 @@
     <string name="disabling">Uitschakelen...</string>
     <string name="disable_two_factor">Tweefactorauthenticatie uitschakelen</string>
     <string name="generate_new_backup_codes_section">Nieuwe back-upcodes genereren</string>
-    <string name="generate_backup_codes_description">Voer een huidige code van je authenticator-app in. Je vorige back-upcodes worden ongeldig gemaakt.</string>
+    <string name="generate_backup_codes_description">Voer je wachtwoord en een huidige code van je authenticator-app in. Je vorige back-upcodes werken daarna niet meer.</string>
     <string name="generating">Genereren...</string>
     <string name="generate_codes">Codes genereren</string>
     <string name="two_factor_enabled_title">Tweefactorauthenticatie ingeschakeld</string>
@@ -1815,6 +1815,7 @@
     <string name="totp_code_required_label">Authenticator- of back-upcode</string>
     <string name="totp_code_required_error">Voer de 6-cijferige code uit je authenticator-app in, of een van je back-upcodes</string>
     <string name="preferences_locked_retry">Je instellingen konden nu niet worden ontgrendeld. We tonen standaardwaarden, ga terug en open opnieuw.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail ontgrendelt dit item nog, dus je wijziging is niet opgeslagen. Probeer het zo opnieuw.</string>
     <string name="plan_name_star">Ster</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
@@ -2670,6 +2671,9 @@
     <string name="folder_locked">Map vergrendeld</string>
     <string name="folder_unlocked">Map ontgrendeld</string>
     <string name="folder_lock_set">Mapvergrendeling ingesteld</string>
+    <string name="folder_relock_required">Deze map is op een ander apparaat opnieuw vergrendeld. Om de map hier te openen, verwijder je de vergrendeling en stel je die opnieuw in.</string>
+    <string name="folder_protection_unavailable">De beveiligingsgegevens van de map kunnen op dit apparaat niet worden gelezen. Meld je af en weer aan en probeer het opnieuw.</string>
+    <string name="folder_lock_set_unconfirmed">Mapvergrendeling ingesteld. Voer het wachtwoord in om de map te openen.</string>
     <string name="folder_lock_removed">Mapvergrendeling verwijderd</string>
     <string name="folder_notifications_muted">Meldingen gedempt voor deze map</string>
     <string name="folder_notifications_unmuted">Meldingen aan voor deze map</string>
@@ -2848,8 +2852,11 @@
     <string name="failed_to_move_items">Verplaatsen mislukt</string>
     <string name="folder_name_taken">Er bestaat al een map met deze naam.</string>
     <string name="hardware_key_remove_confirm">Je kunt daarna niet meer met deze beveiligingssleutel inloggen.</string>
-    <string name="hardware_key_remove_last_title">Je laatste beveiligingssleutel verwijderen?</string>
-    <string name="hardware_key_remove_last_description">Dit is de laatste tweede factor op je account. Voer je wachtwoord in om hem te verwijderen.</string>
+    <string name="hardware_key_remove_last_title">Deze beveiligingssleutel verwijderen?</string>
+    <string name="hardware_key_remove_last_description">Voer je wachtwoord in om deze beveiligingssleutel te verwijderen.</string>
+    <string name="passkey_add_reauth_description">Voer je wachtwoord in om een passkey toe te voegen.</string>
+    <string name="totp_setup_reauth_description">Voer je wachtwoord in om tweestapsverificatie in te stellen.</string>
+    <string name="reauth_key_check_failed">Je passkey of beveiligingssleutel kon niet worden gecontroleerd. Probeer het opnieuw.</string>
     <string name="image_insert_failed">Die afbeelding kon niet worden toegevoegd. Mogelijk is die te groot of heeft die een niet-ondersteunde indeling.</string>
     <string name="invalid_recipient_address">“%1$s” is geen geldig e-mailadres</string>
     <string name="label_name_taken">Er bestaat al een label met deze naam.</string>
@@ -3496,6 +3503,11 @@
     <string name="contact_sync_settings_title">Toegang tot contacten toestaan</string>
     <string name="contact_sync_settings_message">Tik op Instellingen openen, ga naar Rechten &gt; Contacten en kies Toestaan om je contacten te synchroniseren.</string>
     <string name="contact_sync_open_settings">Instellingen openen</string>
+    <string name="contact_sync_all_details_title">Alle contactgegevens synchroniseren</string>
+    <string name="contact_sync_all_details_subtitle">Als dit uit staat, voegt Aster alleen namen en e-mailadressen toe aan de Contacten-app van je telefoon.</string>
+    <string name="contact_sync_all_details_confirm_title">Alle contactgegevens synchroniseren?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster voegt ook telefoonnummers, adressen, verjaardagen, notities, foto\'s en andere gegevens toe aan de Contacten-app van je telefoon. Andere apps met toegang tot je contacten kunnen deze gegevens lezen.</string>
+    <string name="contact_sync_all_details_confirm">Alle gegevens synchroniseren</string>
     <string name="contact_sync_label_sibling">Broer of zus</string>
     <string name="contact_sync_label_graduation">Diploma-uitreiking</string>
     <string name="contact_sync_label_wedding">Bruiloft</string>
@@ -3646,6 +3658,16 @@
         <item quantity="other">%d contacten toegevoegd</item>
     </plurals>
     <string name="body_index_status">Berichttekst wordt geïndexeerd voor zoeken: %1$d van %2$d</string>
+    <string name="mail_key_upgrade_title">Je opgeslagen e-mail wordt bijgewerkt</string>
+    <string name="mail_key_upgrade_running">Aster Mail versleutelt je opgeslagen berichten opnieuw met je huidige sleutels. Houd dit venster open tot het klaar is.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail kon het bijwerken van je opgeslagen berichten niet voltooien. Je e-mail is niet gewijzigd. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="mail_key_upgrade_retry">Opnieuw proberen</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d bericht gecontroleerd</item>
+        <item quantity="other">%d berichten gecontroleerd</item>
+    </plurals>
+    <string name="account_link_confirm_title">Dit account koppelen?</string>
+    <string name="account_link_confirm_message">%1$s wil %2$s op dit apparaat gebruiken. Bevestig alleen als je dit zelf in %1$s hebt gestart.</string>
     <string name="delete_selected_subscriptions">Verwijderen (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">%d abonnement verwijderen?</item>
@@ -3657,4 +3679,5 @@
         <item quantity="other">%d abonnementen verwijderd</item>
     </plurals>
     <string name="delete_subscriptions_failed">Kan de geselecteerde abonnementen niet verwijderen</string>
+    <string name="attachment_unverified">Niet-geverifieerde bijlage</string>
 </resources>

@@ -98,25 +98,45 @@ class RecipientEncryptionOpportunisticTest {
     }
 
     @Test
-    fun server_flag_stays_an_upgrade_only() {
-        assertEquals(RecipientEncryption.ENCRYPT, decide(info(source = "keyserver", will_encrypt = true), false))
+    fun server_flag_does_not_choose_the_key() {
+        assertEquals(RecipientEncryption.PLAIN, decide(info(source = "keyserver", will_encrypt = true), false))
+        assertEquals(RecipientEncryption.PLAIN, decide(info(source = "keyserver", will_encrypt = true), true))
+        assertEquals(RecipientEncryption.PLAIN, decide(info(will_encrypt = true), false))
     }
 
     @Test
     fun lock_status_matches_the_send_decision() {
         assertEquals(
             RecipientLockStatus.ENCRYPTED,
+            RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = true, key_trust = pinned),
+        )
+        assertEquals(
+            RecipientLockStatus.AVAILABLE,
+            RecipientEncryptionRules.lock_status_for(info(source = "keyserver"), now, encrypt_by_default = true, key_trust = pinned),
+        )
+        assertEquals(
+            RecipientLockStatus.AVAILABLE,
+            RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = false, key_trust = pinned),
+        )
+    }
+
+    @Test
+    fun the_lock_needs_a_saved_key() {
+        assertEquals(
+            RecipientLockStatus.AVAILABLE,
             RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = true),
         )
         assertEquals(
             RecipientLockStatus.AVAILABLE,
-            RecipientEncryptionRules.lock_status_for(info(source = "keyserver"), now, encrypt_by_default = true),
+            RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = true) { OpportunisticKeyTrust.UNPINNED },
         )
         assertEquals(
-            RecipientLockStatus.AVAILABLE,
-            RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = false),
+            RecipientLockStatus.KEY_INVALID,
+            RecipientEncryptionRules.lock_status_for(info(), now, encrypt_by_default = true) { OpportunisticKeyTrust.CHANGED },
         )
     }
+
+    private val pinned: (ExternalKeyInfo) -> OpportunisticKeyTrust = { OpportunisticKeyTrust.PINNED }
 
     @Test
     fun lookup_passes_the_sender_setting_through() = runTest {
@@ -126,6 +146,7 @@ class RecipientEncryptionOpportunisticTest {
             wait = {},
             discover = { listOf(info()) },
             encrypt_by_default = true,
+            key_trust = pinned,
         )
         assertEquals(mapOf("bob@example.com" to RecipientLockStatus.ENCRYPTED), result)
     }

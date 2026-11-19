@@ -75,6 +75,7 @@ class RatchetBootstrapService @Inject constructor(
             storage = SessionEcOneTimeSecretStorage(session_key_store),
             ratchet_api = ratchet_api,
             sync_key_candidates = { state_store.state_encryption_key_candidates() },
+            prekey_seal = { PrekeySeal.from_store(session_key_store) },
         )
     }
 
@@ -82,12 +83,26 @@ class RatchetBootstrapService @Inject constructor(
         EcOneTimePrekeyService(
             store = ec_one_time_prekey_store,
             ratchet_api = ratchet_api,
-            sync_key = { state_store.derive_state_encryption_key() },
+            prekey_seal = { PrekeySeal.from_store(session_key_store) },
         )
+    }
+
+    private suspend fun adopt_vault_prekey_seal() {
+        val local = PrekeySeal.from_store(session_key_store)
+        val present = local.has_key()
+        local.wipe()
+        if (present || !has_passphrase()) return
+        val adopted = ensure_vault_prekey_seal(vault_updates.session()) ?: return
+        try {
+            session_key_store.put_prekey_seal(adopted.key, adopted.migrated)
+        } finally {
+            adopted.key.fill(0)
+        }
     }
 
     private suspend fun replenish_ec_one_time_prekeys() {
         try {
+            adopt_vault_prekey_seal()
             ec_one_time_prekey_service.replenish()
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -191,22 +206,27 @@ class RatchetBootstrapService @Inject constructor(
                 keys.signed_prekey_public_b64,
                 pq_public,
             )
-            val needs_upload = !server_matches ||
-                published_keys_changed ||
-                uploaded_generation(user_id) < BUNDLE_UPLOAD_GENERATION
+            val keys_current = server_matches &&
+                !published_keys_changed &&
+                uploaded_generation(user_id) >= BUNDLE_UPLOAD_GENERATION
+            val needs_upload = !keys_current || published_bundle_needs_signature(published)
 
+            var uploaded = false
             if (needs_upload) {
                 val blocked = upload_bundle(keys, pq_public)
-                if (blocked != null) return blocked
-                mark_uploaded(user_id)
+                if (blocked != null && !keys_current) return blocked
+                if (blocked == null) {
+                    mark_uploaded(user_id)
+                    uploaded = true
+                }
             } else {
                 debug_log("server already holds a matching pq bundle for user $user_id")
             }
 
             confirmed_user_ids.add(user_id)
-            report_capability(user_id, keys.identity_public_b64, pq_public, force = needs_upload)
+            report_capability(user_id, keys.identity_public_b64, pq_public, force = uploaded)
             replenish_ec_one_time_prekeys()
-            return if (needs_upload) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
+            return if (uploaded) RatchetBootstrapOutcome.Published else RatchetBootstrapOutcome.AlreadyPublished
         } finally {
             in_flight.set(false)
         }
@@ -303,6 +323,7 @@ class RatchetBootstrapService @Inject constructor(
                     identity_public_b64 = lookup.identity.kem_identity_key,
                     signed_prekey_public_b64 = lookup.identity.signed_prekey,
                     pq_identity_public_b64 = lookup.identity.pq_kem_public_key,
+                    signed_prekey_signature = lookup.identity.signed_prekey_signature,
                 ),
             )
             OwnRatchetIdentityLookup.NotFound -> OwnBundleRead.Missing

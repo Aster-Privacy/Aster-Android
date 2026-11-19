@@ -29,6 +29,7 @@ import org.astermail.android.api.recovery.InitiateRecoveryRequest
 import org.astermail.android.api.recovery.InitiateRecoveryResponse
 import org.astermail.android.api.recovery.NewEmailRecoveryBackup
 import org.astermail.android.api.recovery.RecoveryShareData
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -260,5 +261,19 @@ class RecoveryModelsTest {
         val a = NewEmailRecoveryBackup("a", "b", "c", "d")
         val b = NewEmailRecoveryBackup("a", "b", "c", "d")
         assertEquals(a, b)
+    }
+
+    @Test
+    fun `CompleteRecoveryRequest sends the stamped vault generation`() {
+        val json = Json { ignoreUnknownKeys = true }
+        val request = json.decodeFromString(
+            CompleteRecoveryRequest.serializer(),
+            """{"recovery_token":"rt","new_password_hash":"nph","new_password_salt":"nps",
+            "new_encrypted_vault":"nev","new_vault_nonce":"nvn","new_recovery_shares":[],
+            "new_encrypted_vault_backup":"nevb","new_vault_backup_nonce":"nvbn",
+            "new_recovery_key_salt":"nrks","vault_generation":11}""",
+        )
+        val sent = json.encodeToString(CompleteRecoveryRequest.serializer(), request)
+        assertTrue(sent, sent.contains("\"vault_generation\":11"))
     }
 }

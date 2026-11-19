@@ -36,7 +36,13 @@ data class PublishedRatchetBundleView(
     val identity_public_b64: String?,
     val signed_prekey_public_b64: String?,
     val pq_identity_public_b64: String?,
+    val signed_prekey_signature: String? = null,
 )
+
+fun published_bundle_needs_signature(published: PublishedRatchetBundleView?): Boolean {
+    val signature = published?.signed_prekey_signature ?: return false
+    return !PrekeyBindingVerifier.is_pgp_signature(signature)
+}
 
 fun published_bundle_matches_local(
     published: PublishedRatchetBundleView?,

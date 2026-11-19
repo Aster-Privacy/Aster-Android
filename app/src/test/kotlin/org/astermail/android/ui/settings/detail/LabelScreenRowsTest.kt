@@ -152,7 +152,7 @@ class LabelScreenRowsTest {
             tags = listOf(
                 tag("keep", name = "Work", sort_order = 0),
                 tag("blank", name = "", sort_order = 1),
-                tag("cipher", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 2),
+                tag("cipher", name = "aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQgcGF5bG9hZA==", sort_order = 2).copy(decryption_failed = true),
             ),
             labels = listOf(label("null_name", name = null)),
             unreadable_name = "Unable to decrypt",

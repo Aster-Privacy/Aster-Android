@@ -84,6 +84,7 @@ fun resolve_pgp_body_fields(
             }
         }
     }
+    var html_pgp_decrypted = false
     val armored_html = body_html
     if (armored_html != null && body_starts_with(armored_html, PGP_ARMOR_PREFIX)) {
         val result = decrypt(armored_html)
@@ -92,6 +93,19 @@ fun resolve_pgp_body_fields(
             body_html = plaintext
             pgp_encrypted = true
             pgp_signature = merge_pgp_signature(pgp_signature, result.signature)
+            html_pgp_decrypted = true
+        }
+    }
+    if (text_pgp_decrypted && !html_pgp_decrypted) {
+        body_html = null
+    }
+    val decrypted_html = body_html
+    if (html_pgp_decrypted && !text_pgp_decrypted && decrypted_html != null) {
+        if (MimeParser.looks_like_mime(decrypted_html)) {
+            body_text = decrypted_html
+            body_html = null
+        } else {
+            body_text = html_to_plain_text(decrypted_html)
         }
     }
     return PgpBodyFields(body_text, body_html, pgp_encrypted, pgp_signature)

@@ -62,10 +62,11 @@ const val DEVICE_RECOVERY_PUT_RATE_LIMITED_BACKOFF_MS = 6L * 60 * 60 * 1000
 
 interface DeviceRecoveryVaultCodec {
     fun decrypt_vault(encrypted_vault: String, vault_nonce: String, passphrase: ByteArray): ByteArray?
-    fun derive_storage_key(passphrase: ByteArray): String?
+    fun password_storage_keys(passphrase: ByteArray, kdf_version: Int): List<String>
 }
 
 class NativeDeviceRecoveryVaultCodec(
+    private val retired_hashes: () -> Collection<String> = { emptyList() },
     private val reported_iterations: () -> Int? = { null },
 ) : DeviceRecoveryVaultCodec {
     override fun decrypt_vault(
@@ -81,12 +82,10 @@ class NativeDeviceRecoveryVaultCodec(
         ).plaintext
     }.getOrNull()
 
-    override fun derive_storage_key(passphrase: ByteArray): String? = runCatching {
-        val raw = CryptoNative.derive_storage_key(passphrase)
-        val encoded = Base64.getEncoder().encodeToString(raw)
-        raw.fill(0)
-        encoded
-    }.getOrNull()
+    override fun password_storage_keys(passphrase: ByteArray, kdf_version: Int): List<String> =
+        runCatching {
+            encoded_password_storage_keys(passphrase, kdf_version, retired_hashes = retired_hashes())
+        }.getOrDefault(emptyList())
 }
 
 fun interface DeviceRecoveryCommit {
@@ -136,8 +135,11 @@ class DeviceRecovery internal constructor(
         keys_api,
         session_key_store,
         FileDeviceSnapshotStore(context),
-        KeystoreDeviceRecoveryKeyProvider(),
-        NativeDeviceRecoveryVaultCodec { session_key_store.get_vault_kdf_iterations() },
+        KeystoreDeviceRecoveryKeyProvider(org.astermail.android.storage.StrongBoxKeys.available(context)),
+        NativeDeviceRecoveryVaultCodec(
+            retired_hashes = { session_key_store.retired_storage_key_hashes() },
+            reported_iterations = { session_key_store.get_vault_kdf_iterations() },
+        ),
         PrefsDeviceRecoveryStateStore(context),
         DeviceRecoveryCommit { user_id, passphrase, vault_obj, identity_keys, keks, ratchet, base_vault ->
             auth_repository.get().commit_recovered_keys(
@@ -381,7 +383,7 @@ class DeviceRecovery internal constructor(
             previous_keys = previous_keys,
             legacy_identity_keys = legacy_identity_keys,
             unlocked_keys = unlocked_keys,
-            storage_keys = harvest_storage_keks(vault_obj, vault_codec.derive_storage_key(passphrase)),
+            storage_keys = harvest_storage_keks(vault_obj) { vault_codec.password_storage_keys(passphrase, it) },
             ratchet_keys = retain_previous_ratchet_keys(vault_obj),
         )
     }

@@ -29,6 +29,7 @@ data class DeviceContactState(
     val deleted: Boolean,
     val version: Int,
     val schema: Int = CARD_SCHEMA,
+    val scope: ContactFieldScope = ContactFieldScope.ALL,
 )
 
 const val CARD_SCHEMA = 2
@@ -90,6 +91,11 @@ class RemotePlanLimit : Exception()
 class RemoteNotFound : Exception()
 class RemoteUndecryptable : Exception()
 
+const val DELETION_OVERRIDE_MIN_SDK = 30
+
+fun honors_deletion_override(requested: Boolean, sdk_int: Int): Boolean =
+    requested && sdk_int >= DELETION_OVERRIDE_MIN_SDK
+
 data class ContactSyncOptions(
     val override_too_many_deletions: Boolean = false,
     val discard_local_deletions: Boolean = false,
@@ -118,10 +124,13 @@ class ContactSyncEngine(
     private val cursor: ContactSyncCursor,
     private val ensure_active: () -> Unit,
     private val now_iso: () -> String,
+    private val scope: ContactFieldScope = ContactFieldScope.ALL,
 ) {
     suspend fun sync(options: ContactSyncOptions = ContactSyncOptions()): ContactSyncStats {
         val stats = ContactSyncStats()
-        var force_full = purge_duplicate_sources(device.list_states(), stats)
+        val states = device.list_states()
+        var force_full = purge_duplicate_sources(states, stats) ||
+            states.any { it.source_id != null && !it.deleted && it.scope != scope }
         force_full = push(options, stats) || force_full
         pull(options, stats, force_full)
         return stats
@@ -192,8 +201,9 @@ class ContactSyncEngine(
                     break
                 }
                 stats.created_remote++
-                if (!device.apply_remote(row.raw_id, card, synced, result.revision, result.id, row.version, null)) {
-                    device.set_identity(row.raw_id, result.id, result.revision, synced)
+                val kept = scope.keep_device_details(scope.limit(synced), card)
+                if (!device.apply_remote(row.raw_id, card, kept, result.revision, result.id, row.version, null)) {
+                    device.set_identity(row.raw_id, result.id, result.revision, kept)
                 }
             }
         }
@@ -241,7 +251,8 @@ class ContactSyncEngine(
                 return
             }
             val remote_card = contact_card_from_json(current.json)
-            var merged = merge_contact_cards(base, local, remote_card)
+            val origin = if (base != null && row.scope == scope) base else scope.limit(base ?: remote_card)
+            var merged = merge_contact_cards(origin, local, remote_card)
             var avatar: String? = null
             if (is_device_photo(merged.photo)) {
                 avatar = device.read_photo(row.raw_id)
@@ -268,7 +279,8 @@ class ContactSyncEngine(
                 }
             }
             val photo = if (avatar == null && merged.photo != local.photo) contact_inline_avatar(current.json) else null
-            if (device.apply_remote(row.raw_id, local, merged, revision, source_id, row.version, photo) && merged != local) {
+            val kept = if (row.scope == scope) scope.keep_device_details(scope.limit(merged), local) else scope.limit(merged)
+            if (device.apply_remote(row.raw_id, local, kept, revision, source_id, row.version, photo) && kept != local) {
                 stats.updated_local++
             }
             return
@@ -310,7 +322,7 @@ class ContactSyncEngine(
                 val trashed = is_trashed_contact_json(contact.json)
                 if (state == null) {
                     if (trashed) continue
-                    val card = contact_card_from_json(contact.json)
+                    val card = scope.limit(contact_card_from_json(contact.json))
                     val photo = if (card.photo.isNotEmpty()) contact_inline_avatar(contact.json) else null
                     device.insert(contact.id, contact.revision, card, photo)
                     stats.inserted_local++
@@ -322,7 +334,7 @@ class ContactSyncEngine(
                     stats.deleted_local++
                     continue
                 }
-                if (state.sync_revision == contact.revision && state.schema >= CARD_SCHEMA) continue
+                if (state.sync_revision == contact.revision && state.schema >= CARD_SCHEMA && state.scope == scope) continue
                 updates.add(state to contact)
             }
 
@@ -339,7 +351,8 @@ class ContactSyncEngine(
                         }
                         continue
                     }
-                    val target = contact_card_from_json(contact.json)
+                    val limited = scope.limit(contact_card_from_json(contact.json))
+                    val target = if (state.scope == scope) scope.keep_device_details(limited, local) else limited
                     val photo = if (target.photo.isNotEmpty() && target.photo != local?.photo) {
                         contact_inline_avatar(contact.json)
                     } else {

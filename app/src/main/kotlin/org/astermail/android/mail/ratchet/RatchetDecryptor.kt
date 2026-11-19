@@ -57,6 +57,7 @@ class RatchetDecryptor @Inject constructor(
     private val escrow: MessageEscrow,
     private val address_directory: AddressIdentityDirectory,
     private val keys_api: KeysApi,
+    private val lane_replay_vault: LaneReplayVault,
 ) {
 
     private data class ReceiverKeySet(
@@ -80,6 +81,7 @@ class RatchetDecryptor @Inject constructor(
             storage = SessionEcOneTimeSecretStorage(session_key_store),
             ratchet_api = ratchet_api,
             sync_key_candidates = { state_store.state_encryption_key_candidates() },
+            prekey_seal = { PrekeySeal.from_store(session_key_store) },
         )
     }
 
@@ -436,8 +438,20 @@ class RatchetDecryptor @Inject constructor(
                     if (continuity == SenderIdentityContinuity.CHANGED) {
                         flag_sender_rotation(conversation_id, sender_email, envelope.sender_identity_key)
                     }
-                    cache_plaintext(message_id, final_recovery, sender_unauthenticated = true, binding = binding)
-                    return@with_lock final_recovery
+                    val verdict = recovery_lane_verdict(
+                        final_recovery,
+                        continuity,
+                        conversation_id,
+                        sender_email,
+                        lane_message_identity(message_id, recipient.header),
+                    )
+                    cache_plaintext(
+                        message_id,
+                        final_recovery.plaintext,
+                        sender_unauthenticated = verdict != RecoveryLaneVerdict.CONFIRMED,
+                        binding = binding,
+                    )
+                    return@with_lock final_recovery.plaintext
                 }
                 decrypt_error?.let { throw it }
                 return@with_lock null
@@ -455,7 +469,9 @@ class RatchetDecryptor @Inject constructor(
             )
             val directory_confirmed = continuity != SenderIdentityContinuity.KNOWN &&
                 directory_confirms_identity(sender_email, identity_key)
-            val unconfirmed_sender = continuity == SenderIdentityContinuity.CHANGED || (continuity == SenderIdentityContinuity.NEW && !directory_confirmed)
+            val trusted_sighting = continuity == SenderIdentityContinuity.KNOWN ||
+                (continuity == SenderIdentityContinuity.NEW && directory_confirmed)
+            val unconfirmed_sender = continuity != SenderIdentityContinuity.KNOWN
             if (!chained && state_loaded_locally &&
                 !bootstrap_may_replace_session(
                     conversation_id,
@@ -474,7 +490,7 @@ class RatchetDecryptor @Inject constructor(
                 final_state.remote_identity_key = identity_key
             }
             val sighting = if (chained) IdentitySighting.CHAINED else IdentitySighting.BOOTSTRAP
-            if (!unconfirmed_sender &&
+            if (trusted_sighting &&
                 RatchetIdentityPinRules.records_identity(sighting, bootstrap_already_accepted)
             ) {
                 record_identity_pin(conversation_id, sender_email, identity_key)
@@ -493,7 +509,7 @@ class RatchetDecryptor @Inject constructor(
 
             if (continuity == SenderIdentityContinuity.CHANGED) {
                 flag_sender_rotation(conversation_id, sender_email, identity_key)
-            } else if (!unconfirmed_sender) {
+            } else if (trusted_sighting) {
                 remember_sender_identity(sender_email, identity_key)
             }
             cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
@@ -501,6 +517,54 @@ class RatchetDecryptor @Inject constructor(
             state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
             resolved
+        }
+    }
+
+    private fun lane_message_identity(message_id: String?, header: MessageHeader): String =
+        if (message_id.isNullOrBlank()) "" else "$message_id:${header.dh_public}:${header.message_number}"
+
+    private suspend fun recovery_lane_verdict(
+        recovered: RecoveredLanePlaintext,
+        continuity: SenderIdentityContinuity,
+        conversation_id: String,
+        sender_email: String,
+        message_identity: String,
+    ): RecoveryLaneVerdict {
+        val sender_pin = identity_pins.lane_sender_pin(sender_email)
+        val freshness = if (recovered.binding != RecoveryLaneBinding.NONE) {
+            claim_lane_freshness(sender_email, conversation_id, recovered, message_identity)
+        } else {
+            LaneFreshness.UNKNOWN
+        }
+        val verdict = RecoveryLaneTrust.verdict(recovered.binding, freshness, continuity, sender_pin)
+        if (RecoveryLaneTrust.pins(recovered.binding, verdict)) {
+            runCatching { identity_pins.pin_lane_sender(sender_email) }
+        }
+        return verdict
+    }
+
+    private suspend fun claim_lane_freshness(
+        sender_email: String,
+        conversation_id: String,
+        recovered: RecoveredLanePlaintext,
+        message_identity: String,
+    ): LaneFreshness {
+        val sender = sender_email.trim().lowercase(java.util.Locale.ROOT)
+        return try {
+            val claim = identity_pins.claim_lane_nonce(
+                sender,
+                conversation_id,
+                recovered.snonce,
+                message_identity,
+                recovered.sent_at,
+                lane_replay_vault.record(sender),
+            ) ?: return LaneFreshness.UNKNOWN
+            if (claim.changed) lane_replay_vault.queue(sender, claim.record)
+            claim.freshness
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            LaneFreshness.UNKNOWN
         }
     }
 
@@ -865,18 +929,23 @@ class RatchetDecryptor @Inject constructor(
         conversation_id: String,
         sender_identity_key: String,
         own_address: String? = null,
-    ): String? {
-        val message_key_b64 = open_recovery_lane_message_key(recipient, conversation_id, sender_identity_key, own_address)
+    ): RecoveredLanePlaintext? {
+        val opened = open_recovery_lane_message_key(recipient, conversation_id, sender_identity_key, own_address)
             ?: return null
 
         val message_key = try {
-            RatchetCrypto.b64_decode(message_key_b64)
+            RatchetCrypto.b64_decode(opened.message_key)
         } catch (t: Throwable) {
             return null
         }
 
         return try {
-            DoubleRatchet.decrypt_with_message_key(recipient, message_key)
+            RecoveredLanePlaintext(
+                DoubleRatchet.decrypt_with_message_key(recipient, message_key),
+                opened.binding,
+                opened.snonce,
+                opened.sent_at,
+            )
         } catch (t: Throwable) {
             null
         } finally {
@@ -889,7 +958,7 @@ class RatchetDecryptor @Inject constructor(
         conversation_id: String,
         sender_identity_key: String,
         own_address: String? = null,
-    ): String? {
+    ): OpenedRecoveryLane? {
         val lane = recipient.recovery ?: return null
         if (lane.kem_ct == null && identity_pins.is_post_quantum_established(conversation_id)) {
             if (org.astermail.android.BuildConfig.DEBUG) {
@@ -905,20 +974,58 @@ class RatchetDecryptor @Inject constructor(
             ciphertext = lane.ciphertext,
             nonce = lane.nonce,
             rid = lane.rid,
+            sct = lane.sct,
+            snonce = lane.snonce,
+            t = lane.t,
         )
 
+        val sent_at = data.sent_at
+        val transcript = sent_at?.let {
+            RecoveryLane.Transcript(
+                dh_public = recipient.header.dh_public,
+                previous_chain_length = recipient.header.previous_chain_length,
+                message_number = recipient.header.message_number,
+                nonce = recipient.nonce,
+                sent_at = it,
+            )
+        }
+        val bindings = if (transcript == null) {
+            listOf(RecoveryLaneBinding.LEGACY, RecoveryLaneBinding.NONE)
+        } else {
+            listOf(RecoveryLaneBinding.TRANSCRIPT, RecoveryLaneBinding.LEGACY, RecoveryLaneBinding.NONE)
+        }
         val ordered = recovery_lane_candidates(own_address)
             .sortedByDescending { it.own_keys.identity_public == lane.rid }
 
-        for (candidate in ordered) {
-            val opened = RecoveryLane.open(
-                data,
-                conversation_id,
-                sender_identity_key,
-                candidate.own_keys,
-                candidate.pq_identity_public,
-            )
-            if (opened != null) return opened
+        for (binding in bindings) {
+            for (candidate in ordered) {
+                val opened = if (binding == RecoveryLaneBinding.NONE) {
+                    RecoveryLane.open_unauthenticated(
+                        data,
+                        conversation_id,
+                        sender_identity_key,
+                        candidate.own_keys,
+                        candidate.pq_identity_public,
+                    )
+                } else {
+                    RecoveryLane.open(
+                        data,
+                        conversation_id,
+                        sender_identity_key,
+                        candidate.own_keys,
+                        candidate.pq_identity_public,
+                        if (binding == RecoveryLaneBinding.TRANSCRIPT) transcript else null,
+                    )
+                }
+                if (opened != null) {
+                    return OpenedRecoveryLane(
+                        opened,
+                        binding,
+                        if (binding == RecoveryLaneBinding.NONE) "" else lane.snonce.orEmpty(),
+                        if (binding == RecoveryLaneBinding.TRANSCRIPT) sent_at ?: 0L else 0L,
+                    )
+                }
+            }
         }
 
         return null
@@ -1182,52 +1289,32 @@ class RatchetDecryptor @Inject constructor(
             mark_pq_secret_missed(key_id)
             return null
         }
-        val keys = state_store.state_encryption_key_candidates()
-        if (keys.isEmpty()) {
+        val seal = PrekeySeal.from_store(session_key_store)
+        val pt = try {
+            open_and_reseal_pq_secret(
+                ratchet_api,
+                seal,
+                key_id,
+                resp,
+                org.astermail.android.api.keys.BoundWriteSwitches.prekey(),
+            ) { state_store.state_encryption_key_candidates() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        } finally {
+            seal.wipe()
+        }
+        if (pt == null) {
             if (org.astermail.android.BuildConfig.DEBUG) {
-                android.util.Log.w("AsterRatchet", "pq secret $key_id: no candidate keys")
+                android.util.Log.w("AsterRatchet", "pq secret $key_id: not readable")
             }
             mark_pq_secret_missed(key_id)
             return null
         }
-        return try {
-            val ct = RatchetCrypto.b64_decode(resp.encrypted_secret)
-            val nonce = RatchetCrypto.b64_decode(resp.secret_nonce)
-            var index = -1
-            val pt = keys.withIndex().firstNotNullOfOrNull { (i, candidate) ->
-                try {
-                    RatchetCrypto.aes_gcm_decrypt(ct, candidate, nonce, null).also { index = i }
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (_: Throwable) {
-                    null
-                }
-            }
-            if (pt == null) {
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.w("AsterRatchet", "pq secret $key_id: ${keys.size} candidates all failed")
-                }
-                mark_pq_secret_missed(key_id)
-                null
-            } else {
-                if (org.astermail.android.BuildConfig.DEBUG) {
-                    android.util.Log.i("AsterRatchet", "pq secret $key_id: candidate $index of ${keys.size}")
-                }
-                session_key_store.put_pq_secret(key_id, pt)
-                pq_secret_missed_at.remove(key_id)
-                pt
-            }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (t: Throwable) {
-            if (org.astermail.android.BuildConfig.DEBUG) {
-                android.util.Log.w("AsterRatchet", "pq secret $key_id: decode failed", t)
-            }
-            mark_pq_secret_missed(key_id)
-            null
-        } finally {
-            keys.forEach { it.fill(0) }
-        }
+        session_key_store.put_pq_secret(key_id, pt)
+        pq_secret_missed_at.remove(key_id)
+        return pt
     }
 
 }

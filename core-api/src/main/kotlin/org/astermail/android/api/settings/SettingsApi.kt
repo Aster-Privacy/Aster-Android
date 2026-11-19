@@ -262,6 +262,11 @@ data class CustomDomainAddressInfo(
 }
 
 @Serializable
+data class DeleteDomainAddressRequest(
+    val address: String,
+)
+
+@Serializable
 data class AllDomainAddressesResponse(
     val addresses: List<CustomDomainAddressInfo> = emptyList(),
 )
@@ -815,7 +820,7 @@ interface SettingsApi {
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
     suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
     suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
-    suspend fun delete_domain_address(domain_id: String, address_id: String)
+    suspend fun delete_domain_address(domain_id: String, address_id: String, address: String?)
     suspend fun list_domains(): DomainListResponse
     suspend fun add_domain(request: AddDomainRequest): CustomDomain
     suspend fun delete_domain(domain_id: String)
@@ -1212,9 +1217,13 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         }
     }
 
-    override suspend fun delete_domain_address(domain_id: String, address_id: String) {
+    override suspend fun delete_domain_address(domain_id: String, address_id: String, address: String?) {
         val response = client.http.delete("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses/$address_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            if (address != null) {
+                contentType(ContentType.Application.Json)
+                setBody(DeleteDomainAddressRequest(address))
+            }
         }
         if (response.status.value !in 200..299) {
             val body = try { response.body<String>() } catch (_: Throwable) { "" }

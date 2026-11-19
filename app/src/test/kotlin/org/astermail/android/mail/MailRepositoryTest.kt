@@ -89,6 +89,7 @@ class MailRepositoryTest {
     private lateinit var system_folder_bootstrap: SystemFolderBootstrap
     private lateinit var pending_send_dao: FakePendingSendDao
     private lateinit var repo: MailRepository
+    private lateinit var send_failure_editor: android.content.SharedPreferences.Editor
 
     private class FakePendingSendDao : PendingSendDao {
         val rows = java.util.concurrent.ConcurrentHashMap<String, PendingSendEntity>()
@@ -150,6 +151,13 @@ class MailRepositoryTest {
         ratchet_encryptor = mockk(relaxed = true)
         ratchet_plaintext_cache = mockk(relaxed = true)
         context = mockk(relaxed = true)
+        send_failure_editor = mockk(relaxed = true)
+        val send_failure_store: android.content.SharedPreferences = mockk(relaxed = true)
+        every { context.getSharedPreferences("outbox_send_failures", any()) } returns send_failure_store
+        every { send_failure_store.edit() } returns send_failure_editor
+        every { send_failure_editor.putString(any(), any()) } returns send_failure_editor
+        every { send_failure_editor.putStringSet(any(), any()) } returns send_failure_editor
+        every { send_failure_editor.remove(any()) } returns send_failure_editor
         system_folder_bootstrap = mockk(relaxed = true)
         coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
         every { session_key_store.get_identity_key() } returns "test_identity_key"
@@ -206,6 +214,7 @@ class MailRepositoryTest {
     }
 
     private fun require_encryption_repo(
+        pins: ExternalKeyPinSource? = null,
         settings: suspend () -> org.astermail.android.api.encryption.EncryptionSettings,
     ): MailRepository {
         val api = mockk<org.astermail.android.api.encryption.EncryptionApi>()
@@ -229,6 +238,7 @@ class MailRepositoryTest {
             auth_repository = dagger.Lazy { mockk(relaxed = true) },
             encryption_api_provider = dagger.Lazy { api },
             identity_pins_provider = dagger.Lazy { first_seen_sender_pins() },
+            external_key_pins_provider = pins?.let { source -> dagger.Lazy { source } },
         )
     }
 
@@ -349,15 +359,421 @@ class MailRepositoryTest {
         coVerify(exactly = 0) { send_api.react(any()) }
     }
 
-    private fun required_encryption_send_repo(): MailRepository {
+    private fun required_encryption_send_repo(
+        pins: ExternalKeyPinSource = EmptyExternalKeyPins(),
+        required: Boolean = true,
+        encrypt_by_default: Boolean = false,
+    ): MailRepository {
         every { session_key_store.get_user_id() } returns "user_1"
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
             org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
-        return require_encryption_repo {
-            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = true)
+        return require_encryption_repo(pins) {
+            org.astermail.android.api.encryption.EncryptionSettings(
+                require_encryption = required,
+                encrypt_by_default = encrypt_by_default,
+            )
         }
+    }
+
+    private class EmptyExternalKeyPins : ExternalKeyPinSource {
+        private val pins = HashMap<String, String>()
+
+        override fun read(account_id: String, email: String): ExternalKeyPinRead =
+            ExternalKeyPinRead(readable = true, fingerprint = pins[ExternalKeyPinRule.entry_key(account_id, email)])
+
+        override fun pin(account_id: String, email: String, fingerprint: String): Boolean {
+            pins[ExternalKeyPinRule.entry_key(account_id, email)] = fingerprint
+            return true
+        }
+    }
+
+    private class UnreadableExternalKeyPins : ExternalKeyPinSource {
+        var pin_attempts = 0
+
+        override fun read(account_id: String, email: String): ExternalKeyPinRead =
+            ExternalKeyPinRead(readable = false, fingerprint = null)
+
+        override fun pin(account_id: String, email: String, fingerprint: String): Boolean {
+            pin_attempts++
+            return false
+        }
+    }
+
+    private class WriteFailingExternalKeyPins(private val failures: Int = Int.MAX_VALUE) : ExternalKeyPinSource {
+        var pin_attempts = 0
+        private var saved: String? = null
+
+        override fun read(account_id: String, email: String): ExternalKeyPinRead =
+            ExternalKeyPinRead(readable = true, fingerprint = saved)
+
+        override fun pin(account_id: String, email: String, fingerprint: String): Boolean {
+            pin_attempts++
+            if (pin_attempts <= failures) return false
+            saved = fingerprint
+            return true
+        }
+    }
+
+    private fun outside_key(passphrase: CharArray): org.astermail.android.crypto.PgpKeyPairResult {
+        val key = org.astermail.android.crypto.PgpKeyGenerator.generate("Pin", "pin@outside.example", passphrase)
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "pin@outside.example",
+                found = true,
+                public_key = key.armored_public_key,
+                source = "wkd",
+                will_encrypt = true,
+            ),
+        )
+        return key
+    }
+
+    private suspend fun send_to_pinned_recipient(repo: MailRepository, ack_scope: String? = null): Result<*> =
+        repo.send_email(
+            to = listOf("pin@outside.example"),
+            subject = "Pin check",
+            body_html = "<p>pin</p>",
+            sender_email = "me@astermail.org",
+            ack_scope = ack_scope,
+        )
+
+    private class PartlyUnreadableExternalKeyPins(private val unreadable: String) : ExternalKeyPinSource {
+        private val pins = HashMap<String, String>()
+
+        override fun read(account_id: String, email: String): ExternalKeyPinRead =
+            if (email.equals(unreadable, ignoreCase = true)) {
+                ExternalKeyPinRead(readable = false, fingerprint = null)
+            } else {
+                ExternalKeyPinRead(readable = true, fingerprint = pins[ExternalKeyPinRule.entry_key(account_id, email)])
+            }
+
+        override fun pin(account_id: String, email: String, fingerprint: String): Boolean {
+            if (email.equals(unreadable, ignoreCase = true)) return false
+            pins[ExternalKeyPinRule.entry_key(account_id, email)] = fingerprint
+            return true
+        }
+    }
+
+    private fun two_outside_keys(passphrase: CharArray) {
+        val listed = org.astermail.android.crypto.PgpKeyGenerator.generate("Listed", "listed@outside.example", passphrase)
+        val other = org.astermail.android.crypto.PgpKeyGenerator.generate("Other", "other@outside.example", passphrase)
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "listed@outside.example",
+                found = true,
+                public_key = listed.armored_public_key,
+                source = "wkd",
+                will_encrypt = true,
+            ),
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "other@outside.example",
+                found = true,
+                public_key = other.armored_public_key,
+                source = "wkd",
+                will_encrypt = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `a recipient that cannot get a copy never drops the copy of a listed recipient in either order`() = runTest {
+        two_outside_keys("two key passphrase".toCharArray())
+        val orders = listOf(
+            listOf("listed@outside.example", "other@outside.example"),
+            listOf("other@outside.example", "listed@outside.example"),
+        )
+        for (order in orders) {
+            val guarded = required_encryption_send_repo(
+                PartlyUnreadableExternalKeyPins("other@outside.example"),
+                required = false,
+            )
+            val err = guarded.send_email(
+                to = order,
+                subject = "Order check",
+                body_html = "<p>order</p>",
+                sender_email = "me@astermail.org",
+                pgp_recipients = listOf("listed@outside.example"),
+            ).exceptionOrNull()
+            assertTrue("$order $err", err is EncryptionRequiredException)
+        }
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `unlisted recipients that cannot get a copy send without copies in either order`() = runTest {
+        two_outside_keys("two key plain passphrase".toCharArray())
+        val orders = listOf(
+            listOf("listed@outside.example", "other@outside.example"),
+            listOf("other@outside.example", "listed@outside.example"),
+        )
+        for (order in orders) {
+            val guarded = required_encryption_send_repo(
+                PartlyUnreadableExternalKeyPins("other@outside.example"),
+                required = false,
+            )
+            val result = guarded.send_email(
+                to = order,
+                subject = "Order check",
+                body_html = "<p>order</p>",
+                sender_email = "me@astermail.org",
+            )
+            assertTrue("$order ${result.exceptionOrNull()}", result.isSuccess)
+        }
+        val requests = mutableListOf<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 2) { send_api.send_external(capture(requests)) }
+        assertTrue(requests.all { it.external_pgp_bodies.isNullOrEmpty() })
+    }
+
+    @Test
+    fun `a key confirmation belongs to one send and survives that send failing`() = runTest {
+        outside_key("scoped pin passphrase".toCharArray())
+        val guarded = required_encryption_send_repo(UnreadableExternalKeyPins())
+        var attempts = 0
+        coEvery { send_api.send_external(any()) } answers {
+            attempts++
+            if (attempts == 1) throw java.io.IOException("offline")
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m1")
+        }
+        val change = guarded.verified_external_key_fingerprint_changes(
+            listOf("pin@outside.example"),
+            ack_scope = "draft-1",
+        ).getOrNull()!!.single()
+        assertTrue(guarded.acknowledge_external_key_fingerprint_change(change, "draft-1"))
+
+        assertEquals(
+            listOf(change),
+            guarded.verified_external_key_fingerprint_changes(listOf("pin@outside.example"), ack_scope = "draft-2").getOrNull(),
+        )
+        val other_send = send_to_pinned_recipient(guarded, "draft-2").exceptionOrNull()
+        assertTrue(other_send.toString(), other_send is ExternalKeyPinUnavailableException)
+        val unscoped = send_to_pinned_recipient(guarded).exceptionOrNull()
+        assertTrue(unscoped.toString(), unscoped is ExternalKeyPinUnavailableException)
+
+        val failed = send_to_pinned_recipient(guarded, "draft-1")
+        assertTrue(failed.isFailure)
+        val retried = send_to_pinned_recipient(guarded, "draft-1")
+        assertTrue(retried.exceptionOrNull()?.toString(), retried.isSuccess)
+        val again = send_to_pinned_recipient(guarded, "draft-1").exceptionOrNull()
+        assertTrue(again.toString(), again is ExternalKeyPinUnavailableException)
+        assertEquals(2, attempts)
+    }
+
+    @Test
+    fun `a changed outside key keeps the message for review instead of retrying`() = runTest {
+        val passphrase = "changed key passphrase".toCharArray()
+        outside_key(passphrase)
+        val pins = EmptyExternalKeyPins()
+        pins.pin("user_1", "pin@outside.example", "0123456789ABCDEF0123456789ABCDEF01234567")
+        val guarded = required_encryption_send_repo(pins)
+
+        val err = send_to_pinned_recipient(guarded).exceptionOrNull()
+
+        assertTrue(err.toString(), err is ExternalKeyChangedException)
+        assertTrue(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.KEY_CHANGED, send_failure_reason_for(err))
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `an unreadable pin store makes a required send retry later`() = runTest {
+        val passphrase = "unreadable pin passphrase".toCharArray()
+        outside_key(passphrase)
+        val guarded = required_encryption_send_repo(UnreadableExternalKeyPins())
+
+        val err = send_to_pinned_recipient(guarded).exceptionOrNull()
+
+        assertTrue(err.toString(), err is ExternalKeyPinUnavailableException)
+        assertFalse(is_permanent_send_failure_cause(err))
+        assertEquals(SendFailureReason.ENCRYPTION, send_failure_reason_for(err))
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `an unreadable pin store never blocks an opportunistic send`() = runTest {
+        val passphrase = "opportunistic pin passphrase".toCharArray()
+        outside_key(passphrase)
+        val guarded = required_encryption_send_repo(UnreadableExternalKeyPins(), required = false)
+
+        val changes = guarded.verified_external_key_fingerprint_changes(listOf("pin@outside.example"))
+        val result = send_to_pinned_recipient(guarded)
+
+        assertEquals(emptyList<RecipientKeyChange>(), changes.getOrNull())
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertTrue(request.captured.external_pgp_bodies.isNullOrEmpty())
+    }
+
+    @Test
+    fun `a first use pin that fails to save makes a required send retry later`() = runTest {
+        val passphrase = "unsaved pin passphrase".toCharArray()
+        outside_key(passphrase)
+        val pins = WriteFailingExternalKeyPins()
+        val guarded = required_encryption_send_repo(pins)
+
+        val err = send_to_pinned_recipient(guarded).exceptionOrNull()
+
+        assertTrue(err.toString(), err is ExternalKeyPinUnavailableException)
+        assertEquals(1, pins.pin_attempts)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `an opportunistic send with no saved key sends without a copy and saves nothing`() = runTest {
+        val passphrase = "unsaved opportunistic passphrase".toCharArray()
+        outside_key(passphrase)
+        val pins = WriteFailingExternalKeyPins()
+        val guarded = required_encryption_send_repo(pins, required = false)
+
+        val result = send_to_pinned_recipient(guarded)
+
+        assertTrue(result.exceptionOrNull()?.toString(), result.isSuccess)
+        assertEquals(0, pins.pin_attempts)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertTrue(request.captured.external_pgp_bodies.isNullOrEmpty())
+    }
+
+    @Test
+    fun `an opportunistic send encrypts only after the key is saved`() = runTest {
+        val passphrase = "retried pin passphrase".toCharArray()
+        val key = outside_key(passphrase)
+        val pins = WriteFailingExternalKeyPins(failures = 0)
+        val guarded = required_encryption_send_repo(pins, required = false, encrypt_by_default = true)
+        val fingerprint = org.astermail.android.crypto.ExternalPgpKeyCodec.normalize_fingerprint(
+            org.astermail.android.crypto.pgp_key_fingerprint(key.armored_public_key)!!,
+        )
+
+        val first = send_to_pinned_recipient(guarded)
+        assertEquals(0, pins.pin_attempts)
+        assertTrue(pins.pin("user_1", "pin@outside.example", fingerprint))
+        val second = send_to_pinned_recipient(guarded)
+
+        assertTrue(first.exceptionOrNull()?.toString(), first.isSuccess)
+        assertTrue(second.exceptionOrNull()?.toString(), second.isSuccess)
+        assertEquals(1, pins.pin_attempts)
+        val requests = mutableListOf<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 2) { send_api.send_external(capture(requests)) }
+        assertTrue(requests[0].external_pgp_bodies.isNullOrEmpty())
+        assertTrue(requests[1].external_pgp_bodies.orEmpty().containsKey("pin@outside.example"))
+    }
+
+    @Test
+    fun `a required send after a failed first pin tries the pin again`() = runTest {
+        val passphrase = "required retry passphrase".toCharArray()
+        outside_key(passphrase)
+        val pins = WriteFailingExternalKeyPins(failures = 1)
+        val guarded = required_encryption_send_repo(pins)
+
+        val first = send_to_pinned_recipient(guarded).exceptionOrNull()
+        val second = send_to_pinned_recipient(guarded)
+
+        assertTrue(first.toString(), first is ExternalKeyPinUnavailableException)
+        assertTrue(second.exceptionOrNull()?.toString(), second.isSuccess)
+        assertEquals(2, pins.pin_attempts)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertTrue(request.captured.external_pgp_bodies.orEmpty().containsKey("pin@outside.example"))
+    }
+
+    @Test
+    fun `a required retry pins the key served on the retry and refuses a later change`() = runTest {
+        val first_key = outside_key("required first key passphrase".toCharArray())
+        val pins = WriteFailingExternalKeyPins(failures = 1)
+        val guarded = required_encryption_send_repo(pins)
+
+        val first = send_to_pinned_recipient(guarded).exceptionOrNull()
+        val second_key = outside_key("required second key passphrase".toCharArray())
+        val second = send_to_pinned_recipient(guarded)
+
+        assertTrue(first.toString(), first is ExternalKeyPinUnavailableException)
+        assertTrue(second.exceptionOrNull()?.toString(), second.isSuccess)
+        assertEquals(
+            org.astermail.android.crypto.ExternalPgpKeyCodec.normalize_fingerprint(
+                org.astermail.android.crypto.pgp_key_fingerprint(second_key.armored_public_key)!!,
+            ),
+            pins.read("user_1", "pin@outside.example").fingerprint,
+        )
+
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(
+                email = "pin@outside.example",
+                found = true,
+                public_key = first_key.armored_public_key,
+                source = "wkd",
+                will_encrypt = true,
+            ),
+        )
+        val third = send_to_pinned_recipient(guarded).exceptionOrNull()
+
+        assertTrue(third.toString(), third is ExternalKeyChangedException)
+        coVerify(exactly = 1) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `confirming a key after its pin failed to save allows the required send`() = runTest {
+        val passphrase = "confirmed unsaved passphrase".toCharArray()
+        val key = outside_key(passphrase)
+        val guarded = required_encryption_send_repo(WriteFailingExternalKeyPins())
+        val fingerprint = org.astermail.android.crypto.ExternalPgpKeyCodec.normalize_fingerprint(
+            org.astermail.android.crypto.pgp_key_fingerprint(key.armored_public_key)!!,
+        )
+
+        val failed = send_to_pinned_recipient(guarded).exceptionOrNull()
+        assertTrue(failed.toString(), failed is ExternalKeyPinUnavailableException)
+        val changes = guarded.verified_external_key_fingerprint_changes(listOf("pin@outside.example")).getOrNull()
+        assertEquals(
+            listOf(RecipientKeyChange("pin@outside.example", ExternalKeyPinRule.UNREADABLE_PRIOR, fingerprint)),
+            changes,
+        )
+        assertTrue(guarded.acknowledge_external_key_fingerprint_change(changes!!.single(), "draft-2"))
+
+        val sent = send_to_pinned_recipient(guarded, "draft-2")
+
+        assertTrue(sent.exceptionOrNull()?.toString(), sent.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        assertTrue(request.captured.external_pgp_bodies.orEmpty().containsKey("pin@outside.example"))
+    }
+
+    @Test
+    fun `confirming a key while the pin store is unreadable allows exactly one required send`() = runTest {
+        val passphrase = "acknowledged pin passphrase".toCharArray()
+        val key = outside_key(passphrase)
+        val pins = UnreadableExternalKeyPins()
+        val guarded = required_encryption_send_repo(pins)
+        val fingerprint = org.astermail.android.crypto.ExternalPgpKeyCodec.normalize_fingerprint(
+            org.astermail.android.crypto.pgp_key_fingerprint(key.armored_public_key)!!,
+        )
+
+        val before = guarded.verified_external_key_fingerprint_changes(listOf("pin@outside.example")).getOrNull()
+        assertEquals(
+            listOf(RecipientKeyChange("pin@outside.example", ExternalKeyPinRule.UNREADABLE_PRIOR, fingerprint)),
+            before,
+        )
+        assertTrue(guarded.acknowledge_external_key_fingerprint_change(before!!.single(), "draft-1"))
+        assertEquals(1, pins.pin_attempts)
+        val after = guarded.verified_external_key_fingerprint_changes(
+            listOf("pin@outside.example"),
+            ack_scope = "draft-1",
+        ).getOrNull()
+        assertEquals(emptyList<RecipientKeyChange>(), after)
+
+        val first = send_to_pinned_recipient(guarded, "draft-1")
+        val second = send_to_pinned_recipient(guarded, "draft-1").exceptionOrNull()
+
+        assertTrue(first.exceptionOrNull()?.toString(), first.isSuccess)
+        val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
+        coVerify(exactly = 1) { send_api.send_external(capture(request)) }
+        val plain = org.astermail.android.crypto.PgpDecryptor.decrypt(
+            request.captured.external_pgp_bodies!!.getValue("pin@outside.example"),
+            key.armored_private_key,
+            passphrase,
+        )
+        assertTrue(plain.orEmpty().contains("Pin check"))
+        assertTrue(second.toString(), second is ExternalKeyPinUnavailableException)
     }
 
     @Test
@@ -3074,7 +3490,13 @@ class MailRepositoryTest {
         assertEquals("book.epub", meta!!.filename)
         assertEquals("application/epub+zip", meta.content_type)
 
-        val decrypted = repo.decrypt_attachment_data(body.encrypted_data, body.data_nonce, meta.session_key)
+        val decrypted = repo.decrypt_attachment_data(
+            body.encrypted_data,
+            body.data_nonce,
+            meta.session_key,
+            "sent_1",
+            body.seq_num,
+        )
         assertArrayEquals("sent-copy attachment bytes must round-trip", raw_bytes, decrypted)
     }
 
@@ -3130,6 +3552,227 @@ class MailRepositoryTest {
         assertEquals("report.pdf", restored[0].filename)
         assertEquals("application/pdf", restored[0].content_type)
         assertArrayEquals(bytes, java.util.Base64.getDecoder().decode(restored[0].data))
+    }
+
+    private fun draft_json(subject: String): String =
+        org.json.JSONObject()
+            .put("subject", subject)
+            .put("body_text", "draft body")
+            .put("to", org.json.JSONArray())
+            .toString()
+
+    private fun b64_text(text: String): String =
+        java.util.Base64.getEncoder().encodeToString(text.toByteArray(Charsets.UTF_8))
+
+    private fun serve_draft(id: String, encrypted_content: String, content_nonce: String = "") {
+        coEvery { mail_api.get_draft(id) } returns org.astermail.android.api.mail.DraftItem(
+            id = id,
+            encrypted_content = encrypted_content,
+            content_nonce = content_nonce,
+        )
+    }
+
+    private fun aes_draft(key: ByteArray, subject: String): Pair<String, String> {
+        val nonce = ByteArray(12).also { java.security.SecureRandom().nextBytes(it) }
+        val sealed = org.astermail.android.crypto.AesGcm.encrypt(key, nonce, draft_json(subject).toByteArray(Charsets.UTF_8))
+        val encoder = java.util.Base64.getEncoder()
+        return encoder.encodeToString(sealed) to encoder.encodeToString(nonce)
+    }
+
+    private fun sha256_text(text: String): ByteArray =
+        java.security.MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
+
+    private suspend fun forged_draft_subject(id: String): String? {
+        val result = repo.fetch_draft_for_compose(id)
+        return if (result.isFailure) null else result.getOrNull()?.second?.subject
+    }
+
+    @Test
+    fun `a draft that opens through the inbound ratchet key is refused`() = runTest {
+        every { Base64.decode(any<String>(), any()) } answers {
+            val text = firstArg<String>()
+            if (secondArg<Int>() and Base64.URL_SAFE != 0) {
+                java.util.Base64.getUrlDecoder().decode(text.trimEnd('='))
+            } else {
+                java.util.Base64.getDecoder().decode(text)
+            }
+        }
+        val vectors = org.json.JSONObject(
+            checkNotNull(javaClass.classLoader?.getResourceAsStream("inbound_envelope_vectors.json"))
+                .bufferedReader().use { it.readText() },
+        )
+        val url = java.util.Base64.getUrlEncoder().withoutPadding()
+        val scalar = java.util.Base64.getDecoder().decode(vectors.getString("recipient_p256_private_scalar_b64"))
+        val point = java.util.Base64.getDecoder().decode(vectors.getString("recipient_p256_public_sec1_b64"))
+        val jwk = org.json.JSONObject()
+            .put("kty", "EC")
+            .put("crv", "P-256")
+            .put("d", url.encodeToString(scalar))
+            .put("x", url.encodeToString(point.copyOfRange(1, 33)))
+            .put("y", url.encodeToString(point.copyOfRange(33, 65)))
+            .toString()
+        every { session_key_store.get_ratchet_identity_jwk() } returns jwk
+        val block = vectors.getJSONObject("ecdh_compressed")
+        serve_draft("draft_inbound", block.getString("envelope_b64"), block.getString("nonce_b64"))
+
+        val subject = forged_draft_subject("draft_inbound")
+
+        assertNull("a draft sealed to the public ratchet key must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a level two draft under a public constant is refused`() = runTest {
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val sealed = LevelTwoEnvelope.seal_b64(draft_json("Planted").toByteArray(Charsets.UTF_8), constant)
+        serve_draft("draft_v2_constant", sealed, LevelTwoEnvelope.marker_b64())
+
+        val subject = forged_draft_subject("draft_v2_constant")
+
+        assertNull("a level two draft under a public constant must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a draft keyed by the unset identity constant is refused`() = runTest {
+        every { session_key_store.get_identity_key() } returns "undefined"
+        val (sealed, nonce) = aes_draft(sha256_text("undefined" + org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT), "Planted")
+        serve_draft("draft_identity_constant", sealed, nonce)
+
+        val subject = forged_draft_subject("draft_identity_constant")
+
+        assertNull("a draft keyed by the unset identity constant must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a draft under a public decrypt key is refused`() = runTest {
+        val (sealed, nonce) = aes_draft(sha256_text("undefined" + org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT), "Planted")
+        serve_draft("draft_public_kek", sealed, nonce)
+
+        val subject = forged_draft_subject("draft_public_kek")
+
+        assertNull("a draft under a public decrypt key must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a draft keyed by the login hash is refused`() = runTest {
+        val salt = ByteArray(16) { (it + 3).toByte() }
+        every { session_key_store.get_passphrase() } answers { "pw".toByteArray(Charsets.UTF_8) }
+        every { session_key_store.get_password_salt() } answers { salt.copyOf() }
+        val login_hash = org.astermail.android.crypto.CryptoNative.derive_pbkdf2_hash(
+            "pw".toByteArray(Charsets.UTF_8),
+            salt,
+            310000,
+        )
+        val (sealed, nonce) = aes_draft(login_hash, "Planted")
+        serve_draft("draft_login_hash", sealed, nonce)
+
+        val subject = forged_draft_subject("draft_login_hash")
+
+        assertNull("a draft keyed by the login hash must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a draft under the account draft key still opens`() = runTest {
+        val key = ByteArray(32) { (it + 11).toByte() }
+        every { session_key_store.get_account_write_kek(org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT) } answers { key.copyOf() }
+        val (sealed, nonce) = aes_draft(key, "Mine")
+        serve_draft("draft_account", sealed, nonce)
+
+        val (_, envelope) = repo.fetch_draft_for_compose("draft_account").getOrThrow()
+
+        assertEquals("Mine", envelope?.subject)
+    }
+
+    @Test
+    fun `a level two draft under the data key still opens`() = runTest {
+        val key = ByteArray(32) { (it + 21).toByte() }
+        every { session_key_store.get_data_kek() } answers { key.copyOf() }
+        val sealed = LevelTwoEnvelope.seal_b64(draft_json("Mine").toByteArray(Charsets.UTF_8), key)
+        serve_draft("draft_v2_data", sealed, LevelTwoEnvelope.marker_b64())
+
+        val (_, envelope) = repo.fetch_draft_for_compose("draft_v2_data").getOrThrow()
+
+        assertEquals("Mine", envelope?.subject)
+    }
+
+    @Test
+    fun `a level two draft keyed by the login hash is refused`() = runTest {
+        val salt = ByteArray(16) { (it + 5).toByte() }
+        every { session_key_store.get_passphrase() } answers { "pw".toByteArray(Charsets.UTF_8) }
+        every { session_key_store.get_password_salt() } answers { salt.copyOf() }
+        val login_hash = org.astermail.android.crypto.CryptoNative.derive_pbkdf2_hash(
+            "pw".toByteArray(Charsets.UTF_8),
+            salt,
+            310000,
+        )
+        every { session_key_store.get_decrypt_keks() } returns listOf(java.util.Base64.getEncoder().encodeToString(login_hash))
+        val sealed = LevelTwoEnvelope.seal_b64(draft_json("Planted").toByteArray(Charsets.UTF_8), login_hash)
+        serve_draft("draft_v2_login_hash", sealed, LevelTwoEnvelope.marker_b64())
+
+        val subject = forged_draft_subject("draft_v2_login_hash")
+
+        assertNull("a level two draft keyed by the login hash must not open, got $subject", subject)
+    }
+
+    @Test
+    fun `a level two draft under a previous account key still opens`() = runTest {
+        val previous = ByteArray(32) { (it + 41).toByte() }
+        val previous_b64 = java.util.Base64.getEncoder().encodeToString(previous)
+        every { session_key_store.get_account_keks() } returns listOf(previous_b64)
+        every { session_key_store.get_decrypt_keks() } returns listOf(previous_b64)
+        val sealed = LevelTwoEnvelope.seal_b64(draft_json("Older").toByteArray(Charsets.UTF_8), previous)
+        serve_draft("draft_v2_previous", sealed, LevelTwoEnvelope.marker_b64())
+
+        val subject = forged_draft_subject("draft_v2_previous")
+
+        assertEquals("a level two draft under a previous account key must still open", "Older", subject)
+    }
+
+    @Test
+    fun `a draft under a previous account draft key opens on a device with no login salts`() = runTest {
+        val current = ByteArray(32) { (it + 51).toByte() }
+        val previous = ByteArray(32) { (it + 61).toByte() }
+        val previous_b64 = java.util.Base64.getEncoder().encodeToString(previous)
+        every { session_key_store.get_password_salt() } returns null
+        every { session_key_store.get_retired_password_salts() } returns emptyList()
+        every { session_key_store.get_account_write_kek(org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT) } answers { current.copyOf() }
+        every { session_key_store.get_account_keks() } returns listOf(previous_b64)
+        every { session_key_store.get_decrypt_keks() } returns listOf(previous_b64)
+        val (sealed, nonce) = aes_draft(previous, "Older")
+        serve_draft("draft_previous_key", sealed, nonce)
+
+        val subject = forged_draft_subject("draft_previous_key")
+
+        assertEquals("a draft under a previous account draft key must still open", "Older", subject)
+    }
+
+    @Test
+    fun `a draft stored as plain JSON with an empty nonce is refused`() = runTest {
+        use_inline_owner_keys()
+        serve_draft("draft_plain", b64_text(draft_json("Planted")))
+
+        val result = repo.fetch_draft_for_compose("draft_plain")
+
+        assertTrue("a plain JSON draft must not open, got ${result.getOrNull()?.second?.subject}", result.isFailure)
+    }
+
+    @Test
+    fun `a draft stored as unsigned PGP to the own key is refused`() = runTest {
+        use_inline_owner_keys()
+        serve_draft("draft_unsigned", b64_text(inline_ciphertext(draft_json("Planted"), null)))
+
+        val result = repo.fetch_draft_for_compose("draft_unsigned")
+
+        assertTrue("an unsigned PGP draft must not open, got ${result.getOrNull()?.second?.subject}", result.isFailure)
+    }
+
+    @Test
+    fun `a draft stored as PGP signed by the own key still opens`() = runTest {
+        use_inline_owner_keys()
+        serve_draft("draft_signed", b64_text(inline_ciphertext(draft_json("Mine"), inline_owner_keys, "pw")))
+
+        val (_, envelope) = repo.fetch_draft_for_compose("draft_signed").getOrThrow()
+
+        assertEquals("Mine", envelope?.subject)
     }
 
     @Test
@@ -3414,6 +4057,7 @@ class MailRepositoryTest {
             .put("to_recipients", org.json.JSONArray(recipients))
             .put("subject", subject)
             .put("body", "<p>hello</p>")
+            .let { org.astermail.android.crypto.ScheduledContentTag.tagged("test_identity_key", it) }
             .toString()
         val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
@@ -3598,6 +4242,55 @@ class MailRepositoryTest {
         assertEquals(true, request.captured.is_external)
         assertNull(request.captured.delivery)
         coVerify(exactly = 0) { ratchet_encryptor.encrypt_envelope(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `external schedule tags its envelope for this account`() = runTest {
+        coEvery { scheduled_api.create_scheduled(any()) } returns
+            org.astermail.android.api.scheduled.CreateScheduledResponse(id = "sched_tag", success = true)
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+
+        repo.schedule_email(
+            subject = "Later",
+            body_html = "<p>later</p>",
+            sender_email = "me@astermail.org",
+            to = listOf("friend@example.com"),
+            scheduled_at = scheduled_at,
+        ).getOrThrow()
+
+        val request = slot<org.astermail.android.api.scheduled.CreateScheduledRequest>()
+        coVerify(exactly = 1) { scheduled_api.create_scheduled(capture(request)) }
+        val decoder = java.util.Base64.getDecoder()
+        val envelope = org.json.JSONObject(
+            String(
+                org.astermail.android.crypto.AesGcm.decrypt(
+                    decoder.decode(request.captured.ephemeral_key),
+                    decoder.decode(request.captured.envelope_nonce),
+                    decoder.decode(request.captured.encrypted_envelope),
+                ),
+                Charsets.UTF_8,
+            ),
+        )
+        assertTrue(org.astermail.android.crypto.ScheduledContentTag.verifies(envelope, listOf("test_identity_key")))
+        assertFalse(org.astermail.android.crypto.ScheduledContentTag.verifies(envelope, listOf("another_identity_key")))
+    }
+
+    @Test
+    fun `external schedule is refused without a usable identity key`() = runTest {
+        val scheduled_at = java.time.Instant.now().plus(java.time.Duration.ofDays(1)).toString()
+        for (identity_key in listOf(null, "", "undefined")) {
+            every { session_key_store.get_identity_key() } returns identity_key
+
+            val result = repo.schedule_email(
+                subject = "Later",
+                body_html = "<p>later</p>",
+                to = listOf("friend@example.com"),
+                scheduled_at = scheduled_at,
+            )
+
+            assertTrue(result.isFailure)
+        }
+        coVerify(exactly = 0) { scheduled_api.create_scheduled(any()) }
     }
 
     @Test
@@ -3894,15 +4587,100 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `run_pending_send defers instead of failing when the key lookup keeps failing`() = runTest {
+    fun `run_pending_send fails a send whose key lookup stayed offline past the offline window`() = runTest {
         pending_send_dao.upsert(pending_row("pend_net_max", draft_id = "draft_net_max", to = "friend@example.com"))
         coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
 
         val outcome = repo.run_pending_send("pend_net_max", attempt = SEND_RETRY_MAX_ATTEMPTS)
 
-        assertEquals(PendingSendOutcome.DEFERRED, outcome)
-        assertEquals("pending", pending_send_dao.get_by_id("pend_net_max")?.status)
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_net_max")?.status)
+        assertTrue(repo.send_problem.value)
+        assertEquals(1, repo.failed_send_count.value)
+        assertEquals("pend_net_max", repo.failed_send_notice.value?.id)
+        verify { send_failure_editor.putString("reason_pend_net_max", SendFailureReason.CONNECTION.code) }
         coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `run_pending_send waits for the network while an offline key lookup is inside the offline window`() = runTest {
+        pending_send_dao.upsert(
+            pending_row("pend_net_wait", draft_id = "draft_net_wait", to = "friend@example.com")
+                .copy(created_at_ms = System.currentTimeMillis()),
+        )
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+
+        val outcome = repo.run_pending_send("pend_net_wait", attempt = SEND_RETRY_MAX_ATTEMPTS + 20)
+
+        assertEquals(PendingSendOutcome.WAIT_FOR_NETWORK, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_net_wait")?.status)
+        assertFalse(repo.send_problem.value)
+        assertEquals(0, repo.failed_send_count.value)
+        coVerify(exactly = 0) { send_api.send_external(any()) }
+    }
+
+    @Test
+    fun `a send that fails after an offline key lookup keeps its content as a draft`() = runTest {
+        val keys = org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+        every { session_key_store.get_identity_key() } returns keys.armored_private_key
+        pending_send_dao.upsert(pending_row("pend_net_draft", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "kept_draft", success = true)
+
+        val outcome = repo.run_pending_send("pend_net_draft", attempt = SEND_RETRY_MAX_ATTEMPTS)
+
+        assertEquals(PendingSendOutcome.FAILED, outcome)
+        assertEquals("kept_draft", pending_send_dao.get_by_id("pend_net_draft")?.draft_id)
+    }
+
+    @Test
+    fun `a deferred send can be sent again from the failed send notice`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_back", draft_id = "draft_back", to = "friend@example.com"))
+        coEvery { keys_api.discover_external_keys_batch(any()) } throws java.io.IOException("offline")
+        repo.run_pending_send("pend_back", attempt = SEND_RETRY_MAX_ATTEMPTS)
+        assertEquals("failed", pending_send_dao.get_by_id("pend_back")?.status)
+
+        repo.retry_failed_send("pend_back")
+        assertEquals("pending", pending_send_dao.get_by_id("pend_back")?.status)
+        coEvery { keys_api.discover_external_keys_batch(any()) } returns listOf(
+            org.astermail.android.api.keys.ExternalKeyInfo(email = "friend@example.com", found = true),
+        )
+        coEvery { send_api.send_external(any()) } returns
+            org.astermail.android.api.send.ExternalSendResponse(success = true, mail_item_id = "m_back")
+        coEvery { mail_api.delete_draft(any()) } returns DeleteResponse(success = true, deleted_count = 1)
+
+        assertEquals(PendingSendOutcome.SENT, repo.run_pending_send("pend_back"))
+        assertFalse(repo.send_problem.value)
+        assertEquals(0, repo.failed_send_count.value)
+    }
+
+    @Test
+    fun `a deferred send that another sender holds is left to that sender`() = runTest {
+        pending_send_dao.upsert(
+            pending_row("pend_held", status = "sending", to = "friend@example.com")
+                .copy(sending_started_at_ms = System.currentTimeMillis()),
+        )
+
+        val outcome = repo.run_pending_send("pend_held", attempt = SEND_RETRY_MAX_ATTEMPTS)
+
+        assertEquals(PendingSendOutcome.DEFERRED, outcome)
+        assertEquals("sending", pending_send_dao.get_by_id("pend_held")?.status)
+        assertFalse(repo.send_problem.value)
+        assertNull(repo.failed_send_notice.value)
+    }
+
+    @Test
+    fun `a deferred send of another account stays queued for that account`() = runTest {
+        pending_send_dao.upsert(
+            pending_row("pend_other", to = "friend@example.com").copy(account_id = "user_2"),
+        )
+
+        val outcome = repo.run_pending_send("pend_other", attempt = SEND_RETRY_MAX_ATTEMPTS)
+
+        assertEquals(PendingSendOutcome.DEFERRED, outcome)
+        assertEquals("pending", pending_send_dao.get_by_id("pend_other")?.status)
+        assertFalse(repo.send_problem.value)
     }
 
     @Test

@@ -21,6 +21,7 @@
 
 package org.astermail.android.auth
 
+import org.astermail.android.crypto.StorageWriteKey
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -233,4 +234,18 @@ fun retain_password_storage_key(
         "legacy_keks",
         prepend_keks_keeping_all(vault_obj.optJSONArray("legacy_keks"), listOf(encoded), now(), data_kek.ifBlank { null }),
     )
+}
+
+fun retain_password_storage_keys(
+    vault_obj: JSONObject,
+    passphrase: ByteArray,
+    encode: (ByteArray) -> String,
+    derive: (ByteArray, Int?) -> ByteArray? = StorageWriteKey.restore_key_derive,
+    now: () -> String = { Instant.now().toString() },
+    retired_hashes: Collection<String> = emptyList(),
+) {
+    StorageWriteKey.with_restore_read_keys(passphrase, vault_storage_kdf_version(vault_obj), derive) { keys ->
+        StorageWriteKey.not_retired(keys, retired_hashes).asReversed()
+            .forEach { retain_password_storage_key(vault_obj, it, encode, now) }
+    }
 }

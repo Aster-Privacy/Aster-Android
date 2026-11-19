@@ -159,6 +159,7 @@ class RatchetEncryptorStrictBundleTest {
         keys_api,
         identity_pins,
         account_only_directory(),
+        mockk<RatchetSenderKeyHeal>(relaxed = true),
     ).also { it.require_verified_prekey_bundle = strict }
 
     private val pgp_passphrase = "prekey-binding-fixture"
@@ -207,7 +208,7 @@ class RatchetEncryptorStrictBundleTest {
     private fun serve_bundle(signature: String) {
         bundle = bundle.copy(signed_prekey_signature = signature)
         coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns bundle
-        every { identity_pins.evaluate(conversation_id, recipient_identity_b64) } returns
+        every { identity_pins.evaluate(conversation_id, any(), recipient_identity_b64) } returns
             IdentityPinOutcome.UNCHANGED
     }
 
@@ -242,6 +243,7 @@ class RatchetEncryptorStrictBundleTest {
             keys_api,
             identity_pins,
             account_only_directory(),
+            mockk<RatchetSenderKeyHeal>(relaxed = true),
         )
         assertEquals(PrekeyBundlePolicy.require_verified_prekey_bundle, encryptor.require_verified_prekey_bundle)
     }
@@ -265,7 +267,7 @@ class RatchetEncryptorStrictBundleTest {
         assertTrue(thrown is UnverifiedPrekeyBundleException)
         assertEquals(recipient_email, (thrown as UnverifiedPrekeyBundleException).recipient)
         coVerify(exactly = 0) { state_store.save(any()) }
-        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any()) }
+        coVerify(exactly = 0) { identity_pins.pin_if_absent(any(), any(), any()) }
         coVerify(exactly = 0) { identity_pins.pin_owner_key_if_absent(any(), any()) }
     }
 
@@ -424,6 +426,21 @@ class RatchetEncryptorStrictBundleTest {
         }.exceptionOrNull()
 
         assertTrue(thrown is RecipientPublicKeyMissingException)
+    }
+
+    @Test
+    fun `pgp fallback refuses an owner key first pinned during the same send`() = runTest {
+        val key = generate_pgp_key()
+        serve_bundle(sign_binding(key, bundle.kem_identity_key, bundle.signed_prekey))
+        coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
+            PublicKeyResponse("kchaos", public_armor(key))
+        val encryptor = new_encryptor()
+
+        assertTrue(encryptor.owner_key_matches_pin(recipient_email, public_armor(key)))
+        encryptor.encrypt_envelope(sender_email, listOf(recipient_email), "hello", allow_non_post_quantum = true)
+
+        coVerify(exactly = 1) { identity_pins.pin_owner_key_if_absent(recipient_email, any()) }
+        assertTrue(!encryptor.owner_key_matches_pin(recipient_email, public_armor(key)))
     }
 
     @Test

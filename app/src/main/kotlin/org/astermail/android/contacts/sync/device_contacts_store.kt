@@ -38,6 +38,7 @@ class DeviceContactsStore(
     private val provider: ContentProviderClient,
     private val account: Account,
     private val labels: DeviceLabels,
+    private val scope: ContactFieldScope = ContactFieldScope.ALL,
 ) : ContactSyncDevice {
 
     private val pending = ArrayList<ContentProviderOperation>()
@@ -84,7 +85,8 @@ class DeviceContactsStore(
                         dirty = c.getInt(3) != 0,
                         deleted = c.getInt(4) != 0,
                         version = c.getInt(5),
-                        schema = c.getString(6)?.toIntOrNull() ?: 1,
+                        schema = ContactFieldScope.schema_of(c.getString(6)),
+                        scope = ContactFieldScope.scope_of(c.getString(6)),
                     ),
                 )
             }
@@ -245,7 +247,7 @@ class DeviceContactsStore(
                 .withValue(RawContacts.SOURCE_ID, source_id)
                 .withValue(RawContacts.SYNC1, revision.toString())
                 .withValue(RawContacts.SYNC2, card.to_base_json())
-                .withValue(RawContacts.SYNC4, CARD_SCHEMA.toString())
+                .withValue(RawContacts.SYNC4, scope.marker())
                 .withValue(RawContacts.STARRED, if (card.starred) 1 else 0)
                 .withYieldAllowed(true)
                 .build(),
@@ -336,7 +338,7 @@ class DeviceContactsStore(
             .withValue(RawContacts.SOURCE_ID, source_id)
             .withValue(RawContacts.SYNC1, revision.toString())
             .withValue(RawContacts.SYNC2, target.to_base_json())
-            .withValue(RawContacts.SYNC4, CARD_SCHEMA.toString())
+            .withValue(RawContacts.SYNC4, scope.marker())
             .withValue(RawContacts.STARRED, if (target.starred) 1 else 0)
             .withValue(RawContacts.DIRTY, 0)
         if (link != null) update.withValue(RawContacts.SYNC3, link)
@@ -356,7 +358,7 @@ class DeviceContactsStore(
             put(RawContacts.SOURCE_ID, source_id)
             put(RawContacts.SYNC1, revision.toString())
             put(RawContacts.SYNC2, base.to_base_json())
-            put(RawContacts.SYNC4, CARD_SCHEMA.toString())
+            put(RawContacts.SYNC4, scope.marker())
         }
         provider.update(raw_item_uri(raw_id), values, null, null)
     }

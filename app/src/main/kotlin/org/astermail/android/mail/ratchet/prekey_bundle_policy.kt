@@ -35,6 +35,11 @@ class RecipientPublicKeyMissingException(
 
 class PgpFallbackSealException(message: String) : Exception(message)
 
+const val OWNER_KEY_SEND_PIN_WINDOW_MS = 10L * 60L * 1000L
+
+fun owner_key_pinned_during_send(pinned_at: Long?, now_ms: Long): Boolean =
+    pinned_at != null && now_ms >= pinned_at && now_ms - pinned_at < OWNER_KEY_SEND_PIN_WINDOW_MS
+
 fun prekey_bundle_needs_pgp_fallback(
     require_verified: Boolean,
     result: PrekeyBindingResult,
@@ -54,16 +59,34 @@ fun owner_key_trusted(pinned_owner: String?, served_owner: String?): Boolean {
     return !served_owner.isNullOrBlank() && served_owner.equals(pinned_owner, ignoreCase = true)
 }
 
+const val ONE_TIME_PREKEY_WITHHELD_WARNING =
+    "a recipient server sent no one-time prekey, so the message was sealed with the signed prekey alone and has downgraded forward secrecy for its first reply"
+
 suspend fun seal_internal_body(
     recipients: List<String>,
     allow_non_post_quantum: Boolean,
-    seal_ratchet: suspend () -> String?,
+    seal_ratchet: suspend (without_one_time: Boolean) -> String?,
     seal_pgp: suspend () -> String,
+    warn: (String) -> Unit = {},
 ): String? {
     return try {
-        seal_ratchet()
+        try {
+            try {
+                seal_ratchet(false)
+            } catch (withheld: OneTimePrekeyWithheldException) {
+                seal_ratchet(false)
+            }
+        } catch (withheld: OneTimePrekeyWithheldException) {
+            warn(ONE_TIME_PREKEY_WITHHELD_WARNING)
+            seal_ratchet(true)
+        }
     } catch (e: RatchetEncryptionException) {
-        if (e !is UnverifiedPrekeyBundleException && e !is RecoveryLaneDowngradeException) throw e
+        if (
+            e !is UnverifiedPrekeyBundleException &&
+            e !is RecoveryLaneDowngradeException
+        ) {
+            throw e
+        }
         if (!allow_non_post_quantum) throw PostQuantumUnavailableException(recipients)
         seal_pgp()
     }

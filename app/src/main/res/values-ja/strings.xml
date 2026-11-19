@@ -672,7 +672,7 @@
     <string name="disabling">無効化中...</string>
     <string name="disable_two_factor">二要素認証を無効化</string>
     <string name="generate_new_backup_codes_section">新しいバックアップコードを生成</string>
-    <string name="generate_backup_codes_description">認証アプリの現在のコードを入力してください。以前のバックアップコードは無効になります。</string>
+    <string name="generate_backup_codes_description">パスワードと認証アプリの現在のコードを入力してください。以前のバックアップコードは使えなくなります。</string>
     <string name="generating">生成中...</string>
     <string name="generate_codes">コードを生成</string>
     <string name="two_factor_enabled_title">二要素認証が有効になりました</string>
@@ -1811,6 +1811,7 @@
     <string name="totp_code_required_label">認証アプリのコードまたはバックアップコード</string>
     <string name="totp_code_required_error">認証アプリの 6 桁のコード、またはバックアップコードのいずれかを入力してください</string>
     <string name="preferences_locked_retry">いま設定を復号できませんでした。既定値を表示しています。戻ってから開き直してください。</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail はまだこの項目のロックを解除中のため、変更は保存されませんでした。しばらくしてからもう一度お試しください。</string>
     <string name="plan_name_star">スターを付ける</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">超新星</string>
@@ -2659,6 +2660,9 @@
     <string name="folder_locked">フォルダをロックしました</string>
     <string name="folder_unlocked">フォルダのロックを解除しました</string>
     <string name="folder_lock_set">フォルダロックを設定しました</string>
+    <string name="folder_relock_required">このフォルダは別のデバイスで再びロックされました。ここで開くには、ロックを解除してから再度設定してください。</string>
+    <string name="folder_protection_unavailable">このデバイスでフォルダの保護情報を読み取れませんでした。サインアウトして再度サインインしてから、もう一度お試しください。</string>
+    <string name="folder_lock_set_unconfirmed">フォルダロックを設定しました。フォルダを開くにはパスワードを入力してください。</string>
     <string name="folder_lock_removed">フォルダロックを削除しました</string>
     <string name="folder_notifications_muted">このフォルダの通知をミュートしました</string>
     <string name="folder_notifications_unmuted">このフォルダの通知をオンにしました</string>
@@ -2835,8 +2839,11 @@
     <string name="failed_to_move_items">移動できませんでした</string>
     <string name="folder_name_taken">この名前のフォルダはすでに存在します。</string>
     <string name="hardware_key_remove_confirm">このセキュリティキーではサインインできなくなります。</string>
-    <string name="hardware_key_remove_last_title">最後のセキュリティキーを削除しますか？</string>
-    <string name="hardware_key_remove_last_description">これはアカウントに残る最後の 2 要素です。削除するには、パスワードを入力してください。</string>
+    <string name="hardware_key_remove_last_title">このセキュリティキーを削除しますか？</string>
+    <string name="hardware_key_remove_last_description">このセキュリティキーを削除するには、パスワードを入力してください。</string>
+    <string name="passkey_add_reauth_description">パスキーを追加するには、パスワードを入力してください。</string>
+    <string name="totp_setup_reauth_description">2 要素認証を設定するには、パスワードを入力してください。</string>
+    <string name="reauth_key_check_failed">パスキーまたはセキュリティキーを確認できませんでした。もう一度お試しください。</string>
     <string name="image_insert_failed">この画像を追加できませんでした。サイズが大きすぎるか、対応していない形式の可能性があります。</string>
     <string name="invalid_recipient_address">「%1$s」は有効なメールアドレスではありません</string>
     <string name="label_name_taken">この名前のラベルはすでに存在します。</string>
@@ -3481,6 +3488,11 @@
     <string name="contact_sync_settings_title">連絡先へのアクセスを許可</string>
     <string name="contact_sync_settings_message">連絡先を同期するには、「設定を開く」をタップし、「権限」&gt;「連絡先」で「許可」を選択してください。</string>
     <string name="contact_sync_open_settings">設定を開く</string>
+    <string name="contact_sync_all_details_title">連絡先のすべての詳細を同期</string>
+    <string name="contact_sync_all_details_subtitle">オフの場合、Aster はスマートフォンの連絡先アプリに名前とメールアドレスのみを追加します。</string>
+    <string name="contact_sync_all_details_confirm_title">連絡先のすべての詳細を同期しますか？</string>
+    <string name="contact_sync_all_details_confirm_message">Aster はスマートフォンの連絡先アプリに電話番号、住所、誕生日、メモ、写真などの詳細も追加します。連絡先へのアクセスを許可された他のアプリは、これらの詳細を読み取ることができます。</string>
+    <string name="contact_sync_all_details_confirm">すべての詳細を同期</string>
     <string name="contact_sync_label_sibling">兄弟姉妹</string>
     <string name="contact_sync_label_graduation">卒業</string>
     <string name="contact_sync_label_wedding">結婚</string>
@@ -3629,6 +3641,15 @@
         <item quantity="other">%d 件の連絡先を追加しました</item>
     </plurals>
     <string name="body_index_status">検索用にメッセージ本文をインデックス中: %1$d / %2$d</string>
+    <string name="mail_key_upgrade_title">保存済みのメールを更新しています</string>
+    <string name="mail_key_upgrade_running">Aster Mail は保存済みのメッセージを現在の鍵で再暗号化しています。完了するまでこのウィンドウを開いたままにしてください。</string>
+    <string name="mail_key_upgrade_failed">Aster Mail は保存済みのメッセージの更新を完了できませんでした。メールは変更されていません。接続を確認してから、もう一度お試しください。</string>
+    <string name="mail_key_upgrade_retry">再試行</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="other">%d 件のメッセージを確認しました</item>
+    </plurals>
+    <string name="account_link_confirm_title">このアカウントをリンクしますか？</string>
+    <string name="account_link_confirm_message">%1$s がこのデバイスで %2$s を使用しようとしています。%1$s でこの操作を始めた場合のみ確認してください。</string>
     <string name="delete_selected_subscriptions">削除 (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="other">%d 件の購読を削除しますか?</item>
@@ -3638,4 +3659,5 @@
         <item quantity="other">%d 件の購読を削除しました</item>
     </plurals>
     <string name="delete_subscriptions_failed">選択した購読を削除できませんでした</string>
+    <string name="attachment_unverified">未確認の添付ファイル</string>
 </resources>

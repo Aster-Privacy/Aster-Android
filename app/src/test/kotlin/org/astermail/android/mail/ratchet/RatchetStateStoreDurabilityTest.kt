@@ -31,6 +31,7 @@ import kotlinx.coroutines.test.runTest
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -56,6 +57,38 @@ class RatchetStateStoreDurabilityTest {
     @After
     fun teardown() {
         unmockkObject(SecurePrefs)
+    }
+
+    @Test
+    fun `retired state keys never include keys derived from a public constant`() {
+        io.mockk.mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            java.util.Base64.getEncoder().encodeToString(firstArg())
+        }
+        val derived = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().flatMap { raw ->
+            listOf(
+                org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(
+                    ikm = raw,
+                    salt = "Aster Mail_Ratchet_State_Sync".toByteArray(Charsets.UTF_8),
+                    info = "ratchet_state_sync_key_v3".toByteArray(Charsets.UTF_8),
+                    length = 32,
+                ),
+                org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(
+                    ikm = raw,
+                    salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+                    info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+                    length = 32,
+                ),
+            )
+        }
+
+        val retired = store.retired_state_key_candidates()
+
+        io.mockk.unmockkStatic(android.util.Base64::class)
+        assertFalse(
+            "retired ratchet state must not open under a public constant",
+            retired.any { key -> derived.any { it.contentEquals(key) } },
+        )
     }
 
     private fun sample_state(): RatchetState = RatchetState(

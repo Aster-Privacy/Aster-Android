@@ -64,6 +64,18 @@ object DeviceEnvelope {
     fun choose_envelope_version(offered: List<Int>?): Int =
         if (offered?.contains(ENVELOPE_V2) == true) ENVELOPE_V2 else ENVELOPE_V1
 
+    fun choose_link_envelope_version(
+        server_offered: List<Int>?,
+        peer_offered: List<Int>?,
+    ): Int {
+        if (peer_offered != null) {
+            if (peer_offered.contains(ENVELOPE_V2)) return ENVELOPE_V2
+            if (peer_offered.contains(ENVELOPE_V1)) return ENVELOPE_V1
+            throw InvalidDeviceKeyException("peer offers no supported envelope version")
+        }
+        return choose_envelope_version(server_offered)
+    }
+
     fun seal_secret_for_device(
         secret: ByteArray,
         recipient: DeviceRecipient,
@@ -129,8 +141,12 @@ object DeviceEnvelope {
         recipient: DeviceRecipient,
         device_mlkem_sk: ByteArray,
         device_x25519_sk: ByteArray,
+        required_version: Int? = null,
     ): ByteArray {
         val versioned = starts_with_magic(envelope)
+        if (required_version == ENVELOPE_V2 && !versioned) {
+            throw InvalidDeviceKeyException("envelope is not bound to this device")
+        }
         val body = if (versioned) {
             envelope.copyOfRange(ENVELOPE_V2_MAGIC.size, envelope.size)
         } else {

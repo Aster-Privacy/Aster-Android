@@ -21,12 +21,14 @@
 
 package org.astermail.android.mail
 
+import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.BuildConfig
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.astermail.android.R
 import java.security.MessageDigest
 import java.security.SecureRandom
+import org.astermail.android.crypto.ScheduledContentTag
 import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.PasswordKdf
 import javax.inject.Inject
@@ -128,6 +130,10 @@ class WeakMessagePasswordException(message: String) : Exception(message)
 
 class EncryptionRequiredException(message: String) : Exception(message)
 
+class ExternalKeyChangedException(message: String) : Exception(message)
+
+class ExternalKeyPinUnavailableException(message: String) : Exception(message)
+
 class EncryptionSettingUnavailableException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 fun has_mixed_recipients(recipients: List<String>): Boolean {
@@ -184,6 +190,10 @@ internal const val SEND_OFFLINE_MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000
 fun should_wait_for_network(err: Throwable?, is_permanent: Boolean, created_at_ms: Long, now_ms: Long): Boolean =
     !is_permanent && is_connectivity_failure(err) && now_ms - created_at_ms < SEND_OFFLINE_MAX_AGE_MS
 
+fun should_wait_for_key_lookup(err: Throwable?, created_at_ms: Long, now_ms: Long): Boolean =
+    (is_connectivity_failure(err) || has_cause(err) { it is java.io.IOException }) &&
+        now_ms - created_at_ms < SEND_OFFLINE_MAX_AGE_MS
+
 private const val DRAIN_PAUSE_WAIT_MS = 15_000L
 private const val STATUS_PENDING = "pending"
 private const val STATUS_FAILED = "failed"
@@ -200,7 +210,6 @@ private const val RATCHET_PREFETCH_BUDGET_MS = 1_500L
 private const val RATCHET_BACKFILL_BUDGET_MS = 60_000L
 private const val RATCHET_INLINE_TIMEOUT_MS = 6_000L
 private const val SENDER_KEY_FETCH_TIMEOUT_MS = 4_000L
-private const val SENDER_KEY_MISS_TTL_MS = 10L * 60L * 1000L
 private const val OUTBOX_FILE_REF_PREFIX = "@file:"
 private const val EMPTY_ATTACHMENTS_JSON = "[]"
 private const val OUTBOX_FILE_KEY_PREFS = "aster_outbox_file_key"
@@ -494,6 +503,10 @@ class MetadataUndecryptableException : IllegalStateException("metadata cannot be
 
 class DraftSessionClosedException : IllegalStateException("draft session closed")
 
+class DraftDecryptionException : IllegalStateException("draft could not be opened")
+
+private class DraftFormRefusedException : IllegalStateException("draft form refused")
+
 private class EnvelopeKeysMissingException : IllegalStateException("all envelope keys failed")
 
 data class CategoryWrite(
@@ -509,6 +522,7 @@ data class AttachmentMeta(
     val content_id: String? = null,
     val size_bytes: Long? = null,
     val is_placeholder: Boolean = false,
+    val is_unverified: Boolean = false,
 )
 
 data class DecryptedReaction(
@@ -581,6 +595,7 @@ class MailRepository @Inject constructor(
     private val identity_pins_provider: dagger.Lazy<org.astermail.android.mail.ratchet.RatchetIdentityPinStore>? = null,
     private val address_directory_provider: dagger.Lazy<org.astermail.android.mail.ratchet.AddressIdentityDirectory>? = null,
     private val body_index_dao_provider: dagger.Lazy<org.astermail.android.storage.search.MessageBodyIndexDao>? = null,
+    private val external_key_pins_provider: dagger.Lazy<ExternalKeyPinSource>? = null,
 ) {
     private val external_pgp_key_store: org.astermail.android.crypto.ExternalPgpKeyStore?
         get() = external_pgp_key_store_provider?.get()
@@ -1062,17 +1077,40 @@ class MailRepository @Inject constructor(
         return cached.show_profile_pictures to cached.low_network_mode
     }
 
-    fun cached_encrypt_by_default(): Boolean {
-        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return false
+    fun cached_encrypt_by_default(): Boolean? {
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
         val raw = runCatching {
             PreferencesCacheStore(context).read(account_key)
-        }.getOrNull() ?: return false
+        }.getOrNull() ?: return null
         return runCatching {
             cached_custom_categories_json.decodeFromString(
                 UserPreferences.serializer(),
                 raw,
             ).encrypt_emails
-        }.getOrDefault(false)
+        }.getOrNull()
+    }
+
+    private val last_known_encrypt_by_default = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    suspend fun encrypt_by_default_setting(): Boolean? {
+        val account = current_account_id()?.takeIf { it.isNotBlank() }
+        val api = encryption_api_provider?.get()
+        val fresh = if (api == null) {
+            null
+        } else {
+            try {
+                api.get_encryption_settings().encrypt_by_default
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                null
+            }
+        }
+        if (fresh != null) {
+            if (account != null && current_account_id() == account) last_known_encrypt_by_default[account] = fresh
+            return fresh
+        }
+        return account?.let { last_known_encrypt_by_default[it] } ?: cached_encrypt_by_default()
     }
 
     val custom_categories_fingerprint: Int
@@ -1106,7 +1144,12 @@ class MailRepository @Inject constructor(
     @Volatile private var forced_envelope_heal_until = 0L
     @Volatile private var cached_kek_candidates: List<ByteArray>? = null
     @Volatile private var cached_kek_source: List<String>? = null
-    private class MetadataKeySet(val source: String, val keys: List<ByteArray>, val has_write_key: Boolean)
+    private class MetadataKeySet(
+        val source: String,
+        val keys: List<ByteArray>,
+        val has_write_key: Boolean,
+        val public_indices: Set<Int> = emptySet(),
+    )
     @Volatile private var cached_metadata: MetadataKeySet? = null
     @Volatile private var cached_sent_folder_token: String? = null
     private val draft_item_cache =
@@ -1226,6 +1269,61 @@ class MailRepository @Inject constructor(
 
     private fun sent_folder_prefs_key(): String = session_key_store.get_user_id() ?: "anonymous"
 
+    private val own_authored_prefs: android.content.SharedPreferences? by lazy {
+        runCatching {
+            context.getSharedPreferences(OWN_AUTHORED_PREFS, android.content.Context.MODE_PRIVATE)
+        }.getOrNull()
+    }
+
+    private val own_authored_writes = java.util.concurrent.atomic.AtomicInteger()
+
+    private fun own_authored_key(mail_item_id: String): String? =
+        session_key_store.get_user_id()?.takeIf { it.isNotBlank() }?.let { "$it:$mail_item_id" }
+
+    private fun remember_own_authored(mail_item_id: String?) {
+        if (mail_item_id.isNullOrBlank()) return
+        InboundAttachmentKeyStore.note_own_authored(mail_item_id)
+        val prefs = own_authored_prefs ?: return
+        runCatching {
+            val key = own_authored_key(mail_item_id) ?: return
+            if (prefs.contains(key)) return
+            prefs.edit().putLong(key, System.currentTimeMillis()).apply()
+            if (own_authored_writes.incrementAndGet() % OWN_AUTHORED_PRUNE_EVERY == 0) prune_own_authored(prefs)
+        }
+    }
+
+    private fun prune_own_authored(prefs: android.content.SharedPreferences) {
+        val entries = prefs.all
+        if (entries.size <= OWN_AUTHORED_MAX_ENTRIES) return
+        val editor = prefs.edit()
+        entries.entries
+            .sortedBy { (it.value as? Long) ?: 0L }
+            .take(entries.size - OWN_AUTHORED_MAX_ENTRIES)
+            .forEach { editor.remove(it.key) }
+        editor.apply()
+    }
+
+    fun forget_own_authored(user_id: String) {
+        if (user_id.isBlank()) return
+        val prefs = own_authored_prefs ?: return
+        runCatching {
+            val prefixes = listOf("$user_id:", "anonymous:")
+            val editor = prefs.edit()
+            prefs.all.keys.filter { key -> prefixes.any { key.startsWith(it) } }.forEach { editor.remove(it) }
+            editor.apply()
+        }
+    }
+
+    private fun is_item_own_authored(mail_item_id: String?): Boolean {
+        if (mail_item_id.isNullOrBlank()) return false
+        if (InboundAttachmentKeyStore.is_own_authored(mail_item_id)) return true
+        val prefs = own_authored_prefs ?: return false
+        val key = own_authored_key(mail_item_id) ?: return false
+        val known = runCatching { prefs.contains(key) }.getOrDefault(false)
+        if (known) InboundAttachmentKeyStore.note_own_authored(mail_item_id)
+        return known
+    }
+
     enum class SenderAliasBackfillStatus { idle, running, done }
 
     private val _sender_alias_backfill_status = kotlinx.coroutines.flow.MutableStateFlow(SenderAliasBackfillStatus.idle)
@@ -1296,8 +1394,8 @@ class MailRepository @Inject constructor(
 
     private fun refreshed_sender_alias_hash(stored: String?, sender_email: String?): String? {
         if (stored.isNullOrBlank()) return stored
-        val write = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
-        val reads = runCatching { org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store) }.getOrDefault(emptyList())
+        val write = StorageWriteKey.write_key(session_key_store)
+        val reads = runCatching { StorageWriteKey.read_keys(session_key_store) }.getOrDefault(emptyList())
         return try {
             runCatching {
                 org.astermail.android.crypto.storage_rotation.current_sender_alias_hash(stored, sender_email, write, reads)
@@ -1497,6 +1595,7 @@ class MailRepository @Inject constructor(
 
     private fun delete_outbox_attachments(pending_id: String) {
         runCatching { java.io.File(outbox_attachments_dir, "$pending_id.json").delete() }
+        runCatching { unpinned_key_acknowledgments.drop(pending_ack_scope(pending_id)) }
     }
 
     init {
@@ -1529,6 +1628,7 @@ class MailRepository @Inject constructor(
         reply_to_id: String? = null,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
@@ -1591,6 +1691,7 @@ class MailRepository @Inject constructor(
             return result
         }
         val queued_id = result.getOrThrow()
+        unpinned_key_acknowledgments.move(ack_scope, pending_ack_scope(queued_id))
         if (queued_id != pending_id) optimistic_send_store.remove(pending_id)
         val pending = PendingUndoSend(
             started_at_ms = started_at_ms,
@@ -1783,12 +1884,28 @@ class MailRepository @Inject constructor(
         val outcome = run_pending_send_inner(pending_id, expected_owner, attempt)
         when (outcome) {
             PendingSendOutcome.FAILED -> optimistic_send_store.remove(pending_id)
+            PendingSendOutcome.DEFERRED -> if (park_deferred_send(pending_id)) {
+                optimistic_send_store.remove(pending_id)
+            }
             PendingSendOutcome.GONE -> if (optimistic_send_store.get(pending_id)?.committed == false) {
                 optimistic_send_store.remove(pending_id)
             }
             else -> Unit
         }
         return outcome
+    }
+
+    private suspend fun park_deferred_send(pending_id: String): Boolean {
+        val row = runCatching { pending_send_dao.get_by_id(pending_id) }.getOrNull() ?: return false
+        val owner = row.account_id
+        if (owner != null && owner != session_key_store.get_user_id()) return false
+        if (row.status != STATUS_PENDING) return false
+        _send_problem.value = true
+        _send_result_events.tryEmit(Result.failure(TransientSendException()))
+        mark_send_failed(pending_id, SendFailureReason.CONNECTION)
+        refresh_failed_send_count()
+        _draft_changes.tryEmit(Unit)
+        return true
     }
 
     private fun commit_optimistic_send(pending_id: String, mail_item_id: String?) {
@@ -1881,16 +1998,45 @@ class MailRepository @Inject constructor(
             return PendingSendOutcome.FAILED
         }
         val all_recipients = recipients.first + recipients.second + recipients.third
+        val row_pgp_recipients = row.pgp_recipients_json
+            ?.let { decode_outbox_recipients(outbox_json, it, "pgp_recipients") }
+            .orEmpty()
         val key_changes = if (all_recipients.any { !is_internal_recipient(it) }) {
-            verified_external_key_fingerprint_changes(all_recipients)
+            verified_external_key_fingerprint_changes(
+                all_recipients,
+                row.force_pgp,
+                row_pgp_recipients,
+                ack_scope = pending_ack_scope(pending_id),
+            )
         } else {
             Result.success(emptyList())
         }
         if (key_changes.isFailure) {
+            if (attempt < SEND_RETRY_MAX_ATTEMPTS) {
+                runCatching { pending_send_dao.mark_pending(pending_id) }
+                return PendingSendOutcome.RETRY
+            }
+            if (should_wait_for_key_lookup(key_changes.exceptionOrNull(), row.created_at_ms, System.currentTimeMillis())) {
+                runCatching { pending_send_dao.mark_pending(pending_id) }
+                return PendingSendOutcome.WAIT_FOR_NETWORK
+            }
+            _send_problem.value = true
+            _send_result_events.tryEmit(Result.failure(TransientSendException()))
+            mark_send_failed(pending_id, SendFailureReason.CONNECTION)
+            refresh_failed_send_count()
+            preserve_failed_send_draft(pending_id, row, recipients, attachments)
+            _draft_changes.tryEmit(Unit)
+            return PendingSendOutcome.FAILED
+        }
+        val (unreadable_pins, changed_keys) = key_changes.getOrDefault(emptyList())
+            .partition { it.prior_fingerprint == ExternalKeyPinRule.UNREADABLE_PRIOR }
+        if (!replay_blocked_by_key_change(all_recipients, changed_keys) &&
+            replay_blocked_by_key_change(all_recipients, unreadable_pins)
+        ) {
             runCatching { pending_send_dao.mark_pending(pending_id) }
             return bounded_retry_outcome(attempt)
         }
-        if (replay_blocked_by_key_change(all_recipients, key_changes.getOrDefault(emptyList()))) {
+        if (replay_blocked_by_key_change(all_recipients, changed_keys)) {
             _send_problem.value = true
             _send_result_events.tryEmit(
                 Result.failure(IllegalStateException(context.getString(R.string.send_key_changed_while_waiting))),
@@ -1918,7 +2064,8 @@ class MailRepository @Inject constructor(
             allow_non_post_quantum = row.allow_non_post_quantum,
             client_send_id = client_send_id_for(pending_id),
             force_pgp = row.force_pgp,
-            pgp_recipients = row.pgp_recipients_json?.let { decode_outbox_recipients(outbox_json, it, "pgp_recipients") }.orEmpty(),
+            pgp_recipients = row_pgp_recipients,
+            ack_scope = pending_ack_scope(pending_id),
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -2356,12 +2503,14 @@ class MailRepository @Inject constructor(
         envelope_nonce: String?,
         message_id: String? = null,
         allow_external_pgp: Boolean = false,
+        received_at: String? = null,
     ): HealingEnvelopeResult = withContext(Dispatchers.IO) {
         val envelope = try_decrypt_envelope(
             encrypted_envelope,
             envelope_nonce,
             message_id,
             allow_external_pgp = allow_external_pgp,
+            received_at = received_at,
         )
         val is_placeholder = envelope?.is_pgp_placeholder == true
         if (!is_placeholder && (envelope != null || !is_sealed_inbound_nonce(envelope_nonce))) {
@@ -2374,6 +2523,7 @@ class MailRepository @Inject constructor(
                 envelope_nonce,
                 message_id,
                 allow_external_pgp = allow_external_pgp,
+                received_at = received_at,
             ) ?: envelope,
             false,
         )
@@ -2386,7 +2536,12 @@ class MailRepository @Inject constructor(
         if (mail_item_id.isNullOrBlank()) return false
         val item = resolve_raw_item(mail_item_id) ?: return false
         if (!is_sealed_inbound_nonce(item.envelope_nonce)) return false
-        return decrypt_envelope_with_heal(item.encrypted_envelope, item.envelope_nonce, item.id).envelope != null
+        return decrypt_envelope_with_heal(
+            item.encrypted_envelope,
+            item.envelope_nonce,
+            item.id,
+            received_at = item.created_at,
+        ).envelope != null
     }
 
     private suspend fun heal_attachment_keys_for_messages(mail_item_ids: Collection<String>): Boolean {
@@ -2429,7 +2584,6 @@ class MailRepository @Inject constructor(
         clear_caches()
         ratchet_plaintext_cache.clear()
         sender_pgp_key_cache.clear()
-        sender_pgp_key_misses.clear()
         address_directory_provider?.get()?.clear()
     }
 
@@ -2478,6 +2632,9 @@ class MailRepository @Inject constructor(
                 until == null || (parse_timestamp_ms(until) ?: 0L) <= now_ms
             }
         } else response.items
+        if (item_type?.trim()?.lowercase() in OWN_AUTHORED_ITEM_TYPES) {
+            filtered_raw.forEach { remember_own_authored(it.id) }
+        }
         if (label_token != null) offer_unlocked_folder_rekey(label_token, response.items)
         val batch = decrypt_items_batch(filtered_raw)
         val next_cursor = if (is_token_scope && response.next_cursor == null && response.has_more) {
@@ -2495,6 +2652,7 @@ class MailRepository @Inject constructor(
     }
 
     private fun offer_unlocked_folder_rekey(label_token: String, items: List<MailItem>) {
+        MailLegacyFolderHook.folder_opened(label_token)
         val provider = storage_rekey_service_provider ?: return
         runCatching {
             val folder_id = org.astermail.android.folders.folder_lock_store.unlocked_protected_folder_id(label_token)
@@ -2526,7 +2684,10 @@ class MailRepository @Inject constructor(
     suspend fun fetch_drafts(limit: Int = 50, cursor: String? = null): Result<InboxPage> = runCatching {
         val response = mail_api.list_drafts(limit = limit, cursor = cursor)
         val hidden = hidden_draft_ids()
-        response.items.forEach { draft -> draft_item_cache[draft.id] = draft }
+        response.items.forEach { draft ->
+            draft_item_cache[draft.id] = draft
+            remember_own_authored(draft.id)
+        }
         val items = withContext(Dispatchers.IO) {
             response.items
                 .filterNot { hidden.contains(it.id) }
@@ -2569,9 +2730,10 @@ class MailRepository @Inject constructor(
         val offset = cursor?.toIntOrNull() ?: 0
         val response = scheduled_api.list_scheduled(limit = limit, offset = offset)
         val active = response.items.filter { it.status in ACTIVE_SCHEDULED_STATUSES }
+        val untagged_snapshot = scheduled_untagged_snapshot(response, offset)
         val items = coroutineScope {
             active.map { summary ->
-                async(Dispatchers.IO) { decrypt_scheduled_summary(summary) }
+                async(Dispatchers.IO) { decrypt_scheduled_summary(summary, untagged_snapshot) }
             }.awaitAll()
         }
         val next_offset = offset + response.items.size
@@ -2584,6 +2746,47 @@ class MailRepository @Inject constructor(
             response.total.toInt(),
             ordered.map { it.id }.toSet(),
         )
+    }
+
+    private suspend fun scheduled_untagged_snapshot(
+        page: org.astermail.android.api.scheduled.ListScheduledResponse,
+        offset: Int,
+    ): org.astermail.android.storage.ScheduledUntaggedSnapshot {
+        session_key_store.scheduled_untagged_snapshot()?.let { return it }
+        val taken_ms = System.currentTimeMillis()
+        val ids = all_scheduled_ids(page, offset) ?: return org.astermail.android.storage.ScheduledUntaggedSnapshot.EMPTY
+        val snapshot = session_key_store.put_scheduled_untagged_snapshot(
+            org.astermail.android.storage.ScheduledUntaggedSnapshot.taken_at(ids, taken_ms),
+        )
+        if (snapshot == org.astermail.android.storage.ScheduledUntaggedSnapshot.EMPTY) return snapshot
+        try {
+            auth_repository.get().record_scheduled_untagged_snapshot(snapshot)
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+        }
+        return session_key_store.scheduled_untagged_snapshot() ?: snapshot
+    }
+
+    private suspend fun all_scheduled_ids(
+        page: org.astermail.android.api.scheduled.ListScheduledResponse,
+        offset: Int,
+    ): Set<String>? {
+        val ids = HashSet<String>()
+        var next = 0
+        var current: org.astermail.android.api.scheduled.ListScheduledResponse? = if (offset == 0) page else null
+        repeat(SCHEDULED_SNAPSHOT_MAX_PAGES) {
+            val listed = current ?: try {
+                scheduled_api.list_scheduled(limit = SCHEDULED_SNAPSHOT_PAGE_SIZE, offset = next)
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                return null
+            }
+            current = null
+            listed.items.forEach { ids.add(it.id) }
+            next += listed.items.size
+            if (listed.items.isEmpty() || next >= listed.total) return ids
+        }
+        return null
     }
 
     private fun fallback_scheduled_item(
@@ -2620,10 +2823,12 @@ class MailRepository @Inject constructor(
 
     private suspend fun decrypt_scheduled_summary(
         summary: org.astermail.android.api.scheduled.ScheduledSummary,
+        untagged_snapshot: org.astermail.android.storage.ScheduledUntaggedSnapshot,
     ): InboxItem {
+        remember_own_authored(summary.id)
         val detail = runCatching { scheduled_api.get_scheduled(summary.id) }.getOrNull()
             ?: return fallback_scheduled_item(summary)
-        val envelope = decrypt_scheduled_envelope(detail)
+        val envelope = decrypt_scheduled_envelope(detail, untagged_snapshot)
         val recipients = envelope?.optJSONArray("to_recipients")?.let { array ->
             (0 until array.length()).mapNotNull { array.optString(it).takeIf { value -> value.isNotBlank() } }
         } ?: emptyList()
@@ -2674,6 +2879,7 @@ class MailRepository @Inject constructor(
 
     private fun decrypt_scheduled_envelope(
         detail: org.astermail.android.api.scheduled.ScheduledDetailResponse,
+        untagged_snapshot: org.astermail.android.storage.ScheduledUntaggedSnapshot,
     ): org.json.JSONObject? {
         val ciphertext = runCatching {
             android.util.Base64.decode(detail.encrypted_envelope, android.util.Base64.DEFAULT)
@@ -2693,15 +2899,21 @@ class MailRepository @Inject constructor(
                 } finally {
                     key.fill(0)
                 }
-                if (plaintext != null) return parse_scheduled_envelope(plaintext)
+                if (plaintext != null) return parse_scheduled_envelope(plaintext)?.takeIf { envelope ->
+                    if (ScheduledContentTag.is_tagged(envelope)) {
+                        ScheduledContentTag.verifies(envelope, scheduled_tag_keys())
+                    } else {
+                        untagged_snapshot.allows(detail.id, detail.updated_at)
+                    }
+                }
             }
         }
 
         val identity_key = session_key_store.get_identity_key()
         val candidates = buildList {
-            if (!identity_key.isNullOrBlank()) add(identity_key)
+            if (identity_key != null) add(identity_key)
             session_key_store.get_previous_keys()?.let { addAll(it) }
-        }
+        }.filter(::is_secret_identity_key)
         for (candidate in candidates) {
             val key = MessageDigest.getInstance("SHA-256")
                 .digest((candidate + SCHEDULED_KEY_VERSION).toByteArray(Charsets.UTF_8))
@@ -2713,12 +2925,21 @@ class MailRepository @Inject constructor(
             if (plaintext != null) return parse_scheduled_envelope(plaintext)
         }
 
-        for (kek in kek_candidates()) {
+        if (session_key_store.mail_legacy_retired()) return null
+        for (kek in kek_candidates().filterNot(StorageWriteKey::is_public_mail_kek)) {
             val plaintext = runCatching { AesGcm.decrypt(kek, nonce, ciphertext) }.getOrNull()
-            if (plaintext != null) return parse_scheduled_envelope(plaintext)
+            if (plaintext != null) {
+                promote_kek(kek)
+                return parse_scheduled_envelope(plaintext)
+            }
         }
 
         return null
+    }
+
+    private fun scheduled_tag_keys(): List<String> = buildList {
+        session_key_store.get_identity_key()?.let { add(it) }
+        session_key_store.get_previous_keys()?.let { addAll(it) }
     }
 
     private fun parse_scheduled_envelope(plaintext: ByteArray): org.json.JSONObject? = try {
@@ -2792,12 +3013,15 @@ class MailRepository @Inject constructor(
         val found = draft ?: throw IllegalStateException("draft not found")
         val envelope = account_data_writer.retry_after_key_load {
             withContext(Dispatchers.IO) {
+                var refused = false
                 try_decrypt_envelope(
                     found.encrypted_content,
                     found.content_nonce,
                     found.id,
                     include_draft_attachments = true,
-                )
+                    own_authored_only = true,
+                    on_refused = { refused = true },
+                ).also { if (refused) throw DraftDecryptionException() }
             }
         }
         val item = withContext(Dispatchers.IO) { decrypt_draft_item(found) }
@@ -4121,7 +4345,12 @@ class MailRepository @Inject constructor(
     }
 
     private fun decrypt_draft_item(draft: org.astermail.android.api.mail.DraftItem): InboxItem {
-        val envelope = try_decrypt_envelope(draft.encrypted_content, draft.content_nonce, draft.id)
+        val envelope = try_decrypt_envelope(
+            draft.encrypted_content,
+            draft.content_nonce,
+            draft.id,
+            own_authored_only = true,
+        )
         val user_email = get_user_email() ?: ""
         return InboxItem(
             id = draft.id,
@@ -4229,10 +4458,12 @@ class MailRepository @Inject constructor(
         base_envelope: DecryptedEnvelope? = null,
     ): InboxItem {
         get_user_email()
+        note_own_authored(item.id, item.item_type ?: item.metadata?.item_type)
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
             item.id,
+            received_at = item.created_at,
             ratchet_override = ratchet_override,
             key_sets = key_sets,
             base_envelope = base_envelope,
@@ -4343,13 +4574,21 @@ class MailRepository @Inject constructor(
         return server_is_read ?: meta_is_read ?: false
     }
 
+    private fun note_own_authored(mail_item_id: String, item_type: String?) {
+        if (item_type?.trim()?.lowercase() in OWN_AUTHORED_ITEM_TYPES) {
+            remember_own_authored(mail_item_id)
+        }
+    }
+
     private fun decrypt_thread_message(item: ThreadMessageItem): ThreadMessageDecrypted {
         get_user_email()
+        note_own_authored(item.id, item.item_type ?: item.metadata?.item_type)
         var keys_missing = false
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
             item.id,
+            received_at = item.created_at,
             on_keys_missing = { keys_missing = true },
             allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
         )
@@ -4432,6 +4671,7 @@ class MailRepository @Inject constructor(
             item.envelope_nonce,
             item.id,
             allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
+            received_at = item.created_at,
         ).envelope
 
     private fun try_decrypt_envelope(
@@ -4446,6 +4686,9 @@ class MailRepository @Inject constructor(
         base_sink: MutableMap<String, DecryptedEnvelope>? = null,
         on_keys_missing: (() -> Unit)? = null,
         allow_external_pgp: Boolean = false,
+        received_at: String? = null,
+        own_authored_only: Boolean = false,
+        on_refused: (() -> Unit)? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -4471,6 +4714,12 @@ class MailRepository @Inject constructor(
                         val armored_is_encrypted =
                             body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)
                         val own_result = try_pgp_decrypt_own_result(text)
+                        if (own_authored_only) {
+                            if (own_result?.plaintext == null) return null
+                            if (own_result?.signature != org.astermail.android.crypto.PgpSignatureStatus.VALID) {
+                                throw DraftFormRefusedException()
+                            }
+                        }
                         val pgp_result = own_result
                             ?: if (allow_external_pgp) try_external_pgp_decrypt(text, null) else null
                         val pgp_plaintext = pgp_result?.plaintext
@@ -4501,6 +4750,7 @@ class MailRepository @Inject constructor(
                             return pgp_placeholder_envelope(armored_is_encrypted)
                         }
                     } else {
+                        if (own_authored_only) throw DraftFormRefusedException()
                         unauthenticated = true
                         own_sealed = false
                         raw
@@ -4510,21 +4760,44 @@ class MailRepository @Inject constructor(
                     decrypt_envelope_pbkdf2(encrypted_envelope)
                 }
                 nonce_bytes.size == 1 && nonce_bytes[0] == 2.toByte() -> {
-                    decrypt_envelope_v2(encrypted_envelope) ?: throw EnvelopeKeysMissingException()
+                    if (own_authored_only) {
+                        open_draft_v2(encrypted_envelope) ?: throw DraftFormRefusedException()
+                    } else {
+                        decrypt_envelope_v2(encrypted_envelope) ?: throw EnvelopeKeysMissingException()
+                    }
                 }
                 else -> {
-                    decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value)
-                        ?.also { own_sealed = false }
+                    val allow_legacy = !session_key_store.mail_legacy_retired()
+                    (if (own_authored_only) open_with_draft_write_key(encrypted_envelope, nonce_bytes) else null)
+                        ?: decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value, received_at)
+                        ?.also { opened ->
+                            own_sealed = false
+                            if (own_authored_only) {
+                                opened.fill(0)
+                                throw DraftFormRefusedException()
+                            }
+                        }
                         ?: runCatching {
-                            decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes)
+                            decrypt_envelope_identity_key(encrypted_envelope, nonce_bytes, allow_legacy)
                         }.getOrNull()
-                        ?: decrypt_envelope_legacy_key_material(encrypted_envelope, nonce_bytes)
+                        ?: (if (allow_legacy) decrypt_envelope_legacy_key_material(encrypted_envelope, nonce_bytes) else null)
+                            ?.also { own_sealed = false }
                         ?: throw EnvelopeKeysMissingException()
                 }
             }
 
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
+            if (own_authored_only && SentEncryptionEvidenceRules.is_legacy_unverified(json_str)) {
+                throw DraftFormRefusedException()
+            }
+            if (SentEncryptionEvidenceRules.is_legacy_unverified(json_str)) {
+                envelope_own_seal_verified = false
+                own_sealed = false
+                if (envelope_pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID) {
+                    envelope_pgp_signature = org.astermail.android.crypto.PgpSignatureStatus.UNVERIFIED
+                }
+            }
             InboundAttachmentKeyStore.register_from_envelope_json(
                 message_id,
                 json_str,
@@ -4542,6 +4815,7 @@ class MailRepository @Inject constructor(
             } else {
                 null
             }
+            if (sent_scope != null || own_authored_only) remember_own_authored(message_id)
             val carried = if (envelope_pgp_signature != org.astermail.android.crypto.PgpSignatureStatus.NONE || sent_scope != null) {
                 parsed?.copy(
                     pgp_encrypted = false,
@@ -4566,12 +4840,73 @@ class MailRepository @Inject constructor(
                 android.util.Log.w("MailRepository", "envelope decrypt failed: ${t.javaClass.simpleName}")
             }
             if (t is EnvelopeKeysMissingException) on_keys_missing?.invoke()
+            if (t is DraftFormRefusedException) on_refused?.invoke()
             null
         }
     }
 
+    private fun open_with_draft_write_key(encrypted_b64: String, nonce: ByteArray): ByteArray? {
+        val key = session_key_store.get_account_write_kek(
+            org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT,
+        ) ?: return null
+        try {
+            if (key.size != StorageWriteKey.KEY_LENGTH || StorageWriteKey.is_public_mail_kek(key)) return null
+            val ciphertext = runCatching {
+                android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+            }.getOrNull() ?: return null
+            return runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()
+        } finally {
+            key.fill(0)
+        }
+    }
+
+    private fun open_draft_v2(encrypted_b64: String): ByteArray? {
+        val keys = account_secret_keys()
+        try {
+            return LevelTwoEnvelope.open_b64(encrypted_b64, keys)
+        } finally {
+            keys.forEach { it.fill(0) }
+        }
+    }
+
+    private fun account_secret_keys(): List<ByteArray> {
+        val candidates = listOfNotNull(
+            session_key_store.get_data_kek(),
+            session_key_store.get_account_write_kek(org.astermail.android.crypto.AccountDataWriter.DRAFT_CONTEXT),
+        ) + session_key_store.get_account_keks().orEmpty().mapNotNull(StorageWriteKey::decode_key)
+        val seen = HashSet<String>()
+        val keys = ArrayList<ByteArray>()
+        for (key in candidates) {
+            val usable = key.size == StorageWriteKey.KEY_LENGTH &&
+                !StorageWriteKey.is_public_mail_kek(key) &&
+                seen.add(StorageWriteKey.encode_key(key)) &&
+                !is_known_login_hash(key)
+            if (usable) keys.add(key) else key.fill(0)
+        }
+        return keys
+    }
+
+    private fun is_known_login_hash(kek: ByteArray): Boolean {
+        val salts = legacy_key_salts()
+        try {
+            return salts.any { salt -> is_login_hash_kek(kek, salt) == true }
+        } finally {
+            salts.forEach { it.fill(0) }
+        }
+    }
+
+    private fun is_account_token_kek(kek: ByteArray): Boolean =
+        session_key_store.get_account_keks().orEmpty().any { encoded ->
+            val held = StorageWriteKey.decode_key(encoded) ?: return@any false
+            try {
+                held.size == kek.size && MessageDigest.isEqual(held, kek)
+            } finally {
+                held.fill(0)
+            }
+        }
+
     private fun kek_candidates(): List<ByteArray> {
-        val raw = session_key_store.get_decrypt_keks()
+        val raw = StorageWriteKey.with_public_fallback(session_key_store.get_decrypt_keks())
         val cached = cached_kek_candidates
         if (cached != null && cached_kek_source == raw) return cached
         val decoded = raw.mapNotNull { kek_b64 ->
@@ -4583,17 +4918,22 @@ class MailRepository @Inject constructor(
     }
 
     private fun promote_kek(kek: ByteArray) {
+        StorageWriteKey.note_if_public(session_key_store, kek)
         val current = cached_kek_candidates ?: return
         if (current.firstOrNull() === kek) return
         cached_kek_candidates = listOf(kek) + current.filterNot { it === kek }
     }
 
-    private fun decrypt_envelope_pbkdf2(encrypted_b64: String): ByteArray {
+    private fun decrypt_envelope_pbkdf2(
+        encrypted_b64: String,
+        allow_legacy: Boolean = !session_key_store.mail_legacy_retired(),
+    ): ByteArray {
         val data = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
         val salt = data.sliceArray(0 until 16)
         val iv = data.sliceArray(16 until 28)
         val ciphertext = data.sliceArray(28 until data.size)
         val salt_hex = salt.joinToString("") { "%02x".format(it) }
+        if (session_key_store.is_login_salt(salt)) throw EnvelopeKeysMissingException()
 
         pbkdf2_key_cache.get_copy(salt_hex)?.let { cached ->
             try {
@@ -4602,18 +4942,16 @@ class MailRepository @Inject constructor(
                 cached.fill(0)
             }
         }
-        for (kek in kek_candidates()) {
-            runCatching {
-                val plaintext = aes_gcm_decrypt(ciphertext, kek, iv)
-                promote_kek(kek)
-                return plaintext
-            }
+        for (kek in if (allow_legacy) kek_candidates() else emptyList()) {
+            val plaintext = runCatching { aes_gcm_decrypt(ciphertext, kek, iv) }.getOrNull() ?: continue
+            promote_kek(kek)
+            return settle_fallback_open(plaintext, kek)
         }
 
         val passphrase = session_key_store.get_passphrase()
             ?: throw IllegalStateException("no passphrase")
         val key_bytes = try {
-            PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
+            derive_password_envelope_key(passphrase, salt)
         } finally {
             passphrase.fill(0)
         }
@@ -4626,6 +4964,56 @@ class MailRepository @Inject constructor(
 
         return plaintext
     }
+
+    private fun derive_password_envelope_key(passphrase: ByteArray, salt: ByteArray): ByteArray =
+        PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
+
+    private fun is_login_hash_kek(kek: ByteArray, salt: ByteArray): Boolean? {
+        val v1 = legacy_key_material(salt) ?: return null
+        try {
+            if (MessageDigest.isEqual(v1, kek)) return true
+            val v2 = org.astermail.android.auth.LoginProof.derive_v2(v1)
+            try {
+                return MessageDigest.isEqual(v2, kek)
+            } finally {
+                v2.fill(0)
+            }
+        } finally {
+            v1.fill(0)
+        }
+    }
+
+    private fun is_server_derivable_kek(kek: ByteArray): Boolean {
+        if (StorageWriteKey.is_public_mail_kek(kek)) return true
+        val salts = legacy_key_salts()
+        try {
+            if (salts.any { salt -> is_login_hash_kek(kek, salt) == true }) return true
+            if (is_account_token_kek(kek)) return false
+            if (salts.isEmpty()) return true
+            return salts.any { salt -> is_login_hash_kek(kek, salt) != false }
+        } finally {
+            salts.forEach { it.fill(0) }
+        }
+    }
+
+    private fun mark_server_derivable_open(plaintext: ByteArray): ByteArray {
+        try {
+            return SentEncryptionEvidenceRules.mark_legacy_unverified(plaintext)
+                ?: throw IllegalStateException("unmarkable legacy open")
+        } finally {
+            plaintext.fill(0)
+        }
+    }
+
+    private fun settle_fallback_open(plaintext: ByteArray, kek: ByteArray): ByteArray =
+        if (is_server_derivable_kek(kek)) mark_server_derivable_open(plaintext) else plaintext
+
+    private fun settle_public_open(plaintext: ByteArray, key: ByteArray, material: String): ByteArray =
+        if (StorageWriteKey.is_public_mail_kek(key) || !is_secret_identity_key(material)) {
+            mark_server_derivable_open(plaintext)
+        } else {
+            plaintext
+        }
 
     private fun legacy_key_salts(): List<ByteArray> {
         val current = session_key_store.get_password_salt()
@@ -4681,7 +5069,9 @@ class MailRepository @Inject constructor(
             for (salt in salts) {
                 val key = legacy_key_material(salt) ?: continue
                 try {
-                    runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()?.let { return it }
+                    runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()?.let {
+                        return runCatching { mark_server_derivable_open(it) }.getOrNull()
+                    }
                 } finally {
                     key.fill(0)
                 }
@@ -4698,10 +5088,15 @@ class MailRepository @Inject constructor(
         return java.util.Base64.getEncoder().withoutPadding().encodeToString(digest.copyOf(12))
     }
 
-    internal fun decrypt_envelope_identity_key(encrypted_b64: String, nonce: ByteArray): ByteArray {
+    internal fun decrypt_envelope_identity_key(
+        encrypted_b64: String,
+        nonce: ByteArray,
+        allow_legacy: Boolean = !session_key_store.mail_legacy_retired(),
+    ): ByteArray {
+        val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
+        if (!allow_legacy) return decrypt_envelope_current_keys(ciphertext, nonce)
         val identity_key = session_key_store.get_identity_key()
             ?: throw IllegalStateException("no identity key")
-        val ciphertext = android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT)
 
         val identity_tag = identity_key_cache_tag(identity_key)
         for (version in ENVELOPE_VERSIONS) {
@@ -4711,7 +5106,7 @@ class MailRepository @Inject constructor(
                     MessageDigest.getInstance("SHA-256").digest(material)
                 }
                 try {
-                    return aes_gcm_decrypt(ciphertext, key, nonce)
+                    return settle_public_open(aes_gcm_decrypt(ciphertext, key, nonce), key, identity_key)
                 } finally {
                     key.fill(0)
                 }
@@ -4730,7 +5125,7 @@ class MailRepository @Inject constructor(
                             MessageDigest.getInstance("SHA-256").digest(material)
                         }
                         try {
-                            return aes_gcm_decrypt(ciphertext, key, nonce)
+                            return settle_public_open(aes_gcm_decrypt(ciphertext, key, nonce), key, prev_key)
                         } finally {
                             key.fill(0)
                         }
@@ -4752,15 +5147,38 @@ class MailRepository @Inject constructor(
 
         for (raw_key in kek_candidates()) {
             if (raw_key.size != 32) continue
-            try {
-                val plaintext = aes_gcm_decrypt(ciphertext, raw_key, nonce)
-                promote_kek(raw_key)
-                return plaintext
-            } catch (_: Throwable) {
-            }
+            val plaintext = runCatching { aes_gcm_decrypt(ciphertext, raw_key, nonce) }.getOrNull() ?: continue
+            promote_kek(raw_key)
+            return settle_fallback_open(plaintext, raw_key)
         }
 
         throw IllegalStateException("all identity key versions failed")
+    }
+
+    private fun decrypt_envelope_current_keys(ciphertext: ByteArray, nonce: ByteArray): ByteArray {
+        val identity_key = session_key_store.get_identity_key()?.takeIf(::is_secret_identity_key)
+        if (identity_key != null) {
+            val identity_tag = identity_key_cache_tag(identity_key)
+            for (version in ENVELOPE_VERSIONS) {
+                val key = identity_key_cache.get_or_put("cur_${identity_tag}_$version") {
+                    MessageDigest.getInstance("SHA-256").digest((identity_key + version).toByteArray(Charsets.UTF_8))
+                }
+                try {
+                    runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull()?.let { return it }
+                } finally {
+                    key.fill(0)
+                }
+            }
+        }
+        val write_key = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+        if (write_key != null) {
+            try {
+                runCatching { aes_gcm_decrypt(ciphertext, write_key, nonce) }.getOrNull()?.let { return it }
+            } finally {
+                write_key.fill(0)
+            }
+        }
+        throw EnvelopeKeysMissingException()
     }
 
     private fun inbound_ratchet_key_sets(): List<InboundRatchetKeySet> {
@@ -4811,14 +5229,23 @@ class MailRepository @Inject constructor(
     private fun decrypt_inbound_envelope(
         encrypted_b64: String,
         nonce: ByteArray,
-        key_sets: List<InboundRatchetKeySet>? = null,
-    ): ByteArray? =
-        InboundEnvelopeDecryptor.decrypt(
+        key_sets: List<InboundRatchetKeySet>?,
+        received_at: String?,
+    ): ByteArray? {
+        val plaintext = InboundEnvelopeDecryptor.decrypt(
             encrypted_b64,
             nonce,
             key_sets ?: inbound_ratchet_key_sets(),
             session_key_store.get_user_id(),
-        )
+            legacy_markers = InboundMarkerFloor.accepts_legacy(
+                received_at?.let { parse_timestamp_ms(it) },
+                encrypted_b64 = encrypted_b64,
+            ),
+        ) ?: return null
+        val marker = InboundEnvelopeDecryptor.marker_of(encrypted_b64)
+        if (marker != null && InboundEnvelopeDecryptor.is_owner_bound(marker)) InboundMarkerFloor.note_bound()
+        return plaintext
+    }
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
@@ -4827,7 +5254,7 @@ class MailRepository @Inject constructor(
         AesGcm.encrypt(key, iv, plaintext)
 
     private fun seal_attachment_data(raw: ByteArray, key: ByteArray, nonce: ByteArray, seq_num: Int): ByteArray =
-        seal_attachment_bytes(raw, key, nonce, seq_num, org.astermail.android.api.keys.BoundWriteSwitches.attachment())
+        seal_attachment_bytes(raw, key, nonce, seq_num)
 
     private fun derive_metadata_key(master: ByteArray): ByteArray {
         val salt = "aster-metadata-salt-v1".toByteArray(Charsets.UTF_8)
@@ -4842,27 +5269,35 @@ class MailRepository @Inject constructor(
         val encoded = data_kek?.let { android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP) }.orEmpty()
         data_kek?.fill(0)
         return encoded + "|" + session_key_store.get_storage_kdf_version() + "|" +
-            session_key_store.get_decrypt_keks().joinToString(",")
+            StorageWriteKey.with_public_fallback(session_key_store.get_decrypt_keks()).joinToString(",") + "|" +
+            session_key_store.mail_legacy_retired()
     }
-
-    private fun metadata_keys(): List<ByteArray> = metadata_key_set().keys
 
     private fun metadata_key_set(): MetadataKeySet {
         val source = metadata_key_source()
         val cached = cached_metadata
         if (cached != null && cached.source == source) return cached
-        val write_master = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store)
+        val write_master = StorageWriteKey.write_key(session_key_store)
         val masters = ArrayList<ByteArray>()
         write_master?.let { masters.add(it) }
-        masters.addAll(org.astermail.android.crypto.StorageWriteKey.read_keys(session_key_store))
-        kek_candidates().filter { it.size == 32 }.forEach { masters.add(it.copyOf()) }
+        if (!session_key_store.mail_legacy_retired()) {
+            masters.addAll(StorageWriteKey.read_keys(session_key_store))
+            kek_candidates().filter { it.size == 32 }.forEach { masters.add(it.copyOf()) }
+        }
         val keys = ArrayList<ByteArray>()
+        val public_indices = HashSet<Int>()
         for (master in masters) {
             val derived = derive_metadata_key(master)
+            val from_constant = StorageWriteKey.is_public_mail_kek(master)
             master.fill(0)
-            if (keys.none { it.contentEquals(derived) }) keys.add(derived) else derived.fill(0)
+            if (keys.none { it.contentEquals(derived) }) {
+                if (from_constant) public_indices.add(keys.size)
+                keys.add(derived)
+            } else {
+                derived.fill(0)
+            }
         }
-        val built = MetadataKeySet(source, keys, write_master != null)
+        val built = MetadataKeySet(source, keys, write_master != null, public_indices)
         cached_metadata = built
         return built
     }
@@ -4885,12 +5320,14 @@ class MailRepository @Inject constructor(
     }
 
     private fun open_metadata(encrypted_b64: String, nonce_b64: String): OpenedMetadata? {
-        val keys = metadata_keys()
+        val key_set = metadata_key_set()
+        val keys = key_set.keys
         if (keys.isEmpty()) return null
         val ciphertext = runCatching { android.util.Base64.decode(encrypted_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
         val nonce = runCatching { android.util.Base64.decode(nonce_b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
-        for (key in keys) {
+        for ((index, key) in keys.withIndex()) {
             val plaintext = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull() ?: continue
+            if (index in key_set.public_indices) session_key_store.note_public_constant_use()
             val json_str = String(plaintext, Charsets.UTF_8)
             plaintext.fill(0)
             return OpenedMetadata(json_str, key)
@@ -4980,9 +5417,18 @@ class MailRepository @Inject constructor(
         }.getOrNull()
 
         val row_meta = if (is_sealed_meta_nonce(nonce_bytes)) {
-            read_sealed_attachment_meta(encrypted_meta, nonce_bytes!!, entry?.key, mail_item_id, seq_num)
+            open_meta_or_null {
+                read_sealed_attachment_meta(
+                    encrypted_meta,
+                    nonce_bytes!!,
+                    entry?.key,
+                    mail_item_id,
+                    seq_num,
+                    is_item_own_authored(mail_item_id),
+                )
+            }
         } else {
-            read_legacy_attachment_meta(encrypted_meta)
+            read_legacy_attachment_meta(encrypted_meta, is_item_own_authored(mail_item_id))
         }
 
         return merge_attachment_meta(entry, row_meta, size_bytes)
@@ -5005,16 +5451,26 @@ class MailRepository @Inject constructor(
         row_meta: AttachmentMeta?,
         size_bytes: Long?,
     ): AttachmentMeta {
-        val filename = entry?.filename?.takeIf { it.isNotBlank() }
-            ?: row_meta?.filename?.takeIf { it.isNotBlank() }
-        val content_type = entry?.content_type?.takeIf { it.isNotBlank() }
-            ?: row_meta?.content_type?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_ATTACHMENT_CONTENT_TYPE
-        val session_key = row_meta?.session_key?.takeIf { it.isNotBlank() }
-            ?: entry?.key.orEmpty()
+        val entry_filename = entry?.filename?.takeIf { it.isNotBlank() }
+        val entry_content_type = entry?.content_type?.takeIf { it.isNotBlank() }
+        val row_filename = row_meta?.filename?.takeIf { it.isNotBlank() }
+        val row_content_type = row_meta?.content_type?.takeIf { it.isNotBlank() }
+        val row_unverified = row_meta?.is_unverified == true
+        val filename = entry_filename ?: row_filename
+        val content_type = entry_content_type ?: row_content_type ?: DEFAULT_ATTACHMENT_CONTENT_TYPE
+        val row_key = row_meta?.session_key?.takeIf { it.isNotBlank() }
+        val entry_key = entry?.key?.takeIf { it.isNotBlank() }
+        val session_key = if (row_unverified) {
+            entry_key ?: row_key.orEmpty()
+        } else {
+            row_key ?: entry_key.orEmpty()
+        }
         val content_id = entry?.content_id?.takeIf { it.isNotBlank() }
             ?: row_meta?.content_id?.takeIf { it.isNotBlank() }
         val size = entry?.size ?: size_bytes
+        val shows_row_fields = (entry_filename == null && row_filename != null) ||
+            (entry_content_type == null && row_content_type != null) ||
+            (entry_key == null && row_key != null)
 
         return AttachmentMeta(
             filename = filename ?: context.getString(R.string.attachment_unnamed),
@@ -5023,6 +5479,7 @@ class MailRepository @Inject constructor(
             content_id = content_id,
             size_bytes = size,
             is_placeholder = filename == null,
+            is_unverified = row_unverified && shows_row_fields,
         )
     }
 
@@ -5032,6 +5489,7 @@ class MailRepository @Inject constructor(
         session_key_b64: String?,
         mail_item_id: String?,
         seq_num: Int?,
+        own_authored: Boolean,
     ): AttachmentMeta? {
         val sealed = decrypt_sealed_attachment_meta(encrypted_meta, nonce_bytes, session_key_b64)
         if (sealed != null) return sealed
@@ -5045,41 +5503,88 @@ class MailRepository @Inject constructor(
         }.recoverCatching {
             decrypt_envelope_pbkdf2(encrypted_meta)
         }.recoverCatching {
-            LevelTwoEnvelope.open_raw_with_store(encrypted_meta, nonce_bytes, session_key_store)
-                ?: throw IllegalStateException()
+            open_level2_meta(encrypted_meta, nonce_bytes) ?: throw IllegalStateException()
         }.getOrNull() ?: run {
             session_key_store.get_identity_key()
                 ?.let { InboundAttachmentKeyStore.mark_unreadable(mail_item_id, seq_num) }
             return null
         }
 
-        return parse_attachment_meta_json(decrypted)
+        return parse_attachment_meta_json(decrypted)?.takeUnless { own_authored && it.is_unverified }
     }
 
-    private fun read_legacy_attachment_meta(encrypted_meta: String): AttachmentMeta? {
+    private fun read_legacy_attachment_meta(encrypted_meta: String, own_authored: Boolean): AttachmentMeta? {
         val raw = runCatching {
             android.util.Base64.decode(encrypted_meta, android.util.Base64.DEFAULT)
         }.getOrNull() ?: return null
 
-        parse_attachment_meta_json(raw)?.let { return it }
+        if (!own_authored) {
+            parse_attachment_meta_json(raw)?.let { return it.copy(is_unverified = true) }
+        }
 
         val text = String(raw, Charsets.UTF_8)
         if (body_starts_with(text, "-----BEGIN PGP")) {
-            val pgp_result = try_pgp_decrypt(text)
-            if (pgp_result != null) {
-                parse_attachment_meta_json(pgp_result.toByteArray(Charsets.UTF_8))?.let { return it }
+            val result = try_pgp_decrypt_own_account_result(text)
+            val plaintext = result?.plaintext
+            val signed = result?.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
+            if (plaintext != null && (signed || !own_authored)) {
+                parse_attachment_meta_json(plaintext.toByteArray(Charsets.UTF_8))?.let { meta ->
+                    return if (signed) meta else meta.copy(is_unverified = true)
+                }
             }
         }
 
-        val decrypted = decrypt_envelope_v2(encrypted_meta) ?: runCatching {
-            decrypt_envelope_pbkdf2(encrypted_meta)
-        }.getOrNull() ?: return null
+        val decrypted = open_meta_or_null { decrypt_envelope_v2(encrypted_meta) }
+            ?: open_meta_or_null { decrypt_envelope_pbkdf2(encrypted_meta) }
+            ?: return null
 
-        return parse_attachment_meta_json(decrypted)
+        return parse_attachment_meta_json(decrypted)?.takeUnless { own_authored && it.is_unverified }
     }
 
-    private fun decrypt_envelope_v2(encrypted_b64: String): ByteArray? =
-        LevelTwoEnvelope.open_with_store(encrypted_b64, session_key_store)
+    private inline fun <T> open_meta_or_null(open: () -> T?): T? =
+        try {
+            open()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+
+    private fun decrypt_envelope_v2(encrypted_b64: String): ByteArray? {
+        val keys = LevelTwoEnvelope.read_keys(session_key_store)
+        try {
+            val ordered = keys.filterNot(StorageWriteKey::is_public_mail_kek) +
+                keys.filter(StorageWriteKey::is_public_mail_kek)
+            for (key in ordered) {
+                val opened = LevelTwoEnvelope.open_b64(encrypted_b64, listOf(key)) ?: continue
+                if (StorageWriteKey.is_public_mail_kek(key)) {
+                    session_key_store.note_public_constant_use()
+                    return mark_server_derivable_open(opened)
+                }
+                return if (is_current_data_kek(key)) opened else settle_fallback_open(opened, key)
+            }
+            return null
+        } finally {
+            keys.forEach { it.fill(0) }
+        }
+    }
+
+    private fun is_current_data_kek(key: ByteArray): Boolean {
+        val data_kek = session_key_store.get_data_kek() ?: return false
+        try {
+            return MessageDigest.isEqual(data_kek, key)
+        } finally {
+            data_kek.fill(0)
+        }
+    }
+
+    private fun open_level2_meta(encrypted_meta: String, nonce_bytes: ByteArray?): ByteArray? {
+        var opened_with_constant = false
+        val opened = LevelTwoEnvelope.open_raw_with_store(encrypted_meta, nonce_bytes, session_key_store) {
+            opened_with_constant = true
+        } ?: return null
+        return if (opened_with_constant) mark_server_derivable_open(opened) else opened
+    }
 
     fun decrypt_attachment_data(
         encrypted_data_b64: String,
@@ -5141,6 +5646,7 @@ class MailRepository @Inject constructor(
                         content_id = meta.content_id,
                         mail_item_id = att.mail_item_id,
                         seq_num = att.seq_num,
+                        is_unverified = meta.is_unverified,
                     )
                 }
             }.let { server ->
@@ -5211,6 +5717,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
+                    is_unverified = meta.is_unverified,
                 )
             }
             Result.success(DecryptedMimeAttachments.merge_into(mail_item_id, resolved))
@@ -5262,6 +5769,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
+                    is_unverified = meta.is_unverified,
                 ),
             )
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
@@ -5296,6 +5804,7 @@ class MailRepository @Inject constructor(
                     session_key = meta.session_key,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
+                    is_unverified = meta.is_unverified,
                 ),
                 data,
             ).let { Result.success(it) }
@@ -5602,6 +6111,8 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean?,
         pgp_recipients: List<String>,
         require_encryption: Boolean,
+        ack_scope: String?,
+        used_acknowledgments: MutableList<ExternalKeyAcknowledgmentUse>,
     ): Map<String, String>? {
         val outside = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
         if (outside.isEmpty()) return null
@@ -5627,8 +6138,30 @@ class MailRepository @Inject constructor(
         }
         val by_address = discovered.associateBy { RecipientEncryptionRules.normalize(it.email) }
         val recipient_keys = LinkedHashMap<String, String>()
-        val encrypt_by_default = cached_encrypt_by_default()
+        val without_copy = mutableListOf<String>()
+        val build_acknowledgments = mutableListOf<ExternalKeyAcknowledgmentUse>()
+        val encrypt_by_default = encrypt_by_default_setting()
         val now_ms = System.currentTimeMillis()
+        fun use_unverified_key(recipient: String, armored: String, fingerprint: String) {
+            val step = ExternalKeyPinRule.unreadable_step(
+                explicit = RecipientEncryptionRules.unmatched_key_throws(
+                    force_pgp,
+                    require_encryption,
+                    RecipientEncryptionRules.is_listed(recipient, pgp_recipients),
+                ),
+                acknowledged = { has_unpinned_acknowledgment(ack_scope, recipient, fingerprint) },
+            )
+            when (step) {
+                ExternalKeyUnreadableStep.USE -> {
+                    recipient_keys[recipient] = armored
+                    build_acknowledgments.add(ExternalKeyAcknowledgmentUse(recipient, fingerprint))
+                }
+                ExternalKeyUnreadableStep.SEND_WITHOUT_COPY -> without_copy.add(recipient)
+                ExternalKeyUnreadableStep.RETRY -> throw ExternalKeyPinUnavailableException(
+                    context.getString(R.string.send_key_check_failed),
+                )
+            }
+        }
         for (recipient in outside) {
             val info = by_address[RecipientEncryptionRules.normalize(recipient)]
             val decision = RecipientEncryptionRules.decide(
@@ -5641,9 +6174,52 @@ class MailRepository @Inject constructor(
             )
             when (decision) {
                 RecipientEncryption.SERVER -> throw pgp_copy_exception(too_large = false)
-                RecipientEncryption.PLAIN -> return pgp_copy_failure(listed, listed, too_large = false, require_encryption)
-                RecipientEncryption.ENCRYPT -> recipient_keys[recipient] = info!!.public_key!!
+                RecipientEncryption.PLAIN -> without_copy.add(recipient)
+                RecipientEncryption.ENCRYPT -> {
+                    val armored = info!!.public_key!!
+                    val pin_read = read_external_key_pin(recipient)
+                    val vetting = ExternalKeyPinRule.vet_armored(
+                        recipient,
+                        armored,
+                        pin_read.fingerprint,
+                        pin_read.readable,
+                        explicit = RecipientEncryptionRules.is_explicit(
+                            force_pgp,
+                            require_encryption,
+                            RecipientEncryptionRules.is_listed(recipient, pgp_recipients),
+                        ),
+                    )
+                    when (ExternalKeyPinRule.send_step(vetting)) {
+                        ExternalKeySendStep.USE_AND_PIN -> {
+                            val fingerprint = (vetting as ExternalKeyVetting.Accepted).fingerprint
+                            if (pin_external_key(recipient, fingerprint)) {
+                                recipient_keys[recipient] = armored
+                            } else {
+                                use_unverified_key(recipient, armored, fingerprint)
+                            }
+                        }
+                        ExternalKeySendStep.USE -> recipient_keys[recipient] = armored
+                        ExternalKeySendStep.STOP_CHANGED -> throw ExternalKeyChangedException(
+                            context.getString(R.string.key_trust_change_message, recipient),
+                        )
+                        ExternalKeySendStep.STOP_UNREADABLE -> use_unverified_key(
+                            recipient,
+                            armored,
+                            (vetting as ExternalKeyVetting.Unverified).fingerprint,
+                        )
+                        ExternalKeySendStep.SKIP_OR_REQUIRE -> {
+                            val recipient_listed = RecipientEncryptionRules.is_listed(recipient, pgp_recipients)
+                            if (RecipientEncryptionRules.unmatched_key_throws(force_pgp, require_encryption, recipient_listed)) {
+                                throw pgp_copy_exception(too_large = false)
+                            }
+                            without_copy.add(recipient)
+                        }
+                    }
+                }
             }
+        }
+        if (without_copy.isNotEmpty()) {
+            return pgp_copy_failure(listed, listed, too_large = false, require_encryption)
         }
         val outcome = try {
             val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
@@ -5657,13 +6233,10 @@ class MailRepository @Inject constructor(
             ClientPgpCopyOutcome.Failed(too_large = false)
         }
         return when (outcome) {
-            is ClientPgpCopyOutcome.Copies -> outcome.copies
+            is ClientPgpCopyOutcome.Copies -> outcome.copies.also { used_acknowledgments.addAll(build_acknowledgments) }
             is ClientPgpCopyOutcome.Failed -> pgp_copy_failure(explicit, listed, outcome.too_large, require_encryption)
         }
     }
-
-    private fun try_pgp_decrypt(ciphertext: String): String? =
-        try_pgp_decrypt_result(ciphertext)?.plaintext
 
     private fun try_pgp_decrypt_result(
         ciphertext: String,
@@ -5744,8 +6317,7 @@ class MailRepository @Inject constructor(
         }
     }
 
-    private val sender_pgp_key_cache = java.util.concurrent.ConcurrentHashMap<String, String>()
-    private val sender_pgp_key_misses = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val sender_pgp_key_cache = SenderKeyCache()
 
     private fun verify_with_outside_sender_key(
         ciphertext: String,
@@ -5792,21 +6364,14 @@ class MailRepository @Inject constructor(
     }
 
     private fun cached_sender_key(normalized: String, fetch: suspend () -> String?): String? {
-        sender_pgp_key_cache[normalized]?.let { return it }
-        val missed_at = sender_pgp_key_misses[normalized]
-        val now = System.currentTimeMillis()
-        if (missed_at != null && now - missed_at < SENDER_KEY_MISS_TTL_MS) return null
+        sender_pgp_key_cache.fresh_key(normalized)?.let { return it }
+        if (sender_pgp_key_cache.recently_missed(normalized)) return null
         val key = runCatching {
             kotlinx.coroutines.runBlocking {
                 kotlinx.coroutines.withTimeout(SENDER_KEY_FETCH_TIMEOUT_MS) { fetch() }
             }
         }.getOrNull()?.takeIf { it.isNotBlank() }
-        if (key == null) {
-            sender_pgp_key_misses[normalized] = now
-            return null
-        }
-        sender_pgp_key_misses.remove(normalized)
-        sender_pgp_key_cache[normalized] = key
+        sender_pgp_key_cache.remember(normalized, key)
         return key
     }
 
@@ -5876,6 +6441,7 @@ class MailRepository @Inject constructor(
             item.encrypted_envelope,
             item.envelope_nonce,
             item.id,
+            received_at = item.created_at,
             decrypt_body_fields = false,
             key_sets = key_sets,
             base_sink = base_envelopes,
@@ -6100,6 +6666,56 @@ class MailRepository @Inject constructor(
     }
 
     private val key_trust_cache = ExternalKeyTrustCache()
+    private val external_key_pins: ExternalKeyPinSource by lazy {
+        external_key_pins_provider?.get() ?: SecureExternalKeyPins(context)
+    }
+
+    private val unpinned_key_acknowledgments = ExternalKeyAcknowledgments {
+        runCatching { org.astermail.android.storage.SecurePrefs.open(context, ExternalKeyAcknowledgments.PREFS_NAME) }.getOrNull()
+    }
+
+    private fun note_unpinned_acknowledgment(scope: String?, email: String, fingerprint: String): Boolean =
+        session_key_store.get_user_id()?.let { unpinned_key_acknowledgments.note(it, scope, email, fingerprint) } ?: false
+
+    private fun has_unpinned_acknowledgment(scope: String?, email: String, fingerprint: String): Boolean =
+        session_key_store.get_user_id()?.let { unpinned_key_acknowledgments.matches(it, scope, email, fingerprint) } ?: false
+
+    private fun consume_unpinned_acknowledgments(scope: String?, used: List<ExternalKeyAcknowledgmentUse>) {
+        val account = session_key_store.get_user_id() ?: return
+        used.forEach { unpinned_key_acknowledgments.consume(account, scope, it.email, it.fingerprint) }
+    }
+
+    private fun pinned_external_key(email: String): String? =
+        session_key_store.get_user_id()?.let { external_key_pins.pinned(it, email) }
+
+    private val failed_key_pins: MutableSet<String> = java.util.Collections.synchronizedSet(HashSet())
+
+    private fun read_external_key_pin(email: String): ExternalKeyPinRead =
+        session_key_store.get_user_id()?.let { external_key_pins.read(it, email) }
+            ?: ExternalKeyPinRead(readable = false, fingerprint = null)
+
+    private fun review_external_key_pin(email: String): ExternalKeyPinRead {
+        val account = session_key_store.get_user_id() ?: return ExternalKeyPinRead(readable = false, fingerprint = null)
+        val read = external_key_pins.read(account, email)
+        if (read.fingerprint == null && ExternalKeyPinRule.entry_key(account, email) in failed_key_pins) {
+            return ExternalKeyPinRead(readable = false, fingerprint = null)
+        }
+        return read
+    }
+
+    private fun pin_external_key(email: String, fingerprint: String): Boolean {
+        val account = session_key_store.get_user_id() ?: return false
+        val entry = ExternalKeyPinRule.entry_key(account, email)
+        val pinned = runCatching { external_key_pins.pin(account, email, fingerprint) }.getOrDefault(false)
+        if (pinned) failed_key_pins.remove(entry) else failed_key_pins.add(entry)
+        return pinned
+    }
+
+    private fun opportunistic_key_trust(info: ExternalKeyInfo): org.astermail.android.crypto.OpportunisticKeyTrust {
+        val armored = info.public_key ?: return org.astermail.android.crypto.OpportunisticKeyTrust.UNPINNED
+        return ExternalKeyPinRule.opportunistic_trust(info.email, armored, pinned_external_key(info.email))
+    }
+
     private val key_trust_lookups = HashMap<List<String>, kotlinx.coroutines.Deferred<Result<List<RecipientKeyChange>>>>()
     private var key_trust_generation = 0L
 
@@ -6121,7 +6737,10 @@ class MailRepository @Inject constructor(
         val lookup = app_scope.async(start = kotlinx.coroutines.CoroutineStart.LAZY) {
             try {
                 val keys = keys_api.discover_external_keys_batch(external)
-                val changes = key_changes_from_discovery(keys)
+                val changes = ExternalKeyPinRule.merge_changes(
+                    key_changes_from_discovery(keys),
+                    ExternalKeyPinRule.local_changes(keys, ::review_external_key_pin),
+                )
                 synchronized(key_trust_lookups) {
                     if (generation == key_trust_generation) {
                         key_trust_cache.store(external, changes, keyed_recipients_from_discovery(keys) + changes.map { it.email })
@@ -6155,7 +6774,8 @@ class MailRepository @Inject constructor(
                 now_ms = { System.currentTimeMillis() },
                 wait = { kotlinx.coroutines.delay(it) },
                 discover = { discover_keys_in_batches(it) },
-                encrypt_by_default = cached_encrypt_by_default(),
+                encrypt_by_default = cached_encrypt_by_default() ?: encrypt_by_default_setting(),
+                key_trust = ::opportunistic_key_trust,
             )
         }
         return found + hosted.associateWith { org.astermail.android.crypto.RecipientLockStatus.ENCRYPTED }
@@ -6180,7 +6800,12 @@ class MailRepository @Inject constructor(
                     } catch (_: Exception) {
                         null
                     }
-                    if (internal != null) HostedRecipientDirectory.record(address, internal)
+                    if (internal != null) {
+                        HostedRecipientDirectory.record(
+                            address,
+                            HostedRecipientDirectory.classify(internal, pinned_external_key(address)),
+                        )
+                    }
                 }
             }.awaitAll()
         }
@@ -6194,26 +6819,51 @@ class MailRepository @Inject constructor(
 
     suspend fun verified_external_key_fingerprint_changes(
         recipients: List<String>,
+        force_pgp: Boolean? = null,
+        pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
     ): Result<List<RecipientKeyChange>> {
         val external = external_key_trust_candidates(recipients)
         if (external.isEmpty()) return Result.success(emptyList())
         if (key_trust_cache.all_fresh_without_key(external)) return Result.success(emptyList())
-        return try {
+        val found = try {
             key_trust_lookup(external).await()
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
             Result.failure(e)
         }
+        val changes = found.getOrElse { return found }
+        if (changes.none { it.prior_fingerprint == ExternalKeyPinRule.UNREADABLE_PRIOR }) return found
+        val require_encryption = require_encryption_setting() ?: true
+        return Result.success(
+            ExternalKeyPinRule.changes_to_confirm(
+                changes,
+                explicit_for = { email ->
+                    RecipientEncryptionRules.unmatched_key_throws(
+                        force_pgp,
+                        require_encryption,
+                        RecipientEncryptionRules.is_listed(email, pgp_recipients),
+                    )
+                },
+                acknowledged = { change -> has_unpinned_acknowledgment(ack_scope, change.email, change.new_fingerprint) },
+            ),
+        )
     }
 
     suspend fun acknowledge_external_key_fingerprint_change(
         change: RecipientKeyChange,
+        ack_scope: String? = null,
     ): Boolean = runCatching {
-        keys_api.acknowledge_external_key_fingerprint_change(
-            change.email,
-            change.prior_fingerprint,
-            change.new_fingerprint,
-        )
+        val pinned = pin_external_key(change.email, change.new_fingerprint)
+        if (change.prior_fingerprint == ExternalKeyPinRule.UNREADABLE_PRIOR) {
+            pinned || note_unpinned_acknowledgment(ack_scope, change.email, change.new_fingerprint)
+        } else {
+            keys_api.acknowledge_external_key_fingerprint_change(
+                change.email,
+                change.prior_fingerprint,
+                change.new_fingerprint,
+            )
+        }
     }.getOrDefault(false).also { key_trust_cache.forget(change.email) }
 
     suspend fun check_post_quantum_coverage(
@@ -6327,6 +6977,40 @@ class MailRepository @Inject constructor(
         client_send_id: String? = null,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        ack_scope: String? = null,
+    ): Result<SimpleSendResponse> {
+        val used_acknowledgments = java.util.Collections.synchronizedList(mutableListOf<ExternalKeyAcknowledgmentUse>())
+        return send_email_inner(
+            to, cc, bcc, subject, body_html, sender_email, sender_display_name, thread_token, expires_at,
+            expiry_password, attachments, sender_alias_hash, suppress_branding, allow_non_post_quantum,
+            client_send_id, force_pgp, pgp_recipients, ack_scope, used_acknowledgments,
+        ).also { result ->
+            if (result.getOrNull()?.success == true) {
+                consume_unpinned_acknowledgments(ack_scope, used_acknowledgments.toList())
+            }
+        }
+    }
+
+    private suspend fun send_email_inner(
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        sender_email: String?,
+        sender_display_name: String?,
+        thread_token: String?,
+        expires_at: String?,
+        expiry_password: String?,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_alias_hash: String?,
+        suppress_branding: Boolean?,
+        allow_non_post_quantum: Boolean,
+        client_send_id: String?,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+        ack_scope: String?,
+        used_acknowledgments: MutableList<ExternalKeyAcknowledgmentUse>,
     ): Result<SimpleSendResponse> = runCatching {
         classify_recipients(to + cc + bcc)
         val is_mixed = has_mixed_recipients(to + cc + bcc)
@@ -6413,6 +7097,8 @@ class MailRepository @Inject constructor(
                 force_pgp = force_pgp,
                 pgp_recipients = listed_pgp_recipients,
                 require_encryption = require_encryption,
+                ack_scope = ack_scope,
+                used_acknowledgments = used_acknowledgments,
             )
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val mixed_attachments = if (attachments.isNotEmpty()) {
@@ -6512,6 +7198,8 @@ class MailRepository @Inject constructor(
                 force_pgp = force_pgp,
                 pgp_recipients = listed_pgp_recipients,
                 require_encryption = require_encryption,
+                ack_scope = ack_scope,
+                used_acknowledgments = used_acknowledgments,
             )
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val secure_message = if (uses_password_sealed_message(expiry_password)) {
@@ -6685,10 +7373,17 @@ class MailRepository @Inject constructor(
             org.astermail.android.mail.ratchet.seal_internal_body(
                 recipients = recipients,
                 allow_non_post_quantum = allow_non_post_quantum,
-                seal_ratchet = {
-                    ratchet_encryptor.encrypt_envelope(from_addr, recipients, wrapped, allow_non_post_quantum)
+                seal_ratchet = { without_one_time ->
+                    ratchet_encryptor.encrypt_envelope(
+                        from_addr,
+                        recipients,
+                        wrapped,
+                        allow_non_post_quantum,
+                        without_one_time,
+                    )
                 },
                 seal_pgp = { seal_internal_body_with_pgp(from_addr, recipients, wrapped) },
+                warn = { message -> android.util.Log.w("AsterRatchet", message) },
             )
         } catch (t: org.astermail.android.mail.ratchet.PostQuantumUnavailableException) {
             throw not_on_aster_failure(t, recipients, from_addr) ?: t
@@ -6885,6 +7580,7 @@ class MailRepository @Inject constructor(
                     item.encrypted_envelope,
                     item.envelope_nonce,
                     item.id,
+                    received_at = item.created_at,
                 ) ?: return@runCatching null
                 val raw = listOf(envelope.body_text, envelope.body_html.orEmpty())
                     .map { it.trim() }
@@ -7658,6 +8354,10 @@ class MailRepository @Inject constructor(
         folder_token: String,
         sender_alias_hash: String?,
     ): CreateScheduledRequest {
+        val identity_key = session_key_store.get_identity_key()
+            ?.takeIf { ScheduledContentTag.is_usable_key(it) }
+            ?: throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
+        val tagged_envelope_json = ScheduledContentTag.tagged(identity_key, org.json.JSONObject(envelope_json)).toString()
         val ephemeral_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
         val base_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
         fun derive_nonce(xor_byte: Int): ByteArray = base_nonce.copyOf().also {
@@ -7667,7 +8367,7 @@ class MailRepository @Inject constructor(
             val envelope_nonce = derive_nonce(0x01)
             val recipients_nonce = derive_nonce(0x02)
             return CreateScheduledRequest(
-                encrypted_envelope = seal_scheduled_field(ephemeral_key, envelope_nonce, envelope_json),
+                encrypted_envelope = seal_scheduled_field(ephemeral_key, envelope_nonce, tagged_envelope_json),
                 envelope_nonce = scheduled_b64(envelope_nonce),
                 encrypted_recipients = seal_scheduled_field(ephemeral_key, recipients_nonce, recipients_json),
                 recipients_nonce = scheduled_b64(recipients_nonce),
@@ -7757,6 +8457,207 @@ class MailRepository @Inject constructor(
         }
     }
 
+    internal fun mail_legacy_crypto(): MailLegacyCrypto = object : MailLegacyCrypto {
+
+        private fun is_json_object(plaintext: ByteArray): Boolean = runCatching {
+            Json.parseToJsonElement(String(plaintext, Charsets.UTF_8)) is kotlinx.serialization.json.JsonObject
+        }.getOrDefault(false)
+
+        private fun decode(value: String): ByteArray? =
+            runCatching { android.util.Base64.decode(value, android.util.Base64.DEFAULT) }.getOrNull()
+
+        private fun encode(value: ByteArray): String =
+            android.util.Base64.encodeToString(value, android.util.Base64.NO_WRAP)
+
+        private fun legacy_or_unreadable(plaintext: ByteArray?): StoredRecord {
+            if (plaintext == null) return StoredRecord.Unreadable
+            if (is_json_object(plaintext)) return StoredRecord.Legacy(plaintext)
+            plaintext.fill(0)
+            return StoredRecord.Unreadable
+        }
+
+        private fun is_password_marker(nonce: ByteArray): Boolean = nonce.size == 1 && nonce[0] == 1.toByte()
+
+        private fun open_envelope_strict(encrypted: String, nonce: ByteArray): ByteArray? = runCatching {
+            if (is_password_marker(nonce)) {
+                decrypt_envelope_pbkdf2(encrypted, allow_legacy = false)
+            } else {
+                decrypt_envelope_identity_key(encrypted, nonce, allow_legacy = false)
+            }
+        }.getOrNull()
+
+        private fun open_envelope_lenient(encrypted: String, nonce: ByteArray): ByteArray? {
+            if (is_password_marker(nonce)) {
+                return runCatching { decrypt_envelope_pbkdf2(encrypted, allow_legacy = true) }.getOrNull()
+            }
+            return runCatching { decrypt_envelope_identity_key(encrypted, nonce, allow_legacy = true) }.getOrNull()
+                ?: decrypt_envelope_legacy_key_material(encrypted, nonce)
+        }
+
+        override fun classify_envelope(encrypted: String, nonce: String): StoredRecord {
+            val nonce_bytes = decode(nonce) ?: return StoredRecord.Unreadable
+            open_envelope_strict(encrypted, nonce_bytes)?.let {
+                it.fill(0)
+                return StoredRecord.Current
+            }
+            open_envelope_lenient(encrypted, nonce_bytes)?.let { opened ->
+                if (!is_login_salted_envelope(encrypted, nonce)) return legacy_or_unreadable(opened)
+                return try {
+                    legacy_or_unreadable(SentEncryptionEvidenceRules.mark_legacy_unverified(opened))
+                } finally {
+                    opened.fill(0)
+                }
+            }
+            return legacy_or_unreadable(open_vault_vouched_login_salted(encrypted, nonce_bytes))
+        }
+
+        private fun open_vault_vouched_login_salted(encrypted: String, nonce: ByteArray): ByteArray? {
+            if (!is_password_marker(nonce)) return null
+            val data = decode(encrypted) ?: return null
+            if (data.size <= 28) return null
+            val salt = data.sliceArray(0 until 16)
+            if (!session_key_store.is_login_salt(salt)) return null
+            val passphrase = session_key_store.get_passphrase() ?: return null
+            val key = try {
+                derive_password_envelope_key(passphrase, salt)
+            } finally {
+                passphrase.fill(0)
+            }
+            try {
+                if (!vault_holds_key(key)) return null
+                val opened = runCatching {
+                    aes_gcm_decrypt(data.sliceArray(28 until data.size), key, data.sliceArray(16 until 28))
+                }.getOrNull() ?: return null
+                return try {
+                    SentEncryptionEvidenceRules.mark_legacy_unverified(opened)
+                } finally {
+                    opened.fill(0)
+                }
+            } finally {
+                key.fill(0)
+            }
+        }
+
+        private fun vault_holds_key(key: ByteArray): Boolean =
+            session_key_store.get_legacy_keks().orEmpty().any { encoded ->
+                val held = decode(encoded) ?: return@any false
+                try {
+                    held.size == key.size && MessageDigest.isEqual(held, key)
+                } finally {
+                    held.fill(0)
+                }
+            }
+
+        override fun reseal_envelope(plaintext: ByteArray): SealedField? {
+            val level2_key = LevelTwoEnvelope.write_key(session_key_store)
+            if (level2_key != null) {
+                try {
+                    val sealed = LevelTwoEnvelope.seal_b64(plaintext, level2_key)
+                    val reopened = LevelTwoEnvelope.open_b64(sealed, listOf(level2_key)) ?: return null
+                    val same = reopened.contentEquals(plaintext)
+                    reopened.fill(0)
+                    return if (same) SealedField(sealed, LevelTwoEnvelope.marker_b64()) else null
+                } finally {
+                    level2_key.fill(0)
+                }
+            }
+            val identity_key = session_key_store.get_identity_key()?.takeIf(::is_secret_identity_key) ?: return null
+            val key = MessageDigest.getInstance("SHA-256")
+                .digest((identity_key + "astermail-envelope-v1").toByteArray(Charsets.UTF_8))
+            val nonce = ByteArray(LEGACY_KEY_MATERIAL_NONCE_LENGTH).also { SecureRandom().nextBytes(it) }
+            val sealed = try {
+                encode(AesGcm.encrypt(key, nonce, plaintext))
+            } finally {
+                key.fill(0)
+            }
+            val reopened = open_envelope_strict(sealed, nonce) ?: return null
+            val same = reopened.contentEquals(plaintext)
+            reopened.fill(0)
+            return if (same) SealedField(sealed, encode(nonce)) else null
+        }
+
+        override fun classify_metadata(encrypted: String, nonce: String): StoredRecord {
+            val set = metadata_key_set()
+            val ciphertext = decode(encrypted) ?: return StoredRecord.Unreadable
+            val nonce_bytes = decode(nonce) ?: return StoredRecord.Unreadable
+            set.keys.forEachIndexed { index, key ->
+                val plaintext = runCatching { aes_gcm_decrypt(ciphertext, key, nonce_bytes) }.getOrNull()
+                    ?: return@forEachIndexed
+                if (index == 0 && set.has_write_key) {
+                    plaintext.fill(0)
+                    return StoredRecord.Current
+                }
+                if (index in set.public_indices) {
+                    plaintext.fill(0)
+                    return StoredRecord.Unreadable
+                }
+                return legacy_or_unreadable(plaintext)
+            }
+            return StoredRecord.Unreadable
+        }
+
+        override fun reseal_metadata(plaintext: ByteArray): SealedField? {
+            val key = metadata_write_key() ?: return null
+            val sealed = encrypt_metadata_plaintext(String(plaintext, Charsets.UTF_8), key) ?: return null
+            val ciphertext = decode(sealed.first) ?: return null
+            val nonce = decode(sealed.second) ?: return null
+            val reopened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull() ?: return null
+            val same = reopened.contentEquals(plaintext)
+            reopened.fill(0)
+            return if (same) SealedField(sealed.first, sealed.second) else null
+        }
+
+        override fun classify_attachment_meta(encrypted: String, nonce: String): StoredRecord {
+            val nonce_bytes = decode(nonce) ?: return StoredRecord.Unreadable
+            runCatching { decrypt_envelope_identity_key(encrypted, nonce_bytes, allow_legacy = false) }.getOrNull()?.let {
+                it.fill(0)
+                return StoredRecord.Current
+            }
+            val opened = runCatching { decrypt_envelope_identity_key(encrypted, nonce_bytes, allow_legacy = true) }
+                .recoverCatching { decrypt_envelope_v2(encrypted) ?: throw IllegalStateException() }
+                .recoverCatching { decrypt_envelope_pbkdf2(encrypted, allow_legacy = true) }
+                .recoverCatching {
+                    open_level2_meta(encrypted, nonce_bytes) ?: throw IllegalStateException()
+                }
+                .getOrNull()
+            return verified_meta_or_unreadable(opened)
+        }
+
+        private fun verified_meta_or_unreadable(plaintext: ByteArray?): StoredRecord {
+            if (plaintext != null &&
+                SentEncryptionEvidenceRules.is_legacy_unverified(String(plaintext, Charsets.UTF_8))
+            ) {
+                plaintext.fill(0)
+                return StoredRecord.Unreadable
+            }
+            return legacy_or_unreadable(plaintext)
+        }
+
+        override fun reseal_attachment_meta(plaintext: ByteArray): SealedField? {
+            val key = org.astermail.android.crypto.StorageWriteKey.write_key(session_key_store) ?: return null
+            try {
+                val nonce = ByteArray(LEGACY_KEY_MATERIAL_NONCE_LENGTH).also { SecureRandom().nextBytes(it) }
+                val ciphertext = AesGcm.encrypt(key, nonce, plaintext)
+                val reopened = runCatching { aes_gcm_decrypt(ciphertext, key, nonce) }.getOrNull() ?: return null
+                val same = reopened.contentEquals(plaintext)
+                reopened.fill(0)
+                return if (same) SealedField(encode(ciphertext), encode(nonce)) else null
+            } finally {
+                key.fill(0)
+            }
+        }
+
+        override fun stored_sha256_hex(encrypted: String): String? = LevelTwoEnvelope.stored_sha256_hex(encrypted)
+
+        override fun is_login_salted_envelope(encrypted: String, nonce: String): Boolean {
+            val nonce_bytes = decode(nonce) ?: return false
+            if (!is_password_marker(nonce_bytes)) return false
+            val data = decode(encrypted) ?: return false
+            if (data.size < 28) return false
+            return session_key_store.is_login_salt(data.sliceArray(0 until 16))
+        }
+    }
+
     private fun encrypt_envelope(json: String): Pair<String, String> {
         val level2_key = LevelTwoEnvelope.write_key(session_key_store)
         if (level2_key != null) {
@@ -7785,7 +8686,8 @@ class MailRepository @Inject constructor(
                 passphrase.fill(0)
             }
         }
-        val identity_key = session_key_store.get_identity_key()
+        if (session_key_store.mail_legacy_retired()) throw IllegalStateException("no key material available")
+        val identity_key = session_key_store.get_identity_key()?.takeIf(::is_secret_identity_key)
             ?: throw IllegalStateException("no key material available")
         val material = (identity_key + "astermail-envelope-v1").toByteArray(Charsets.UTF_8)
         val key = MessageDigest.getInstance("SHA-256").digest(material)
@@ -7860,6 +8762,7 @@ class MailRepository @Inject constructor(
                     content_type = content_type ?: DEFAULT_ATTACHMENT_CONTENT_TYPE,
                     session_key = session_key,
                     content_id = json.optString("content_id", "").ifBlank { null },
+                    is_unverified = json.has(SentEncryptionEvidenceRules.LEGACY_UNVERIFIED_FIELD),
                 )
             } catch (_: Throwable) {
                 null
@@ -7885,7 +8788,14 @@ class MailRepository @Inject constructor(
 
         private const val SCHEDULED_KEY_VERSION = "astermail-scheduled-v1"
 
+        private val OWN_AUTHORED_ITEM_TYPES = setOf("sent", "draft", "drafts", "scheduled")
+        private const val OWN_AUTHORED_PREFS = "aster_own_authored"
+        private const val OWN_AUTHORED_MAX_ENTRIES = 20000
+        private const val OWN_AUTHORED_PRUNE_EVERY = 256
+
         private val ACTIVE_SCHEDULED_STATUSES = setOf("pending", "sending", "failed")
+        private const val SCHEDULED_SNAPSHOT_MAX_PAGES = 50
+        private const val SCHEDULED_SNAPSHOT_PAGE_SIZE = 100
 
         fun aes_gcm_decrypt_bytes(
             ciphertext: ByteArray,
@@ -7908,8 +8818,7 @@ class MailRepository @Inject constructor(
             key: ByteArray,
             nonce: ByteArray,
             seq_num: Int,
-            bound: Boolean,
-        ): ByteArray = AesGcm.encrypt(key, nonce, raw, if (bound) attachment_data_aad(seq_num) else null)
+        ): ByteArray = AesGcm.encrypt(key, nonce, raw, attachment_data_aad(seq_num))
 
         fun open_attachment_ciphertext(
             ciphertext: ByteArray,
@@ -8208,6 +9117,8 @@ private inline fun has_cause(err: Throwable?, predicate: (Throwable) -> Boolean)
 internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when {
     has_cause(err) { it is RecipientNotOnAsterException } -> SendFailureReason.RECIPIENT_NOT_FOUND
     has_cause(err) { it is WeakMessagePasswordException } -> SendFailureReason.WEAK_PASSWORD
+    has_cause(err) { it is ExternalKeyChangedException } -> SendFailureReason.KEY_CHANGED
+    has_cause(err) { it is ExternalKeyPinUnavailableException } -> SendFailureReason.ENCRYPTION
     has_cause(err) { it is EncryptionRequiredException } -> SendFailureReason.ENCRYPTION
     has_cause(err) { it is org.astermail.android.mail.ratchet.PostQuantumUnavailableException } ->
         SendFailureReason.POST_QUANTUM
@@ -8227,10 +9138,14 @@ internal fun send_failure_reason_for(err: Throwable?): SendFailureReason = when 
 private val client_send_id_pattern =
     Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
+internal fun pending_ack_scope(pending_id: String): String = "pending:$pending_id"
+
 internal fun client_send_id_for(pending_id: String): String? =
     pending_id.takeIf { client_send_id_pattern.matches(it) }
 
 internal fun is_permanent_send_failure_cause(err: Throwable?): Boolean {
+    if (has_cause(err) { it is ExternalKeyPinUnavailableException }) return false
+    if (has_cause(err) { it is ExternalKeyChangedException }) return true
     if (has_cause(err) { it is WeakMessagePasswordException || it is EncryptionRequiredException }) return true
     if (server_rejection_cause(err) != null) return true
     if (is_transient_send_cause(err)) return false

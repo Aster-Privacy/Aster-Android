@@ -208,4 +208,42 @@ class LoginProofTest {
         assertTrue(pins.is_pinned(listOf("u:other")))
         assertEquals(listOf("u:other"), LoginProof.remove_pins(listOf("u:other"), emptyList()))
     }
+
+    @Test
+    fun account_keys_cover_a_pin_saved_under_either_sign_in_hash() {
+        val email = "first.last@astermail.org"
+        val hash_dotless = { address: String -> "dotless:" + address.replace(".", "") }
+        val hash_dotted = { address: String -> "dotted:$address" }
+        val dotless = hash_dotless(email)
+        val dotted = hash_dotted(email)
+        assertTrue(dotless != dotted)
+        val keys = LoginProof.account_pin_keys(null, email, hash_dotless, hash_dotted)
+        val saved_dotted = LoginProof.add_pins(emptyList(), LoginProof.pin_keys(null, dotted))
+        val saved_dotless = LoginProof.add_pins(emptyList(), LoginProof.pin_keys(null, dotless))
+        assertTrue(LoginProof.remove_pins(saved_dotted, keys).isEmpty())
+        assertTrue(LoginProof.remove_pins(saved_dotless, keys).isEmpty())
+        val with_id = LoginProof.account_pin_keys("user-1", email, hash_dotless, hash_dotted)
+        assertTrue(with_id.containsAll(LoginProof.pin_keys("user-1", dotless)))
+        assertEquals(with_id.distinct(), with_id)
+        assertEquals(LoginProof.pin_keys("user-1", null), LoginProof.account_pin_keys("user-1", " ", hash_dotless, hash_dotted))
+    }
+
+    @Test
+    fun a_v3_pin_saved_under_the_typed_address_is_removed_with_its_account() {
+        val typed_key = LoginProof.pin_keys(null, "typed-alias-hash")
+        val other_key = LoginProof.pin_keys(null, "other-account-hash")
+        val pins = LoginProof.add_pins(emptyList(), typed_key + other_key)
+        val owners = LoginProof.add_owner(emptyList(), "user-1", typed_key)
+        val with_other = LoginProof.add_owner(owners, "user-2", other_key)
+
+        val session_keys = LoginProof.pin_keys(null, "session-email-hash")
+        val removed = LoginProof.remove_pins(pins, LoginProof.owned_keys(with_other, "user-1") + session_keys)
+
+        assertEquals(other_key, removed)
+        assertEquals(other_key, LoginProof.owned_keys(LoginProof.remove_owner(with_other, "user-1"), "user-2"))
+        assertTrue(LoginProof.owned_keys(LoginProof.remove_owner(with_other, "user-1"), "user-1").isEmpty())
+        assertEquals(with_other, LoginProof.parse_owners(LoginProof.serialize_pins(with_other)))
+        assertEquals(owners, LoginProof.add_owner(owners, "bad=id", typed_key))
+        assertTrue(LoginProof.owned_keys(with_other, null).isEmpty())
+    }
 }

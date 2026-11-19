@@ -672,7 +672,7 @@
     <string name="disabling">Devre dışı bırakılıyor...</string>
     <string name="disable_two_factor">İki faktörlü doğrulamayı devre dışı bırak</string>
     <string name="generate_new_backup_codes_section">Yeni yedek kodlar oluştur</string>
-    <string name="generate_backup_codes_description">Kimlik doğrulama uygulamanızdaki güncel kodu girin. Önceki yedek kodlarınız geçersiz kılınacaktır.</string>
+    <string name="generate_backup_codes_description">Parolanızı ve kimlik doğrulama uygulamanızdaki güncel kodu girin. Önceki yedek kodlarınız artık çalışmaz.</string>
     <string name="generating">Oluşturuluyor...</string>
     <string name="generate_codes">Kodları oluştur</string>
     <string name="two_factor_enabled_title">İki faktörlü kimlik doğrulama etkinleştirildi</string>
@@ -1815,6 +1815,7 @@
     <string name="totp_code_required_label">Doğrulayıcı ya da yedek kod</string>
     <string name="totp_code_required_error">Doğrulayıcı uygulamanızdaki 6 haneli kodu ya da yedek kodlarınızdan birini girin</string>
     <string name="preferences_locked_retry">Ayarlarınız şu anda açılamadı. Varsayılanlar gösteriliyor, yeniden denemek için geri dönüp tekrar açın.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail bu öğenin kilidini hâlâ açıyor, bu yüzden değişikliğiniz kaydedilmedi. Biraz sonra tekrar deneyin.</string>
     <string name="plan_name_star">Yıldızla</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Süpernova</string>
@@ -2670,6 +2671,9 @@
     <string name="folder_locked">Klasör kilitlendi</string>
     <string name="folder_unlocked">Klasörün kilidi açıldı</string>
     <string name="folder_lock_set">Klasör kilidi ayarlandı</string>
+    <string name="folder_relock_required">Bu klasör başka bir cihazda yeniden kilitlendi. Burada açmak için kilidi kaldırıp yeniden ayarlayın.</string>
+    <string name="folder_protection_unavailable">Klasör koruma bilgileri bu cihazda okunamadı. Oturumu kapatıp yeniden açın, ardından tekrar deneyin.</string>
+    <string name="folder_lock_set_unconfirmed">Klasör kilidi ayarlandı. Klasörü açmak için parolayı girin.</string>
     <string name="folder_lock_removed">Klasör kilidi kaldırıldı</string>
     <string name="folder_notifications_muted">Bu klasör için bildirimler sessize alındı</string>
     <string name="folder_notifications_unmuted">Bu klasör için bildirimler açık</string>
@@ -2848,8 +2852,11 @@
     <string name="failed_to_move_items">Taşınamadı</string>
     <string name="folder_name_taken">Bu adda bir klasör zaten var.</string>
     <string name="hardware_key_remove_confirm">Bu güvenlik anahtarıyla artık oturum açamazsınız.</string>
-    <string name="hardware_key_remove_last_title">Son güvenlik anahtarınız kaldırılsın mı?</string>
-    <string name="hardware_key_remove_last_description">Bu, hesabınızdaki son ikinci doğrulama adımı. Kaldırmak için parolanızı girin.</string>
+    <string name="hardware_key_remove_last_title">Bu güvenlik anahtarı kaldırılsın mı?</string>
+    <string name="hardware_key_remove_last_description">Bu güvenlik anahtarını kaldırmak için parolanızı girin.</string>
+    <string name="passkey_add_reauth_description">Geçiş anahtarı eklemek için parolanızı girin.</string>
+    <string name="totp_setup_reauth_description">İki faktörlü kimlik doğrulamayı ayarlamak için parolanızı girin.</string>
+    <string name="reauth_key_check_failed">Geçiş anahtarınız veya güvenlik anahtarınız kontrol edilemedi. Tekrar deneyin.</string>
     <string name="image_insert_failed">Bu görsel eklenemedi. Çok büyük olabilir veya desteklenmeyen bir biçimde olabilir.</string>
     <string name="invalid_recipient_address">“%1$s” geçerli bir e-posta adresi değil</string>
     <string name="label_name_taken">Bu adda bir etiket zaten var.</string>
@@ -3496,6 +3503,11 @@
     <string name="contact_sync_settings_title">Kişilere erişime izin verin</string>
     <string name="contact_sync_settings_message">Kişilerinizi eşzamanlamak için Ayarları aç\'a dokunun, İzinler &gt; Kişiler\'e gidin ve İzin ver\'i seçin.</string>
     <string name="contact_sync_open_settings">Ayarları aç</string>
+    <string name="contact_sync_all_details_title">Tüm kişi ayrıntılarını eşzamanla</string>
+    <string name="contact_sync_all_details_subtitle">Bu seçenek kapalıyken Aster, telefonunuzun Kişiler uygulamasına yalnızca adları ve e-posta adreslerini ekler.</string>
+    <string name="contact_sync_all_details_confirm_title">Tüm kişi ayrıntıları eşzamanlansın mı?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster, telefonunuzun Kişiler uygulamasına telefon numaralarını, adresleri, doğum günlerini, notları, fotoğrafları ve diğer ayrıntıları da ekler. Kişilerinize erişebilen diğer uygulamalar bu ayrıntıları okuyabilir.</string>
+    <string name="contact_sync_all_details_confirm">Tüm ayrıntıları eşzamanla</string>
     <string name="contact_sync_label_sibling">Kardeş</string>
     <string name="contact_sync_label_graduation">Mezuniyet</string>
     <string name="contact_sync_label_wedding">Düğün</string>
@@ -3646,6 +3658,16 @@
         <item quantity="other">%d kişi eklendi</item>
     </plurals>
     <string name="body_index_status">Arama için ileti metni dizine ekleniyor: %1$d / %2$d</string>
+    <string name="mail_key_upgrade_title">Kayıtlı e-postalarınız güncelleniyor</string>
+    <string name="mail_key_upgrade_running">Aster Mail, kayıtlı iletilerinizi mevcut anahtarlarınızla yeniden şifreliyor. İşlem bitene kadar bu pencereyi açık tutun.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail kayıtlı iletilerinizin güncellenmesini tamamlayamadı. E-postalarınız değişmedi. Bağlantınızı kontrol edip yeniden deneyin.</string>
+    <string name="mail_key_upgrade_retry">Yeniden dene</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d ileti kontrol edildi</item>
+        <item quantity="other">%d ileti kontrol edildi</item>
+    </plurals>
+    <string name="account_link_confirm_title">Bu hesap bağlansın mı?</string>
+    <string name="account_link_confirm_message">%1$s, bu cihazda %2$s hesabını kullanmak istiyor. Yalnızca bu işlemi %1$s içinde siz başlattıysanız onaylayın.</string>
     <string name="delete_selected_subscriptions">Sil (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">%d abonelik silinsin mi?</item>
@@ -3657,4 +3679,5 @@
         <item quantity="other">%d abonelik silindi</item>
     </plurals>
     <string name="delete_subscriptions_failed">Seçilen abonelikler silinemedi</string>
+    <string name="attachment_unverified">Doğrulanmamış ek</string>
 </resources>

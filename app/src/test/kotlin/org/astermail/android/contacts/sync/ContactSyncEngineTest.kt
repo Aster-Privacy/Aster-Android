@@ -44,12 +44,14 @@ class ContactSyncEngineTest {
         var photo: String? = null,
         var link: String = "",
         var schema: Int = CARD_SCHEMA,
+        var scope: ContactFieldScope = ContactFieldScope.ALL,
     )
 
     private class FakeDevice : ContactSyncDevice {
         val rows = linkedMapOf<Long, Row>()
         var next_id = 1L
         var before_apply: ((Long) -> Unit)? = null
+        var scope = ContactFieldScope.ALL
 
         val photo_reads = mutableListOf<Long>()
 
@@ -69,7 +71,7 @@ class ContactSyncEngineTest {
         private fun stored_photo(data_uri: String) = "dev:$data_uri"
 
         override fun list_states() = rows.map { (id, r) ->
-            DeviceContactState(id, r.source_id, r.revision, r.dirty, r.deleted, r.version, r.schema)
+            DeviceContactState(id, r.source_id, r.revision, r.dirty, r.deleted, r.version, r.schema, r.scope)
         }
 
         override fun read_cards(raw_ids: Collection<Long>) =
@@ -84,7 +86,7 @@ class ContactSyncEngineTest {
         }
 
         override fun insert(source_id: String, revision: Long, card: ContactCard, photo: String?) {
-            val row = Row(source_id, revision, card, card, dirty = false, deleted = false, version = 1)
+            val row = Row(source_id, revision, card, card, dirty = false, deleted = false, version = 1, scope = scope)
             if (card.photo.isNotEmpty() && photo != null) {
                 row.photo = stored_photo(photo)
                 row.link = "${device_fp(row)}|${card.photo}"
@@ -127,6 +129,7 @@ class ContactSyncEngineTest {
             row.source_id = source_id
             row.dirty = false
             row.schema = CARD_SCHEMA
+            row.scope = scope
             row.version++
             return true
         }
@@ -137,6 +140,7 @@ class ContactSyncEngineTest {
             row.revision = revision
             row.base = base
             row.schema = CARD_SCHEMA
+            row.scope = scope
         }
 
         override fun purge(raw_id: Long) {
@@ -295,6 +299,26 @@ class ContactSyncEngineTest {
         ensure_active = { if (!active) throw ContactSyncSessionLost() },
         now_iso = { "2026-09-29T12:00:00Z" },
     )
+
+    private fun engine_for(scope: ContactFieldScope): ContactSyncEngine {
+        device.scope = scope
+        return ContactSyncEngine(
+            device,
+            remote,
+            cursor,
+            ensure_active = { if (!active) throw ContactSyncSessionLost() },
+            now_iso = { "2026-09-29T12:00:00Z" },
+            scope = scope,
+        )
+    }
+
+    private fun detailed(n: Int) = person(n).copy(
+        phones = listOf(CardEntry("+1555000$n", "mobile")),
+        addresses = listOf(CardAddress(street = "$n Main St", city = "Springfield")),
+        notes = "note $n",
+        birthday = "1990-01-0$n",
+        company = "Company $n",
+    ).normalized()
 
     private fun person(n: Int) = ContactCard(
         first_name = "Person$n",
@@ -694,5 +718,147 @@ class ContactSyncEngineTest {
         val after = device.by_source(id)!!.value
         assertEquals("dev:${avatar(1)}", after.photo)
         assertEquals(CARD_SCHEMA, after.schema)
+    }
+
+    @Test
+    fun names_and_emails_scope_keeps_other_details_off_the_phone() = runTest {
+        val id = remote.server_create(detailed(1))
+        engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync()
+        val row = device.by_source(id)!!.value
+        assertEquals(person(1), row.card)
+        assertEquals(person(1), row.base)
+        assertEquals(ContactFieldScope.NAMES_AND_EMAILS, row.scope)
+        assertEquals(detailed(1), remote.card(id))
+    }
+
+    @Test
+    fun switching_to_names_and_emails_removes_details_already_on_the_phone() = runTest {
+        val id = remote.server_create(detailed(1))
+        engine.sync()
+        assertEquals(detailed(1), device.by_source(id)!!.value.card)
+        val stats = engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync()
+        val row = device.by_source(id)!!.value
+        assertEquals(person(1), row.card)
+        assertEquals(person(1), row.base)
+        assertEquals(1, stats.updated_local)
+        assertEquals(0, stats.updated_remote)
+        assertEquals(detailed(1), remote.card(id))
+        assertEquals(ContactSyncStats(), engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync())
+    }
+
+    @Test
+    fun phone_edit_in_names_and_emails_scope_keeps_remote_details() = runTest {
+        val id = remote.server_create(detailed(1))
+        val limited = engine_for(ContactFieldScope.NAMES_AND_EMAILS)
+        limited.sync()
+        device.user_edit(device.by_source(id)!!.key) { it.copy(first_name = "Renamed") }
+        val stats = limited.sync()
+        assertEquals(1, stats.updated_remote)
+        assertEquals(detailed(1).copy(first_name = "Renamed"), remote.card(id))
+        assertEquals(person(1).copy(first_name = "Renamed"), device.by_source(id)!!.value.card)
+    }
+
+    @Test
+    fun details_added_on_the_phone_in_names_and_emails_scope_reach_aster() = runTest {
+        val id = remote.server_create(detailed(1))
+        val limited = engine_for(ContactFieldScope.NAMES_AND_EMAILS)
+        limited.sync()
+        val extra = CardEntry("+15559999", "work")
+        device.user_edit(device.by_source(id)!!.key) { it.copy(phones = listOf(extra)) }
+        limited.sync()
+        assertEquals(listOf(CardEntry("+15550001", "mobile"), extra).map { it.value }, remote.card(id).phones.map { it.value })
+        assertEquals(person(1).copy(phones = listOf(extra)), device.by_source(id)!!.value.card)
+    }
+
+    @Test
+    fun new_phone_contact_in_names_and_emails_scope_is_pushed_in_full() = runTest {
+        val raw = device.user_create(detailed(4))
+        engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync()
+        val row = device.rows.getValue(raw)
+        assertEquals(detailed(4), remote.card(row.source_id!!))
+        assertEquals(detailed(4), row.card)
+        assertEquals(detailed(4), row.base)
+    }
+
+    @Test
+    fun numbers_typed_on_the_phone_stay_there_in_names_and_emails_scope() = runTest {
+        val id = remote.server_create(detailed(1))
+        val limited = engine_for(ContactFieldScope.NAMES_AND_EMAILS)
+        limited.sync()
+        val typed = CardEntry("+15557777", "home")
+        device.user_edit(device.by_source(id)!!.key) { it.copy(phones = listOf(typed), notes = "typed note") }
+        limited.sync()
+        val card = device.by_source(id)!!.value.card
+        assertEquals(listOf("+15557777"), card.phones.map { it.value })
+        assertEquals("typed note", card.notes)
+        assertEquals(ContactSyncStats(), limited.sync())
+    }
+
+    @Test
+    fun a_new_phone_contact_keeps_its_details_on_the_phone() = runTest {
+        val raw = device.user_create(detailed(5))
+        engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync()
+        assertEquals(detailed(5).phones, device.rows.getValue(raw).card.phones)
+        assertEquals(detailed(5).addresses, device.rows.getValue(raw).card.addresses)
+    }
+
+    @Test
+    fun removing_a_typed_number_on_the_phone_removes_it_from_aster() = runTest {
+        val id = remote.server_create(detailed(1))
+        val limited = engine_for(ContactFieldScope.NAMES_AND_EMAILS)
+        limited.sync()
+        val typed = CardEntry("+15557777", "home")
+        device.user_edit(device.by_source(id)!!.key) { it.copy(phones = listOf(typed)) }
+        limited.sync()
+        device.user_edit(device.by_source(id)!!.key) { it.copy(phones = emptyList()) }
+        limited.sync()
+        assertEquals(listOf("+15550001"), remote.card(id).phones.map { it.value })
+    }
+
+    @Test
+    fun a_server_update_keeps_numbers_typed_on_the_phone() = runTest {
+        val id = remote.server_create(detailed(1))
+        val limited = engine_for(ContactFieldScope.NAMES_AND_EMAILS)
+        limited.sync()
+        val typed = CardEntry("+15557777", "home")
+        device.user_edit(device.by_source(id)!!.key) { it.copy(phones = listOf(typed)) }
+        limited.sync()
+        remote.server_edit(id) { it.copy(last_name = "Changed") }
+        limited.sync()
+        val card = device.by_source(id)!!.value.card
+        assertEquals("Changed", card.last_name)
+        assertEquals(listOf("+15557777"), card.phones.map { it.value })
+    }
+
+    @Test
+    fun switching_back_to_all_details_restores_them() = runTest {
+        val id = remote.server_create(detailed(1))
+        engine_for(ContactFieldScope.NAMES_AND_EMAILS).sync()
+        engine_for(ContactFieldScope.ALL).sync()
+        assertEquals(detailed(1), device.by_source(id)!!.value.card)
+        assertEquals(ContactFieldScope.ALL, device.by_source(id)!!.value.scope)
+    }
+
+    @Test
+    fun field_scope_defaults_and_markers() {
+        assertEquals(ContactFieldScope.NAMES_AND_EMAILS, ContactFieldScope.resolve(null, sync_enabled = false))
+        assertEquals(ContactFieldScope.ALL, ContactFieldScope.resolve(null, sync_enabled = true))
+        assertEquals(ContactFieldScope.NAMES_AND_EMAILS, ContactFieldScope.resolve("names_emails", sync_enabled = true))
+        assertEquals(ContactFieldScope.ALL, ContactFieldScope.resolve("all", sync_enabled = false))
+        assertEquals(CARD_SCHEMA.toString(), ContactFieldScope.ALL.marker())
+        for (scope in ContactFieldScope.entries) {
+            assertEquals(CARD_SCHEMA, ContactFieldScope.schema_of(scope.marker()))
+            assertEquals(scope, ContactFieldScope.scope_of(scope.marker()))
+        }
+        assertEquals(1, ContactFieldScope.schema_of(null))
+        assertEquals(ContactFieldScope.ALL, ContactFieldScope.scope_of(null))
+        assertEquals(ContactFieldScope.ALL, ContactFieldScope.scope_of("1"))
+    }
+
+    @Test
+    fun deletion_override_is_honored_only_where_the_platform_limits_who_starts_a_sync() {
+        assertFalse(honors_deletion_override(requested = true, sdk_int = 29))
+        assertFalse(honors_deletion_override(requested = false, sdk_int = 34))
+        assertTrue(honors_deletion_override(requested = true, sdk_int = 30))
     }
 }

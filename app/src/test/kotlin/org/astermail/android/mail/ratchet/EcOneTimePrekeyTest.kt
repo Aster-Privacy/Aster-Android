@@ -26,6 +26,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import java.util.Base64
 import kotlinx.coroutines.test.runTest
+import org.astermail.android.api.keys.BoundWriteSwitches
 import org.astermail.android.api.ratchet.EcPrekeyStatusResponse
 import org.astermail.android.api.ratchet.EnvelopeCapabilityResponse
 import org.astermail.android.api.ratchet.PostStateOutcome
@@ -35,9 +36,12 @@ import org.astermail.android.api.ratchet.PutStateOutcome
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.RatchetStateResponse
 import org.astermail.android.api.ratchet.ReportEnvelopeCapabilityRequest
+import org.astermail.android.api.ratchet.ResealEcPrekeySecretRequest
 import org.astermail.android.api.ratchet.UploadEcPrekeysRequest
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
 import org.astermail.android.crypto.ratchet.RatchetCrypto
+import org.astermail.android.storage.SessionKeyStore
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -80,6 +84,7 @@ private open class EcPrekeyFakeApi(
     var secret_calls = 0
     val uploads = mutableListOf<UploadEcPrekeysRequest>()
     val deleted = mutableListOf<Int>()
+    val resealed = mutableListOf<Pair<Int, ResealEcPrekeySecretRequest>>()
     val capability_requests = mutableListOf<ReportEnvelopeCapabilityRequest>()
 
     override suspend fun fetch_ec_prekey_status(): EcPrekeyStatusResponse? {
@@ -96,6 +101,11 @@ private open class EcPrekeyFakeApi(
     override suspend fun fetch_ec_prekey_secret(key_id: Int): PqSecretResponse? {
         secret_calls += 1
         return remote_secret
+    }
+
+    override suspend fun put_ec_prekey_secret(key_id: Int, request: ResealEcPrekeySecretRequest): Boolean {
+        resealed.add(key_id to request)
+        return true
     }
 
     override suspend fun delete_ec_prekey(key_id: Int): Boolean {
@@ -152,10 +162,17 @@ class EcOneTimePrekeyTest {
 
     private val sync_key = ByteArray(32) { (it + 1).toByte() }
     private val other_key = ByteArray(32) { (it + 100).toByte() }
+    private val seal_raw = ByteArray(32) { (it + 40).toByte() }
+    private var seal_migrated = false
     private var clock = 1_000_000L
+
+    private fun server_ready_for_prekey_writes(ready: Boolean) {
+        BoundWriteSwitches.record("{\"bound_prekey_writes\":$ready}")
+    }
 
     @Before
     fun set_up() {
+        server_ready_for_prekey_writes(true)
         mockkStatic(android.util.Base64::class)
         every { android.util.Base64.encodeToString(any(), any()) } answers {
             val bytes = firstArg<ByteArray>()
@@ -179,6 +196,7 @@ class EcOneTimePrekeyTest {
 
     @After
     fun tear_down() {
+        BoundWriteSwitches.clear()
         unmockkStatic(android.util.Base64::class)
     }
 
@@ -187,17 +205,24 @@ class EcOneTimePrekeyTest {
         ratchet_api = api,
         sync_key_candidates = { listOf(other_key.copyOf(), sync_key.copyOf()) },
         now_ms = { clock },
+        prekey_seal = { seal() },
     )
+
+    private fun seal(key: ByteArray? = seal_raw): PrekeySeal {
+        val keys = SessionKeyStore()
+        keys.put_prekey_seal(key?.copyOf(), seal_migrated)
+        return PrekeySeal.from_store(keys)
+    }
 
     private fun service(
         storage: EcOneTimeSecretStorage,
         api: RatchetApi,
-        key: ByteArray? = sync_key,
+        key: ByteArray? = seal_raw,
         ids: Iterator<Int>? = null,
     ) = EcOneTimePrekeyService(
         store = store(storage, api),
         ratchet_api = api,
-        sync_key = { key?.copyOf() },
+        prekey_seal = { seal(key) },
         now_ms = { clock },
         random_key_id = if (ids != null) {
             { ids.next() }
@@ -226,6 +251,51 @@ class EcOneTimePrekeyTest {
             javax.crypto.spec.GCMParameterSpec(128, nonce),
         )
         assertArrayEquals(scalar, cipher.doFinal(sealed))
+    }
+
+    @Test
+    fun older_app_copies_are_never_wrapped_under_a_public_constant_state_key() {
+        val constant_key = org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(
+            ikm = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first(),
+            salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+            info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+            length = 32,
+        )
+        val only_constant = EcOneTimePrekeyStore(
+            storage = MemoryEcSecretStorage(),
+            ratchet_api = EcPrekeyFakeApi(),
+            sync_key_candidates = { listOf(constant_key.copyOf()) },
+            now_ms = { clock },
+            prekey_seal = { seal() },
+        )
+
+        assertNull(
+            "a copy for older apps must not use a public constant key",
+            only_constant.wrap_for_older_apps(ByteArray(32) { 7 }),
+        )
+    }
+
+    @Test
+    fun a_remote_copy_under_a_public_constant_state_key_is_not_loaded_or_resealed() = runTest {
+        val constant_key = org.astermail.android.crypto.ratchet.RatchetCrypto.hkdf_sha256(
+            ikm = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first(),
+            salt = "Aster Mail_Ratchet_State_Encryption".toByteArray(Charsets.UTF_8),
+            info = "ratchet_state_key".toByteArray(Charsets.UTF_8),
+            length = 32,
+        )
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val wrapped = checkNotNull(EcOneTimeSecretWrap.wrap(scalar, constant_key))
+        val api = EcPrekeyFakeApi(remote_secret = PqSecretResponse(42, wrapped.encrypted_secret, wrapped.secret_nonce))
+        val with_constant = EcOneTimePrekeyStore(
+            storage = MemoryEcSecretStorage(),
+            ratchet_api = api,
+            sync_key_candidates = { listOf(constant_key.copyOf(), sync_key.copyOf()) },
+            now_ms = { clock },
+            prekey_seal = { seal() },
+        )
+
+        assertNull("a secret under a public constant must not load", with_constant.load(42))
+        assertTrue("a secret under a public constant must not be resealed", api.resealed.isEmpty())
     }
 
     @Test
@@ -347,6 +417,51 @@ class EcOneTimePrekeyTest {
     }
 
     @Test
+    fun a_mobile_only_account_creates_the_vault_seal_key_and_uploads_prekeys_under_it() = runTest {
+        val server = PrekeyVaultServer(
+            JSONObject().put("identity_key", "identity").put("data_kek", Base64.getEncoder().encodeToString(ByteArray(32) { 7 })),
+        )
+        val created = ByteArray(32) { (it + 60).toByte() }
+
+        val adopted = runCatching { ensure_vault_prekey_seal(server.updater()) { created.copyOf() } }.getOrNull()
+
+        assertNotNull(adopted)
+        assertEquals(1, server.puts)
+        assertArrayEquals(created, vault_prekey_seal_key(server.vault))
+
+        val storage = MemoryEcSecretStorage()
+        val api = EcPrekeyFakeApi(status = accepted(target = 2))
+        assertEquals(2, service(storage, api, key = adopted!!.key).replenish())
+
+        val prekeys = api.uploads.single().prekeys
+        assertEquals(2, prekeys.size)
+        for (prekey in prekeys) {
+            assertNotNull(seal(created).open(PrekeySealKind.EC, prekey.key_id, prekey.encrypted_secret, prekey.secret_nonce))
+            assertNull(
+                EcOneTimeSecretWrap.unwrap(prekey.encrypted_secret, prekey.secret_nonce, listOf(sync_key, other_key)),
+            )
+        }
+    }
+
+    @Test
+    fun a_vault_whose_rows_were_sealed_never_gets_a_new_seal_key_from_this_device() = runTest {
+        val server = PrekeyVaultServer(
+            JSONObject()
+                .put("identity_key", "identity")
+                .put("data_kek", Base64.getEncoder().encodeToString(ByteArray(32) { 7 }))
+                .put("prekey_seal_migrated", true),
+        )
+
+        val adopted = runCatching {
+            ensure_vault_prekey_seal(server.updater()) { ByteArray(32) { (it + 60).toByte() } }
+        }.getOrNull()
+
+        assertNull(adopted)
+        assertEquals(0, server.puts)
+        assertNull(vault_prekey_seal_key(server.vault))
+    }
+
+    @Test
     fun refill_uploads_wrapped_keys_and_keeps_the_scalars_locally() = runTest {
         val storage = MemoryEcSecretStorage()
         val api = EcPrekeyFakeApi(status = accepted(target = 4))
@@ -365,7 +480,7 @@ class EcOneTimePrekeyTest {
             assertEquals(12, Base64.getDecoder().decode(prekey.secret_nonce).size)
 
             val scalar = checkNotNull(
-                EcOneTimeSecretWrap.unwrap(prekey.encrypted_secret, prekey.secret_nonce, listOf(sync_key)),
+                seal().open(PrekeySealKind.EC, prekey.key_id, prekey.encrypted_secret, prekey.secret_nonce),
             )
             assertArrayEquals(storage.secrets[prekey.key_id], scalar)
             assertArrayEquals(
@@ -375,6 +490,34 @@ class EcOneTimePrekeyTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun refill_uploads_in_the_format_older_apps_read_until_the_server_is_ready() = runTest {
+        server_ready_for_prekey_writes(false)
+        val storage = MemoryEcSecretStorage()
+        val api = EcPrekeyFakeApi(status = accepted(target = 2))
+
+        assertEquals(2, service(storage, api).replenish())
+
+        for (prekey in api.uploads.single().prekeys) {
+            assertNull(seal().open(PrekeySealKind.EC, prekey.key_id, prekey.encrypted_secret, prekey.secret_nonce))
+            assertArrayEquals(
+                storage.secrets[prekey.key_id],
+                EcOneTimeSecretWrap.unwrap(prekey.encrypted_secret, prekey.secret_nonce, listOf(sync_key, other_key)),
+            )
+        }
+    }
+
+    @Test
+    fun an_older_copy_is_not_rewritten_until_the_server_is_ready() = runTest {
+        server_ready_for_prekey_writes(false)
+        val storage = MemoryEcSecretStorage()
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val api = EcPrekeyFakeApi(remote_secret = remote(42, checkNotNull(EcOneTimeSecretWrap.wrap(scalar, sync_key))))
+
+        assertArrayEquals(scalar, store(storage, api).load(42))
+        assertTrue(api.resealed.isEmpty())
     }
 
     @Test
@@ -558,5 +701,173 @@ class EcOneTimePrekeyTest {
         assertEquals(1, api.capability_requests.size)
         assertEquals(3, EnvelopeCapabilityReporter.reported_x3dh_max_version(false))
         assertEquals(4, EnvelopeCapabilityReporter.reported_x3dh_max_version(true))
+    }
+
+    @Test
+    fun a_server_copy_for_another_key_id_is_refused() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val wrapped = checkNotNull(EcOneTimeSecretWrap.wrap(scalar, sync_key))
+        val api = EcPrekeyFakeApi(
+            remote_secret = PqSecretResponse(43, wrapped.encrypted_secret, wrapped.secret_nonce),
+        )
+
+        assertNull(store(storage, api).load(42))
+        assertTrue(storage.secrets.isEmpty())
+    }
+
+    @Test
+    fun refilled_secrets_never_open_under_the_sync_key() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val api = EcPrekeyFakeApi(status = accepted(target = 3))
+
+        assertEquals(3, service(storage, api).replenish())
+
+        val prekeys = api.uploads.single().prekeys
+        assertEquals(3, prekeys.size)
+        for (prekey in prekeys) {
+            assertNull(
+                EcOneTimeSecretWrap.unwrap(prekey.encrypted_secret, prekey.secret_nonce, listOf(sync_key, other_key)),
+            )
+        }
+    }
+
+    private fun hmac_sha256(key: ByteArray, data: ByteArray): ByteArray {
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec(key, "HmacSHA256"))
+        return mac.doFinal(data)
+    }
+
+    private fun remote(key_id: Int, wrapped: WrappedEcOneTimeSecret) =
+        PqSecretResponse(key_id, wrapped.encrypted_secret, wrapped.secret_nonce)
+
+    @Test
+    fun the_vault_seal_matches_the_shared_format() {
+        val scalar = ByteArray(32) { (0x30 + it).toByte() }
+        val sealed = checkNotNull(seal().seal(PrekeySealKind.EC, 42, scalar))
+
+        val prk = hmac_sha256(ByteArray(32), seal_raw)
+        val derived = hmac_sha256(prk, "aster-opk-seal-v1".toByteArray(Charsets.UTF_8) + byteArrayOf(1))
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            javax.crypto.Cipher.DECRYPT_MODE,
+            javax.crypto.spec.SecretKeySpec(derived, "AES"),
+            javax.crypto.spec.GCMParameterSpec(128, Base64.getDecoder().decode(sealed.secret_nonce)),
+        )
+        cipher.updateAAD("aster-opk-seal-v1:ec:42".toByteArray(Charsets.UTF_8))
+
+        assertArrayEquals(scalar, cipher.doFinal(Base64.getDecoder().decode(sealed.encrypted_secret)))
+    }
+
+    @Test
+    fun a_server_copy_sealed_under_the_vault_key_opens() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val api = EcPrekeyFakeApi(remote_secret = remote(42, checkNotNull(seal().seal(PrekeySealKind.EC, 42, scalar))))
+
+        assertArrayEquals(scalar, store(storage, api).load(42))
+        assertArrayEquals(scalar, storage.secrets[42])
+    }
+
+    @Test
+    fun a_vault_sealed_copy_bound_to_another_key_id_is_refused() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val scalar = ByteArray(32) { 4 }
+        val api = EcPrekeyFakeApi(remote_secret = remote(42, checkNotNull(seal().seal(PrekeySealKind.EC, 43, scalar))))
+
+        assertNull(store(storage, api).load(42))
+        assertTrue(storage.secrets.isEmpty())
+    }
+
+    @Test
+    fun an_older_client_copy_opens_after_migration_and_is_resealed() = runTest {
+        seal_migrated = true
+        val storage = MemoryEcSecretStorage()
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val api = EcPrekeyFakeApi(remote_secret = remote(42, checkNotNull(EcOneTimeSecretWrap.wrap(scalar, sync_key))))
+
+        assertArrayEquals(scalar, store(storage, api).load(42))
+        assertArrayEquals(scalar, storage.secrets[42])
+        val (resealed_id, resealed) = api.resealed.single()
+        assertEquals(42, resealed_id)
+        assertArrayEquals(scalar, seal().open(PrekeySealKind.EC, 42, resealed.encrypted_secret, resealed.secret_nonce))
+    }
+
+    @Test
+    fun a_server_copy_already_under_the_vault_key_is_not_resealed() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val scalar = RatchetCrypto.private_to_raw_d(RatchetCrypto.generate_p256_keypair().private_key)
+        val api = EcPrekeyFakeApi(remote_secret = remote(42, checkNotNull(seal().seal(PrekeySealKind.EC, 42, scalar))))
+
+        assertArrayEquals(scalar, store(storage, api).load(42))
+        assertTrue(api.resealed.isEmpty())
+    }
+
+    @Test
+    fun a_mobile_only_account_creates_the_vault_seal_key_and_keeps_refilling() = runTest {
+        val server = PrekeyVaultServer(JSONObject().put("identity_key", "identity"))
+        val storage = MemoryEcSecretStorage()
+        val api = EcPrekeyFakeApi(status = accepted(target = 3))
+
+        val adopted = ensure_vault_prekey_seal(server.updater()) { seal_raw.copyOf() }
+        assertNotNull(adopted)
+
+        assertArrayEquals(seal_raw, vault_prekey_seal_key(server.vault))
+        assertEquals(3, service(storage, api, key = adopted!!.key).replenish())
+        val prekey = api.uploads.single().prekeys.first()
+        assertArrayEquals(
+            storage.secrets[prekey.key_id],
+            seal().open(PrekeySealKind.EC, prekey.key_id, prekey.encrypted_secret, prekey.secret_nonce),
+        )
+    }
+
+    @Test
+    fun refill_uploads_nothing_without_a_vault_seal_key() = runTest {
+        val storage = MemoryEcSecretStorage()
+        val api = EcPrekeyFakeApi(status = accepted())
+
+        assertEquals(0, service(storage, api, key = null).replenish())
+        assertTrue(api.uploads.isEmpty())
+        assertTrue(storage.secrets.isEmpty())
+    }
+
+    @Test
+    fun a_pq_secret_for_another_key_id_is_refused() {
+        val secret = ByteArray(64) { 6 }
+        val sealed = checkNotNull(seal().seal(PrekeySealKind.PQ, 9, secret))
+        val legacy = checkNotNull(EcOneTimeSecretWrap.wrap(ByteArray(32) { 6 }, sync_key))
+
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 8, remote(9, sealed)) { listOf(sync_key.copyOf()) })
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 8, remote(9, legacy)) { listOf(sync_key.copyOf()) })
+        assertArrayEquals(
+            secret,
+            open_prekey_secret(seal(), PrekeySealKind.PQ, 9, remote(9, sealed)) { emptyList() },
+        )
+    }
+
+    @Test
+    fun a_pq_secret_never_opens_as_another_kind_or_id() {
+        val secret = ByteArray(64) { 7 }
+        val sealed = checkNotNull(seal().seal(PrekeySealKind.EC, 9, secret))
+        val wrong_id = checkNotNull(seal().seal(PrekeySealKind.PQ, 10, secret))
+
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 9, remote(9, sealed)) { emptyList() })
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 9, remote(9, wrong_id)) { emptyList() })
+    }
+
+    @Test
+    fun a_pq_secret_in_the_older_format_still_opens_after_migration() {
+        val secret = ByteArray(32) { 8 }
+        val legacy = remote(9, checkNotNull(EcOneTimeSecretWrap.wrap(secret, sync_key)))
+
+        assertArrayEquals(
+            secret,
+            open_prekey_secret(seal(), PrekeySealKind.PQ, 9, legacy) { listOf(other_key.copyOf(), sync_key.copyOf()) },
+        )
+        seal_migrated = true
+        assertArrayEquals(
+            secret,
+            open_prekey_secret(seal(), PrekeySealKind.PQ, 9, legacy) { listOf(sync_key.copyOf()) },
+        )
     }
 }

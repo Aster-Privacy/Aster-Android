@@ -93,6 +93,11 @@ data class EcOneTimePrekeyInfo(
 )
 
 @Serializable
+data class StoredKeyReadinessResponse(
+    val stored_keys_ready: Boolean = false,
+)
+
+@Serializable
 data class EcPrekeyStatusResponse(
     val accepted: Boolean? = null,
     val available: Int? = null,
@@ -104,6 +109,19 @@ data class EcPrekeyStatusResponse(
 data class EcPrekeyUpload(
     val key_id: Int,
     val public_key: String,
+    val encrypted_secret: String,
+    val secret_nonce: String,
+)
+
+@Serializable
+data class StorePqSecretRequest(
+    val key_id: Int,
+    val encrypted_secret: String,
+    val secret_nonce: String,
+)
+
+@Serializable
+data class ResealEcPrekeySecretRequest(
     val encrypted_secret: String,
     val secret_nonce: String,
 )
@@ -166,6 +184,14 @@ data class ReportEnvelopeCapabilityRequest(
     val pgp_external_version: Int? = null,
     val bound_envelope_version: Int? = null,
     val address_identity_version: Int? = null,
+    val ratchet_sync_version: Int? = null,
+    val recovery_backup_version: Int? = null,
+)
+
+@Serializable
+data class SyncFormatReadinessResponse(
+    val ratchet_sync_v3_ready: Boolean = false,
+    val recovery_backup_v2_ready: Boolean = false,
 )
 
 @Serializable
@@ -238,9 +264,13 @@ interface RatchetApi {
     suspend fun upload_plaintext_escrow(entry: PlaintextEscrowEntry): Boolean = false
     suspend fun fetch_plaintext_escrow(message_id: String): PlaintextEscrowEntry? = null
     suspend fun fetch_ec_prekey_status(): EcPrekeyStatusResponse? = null
+    suspend fun fetch_stored_key_readiness(): Boolean = false
     suspend fun upload_ec_prekeys(request: UploadEcPrekeysRequest): Boolean = false
     suspend fun fetch_ec_prekey_secret(key_id: Int): PqSecretResponse? = null
     suspend fun delete_ec_prekey(key_id: Int): Boolean = false
+    suspend fun fetch_sync_format_readiness(): SyncFormatReadinessResponse? = null
+    suspend fun put_ec_prekey_secret(key_id: Int, request: ResealEcPrekeySecretRequest): Boolean = false
+    suspend fun store_pq_secret(request: StorePqSecretRequest): Boolean = false
 }
 
 class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
@@ -281,6 +311,15 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         if (response.status.value == 404) return null
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun store_pq_secret(request: StorePqSecretRequest): Boolean {
+        val response = client.http.post("${client.base_url}/api/crypto/v1/ratchet/pq-secret") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return response.status.value in 200..299
     }
 
     override suspend fun put_state(
@@ -426,6 +465,12 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         return try { response.body() } catch (_: Throwable) { null }
     }
 
+    override suspend fun fetch_stored_key_readiness(): Boolean {
+        val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/stored-key-readiness")
+        if (response.status.value !in 200..299) return false
+        return try { response.body<StoredKeyReadinessResponse>().stored_keys_ready } catch (_: Throwable) { false }
+    }
+
     override suspend fun fetch_ec_prekey_status(): EcPrekeyStatusResponse? {
         val response = client.http.get("${client.base_url}$ec_prekeys/status")
         if (response.status.value !in 200..299) return null
@@ -447,10 +492,25 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         return try { response.body() } catch (_: Throwable) { null }
     }
 
+    override suspend fun put_ec_prekey_secret(key_id: Int, request: ResealEcPrekeySecretRequest): Boolean {
+        val response = client.http.put("${client.base_url}$ec_prekeys/secret/$key_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return response.status.value in 200..299 || response.status.value == 404
+    }
+
     override suspend fun delete_ec_prekey(key_id: Int): Boolean {
         val response = client.http.delete("${client.base_url}$ec_prekeys/$key_id") {
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
         }
         return response.status.value in 200..299 || response.status.value == 404
+    }
+
+    override suspend fun fetch_sync_format_readiness(): SyncFormatReadinessResponse? {
+        val response = client.http.get("${client.base_url}/api/crypto/v1/ratchet/sync-format-readiness")
+        if (response.status.value !in 200..299) return null
+        return try { response.body<SyncFormatReadinessResponse>() } catch (_: Throwable) { null }
     }
 }

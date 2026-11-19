@@ -44,6 +44,8 @@ import org.astermail.android.storage.TokenStore
 private val secure_prefs_namespaces = listOf(
     "aster_tokens_v1",
     "aster_session_keys_v1",
+    org.astermail.android.storage.SessionKeyStore.mail_legacy_retired_prefs_name,
+    org.astermail.android.storage.SessionKeyStore.folder_key_pins_prefs_name,
     "aster_accounts_v1",
     "aster_app_lock",
     "aster_db_meta",
@@ -186,6 +188,11 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
             org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
+        }
+        runCatching {
+            EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+                .ratchet_vault_flush_triggers()
+                .start()
         }
         runCatching {
             val contacts_repository = EntryPointAccessors
@@ -343,7 +350,12 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         fun search_index_manager(): org.astermail.android.mail.SearchIndexManager
         fun app_lock_store(): org.astermail.android.security.AppLockStore
         fun lazy_auth_repository(): dagger.Lazy<org.astermail.android.auth.AuthRepository>
+        fun ratchet_vault_flush_triggers(): org.astermail.android.mail.ratchet.RatchetVaultFlushTriggers
     }
+
+    @Volatile
+    var image_http_client: OkHttpClient? = null
+        private set
 
     override fun newImageLoader(): ImageLoader {
         val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
@@ -367,6 +379,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
             .addInterceptor(bearer_interceptor(token_store, api_host))
             .addInterceptor(lockdown_interceptor(api_host))
             .build()
+        image_http_client = ok_http
 
         return ImageLoader.Builder(this)
             .okHttpClient(ok_http)

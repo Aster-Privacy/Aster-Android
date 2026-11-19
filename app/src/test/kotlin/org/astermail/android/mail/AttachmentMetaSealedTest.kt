@@ -43,6 +43,8 @@ class AttachmentMetaSealedTest {
     private lateinit var context: android.content.Context
     private lateinit var session_key_store: SessionKeyStore
     private lateinit var repo: MailRepository
+    private lateinit var mail_api: org.astermail.android.api.mail.MailApi
+    private lateinit var own_authored_prefs: org.astermail.android.storage.fake_prefs
 
     private val placeholder = "Attachment"
 
@@ -64,9 +66,17 @@ class AttachmentMetaSealedTest {
         every { session_key_store.get_passphrase() } returns null
         every { session_key_store.get_user_email() } returns "me@astermail.org"
         every { session_key_store.has_ratchet_keys() } returns false
+        every { session_key_store.get_user_id() } returns "user-a"
+        mail_api = mockk(relaxed = true)
+        own_authored_prefs = org.astermail.android.storage.fake_prefs()
+        every { context.getSharedPreferences("aster_own_authored", any()) } returns own_authored_prefs
 
-        repo = MailRepository(
-            mail_api = mockk(relaxed = true),
+        repo = build_repo()
+    }
+
+    private fun build_repo(): MailRepository =
+        MailRepository(
+            mail_api = mail_api,
             send_api = mockk(relaxed = true),
             snooze_api = mockk(relaxed = true),
             labels_api = mockk(relaxed = true),
@@ -83,7 +93,6 @@ class AttachmentMetaSealedTest {
             context = context,
             auth_repository = mockk(relaxed = true),
         )
-    }
 
     @After
     fun teardown() {
@@ -166,29 +175,389 @@ class AttachmentMetaSealedTest {
     }
 
     @Test
-    fun zero_nonce_row_is_read_as_legacy_plaintext_json() {
-        val plaintext = """{"filename":"legacy.txt","content_type":"text/plain","session_key":""}"""
+    fun received_zero_nonce_row_in_plain_json_still_downloads_as_unverified() {
+        val plaintext = """{"filename":"legacy.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
         val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
 
         val meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "item-2", 0, 7L)
 
         assertFalse(meta.is_placeholder)
         assertEquals("legacy.txt", meta.filename)
-        assertEquals("text/plain", meta.content_type)
-        assertEquals("", meta.session_key)
+        assertEquals("c2VydmVy", meta.session_key)
         assertEquals(7L, meta.size_bytes)
+        assertTrue("row fields from another sender are never verified", meta.is_unverified)
     }
 
     @Test
-    fun empty_nonce_row_is_read_as_legacy_plaintext_json() {
-        val plaintext = """{"filename":"empty.txt","content_type":"text/plain"}"""
+    fun received_empty_nonce_row_in_plain_json_still_downloads() {
+        val plaintext = """{"filename":"empty.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
         val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
 
         val from_blank = repo.decrypt_attachment_meta(encoded, "", "item-2", 0, 1L)
         val from_null = repo.decrypt_attachment_meta(encoded, null, "item-2", 0, 1L)
 
         assertEquals("empty.txt", from_blank.filename)
+        assertEquals("c2VydmVy", from_blank.session_key)
+        assertTrue(from_blank.is_unverified)
         assertEquals("empty.txt", from_null.filename)
+        assertEquals("c2VydmVy", from_null.session_key)
+    }
+
+    @Test
+    fun received_plain_row_takes_name_type_and_key_from_the_verified_manifest() {
+        val plaintext = """{"filename":"row.exe","content_type":"application/x-msdownload","session_key":"c2VydmVy"}"""
+        InboundAttachmentKeyStore.register_from_envelope_json(
+            "item-mf",
+            """{"attachment_keys":[{"seq":0,"key":"${b64(session_key)}","filename":"manifest.pdf","content_type":"application/pdf"}]}""",
+        )
+
+        val meta = repo.decrypt_attachment_meta(
+            b64(plaintext.toByteArray(Charsets.UTF_8)),
+            b64(ByteArray(12)),
+            "item-mf",
+            0,
+            9L,
+        )
+
+        assertEquals("manifest.pdf", meta.filename)
+        assertEquals("application/pdf", meta.content_type)
+        assertEquals(b64(session_key), meta.session_key)
+        assertFalse(meta.is_unverified)
+    }
+
+    @Test
+    fun sent_row_in_plain_json_is_refused() {
+        val plaintext = """{"filename":"forged.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
+        InboundAttachmentKeyStore.note_own_authored("sent-1")
+
+        val under_zero = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "sent-1", 0, 7L)
+        val under_empty = repo.decrypt_attachment_meta(encoded, "", "sent-1", 0, 7L)
+
+        assertTrue("plain JSON on an own sent row must not be trusted", under_zero.is_placeholder)
+        assertEquals("", under_zero.session_key)
+        assertTrue("plain JSON on an own sent row must not be trusted", under_empty.is_placeholder)
+        assertEquals("", under_empty.session_key)
+    }
+
+    @Test
+    fun a_thread_message_of_sent_type_makes_its_rows_strict() {
+        val plaintext = """{"filename":"forged.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "sent-thread",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+        val received = sent.copy(id = "received-thread", item_type = "received")
+
+        kotlinx.coroutines.runBlocking {
+            repo.decrypt_single_thread_message(sent)
+            repo.decrypt_single_thread_message(received)
+        }
+
+        val sent_meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "sent-thread", 0, 7L)
+        val received_meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "received-thread", 0, 7L)
+
+        assertTrue("a sent message row must not be read from plain JSON", sent_meta.is_placeholder)
+        assertEquals("forged.txt", received_meta.filename)
+        assertTrue(received_meta.is_unverified)
+    }
+
+    @Test
+    fun a_sent_row_stays_strict_after_a_cold_start() {
+        val plaintext = """{"filename":"forged.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "sent-cold",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+        kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(sent) }
+
+        InboundAttachmentKeyStore.clear()
+        val restarted = build_repo()
+        val meta = restarted.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "sent-cold", 0, 7L)
+
+        assertTrue("a sent row seen before a restart must stay strict", meta.is_placeholder)
+        assertEquals("", meta.session_key)
+    }
+
+    @Test
+    fun a_sent_row_relabeled_as_received_after_eviction_stays_strict() {
+        val plaintext = """{"filename":"forged.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "sent-relabel",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+        kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(sent) }
+
+        InboundAttachmentKeyStore.clear()
+        kotlinx.coroutines.runBlocking {
+            repo.decrypt_single_thread_message(sent.copy(item_type = "received"))
+        }
+        val meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "sent-relabel", 0, 7L)
+
+        assertTrue("a relabel must not make an own sent row lenient", meta.is_placeholder)
+        assertEquals("", meta.session_key)
+    }
+
+    @Test
+    fun forgetting_an_account_drops_only_its_own_authored_items() {
+        val forget = MailRepository::class.java.methods.firstOrNull { it.name == "forget_own_authored" }
+        assertTrue("the repository must offer a way to forget an account's own authored items", forget != null)
+        own_authored_prefs.edit().putLong("user-b:other-id", 1L).apply()
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "forget-me",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+        kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(sent) }
+        assertTrue(own_authored_prefs.contains("user-a:forget-me"))
+
+        forget!!.invoke(repo, "user-a")
+
+        assertFalse(own_authored_prefs.contains("user-a:forget-me"))
+        assertTrue(own_authored_prefs.contains("user-b:other-id"))
+    }
+
+    @Test
+    fun deleting_the_account_forgets_its_own_authored_items() {
+        val source = java.io.File("src/main/kotlin/org/astermail/android/auth/AuthRepository.kt")
+            .readText()
+            .replace("\r\n", "\n")
+        val body = source.substringAfter("suspend fun delete_account(").substringBefore("\n    }\n")
+        assertTrue(
+            "account deletion must forget the account's own authored items",
+            Regex("""mail_repository\.forget_own_authored\(it\)""").containsMatchIn(body),
+        )
+    }
+
+    @Test
+    fun an_item_seen_after_the_session_is_cleared_is_not_remembered() {
+        every { session_key_store.get_user_id() } returns null
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "late-item",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+
+        kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(sent) }
+
+        assertFalse(
+            "an item seen with no signed-in account must not be stored",
+            own_authored_prefs.all.keys.any { it.endsWith(":late-item") },
+        )
+    }
+
+    @Test
+    fun forgetting_an_account_also_drops_entries_written_without_an_account() {
+        val forget = MailRepository::class.java.methods.first { it.name == "forget_own_authored" }
+        own_authored_prefs.edit().putLong("anonymous:stray-id", 1L).apply()
+        own_authored_prefs.edit().putLong("user-b:other-id", 1L).apply()
+
+        forget.invoke(repo, "user-a")
+
+        assertFalse("entries written without an account must be dropped", own_authored_prefs.contains("anonymous:stray-id"))
+        assertTrue(own_authored_prefs.contains("user-b:other-id"))
+    }
+
+    @Test
+    fun signing_out_forgets_the_account_own_authored_items() {
+        val source = java.io.File("src/main/kotlin/org/astermail/android/auth/AuthRepository.kt")
+            .readText()
+            .replace("\r\n", "\n")
+        val body = source.substringAfter("private suspend fun sign_out_internal(").substringBefore("\n    }\n")
+        assertTrue(
+            "sign-out and account removal must forget the account's own authored items",
+            Regex("""mail_repository\.forget_own_authored\(it\)""").containsMatchIn(body),
+        )
+    }
+
+    @Test
+    fun the_attachment_chip_labels_unverified_attachments() {
+        val source = java.io.File("src/main/kotlin/org/astermail/android/ui/mail/mail_detail_screen.kt")
+            .readText()
+            .replace("\r\n", "\n")
+        val chip = source.substringAfter("private fun attachment_chip(").substringBefore("\n}\n")
+        assertTrue(
+            "the attachment chip must label unverified attachments",
+            Regex("""if \(attachment\.is_unverified\) \{\s*Text\(\s*text = stringResource\(R\.string\.attachment_unverified\)""")
+                .containsMatchIn(chip),
+        )
+    }
+
+    @Test
+    fun the_attachment_preview_and_options_label_unverified_attachments() {
+        val source = java.io.File("src/main/kotlin/org/astermail/android/ui/mail/mail_detail_screen.kt")
+            .readText()
+            .replace("\r\n", "\n")
+        val label = Regex("""if \(attachment\.is_unverified\) \{\s*Text\(\s*text = stringResource\(R\.string\.attachment_unverified\)""")
+        val preview = source.substringAfter("private fun attachment_preview_dialog(").substringBefore("\n}\n")
+        val options = source.substringAfter("private fun attachment_options_sheet(").substringBefore("\n}\n")
+        assertTrue("the attachment preview must label unverified attachments", label.containsMatchIn(preview))
+        assertTrue("the attachment options must label unverified attachments", label.containsMatchIn(options))
+    }
+
+    @Test
+    fun every_locale_has_the_unverified_attachment_label() {
+        val locales = java.io.File("src/main/res").listFiles().orEmpty()
+            .filter { java.io.File(it, "strings.xml").isFile }
+        assertEquals(16, locales.size)
+        val missing = locales.filterNot { dir ->
+            Regex("""<string name="attachment_unverified">[^<]+</string>""")
+                .containsMatchIn(java.io.File(dir, "strings.xml").readText())
+        }.map { it.name }
+        assertTrue("every locale needs the unverified attachment label, missing in $missing", missing.isEmpty())
+    }
+
+    private fun constant_sealed_meta(json: String): String {
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val salt = ByteArray(16) { (it + 90).toByte() }
+        val iv = ByteArray(12) { (it + 120).toByte() }
+        val sealed = java.util.Base64.getDecoder().decode(seal(json, constant, iv))
+        return b64(salt + iv + sealed)
+    }
+
+    @Test
+    fun received_meta_that_opens_under_a_public_constant_is_unverified() {
+        val encoded = constant_sealed_meta(pgp_meta_json)
+
+        val meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "item-const", 0, 5L)
+
+        assertEquals("invoice.pdf", meta.filename)
+        assertTrue("meta opened under a public constant must be unverified", meta.is_unverified)
+    }
+
+    @Test
+    fun own_meta_that_opens_under_a_public_constant_is_refused() {
+        val encoded = constant_sealed_meta(pgp_meta_json)
+        InboundAttachmentKeyStore.note_own_authored("sent-const")
+
+        val meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "sent-const", 0, 5L)
+
+        assertTrue("constant meta on an own row must not be trusted", meta.is_placeholder)
+        assertEquals("", meta.session_key)
+    }
+
+    @Test
+    fun parsed_meta_keeps_the_unverified_mark() {
+        val marked = MailRepository.parse_attachment_meta_json(
+            """{"filename":"a.txt","content_type":"text/plain","legacy_unverified":true}""".toByteArray(Charsets.UTF_8),
+        )
+
+        assertTrue(marked!!.is_unverified)
+    }
+
+    @Test
+    fun own_authored_items_are_kept_per_account() {
+        val plaintext = """{"filename":"plain.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))
+        val sent = org.astermail.android.api.mail.ThreadMessageItem(
+            id = "shared-id",
+            item_type = "sent",
+            message_ts = "2026-04-26T10:00:00Z",
+            created_at = "2026-04-26T10:00:00Z",
+        )
+        kotlinx.coroutines.runBlocking { repo.decrypt_single_thread_message(sent) }
+
+        InboundAttachmentKeyStore.clear()
+        every { session_key_store.get_user_id() } returns "user-b"
+        val other_account = build_repo()
+        val meta = other_account.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "shared-id", 0, 7L)
+
+        assertEquals("plain.txt", meta.filename)
+        assertTrue(meta.is_unverified)
+    }
+
+    @Test
+    fun the_attachment_model_carries_the_unverified_flag() {
+        val plaintext = """{"filename":"legacy.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
+        val response = org.astermail.android.api.mail.AttachmentResponse(
+            id = "att-1",
+            mail_item_id = "item-ui",
+            encrypted_data = "",
+            data_nonce = "",
+            encrypted_meta = b64(plaintext.toByteArray(Charsets.UTF_8)),
+            meta_nonce = b64(ByteArray(12)),
+            size_bytes = 7L,
+        )
+        io.mockk.coEvery { mail_api.get_attachment("att-1") } returns response
+
+        val attachment = kotlinx.coroutines.runBlocking { repo.fetch_attachment("att-1") }.getOrThrow()
+
+        assertEquals("legacy.txt", attachment.filename)
+        assertTrue("the UI model must know the row fields are unverified", attachment.is_unverified)
+    }
+
+    private val own_pgp_key by lazy {
+        org.astermail.android.crypto.PgpKeyGenerator.generate("Me", "me@astermail.org", "pw".toCharArray())
+    }
+
+    private fun use_own_pgp_key() {
+        every { session_key_store.get_identity_key() } returns own_pgp_key.armored_private_key
+        every { session_key_store.get_previous_keys() } returns emptyList()
+        every { session_key_store.get_passphrase() } answers { "pw".toByteArray(Charsets.UTF_8) }
+    }
+
+    private val pgp_meta_json = """{"filename":"invoice.pdf","content_type":"application/pdf","session_key":"c2VydmVy"}"""
+
+    @Test
+    fun received_unsigned_pgp_row_from_another_sender_still_downloads() {
+        use_own_pgp_key()
+        val armored = org.astermail.android.crypto.PgpEncryptor.encrypt_to_keys(
+            pgp_meta_json,
+            listOf(own_pgp_key.armored_public_key),
+        )!!
+
+        val meta = repo.decrypt_attachment_meta(b64(armored.toByteArray(Charsets.UTF_8)), "", "item-u", 0, 5L)
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("invoice.pdf", meta.filename)
+        assertEquals("c2VydmVy", meta.session_key)
+        assertTrue("unsigned PGP from another sender is never verified", meta.is_unverified)
+    }
+
+    @Test
+    fun sent_row_in_unsigned_pgp_is_refused() {
+        use_own_pgp_key()
+        InboundAttachmentKeyStore.note_own_authored("sent-u")
+        val armored = org.astermail.android.crypto.PgpEncryptor.encrypt_to_keys(
+            pgp_meta_json,
+            listOf(own_pgp_key.armored_public_key),
+        )!!
+
+        val meta = repo.decrypt_attachment_meta(b64(armored.toByteArray(Charsets.UTF_8)), "", "sent-u", 0, 5L)
+
+        assertTrue("unsigned PGP on an own sent row must not be trusted", meta.is_placeholder)
+        assertEquals("", meta.session_key)
+    }
+
+    @Test
+    fun pgp_row_meta_signed_by_the_owner_is_read() {
+        use_own_pgp_key()
+        val armored = org.astermail.android.crypto.PgpEncryptor.encrypt_and_sign(
+            pgp_meta_json,
+            listOf(own_pgp_key.armored_public_key),
+            own_pgp_key.armored_private_key,
+            "pw".toCharArray(),
+        )!!
+
+        InboundAttachmentKeyStore.note_own_authored("item-s")
+
+        val meta = repo.decrypt_attachment_meta(b64(armored.toByteArray(Charsets.UTF_8)), "", "item-s", 0, 5L)
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("invoice.pdf", meta.filename)
+        assertEquals("c2VydmVy", meta.session_key)
+        assertFalse(meta.is_unverified)
     }
 
     @Test

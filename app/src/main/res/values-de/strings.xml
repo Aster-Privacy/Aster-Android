@@ -673,7 +673,7 @@
     <string name="disabling">Wird deaktiviert…</string>
     <string name="disable_two_factor">Zwei-Faktor-Authentifizierung deaktivieren</string>
     <string name="generate_new_backup_codes_section">Neue Backup-Codes generieren</string>
-    <string name="generate_backup_codes_description">Geben Sie einen aktuellen Code Ihrer Authentifizierungs-App ein. Ihre bisherigen Backup-Codes werden ungültig.</string>
+    <string name="generate_backup_codes_description">Geben Sie Ihr Passwort und einen aktuellen Code Ihrer Authentifizierungs-App ein. Ihre bisherigen Backup-Codes funktionieren danach nicht mehr.</string>
     <string name="generating">Wird generiert…</string>
     <string name="generate_codes">Codes generieren</string>
     <string name="two_factor_enabled_title">Zwei-Faktor-Authentifizierung aktiviert</string>
@@ -1816,6 +1816,7 @@
     <string name="totp_code_required_label">Authenticator- oder Backup-Code</string>
     <string name="totp_code_required_error">Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App oder einen Ihrer Backup-Codes ein</string>
     <string name="preferences_locked_retry">Ihre Einstellungen ließen sich gerade nicht entsperren. Es werden Standardwerte angezeigt. Gehen Sie zurück und öffnen Sie sie erneut.</string>
+    <string name="encrypted_edit_locked_retry">Aster Mail entsperrt dieses Element noch, daher wurde Ihre Änderung nicht gespeichert. Versuchen Sie es gleich noch einmal.</string>
     <string name="plan_name_star">Stern</string>
     <string name="plan_name_nova">Nova</string>
     <string name="plan_name_supernova">Supernova</string>
@@ -2671,6 +2672,9 @@
     <string name="folder_locked">Ordner gesperrt</string>
     <string name="folder_unlocked">Ordner entsperrt</string>
     <string name="folder_lock_set">Ordnersperre eingerichtet</string>
+    <string name="folder_relock_required">Dieser Ordner wurde auf einem anderen Gerät neu gesperrt. Um ihn hier zu öffnen, entferne die Sperre und richte sie erneut ein.</string>
+    <string name="folder_protection_unavailable">Die Schutzdaten des Ordners konnten auf diesem Gerät nicht gelesen werden. Melde dich ab und wieder an und versuche es dann erneut.</string>
+    <string name="folder_lock_set_unconfirmed">Ordnersperre eingerichtet. Gib das Passwort ein, um den Ordner zu öffnen.</string>
     <string name="folder_lock_removed">Ordnersperre entfernt</string>
     <string name="folder_notifications_muted">Benachrichtigungen für diesen Ordner stummgeschaltet</string>
     <string name="folder_notifications_unmuted">Benachrichtigungen für diesen Ordner aktiviert</string>
@@ -2849,8 +2853,11 @@
     <string name="failed_to_move_items">Verschieben nicht möglich</string>
     <string name="folder_name_taken">Ein Ordner mit diesem Namen existiert bereits.</string>
     <string name="hardware_key_remove_confirm">Sie können sich mit diesem Sicherheitsschlüssel dann nicht mehr anmelden.</string>
-    <string name="hardware_key_remove_last_title">Letzten Sicherheitsschlüssel entfernen?</string>
-    <string name="hardware_key_remove_last_description">Das ist der letzte zweite Faktor Ihres Kontos. Geben Sie Ihr Passwort ein, um ihn zu entfernen.</string>
+    <string name="hardware_key_remove_last_title">Diesen Sicherheitsschlüssel entfernen?</string>
+    <string name="hardware_key_remove_last_description">Geben Sie Ihr Passwort ein, um diesen Sicherheitsschlüssel zu entfernen.</string>
+    <string name="passkey_add_reauth_description">Geben Sie Ihr Passwort ein, um einen Passkey hinzuzufügen.</string>
+    <string name="totp_setup_reauth_description">Geben Sie Ihr Passwort ein, um die Zwei-Faktor-Authentifizierung einzurichten.</string>
+    <string name="reauth_key_check_failed">Ihr Passkey oder Sicherheitsschlüssel konnte nicht geprüft werden. Versuchen Sie es noch einmal.</string>
     <string name="image_insert_failed">Dieses Bild konnte nicht hinzugefügt werden. Es ist möglicherweise zu groß oder hat ein nicht unterstütztes Format.</string>
     <string name="invalid_recipient_address">„%1$s“ ist keine gültige E-Mail-Adresse</string>
     <string name="label_name_taken">Ein Label mit diesem Namen existiert bereits.</string>
@@ -3497,6 +3504,11 @@
     <string name="contact_sync_settings_title">Zugriff auf Kontakte erlauben</string>
     <string name="contact_sync_settings_message">Um deine Kontakte zu synchronisieren, tippe auf „Einstellungen öffnen“, gehe zu Berechtigungen &gt; Kontakte und wähle „Zulassen“.</string>
     <string name="contact_sync_open_settings">Einstellungen öffnen</string>
+    <string name="contact_sync_all_details_title">Alle Kontaktdetails synchronisieren</string>
+    <string name="contact_sync_all_details_subtitle">Wenn diese Option deaktiviert ist, fügt Aster der Kontakte-App deines Telefons nur Namen und E-Mail-Adressen hinzu.</string>
+    <string name="contact_sync_all_details_confirm_title">Alle Kontaktdetails synchronisieren?</string>
+    <string name="contact_sync_all_details_confirm_message">Aster fügt der Kontakte-App deines Telefons auch Telefonnummern, Adressen, Geburtstage, Notizen, Fotos und weitere Details hinzu. Andere Apps mit Zugriff auf deine Kontakte können diese Details lesen.</string>
+    <string name="contact_sync_all_details_confirm">Alle Details synchronisieren</string>
     <string name="contact_sync_label_sibling">Geschwister</string>
     <string name="contact_sync_label_graduation">Abschluss</string>
     <string name="contact_sync_label_wedding">Hochzeit</string>
@@ -3647,6 +3659,16 @@
         <item quantity="other">%d Kontakte hinzugefügt</item>
     </plurals>
     <string name="body_index_status">Nachrichtentext wird für die Suche indexiert: %1$d von %2$d</string>
+    <string name="mail_key_upgrade_title">Gespeicherte E-Mails werden aktualisiert</string>
+    <string name="mail_key_upgrade_running">Aster Mail verschlüsselt deine gespeicherten Nachrichten mit deinen aktuellen Schlüsseln neu. Lass dieses Fenster geöffnet, bis der Vorgang abgeschlossen ist.</string>
+    <string name="mail_key_upgrade_failed">Aster Mail konnte deine gespeicherten Nachrichten nicht vollständig aktualisieren. Deine E-Mails sind unverändert. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="mail_key_upgrade_retry">Erneut versuchen</string>
+    <plurals name="mail_key_upgrade_progress">
+        <item quantity="one">%d Nachricht geprüft</item>
+        <item quantity="other">%d Nachrichten geprüft</item>
+    </plurals>
+    <string name="account_link_confirm_title">Dieses Konto verknüpfen?</string>
+    <string name="account_link_confirm_message">%1$s möchte %2$s auf diesem Gerät verwenden. Bestätigen Sie nur, wenn Sie dies in %1$s gestartet haben.</string>
     <string name="delete_selected_subscriptions">Löschen (%1$d)</string>
     <plurals name="delete_subscriptions_title">
         <item quantity="one">%d Abonnement löschen?</item>
@@ -3658,4 +3680,5 @@
         <item quantity="other">%d Abonnements gelöscht</item>
     </plurals>
     <string name="delete_subscriptions_failed">Die ausgewählten Abonnements konnten nicht gelöscht werden</string>
+    <string name="attachment_unverified">Nicht bestätigter Anhang</string>
 </resources>

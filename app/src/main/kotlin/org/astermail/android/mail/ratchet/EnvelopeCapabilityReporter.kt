@@ -37,6 +37,8 @@ data class EnvelopeCapabilityReport(
     val address_identity_version: Int = 0,
     val bound_envelope_version: Int = 0,
     val x3dh_max_version: Int = 0,
+    val ratchet_sync_version: Int = 0,
+    val recovery_backup_version: Int = 0,
 )
 
 interface EnvelopeCapabilityStore {
@@ -69,6 +71,8 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
             parts.getOrNull(4)?.toIntOrNull() ?: 0,
             parts.getOrNull(5)?.toIntOrNull() ?: 0,
             parts.getOrNull(6)?.toIntOrNull() ?: 0,
+            parts.getOrNull(7)?.toIntOrNull() ?: 0,
+            parts.getOrNull(8)?.toIntOrNull() ?: 0,
         )
     }
 
@@ -76,7 +80,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
         prefs().edit()
             .putString(
                 LAST_REPORTED_PREFIX + user_id,
-                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.address_identity_version}|${report.bound_envelope_version}|${report.x3dh_max_version}",
+                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.address_identity_version}|${report.bound_envelope_version}|${report.x3dh_max_version}|${report.ratchet_sync_version}|${report.recovery_backup_version}",
             )
             .apply()
     }
@@ -120,6 +124,8 @@ class EnvelopeCapabilityReporter(
             last.pgp_external_version == PGP_EXTERNAL_VERSION &&
             last.address_identity_version == ADDRESS_IDENTITY_VERSION &&
             last.bound_envelope_version == BOUND_ENVELOPE_VERSION &&
+            last.ratchet_sync_version == RATCHET_SYNC_VERSION &&
+            last.recovery_backup_version == RECOVERY_BACKUP_VERSION &&
             (last.x3dh_max_version.takeIf { it > 0 } ?: X3DH_MAX_VERSION) == x3dh_max_version &&
             now - last.at_ms in 0 until REPORT_INTERVAL_MS
         ) {
@@ -140,6 +146,8 @@ class EnvelopeCapabilityReporter(
                     pgp_external_version = PGP_EXTERNAL_VERSION,
                     bound_envelope_version = BOUND_ENVELOPE_VERSION,
                     address_identity_version = ADDRESS_IDENTITY_VERSION,
+                    ratchet_sync_version = RATCHET_SYNC_VERSION,
+                    recovery_backup_version = RECOVERY_BACKUP_VERSION,
                 ),
             )
         }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
@@ -156,6 +164,8 @@ class EnvelopeCapabilityReporter(
                     ADDRESS_IDENTITY_VERSION,
                     BOUND_ENVELOPE_VERSION,
                     x3dh_max_version,
+                    RATCHET_SYNC_VERSION,
+                    RECOVERY_BACKUP_VERSION,
                 ),
             )
         }
@@ -191,6 +201,8 @@ class EnvelopeCapabilityReporter(
         const val X3DH_ONE_TIME_READ_VERSION: Int = X3dh.READ_VERSION_MAX
         const val PGP_EXTERNAL_VERSION: Int = 1
         const val BOUND_ENVELOPE_VERSION: Int = 1
+        const val RATCHET_SYNC_VERSION: Int = 3
+        const val RECOVERY_BACKUP_VERSION: Int = 2
         const val ADDRESS_IDENTITY_VERSION: Int = AddressIdentityDirectory.ADDRESS_IDENTITY_VERSION
         const val PLATFORM: String = "android"
         const val REPORT_INTERVAL_MS: Long = 7L * 24 * 60 * 60 * 1000

@@ -21,7 +21,6 @@
 
 package org.astermail.android.crypto
 
-import org.astermail.android.api.keys.ExternalKeyInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -33,22 +32,6 @@ class ClientPgpCopiesTest {
 
     private val passphrase = "correct horse battery staple"
 
-    private fun key_info(
-        email: String,
-        found: Boolean = true,
-        public_key: String? = "-----BEGIN PGP PUBLIC KEY BLOCK-----",
-        will_encrypt: Boolean = true,
-    ) = ExternalKeyInfo(email = email, found = found, public_key = public_key, will_encrypt = will_encrypt)
-
-    @Test
-    fun encrypts_only_when_a_usable_key_will_be_used() {
-        assertTrue(ClientPgpCopies.encrypts_for(key_info("a@example.com")))
-        assertFalse(ClientPgpCopies.encrypts_for(null))
-        assertFalse(ClientPgpCopies.encrypts_for(key_info("a@example.com", found = false)))
-        assertFalse(ClientPgpCopies.encrypts_for(key_info("a@example.com", public_key = null)))
-        assertFalse(ClientPgpCopies.encrypts_for(key_info("a@example.com", will_encrypt = false)))
-    }
-
     @Test
     fun outside_recipients_are_deduplicated_and_internal_ones_dropped() {
         val recipients = ClientPgpCopies.outside_recipients(
@@ -56,28 +39,6 @@ class ClientPgpCopiesTest {
         ) { it.endsWith("@astermail.org") }
 
         assertEquals(listOf("Bob@example.com"), recipients)
-    }
-
-    @Test
-    fun recipient_keys_require_every_recipient_to_encrypt() {
-        val keys = ClientPgpCopies.recipient_keys(
-            listOf("bob@example.com", "carol@example.com"),
-            listOf(key_info("Bob@example.com"), key_info("carol@example.com")),
-        )
-        assertEquals(listOf("bob@example.com", "carol@example.com"), keys?.keys?.toList())
-
-        assertNull(
-            ClientPgpCopies.recipient_keys(
-                listOf("bob@example.com", "carol@example.com"),
-                listOf(key_info("bob@example.com"), key_info("carol@example.com", will_encrypt = false)),
-            ),
-        )
-        assertNull(
-            ClientPgpCopies.recipient_keys(
-                listOf("bob@example.com"),
-                emptyList(),
-            ),
-        )
     }
 
     @Test

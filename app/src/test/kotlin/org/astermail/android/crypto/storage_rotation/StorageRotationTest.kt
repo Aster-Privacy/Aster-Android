@@ -442,4 +442,39 @@ class StorageRotationTest {
         assertFalse(should_retry_storage_rekey(ResealRunResult(ResealRunStatus.NOT_NEEDED, StepCounts())))
         assertFalse(should_retry_storage_rekey(ResealRunResult(ResealRunStatus.DONE, StepCounts())))
     }
+
+    @Test
+    fun an_interrupted_run_retries_quickly_a_few_times_and_then_stops() {
+        val interrupted = ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts())
+        assertEquals(StorageRekeyNextRun(1, 60L), storage_rekey_next_run(interrupted, 0))
+        assertEquals(StorageRekeyNextRun(3, 900L), storage_rekey_next_run(interrupted, 2))
+        assertNull(storage_rekey_next_run(interrupted, 3))
+        val failed = ResealRunResult(ResealRunStatus.FAILED, StepCounts(), "error")
+        assertNull(storage_rekey_next_run(failed, 3))
+    }
+
+    @Test
+    fun a_pending_key_retirement_waits_hours_between_runs() {
+        val pending = ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts(), LEGACY_KEY_RETIRE_PENDING)
+        val first = storage_rekey_next_run(pending, 0)
+        assertEquals(StorageRekeyNextRun(0, STORAGE_REKEY_RETIRE_WAIT_SECS, 1), first)
+        assertTrue(STORAGE_REKEY_RETIRE_WAIT_SECS >= 3600L)
+        val second = storage_rekey_next_run(pending, first!!.attempt, first.retire_attempt)
+        assertEquals(StorageRekeyNextRun(0, STORAGE_REKEY_RETIRE_WAIT_SECS, 2), second)
+    }
+
+    @Test
+    fun a_pending_key_retirement_after_used_up_quick_retries_still_gets_its_long_waits() {
+        val pending = ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts(), LEGACY_KEY_RETIRE_PENDING)
+        val first = storage_rekey_next_run(pending, 3, 0)
+        assertEquals(StorageRekeyNextRun(3, STORAGE_REKEY_RETIRE_WAIT_SECS, 1), first)
+        val second = storage_rekey_next_run(pending, first!!.attempt, first.retire_attempt)
+        assertEquals(StorageRekeyNextRun(3, STORAGE_REKEY_RETIRE_WAIT_SECS, 2), second)
+    }
+
+    @Test
+    fun quick_retries_after_a_retirement_wait_keep_the_retirement_count() {
+        val interrupted = ResealRunResult(ResealRunStatus.INTERRUPTED, StepCounts())
+        assertEquals(StorageRekeyNextRun(1, 60L, 2), storage_rekey_next_run(interrupted, 0, 2))
+    }
 }

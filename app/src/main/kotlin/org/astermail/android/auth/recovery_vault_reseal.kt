@@ -21,6 +21,11 @@
 
 package org.astermail.android.auth
 
+import org.astermail.android.api.recovery.CompleteRecoveryRequest
+import org.astermail.android.api.recovery.RecoveryShareData
+import org.astermail.android.crypto.storage_rotation.server_write_count_floor
+import org.astermail.android.crypto.storage_rotation.stamp_vault_generation
+import org.astermail.android.crypto.storage_rotation.vault_generation
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -40,6 +45,16 @@ fun recovery_locked_identity_key(backup: JSONObject): String? {
     return identity
 }
 
+fun stamp_recovered_vault(
+    reseal: RecoveryVaultReseal,
+    binding: RecoveryBackupBinding,
+    format_v2: Boolean,
+): RecoveryVaultReseal {
+    RecoveryBackupVaultFields.stamp(reseal.vault, binding, format_v2)
+    RecoveryBackupVaultFields.stamp(reseal.backup, binding, format_v2)
+    return reseal
+}
+
 fun recovery_needs_previous_password(backup: JSONObject): Boolean =
     recovery_locked_identity_key(backup) != null
 
@@ -52,6 +67,7 @@ fun reseal_recovery_vault(
     lock: (String, CharArray) -> String = ::lock_unlocked_pgp_key,
     reprotect: (String, CharArray, CharArray) -> String = ::reprotect_pgp_key,
     unlock: (String, CharArray) -> String = ::unlock_pgp_key,
+    server_write_count: Long? = null,
 ): RecoveryVaultReseal {
     val locked_identity = recovery_locked_identity_key(backup)
     val usable_previous = previous_password?.takeIf { it.isNotEmpty() }
@@ -76,6 +92,7 @@ fun reseal_recovery_vault(
     val codes = JSONArray()
     recovery_codes.forEach { codes.put(it) }
     vault.put("recovery_codes", codes)
+    stamp_vault_generation(vault, backup, server_write_count_floor(server_write_count))
 
     val carried = carry_backup_unlocked_keys(vault, relocked)
     val backup_out = if (usable_previous == null) {
@@ -91,3 +108,66 @@ fun reseal_recovery_vault(
 
     return RecoveryVaultReseal(vault = vault, backup = backup_out, identity_locked = identity_locked)
 }
+
+class RecoveryUploadVault(
+    val plain: ByteArray,
+    val backup_plain: ByteArray,
+    val vault_format: Int,
+    val identity_locked: Boolean,
+    val vault_generation: Long?,
+)
+
+class RecoveryBackupFields(val encrypted_data: String, val nonce: String, val salt: String)
+
+fun recovery_upload_vault(
+    vault_bytes: ByteArray,
+    codes: List<String>,
+    password: CharArray,
+    previous_password: CharArray?,
+    server_write_count: Long?,
+    binding: RecoveryBackupBinding? = null,
+    format_v2: Boolean = false,
+): RecoveryUploadVault {
+    val reseal = reseal_recovery_vault(
+        JSONObject(String(vault_bytes, Charsets.UTF_8)),
+        codes,
+        password,
+        previous_password,
+        server_write_count = server_write_count,
+    )
+    val resealed = if (binding == null) reseal else stamp_recovered_vault(reseal, binding, format_v2)
+    return RecoveryUploadVault(
+        plain = resealed.vault.toString().toByteArray(Charsets.UTF_8),
+        backup_plain = resealed.backup.toString().toByteArray(Charsets.UTF_8),
+        vault_format = stored_vault_format(resealed.vault),
+        identity_locked = resealed.identity_locked,
+        vault_generation = vault_generation(resealed.vault).takeIf { it > 0 },
+    )
+}
+
+fun recovery_complete_request(
+    recovery_token: String,
+    password_hash: String,
+    password_hash_v2: String,
+    password_salt: String,
+    encrypted_vault: String,
+    vault_nonce: String,
+    shares: List<RecoveryShareData>,
+    backup: RecoveryBackupFields,
+    vault: RecoveryUploadVault,
+    vault_kdf_iterations: Int?,
+): CompleteRecoveryRequest = CompleteRecoveryRequest(
+    recovery_token = recovery_token,
+    new_password_hash = password_hash,
+    new_password_hash_v2 = password_hash_v2,
+    new_password_salt = password_salt,
+    new_encrypted_vault = encrypted_vault,
+    new_vault_nonce = vault_nonce,
+    new_recovery_shares = shares,
+    new_encrypted_vault_backup = backup.encrypted_data,
+    new_vault_backup_nonce = backup.nonce,
+    new_recovery_key_salt = backup.salt,
+    vault_format = vault.vault_format,
+    vault_kdf_iterations = vault_kdf_iterations,
+    vault_generation = vault.vault_generation,
+)

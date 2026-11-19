@@ -30,11 +30,13 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.security.StepUpKeyAssertion
 
 @Serializable
 data class RecoveryEmailStateResponse(
@@ -54,6 +56,7 @@ data class SaveRecoveryEmailRequest(
     val plaintext_email: String,
     val password_hash: String? = null,
     val totp_code: String? = null,
+    val hardware_key_assertion: StepUpKeyAssertion? = null,
 )
 
 @Serializable
@@ -66,6 +69,7 @@ data class BackfillServerEncRequest(
 data class RemoveRecoveryEmailRequest(
     val password_hash: String,
     val totp_code: String? = null,
+    val hardware_key_assertion: StepUpKeyAssertion? = null,
 )
 
 @Serializable
@@ -110,6 +114,9 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
     override suspend fun save(request: SaveRecoveryEmailRequest): RecoveryEmailSuccessResponse {
         val response = client.http.put("${client.base_url}$base") {
             contentType(ContentType.Application.Json)
+            if (request.hardware_key_assertion != null) {
+                header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            }
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }
@@ -128,6 +135,9 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
     override suspend fun remove(request: RemoveRecoveryEmailRequest): RecoveryEmailSuccessResponse {
         val response = client.http.delete("${client.base_url}$base") {
             contentType(ContentType.Application.Json)
+            if (request.hardware_key_assertion != null) {
+                header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+            }
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
         }

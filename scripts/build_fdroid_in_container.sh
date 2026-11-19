@@ -17,7 +17,13 @@ if [ -z "$ref" ] || [ -z "$out" ]; then
   exit 2
 fi
 
-image="${ASTER_FDROID_IMAGE:-registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie}"
+pinned_image="registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie@sha256:1ea8bef1820bff06c2974e31b4fc4c79c364cd24231b86e71fa4b926797e0dac"
+image="${ASTER_FDROID_IMAGE:-$pinned_image}"
+case "$image" in
+  *@sha256:[0-9a-f]*) ;;
+  *) echo "ASTER_FDROID_IMAGE must name an image by digest (name@sha256:...): $image" >&2; exit 2 ;;
+esac
+image_digest="${image##*@}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
@@ -31,7 +37,9 @@ to_docker_path() {
 
 command -v docker >/dev/null || { echo "docker not found" >&2; exit 1; }
 docker pull "$image"
-echo "fdroid build image: $(docker image inspect --format '{{index .RepoDigests 0}}' "$image")"
+pulled_digests="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$image")"
+printf '%s\n' "$pulled_digests" | grep -qF "@$image_digest" || { echo "pulled image digest does not match $image_digest" >&2; exit 1; }
+echo "fdroid build image: $image"
 
 MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker run --rm -i \
   -v "$(to_docker_path "$repo_root"):/src:ro" \

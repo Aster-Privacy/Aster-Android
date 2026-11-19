@@ -39,10 +39,12 @@ class RecipientEncryptionRulesTest {
         public_key: String? = "-----BEGIN PGP PUBLIC KEY BLOCK-----",
         will_encrypt: Boolean = false,
         expires_at: String? = null,
+        source: String? = null,
     ) = ExternalKeyInfo(
         email = email,
         found = found,
         public_key = public_key,
+        source = source,
         will_encrypt = will_encrypt,
         expires_at = expires_at,
     )
@@ -51,7 +53,7 @@ class RecipientEncryptionRulesTest {
     fun trusted_key_encrypts_without_explicit_request() {
         assertEquals(
             RecipientEncryption.ENCRYPT,
-            RecipientEncryptionRules.decide(info(will_encrypt = true), null, false, false),
+            RecipientEncryptionRules.decide(info(source = "wkd"), null, false, false, encrypt_by_default = true),
         )
     }
 
@@ -84,7 +86,7 @@ class RecipientEncryptionRulesTest {
     fun force_off_sends_plain_even_with_trusted_key() {
         assertEquals(
             RecipientEncryption.PLAIN,
-            RecipientEncryptionRules.decide(info(will_encrypt = true), false, false, false),
+            RecipientEncryptionRules.decide(info(source = "wkd"), false, false, false, encrypt_by_default = true),
         )
     }
 
@@ -187,7 +189,10 @@ class RecipientEncryptionRulesTest {
 
     @Test
     fun lock_status_follows_key_state() {
-        assertEquals(RecipientLockStatus.ENCRYPTED, RecipientEncryptionRules.lock_status_for(info(will_encrypt = true), now))
+        assertEquals(
+            RecipientLockStatus.ENCRYPTED,
+            RecipientEncryptionRules.lock_status_for(info(source = "wkd"), now, encrypt_by_default = true) { OpportunisticKeyTrust.PINNED },
+        )
         assertEquals(RecipientLockStatus.AVAILABLE, RecipientEncryptionRules.lock_status_for(info(), now))
         assertEquals(
             RecipientLockStatus.KEY_INVALID,
@@ -266,9 +271,10 @@ class RecipientEncryptionRulesTest {
     fun statuses_mark_undiscovered_addresses_as_transit() {
         val result = RecipientEncryptionRules.statuses_from_discovery(
             listOf("Bob@example.com", "eve@example.com"),
-            listOf(info(email = "bob@example.com", will_encrypt = true)),
+            listOf(info(email = "bob@example.com", source = "wkd")),
             now,
-        )
+            encrypt_by_default = true,
+        ) { OpportunisticKeyTrust.PINNED }
         assertEquals(RecipientLockStatus.ENCRYPTED, result["bob@example.com"])
         assertEquals(RecipientLockStatus.TRANSIT, result["eve@example.com"])
     }
@@ -283,9 +289,10 @@ class RecipientEncryptionRulesTest {
             wait = { waits.add(it) },
             discover = {
                 calls += 1
-                if (calls < 3) error("offline") else listOf(info(will_encrypt = true))
+                if (calls < 3) error("offline") else listOf(info(source = "wkd"))
             },
-        )
+            encrypt_by_default = true,
+        ) { OpportunisticKeyTrust.PINNED }
         assertEquals(3, calls)
         assertEquals(listOf(2000L, 4000L), waits)
         assertEquals(RecipientLockStatus.ENCRYPTED, result["bob@example.com"])
@@ -311,6 +318,15 @@ class RecipientEncryptionRulesTest {
             discover = { emptyList() },
         )
         assertEquals(RecipientLockStatus.TRANSIT, result["bob@example.com"])
+    }
+
+    @Test
+    fun a_key_without_the_address_stops_only_a_requested_encryption() {
+        assertTrue(RecipientEncryptionRules.unmatched_key_throws(force_pgp = null, require_encryption = false, listed = true))
+        assertTrue(RecipientEncryptionRules.unmatched_key_throws(force_pgp = true, require_encryption = false, listed = false))
+        assertTrue(RecipientEncryptionRules.unmatched_key_throws(force_pgp = null, require_encryption = true, listed = false))
+        assertFalse(RecipientEncryptionRules.unmatched_key_throws(force_pgp = null, require_encryption = false, listed = false))
+        assertFalse(RecipientEncryptionRules.unmatched_key_throws(force_pgp = false, require_encryption = false, listed = false))
     }
 
     @Test

@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail
 
+import org.astermail.android.crypto.StorageWriteKey
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.nio.ByteBuffer
@@ -63,6 +64,7 @@ import org.astermail.android.crypto.AesGcm
 import org.astermail.android.crypto.PasswordKdf
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.SentCopySeal
+import org.astermail.android.crypto.SentEncryptionEvidenceRules
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.util.passphrase_chars
 
@@ -540,14 +542,13 @@ class AccountDataConversion internal constructor(
         val text = strict_utf8(stored).orEmpty()
         if (text.startsWith(PGP_MESSAGE_HEADER)) {
             return runCatching {
-                PgpDecryptor.decrypt_with_own_keys_status(
+                PgpDecryptor.decrypt_signed_by_own_keys(
                     text,
                     listOf(keys.identity_key) + keys.previous_keys,
                     keys.passphrase,
-                )?.plaintext
+                )
             }.getOrNull()
         }
-        if (text.isNotEmpty() && is_attachment_meta_text(text)) return text
         return open_password_envelope(encrypted_meta, keys)
     }
 
@@ -560,14 +561,20 @@ class AccountDataConversion internal constructor(
         val salt = data.copyOfRange(0, SALT_LENGTH)
         val nonce = data.copyOfRange(SALT_LENGTH, SALT_LENGTH + NONCE_LENGTH)
         val ciphertext = data.copyOfRange(SALT_LENGTH + NONCE_LENGTH, data.size)
-        val opened = LevelTwoEnvelope.open_with_store(sealed_b64, session_key_store)
+        var opened_with_constant = false
+        val level2 = LevelTwoEnvelope.open_with_store(sealed_b64, session_key_store) { opened_with_constant = true }
+        val opened = level2
             ?: open_with_passphrases(salt, nonce, ciphertext, keys)
-            ?: decrypt_with_keks(nonce, ciphertext)
+            ?: decrypt_with_keks(nonce, ciphertext) { opened_with_constant = true }
             ?: return null
+        val unverified = opened_with_constant || (level2 == null && session_key_store.is_login_salt(salt))
+        val marked = if (unverified) SentEncryptionEvidenceRules.mark_legacy_unverified(opened) else null
         return try {
-            strict_utf8(opened)
+            val text = strict_utf8(opened)
+            if (unverified) text?.let { marked?.let { strict_utf8(it) } } else text
         } finally {
             opened.fill(0)
+            marked?.fill(0)
         }
     }
 
@@ -577,10 +584,12 @@ class AccountDataConversion internal constructor(
         ciphertext: ByteArray,
         keys: ConversionKeys,
     ): ByteArray? {
+        val login_salted = session_key_store.is_login_salt(salt)
         for (passphrase in listOf(keys.passphrase_bytes) + keys.fallback_passphrases) {
             if (passphrase.isEmpty()) continue
             val key = PasswordKdf.derive_aes_key(passphrase, salt, PBKDF2_ITERATIONS)
             try {
+                if (login_salted && !vault_holds_key(key)) continue
                 val opened = runCatching { AesGcm.decrypt(key, nonce, ciphertext) }.getOrNull()
                 if (opened != null) return opened
             } finally {
@@ -590,18 +599,30 @@ class AccountDataConversion internal constructor(
         return null
     }
 
-    private fun decrypt_with_keks(nonce: ByteArray, ciphertext: ByteArray): ByteArray? {
-        for (kek_b64 in session_key_store.get_decrypt_keks()) {
-            val raw = runCatching { Base64.getMimeDecoder().decode(kek_b64.trim()) }.getOrNull() ?: continue
+    private fun vault_holds_key(key: ByteArray): Boolean =
+        session_key_store.get_legacy_keks().orEmpty().any { encoded ->
+            val held = runCatching { Base64.getMimeDecoder().decode(encoded.trim()) }.getOrNull() ?: return@any false
             try {
-                if (raw.size != KEK_LENGTH) continue
-                val opened = runCatching { AesGcm.decrypt(raw, nonce, ciphertext) }.getOrNull()
-                if (opened != null) return opened
+                held.size == key.size && MessageDigest.isEqual(held, key)
             } finally {
-                raw.fill(0)
+                held.fill(0)
             }
         }
-        return null
+
+    private fun decrypt_with_keks(
+        nonce: ByteArray,
+        ciphertext: ByteArray,
+        on_constant: () -> Unit = {},
+    ): ByteArray? {
+        return StorageWriteKey.open_with_decrypt_keks(
+            session_key_store.get_decrypt_keks(),
+            on_constant = {
+                session_key_store.note_public_constant_use()
+                on_constant()
+            },
+        ) { key ->
+            runCatching { AesGcm.decrypt(key, nonce, ciphertext) }.getOrNull()
+        }
     }
 
     internal suspend fun convert_preferences(
@@ -682,7 +703,7 @@ class AccountDataConversion internal constructor(
     }
 
     private fun open_legacy_preferences(ciphertext: ByteArray, nonce: ByteArray, keys: ConversionKeys): ByteArray? {
-        val sources = (listOf(keys.identity_key) + keys.previous_keys).distinct()
+        val sources = (listOf(keys.identity_key) + keys.previous_keys).filter(::is_secret_identity_key).distinct()
         for (source in sources) {
             val key = MessageDigest.getInstance("SHA-256")
                 .digest((source + AccountDataWriter.PREFERENCES_CONTEXT).toByteArray(Charsets.UTF_8))
@@ -693,7 +714,11 @@ class AccountDataConversion internal constructor(
                 key.fill(0)
             }
         }
-        return decrypt_with_keks(nonce, ciphertext)
+        var opened_with_constant = false
+        val opened = decrypt_with_keks(nonce, ciphertext) { opened_with_constant = true } ?: return null
+        if (!opened_with_constant) return opened
+        opened.fill(0)
+        return null
     }
 
     companion object {

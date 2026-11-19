@@ -22,6 +22,8 @@
 
 package org.astermail.android.auth
 
+import java.util.Base64
+import org.astermail.android.crypto.StorageWriteKey
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -39,7 +41,20 @@ val RECOVERED_KEYS_NOT_WRITTEN = RecoveredKeyCommitResult(written = false)
 
 val RECOVERED_KEYS_ROUNDTRIP_FAILED = RecoveredKeyCommitResult(written = false, roundtrip_failed = true)
 
-fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<String> {
+fun encoded_password_storage_keys(
+    passphrase: ByteArray,
+    kdf_version: Int,
+    derive: (ByteArray, Int?) -> ByteArray? = StorageWriteKey.restore_key_derive,
+    retired_hashes: Collection<String> = emptyList(),
+): List<String> =
+    StorageWriteKey.with_restore_read_keys(passphrase, kdf_version, derive) { keys ->
+        StorageWriteKey.not_retired(keys, retired_hashes).map { Base64.getEncoder().encodeToString(it) }
+    }
+
+fun harvest_storage_keks(
+    old_vault: JSONObject,
+    password_keys: (Int) -> List<String> = { emptyList() },
+): List<String> {
     val harvested = mutableListOf<String>()
 
     old_vault.optString("data_kek", "").takeIf { it.isNotBlank() }?.let { harvested.add(it) }
@@ -52,8 +67,9 @@ fun harvest_storage_keks(old_vault: JSONObject, derived_old_key: String?): List<
         }
     }
 
-    if (vault_storage_kdf_version(old_vault) <= SUPPORTED_STORAGE_KDF_VERSION) {
-        derived_old_key?.takeIf { it.isNotBlank() }?.let { harvested.add(it) }
+    val kdf_version = vault_storage_kdf_version(old_vault)
+    if (kdf_version <= ROTATABLE_STORAGE_KDF_VERSION) {
+        harvested.addAll(password_keys(kdf_version).filter { it.isNotBlank() })
     }
 
     return harvested

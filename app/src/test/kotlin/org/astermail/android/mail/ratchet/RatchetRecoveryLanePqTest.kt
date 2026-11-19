@@ -124,7 +124,7 @@ class RatchetRecoveryLanePqTest {
         every { session_key_store.get_ratchet_identity_jwk() } returns to_private_jwk(sender_identity)
         coEvery { keys_api.get_recipient_public_key(any(), any()) } returns
             PublicKeyResponse("kchaos", armor { owner_key.publicKey.encode(it) })
-        every { identity_pins.evaluate(conversation_id, identity_b64) } returns IdentityPinOutcome.UNCHANGED
+        every { identity_pins.evaluate(conversation_id, any(), identity_b64) } returns IdentityPinOutcome.UNCHANGED
         every { identity_pins.is_prekey_binding_verified(any()) } returns false
         every { identity_pins.owner_key_pin(any()) } returns null
         coEvery { identity_pins.pin_owner_key_if_absent(any(), any()) } returns true
@@ -205,6 +205,7 @@ class RatchetRecoveryLanePqTest {
             keys_api,
             identity_pins,
             account_only_directory(),
+            mockk<RatchetSenderKeyHeal>(relaxed = true),
         ).encrypt_envelope(sender_email, listOf(recipient_email), "hello", allow_non_post_quantum = true)
         return json.decodeFromString(RatchetEnvelope.serializer(), envelope!!).recipients.getValue(recipient_email)
     }
