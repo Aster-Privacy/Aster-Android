@@ -87,14 +87,46 @@ class EncryptionBadgeSemanticsTest {
     fun own_copy_item_type_alone_does_not_earn_the_end_to_end_badge() {
         for (item_type in listOf("sent", "scheduled", "draft")) {
             assertFalse(item_type, message(item_type = item_type).is_e2e_encrypted)
-            assertFalse(item_type, message(item_type = item_type, e2e_verified = true).is_e2e_encrypted)
         }
     }
 
     @Test
-    fun own_copy_sealed_on_this_account_is_end_to_end_encrypted() {
-        for (item_type in listOf("sent", "scheduled", "draft")) {
-            assertTrue(item_type, message(item_type = item_type, own_sealed = true).is_e2e_encrypted)
+    fun draft_sealed_on_this_account_is_end_to_end_encrypted() {
+        assertTrue(message(item_type = "draft", own_sealed = true).is_e2e_encrypted)
+        assertFalse(message(item_type = "draft", e2e_verified = true).is_e2e_encrypted)
+    }
+
+    @Test
+    fun own_sent_copy_seal_without_send_evidence_stays_in_transit() {
+        for (item_type in listOf("sent", "scheduled")) {
+            val sealed = message(item_type = item_type, own_sealed = true)
+
+            assertFalse(item_type, sealed.is_e2e_encrypted)
+            assertFalse(item_type, thread_is_end_to_end_encrypted(listOf(sealed)))
+        }
+    }
+
+    @Test
+    fun own_sent_copy_with_a_verified_sealed_body_is_end_to_end_encrypted() {
+        for (item_type in listOf("sent", "scheduled")) {
+            assertTrue(item_type, message(item_type = item_type, e2e_verified = true).is_e2e_encrypted)
+            assertTrue(
+                item_type,
+                message(item_type = item_type, e2e_verified = true, own_sealed = true).is_e2e_encrypted,
+            )
+            assertFalse(
+                item_type,
+                message(item_type = item_type, is_external = true, e2e_verified = true).is_e2e_encrypted,
+            )
+        }
+    }
+
+    @Test
+    fun own_sent_copy_with_send_evidence_is_end_to_end_encrypted() {
+        for (scope in org.astermail.android.crypto.SentEncryptionScope.values()) {
+            val copy = message(item_type = "sent", is_external = true).copy(sent_encryption_scope = scope)
+
+            assertTrue(scope.name, copy.is_e2e_encrypted)
         }
     }
 
@@ -302,7 +334,7 @@ class EncryptionBadgeSemanticsTest {
 
         val verified = decrypted(e2e_verified = true, own_sealed = false, item_type = "received")
         val unverified = decrypted(e2e_verified = false, own_sealed = false, item_type = "received")
-        val sealed = decrypted(e2e_verified = false, own_sealed = true, item_type = "sent")
+        val sealed = decrypted(e2e_verified = false, own_sealed = true, item_type = "draft")
         val restore = { message: ThreadMessageDecrypted ->
             org.astermail.android.mail.thread_message_of(org.astermail.android.mail.thread_snapshot_of(message))
         }
