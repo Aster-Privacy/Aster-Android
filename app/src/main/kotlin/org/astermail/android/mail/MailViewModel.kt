@@ -5712,6 +5712,11 @@ class MailViewModel @Inject constructor(
         sender_email: String? = null,
     ): PostQuantumCoverage = repository.check_post_quantum_coverage(recipients, sender_email)
 
+    suspend fun find_unregistered_aster_addresses(
+        recipients: List<String>,
+        sender_email: String? = null,
+    ): List<String> = repository.find_unregistered_aster_addresses(recipients, sender_email)
+
     suspend fun require_encryption_setting(): Boolean? = repository.require_encryption_setting()
 
     suspend fun verified_external_key_fingerprint_changes(
