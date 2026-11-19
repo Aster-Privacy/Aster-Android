@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
+import org.astermail.android.api.ApiError
 import org.astermail.android.api.subscriptions.BulkUnsubscribeRequest
 import org.astermail.android.api.subscriptions.DeleteSubscriptionsRequest
 import org.astermail.android.api.subscriptions.MailingListStats
@@ -63,6 +64,24 @@ data class MailingListsState(
 
 internal const val BULK_UNSUBSCRIBE_LIMIT = 50
 internal const val DELETE_SUBSCRIPTIONS_LIMIT = 500
+
+internal fun is_missing_delete_endpoint(error: Throwable): Boolean =
+    error is ApiError.NotFoundError || (error is ApiError.ServerError && error.code == 405)
+
+internal suspend fun delete_subscription_senders(
+    senders: List<String>,
+    delete_chunk: suspend (List<String>) -> Unit,
+): Boolean {
+    try {
+        senders.chunked(DELETE_SUBSCRIPTIONS_LIMIT).forEach { delete_chunk(it) }
+        return true
+    } catch (e: CancellationException) {
+        throw e
+    } catch (t: Throwable) {
+        if (is_missing_delete_endpoint(t)) return false
+        throw t
+    }
+}
 
 @HiltViewModel
 class MailingListsViewModel @Inject constructor(
@@ -333,7 +352,7 @@ class MailingListsViewModel @Inject constructor(
         _state.value = _state.value.copy(pending_ids = _state.value.pending_ids + ids)
         viewModelScope.launch {
             try {
-                senders.chunked(DELETE_SUBSCRIPTIONS_LIMIT).forEach { chunk ->
+                delete_subscription_senders(senders) { chunk ->
                     api.delete_senders(DeleteSubscriptionsRequest(chunk))
                 }
                 deleted_store.record_deleted(senders)
