@@ -2409,7 +2409,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `save_preferences recovers and re-encrypts under current key when server blob is undecryptable`() = runTest {
+    fun `save_preferences never overwrites a server blob this device cannot decrypt`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
             org.astermail.android.api.preferences.EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
@@ -2450,11 +2450,15 @@ class SettingsViewModelTest {
         }
         advanceUntilIdle()
 
+        io.mockk.clearMocks(preferences_cache, answers = false, recordedCalls = true)
+
         fresh_vm.save_preferences(UserPreferences(load_remote_images = "always"))
         advanceUntilIdle()
 
-        assertEquals(SaveStatus.SAVED, fresh_vm.state.value.save_status)
-        coVerify(exactly = 1) { preferences_api.save_encrypted_preferences(any()) }
+        assertEquals(SaveStatus.ERROR, fresh_vm.state.value.save_status)
+        assertTrue(fresh_vm.state.value.preferences_locked)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        verify(exactly = 0) { preferences_cache.write(any(), any()) }
     }
 
     private fun test_prefs_key(identity_key: String): ByteArray =
@@ -2771,6 +2775,119 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `undecryptable preferences without a cache never save defaults over the server copy`() = runTest {
+        every { session_key_store.get_identity_key() } returns "identity_after_password_change"
+        server_blob(
+            encrypt_test_blob(
+                """{"show_aster_branding":false,"compact_mode":true,"inbox_categories_enabled":false}""",
+                "identity_unknown_to_this_device",
+            ),
+        )
+        every { preferences_cache.read(any()) } returns null
+        val target = new_vm()
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+
+        assertTrue(target.state.value.preferences_locked)
+        assertFalse(target.state.value.preferences_authoritative)
+
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+
+        val shown = target.state.value.preferences ?: UserPreferences()
+        target.save_preferences(shown.copy(locked_data_banner_dismissed = "banner"))
+        target.save_preferences(shown.copy(emoji_skin_tone = "medium"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences_raw(any()) }
+    }
+
+    @Test
+    fun `preferences save again once the server copy opens after a failed load`() = runTest {
+        every { session_key_store.get_identity_key() } returns "user_identity_key"
+        server_blob(encrypt_test_blob("""{"show_aster_branding":false}""", "identity_unknown_to_this_device"))
+        every { preferences_cache.read(any()) } returns null
+        val target = new_vm()
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_locked)
+
+        server_blob(encrypt_test_blob("""{"show_aster_branding":false,"compact_mode":true}""", "user_identity_key"))
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+
+        assertFalse(target.state.value.preferences_locked)
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertEquals(true, target.state.value.preferences?.compact_mode)
+
+        val request = io.mockk.slot<org.astermail.android.api.preferences.SaveEncryptedPreferencesRequest>()
+        coEvery { preferences_api.save_encrypted_preferences(capture(request)) } returns Unit
+        target.save_preferences(target.state.value.preferences!!.copy(emoji_skin_tone = "medium"))
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.SAVED, target.state.value.save_status)
+        val written = decrypt_with_raw_key(
+            request.captured.encrypted_preferences,
+            request.captured.preferences_nonce,
+            test_prefs_key("user_identity_key"),
+        )
+        assertTrue(written.contains("\"show_aster_branding\":false"))
+        assertTrue(written.contains("\"compact_mode\":true"))
+    }
+
+    @Test
+    fun `signatures that fail to decrypt keep their cached text`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val cached = listOf(
+            DecryptedSignature(
+                id = "sig_1",
+                name = "Work",
+                content = "Kind regards, Sam",
+                is_default = true,
+                is_html = false,
+                alias_id = null,
+                placement = null,
+            ),
+        )
+        every { preferences_cache.read_signatures("user_1") } returns
+            kotlinx.serialization.json.Json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(DecryptedSignature.serializer()),
+                cached,
+            )
+        coEvery { signatures_api.list_signatures() } returns
+            org.astermail.android.api.signatures.ListSignaturesResponse(
+                signatures = listOf(
+                    org.astermail.android.api.signatures.Signature(
+                        id = "sig_1",
+                        encrypted_name = "bm90LWEtdmFsaWQtYmxvYg==",
+                        name_nonce = "AAAAAAAAAAAAAAAA",
+                        encrypted_content = "bm90LWEtdmFsaWQtYmxvYg==",
+                        content_nonce = "AAAAAAAAAAAAAAAA",
+                        is_default = true,
+                    ),
+                ),
+                total = 1,
+            )
+        val written = io.mockk.slot<String>()
+        every { preferences_cache.write_signatures("user_1", capture(written)) } returns Unit
+
+        val target = new_vm()
+        target.load_signature()
+        advanceUntilIdle()
+
+        assertEquals("Kind regards, Sam", target.signatures.value.single().content)
+        assertEquals("Work", target.signatures.value.single().name)
+        assertEquals("Kind regards, Sam", target.signature_text.value)
+        if (written.isCaptured) {
+            assertTrue(written.captured.contains("Kind regards, Sam"))
+        }
+    }
+
+    @Test
     fun `plaintext save preserves web-only keys from the raw load`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
             org.astermail.android.api.preferences.EncryptedPreferencesResponse()
@@ -2933,18 +3050,43 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_preferences marks authoritative after decrypt-failure recovery`() = runTest {
+    fun `load_preferences recovers from the cached copy after a decrypt failure`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns
             org.astermail.android.api.preferences.EncryptedPreferencesResponse(
                 encrypted_preferences = "blob",
                 preferences_nonce = "nonce",
             )
         every { session_key_store.get_identity_key() } returns "current_key_after_password_reset"
+        val cached = UserPreferences(show_aster_branding = false, compact_mode = true)
+        every { session_key_store.get_user_id() } returns "user_1"
+        every { preferences_cache.read("user_1") } returns
+            kotlinx.serialization.json.Json { encodeDefaults = true }
+                .encodeToString(UserPreferences.serializer(), cached)
 
-        vm.load_preferences()
+        val target = new_vm()
         advanceUntilIdle()
 
-        assertTrue(vm.state.value.preferences_authoritative)
+        assertTrue(target.state.value.preferences_authoritative)
+        assertFalse(target.state.value.preferences_locked)
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertEquals(true, target.state.value.preferences?.compact_mode)
+    }
+
+    @Test
+    fun `load_preferences stays locked after a decrypt failure with no cached copy`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            org.astermail.android.api.preferences.EncryptedPreferencesResponse(
+                encrypted_preferences = "blob",
+                preferences_nonce = "nonce",
+            )
+        every { session_key_store.get_identity_key() } returns "current_key_after_password_reset"
+        every { preferences_cache.read(any()) } returns null
+
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertFalse(target.state.value.preferences_authoritative)
+        assertTrue(target.state.value.preferences_locked)
     }
 
     @Test
