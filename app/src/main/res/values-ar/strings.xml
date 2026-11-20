@@ -3795,4 +3795,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">تعذر حذف الاشتراكات المحددة</string>
     <string name="attachment_unverified">مرفق لم يتم التحقق منه</string>
+    <string name="confirm_back_exit">التأكيد قبل الخروج</string>
+    <string name="confirm_back_exit_subtitle">اضغط على زر الرجوع مرتين لمغادرة التطبيق من البريد الوارد</string>
 </resources>

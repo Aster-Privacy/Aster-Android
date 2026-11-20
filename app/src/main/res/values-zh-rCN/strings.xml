@@ -3653,4 +3653,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">无法删除所选订阅</string>
     <string name="attachment_unverified">未验证的附件</string>
+    <string name="confirm_back_exit">退出前确认</string>
+    <string name="confirm_back_exit_subtitle">在收件箱中按两次返回键退出应用</string>
 </resources>

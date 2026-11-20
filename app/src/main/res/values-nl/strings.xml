@@ -3680,4 +3680,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Kan de geselecteerde abonnementen niet verwijderen</string>
     <string name="attachment_unverified">Niet-geverifieerde bijlage</string>
+    <string name="confirm_back_exit">Bevestigen voor afsluiten</string>
+    <string name="confirm_back_exit_subtitle">Druk twee keer op Terug om de app vanuit de inbox te verlaten</string>
 </resources>
