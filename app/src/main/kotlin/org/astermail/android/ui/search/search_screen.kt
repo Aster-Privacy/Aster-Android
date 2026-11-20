@@ -318,18 +318,17 @@ fun SearchScreen(
         SearchLabelIndex(
             settings_state.labels.mapNotNull { label ->
                 org.astermail.android.labels.readable_label_name(label)
-                    ?.let { SearchLabelEntry(it, label.label_token) }
+                    ?.let { SearchLabelEntry(it, label.label_token, is_folder = true) }
             } + settings_state.tags
                 .filter { org.astermail.android.labels.tag_name_readable(it) }
                 .map { SearchLabelEntry(it.encrypted_name, it.tag_token) },
         )
     }
-    val uses_labels = parsed.operators.any { it.key == "label" }
-    LaunchedEffect(uses_labels) {
-        if (uses_labels) {
-            if (settings_state.labels.isEmpty()) settings_vm.load_labels()
-            if (settings_state.tags.isEmpty()) settings_vm.load_tags()
-        }
+    val uses_tags = parsed.operators.any { it.key == "label" }
+    val uses_labels = uses_tags || parsed.operators.any { it.key == "folder" }
+    LaunchedEffect(uses_labels, uses_tags) {
+        if (uses_labels && settings_state.labels.isEmpty()) settings_vm.load_labels()
+        if (uses_tags && settings_state.tags.isEmpty()) settings_vm.load_tags()
     }
     val search_labels = if (uses_labels) label_index else NO_SEARCH_LABELS
 

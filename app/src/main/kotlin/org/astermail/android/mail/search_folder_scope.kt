@@ -31,6 +31,17 @@ fun search_scope_query(folder: String): String? = when (folder) {
     else -> null
 }
 
+fun search_filter_scope_query(filter_kind: String?, filter_name: String): String? {
+    val key = when (filter_kind) {
+        filter_kind_folder -> "folder"
+        filter_kind_label, filter_kind_tag -> "label"
+        else -> return null
+    }
+    val name = filter_name.replace("\"", "").trim()
+    if (name.isEmpty()) return null
+    return if (name.any { it.isWhitespace() }) "$key:\"$name\"" else "$key:$name"
+}
+
 fun search_narrow_query(folder: String): String? = when (folder) {
     "inbox" -> "in:inbox"
     "sent" -> "in:sent"

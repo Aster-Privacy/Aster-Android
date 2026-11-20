@@ -344,6 +344,7 @@ fun InboxScreen(
     on_open_external_accounts: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
+    search_scoped_to_title: Boolean = false,
     inbox_category: String = "primary",
     on_folder_change: (String) -> Unit = {},
     custom_folders: List<quick_folder_node> = emptyList(),
@@ -2817,7 +2818,7 @@ fun InboxScreen(
             Spacer(Modifier.height(status_bar_top))
                     inbox_top_bar(
                         folder_title = display_title ?: folder_display_name(current_folder),
-                        search_scoped = org.astermail.android.mail.search_scope_query(current_folder) != null,
+                        search_scoped = search_scoped_to_title || org.astermail.android.mail.search_scope_query(current_folder) != null,
                         unread_count = folder_count,
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
