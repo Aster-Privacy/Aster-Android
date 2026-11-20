@@ -187,6 +187,46 @@ class AddressIdentityVectorsTest {
         assertNotNull(AddressIdentity.derive_key_set(good, address)?.pq_identity_public)
     }
 
+    private fun with_high_s(signature: ByteArray, offset: Int): ByteArray {
+        val n = org.bouncycastle.asn1.sec.SECNamedCurves.getByName("secp256r1").n
+        val s = java.math.BigInteger(1, signature.copyOfRange(offset + 32, offset + 64))
+        val flipped = n.subtract(s).toByteArray().let { raw ->
+            if (raw.size > 32) raw.copyOfRange(raw.size - 32, raw.size) else ByteArray(32 - raw.size) + raw
+        }
+        val out = signature.copyOf()
+        System.arraycopy(flipped, 0, out, offset + 32, 32)
+        return out
+    }
+
+    @Test
+    fun rejects_an_entry_whose_signature_uses_a_high_s_value() {
+        val entry = vectors.getJSONObject("entry")
+        val raw = java.util.Base64.getDecoder().decode(entry.getString("signed_prekey_signature"))
+        val verification = AddressIdentity.verify_entry(
+            vectors.getString("address"),
+            entry.getString("kem_identity_key"),
+            entry.getString("signed_prekey"),
+            java.util.Base64.getEncoder().encodeToString(with_high_s(raw, 0)),
+            entry.getString("pq_kem_public_key"),
+        )
+        assertFalse(verification.valid)
+    }
+
+    @Test
+    fun drops_an_endorsement_whose_signature_uses_a_high_s_value() {
+        val entry = vectors.getJSONObject("entry")
+        val raw = java.util.Base64.getDecoder().decode(entry.getString("signed_prekey_signature"))
+        val verification = AddressIdentity.verify_entry(
+            vectors.getString("address"),
+            entry.getString("kem_identity_key"),
+            entry.getString("signed_prekey"),
+            java.util.Base64.getEncoder().encodeToString(with_high_s(raw, 64 + 65)),
+            entry.getString("pq_kem_public_key"),
+        )
+        assertTrue(verification.valid)
+        assertEquals(emptyList<String>(), verification.endorsers)
+    }
+
     @Test
     fun rejects_an_entry_for_another_address() {
         val entry = vectors.getJSONObject("entry")
