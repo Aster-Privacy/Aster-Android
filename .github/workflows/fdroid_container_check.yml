@@ -23,16 +23,19 @@ on:
       - '.github/workflows/fdroid_container_check.yml'
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   fdroid_container:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
+
       - name: build fdroid flavor in the buildserver image
-        run: bash scripts/build_fdroid_in_container.sh "$(git rev-parse HEAD)" "$RUNNER_TEMP/fdroid_out"
+        run: bash scripts/build_fdroid_in_container.sh "$(git rev-parse HEAD)" "${RUNNER_TEMP}/fdroid_out"
