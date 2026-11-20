@@ -3704,5 +3704,5 @@
     <string name="delete_subscriptions_failed">Impossibile eliminare le iscrizioni selezionate</string>
     <string name="attachment_unverified">Allegato non verificato</string>
     <string name="confirm_back_exit">Conferma prima di uscire</string>
-    <string name="confirm_back_exit_subtitle">Premi Indietro due volte per uscire dall'app dalla posta in arrivo</string>
+    <string name="confirm_back_exit_subtitle">Premi Indietro due volte per uscire dall\'app dalla posta in arrivo</string>
 </resources>

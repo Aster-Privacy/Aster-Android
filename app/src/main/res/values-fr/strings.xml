@@ -3733,5 +3733,5 @@
     <string name="delete_subscriptions_failed">Impossible de supprimer les abonnements sélectionnés</string>
     <string name="attachment_unverified">Pièce jointe non vérifiée</string>
     <string name="confirm_back_exit">Confirmer avant de quitter</string>
-    <string name="confirm_back_exit_subtitle">Appuyez deux fois sur Retour pour quitter l'app depuis la boîte de réception</string>
+    <string name="confirm_back_exit_subtitle">Appuyez deux fois sur Retour pour quitter l\'app depuis la boîte de réception</string>
 </resources>
