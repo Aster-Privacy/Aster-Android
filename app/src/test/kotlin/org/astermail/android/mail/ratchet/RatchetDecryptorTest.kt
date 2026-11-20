@@ -1757,6 +1757,21 @@ class RatchetDecryptorTest {
     }
 
     @Test
+    fun `a session start message seen before stops without trying a saved copy`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val escrow = escrow_returning("saved copy")
+        val decryptor = chain_decryptor(fixture, stateful_store(), real_pin_store(), mockk(relaxed = true), escrow)
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first"))
+        val replayed = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_second")
+
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, replayed)
+        coVerify(exactly = 0) { escrow.fetch_bound(any(), any(), any()) }
+    }
+
+    @Test
     fun `a session start message opened again under its own id keeps the session`() = runTest {
         val fixture = build_fixture()
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")

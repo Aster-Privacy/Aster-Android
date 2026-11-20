@@ -399,14 +399,13 @@ class RatchetDecryptor @Inject constructor(
                         message_id,
                     )
                     if (claim == BootstrapClaim.REPLAYED) {
-                        decrypt_error = IllegalStateException("opening message was already used")
-                    } else {
-                        bootstrap_claim = claim
-                        state = recovered.first
-                        plaintext = recovered.second
-                        consume_pq_prekey(recipient)
-                        consume_ec_one_time_prekey(recipient)
+                        throw IllegalStateException("opening message was already used")
                     }
+                    bootstrap_claim = claim
+                    state = recovered.first
+                    plaintext = recovered.second
+                    consume_pq_prekey(recipient)
+                    consume_ec_one_time_prekey(recipient)
                 }
             }
 
