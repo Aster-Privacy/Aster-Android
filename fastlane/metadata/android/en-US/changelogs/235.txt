@@ -1,0 +1,3 @@
+What's new:
+
+- To leave the app with one press of Back from your inbox, turn off Confirm before exiting in Settings > Mail behavior.
