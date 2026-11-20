@@ -40,6 +40,10 @@ data class LaneReplayRecord(val f: Long, val e: List<LaneReplayEntry>) {
 
 data class LaneReplayClaim(val freshness: LaneFreshness, val record: LaneReplayRecord, val changed: Boolean)
 
+enum class BootstrapClaim { FIRST, SAME_MESSAGE, REPLAYED, UNKNOWN }
+
+data class BootstrapRecordClaim(val claim: BootstrapClaim, val record: LaneReplayRecord, val changed: Boolean)
+
 object LaneReplay {
     const val MAX_ENTRIES = 1024
     const val MAX_TOTAL_ENTRIES = 4096
@@ -47,6 +51,8 @@ object LaneReplay {
     const val GLOBAL_FLOOR_KEY = "*"
     private const val DIGEST_BYTES = 16
     private const val MAX_SAFE_INTEGER = 9_007_199_254_740_991L
+
+    const val BOOTSTRAP_RECORD_MAX_AGE_MS = 365L * 24 * 60 * 60 * 1000
 
     val EMPTY = LaneReplayRecord(0, emptyList())
 
@@ -60,6 +66,42 @@ object LaneReplay {
     fun key(conversation_id: String, snonce: String): String = short_digest("$conversation_id\n$snonce")
 
     fun message(message_id: String): String = short_digest(message_id)
+
+    fun bootstrap_key(
+        sender_identity_key: String,
+        ephemeral_key: String,
+        pq_ciphertext: String?,
+        dh_public: String,
+        message_number: Int,
+    ): String = short_digest(
+        listOf(
+            "bootstrap",
+            sender_identity_key,
+            ephemeral_key,
+            pq_ciphertext.orEmpty(),
+            dh_public,
+            message_number.toString(),
+        ).joinToString("\n"),
+    )
+
+    fun claim_bootstrap(stored: Any?, key: String, message: String, now: Long): BootstrapRecordClaim {
+        val record = normalize(stored)
+        val live = record.e.filter { now - it.t <= BOOTSTRAP_RECORD_MAX_AGE_MS }
+        val pruned = live.size != record.e.size
+        val prior = live.firstOrNull { it.k == key }
+        if (prior != null) {
+            return BootstrapRecordClaim(
+                if (prior.m == message) BootstrapClaim.SAME_MESSAGE else BootstrapClaim.REPLAYED,
+                LaneReplayRecord(record.f, live),
+                changed = pruned,
+            )
+        }
+        return BootstrapRecordClaim(
+            BootstrapClaim.FIRST,
+            cap(LaneReplayRecord(record.f, live + LaneReplayEntry(key, message, now))),
+            changed = true,
+        )
+    }
 
     fun is_count(value: Long): Boolean = value in 0..MAX_SAFE_INTEGER
 

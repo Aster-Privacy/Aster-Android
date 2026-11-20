@@ -315,6 +315,9 @@ class RatchetDecryptor @Inject constructor(
 
             var state = state_store.load(conversation_id)
             val state_loaded_locally = state != null
+            val loaded_dh_chains = state?.let { loaded ->
+                setOfNotNull(loaded.dh_remote_public) + loaded.skipped_message_keys.map { it.dh_public }
+            }.orEmpty()
             val established_identity_key = state?.remote_identity_key
             val bootstrap_already_accepted = can_bootstrap && runCatching {
                 identity_pins.is_replayed_bootstrap(conversation_id, recipient.ephemeral_key.orEmpty())
@@ -333,6 +336,7 @@ class RatchetDecryptor @Inject constructor(
             var plaintext: String? = null
             var decrypt_error: Throwable? = null
             var chained = false
+            var bootstrap_claim: BootstrapClaim? = null
 
             if (state != null) {
                 try {
@@ -388,10 +392,21 @@ class RatchetDecryptor @Inject constructor(
                     )
                 }
                 if (recovered != null) {
-                    state = recovered.first
-                    plaintext = recovered.second
-                    consume_pq_prekey(recipient)
-                    consume_ec_one_time_prekey(recipient)
+                    val claim = identity_pins.claim_bootstrap(
+                        sender_email,
+                        envelope.sender_identity_key,
+                        recipient,
+                        message_id,
+                    )
+                    if (claim == BootstrapClaim.REPLAYED) {
+                        decrypt_error = IllegalStateException("opening message was already used")
+                    } else {
+                        bootstrap_claim = claim
+                        state = recovered.first
+                        plaintext = recovered.second
+                        consume_pq_prekey(recipient)
+                        consume_ec_one_time_prekey(recipient)
+                    }
                 }
             }
 
@@ -472,6 +487,12 @@ class RatchetDecryptor @Inject constructor(
             val trusted_sighting = continuity == SenderIdentityContinuity.KNOWN ||
                 (continuity == SenderIdentityContinuity.NEW && directory_confirmed)
             val unconfirmed_sender = continuity != SenderIdentityContinuity.KNOWN
+            if (!chained && state_loaded_locally &&
+                (bootstrap_claim != BootstrapClaim.FIRST || recipient.header.dh_public in loaded_dh_chains)
+            ) {
+                cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
+                return@with_lock resolved
+            }
             if (!chained && state_loaded_locally &&
                 !bootstrap_may_replace_session(
                     conversation_id,

@@ -214,4 +214,55 @@ class LaneReplayTest {
         assertFalse(key == LaneReplay.key("conv", "other"))
         assertFalse(key == LaneReplay.key("other", "nonce"))
     }
+
+    @Test
+    fun a_session_start_message_is_first_the_first_time_it_is_opened() {
+        val claim = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10)
+
+        assertEquals(BootstrapClaim.FIRST, claim.claim)
+        assertTrue(claim.changed)
+        assertEquals(listOf(LaneReplayEntry("k", "m", 10)), claim.record.e)
+    }
+
+    @Test
+    fun a_session_start_message_opened_again_under_its_own_id_is_the_same_message() {
+        val stored = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10).record
+
+        val claim = LaneReplay.claim_bootstrap(stored, "k", "m", 20)
+
+        assertEquals(BootstrapClaim.SAME_MESSAGE, claim.claim)
+        assertFalse(claim.changed)
+    }
+
+    @Test
+    fun a_session_start_message_opened_again_under_another_id_is_replayed() {
+        val stored = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10).record
+
+        val claim = LaneReplay.claim_bootstrap(stored.to_json().toString(), "k", "other", 20)
+
+        assertEquals(BootstrapClaim.REPLAYED, claim.claim)
+    }
+
+    @Test
+    fun session_start_records_older_than_a_year_are_dropped() {
+        val stored = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10).record
+        val later = 11 + LaneReplay.BOOTSTRAP_RECORD_MAX_AGE_MS
+
+        val claim = LaneReplay.claim_bootstrap(stored, "k", "other", later)
+
+        assertEquals(BootstrapClaim.FIRST, claim.claim)
+        assertEquals(listOf(LaneReplayEntry("k", "other", later)), claim.record.e)
+    }
+
+    @Test
+    fun the_session_start_key_covers_every_field_of_the_opening_message() {
+        val base = LaneReplay.bootstrap_key("id", "eph", null, "dh", 0)
+
+        assertEquals(base, LaneReplay.bootstrap_key("id", "eph", "", "dh", 0))
+        assertTrue(base != LaneReplay.bootstrap_key("other", "eph", null, "dh", 0))
+        assertTrue(base != LaneReplay.bootstrap_key("id", "other", null, "dh", 0))
+        assertTrue(base != LaneReplay.bootstrap_key("id", "eph", "ct", "dh", 0))
+        assertTrue(base != LaneReplay.bootstrap_key("id", "eph", null, "other", 0))
+        assertTrue(base != LaneReplay.bootstrap_key("id", "eph", null, "dh", 1))
+    }
 }

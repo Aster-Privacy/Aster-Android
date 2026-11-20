@@ -248,6 +248,7 @@ class RatchetDecryptorTest {
         val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
         every { identity_pins.sender_continuity(any(), any(), any()) } returns continuity
         coEvery { identity_pins.is_replayed_bootstrap(any(), any()) } returns replayed_bootstrap
+        coEvery { identity_pins.claim_bootstrap(any(), any(), any(), any()) } returns BootstrapClaim.FIRST
         coEvery { identity_pins.record(any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
         every { identity_pins.lane_sender_pin(any()) } returns LaneSenderPin.UNPINNED
         coEvery { identity_pins.claim_lane_nonce(any(), any(), any(), any(), any(), any()) } returns
@@ -1738,6 +1739,69 @@ class RatchetDecryptorTest {
         assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_bound"))
 
         assertEquals(RatchetCrypto.b64_encode(fixture.sender_identity_raw), saved.single().remote_identity_key)
+    }
+
+    @Test
+    fun `a session start message opened again under another message id is refused`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val saved = mutableListOf<RatchetState>()
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), mockk(relaxed = true), escrow_returning(null))
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first"))
+        val replayed = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_second")
+
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, replayed)
+        assertEquals(1, saved.size)
+    }
+
+    @Test
+    fun `a session start message opened again under its own id keeps the session`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val saved = mutableListOf<RatchetState>()
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), mockk(relaxed = true), escrow_returning(null))
+
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first"))
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first"))
+
+        assertEquals(1, saved.size)
+    }
+
+    @Test
+    fun `a sender that starts over after a session start message is seen again still replaces the session`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello kchaos")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+        val saved = mutableListOf<RatchetState>()
+        val decryptor = chain_decryptor(fixture, stateful_store(saved), real_pin_store(), mockk(relaxed = true), escrow_returning(null))
+        assertEquals("hello kchaos", decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_first"))
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_second"))
+
+        val restart = X3dh.perform_sender(
+            sender_identity_jwk = fixture.sender_identity_jwk,
+            recipient_identity_raw = RatchetCrypto.b64_decode(fixture.receiver_keys.identity_public_b64),
+            recipient_signed_prekey_raw = RatchetCrypto.b64_decode(fixture.receiver_keys.spk_public_b64),
+        )
+        val restarted = Fixture(
+            conversation_id = fixture.conversation_id,
+            sender_identity_raw = fixture.sender_identity_raw,
+            sender_state = DoubleRatchet.init_sender(
+                conversation_id = fixture.conversation_id,
+                shared_secret = restart.shared_secret,
+                remote_signed_prekey_raw_b64 = fixture.receiver_keys.spk_public_b64,
+            ),
+            sender_ephemeral_raw = restart.ephemeral_public_raw,
+            receiver_keys = fixture.receiver_keys,
+            sender_identity_jwk = fixture.sender_identity_jwk,
+        )
+        val enc_restarted = DoubleRatchet.encrypt(restarted.sender_state, "starting over")
+        val restarted_body = envelope_json(restarted.sender_identity_raw, recipient_data_for(restarted, enc_restarted))
+
+        assertEquals("starting over", decryptor.try_decrypt(restarted_body, listOf(recipient_email), sender_email, "msg_third"))
+        assertEquals(2, saved.size)
     }
 
     @Test
