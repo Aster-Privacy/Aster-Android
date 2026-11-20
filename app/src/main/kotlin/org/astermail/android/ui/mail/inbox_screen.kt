@@ -169,6 +169,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.all_mail_folder
 import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.is_all_mail_folder
+import org.astermail.android.mail.list_count_refreshing
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
@@ -2063,7 +2064,7 @@ fun InboxScreen(
                 val pull_indicator: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {
                     org.astermail.android.ui.common.aster_pull_refresh_indicator(
                         state = pull_state,
-                        refreshing = is_refreshing,
+                        refreshing = is_refreshing || (state_matches_folder && list_count_refreshing(inbox_state)),
                         enabled = !select_mode,
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -2819,6 +2820,12 @@ fun InboxScreen(
                         folder_title = display_title ?: folder_display_name(current_folder),
                         search_scoped = org.astermail.android.mail.search_scope_query(current_folder) != null,
                         unread_count = folder_count,
+                        unread_count_refreshing = unread_count_refreshing(
+                            folder = current_folder,
+                            category_counts = categories_enabled && category_unread.isNotEmpty(),
+                            stats_refreshing = inbox_state.stats_refreshing,
+                            list_refreshing = state_matches_folder && list_count_refreshing(inbox_state),
+                        ),
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
                         on_enter_select_mode = {
@@ -3382,6 +3389,7 @@ internal fun inbox_top_bar(
     folder_title: String,
     search_scoped: Boolean = false,
     unread_count: Int,
+    unread_count_refreshing: Boolean = false,
     on_open_drawer: () -> Unit,
     on_open_search: () -> Unit,
     on_enter_select_mode: () -> Unit,
@@ -3445,12 +3453,18 @@ internal fun inbox_top_bar(
                             .widthIn(max = 180.dp),
                     )
                     if (unread_count > 0) {
+                        val count_alpha by animateFloatAsState(
+                            targetValue = if (unread_count_refreshing) STALE_COUNT_ALPHA else 1f,
+                            animationSpec = tween(180),
+                            label = "unread_count_alpha",
+                        )
                         Spacer(Modifier.width(6.dp))
                         Text(
                             text = unread_count.toString(),
                             color = colors.accent_blue,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
+                            modifier = Modifier.graphicsLayer { alpha = count_alpha },
                         )
                     }
                     Spacer(Modifier.width(2.dp))
@@ -5090,3 +5104,22 @@ internal fun filtered_load_more_wanted(
 
 internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
     is_loading_more && !removal_quiet
+
+private const val STALE_COUNT_ALPHA = 0.35f
+
+internal fun unread_count_refreshing(
+    folder: String,
+    category_counts: Boolean,
+    stats_refreshing: Boolean,
+    list_refreshing: Boolean,
+): Boolean = when {
+    folder_count_from_stats(folder, category_counts) -> stats_refreshing
+    folder == "inbox" -> list_refreshing
+    else -> false
+}
+
+internal fun folder_count_from_stats(folder: String, category_counts: Boolean): Boolean = when (folder) {
+    "inbox" -> !category_counts
+    "drafts", "scheduled" -> true
+    else -> false
+}
