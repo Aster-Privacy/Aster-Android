@@ -616,6 +616,7 @@ class ContactsViewModel @Inject constructor(
             ContactsContract.Data.MIMETYPE,
             ContactsContract.Data.DATA1,
             ContactsContract.Data.DATA2,
+            ContactsContract.Data.DATA3,
             ContactsContract.Data.DATA4,
             ContactsContract.Data.DATA7,
             ContactsContract.Data.DATA8,
@@ -625,6 +626,12 @@ class ContactsViewModel @Inject constructor(
 
         val all_phones = mutableMapOf<String, MutableList<ContactEntry>>()
         val all_emails = mutableMapOf<String, MutableList<ContactEntry>>()
+        val labels = org.astermail.android.contacts.sync.DeviceLabels(
+            sibling = context.getString(R.string.contact_sync_label_sibling),
+            graduation = context.getString(R.string.contact_sync_label_graduation),
+            wedding = context.getString(R.string.contact_sync_label_wedding),
+            personal = context.getString(R.string.personal),
+        )
 
         val selection = ContactsContract.Data.MIMETYPE +
             " IN (" + mime_types.joinToString(",") { "?" } + ") AND " + foreign_selection
@@ -640,6 +647,7 @@ class ContactsViewModel @Inject constructor(
             val mime_idx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE)
             val d1_idx = cursor.getColumnIndex(ContactsContract.Data.DATA1)
             val d2_idx = cursor.getColumnIndex(ContactsContract.Data.DATA2)
+            val d3_idx = cursor.getColumnIndex(ContactsContract.Data.DATA3)
             val d4_idx = cursor.getColumnIndex(ContactsContract.Data.DATA4)
             val d7_idx = cursor.getColumnIndex(ContactsContract.Data.DATA7)
             val d8_idx = cursor.getColumnIndex(ContactsContract.Data.DATA8)
@@ -656,17 +664,18 @@ class ContactsViewModel @Inject constructor(
                 val mime = cursor.getString(mime_idx) ?: continue
                 val value = column(d1_idx)
                 val kind = if (d2_idx < 0) 0 else cursor.getInt(d2_idx)
+                val kind_code = if (d2_idx < 0 || cursor.isNull(d2_idx)) null else kind
 
                 if (mime == ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE && value.isNotBlank()) {
                     val list = all_emails.getOrPut(contact_id) { mutableListOf() }
                     if (list.none { it.value.equals(value, ignoreCase = true) }) {
-                        list.add(ContactEntry(value, device_email_type(kind)))
+                        list.add(device_entry(mime, value, kind_code, column(d3_idx), labels))
                     }
                 }
                 if (mime == ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE && value.isNotBlank()) {
                     val list = all_phones.getOrPut(contact_id) { mutableListOf() }
                     if (list.none { phone_digits(it.value) == phone_digits(value) }) {
-                        list.add(ContactEntry(value, device_phone_type(kind)))
+                        list.add(device_entry(mime, value, kind_code, column(d3_idx), labels))
                     }
                 }
 
@@ -775,10 +784,9 @@ class ContactsViewModel @Inject constructor(
             val contact = contacts[contact_id] ?: continue
             val device_phones = all_phones[contact_id].orEmpty()
             val device_emails = all_emails[contact_id].orEmpty()
-            if (device_phones.size < 2 && device_emails.size < 2) continue
             contacts[contact_id] = contact.with_typed_fields(
-                emails = if (device_emails.size >= 2) device_emails else contact.email_entries(),
-                phones = if (device_phones.size >= 2) device_phones else contact.phone_entries(),
+                emails = device_emails.ifEmpty { contact.email_entries() },
+                phones = device_phones.ifEmpty { contact.phone_entries() },
                 addresses = contact.address_entries(),
             )
         }
@@ -1315,21 +1323,28 @@ class ContactsViewModel @Inject constructor(
     }
 }
 
-private fun device_email_type(kind: Int): String = when (kind) {
-    ContactsContract.CommonDataKinds.Email.TYPE_HOME -> ContactEntry.TYPE_HOME
-    ContactsContract.CommonDataKinds.Email.TYPE_WORK -> ContactEntry.TYPE_WORK
-    else -> ContactEntry.TYPE_OTHER
+private fun device_entry(
+    mime: String,
+    value: String,
+    kind: Int?,
+    label: String,
+    labels: org.astermail.android.contacts.sync.DeviceLabels,
+): ContactEntry {
+    val row = org.astermail.android.contacts.sync.DeviceDataRow(
+        mime,
+        mapOf(
+            ContactsContract.Data.DATA1 to value,
+            ContactsContract.Data.DATA2 to kind,
+            ContactsContract.Data.DATA3 to label,
+        ),
+    )
+    val entry = if (mime == ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) {
+        org.astermail.android.contacts.sync.device_email_entry(row, labels)
+    } else {
+        org.astermail.android.contacts.sync.device_phone_entry(row, labels)
+    }
+    return ContactEntry(entry.value, entry.type, entry.label)
 }
 
 private fun phone_digits(value: String): String = value.filter { it.isDigit() }
 
-private fun device_phone_type(kind: Int): String = when (kind) {
-    ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE -> ContactEntry.TYPE_MOBILE
-    ContactsContract.CommonDataKinds.Phone.TYPE_HOME -> ContactEntry.TYPE_HOME
-    ContactsContract.CommonDataKinds.Phone.TYPE_WORK,
-    ContactsContract.CommonDataKinds.Phone.TYPE_WORK_MOBILE -> ContactEntry.TYPE_WORK
-    ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK,
-    ContactsContract.CommonDataKinds.Phone.TYPE_FAX_HOME -> ContactEntry.TYPE_FAX
-    ContactsContract.CommonDataKinds.Phone.TYPE_PAGER -> ContactEntry.TYPE_PAGER
-    else -> ContactEntry.TYPE_OTHER
-}

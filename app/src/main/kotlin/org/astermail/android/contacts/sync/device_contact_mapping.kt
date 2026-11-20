@@ -279,6 +279,31 @@ private fun DeviceDataRow.int(column: String): Int? = values[column]?.toString()
 private fun String.matches_label(localized: String, fallback: String): Boolean =
     equals(localized, ignoreCase = true) || equals(fallback, ignoreCase = true)
 
+fun device_email_entry(row: DeviceDataRow, labels: DeviceLabels): CardEntry {
+    val (type, label) = row.typed(Email.TYPE, Email.LABEL, Email.TYPE_CUSTOM, labels, true) { code ->
+        when (code) {
+            Email.TYPE_HOME -> "home"
+            Email.TYPE_WORK -> "work"
+            else -> "other"
+        }
+    }
+    return CardEntry(row.text(Email.ADDRESS), type, label)
+}
+
+fun device_phone_entry(row: DeviceDataRow, labels: DeviceLabels): CardEntry {
+    val (type, label) = row.typed(Phone.TYPE, Phone.LABEL, Phone.TYPE_CUSTOM, labels, true) { code ->
+        when (code) {
+            Phone.TYPE_MOBILE -> "mobile"
+            Phone.TYPE_HOME -> "home"
+            Phone.TYPE_WORK, Phone.TYPE_WORK_MOBILE, Phone.TYPE_COMPANY_MAIN -> "work"
+            Phone.TYPE_FAX_HOME, Phone.TYPE_FAX_WORK, Phone.TYPE_OTHER_FAX -> "fax"
+            Phone.TYPE_PAGER, Phone.TYPE_WORK_PAGER -> "pager"
+            else -> "other"
+        }
+    }
+    return CardEntry(row.text(Phone.NUMBER), type, label)
+}
+
 fun contact_card_from_device_rows(
     rows: List<DeviceDataRow>,
     starred: Boolean,
@@ -324,29 +349,8 @@ fun contact_card_from_device_rows(
         job_title = organization?.text(Organization.TITLE).orEmpty(),
         notes = notes.joinToString("\n"),
         birthday = birthday?.text(Event.START_DATE).orEmpty(),
-        emails = of(Email.CONTENT_ITEM_TYPE).map {
-            val (type, label) = it.typed(Email.TYPE, Email.LABEL, Email.TYPE_CUSTOM, labels, true) { code ->
-                when (code) {
-                    Email.TYPE_HOME -> "home"
-                    Email.TYPE_WORK -> "work"
-                    else -> "other"
-                }
-            }
-            CardEntry(it.text(Email.ADDRESS), type, label)
-        },
-        phones = of(Phone.CONTENT_ITEM_TYPE).map {
-            val (type, label) = it.typed(Phone.TYPE, Phone.LABEL, Phone.TYPE_CUSTOM, labels, true) { code ->
-                when (code) {
-                    Phone.TYPE_MOBILE -> "mobile"
-                    Phone.TYPE_HOME -> "home"
-                    Phone.TYPE_WORK, Phone.TYPE_WORK_MOBILE, Phone.TYPE_COMPANY_MAIN -> "work"
-                    Phone.TYPE_FAX_HOME, Phone.TYPE_FAX_WORK, Phone.TYPE_OTHER_FAX -> "fax"
-                    Phone.TYPE_PAGER, Phone.TYPE_WORK_PAGER -> "pager"
-                    else -> "other"
-                }
-            }
-            CardEntry(it.text(Phone.NUMBER), type, label)
-        },
+        emails = of(Email.CONTENT_ITEM_TYPE).map { device_email_entry(it, labels) },
+        phones = of(Phone.CONTENT_ITEM_TYPE).map { device_phone_entry(it, labels) },
         addresses = of(StructuredPostal.CONTENT_ITEM_TYPE).map {
             val street = it.text(StructuredPostal.STREET)
             val city = it.text(StructuredPostal.CITY)

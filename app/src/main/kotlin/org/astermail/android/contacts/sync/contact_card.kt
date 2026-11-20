@@ -271,7 +271,7 @@ fun contact_card_from_json_object(obj: JSONObject): ContactCard {
         obj.entries("email_entries")
     } else {
         val arr = obj.optJSONArray("emails")
-        buildList {
+        val listed = buildList {
             if (arr != null) {
                 for (i in 0 until arr.length()) {
                     val value = if (arr.isNull(i)) "" else arr.optString(i, "")
@@ -279,11 +279,17 @@ fun contact_card_from_json_object(obj: JSONObject): ContactCard {
                 }
             }
         }
+        val work_email = obj.str("work_email").trim()
+        if (work_email.isEmpty() || listed.any { it.value.trim().equals(work_email, ignoreCase = true) }) {
+            listed
+        } else {
+            listed + CardEntry(work_email, "work")
+        }
     }
     val phones = if (obj.has_array_entries("phone_entries")) {
         obj.entries("phone_entries")
     } else {
-        listOf(CardEntry(obj.str("phone"), "mobile"))
+        listOf(CardEntry(obj.str("phone"), "mobile"), CardEntry(obj.str("work_phone"), "work"))
     }
     val addresses = if (obj.has_array_entries("address_entries")) {
         val arr = obj.getJSONArray("address_entries")

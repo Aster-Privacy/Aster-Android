@@ -101,8 +101,7 @@ fun device_entry_keys(contacts: List<Contact>): Set<String> = buildSet {
     }
 }
 
-private fun merge_new_entries(existing: Contact, incoming: Contact, previously_seen: Set<String>?): Contact? {
-    if (previously_seen == null) return null
+private fun merge_new_entries(existing: Contact, incoming: Contact, previously_seen: Set<String>): Contact? {
     val known_emails = existing.email_entries()
     val known_phones = existing.phone_entries()
     val email_set = known_emails.map { normalized_key(it.value) }.toSet()
@@ -160,7 +159,8 @@ fun plan_contact_import(
             ?: name_key(contact)?.let { emailless_index[it] }
         if (target != null) {
             if (target.id.isNotBlank()) {
-                merge_new_entries(updates[target.id] ?: target, contact, previously_seen)?.let { updates[target.id] = it }
+                merge_new_entries(updates[target.id] ?: target, contact, previously_seen.orEmpty())
+                    ?.let { updates[target.id] = it }
             }
             continue
         }

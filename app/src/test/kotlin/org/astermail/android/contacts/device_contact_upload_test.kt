@@ -173,11 +173,52 @@ class device_contact_upload_test {
     }
 
     @Test
-    fun a_first_device_sync_never_merges_into_stored_contacts() {
+    fun a_first_device_sync_merges_missing_entries_into_stored_contacts() {
         val phone = listOf(with_emails("Hal", "hal@example.com", "hal@old.example"))
         val plan = plan_contact_import(phone, listOf(stored("c8", "Hal", email = "hal@example.com")), null)
-        assertTrue(plan.updates.isEmpty())
         assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(
+            listOf("hal@example.com", "hal@old.example"),
+            plan.updates.single().email_entries().map { it.value },
+        )
+    }
+
+    @Test
+    fun a_first_device_sync_adds_the_second_phone_with_its_label() {
+        val phone = listOf(
+            person("Jo", "jo@example.com").with_typed_fields(
+                emails = listOf(ContactEntry("jo@example.com", ContactEntry.TYPE_HOME)),
+                phones = listOf(
+                    ContactEntry("+1 555 0300", ContactEntry.TYPE_WORK),
+                    ContactEntry("+1 555 0301", ContactEntry.TYPE_PERSONAL),
+                ),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(
+            phone,
+            listOf(stored("c9", "Jo", email = "jo@example.com", phone = "+1 555 0300")),
+            null,
+        )
+        val merged = plan.updates.single().phone_entries()
+        assertEquals(listOf("+1 555 0300", "+1 555 0301"), merged.map { it.value })
+        assertEquals(ContactEntry.TYPE_PERSONAL, merged[1].type)
+    }
+
+    @Test
+    fun a_first_device_sync_keeps_both_phones_on_a_new_contact() {
+        val phone = listOf(
+            person("Kit").with_typed_fields(
+                emails = emptyList(),
+                phones = listOf(
+                    ContactEntry("+1 555 0400", ContactEntry.TYPE_WORK),
+                    ContactEntry("+1 555 0401", ContactEntry.TYPE_PERSONAL),
+                ),
+                addresses = emptyList(),
+            ),
+        )
+        val created = plan_contact_import(phone, emptyList(), null).new_contacts.single()
+        assertEquals(listOf("+1 555 0400", "+1 555 0401"), created.phone_entries().map { it.value })
     }
 
     @Test

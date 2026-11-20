@@ -193,4 +193,84 @@ class ContactCardTest {
         val merged = merge_contact_cards(null, full_card.copy(notes = "local"), full_card)
         assertEquals("local", merged.notes)
     }
+
+    @Test
+    fun legacy_payload_keeps_work_phone_and_work_email() {
+        val card = contact_card_from_json(
+            """{"first_name":"Ada","phone":"+1 555 0100","work_phone":"+1 555 0200",""" +
+                """"emails":["ada@example.com"],"work_email":"ada@work.example"}""",
+        ).normalized()
+        assertEquals(
+            listOf(CardEntry("+1 555 0100", "mobile"), CardEntry("+1 555 0200", "work")),
+            card.phones,
+        )
+        assertEquals(
+            listOf(CardEntry("ada@example.com", "other"), CardEntry("ada@work.example", "work")),
+            card.emails,
+        )
+    }
+
+    @Test
+    fun legacy_payload_without_work_fields_keeps_one_phone() {
+        val card = contact_card_from_json("""{"first_name":"Ada","phone":"+1 555 0100"}""").normalized()
+        assertEquals(listOf(CardEntry("+1 555 0100", "mobile")), card.phones)
+    }
+
+    @Test
+    fun typed_phone_entries_win_over_legacy_fields() {
+        val card = contact_card_from_json(
+            """{"phone":"+1 555 0100","work_phone":"+1 555 0999",""" +
+                """"phone_entries":[{"value":"+1 555 0100","type":"work"},{"value":"+1 555 0101","type":"personal"}]}""",
+        ).normalized()
+        assertEquals(
+            listOf(CardEntry("+1 555 0100", "work"), CardEntry("+1 555 0101", "personal")),
+            card.phones,
+        )
+    }
+
+    @Test
+    fun legacy_work_email_already_listed_is_not_duplicated() {
+        val card = contact_card_from_json(
+            """{"emails":["Ada@Work.example"],"work_email":"ada@work.example"}""",
+        ).normalized()
+        assertEquals(1, card.emails.size)
+    }
+
+    @Test
+    fun device_rows_keep_work_and_personal_phones() {
+        val phone = android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE
+        fun row(number: String, type: Int, label: String? = null) = DeviceDataRow(
+            phone,
+            mapOf(
+                android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER to number,
+                android.provider.ContactsContract.CommonDataKinds.Phone.TYPE to type,
+                android.provider.ContactsContract.CommonDataKinds.Phone.LABEL to label,
+            ),
+        )
+        val rows = listOf(
+            row("+1 555 0100", android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_WORK),
+            row("+1 555 0101", android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "Personal"),
+            row("+1 555 0102", android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "Cabin"),
+            row("+1 555 0103", android.provider.ContactsContract.CommonDataKinds.Phone.TYPE_COMPANY_MAIN),
+        )
+        val card = contact_card_from_device_rows(rows, starred = false, labels = labels)
+        assertEquals(
+            listOf(
+                CardEntry("+1 555 0100", "work"),
+                CardEntry("+1 555 0101", "personal"),
+                CardEntry("+1 555 0102", "other", "Cabin"),
+                CardEntry("+1 555 0103", "work"),
+            ),
+            card.phones,
+        )
+    }
+
+    @Test
+    fun device_phone_entry_without_a_type_is_other() {
+        val row = DeviceDataRow(
+            android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
+            mapOf(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER to "+1 555 0100"),
+        )
+        assertEquals(CardEntry("+1 555 0100", "other"), device_phone_entry(row, labels))
+    }
 }
