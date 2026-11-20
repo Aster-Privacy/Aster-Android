@@ -155,7 +155,7 @@ class SettingsSearchMatcherTest {
     fun sender_logo_synonyms_find_sender_pictures() {
         val label = settings_search_fixture.text(org.astermail.android.R.string.show_sender_pictures)
         listOf("company", "logo", "logos", "favicon", "brand", "company logo").forEach {
-            assert_finds(it, "behavior", label)
+            assert_finds(it, "behavior", label, top = 3)
         }
     }
 
