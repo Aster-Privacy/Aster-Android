@@ -870,4 +870,34 @@ class EcOneTimePrekeyTest {
             open_prekey_secret(seal(), PrekeySealKind.PQ, 9, legacy) { listOf(sync_key.copyOf()) },
         )
     }
+
+    @Test
+    fun a_secret_bound_to_its_key_id_opens_with_the_sync_key() {
+        val secret = ByteArray(32) { 11 }
+        val pq = remote(9, bound_copy("aster-prekey-secret:pq:v1:9", secret))
+        val ec = remote(42, bound_copy("aster-prekey-secret:ec:v1:42", secret))
+
+        val opened_pq = open_prekey_secret_row(seal(), PrekeySealKind.PQ, 9, pq) { listOf(other_key.copyOf(), sync_key.copyOf()) }
+        val opened_ec = open_prekey_secret_row(seal(), PrekeySealKind.EC, 42, ec) { listOf(sync_key.copyOf()) }
+
+        assertArrayEquals(secret, opened_pq?.plain)
+        assertTrue(opened_pq!!.legacy)
+        assertArrayEquals(secret, opened_ec?.plain)
+    }
+
+    @Test
+    fun a_secret_bound_to_another_key_id_or_kind_is_refused() {
+        val secret = ByteArray(32) { 12 }
+        val other_id = remote(9, bound_copy("aster-prekey-secret:pq:v1:10", secret))
+        val other_kind = remote(9, bound_copy("aster-prekey-secret:ec:v1:9", secret))
+
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 9, other_id) { listOf(sync_key.copyOf()) })
+        assertNull(open_prekey_secret(seal(), PrekeySealKind.PQ, 9, other_kind) { listOf(sync_key.copyOf()) })
+    }
+
+    private fun bound_copy(binding: String, secret: ByteArray): WrappedEcOneTimeSecret {
+        val nonce = ByteArray(EC_ONE_TIME_NONCE_LEN) { (it + 3).toByte() }
+        val sealed = RatchetCrypto.aes_gcm_encrypt(secret, sync_key, nonce, binding.toByteArray(Charsets.UTF_8))
+        return WrappedEcOneTimeSecret(RatchetCrypto.b64_encode(sealed), RatchetCrypto.b64_encode(nonce))
+    }
 }
