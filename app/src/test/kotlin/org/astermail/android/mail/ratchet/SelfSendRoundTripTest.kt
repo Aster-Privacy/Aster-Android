@@ -397,7 +397,8 @@ class SelfSendRoundTripTest {
         assertEquals("one", open(a, "m1"))
         val b = send("two")
         assertEquals("two", open(b, "m2"))
-        assertEquals("one", open(a, "m1-again"))
+        assertEquals("one", open(a, "m1"))
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, open(a, "m1-again"))
     }
 
     @Test
@@ -444,7 +445,8 @@ class SelfSendRoundTripTest {
         assertEquals("one", open(a, "m1"))
         val b = send("two")
         assertEquals("two", open(b, "m2"))
-        assertEquals("one", open(a, "m1-again"))
+        assertEquals("one", open(a, "m1"))
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, open(a, "m1-again"))
     }
 
     private fun replace_keys_from_vault() {

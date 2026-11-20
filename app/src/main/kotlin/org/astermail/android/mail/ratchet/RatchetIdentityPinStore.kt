@@ -460,6 +460,53 @@ class RatchetIdentityPinStore @Inject constructor(
         }
     }
 
+    suspend fun claim_bootstrap(
+        sender_email: String,
+        sender_identity_key: String,
+        recipient: RatchetRecipientData,
+        message_id: String?,
+    ): BootstrapClaim {
+        val ephemeral = recipient.ephemeral_key
+        if (sender_identity_key.isBlank() || ephemeral.isNullOrBlank() ||
+            recipient.header.dh_public.isBlank() || message_id.isNullOrBlank()
+        ) {
+            return BootstrapClaim.UNKNOWN
+        }
+        val contact = contact_of(sender_email) ?: return BootstrapClaim.UNKNOWN
+        val key = LaneReplay.bootstrap_key(
+            sender_identity_key,
+            ephemeral,
+            recipient.pq_ciphertext,
+            recipient.header.dh_public,
+            recipient.header.message_number,
+        )
+        val message = LaneReplay.message(message_id)
+        return mutex.withLock {
+            try {
+                val scope = refresh_scope()
+                val slot = scoped(scope, bootstrap_seen_key(contact.id))
+                val outcome = LaneReplay.claim_bootstrap(
+                    prefs.getString(slot, null),
+                    key,
+                    message,
+                    System.currentTimeMillis(),
+                )
+                if (outcome.changed &&
+                    !prefs.edit().putString(slot, outcome.record.to_json().toString()).commit() &&
+                    outcome.claim == BootstrapClaim.FIRST
+                ) {
+                    BootstrapClaim.UNKNOWN
+                } else {
+                    outcome.claim
+                }
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
+            } catch (_: Throwable) {
+                BootstrapClaim.UNKNOWN
+            }
+        }
+    }
+
     fun highest_x3dh_version(conversation_id: String): Int {
         if (conversation_id.isBlank()) return 0
         return read_int(refresh_scope(), x3dh_key(conversation_id))
@@ -745,6 +792,8 @@ class RatchetIdentityPinStore @Inject constructor(
     private fun lane_sender_key(contact_id: String): String = "lanepin_$contact_id"
 
     private fun lane_replay_key(contact_id: String): String = "lanereplay_$contact_id"
+
+    private fun bootstrap_seen_key(contact_id: String): String = "bootseen_$contact_id"
 
     private fun history_key(normalized_email: String): String = "$history_prefix$normalized_email"
 

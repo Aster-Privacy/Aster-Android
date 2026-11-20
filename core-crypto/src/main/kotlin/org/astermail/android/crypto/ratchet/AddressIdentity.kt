@@ -332,14 +332,19 @@ object AddressIdentity {
         if (signature.size != SIGNATURE_LEN || public_key.size != POINT_LEN) {
             false
         } else {
-            val point = curve.curve.decodePoint(public_key)
-            val verifier = ECDSASigner()
-            verifier.init(false, ECPublicKeyParameters(point, curve))
-            verifier.verifySignature(
-                digest,
-                BigInteger(1, signature.copyOfRange(0, 32)),
-                BigInteger(1, signature.copyOfRange(32, 64)),
-            )
+            val s = BigInteger(1, signature.copyOfRange(32, 64))
+            if (s > curve.n.shiftRight(1)) {
+                false
+            } else {
+                val point = curve.curve.decodePoint(public_key)
+                val verifier = ECDSASigner()
+                verifier.init(false, ECPublicKeyParameters(point, curve))
+                verifier.verifySignature(
+                    digest,
+                    BigInteger(1, signature.copyOfRange(0, 32)),
+                    s,
+                )
+            }
         }
     } catch (_: Throwable) {
         false

@@ -140,7 +140,7 @@ object RatchetStateContainer {
         }
         val state = runCatching {
             json.decodeFromString(RatchetState.serializer(), inner.toString())
-        }.getOrNull() ?: return RatchetStateContainerResult.Malformed
+        }.getOrNull()?.takeIf { DoubleRatchet.is_well_formed(it) } ?: return RatchetStateContainerResult.Malformed
 
         if (state.conversation_id != conversation_id) return RatchetStateContainerResult.WrongConversation
         if (wrapped != null) {

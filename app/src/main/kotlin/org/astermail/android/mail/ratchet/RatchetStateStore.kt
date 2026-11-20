@@ -51,7 +51,7 @@ class RatchetStateStore @Inject constructor(
     suspend fun load(conversation_id: String): RatchetState? = mutex.withLock {
         val raw = prefs.getString(key_for(conversation_id), null) ?: return null
         try {
-            json.decodeFromString<RatchetState>(raw)
+            json.decodeFromString<RatchetState>(raw).takeIf { DoubleRatchet.is_well_formed(it) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {

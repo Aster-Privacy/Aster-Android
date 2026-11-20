@@ -39,6 +39,9 @@ enum class PrekeySealKind(val label: String) {
 fun prekey_seal_aad(kind: PrekeySealKind, key_id: Int): ByteArray =
     "$PREKEY_SEAL_LABEL:${kind.label}:$key_id".toByteArray(Charsets.UTF_8)
 
+fun prekey_secret_binding(kind: PrekeySealKind, key_id: Int): ByteArray =
+    "aster-prekey-secret:${kind.label}:v1:$key_id".toByteArray(Charsets.UTF_8)
+
 class PrekeySeal private constructor(
     private val key: ByteArray?,
 ) {
@@ -147,13 +150,8 @@ fun open_prekey_secret_row(
     try {
         for (candidate in candidates) {
             if (RatchetStateStore.is_public_state_key(candidate)) continue
-            val plain = try {
-                RatchetCrypto.aes_gcm_decrypt(sealed, candidate, nonce, null)
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Throwable) {
-                null
-            }
+            val plain = open_with_sync_key(sealed, candidate, nonce, prekey_secret_binding(kind, key_id))
+                ?: open_with_sync_key(sealed, candidate, nonce, null)
             if (plain != null) return OpenedPrekeySecret(plain, true)
         }
         return null
@@ -161,3 +159,12 @@ fun open_prekey_secret_row(
         candidates.forEach { it.fill(0) }
     }
 }
+
+private fun open_with_sync_key(sealed: ByteArray, sync_key: ByteArray, nonce: ByteArray, aad: ByteArray?): ByteArray? =
+    try {
+        RatchetCrypto.aes_gcm_decrypt(sealed, sync_key, nonce, aad)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Throwable) {
+        null
+    }

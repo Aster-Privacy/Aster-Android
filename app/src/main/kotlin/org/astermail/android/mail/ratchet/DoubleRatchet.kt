@@ -34,6 +34,15 @@ object DoubleRatchet {
     private const val max_total_skipped = 2000
     private const val skipped_key_ttl_ms = 30L * 24 * 60 * 60 * 1000
     const val max_header_version = 255
+    const val max_header_counter = Int.MAX_VALUE
+
+    fun is_well_formed(state: RatchetState): Boolean =
+        state.send_message_number >= 0 &&
+            state.recv_message_number >= 0 &&
+            state.previous_chain_length >= 0 &&
+            state.epoch >= 0 &&
+            state.skipped_message_keys.size <= max_total_skipped &&
+            state.skipped_message_keys.all { it.message_number >= 0 }
 
     fun header_version(header: MessageHeader): Int {
         val version = header.v ?: 1
@@ -71,6 +80,9 @@ object DoubleRatchet {
         val header_bound = header_version(header) >= 2
         if (state.header_bound && !header_bound) {
             throw IllegalStateException("unbound header on a bound session")
+        }
+        if (header.message_number >= max_header_counter) {
+            throw IllegalStateException("malformed ratchet header")
         }
         try_skipped(state, recipient)?.let {
             state.updated_at = System.currentTimeMillis()
@@ -208,6 +220,9 @@ object DoubleRatchet {
     )
 
     fun encrypt(state: RatchetState, plaintext: String): EncryptResult {
+        if (state.send_message_number >= max_header_counter) {
+            throw IllegalStateException("sending chain is exhausted")
+        }
         val chain_send_b64 = state.chain_key_send
             ?: throw IllegalStateException("no chain_key_send (ratchet not initialized for sending)")
         val chain_key = RatchetCrypto.b64_decode(chain_send_b64)
