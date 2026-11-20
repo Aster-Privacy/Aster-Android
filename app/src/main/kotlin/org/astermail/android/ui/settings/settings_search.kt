@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.settings
 
+import android.content.Context
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -77,6 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.util.Locale
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ArrowLeft
 import compose.icons.tablericons.Ban
@@ -130,12 +133,6 @@ private data class settings_search_match(
     val parent: String,
     val icon: ImageVector,
     val score: Int,
-)
-
-private data class settings_search_row_text(
-    val entry: settings_index_entry,
-    val label: String,
-    val parent: String,
 )
 
 private val extra_screen_icons = mapOf(
@@ -315,13 +312,7 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
         build_settings_sections(is_family = true).flatMap { it.rows }.associate { it.id to it.icon }
     }
     val table = remember(configuration) {
-        settings_search_index.map { entry ->
-            settings_search_row_text(
-                entry = entry,
-                label = context.getString(entry.label_res),
-                parent = context.getString(entry.screen_title_res),
-            )
-        }
+        prepare_settings_search(build_settings_search_candidates(context))
     }
 
     if (query.isEmpty()) {
@@ -329,7 +320,19 @@ private fun settings_search_results(query: String, on_open: (String) -> Unit) {
         return
     }
 
-    val matched = remember(query, table) { rank_settings_matches(query, table, icons) }
+    val matched = remember(query, table) {
+        rank_settings_search(query, table).map { scored ->
+            settings_search_match(
+                screen_id = scored.candidate.screen_id,
+                label = scored.candidate.label,
+                parent = scored.candidate.parent,
+                icon = icons[scored.candidate.screen_id]
+                    ?: extra_screen_icons[scored.candidate.screen_id]
+                    ?: TablerIcons.Settings,
+                score = scored.score,
+            )
+        }
+    }
 
     if (matched.isEmpty()) {
         settings_search_message(stringResource(R.string.no_results_found))
@@ -474,60 +477,29 @@ private fun settings_search_result_row(
     }
 }
 
-internal fun settings_keyword_score(keywords: List<String>, needle: String, last_token: String): Int {
-    if (keywords.isEmpty()) return 0
-    if (keywords.any { it == needle }) return 130
-    val prefix_hit = keywords.any { keyword ->
-        keyword.startsWith(needle) && keyword.substringAfterLast(' ').startsWith(last_token)
-    }
-    return if (prefix_hit) 95 else 0
+private fun english_settings_context(context: Context): Context? {
+    if (context.resources.configuration.locales.get(0).language == Locale.ENGLISH.language) return null
+    val configuration = Configuration(context.resources.configuration)
+    configuration.setLocale(Locale.ENGLISH)
+    return context.createConfigurationContext(configuration)
 }
 
-private fun rank_settings_matches(
-    query: String,
-    table: List<settings_search_row_text>,
-    icons: Map<String, ImageVector>,
-): List<settings_search_match> {
-    val needle = query.lowercase()
-    val tokens = needle.split(' ', '\t').filter { it.isNotBlank() }
-    if (tokens.isEmpty()) return emptyList()
-    val results = mutableListOf<settings_search_match>()
-    for (row in table) {
-        val label_lower = row.label.lowercase()
-        val parent_lower = row.parent.lowercase()
-        val keywords = row.entry.keywords
-        val haystack = (listOf(label_lower, parent_lower) + keywords).joinToString(" ")
-        if (!tokens.all { haystack.contains(it) }) continue
-        var score = settings_keyword_score(keywords, needle, tokens.last())
-        if (label_lower == needle) score += 120
-        if (label_lower.startsWith(needle)) score += 60
-        if (label_lower.contains(needle)) score += 30
-        if (label_lower.split(' ').any { it.startsWith(tokens.first()) }) score += 25
-        if (row.entry.is_screen_title) score += 20
-        if (parent_lower.contains(needle)) score += 8
-        score -= (row.label.length / 12).coerceAtMost(6)
-        results += settings_search_match(
-            screen_id = row.entry.screen_id,
-            label = row.label,
-            parent = row.parent,
-            icon = icons[row.entry.screen_id]
-                ?: extra_screen_icons[row.entry.screen_id]
-                ?: TablerIcons.Settings,
-            score = score,
+internal fun build_settings_search_candidates(context: Context): List<settings_search_candidate> {
+    val english = english_settings_context(context)
+    return settings_search_index.map { entry ->
+        val keywords = mutableListOf<String>()
+        for (res in settings_keyword_resources(entry)) {
+            keywords += split_settings_search_keywords(context.getString(res))
+            if (english != null) keywords += split_settings_search_keywords(english.getString(res))
+        }
+        if (english != null) keywords += english.getString(entry.label_res)
+        settings_search_candidate(
+            screen_id = entry.screen_id,
+            label = context.getString(entry.label_res),
+            parent = context.getString(entry.screen_title_res),
+            keywords = keywords,
+            is_screen_title = entry.is_screen_title,
+            is_description = is_settings_description_name(context.resources.getResourceEntryName(entry.label_res)),
         )
     }
-    val per_screen = mutableMapOf<String, Int>()
-    return results
-        .sortedWith(compareByDescending<settings_search_match> { it.score }.thenBy { it.label.length })
-        .distinctBy { it.screen_id + "|" + it.label.lowercase() }
-        .filter { hit ->
-            val used = per_screen[hit.screen_id] ?: 0
-            if (used >= 3) {
-                false
-            } else {
-                per_screen[hit.screen_id] = used + 1
-                true
-            }
-        }
-        .take(40)
 }

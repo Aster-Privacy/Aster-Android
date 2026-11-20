@@ -19,6 +19,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+
 package org.astermail.android.ui.settings
 
 import org.astermail.android.ui.upgrade.UpgradeLimitKey
@@ -30,7 +31,7 @@ import org.junit.Test
 
 class SettingsSearchKeywordTest {
 
-    private val mail_rules_keywords = settings_search_index
+    private val mail_rules_keywords = settings_search_fixture.candidates
         .first { it.screen_id == "mail_rules" && it.is_screen_title }
         .keywords
 
@@ -42,22 +43,34 @@ class SettingsSearchKeywordTest {
     }
 
     @Test
-    fun exact_filter_query_outscores_filters_and_rules_label() {
-        val mail_rules_score = settings_keyword_score(mail_rules_keywords, "filter", "filter") + 20
-        val filters_rules_label_score = 60 + 30 + 25 - 1
-        assertTrue(mail_rules_score > filters_rules_label_score)
+    fun filter_query_ranks_mail_rules_near_the_top() {
+        listOf("filter", "filters").forEach { query ->
+            val top = settings_search_fixture.search(query).take(3).map { it.candidate.screen_id }
+            assertTrue(query, "mail_rules" in top)
+        }
+        listOf("email filter", "mail filters").forEach { query ->
+            assertEquals(query, "mail_rules", settings_search_fixture.search(query).first().candidate.screen_id)
+        }
     }
 
     @Test
-    fun partial_filter_query_gets_prefix_score() {
-        assertTrue(settings_keyword_score(mail_rules_keywords, "filt", "filt") > 0)
-        assertTrue(settings_keyword_score(mail_rules_keywords, "email fil", "fil") > 0)
+    fun every_keyword_resource_is_reachable_from_an_entry() {
+        val used = settings_search_index.flatMap { settings_keyword_resources(it) }.toSet()
+        val declared = settings_screen_keyword_res.values.toSet() + settings_label_keyword_res.values.toSet()
+        assertEquals(declared, used)
+        val defined = settings_search_fixture.english.keys.filter { it.startsWith("search_keywords_") }.toSet()
+        val referenced = declared.map { settings_search_fixture.string_names.getValue(it) }.toSet()
+        assertEquals(defined, referenced)
     }
 
     @Test
-    fun unrelated_prefix_gets_no_keyword_score() {
-        assertEquals(0, settings_keyword_score(mail_rules_keywords, "email", "email"))
-        assertEquals(0, settings_keyword_score(emptyList(), "filter", "filter"))
+    fun keyword_screen_ids_exist_in_the_index() {
+        val ids = settings_search_index.filter { it.is_screen_title }.map { it.screen_id }.toSet()
+        settings_screen_keyword_res.keys.forEach { assertTrue(it, it in ids) }
+        val labels = settings_search_index.map { it.label_res }.toSet()
+        settings_label_keyword_res.keys.forEach {
+            assertTrue(settings_search_fixture.string_names[it] ?: "$it", it in labels)
+        }
     }
 
     @Test
