@@ -2572,11 +2572,7 @@ class MailViewModel @Inject constructor(
     }
 
     private fun sync_thread_read_state(item_id: String, is_read: Boolean) {
-        val thread = _thread_state.value
-        val item = thread.item
-        if (item == null || item.id != item_id) return
-        if (item.is_read == is_read) return
-        _thread_state.value = thread.copy(item = item.copy(is_read = is_read))
+        _thread_state.update { thread_with_read(it, item_id, is_read) }
     }
 
     private data class LocalRead(val item: InboxItem?, val prior: Map<String, Boolean>, val sequence: Long)
