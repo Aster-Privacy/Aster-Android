@@ -52,5 +52,8 @@ fun list_destructive_action(action: String, all_trashed: Boolean): String = when
     else -> action
 }
 
+fun all_ids_trashed(ids: List<String>, trashed_ids: Set<String>): Boolean =
+    ids.isNotEmpty() && ids.all { it in trashed_ids }
+
 fun untrashed_ids(ids: List<String>, trashed_ids: Set<String>): List<String> =
     ids.filter { it !in trashed_ids }

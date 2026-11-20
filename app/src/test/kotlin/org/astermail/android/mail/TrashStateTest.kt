@@ -87,4 +87,15 @@ class TrashStateTest {
     fun mixed_selection_trashes_only_live_items() {
         assertEquals(listOf("b"), untrashed_ids(listOf("a", "b", "c"), setOf("a", "c")))
     }
+
+    @Test
+    fun selection_of_only_trashed_items_is_all_trashed() {
+        assertTrue(all_ids_trashed(listOf("a", "c"), setOf("a", "c", "d")))
+    }
+
+    @Test
+    fun selection_with_a_live_item_or_nothing_is_not_all_trashed() {
+        assertFalse(all_ids_trashed(listOf("a", "b"), setOf("a")))
+        assertFalse(all_ids_trashed(emptyList(), setOf("a")))
+    }
 }

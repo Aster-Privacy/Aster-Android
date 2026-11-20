@@ -238,6 +238,8 @@ fun SearchScreen(
     var show_label_sheet by remember { mutableStateOf(false) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var advanced_open by remember { mutableStateOf(false) }
+    var show_delete_permanent_dialog by remember { mutableStateOf(false) }
+    var delete_permanent_count by remember { mutableStateOf(0) }
 
     LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
         val raw = settings_state.preferences?.selection_toolbar_actions
@@ -550,8 +552,23 @@ fun SearchScreen(
         exit_select_mode()
     }
 
-    fun run_selection_action(action_id: String) {
+    val selection_all_trashed = org.astermail.android.mail.all_ids_trashed(
+        expand_selection(selected_ids.toList()),
+        visible_corpus.filter { it.is_trashed }.mapTo(HashSet()) { it.id },
+    )
+
+    fun delete_permanent_selected() {
+        mail_vm.delete_permanent_bulk(expand_selection(selected_ids.toList()))
+        exit_select_mode()
+    }
+
+    fun run_selection_action(requested_action_id: String) {
+        val action_id = org.astermail.android.mail.list_destructive_action(requested_action_id, selection_all_trashed)
         when (action_id) {
+            "delete_permanent" -> {
+                delete_permanent_count = selected_ids.size
+                show_delete_permanent_dialog = true
+            }
             "read" -> mark_read_selected()
             "unread" -> mark_unread_selected()
             "trash" -> delete_selected()
@@ -919,6 +936,28 @@ fun SearchScreen(
                 )
             }
         }
+    }
+
+    if (show_delete_permanent_dialog) {
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { show_delete_permanent_dialog = false },
+            title = stringResource(R.string.confirm_delete_permanent_title),
+            message = stringResource(
+                R.string.confirm_delete_permanent_message_count,
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.common_messages_count,
+                    delete_permanent_count,
+                    delete_permanent_count,
+                ),
+            ),
+            confirm_label = stringResource(R.string.swipe_delete_forever),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                show_delete_permanent_dialog = false
+                if (selection_all_trashed) delete_permanent_selected()
+            },
+        )
     }
 
     if (show_selection_overflow) {
