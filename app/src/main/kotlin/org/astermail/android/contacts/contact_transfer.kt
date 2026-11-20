@@ -636,8 +636,8 @@ fun contacts_to_csv(contacts: List<Contact>): String {
         listOf(
             first,
             last,
-            listOf(contact.email, contact.work_email).filter { it.isNotBlank() }.joinToString("; "),
-            listOf(contact.phone, contact.work_phone).filter { it.isNotBlank() }.joinToString("; "),
+            contact.email_entries().map { it.value.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("; "),
+            contact.phone_entries().map { it.value.trim() }.filter { it.isNotEmpty() }.distinct().joinToString("; "),
             contact.company,
             contact.title,
             contact.address,

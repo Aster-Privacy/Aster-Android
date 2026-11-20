@@ -38,7 +38,7 @@ class DeviceImportBaseline(context: Context) {
 
     private companion object {
         const val PREFS = "device_contact_import"
-        const val KEY_PREFIX = "baseline_"
+        const val KEY_PREFIX = "baseline_v2_"
     }
 }
 
