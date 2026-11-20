@@ -3681,4 +3681,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Die ausgewählten Abonnements konnten nicht gelöscht werden</string>
     <string name="attachment_unverified">Nicht bestätigter Anhang</string>
+    <string name="confirm_back_exit">Vor dem Beenden bestätigen</string>
+    <string name="confirm_back_exit_subtitle">Zweimal Zurück drücken, um die App im Posteingang zu verlassen</string>
 </resources>

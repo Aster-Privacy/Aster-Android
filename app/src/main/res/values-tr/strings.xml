@@ -3680,4 +3680,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Seçilen abonelikler silinemedi</string>
     <string name="attachment_unverified">Doğrulanmamış ek</string>
+    <string name="confirm_back_exit">Çıkmadan önce onayla</string>
+    <string name="confirm_back_exit_subtitle">Gelen kutusundan uygulamadan çıkmak için Geri tuşuna iki kez basın</string>
 </resources>

@@ -3572,4 +3572,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">चुनी गई सदस्यताएं हटाई नहीं जा सकीं</string>
     <string name="attachment_unverified">असत्यापित अटैचमेंट</string>
+    <string name="confirm_back_exit">बाहर निकलने से पहले पुष्टि करें</string>
+    <string name="confirm_back_exit_subtitle">इनबॉक्स से ऐप छोड़ने के लिए दो बार वापस दबाएं</string>
 </resources>

@@ -3738,4 +3738,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Nie można usunąć wybranych subskrypcji</string>
     <string name="attachment_unverified">Niezweryfikowany załącznik</string>
+    <string name="confirm_back_exit">Potwierdzaj przed wyjściem</string>
+    <string name="confirm_back_exit_subtitle">Naciśnij Wstecz dwa razy, aby opuścić aplikację ze skrzynki odbiorczej</string>
 </resources>

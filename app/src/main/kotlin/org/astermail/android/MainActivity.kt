@@ -2768,7 +2768,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         }
         BackHandler(enabled = !drawer_state.isOpen) {
             val now = android.os.SystemClock.elapsedRealtime()
-            if (now - last_back_press in 1L..2000L) {
+            if (!org.astermail.android.settings.ExitConfirmPref.is_enabled(exit_context)) {
+                (exit_context as? android.app.Activity)?.finish()
+            } else if (now - last_back_press in 1L..2000L) {
                 (exit_context as? android.app.Activity)?.finish()
             } else {
                 last_back_press = now

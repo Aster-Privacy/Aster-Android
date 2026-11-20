@@ -3731,4 +3731,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Can\'t delete the selected subscriptions</string>
     <string name="attachment_unverified">Unverified attachment</string>
+    <string name="confirm_back_exit">Confirm before exiting</string>
+    <string name="confirm_back_exit_subtitle">Press back twice to leave the app from the inbox</string>
 </resources>

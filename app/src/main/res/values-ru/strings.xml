@@ -3738,4 +3738,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Не удалось удалить выбранные подписки</string>
     <string name="attachment_unverified">Непроверенное вложение</string>
+    <string name="confirm_back_exit">Подтверждать выход</string>
+    <string name="confirm_back_exit_subtitle">Нажмите «Назад» дважды, чтобы выйти из приложения из папки «Входящие»</string>
 </resources>

@@ -532,6 +532,18 @@ fun BehaviorScreen(
                     checked = force_dark_emails,
                     on_change = { force_dark_emails = it; save_trigger++ },
                 )
+                settings_row_gap(modifier = Modifier)
+                val exit_pref_context = LocalContext.current
+                var confirm_back_exit by remember { mutableStateOf(org.astermail.android.settings.ExitConfirmPref.is_enabled(exit_pref_context)) }
+                behavior_toggle(
+                    title = stringResource(R.string.confirm_back_exit),
+                    subtitle = stringResource(R.string.confirm_back_exit_subtitle),
+                    checked = confirm_back_exit,
+                    on_change = {
+                        confirm_back_exit = it
+                        org.astermail.android.settings.ExitConfirmPref.set_enabled(exit_pref_context, it)
+                    },
+                )
             }
             v_gap(AsterSpacing.md)
             AsterCard(modifier = Modifier.fillMaxWidth()) {

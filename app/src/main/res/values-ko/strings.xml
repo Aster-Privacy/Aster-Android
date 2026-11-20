@@ -3653,4 +3653,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">선택한 구독을 삭제할 수 없습니다</string>
     <string name="attachment_unverified">확인되지 않은 첨부 파일</string>
+    <string name="confirm_back_exit">종료 전에 확인</string>
+    <string name="confirm_back_exit_subtitle">받은편지함에서 뒤로를 두 번 눌러 앱을 종료합니다</string>
 </resources>

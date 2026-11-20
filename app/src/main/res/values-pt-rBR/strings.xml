@@ -3703,4 +3703,6 @@
     </plurals>
     <string name="delete_subscriptions_failed">Não foi possível excluir as inscrições selecionadas</string>
     <string name="attachment_unverified">Anexo não verificado</string>
+    <string name="confirm_back_exit">Confirmar antes de sair</string>
+    <string name="confirm_back_exit_subtitle">Toque em Voltar duas vezes para sair do app pela caixa de entrada</string>
 </resources>
