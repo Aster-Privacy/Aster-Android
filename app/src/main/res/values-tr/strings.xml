@@ -475,6 +475,16 @@
     <string name="smtp_token_revoke_title">Jeton iptal edilsin mi?</string>
     <string name="smtp_token_revoke_message">Bu işlem %1$s jetonunu kalıcı olarak iptal eder. Bunu kullanan herhangi bir uygulama artık e-posta gönderemez.</string>
     <string name="smtp_token_revoked_toast">SMTP jetonu iptal edildi</string>
+    <string name="smtp_token_setup_details">Kurulum ayrıntıları</string>
+    <string name="smtp_token_setup_description">E-posta istemcinizi veya uygulamanızı bağlamak için bu ayarları kullanın.</string>
+    <string name="smtp_token_password_hidden">Gizli</string>
+    <string name="smtp_token_password_note">Parola, jetonu oluşturduğunuzda yalnızca bir kez görünür ve tekrar gösterilemez. Parola artık sizde değilse bu jetonu iptal edin ve yeni bir jeton oluşturun.</string>
+    <string name="smtp_token_rename_title">Jetonu yeniden adlandır</string>
+    <string name="smtp_token_rename_description">Yeniden adlandırma, parolayı veya uygulamalarınızdaki ayarları değiştirmez.</string>
+    <string name="smtp_token_renamed_toast">Jeton yeniden adlandırıldı</string>
+    <string name="smtp_token_rename_failed">Jeton yeniden adlandırılamadı. Tekrar deneyin.</string>
+    <string name="smtp_token_rename_unavailable">Yeniden adlandırma henüz kullanılamıyor. Daha sonra tekrar deneyin.</string>
+    <string name="smtp_token_name_invalid">En fazla 64 karakterlik bir ad girin.</string>
     <string name="smtp_token_not_e2e_title">SMTP jetonlarıyla gönderilen mesajlar uçtan uca şifreli değildir</string>
     <string name="smtp_token_not_e2e_body">Bir SMTP jetonu üzerinden gönderilen e-posta, aktarım sırasında TLS ile korunur ve sunucularımızda sıfır erişimli şifrelemeyle depolanır, ancak uçtan uca şifreli değildir. Aster, Aster uygulamalarının dışından gelen e-postalara uçtan uca şifreleme uygulayamaz. SMTP jetonlarını yalnızca uçtan uca şifrelemenin gerekmediği otomatik veya işlemsel e-postalar için kullanın.</string>
     <string name="clipboard_label_smtp_token">SMTP ayarları</string>

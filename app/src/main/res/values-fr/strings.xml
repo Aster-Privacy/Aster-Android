@@ -502,6 +502,16 @@
     <string name="smtp_token_revoke_title">Révoquer le jeton ?</string>
     <string name="smtp_token_revoke_message">Cette action révoquera définitivement %1$s. Toute application l\'utilisant ne pourra plus envoyer de messages.</string>
     <string name="smtp_token_revoked_toast">Jeton SMTP révoqué</string>
+    <string name="smtp_token_setup_details">Détails de configuration</string>
+    <string name="smtp_token_setup_description">Utilisez ces paramètres pour connecter votre client de messagerie ou votre application.</string>
+    <string name="smtp_token_password_hidden">Masqué</string>
+    <string name="smtp_token_password_note">Le mot de passe n\'apparaît qu\'une seule fois, lorsque vous générez le jeton, et ne peut plus être affiché ensuite. Si vous ne l\'avez plus, révoquez ce jeton et générez-en un nouveau.</string>
+    <string name="smtp_token_rename_title">Renommer le jeton</string>
+    <string name="smtp_token_rename_description">Le renommage ne modifie ni le mot de passe ni les paramètres de vos applications.</string>
+    <string name="smtp_token_renamed_toast">Jeton renommé</string>
+    <string name="smtp_token_rename_failed">Impossible de renommer le jeton. Réessayez.</string>
+    <string name="smtp_token_rename_unavailable">Le renommage n\'est pas encore disponible. Réessayez plus tard.</string>
+    <string name="smtp_token_name_invalid">Saisissez un nom de 64 caractères maximum.</string>
     <string name="smtp_token_not_e2e_title">Les messages envoyés avec des jetons SMTP ne sont pas chiffrés de bout en bout</string>
     <string name="smtp_token_not_e2e_body">Les e-mails envoyés via un jeton SMTP sont protégés par TLS en transit et stockés avec un chiffrement à accès zéro sur nos serveurs, mais ils ne sont pas chiffrés de bout en bout. Aster ne peut pas appliquer le chiffrement de bout en bout aux messages provenant de l\'extérieur des applications Aster. N\'utilisez les jetons SMTP que pour des messages automatisés ou transactionnels où le chiffrement de bout en bout n\'est pas requis.</string>
     <string name="clipboard_label_smtp_token">Réglages SMTP</string>

@@ -475,6 +475,16 @@
     <string name="smtp_token_revoke_title">撤销令牌？</string>
     <string name="smtp_token_revoke_message">此操作将永久撤销 %1$s。任何使用它的应用都将无法再发送邮件。</string>
     <string name="smtp_token_revoked_toast">SMTP 令牌已撤销</string>
+    <string name="smtp_token_setup_details">设置详情</string>
+    <string name="smtp_token_setup_description">使用这些设置连接您的邮件客户端或应用。</string>
+    <string name="smtp_token_password_hidden">已隐藏</string>
+    <string name="smtp_token_password_note">密码仅在您生成令牌时显示一次，无法再次显示。如果您已没有该密码，请撤销此令牌并生成新令牌。</string>
+    <string name="smtp_token_rename_title">重命名令牌</string>
+    <string name="smtp_token_rename_description">重命名不会更改密码或您应用中的设置。</string>
+    <string name="smtp_token_renamed_toast">令牌已重命名</string>
+    <string name="smtp_token_rename_failed">无法重命名令牌。请重试。</string>
+    <string name="smtp_token_rename_unavailable">暂时无法重命名。请稍后重试。</string>
+    <string name="smtp_token_name_invalid">请输入不超过 64 个字符的名称。</string>
     <string name="smtp_token_not_e2e_title">使用 SMTP 令牌发送的邮件不是端到端加密的</string>
     <string name="smtp_token_not_e2e_body">通过 SMTP 令牌发送的邮件在传输过程中受 TLS 保护，并以零访问加密的方式存储在我们的服务器上，但它不是端到端加密的。Aster 无法对源自 Aster 应用之外的邮件应用端到端加密。请仅在无需端到端加密的自动化或事务性邮件中使用 SMTP 令牌。</string>
     <string name="clipboard_label_smtp_token">SMTP 设置</string>

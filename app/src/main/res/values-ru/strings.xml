@@ -475,6 +475,16 @@
     <string name="smtp_token_revoke_title">Отозвать токен?</string>
     <string name="smtp_token_revoke_message">Это безвозвратно отзовёт %1$s. Любое приложение, использующее его, больше не сможет отправлять почту.</string>
     <string name="smtp_token_revoked_toast">Токен SMTP отозван</string>
+    <string name="smtp_token_setup_details">Параметры подключения</string>
+    <string name="smtp_token_setup_description">Используйте эти настройки, чтобы подключить ваш почтовый клиент или приложение.</string>
+    <string name="smtp_token_password_hidden">Скрыт</string>
+    <string name="smtp_token_password_note">Пароль показывается только один раз, когда вы создаёте токен, и показать его снова нельзя. Если у вас его больше нет, отзовите этот токен и создайте новый.</string>
+    <string name="smtp_token_rename_title">Переименовать токен</string>
+    <string name="smtp_token_rename_description">Переименование не меняет пароль и настройки в ваших приложениях.</string>
+    <string name="smtp_token_renamed_toast">Токен переименован</string>
+    <string name="smtp_token_rename_failed">Не удалось переименовать токен. Повторите попытку.</string>
+    <string name="smtp_token_rename_unavailable">Переименование пока недоступно. Повторите попытку позже.</string>
+    <string name="smtp_token_name_invalid">Введите имя длиной до 64 символов.</string>
     <string name="smtp_token_not_e2e_title">Сообщения, отправленные с помощью токенов SMTP, не защищены сквозным шифрованием</string>
     <string name="smtp_token_not_e2e_body">Письма, отправленные через токен SMTP, защищены протоколом TLS при передаче и хранятся на наших серверах с архитектурой нулевого доступа, но они не защищены сквозным шифрованием. Aster не может применить сквозное шифрование к почте, которая создаётся за пределами приложений Aster. Используйте токены SMTP только для автоматизированной или транзакционной почты, где сквозное шифрование не требуется.</string>
     <string name="clipboard_label_smtp_token">Настройки SMTP</string>

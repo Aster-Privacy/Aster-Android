@@ -474,6 +474,16 @@
     <string name="smtp_token_revoke_title">Revogar token?</string>
     <string name="smtp_token_revoke_message">Isto revogará permanentemente %1$s. Qualquer aplicativo que o utilize não poderá mais enviar e-mails.</string>
     <string name="smtp_token_revoked_toast">Token SMTP revogado</string>
+    <string name="smtp_token_setup_details">Detalhes de configuração</string>
+    <string name="smtp_token_setup_description">Use estas configurações para conectar o seu cliente de e-mail ou aplicativo.</string>
+    <string name="smtp_token_password_hidden">Oculta</string>
+    <string name="smtp_token_password_note">A senha aparece apenas uma vez, quando você gera o token, e não pode ser exibida novamente. Se você não a tem mais, revogue este token e gere um novo.</string>
+    <string name="smtp_token_rename_title">Renomear token</string>
+    <string name="smtp_token_rename_description">Renomear não altera a senha nem as configurações nos seus aplicativos.</string>
+    <string name="smtp_token_renamed_toast">Token renomeado</string>
+    <string name="smtp_token_rename_failed">Não foi possível renomear o token. Tente novamente.</string>
+    <string name="smtp_token_rename_unavailable">Ainda não é possível renomear. Tente novamente mais tarde.</string>
+    <string name="smtp_token_name_invalid">Digite um nome com até 64 caracteres.</string>
     <string name="smtp_token_not_e2e_title">As mensagens enviadas com tokens SMTP não têm criptografia de ponta a ponta</string>
     <string name="smtp_token_not_e2e_body">O e-mail enviado por meio de um token SMTP é protegido por TLS em trânsito e armazenado com criptografia de acesso zero em nossos servidores, mas não tem criptografia de ponta a ponta. O Aster não pode aplicar criptografia de ponta a ponta a e-mails originados fora dos aplicativos Aster. Use tokens SMTP apenas para e-mails automatizados ou transacionais em que a criptografia de ponta a ponta não seja necessária.</string>
     <string name="clipboard_label_smtp_token">Configurações de SMTP</string>

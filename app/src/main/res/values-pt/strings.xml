@@ -475,6 +475,16 @@
     <string name="smtp_token_revoke_title">Revogar token?</string>
     <string name="smtp_token_revoke_message">Isto revoga permanentemente %1$s. Qualquer aplicação que o utilize deixa de poder enviar correio.</string>
     <string name="smtp_token_revoked_toast">Token SMTP revogado</string>
+    <string name="smtp_token_setup_details">Detalhes de configuração</string>
+    <string name="smtp_token_setup_description">Utilize estas definições para ligar o seu cliente de e-mail ou aplicação.</string>
+    <string name="smtp_token_password_hidden">Oculta</string>
+    <string name="smtp_token_password_note">A palavra-passe aparece apenas uma vez, quando gera o token, e não pode ser apresentada novamente. Se já não a tiver, revogue este token e gere um novo.</string>
+    <string name="smtp_token_rename_title">Mudar o nome do token</string>
+    <string name="smtp_token_rename_description">Mudar o nome não altera a palavra-passe nem as definições nas suas aplicações.</string>
+    <string name="smtp_token_renamed_toast">Nome do token alterado</string>
+    <string name="smtp_token_rename_failed">Não foi possível mudar o nome do token. Tente novamente.</string>
+    <string name="smtp_token_rename_unavailable">Ainda não é possível mudar o nome. Tente novamente mais tarde.</string>
+    <string name="smtp_token_name_invalid">Introduza um nome com até 64 caracteres.</string>
     <string name="smtp_token_not_e2e_title">As mensagens enviadas com tokens SMTP não têm encriptação de ponta a ponta</string>
     <string name="smtp_token_not_e2e_body">O correio enviado através de um token SMTP é protegido por TLS em trânsito e armazenado com encriptação de acesso zero nos nossos servidores, mas não tem encriptação de ponta a ponta. O Aster não pode aplicar encriptação de ponta a ponta a correio originado fora das aplicações Aster. Utilize tokens SMTP apenas para correio automatizado ou transacional em que a encriptação de ponta a ponta não seja necessária.</string>
     <string name="clipboard_label_smtp_token">Definições de SMTP</string>

@@ -475,6 +475,16 @@
     <string name="smtp_token_revoke_title">Unieważnić token?</string>
     <string name="smtp_token_revoke_message">Spowoduje to trwałe unieważnienie %1$s. Każda aplikacja, która go używa, nie będzie już mogła wysyłać poczty.</string>
     <string name="smtp_token_revoked_toast">Token SMTP unieważniony</string>
+    <string name="smtp_token_setup_details">Szczegóły konfiguracji</string>
+    <string name="smtp_token_setup_description">Użyj tych ustawień, aby połączyć swojego klienta poczty lub aplikację.</string>
+    <string name="smtp_token_password_hidden">Ukryte</string>
+    <string name="smtp_token_password_note">Hasło pojawia się tylko raz, gdy generujesz token, i nie można go wyświetlić ponownie. Jeśli już go nie masz, unieważnij ten token i wygeneruj nowy.</string>
+    <string name="smtp_token_rename_title">Zmień nazwę tokena</string>
+    <string name="smtp_token_rename_description">Zmiana nazwy nie zmienia hasła ani ustawień w Twoich aplikacjach.</string>
+    <string name="smtp_token_renamed_toast">Zmieniono nazwę tokena</string>
+    <string name="smtp_token_rename_failed">Nie udało się zmienić nazwy tokena. Spróbuj ponownie.</string>
+    <string name="smtp_token_rename_unavailable">Zmiana nazwy nie jest jeszcze dostępna. Spróbuj ponownie później.</string>
+    <string name="smtp_token_name_invalid">Wpisz nazwę o długości do 64 znaków.</string>
     <string name="smtp_token_not_e2e_title">Wiadomości wysyłane za pomocą tokenów SMTP nie są szyfrowane end-to-end</string>
     <string name="smtp_token_not_e2e_body">Poczta wysłana przez token SMTP jest chroniona protokołem TLS podczas przesyłania i przechowywana z szyfrowaniem bez dostępu na naszych serwerach, ale nie jest szyfrowana end-to-end. Aster nie może zastosować szyfrowania end-to-end do poczty pochodzącej spoza aplikacji Aster. Używaj tokenów SMTP wyłącznie do poczty zautomatyzowanej lub transakcyjnej, gdzie szyfrowanie end-to-end nie jest wymagane.</string>
     <string name="clipboard_label_smtp_token">Ustawienia SMTP</string>
