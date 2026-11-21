@@ -89,6 +89,17 @@ class SessionTokenOwnerTest {
     }
 
     @Test
+    fun jwt_session_id_reads_the_session_claim() {
+        val encoder = Base64.getUrlEncoder().withoutPadding()
+        val header = encoder.encodeToString("{\"alg\":\"none\"}".toByteArray())
+        val body = encoder.encodeToString("{\"sub\":\"u\",\"session_id\":\"s-1\"}".toByteArray())
+        assertEquals("s-1", jwt_session_id("$header.$body.sig"))
+        assertNull(jwt_session_id(jwt("User-A")))
+        assertNull(jwt_session_id(null))
+        assertNull(jwt_session_id("opaque"))
+    }
+
+    @Test
     fun session_token_owner_prefers_refresh_and_lowercases() {
         assertEquals("user-a", session_token_owner(jwt("User-A"), jwt("user-b")))
         assertEquals("user-b", session_token_owner("opaque", jwt("User-B")))

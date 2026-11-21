@@ -143,6 +143,11 @@ class MailKeyUpgrade @Inject constructor(
     @Volatile private var active_user: String? = null
     private var timer: Job? = null
     private val folder_runs = java.util.Collections.synchronizedSet(HashSet<String>())
+    @Volatile private var reseal_user: String? = null
+    private val reseal_lock = Mutex()
+    private val server_seal_resealer by lazy {
+        ServerSealResealer(KtorResealApi(api_client)) { mail_repository.get().mail_legacy_crypto() }
+    }
 
     private val flags: MailLegacyFlagStore by lazy {
         runCatching { SecurePrefs.open(context, MAIL_LEGACY_PREFS_NAME) }.getOrNull()
@@ -152,6 +157,7 @@ class MailKeyUpgrade @Inject constructor(
 
     init {
         MailLegacyFolderHook.attach { token -> offer_folder(token) }
+        ServerSealHook.attach { item_id, encrypted -> offer_server_seal(item_id, encrypted) }
     }
 
     private fun migration(user_id: String): MailLegacyMigration {
@@ -181,6 +187,7 @@ class MailKeyUpgrade @Inject constructor(
     @Synchronized
     fun start() {
         val user_id = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return
+        reseal_user = user_id
         if (active_user == user_id) return
         stop()
         if (session_key_store.mail_legacy_retired()) return
@@ -188,9 +195,20 @@ class MailKeyUpgrade @Inject constructor(
         schedule(MAIL_KEY_UPGRADE_START_DELAY_MS, false, 0)
     }
 
+    private fun offer_server_seal(item_id: String, encrypted: String) {
+        val user_id = reseal_user ?: return
+        scope.launch {
+            reseal_lock.withLock {
+                if (reseal_user != user_id || session_key_store.get_user_id() != user_id) return@withLock
+                server_seal_resealer.reseal(item_id, encrypted)
+            }
+        }
+    }
+
     @Synchronized
     fun stop() {
         generation += 1
+        reseal_user = null
         timer?.cancel()
         timer = null
         active_user = null

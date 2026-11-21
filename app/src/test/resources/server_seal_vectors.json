@@ -1,0 +1,6 @@
+{
+  "label": "aster-server-seal-v1",
+  "key_vector": "external_pgp_key_vectors.json",
+  "plaintext": "{\"subject\":\"seal check\",\"body_text\":\"server sealed body\"}",
+  "sealed_armored": "-----BEGIN PGP MESSAGE-----\n\nwV4DTFQYavFJw1wSAQdApFzp+du7iZO9x+I3Oa2XJY7+/Db3Os0OgwQOUU93dF4w\nilcr6CXI0aJ0ioBwgOFbwYFF8pwhdVLlqUAjuIP7YN5Aw+z/tBOzSyJqVeVijJ7p\n0moBtPVxnAe2mKB9u9yAQUdnuV5Z9kHDk+dEYIYna3pmADMKxjzXAsToVxiJYACw\n1bqsVrBGDr3gZB80/amxRWKSTvGH1txMtGY5GOHf/upSZP9nPLXEphbxs1hZP+r7\nv3hiSLY9aL2w2HHI\n=61J9\n-----END PGP MESSAGE-----\n\n"
+}

@@ -68,6 +68,7 @@ interface MailLegacyCrypto {
     fun reseal_attachment_meta(plaintext: ByteArray): SealedField?
     fun stored_sha256_hex(encrypted: String): String?
     fun is_login_salted_envelope(encrypted: String, nonce: String): Boolean = false
+    fun classify_server_seal(encrypted: String): StoredRecord = StoredRecord.Unreadable
 }
 
 interface MailLegacyFlagStore {

@@ -34,6 +34,7 @@ import org.astermail.android.api.ratchet.RatchetStateResponse
 import org.astermail.android.api.ratchet.ReportEnvelopeCapabilityRequest
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -433,5 +434,43 @@ class EnvelopeCapabilityReporterTest {
 
         assertEquals(2, api.requests.size)
         assertEquals(3, api.requests[1].ratchet_sync_version)
+    }
+
+    @Test
+    fun reports_again_right_after_a_new_sign_in_on_the_same_install() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity, session_id = "session-a")
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, identity, session_id = "session-a")
+        assertEquals(1, api.requests.size)
+
+        reporter(store, api, now = { 3_000L }).report_if_due(user_id, identity, session_id = "session-b")
+        assertEquals(2, api.requests.size)
+        assertEquals(api.requests[0].client_id, api.requests[1].client_id)
+    }
+
+    @Test
+    fun a_report_from_before_sessions_were_tracked_is_sent_again() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity)
+        reporter(store, api, now = { 2_000L }).report_if_due(user_id, identity, session_id = "session-a")
+
+        assertEquals(2, api.requests.size)
+    }
+
+    @Test
+    fun the_stored_report_never_holds_the_raw_session_id() = runTest {
+        val store = FakeStore()
+        val api = FakeRatchetApi()
+
+        reporter(store, api, now = { 1_000L }).report_if_due(user_id, identity, session_id = "session-a")
+
+        val tag = store.last_reported.getValue(user_id).session_tag
+        assertTrue(tag.isNotEmpty())
+        assertFalse(tag.contains("session-a"))
+        assertFalse(tag.contains('|'))
     }
 }
