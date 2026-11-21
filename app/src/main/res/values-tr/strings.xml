@@ -2939,6 +2939,8 @@
     <string name="signature_add_formatting">Biçimlendirme ekle</string>
     <string name="alias_directory_separator_hint">Dizin adından önce nokta, eğik çizgi, artı işareti veya kare işareti kullanabilirsiniz.</string>
     <string name="app_lock_biometric_failed">Biyometrik kilit açma kullanılamıyor. PIN kodunuzu girin.</string>
+    <string name="app_lock_biometric_error">Biyometrik kilit açma çalışmadı. Tekrar deneyin veya PIN kodunuzu girin.</string>
+    <string name="app_lock_biometric_reset">Aster Mail biyometrik kilit açmayı kapattı. Yeniden açmak için PIN kodunuzu girin.</string>
     <string name="applied_to_loaded_only">%2$d iletiden %1$d tanesine uygulandı - bu işlem yalnızca yüklenmiş iletileri kapsar</string>
     <string name="audit_event_2fa_disabled">İki adımlı doğrulama kapatıldı</string>
     <string name="audit_event_2fa_enabled">İki adımlı doğrulama açıldı</string>

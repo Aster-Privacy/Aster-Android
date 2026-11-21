@@ -2924,6 +2924,8 @@
     <string name="signature_add_formatting">書式を追加</string>
     <string name="alias_directory_separator_hint">ディレクトリ名の前には、ドット、スラッシュ、プラス記号、番号記号のいずれも使えます。</string>
     <string name="app_lock_biometric_failed">生体認証によるロック解除は利用できません。PIN を入力してください。</string>
+    <string name="app_lock_biometric_error">生体認証によるロック解除が機能しませんでした。もう一度お試しいただくか、PIN を入力してください。</string>
+    <string name="app_lock_biometric_reset">Aster Mail は生体認証によるロック解除をオフにしました。再度オンにするには、PIN を入力してください。</string>
     <string name="applied_to_loaded_only">%2$d 件中 %1$d 件に適用しました。この操作は読み込み済みのメッセージのみが対象です</string>
     <string name="audit_event_2fa_disabled">二要素認証をオフにしました</string>
     <string name="audit_event_2fa_enabled">二要素認証をオンにしました</string>

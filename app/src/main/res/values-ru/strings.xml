@@ -2977,6 +2977,8 @@
     <string name="signature_add_formatting">Добавить форматирование</string>
     <string name="alias_directory_separator_hint">Перед именем каталога можно поставить точку, косую черту, плюс или знак номера.</string>
     <string name="app_lock_biometric_failed">Биометрическая разблокировка недоступна. Введите PIN-код.</string>
+    <string name="app_lock_biometric_error">Биометрическая разблокировка не сработала. Повторите попытку или введите PIN-код.</string>
+    <string name="app_lock_biometric_reset">Aster Mail отключил биометрическую разблокировку. Чтобы снова включить её, введите PIN-код.</string>
     <string name="applied_to_loaded_only">Применено к %1$d из %2$d - это действие затрагивает только загруженные письма</string>
     <string name="audit_event_2fa_disabled">Двухфакторная аутентификация отключена</string>
     <string name="audit_event_2fa_enabled">Двухфакторная аутентификация включена</string>

@@ -2939,6 +2939,8 @@
     <string name="signature_add_formatting">Opmaak toevoegen</string>
     <string name="alias_directory_separator_hint">Een punt, schuine streep, plusteken of hekje werkt allemaal voor de directorynaam.</string>
     <string name="app_lock_biometric_failed">Biometrisch ontgrendelen is niet beschikbaar. Voer je pincode in.</string>
+    <string name="app_lock_biometric_error">Biometrisch ontgrendelen werkte niet. Probeer het opnieuw of voer je pincode in.</string>
+    <string name="app_lock_biometric_reset">Aster Mail heeft biometrisch ontgrendelen uitgeschakeld. Voer je pincode in om het weer in te schakelen.</string>
     <string name="applied_to_loaded_only">Toegepast op %1$d van %2$d - deze actie geldt alleen voor geladen berichten</string>
     <string name="audit_event_2fa_disabled">Tweefactorauthenticatie uitgeschakeld</string>
     <string name="audit_event_2fa_enabled">Tweefactorauthenticatie ingeschakeld</string>

@@ -2940,6 +2940,8 @@
     <string name="signature_add_formatting">Formatierung hinzufügen</string>
     <string name="alias_directory_separator_hint">Ein Punkt, Schrägstrich, Pluszeichen oder Rautezeichen funktioniert vor dem Verzeichnisnamen.</string>
     <string name="app_lock_biometric_failed">Biometrisches Entsperren ist nicht verfügbar. Geben Sie Ihre PIN ein.</string>
+    <string name="app_lock_biometric_error">Biometrisches Entsperren hat nicht funktioniert. Versuchen Sie es erneut oder geben Sie Ihre PIN ein.</string>
+    <string name="app_lock_biometric_reset">Aster Mail hat das biometrische Entsperren deaktiviert. Geben Sie Ihre PIN ein, um es wieder zu aktivieren.</string>
     <string name="applied_to_loaded_only">Auf %1$d von %2$d angewendet - diese Aktion gilt nur für geladene Nachrichten</string>
     <string name="audit_event_2fa_disabled">Zwei-Faktor-Authentifizierung deaktiviert</string>
     <string name="audit_event_2fa_enabled">Zwei-Faktor-Authentifizierung aktiviert</string>

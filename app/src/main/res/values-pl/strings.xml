@@ -2977,6 +2977,8 @@
     <string name="signature_add_formatting">Dodaj formatowanie</string>
     <string name="alias_directory_separator_hint">Przed nazwą katalogu możesz użyć kropki, ukośnika, znaku plus lub krzyżyka.</string>
     <string name="app_lock_biometric_failed">Odblokowanie biometryczne jest niedostępne. Wprowadź kod PIN.</string>
+    <string name="app_lock_biometric_error">Odblokowanie biometryczne nie zadziałało. Spróbuj ponownie lub wpisz kod PIN.</string>
+    <string name="app_lock_biometric_reset">Aster Mail wyłączył odblokowanie biometryczne. Aby je ponownie włączyć, wpisz kod PIN.</string>
     <string name="applied_to_loaded_only">Zastosowano do %1$d z %2$d - ta operacja obejmuje tylko wczytane wiadomości</string>
     <string name="audit_event_2fa_disabled">Uwierzytelnianie dwuskładnikowe wyłączone</string>
     <string name="audit_event_2fa_enabled">Uwierzytelnianie dwuskładnikowe włączone</string>

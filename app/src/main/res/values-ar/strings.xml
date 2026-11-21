@@ -3015,6 +3015,8 @@
     <string name="signature_add_formatting">إضافة تنسيق</string>
     <string name="alias_directory_separator_hint">يمكن استخدام نقطة أو شرطة مائلة أو علامة زائد أو علامة رقم قبل اسم الدليل.</string>
     <string name="app_lock_biometric_failed">فتح القفل بالمقاييس الحيوية غير متاح. أدخل رمز PIN.</string>
+    <string name="app_lock_biometric_error">لم يعمل فتح القفل بالمقاييس الحيوية. حاول مرة أخرى أو أدخل رمز PIN.</string>
+    <string name="app_lock_biometric_reset">أوقف Aster Mail فتح القفل بالمقاييس الحيوية. لتشغيله مرة أخرى، أدخل رمز PIN.</string>
     <string name="applied_to_loaded_only">تم التطبيق على %1$d من %2$d - يشمل هذا الإجراء الرسائل المحمّلة فقط</string>
     <string name="audit_event_2fa_disabled">تم تعطيل المصادقة الثنائية</string>
     <string name="audit_event_2fa_enabled">تم تفعيل المصادقة الثنائية</string>

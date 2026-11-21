@@ -2215,6 +2215,8 @@
     <string name="app_lock_biometric_subtitle">अनलॉक करने के लिए अपना फ़िंगरप्रिंट या चेहरा इस्तेमाल करें</string>
     <string name="app_lock_use_pin">PIN इस्तेमाल करें</string>
     <string name="app_lock_biometric_failed">बायोमेट्रिक अनलॉक उपलब्ध नहीं है। अपना PIN डालें।</string>
+    <string name="app_lock_biometric_error">बायोमेट्रिक अनलॉक काम नहीं किया. फिर से कोशिश करें या अपना PIN डालें.</string>
+    <string name="app_lock_biometric_reset">Aster Mail ने बायोमेट्रिक अनलॉक बंद कर दिया. इसे फिर से चालू करने के लिए, अपना PIN डालें.</string>
     <string name="app_lock_verify_title">पहचान की पुष्टि करें</string>
     <string name="app_lock_enter_to_change">इसे बदलने के लिए अपना मौजूदा PIN डालें।</string>
     <string name="app_lock_enter_to_disable">ऐप लॉक बंद करने के लिए अपना PIN डालें।</string>

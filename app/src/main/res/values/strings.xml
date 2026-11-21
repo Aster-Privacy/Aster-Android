@@ -2504,6 +2504,8 @@
     <string name="app_lock_biometric_subtitle">Use your fingerprint or face to unlock</string>
     <string name="app_lock_use_pin">Use PIN</string>
     <string name="app_lock_biometric_failed">Biometric unlock isn\'t available. Enter your PIN.</string>
+    <string name="app_lock_biometric_error">Biometric unlock didn\'t work. Try again or enter your PIN.</string>
+    <string name="app_lock_biometric_reset">Aster Mail turned off biometric unlock. To turn it back on, enter your PIN.</string>
 
     <!-- App Lock verify -->
     <string name="app_lock_verify_title">Verify identity</string>

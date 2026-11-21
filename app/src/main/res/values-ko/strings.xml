@@ -2922,6 +2922,8 @@
     <string name="signature_add_formatting">서식 추가</string>
     <string name="alias_directory_separator_hint">디렉터리 이름 앞에는 마침표, 슬래시, 더하기 기호, 우물 정 기호를 사용할 수 있습니다.</string>
     <string name="app_lock_biometric_failed">생체 인식 잠금 해제를 사용할 수 없습니다. PIN을 입력하세요.</string>
+    <string name="app_lock_biometric_error">생체 인식 잠금 해제가 작동하지 않았습니다. 다시 시도하거나 PIN을 입력하세요.</string>
+    <string name="app_lock_biometric_reset">Aster Mail에서 생체 인식 잠금 해제를 껐습니다. 다시 켜려면 PIN을 입력하세요.</string>
     <string name="applied_to_loaded_only">%2$d개 중 %1$d개에 적용됨 - 이 작업은 불러온 메시지에만 적용됩니다</string>
     <string name="audit_event_2fa_disabled">2단계 인증 끔</string>
     <string name="audit_event_2fa_enabled">2단계 인증 켬</string>

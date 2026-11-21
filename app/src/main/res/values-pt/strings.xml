@@ -2958,6 +2958,8 @@
     <string name="signature_add_formatting">Adicionar formatação</string>
     <string name="alias_directory_separator_hint">Um ponto, uma barra, um sinal de mais ou um cardinal funcionam antes do nome do diretório.</string>
     <string name="app_lock_biometric_failed">O desbloqueio biométrico não está disponível. Introduza o seu PIN.</string>
+    <string name="app_lock_biometric_error">O desbloqueio biométrico não funcionou. Tente novamente ou introduza o seu PIN.</string>
+    <string name="app_lock_biometric_reset">O Aster Mail desativou o desbloqueio biométrico. Para o voltar a ativar, introduza o seu PIN.</string>
     <string name="applied_to_loaded_only">Aplicado a %1$d de %2$d - esta ação abrange apenas as mensagens carregadas</string>
     <string name="audit_event_2fa_disabled">Autenticação de dois fatores desativada</string>
     <string name="audit_event_2fa_enabled">Autenticação de dois fatores ativada</string>

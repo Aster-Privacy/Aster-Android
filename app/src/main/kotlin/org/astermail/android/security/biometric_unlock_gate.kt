@@ -116,6 +116,10 @@ object BiometricUnlockGate {
         drop_binding(context, rebind_pending = false)
     }
 
+    fun invalidate(context: Context) {
+        drop_binding(context, rebind_pending = true)
+    }
+
     private fun has_token(context: Context): Boolean {
         val p = prefs(context)
         return p.contains(KEY_TOKEN_CIPHERTEXT) && p.contains(KEY_TOKEN_IV) && p.contains(KEY_TOKEN_DIGEST)
