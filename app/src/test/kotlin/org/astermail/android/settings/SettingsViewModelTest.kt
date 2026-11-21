@@ -771,7 +771,9 @@ class SettingsViewModelTest {
     @Test
     fun `forget learned senders clears the list`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
-        vm.load_preferences()
+        coEvery { preferences_api.get_preferences_raw() } returns "{}"
+        coEvery { preferences_api.get_preferences() } returns UserPreferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
         val learned = listOf(
             org.astermail.android.api.preferences.LearnedCategorySender("a@x.com", "social", 10),
@@ -790,7 +792,9 @@ class SettingsViewModelTest {
     @Test
     fun `learned edits from a move are saved and undone`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
-        vm.load_preferences()
+        coEvery { preferences_api.get_preferences_raw() } returns "{}"
+        coEvery { preferences_api.get_preferences() } returns UserPreferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
         val move = org.astermail.android.mail.learn_from_category_move(
             current = emptyList(),
@@ -815,7 +819,9 @@ class SettingsViewModelTest {
     @Test
     fun `turning off learning keeps learned senders`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
-        vm.load_preferences()
+        coEvery { preferences_api.get_preferences_raw() } returns "{}"
+        coEvery { preferences_api.get_preferences() } returns UserPreferences()
+        vm.load_preferences(force = true)
         advanceUntilIdle()
         val learned = listOf(org.astermail.android.api.preferences.LearnedCategorySender("a@x.com", "social", 10))
         vm.save_preferences(vm.state.value.preferences!!.copy(learned_category_senders = learned))
