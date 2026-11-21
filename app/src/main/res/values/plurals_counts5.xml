@@ -80,4 +80,12 @@
         <item quantity="one">%1$d second</item>
         <item quantity="other">%1$d seconds</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Forget %1$d learned sender</item>
+        <item quantity="other">Forget %1$d learned senders</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Email from %1$d sender goes back to automatic sorting. You can\'t undo this.</item>
+        <item quantity="other">Email from %1$d senders goes back to automatic sorting. You can\'t undo this.</item>
+    </plurals>
 </resources>

@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Podaj wartość dla każdej akcji.</string>
     <string name="mute_category_notifications">Wycisz powiadomienia dla %1$s</string>
     <string name="unmute_category_notifications">Wyłącz wyciszenie powiadomień dla %1$s</string>
+    <string name="learn_from_category_moves">Ucz się z przeniesień</string>
+    <string name="learn_from_category_moves_description">Gdy przeniesiesz wiadomość do kategorii, przyszłe wiadomości od tego nadawcy też tam trafią. Te dane pozostają zaszyfrowane i nigdy nie są nam udostępniane.</string>
+    <string name="forget_learned_senders_title">Zapomnieć zapamiętanych nadawców?</string>
+    <string name="forget_learned_senders_confirm">Zapomnij</string>
 </resources>

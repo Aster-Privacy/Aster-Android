@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Her işlem için bir değer girin.</string>
     <string name="mute_category_notifications">%1$s bildirimlerini sessize al</string>
     <string name="unmute_category_notifications">%1$s bildirimlerinin sesini aç</string>
+    <string name="learn_from_category_moves">Taşımalarınızdan öğren</string>
+    <string name="learn_from_category_moves_description">Bir e-postayı bir kategoriye taşıdığınızda, o göndericiden gelecek e-postalar da oraya gider. Bu bilgi şifreli kalır ve hiçbir zaman bizimle paylaşılmaz.</string>
+    <string name="forget_learned_senders_title">Öğrenilen göndericiler unutulsun mu?</string>
+    <string name="forget_learned_senders_confirm">Unut</string>
 </resources>

@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">모든 작업에 값을 입력하세요.</string>
     <string name="mute_category_notifications">%1$s 알림 음소거</string>
     <string name="unmute_category_notifications">%1$s 알림 음소거 해제</string>
+    <string name="learn_from_category_moves">이동한 내용으로 학습</string>
+    <string name="learn_from_category_moves_description">메일을 카테고리로 이동하면 해당 발신자의 이후 메일도 그 카테고리로 이동합니다. 이 정보는 암호화된 상태로 유지되며 당사와 공유되지 않습니다.</string>
+    <string name="forget_learned_senders_title">학습한 발신자를 삭제할까요?</string>
+    <string name="forget_learned_senders_confirm">삭제</string>
 </resources>

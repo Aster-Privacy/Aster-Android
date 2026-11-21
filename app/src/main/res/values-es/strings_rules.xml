@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Completa un valor para cada acción.</string>
     <string name="mute_category_notifications">Silenciar las notificaciones de %1$s</string>
     <string name="unmute_category_notifications">Reactivar las notificaciones de %1$s</string>
+    <string name="learn_from_category_moves">Aprender de tus movimientos</string>
+    <string name="learn_from_category_moves_description">Cuando mueves un correo a una categoría, los correos futuros de ese remitente también irán allí. Esto se mantiene cifrado y nunca se comparte con nosotros.</string>
+    <string name="forget_learned_senders_title">¿Olvidar remitentes aprendidos?</string>
+    <string name="forget_learned_senders_confirm">Olvidar</string>
 </resources>

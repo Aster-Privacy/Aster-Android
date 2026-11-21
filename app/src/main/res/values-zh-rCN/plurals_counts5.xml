@@ -60,4 +60,10 @@
     <plurals name="undo_send_delay_seconds">
         <item quantity="other">%1$d 秒</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="other">清除 %1$d 个已学习的发件人</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="other">来自 %1$d 个发件人的邮件将恢复自动分类。此操作无法撤销。</item>
+    </plurals>
 </resources>

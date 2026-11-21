@@ -120,4 +120,16 @@
         <item quantity="many">%1$d s</item>
         <item quantity="other">%1$d s</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Zapomnij %1$d zapamiętanego nadawcę</item>
+        <item quantity="few">Zapomnij %1$d zapamiętanych nadawców</item>
+        <item quantity="many">Zapomnij %1$d zapamiętanych nadawców</item>
+        <item quantity="other">Zapomnij %1$d zapamiętanego nadawcy</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Poczta od %1$d nadawcy wróci do automatycznego sortowania. Tej czynności nie można cofnąć.</item>
+        <item quantity="few">Poczta od %1$d nadawców wróci do automatycznego sortowania. Tej czynności nie można cofnąć.</item>
+        <item quantity="many">Poczta od %1$d nadawców wróci do automatycznego sortowania. Tej czynności nie można cofnąć.</item>
+        <item quantity="other">Poczta od %1$d nadawcy wróci do automatycznego sortowania. Tej czynności nie można cofnąć.</item>
+    </plurals>
 </resources>

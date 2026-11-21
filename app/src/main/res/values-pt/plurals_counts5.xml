@@ -100,4 +100,14 @@
         <item quantity="many">%1$d segundos</item>
         <item quantity="other">%1$d segundos</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Esquecer %1$d remetente aprendido</item>
+        <item quantity="many">Esquecer %1$d remetentes aprendidos</item>
+        <item quantity="other">Esquecer %1$d remetentes aprendidos</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">O correio de %1$d remetente volta à ordenação automática. Não é possível anular esta ação.</item>
+        <item quantity="many">O correio de %1$d remetentes volta à ordenação automática. Não é possível anular esta ação.</item>
+        <item quantity="other">O correio de %1$d remetentes volta à ordenação automática. Não é possível anular esta ação.</item>
+    </plurals>
 </resources>

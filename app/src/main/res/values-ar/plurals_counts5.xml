@@ -160,4 +160,20 @@
         <item quantity="many">%1$d ث</item>
         <item quantity="other">%1$d ث</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="zero">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+        <item quantity="one">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+        <item quantity="two">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+        <item quantity="few">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+        <item quantity="many">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+        <item quantity="other">نسيان المرسلين الذين تم تعلّمهم (%1$d)</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="zero">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+        <item quantity="one">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+        <item quantity="two">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+        <item quantity="few">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+        <item quantity="many">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+        <item quantity="other">ستعود رسائل المرسلين (%1$d) إلى الفرز التلقائي. لا يمكنك التراجع عن هذا الإجراء.</item>
+    </plurals>
 </resources>

@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">أدخل قيمة لكل إجراء.</string>
     <string name="mute_category_notifications">كتم الإشعارات لـ %1$s</string>
     <string name="unmute_category_notifications">إلغاء كتم الإشعارات لـ %1$s</string>
+    <string name="learn_from_category_moves">التعلّم من عمليات النقل</string>
+    <string name="learn_from_category_moves_description">عند نقل رسالة إلى فئة، تنتقل الرسائل المستقبلية من المرسل نفسه إليها أيضًا. تبقى هذه المعلومات مشفرة ولا تتم مشاركتها معنا أبدًا.</string>
+    <string name="forget_learned_senders_title">هل تريد نسيان المرسلين الذين تم تعلّمهم؟</string>
+    <string name="forget_learned_senders_confirm">نسيان</string>
 </resources>

@@ -120,4 +120,16 @@
         <item quantity="many">%1$d с</item>
         <item quantity="other">%1$d с</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Забыть %1$d изученного отправителя</item>
+        <item quantity="few">Забыть %1$d изученных отправителей</item>
+        <item quantity="many">Забыть %1$d изученных отправителей</item>
+        <item quantity="other">Забыть %1$d изученного отправителя</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Почта от %1$d отправителя снова будет сортироваться автоматически. Это действие нельзя отменить.</item>
+        <item quantity="few">Почта от %1$d отправителей снова будет сортироваться автоматически. Это действие нельзя отменить.</item>
+        <item quantity="many">Почта от %1$d отправителей снова будет сортироваться автоматически. Это действие нельзя отменить.</item>
+        <item quantity="other">Почта от %1$d отправителя снова будет сортироваться автоматически. Это действие нельзя отменить.</item>
+    </plurals>
 </resources>

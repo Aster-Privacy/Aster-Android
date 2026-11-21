@@ -100,4 +100,14 @@
         <item quantity="many">%1$d segundos</item>
         <item quantity="other">%1$d segundos</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Esquecer %1$d remetente aprendido</item>
+        <item quantity="many">Esquecer %1$d remetentes aprendidos</item>
+        <item quantity="other">Esquecer %1$d remetentes aprendidos</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Os e-mails de %1$d remetente voltam à classificação automática. Não é possível desfazer esta ação.</item>
+        <item quantity="many">Os e-mails de %1$d remetentes voltam à classificação automática. Não é possível desfazer esta ação.</item>
+        <item quantity="other">Os e-mails de %1$d remetentes voltam à classificação automática. Não é possível desfazer esta ação.</item>
+    </plurals>
 </resources>

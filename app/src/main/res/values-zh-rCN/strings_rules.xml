@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">为每个操作填写值。</string>
     <string name="mute_category_notifications">将 %1$s 的通知静音</string>
     <string name="unmute_category_notifications">取消 %1$s 的通知静音</string>
+    <string name="learn_from_category_moves">从你的移动操作中学习</string>
+    <string name="learn_from_category_moves_description">当你将邮件移到某个类别后，该发件人以后的邮件也会进入这个类别。这些信息始终加密，绝不会与我们共享。</string>
+    <string name="forget_learned_senders_title">要清除已学习的发件人吗？</string>
+    <string name="forget_learned_senders_confirm">清除</string>
 </resources>

@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Geben Sie für jede Aktion einen Wert an.</string>
     <string name="mute_category_notifications">Benachrichtigungen für %1$s stummschalten</string>
     <string name="unmute_category_notifications">Stummschaltung für %1$s aufheben</string>
+    <string name="learn_from_category_moves">Aus Ihren Verschiebungen lernen</string>
+    <string name="learn_from_category_moves_description">Wenn Sie eine E-Mail in eine Kategorie verschieben, landen künftige E-Mails dieses Absenders ebenfalls dort. Diese Angaben bleiben verschlüsselt und werden nie mit uns geteilt.</string>
+    <string name="forget_learned_senders_title">Gelernte Absender vergessen?</string>
+    <string name="forget_learned_senders_confirm">Vergessen</string>
 </resources>

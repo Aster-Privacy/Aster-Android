@@ -105,4 +105,8 @@
     <string name="rules_hint_finish_action">हर कार्रवाई के लिए कोई मान भरें।</string>
     <string name="mute_category_notifications">%1$s की सूचनाएं म्यूट करें</string>
     <string name="unmute_category_notifications">%1$s की सूचनाएं अनम्यूट करें</string>
+    <string name="learn_from_category_moves">आपके बदलावों से सीखें</string>
+    <string name="learn_from_category_moves_description">जब आप किसी ईमेल को किसी श्रेणी में ले जाते हैं, तो उस प्रेषक के आगे के ईमेल भी वहीं जाते हैं। यह जानकारी एन्क्रिप्टेड रहती है और कभी हमारे साथ साझा नहीं की जाती।</string>
+    <string name="forget_learned_senders_title">सीखे गए प्रेषक भूलें?</string>
+    <string name="forget_learned_senders_confirm">भूलें</string>
 </resources>

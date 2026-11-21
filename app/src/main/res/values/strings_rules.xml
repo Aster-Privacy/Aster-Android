@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_condition">Fill in a value for every condition.</string>
     <string name="rules_hint_add_action">Add at least one action.</string>
     <string name="rules_hint_finish_action">Fill in a value for every action.</string>
+    <string name="learn_from_category_moves">Learn from your moves</string>
+    <string name="learn_from_category_moves_description">When you move an email to a category, future email from that sender goes there too. This stays encrypted and is never shared with us.</string>
+    <string name="forget_learned_senders_title">Forget learned senders?</string>
+    <string name="forget_learned_senders_confirm">Forget</string>
 </resources>

@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Укажите значение для каждого действия.</string>
     <string name="mute_category_notifications">Отключить уведомления для %1$s</string>
     <string name="unmute_category_notifications">Включить уведомления для %1$s</string>
+    <string name="learn_from_category_moves">Учиться на ваших перемещениях</string>
+    <string name="learn_from_category_moves_description">Когда вы перемещаете письмо в категорию, будущие письма от этого отправителя тоже попадут туда. Эти данные остаются зашифрованными и никогда не передаются нам.</string>
+    <string name="forget_learned_senders_title">Забыть изученных отправителей?</string>
+    <string name="forget_learned_senders_confirm">Забыть</string>
 </resources>

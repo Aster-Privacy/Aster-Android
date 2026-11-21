@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Renseignez une valeur pour chaque action.</string>
     <string name="mute_category_notifications">Désactiver les notifications pour %1$s</string>
     <string name="unmute_category_notifications">Réactiver les notifications pour %1$s</string>
+    <string name="learn_from_category_moves">Apprendre de vos déplacements</string>
+    <string name="learn_from_category_moves_description">Lorsque vous déplacez un e-mail vers une catégorie, les prochains e-mails de cet expéditeur y seront aussi classés. Ces données restent chiffrées et ne sont jamais partagées avec nous.</string>
+    <string name="forget_learned_senders_title">Oublier les expéditeurs appris ?</string>
+    <string name="forget_learned_senders_confirm">Oublier</string>
 </resources>

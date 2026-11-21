@@ -60,4 +60,10 @@
     <plurals name="undo_send_delay_seconds">
         <item quantity="other">%1$d秒</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="other">学習した送信者 %1$d 件を消去</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="other">%1$d 件の送信者からのメールは自動分類に戻ります。この操作は元に戻せません。</item>
+    </plurals>
 </resources>

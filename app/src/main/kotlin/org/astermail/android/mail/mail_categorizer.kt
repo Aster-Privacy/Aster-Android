@@ -23,6 +23,7 @@ package org.astermail.android.mail
 
 import org.astermail.android.api.mail.MailItemMetadata
 import org.astermail.android.api.preferences.CustomCategoryRule
+import org.astermail.android.api.preferences.normalize_learned_sender
 
 val CATEGORY_TABS: List<String> = listOf("primary") + DEFAULT_ENABLED_CATEGORIES
 
@@ -152,11 +153,26 @@ private fun resolve_rule_category(
     return if (custom) rule_category else null
 }
 
+fun resolve_learned_category(
+    from_email: String,
+    sender_verification: String?,
+    learned: Map<String, String>,
+    custom_categories: List<CustomCategoryRule>,
+): String? {
+    if (learned.isEmpty()) return null
+    if (sender_verification == "invalid") return null
+    val sender = normalize_learned_sender(from_email) ?: return null
+    val category = learned[sender] ?: return null
+    if (BUILTIN_CATEGORY_IDS.contains(category)) return category
+    return if (custom_categories.any { it.id == category && it.enabled }) category else null
+}
+
 fun classify(
     envelope: DecryptedEnvelope,
     metadata: MailItemMetadata?,
     rule_category: String? = null,
     custom_categories: List<CustomCategoryRule> = emptyList(),
+    learned: Map<String, String> = emptyMap(),
 ): String {
     val pinned_category = metadata?.category
     if (metadata?.category_pinned == true && pinned_category != null) {
@@ -189,6 +205,16 @@ fun classify(
         envelope.sender_verification != "invalid"
     ) {
         return "primary"
+    }
+
+    val learned_match = resolve_learned_category(
+        email,
+        envelope.sender_verification,
+        learned,
+        custom_categories,
+    )
+    if (learned_match != null) {
+        return learned_match
     }
 
     val custom_match = match_custom_category(auth_domains, subject, custom_categories)

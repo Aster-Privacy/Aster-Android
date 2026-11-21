@@ -769,6 +769,66 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `forget learned senders clears the list`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
+        vm.load_preferences()
+        advanceUntilIdle()
+        val learned = listOf(
+            org.astermail.android.api.preferences.LearnedCategorySender("a@x.com", "social", 10),
+            org.astermail.android.api.preferences.LearnedCategorySender("b@x.com", "updates", 20),
+        )
+        vm.save_preferences(vm.state.value.preferences!!.copy(learned_category_senders = learned))
+        advanceUntilIdle()
+        assertEquals(2, vm.state.value.preferences?.learned_category_senders?.size)
+
+        vm.forget_learned_category_senders()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<org.astermail.android.api.preferences.LearnedCategorySender>(), vm.state.value.preferences?.learned_category_senders)
+    }
+
+    @Test
+    fun `learned edits from a move are saved and undone`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
+        vm.load_preferences()
+        advanceUntilIdle()
+        val move = org.astermail.android.mail.learn_from_category_move(
+            current = emptyList(),
+            learning_enabled = true,
+            sources = listOf(org.astermail.android.mail.LearnedMoveSource("shop@store.com", null, false, true)),
+            category = "shopping",
+            now_seconds = 100,
+        )!!
+
+        vm.apply_learned_category_edit(move.apply)
+        advanceUntilIdle()
+        assertEquals(
+            listOf(org.astermail.android.api.preferences.LearnedCategorySender("shop@store.com", "shopping", 100)),
+            vm.state.value.preferences?.learned_category_senders,
+        )
+
+        vm.apply_learned_category_edit(move.undo)
+        advanceUntilIdle()
+        assertEquals(emptyList<org.astermail.android.api.preferences.LearnedCategorySender>(), vm.state.value.preferences?.learned_category_senders)
+    }
+
+    @Test
+    fun `turning off learning keeps learned senders`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
+        vm.load_preferences()
+        advanceUntilIdle()
+        val learned = listOf(org.astermail.android.api.preferences.LearnedCategorySender("a@x.com", "social", 10))
+        vm.save_preferences(vm.state.value.preferences!!.copy(learned_category_senders = learned))
+        advanceUntilIdle()
+
+        vm.set_learn_from_category_moves(false)
+        advanceUntilIdle()
+
+        assertEquals(false, vm.state.value.preferences?.learn_from_category_moves)
+        assertEquals(learned, vm.state.value.preferences?.learned_category_senders)
+    }
+
+    @Test
     fun `load_api_keys populates api keys`() = runTest {
         val keys = listOf(
             ApiKeyInfo(id = "k1", name_encrypted = "enc", name_nonce = "n", prefix = "ak_"),

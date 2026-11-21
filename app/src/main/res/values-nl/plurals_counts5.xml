@@ -80,4 +80,12 @@
         <item quantity="one">%1$d seconde</item>
         <item quantity="other">%1$d seconden</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">%1$d geleerde afzender vergeten</item>
+        <item quantity="other">%1$d geleerde afzenders vergeten</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">E-mail van %1$d afzender wordt weer automatisch gesorteerd. Je kunt dit niet ongedaan maken.</item>
+        <item quantity="other">E-mail van %1$d afzenders wordt weer automatisch gesorteerd. Je kunt dit niet ongedaan maken.</item>
+    </plurals>
 </resources>
