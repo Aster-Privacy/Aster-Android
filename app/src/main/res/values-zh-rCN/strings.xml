@@ -1343,6 +1343,7 @@
     <string name="csrf_unavailable">此会话已失效。请重新登录。</string>
     <string name="received_on_label">接收地址</string>
     <string name="forwarded_by_label">转发方</string>
+    <string name="forwarded_via_domain">通过 %1$s</string>
     <string name="auto_advance_label">归档或删除后</string>
     <string name="auto_advance_next">转到下一封邮件</string>
     <string name="auto_advance_previous">转到上一封邮件</string>

@@ -270,13 +270,80 @@ fun forwarding_address(display_sender_email: String?, sender_email: String): Str
     return literal
 }
 
+const val addy_custom_service = "addy_custom"
+
+private fun is_known_forwarder(email: String): Boolean =
+    matches_forwarder(email, addy_domains) || matches_forwarder(email, simplelogin_domains)
+
+fun decode_custom_domain_forward_address(from_email: String): String? {
+    val trimmed = from_email.trim()
+    if (!email_address_pattern.matches(trimmed)) return null
+    val at = trimmed.lastIndexOf('@')
+    if (at <= 0) return null
+    val local = trimmed.substring(0, at)
+    val plus = local.lastIndexOf('+')
+    if (plus <= 0) return null
+    val tag = local.substring(plus + 1)
+    if (tag.count { it == '=' } != 1) return null
+    val eq = tag.lastIndexOf('=')
+    val decoded = tag.substring(0, eq) + "@" + tag.substring(eq + 1)
+    if (!email_address_pattern.matches(decoded)) return null
+    return decoded
+}
+
+private fun is_custom_forward_authenticated(auth: ForwardingAuthResults?): Boolean {
+    if (auth == null) return false
+    if (auth.sender_aligned == false) return false
+    return auth_status(auth.dmarc_result) == "pass"
+}
+
+private fun header_present(raw_headers: List<Pair<String, String>>, name: String): Boolean =
+    raw_headers.any { it.first.equals(name, ignoreCase = true) }
+
+fun detect_custom_domain_forward(
+    raw_headers: List<Pair<String, String>>,
+    from_email: String,
+    auth: ForwardingAuthResults?,
+): ForwardedAliasInfo? {
+    if (raw_headers.isEmpty() || from_email.isBlank()) return null
+    if (is_known_forwarder(from_email)) return null
+    val decoded = decode_custom_domain_forward_address(from_email) ?: return null
+    if (!is_custom_forward_authenticated(auth)) return null
+    if (addy_reports_dmarc_failure(raw_headers)) return null
+
+    val sender_name = "X-AnonAddy-Original-Sender"
+    val from_header_name = "X-AnonAddy-Original-From-Header"
+    val sender_value = find_header(raw_headers, sender_name)
+    val from_header_value = find_header(raw_headers, from_header_name)
+    if (sender_value == null && header_present(raw_headers, sender_name)) return null
+    if (from_header_value == null && header_present(raw_headers, from_header_name)) return null
+
+    val from_header = parse_original_sender(from_header_value)
+    val bound = if (sender_value != null) parse_original_sender(sender_value) else from_header
+    if (bound == null || !same_email(bound.email, decoded)) return null
+    if (same_email(bound.email, from_email)) return null
+
+    val name = from_header?.takeIf { same_email(it.email, decoded) }?.name
+    return ForwardedAliasInfo(addy_custom_service, ParsedEmailAddress(name, bound.email))
+}
+
+fun custom_forward_via_domain(display_sender_email: String?, sender_email: String): String? {
+    val shown = display_sender_email?.trim().orEmpty()
+    if (shown.isEmpty()) return null
+    if (is_known_forwarder(sender_email)) return null
+    val decoded = decode_custom_domain_forward_address(sender_email) ?: return null
+    if (!same_email(decoded, shown)) return null
+    return domain_of(sender_email.trim()).takeIf { it.isNotEmpty() }
+}
+
 fun resolve_forwarding_display(
     from_email: String,
     raw_headers: List<Pair<String, String>>,
     auth: ForwardingAuthResults? = null,
 ): ForwardingDisplay? {
-    if (!is_forwarder_authenticated(auth)) return null
-    val forwarded = detect_forwarded_alias(raw_headers, from_email) ?: return null
+    val forwarded = (if (is_forwarder_authenticated(auth)) detect_forwarded_alias(raw_headers, from_email) else null)
+        ?: detect_custom_domain_forward(raw_headers, from_email, auth)
+        ?: return null
     val fallback_name = forwarded.original.email.substringBefore('@')
     return ForwardingDisplay(
         display_sender_name = forwarded.original.name

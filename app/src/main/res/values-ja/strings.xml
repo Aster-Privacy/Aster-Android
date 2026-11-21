@@ -1343,6 +1343,7 @@
     <string name="csrf_unavailable">このセッションは無効です。もう一度サインインしてください。</string>
     <string name="received_on_label">受信アドレス</string>
     <string name="forwarded_by_label">転送元</string>
+    <string name="forwarded_via_domain">%1$s 経由</string>
     <string name="auto_advance_label">アーカイブまたは削除後</string>
     <string name="auto_advance_next">次のメールへ移動</string>
     <string name="auto_advance_previous">前のメールへ移動</string>

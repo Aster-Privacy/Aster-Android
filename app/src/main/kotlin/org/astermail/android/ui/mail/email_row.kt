@@ -94,7 +94,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -285,9 +289,14 @@ fun EmailRow(
         }
 
         Column(modifier = Modifier.weight(1f)) {
+            val via_label = custom_forward_via_label(email.display_sender_email, email.sender_email)
+            val via_color = colors.text_tertiary
+            val sender_text = remember(shown_sender_name, via_label, via_color) {
+                with_via_suffix(shown_sender_name, via_label, via_color)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = shown_sender_name,
+                    text = sender_text,
                     style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
                     color = sender_color,
                     fontSize = 16.sp,
@@ -674,9 +683,18 @@ fun ThreadInboxRow(
                     others_template = others_template,
                 )
             }
+            val via_label = if (shown_participants.size <= 1) {
+                custom_forward_via_label(email.display_sender_email, email.sender_email)
+            } else {
+                null
+            }
+            val via_color = colors.text_tertiary
+            val sender_text = remember(participants_text, via_label, via_color) {
+                with_via_suffix(participants_text, via_label, via_color)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = participants_text,
+                    text = sender_text,
                     style = inbox_sender_text_style(),
                     color = sender_color,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
@@ -1041,6 +1059,23 @@ private fun format_participants(
         }
     }
 }
+
+@Composable
+internal fun custom_forward_via_label(display_sender_email: String?, sender_email: String): String? {
+    val domain = custom_forward_via_domain(display_sender_email, sender_email) ?: return null
+    return stringResource(R.string.forwarded_via_domain, domain)
+}
+
+internal fun with_via_suffix(name: String, via_label: String?, via_color: Color): AnnotatedString =
+    buildAnnotatedString {
+        append(name)
+        if (via_label != null) {
+            append(" ")
+            withStyle(SpanStyle(color = via_color, fontWeight = FontWeight.Normal, fontSize = 13.sp)) {
+                append(via_label)
+            }
+        }
+    }
 
 private fun first_name(full: String): String {
     val trimmed = full.trim()

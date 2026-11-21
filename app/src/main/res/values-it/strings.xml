@@ -1349,6 +1349,7 @@
     <string name="csrf_unavailable">Questa sessione non è più valida. Accedi di nuovo.</string>
     <string name="received_on_label">Ricevuto su</string>
     <string name="forwarded_by_label">Inoltrato da</string>
+    <string name="forwarded_via_domain">tramite %1$s</string>
     <string name="auto_advance_label">Dopo l\'archiviazione o l\'eliminazione</string>
     <string name="auto_advance_next">Vai all\'email successiva</string>
     <string name="auto_advance_previous">Vai all\'email precedente</string>

@@ -352,4 +352,215 @@ class ForwardingAliasTest {
         assertNull(forwarding_address(null, "jane@example.com"))
         assertNull(forwarding_address("Jane@example.com", "jane@example.com"))
     }
+
+    private val custom_from = "shop+jane.doe=example.com@mail.custom.example"
+    private val strict_auth = ForwardingAuthResults(dkim_result = "pass", dmarc_result = "pass", sender_aligned = true)
+
+    private fun custom_headers(vararg extra: Pair<String, String>): List<Pair<String, String>> =
+        listOf(
+            "X-AnonAddy-Original-Sender" to "jane.doe@example.com",
+            "X-AnonAddy-Original-From-Header" to "Jane Doe <jane.doe@example.com>",
+        ) + extra.toList()
+
+    @Test
+    fun resolves_custom_domain_forward() {
+        val result = resolve_forwarding_display(custom_from, custom_headers(), strict_auth)
+        assertEquals("Jane Doe", result?.display_sender_name)
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+        assertEquals(addy_custom_service, result?.forwarding_service)
+        assertEquals("mail.custom.example", custom_forward_via_domain(result?.display_sender_email, custom_from))
+        assertEquals(custom_from, forwarding_address(result?.display_sender_email, custom_from))
+    }
+
+    @Test
+    fun custom_domain_forward_uses_fallback_name_when_from_header_differs() {
+        val result = resolve_forwarding_display(
+            custom_from,
+            headers(
+                "X-AnonAddy-Original-Sender" to "jane.doe@example.com",
+                "X-AnonAddy-Original-From-Header" to "Bank <security@bank.example>",
+            ),
+            strict_auth,
+        )
+        assertEquals("jane.doe", result?.display_sender_name)
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+    }
+
+    @Test
+    fun custom_domain_forward_binds_from_header_when_sender_absent() {
+        val result = resolve_forwarding_display(
+            custom_from,
+            headers("X-AnonAddy-Original-From-Header" to "Jane Doe <Jane.Doe@Example.com>"),
+            strict_auth,
+        )
+        assertEquals("Jane Doe", result?.display_sender_name)
+        assertEquals(addy_custom_service, result?.forwarding_service)
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_mismatched_original_sender() {
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                headers(
+                    "X-AnonAddy-Original-Sender" to "ceo@bank.example",
+                    "X-AnonAddy-Original-From-Header" to "Jane Doe <jane.doe@example.com>",
+                ),
+                strict_auth,
+            ),
+        )
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_missing_headers() {
+        assertNull(resolve_forwarding_display(custom_from, headers("From" to custom_from), strict_auth))
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_duplicated_sender_header() {
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                custom_headers("X-AnonAddy-Original-Sender" to "ceo@bank.example"),
+                strict_auth,
+            ),
+        )
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                headers(
+                    "X-AnonAddy-Original-Sender" to "ceo@bank.example",
+                    "X-AnonAddy-Original-Sender" to "jane.doe@example.com",
+                    "X-AnonAddy-Original-From-Header" to "Jane Doe <jane.doe@example.com>",
+                ),
+                strict_auth,
+            ),
+        )
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                custom_headers("X-AnonAddy-Original-From-Header" to "Bank <security@bank.example>"),
+                strict_auth,
+            ),
+        )
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_weak_dmarc() {
+        listOf(null, "", "none", "fail", "missing", "temperror").forEach { dmarc ->
+            assertNull(
+                resolve_forwarding_display(
+                    custom_from,
+                    custom_headers(),
+                    ForwardingAuthResults(dkim_result = "pass", dmarc_result = dmarc, sender_aligned = true),
+                ),
+            )
+        }
+        assertNull(resolve_forwarding_display(custom_from, custom_headers(), ForwardingAuthResults()))
+        assertNull(resolve_forwarding_display(custom_from, custom_headers(), null))
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_unaligned_sender() {
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                custom_headers(),
+                ForwardingAuthResults(dkim_result = "pass", dmarc_result = "pass", sender_aligned = false),
+            ),
+        )
+    }
+
+    @Test
+    fun custom_domain_forward_accepts_unknown_alignment_with_dmarc_pass() {
+        val result = resolve_forwarding_display(
+            custom_from,
+            custom_headers(),
+            ForwardingAuthResults(dmarc_result = "pass"),
+        )
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_forwarder_dmarc_failure() {
+        assertNull(
+            resolve_forwarding_display(
+                custom_from,
+                custom_headers(
+                    "X-AnonAddy-Authentication-Results" to "mx.addy.io; spf=pass; dmarc=fail (p=reject)",
+                ),
+                strict_auth,
+            ),
+        )
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_malformed_tags() {
+        listOf(
+            "shop@mail.custom.example",
+            "shop+jane.doe@mail.custom.example",
+            "shop+jane.doe.example.com@mail.custom.example",
+            "shop+jane=doe=example.com@mail.custom.example",
+            "+jane.doe=example.com@mail.custom.example",
+        ).forEach { from ->
+            assertNull(decode_custom_domain_forward_address(from))
+            assertNull(resolve_forwarding_display(from, custom_headers(), strict_auth))
+        }
+    }
+
+    @Test
+    fun custom_domain_forward_uses_last_plus_for_tag() {
+        assertEquals(
+            "jane.doe@example.com",
+            decode_custom_domain_forward_address("shop+news+jane.doe=example.com@mail.custom.example"),
+        )
+    }
+
+    @Test
+    fun custom_domain_forward_rejects_invalid_decoded_address() {
+        listOf(
+            "shop+jane.doe=@mail.custom.example",
+            "shop+jane.doe=-bad-.example@mail.custom.example",
+            "shop+jane.doe=exa_mple.com@mail.custom.example",
+        ).forEach { from ->
+            assertNull(decode_custom_domain_forward_address(from))
+        }
+        assertNull(
+            resolve_forwarding_display(
+                "shop+jane.doe=exa_mple.com@mail.custom.example",
+                headers("X-AnonAddy-Original-Sender" to "jane.doe@exa_mple.com"),
+                strict_auth,
+            ),
+        )
+    }
+
+    @Test
+    fun custom_domain_reply_to_mode_stays_literal() {
+        assertNull(resolve_forwarding_display("shop@mail.custom.example", custom_headers(), strict_auth))
+        assertNull(custom_forward_via_domain(null, "shop@mail.custom.example"))
+    }
+
+    @Test
+    fun custom_domain_path_does_not_apply_to_known_forwarders() {
+        assertNull(
+            detect_custom_domain_forward(
+                custom_headers(),
+                "shop+jane.doe=example.com@addy.io",
+                strict_auth,
+            ),
+        )
+        assertNull(custom_forward_via_domain("jane@example.com", "shop@addy.io"))
+        val known = resolve_forwarding_display(
+            "shop@addy.io",
+            headers("X-AnonAddy-Original-Sender" to "jane@example.com"),
+            ForwardingAuthResults(),
+        )
+        assertEquals("addy", known?.forwarding_service)
+    }
+
+    @Test
+    fun via_domain_requires_display_to_match_decoded_address() {
+        assertNull(custom_forward_via_domain("other@example.com", custom_from))
+        assertNull(custom_forward_via_domain("", custom_from))
+    }
 }
