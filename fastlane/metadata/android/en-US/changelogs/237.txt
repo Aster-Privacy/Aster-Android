@@ -1,0 +1,11 @@
+What's new:
+
+- Aster Guard asks one of your devices to approve each new sign-in and can hold sensitive changes for a set time.
+- You can search inside a folder and permanently delete messages from search results.
+- Settings shows setup details for SMTP tokens and lets you rename them.
+
+Fixed:
+
+- Contact details refresh when your devices sync.
+- Your recovery backup stays current when your keys change.
+- Search indexing shows steadier progress.
