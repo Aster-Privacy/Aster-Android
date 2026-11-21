@@ -1064,7 +1064,12 @@ private fun vanguard_section(
     state.passkey_reauth?.let { prompt ->
         reauth_dialog(
             title = stringResource(R.string.confirm_its_you),
-            message = stringResource(R.string.passkey_add_reauth_description),
+            message = stringResource(
+                org.astermail.android.settings.passkey_add_reauth_message_res(
+                    registered_key_count = state.hardware_keys.size,
+                    totp_enabled = state.security_status?.totp_enabled == true,
+                ),
+            ),
             confirm_label = stringResource(R.string.continue_action),
             prompt = prompt,
             on_dismiss = { vm.dismiss_passkey_reauth() },

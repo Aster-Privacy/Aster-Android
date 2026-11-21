@@ -81,10 +81,23 @@ suspend fun remove_recovery_email_with_reauth(
     )
 }
 
-fun is_key_check_cancelled(t: Throwable): Boolean = t is PasskeyCancelledException
+fun is_key_check_cancelled(t: Throwable): Boolean = t is PasskeyCancelledException && !t.interrupted
 
-fun key_check_error_text(context: Context, t: Throwable): String? = when (t) {
-    is PasskeyUnavailableException, is PasskeyFailedException ->
-        context.getString(R.string.reauth_key_check_failed)
+fun key_check_error_res(t: Throwable): Int? = when (t) {
+    is PasskeyCancelledException ->
+        if (t.interrupted) R.string.reauth_key_check_interrupted else null
+    is PasskeyUnavailableException ->
+        if (t.no_provider) R.string.reauth_key_check_unavailable else R.string.reauth_key_check_no_credential
+    is PasskeyFailedException -> R.string.reauth_key_check_failed
     else -> null
 }
+
+fun key_check_error_text(context: Context, t: Throwable): String? =
+    key_check_error_res(t)?.let { context.getString(it) }
+
+fun passkey_add_reauth_message_res(registered_key_count: Int, totp_enabled: Boolean): Int =
+    if (registered_key_count > 0 && !totp_enabled) {
+        R.string.passkey_add_reauth_existing_key_description
+    } else {
+        R.string.passkey_add_reauth_description
+    }

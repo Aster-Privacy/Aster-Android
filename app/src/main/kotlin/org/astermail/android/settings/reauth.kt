@@ -110,11 +110,8 @@ fun reauth_retry_prompt(context: Context, prompt: ReauthPrompt, t: Throwable): R
         needs_code = true,
         error = context.getString(R.string.error_2fa_code_required),
     )
-    t is PasskeyCancelledException -> prompt.copy(busy = false, error = null)
-    t is PasskeyUnavailableException || t is PasskeyFailedException -> prompt.copy(
-        busy = false,
-        error = context.getString(R.string.reauth_key_check_failed),
-    )
+    t is PasskeyCancelledException || t is PasskeyUnavailableException || t is PasskeyFailedException ->
+        prompt.copy(busy = false, error = key_check_error_text(context, t))
     else -> prompt.copy(
         busy = false,
         error = org.astermail.android.localized_api_error(

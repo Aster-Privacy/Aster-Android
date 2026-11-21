@@ -28,6 +28,10 @@ import kotlinx.serialization.json.Json
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.auth.WebAuthnAssertionOptions
 import org.astermail.android.api.security.ReauthProofRequest
+import org.astermail.android.auth.PasskeyCancelledException
+import org.astermail.android.auth.PasskeyFailedException
+import org.astermail.android.auth.PasskeyUnavailableException
+import org.astermail.android.auth.map_get_credential_failure
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -186,6 +190,96 @@ class ReauthFlowTest {
         assertEquals(
             "string-${org.astermail.android.R.string.enter_account_password}",
             (outcome as Reauthorized.Retry).prompt.error,
+        )
+    }
+
+    private fun key_check_error(t: Throwable): String? =
+        reauth_retry_prompt(context, ReauthPrompt(busy = true), t).error
+
+    private fun text_of(id: Int): String = "string-$id"
+
+    @Test
+    fun a_dismissed_key_check_keeps_the_dialog_without_an_error() {
+        val next = reauth_retry_prompt(context, ReauthPrompt(busy = true), PasskeyCancelledException())
+        assertFalse(next.busy)
+        assertNull(next.error)
+        assertTrue(is_key_check_cancelled(PasskeyCancelledException()))
+    }
+
+    @Test
+    fun an_interrupted_key_check_asks_for_a_key_already_on_the_account() {
+        val failure = PasskeyCancelledException(interrupted = true)
+        assertEquals(
+            text_of(org.astermail.android.R.string.reauth_key_check_interrupted),
+            key_check_error(failure),
+        )
+        assertFalse(is_key_check_cancelled(failure))
+    }
+
+    @Test
+    fun a_device_without_a_matching_credential_says_so() {
+        assertEquals(
+            text_of(org.astermail.android.R.string.reauth_key_check_no_credential),
+            key_check_error(PasskeyUnavailableException()),
+        )
+    }
+
+    @Test
+    fun a_device_that_cannot_check_keys_says_so() {
+        assertEquals(
+            text_of(org.astermail.android.R.string.reauth_key_check_unavailable),
+            key_check_error(PasskeyUnavailableException(no_provider = true)),
+        )
+    }
+
+    @Test
+    fun an_unknown_key_check_failure_keeps_the_general_message() {
+        assertEquals(
+            text_of(org.astermail.android.R.string.reauth_key_check_failed),
+            key_check_error(PasskeyFailedException()),
+        )
+    }
+
+    @Test
+    fun each_key_check_failure_has_its_own_message() {
+        val messages = listOf(
+            key_check_error_res(PasskeyCancelledException(interrupted = true)),
+            key_check_error_res(PasskeyUnavailableException()),
+            key_check_error_res(PasskeyUnavailableException(no_provider = true)),
+            key_check_error_res(PasskeyFailedException()),
+        )
+        assertEquals(4, messages.filterNotNull().toSet().size)
+        assertNull(key_check_error_res(PasskeyCancelledException()))
+        assertNull(key_check_error_res(IllegalStateException()))
+    }
+
+    @Test
+    fun a_rejected_platform_prompt_is_not_treated_as_a_plain_dismissal() {
+        val rejected = map_get_credential_failure(
+            androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentialDomException(
+                androidx.credentials.exceptions.domerrors.NotAllowedError(),
+            ),
+        )
+        assertTrue(rejected is PasskeyCancelledException && rejected.interrupted)
+        val dismissed = map_get_credential_failure(
+            androidx.credentials.exceptions.GetCredentialCancellationException("x"),
+        )
+        assertTrue(dismissed is PasskeyCancelledException && !dismissed.interrupted)
+    }
+
+    @Test
+    fun the_add_dialog_mentions_an_existing_key_only_when_one_is_needed() {
+        assertEquals(
+            org.astermail.android.R.string.passkey_add_reauth_existing_key_description,
+            passkey_add_reauth_message_res(registered_key_count = 1, totp_enabled = false),
+        )
+        assertEquals(
+            org.astermail.android.R.string.passkey_add_reauth_description,
+            passkey_add_reauth_message_res(registered_key_count = 0, totp_enabled = false),
+        )
+        assertEquals(
+            org.astermail.android.R.string.passkey_add_reauth_description,
+            passkey_add_reauth_message_res(registered_key_count = 2, totp_enabled = true),
         )
     }
 }

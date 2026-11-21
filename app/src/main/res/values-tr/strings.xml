@@ -2857,6 +2857,10 @@
     <string name="passkey_add_reauth_description">Geçiş anahtarı eklemek için parolanızı girin.</string>
     <string name="totp_setup_reauth_description">İki faktörlü kimlik doğrulamayı ayarlamak için parolanızı girin.</string>
     <string name="reauth_key_check_failed">Geçiş anahtarınız veya güvenlik anahtarınız kontrol edilemedi. Tekrar deneyin.</string>
+    <string name="passkey_add_reauth_existing_key_description">Geçiş anahtarı eklemek için parolanızı girin. Aster daha sonra bir geçiş anahtarı veya güvenlik anahtarı isterse hesabınızda zaten bulunan birini kullanın.</string>
+    <string name="reauth_key_check_no_credential">Aster bu cihazda hesabınıza ait bir geçiş anahtarı veya güvenlik anahtarı bulamadı. Hesabınızda zaten bulunan birini kullanın ve tekrar deneyin.</string>
+    <string name="reauth_key_check_unavailable">Bu cihaz şu anda geçiş anahtarlarını veya güvenlik anahtarlarını kontrol edemiyor. Ekran kilidinin açık olduğundan emin olun ve tekrar deneyin.</string>
+    <string name="reauth_key_check_interrupted">Kontrol tamamlanmadı. Hesabınızda zaten bulunan bir geçiş anahtarı veya güvenlik anahtarı kullanın ve tekrar deneyin.</string>
     <string name="image_insert_failed">Bu görsel eklenemedi. Çok büyük olabilir veya desteklenmeyen bir biçimde olabilir.</string>
     <string name="invalid_recipient_address">“%1$s” geçerli bir e-posta adresi değil</string>
     <string name="label_name_taken">Bu adda bir etiket zaten var.</string>

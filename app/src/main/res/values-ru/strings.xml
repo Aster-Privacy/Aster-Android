@@ -2891,6 +2891,10 @@
     <string name="passkey_add_reauth_description">Чтобы добавить ключ доступа, введите пароль.</string>
     <string name="totp_setup_reauth_description">Чтобы настроить двухфакторную аутентификацию, введите пароль.</string>
     <string name="reauth_key_check_failed">Не удалось проверить ключ доступа или ключ безопасности. Повторите попытку.</string>
+    <string name="passkey_add_reauth_existing_key_description">Чтобы добавить ключ доступа, введите пароль. Если затем Aster запросит ключ доступа или ключ безопасности, используйте тот, который уже добавлен в аккаунт.</string>
+    <string name="reauth_key_check_no_credential">Aster не нашел на этом устройстве ключ доступа или ключ безопасности для вашего аккаунта. Используйте тот, который уже добавлен в аккаунт, и повторите попытку.</string>
+    <string name="reauth_key_check_unavailable">Сейчас это устройство не может проверять ключи доступа и ключи безопасности. Убедитесь, что блокировка экрана включена, и повторите попытку.</string>
+    <string name="reauth_key_check_interrupted">Проверка не завершена. Используйте ключ доступа или ключ безопасности, который уже добавлен в аккаунт, и повторите попытку.</string>
     <string name="image_insert_failed">Не удалось добавить это изображение. Возможно, оно слишком большое или в неподдерживаемом формате.</string>
     <string name="invalid_recipient_address">«%1$s» не является корректным адресом электронной почты</string>
     <string name="label_name_taken">Метка с таким именем уже существует.</string>

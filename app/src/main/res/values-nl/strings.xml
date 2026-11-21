@@ -2857,6 +2857,10 @@
     <string name="passkey_add_reauth_description">Voer je wachtwoord in om een passkey toe te voegen.</string>
     <string name="totp_setup_reauth_description">Voer je wachtwoord in om tweestapsverificatie in te stellen.</string>
     <string name="reauth_key_check_failed">Je passkey of beveiligingssleutel kon niet worden gecontroleerd. Probeer het opnieuw.</string>
+    <string name="passkey_add_reauth_existing_key_description">Voer je wachtwoord in om een passkey toe te voegen. Als Aster daarna om een passkey of beveiligingssleutel vraagt, gebruik je er een die al aan je account is gekoppeld.</string>
+    <string name="reauth_key_check_no_credential">Aster heeft op dit apparaat geen passkey of beveiligingssleutel voor je account gevonden. Gebruik er een die al aan je account is gekoppeld en probeer het opnieuw.</string>
+    <string name="reauth_key_check_unavailable">Dit apparaat kan nu geen passkeys of beveiligingssleutels controleren. Controleer of de schermvergrendeling aanstaat en probeer het opnieuw.</string>
+    <string name="reauth_key_check_interrupted">De controle is niet voltooid. Gebruik een passkey of beveiligingssleutel die al aan je account is gekoppeld en probeer het opnieuw.</string>
     <string name="image_insert_failed">Die afbeelding kon niet worden toegevoegd. Mogelijk is die te groot of heeft die een niet-ondersteunde indeling.</string>
     <string name="invalid_recipient_address">“%1$s” is geen geldig e-mailadres</string>
     <string name="label_name_taken">Er bestaat al een label met deze naam.</string>

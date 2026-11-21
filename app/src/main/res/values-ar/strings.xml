@@ -2925,6 +2925,10 @@
     <string name="passkey_add_reauth_description">لإضافة مفتاح مرور، أدخل كلمة السر.</string>
     <string name="totp_setup_reauth_description">لإعداد المصادقة الثنائية، أدخل كلمة السر.</string>
     <string name="reauth_key_check_failed">تعذّر التحقق من مفتاح المرور أو مفتاح الأمان. حاول مرة أخرى.</string>
+    <string name="passkey_add_reauth_existing_key_description">لإضافة مفتاح مرور، أدخل كلمة السر. إذا طلب Aster بعد ذلك مفتاح مرور أو مفتاح أمان، فاستخدم مفتاحًا مضافًا إلى حسابك من قبل.</string>
+    <string name="reauth_key_check_no_credential">لم يعثر Aster على مفتاح مرور أو مفتاح أمان لحسابك على هذا الجهاز. استخدم مفتاحًا مضافًا إلى حسابك من قبل، ثم حاول مرة أخرى.</string>
+    <string name="reauth_key_check_unavailable">لا يستطيع هذا الجهاز التحقق من مفاتيح المرور أو مفاتيح الأمان الآن. تأكد من تشغيل قفل الشاشة، ثم حاول مرة أخرى.</string>
+    <string name="reauth_key_check_interrupted">لم يكتمل التحقق. استخدم مفتاح مرور أو مفتاح أمان مضافًا إلى حسابك من قبل، ثم حاول مرة أخرى.</string>
     <string name="image_insert_failed">تعذّرت إضافة هذه الصورة. ربما تكون كبيرة جدًا أو بتنسيق غير مدعوم.</string>
     <string name="invalid_recipient_address">«%1$s» ليس عنوان بريد إلكتروني صالحًا</string>
     <string name="label_name_taken">يوجد تصنيف بهذا الاسم بالفعل.</string>

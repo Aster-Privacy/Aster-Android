@@ -3106,6 +3106,10 @@
     <string name="passkey_add_reauth_description">To add a passkey, enter your password.</string>
     <string name="totp_setup_reauth_description">To set up two-factor authentication, enter your password.</string>
     <string name="reauth_key_check_failed">Your passkey or security key couldn\'t be checked. Try again.</string>
+    <string name="passkey_add_reauth_existing_key_description">To add a passkey, enter your password. If Aster then asks for a passkey or security key, use one that\'s already on your account.</string>
+    <string name="reauth_key_check_no_credential">Aster couldn\'t find a passkey or security key for your account on this device. Use one that\'s already on your account, then try again.</string>
+    <string name="reauth_key_check_unavailable">This device can\'t check passkeys or security keys right now. Make sure screen lock is on, then try again.</string>
+    <string name="reauth_key_check_interrupted">The check didn\'t finish. Use a passkey or security key that\'s already on your account, then try again.</string>
     <string name="image_insert_failed">That image could not be added. It may be too large or in an unsupported format.</string>
     <string name="invalid_recipient_address">“%1$s” is not a valid email address</string>
     <string name="label_name_taken">A label with this name already exists.</string>

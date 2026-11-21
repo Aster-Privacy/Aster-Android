@@ -2844,6 +2844,10 @@
     <string name="passkey_add_reauth_description">パスキーを追加するには、パスワードを入力してください。</string>
     <string name="totp_setup_reauth_description">2 要素認証を設定するには、パスワードを入力してください。</string>
     <string name="reauth_key_check_failed">パスキーまたはセキュリティキーを確認できませんでした。もう一度お試しください。</string>
+    <string name="passkey_add_reauth_existing_key_description">パスキーを追加するには、パスワードを入力してください。その後、Aster からパスキーまたはセキュリティキーを求められた場合は、アカウントに登録済みのものを使用してください。</string>
+    <string name="reauth_key_check_no_credential">このデバイスには、アカウントのパスキーまたはセキュリティキーが見つかりませんでした。アカウントに登録済みのものを使用して、もう一度お試しください。</string>
+    <string name="reauth_key_check_unavailable">このデバイスでは現在、パスキーまたはセキュリティキーを確認できません。画面ロックがオンになっていることを確認して、もう一度お試しください。</string>
+    <string name="reauth_key_check_interrupted">確認が完了しませんでした。アカウントに登録済みのパスキーまたはセキュリティキーを使用して、もう一度お試しください。</string>
     <string name="image_insert_failed">この画像を追加できませんでした。サイズが大きすぎるか、対応していない形式の可能性があります。</string>
     <string name="invalid_recipient_address">「%1$s」は有効なメールアドレスではありません</string>
     <string name="label_name_taken">この名前のラベルはすでに存在します。</string>
