@@ -69,7 +69,7 @@ fun looks_like_ciphertext(text: String): Boolean =
     CIPHERTEXT_MARKERS.any { text.contains(it) } || looks_like_bundle_fragment(text)
 
 fun strip_body_html(html: String): String {
-    var text = strip_non_rendered_blocks(html)
+    var text = strip_non_rendered_blocks(strip_html_comments(html))
     text = text.replace(ANY_TAG_PATTERN, " ")
     text = decode_html_entities_for_preview(text)
     text = strip_non_rendered_blocks(text)
@@ -100,7 +100,7 @@ fun looks_like_html_body(text: String): Boolean {
 }
 
 fun html_to_plain_text(html: String): String {
-    var text = strip_non_rendered_blocks(html)
+    var text = strip_non_rendered_blocks(strip_html_comments(html))
     text = text.replace(BREAK_TAG_PATTERN, "\n")
     text = text.replace(BLOCK_CLOSE_PATTERN, "\n")
     text = text.replace(HR_TAG_PATTERN, "\n")

@@ -106,6 +106,7 @@ object EmailHtmlSanitizer {
     private fun clean_body(body_html: String, clean_tracking_links: Boolean): Document {
         val dirty = Jsoup.parseBodyFragment(body_html, "https://mail-content.invalid/")
         drop_blank_image_sources(dirty)
+        dirty.select("title").remove()
         val doc = Cleaner(safelist).clean(dirty).apply { outputSettings(raw_output_settings()) }
         scrub_attributes(doc, clean_tracking_links)
         remove_sourceless_images(doc)
