@@ -1063,8 +1063,7 @@ private fun compose_screen_content(
                 seeded_quoted_source
             } else {
                 val item = thread_state.item
-                val original_html = msg.body_html?.takeIf { it.isNotBlank() }
-                    ?: org.astermail.android.mail.build_plain_text_html(msg.body_text)
+                val original_html = org.astermail.android.mail.quotable_html(msg.body_html, msg.body_text)
                 original_html to Triple(
                     msg.display_sender_email ?: msg.sender_email,
                     msg.timestamp,
@@ -5825,7 +5824,7 @@ internal fun insert_template_body(
     return trimmed_core + separator + template.trim() + signature_block + watermark_block
 }
 
-private val STYLE_SCRIPT_TAG_RE = Regex("(?is)<(style|script)\\b[^>]*>.*?</\\1>")
+private val STYLE_SCRIPT_TAG_RE = Regex("(?is)<(style|script|title)\\b[^>]*>.*?</\\1\\s*>")
 
 private const val IMG_MARKER = '￼'
 

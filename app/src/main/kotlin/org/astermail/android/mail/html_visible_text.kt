@@ -79,6 +79,36 @@ private fun index_of_body_start(html: String, from: Int): Int {
 
 fun strip_non_rendered_blocks(html: String): String = strip_element_blocks(html, non_rendered_tags)
 
+fun strip_html_comments(html: String): String {
+    if (html.indexOf("<!--") < 0) return html
+
+    val out = StringBuilder(html.length)
+    var i = 0
+
+    while (i < html.length) {
+        val start = html.indexOf("<!--", i)
+
+        if (start < 0) {
+            out.append(html, i, html.length)
+            break
+        }
+
+        out.append(html, i, start).append(' ')
+
+        val end = html.indexOf("-->", start + 4)
+        if (end < 0) break
+        i = end + 3
+    }
+
+    return out.toString()
+}
+
+fun quotable_html(body_html: String?, body_text: String): String {
+    val html = body_html?.takeIf { it.isNotBlank() }
+    if (html != null) return html
+    return if (looks_like_html_body(body_text)) body_text else build_plain_text_html(body_text)
+}
+
 fun strip_script_like_blocks(html: String): String = strip_element_blocks(html, script_like_tags)
 
 private fun strip_element_blocks(html: String, names: Set<String>): String {

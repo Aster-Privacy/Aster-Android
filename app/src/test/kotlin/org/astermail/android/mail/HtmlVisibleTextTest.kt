@@ -130,4 +130,42 @@ class HtmlVisibleTextTest {
         assert_no_css(text)
         assertTrue(text.contains("readable body"))
     }
+
+    @Test
+    fun `drops style rules wrapped in a conditional comment`() {
+        val html = "<!--[if mso]><style>p{margin:0}</style><![endif]--><p>readable body</p>"
+
+        val text = html_to_plain_text(html)
+
+        assertFalse(text, text.contains("margin"))
+        assertTrue(text, text.contains("readable body"))
+    }
+
+    @Test
+    fun `keeps content between revealed conditional comments`() {
+        val html = "<!--[if !mso]><!--><p>shown</p><!--<![endif]--><p>tail</p>"
+
+        val text = html_to_plain_text(html)
+
+        assertTrue(text, text.contains("shown"))
+        assertTrue(text, text.contains("tail"))
+    }
+
+    @Test
+    fun `drops an unclosed comment`() {
+        val text = html_to_plain_text("<p>kept</p><!-- <style>p{margin:0}")
+
+        assertTrue(text, text.contains("kept"))
+        assertFalse(text, text.contains("margin"))
+    }
+
+    @Test
+    fun `quotes markup stored in the text field as markup`() {
+        val stored = "<html><head><style>p{margin:0}</style></head><body><p>Hi</p></body></html>"
+
+        assertTrue(quotable_html("", stored) == stored)
+        assertTrue(quotable_html(null, stored) == stored)
+        assertTrue(quotable_html("<p>html</p>", "text") == "<p>html</p>")
+        assertFalse(quotable_html(null, "plain a < b").contains("<b"))
+    }
 }

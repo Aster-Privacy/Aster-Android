@@ -43,4 +43,11 @@ class ProtectedMimeBuilderTest {
             ProtectedMimeBuilder.html_to_plain_text(html),
         )
     }
+
+    @Test
+    fun `plain text leaves out style rules inside a conditional comment`() {
+        val html = "<!--[if mso]><style>p{margin:0}</style><![endif]--><p>Hello</p>"
+
+        assertEquals("Hello", ProtectedMimeBuilder.html_to_plain_text(html))
+    }
 }
