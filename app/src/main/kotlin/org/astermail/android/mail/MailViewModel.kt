@@ -262,10 +262,7 @@ class MailViewModel @Inject constructor(
 
     private fun publish_learned_category_edit(edit: LearnedCategoryEdit) {
         if (edit.is_empty()) return
-        val next = apply_learned_category_edit(repository.learned_category_senders, edit)
-        val changed = repository.set_learned_categories(repository.is_learning_from_category_moves, next)
         _learned_category_edits.trySend(edit)
-        if (changed) apply_category_signature(true)
     }
 
     private fun apply_category_signature(changed: Boolean) {

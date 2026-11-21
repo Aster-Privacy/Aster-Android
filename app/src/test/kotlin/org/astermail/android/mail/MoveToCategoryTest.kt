@@ -405,6 +405,39 @@ class MoveToCategoryTest {
     }
 
     @Test
+    fun `only senders whose write succeeded are learned`() = runTest {
+        every { repository.is_learning_from_category_moves } returns true
+        every { repository.learned_category_senders } returns emptyList()
+        load(
+            deal("a-1", thread = "thread-a").copy(sender_email = "a@shop.example.test"),
+            deal("b-1", thread = "thread-b").copy(sender_email = "b@shop.example.test"),
+        )
+        record_writes(fail_ids = setOf("b-1"))
+        val edits = mutableListOf<LearnedCategoryEdit>()
+        backgroundScope.launch { vm.learned_category_edits.collect { edits.add(it) } }
+
+        vm.move_to_category_bulk(listOf("a-1", "b-1"), "shopping")
+        advanceUntilIdle()
+
+        assertEquals(listOf("a@shop.example.test"), edits.flatMap { it.upserts }.map { it.sender })
+    }
+
+    @Test
+    fun `a failed move learns nothing`() = runTest {
+        every { repository.is_learning_from_category_moves } returns true
+        every { repository.learned_category_senders } returns emptyList()
+        load(deal())
+        record_writes(fail_ids = setOf("deal-1"))
+        val edits = mutableListOf<LearnedCategoryEdit>()
+        backgroundScope.launch { vm.learned_category_edits.collect { edits.add(it) } }
+
+        vm.move_to_category("deal-1", "shopping")
+        advanceUntilIdle()
+
+        assertTrue(edits.isEmpty())
+    }
+
+    @Test
     fun `an undecryptable message in a bulk move keeps its category`() = runTest {
         load(deal("a-1", thread = "thread-a"), deal("b-1", thread = "thread-b"))
         coEvery { repository.write_category(any(), any(), any(), any()) } coAnswers {

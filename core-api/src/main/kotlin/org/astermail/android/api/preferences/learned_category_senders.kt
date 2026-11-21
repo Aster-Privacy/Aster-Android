@@ -90,6 +90,16 @@ fun normalize_learned_entry(entry: LearnedCategorySender): LearnedCategorySender
     return if (sender == entry.sender) entry else entry.copy(sender = sender)
 }
 
+fun preferred_learned_entry(
+    first: LearnedCategorySender,
+    second: LearnedCategorySender,
+): LearnedCategorySender = when {
+    first.updated_at > second.updated_at -> first
+    second.updated_at > first.updated_at -> second
+    first.category <= second.category -> first
+    else -> second
+}
+
 fun sanitize_learned_category_senders(
     entries: List<LearnedCategorySender>,
 ): List<LearnedCategorySender> {
@@ -97,9 +107,7 @@ fun sanitize_learned_category_senders(
     for (raw in entries) {
         val entry = normalize_learned_entry(raw) ?: continue
         val existing = by_sender[entry.sender]
-        if (existing == null || entry.updated_at > existing.updated_at) {
-            by_sender[entry.sender] = entry
-        }
+        by_sender[entry.sender] = if (existing == null) entry else preferred_learned_entry(existing, entry)
     }
     return by_sender.values
         .sortedWith(compareByDescending<LearnedCategorySender> { it.updated_at }.thenBy { it.sender })
@@ -113,9 +121,10 @@ fun merge_learned_category_senders(
 
 fun rebase_learned_category_senders(
     server: List<LearnedCategorySender>,
-    baseline: List<LearnedCategorySender>,
+    baseline: List<LearnedCategorySender>?,
     local: List<LearnedCategorySender>,
 ): List<LearnedCategorySender> {
+    if (baseline == null) return merge_learned_category_senders(server, local)
     val server_map = sanitize_learned_category_senders(server).associateBy { it.sender }
     val baseline_map = sanitize_learned_category_senders(baseline).associateBy { it.sender }
     val local_map = sanitize_learned_category_senders(local).associateBy { it.sender }
@@ -126,20 +135,31 @@ fun rebase_learned_category_senders(
     }
     val result = ArrayList<LearnedCategorySender>()
     for (sender in senders) {
-        val before = baseline_map[sender]
-        val mine = local_map[sender]
-        val theirs = server_map[sender]
-        val chosen = when {
-            mine == before -> theirs
-            theirs == before -> mine
-            mine == null -> theirs
-            theirs == null -> mine
-            mine.updated_at >= theirs.updated_at -> mine
-            else -> theirs
-        }
+        val chosen = reconcile_learned_sender(baseline_map[sender], local_map[sender], server_map[sender])
         if (chosen != null) result.add(chosen)
     }
     return sanitize_learned_category_senders(result)
+}
+
+private fun reconcile_learned_sender(
+    before: LearnedCategorySender?,
+    mine: LearnedCategorySender?,
+    theirs: LearnedCategorySender?,
+): LearnedCategorySender? {
+    if (before == null) {
+        return when {
+            mine == null -> theirs
+            theirs == null -> mine
+            else -> preferred_learned_entry(mine, theirs)
+        }
+    }
+    return when {
+        mine == before -> theirs
+        theirs == before -> mine
+        mine == null -> theirs
+        theirs == null -> mine
+        else -> preferred_learned_entry(mine, theirs)
+    }
 }
 
 private fun primitive_string(element: JsonElement?): String? {

@@ -140,7 +140,7 @@ fun rebase_preferences_changes(
     return json.decodeFromJsonElement(UserPreferences.serializer(), merged).copy(
         learned_category_senders = rebase_learned_category_senders(
             server = base.learned_category_senders,
-            baseline = baseline?.learned_category_senders.orEmpty(),
+            baseline = baseline?.learned_category_senders,
             local = updated.learned_category_senders,
         ),
     )

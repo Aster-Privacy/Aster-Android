@@ -2396,17 +2396,23 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         colors.bg_primary
     }
 
+    val learned_categories_known = settings_state.preferences_authoritative || settings_state.preferences_cached
     androidx.compose.runtime.LaunchedEffect(
         prefs?.custom_categories,
         prefs?.learn_from_category_moves,
         prefs?.learned_category_senders,
+        learned_categories_known,
     ) {
         if (prefs != null) {
-            mail_vm.set_category_preferences(
-                prefs.custom_categories.orEmpty(),
-                prefs.learn_from_category_moves,
-                prefs.learned_category_senders,
-            )
+            if (learned_categories_known) {
+                mail_vm.set_category_preferences(
+                    prefs.custom_categories.orEmpty(),
+                    prefs.learn_from_category_moves,
+                    prefs.learned_category_senders,
+                )
+            } else {
+                mail_vm.set_custom_categories(prefs.custom_categories.orEmpty())
+            }
         }
     }
 

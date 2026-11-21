@@ -4566,7 +4566,14 @@ class MailRepository @Inject constructor(
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) {
-                classify(envelope, meta, item.rule_category, custom_categories, learned_category_map)
+                classify(
+                    envelope,
+                    meta,
+                    item.rule_category,
+                    custom_categories,
+                    learned_category_map,
+                    sender_auth_failed(item.spf_result, item.dkim_result, item.dmarc_result),
+                )
             } else {
                 "primary"
             },
