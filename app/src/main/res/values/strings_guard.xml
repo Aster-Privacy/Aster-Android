@@ -191,6 +191,12 @@
     <string name="guard_switches_not_guard_device">To change these settings, use one of your Guard devices.</string>
     <string name="guard_switches_canceled">Nothing changed. To save, confirm it\'s you.</string>
     <string name="guard_switches_tools_section">Tools</string>
+    <string name="guard_rotate_title">New rescue code</string>
+    <string name="guard_rotate_row_subtitle">Replace the code you use to get back into your account</string>
+    <string name="guard_rotate_action">Replace rescue code</string>
+    <string name="guard_rotate_prompt_subtitle">Replace your rescue code</string>
+    <string name="guard_rotate_done_title">Rescue code replaced</string>
+    <string name="guard_rotate_done_body">Your old rescue code no longer works. Keep the new one somewhere safe and offline.</string>
     <string name="guard_switches_code_subtitle">Approve a sign-in without a notification</string>
     <string name="guard_devices_section">Guard devices</string>
     <string name="guard_devices_this_device">This phone</string>

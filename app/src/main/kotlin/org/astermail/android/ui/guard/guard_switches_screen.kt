@@ -236,6 +236,13 @@ private fun guard_switches_on_content(
         )
         settings_row_gap()
         detail_row(
+            title = stringResource(R.string.guard_rotate_title),
+            subtitle = stringResource(R.string.guard_rotate_row_subtitle),
+            icon = TablerIcons.Key,
+            on_click = { on_open("guard_rotate_rescue") },
+        )
+        settings_row_gap()
+        detail_row(
             title = stringResource(R.string.guard_changes_title),
             subtitle = if (status.pending_changes.isNotEmpty()) {
                 pluralStringResource(R.plurals.guard_changes_row_count, status.pending_changes.size, status.pending_changes.size)

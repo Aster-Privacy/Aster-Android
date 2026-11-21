@@ -79,6 +79,11 @@ class GuardDigestsTest {
     }
 
     @Test
+    fun rescue_rotate_subject_vector() {
+        assertEquals("c258331a421bf62c2379f975c6fb6115b160a2f39104302166d95b40f536ab01", hex(GuardDigests.rescue_rotate_subject("BCDFGHJKMN23456789BCDFGHJ")))
+    }
+
+    @Test
     fun panic_subject_and_absent_key_are_zero() {
         assertArrayEquals(ByteArray(32), GuardDigests.PANIC_SUBJECT)
         assertArrayEquals(ByteArray(33), GuardDigests.ABSENT_ACTION_PK)
@@ -98,8 +103,9 @@ class GuardDigestsTest {
             GuardActionCode.SWITCHES to "145d3ac91b28bb6d3b84994acb8de784bbe28b7a73ddd34f57b044329af4a1ea",
             GuardActionCode.JOIN to "302d82406e44010289df1573d6ff620f67dc3144d5c472ec82e9d9ef6083b084",
             GuardActionCode.RESUME to "e0875eea1b941c547e40cec50c6f092809f157c8722ddc2c58c80d53c21ab016",
+            GuardActionCode.ROTATE_RESCUE to "e78ec94b6c9c767af6a5c682164c1874c6ccc65c095adb5d980221d822f7d125",
         )
-        assertEquals(11, GuardActionCode.entries.size)
+        assertEquals(12, GuardActionCode.entries.size)
         for ((code, digest) in expected) {
             val msg = GuardDigests.action_message(code, user_id, nonce, subject)
             assertEquals(102, msg.size)

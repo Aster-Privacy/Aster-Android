@@ -1703,6 +1703,12 @@ private fun AsterNavHost() {
                 on_back = { back(); Unit },
             )
         }
+        composable(routes.settings_detail("guard_rotate_rescue")) {
+            org.astermail.android.ui.guard.guard_rotate_rescue_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+            )
+        }
         composable(routes.settings_detail("guard_code")) {
             org.astermail.android.ui.guard.guard_code_host(
                 view_model = hiltViewModel(),
