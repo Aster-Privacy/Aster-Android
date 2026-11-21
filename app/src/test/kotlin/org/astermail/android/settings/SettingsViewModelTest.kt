@@ -5293,6 +5293,42 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `a failed smtp token create keeps its error for the dialog and clears on retry`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } throws RuntimeException("boom")
+
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        assertEquals("Something went wrong", vm.state.value.smtp_token_create_error)
+        assertFalse(vm.state.value.smtp_token_creating)
+        assertNull(vm.state.value.smtp_token_created)
+        assertNull(vm.state.value.action_result)
+
+        coEvery { settings_api.create_smtp_token(any()) } returns
+            org.astermail.android.api.settings.CreateSmtpTokenResponse(id = "t4")
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.smtp_token_create_error)
+        assertEquals("t4", vm.state.value.smtp_token_created?.id)
+    }
+
+    @Test
+    fun `dismissing the create dialog clears its error`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } throws RuntimeException("boom")
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        vm.clear_smtp_token_create_error()
+
+        assertNull(vm.state.value.smtp_token_create_error)
+    }
+
+    @Test
     fun `a method not allowed rename stays unavailable when the list carries settings`() = runTest {
         seed_smtp_tokens()
         advanceUntilIdle()

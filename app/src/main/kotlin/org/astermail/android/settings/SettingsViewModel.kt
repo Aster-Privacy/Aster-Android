@@ -242,6 +242,7 @@ data class SettingsUiState(
     val smtp_tokens_load_failed: Boolean = false,
     val smtp_token_creating: Boolean = false,
     val smtp_token_created: org.astermail.android.api.settings.CreateSmtpTokenResponse? = null,
+    val smtp_token_create_error: String? = null,
     val smtp_token_renaming: Boolean = false,
     val smtp_token_rename_error: String? = null,
     val smtp_token_renamed_id: String? = null,
@@ -3062,12 +3063,13 @@ class SettingsViewModel @Inject constructor(
 
     fun create_smtp_token(name: String, local_part: String, domain: String) {
         val label = normalize_smtp_token_label(name)
+        if (_state.value.smtp_token_creating) return
         if (label == null) {
-            _state.update { it.copy(action_result = context.getString(R.string.smtp_token_name_invalid)) }
+            _state.update { it.copy(smtp_token_create_error = context.getString(R.string.smtp_token_name_invalid)) }
             return
         }
+        _state.update { it.copy(smtp_token_creating = true, smtp_token_create_error = null) }
         viewModelScope.launch {
-            _state.value = _state.value.copy(smtp_token_creating = true)
             try {
                 val (enc_label, label_nonce) = encrypt_alias_field(label)
                 val normalized = normalize_alias_local_part(local_part)
@@ -3083,9 +3085,13 @@ class SettingsViewModel @Inject constructor(
                 load_smtp_tokens(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(smtp_token_creating = false, action_result = user_facing_error(t))
+                _state.update { it.copy(smtp_token_creating = false, smtp_token_create_error = user_facing_error(t)) }
             }
         }
+    }
+
+    fun clear_smtp_token_create_error() {
+        _state.update { it.copy(smtp_token_create_error = null) }
     }
 
     fun clear_created_smtp_token() {

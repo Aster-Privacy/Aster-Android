@@ -47,6 +47,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -263,7 +264,10 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
                 AsterButton(
                     label = stringResource(R.string.smtp_token_generate),
-                    onClick = { show_create = true },
+                    onClick = {
+                        vm.clear_smtp_token_create_error()
+                        show_create = true
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -276,7 +280,11 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         smtp_token_create_dialog(
             addresses = addresses.map { it.encrypted_local_part to it.domain_name },
             is_busy = state.smtp_token_creating,
-            on_dismiss = { show_create = false },
+            error = state.smtp_token_create_error,
+            on_dismiss = {
+                show_create = false
+                vm.clear_smtp_token_create_error()
+            },
             on_create = { local_part, domain, name ->
                 vm.create_smtp_token(name, local_part, domain)
             },
@@ -684,6 +692,7 @@ internal fun format_smtp_last_used(
 private fun smtp_token_create_dialog(
     addresses: List<Pair<String, String>>,
     is_busy: Boolean,
+    error: String?,
     on_dismiss: () -> Unit,
     on_create: (String, String, String) -> Unit,
 ) {
@@ -699,6 +708,7 @@ private fun smtp_token_create_dialog(
         cancel_label = stringResource(R.string.cancel),
         confirm_enabled = normalized != null && selected != null && !is_busy,
         is_busy = is_busy,
+        dismiss_on_confirm = false,
         on_confirm = {
             val target = selected
             if (target != null && normalized != null) on_create(target.first, target.second, normalized)
@@ -715,6 +725,7 @@ private fun smtp_token_create_dialog(
                     } else {
                         null
                     },
+                    enabled = !is_busy,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 v_gap(AsterSpacing.sm)
@@ -724,7 +735,7 @@ private fun smtp_token_create_dialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { selected = entry }
+                                .clickable(enabled = !is_busy) { selected = entry }
                                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -756,6 +767,15 @@ private fun smtp_token_create_dialog(
                         }
                         if (i < addresses.lastIndex) settings_row_gap(modifier = Modifier)
                     }
+                }
+                if (error != null) {
+                    v_gap(AsterSpacing.sm)
+                    Text(
+                        text = error,
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                        modifier = Modifier.fillMaxWidth().testTag("smtp_token_create_error"),
+                    )
                 }
             }
         },
