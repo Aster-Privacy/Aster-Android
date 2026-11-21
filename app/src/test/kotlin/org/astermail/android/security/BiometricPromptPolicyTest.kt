@@ -33,7 +33,11 @@ class BiometricPromptPolicyTest {
     fun user_dismissals_stay_quiet() {
         assertEquals(BiometricErrorOutcome.IGNORE, biometric_error_outcome(BiometricPrompt.ERROR_USER_CANCELED))
         assertEquals(BiometricErrorOutcome.IGNORE, biometric_error_outcome(BiometricPrompt.ERROR_NEGATIVE_BUTTON))
-        assertEquals(BiometricErrorOutcome.IGNORE, biometric_error_outcome(BiometricPrompt.ERROR_CANCELED))
+    }
+
+    @Test
+    fun a_system_cancel_is_explained() {
+        assertEquals(BiometricErrorOutcome.SHOW_MESSAGE, biometric_error_outcome(BiometricPrompt.ERROR_CANCELED))
     }
 
     @Test

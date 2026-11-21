@@ -30,7 +30,6 @@ enum class BiometricLaunchBlock { NONE, NO_HOST, NOT_RESUMED, STATE_SAVED }
 fun biometric_error_outcome(code: Int): BiometricErrorOutcome = when (code) {
     BiometricPrompt.ERROR_USER_CANCELED,
     BiometricPrompt.ERROR_NEGATIVE_BUTTON,
-    BiometricPrompt.ERROR_CANCELED,
     -> BiometricErrorOutcome.IGNORE
     BiometricPrompt.ERROR_HW_NOT_PRESENT,
     BiometricPrompt.ERROR_HW_UNAVAILABLE,
