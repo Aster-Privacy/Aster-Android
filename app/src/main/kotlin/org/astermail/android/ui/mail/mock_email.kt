@@ -407,7 +407,7 @@ fun inbox_item_to_email(
         sender_name = display_name,
         sender_email = item.sender_email,
         subject = item.subject.ifBlank { no_subject_label },
-        preview = strip_html_simple(item.preview).ifBlank { item.subject.ifBlank { "" } },
+        preview = org.astermail.android.mail.strip_leading_css(strip_html_simple(item.preview)).ifBlank { item.subject.ifBlank { "" } },
         received_at = ts,
         is_read = item.is_read,
         is_starred = item.is_starred,
@@ -537,6 +537,7 @@ internal fun select_display_body(body_text: String, html: String?): String = whe
     body_text.isBlank() && html != null -> org.astermail.android.mail.html_to_plain_text(html)
     body_text.contains(PGP_ARMOR_MARKER) || PATCH_MARKER.containsMatchIn(body_text) -> body_text
     org.astermail.android.mail.looks_like_html_body(body_text) -> org.astermail.android.mail.html_to_plain_text(body_text)
+    html != null && org.astermail.android.mail.has_leading_css(body_text) -> org.astermail.android.mail.html_to_plain_text(html)
     html != null && is_flattened_copy_of(body_text, html) -> org.astermail.android.mail.html_to_plain_text(html)
     else -> body_text
 }

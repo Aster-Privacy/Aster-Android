@@ -22,6 +22,7 @@
 package org.astermail.android.ui.search
 
 import org.astermail.android.mail.InboxItem
+import org.astermail.android.mail.strip_leading_css
 import java.text.Normalizer
 import java.time.Instant
 import java.time.LocalDate
@@ -567,7 +568,7 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
 }
 
 private fun item_haystack(item: InboxItem): String = fold_text(
-    (sender_fields(item) + item.subject + item.preview + recipient_fields(item))
+    (sender_fields(item) + item.subject + strip_leading_css(item.preview) + recipient_fields(item))
         .filterNotNull()
         .joinToString("\n"),
 )
