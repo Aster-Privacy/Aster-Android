@@ -65,7 +65,7 @@ class StaleIndexPurgeTest {
             mail_api.list_messages(
                 limit = any(),
                 cursor = any(),
-                item_type = "received",
+                item_type = "all",
                 is_trashed = false,
                 is_archived = false,
                 is_spam = false,

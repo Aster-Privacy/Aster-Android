@@ -247,6 +247,10 @@ data class SettingsUiState(
     val smtp_tokens_load_failed: Boolean = false,
     val smtp_token_creating: Boolean = false,
     val smtp_token_created: org.astermail.android.api.settings.CreateSmtpTokenResponse? = null,
+    val smtp_token_create_error: String? = null,
+    val smtp_token_renaming: Boolean = false,
+    val smtp_token_rename_error: String? = null,
+    val smtp_token_renamed_id: String? = null,
     val deleted_aliases: List<DecryptedDeletedAlias> = emptyList(),
     val deleted_aliases_loading: Boolean = false,
     val alias_preferences: AliasPreferences? = null,
@@ -3087,10 +3091,16 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun create_smtp_token(name: String, local_part: String, domain: String) {
+        val label = normalize_smtp_token_label(name)
+        if (_state.value.smtp_token_creating) return
+        if (label == null) {
+            _state.update { it.copy(smtp_token_create_error = context.getString(R.string.smtp_token_name_invalid)) }
+            return
+        }
+        _state.update { it.copy(smtp_token_creating = true, smtp_token_create_error = null) }
         viewModelScope.launch {
-            _state.value = _state.value.copy(smtp_token_creating = true)
             try {
-                val (enc_label, label_nonce) = encrypt_alias_field(name)
+                val (enc_label, label_nonce) = encrypt_alias_field(label)
                 val normalized = normalize_alias_local_part(local_part)
                 val response = settings_api.create_smtp_token(
                     org.astermail.android.api.settings.CreateSmtpTokenRequest(
@@ -3104,9 +3114,18 @@ class SettingsViewModel @Inject constructor(
                 load_smtp_tokens(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(smtp_token_creating = false, action_result = user_facing_error(t))
+                val message = if (t is ApiError.Conflict) {
+                    context.getString(R.string.smtp_token_address_in_use)
+                } else {
+                    user_facing_error(t)
+                }
+                _state.update { it.copy(smtp_token_creating = false, smtp_token_create_error = message) }
             }
         }
+    }
+
+    fun clear_smtp_token_create_error() {
+        _state.update { it.copy(smtp_token_create_error = null) }
     }
 
     fun clear_created_smtp_token() {
@@ -3128,6 +3147,88 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(action_result = user_facing_error(t))
             }
         }
+    }
+
+    fun rename_smtp_token(token_id: String, name: String) {
+        if (_state.value.smtp_token_renaming) return
+        val label = normalize_smtp_token_label(name)
+        if (label == null) {
+            _state.update {
+                it.copy(smtp_token_rename_error = context.getString(R.string.smtp_token_name_invalid))
+            }
+            return
+        }
+        val gen = account_generation
+        _state.update {
+            it.copy(smtp_token_renaming = true, smtp_token_rename_error = null, smtp_token_renamed_id = null)
+        }
+        viewModelScope.launch {
+            try {
+                val (enc_label, label_nonce) = encrypt_alias_field(label)
+                val updated = settings_api.rename_smtp_token(
+                    token_id,
+                    org.astermail.android.api.settings.RenameSmtpTokenRequest(
+                        label_encrypted = enc_label,
+                        label_nonce = label_nonce,
+                    ),
+                )
+                if (gen != account_generation) return@launch
+                _state.update { s ->
+                    s.copy(
+                        smtp_tokens = s.smtp_tokens.map { row ->
+                            if (row.id != token_id) {
+                                row
+                            } else {
+                                row.copy(
+                                    label_encrypted = enc_label,
+                                    label_nonce = label_nonce,
+                                    smtp_settings = updated.smtp_settings ?: row.smtp_settings,
+                                    decrypted_label = label,
+                                )
+                            }
+                        },
+                        smtp_token_renaming = false,
+                        smtp_token_renamed_id = token_id,
+                        action_result = context.getString(R.string.smtp_token_renamed_toast),
+                    )
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (gen != account_generation) return@launch
+                if (smtp_token_is_gone(t)) {
+                    _state.update { s ->
+                        s.copy(
+                            smtp_tokens = s.smtp_tokens.filter { it.id != token_id },
+                            smtp_token_renaming = false,
+                            smtp_token_rename_error = null,
+                            action_result = context.getString(R.string.smtp_token_unavailable),
+                        )
+                    }
+                    load_smtp_tokens(force = true)
+                    return@launch
+                }
+                _state.update {
+                    it.copy(smtp_token_renaming = false, smtp_token_rename_error = smtp_token_rename_error_text(t))
+                }
+            }
+        }
+    }
+
+    private fun smtp_token_is_gone(t: Throwable): Boolean =
+        t is ApiError.NotFoundError && _state.value.smtp_tokens.any { it.smtp_settings != null }
+
+    fun clear_smtp_token_rename() {
+        _state.update { it.copy(smtp_token_rename_error = null, smtp_token_renamed_id = null) }
+    }
+
+    private fun smtp_token_rename_error_text(t: Throwable): String {
+        val unavailable = t is ApiError.NotFoundError || (t is ApiError.ServerError && t.code == 405)
+        if (unavailable) return context.getString(R.string.smtp_token_rename_unavailable)
+        return org.astermail.android.localized_api_error(
+            context,
+            t,
+            context.getString(R.string.smtp_token_rename_failed),
+        )
     }
 
     fun load_directories() {

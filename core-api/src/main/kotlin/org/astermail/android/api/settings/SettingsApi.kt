@@ -351,6 +351,14 @@ data class AliasDirectory(
 )
 
 @Serializable
+data class SmtpTokenConnectionSettings(
+    val host: String = "",
+    val port: Int = 0,
+    val security: String = "",
+    val username: String = "",
+)
+
+@Serializable
 data class SmtpTokenRow(
     val id: String = "",
     val selector: String = "",
@@ -361,7 +369,14 @@ data class SmtpTokenRow(
     val last_used_at: String? = null,
     val expires_at: String? = null,
     val created_at: String = "",
+    val smtp_settings: SmtpTokenConnectionSettings? = null,
     val decrypted_label: String = "",
+)
+
+@Serializable
+data class RenameSmtpTokenRequest(
+    val label_encrypted: String,
+    val label_nonce: String,
 )
 
 @Serializable
@@ -848,6 +863,7 @@ interface SettingsApi {
     suspend fun list_smtp_tokens(): ListSmtpTokensResponse
     suspend fun create_smtp_token(request: CreateSmtpTokenRequest): CreateSmtpTokenResponse
     suspend fun revoke_smtp_token(token_id: String)
+    suspend fun rename_smtp_token(token_id: String, request: RenameSmtpTokenRequest): SmtpTokenRow
 }
 
 class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
@@ -1352,6 +1368,15 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
         if (response.status.value !in 200..299) {
             throw client.map_http_status(response.status.value, "")
         }
+    }
+
+    override suspend fun rename_smtp_token(token_id: String, request: RenameSmtpTokenRequest): SmtpTokenRow {
+        val response = client.http.patch("${client.base_url}/api/developer/v1/smtp-tokens/$token_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
     }
 
     override suspend fun get_twin_address(): TwinAddressResponse {

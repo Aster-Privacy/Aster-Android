@@ -12,6 +12,7 @@
     <string name="search_chip_after">Şundan sonra</string>
     <string name="search_chip_date">Tarih</string>
     <string name="search_chip_label">Etiket</string>
+    <string name="search_chip_folder">Klasör</string>
     <string name="search_chip_not_prefix">Değil</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

@@ -12,6 +12,7 @@
     <string name="search_chip_after">이후</string>
     <string name="search_chip_date">날짜</string>
     <string name="search_chip_label">라벨</string>
+    <string name="search_chip_folder">폴더</string>
     <string name="search_chip_not_prefix">제외</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

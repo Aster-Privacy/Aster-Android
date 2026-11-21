@@ -39,6 +39,7 @@ internal val RECOGNIZED_OPERATOR_KEYS = setOf(
     "after",
     "date",
     "label",
+    "folder",
     "filename",
     "larger",
     "smaller",
@@ -134,8 +135,10 @@ internal data class ParsedQuery(
 internal data class SearchLabelEntry(
     val name: String,
     val token: String,
+    val is_folder: Boolean = false,
 ) {
     val folded_name: String = fold_text(name.trim())
+    val folded_operator_name: String = fold_text(name.replace("\"", "").trim())
 }
 
 internal data class SearchLabelIndex(
@@ -147,6 +150,14 @@ internal data class SearchLabelIndex(
         val exact = entries.filter { it.folded_name == wanted }
         val hits = exact.ifEmpty { entries.filter { it.folded_name.startsWith(wanted) } }
         return hits.mapTo(LinkedHashSet()) { it.token }
+    }
+
+    fun folder_tokens_for(value: String): Set<String> {
+        val wanted = fold_text(value.replace("\"", "").trim())
+        if (wanted.isEmpty()) return emptySet()
+        return entries
+            .filter { it.is_folder && it.folded_operator_name == wanted }
+            .mapTo(LinkedHashSet()) { it.token }
     }
 }
 
@@ -263,7 +274,7 @@ internal fun is_evaluable_operator(key: String, value: String): Boolean = when (
     "has" -> HAS_OPERATOR_VALUES.contains(value) || is_attachment_type_value(value)
     "before", "after" -> parse_iso_date(value) != null || parse_relative_days(value) != null
     "date" -> DATE_OPERATOR_VALUES.contains(value) || parse_iso_date(value) != null
-    "from", "to", "contact", "subject", "label", "filename", TEXT_OPERATOR_KEY -> value.isNotBlank()
+    "from", "to", "contact", "subject", "label", "folder", "filename", TEXT_OPERATOR_KEY -> value.isNotBlank()
     "larger", "smaller" -> value.isNotEmpty() && value.all { it in '0'..'9' }
     else -> false
 }
@@ -500,6 +511,12 @@ private fun matches_label(item: InboxItem, value: String, labels: SearchLabelInd
         org.astermail.android.folders.inbox_item_folder_tokens(item).any { tokens.contains(it) }
 }
 
+private fun matches_folder(item: InboxItem, value: String, labels: SearchLabelIndex): Boolean {
+    val tokens = labels.folder_tokens_for(value)
+    if (tokens.isEmpty()) return false
+    return org.astermail.android.folders.inbox_item_folder_tokens(item).any { tokens.contains(it) }
+}
+
 private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv): Boolean? = when (op.key) {
     "from" -> matches_person(op.value, sender_fields(item), sender_addresses(item))
     "to" -> matches_person(op.value, recipient_fields(item), recipient_fields(item))
@@ -540,6 +557,7 @@ private fun operator_result(item: InboxItem, op: SearchOperator, env: SearchEnv)
     "after" -> date_bound_millis(op.value, env)?.let { parse_item_timestamp(item.timestamp) >= it }
     "date" -> date_window_millis(op.value, env)?.contains(parse_item_timestamp(item.timestamp))
     "label" -> matches_label(item, op.value, env.labels)
+    "folder" -> matches_folder(item, op.value, env.labels)
     "filename" -> item.has_attachments &&
         env.attachments[item.id].orEmpty().any { fold_text(it.filename).contains(fold_text(op.value)) }
     TEXT_OPERATOR_KEY -> fold_text(op.value).let { term ->

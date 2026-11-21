@@ -32,7 +32,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ratchet.RatchetApiImpl
@@ -43,6 +45,7 @@ import org.astermail.android.crypto.sync_format_readiness
 import org.astermail.android.folders.FOLDER_KEY_PINS_FIELD
 import org.astermail.android.folders.merge_folder_key_pins
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
+import org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault
 import org.astermail.android.mail.vault_has_shared_scheduled_snapshot
 import org.astermail.android.mail.vault_marks_mail_legacy_retired
 import org.astermail.android.mail.vault_scheduled_untagged
@@ -62,6 +65,7 @@ private const val PROGRESS_KEY_PREFIX = "progress_"
 private const val KEY_MATERIAL_ITERATIONS = 310000
 private const val MAX_KEY_MATERIAL_SALTS = 4
 private const val BACKUP_REFRESH_KEY_PREFIX = "backup_refresh_"
+private const val BACKUP_KEYS_KEY_PREFIX = "backup_keys_"
 
 private const val FOLDER_CURSOR_KEY_PREFIX = "unlocked_folder_cursor_"
 
@@ -288,6 +292,7 @@ fun session_vault_updater(
     on_vault_changed = { vault, sealed ->
         if (!sealed.from_server) note_vault_written(sealed)
         absorb_rotated_vault(store, vault, sealed)
+        if (!sealed.from_server) StorageRekeyService.note_vault_keys(vault)
     },
     local_keys = { local_storage_keys(store) },
 )
@@ -340,6 +345,60 @@ class StorageRekeyService @Inject constructor(
         fun install_backup_builder(builder: RecoveryBackupBuilder?) {
             backup_builder = builder
         }
+
+        @Volatile private var vault_keys_listener: ((JSONObject) -> Unit)? = null
+        private val backup_refresh_mutex = Mutex()
+        private val backup_scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val backup_retry_at = Collections.synchronizedMap(HashMap<String, Long>())
+        private val memory_backup_keys = Collections.synchronizedMap(HashMap<String, Set<String>>())
+
+        @Volatile private var backup_written_listener: ((String?, Collection<String>?) -> Unit)? = null
+
+        fun note_vault_keys(vault: JSONObject) {
+            runCatching { vault_keys_listener?.invoke(vault) }
+        }
+
+        fun note_backup_written(user_id: String?, keys: Collection<String>?) {
+            runCatching { backup_written_listener?.invoke(user_id, keys) }
+        }
+    }
+
+    fun watch_vault_keys() {
+        vault_keys_listener = { vault -> offer_vault_keys(vault) }
+        backup_written_listener = { user_id, keys ->
+            val owner = user_id?.takeIf { it.isNotBlank() }
+            if (owner != null) record_backup_keys(owner, written_backup_keys(keys))
+        }
+    }
+
+    private fun vault_backup_keys(vault: JSONObject): Set<String> =
+        runCatching { collect_vault_key_fingerprints(vault).toSet() }.getOrDefault(emptySet())
+
+    private fun recorded_backup_keys(user_id: String): Set<String>? =
+        decode_backup_keys(prefs?.getString(BACKUP_KEYS_KEY_PREFIX + user_id, null)) ?: memory_backup_keys[user_id]
+
+    private fun record_backup_keys(user_id: String, keys: Set<String>) {
+        memory_backup_keys[user_id] = keys
+        prefs?.edit()?.putString(BACKUP_KEYS_KEY_PREFIX + user_id, encode_backup_keys(keys))?.apply()
+    }
+
+    private fun pending_storage_key_id(vault: JSONObject): String? {
+        if (!needs_storage_reseal(VaultKeyView.of(vault))) return null
+        val key = vault_random_storage_key(vault) ?: return null
+        val key_id = wrap_key_id(key)
+        key.fill(0)
+        return key_id
+    }
+
+    private fun offer_vault_keys(vault: JSONObject) {
+        if (backup_builder == null) return
+        val user_id = session_key_store.get_user_id() ?: return
+        val coverage =
+            backup_coverage(recorded_backup_keys(user_id), vault_backup_keys(vault), vault_at_key_cap(vault))
+        if (coverage != BackupCoverage.STALE) return
+        if (!backup_retry_allowed(backup_retry_at[user_id], System.currentTimeMillis())) return
+        val snapshot = JSONObject(vault.toString())
+        backup_scope.launch { runCatching { refresh_backup_for(KtorResealApi(api_client), snapshot) } }
     }
 
     private val folder_queue by lazy {
@@ -355,6 +414,7 @@ class StorageRekeyService @Inject constructor(
     fun forget_session() {
         healed_users.clear()
         side_copied.clear()
+        coverage_asked.clear()
         folder_queue.forget()
     }
 
@@ -420,35 +480,104 @@ class StorageRekeyService @Inject constructor(
         if (stored == SideCopyStore.STORED || stored == SideCopyStore.CURRENT) side_copied.add(marker)
     }
 
-    private suspend fun refresh_backup_for(api: ResealApi, vault: JSONObject) {
-        val builder = backup_builder ?: return
-        if (!needs_storage_reseal(VaultKeyView.of(vault))) return
-        val user_id = session_key_store.get_user_id() ?: return
-        val key = vault_random_storage_key(vault) ?: return
-        val key_id = wrap_key_id(key)
-        key.fill(0)
-        val marker_key = BACKUP_REFRESH_KEY_PREFIX + user_id
-        if (prefs?.getString(marker_key, null) == key_id) return
-        val updater = session_vault_updater(api, session_key_store)
-        sync_format_readiness.install_api_if_absent { RatchetApiImpl(api_client) }
-        sync_format_readiness.current(user_id)
-        val result = try {
-            refresh_recovery_backup(
-                api = api,
-                load = { updater.latest() },
-                update = { edit -> vault_recorded(updater.update(edit = edit)) },
-                builder = builder,
-            )
+    private val coverage_asked = Collections.synchronizedSet(HashSet<String>())
+
+    private suspend fun server_reports_stale(api: ResealApi, user_id: String): Boolean {
+        if (!coverage_asked.add(user_id)) return false
+        val reply = try {
+            api.get(RECOVERY_CODES_STATUS_PATH)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
             null
         }
-        when (result) {
-            BackupRefresh.REFRESHED, BackupRefresh.NO_CODES, BackupRefresh.CODES_CHANGED ->
-                prefs?.edit()?.putString(marker_key, key_id)?.apply()
-            else -> Unit
+        if (reply == null || reply.error) coverage_asked.remove(user_id)
+        return reply != null && server_backup_coverage(reply) == false
+    }
+
+    private suspend fun merge_local_ratchet_keys(updater: VaultUpdater) {
+        updater.update { draft ->
+            val before = draft.vault.optJSONArray("ratchet_previous_keys")?.toString()
+            fold_local_ratchet_keys_into_vault(draft.vault, session_key_store)
+            if (draft.vault.optJSONArray("ratchet_previous_keys")?.toString() == before) {
+                VaultEdit.UNCHANGED
+            } else {
+                VaultEdit.CHANGED
+            }
         }
+    }
+
+    private suspend fun refresh_backup_for(
+        api: ResealApi,
+        vault: JSONObject,
+        ask_server: Boolean = false,
+    ) = backup_refresh_mutex.withLock {
+        val builder = backup_builder ?: return@withLock
+        val user_id = session_key_store.get_user_id() ?: return@withLock
+        val marker_key = BACKUP_REFRESH_KEY_PREFIX + user_id
+        val key_id = pending_storage_key_id(vault)
+        val key_due = key_id != null && prefs?.getString(marker_key, null) != key_id
+        val keys = vault_backup_keys(vault)
+        val keys_due =
+            backup_coverage(recorded_backup_keys(user_id), keys, vault_at_key_cap(vault)) == BackupCoverage.STALE
+        val server_stale = !key_due && !keys_due && ask_server && server_reports_stale(api, user_id)
+        if (!key_due && !keys_due && !server_stale) return@withLock
+        val guarded = CoverageBackupBuilder(
+            inner = builder,
+            vault_keys = { loaded -> vault_backup_keys(loaded) },
+            recorded = { recorded_backup_keys(user_id) },
+            record = { covered -> record_backup_keys(user_id, covered) },
+            storage_key_due = { key_due },
+            server_stale = server_stale,
+            vault_at_cap = { loaded -> vault_at_key_cap(loaded) },
+        )
+        val updater = session_vault_updater(api, session_key_store)
+        sync_format_readiness.install_api_if_absent { RatchetApiImpl(api_client) }
+        sync_format_readiness.current(user_id)
+        val attempt: suspend () -> BackupRefresh? = {
+            try {
+                refresh_recovery_backup(
+                    api = api,
+                    load = { updater.latest() },
+                    update = { edit -> vault_recorded(updater.update(edit = edit)) },
+                    builder = guarded,
+                )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                null
+            }
+        }
+        var result = attempt()
+        if (result == BackupRefresh.DROPS_PUBLISHED_KEY) {
+            try {
+                merge_local_ratchet_keys(updater)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+            }
+            result = attempt()
+        }
+        when (result) {
+            BackupRefresh.REFRESHED -> {
+                if (key_due) prefs?.edit()?.putString(marker_key, key_id)?.apply()
+                backup_retry_at.remove(user_id)
+            }
+            BackupRefresh.NO_CODES -> {
+                if (key_due) prefs?.edit()?.putString(marker_key, key_id)?.apply()
+                if (keys_due) record_backup_keys(user_id, keys)
+                backup_retry_at.remove(user_id)
+            }
+            BackupRefresh.CODES_CHANGED -> {
+                if (key_due) prefs?.edit()?.putString(marker_key, key_id)?.apply()
+                backup_retry_at[user_id] = System.currentTimeMillis() + BACKUP_RETRY_DELAY_MS
+            }
+            BackupRefresh.VAULT_NOT_RECORDED -> backup_retry_at.remove(user_id)
+            else -> if (!guarded.declined) {
+                backup_retry_at[user_id] = System.currentTimeMillis() + BACKUP_RETRY_DELAY_MS
+            }
+        }
+        Unit
     }
 
     private fun vault_recorded(outcome: VaultUpdateOutcome): Boolean =
@@ -505,7 +634,7 @@ class StorageRekeyService @Inject constructor(
                 (outcome as? StorageVaultOutcome.Skipped)?.reason,
             )
         runCatching { keep_side_copy(api, vault) }
-        runCatching { refresh_backup_for(api, vault) }
+        runCatching { refresh_backup_for(api, vault, ask_server = true) }
         val view = VaultKeyView.of(vault)
         val extra_old = session_key_store.get_legacy_keks().orEmpty().mapNotNull { encoded ->
             decode_b64(encoded)?.takeIf { it.size == RESEAL_KEY_LENGTH }

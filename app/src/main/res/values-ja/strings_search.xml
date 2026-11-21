@@ -12,6 +12,7 @@
     <string name="search_chip_after">これより後</string>
     <string name="search_chip_date">日付</string>
     <string name="search_chip_label">ラベル</string>
+    <string name="search_chip_folder">フォルダ</string>
     <string name="search_chip_not_prefix">除外</string>
     <string name="search_chip_format">%1$s：%2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s：%3$s</string>

@@ -110,4 +110,29 @@ class ToolbarCustomizationTest {
     fun unknown_action_stays_null() {
         assertEquals(null, selection_toolbar_action_for("bogus", true))
     }
+
+    @Test
+    fun delete_reads_delete_forever_when_every_selected_message_is_in_trash() {
+        val action = selection_toolbar_action_for("trash", false, false, selection_all_trashed = true)
+        assertEquals(org.astermail.android.R.string.swipe_delete_forever, action?.label_res)
+        assertEquals("trash", action?.id)
+    }
+
+    @Test
+    fun delete_keeps_its_label_when_a_selected_message_is_outside_trash() {
+        assertEquals(
+            selection_toolbar_action_by_id("trash"),
+            selection_toolbar_action_for("trash", false, false, selection_all_trashed = false),
+        )
+    }
+
+    @Test
+    fun a_trashed_selection_leaves_other_actions_unchanged() {
+        listOf("folder", "label", "archive", "snooze", "spam").forEach { id ->
+            assertEquals(
+                selection_toolbar_action_by_id(id),
+                selection_toolbar_action_for(id, false, false, selection_all_trashed = true),
+            )
+        }
+    }
 }

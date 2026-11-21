@@ -500,6 +500,10 @@ class RecoveryViewModel @Inject constructor(
                     retry_plain.fill(0)
                 }
 
+                org.astermail.android.crypto.storage_rotation.StorageRekeyService.note_backup_written(
+                    backup_binding.user_id,
+                    updated_vault.backup_key_fingerprints,
+                )
                 if (format_v2) {
                     recovery_backup_floors.raise(backup_binding.user_id, backup_binding.generation, user_email)
                     recovery_backup_floors.mark_v2(backup_binding.user_id, user_email)

@@ -280,6 +280,7 @@ class AuthRepository @Inject constructor(
                 override fun saved(built: kotlinx.serialization.json.JsonObject) = note_saved_refresh_backup(built)
             },
         )
+        storage_rekey_service.watch_vault_keys()
     }
 
     private fun build_refresh_backup(vault: org.json.JSONObject): kotlinx.serialization.json.JsonObject? {
@@ -310,6 +311,8 @@ class AuthRepository @Inject constructor(
                 vault_backup_nonce = vault_backup.nonce,
                 recovery_key_salt = vault_backup.salt,
                 refresh_only = true,
+                backup_key_fingerprints =
+                    org.astermail.android.crypto.storage_rotation.backup_key_fingerprints(vault),
             )
             return refresh_backup_json.encodeToJsonElement(SaveRecoveryBackupRequest.serializer(), request)
                 as? kotlinx.serialization.json.JsonObject
@@ -1377,6 +1380,10 @@ class AuthRepository @Inject constructor(
         repeat(RECOVERY_BACKUP_ATTEMPTS) { attempt ->
             val uploaded = runCatching { recovery_api.backup(request) }
             if (uploaded.isSuccess) {
+                org.astermail.android.crypto.storage_rotation.StorageRekeyService.note_backup_written(
+                    session_key_store.get_user_id(),
+                    request.backup_key_fingerprints,
+                )
                 pending_recovery_backup.set(null)
                 return true
             }
@@ -3491,9 +3498,17 @@ class AuthRepository @Inject constructor(
                     }
                 }.awaitAll()
             }
-            val outcome = withContext(NonCancellable) {
+            val write: suspend (Boolean) -> org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome =
+                { fold_local_keys ->
+                withContext(NonCancellable) {
                 vault_updates.with_passphrase(passphrase).replace_through(
                     edit = { draft ->
+                        if (fold_local_keys) {
+                            org.astermail.android.mail.ratchet.fold_local_ratchet_keys_into_vault(
+                                draft.vault,
+                                session_key_store,
+                            )
+                        }
                         val plan = apply_rotated_codes(
                             draft.vault,
                             codes,
@@ -3510,7 +3525,7 @@ class AuthRepository @Inject constructor(
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
                         val vault_backup = encrypt_vault_backup(backup_plain, recovery_key, backup_binding, backup_format_v2)
                         backup_plain.fill(0)
-                        recovery_api.backup(
+                        val backup_request =
                             SaveRecoveryBackupRequest(
                                 recovery_shares = shares,
                                 encrypted_vault_backup = vault_backup.encrypted_data,
@@ -3522,12 +3537,23 @@ class AuthRepository @Inject constructor(
                                 vault_format = stored_vault_format(vault_obj),
                                 expected_vault_sha256 = snapshot.vault_sha256,
                                 vault_kdf_iterations = VaultKdf.to_server(sealed.kdf_iterations),
-                            ),
+                                backup_key_fingerprints =
+                                    org.astermail.android.crypto.storage_rotation.backup_key_fingerprints(vault_obj),
+                            )
+                        recovery_api.backup(backup_request)
+                        org.astermail.android.crypto.storage_rotation.StorageRekeyService.note_backup_written(
+                            user_id,
+                            backup_request.backup_key_fingerprints,
                         )
                         true
                     },
                 )
+                }
             }
+            val outcome = org.astermail.android.crypto.storage_rotation.write_with_local_keys(
+                on_uncovered = { ApiError.UnknownError(context.getString(R.string.error_generic)) },
+                write = write,
+            )
             if (outcome !is org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome.Written) {
                 throw ApiError.UnknownError(context.getString(R.string.error_generic))
             }

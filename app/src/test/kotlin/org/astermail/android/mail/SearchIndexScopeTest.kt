@@ -118,6 +118,38 @@ class SearchIndexScopeTest {
     }
 
     @Test
+    fun `the live walk lists every folder and leaves sent mail out of the index`() = runTest {
+        coEvery { dao.get_all_ids() } returns listOf("i1", "s1")
+        live_page(listOf(item("i1").copy(is_read = true), item("s1").copy(item_type = "sent", is_read = true)))
+
+        manager.refresh_index_and_wait()
+
+        coVerify(atLeast = 1) {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = "all",
+                is_trashed = false,
+                is_archived = false,
+                is_spam = false,
+                skip_total = any(),
+            )
+        }
+        coVerify(exactly = 1) { dao.set_read(listOf("i1"), true) }
+    }
+
+    @Test
+    fun `already indexed mail keeps its own archived state on the live walk`() = runTest {
+        coEvery { dao.get_all_ids() } returns listOf("i1", "i2")
+        live_page(listOf(item("i1").copy(is_archived = true), item("i2")))
+
+        manager.refresh_index_and_wait()
+
+        coVerify(exactly = 1) { dao.mark_archived(listOf("i1")) }
+        coVerify(exactly = 1) { dao.mark_unarchived(listOf("i2")) }
+    }
+
+    @Test
     fun `new mail written to the index keeps a pending read and drops it once cleared`() = runTest {
         coEvery { dao.get_all_ids() } returns emptyList()
         live_page(listOf(item("i2").copy(is_read = false)))

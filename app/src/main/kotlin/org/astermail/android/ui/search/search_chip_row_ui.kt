@@ -278,6 +278,7 @@ internal fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         "after" -> stringResource(R.string.search_chip_after)
         "date" -> stringResource(R.string.search_chip_date)
         "label" -> stringResource(R.string.search_chip_label)
+        "folder" -> stringResource(R.string.search_chip_folder)
         "filename" -> stringResource(R.string.search_chip_filename)
         TEXT_OPERATOR_KEY -> ""
         else -> op.key.replaceFirstChar { it.uppercase() }
@@ -567,7 +568,9 @@ internal fun search_chip_row(
     val date_preset = detect_date_preset(operators)
     val scope_state = query_search_scope(operators, folder)
     val scope_active = scope_chip_active(operators, folder)
-    val extra_operators = extra_chip_operators(operators)
+    val all_extra_operators = extra_chip_operators(operators)
+    val folder_operators = all_extra_operators.filter { !it.negated && it.key == "folder" }
+    val extra_operators = all_extra_operators.filterNot { !it.negated && it.key == "folder" }
     val has_free_text = free_text.isNotBlank()
 
     val date_label = date_filter_label(operators)
@@ -588,6 +591,11 @@ internal fun search_chip_row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        folder_operators.forEach { op ->
+            operator_chip(op) {
+                on_operators_change(operators.filterNot { it === op })
+            }
+        }
         Box {
             quick_chip(
                 label = scope_label,

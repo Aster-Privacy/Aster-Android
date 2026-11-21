@@ -119,4 +119,39 @@ class SmtpTokenCopySourceTest {
     fun the_token_screen_has_no_double_blank_line() {
         assertFalse(source.contains("\n\n\n"))
     }
+
+    private fun details_dialog_block(): String {
+        val start = source.indexOf("fun smtp_token_details_dialog(")
+        assertTrue(start >= 0)
+        val end = source.indexOf("\n@Composable", start)
+        assertTrue(end > start)
+        return source.substring(start, end)
+    }
+
+    @Test
+    fun the_details_dialog_never_reads_a_password_value() {
+        val block = details_dialog_block()
+        assertTrue(block.contains("settings: SmtpTokenConnectionSettings"))
+        assertFalse(block.contains(".password"))
+        assertFalse(block.contains("SmtpTokenSettings"))
+        assertTrue(block.contains("R.string.smtp_token_password_hidden"))
+    }
+
+    @Test
+    fun the_details_copy_all_holds_only_the_connection_settings() {
+        val block = details_dialog_block()
+        assertTrue(block.contains("write_sensitive_to_clipboard(context, clipboard_label, details_text)"))
+        assertTrue(block.contains("val details_text = smtp_connection_copy_text("))
+        val start = source.indexOf("internal fun smtp_connection_copy_text(")
+        assertTrue(start >= 0)
+        val helper = source.substring(start, source.indexOf("\n\n", start))
+        assertFalse(helper.contains("password", ignoreCase = true))
+    }
+
+    @Test
+    fun setup_details_never_fall_back_to_fixed_connection_values() {
+        assertTrue(source.contains("token.smtp_settings?.takeIf { it.host.isNotBlank() && it.username.isNotBlank() }"))
+        assertFalse(Regex("host = \"[^\"]").containsMatchIn(source))
+        assertFalse(Regex("port = \\d").containsMatchIn(source))
+    }
 }
