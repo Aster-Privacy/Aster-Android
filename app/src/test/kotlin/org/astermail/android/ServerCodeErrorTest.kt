@@ -67,6 +67,12 @@ class ServerCodeErrorTest {
     }
 
     @Test
+    fun maps_a_password_confirmation_demand_to_a_string_resource() {
+        assertEquals(R.string.recovery_step_up_description, server_code_string_res(STEP_UP_REQUIRED_CODE))
+        assertEquals("STEP_UP_REQUIRED", STEP_UP_REQUIRED_CODE)
+    }
+
+    @Test
     fun leaves_an_unknown_code_to_the_server_message() {
         assertNull(server_code_string_res("SOMETHING_ELSE"))
         assertNull(server_code_string_res(""))

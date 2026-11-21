@@ -121,6 +121,7 @@ private fun server_code_of(t: Throwable): String? = when (t) {
 }
 
 private const val VAULT_CHANGED_CODE = "VAULT_CHANGED"
+const val STEP_UP_REQUIRED_CODE = "STEP_UP_REQUIRED"
 private const val CLIENT_UPGRADE_REQUIRED_CODE = "CLIENT_UPGRADE_REQUIRED"
 
 fun server_code_string_res(code: String): Int? = when (code) {
@@ -133,6 +134,7 @@ fun server_code_string_res(code: String): Int? = when (code) {
     "IDENTITY_CONTINUITY_REQUIRED" -> R.string.error_key_continuity_required
     "SENDER_NOT_AUTHORIZED" -> R.string.error_sender_address_refused
     "ALIAS_SENDING_DISABLED" -> R.string.error_alias_sending_disabled
+    STEP_UP_REQUIRED_CODE -> R.string.recovery_step_up_description
     USERNAME_IN_USE_CODE -> R.string.error_username_taken
     else -> null
 }

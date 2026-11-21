@@ -42,6 +42,7 @@ import org.astermail.android.api.totp.TotpSetupVerifyRequest
 import org.astermail.android.auth.AuthRepository
 import org.astermail.android.settings.ReauthPrompt
 import org.astermail.android.settings.Reauthorized
+import org.astermail.android.settings.reauth_demand_of
 import org.astermail.android.settings.reauthorize
 import org.astermail.android.util.latest_code_input
 import org.astermail.android.util.normalize_digits
@@ -71,6 +72,24 @@ data class TwoFactorUiState(
     val password_input: String = "",
     val backup_codes: List<String> = emptyList(),
 )
+
+internal fun after_failed_setup_verification(
+    state: TwoFactorUiState,
+    failure: Throwable,
+    message: String,
+): TwoFactorUiState {
+    if (reauth_demand_of(failure) == null) return state.copy(is_busy = false, error = message)
+    return state.copy(
+        is_busy = false,
+        mode = TwoFactorMode.SetupReauth,
+        setup_secret = null,
+        setup_otpauth_uri = null,
+        setup_token = null,
+        code_input = "",
+        password_input = "",
+        error = message,
+    )
+}
 
 @HiltViewModel
 class TwoFactorViewModel @Inject constructor(
@@ -175,7 +194,7 @@ class TwoFactorViewModel @Inject constructor(
                 },
                 onFailure = {
                     if (it is kotlinx.coroutines.CancellationException) throw it
-                    _state.value.copy(is_busy = false, error = readable(it))
+                    after_failed_setup_verification(_state.value, it, readable(it))
                 },
             )
         }
