@@ -1876,7 +1876,7 @@
     <string name="show_encryption_indicators">Versleutelingsindicatoren tonen</string>
     <string name="show_encryption_indicators_sub">Toont een slotje bij versleutelde e-mail</string>
     <string name="publish_to_wkd">Publiceren naar WKD</string>
-    <string name="publish_to_wkd_sub">Publiceert je publieke sleutel in de Web Key Directory</string>
+    <string name="publish_to_wkd_sub">Publiceert de sleutel van je primaire adres in de Web Key Directory. Aliassen en adressen van een eigen domein worden niet gepubliceerd.</string>
     <string name="publish_to_keyservers">Publiceren naar sleutelservers</string>
     <string name="publish_to_keyservers_sub">Publiceert je sleutel op openbare keyservers</string>
     <string name="keyserver_publish_failed">Je openbare sleutel is niet gepubliceerd op de keyserver. Een nieuwe poging zou moeten werken.</string>

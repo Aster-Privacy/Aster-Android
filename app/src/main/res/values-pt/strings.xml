@@ -1880,7 +1880,7 @@
     <string name="show_encryption_indicators">Mostrar indicadores de encriptação</string>
     <string name="show_encryption_indicators_sub">Apresentar ícones de cadeado nos e-mails encriptados</string>
     <string name="publish_to_wkd">Publicar no WKD</string>
-    <string name="publish_to_wkd_sub">Publicar a sua chave pública no Web Key Directory</string>
+    <string name="publish_to_wkd_sub">Publicar a chave do seu endereço principal no Web Key Directory. Os aliases e os endereços de domínio personalizado não são publicados.</string>
     <string name="publish_to_keyservers">Publicar em servidores de chaves</string>
     <string name="publish_to_keyservers_sub">Publicar a sua chave em servidores de chaves públicos</string>
     <string name="keyserver_publish_failed">A sua chave pública não foi publicada no servidor de chaves. Tente novamente.</string>

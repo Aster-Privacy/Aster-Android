@@ -1884,7 +1884,7 @@
     <string name="show_encryption_indicators">Pokaż wskaźniki szyfrowania</string>
     <string name="show_encryption_indicators_sub">Pokazuje ikonę kłódki przy zaszyfrowanych wiadomościach</string>
     <string name="publish_to_wkd">Publikuj w WKD</string>
-    <string name="publish_to_wkd_sub">Publikuje Twój klucz publiczny w Web Key Directory</string>
+    <string name="publish_to_wkd_sub">Publikuje klucz Twojego adresu głównego w Web Key Directory. Aliasy i adresy własnej domeny nie są publikowane.</string>
     <string name="publish_to_keyservers">Publikuj na serwerach kluczy</string>
     <string name="publish_to_keyservers_sub">Publikuje Twój klucz na publicznych serwerach kluczy</string>
     <string name="keyserver_publish_failed">Nie udało się opublikować klucza publicznego na serwerze kluczy. Spróbuj ponownie.</string>

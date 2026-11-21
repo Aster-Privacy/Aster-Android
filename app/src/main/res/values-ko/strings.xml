@@ -1872,7 +1872,7 @@
     <string name="show_encryption_indicators">암호화 표시기 표시</string>
     <string name="show_encryption_indicators_sub">암호화된 메일에 자물쇠 아이콘을 표시합니다</string>
     <string name="publish_to_wkd">WKD에 게시</string>
-    <string name="publish_to_wkd_sub">공개 키를 Web Key Directory에 게시합니다</string>
+    <string name="publish_to_wkd_sub">기본 주소의 키를 Web Key Directory에 게시합니다. 별칭과 사용자 도메인 주소는 게시되지 않습니다.</string>
     <string name="publish_to_keyservers">키서버에 게시</string>
     <string name="publish_to_keyservers_sub">공개 키 서버에 키를 게시합니다</string>
     <string name="keyserver_publish_failed">공개 키가 키 서버에 게시되지 않았습니다. 다시 시도하면 됩니다.</string>

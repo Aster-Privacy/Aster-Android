@@ -1772,7 +1772,7 @@
     <string name="show_encryption_indicators">एन्क्रिप्शन संकेत दिखाएं</string>
     <string name="show_encryption_indicators_sub">एन्क्रिप्टेड ईमेल पर ताले का आइकन दिखाएं</string>
     <string name="publish_to_wkd">WKD पर प्रकाशित करें</string>
-    <string name="publish_to_wkd_sub">अपनी सार्वजनिक कुंजी Web Key Directory पर प्रकाशित करें</string>
+    <string name="publish_to_wkd_sub">अपने मुख्य पते की कुंजी Web Key Directory पर प्रकाशित करें। एलियास और कस्टम डोमेन के पते प्रकाशित नहीं होते।</string>
     <string name="publish_to_keyservers">कीसर्वर पर प्रकाशित करें</string>
     <string name="publish_to_keyservers_sub">अपनी कुंजी सार्वजनिक कीसर्वर पर प्रकाशित करें</string>
     <string name="keyserver_publish_failed">आपकी सार्वजनिक कुंजी कीसर्वर पर प्रकाशित नहीं हुई। एक और कोशिश से काम बन जाना चाहिए।</string>
