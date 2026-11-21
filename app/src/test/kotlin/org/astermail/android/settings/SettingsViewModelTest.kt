@@ -5164,4 +5164,287 @@ class SettingsViewModelTest {
 
         assertTrue(vm.state.value.smtp_tokens_loading)
     }
+
+    private val smtp_details = org.astermail.android.api.settings.SmtpTokenConnectionSettings(
+        host = "smtp.example.com",
+        port = 587,
+        security = "STARTTLS",
+        username = "a@example.com",
+    )
+
+    private fun seed_smtp_tokens(with_settings: Boolean = true) {
+        coEvery { settings_api.list_smtp_tokens() } returns ListSmtpTokensResponse(
+            listOf(
+                SmtpTokenRow(
+                    id = "t1",
+                    bound_address = "a@example.com",
+                    smtp_settings = if (with_settings) smtp_details else null,
+                    decrypted_label = "Old name",
+                ),
+                SmtpTokenRow(id = "t2", bound_address = "b@example.com", decrypted_label = "Other"),
+            ),
+        )
+        every { context.getString(R.string.smtp_token_renamed_toast) } returns "renamed"
+        every { context.getString(R.string.smtp_token_rename_failed) } returns "rename_failed"
+        every { context.getString(R.string.smtp_token_rename_unavailable) } returns "rename_unavailable"
+        every { context.getString(R.string.smtp_token_unavailable) } returns "token_unavailable"
+        every { context.getString(R.string.smtp_token_name_invalid) } returns "name_invalid"
+        every { context.getString(R.string.error_no_connection) } returns "no_connection"
+        vm.load_smtp_tokens()
+    }
+
+    private fun smtp_label(id: String): String? =
+        vm.state.value.smtp_tokens.firstOrNull { it.id == id }?.decrypted_label
+
+    @Test
+    fun `renaming an smtp token updates its label after the server accepts it`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        val sent = slot<org.astermail.android.api.settings.RenameSmtpTokenRequest>()
+        val gate = CompletableDeferred<SmtpTokenRow>()
+        coEvery { settings_api.rename_smtp_token("t1", capture(sent)) } coAnswers { gate.await() }
+
+        vm.rename_smtp_token("t1", "  Billing server  ")
+        runCurrent()
+
+        assertTrue(vm.state.value.smtp_token_renaming)
+        assertEquals("Old name", smtp_label("t1"))
+
+        gate.complete(SmtpTokenRow(id = "t1", bound_address = "a@example.com"))
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals("Billing server", smtp_label("t1"))
+        assertEquals("Other", smtp_label("t2"))
+        assertEquals(smtp_details, state.smtp_tokens.first { it.id == "t1" }.smtp_settings)
+        assertFalse(state.smtp_token_renaming)
+        assertEquals("t1", state.smtp_token_renamed_id)
+        assertNull(state.smtp_token_rename_error)
+        assertEquals("renamed", state.action_result)
+        assertTrue(sent.captured.label_encrypted.isNotBlank())
+        assertTrue(sent.captured.label_nonce.isNotBlank())
+        assertFalse(sent.captured.label_encrypted.contains("Billing server"))
+        coVerify(exactly = 1) { settings_api.rename_smtp_token("t1", any()) }
+    }
+
+    @Test
+    fun `renaming an smtp token reports it as unavailable when the route is missing`() = runTest {
+        seed_smtp_tokens(with_settings = false)
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.NotFoundError
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_unavailable", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        assertFalse(vm.state.value.smtp_token_renaming)
+        assertNull(vm.state.value.smtp_token_renamed_id)
+        assertNull(vm.state.value.action_result)
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `renaming an smtp token that no longer exists removes it and reloads the list`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.NotFoundError
+        coEvery { settings_api.list_smtp_tokens() } returns ListSmtpTokensResponse(
+            tokens = listOf(
+                SmtpTokenRow(
+                    id = "t2",
+                    bound_address = "b@example.com",
+                    smtp_settings = smtp_details,
+                    decrypted_label = "Other",
+                ),
+            ),
+        )
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals("token_unavailable", state.action_result)
+        assertNull(state.smtp_token_rename_error)
+        assertNull(state.smtp_token_renamed_id)
+        assertFalse(state.smtp_token_renaming)
+        assertEquals(listOf("t2"), state.smtp_tokens.map { it.id })
+        coVerify(exactly = 2) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `closing the created token dialog drops the one time password from state`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } returns
+            org.astermail.android.api.settings.CreateSmtpTokenResponse(
+                id = "t3",
+                smtp_settings = org.astermail.android.api.settings.SmtpTokenSettings(password = "one-time-secret"),
+            )
+
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+        assertEquals("one-time-secret", vm.state.value.smtp_token_created?.smtp_settings?.password)
+
+        vm.clear_created_smtp_token()
+
+        assertNull(vm.state.value.smtp_token_created)
+        assertFalse(vm.state.value.toString().contains("one-time-secret"))
+    }
+
+    @Test
+    fun `a failed smtp token create keeps its error for the dialog and clears on retry`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } throws RuntimeException("boom")
+
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        assertEquals("Something went wrong", vm.state.value.smtp_token_create_error)
+        assertFalse(vm.state.value.smtp_token_creating)
+        assertNull(vm.state.value.smtp_token_created)
+        assertNull(vm.state.value.action_result)
+
+        coEvery { settings_api.create_smtp_token(any()) } returns
+            org.astermail.android.api.settings.CreateSmtpTokenResponse(id = "t4")
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.smtp_token_create_error)
+        assertEquals("t4", vm.state.value.smtp_token_created?.id)
+    }
+
+    @Test
+    fun `dismissing the create dialog clears its error`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } throws RuntimeException("boom")
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+
+        vm.clear_smtp_token_create_error()
+
+        assertNull(vm.state.value.smtp_token_create_error)
+    }
+
+    @Test
+    fun `a method not allowed rename stays unavailable when the list carries settings`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.ServerError(405)
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_unavailable", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `renaming an smtp token reports it as unavailable when the method is not allowed`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.ServerError(405)
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_unavailable", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        assertFalse(vm.state.value.smtp_token_renaming)
+        assertNull(vm.state.value.smtp_token_renamed_id)
+    }
+
+    @Test
+    fun `a failed smtp token rename keeps the old label and reports the failure`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.ServerError(500)
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_failed", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        assertFalse(vm.state.value.smtp_token_renaming)
+
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws IOException("boom")
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_failed", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+    }
+
+    @Test
+    fun `an smtp token rename without a connection reports the connection`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.NetworkError
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("no_connection", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        assertFalse(vm.state.value.smtp_token_renaming)
+    }
+
+    @Test
+    fun `an invalid smtp token name is rejected before any request`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+
+        for (name in listOf("", "   ", "first\nsecond", "first\tsecond", "a".repeat(65))) {
+            vm.clear_smtp_token_rename()
+            vm.rename_smtp_token("t1", name)
+            advanceUntilIdle()
+
+            assertEquals("name_invalid", vm.state.value.smtp_token_rename_error)
+            assertFalse(vm.state.value.smtp_token_renaming)
+        }
+
+        assertEquals("Old name", smtp_label("t1"))
+        coVerify(exactly = 0) { settings_api.rename_smtp_token(any(), any()) }
+    }
+
+    @Test
+    fun `an smtp token rename that finishes after an account switch is ignored`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<SmtpTokenRow>()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } coAnswers { gate.await() }
+
+        vm.rename_smtp_token("t1", "Billing server")
+        runCurrent()
+        vm.reset_for_account_switch()
+        gate.complete(SmtpTokenRow(id = "t1"))
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertTrue(state.smtp_tokens.isEmpty())
+        assertNull(state.smtp_token_renamed_id)
+        assertNull(state.smtp_token_rename_error)
+        assertNull(state.action_result)
+        assertFalse(state.smtp_token_renaming)
+    }
+
+    @Test
+    fun `an smtp token rename that fails after an account switch is ignored`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        val gate = CompletableDeferred<SmtpTokenRow>()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } coAnswers { gate.await() }
+
+        vm.rename_smtp_token("t1", "Billing server")
+        runCurrent()
+        vm.reset_for_account_switch()
+        gate.completeExceptionally(ApiError.ServerError(500))
+        advanceUntilIdle()
+
+        assertNull(vm.state.value.smtp_token_rename_error)
+        assertFalse(vm.state.value.smtp_token_renaming)
+    }
 }

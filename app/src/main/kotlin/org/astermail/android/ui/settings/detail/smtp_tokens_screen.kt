@@ -46,9 +46,8 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
+import org.astermail.android.api.settings.SmtpTokenConnectionSettings
 import org.astermail.android.api.settings.SmtpTokenRow
 import org.astermail.android.api.settings.SmtpTokenSettings
 import org.astermail.android.billing.PlanLimitsViewModel
@@ -64,10 +64,16 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.settings.normalize_smtp_token_label
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.secure_screen
+import org.astermail.android.ui.common.show_copy_failed_toast
+import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_sensitive_to_clipboard
 import org.astermail.android.util.schedule_sensitive_clipboard_clear
 
@@ -82,6 +88,8 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     var show_create by remember { mutableStateOf(false) }
     var pending_revoke by remember { mutableStateOf<SmtpTokenRow?>(null) }
+    var details_token_id by remember { mutableStateOf<String?>(null) }
+    var rename_token_id by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         vm.load_smtp_tokens()
@@ -96,6 +104,25 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     LaunchedEffect(state.smtp_token_created) {
         if (state.smtp_token_created != null) show_create = false
+    }
+
+    LaunchedEffect(state.smtp_tokens, rename_token_id) {
+        val open_id = rename_token_id
+        if (open_id != null && state.smtp_tokens.none { it.id == open_id }) {
+            rename_token_id = null
+            vm.clear_smtp_token_rename()
+        }
+    }
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { vm.clear_created_smtp_token() }
+    }
+
+    LaunchedEffect(state.smtp_token_renamed_id) {
+        if (state.smtp_token_renamed_id != null) {
+            rename_token_id = null
+            vm.clear_smtp_token_rename()
+        }
     }
 
     val is_locked = plan_state.limits?.plan_code == "free" && !plan_state.is_loading
@@ -219,7 +246,15 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
                     section_label(stringResource(R.string.settings_smtp_tokens))
                     AsterCard(modifier = Modifier.fillMaxWidth()) {
                         state.smtp_tokens.forEachIndexed { i, token ->
-                            smtp_token_row(token = token, on_revoke = { pending_revoke = token })
+                            smtp_token_row(
+                                token = token,
+                                on_details = { details_token_id = token.id },
+                                on_rename = {
+                                    vm.clear_smtp_token_rename()
+                                    rename_token_id = token.id
+                                },
+                                on_revoke = { pending_revoke = token },
+                            )
                             if (i < state.smtp_tokens.lastIndex) settings_row_gap(modifier = Modifier)
                         }
                     }
@@ -229,7 +264,10 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
                 AsterButton(
                     label = stringResource(R.string.smtp_token_generate),
-                    onClick = { show_create = true },
+                    onClick = {
+                        vm.clear_smtp_token_create_error()
+                        show_create = true
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -242,7 +280,11 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         smtp_token_create_dialog(
             addresses = addresses.map { it.encrypted_local_part to it.domain_name },
             is_busy = state.smtp_token_creating,
-            on_dismiss = { show_create = false },
+            error = state.smtp_token_create_error,
+            on_dismiss = {
+                show_create = false
+                vm.clear_smtp_token_create_error()
+            },
             on_create = { local_part, domain, name ->
                 vm.create_smtp_token(name, local_part, domain)
             },
@@ -252,6 +294,26 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
     val created = state.smtp_token_created
     if (created != null) {
         smtp_token_created_dialog(created.smtp_settings, on_done = { vm.clear_created_smtp_token() })
+    }
+
+    val details_target = state.smtp_tokens.firstOrNull { it.id == details_token_id }
+    val details_settings = details_target?.let { smtp_token_setup_details(it) }
+    if (details_settings != null) {
+        smtp_token_details_dialog(details_settings, on_done = { details_token_id = null })
+    }
+
+    val rename_target = state.smtp_tokens.firstOrNull { it.id == rename_token_id }
+    if (rename_target != null) {
+        smtp_token_rename_dialog(
+            current_name = rename_target.decrypted_label,
+            is_busy = state.smtp_token_renaming,
+            error = state.smtp_token_rename_error,
+            on_dismiss = {
+                rename_token_id = null
+                vm.clear_smtp_token_rename()
+            },
+            on_rename = { name -> vm.rename_smtp_token(rename_target.id, name) },
+        )
     }
 
     val revoke_target = pending_revoke
@@ -276,12 +338,31 @@ internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () 
     val context = LocalContext.current
     val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
     secure_screen()
-    val all_text = buildString {
-        appendLine(context.getString(R.string.smtp_token_host) + ": " + settings.host)
-        appendLine(context.getString(R.string.smtp_token_port) + ": " + settings.port)
-        appendLine(context.getString(R.string.smtp_token_security) + ": " + settings.security)
-        appendLine(context.getString(R.string.smtp_token_username) + ": " + settings.username)
-        append(context.getString(R.string.smtp_token_password) + ": " + settings.password)
+    val connection = SmtpTokenConnectionSettings(
+        host = settings.host,
+        port = settings.port,
+        security = settings.security,
+        username = settings.username,
+    )
+    val connection_text = smtp_connection_copy_text(
+        host_label = stringResource(R.string.smtp_token_host),
+        port_label = stringResource(R.string.smtp_token_port),
+        security_label = stringResource(R.string.smtp_token_security),
+        username_label = stringResource(R.string.smtp_token_username),
+        settings = connection,
+    )
+    val all_text = connection_text + "\n" + stringResource(R.string.smtp_token_password) + ": " + settings.password
+    val copy_value: (String) -> Unit = { value ->
+        if (write_sensitive_to_clipboard(context, clipboard_label, value)) {
+            schedule_sensitive_clipboard_clear(context)
+            android.widget.Toast.makeText(
+                context,
+                context.getString(R.string.copied_to_clipboard),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+        } else {
+            show_copy_failed_toast(context)
+        }
     }
     AsterAlertDialog(
         on_dismiss = on_done,
@@ -292,11 +373,12 @@ internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () 
         secure = true,
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                smtp_setting_row(stringResource(R.string.smtp_token_host), settings.host)
-                smtp_setting_row(stringResource(R.string.smtp_token_port), settings.port.toString())
-                smtp_setting_row(stringResource(R.string.smtp_token_security), settings.security)
-                smtp_setting_row(stringResource(R.string.smtp_token_username), settings.username)
-                smtp_setting_row(stringResource(R.string.smtp_token_password), settings.password)
+                smtp_connection_rows(connection, on_copy = copy_value)
+                smtp_setting_row(
+                    label = stringResource(R.string.smtp_token_password),
+                    value = settings.password,
+                    on_copy = { copy_value(settings.password) },
+                )
                 v_gap(AsterSpacing.sm)
                 AsterButton(
                     label = stringResource(R.string.smtp_token_copy_all),
@@ -330,22 +412,178 @@ private fun notice_card(title: String, body: String) {
 }
 
 @Composable
-private fun smtp_setting_row(label: String, value: String) {
+internal fun smtp_token_details_dialog(settings: SmtpTokenConnectionSettings, on_done: () -> Unit) {
+    val context = LocalContext.current
     val colors = AsterMaterial.colors
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, color = colors.text_tertiary, fontSize = 13.sp)
-        Spacer(modifier = Modifier.width(AsterSpacing.md))
-        Text(text = value, color = colors.text_primary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+    val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
+    val details_text = smtp_connection_copy_text(
+        host_label = stringResource(R.string.smtp_token_host),
+        port_label = stringResource(R.string.smtp_token_port),
+        security_label = stringResource(R.string.smtp_token_security),
+        username_label = stringResource(R.string.smtp_token_username),
+        settings = settings,
+    )
+    val copy_value: (String) -> Unit = { value ->
+        show_copy_result_toast(context, value, write_sensitive_to_clipboard(context, clipboard_label, value))
     }
+    AsterAlertDialog(
+        on_dismiss = on_done,
+        title = stringResource(R.string.smtp_token_setup_details),
+        message = stringResource(R.string.smtp_token_setup_description),
+        confirm_label = stringResource(R.string.done),
+        on_confirm = on_done,
+        extra_content = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                smtp_connection_rows(settings, on_copy = copy_value)
+                smtp_setting_row(
+                    label = stringResource(R.string.smtp_token_password),
+                    value = stringResource(R.string.smtp_token_password_hidden),
+                    on_copy = null,
+                )
+                v_gap(AsterSpacing.sm)
+                AsterButton(
+                    label = stringResource(R.string.smtp_token_copy_all),
+                    onClick = {
+                        if (write_sensitive_to_clipboard(context, clipboard_label, details_text)) {
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.copied_to_clipboard),
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        } else {
+                            show_copy_failed_toast(context)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                v_gap(AsterSpacing.sm)
+                Text(
+                    text = stringResource(R.string.smtp_token_password_note),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+            }
+        },
+    )
 }
 
 @Composable
-private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
+private fun smtp_token_rename_dialog(
+    current_name: String,
+    is_busy: Boolean,
+    error: String?,
+    on_dismiss: () -> Unit,
+    on_rename: (String) -> Unit,
+) {
+    var name by remember { mutableStateOf(current_name) }
+    val normalized = normalize_smtp_token_label(name)
+    val invalid_text = if (name.isNotBlank() && normalized == null) {
+        stringResource(R.string.smtp_token_name_invalid)
+    } else {
+        null
+    }
+    AsterAlertDialog(
+        on_dismiss = on_dismiss,
+        title = stringResource(R.string.smtp_token_rename_title),
+        message = stringResource(R.string.smtp_token_rename_description),
+        confirm_label = stringResource(R.string.save),
+        cancel_label = stringResource(R.string.cancel),
+        confirm_enabled = normalized != null && normalized != current_name && !is_busy,
+        is_busy = is_busy,
+        dismiss_on_confirm = false,
+        on_confirm = { if (normalized != null) on_rename(normalized) },
+        extra_content = {
+            AsterTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = stringResource(R.string.smtp_token_name_label),
+                placeholder = stringResource(R.string.smtp_token_name_placeholder),
+                error_text = invalid_text ?: error,
+                enabled = !is_busy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+    )
+}
+
+@Composable
+private fun smtp_connection_rows(settings: SmtpTokenConnectionSettings, on_copy: (String) -> Unit) {
+    smtp_setting_row(
+        label = stringResource(R.string.smtp_token_host),
+        value = settings.host,
+        on_copy = { on_copy(settings.host) },
+    )
+    smtp_setting_row(
+        label = stringResource(R.string.smtp_token_port),
+        value = settings.port.toString(),
+        on_copy = { on_copy(settings.port.toString()) },
+    )
+    smtp_setting_row(
+        label = stringResource(R.string.smtp_token_security),
+        value = settings.security,
+        on_copy = { on_copy(settings.security) },
+    )
+    smtp_setting_row(
+        label = stringResource(R.string.smtp_token_username),
+        value = settings.username,
+        on_copy = { on_copy(settings.username) },
+    )
+}
+
+@Composable
+private fun smtp_setting_row(label: String, value: String, on_copy: (() -> Unit)?) {
     val colors = AsterMaterial.colors
+    val copy_label = stringResource(R.string.copy)
+    val row_modifier = if (on_copy != null) {
+        Modifier.fillMaxWidth().clickable(onClickLabel = copy_label, onClick = on_copy)
+    } else {
+        Modifier.fillMaxWidth()
+    }
+    Row(
+        modifier = row_modifier.padding(vertical = AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = label, color = colors.text_tertiary, fontSize = 13.sp, maxLines = 1)
+        Spacer(modifier = Modifier.width(AsterSpacing.md))
+        Text(
+            text = value,
+            color = colors.text_primary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            maxLines = 3,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+internal fun smtp_connection_copy_text(
+    host_label: String,
+    port_label: String,
+    security_label: String,
+    username_label: String,
+    settings: SmtpTokenConnectionSettings,
+): String = listOf(
+    host_label + ": " + settings.host,
+    port_label + ": " + settings.port,
+    security_label + ": " + settings.security,
+    username_label + ": " + settings.username,
+).joinToString("\n")
+
+internal fun smtp_token_setup_details(token: SmtpTokenRow): SmtpTokenConnectionSettings? =
+    token.smtp_settings?.takeIf { it.host.isNotBlank() && it.username.isNotBlank() }
+
+@Composable
+private fun smtp_token_row(
+    token: SmtpTokenRow,
+    on_details: () -> Unit,
+    on_rename: () -> Unit,
+    on_revoke: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    var menu_open by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -372,12 +610,42 @@ private fun smtp_token_row(token: SmtpTokenRow, on_revoke: () -> Unit) {
             )
         }
         Spacer(modifier = Modifier.width(AsterSpacing.sm))
-        Icon(
-            imageVector = TablerIcons.Trash,
-            contentDescription = stringResource(R.string.revoke),
-            tint = colors.danger,
-            modifier = Modifier.size(20.dp).clip(CircleShape).clickable(onClick = on_revoke),
-        )
+        Box {
+            AsterIconButton(
+                icon = TablerIcons.DotsVertical,
+                content_description = stringResource(R.string.more_options),
+                onClick = { menu_open = true },
+            )
+            aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                if (smtp_token_setup_details(token) != null) {
+                    aster_menu_item(
+                        label = stringResource(R.string.smtp_token_setup_details),
+                        icon = TablerIcons.Settings,
+                        on_click = {
+                            menu_open = false
+                            on_details()
+                        },
+                    )
+                }
+                aster_menu_item(
+                    label = stringResource(R.string.rename),
+                    icon = TablerIcons.Pencil,
+                    on_click = {
+                        menu_open = false
+                        on_rename()
+                    },
+                )
+                aster_menu_item(
+                    label = stringResource(R.string.revoke),
+                    icon = TablerIcons.Trash,
+                    destructive = true,
+                    on_click = {
+                        menu_open = false
+                        on_revoke()
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -400,37 +668,50 @@ internal fun smtp_tokens_body(
     else -> SmtpTokensBody.placeholder
 }
 
-private fun format_smtp_last_used(raw: String?): String? {
+internal fun format_smtp_last_used(
+    raw: String?,
+    zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+    locale: java.util.Locale = java.util.Locale.getDefault(),
+): String? {
     if (raw.isNullOrBlank()) return null
-    return runCatching {
-        java.time.OffsetDateTime.parse(raw)
-            .atZoneSameInstant(java.time.ZoneId.systemDefault())
-            .format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
-    }.getOrElse { raw }
+    val text = raw.trim()
+    val instant = runCatching { java.time.OffsetDateTime.parse(text).toInstant() }
+        .recoverCatching { java.time.Instant.parse(text) }
+        .recoverCatching {
+            java.time.LocalDateTime.parse(text.replace(' ', 'T')).toInstant(java.time.ZoneOffset.UTC)
+        }
+        .getOrNull() ?: return raw
+    return instant.atZone(zone).format(
+        java.time.format.DateTimeFormatter
+            .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+            .withLocale(locale),
+    )
 }
 
 @Composable
 private fun smtp_token_create_dialog(
     addresses: List<Pair<String, String>>,
     is_busy: Boolean,
+    error: String?,
     on_dismiss: () -> Unit,
     on_create: (String, String, String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var name by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(addresses.firstOrNull()) }
-    
+    val normalized = normalize_smtp_token_label(name)
 
     AsterAlertDialog(
         on_dismiss = on_dismiss,
         title = stringResource(R.string.smtp_token_create_title),
         confirm_label = stringResource(R.string.smtp_token_generate),
         cancel_label = stringResource(R.string.cancel),
-        confirm_enabled = name.isNotBlank() && selected != null && !is_busy,
+        confirm_enabled = normalized != null && selected != null && !is_busy,
         is_busy = is_busy,
+        dismiss_on_confirm = false,
         on_confirm = {
             val target = selected
-            if (target != null && name.isNotBlank()) on_create(target.first, target.second, name.trim())
+            if (target != null && normalized != null) on_create(target.first, target.second, normalized)
         },
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -439,6 +720,12 @@ private fun smtp_token_create_dialog(
                     onValueChange = { name = it },
                     label = stringResource(R.string.smtp_token_name_label),
                     placeholder = stringResource(R.string.smtp_token_name_placeholder),
+                    error_text = if (name.isNotBlank() && normalized == null) {
+                        stringResource(R.string.smtp_token_name_invalid)
+                    } else {
+                        null
+                    },
+                    enabled = !is_busy,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 v_gap(AsterSpacing.sm)
@@ -448,7 +735,7 @@ private fun smtp_token_create_dialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { selected = entry }
+                                .clickable(enabled = !is_busy) { selected = entry }
                                 .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -480,6 +767,15 @@ private fun smtp_token_create_dialog(
                         }
                         if (i < addresses.lastIndex) settings_row_gap(modifier = Modifier)
                     }
+                }
+                if (error != null) {
+                    v_gap(AsterSpacing.sm)
+                    Text(
+                        text = error,
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                        modifier = Modifier.fillMaxWidth().testTag("smtp_token_create_error"),
+                    )
                 }
             }
         },
