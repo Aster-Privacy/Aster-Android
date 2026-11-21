@@ -1462,7 +1462,7 @@ private fun compose_screen_content(
         scope.launch { attach_uris(uris) }
     }
 
-    val image_picker = remember_multiple_image_picker { uris ->
+    val image_picker = remember_multiple_image_picker(include_videos = true) { uris ->
         scope.launch { attach_uris(uris) }
     }
 

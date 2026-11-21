@@ -50,6 +50,8 @@ internal const val image_pick_androidx_max_extra = "androidx.activity.result.con
 internal const val image_pick_gms_action = "com.google.android.gms.provider.action.PICK_IMAGES"
 internal const val image_pick_gms_max_extra = "com.google.android.gms.provider.extra.PICK_IMAGES_MAX"
 private const val image_pick_mime_type = "image/*"
+internal const val visual_media_any_type = "*/*"
+internal val visual_media_mime_types = arrayOf("image/*", "video/*")
 
 internal enum class image_pick_source {
     system_picker,
@@ -65,6 +67,17 @@ internal data class image_pick_spec(
     val max_items_extra: String?,
     val allow_multiple: Boolean,
 )
+
+internal data class image_pick_types(
+    val type: String?,
+    val extra_mime_types: List<String>?,
+)
+
+internal fun image_pick_types_for(spec: image_pick_spec, include_videos: Boolean): image_pick_types = when {
+    !include_videos -> image_pick_types(image_pick_mime_type, null)
+    spec.openable -> image_pick_types(visual_media_any_type, visual_media_mime_types.toList())
+    else -> image_pick_types(null, null)
+}
 
 internal fun is_system_photo_picker_available(sdk_int: Int, r_extension_version: Int): Boolean =
     sdk_int >= 33 || (sdk_int >= 30 && r_extension_version >= 2)
@@ -124,12 +137,18 @@ fun remember_image_picker(on_picked: (Uri) -> Unit): image_picker_launcher =
     remember_image_picker_launcher(multiple = false) { uris -> uris.firstOrNull()?.let(on_picked) }
 
 @Composable
-fun remember_multiple_image_picker(on_picked: (List<Uri>) -> Unit): image_picker_launcher =
-    remember_image_picker_launcher(multiple = true) { uris -> if (uris.isNotEmpty()) on_picked(uris) }
+fun remember_multiple_image_picker(
+    include_videos: Boolean = false,
+    on_picked: (List<Uri>) -> Unit,
+): image_picker_launcher =
+    remember_image_picker_launcher(multiple = true, include_videos = include_videos) { uris ->
+        if (uris.isNotEmpty()) on_picked(uris)
+    }
 
 @Composable
 private fun remember_image_picker_launcher(
     multiple: Boolean,
+    include_videos: Boolean = false,
     on_result: (List<Uri>) -> Unit,
 ): image_picker_launcher {
     val context = LocalContext.current
@@ -137,8 +156,8 @@ private fun remember_image_picker_launcher(
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         latest_on_result(picked_image_uris(result))
     }
-    return remember(context, launcher, multiple) {
-        image_picker_launcher { launch_image_picker(context, launcher, multiple) }
+    return remember(context, launcher, multiple, include_videos) {
+        image_picker_launcher { launch_image_picker(context, launcher, multiple, include_videos) }
     }
 }
 
@@ -146,6 +165,7 @@ private fun launch_image_picker(
     context: Context,
     launcher: ActivityResultLauncher<Intent>,
     multiple: Boolean,
+    include_videos: Boolean,
 ) {
     val sdk_int = Build.VERSION.SDK_INT
     val r_extension = r_extension_version()
@@ -163,7 +183,7 @@ private fun launch_image_picker(
             image_pick_source.gms_picker -> gms_picker
             else -> null
         }
-        val intent = image_pick_intent(image_pick_spec_for(source, multiple), component, max_items)
+        val intent = image_pick_intent(image_pick_spec_for(source, multiple), component, max_items, include_videos)
         val launched = try {
             launcher.launch(intent)
             true
@@ -177,8 +197,16 @@ private fun launch_image_picker(
     Toast.makeText(context, context.getString(R.string.image_picker_unavailable), Toast.LENGTH_LONG).show()
 }
 
-private fun image_pick_intent(spec: image_pick_spec, component: ResolveInfo?, max_items: Int): Intent {
-    val intent = Intent(spec.action).setType(image_pick_mime_type)
+private fun image_pick_intent(
+    spec: image_pick_spec,
+    component: ResolveInfo?,
+    max_items: Int,
+    include_videos: Boolean,
+): Intent {
+    val types = image_pick_types_for(spec, include_videos)
+    val intent = Intent(spec.action)
+    types.type?.let { intent.setType(it) }
+    types.extra_mime_types?.let { intent.putExtra(Intent.EXTRA_MIME_TYPES, it.toTypedArray()) }
     component?.activityInfo?.let { info -> intent.setClassName(info.applicationInfo.packageName, info.name) }
     if (spec.openable) intent.addCategory(Intent.CATEGORY_OPENABLE)
     spec.max_items_extra?.let { extra -> intent.putExtra(extra, max_items) }
