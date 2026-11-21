@@ -3749,7 +3749,7 @@ class MailRepository @Inject constructor(
         val excluded = exclude.toHashSet()
         val ids = LinkedHashSet<String>()
         targets.forEach { token ->
-            runCatching { mail_api.get_thread_messages(token) }
+            runCatching { with_rate_limit_wait { mail_api.get_thread_messages(token) } }
                 .onSuccess { thread ->
                     thread.messages
                         .filter { it.item_type == "received" && it.is_trashed != true && it.id !in excluded }
@@ -3778,12 +3778,12 @@ class MailRepository @Inject constructor(
         thread_covered_ids: Set<String> = emptySet(),
     ): Result<Unit> = runCatching {
         val failed_threads = trash_threads(thread_tokens)
+        trash_ids_verified(item_ids.filter { it !in thread_covered_ids })
         if (failed_threads.isNotEmpty()) {
             throw IllegalStateException(
                 "trash failed for ${failed_threads.size} of ${thread_tokens.size} conversations",
             )
         }
-        trash_ids_verified(item_ids.filter { it !in thread_covered_ids })
         patch_metadata_for_items(
             item_ids,
             raw_items,
@@ -3805,7 +3805,8 @@ class MailRepository @Inject constructor(
         if (targets.isEmpty()) return emptySet()
         val failed = mutableSetOf<String>()
         targets.forEach { token ->
-            val error = runCatching { mail_api.trash_thread(token, true) }.exceptionOrNull() ?: return@forEach
+            val error = runCatching { with_rate_limit_wait { mail_api.trash_thread(token, true) } }.exceptionOrNull()
+                ?: return@forEach
             if (error is ApiError.NotFoundError) return@forEach
             rethrow_if_transient(error)
             failed.add(token)
@@ -3818,7 +3819,9 @@ class MailRepository @Inject constructor(
         if (targets.isEmpty()) return
         var affected = 0
         targets.chunked(METADATA_PATCH_BATCH_SIZE).forEach { chunk ->
-            affected += mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = chunk)).affected_count
+            affected += with_rate_limit_wait {
+                mail_api.bulk_action(BulkScopeRequest(action = "trash", ids = chunk))
+            }.affected_count
         }
         if (affected >= targets.size) return
         val uncovered = ids_not_trashed(targets)
@@ -3906,7 +3909,7 @@ class MailRepository @Inject constructor(
         if (targets.isEmpty()) return emptyList()
         val ids = LinkedHashSet<String>()
         targets.forEach { token ->
-            runCatching { mail_api.spam_thread(token, is_spam) }
+            runCatching { with_rate_limit_wait { mail_api.spam_thread(token, is_spam) } }
                 .onSuccess { ids.addAll(it.ids) }
                 .onFailure { rethrow_if_transient(it) }
         }
@@ -4226,11 +4229,13 @@ class MailRepository @Inject constructor(
 
     private suspend fun bulk_action_by_ids(action: String, item_ids: List<String>): BulkScopeResponse {
         val chunks = item_ids.chunked(BULK_SCOPE_ID_LIMIT)
-        if (chunks.size <= 1) return mail_api.bulk_action(BulkScopeRequest(action = action, ids = item_ids))
+        if (chunks.size <= 1) {
+            return with_rate_limit_wait { mail_api.bulk_action(BulkScopeRequest(action = action, ids = item_ids)) }
+        }
         var affected = 0
         var completed = true
         chunks.forEach { chunk ->
-            val response = mail_api.bulk_action(BulkScopeRequest(action = action, ids = chunk))
+            val response = with_rate_limit_wait { mail_api.bulk_action(BulkScopeRequest(action = action, ids = chunk)) }
             affected += response.affected_count
             completed = completed && response.completed
         }
@@ -4336,9 +4341,11 @@ class MailRepository @Inject constructor(
     private suspend fun bulk_delete_permanent_now(ids: List<String>): Result<Int> = runCatching {
         var deleted = 0
         ids.filter { it.isNotBlank() }.chunked(PERMANENT_DELETE_BULK_LIMIT).forEach { chunk ->
-            val response = mail_api.bulk_delete_permanent(
-                org.astermail.android.api.mail.BulkPermanentDeleteRequest(ids = chunk),
-            )
+            val response = with_rate_limit_wait {
+                mail_api.bulk_delete_permanent(
+                    org.astermail.android.api.mail.BulkPermanentDeleteRequest(ids = chunk),
+                )
+            }
             deleted += response.deleted_count
         }
         deleted
