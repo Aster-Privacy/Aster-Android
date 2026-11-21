@@ -4300,7 +4300,7 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         adjust_stats_for_removed(removed_items)
-        val search_removed = remove_search_items(item_ids)
+        val search_removed = flag_search_items(item_ids) { it.copy(is_trashed = true) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches_except_current(listOf("trash", "inbox"))
@@ -4466,7 +4466,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
-        val search_removed = remove_search_items(item_ids)
+        val search_removed = flag_search_items(item_ids) { it.copy(is_spam = true) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches_except_current(listOf("spam", "inbox"))
@@ -4517,6 +4517,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val search_before = flag_search_items(item_ids) { it.copy(is_spam = false) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches(listOf("spam", "inbox"))
@@ -4535,7 +4536,7 @@ class MailViewModel @Inject constructor(
                         ) {
                             undo_restore(
                                 removed_items = removed_items,
-                                search_removed = emptyList(),
+                                search_removed = search_before,
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_spam(it) },
                                 restore = { repository.mark_spam(it, lookup_raw_items(it), thread_tokens) },
@@ -4549,6 +4550,7 @@ class MailViewModel @Inject constructor(
                     },
                     onFailure = {
                         undo_local_restore(removed_items)
+                        undo_search_restore(search_before)
                         emit_toast(context.getString(R.string.failed_remove_spam))
                     },
                 )
@@ -4596,13 +4598,26 @@ class MailViewModel @Inject constructor(
         return removed
     }
 
+    private fun flag_search_items(item_ids: List<String>, change: (InboxItem) -> InboxItem): List<InboxItem> {
+        val ids = item_ids.toHashSet()
+        val current = _search_state.value.all_items
+        val before = current.filter { it.id in ids }
+        if (before.isNotEmpty()) {
+            _search_state.value = _search_state.value.copy(
+                all_items = current.map { if (it.id in ids) change(it) else it },
+            )
+        }
+        return before
+    }
+
     private fun undo_search_restore(removed: List<InboxItem>) {
         if (removed.isEmpty()) return
         val current = _search_state.value.all_items
+        val restored = removed.associateBy { it.id }
         val current_ids = current.map { it.id }.toHashSet()
-        val to_add = removed.filter { it.id !in current_ids }
-        if (to_add.isEmpty()) return
-        _search_state.value = _search_state.value.copy(all_items = current + to_add)
+        _search_state.value = _search_state.value.copy(
+            all_items = current.map { restored[it.id] ?: it } + removed.filter { it.id !in current_ids },
+        )
     }
 
     private fun protect_restored(item_ids: List<String>) {
@@ -4769,6 +4784,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val search_before = flag_search_items(item_ids) { it.copy(is_trashed = false) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "trash"))
@@ -4783,7 +4799,7 @@ class MailViewModel @Inject constructor(
                         ) {
                             undo_restore(
                                 removed_items = removed_items,
-                                search_removed = emptyList(),
+                                search_removed = search_before,
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_trashed(it) },
                                 restore = { repository.trash(it, lookup_raw_items(it)) },
@@ -4793,6 +4809,7 @@ class MailViewModel @Inject constructor(
                     },
                     onFailure = {
                         undo_local_restore(removed_items)
+                        undo_search_restore(search_before)
                         emit_toast(context.getString(R.string.failed_to_restore))
                     },
                 )
