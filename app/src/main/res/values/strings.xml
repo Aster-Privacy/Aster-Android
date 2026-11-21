@@ -2035,7 +2035,7 @@
     <string name="show_encryption_indicators">Show encryption indicators</string>
     <string name="show_encryption_indicators_sub">Display lock icons on encrypted emails</string>
     <string name="publish_to_wkd">Publish to WKD</string>
-    <string name="publish_to_wkd_sub">Publish the key for your primary address to Web Key Directory. Aliases and custom domain addresses aren't published.</string>
+    <string name="publish_to_wkd_sub">Publish the key for your primary address to Web Key Directory. Aliases and custom domain addresses aren\'t published.</string>
     <string name="publish_to_keyservers">Publish to keyservers</string>
     <string name="publish_to_keyservers_sub">Publish your key to public keyservers</string>
     <string name="keyserver_publish_failed">Your public key did not publish to the keyserver. Another attempt should do it.</string>
