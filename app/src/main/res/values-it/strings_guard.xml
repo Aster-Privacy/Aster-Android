@@ -345,4 +345,10 @@
     <string name="guard_wait_resume_retry">Riprova</string>
     <string name="guard_approve_mismatch_title">Il numero non corrisponde</string>
     <string name="guard_approve_mismatch">Questa richiesta di accesso è stata interrotta. Per continuare, accedi di nuovo sull\'altro dispositivo.</string>
+    <string name="guard_rotate_title">Nuovo codice di soccorso</string>
+    <string name="guard_rotate_row_subtitle">Sostituisci il codice che usi per rientrare nel tuo account</string>
+    <string name="guard_rotate_action">Sostituisci codice di soccorso</string>
+    <string name="guard_rotate_prompt_subtitle">Sostituisci il codice di soccorso</string>
+    <string name="guard_rotate_done_title">Codice di soccorso sostituito</string>
+    <string name="guard_rotate_done_body">Il vecchio codice di soccorso non funziona più. Conserva quello nuovo in un luogo sicuro e offline.</string>
 </resources>

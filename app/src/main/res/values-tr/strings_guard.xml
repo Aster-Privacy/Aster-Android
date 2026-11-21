@@ -336,4 +336,10 @@
     <string name="guard_wait_resume_retry">Yeniden dene</string>
     <string name="guard_approve_mismatch_title">Numara eşleşmedi</string>
     <string name="guard_approve_mismatch">Bu oturum açma isteği durduruldu. Devam etmek için diğer cihazda yeniden oturum açın.</string>
+    <string name="guard_rotate_title">Yeni kurtarma kodu</string>
+    <string name="guard_rotate_row_subtitle">Hesabınıza geri dönmek için kullandığınız kodu değiştirin</string>
+    <string name="guard_rotate_action">Kurtarma kodunu değiştir</string>
+    <string name="guard_rotate_prompt_subtitle">Kurtarma kodunuzu değiştirin</string>
+    <string name="guard_rotate_done_title">Kurtarma kodu değiştirildi</string>
+    <string name="guard_rotate_done_body">Eski kurtarma kodunuz artık çalışmıyor. Yeni kodu çevrimdışı ve güvenli bir yerde saklayın.</string>
 </resources>

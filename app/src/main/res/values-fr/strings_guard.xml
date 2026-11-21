@@ -345,4 +345,10 @@
     <string name="guard_wait_resume_retry">Réessayer</string>
     <string name="guard_approve_mismatch_title">Le numéro ne correspond pas</string>
     <string name="guard_approve_mismatch">Cette demande de connexion a été arrêtée. Pour continuer, reconnectez-vous sur l\'autre appareil.</string>
+    <string name="guard_rotate_title">Nouveau code de secours</string>
+    <string name="guard_rotate_row_subtitle">Remplacez le code qui vous permet de revenir dans votre compte</string>
+    <string name="guard_rotate_action">Remplacer le code de secours</string>
+    <string name="guard_rotate_prompt_subtitle">Remplacez votre code de secours</string>
+    <string name="guard_rotate_done_title">Code de secours remplacé</string>
+    <string name="guard_rotate_done_body">Votre ancien code de secours ne fonctionne plus. Conservez le nouveau en lieu sûr, hors ligne.</string>
 </resources>

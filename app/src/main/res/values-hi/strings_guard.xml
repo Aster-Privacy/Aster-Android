@@ -336,4 +336,10 @@
     <string name="guard_wait_resume_retry">फिर से कोशिश करें</string>
     <string name="guard_approve_mismatch_title">नंबर मेल नहीं खाया</string>
     <string name="guard_approve_mismatch">यह साइन-इन अनुरोध रोक दिया गया। जारी रखने के लिए, दूसरे डिवाइस पर फिर से साइन इन करें।</string>
+    <string name="guard_rotate_title">नया रेस्क्यू कोड</string>
+    <string name="guard_rotate_row_subtitle">वह कोड बदलें जिससे आप अपने खाते में वापस आते हैं</string>
+    <string name="guard_rotate_action">रेस्क्यू कोड बदलें</string>
+    <string name="guard_rotate_prompt_subtitle">अपना रेस्क्यू कोड बदलें</string>
+    <string name="guard_rotate_done_title">रेस्क्यू कोड बदल दिया गया</string>
+    <string name="guard_rotate_done_body">आपका पुराना रेस्क्यू कोड अब काम नहीं करता। नए कोड को ऑफ़लाइन किसी सुरक्षित जगह पर रखें।</string>
 </resources>

@@ -327,4 +327,10 @@
     <string name="guard_wait_resume_retry">再試行</string>
     <string name="guard_approve_mismatch_title">番号が一致しません</string>
     <string name="guard_approve_mismatch">このサインインリクエストは停止されました。続行するには、もう一方のデバイスでもう一度サインインしてください。</string>
+    <string name="guard_rotate_title">新しいレスキューコード</string>
+    <string name="guard_rotate_row_subtitle">アカウントに戻るためのコードを置き換えます</string>
+    <string name="guard_rotate_action">レスキューコードを置き換える</string>
+    <string name="guard_rotate_prompt_subtitle">レスキューコードを置き換える</string>
+    <string name="guard_rotate_done_title">レスキューコードを置き換えました</string>
+    <string name="guard_rotate_done_body">以前のレスキューコードは使用できなくなりました。新しいコードはオフラインの安全な場所に保管してください。</string>
 </resources>

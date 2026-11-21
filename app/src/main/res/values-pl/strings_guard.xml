@@ -354,4 +354,10 @@
     <string name="guard_wait_resume_retry">Spróbuj ponownie</string>
     <string name="guard_approve_mismatch_title">Numer się nie zgadza</string>
     <string name="guard_approve_mismatch">To żądanie logowania zostało zatrzymane. Aby kontynuować, zaloguj się ponownie na drugim urządzeniu.</string>
+    <string name="guard_rotate_title">Nowy kod ratunkowy</string>
+    <string name="guard_rotate_row_subtitle">Zastąp kod, którym wracasz na konto</string>
+    <string name="guard_rotate_action">Zastąp kod ratunkowy</string>
+    <string name="guard_rotate_prompt_subtitle">Zastąp kod ratunkowy</string>
+    <string name="guard_rotate_done_title">Kod ratunkowy zastąpiony</string>
+    <string name="guard_rotate_done_body">Stary kod ratunkowy już nie działa. Przechowuj nowy offline w bezpiecznym miejscu.</string>
 </resources>

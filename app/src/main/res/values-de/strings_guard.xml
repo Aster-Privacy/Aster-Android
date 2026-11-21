@@ -336,4 +336,10 @@
     <string name="guard_wait_resume_retry">Erneut versuchen</string>
     <string name="guard_approve_mismatch_title">Die Zahl stimmt nicht überein</string>
     <string name="guard_approve_mismatch">Diese Anmeldeanfrage wurde gestoppt. Melde dich auf dem anderen Gerät erneut an, um fortzufahren.</string>
+    <string name="guard_rotate_title">Neuer Rettungscode</string>
+    <string name="guard_rotate_row_subtitle">Ersetzen Sie den Code, mit dem Sie wieder in Ihr Konto kommen</string>
+    <string name="guard_rotate_action">Rettungscode ersetzen</string>
+    <string name="guard_rotate_prompt_subtitle">Ersetzen Sie Ihren Rettungscode</string>
+    <string name="guard_rotate_done_title">Rettungscode ersetzt</string>
+    <string name="guard_rotate_done_body">Ihr alter Rettungscode funktioniert nicht mehr. Bewahren Sie den neuen sicher und offline auf.</string>
 </resources>

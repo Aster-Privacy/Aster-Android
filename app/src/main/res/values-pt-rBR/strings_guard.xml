@@ -345,4 +345,10 @@
     <string name="guard_wait_resume_retry">Tentar de novo</string>
     <string name="guard_approve_mismatch_title">O número não corresponde</string>
     <string name="guard_approve_mismatch">Esta solicitação de login foi interrompida. Para continuar, faça login de novo no outro dispositivo.</string>
+    <string name="guard_rotate_title">Novo código de resgate</string>
+    <string name="guard_rotate_row_subtitle">Substitua o código que você usa para voltar à sua conta</string>
+    <string name="guard_rotate_action">Substituir código de resgate</string>
+    <string name="guard_rotate_prompt_subtitle">Substitua seu código de resgate</string>
+    <string name="guard_rotate_done_title">Código de resgate substituído</string>
+    <string name="guard_rotate_done_body">Seu código de resgate antigo não funciona mais. Guarde o novo em um lugar seguro e offline.</string>
 </resources>
