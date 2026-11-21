@@ -76,4 +76,29 @@ class RecoveryCompleteRequestTest {
         assertEquals(5L, written_generation(vault))
         assertEquals(5L, request_for(vault).vault_generation)
     }
+
+    @Test
+    fun recovered_request_reports_the_keys_its_backup_holds() {
+        val vault = RecoveryUploadVault(
+            plain = ByteArray(0),
+            backup_plain = ByteArray(0),
+            vault_format = 1,
+            identity_locked = false,
+            vault_generation = null,
+            backup_key_fingerprints = listOf("first", "second"),
+        )
+        assertEquals(listOf("first", "second"), request_for(vault).backup_key_fingerprints)
+    }
+
+    @Test
+    fun recovered_request_omits_the_key_list_when_the_backup_has_none() {
+        val vault = RecoveryUploadVault(
+            plain = ByteArray(0),
+            backup_plain = ByteArray(0),
+            vault_format = 1,
+            identity_locked = false,
+            vault_generation = null,
+        )
+        assertEquals(null, request_for(vault).backup_key_fingerprints)
+    }
 }

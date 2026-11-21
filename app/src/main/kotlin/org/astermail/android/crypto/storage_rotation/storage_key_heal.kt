@@ -30,6 +30,9 @@ import org.json.JSONObject
 
 const val RECOVERY_BACKUP_PATH = "/core/v1/recovery/backup"
 const val RECOVERY_CODES_CHANGED_CODE = "RECOVERY_CODES_CHANGED"
+const val BACKUP_DROPS_PUBLISHED_KEY_CODE = "backup_drops_published_key"
+const val RECOVERY_CODES_STATUS_PATH = "/core/v1/recovery/codes/status"
+const val BACKUP_COVERS_PUBLISHED_KEYS_FIELD = "backup_covers_published_keys"
 private const val UPGRADE_REQUIRED_CODE = "CLIENT_UPGRADE_REQUIRED"
 private val REFRESH_FORBIDDEN_FIELDS = setOf(
     "encrypted_vault",
@@ -79,7 +82,15 @@ suspend fun heal_storage_key_from_side_copy(
     }
 }
 
-enum class BackupRefresh { REFRESHED, VAULT_NOT_RECORDED, NO_CODES, CODES_CHANGED, UPGRADE_REQUIRED, FAILED }
+enum class BackupRefresh {
+    REFRESHED,
+    VAULT_NOT_RECORDED,
+    NO_CODES,
+    CODES_CHANGED,
+    UPGRADE_REQUIRED,
+    DROPS_PUBLISHED_KEY,
+    FAILED,
+}
 
 fun interface RecoveryBackupBuilder {
     fun build(vault: JSONObject): JsonObject?
@@ -140,6 +151,7 @@ suspend fun refresh_recovery_backup(
         when {
             reply.code == RECOVERY_CODES_CHANGED_CODE -> return BackupRefresh.CODES_CHANGED
             reply.status == 426 || reply.code == UPGRADE_REQUIRED_CODE -> return BackupRefresh.UPGRADE_REQUIRED
+            reply.code == BACKUP_DROPS_PUBLISHED_KEY_CODE -> return BackupRefresh.DROPS_PUBLISHED_KEY
             reply.code == VAULT_CHANGED_CODE -> Unit
             reply.status == 409 && reply.code == null -> Unit
             else -> return BackupRefresh.FAILED
