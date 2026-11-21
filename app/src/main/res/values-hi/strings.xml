@@ -2198,6 +2198,16 @@
     <string name="app_lock_passphrase_too_short">पासफ़्रेज़ में कम से कम 4 अक्षर होने चाहिए।</string>
     <string name="app_lock_title">Aster Mail लॉक है</string>
     <string name="app_lock_wrong_pin">गलत PIN। फिर से कोशिश करें।</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">गलत PIN। %d कोशिश बाकी है।</item>
+        <item quantity="other">गलत PIN। %d कोशिशें बाकी हैं।</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">गलत PIN। अगला गलत PIN ऐप को लॉक कर देगा।</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">%d कोशिश बाकी है</item>
+        <item quantity="other">%d कोशिशें बाकी हैं</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">अगला गलत PIN ऐप को लॉक कर देगा।</string>
     <string name="app_lock_locked_out">बहुत ज़्यादा कोशिशें हो गईं। दोबारा कोशिश करने से पहले रुकें।</string>
     <string name="app_lock_unlock">अनलॉक करें</string>
     <string name="app_lock_use_biometric">बायोमेट्रिक इस्तेमाल करें</string>

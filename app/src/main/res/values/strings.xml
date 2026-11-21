@@ -2487,6 +2487,16 @@
     <!-- App Lock screen -->
     <string name="app_lock_title">Aster Mail is locked</string>
     <string name="app_lock_wrong_pin">Incorrect PIN. Try again.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">Incorrect PIN. %d attempt left.</item>
+        <item quantity="other">Incorrect PIN. %d attempts left.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">Incorrect PIN. The next wrong PIN locks the app.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">%d attempt left</item>
+        <item quantity="other">%d attempts left</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">The next wrong PIN locks the app.</string>
     <string name="app_lock_locked_out">Too many attempts. Wait before trying again.</string>
     <string name="app_lock_unlock">Unlock</string>
     <string name="app_lock_use_biometric">Use biometrics</string>

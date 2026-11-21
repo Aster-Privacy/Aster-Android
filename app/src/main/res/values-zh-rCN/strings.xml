@@ -2283,6 +2283,14 @@
     <string name="app_lock_passphrase_too_short">口令至少要 4 个字符。</string>
     <string name="app_lock_title">Aster Mail 已锁定</string>
     <string name="app_lock_wrong_pin">PIN 码不正确，请重试。</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="other">PIN 码不正确，还剩 %d 次机会。</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">PIN 码不正确。再输错一次，应用将被锁定。</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="other">还剩 %d 次机会</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">再输错一次，应用将被锁定。</string>
     <string name="app_lock_locked_out">尝试次数过多，请稍候再试。</string>
     <string name="app_lock_unlock">解锁</string>
     <string name="app_lock_use_biometric">使用生物识别</string>

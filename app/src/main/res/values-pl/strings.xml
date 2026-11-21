@@ -2298,6 +2298,20 @@
     <string name="app_lock_passphrase_too_short">Hasło musi mieć co najmniej 4 znaki.</string>
     <string name="app_lock_title">Aster Mail jest zablokowany</string>
     <string name="app_lock_wrong_pin">Błędny PIN. Spróbuj jeszcze raz.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">Błędny PIN. Pozostała %d próba.</item>
+        <item quantity="few">Błędny PIN. Pozostały %d próby.</item>
+        <item quantity="many">Błędny PIN. Pozostało %d prób.</item>
+        <item quantity="other">Błędny PIN. Pozostało %d próby.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">Błędny PIN. Kolejny błędny PIN zablokuje aplikację.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">Pozostała %d próba</item>
+        <item quantity="few">Pozostały %d próby</item>
+        <item quantity="many">Pozostało %d prób</item>
+        <item quantity="other">Pozostało %d próby</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">Kolejny błędny PIN zablokuje aplikację.</string>
     <string name="app_lock_locked_out">Za dużo prób. Odczekaj chwilę, zanim spróbujesz ponownie.</string>
     <string name="app_lock_unlock">Odblokuj</string>
     <string name="app_lock_use_biometric">Użyj biometrii</string>

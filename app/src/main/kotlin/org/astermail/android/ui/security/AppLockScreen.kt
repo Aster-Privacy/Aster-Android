@@ -163,6 +163,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     var shake_trigger by remember { mutableIntStateOf(0) }
     var locked_out by remember { mutableStateOf(store.is_locked_out()) }
     var lockout_secs by remember { mutableLongStateOf(store.lockout_remaining_seconds()) }
+    var attempt_notice by remember { mutableStateOf(store.attempt_notice()) }
     var show_passphrase by remember { mutableStateOf(false) }
     var biometric_available by remember {
         mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
@@ -177,7 +178,6 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         )
     }
 
-    val wrong_pin_str = stringResource(R.string.app_lock_wrong_pin)
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
     val biometric_failed_str = stringResource(R.string.app_lock_biometric_failed)
 
@@ -277,17 +277,21 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 return@launch
             }
             input = ""
+            attempt_notice = store.attempt_notice()
             if (store.is_locked_out()) {
                 locked_out = true
                 lockout_secs = store.lockout_remaining_seconds()
                 error_msg = null
             } else {
                 shake_trigger++
-                error_msg = wrong_pin_str
-                launch { delay(2000); error_msg = null }
+                val message = pin_failure_message(context.resources, attempt_notice)
+                error_msg = message
+                launch { delay(2000); if (error_msg == message) error_msg = null }
             }
         }
     }
+
+    val attempt_hint = if (locked_out) null else pin_attempt_hint(attempt_notice)
 
     fun handle_digit(d: String) {
         if (verifying || locked_out) return
@@ -342,6 +346,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                         when {
                             verifying -> CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
                             error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
+                            attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
                         }
                     }
                 }
@@ -407,6 +412,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                     }
                     if (error_msg != null) {
                         Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
+                    } else if (attempt_hint != null) {
+                        Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
                     }
                     AsterButton(
                         label = stringResource(R.string.app_lock_unlock),
