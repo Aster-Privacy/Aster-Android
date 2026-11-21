@@ -38,12 +38,14 @@ import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.ratchet.RatchetApi
 import org.astermail.android.api.ratchet.OwnRatchetIdentityLookup
 import org.astermail.android.api.ratchet.UploadPrekeyBundleRequest
+import org.astermail.android.auth.jwt_session_id
 import org.astermail.android.crypto.CryptoNative
 import org.astermail.android.crypto.storage_rotation.VaultEdit
 import org.astermail.android.crypto.storage_rotation.VaultUpdateOutcome
 import org.astermail.android.crypto.storage_rotation.VaultUpdates
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.storage.SessionKeyStore
+import org.astermail.android.storage.TokenStore
 
 private const val UPLOADED_FLAG_PREFS = "ratchet_bootstrap"
 private const val UPLOADED_FLAG_PREFIX = "uploaded_"
@@ -59,6 +61,7 @@ class RatchetBootstrapService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val vault_updates: VaultUpdates,
     private val state_store: RatchetStateStore,
+    private val token_store: TokenStore,
 ) {
 
     private val in_flight = AtomicBoolean(false)
@@ -284,6 +287,7 @@ class RatchetBootstrapService @Inject constructor(
                 !session_key_store.get_ratchet_pq_identity_secret().isNullOrBlank(),
                 force,
                 ec_one_time_prekey_store.storage_available(),
+                jwt_session_id(token_store.refresh_token) ?: jwt_session_id(token_store.access_token),
             )
         } catch (cancelled: CancellationException) {
             throw cancelled

@@ -33,12 +33,16 @@ import org.astermail.android.api.auth.RefreshOutcome
 
 private val subject_json = Json { ignoreUnknownKeys = true }
 
-fun jwt_subject(token: String?): String? {
+fun jwt_subject(token: String?): String? = jwt_string_claim(token, "sub")
+
+fun jwt_session_id(token: String?): String? = jwt_string_claim(token, "session_id")
+
+private fun jwt_string_claim(token: String?, name: String): String? {
     val payload = token?.split('.')?.getOrNull(1)?.takeIf { it.isNotEmpty() } ?: return null
     return runCatching {
         val decoded = java.util.Base64.getUrlDecoder().decode(payload.trimEnd('='))
         val claims = subject_json.parseToJsonElement(String(decoded, Charsets.UTF_8)) as JsonObject
-        claims["sub"]?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+        claims[name]?.jsonPrimitive?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
     }.getOrNull()
 }
 

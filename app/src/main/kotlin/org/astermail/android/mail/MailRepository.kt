@@ -4742,6 +4742,12 @@ class MailRepository @Inject constructor(
                             envelope_own_seal_verified = own_result?.plaintext != null &&
                                 own_result.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
                             own_sealed = envelope_own_seal_verified
+                            if (!own_authored_only && message_id != null && encrypted_envelope != null && own_result?.plaintext != null &&
+                                own_result.signature == org.astermail.android.crypto.PgpSignatureStatus.NONE &&
+                                !MimeParser.looks_like_mime(pgp_plaintext)
+                            ) {
+                                ServerSealHook.offer(message_id, encrypted_envelope)
+                            }
                             if (MimeParser.looks_like_mime(pgp_plaintext)) {
                                 DecryptedMimeAttachments.keep_from_plaintext(message_id, pgp_plaintext)
                                 val mime = MimeParser.parse(pgp_plaintext)
@@ -8506,6 +8512,20 @@ class MailRepository @Inject constructor(
             }
             return runCatching { decrypt_envelope_identity_key(encrypted, nonce, allow_legacy = true) }.getOrNull()
                 ?: decrypt_envelope_legacy_key_material(encrypted, nonce)
+        }
+
+        override fun classify_server_seal(encrypted: String): StoredRecord {
+            val raw = decode(encrypted) ?: return StoredRecord.Unreadable
+            val text = String(raw, Charsets.UTF_8)
+            if (!body_starts_with(text, PGP_ENCRYPTED_MESSAGE_HEADER)) return StoredRecord.Unreadable
+            val result = try_pgp_decrypt_own_account_result(text) ?: return StoredRecord.Unreadable
+            if (result.signature != org.astermail.android.crypto.PgpSignatureStatus.NONE) return StoredRecord.Unreadable
+            val plaintext = result.plaintext?.toByteArray(Charsets.UTF_8) ?: return StoredRecord.Unreadable
+            return try {
+                legacy_or_unreadable(SentEncryptionEvidenceRules.mark_legacy_unverified(plaintext))
+            } finally {
+                plaintext.fill(0)
+            }
         }
 
         override fun classify_envelope(encrypted: String, nonce: String): StoredRecord {

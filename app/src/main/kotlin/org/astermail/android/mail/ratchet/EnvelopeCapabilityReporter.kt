@@ -39,6 +39,7 @@ data class EnvelopeCapabilityReport(
     val x3dh_max_version: Int = 0,
     val ratchet_sync_version: Int = 0,
     val recovery_backup_version: Int = 0,
+    val session_tag: String = "",
 )
 
 interface EnvelopeCapabilityStore {
@@ -73,6 +74,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
             parts.getOrNull(6)?.toIntOrNull() ?: 0,
             parts.getOrNull(7)?.toIntOrNull() ?: 0,
             parts.getOrNull(8)?.toIntOrNull() ?: 0,
+            parts.getOrElse(9) { "" },
         )
     }
 
@@ -80,7 +82,7 @@ class SharedPrefsEnvelopeCapabilityStore(private val context: Context) : Envelop
         prefs().edit()
             .putString(
                 LAST_REPORTED_PREFIX + user_id,
-                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.address_identity_version}|${report.bound_envelope_version}|${report.x3dh_max_version}|${report.ratchet_sync_version}|${report.recovery_backup_version}",
+                "${report.at_ms}|${report.identity_fingerprint}|${report.pq_identity_fingerprint}|${report.pgp_external_version}|${report.address_identity_version}|${report.bound_envelope_version}|${report.x3dh_max_version}|${report.ratchet_sync_version}|${report.recovery_backup_version}|${report.session_tag}",
             )
             .apply()
     }
@@ -106,6 +108,7 @@ class EnvelopeCapabilityReporter(
         holds_pq_identity_secret: Boolean = false,
         force: Boolean = false,
         one_time_prekeys_readable: Boolean = false,
+        session_id: String? = null,
     ): EnvelopeCapabilityResponse? {
         if (user_id.isBlank()) return null
 
@@ -115,6 +118,7 @@ class EnvelopeCapabilityReporter(
         val fingerprint = identity_fingerprint(identity_public_b64)
         val pq_fingerprint = pq_identity_fingerprint(pq_identity_public_b64, holds_pq_identity_secret)
         val last = store.get_last_report(user_id)
+        val session_tag = session_tag(session_id)
 
         if (!force &&
             last != null &&
@@ -126,6 +130,7 @@ class EnvelopeCapabilityReporter(
             last.bound_envelope_version == BOUND_ENVELOPE_VERSION &&
             last.ratchet_sync_version == RATCHET_SYNC_VERSION &&
             last.recovery_backup_version == RECOVERY_BACKUP_VERSION &&
+            last.session_tag == session_tag &&
             (last.x3dh_max_version.takeIf { it > 0 } ?: X3DH_MAX_VERSION) == x3dh_max_version &&
             now - last.at_ms in 0 until REPORT_INTERVAL_MS
         ) {
@@ -166,10 +171,19 @@ class EnvelopeCapabilityReporter(
                     x3dh_max_version,
                     RATCHET_SYNC_VERSION,
                     RECOVERY_BACKUP_VERSION,
+                    session_tag,
                 ),
             )
         }
         return response
+    }
+
+    private fun session_tag(session_id: String?): String {
+        val trimmed = session_id?.trim().orEmpty()
+        if (trimmed.isEmpty() || trimmed.length > MAX_SESSION_ID_LEN) return ""
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest((SESSION_TAG_CONTEXT + trimmed).toByteArray(Charsets.UTF_8))
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest.copyOf(SESSION_TAG_BYTES))
     }
 
     private fun identity_fingerprint(identity_public_b64: String?): String {
@@ -209,6 +223,9 @@ class EnvelopeCapabilityReporter(
         private const val IDENTITY_POINT_LEN: Int = 65
         private const val UNCOMPRESSED_POINT_TAG: Byte = 0x04
         private const val ML_KEM_768_PUBLIC_KEY_LEN: Int = 1184
+        private const val MAX_SESSION_ID_LEN: Int = 128
+        private const val SESSION_TAG_BYTES: Int = 16
+        private const val SESSION_TAG_CONTEXT: String = "aster-capability-session:"
 
         fun reported_x3dh_max_version(one_time_prekeys_readable: Boolean): Int =
             if (one_time_prekeys_readable) X3DH_ONE_TIME_READ_VERSION else X3DH_MAX_VERSION
