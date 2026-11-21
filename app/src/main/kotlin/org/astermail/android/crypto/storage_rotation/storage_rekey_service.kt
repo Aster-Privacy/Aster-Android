@@ -352,13 +352,23 @@ class StorageRekeyService @Inject constructor(
         private val backup_retry_at = Collections.synchronizedMap(HashMap<String, Long>())
         private val memory_backup_keys = Collections.synchronizedMap(HashMap<String, Set<String>>())
 
+        @Volatile private var backup_written_listener: ((String?, Collection<String>?) -> Unit)? = null
+
         fun note_vault_keys(vault: JSONObject) {
             runCatching { vault_keys_listener?.invoke(vault) }
+        }
+
+        fun note_backup_written(user_id: String?, keys: Collection<String>?) {
+            runCatching { backup_written_listener?.invoke(user_id, keys) }
         }
     }
 
     fun watch_vault_keys() {
         vault_keys_listener = { vault -> offer_vault_keys(vault) }
+        backup_written_listener = { user_id, keys ->
+            val owner = user_id?.takeIf { it.isNotBlank() }
+            if (owner != null) record_backup_keys(owner, written_backup_keys(keys))
+        }
     }
 
     private fun vault_backup_keys(vault: JSONObject): Set<String> =
@@ -383,7 +393,8 @@ class StorageRekeyService @Inject constructor(
     private fun offer_vault_keys(vault: JSONObject) {
         if (backup_builder == null) return
         val user_id = session_key_store.get_user_id() ?: return
-        val coverage = backup_coverage(recorded_backup_keys(user_id), vault_backup_keys(vault))
+        val coverage =
+            backup_coverage(recorded_backup_keys(user_id), vault_backup_keys(vault), vault_at_key_cap(vault))
         if (coverage != BackupCoverage.STALE) return
         if (!backup_retry_allowed(backup_retry_at[user_id], System.currentTimeMillis())) return
         val snapshot = JSONObject(vault.toString())
@@ -507,7 +518,8 @@ class StorageRekeyService @Inject constructor(
         val key_id = pending_storage_key_id(vault)
         val key_due = key_id != null && prefs?.getString(marker_key, null) != key_id
         val keys = vault_backup_keys(vault)
-        val keys_due = backup_coverage(recorded_backup_keys(user_id), keys) == BackupCoverage.STALE
+        val keys_due =
+            backup_coverage(recorded_backup_keys(user_id), keys, vault_at_key_cap(vault)) == BackupCoverage.STALE
         val server_stale = !key_due && !keys_due && ask_server && server_reports_stale(api, user_id)
         if (!key_due && !keys_due && !server_stale) return@withLock
         val guarded = CoverageBackupBuilder(
@@ -517,6 +529,7 @@ class StorageRekeyService @Inject constructor(
             record = { covered -> record_backup_keys(user_id, covered) },
             storage_key_due = { key_due },
             server_stale = server_stale,
+            vault_at_cap = { loaded -> vault_at_key_cap(loaded) },
         )
         val updater = session_vault_updater(api, session_key_store)
         sync_format_readiness.install_api_if_absent { RatchetApiImpl(api_client) }

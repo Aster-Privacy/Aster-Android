@@ -23,7 +23,9 @@ package org.astermail.android.crypto.storage_rotation
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import org.astermail.android.api.ApiError
 import org.astermail.android.mail.ratchet.collect_vault_key_fingerprints
+import org.astermail.android.mail.ratchet.max_retained_ratchet_key_sets
 import org.json.JSONObject
 
 const val BACKUP_RETRY_DELAY_MS = 15L * 60L * 1000L
@@ -32,12 +34,43 @@ private const val BACKUP_KEYS_SEPARATOR = "\n"
 
 enum class BackupCoverage { CURRENT, STALE, WOULD_SHRINK }
 
-fun backup_coverage(recorded: Set<String>?, vault_keys: Set<String>): BackupCoverage = when {
-    recorded != null && !vault_keys.containsAll(recorded) -> BackupCoverage.WOULD_SHRINK
-    vault_keys.isEmpty() -> BackupCoverage.CURRENT
-    recorded != null && recorded.size == vault_keys.size -> BackupCoverage.CURRENT
-    else -> BackupCoverage.STALE
+fun backup_coverage(
+    recorded: Set<String>?,
+    vault_keys: Set<String>,
+    vault_at_cap: Boolean = false,
+): BackupCoverage {
+    val missing = recorded != null && !vault_keys.containsAll(recorded)
+    val gained = recorded == null || !recorded.containsAll(vault_keys)
+    return when {
+        vault_keys.isEmpty() -> if (missing) BackupCoverage.WOULD_SHRINK else BackupCoverage.CURRENT
+        missing && !vault_at_cap -> BackupCoverage.WOULD_SHRINK
+        gained -> BackupCoverage.STALE
+        else -> BackupCoverage.CURRENT
+    }
 }
+
+fun vault_at_key_cap(vault: JSONObject, cap: Int = max_retained_ratchet_key_sets): Boolean =
+    (vault.optJSONArray("ratchet_previous_keys")?.length() ?: 0) >= cap
+
+fun written_backup_keys(keys: Collection<String>?): Set<String> = keys.orEmpty().toSet()
+
+fun drops_published_key(error: Throwable): Boolean =
+    error is ApiError.Conflict && error.code == BACKUP_DROPS_PUBLISHED_KEY_CODE
+
+suspend fun <T> write_with_local_keys(
+    on_uncovered: () -> Throwable,
+    write: suspend (Boolean) -> T,
+): T =
+    try {
+        write(false)
+    } catch (error: ApiError.Conflict) {
+        if (!drops_published_key(error)) throw error
+        try {
+            write(true)
+        } catch (again: ApiError.Conflict) {
+            throw if (drops_published_key(again)) on_uncovered() else again
+        }
+    }
 
 fun encode_backup_keys(keys: Set<String>): String = keys.sorted().joinToString(BACKUP_KEYS_SEPARATOR)
 
@@ -64,6 +97,7 @@ class CoverageBackupBuilder(
     private val record: (Set<String>) -> Unit,
     private val storage_key_due: (JSONObject) -> Boolean = { false },
     private val server_stale: Boolean = false,
+    private val vault_at_cap: (JSONObject) -> Boolean = { false },
 ) : RecoveryBackupBuilder {
     @Volatile private var pending: Set<String>? = null
 
@@ -73,15 +107,15 @@ class CoverageBackupBuilder(
     override fun build(vault: JSONObject): JsonObject? {
         pending = null
         val keys = vault_keys(vault)
-        val coverage = backup_coverage(recorded(), keys)
+        val coverage = backup_coverage(recorded(), keys, vault_at_cap(vault))
         declined = when (coverage) {
             BackupCoverage.STALE -> false
             BackupCoverage.CURRENT -> !server_stale && !storage_key_due(vault)
-            BackupCoverage.WOULD_SHRINK -> !storage_key_due(vault)
+            BackupCoverage.WOULD_SHRINK -> true
         }
         if (declined) return null
         val built = inner.build(vault) ?: return null
-        pending = if (coverage == BackupCoverage.WOULD_SHRINK) null else keys
+        pending = keys
         return built
     }
 

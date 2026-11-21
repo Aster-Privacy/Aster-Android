@@ -23,11 +23,13 @@ package org.astermail.android.crypto.storage_rotation
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import org.astermail.android.api.ApiError
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -71,6 +73,7 @@ class RecoveryBackupCoverageTest {
         record: Record,
         storage_key_due: Boolean = false,
         server_stale: Boolean = false,
+        at_cap: Boolean = false,
         inner: RecoveryBackupBuilder = RecoveryBackupBuilder { built_backup },
     ) = CoverageBackupBuilder(
         inner = inner,
@@ -79,7 +82,10 @@ class RecoveryBackupCoverageTest {
         record = { record.keys = it },
         storage_key_due = { storage_key_due },
         server_stale = server_stale,
+        vault_at_cap = { at_cap },
     )
+
+    private fun dropped_key() = ApiError.Conflict("conflict", BACKUP_DROPS_PUBLISHED_KEY_CODE)
 
     @Test
     fun coverage_is_stale_when_the_vault_gained_keys() {
@@ -248,6 +254,117 @@ class RecoveryBackupCoverageTest {
         assertNull(server_backup_coverage(ApiReply(200)))
         assertNull(server_backup_coverage(ApiReply(500, missing)))
         assertNull(server_backup_coverage(ApiReply(null)))
+    }
+
+    @Test
+    fun a_due_storage_key_never_writes_a_vault_with_fewer_keys() = runBlocking {
+        val record = Record(setOf("identity", "rotated"))
+        val api = CountingApi()
+        val guarded = builder(record, storage_key_due = true)
+        val result = refresh_recovery_backup(api, { draft(vault("rotated")) }, builder = guarded)
+        assertEquals(BackupRefresh.FAILED, result)
+        assertTrue(guarded.declined)
+        assertTrue(api.posts.isEmpty())
+        assertEquals(setOf("identity", "rotated"), record.keys)
+    }
+
+    @Test
+    fun coverage_allows_keys_the_full_vault_let_go() {
+        assertEquals(BackupCoverage.STALE, backup_coverage(setOf("old", "kept"), setOf("kept", "new"), true))
+        assertEquals(BackupCoverage.WOULD_SHRINK, backup_coverage(setOf("old", "kept"), setOf("kept", "new"), false))
+        assertEquals(BackupCoverage.CURRENT, backup_coverage(setOf("old", "kept"), setOf("kept"), true))
+        assertEquals(BackupCoverage.WOULD_SHRINK, backup_coverage(setOf("old"), emptySet(), true))
+    }
+
+    @Test
+    fun a_vault_reaches_its_key_cap_at_the_retention_limit() {
+        val entries = JSONArray()
+        repeat(3) { entries.put(JSONObject().put("ratchet_identity_public", "key-$it")) }
+        val held = JSONObject().put("ratchet_previous_keys", entries)
+        assertTrue(vault_at_key_cap(held, cap = 3))
+        assertFalse(vault_at_key_cap(held, cap = 4))
+        assertFalse(vault_at_key_cap(JSONObject(), cap = 3))
+    }
+
+    @Test
+    fun a_full_vault_that_gained_a_key_refreshes_and_replaces_the_record() = runBlocking {
+        val record = Record(setOf("old", "kept"))
+        val api = CountingApi()
+        val guarded = builder(record, at_cap = true)
+        val result = refresh_recovery_backup(api, { draft(vault("kept", "new")) }, builder = guarded)
+        assertEquals(BackupRefresh.REFRESHED, result)
+        assertEquals(1, api.posts.size)
+        assertEquals(setOf("kept", "new"), record.keys)
+    }
+
+    @Test
+    fun a_vault_below_its_cap_that_lost_a_key_is_still_refused() = runBlocking {
+        val record = Record(setOf("old", "kept"))
+        val api = CountingApi()
+        val guarded = builder(record)
+        val result = refresh_recovery_backup(api, { draft(vault("kept", "new")) }, builder = guarded)
+        assertEquals(BackupRefresh.FAILED, result)
+        assertTrue(api.posts.isEmpty())
+        assertEquals(setOf("old", "kept"), record.keys)
+    }
+
+    @Test
+    fun a_backup_written_without_a_key_list_is_refreshed_later() {
+        assertEquals(emptySet<String>(), written_backup_keys(null))
+        assertEquals(setOf("a", "b"), written_backup_keys(listOf("a", "b", "a")))
+        assertEquals(BackupCoverage.STALE, backup_coverage(written_backup_keys(null), setOf("a")))
+        assertEquals(BackupCoverage.CURRENT, backup_coverage(written_backup_keys(listOf("a")), setOf("a")))
+    }
+
+    @Test
+    fun a_write_that_succeeds_is_not_repeated() = runBlocking {
+        val calls = ArrayList<Boolean>()
+        val result = write_with_local_keys({ IllegalStateException("uncovered") }) { fold ->
+            calls.add(fold)
+            "written"
+        }
+        assertEquals("written", result)
+        assertEquals(listOf(false), calls)
+    }
+
+    @Test
+    fun a_write_that_would_drop_a_key_is_repeated_once_with_the_local_keys() = runBlocking {
+        val calls = ArrayList<Boolean>()
+        val result = write_with_local_keys({ IllegalStateException("uncovered") }) { fold ->
+            calls.add(fold)
+            if (!fold) throw dropped_key()
+            "written"
+        }
+        assertEquals("written", result)
+        assertEquals(listOf(false, true), calls)
+    }
+
+    @Test
+    fun a_write_that_still_drops_a_key_fails_without_a_third_try() = runBlocking {
+        val calls = ArrayList<Boolean>()
+        val uncovered = IllegalStateException("uncovered")
+        val thrown = runCatching {
+            write_with_local_keys<String>({ uncovered }) { fold ->
+                calls.add(fold)
+                throw dropped_key()
+            }
+        }.exceptionOrNull()
+        assertSame(uncovered, thrown)
+        assertEquals(listOf(false, true), calls)
+    }
+
+    @Test
+    fun another_conflict_is_passed_on_unchanged() = runBlocking {
+        val calls = ArrayList<Boolean>()
+        val other = ApiError.Conflict("conflict", VAULT_CHANGED_CODE)
+        val thrown = runCatching {
+            write_with_local_keys<String>({ IllegalStateException("uncovered") }) { fold ->
+                calls.add(fold)
+                throw other
+            }
+        }.exceptionOrNull()
+        assertSame(other, thrown)
+        assertEquals(listOf(false), calls)
     }
 
     @Test
