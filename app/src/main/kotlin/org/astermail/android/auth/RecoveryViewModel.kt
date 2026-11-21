@@ -49,6 +49,11 @@ import org.astermail.android.api.recovery.RecoveryShareData
 import org.astermail.android.api.recovery.VerifierSaltsRequest
 import org.astermail.android.crypto.CryptoNative
 
+internal fun recovery_held_state(s: RecoveryUiState, t: Throwable): RecoveryUiState? {
+    val notice = org.astermail.android.guard.guard_held_of(t) ?: return null
+    return s.copy(step = RecoveryStep.password, is_loading = false, held = notice, error = null, processing_status = "")
+}
+
 enum class RecoveryStep {
     email,
     other_ways,
@@ -80,6 +85,7 @@ data class RecoveryUiState(
     val needs_previous_password: Boolean = false,
     val previous_password_skipped: Boolean = false,
     val keys_left_locked: Boolean = false,
+    val held: org.astermail.android.guard.guard_held_notice? = null,
     val account_address: String = "",
 )
 
@@ -530,6 +536,11 @@ class RecoveryViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                val held_state = recovery_held_state(_state.value, t)
+                if (held_state != null) {
+                    _state.value = held_state
+                    return@launch
+                }
                 val restart_message = recovery_restart_message(t)
                 if (restart_message != null) {
                     reset_recovery_session()

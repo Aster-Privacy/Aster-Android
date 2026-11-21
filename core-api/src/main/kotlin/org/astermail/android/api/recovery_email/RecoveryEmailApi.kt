@@ -166,6 +166,8 @@ class RecoveryEmailApiImpl(private val client: ApiClient) : RecoveryEmailApi {
             }
             val message = parsed?.error?.takeIf { it.isNotBlank() }
             when {
+                parsed?.code?.startsWith("GUARD_") == true ->
+                    throw client.map_http_status(status, body)
                 parsed?.code == "STEP_UP_REQUIRED" ->
                     throw RecoveryEmailError(STEP_UP_REQUIRED, message)
                 parsed?.code == "TOTP_REQUIRED" ->

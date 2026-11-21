@@ -244,6 +244,7 @@ fun RuleEditorScreen(
     var chain_to_value by remember { mutableStateOf(false) }
     var is_saving by remember { mutableStateOf(false) }
     var save_error by remember { mutableStateOf<Int?>(null) }
+    var save_held by remember { mutableStateOf<org.astermail.android.guard.guard_held_notice?>(null) }
     var duplicate_warning by remember { mutableStateOf<Int?>(null) }
     var skipped_duplicates by remember { mutableStateOf(0) }
     var switched_to_any by remember { mutableStateOf(false) }
@@ -659,6 +660,9 @@ fun RuleEditorScreen(
             }
 
             Spacer(Modifier.height(AsterSpacing.xxl))
+            save_held?.let {
+                org.astermail.android.guard.GuardHeldBanner(it, Modifier.padding(bottom = AsterSpacing.sm))
+            }
             save_error?.let { msg ->
                 Text(
                     text = stringResource(msg),
@@ -682,6 +686,7 @@ fun RuleEditorScreen(
                     if (rule_id != null && existing == null) return@AsterButton
                     is_saving = true
                     save_error = null
+                    save_held = null
                     if (existing == null) {
                         vm.create_rule(
                             name = name,
@@ -692,7 +697,12 @@ fun RuleEditorScreen(
                             actions = actions.toList() + preserved_actions,
                         ) { id ->
                             is_saving = false
-                            if (id != null) on_saved() else save_error = vm.state.value.error ?: R.string.rules_save_failed
+                            if (id != null) {
+                                on_saved()
+                            } else {
+                                save_held = vm.state.value.held
+                                if (save_held == null) save_error = vm.state.value.error ?: R.string.rules_save_failed
+                            }
                         }
                     } else {
                         vm.update_rule(
@@ -704,7 +714,12 @@ fun RuleEditorScreen(
                             actions = actions.toList() + preserved_actions,
                         ) { ok ->
                             is_saving = false
-                            if (ok) on_saved() else save_error = vm.state.value.error ?: R.string.rules_save_failed
+                            if (ok) {
+                                on_saved()
+                            } else {
+                                save_held = vm.state.value.held
+                                if (save_held == null) save_error = vm.state.value.error ?: R.string.rules_save_failed
+                            }
                         }
                     }
                 },

@@ -120,6 +120,10 @@ fun AutoForwardScreen(
             )
             return@detail_scaffold
         }
+        state.forwarding_held?.let {
+            org.astermail.android.guard.GuardHeldBanner(it)
+            v_gap(AsterSpacing.md)
+        }
         if (state.forwarding_rules_load_failed && rules.isEmpty()) {
             load_failed_card(state.error) { vm.load_forwarding_rules() }
             return@detail_scaffold

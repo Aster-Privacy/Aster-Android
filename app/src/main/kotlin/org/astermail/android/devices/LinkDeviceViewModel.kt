@@ -41,6 +41,11 @@ import org.astermail.android.api.devices.normalize_device_code
 import org.astermail.android.crypto.DeviceEnvelope
 import org.astermail.android.crypto.DeviceKeyFingerprint
 import org.astermail.android.crypto.zeroize
+import org.astermail.android.guard.GuardLinkApprover
+import org.astermail.android.guard.GuardNoDeviceException
+import org.astermail.android.guard.guard_link_outcome
+import org.astermail.android.guard.guard_signer
+import org.astermail.android.guard.is_guard_device_required
 import org.astermail.android.storage.SessionKeyStore
 
 enum class LinkDeviceStep { INPUT, CONFIRM, SUCCESS }
@@ -55,6 +60,8 @@ enum class LinkDeviceError {
     RATE_LIMITED,
     SESSION_EXPIRED,
     UNAVAILABLE,
+    KEYS_MISMATCH,
+    GUARD_DEVICE_REQUIRED,
     FAILED,
 }
 
@@ -68,6 +75,7 @@ data class LinkDeviceUiState(
     val is_verifying: Boolean = false,
     val is_confirming: Boolean = false,
     val error: LinkDeviceError? = null,
+    val pending_activates_at: String? = null,
 ) {
     val is_code_complete: Boolean
         get() = normalize_device_code(code_input).length == DEVICE_CODE_LENGTH
@@ -86,6 +94,7 @@ data class LinkDeviceUiState(
 class LinkDeviceViewModel @Inject constructor(
     private val device_code_api: DeviceCodeApi,
     private val session_key_store: SessionKeyStore,
+    private val guard_link: GuardLinkApprover,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LinkDeviceUiState())
@@ -115,6 +124,7 @@ class LinkDeviceViewModel @Inject constructor(
                     device.ed25519_pk,
                     device.mlkem_pk,
                     device.x25519_pk,
+                    device.action_pk,
                 )
                 _state.value = if (fingerprint == null) {
                     _state.value.copy(
@@ -141,7 +151,7 @@ class LinkDeviceViewModel @Inject constructor(
         }
     }
 
-    fun confirm_link() {
+    fun confirm_link(signer: guard_signer? = null) {
         val current = _state.value
         val device = current.pending_device ?: return
         if (current.is_confirming) return
@@ -154,21 +164,29 @@ class LinkDeviceViewModel @Inject constructor(
         _state.value = current.copy(is_confirming = true, error = null)
         viewModelScope.launch {
             runCatching {
+                val action = when (val outcome = guard_link.approve(device, signer)) {
+                    guard_link_outcome.off -> null
+                    guard_link_outcome.canceled -> throw LinkCanceledException()
+                    guard_link_outcome.keys_mismatch -> throw KeysMismatchException()
+                    guard_link_outcome.needs_device -> throw GuardNoDeviceException()
+                    is guard_link_outcome.signed -> outcome.action
+                }
                 val envelope = withContext(Dispatchers.Default) { seal_for(device, typed) }
                 withContext(Dispatchers.IO) {
-                    device_code_api.confirm_code(current.code_input, envelope)
+                    device_code_api.confirm_code(current.code_input, envelope, action)
                 }
             }.onSuccess { response ->
-                _state.value = _state.value.copy(
-                    step = LinkDeviceStep.SUCCESS,
-                    linked_device_name = response.machine_name.ifBlank { device.machine_name },
-                    pending_device = null,
-                    code_input = "",
-                    is_confirming = false,
-                    error = null,
-                )
+                linked(device, response.machine_name, response.activates_at)
             }.onFailure { throwable ->
                 if (throwable is kotlinx.coroutines.CancellationException) throw throwable
+                if (throwable is LinkCanceledException) {
+                    _state.value = _state.value.copy(is_confirming = false)
+                    return@onFailure
+                }
+                if (throwable is ApiError.GuardDevicePending) {
+                    linked(device, "", throwable.activates_at)
+                    return@onFailure
+                }
                 val error = classify(throwable)
                 val restart = error == LinkDeviceError.EXPIRED_CODE ||
                     error == LinkDeviceError.INVALID_CODE
@@ -183,6 +201,18 @@ class LinkDeviceViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun linked(device: PendingDevice, machine_name: String, activates_at: String?) {
+        _state.value = _state.value.copy(
+            step = LinkDeviceStep.SUCCESS,
+            linked_device_name = machine_name.ifBlank { device.machine_name },
+            pending_device = null,
+            code_input = "",
+            is_confirming = false,
+            error = null,
+            pending_activates_at = activates_at,
+        )
     }
 
     fun on_fingerprint_change(raw: String) {
@@ -215,7 +245,8 @@ class LinkDeviceViewModel @Inject constructor(
         ) {
             throw DeviceEnvelope.InvalidDeviceKeyException("bad device key size")
         }
-        val sealed_to = DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk)
+        val action_pk = DeviceKeyFingerprint.decode_action_pk(device.action_pk).getOrThrow()
+        val sealed_to = DeviceKeyFingerprint.of(ed25519_pk, mlkem_pk, x25519_pk, action_pk)
         if (!DeviceKeyFingerprint.matches(confirmed_fingerprint, sealed_to)) {
             throw DeviceEnvelope.InvalidDeviceKeyException("device keys do not match the typed fingerprint")
         }
@@ -239,6 +270,8 @@ class LinkDeviceViewModel @Inject constructor(
 
     private fun classify(throwable: Throwable): LinkDeviceError = when (throwable) {
         is SessionExpiredException -> LinkDeviceError.SESSION_EXPIRED
+        is KeysMismatchException -> LinkDeviceError.KEYS_MISMATCH
+        is GuardNoDeviceException -> LinkDeviceError.GUARD_DEVICE_REQUIRED
         is DeviceLinkError.CodeNotFound -> LinkDeviceError.EXPIRED_CODE
         is DeviceLinkError.AlreadyLinked -> LinkDeviceError.ALREADY_LINKED
         is DeviceLinkError.PlanUpgradeRequired -> LinkDeviceError.UPGRADE_REQUIRED
@@ -249,8 +282,10 @@ class LinkDeviceViewModel @Inject constructor(
         is ApiError.RateLimited -> LinkDeviceError.RATE_LIMITED
         is ApiError.InvalidCredentials, is ApiError.UnauthorizedError -> LinkDeviceError.SESSION_EXPIRED
         is ApiError.ValidationError -> LinkDeviceError.INVALID_CODE
-        else -> LinkDeviceError.FAILED
+        else -> if (is_guard_device_required(throwable)) LinkDeviceError.GUARD_DEVICE_REQUIRED else LinkDeviceError.FAILED
     }
 
     private class SessionExpiredException : Exception("vault locked")
+    private class KeysMismatchException : Exception("device keys do not match")
+    private class LinkCanceledException : Exception("link canceled")
 }

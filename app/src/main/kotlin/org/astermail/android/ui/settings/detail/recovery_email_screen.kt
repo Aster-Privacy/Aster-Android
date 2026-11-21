@@ -148,6 +148,14 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
         }
     }
 
+    LaunchedEffect(state.recovery_email_held) {
+        if (state.recovery_email_held != null) {
+            show_step_up = false
+            step_up_password = ""
+            step_up_code = ""
+        }
+    }
+
     detail_scaffold(title = stringResource(R.string.recovery_email), on_back = on_back) {
         Text(
             text = stringResource(R.string.backup_email_description),
@@ -243,6 +251,10 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             v_gap(AsterSpacing.lg)
         }
 
+        state.recovery_email_held?.let {
+            org.astermail.android.guard.GuardHeldBanner(it)
+            v_gap(AsterSpacing.lg)
+        }
         state.error?.let {
             error_banner(it)
             v_gap(AsterSpacing.lg)

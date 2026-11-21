@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
@@ -89,6 +90,7 @@ fun AsterTextField(
     min_height: Dp = 52.dp,
     min_lines: Int = 1,
     max_lines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    text_style: TextStyle? = null,
 ) {
     val colors = AsterMaterial.colors
     val interaction_source = remember { MutableInteractionSource() }
@@ -170,7 +172,7 @@ fun AsterTextField(
                         textStyle = LocalTextStyle.current.copy(
                             color = colors.text_primary,
                             fontSize = 16.sp,
-                        ),
+                        ).merge(text_style),
                         cursorBrush = SolidColor(colors.accent_blue),
                         interactionSource = interaction_source,
                         keyboardOptions = keyboard_options,

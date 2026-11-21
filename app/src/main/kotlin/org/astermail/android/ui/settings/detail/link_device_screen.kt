@@ -91,6 +91,13 @@ fun LinkDeviceScreen(
     vm: LinkDeviceViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val link_signer = org.astermail.android.ui.guard.guard_prompt_signer(
+        org.astermail.android.ui.guard.find_fragment_activity(androidx.compose.ui.platform.LocalContext.current),
+        org.astermail.android.guard.guard_prompt_text(
+            stringResource(R.string.guard_prompt_title),
+            stringResource(R.string.link_device_prompt_subtitle),
+        ),
+    )
     val colors = AsterMaterial.colors
     val step_index = when (state.step) {
         LinkDeviceStep.INPUT -> 0
@@ -238,7 +245,7 @@ fun LinkDeviceScreen(
                     ),
                     keyboard_actions = KeyboardActions(
                         onDone = {
-                            if (state.fingerprint_matches && !state.is_confirming) vm.confirm_link()
+                            if (state.fingerprint_matches && !state.is_confirming) vm.confirm_link(link_signer)
                         },
                     ),
                     leading_icon = { Icon(TablerIcons.Fingerprint, null, tint = colors.text_muted) },
@@ -254,7 +261,7 @@ fun LinkDeviceScreen(
 
                 AsterButton(
                     label = stringResource(R.string.link_device_confirm_action),
-                    onClick = { vm.confirm_link() },
+                    onClick = { vm.confirm_link(link_signer) },
                     enabled = state.fingerprint_matches && !state.is_confirming,
                     is_loading = state.is_confirming,
                 )
@@ -268,6 +275,16 @@ fun LinkDeviceScreen(
             }
 
             LinkDeviceStep.SUCCESS -> {
+                org.astermail.android.guard.guard_parse_instant(state.pending_activates_at)?.let { at ->
+                    AsterAlert(
+                        message = stringResource(
+                            R.string.link_device_mail_app_pending,
+                            org.astermail.android.guard.guard_format_instant(at),
+                        ),
+                        severity = org.astermail.android.design.components.AsterAlertSeverity.info,
+                    )
+                    v_gap(AsterSpacing.lg)
+                }
                 AsterButton(
                     label = stringResource(R.string.link_device_link_another),
                     onClick = { vm.start_over() },
@@ -380,6 +397,8 @@ private fun link_device_error_res(error: LinkDeviceError): Int = when (error) {
     LinkDeviceError.RATE_LIMITED -> R.string.link_device_error_rate_limited
     LinkDeviceError.SESSION_EXPIRED -> R.string.link_device_error_session
     LinkDeviceError.UNAVAILABLE -> R.string.link_device_error_unavailable
+    LinkDeviceError.KEYS_MISMATCH -> R.string.link_device_error_keys_mismatch
+    LinkDeviceError.GUARD_DEVICE_REQUIRED -> R.string.link_device_error_guard_device_required
     LinkDeviceError.FAILED -> R.string.link_device_error_failed
 }
 

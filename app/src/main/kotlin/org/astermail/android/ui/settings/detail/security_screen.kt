@@ -204,6 +204,9 @@ fun SecurityScreen(
     val context = LocalContext.current
 
     val lock_vm: AppLockViewModel = hiltViewModel()
+    val guard_entry_vm: org.astermail.android.ui.guard.GuardEntryViewModel = hiltViewModel()
+    val guard_entry by guard_entry_vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { guard_entry_vm.refresh() }
 
     LaunchedEffect(Unit) {
         vm.load_security_status()
@@ -258,17 +261,18 @@ fun SecurityScreen(
         security_key_count = hardware_keys_count,
     )
 
-    val score = if (!score_loaded) null else security_score(
-        security_score_input(
-            totp_enabled = sec?.totp_enabled == true,
-            security_key_count = hardware_keys_count,
-            recovery_email_verified = recovery_email_verified,
-            login_alerts_enabled = state.login_alerts_enabled == true,
-            block_tracking_pixels = prefs?.block_tracking_pixels == true,
-            block_remote_images = prefs?.block_external_images == true,
-            strip_exif_on_compose = prefs?.strip_exif_on_compose == true,
-        ),
+    val score_input = security_score_input(
+        totp_enabled = sec?.totp_enabled == true,
+        security_key_count = hardware_keys_count,
+        recovery_email_verified = recovery_email_verified,
+        login_alerts_enabled = state.login_alerts_enabled == true,
+        block_tracking_pixels = prefs?.block_tracking_pixels == true,
+        block_remote_images = prefs?.block_external_images == true,
+        strip_exif_on_compose = prefs?.strip_exif_on_compose == true,
+        guard_met = if (guard_entry.visible) guard_entry.criterion_met else null,
     )
+    val score = if (!score_loaded) null else security_score(score_input)
+    val score_max = security_score_max_for(score_input)
 
     val score_color = when (score) {
         null -> colors.text_muted
@@ -394,6 +398,10 @@ fun SecurityScreen(
                 .onGloballyPositioned { content_top_coordinates = it },
         )
         preferences_save_error_banner()
+        state.hardware_key_held?.let {
+            org.astermail.android.guard.GuardHeldBanner(it)
+            v_gap(AsterSpacing.md)
+        }
         val protection_items = listOf(
             protection_item(
                 label = stringResource(R.string.two_factor_auth),
@@ -437,7 +445,18 @@ fun SecurityScreen(
                 test_tag = "protection_item_strip_exif",
                 on_open = { open_check(security_check.strip_exif) },
             ),
-        )
+        ) + if (guard_entry.visible) {
+            listOf(
+                protection_item(
+                    label = stringResource(R.string.check_aster_guard),
+                    done = guard_entry.criterion_met,
+                    test_tag = "protection_item_aster_guard",
+                    on_open = { open_check(security_check.aster_guard) },
+                ),
+            )
+        } else {
+            emptyList()
+        }
         val banner_visible = score != null &&
             !banner_dismissed &&
             prefs?.account_security_banner_dismissed != true
@@ -449,6 +468,7 @@ fun SecurityScreen(
             Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md)) {
                 protection_banner(
                     score = score ?: 0,
+                    score_max = score_max,
                     tone = score_color,
                     items = protection_items,
                     on_dismiss = {
@@ -479,6 +499,10 @@ fun SecurityScreen(
                     null
                 },
             )
+            if (guard_entry.visible) {
+                settings_row_gap()
+                org.astermail.android.ui.guard.guard_security_row(on_open = on_open, entry = guard_entry)
+            }
             settings_row_gap()
             Box(modifier = anchor_modifier(security_anchor.login_alerts)) {
                 detail_row(
@@ -1238,12 +1262,13 @@ private data class protection_item(
 @Composable
 private fun protection_banner(
     score: Int,
+    score_max: Int,
     tone: Color,
     items: List<protection_item>,
     on_dismiss: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val percent = (score * 100f / security_score_max).roundToInt()
+    val percent = (score * 100f / score_max).roundToInt()
     val pending = items.filterNot { it.done }
     val protected_items = items.filter { it.done }
     var show_protected by rememberSaveable { mutableStateOf(false) }
@@ -1308,7 +1333,7 @@ private fun protection_banner(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(fraction = (score / security_score_max.toFloat()).coerceIn(0f, 1f))
+                        .fillMaxWidth(fraction = (score / score_max.toFloat()).coerceIn(0f, 1f))
                         .height(6.dp)
                         .clip(CircleShape)
                         .background(tone),

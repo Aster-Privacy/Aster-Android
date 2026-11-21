@@ -92,6 +92,10 @@ fun SessionsScreen(
         on_back = on_back,
         scroll_state = scroll_state,
     ) {
+        state.sessions_held?.let {
+            org.astermail.android.guard.GuardHeldBanner(it)
+            v_gap(AsterSpacing.md)
+        }
         if (state.sessions.isEmpty() && (state.is_loading || !sessions_load_settled)) {
             section_label(stringResource(R.string.sessions_active_section))
             skeleton_card_list(rows = 3, leading_circle = true, trailing_width = 72.dp)

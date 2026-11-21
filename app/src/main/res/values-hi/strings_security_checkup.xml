@@ -16,4 +16,5 @@
         <item quantity="one">%1$d सुझाई गई कार्रवाई</item>
         <item quantity="other">%1$d सुझाई गई कार्रवाइयां</item>
     </plurals>
+    <string name="check_aster_guard">Aster Guard के साथ नए डिवाइस की स्वीकृति</string>
 </resources>

@@ -50,6 +50,7 @@ data class security_score_input(
     val block_tracking_pixels: Boolean = false,
     val block_remote_images: Boolean = false,
     val strip_exif_on_compose: Boolean = false,
+    val guard_met: Boolean? = null,
 )
 
 fun security_score(input: security_score_input): Int = listOf(
@@ -60,4 +61,8 @@ fun security_score(input: security_score_input): Int = listOf(
     input.block_tracking_pixels,
     input.block_remote_images,
     input.strip_exif_on_compose,
+    input.guard_met == true,
 ).count { it }
+
+fun security_score_max_for(input: security_score_input): Int =
+    security_score_max + if (input.guard_met != null) 1 else 0

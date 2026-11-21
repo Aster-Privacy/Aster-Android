@@ -30,11 +30,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import org.astermail.android.guard.GuardDeviceStore
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshotStore
 import org.astermail.android.storage.PreferencesCacheStore
+import org.astermail.android.storage.SealedPrefs
 import org.astermail.android.storage.ThemeStore
 import org.astermail.android.storage.TokenStore
 import org.astermail.android.storage.TrustedDeviceStore
@@ -148,6 +150,11 @@ object StorageModule {
     @Singleton
     fun provide_trusted_device_store(@ApplicationContext context: Context): TrustedDeviceStore =
         TrustedDeviceStore(context)
+
+    @Provides
+    @Singleton
+    fun provide_guard_device_store(@ApplicationContext context: Context): GuardDeviceStore =
+        GuardDeviceStore(SealedPrefs(SecurePrefs.open(context, GuardDeviceStore.PREFS_NAME), GuardDeviceStore.PREFS_NAME))
 
     @Provides
     @Singleton

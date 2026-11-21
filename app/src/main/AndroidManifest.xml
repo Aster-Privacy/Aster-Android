@@ -98,6 +98,7 @@
                 <data android:host="app.astermail.org" />
                 <data android:path="/settings/billing" />
                 <data android:path="/settings/billing/" />
+                <data android:path="/guard/veto" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

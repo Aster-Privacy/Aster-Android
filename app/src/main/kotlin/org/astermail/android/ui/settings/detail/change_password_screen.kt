@@ -106,6 +106,10 @@ fun ChangePasswordScreen(
             content_type = ContentType.NewPassword,
         )
 
+        state.held?.let { notice ->
+            org.astermail.android.guard.GuardHeldBanner(notice)
+            v_gap(AsterSpacing.md)
+        }
         state.error?.let { err ->
             v_gap(AsterSpacing.md)
             Text(

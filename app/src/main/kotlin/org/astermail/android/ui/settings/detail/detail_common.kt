@@ -374,6 +374,7 @@ internal fun settings_toggle_row(
     info_title: String? = null,
     info_description: String? = null,
     test_tag: String? = null,
+    icon: ImageVector? = null,
     on_change: (Boolean) -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -400,6 +401,15 @@ internal fun settings_toggle_row(
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (enabled) colors.text_secondary else colors.text_tertiary,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.md))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

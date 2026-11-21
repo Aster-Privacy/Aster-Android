@@ -732,6 +732,10 @@ fun EncryptionScreen(
                                     } else {
                                         show_copy_failed_toast(context_export)
                                     }
+                                } else if (vm.state.value.pgp_export_held != null) {
+                                    show_export_private_dialog = false
+                                    export_private_password = ""
+                                    Toast.makeText(context_export, context_export.getString(R.string.guard_held_toast), Toast.LENGTH_LONG).show()
                                 } else {
                                     export_private_error = context_export.getString(R.string.error_private_key_export)
                                 }

@@ -47,6 +47,7 @@ data class ChangePasswordUiState(
     val error: String? = null,
     val success: Boolean = false,
     val notice: String? = null,
+    val held: org.astermail.android.guard.guard_held_notice? = null,
 )
 
 @HiltViewModel
@@ -109,7 +110,7 @@ class ChangePasswordViewModel @Inject constructor(
             return
         }
 
-        _state.value = s.copy(is_submitting = true, error = null, success = false)
+        _state.value = s.copy(is_submitting = true, error = null, success = false, held = null)
         viewModelScope.launch {
             val result = auth_repository.change_password(s.current_password, s.new_password)
             result.onSuccess { summary ->
@@ -125,6 +126,11 @@ class ChangePasswordViewModel @Inject constructor(
                 }
                 _state.value = ChangePasswordUiState(success = notice == null, notice = notice)
             }.onFailure { t ->
+                val held = org.astermail.android.guard.guard_held_of(t)
+                if (held != null) {
+                    _state.value = _state.value.copy(is_submitting = false, held = held, error = null)
+                    return@onFailure
+                }
                 _state.value = _state.value.copy(
                     is_submitting = false,
                     error = if (t is org.astermail.android.api.ApiError.Conflict && t.code == "VAULT_CHANGED") {

@@ -109,11 +109,59 @@ sealed class ApiError(message: String) : Exception(message) {
         val detail: String = "upgrade required",
         val code: String? = null,
     ) : ApiError(detail)
+    data class GuardRequired(
+        val request_id: String,
+        val guard_token: String,
+        val expires_at: String,
+        val methods: List<String>,
+        val user_id: String? = null,
+    ) : ApiError("guard approval required")
+    data class GuardHeld(
+        val id: String,
+        val kind: String,
+        val apply_after: String,
+    ) : ApiError("change held")
+    data class GuardDevicePending(
+        val device_id: String,
+        val activates_at: String,
+        val change_id: String,
+    ) : ApiError("device pending")
+    data class GuardRetry(
+        val code: String,
+        val retry_after_secs: Long,
+    ) : ApiError("guard retry later")
     data class PreconditionRequired(
         val detail: String = "precondition required",
         val code: String? = null,
         val details: Map<String, String> = emptyMap(),
     ) : ApiError(detail)
+}
+
+const val GUARD_HEADER = "X-Aster-Guard"
+const val GUARD_TOKEN_HEADER = "X-Aster-Guard-Token"
+const val GUARD_REQUIRED_CODE = "GUARD_REQUIRED"
+const val GUARD_HELD_CODE = "GUARD_HELD"
+const val GUARD_DEVICE_PENDING_CODE = "GUARD_DEVICE_PENDING"
+const val GUARD_DEVICE_REQUIRED_CODE = "GUARD_DEVICE_REQUIRED"
+const val GUARD_ACTION_INVALID_CODE = "GUARD_ACTION_INVALID"
+const val GUARD_REQUEST_GONE_CODE = "GUARD_REQUEST_GONE"
+const val GUARD_WRONG_NUMBER_CODE = "GUARD_WRONG_NUMBER"
+const val GUARD_DISABLED_CODE = "GUARD_DISABLED"
+const val GUARD_PAUSED_CODE = "GUARD_PAUSED"
+const val GUARD_TOO_MANY_REQUESTS_CODE = "GUARD_TOO_MANY_REQUESTS"
+const val GUARD_ALREADY_ON_CODE = "GUARD_ALREADY_ON"
+const val GUARD_ENVELOPE_REQUIRED_CODE = "GUARD_ENVELOPE_REQUIRED"
+const val GUARD_VETO_INVALID_CODE = "GUARD_VETO_INVALID"
+const val GUARD_NOT_ALLOWED_CODE = "GUARD_NOT_ALLOWED"
+const val GUARD_DEVICE_UNKNOWN_CODE = "GUARD_DEVICE_UNKNOWN"
+
+fun api_error_code(t: Throwable): String? = when (t) {
+    is ApiError.ForbiddenError -> t.code
+    is ApiError.Conflict -> t.code
+    is ApiError.ValidationError -> t.code
+    is ApiError.RateLimited -> t.code
+    is ApiError.GuardRetry -> t.code
+    else -> null
 }
 
 const val VAULT_LEVEL_HEADER = "X-Aster-Vault-Level"
@@ -172,7 +220,10 @@ private val sign_in_path_suffixes = listOf(
 )
 
 fun is_sign_in_path(path: String): Boolean =
-    path.contains("/recovery/") || sign_in_path_suffixes.any { path.endsWith(it) }
+    path.contains("/recovery/") ||
+        path.contains("/guard/sign-in/") ||
+        path.endsWith("/guard/veto") ||
+        sign_in_path_suffixes.any { path.endsWith(it) }
 
 fun build_user_agent(app_version: String = BuildConfig.VERSION_NAME): String {
     val android_version = Build.VERSION.RELEASE ?: "0"
@@ -225,6 +276,14 @@ class ApiClient(
                 pingInterval(java.time.Duration.ofSeconds(20))
                 connectionPool(okhttp3.ConnectionPool(5, 90, java.util.concurrent.TimeUnit.SECONDS))
             }
+            addInterceptor(okhttp3.Interceptor { chain ->
+                val sent = System.currentTimeMillis()
+                val response = chain.proceed(chain.request())
+                if (api_host == null || chain.request().url.host == api_host) {
+                    org.astermail.android.api.network.server_clock.note(response.header("Date"), sent, System.currentTimeMillis())
+                }
+                response
+            })
             addInterceptor(okhttp3.Interceptor { chain ->
                 try {
                     chain.proceed(chain.request())
@@ -306,6 +365,7 @@ class ApiClient(
             header(HttpHeaders.Referrer, "${base_url.trimEnd('/')}/")
             device_id?.let { header(DEVICE_ID_HEADER, it) }
             header(VAULT_LEVEL_HEADER, VAULT_LEVEL)
+            header(GUARD_HEADER, "1")
         }
 
         HttpResponseValidator {
@@ -338,6 +398,16 @@ class ApiClient(
                 throw error
             }
             report_failed_call(request.url.encodedPathSegments.joinToString("/"), original_call.response.status.value)
+            if (original_call.response.status == HttpStatusCode.Accepted) {
+                val saved_accepted = original_call.save()
+                val accepted_body = try {
+                    saved_accepted.response.bodyAsText()
+                } catch (_: Throwable) {
+                    ""
+                }
+                parse_guard_held(accepted_body)?.let { throw it }
+                return@intercept saved_accepted
+            }
             if (original_call.response.status != HttpStatusCode.Forbidden) {
                 return@intercept original_call
             }
@@ -522,9 +592,10 @@ class ApiClient(
         ""
     }
 
-    fun map_http_status(code: Int, body: String): ApiError {
+    fun map_http_status(code: Int, body: String, retry_after: String? = null): ApiError {
         val server_code = parse_error_code(body)
         val detail = parse_error_message(body) ?: ""
+        map_guard_error(code, server_code, body, retry_after)?.let { return it }
         if (server_code == "PLAN_LIMIT_EXCEEDED") {
             return ApiError.PlanLimitExceeded(
                 detail = detail,
@@ -577,6 +648,70 @@ class ApiClient(
             405, 406, 415 -> ApiError.ServerError(code)
             in 500..599 -> ApiError.ServerError(code)
             else -> ApiError.UnknownError(detail)
+        }
+    }
+
+    private fun map_guard_error(
+        code: Int,
+        server_code: String?,
+        body: String,
+        retry_after: String?,
+    ): ApiError? {
+        if (server_code == null || !server_code.startsWith("GUARD_")) return null
+        val details = parse_guard_details(body)
+        fun text(key: String): String? =
+            (details?.get(key) as? kotlinx.serialization.json.JsonPrimitive)
+                ?.takeIf { it.isString }
+                ?.content
+        return when {
+            code == 403 && server_code == GUARD_REQUIRED_CODE -> {
+                val request_id = text("request_id") ?: return null
+                val guard_token = text("guard_token") ?: return null
+                val methods = (details?.get("methods") as? kotlinx.serialization.json.JsonArray)
+                    ?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+                    .orEmpty()
+                ApiError.GuardRequired(
+                    request_id,
+                    guard_token,
+                    text("expires_at").orEmpty(),
+                    methods,
+                    text("user_id")?.takeIf { runCatching { java.util.UUID.fromString(it) }.isSuccess },
+                )
+            }
+            code == 403 && server_code == GUARD_DEVICE_PENDING_CODE -> ApiError.GuardDevicePending(
+                device_id = text("device_id").orEmpty(),
+                activates_at = text("activates_at").orEmpty(),
+                change_id = text("change_id").orEmpty(),
+            )
+            (code == 409 || code == 202) && server_code == GUARD_HELD_CODE -> {
+                val id = text("id") ?: return null
+                ApiError.GuardHeld(id, text("kind").orEmpty(), text("apply_after").orEmpty())
+            }
+            code == 429 && (server_code == GUARD_PAUSED_CODE || server_code == GUARD_TOO_MANY_REQUESTS_CODE) -> {
+                val from_body = (details?.get("retry_after_secs") as? kotlinx.serialization.json.JsonPrimitive)
+                    ?.content
+                    ?.toLongOrNull()
+                val seconds = from_body ?: retry_after?.trim()?.toLongOrNull() ?: 0L
+                ApiError.GuardRetry(server_code, seconds.coerceAtLeast(0L))
+            }
+            code == 410 -> ApiError.Conflict("gone", server_code)
+            else -> null
+        }
+    }
+
+    internal fun parse_guard_held(body: String): ApiError.GuardHeld? {
+        if (body.isBlank()) return null
+        if (parse_error_code(body) != GUARD_HELD_CODE) return null
+        return map_guard_error(202, GUARD_HELD_CODE, body, null) as? ApiError.GuardHeld
+    }
+
+    private fun parse_guard_details(body: String): JsonObject? {
+        if (body.isBlank()) return null
+        return try {
+            val obj = json.parseToJsonElement(body) as? JsonObject ?: return null
+            obj["details"] as? JsonObject
+        } catch (_: Throwable) {
+            null
         }
     }
 

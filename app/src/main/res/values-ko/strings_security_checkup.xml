@@ -15,4 +15,5 @@
     <plurals name="security_actions_remaining">
         <item quantity="other">권장 조치 %1$d개</item>
     </plurals>
+    <string name="check_aster_guard">Aster Guard로 새 기기 승인</string>
 </resources>

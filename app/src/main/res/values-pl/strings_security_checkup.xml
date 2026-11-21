@@ -18,4 +18,5 @@
         <item quantity="many">%1$d zalecanych działań</item>
         <item quantity="other">%1$d zalecanego działania</item>
     </plurals>
+    <string name="check_aster_guard">Zatwierdzanie nowych urządzeń z Aster Guard</string>
 </resources>

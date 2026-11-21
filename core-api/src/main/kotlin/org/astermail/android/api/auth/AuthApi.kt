@@ -472,14 +472,7 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
             val challenge = client.json.decodeFromString<TotpChallengeResponse>(body_str)
             return LoginResult.TotpRequired(challenge)
         }
-        val login_resp = client.json.decodeFromString<LoginResponse>(body_str)
-        client.set_csrf(login_resp.csrf_token)
-        val set_cookies = response.headers.getAll(HttpHeaders.SetCookie)
-        val refresh = login_resp.refresh_token ?: parse_refresh_cookie(set_cookies)
-        return LoginResult.Success(
-            response = login_resp.copy(refresh_token = refresh),
-            trusted_device_token = parse_trusted_device_cookie(set_cookies),
-        )
+        return read_login_response(client, response, body_str)
     }
 
     override suspend fun verify_totp_login(request: TotpLoginVerifyRequest): TotpVerifyOutcome =
@@ -530,56 +523,6 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
             response = body.copy(refresh_token = refresh),
             trusted_device_token = td_token,
         )
-    }
-
-    private fun parse_trusted_device_cookie(set_cookies: List<String>?): String? {
-        if (set_cookies.isNullOrEmpty()) return null
-        val needle = "aster_td="
-        for (raw in set_cookies) {
-            var idx = raw.indexOf(needle)
-            while (idx >= 0) {
-                val before = if (idx == 0) ' ' else raw[idx - 1]
-                if (before == ' ' || before == ',' || before == ';') {
-                    val start = idx + needle.length
-                    var end = start
-                    while (end < raw.length && raw[end] != ';' && raw[end] != ',' && !raw[end].isWhitespace()) {
-                        end++
-                    }
-                    val value = raw.substring(start, end).trim()
-                    if (value.isNotEmpty()) {
-                        return value
-                    }
-                }
-                idx = raw.indexOf(needle, idx + 1)
-            }
-        }
-        return null
-    }
-
-    private fun parse_refresh_cookie(set_cookies: List<String>?): String? =
-        parse_cookie_value(set_cookies, "aster_refresh=")
-
-    private fun parse_cookie_value(set_cookies: List<String>?, needle: String): String? {
-        if (set_cookies.isNullOrEmpty()) return null
-        for (raw in set_cookies) {
-            var idx = raw.indexOf(needle)
-            while (idx >= 0) {
-                val before = if (idx == 0) ' ' else raw[idx - 1]
-                if (before == ' ' || before == ',' || before == ';') {
-                    val start = idx + needle.length
-                    var end = start
-                    while (end < raw.length && raw[end] != ';' && raw[end] != ',' && !raw[end].isWhitespace()) {
-                        end++
-                    }
-                    val value = raw.substring(start, end).trim()
-                    if (value.isNotEmpty()) {
-                        return value
-                    }
-                }
-                idx = raw.indexOf(needle, idx + 1)
-            }
-        }
-        return null
     }
 
     override suspend fun register(request: RegisterRequest): RegisterResponse =
@@ -710,4 +653,65 @@ class AuthApiImpl(private val client: ApiClient) : AuthApi {
 
     private fun is_safe_cookie_value(value: String): Boolean =
         value.all { it.code in 0x21..0x7e && it != ';' && it != ',' }
+}
+
+internal fun read_login_response(client: ApiClient, response: HttpResponse, body_str: String): LoginResult.Success {
+    val login_resp = client.json.decodeFromString<LoginResponse>(body_str)
+    client.set_csrf(login_resp.csrf_token)
+    val set_cookies = response.headers.getAll(HttpHeaders.SetCookie)
+    val refresh = login_resp.refresh_token ?: parse_refresh_cookie(set_cookies)
+    return LoginResult.Success(
+        response = login_resp.copy(refresh_token = refresh),
+        trusted_device_token = parse_trusted_device_cookie(set_cookies),
+    )
+}
+
+private fun parse_trusted_device_cookie(set_cookies: List<String>?): String? {
+    if (set_cookies.isNullOrEmpty()) return null
+    val needle = "aster_td="
+    for (raw in set_cookies) {
+        var idx = raw.indexOf(needle)
+        while (idx >= 0) {
+            val before = if (idx == 0) ' ' else raw[idx - 1]
+            if (before == ' ' || before == ',' || before == ';') {
+                val start = idx + needle.length
+                var end = start
+                while (end < raw.length && raw[end] != ';' && raw[end] != ',' && !raw[end].isWhitespace()) {
+                    end++
+                }
+                val value = raw.substring(start, end).trim()
+                if (value.isNotEmpty()) {
+                    return value
+                }
+            }
+            idx = raw.indexOf(needle, idx + 1)
+        }
+    }
+    return null
+}
+
+private fun parse_refresh_cookie(set_cookies: List<String>?): String? =
+    parse_cookie_value(set_cookies, "aster_refresh=")
+
+private fun parse_cookie_value(set_cookies: List<String>?, needle: String): String? {
+    if (set_cookies.isNullOrEmpty()) return null
+    for (raw in set_cookies) {
+        var idx = raw.indexOf(needle)
+        while (idx >= 0) {
+            val before = if (idx == 0) ' ' else raw[idx - 1]
+            if (before == ' ' || before == ',' || before == ';') {
+                val start = idx + needle.length
+                var end = start
+                while (end < raw.length && raw[end] != ';' && raw[end] != ',' && !raw[end].isWhitespace()) {
+                    end++
+                }
+                val value = raw.substring(start, end).trim()
+                if (value.isNotEmpty()) {
+                    return value
+                }
+            }
+            idx = raw.indexOf(needle, idx + 1)
+        }
+    }
+    return null
 }

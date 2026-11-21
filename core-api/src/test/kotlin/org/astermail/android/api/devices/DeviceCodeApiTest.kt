@@ -91,4 +91,10 @@ class DeviceCodeApiTest {
         assertNull(map_device_link_error(429, """{"error":"slow down"}"""))
         assertNull(map_device_link_error(500, "not json at all"))
     }
+
+    @Test
+    fun `guard errors are left to the shared mapping`() {
+        assertNull(map_device_link_error(409, """{"error":"held","code":"GUARD_HELD","id":"c1"}"""))
+        assertNull(map_device_link_error(403, """{"error":"pending","code":"GUARD_DEVICE_PENDING"}"""))
+    }
 }

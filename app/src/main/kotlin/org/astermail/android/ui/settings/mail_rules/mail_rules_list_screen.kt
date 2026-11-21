@@ -143,6 +143,12 @@ fun MailRulesListScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AsterTopBar(title = stringResource(R.string.mail_rules_title), on_back = on_back)
+            state.held?.let {
+                org.astermail.android.guard.GuardHeldBanner(
+                    it,
+                    Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+                )
+            }
             val copy_suffix = stringResource(R.string.rules_copy_suffix)
             val rules_key = when {
                 state.is_loading -> 0

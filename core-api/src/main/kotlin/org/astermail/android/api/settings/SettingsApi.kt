@@ -409,6 +409,7 @@ data class CreateSmtpTokenResponse(
     val bound_address: String = "",
     val token: String = "",
     val expires_at: String? = null,
+    val activates_at: String? = null,
     val created_at: String = "",
     val smtp_settings: SmtpTokenSettings = SmtpTokenSettings(),
 )

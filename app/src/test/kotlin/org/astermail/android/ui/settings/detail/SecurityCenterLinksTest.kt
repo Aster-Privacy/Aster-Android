@@ -130,4 +130,12 @@ class SecurityCenterLinksTest {
     fun unplaced_anchor_without_fallback_resolves_to_nothing() {
         assertNull(resolve_security_anchor(security_anchor.passkeys) { false })
     }
+
+    @Test
+    fun aster_guard_opens_the_guard_screen() {
+        assertEquals(
+            security_check_target.screen("guard"),
+            security_check_target_for(security_check.aster_guard),
+        )
+    }
 }

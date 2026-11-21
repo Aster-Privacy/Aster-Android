@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+tags:
+  - settings
+  - guard
+name: guard_settings_open
+---
+- runFlow: ../../setup/sign_in.yaml
+- runFlow: ../../setup/open_settings.yaml
+- tapOn:
+    text: "Security"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "Aster Guard"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Aster Guard"
+- waitForAnimationToEnd
+- assertVisible: "Aster Guard"
+- takeScreenshot: guard_settings_open
+- back

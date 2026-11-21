@@ -293,7 +293,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     val created = state.smtp_token_created
     if (created != null) {
-        smtp_token_created_dialog(created.smtp_settings, on_done = { vm.clear_created_smtp_token() })
+        smtp_token_created_dialog(created.smtp_settings, on_done = { vm.clear_created_smtp_token() }, activates_at = created.activates_at)
     }
 
     val details_target = state.smtp_tokens.firstOrNull { it.id == details_token_id }
@@ -334,7 +334,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 }
 
 @Composable
-internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () -> Unit) {
+internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () -> Unit, activates_at: String? = null) {
     val context = LocalContext.current
     val clipboard_label = stringResource(R.string.clipboard_label_smtp_token)
     secure_screen()
@@ -373,6 +373,17 @@ internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () 
         secure = true,
         extra_content = {
             Column(modifier = Modifier.fillMaxWidth()) {
+                org.astermail.android.guard.guard_parse_instant(activates_at)?.let { at ->
+                    Text(
+                        text = stringResource(
+                            R.string.smtp_token_activates_at,
+                            org.astermail.android.guard.guard_format_instant(at),
+                        ),
+                        color = AsterMaterial.colors.warning,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = AsterSpacing.sm),
+                    )
+                }
                 smtp_connection_rows(connection, on_copy = copy_value)
                 smtp_setting_row(
                     label = stringResource(R.string.smtp_token_password),

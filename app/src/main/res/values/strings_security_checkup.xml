@@ -16,4 +16,5 @@
         <item quantity="one">%1$d recommended action</item>
         <item quantity="other">%1$d recommended actions</item>
     </plurals>
+    <string name="check_aster_guard">New device approval with Aster Guard</string>
 </resources>

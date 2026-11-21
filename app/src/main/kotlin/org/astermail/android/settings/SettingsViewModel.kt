@@ -199,6 +199,11 @@ data class SettingsUiState(
     val sessions: List<SessionInfo> = emptyList(),
     val revoking_session_ids: Set<String> = emptySet(),
     val revoking_all_sessions: Boolean = false,
+    val sessions_held: org.astermail.android.guard.guard_held_notice? = null,
+    val forwarding_held: org.astermail.android.guard.guard_held_notice? = null,
+    val recovery_email_held: org.astermail.android.guard.guard_held_notice? = null,
+    val pgp_export_held: org.astermail.android.guard.guard_held_notice? = null,
+    val hardware_key_held: org.astermail.android.guard.guard_held_notice? = null,
     val blocked_senders: List<BlockedSenderView> = emptyList(),
     val blocked_senders_loading: Boolean = false,
     val blocked_senders_error: String? = null,
@@ -891,10 +896,16 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(sessions = refreshed.sessions) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                val held = org.astermail.android.guard.guard_held_of(t)
                 _state.update {
                     it.copy(
                         revoking_session_ids = it.revoking_session_ids - session_id,
-                        action_result = localized_api_error(context, t, context.getString(R.string.failed_revoke_session)),
+                        sessions_held = held ?: it.sessions_held,
+                        action_result = if (held != null) {
+                            context.getString(R.string.guard_held_toast)
+                        } else {
+                            localized_api_error(context, t, context.getString(R.string.failed_revoke_session))
+                        },
                     )
                 }
             } finally {
@@ -919,13 +930,31 @@ class SettingsViewModel @Inject constructor(
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                val held = org.astermail.android.guard.guard_held_of(t)
                 _state.update {
                     it.copy(
                         revoking_all_sessions = false,
-                        action_result = localized_api_error(context, t, context.getString(R.string.failed_sign_out_other_sessions)),
+                        sessions_held = held ?: it.sessions_held,
+                        action_result = if (held != null) {
+                            context.getString(R.string.guard_held_toast)
+                        } else {
+                            localized_api_error(context, t, context.getString(R.string.failed_sign_out_other_sessions))
+                        },
                     )
                 }
             }
+        }
+    }
+
+    fun clear_guard_held() {
+        _state.update {
+            it.copy(
+                sessions_held = null,
+                forwarding_held = null,
+                recovery_email_held = null,
+                pgp_export_held = null,
+                hardware_key_held = null,
+            )
         }
     }
 
@@ -3813,6 +3842,7 @@ class SettingsViewModel @Inject constructor(
         if (prompt.busy) return
         _state.update { it.copy(hardware_key_step_up = prompt.copy(busy = true, error = null)) }
         viewModelScope.launch {
+            var held: org.astermail.android.guard.guard_held_notice? = null
             val outcome = reauthorize(
                 context = context,
                 prompt = prompt,
@@ -3821,14 +3851,31 @@ class SettingsViewModel @Inject constructor(
                 derive_password_hash = { auth_repository.derive_password_hash_b64(it) },
                 load_key_options = { security_api.step_up_assertion_options() },
                 get_credential = get_credential,
-            ) { proof -> security_api.delete_hardware_key(key_id, proof) }
+            ) { proof ->
+                try {
+                    security_api.delete_hardware_key(key_id, proof)
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    held = org.astermail.android.guard.guard_held_of(t)
+                    throw t
+                }
+            }
+            val held_notice = held
             when (outcome) {
                 is Reauthorized.Done -> _state.update { it.copy(
                     hardware_keys = it.hardware_keys.filter { k -> k.id != key_id },
                     hardware_key_step_up_id = null,
                     hardware_key_step_up = ReauthPrompt(),
                 ) }
-                is Reauthorized.Retry -> _state.update { it.copy(hardware_key_step_up = outcome.prompt) }
+                is Reauthorized.Retry -> if (held_notice != null) {
+                    _state.update { it.copy(
+                        hardware_key_held = held_notice,
+                        hardware_key_step_up_id = null,
+                        hardware_key_step_up = ReauthPrompt(),
+                    ) }
+                } else {
+                    _state.update { it.copy(hardware_key_step_up = outcome.prompt) }
+                }
             }
         }
     }
@@ -4467,6 +4514,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun export_private_key_now(password: String): String? {
+        _state.update { it.copy(pgp_export_held = null) }
         return try {
             val hash = auth_repository.derive_password_hash_b64(password) ?: return null
             val result = encryption_api.export_private_key(
@@ -4486,6 +4534,9 @@ class SettingsViewModel @Inject constructor(
             }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
+            org.astermail.android.guard.guard_held_of(t)?.let { held ->
+                _state.update { it.copy(pgp_export_held = held) }
+            }
             null
         }
     }
@@ -4821,6 +4872,16 @@ class SettingsViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                val held = org.astermail.android.guard.guard_held_of(t)
+                if (held != null) {
+                    _state.value = _state.value.copy(
+                        save_status = SaveStatus.IDLE,
+                        recovery_email_held = held,
+                        recovery_email_step_up_required = false,
+                        error = null,
+                    )
+                    return@launch
+                }
                 val needs_step_up = (t as? RecoveryEmailError)?.code ==
                     RecoveryEmailApiImpl.STEP_UP_REQUIRED
                 _state.value = _state.value.copy(
@@ -4880,10 +4941,20 @@ class SettingsViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    save_status = SaveStatus.ERROR,
-                    error = if (is_key_check_cancelled(t)) null else recovery_email_error_message(t),
-                )
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(
+                        save_status = SaveStatus.IDLE,
+                        recovery_email_held = held,
+                        recovery_email_step_up_required = false,
+                        error = null,
+                    )
+                } else {
+                    _state.value.copy(
+                        save_status = SaveStatus.ERROR,
+                        error = if (is_key_check_cancelled(t)) null else recovery_email_error_message(t),
+                    )
+                }
             }
         }
     }
@@ -7361,10 +7432,15 @@ class SettingsViewModel @Inject constructor(
                 load_forwarding_rules()
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    save_status = SaveStatus.ERROR,
-                    error = user_facing_error(t),
-                )
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(save_status = SaveStatus.IDLE, forwarding_held = held, error = null)
+                } else {
+                    _state.value.copy(
+                        save_status = SaveStatus.ERROR,
+                        error = user_facing_error(t),
+                    )
+                }
             }
         }
     }
@@ -7389,10 +7465,15 @@ class SettingsViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    save_status = SaveStatus.ERROR,
-                    error = user_facing_error(t),
-                )
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(save_status = SaveStatus.IDLE, forwarding_held = held, error = null)
+                } else {
+                    _state.value.copy(
+                        save_status = SaveStatus.ERROR,
+                        error = user_facing_error(t),
+                    )
+                }
             }
         }
     }
@@ -7445,9 +7526,14 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { s -> s.copy(forwarding_rules = previous) }
-                _state.value = _state.value.copy(
-                    error = user_facing_error(t),
-                )
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(forwarding_held = held, error = null)
+                } else {
+                    _state.value.copy(
+                        error = user_facing_error(t),
+                    )
+                }
             }
         }
     }
@@ -7459,7 +7545,10 @@ class SettingsViewModel @Inject constructor(
                 _state.update { s -> s.copy(forwarding_rules = s.forwarding_rules.filter { it.id != rule_id }) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.update { s -> s.copy(error = user_facing_error(t)) }
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.update { s ->
+                    if (held != null) s.copy(forwarding_held = held, error = null) else s.copy(error = user_facing_error(t))
+                }
             }
         }
     }

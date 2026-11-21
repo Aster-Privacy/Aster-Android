@@ -132,6 +132,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("security", R.string.security, R.string.section_account_protection, false),
     settings_index_entry("security", R.string.security, R.string.protection_score, false),
     settings_index_entry("security", R.string.security, R.string.two_factor_auth, false),
+    settings_index_entry("security", R.string.security, R.string.guard_setup_title, false),
     settings_index_entry("security", R.string.security, R.string.check_passkey_registered, false),
     settings_index_entry("security", R.string.security, R.string.check_verified_recovery_email, false),
     settings_index_entry("security", R.string.security, R.string.login_alerts, false),

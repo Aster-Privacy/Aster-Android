@@ -75,4 +75,37 @@ class DeviceKeyFingerprintTest {
         assertNull(DeviceKeyFingerprint.of_encoded("***", m, k))
         assertNull(DeviceKeyFingerprint.of_encoded(e, m, DeviceEnvelope.base64url_encode(ByteArray(31))))
     }
+
+    @Test
+    fun `the action key is covered when the device sends one`() {
+        val action = ByteArray(33) { 4 }
+        assertEquals("66ED 3B45 08A0 8B87 6C46", DeviceKeyFingerprint.of(ed, mlkem, x, action))
+        assertEquals(
+            "66ED 3B45 08A0 8B87 6C46",
+            DeviceKeyFingerprint.of_encoded(
+                DeviceEnvelope.base64url_encode(ed),
+                DeviceEnvelope.base64url_encode(mlkem),
+                DeviceEnvelope.base64url_encode(x),
+                DeviceEnvelope.base64url_encode(action),
+            ),
+        )
+    }
+
+    @Test
+    fun `no action key keeps the old fingerprint`() {
+        val e = DeviceEnvelope.base64url_encode(ed)
+        val m = DeviceEnvelope.base64url_encode(mlkem)
+        val k = DeviceEnvelope.base64url_encode(x)
+        assertEquals(vector, DeviceKeyFingerprint.of_encoded(e, m, k, null))
+        assertEquals(vector, DeviceKeyFingerprint.of_encoded(e, m, k, ""))
+    }
+
+    @Test
+    fun `an action key of the wrong size gives no fingerprint`() {
+        val e = DeviceEnvelope.base64url_encode(ed)
+        val m = DeviceEnvelope.base64url_encode(mlkem)
+        val k = DeviceEnvelope.base64url_encode(x)
+        assertNull(DeviceKeyFingerprint.of_encoded(e, m, k, DeviceEnvelope.base64url_encode(ByteArray(32) { 4 })))
+        assertNull(DeviceKeyFingerprint.of_encoded(e, m, k, "***"))
+    }
 }

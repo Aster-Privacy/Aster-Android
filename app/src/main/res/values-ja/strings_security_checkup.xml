@@ -15,4 +15,5 @@
     <plurals name="security_actions_remaining">
         <item quantity="other">推奨される操作: %1$d 件</item>
     </plurals>
+    <string name="check_aster_guard">Aster Guard による新しいデバイスの承認</string>
 </resources>
