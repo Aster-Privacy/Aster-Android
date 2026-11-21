@@ -108,4 +108,31 @@ class ImagePickerTest {
         assertTrue(get_multiple.allow_multiple)
         assertNull(get_multiple.max_items_extra)
     }
+
+    @Test
+    fun image_only_pickers_keep_the_image_type() {
+        for (source in image_pick_source.values()) {
+            val types = image_pick_types_for(image_pick_spec_for(source, true), include_videos = false)
+            assertEquals("image/*", types.type)
+            assertNull(types.extra_mime_types)
+        }
+    }
+
+    @Test
+    fun media_pickers_show_photos_and_videos_without_a_type_filter() {
+        for (source in listOf(image_pick_source.system_picker, image_pick_source.androidx_picker, image_pick_source.gms_picker)) {
+            val types = image_pick_types_for(image_pick_spec_for(source, true), include_videos = true)
+            assertNull(types.type)
+            assertNull(types.extra_mime_types)
+        }
+    }
+
+    @Test
+    fun document_pickers_ask_for_photos_and_videos() {
+        for (source in listOf(image_pick_source.open_document, image_pick_source.get_content)) {
+            val types = image_pick_types_for(image_pick_spec_for(source, true), include_videos = true)
+            assertEquals("*/*", types.type)
+            assertEquals(listOf("image/*", "video/*"), types.extra_mime_types)
+        }
+    }
 }
