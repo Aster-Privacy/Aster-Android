@@ -228,6 +228,7 @@ data class SettingsUiState(
     val referral_load_failed: Boolean = false,
     val preferences: UserPreferences? = null,
     val preferences_authoritative: Boolean = false,
+    val preferences_cached: Boolean = false,
     val preferences_locked: Boolean = false,
     val reserved_addresses: List<ReservedAddress> = emptyList(),
     val family_seats: FamilySeatUsage? = null,
@@ -490,7 +491,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun hydrate_cached_preferences() {
         val cached = read_cached_preferences() ?: return
-        _state.value = _state.value.copy(preferences = cached)
+        _state.value = _state.value.copy(preferences = cached, preferences_cached = true)
         apply_preferences_to_theme_store(cached)
     }
 
@@ -7033,8 +7034,16 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun apply_learned_category_edit(edit: org.astermail.android.mail.LearnedCategoryEdit) {
-        if (edit.is_empty() || !prefs_load_succeeded) return
-        val base = _state.value.preferences ?: return
+        if (edit.is_empty()) return
+        val base = _state.value.preferences
+        if (!prefs_load_succeeded || base == null) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            report_preference_save_failure(context.getString(R.string.preferences_locked_retry))
+            return
+        }
         val next = org.astermail.android.mail.apply_learned_category_edit(base.learned_category_senders, edit)
         if (next == base.learned_category_senders) return
         save_preferences(base.copy(learned_category_senders = next))

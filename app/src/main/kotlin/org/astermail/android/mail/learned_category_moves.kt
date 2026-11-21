@@ -46,6 +46,7 @@ data class LearnedMoveSource(
     val sender_verification: String?,
     val system_origin: Boolean,
     val is_external: Boolean,
+    val auth_failed: Boolean = false,
 )
 
 fun learned_move_source(item: InboxItem): LearnedMoveSource =
@@ -54,6 +55,11 @@ fun learned_move_source(item: InboxItem): LearnedMoveSource =
         sender_verification = item.sender_verification,
         system_origin = item.raw_item.system_origin,
         is_external = item.raw_item.is_external,
+        auth_failed = sender_auth_failed(
+            item.raw_item.spf_result,
+            item.raw_item.dkim_result,
+            item.raw_item.dmarc_result,
+        ),
     )
 
 fun is_locked_learned_source(source: LearnedMoveSource): Boolean =
@@ -63,8 +69,8 @@ fun learned_senders_for_move(sources: List<LearnedMoveSource>): List<String> {
     val senders = LinkedHashSet<String>()
     for (source in sources) {
         if (senders.size >= MAX_LEARNED_SENDERS_PER_MOVE) break
-        if (source.sender_verification == "invalid") continue
         if (is_locked_learned_source(source)) continue
+        if (!is_learned_sender_eligible(source.sender_email, source.sender_verification, source.auth_failed)) continue
         val sender = normalize_learned_sender(source.sender_email) ?: continue
         senders.add(sender)
     }

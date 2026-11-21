@@ -153,14 +153,38 @@ private fun resolve_rule_category(
     return if (custom) rule_category else null
 }
 
+fun is_failed_auth_result(raw: String?): Boolean {
+    val value = raw?.trim()?.lowercase(java.util.Locale.ROOT) ?: return false
+    return value == "fail" || value == "hardfail"
+}
+
+fun sender_auth_failed(spf_result: String?, dkim_result: String?, dmarc_result: String?): Boolean =
+    is_failed_auth_result(spf_result) || is_failed_auth_result(dkim_result) || is_failed_auth_result(dmarc_result)
+
+fun is_aster_domain_sender(email: String): Boolean {
+    val domain = sender_domain(email.trim())
+    return domain.isNotEmpty() && domain_in_set(domain, ASTER_DOMAIN_SUFFIXES)
+}
+
+fun is_learned_sender_eligible(
+    sender_email: String,
+    sender_verification: String?,
+    auth_failed: Boolean,
+): Boolean {
+    if (sender_verification == "invalid") return false
+    if (auth_failed) return false
+    return !is_aster_domain_sender(sender_email)
+}
+
 fun resolve_learned_category(
     from_email: String,
     sender_verification: String?,
     learned: Map<String, String>,
     custom_categories: List<CustomCategoryRule>,
+    auth_failed: Boolean = false,
 ): String? {
     if (learned.isEmpty()) return null
-    if (sender_verification == "invalid") return null
+    if (!is_learned_sender_eligible(from_email, sender_verification, auth_failed)) return null
     val sender = normalize_learned_sender(from_email) ?: return null
     val category = learned[sender] ?: return null
     if (BUILTIN_CATEGORY_IDS.contains(category)) return category
@@ -173,6 +197,7 @@ fun classify(
     rule_category: String? = null,
     custom_categories: List<CustomCategoryRule> = emptyList(),
     learned: Map<String, String> = emptyMap(),
+    auth_failed: Boolean = false,
 ): String {
     val pinned_category = metadata?.category
     if (metadata?.category_pinned == true && pinned_category != null) {
@@ -207,12 +232,18 @@ fun classify(
         return "primary"
     }
 
-    val learned_match = resolve_learned_category(
-        email,
-        envelope.sender_verification,
-        learned,
-        custom_categories,
-    )
+    val account_access = is_account_access_mail(subject, headers)
+    val learned_match = if (account_access) {
+        null
+    } else {
+        resolve_learned_category(
+            email,
+            envelope.sender_verification,
+            learned,
+            custom_categories,
+            auth_failed,
+        )
+    }
     if (learned_match != null) {
         return learned_match
     }
@@ -228,7 +259,7 @@ fun classify(
         return "primary"
     }
 
-    if (is_account_access_mail(subject, headers)) {
+    if (account_access) {
         return "primary"
     }
 

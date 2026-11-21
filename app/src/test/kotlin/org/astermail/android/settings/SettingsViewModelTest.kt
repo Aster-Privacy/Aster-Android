@@ -817,6 +817,55 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `learned edit before preferences load changes nothing and asks to retry`() = runTest {
+        coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("offline")
+        every { preferences_cache.read(any()) } returns null
+        every { context.getString(R.string.preferences_locked_retry) } returns "locked"
+        val target = new_vm()
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+        assertFalse(target.state.value.preferences_authoritative)
+        assertFalse(target.state.value.preferences_cached)
+        io.mockk.clearMocks(preferences_api, answers = false, recordedCalls = true)
+
+        target.apply_learned_category_edit(
+            org.astermail.android.mail.LearnedCategoryEdit(
+                upserts = listOf(org.astermail.android.api.preferences.LearnedCategorySender("shop@store.com", "shopping", 100)),
+            ),
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            emptyList<org.astermail.android.api.preferences.LearnedCategorySender>(),
+            target.state.value.preferences?.learned_category_senders.orEmpty(),
+        )
+        assertEquals(SaveStatus.ERROR, target.state.value.save_status)
+        assertEquals("locked", target.state.value.error)
+        coVerify(exactly = 0) { preferences_api.save_encrypted_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences(any()) }
+        coVerify(exactly = 0) { preferences_api.save_preferences_raw(any()) }
+    }
+
+    @Test
+    fun `cached learned senders are known before the server load finishes`() = runTest {
+        val learned = listOf(org.astermail.android.api.preferences.LearnedCategorySender("shop@store.com", "shopping", 100))
+        coEvery { preferences_api.get_encrypted_preferences() } throws RuntimeException("offline")
+        every { session_key_store.get_user_id() } returns "user_1"
+        every { preferences_cache.read("user_1") } returns
+            kotlinx.serialization.json.Json { encodeDefaults = true }
+                .encodeToString(UserPreferences.serializer(), UserPreferences(learned_category_senders = learned))
+
+        val target = new_vm()
+
+        assertTrue(target.state.value.preferences_cached)
+        assertEquals(learned, target.state.value.preferences?.learned_category_senders)
+        target.load_preferences(force = true)
+        advanceUntilIdle()
+        assertTrue(target.state.value.preferences_cached)
+        assertEquals(learned, target.state.value.preferences?.learned_category_senders)
+    }
+
+    @Test
     fun `turning off learning keeps learned senders`() = runTest {
         coEvery { preferences_api.get_encrypted_preferences() } returns EncryptedPreferencesResponse()
         coEvery { preferences_api.get_preferences_raw() } returns "{}"

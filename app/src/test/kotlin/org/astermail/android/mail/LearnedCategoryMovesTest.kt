@@ -221,6 +221,72 @@ class LearnedCategoryMovesTest {
     }
 
     @Test
+    fun account_access_mail_beats_learned() {
+        val learned = mapOf("alerts@bank.example.test" to "promotions")
+        val by_subject = envelope(from_email = "alerts@bank.example.test", subject = "Your verification code")
+        assertEquals("primary", classify(by_subject, null, learned = learned))
+        val by_header = envelope(
+            from_email = "alerts@bank.example.test",
+            subject = "Hello",
+            raw_headers = listOf("X-Verify-Code" to "123456"),
+        )
+        assertEquals("primary", classify(by_header, null, learned = learned))
+    }
+
+    @Test
+    fun aster_domain_sender_is_not_learned_even_when_not_locked() {
+        val sources = listOf(source("person@astermail.org"), source("friend@aster.cx"), source("shop@store.com"))
+        val move = learn_from_category_move(emptyList(), true, sources, "promotions", 1)
+        assertEquals(listOf("shop@store.com"), move!!.apply.upserts.map { it.sender })
+        assertNull(learn_from_category_move(emptyList(), true, listOf(source("person@astermail.org")), "promotions", 1))
+    }
+
+    @Test
+    fun aster_domain_sender_ignores_a_learned_entry() {
+        val learned = mapOf("person@astermail.org" to "promotions")
+        assertNull(resolve_learned_category("person@astermail.org", null, learned, emptyList()))
+        assertEquals("primary", classify(envelope(from_email = "person@astermail.org"), null, learned = learned))
+    }
+
+    @Test
+    fun failed_auth_sender_is_not_learned() {
+        val sources = listOf(
+            LearnedMoveSource("spoof@x.com", null, false, true, auth_failed = true),
+            source("real@x.com"),
+        )
+        val move = learn_from_category_move(emptyList(), true, sources, "social", 1)
+        assertEquals(listOf("real@x.com"), move!!.apply.upserts.map { it.sender })
+    }
+
+    @Test
+    fun failed_auth_sender_ignores_a_learned_entry() {
+        val env = envelope(from_email = "deals@shop.com")
+        val learned = mapOf("deals@shop.com" to "finance")
+        assertEquals("finance", classify(env, null, learned = learned))
+        assertEquals(classify(env, null), classify(env, null, learned = learned, auth_failed = true))
+        assertNull(resolve_learned_category("deals@shop.com", null, learned, emptyList(), auth_failed = true))
+    }
+
+    @Test
+    fun auth_results_only_fail_on_an_explicit_failure() {
+        assertTrue(sender_auth_failed("fail", null, null))
+        assertTrue(sender_auth_failed(null, " FAIL ", null))
+        assertTrue(sender_auth_failed(null, null, "hardfail"))
+        assertEquals(false, sender_auth_failed(null, null, null))
+        assertEquals(false, sender_auth_failed("pass", "none", "softfail"))
+        assertEquals(false, sender_auth_failed("", "neutral", "temperror"))
+    }
+
+    @Test
+    fun learning_and_applying_share_one_rule() {
+        assertEquals(false, is_learned_sender_eligible("a@x.com", "invalid", false))
+        assertEquals(false, is_learned_sender_eligible("a@x.com", null, true))
+        assertEquals(false, is_learned_sender_eligible("a@astermail.org", null, false))
+        assertTrue(is_learned_sender_eligible("a@x.com", null, false))
+        assertTrue(is_learned_sender_eligible("a@x.com", "valid", false))
+    }
+
+    @Test
     fun forget_clears_every_learned_sender() {
         val before = listOf(entry("a@x.com", "social", 1), entry("b@x.com", "updates", 2))
         val forget = LearnedCategoryEdit(removals = before.map { it.sender }.toSet())

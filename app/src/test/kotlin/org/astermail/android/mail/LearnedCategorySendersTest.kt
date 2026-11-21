@@ -32,6 +32,7 @@ import org.astermail.android.api.preferences.encode_preferences_preserving_unkno
 import org.astermail.android.api.preferences.merge_decrypted_preferences
 import org.astermail.android.api.preferences.merge_learned_category_senders
 import org.astermail.android.api.preferences.normalize_learned_sender
+import org.astermail.android.api.preferences.preferred_learned_entry
 import org.astermail.android.api.preferences.rebase_learned_category_senders
 import org.astermail.android.api.preferences.rebase_preferences_changes
 import org.astermail.android.api.preferences.sanitize_learned_category_senders
@@ -149,6 +150,146 @@ class LearnedCategorySendersTest {
         val server = listOf(entry("a@x.com", "updates", 50))
         val local = listOf(entry("a@x.com", "finance", 30))
         assertEquals(server, rebase_learned_category_senders(server, baseline, local))
+    }
+
+    @Test
+    fun a_tie_keeps_the_smaller_category_in_any_order() {
+        val first = entry("a@x.com", "updates", 10)
+        val second = entry("a@x.com", "social", 10)
+        val expected = listOf(entry("a@x.com", "social", 10))
+        assertEquals(expected, sanitize_learned_category_senders(listOf(first, second)))
+        assertEquals(expected, sanitize_learned_category_senders(listOf(second, first)))
+        assertEquals(expected, merge_learned_category_senders(listOf(first), listOf(second)))
+        assertEquals(expected, merge_learned_category_senders(listOf(second), listOf(first)))
+        assertEquals(second, preferred_learned_entry(first, second))
+        assertEquals(second, preferred_learned_entry(second, first))
+    }
+
+    @Test
+    fun a_tie_in_rebase_keeps_the_smaller_category_on_both_sides() {
+        val baseline = listOf(entry("a@x.com", "finance", 5))
+        val server = listOf(entry("a@x.com", "updates", 10))
+        val local = listOf(entry("a@x.com", "social", 10))
+        val expected = listOf(entry("a@x.com", "social", 10))
+        assertEquals(expected, rebase_learned_category_senders(server, baseline, local))
+        assertEquals(expected, rebase_learned_category_senders(local, baseline, server))
+        assertEquals(expected, rebase_learned_category_senders(server, emptyList(), local))
+        assertEquals(expected, rebase_learned_category_senders(local, emptyList(), server))
+    }
+
+    @Test
+    fun rebase_with_no_changes_keeps_everything() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        assertEquals(baseline, rebase_learned_category_senders(baseline, baseline, baseline))
+    }
+
+    @Test
+    fun rebase_takes_a_server_only_change() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val server = listOf(entry("a@x.com", "updates", 5))
+        assertEquals(server, rebase_learned_category_senders(server, baseline, baseline))
+    }
+
+    @Test
+    fun rebase_takes_a_local_only_change_even_when_older() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val local = listOf(entry("a@x.com", "updates", 5))
+        assertEquals(local, rebase_learned_category_senders(baseline, baseline, local))
+    }
+
+    @Test
+    fun rebase_applies_a_server_deletion() {
+        val baseline = listOf(entry("a@x.com", "social", 10), entry("b@x.com", "updates", 11))
+        val server = listOf(entry("b@x.com", "updates", 11))
+        assertEquals(server, rebase_learned_category_senders(server, baseline, baseline))
+    }
+
+    @Test
+    fun rebase_drops_an_entry_deleted_on_both_sides() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        assertEquals(
+            emptyList<LearnedCategorySender>(),
+            rebase_learned_category_senders(emptyList(), baseline, emptyList()),
+        )
+    }
+
+    @Test
+    fun rebase_keeps_a_change_over_a_deletion_on_the_other_side() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val changed = listOf(entry("a@x.com", "travel", 20))
+        assertEquals(changed, rebase_learned_category_senders(changed, baseline, emptyList()))
+        assertEquals(changed, rebase_learned_category_senders(emptyList(), baseline, changed))
+    }
+
+    @Test
+    fun rebase_keeps_additions_from_both_sides() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val server = baseline + entry("s@x.com", "updates", 20)
+        val local = baseline + entry("l@x.com", "travel", 30)
+        assertEquals(
+            listOf(entry("l@x.com", "travel", 30), entry("s@x.com", "updates", 20), entry("a@x.com", "social", 10)),
+            rebase_learned_category_senders(server, baseline, local),
+        )
+    }
+
+    @Test
+    fun rebase_picks_the_newer_entry_when_both_sides_add_the_same_sender() {
+        val server = listOf(entry("n@x.com", "updates", 20))
+        val local = listOf(entry("n@x.com", "travel", 30))
+        assertEquals(local, rebase_learned_category_senders(server, emptyList(), local))
+        assertEquals(local, rebase_learned_category_senders(local, emptyList(), server))
+    }
+
+    @Test
+    fun rebase_prefers_the_newer_local_entry_on_conflict() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val server = listOf(entry("a@x.com", "updates", 30))
+        val local = listOf(entry("a@x.com", "finance", 50))
+        assertEquals(local, rebase_learned_category_senders(server, baseline, local))
+    }
+
+    @Test
+    fun forget_does_not_come_back_from_an_unchanged_server() {
+        val baseline = listOf(entry("a@x.com", "social", 10), entry("b@x.com", "updates", 20))
+        assertEquals(
+            emptyList<LearnedCategorySender>(),
+            rebase_learned_category_senders(baseline, baseline, emptyList()),
+        )
+        val prefs_baseline = UserPreferences(learned_category_senders = baseline)
+        val forgotten = prefs_baseline.copy(learned_category_senders = emptyList())
+        val result = rebase_preferences_changes(json, prefs_baseline, prefs_baseline, forgotten)
+        assertEquals(emptyList<LearnedCategorySender>(), result.learned_category_senders)
+    }
+
+    @Test
+    fun forget_keeps_senders_the_server_added_afterward() {
+        val baseline = listOf(entry("a@x.com", "social", 10))
+        val server = baseline + entry("s@x.com", "updates", 20)
+        assertEquals(
+            listOf(entry("s@x.com", "updates", 20)),
+            rebase_learned_category_senders(server, baseline, emptyList()),
+        )
+    }
+
+    @Test
+    fun an_unknown_baseline_takes_the_union() {
+        val server = listOf(entry("s@x.com", "updates", 20), entry("a@x.com", "social", 10))
+        val local = listOf(entry("l@x.com", "travel", 30), entry("a@x.com", "finance", 40))
+        assertEquals(
+            listOf(entry("a@x.com", "finance", 40), entry("l@x.com", "travel", 30), entry("s@x.com", "updates", 20)),
+            rebase_learned_category_senders(server, null, local),
+        )
+    }
+
+    @Test
+    fun preference_rebase_with_an_unknown_baseline_takes_the_union() {
+        val server = UserPreferences(learned_category_senders = listOf(entry("s@x.com", "updates", 20)))
+        val updated = UserPreferences(learned_category_senders = listOf(entry("l@x.com", "travel", 30)))
+        val result = rebase_preferences_changes(json, server, null, updated)
+        assertEquals(
+            listOf(entry("l@x.com", "travel", 30), entry("s@x.com", "updates", 20)),
+            result.learned_category_senders,
+        )
     }
 
     @Test
