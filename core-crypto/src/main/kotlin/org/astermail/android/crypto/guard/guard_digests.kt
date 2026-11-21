@@ -38,6 +38,7 @@ enum class GuardActionCode(val wire: Int) {
     SWITCHES(9),
     JOIN(10),
     RESUME(11),
+    ROTATE_RESCUE(12),
 }
 
 object GuardDigests {
@@ -47,6 +48,7 @@ object GuardDigests {
     private val switches_label = "aster-guard-switches-v1".toByteArray(Charsets.US_ASCII)
     private val number_label = "aster-guard-number-v1".toByteArray(Charsets.US_ASCII)
     private val action_label = "aster-guard-action-v1".toByteArray(Charsets.US_ASCII)
+    private val rescue_rotate_label = "aster-guard-rescue-rotate-v1".toByteArray(Charsets.US_ASCII)
 
     const val ACTION_MESSAGE_LEN = 102
     const val NUMBER_MIN = 10
@@ -89,6 +91,9 @@ object GuardDigests {
 
     fun switches_subject(switches: Int, hold_scopes: Int): ByteArray =
         sha256(switches_label, u32_le(switches), u32_le(hold_scopes))
+
+    fun rescue_rotate_subject(normalized_code: String): ByteArray =
+        sha256(rescue_rotate_label, normalized_code.toByteArray(Charsets.UTF_8))
 
     fun number_hash(request_id: UUID, number: Int): ByteArray {
         require(number in NUMBER_MIN..NUMBER_MAX) { "number out of range" }

@@ -327,4 +327,10 @@
     <string name="guard_wait_resume_retry">重试</string>
     <string name="guard_approve_mismatch_title">数字不匹配</string>
     <string name="guard_approve_mismatch">此登录请求已停止。要继续，请在另一台设备上重新登录。</string>
+    <string name="guard_rotate_title">新的救援代码</string>
+    <string name="guard_rotate_row_subtitle">替换您用于重新进入账户的代码</string>
+    <string name="guard_rotate_action">替换救援代码</string>
+    <string name="guard_rotate_prompt_subtitle">替换您的救援代码</string>
+    <string name="guard_rotate_done_title">救援代码已替换</string>
+    <string name="guard_rotate_done_body">您的旧救援代码已失效。请将新代码离线保存在安全的地方。</string>
 </resources>

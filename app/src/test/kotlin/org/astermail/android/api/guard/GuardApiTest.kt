@@ -252,6 +252,34 @@ class GuardApiTest {
     }
 
     @Test
+    fun rotate_rescue_posts_code_and_action() = runBlocking {
+        server.enqueue(ok("""{"status":"applied","id":"r1"}"""))
+        api.rotate_rescue("BCDFGHJKMN23456789BCDFGHJ", action)
+        val req = server.takeRequest()
+        assertEquals("POST", req.method)
+        assertEquals("/api/core/v1/guard/rescue-code", req.path)
+        val body = Json.parseToJsonElement(req.body.readUtf8()).jsonObject
+        assertEquals("BCDFGHJKMN23456789BCDFGHJ", body["rescue_code"]!!.jsonPrimitive.content)
+        assertEquals("n1", body["action"]!!.jsonObject["nonce"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun rotate_rescue_held_response_throws_guard_held() = runBlocking {
+        server.enqueue(
+            ok(
+                """{"error":"held","code":"GUARD_HELD","details":{"id":"c9","kind":"rescue_code_rotation","apply_after":"2026-11-22T10:00:00Z"}}""",
+                202,
+            ),
+        )
+        try {
+            api.rotate_rescue("BCDFGHJKMN23456789BCDFGHJ", action)
+            fail("expected GuardHeld")
+        } catch (held: ApiError.GuardHeld) {
+            assertEquals(ApiError.GuardHeld("c9", "rescue_code_rotation", "2026-11-22T10:00:00Z"), held)
+        }
+    }
+
+    @Test
     fun unsafe_id_is_rejected_without_a_request() = runBlocking {
         try {
             api.deny("../x", action)

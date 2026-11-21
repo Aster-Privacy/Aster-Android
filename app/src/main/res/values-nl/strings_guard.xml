@@ -336,4 +336,10 @@
     <string name="guard_wait_resume_retry">Opnieuw proberen</string>
     <string name="guard_approve_mismatch_title">Het nummer komt niet overeen</string>
     <string name="guard_approve_mismatch">Dit inlogverzoek is gestopt. Log opnieuw in op het andere apparaat om door te gaan.</string>
+    <string name="guard_rotate_title">Nieuwe herstelcode</string>
+    <string name="guard_rotate_row_subtitle">Vervang de code waarmee je weer in je account komt</string>
+    <string name="guard_rotate_action">Herstelcode vervangen</string>
+    <string name="guard_rotate_prompt_subtitle">Vervang je herstelcode</string>
+    <string name="guard_rotate_done_title">Herstelcode vervangen</string>
+    <string name="guard_rotate_done_body">Je oude herstelcode werkt niet meer. Bewaar de nieuwe offline op een veilige plek.</string>
 </resources>

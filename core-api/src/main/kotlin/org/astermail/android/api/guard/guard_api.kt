@@ -361,6 +361,9 @@ private data class GuardCodeBody(val code: String)
 private data class GuardRescueBody(val rescue_code: String)
 
 @Serializable
+private data class GuardRotateRescueBody(val rescue_code: String, val action: SignedAction)
+
+@Serializable
 private data class GuardJoinCompleteBody(val request_id: String)
 
 @Serializable
@@ -384,6 +387,7 @@ interface GuardApi {
     suspend fun skip_change(id: String, action: SignedAction): GuardSkipResult
     suspend fun change_result(id: String): GuardChangeResult
     suspend fun remove_device(id: String, action: SignedAction)
+    suspend fun rotate_rescue(rescue_code: String, action: SignedAction)
     suspend fun panic(action: SignedAction): GuardPanicResult
     suspend fun join(req: GuardJoinRequest): GuardJoinStarted
     suspend fun join_status(id: String): GuardJoinStatus
@@ -466,6 +470,10 @@ class GuardApiImpl(private val client: ApiClient) : GuardApi {
 
     override suspend fun remove_device(id: String, action: SignedAction) {
         expect_ok(client.http.post(url("/devices/${safe_id(id)}/remove")) { json_body(GuardActionRequest(action)) })
+    }
+
+    override suspend fun rotate_rescue(rescue_code: String, action: SignedAction) {
+        expect_ok(client.http.post(url("/rescue-code")) { json_body(GuardRotateRescueBody(rescue_code, action)) })
     }
 
     override suspend fun panic(action: SignedAction): GuardPanicResult =

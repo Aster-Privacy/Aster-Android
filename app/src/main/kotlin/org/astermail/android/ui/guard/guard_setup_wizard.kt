@@ -121,17 +121,17 @@ fun guard_setup_host(view_model: GuardSetupViewModel, on_back: () -> Unit) {
     )
 }
 
-private fun guard_save_rescue(context: Context, code: String) {
+internal fun guard_save_rescue(context: Context, code: String) {
     if (code.isEmpty()) return
     org.astermail.android.util.save_recovery_codes_file(context, RESCUE_FILE_NAME, listOf(GuardCode.format_rescue(code)))
 }
 
-private fun guard_print_rescue(context: Context, code: String) {
+internal fun guard_print_rescue(context: Context, code: String) {
     if (code.isEmpty()) return
     print_recovery_codes(context, "", listOf(GuardCode.format_rescue(code)), on_failure = { show_copy_failed_toast(context) })
 }
 
-private fun guard_copy_rescue(context: Context, code: String) {
+internal fun guard_copy_rescue(context: Context, code: String) {
     if (code.isEmpty()) return
     val clip = ClipData.newPlainText(context.getString(R.string.guard_rescue_label), GuardCode.format_rescue(code))
     clip.description.extras = android.os.PersistableBundle().apply {
@@ -276,7 +276,7 @@ fun guard_setup_screen(
                     )
                 },
             ) {
-                guard_setup_rescue(state, on_save_file, on_print, on_copy)
+                guard_setup_rescue(state.rescue_code, on_save_file, on_print, on_copy)
             }
             guard_setup_step.confirm_rescue -> guard_wizard_scaffold(
                 step = guard_setup_step_number(state.step),
@@ -416,15 +416,15 @@ internal val guard_code_text_style = TextStyle(
 )
 
 @Composable
-private fun guard_setup_rescue(
-    state: guard_setup_ui,
+internal fun guard_setup_rescue(
+    rescue_code: String,
     on_save_file: () -> Unit,
     on_print: () -> Unit,
     on_copy: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val groups = state.rescue_code.chunked(5)
-    val description = stringResource(R.string.guard_setup_rescue_description, state.rescue_code.toCharArray().joinToString(" "))
+    val groups = rescue_code.chunked(5)
+    val description = stringResource(R.string.guard_setup_rescue_description, rescue_code.toCharArray().joinToString(" "))
     guard_card {
         Column(
             modifier = Modifier

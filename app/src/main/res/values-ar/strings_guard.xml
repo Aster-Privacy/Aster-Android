@@ -372,4 +372,10 @@
     <string name="guard_wait_resume_retry">حاول مرة أخرى</string>
     <string name="guard_approve_mismatch_title">الرقم غير مطابق</string>
     <string name="guard_approve_mismatch">تم إيقاف طلب تسجيل الدخول هذا. للمتابعة، سجّل الدخول مرة أخرى على الجهاز الآخر.</string>
+    <string name="guard_rotate_title">رمز إنقاذ جديد</string>
+    <string name="guard_rotate_row_subtitle">استبدل الرمز الذي تستخدمه للعودة إلى حسابك</string>
+    <string name="guard_rotate_action">استبدال رمز الإنقاذ</string>
+    <string name="guard_rotate_prompt_subtitle">استبدل رمز الإنقاذ</string>
+    <string name="guard_rotate_done_title">تم استبدال رمز الإنقاذ</string>
+    <string name="guard_rotate_done_body">لم يعد رمز الإنقاذ القديم يعمل. احفظ الرمز الجديد في مكان آمن غير متصل بالإنترنت.</string>
 </resources>

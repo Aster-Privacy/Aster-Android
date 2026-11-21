@@ -327,4 +327,10 @@
     <string name="guard_wait_resume_retry">다시 시도</string>
     <string name="guard_approve_mismatch_title">번호가 일치하지 않음</string>
     <string name="guard_approve_mismatch">이 로그인 요청이 중지되었습니다. 계속하려면 다른 기기에서 다시 로그인하세요.</string>
+    <string name="guard_rotate_title">새 복구 코드</string>
+    <string name="guard_rotate_row_subtitle">계정에 다시 들어올 때 사용하는 코드를 교체합니다</string>
+    <string name="guard_rotate_action">복구 코드 교체</string>
+    <string name="guard_rotate_prompt_subtitle">복구 코드 교체</string>
+    <string name="guard_rotate_done_title">복구 코드를 교체했습니다</string>
+    <string name="guard_rotate_done_body">이전 복구 코드는 더 이상 작동하지 않습니다. 새 코드는 오프라인의 안전한 곳에 보관하세요.</string>
 </resources>

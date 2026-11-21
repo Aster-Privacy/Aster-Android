@@ -354,4 +354,10 @@
     <string name="guard_wait_resume_retry">Повторить</string>
     <string name="guard_approve_mismatch_title">Число не совпадает</string>
     <string name="guard_approve_mismatch">Этот запрос на вход остановлен. Чтобы продолжить, войдите снова на другом устройстве.</string>
+    <string name="guard_rotate_title">Новый код восстановления</string>
+    <string name="guard_rotate_row_subtitle">Замените код, с помощью которого вы возвращаетесь в аккаунт</string>
+    <string name="guard_rotate_action">Заменить код восстановления</string>
+    <string name="guard_rotate_prompt_subtitle">Замените код восстановления</string>
+    <string name="guard_rotate_done_title">Код восстановления заменен</string>
+    <string name="guard_rotate_done_body">Старый код восстановления больше не работает. Храните новый в надежном месте офлайн.</string>
 </resources>
