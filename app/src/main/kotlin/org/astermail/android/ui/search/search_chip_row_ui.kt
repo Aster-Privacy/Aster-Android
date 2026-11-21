@@ -278,6 +278,7 @@ internal fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
         "after" -> stringResource(R.string.search_chip_after)
         "date" -> stringResource(R.string.search_chip_date)
         "label" -> stringResource(R.string.search_chip_label)
+        "folder" -> stringResource(R.string.search_chip_folder)
         "filename" -> stringResource(R.string.search_chip_filename)
         TEXT_OPERATOR_KEY -> ""
         else -> op.key.replaceFirstChar { it.uppercase() }

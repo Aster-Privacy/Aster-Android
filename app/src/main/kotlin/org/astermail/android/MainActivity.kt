@@ -592,8 +592,13 @@ private object routes {
     fun search_for(query: String): String {
         return "search?q=" + android.net.Uri.encode(query)
     }
-    fun search_for_folder(folder: String, filter_kind: String? = null, filter_name: String = ""): String {
-        val filter_scope = org.astermail.android.mail.search_filter_scope_query(filter_kind, filter_name)
+    fun search_for_folder(
+        folder: String,
+        filter_kind: String? = null,
+        filter_name: String = "",
+        placeholder_name: String? = null,
+    ): String {
+        val filter_scope = org.astermail.android.mail.search_filter_scope_query(filter_kind, filter_name, placeholder_name)
         if (filter_scope != null) return search_for(filter_scope)
         if (org.astermail.android.mail.search_narrow_query(folder) == null) return search
         val scope = org.astermail.android.mail.search_scope_query(folder)
@@ -2836,7 +2841,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         )
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
-                            on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_folder, slot_filter_kind, slot_filter_name)) },
+                            on_open_search = {
+                                nav_controller.navigate(
+                                    routes.search_for_folder(
+                                        effective_folder,
+                                        slot_filter_kind,
+                                        slot_filter_name,
+                                        drawer_context.getString(R.string.folder_decrypt_failed),
+                                    ),
+                                )
+                            },
                             on_compose = {
                                 drawer_context.startActivity(
                                     ComposeActivity.intent_for(

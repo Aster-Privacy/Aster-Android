@@ -156,4 +156,13 @@ class SearchCustomFolderScopeTest {
     fun a_folder_operator_keeps_the_typed_text_filter() {
         assertEquals(emptyList<String>(), opened_from_folder("Receipts", "invoice"))
     }
+
+    @Test
+    fun a_folder_shown_under_a_placeholder_name_stays_unscoped() {
+        assertNull(search_filter_scope_query(filter_kind_folder, "Unreadable", placeholder_name = "Unreadable"))
+        assertEquals(
+            "folder:Receipts",
+            search_filter_scope_query(filter_kind_folder, "Receipts", placeholder_name = "Unreadable"),
+        )
+    }
 }

@@ -12,6 +12,7 @@
     <string name="search_chip_after">Después de</string>
     <string name="search_chip_date">Fecha</string>
     <string name="search_chip_label">Etiqueta</string>
+    <string name="search_chip_folder">Carpeta</string>
     <string name="search_chip_not_prefix">No</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

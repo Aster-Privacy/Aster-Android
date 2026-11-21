@@ -12,6 +12,7 @@
     <string name="search_chip_after">После</string>
     <string name="search_chip_date">Дата</string>
     <string name="search_chip_label">Метка</string>
+    <string name="search_chip_folder">Папка</string>
     <string name="search_chip_not_prefix">Кроме</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>
