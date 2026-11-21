@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -85,6 +86,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,6 +97,9 @@ import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.core.view.WindowCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -106,9 +111,17 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.BiometricEnrollOrigin
+import org.astermail.android.security.BiometricErrorOutcome
+import org.astermail.android.security.BiometricLaunchBlock
 import org.astermail.android.security.BiometricGatePreparation
 import org.astermail.android.security.BiometricUnlockGate
+import org.astermail.android.security.biometric_error_message
+import org.astermail.android.security.biometric_error_outcome
+import org.astermail.android.security.biometric_launch_block
+import org.astermail.android.security.should_auto_prompt_biometric
+import org.astermail.android.security.should_rearm_auto_prompt
 import org.astermail.android.security.should_rebind_after_pin
+import org.astermail.android.ui.common.find_host_activity
 import kotlin.math.roundToInt
 
 @Composable
@@ -168,7 +181,10 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     var biometric_available by remember {
         mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
     }
-    var biometric_prompted by remember { mutableStateOf(false) }
+    var auto_prompt_armed by remember { mutableStateOf(true) }
+    val host_activity = remember(context) { context.find_host_activity() as? FragmentActivity }
+    val lifecycle_owner = host_activity ?: LocalLifecycleOwner.current
+    val lifecycle_state by lifecycle_owner.lifecycle.currentStateAsState()
     var biometric_enrolled by remember {
         mutableStateOf(
             run {
@@ -180,6 +196,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
     val biometric_failed_str = stringResource(R.string.app_lock_biometric_failed)
+    val biometric_error_str = stringResource(R.string.app_lock_biometric_error)
+    val biometric_reset_str = stringResource(R.string.app_lock_biometric_reset)
 
     LaunchedEffect(locked_out) {
         if (!locked_out) return@LaunchedEffect
@@ -191,53 +209,83 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         }
     }
 
-    fun launch_biometric() {
-        val activity = context as? FragmentActivity ?: return
+    fun launch_biometric(from_user: Boolean) {
+        val activity = host_activity
+        val block = biometric_launch_block(
+            has_host = activity != null,
+            resumed = activity?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == true,
+            state_saved = activity?.supportFragmentManager?.isStateSaved == true,
+        )
+        when (block) {
+            BiometricLaunchBlock.NONE -> {}
+            BiometricLaunchBlock.NO_HOST -> {
+                error_msg = biometric_failed_str
+                return
+            }
+            BiometricLaunchBlock.NOT_RESUMED, BiometricLaunchBlock.STATE_SAVED -> {
+                if (from_user) {
+                    error_msg = biometric_error_str
+                } else {
+                    auto_prompt_armed = block == BiometricLaunchBlock.NOT_RESUMED
+                }
+                return
+            }
+        }
+        if (activity == null) return
         val preparation = BiometricUnlockGate.prepare_unlock(context)
         val cipher = (preparation as? BiometricGatePreparation.Verify)?.cipher
         if (cipher == null) {
             biometric_enrolled = BiometricUnlockGate.is_enrolled(context)
-            error_msg = biometric_failed_str
+            error_msg = if (BiometricUnlockGate.is_rebind_pending(context)) biometric_reset_str else biometric_failed_str
             return
         }
-        val executor = ContextCompat.getMainExecutor(context)
+        error_msg = null
+        val executor = ContextCompat.getMainExecutor(activity)
         val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(context.getString(R.string.app_lock_biometric_title))
-            .setSubtitle(context.getString(R.string.app_lock_biometric_subtitle))
-            .setNegativeButtonText(context.getString(R.string.app_lock_use_pin))
+            .setTitle(activity.getString(R.string.app_lock_biometric_title))
+            .setSubtitle(activity.getString(R.string.app_lock_biometric_subtitle))
+            .setNegativeButtonText(activity.getString(R.string.app_lock_use_pin))
             .setAllowedAuthenticators(BIOMETRIC_STRONG)
             .setConfirmationRequired(false)
             .build()
-        BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
+        val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 val authenticated_cipher = result.cryptoObject?.cipher
                 if (authenticated_cipher == null) {
-                    error_msg = biometric_failed_str
+                    error_msg = biometric_error_str
                     return
                 }
-                val ok = BiometricUnlockGate.complete_verify(context, authenticated_cipher)
-                if (ok) {
+                if (BiometricUnlockGate.complete_verify(context, authenticated_cipher)) {
                     store.mark_session_unlocked()
                 } else {
-                    BiometricUnlockGate.reset(context)
+                    BiometricUnlockGate.invalidate(context)
                     biometric_enrolled = false
-                    error_msg = biometric_failed_str
+                    error_msg = biometric_reset_str
                 }
             }
 
             override fun onAuthenticationError(code: Int, message: CharSequence) {
-                if (code == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
-                    code == BiometricPrompt.ERROR_NO_BIOMETRICS ||
-                    code == BiometricPrompt.ERROR_HW_UNAVAILABLE
-                ) {
-                    biometric_available = false
+                when (biometric_error_outcome(code)) {
+                    BiometricErrorOutcome.IGNORE -> {}
+                    BiometricErrorOutcome.SHOW_MESSAGE -> {
+                        error_msg = biometric_error_message(message, biometric_error_str)
+                    }
+                    BiometricErrorOutcome.SHOW_MESSAGE_AND_HIDE -> {
+                        biometric_available = false
+                        error_msg = biometric_error_message(message, biometric_failed_str)
+                    }
                 }
             }
-        }).authenticate(info, BiometricPrompt.CryptoObject(cipher))
+        }
+        try {
+            BiometricPrompt(activity, executor, callback).authenticate(info, BiometricPrompt.CryptoObject(cipher))
+        } catch (e: Exception) {
+            error_msg = biometric_error_str
+        }
     }
 
     fun finish_pin_unlock() {
-        val activity = context as? FragmentActivity
+        val activity = host_activity
         val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
         if (activity == null || !rebind) {
             store.mark_session_unlocked()
@@ -252,10 +300,15 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         ) { store.mark_session_unlocked() }
     }
 
-    LaunchedEffect(biometric_available, biometric_enrolled) {
-        if (biometric_available && biometric_enrolled && !biometric_prompted) {
-            biometric_prompted = true
-            launch_biometric()
+    LaunchedEffect(lifecycle_state) {
+        if (should_rearm_auto_prompt(lifecycle_state.isAtLeast(Lifecycle.State.STARTED))) auto_prompt_armed = true
+    }
+
+    LaunchedEffect(auto_prompt_armed, lifecycle_state, biometric_available, biometric_enrolled) {
+        val resumed = lifecycle_state.isAtLeast(Lifecycle.State.RESUMED)
+        if (should_auto_prompt_biometric(auto_prompt_armed, resumed, biometric_available, biometric_enrolled)) {
+            auto_prompt_armed = false
+            launch_biometric(from_user = false)
         }
     }
 
@@ -342,11 +395,11 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     PinDots(digits = digits, filled = input.length, shake_trigger = shake_trigger)
-                    Box(modifier = Modifier.height(18.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.heightIn(min = 18.dp), contentAlignment = Alignment.Center) {
                         when {
                             verifying -> CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
-                            error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
-                            attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
+                            error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp, textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -411,9 +464,9 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                         }
                     }
                     if (error_msg != null) {
-                        Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
+                        Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp, textAlign = TextAlign.Center)
                     } else if (attempt_hint != null) {
-                        Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
+                        Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp, textAlign = TextAlign.Center)
                     }
                     AsterButton(
                         label = stringResource(R.string.app_lock_unlock),
@@ -429,7 +482,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .clip(SquircleShape(12.dp))
-                        .clickable(role = Role.Button) { launch_biometric() }
+                        .clickable(role = Role.Button) { launch_biometric(from_user = true) }
                         .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
                     contentAlignment = Alignment.Center,
                 ) {
