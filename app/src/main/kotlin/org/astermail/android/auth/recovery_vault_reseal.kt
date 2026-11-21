@@ -115,6 +115,7 @@ class RecoveryUploadVault(
     val vault_format: Int,
     val identity_locked: Boolean,
     val vault_generation: Long?,
+    val backup_key_fingerprints: List<String>? = null,
 )
 
 class RecoveryBackupFields(val encrypted_data: String, val nonce: String, val salt: String)
@@ -142,6 +143,8 @@ fun recovery_upload_vault(
         vault_format = stored_vault_format(resealed.vault),
         identity_locked = resealed.identity_locked,
         vault_generation = vault_generation(resealed.vault).takeIf { it > 0 },
+        backup_key_fingerprints =
+            org.astermail.android.crypto.storage_rotation.backup_key_fingerprints(resealed.backup),
     )
 }
 
@@ -170,4 +173,5 @@ fun recovery_complete_request(
     vault_format = vault.vault_format,
     vault_kdf_iterations = vault_kdf_iterations,
     vault_generation = vault.vault_generation,
+    backup_key_fingerprints = vault.backup_key_fingerprints,
 )

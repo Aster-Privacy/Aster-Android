@@ -253,6 +253,7 @@ class AuthRepository @Inject constructor(
                 override fun saved(built: kotlinx.serialization.json.JsonObject) = note_saved_refresh_backup(built)
             },
         )
+        storage_rekey_service.watch_vault_keys()
     }
 
     private fun build_refresh_backup(vault: org.json.JSONObject): kotlinx.serialization.json.JsonObject? {
@@ -283,6 +284,8 @@ class AuthRepository @Inject constructor(
                 vault_backup_nonce = vault_backup.nonce,
                 recovery_key_salt = vault_backup.salt,
                 refresh_only = true,
+                backup_key_fingerprints =
+                    org.astermail.android.crypto.storage_rotation.backup_key_fingerprints(vault),
             )
             return refresh_backup_json.encodeToJsonElement(SaveRecoveryBackupRequest.serializer(), request)
                 as? kotlinx.serialization.json.JsonObject
@@ -3396,7 +3399,7 @@ class AuthRepository @Inject constructor(
                         val backup_plain = backup_vault_bytes(vault_obj, passphrase.copyOf())
                         val vault_backup = encrypt_vault_backup(backup_plain, recovery_key, backup_binding, backup_format_v2)
                         backup_plain.fill(0)
-                        recovery_api.backup(
+                        val backup_request =
                             SaveRecoveryBackupRequest(
                                 recovery_shares = shares,
                                 encrypted_vault_backup = vault_backup.encrypted_data,
@@ -3408,8 +3411,10 @@ class AuthRepository @Inject constructor(
                                 vault_format = stored_vault_format(vault_obj),
                                 expected_vault_sha256 = snapshot.vault_sha256,
                                 vault_kdf_iterations = VaultKdf.to_server(sealed.kdf_iterations),
-                            ),
-                        )
+                                backup_key_fingerprints =
+                                    org.astermail.android.crypto.storage_rotation.backup_key_fingerprints(vault_obj),
+                            )
+                        save_rotated_backup(backup_request)
                         true
                     },
                 )
@@ -3431,6 +3436,21 @@ class AuthRepository @Inject constructor(
         } finally {
             recovery_key.fill(0)
             passphrase.fill(0)
+        }
+    }
+
+    private suspend fun save_rotated_backup(request: SaveRecoveryBackupRequest) {
+        var pending = request
+        while (true) {
+            try {
+                recovery_api.backup(pending)
+                return
+            } catch (error: ApiError.Conflict) {
+                val drops_published_key =
+                    error.code == org.astermail.android.crypto.storage_rotation.BACKUP_DROPS_PUBLISHED_KEY_CODE
+                if (!drops_published_key || pending.backup_key_fingerprints == null) throw error
+                pending = pending.copy(backup_key_fingerprints = null)
+            }
         }
     }
 

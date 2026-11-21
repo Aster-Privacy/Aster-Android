@@ -121,6 +121,7 @@ data class CompleteRecoveryRequest(
     val vault_format: Int? = null,
     val vault_kdf_iterations: Int? = null,
     val vault_generation: Long? = null,
+    val backup_key_fingerprints: List<String>? = null,
 )
 
 @Serializable
@@ -150,6 +151,7 @@ data class SaveRecoveryBackupRequest(
     val expected_vault_sha256: String? = null,
     val refresh_only: Boolean? = null,
     val vault_kdf_iterations: Int? = null,
+    val backup_key_fingerprints: List<String>? = null,
 )
 
 @Serializable
@@ -176,6 +178,7 @@ data class CodesStatusResponse(
     val used: List<UsedCode> = emptyList(),
     val verifier_salts: List<String?> = emptyList(),
     val code_hash_optional: Boolean? = null,
+    val backup_covers_published_keys: Boolean? = null,
 )
 
 @Serializable
