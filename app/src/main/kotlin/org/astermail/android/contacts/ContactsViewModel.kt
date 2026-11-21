@@ -312,7 +312,12 @@ class ContactsViewModel @Inject constructor(
                 }
                 val account_id = repository.current_account()
                 val baseline = DeviceImportBaseline(context)
-                val plan = plan_contact_import(device_contacts, existing, account_id?.let(baseline::load))
+                val plan = plan_contact_import(
+                    incoming = device_contacts,
+                    existing = existing,
+                    previously_seen = account_id?.let(baseline::load),
+                    refresh_details = true,
+                )
                 val in_trash = plan.in_trash
                 val new_contacts = plan.new_contacts
                 _state.value = _state.value.copy(import_done = 0, import_total = new_contacts.size)

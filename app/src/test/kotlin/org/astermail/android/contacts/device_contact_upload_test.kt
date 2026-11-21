@@ -322,4 +322,121 @@ class device_contact_upload_test {
             plan.updates.single().phone_entries().map { it.value },
         )
     }
+
+    @Test
+    fun a_birthday_changed_on_the_device_replaces_the_stored_one() {
+        val before = listOf(person("Lea", "lea@example.com").copy(birthday = "1990-05-01"))
+        val after = listOf(person("Lea", "lea@example.com").copy(birthday = "1990-06-02"))
+        val plan = plan_contact_import(
+            after,
+            listOf(stored("c10", "Lea", email = "lea@example.com").copy(birthday = "1990-05-01")),
+            device_entry_keys(before),
+            refresh_details = true,
+        )
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals("1990-06-02", plan.updates.single().birthday)
+        assertEquals("c10", plan.updates.single().id)
+    }
+
+    @Test
+    fun a_birthday_added_on_the_device_fills_the_stored_contact() {
+        val before = listOf(person("Mia", "mia@example.com"))
+        val after = listOf(person("Mia", "mia@example.com").copy(birthday = "--03-09"))
+        val plan = plan_contact_import(
+            after,
+            listOf(stored("c11", "Mia", email = "mia@example.com")),
+            device_entry_keys(before),
+            refresh_details = true,
+        )
+        assertEquals("--03-09", plan.updates.single().birthday)
+    }
+
+    @Test
+    fun a_birthday_edited_in_aster_survives_an_unchanged_device_sync() {
+        val phone = listOf(person("Ned", "ned@example.com").copy(birthday = "1990-05-01"))
+        val plan = plan_contact_import(
+            phone,
+            listOf(stored("c12", "Ned", email = "ned@example.com").copy(birthday = "1991-01-01")),
+            device_entry_keys(phone),
+            refresh_details = true,
+        )
+        assertTrue(plan.updates.isEmpty())
+    }
+
+    @Test
+    fun a_birthday_cleared_on_the_device_keeps_the_stored_one() {
+        val before = listOf(person("Oto", "oto@example.com").copy(birthday = "1990-05-01"))
+        val after = listOf(person("Oto", "oto@example.com"))
+        val plan = plan_contact_import(
+            after,
+            listOf(stored("c13", "Oto", email = "oto@example.com").copy(birthday = "1990-05-01")),
+            device_entry_keys(before),
+            refresh_details = true,
+        )
+        assertTrue(plan.updates.isEmpty())
+    }
+
+    @Test
+    fun a_sync_without_a_details_baseline_takes_the_device_birthday_and_fills_blanks_only() {
+        val phone = listOf(
+            person("Pia", "pia@example.com").copy(birthday = "1990-06-02", company = "Device Co", title = "Lead"),
+        )
+        val legacy_baseline = device_entry_keys(phone) - DETAILS_BASELINE_MARKER
+        val plan = plan_contact_import(
+            phone,
+            listOf(stored("c14", "Pia", email = "pia@example.com").copy(birthday = "1990-05-01", company = "Aster Co")),
+            legacy_baseline,
+            refresh_details = true,
+        )
+        val updated = plan.updates.single()
+        assertEquals("1990-06-02", updated.birthday)
+        assertEquals("Aster Co", updated.company)
+        assertEquals("Lead", updated.title)
+    }
+
+    @Test
+    fun other_details_changed_on_the_device_are_refreshed() {
+        val before = listOf(person("Quin", "quin@example.com").copy(company = "Old Co", notes = "first"))
+        val after = listOf(person("Quin", "quin@example.com").copy(company = "New Co", notes = "first"))
+        val plan = plan_contact_import(
+            after,
+            listOf(stored("c15", "Quin", email = "quin@example.com").copy(company = "Old Co", notes = "edited in app")),
+            device_entry_keys(before),
+            refresh_details = true,
+        )
+        val updated = plan.updates.single()
+        assertEquals("New Co", updated.company)
+        assertEquals("edited in app", updated.notes)
+    }
+
+    @Test
+    fun a_changed_birthday_and_a_new_phone_arrive_in_one_update() {
+        val before = listOf(person("Rae", "rae@example.com").copy(birthday = "1990-05-01"))
+        val after = listOf(
+            person("Rae", "rae@example.com").copy(birthday = "1990-06-02").with_typed_fields(
+                emails = listOf(ContactEntry("rae@example.com", ContactEntry.TYPE_HOME)),
+                phones = listOf(ContactEntry("+1 555 0500", ContactEntry.TYPE_MOBILE)),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(
+            after,
+            listOf(stored("c16", "Rae", email = "rae@example.com").copy(birthday = "1990-05-01")),
+            device_entry_keys(before),
+            refresh_details = true,
+        )
+        val updated = plan.updates.single()
+        assertEquals("1990-06-02", updated.birthday)
+        assertEquals(listOf("+1 555 0500"), updated.phone_entries().map { it.value })
+    }
+
+    @Test
+    fun a_file_import_leaves_stored_details_alone() {
+        val parsed = listOf(person("Sol", "sol@example.com").copy(birthday = "1990-06-02"))
+        val plan = plan_contact_import(
+            parsed,
+            listOf(stored("c17", "Sol", email = "sol@example.com").copy(birthday = "1990-05-01")),
+        )
+        assertTrue(plan.updates.isEmpty())
+    }
 }
