@@ -98,7 +98,55 @@ fun device_entry_keys(contacts: List<Contact>): Set<String> = buildSet {
     for (contact in contacts) {
         contact.email_entries().filter { normalized_key(it.value).isNotEmpty() }.forEach { add(email_entry_key(it.value)) }
         contact.phone_entries().filter { phone_digits_key(it.value).isNotEmpty() }.forEach { add(phone_entry_key(it.value)) }
+        addAll(detail_entry_keys(contact))
     }
+    add(DETAILS_BASELINE_MARKER)
+}
+
+const val DETAILS_BASELINE_MARKER = "details_v1"
+
+private class DetailField(
+    val name: String,
+    val device_wins_without_baseline: Boolean,
+    val read: (Contact) -> String,
+    val write: (Contact, String) -> Contact,
+)
+
+private val detail_fields = listOf(
+    DetailField("birthday", true, { it.birthday }, { contact, value -> contact.copy(birthday = value) }),
+    DetailField("company", false, { it.company }, { contact, value -> contact.copy(company = value) }),
+    DetailField("title", false, { it.title }, { contact, value -> contact.copy(title = value) }),
+    DetailField("website", false, { it.website }, { contact, value -> contact.copy(website = value) }),
+    DetailField("notes", false, { it.notes }, { contact, value -> contact.copy(notes = value) }),
+)
+
+private fun detail_entry_key(owner: String, field: DetailField, value: String): String =
+    hash_entry_key("d:" + field.name + ":" + owner + ":" + value)
+
+private fun detail_entry_keys(contact: Contact): List<String> {
+    val owner = import_match_keys(contact).firstOrNull() ?: return emptyList()
+    return detail_fields.mapNotNull { field ->
+        field.read(contact).trim().takeIf { it.isNotEmpty() }?.let { detail_entry_key(owner, field, it) }
+    }
+}
+
+private fun refresh_changed_details(existing: Contact, incoming: Contact, previously_seen: Set<String>): Contact? {
+    val owner = import_match_keys(incoming).firstOrNull() ?: return null
+    val has_baseline = DETAILS_BASELINE_MARKER in previously_seen
+    var refreshed = existing
+    for (field in detail_fields) {
+        val device_value = field.read(incoming).trim()
+        if (device_value.isEmpty()) continue
+        val stored_value = field.read(refreshed).trim()
+        if (device_value == stored_value) continue
+        val changed_on_device = if (has_baseline) {
+            detail_entry_key(owner, field, device_value) !in previously_seen
+        } else {
+            field.device_wins_without_baseline || stored_value.isEmpty()
+        }
+        if (changed_on_device) refreshed = field.write(refreshed, device_value)
+    }
+    return refreshed.takeIf { it != existing }
 }
 
 private fun merge_new_entries(existing: Contact, incoming: Contact, previously_seen: Set<String>): Contact? {
@@ -140,6 +188,7 @@ fun plan_contact_import(
     incoming: List<Contact>,
     existing: List<Contact>,
     previously_seen: Set<String>? = emptySet(),
+    refresh_details: Boolean = false,
 ): ContactImportPlan {
     val active = existing.filter { it.deleted_at.isBlank() }
     val active_index = active_match_index(active)
@@ -159,8 +208,13 @@ fun plan_contact_import(
             ?: name_key(contact)?.let { emailless_index[it] }
         if (target != null) {
             if (target.id.isNotBlank()) {
-                merge_new_entries(updates[target.id] ?: target, contact, previously_seen.orEmpty())
+                val known = previously_seen.orEmpty()
+                merge_new_entries(updates[target.id] ?: target, contact, known)
                     ?.let { updates[target.id] = it }
+                if (refresh_details) {
+                    refresh_changed_details(updates[target.id] ?: target, contact, known)
+                        ?.let { updates[target.id] = it }
+                }
             }
             continue
         }
