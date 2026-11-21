@@ -504,7 +504,7 @@ fun DrawerContent(
                                             on_select_category("primary")
                                             on_close()
                                         },
-                                        show_expand_slot = true,
+                                        show_expand_slot = category_children.isNotEmpty(),
                                         can_expand = category_children.isNotEmpty(),
                                         expanded = categories_expanded,
                                         on_toggle_expand = {
