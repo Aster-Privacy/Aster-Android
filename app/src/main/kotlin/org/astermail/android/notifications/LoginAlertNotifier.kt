@@ -50,8 +50,23 @@ import kotlinx.coroutines.CancellationException
 import org.astermail.android.MainActivity
 import org.astermail.android.R
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.guard.GuardApi
 import org.astermail.android.api.settings.SettingsApi
+import org.astermail.android.guard.GuardDeviceStore
+import org.astermail.android.guard.guard_event
+import org.astermail.android.guard.guard_local_approvals
+import org.astermail.android.guard.guard_notification_spec_for
+import org.astermail.android.guard.guard_open_target
+import org.astermail.android.guard.guard_prompt_push
+import org.astermail.android.guard.GUARD_PROMPT_DEFAULT_TIMEOUT_MS
+import org.astermail.android.guard.guard_prompt_lookup
+import org.astermail.android.guard.guard_prompt_should_post
+import org.astermail.android.guard.guard_prompt_timeout_ms
+import org.astermail.android.guard.guard_push
+import org.astermail.android.guard.guard_should_show
+import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.TokenStore
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 enum class LoginAlertDecision { Show, Skip, Retry, GiveUp }
@@ -309,6 +324,230 @@ object LoginAlertNotifier {
             .build()
     }
 
+    const val GUARD_CHANNEL_ID = "aster_guard_v1"
+    const val KEY_GUARD_EVENT = "guard_event"
+    const val KEY_GUARD_ID = "guard_id"
+    const val KEY_GUARD_ACCOUNT = "guard_account"
+    const val GUARD_NOTIFICATION_ID = 1900
+    private const val ACTION_SLOT_GUARD_OPEN = 1
+    private const val ACTION_SLOT_GUARD_REVIEW = 2
+    private const val ACTION_SLOT_GUARD_PANIC = 3
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface GuardAlertEntryPoint {
+        fun guard_api(): GuardApi
+        fun guard_device_store(): GuardDeviceStore
+        fun account_store(): AccountStore
+        fun token_store(): TokenStore
+    }
+
+    fun create_guard_channel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                GUARD_CHANNEL_ID,
+                localized(context).getString(R.string.notif_channel_guard_name),
+                NotificationManager.IMPORTANCE_HIGH,
+            )
+            channel.description = localized(context).getString(R.string.notif_channel_guard_description)
+            channel.setShowBadge(true)
+            channel.lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return
+            create_alert_channel(manager, channel, vibrate = true, replaced_ids = emptyList())
+        }
+    }
+
+    fun guard_notification_tag(push: guard_push): String =
+        "guard:${push.event.name}:${push.id.lowercase()}:${push.account_id.lowercase()}"
+
+    fun guard_request_code(push: guard_push, slot: Int): Int = "${guard_notification_tag(push)}:$slot".hashCode()
+
+    fun guard_work_name(push: guard_push): String = "guard_${push.event.name}_${push.id}"
+
+    fun enqueue_guard(context: Context, push: guard_push) {
+        if (guard_notification_spec_for(push.event).cancels_prompt) cancel_guard_prompt(context, push)
+        if (!guard_should_show(push, guard_local_approvals::approved_here)) return
+        val request = OneTimeWorkRequestBuilder<GuardAlertWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.SECONDS)
+            .setInputData(
+                Data.Builder()
+                    .putString(KEY_GUARD_EVENT, push.event.name)
+                    .putString(KEY_GUARD_ID, push.id)
+                    .putString(KEY_GUARD_ACCOUNT, push.account_id)
+                    .build(),
+            )
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            guard_work_name(push),
+            ExistingWorkPolicy.KEEP,
+            request,
+        )
+    }
+
+    fun guard_title_res(event: guard_event): Int? = when (event) {
+        guard_event.sign_in_request -> R.string.notif_guard_sign_in_title
+        guard_event.change_held -> R.string.notif_guard_change_held_title
+        guard_event.change_applied -> R.string.notif_guard_change_applied_title
+        guard_event.change_cancelled -> R.string.notif_guard_change_cancelled_title
+        guard_event.panic -> R.string.notif_guard_panic_title
+        guard_event.rescue_started -> R.string.notif_guard_rescue_started_title
+        guard_event.rescue_vetoed -> R.string.notif_guard_rescue_vetoed_title
+        guard_event.guard_enabled -> R.string.notif_guard_enabled_title
+        guard_event.prompts_paused -> R.string.notif_guard_paused_title
+        guard_event.sign_in_approved -> R.string.notif_guard_sign_in_approved_title
+        guard_event.device_added -> R.string.notif_guard_device_added_title
+        guard_event.device_removed -> R.string.notif_guard_device_removed_title
+        guard_event.rescue_completed -> R.string.notif_guard_rescue_completed_title
+        guard_event.guard_disabled -> R.string.notif_guard_disabled_title
+        guard_event.sign_in_denied, guard_event.sign_in_expired -> null
+    }
+
+    fun guard_body_res(event: guard_event): Int? = when (event) {
+        guard_event.sign_in_request -> R.string.notif_guard_sign_in_body
+        guard_event.change_held -> R.string.notif_guard_change_held_body
+        guard_event.change_applied -> R.string.notif_guard_change_applied_body
+        guard_event.change_cancelled -> R.string.notif_guard_change_cancelled_body
+        guard_event.panic -> R.string.notif_guard_panic_body
+        guard_event.rescue_started -> R.string.notif_guard_rescue_started_body
+        guard_event.rescue_vetoed -> R.string.notif_guard_rescue_vetoed_body
+        guard_event.guard_enabled -> R.string.notif_guard_enabled_body
+        guard_event.prompts_paused -> R.string.notif_guard_paused_body
+        guard_event.sign_in_approved -> R.string.notif_guard_sign_in_approved_body
+        guard_event.device_added -> R.string.notif_guard_device_added_body
+        guard_event.device_removed -> R.string.notif_guard_device_removed_body
+        guard_event.rescue_completed -> R.string.notif_guard_rescue_completed_body
+        guard_event.guard_disabled -> R.string.notif_guard_disabled_body
+        guard_event.sign_in_denied, guard_event.sign_in_expired -> null
+    }
+
+    fun guard_open_intent(context: Context, push: guard_push): Intent {
+        val spec = guard_notification_spec_for(push.event)
+        return Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            when (spec.target) {
+                guard_open_target.request -> putExtra(MainActivity.EXTRA_OPEN_GUARD_REQUEST, push.id)
+                guard_open_target.changes -> putExtra(MainActivity.EXTRA_OPEN_GUARD_CHANGES, true)
+                guard_open_target.guard_settings -> putExtra(MainActivity.EXTRA_OPEN_GUARD_SETTINGS, true)
+                guard_open_target.app -> Unit
+            }
+            putExtra(MainActivity.EXTRA_GUARD_ACCOUNT_ID, push.account_id)
+            putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
+        }
+    }
+
+    fun guard_panic_intent(context: Context, push: guard_push): Intent =
+        Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(MainActivity.EXTRA_OPEN_GUARD_PANIC, true)
+            putExtra(MainActivity.EXTRA_GUARD_ACCOUNT_ID, push.account_id)
+            putExtra(internal_launch_token.EXTRA_TOKEN, internal_launch_token.get(context))
+        }
+
+    private fun guard_distinct(intent: Intent, push: guard_push, slot: Int): Intent = intent.apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) identifier = "${guard_notification_tag(push)}:$slot"
+    }
+
+    fun show_guard(
+        context: Context,
+        push: guard_push,
+        timeout_ms: Long = GUARD_PROMPT_DEFAULT_TIMEOUT_MS,
+    ) {
+        val spec = guard_notification_spec_for(push.event)
+        if (!spec.shows) return
+        val title_res = guard_title_res(push.event) ?: return
+        val body_res = guard_body_res(push.event) ?: return
+        if (!can_post(context)) return
+        create_guard_channel(context)
+        val tag = guard_notification_tag(push)
+        val ctx = localized(context)
+        val pending = PendingIntent.getActivity(
+            context, guard_request_code(push, ACTION_SLOT_GUARD_OPEN),
+            guard_distinct(guard_open_intent(context, push), push, ACTION_SLOT_GUARD_OPEN),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val title = ctx.getString(title_res)
+        val body = ctx.getString(body_res)
+        val builder = guard_builder(context)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentIntent(pending)
+            .setOnlyAlertOnce(true)
+        if (push.event == guard_event.sign_in_request) builder.setTimeoutAfter(timeout_ms)
+        if (spec.review_action) {
+            val review_pending = PendingIntent.getActivity(
+                context,
+                guard_request_code(push, ACTION_SLOT_GUARD_REVIEW),
+                guard_distinct(guard_open_intent(context, push), push, ACTION_SLOT_GUARD_REVIEW),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.ic_notification,
+                    ctx.getString(R.string.notif_guard_action_review),
+                    review_pending,
+                ).build(),
+            )
+        }
+        if (spec.panic_action) {
+            val panic_pending = PendingIntent.getActivity(
+                context,
+                guard_request_code(push, ACTION_SLOT_GUARD_PANIC),
+                guard_distinct(guard_panic_intent(context, push), push, ACTION_SLOT_GUARD_PANIC),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    R.drawable.ic_notification,
+                    ctx.getString(R.string.notif_guard_action_panic),
+                    panic_pending,
+                ).build(),
+            )
+        }
+        if (spec.private_details) {
+            val public_version = guard_builder(context)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setContentIntent(pending)
+                .build()
+            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(public_version)
+        }
+        NotificationManagerCompat.from(context).notify(tag, GUARD_NOTIFICATION_ID, builder.build())
+    }
+
+    fun cancel_guard(context: Context, push: guard_push) {
+        NotificationManagerCompat.from(context).cancel(guard_notification_tag(push), GUARD_NOTIFICATION_ID)
+    }
+
+    fun cancel_guard_for_account(context: Context, account_id: String) {
+        val suffix = ":${account_id.lowercase()}"
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+        runCatching {
+            manager.activeNotifications
+                .filter { it.id == GUARD_NOTIFICATION_ID && guard_tag_matches_account(it.tag, suffix) }
+                .forEach { manager.cancel(it.tag, it.id) }
+        }
+    }
+
+    private fun guard_tag_matches_account(tag: String?, suffix: String): Boolean =
+        tag != null && tag.startsWith("guard:") && tag.endsWith(suffix)
+
+    fun cancel_guard_prompt(context: Context, push: guard_push) {
+        val prompt = guard_prompt_push(push)
+        runCatching { WorkManager.getInstance(context).cancelUniqueWork(guard_work_name(prompt)) }
+        cancel_guard(context, prompt)
+    }
+
+    private fun guard_builder(context: Context): NotificationCompat.Builder =
+        NotificationCompat.Builder(context, GUARD_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_guard_notification)
+            .setColor(0xFF3B82F6.toInt())
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+
     private fun base_builder(context: Context): NotificationCompat.Builder {
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
@@ -438,4 +677,56 @@ class LoginAlertRevokeWorker(
             )
         }
     }
+}
+
+class GuardAlertWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        val event = inputData.getString(LoginAlertNotifier.KEY_GUARD_EVENT)
+            ?.let { name -> guard_event.entries.firstOrNull { it.name == name } }
+            ?: return Result.success()
+        val account_id = inputData.getString(LoginAlertNotifier.KEY_GUARD_ACCOUNT).orEmpty()
+        if (account_id.isBlank()) return Result.success()
+        val push = guard_push(event, inputData.getString(LoginAlertNotifier.KEY_GUARD_ID).orEmpty(), account_id)
+        if (!guard_should_show(push, guard_local_approvals::approved_here)) return Result.success()
+        if (event != guard_event.sign_in_request) {
+            LoginAlertNotifier.show_guard(applicationContext, push)
+            return Result.success()
+        }
+        val entry = runCatching {
+            EntryPointAccessors.fromApplication(
+                applicationContext,
+                LoginAlertNotifier.GuardAlertEntryPoint::class.java,
+            )
+        }.getOrNull() ?: return Result.success()
+        val current = runCatching { entry.account_store().get_current_id() }.getOrNull()
+        if (!guard_prompt_should_post(push.account_id, current, guard_prompt_lookup.unknown)) return Result.success()
+        val (lookup, item) = find_request(entry, push)
+        if (!guard_prompt_should_post(push.account_id, current, lookup)) {
+            LoginAlertNotifier.cancel_guard(applicationContext, push)
+            return Result.success()
+        }
+        val timeout = guard_prompt_timeout_ms(item?.expires_at, org.astermail.android.api.network.server_clock.now_ms())
+        LoginAlertNotifier.show_guard(applicationContext, push, timeout)
+        return Result.success()
+    }
+
+    private suspend fun find_request(
+        entry: LoginAlertNotifier.GuardAlertEntryPoint,
+        push: guard_push,
+    ): Pair<guard_prompt_lookup, org.astermail.android.api.guard.GuardRequestItem?> {
+        if (entry.token_store().access_token == null) return guard_prompt_lookup.unknown to null
+        return try {
+            val item = entry.guard_api().requests().requests.firstOrNull { it.id.equals(push.id, ignoreCase = true) }
+            if (item == null) guard_prompt_lookup.absent to null else guard_prompt_lookup.found to item
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            guard_prompt_lookup.unknown to null
+        }
+    }
+
 }

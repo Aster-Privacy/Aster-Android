@@ -16,4 +16,5 @@
         <item quantity="one">%1$d önerilen işlem</item>
         <item quantity="other">%1$d önerilen işlem</item>
     </plurals>
+    <string name="check_aster_guard">Aster Guard ile yeni cihaz onayı</string>
 </resources>

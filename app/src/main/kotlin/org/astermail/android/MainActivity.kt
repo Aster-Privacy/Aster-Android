@@ -39,6 +39,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import org.astermail.android.security.AppLockViewModel
+import org.astermail.android.guard.guard_launch_target
+import org.astermail.android.guard.guard_launch_target_for
 import org.astermail.android.ui.auth.mark_signed_up_now
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.ui.common.edge_swipe_to_open
@@ -97,6 +99,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
@@ -200,6 +203,11 @@ class MainActivity :
     companion object {
         const val EXTRA_OPEN_EMAIL_ID = "open_email_id"
         const val EXTRA_OPEN_SESSIONS = "open_sessions"
+        const val EXTRA_OPEN_GUARD_REQUEST = "open_guard_request"
+        const val EXTRA_OPEN_GUARD_CHANGES = "open_guard_changes"
+        const val EXTRA_OPEN_GUARD_SETTINGS = "open_guard_settings"
+        const val EXTRA_OPEN_GUARD_PANIC = "open_guard_panic"
+        const val EXTRA_GUARD_ACCOUNT_ID = "guard_account_id"
         const val EXTRA_OPEN_CONTACT_SYNC = "open_contact_sync"
         const val EXTRA_ACCOUNT_LINK_REQUEST = "account_link_request"
         private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
@@ -323,7 +331,14 @@ class MainActivity :
             has_data = intent?.data != null,
             extra_keys = extra_keys,
             target_extra_keys = if (internal_launch_token.is_trusted(this, intent)) {
-                setOf(EXTRA_OPEN_EMAIL_ID, EXTRA_OPEN_SESSIONS)
+                setOf(
+                    EXTRA_OPEN_EMAIL_ID,
+                    EXTRA_OPEN_SESSIONS,
+                    EXTRA_OPEN_GUARD_REQUEST,
+                    EXTRA_OPEN_GUARD_CHANGES,
+                    EXTRA_OPEN_GUARD_SETTINGS,
+                    EXTRA_OPEN_GUARD_PANIC,
+                )
             } else {
                 emptySet()
             },
@@ -409,14 +424,22 @@ class MainActivity :
         pending_launch.pending_open_billing.value = true
     }
 
+    private fun consume_guard_veto(intent: Intent?) {
+        val link = org.astermail.android.ui.guard.parse_guard_veto(intent?.dataString) ?: return
+        intent?.data = null
+        pending_launch.pending_guard_veto.value = link
+    }
+
     private fun consume_open_email_extra(intent: Intent?) {
         consume_billing_return(intent)
+        consume_guard_veto(intent)
         val trusted = internal_launch_token.is_trusted(this, intent)
         intent?.removeExtra(internal_launch_token.EXTRA_TOKEN)
         if (intent?.getBooleanExtra(EXTRA_OPEN_SESSIONS, false) == true) {
             intent.removeExtra(EXTRA_OPEN_SESSIONS)
             if (trusted) pending_launch.pending_open_sessions.value = true
         }
+        consume_guard_extras(intent, trusted)
         val contact_sync_nonce = runCatching {
             intent?.getStringExtra(org.astermail.android.notifications.contact_sync_launch.EXTRA_NONCE)
         }.getOrNull()
@@ -440,6 +463,23 @@ class MainActivity :
         pending_launch.pending_open_email_id.value = email_id
         pending_launch.pending_reveal_email_id.value = email_id
         pending_launch.pending_reveal_folder_tokens.value = null
+    }
+
+    private fun consume_guard_extras(intent: Intent?, trusted: Boolean) {
+        if (intent == null) return
+        val request_id = intent.getStringExtra(EXTRA_OPEN_GUARD_REQUEST)
+        val changes = intent.getBooleanExtra(EXTRA_OPEN_GUARD_CHANGES, false)
+        val settings = intent.getBooleanExtra(EXTRA_OPEN_GUARD_SETTINGS, false)
+        val panic = intent.getBooleanExtra(EXTRA_OPEN_GUARD_PANIC, false)
+        val account_id = intent.getStringExtra(EXTRA_GUARD_ACCOUNT_ID)
+        intent.removeExtra(EXTRA_OPEN_GUARD_REQUEST)
+        intent.removeExtra(EXTRA_OPEN_GUARD_CHANGES)
+        intent.removeExtra(EXTRA_OPEN_GUARD_SETTINGS)
+        intent.removeExtra(EXTRA_OPEN_GUARD_PANIC)
+        intent.removeExtra(EXTRA_GUARD_ACCOUNT_ID)
+        if (!trusted) return
+        val target = guard_launch_target_for(request_id, changes, settings, account_id, panic) ?: return
+        pending_launch.pending_guard_target.value = target
     }
 
     override fun onResume() {
@@ -512,6 +552,8 @@ class pending_launch_state {
     val pending_open_sessions = mutableStateOf(false)
     val pending_open_contact_sync = mutableStateOf(false)
     val pending_open_billing = mutableStateOf(false)
+    val pending_guard_target = mutableStateOf<guard_launch_target?>(null)
+    val pending_guard_veto = mutableStateOf<org.astermail.android.ui.guard.guard_veto_link?>(null)
     val pending_account_link = mutableStateOf<String?>(null)
     val pending_reveal_email_id = mutableStateOf<String?>(null)
     val pending_reveal_folder_tokens = mutableStateOf<List<String>?>(null)
@@ -526,6 +568,7 @@ class pending_launch_state {
             pending_open_sessions.value ||
             pending_open_contact_sync.value ||
             pending_open_billing.value ||
+            pending_guard_target.value != null ||
             pending_account_link.value != null
 
     fun take_launch_folder(): String? {
@@ -541,8 +584,11 @@ val local_pending_launch = androidx.compose.runtime.staticCompositionLocalOf<pen
 
 @Composable
 private fun AsterRoot() {
+    val pending = local_pending_launch.current
     org.astermail.android.ui.common.aster_theme_root {
-        AsterNavHost()
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsterNavHost()
+        }
     }
 }
 
@@ -558,6 +604,9 @@ private object routes {
         return "sign_in?email=$encoded"
     }
     const val forgot_password = "forgot_password"
+    const val guard_approve = "guard_approve/{id}"
+
+    fun guard_approve_for(request_id: String): String = "guard_approve/" + android.net.Uri.encode(request_id)
     const val inbox = "inbox"
 
     const val mail_detail = "mail_detail/{email_id}?swipe={swipe}&chain={chain}"
@@ -699,6 +748,7 @@ private fun AsterNavHost() {
         return
     }
 
+    val guard_context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {
         runCatching { lock_vm.store.forget_unverifiable_lock(signed_in = is_signed_in_state) }
     }
@@ -706,6 +756,7 @@ private fun AsterNavHost() {
     val start = remember(is_ready) {
         when {
             is_signed_in_state -> routes.inbox
+            org.astermail.android.ui.guard.has_pending_guard_sign_in(guard_context) -> routes.sign_in
             !theme_vm.onboarding_seen.value -> routes.onboarding
             else -> routes.welcome
         }
@@ -815,6 +866,55 @@ private fun AsterNavHost() {
         if (current?.contains("billing") == true) return@LaunchedEffect
         nav_controller.navigate(routes.settings_detail("billing")) {
             launchSingleTop = true
+        }
+    }
+
+    val guard_rescue_context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(is_signed_in_state, is_locked) {
+        if (!is_signed_in_state || is_locked) return@LaunchedEffect
+        if (!org.astermail.android.ui.guard.take_guard_setup_after_rescue(guard_rescue_context)) return@LaunchedEffect
+        nav_controller.navigate(routes.settings_detail("guard") + "?rescued=true") {
+            launchSingleTop = true
+        }
+    }
+
+    val pending_guard = pending.pending_guard_target.value
+    val guard_accounts_vm: org.astermail.android.accounts.AccountsViewModel = hiltViewModel()
+    val guard_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+    androidx.compose.runtime.LaunchedEffect(pending_guard, is_signed_in_state, is_locked) {
+        if (pending_guard == null || !is_signed_in_state || is_locked) return@LaunchedEffect
+        pending.pending_guard_target.value = null
+        val destination = when (pending_guard) {
+            is guard_launch_target.request -> routes.guard_approve_for(pending_guard.id)
+            is guard_launch_target.changes -> routes.settings_detail("guard_changes")
+            is guard_launch_target.settings -> routes.settings_detail("guard")
+            is guard_launch_target.panic -> routes.settings_detail("guard_panic")
+        }
+        val route = org.astermail.android.guard.guard_launch_route_for(
+            pending_guard.account_id,
+            guard_accounts_vm.current_account_id(),
+            guard_accounts_vm::has_stored_session,
+        )
+        when (route) {
+            org.astermail.android.guard.guard_launch_route.ignore -> Unit
+            org.astermail.android.guard.guard_launch_route.current -> nav_controller.navigate(destination) {
+                launchSingleTop = true
+            }
+            org.astermail.android.guard.guard_launch_route.switch -> {
+                val target_account = pending_guard.account_id ?: return@LaunchedEffect
+                guard_accounts_vm.switch_account(target_account) { restored ->
+                    if (!restored) return@switch_account
+                    guard_switch_settings_vm.reset_for_account_switch()
+                    guard_switch_settings_vm.load_preferences(force = true)
+                    guard_switch_settings_vm.load_signature()
+                    nav_controller.navigate(routes.inbox) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    nav_controller.navigate(destination) {
+                        launchSingleTop = true
+                    }
+                }
+            }
         }
     }
 
@@ -1395,6 +1495,30 @@ private fun AsterNavHost() {
                 on_back = { pop_entry(nav_controller, entry) },
             )
         }
+        dialog(
+            routes.guard_approve,
+            arguments = listOf(navArgument(org.astermail.android.ui.guard.GuardApproveViewModel.ARG_ID) { type = NavType.StringType }),
+            dialogProperties = org.astermail.android.ui.guard.guard_approve_dialog_properties,
+        ) {
+            val approve_vm: org.astermail.android.ui.guard.GuardApproveViewModel = hiltViewModel()
+            val app_locked by lock_vm.store.is_locked.collectAsStateWithLifecycle()
+            androidx.compose.runtime.LaunchedEffect(app_locked) {
+                if (!app_locked) approve_vm.retry_unlocked()
+            }
+            org.astermail.android.ui.guard.guard_approve_host(
+                view_model = approve_vm,
+                on_close = { if (!nav_controller.popBackStack()) nav_controller.navigate(routes.inbox) },
+                on_unlock = {
+                    if (lock_vm.store.is_configured()) lock_vm.store.lock() else approve_vm.retry_unlocked()
+                },
+                on_secure = {
+                    nav_controller.navigate(routes.settings_detail("guard_panic")) {
+                        popUpTo(routes.guard_approve) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
         composable(routes.settings) {
             SettingsScreen(
                 on_back = { pop_once(nav_controller) },
@@ -1528,6 +1652,56 @@ private fun AsterNavHost() {
         }
         composable(routes.settings_detail("signature")) {
             SignatureScreen(on_back = { back(); Unit }, on_open = open_detail)
+        }
+        composable(routes.settings_detail("guard")) {
+            org.astermail.android.ui.guard.guard_switches_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+                on_open = open_detail,
+            )
+        }
+        composable(
+            routes.settings_detail("guard") + "?rescued={rescued}",
+            arguments = listOf(androidx.navigation.navArgument("rescued") { type = androidx.navigation.NavType.BoolType; defaultValue = false }),
+        ) { entry ->
+            org.astermail.android.ui.guard.guard_switches_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+                on_open = open_detail,
+                rescued = entry.arguments?.getBoolean("rescued") == true,
+            )
+        }
+        composable(routes.settings_detail("guard_changes")) {
+            org.astermail.android.ui.guard.guard_changes_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+                on_not_me = { nav_controller.navigate(routes.settings_detail("guard_panic")) { launchSingleTop = true } },
+                on_change_password = {
+                    nav_controller.navigate(routes.settings_detail("change_password")) { launchSingleTop = true }
+                },
+            )
+        }
+        composable(routes.settings_detail("guard_panic")) {
+            org.astermail.android.ui.guard.guard_panic_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+                on_change_password = {
+                    nav_controller.navigate(routes.settings_detail("change_password")) { launchSingleTop = true }
+                },
+            )
+        }
+        composable(routes.settings_detail("guard_setup")) {
+            org.astermail.android.ui.guard.guard_setup_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+            )
+        }
+        composable(routes.settings_detail("guard_code")) {
+            org.astermail.android.ui.guard.guard_code_host(
+                view_model = hiltViewModel(),
+                on_back = { back(); Unit },
+                on_join = { nav_controller.navigate(routes.settings_detail("guard_setup")) { launchSingleTop = true } },
+            )
         }
         composable(routes.settings_detail("security")) {
             SecurityScreen(
@@ -1914,6 +2088,22 @@ composable(routes.settings_detail("family")) {
                 nav_controller.navigate(destination) {
                     popUpTo(0) { inclusive = true }
                 }
+            },
+        )
+    }
+
+    val guard_veto = pending.pending_guard_veto.value
+    if (guard_veto != null) {
+        org.astermail.android.ui.guard.guard_veto_host(
+            link = guard_veto,
+            on_close = { pending.pending_guard_veto.value = null },
+            on_change_password = if (is_signed_in_state) {
+                {
+                    pending.pending_guard_veto.value = null
+                    nav_controller.navigate(routes.settings_detail("change_password")) { launchSingleTop = true }
+                }
+            } else {
+                null
             },
         )
     }

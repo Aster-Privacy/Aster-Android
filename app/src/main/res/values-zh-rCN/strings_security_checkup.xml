@@ -15,4 +15,5 @@
     <plurals name="security_actions_remaining">
         <item quantity="other">%1$d 项建议操作</item>
     </plurals>
+    <string name="check_aster_guard">使用 Aster Guard 批准新设备</string>
 </resources>

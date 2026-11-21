@@ -183,6 +183,23 @@ fun SignInScreen(
         return
     }
 
+    val guard_view_model: org.astermail.android.ui.guard.GuardSignInViewModel = hiltViewModel()
+    var guard_restored by remember { mutableStateOf(guard_view_model.restore_pending()) }
+    val guard_challenge = (state as? AuthUiState.GuardRequired)?.challenge
+    if (guard_challenge != null || guard_restored) {
+        org.astermail.android.ui.guard.guard_sign_in_host(
+            view_model = guard_view_model,
+            challenge = guard_challenge,
+            on_done = { view_model.guard_signed_in() },
+            on_back = {
+                guard_view_model.cancel()
+                guard_restored = false
+                if (guard_challenge != null) view_model.cancel_guard(guard_challenge) else view_model.reset_state()
+            },
+        )
+        return
+    }
+
     val active_totp_challenge = cached_totp_challenge
     BackHandler {
         if (active_totp_challenge != null) {

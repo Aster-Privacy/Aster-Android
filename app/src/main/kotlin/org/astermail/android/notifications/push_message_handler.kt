@@ -125,6 +125,14 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         )
         return PushResult.Shown
     }
+    if (type == org.astermail.android.guard.GUARD_PUSH_TYPE) {
+        return org.astermail.android.guard.handle_guard_push(
+            payload = obj,
+            known_accounts = { guard_known_accounts(context) },
+            claim = { NotificationDedupe.claim_event(context, it) },
+            enqueue = { LoginAlertNotifier.enqueue_guard(context, it) },
+        )
+    }
     if (type != "new_mail" && type != "wake") return PushResult.Ignore
     runCatching {
         EntryPointAccessors.fromApplication(
@@ -264,3 +272,9 @@ private fun push_large_icon(
     val settings = notification_avatar_settings(context, runCatching { repo.cached_avatar_preferences() }.getOrNull())
     NotificationAvatars.offline_icon(context, push_avatar_plan(shown_email, shown_name, settings))
 }.getOrNull()
+
+private fun guard_known_accounts(context: Context): List<String> =
+    dagger.hilt.android.EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        LoginAlertNotifier.GuardAlertEntryPoint::class.java,
+    ).account_store().get_all().map { it.id }

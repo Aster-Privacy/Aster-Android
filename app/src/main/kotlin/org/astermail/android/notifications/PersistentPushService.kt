@@ -381,6 +381,15 @@ class PersistentPushService : Service() {
         }
     }
 
+    private fun deliver_guard(text: String) {
+        val lock = acquire_wake_lock(WAKE_LOCK_TIMEOUT_MS)
+        try {
+            runCatching { handle_push_payload(this, text) }
+        } finally {
+            release_wake_lock(lock)
+        }
+    }
+
     private fun deliver_reaction(text: String) {
         val frame = org.astermail.android.mail.parse_reaction_frame(text)
         if (frame == null || frame.event == null) {
@@ -444,6 +453,7 @@ class PersistentPushService : Service() {
                 "new_mail" -> deliver_new_mail()
                 "new_reaction" -> deliver_reaction(text)
                 "mail_mutation" -> handle_mail_mutation(text)
+                "guard" -> deliver_guard(text)
                 "contacts_changed" -> runCatching {
                     org.astermail.android.contacts.sync.ContactSyncAccounts.notify_remote_updated()
                     org.astermail.android.contacts.sync.ContactSyncAccounts

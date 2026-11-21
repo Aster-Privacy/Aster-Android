@@ -5037,6 +5037,44 @@ class SettingsViewModelTest {
         assertEquals(RecoveryRotationPhase.done, vm.state.value.recovery_rotation.phase)
     }
 
+    @Test
+    fun `a held session sign out shows the hold`() = runTest {
+        coEvery { settings_api.revoke_session("s1") } throws
+            org.astermail.android.api.ApiError.GuardHeld("c1", "guard_device_remove", "2026-11-14T11:00:00Z")
+
+        vm.revoke_session("s1")
+        advanceUntilIdle()
+
+        assertEquals("c1", vm.state.value.sessions_held?.id)
+    }
+
+    @Test
+    fun `a held forwarding rule shows the hold and no error`() = runTest {
+        coEvery { auto_forward_api.create_rule(any()) } throws
+            org.astermail.android.api.ApiError.GuardHeld("c2", "forwarding_change", "2026-11-14T11:00:00Z")
+
+        vm.create_forwarding_rule("a@example.com", keep_copy = true)
+        advanceUntilIdle()
+
+        assertEquals("c2", vm.state.value.forwarding_held?.id)
+        assertEquals(SaveStatus.IDLE, vm.state.value.save_status)
+        assertEquals(null, vm.state.value.error)
+    }
+
+    @Test
+    fun `a held recovery email removal shows the hold`() = runTest {
+        coEvery { auth_repository.derive_password_hash_b64(any()) } returns "h"
+        coEvery { recovery_email_api.remove(any()) } throws
+            org.astermail.android.api.ApiError.GuardHeld("c3", "recovery_email_change", "2026-11-14T11:00:00Z")
+
+        vm.remove_recovery_email("pw", null) { "" }
+        advanceUntilIdle()
+
+        assertEquals("c3", vm.state.value.recovery_email_held?.id)
+        assertEquals(SaveStatus.IDLE, vm.state.value.save_status)
+        assertEquals(null, vm.state.value.error)
+    }
+
     private fun smtp_body_now(): SmtpTokensBody {
         val s = vm.state.value
         return org.astermail.android.ui.settings.detail.smtp_tokens_body(

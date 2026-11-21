@@ -31,14 +31,20 @@ object DeviceKeyFingerprint {
     private const val GROUP_CHARS = 4
     private const val FINGERPRINT_HEX_CHARS = FINGERPRINT_BYTES * 2
     private const val MAX_INPUT_CHARS = 64
+    const val ACTION_PK_BYTES = 33
     private val HEX_CHAR = Regex("[0-9a-fA-F]")
     private val ALLOWED_INPUT = Regex("[0-9a-fA-F\\s-]*")
 
-    fun of(ed25519_pk: ByteArray, mlkem_pk: ByteArray, x25519_pk: ByteArray): String {
+    fun of(
+        ed25519_pk: ByteArray,
+        mlkem_pk: ByteArray,
+        x25519_pk: ByteArray,
+        action_pk: ByteArray? = null,
+    ): String {
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(DOMAIN.toByteArray(Charsets.US_ASCII))
         digest.update(0.toByte())
-        for (key in listOf(ed25519_pk, mlkem_pk, x25519_pk)) {
+        for (key in listOfNotNull(ed25519_pk, mlkem_pk, x25519_pk, action_pk)) {
             digest.update(ByteBuffer.allocate(4).putInt(key.size).array())
             digest.update(key)
         }
@@ -47,7 +53,23 @@ object DeviceKeyFingerprint {
         return hex.chunked(GROUP_CHARS).joinToString(" ")
     }
 
-    fun of_encoded(ed25519_pk: String, mlkem_pk: String, x25519_pk: String): String? {
+    fun decode_action_pk(action_pk: String?): Result<ByteArray?> {
+        if (action_pk.isNullOrBlank()) return Result.success(null)
+        val bytes = runCatching { DeviceEnvelope.base64url_decode(action_pk) }.getOrNull()
+        return if (bytes != null && bytes.size == ACTION_PK_BYTES) {
+            Result.success(bytes)
+        } else {
+            Result.failure(DeviceEnvelope.InvalidDeviceKeyException("bad action key size"))
+        }
+    }
+
+    fun of_encoded(
+        ed25519_pk: String,
+        mlkem_pk: String,
+        x25519_pk: String,
+        action_pk: String? = null,
+    ): String? {
+        val action = decode_action_pk(action_pk).getOrElse { return null }
         val ed = runCatching { DeviceEnvelope.base64url_decode(ed25519_pk) }.getOrNull() ?: return null
         val mlkem = runCatching { DeviceEnvelope.base64url_decode(mlkem_pk) }.getOrNull() ?: return null
         val x = runCatching { DeviceEnvelope.base64url_decode(x25519_pk) }.getOrNull() ?: return null
@@ -57,7 +79,7 @@ object DeviceKeyFingerprint {
         ) {
             return null
         }
-        return of(ed, mlkem, x)
+        return of(ed, mlkem, x, action)
     }
 
     fun format_input(raw: String): String =

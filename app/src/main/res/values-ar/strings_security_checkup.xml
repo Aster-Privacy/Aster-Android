@@ -20,4 +20,5 @@
         <item quantity="many">الإجراءات الموصى بها: %1$d</item>
         <item quantity="other">الإجراءات الموصى بها: %1$d</item>
     </plurals>
+    <string name="check_aster_guard">الموافقة على الأجهزة الجديدة باستخدام Aster Guard</string>
 </resources>

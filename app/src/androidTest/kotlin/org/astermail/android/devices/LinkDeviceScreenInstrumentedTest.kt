@@ -85,6 +85,7 @@ class LinkDeviceScreenInstrumentedTest {
         override suspend fun confirm_code(
             code: String,
             sealed_envelope: String,
+            action: org.astermail.android.api.guard.SignedAction?,
         ): DeviceCodeConfirmResponse {
             confirm_calls += 1
             confirmed_envelope = sealed_envelope
@@ -114,7 +115,7 @@ class LinkDeviceScreenInstrumentedTest {
     }
 
     private fun show(api: DeviceCodeApi, store: SessionKeyStore) {
-        show_vm(LinkDeviceViewModel(api, store))
+        show_vm(LinkDeviceViewModel(api, store, guard_off_approver()))
     }
 
     private fun show_vm(vm: LinkDeviceViewModel) {
@@ -227,7 +228,7 @@ class LinkDeviceScreenInstrumentedTest {
     @Test
     fun tapping_confirm_twice_links_the_device_once() {
         val api = FakeApi(pending(), confirm_delay_ms = 750)
-        val vm = LinkDeviceViewModel(api, session_store())
+        val vm = LinkDeviceViewModel(api, session_store(), guard_off_approver())
         show_vm(vm)
 
         enter_code_and_continue()
@@ -326,5 +327,15 @@ class LinkDeviceScreenInstrumentedTest {
     private fun <T : Any> require_value(value: T?): T {
         if (value == null) throw AssertionError("expected a value")
         return value
+    }
+
+    private fun guard_off_approver(): org.astermail.android.guard.GuardLinkApprover {
+        val guard_api = io.mockk.mockk<org.astermail.android.api.guard.GuardApi>()
+        io.mockk.coEvery { guard_api.status() } throws IllegalStateException("off")
+        return org.astermail.android.guard.GuardLinkApprover(
+            guard_api,
+            io.mockk.mockk(relaxed = true),
+            org.astermail.android.ui.guard.guard_current_user { null },
+        )
     }
 }

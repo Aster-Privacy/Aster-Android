@@ -155,6 +155,8 @@ class AccountsViewModel @Inject constructor(
     fun has_stored_session(account_id: String): Boolean =
         auth_repository.has_stored_session(account_id)
 
+    fun current_account_id(): String? = account_store.get_current_id()
+
     private companion object {
         const val limit_key_max_multi_accounts = "max_multi_accounts"
         const val profile_refresh_interval_ms = 60_000L

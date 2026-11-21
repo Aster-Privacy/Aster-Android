@@ -51,6 +51,7 @@ sealed interface AuthUiState {
     data object AccountSuspended : AuthUiState
     data object Success : AuthUiState
     data class TotpChallenge(val challenge: org.astermail.android.auth.TotpChallenge) : AuthUiState
+    data class GuardRequired(val challenge: GuardSignInChallenge) : AuthUiState
 }
 
 @HiltViewModel
@@ -291,6 +292,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun failure_state(cause: Throwable): AuthUiState {
+        if (cause is GuardSignInRequired) return AuthUiState.GuardRequired(cause.challenge)
         if (cause is kotlinx.coroutines.TimeoutCancellationException && repository.is_signed_in.value) {
             return AuthUiState.Success
         }
@@ -427,6 +429,20 @@ class AuthViewModel @Inject constructor(
 
     fun reset_state() {
         _ui_state.value = AuthUiState.Idle
+    }
+
+    fun cancel_guard(challenge: GuardSignInChallenge) {
+        challenge.credentials?.wipe()
+        _ui_state.value = AuthUiState.Idle
+    }
+
+    fun guard_signed_in() {
+        _ui_state.value = AuthUiState.Success
+    }
+
+    override fun onCleared() {
+        (_ui_state.value as? AuthUiState.GuardRequired)?.challenge?.credentials?.wipe()
+        super.onCleared()
     }
 
     fun cancel_totp(challenge: org.astermail.android.auth.TotpChallenge): Boolean {

@@ -108,6 +108,10 @@ fun TwoFactorScreen(
             return@detail_scaffold
         }
 
+        state.held?.let { notice ->
+            org.astermail.android.guard.GuardHeldBanner(notice)
+            v_gap(AsterSpacing.md)
+        }
         state.error?.let { err ->
             error_banner(err)
             v_gap(AsterSpacing.md)

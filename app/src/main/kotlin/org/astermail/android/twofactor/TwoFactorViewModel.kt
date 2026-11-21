@@ -71,6 +71,7 @@ data class TwoFactorUiState(
     val code_input: String = "",
     val password_input: String = "",
     val backup_codes: List<String> = emptyList(),
+    val held: org.astermail.android.guard.guard_held_notice? = null,
 )
 
 internal fun after_failed_setup_verification(
@@ -253,11 +254,17 @@ class TwoFactorViewModel @Inject constructor(
                         mode = TwoFactorMode.Idle,
                         code_input = "",
                         password_input = "",
+                        held = null,
                     )
                 },
                 onFailure = {
                     if (it is kotlinx.coroutines.CancellationException) throw it
-                    _state.value.copy(is_busy = false, error = readable(it))
+                    val held = org.astermail.android.guard.guard_held_of(it)
+                    if (held != null) {
+                        _state.value.copy(is_busy = false, held = held, error = null)
+                    } else {
+                        _state.value.copy(is_busy = false, error = readable(it))
+                    }
                 },
             )
         }

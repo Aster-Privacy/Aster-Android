@@ -28,6 +28,7 @@ import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import java.util.concurrent.atomic.AtomicInteger
 
 object SecureScreenGuard {
@@ -60,6 +61,7 @@ fun Context.find_host_activity(): Activity? {
 @Composable
 fun secure_screen() {
     val context = LocalContext.current
+    val view = LocalView.current
     DisposableEffect(Unit) {
         val activity = context.find_host_activity()
         SecureScreenGuard.acquire()
@@ -70,9 +72,13 @@ fun secure_screen() {
         val root = activity?.window?.decorView?.rootView
         val previous_filter = root?.filterTouchesWhenObscured ?: false
         root?.filterTouchesWhenObscured = true
+        val own_root = view.rootView.takeIf { it !== root }
+        val previous_own_filter = own_root?.filterTouchesWhenObscured ?: false
+        own_root?.filterTouchesWhenObscured = true
         onDispose {
             SecureScreenGuard.release()
             root?.filterTouchesWhenObscured = previous_filter
+            own_root?.filterTouchesWhenObscured = previous_own_filter
             (activity as? SecureFlagHost)?.enforce_secure_flag()
         }
     }

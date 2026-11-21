@@ -87,7 +87,14 @@ class LinkDeviceFingerprintTest {
 
     private suspend fun run_flow(device: PendingDevice): LinkDeviceViewModel {
         coEvery { api.verify_code(any()) } returns device
-        val vm = LinkDeviceViewModel(api, session_key_store)
+        val guard_api = mockk<org.astermail.android.api.guard.GuardApi>()
+        coEvery { guard_api.status() } throws IllegalStateException("off")
+        val approver = org.astermail.android.guard.GuardLinkApprover(
+            guard_api,
+            mockk(relaxed = true),
+            org.astermail.android.ui.guard.guard_current_user { null },
+        )
+        val vm = LinkDeviceViewModel(api, session_key_store, approver)
         vm.on_code_change(code)
         vm.verify_code()
         vm.state.first { !it.is_verifying }
@@ -117,7 +124,7 @@ class LinkDeviceFingerprintTest {
 
         assertEquals(LinkDeviceError.FINGERPRINT_MISMATCH, vm.state.value.error)
         verify(exactly = 0) { session_key_store.get_passphrase() }
-        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+        coVerify(exactly = 0) { api.confirm_code(any(), any(), any()) }
     }
 
     @Test
@@ -130,7 +137,7 @@ class LinkDeviceFingerprintTest {
 
         assertEquals(LinkDeviceError.FINGERPRINT_MISMATCH, vm.state.value.error)
         verify(exactly = 0) { session_key_store.get_passphrase() }
-        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+        coVerify(exactly = 0) { api.confirm_code(any(), any(), any()) }
     }
 
     @Test
@@ -143,7 +150,7 @@ class LinkDeviceFingerprintTest {
         confirm_and_settle(vm)
 
         assertEquals(LinkDeviceError.FINGERPRINT_MISMATCH, vm.state.value.error)
-        coVerify(exactly = 0) { api.confirm_code(any(), any()) }
+        coVerify(exactly = 0) { api.confirm_code(any(), any(), any()) }
     }
 
     @Test
@@ -162,7 +169,7 @@ class LinkDeviceFingerprintTest {
     @Test
     fun `a matching fingerprint seals and confirms the link`() = runTest(dispatcher) {
         every { session_key_store.get_passphrase() } answers { "vault-passphrase".toByteArray() }
-        coEvery { api.confirm_code(any(), any()) } returns
+        coEvery { api.confirm_code(any(), any(), any()) } returns
             DeviceCodeConfirmResponse(device_id = "dev_1", machine_name = "Laptop")
         val real_mlkem = RatchetCrypto.ml_kem_768_generate_keypair().public_key
         val vm = run_flow(pending(mlkem = DeviceEnvelope.base64url_encode(real_mlkem)))
@@ -172,7 +179,7 @@ class LinkDeviceFingerprintTest {
 
         assertEquals(LinkDeviceStep.SUCCESS, vm.state.value.step)
         assertNull(vm.state.value.error)
-        coVerify(exactly = 1) { api.confirm_code(any(), any()) }
+        coVerify(exactly = 1) { api.confirm_code(any(), any(), any()) }
     }
 
     @Test

@@ -48,6 +48,7 @@ data class MailRulesUiState(
     @StringRes val error: Int? = null,
     val last_saved_id: String? = null,
     val running_rule_id: String? = null,
+    val held: org.astermail.android.guard.guard_held_notice? = null,
 )
 
 @HiltViewModel
@@ -97,6 +98,7 @@ class MailRulesViewModel @Inject constructor(
         on_done: (String?) -> Unit = {},
     ) {
         viewModelScope.launch {
+            _state.value = _state.value.copy(held = null)
             try {
                 val response = api.create(
                     CreateRuleRequest(
@@ -114,7 +116,12 @@ class MailRulesViewModel @Inject constructor(
                 on_done(response.id)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(error = rule_save_error(t))
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(held = held, error = null)
+                } else {
+                    _state.value.copy(error = rule_save_error(t))
+                }
                 on_done(null)
             }
         }
@@ -131,6 +138,7 @@ class MailRulesViewModel @Inject constructor(
         on_done: (Boolean) -> Unit = {},
     ) {
         viewModelScope.launch {
+            _state.value = _state.value.copy(held = null)
             try {
                 val updated = api.update(
                     rule_id,
@@ -149,7 +157,12 @@ class MailRulesViewModel @Inject constructor(
                 on_done(true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(error = rule_save_error(t))
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(held = held, error = null)
+                } else {
+                    _state.value.copy(error = rule_save_error(t))
+                }
                 on_done(false)
             }
         }
@@ -163,9 +176,18 @@ class MailRulesViewModel @Inject constructor(
                 api.delete(rule_id)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(rules = original, error = R.string.rules_error_delete)
+                val held = org.astermail.android.guard.guard_held_of(t)
+                _state.value = if (held != null) {
+                    _state.value.copy(rules = original, held = held, error = null)
+                } else {
+                    _state.value.copy(rules = original, error = R.string.rules_error_delete)
+                }
             }
         }
+    }
+
+    fun clear_held() {
+        _state.value = _state.value.copy(held = null)
     }
 
     fun toggle_enabled(rule_id: String) {

@@ -109,4 +109,30 @@ class SecurityStringsWebParityTest {
             }
         }
     }
+
+    private val checkup_web_wording = mapOf(
+        "check_aster_guard" to "New device approval with Aster Guard",
+    )
+
+    private fun checkup_strings_for(locale: String): Map<String, String> {
+        val file = File("src/main/res/$locale/strings_security_checkup.xml")
+        assertTrue("missing ${file.absolutePath}", file.exists())
+        return Regex("<string name=\"([^\"]+)\">(.*?)</string>", RegexOption.DOT_MATCHES_ALL)
+            .findAll(file.readText())
+            .associate { it.groupValues[1] to it.groupValues[2] }
+    }
+
+    @Test
+    fun checkup_rows_match_the_web_wording_in_every_locale() {
+        val english = checkup_strings_for("values")
+        checkup_web_wording.forEach { (key, expected) ->
+            assertEquals("string $key must match the web checkup wording", expected, english[key]?.let(::unescape))
+        }
+        locales.forEach { locale ->
+            val strings = checkup_strings_for(locale)
+            checkup_web_wording.keys.forEach { key ->
+                assertTrue("$locale is missing $key", strings[key]?.isNotBlank() == true)
+            }
+        }
+    }
 }

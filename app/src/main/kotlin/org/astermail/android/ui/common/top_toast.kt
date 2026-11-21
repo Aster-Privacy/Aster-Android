@@ -32,6 +32,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -150,7 +151,6 @@ private fun toast_icon_action(
         modifier = Modifier
             .size(toast_control_size)
             .clip(SquircleShape(999.dp))
-            .background(toast_control_fill(colors))
             .clickable(enabled = enabled, onClick = on_click),
         contentAlignment = Alignment.Center,
     ) {
@@ -171,9 +171,6 @@ private const val toast_pull_resistance = 0.32f
 
 private fun toast_surface_fill(colors: org.astermail.android.design.AsterSemanticColors) =
     if (colors.is_dark) colors.bg_card.lighten(0.14f) else colors.bg_card
-
-private fun toast_control_fill(colors: org.astermail.android.design.AsterSemanticColors) =
-    if (colors.is_dark) colors.bg_card.lighten(0.28f) else colors.bg_hover
 
 @Composable
 fun top_toast_overlay(
@@ -275,6 +272,7 @@ private fun toast_card(
         .shadow(18.dp, shape, clip = false)
         .clip(shape)
         .background(fill)
+        .then(if (colors.is_dark) Modifier else Modifier.border(1.dp, colors.border_secondary, shape))
         .clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
@@ -378,7 +376,6 @@ private fun toast_card(
             modifier = Modifier
                 .size(32.dp)
                 .clip(SquircleShape(999.dp))
-                .background(toast_control_fill(colors))
                 .clickable(role = Role.Button) { finish { it.on_close?.invoke() } },
             contentAlignment = Alignment.Center,
         ) {

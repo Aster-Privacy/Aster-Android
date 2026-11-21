@@ -104,8 +104,10 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = project.hasProperty("screenshots")
         unitTests.all { test ->
             test.maxHeapSize = "2g"
+            if (!project.hasProperty("screenshots")) test.exclude("**/screenshots/**")
         }
     }
 
@@ -228,6 +230,9 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.json)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.17")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.security.crypto)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -50,18 +50,23 @@ data class PendingDevice(
     val machine_name: String = "",
     val device_type: String = "",
     val envelope_versions: List<Int> = emptyList(),
+    val action_pk: String? = null,
+    val keys_digest: String = "",
 )
 
 @Serializable
 data class DeviceCodeConfirmRequest(
     val code: String,
     val sealed_envelope: String,
+    val action: org.astermail.android.api.guard.SignedAction? = null,
 )
 
 @Serializable
 data class DeviceCodeConfirmResponse(
     val device_id: String = "",
     val machine_name: String = "",
+    val activates_at: String? = null,
+    val change_id: String? = null,
 )
 
 sealed class DeviceLinkError(message: String) : Exception(message) {
@@ -73,7 +78,11 @@ sealed class DeviceLinkError(message: String) : Exception(message) {
 
 interface DeviceCodeApi {
     suspend fun verify_code(code: String): PendingDevice
-    suspend fun confirm_code(code: String, sealed_envelope: String): DeviceCodeConfirmResponse
+    suspend fun confirm_code(
+        code: String,
+        sealed_envelope: String,
+        action: org.astermail.android.api.guard.SignedAction? = null,
+    ): DeviceCodeConfirmResponse
 }
 
 fun normalize_device_code(raw: String): String =
@@ -95,6 +104,7 @@ fun map_device_link_error(status: Int, body: String): DeviceLinkError? {
     val error = fields["error"].orEmpty()
     val code = fields["code"].orEmpty()
 
+    if (code.startsWith("GUARD_")) return null
     if (error == "plan_upgrade_required") return DeviceLinkError.PlanUpgradeRequired
     if (status == 409 || code == "CONFLICT") return DeviceLinkError.AlreadyLinked
     if (status == 404 || code == "NOT_FOUND") return DeviceLinkError.CodeNotFound
@@ -133,6 +143,7 @@ class DeviceCodeApiImpl(private val client: ApiClient) : DeviceCodeApi {
     override suspend fun confirm_code(
         code: String,
         sealed_envelope: String,
+        action: org.astermail.android.api.guard.SignedAction?,
     ): DeviceCodeConfirmResponse {
         val normalized = require_normalized(code)
         val response = client.http.post("${client.base_url}$base/confirm") {
@@ -142,6 +153,7 @@ class DeviceCodeApiImpl(private val client: ApiClient) : DeviceCodeApi {
                 DeviceCodeConfirmRequest(
                     code = normalized,
                     sealed_envelope = sealed_envelope,
+                    action = action,
                 ),
             )
         }

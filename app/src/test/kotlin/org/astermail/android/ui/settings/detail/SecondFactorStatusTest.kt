@@ -20,6 +20,9 @@
 //
 package org.astermail.android.ui.settings.detail
 
+import org.astermail.android.api.guard.GuardStatus
+import org.astermail.android.api.guard.GuardSwitch
+import org.astermail.android.ui.guard.guard_criterion_met
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -86,5 +89,30 @@ class SecondFactorStatusTest {
 
         assertEquals(2, security_score(with_key) - security_score(without_key))
         assertFalse(has_second_factor(totp_enabled = false, security_key_count = 0))
+    }
+
+    @Test
+    fun aster_guard_is_left_out_of_the_score_when_hidden() {
+        val input = security_score_input(totp_enabled = true)
+        assertEquals(security_score_max, security_score_max_for(input))
+        assertEquals(1, security_score(input))
+    }
+
+    @Test
+    fun aster_guard_weighs_the_same_as_two_factor() {
+        val off = security_score_input(guard_met = false)
+        val on = off.copy(guard_met = true)
+        val with_two_factor = off.copy(totp_enabled = true)
+        assertEquals(security_score_max + 1, security_score_max_for(off))
+        assertEquals(security_score(with_two_factor) - security_score(off), security_score(on) - security_score(off))
+        assertEquals(1, security_score(on))
+    }
+
+    @Test
+    fun aster_guard_counts_when_new_device_approval_is_on() {
+        assertTrue(guard_criterion_met(GuardStatus(switches = GuardSwitch.NEW_DEVICE_APPROVAL)))
+        assertTrue(guard_criterion_met(GuardStatus(switches = GuardSwitch.NEW_DEVICE_APPROVAL or GuardSwitch.HOLD_CHANGES)))
+        assertFalse(guard_criterion_met(GuardStatus(switches = GuardSwitch.HOLD_CHANGES)))
+        assertFalse(guard_criterion_met(GuardStatus()))
     }
 }

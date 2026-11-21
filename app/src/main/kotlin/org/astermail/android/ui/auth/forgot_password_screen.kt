@@ -237,6 +237,7 @@ fun ForgotPasswordScreen(
                             on_confirm_change = { new_password_confirm = it },
                             is_loading = state.is_loading,
                             error = state.error,
+                            held = state.held,
                             on_submit = { pw, confirm ->
                                 view_model.submit_new_password(pw, confirm, previous_password)
                             },
@@ -815,6 +816,7 @@ private fun password_step(
     on_previous_password_change: (String) -> Unit = {},
     on_skip_previous_password: () -> Unit = {},
     on_use_previous_password: () -> Unit = {},
+    held: org.astermail.android.guard.guard_held_notice? = null,
 ) {
     val colors = AsterMaterial.colors
     var password_visible by remember { mutableStateOf(false) }
@@ -831,6 +833,11 @@ private fun password_step(
     )
 
     Spacer(Modifier.height(AsterSpacing.xxl))
+
+    if (held != null) {
+        org.astermail.android.guard.GuardHeldBanner(held)
+        Spacer(Modifier.height(AsterSpacing.lg))
+    }
 
     if (error != null) {
         error_banner(message = error)

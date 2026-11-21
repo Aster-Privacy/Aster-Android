@@ -38,6 +38,9 @@ class SignInPathTest {
             "/api/core/v1/auth/hardware-keys/assert/initiate",
             "/api/core/v1/auth/hardware-keys/assert/verify",
             "/api/core/v1/auth/recovery/start",
+            "/api/core/v1/guard/sign-in/status",
+            "/api/core/v1/guard/sign-in/rescue/status",
+            "/api/core/v1/guard/veto",
         ).forEach { assertTrue(it, is_sign_in_path(it)) }
     }
 
@@ -52,6 +55,8 @@ class SignInPathTest {
             "/api/core/v1/auth/hardware-keys/step-up/options",
             "/api/core/v1/auth/totp/enable",
             "/api/mail/v1/messages",
+            "/api/core/v1/guard/requests",
+            "/api/core/v1/guard",
         ).forEach { assertFalse(it, is_sign_in_path(it)) }
     }
 }

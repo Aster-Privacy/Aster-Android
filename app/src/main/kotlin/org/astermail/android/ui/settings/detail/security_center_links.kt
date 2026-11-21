@@ -29,6 +29,7 @@ enum class security_check {
     tracking_pixels,
     remote_images,
     strip_exif,
+    aster_guard,
 }
 
 enum class security_anchor {
@@ -47,6 +48,7 @@ sealed interface security_check_target {
 
 const val security_route_two_factor = "two_factor"
 const val security_route_recovery_email = "recovery_email"
+const val security_route_guard = "guard"
 
 fun security_check_target_for(check: security_check): security_check_target = when (check) {
     security_check.two_factor -> security_check_target.screen(security_route_two_factor)
@@ -56,6 +58,7 @@ fun security_check_target_for(check: security_check): security_check_target = wh
     security_check.tracking_pixels -> security_check_target.section(security_anchor.tracking_pixels)
     security_check.remote_images -> security_check_target.section(security_anchor.remote_images)
     security_check.strip_exif -> security_check_target.section(security_anchor.strip_exif)
+    security_check.aster_guard -> security_check_target.screen(security_route_guard)
 }
 
 fun security_anchor_fallback(anchor: security_anchor): security_anchor? = when (anchor) {

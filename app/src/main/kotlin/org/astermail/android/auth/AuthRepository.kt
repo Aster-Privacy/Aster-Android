@@ -119,6 +119,32 @@ private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 private const val ACCOUNT_SLOT_TIMEOUT_MS = 10_000L
 private const val ACCOUNT_SLOT_RELEASE_TIMEOUT_MS = 3_000L
 
+class GuardLoginCredentials(
+    val password_bytes: ByteArray,
+    val password_hash_bytes: ByteArray,
+    val salt_bytes: ByteArray,
+    val user_hash: String,
+) {
+    fun wipe() {
+        password_bytes.fill(0)
+        password_hash_bytes.fill(0)
+    }
+}
+
+class GuardSignInChallenge(
+    val request_id: String,
+    val guard_token: String,
+    val expires_at: String,
+    val methods: List<String>,
+    val email: String,
+    val user_id: String?,
+    val credentials: GuardLoginCredentials?,
+)
+
+class GuardSignInRequired(val challenge: GuardSignInChallenge) : Exception("guard approval required")
+
+class GuardCredentialsMissing : IllegalStateException("guard sign-in needs the password again")
+
 sealed interface LoginOutcome {
     data object Success : LoginOutcome
     data class NeedsTotp(val challenge: TotpChallenge) : LoginOutcome
@@ -149,6 +175,7 @@ class AuthRepository @Inject constructor(
     private val offer_preferences_store: org.astermail.android.ui.upgrade.OfferPreferencesStore,
     private val login_pins: LoginProofPinStore,
     private val external_pgp_key_store: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>,
+    private val guard_device_store: dagger.Lazy<org.astermail.android.guard.GuardDeviceStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -579,6 +606,15 @@ class AuthRepository @Inject constructor(
         } catch (failed: Throwable) {
             login_enrollment?.wipe()
             login_v3_input?.fill(0)
+            if (failed is ApiError.GuardRequired) {
+                throw GuardSignInRequired(
+                    guard_challenge(
+                        failed,
+                        normalized,
+                        GuardLoginCredentials(password_bytes, password_hash_bytes, salt_bytes, user_hash),
+                    ),
+                )
+            }
             password_bytes.fill(0)
             password_hash_bytes.fill(0)
             throw failed
@@ -645,10 +681,12 @@ class AuthRepository @Inject constructor(
             remember_me = challenge.remember_me,
             device_label = login_device_label(),
         )
-        val outcome = if (use_backup_code) {
-            auth_api.verify_backup_code_login(request)
-        } else {
-            auth_api.verify_totp_login(request)
+        val outcome = guard_aware(challenge) {
+            if (use_backup_code) {
+                auth_api.verify_backup_code_login(request)
+            } else {
+                auth_api.verify_totp_login(request)
+            }
         }
         finish_second_factor_login(outcome, challenge, trust_device)
     }
@@ -668,8 +706,73 @@ class AuthRepository @Inject constructor(
         challenge: TotpChallenge,
         trust_device: Boolean,
     ): Result<Unit> = runCatching {
-        val outcome = auth_api.verify_webauthn_assertion(request)
+        val outcome = guard_aware(challenge) { auth_api.verify_webauthn_assertion(request) }
         finish_second_factor_login(outcome, challenge, trust_device)
+    }
+
+    private suspend fun <T> guard_aware(challenge: TotpChallenge, call: suspend () -> T): T = try {
+        call()
+    } catch (required: ApiError.GuardRequired) {
+        challenge.login_v3_enroll_input?.fill(0)
+        challenge.login_enrollment?.wipe()
+        throw GuardSignInRequired(
+            guard_challenge(
+                required,
+                challenge.email,
+                GuardLoginCredentials(
+                    challenge.password_bytes,
+                    challenge.password_hash_bytes,
+                    challenge.salt_bytes,
+                    challenge.user_hash,
+                ),
+            ),
+        )
+    }
+
+    private fun guard_challenge(
+        required: ApiError.GuardRequired,
+        email: String,
+        credentials: GuardLoginCredentials?,
+    ): GuardSignInChallenge = GuardSignInChallenge(
+        request_id = required.request_id,
+        guard_token = required.guard_token,
+        expires_at = required.expires_at,
+        methods = required.methods,
+        email = email,
+        user_id = required.user_id ?: runCatching {
+            account_store.get_all().firstOrNull { it.email.equals(email, ignoreCase = true) }?.id
+        }.getOrNull(),
+        credentials = credentials,
+    )
+
+    suspend fun complete_guard_sign_in(
+        challenge: GuardSignInChallenge,
+        complete: org.astermail.android.api.guard.GuardSignInComplete,
+        passphrase: ByteArray?,
+    ) {
+        val credentials = challenge.credentials ?: run {
+            passphrase?.fill(0)
+            throw GuardCredentialsMissing()
+        }
+        var handed_over = false
+        try {
+            complete.trusted_device_token?.takeIf { it.isNotBlank() }?.let { token ->
+                trusted_device_store.put_token(challenge.email, token)
+            }
+            val vault_secret = passphrase ?: credentials.password_bytes
+            if (vault_secret !== credentials.password_bytes) credentials.password_bytes.fill(0)
+            handed_over = true
+            complete_login(
+                complete.login,
+                vault_secret,
+                credentials.password_hash_bytes,
+                credentials.salt_bytes,
+                credentials.user_hash,
+                null,
+            )
+        } finally {
+            if (!handed_over) passphrase?.fill(0)
+        }
     }
 
     fun webauthn_origin(): String = api_client.webauthn_origin.trimEnd('/')
@@ -2111,6 +2214,7 @@ class AuthRepository @Inject constructor(
         }
         if (current_id != null) {
             runCatching { session_snapshot_store.remove(current_id) }
+            if (remove_account) runCatching { forget_guard_device(current_id) }
             if (remove_account) runCatching { account_store.remove(current_id) }
             if (remove_account) {
                 runCatching { org.astermail.android.ui.drawer.folder_expansion_store.clear(context, current_id) }
@@ -2119,6 +2223,15 @@ class AuthRepository @Inject constructor(
         if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
+    }
+
+    private fun forget_guard_device(account_id: String) {
+        val user = runCatching { java.util.UUID.fromString(account_id) }.getOrNull() ?: return
+        val alias = runCatching { guard_device_store.get().clear(user) }.getOrNull()
+            ?: org.astermail.android.guard.GuardActionKey.default_alias(user)
+        runCatching { org.astermail.android.guard.GuardActionKey.delete(alias) }
+        runCatching { org.astermail.android.guard.guard_local_approvals.clear_account(account_id) }
+        runCatching { org.astermail.android.notifications.LoginAlertNotifier.cancel_guard_for_account(context, account_id) }
     }
 
     private var uid_update_attempted_for: String? = null
@@ -2849,6 +2962,7 @@ class AuthRepository @Inject constructor(
             }.getOrDefault(emptyList())
             runCatching { database.pending_send_dao().clear_for_account(current_id) }
             runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
+            runCatching { forget_guard_device(current_id) }
             account_store.remove(current_id)
             runCatching { session_snapshot_store.remove(current_id) }
         }

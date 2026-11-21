@@ -98,6 +98,8 @@ import org.astermail.android.api.send.SendApi
 import org.astermail.android.api.send.SendApiImpl
 import org.astermail.android.api.devices.DeviceCodeApi
 import org.astermail.android.api.devices.DeviceCodeApiImpl
+import org.astermail.android.api.guard.GuardApi
+import org.astermail.android.api.guard.GuardApiImpl
 import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.security.SecurityApiImpl
 import org.astermail.android.api.signatures.SignaturesApi
@@ -356,6 +358,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provide_device_code_api(client: ApiClient): DeviceCodeApi = DeviceCodeApiImpl(client)
+
+    @Provides
+    @Singleton
+    fun provide_guard_api(client: ApiClient): GuardApi = GuardApiImpl(client)
 
     @Provides
     @Singleton

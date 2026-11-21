@@ -91,6 +91,10 @@ fun server_supplied_detail(t: Throwable): String? {
         ApiError.UnauthorizedError,
         ApiError.NotFoundError,
         is ApiError.ServerError,
+        is ApiError.GuardRequired,
+        is ApiError.GuardHeld,
+        is ApiError.GuardDevicePending,
+        is ApiError.GuardRetry,
         -> null
     }
 }
