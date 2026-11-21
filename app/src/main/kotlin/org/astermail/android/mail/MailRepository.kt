@@ -6475,7 +6475,14 @@ class MailRepository @Inject constructor(
         if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
             return org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
         }
-        val result = ratchet_decryptor.try_decrypt(candidate, our_addresses, envelope.from_email, message_id)
+        val attempted = ratchet_decryptor.try_decrypt(candidate, our_addresses, envelope.from_email, message_id)
+        val result = if (
+            attempted == org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL && !message_id.isNullOrBlank()
+        ) {
+            ratchet_plaintext_cache.get(message_id, envelope.from_email) ?: attempted
+        } else {
+            attempted
+        }
         if (!message_id.isNullOrBlank()) {
             if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
                 ratchet_undecryptable_at.remove(message_id)

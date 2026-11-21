@@ -356,6 +356,7 @@ class MailPollingWorker(
                     repo.begin_decrypt_retry()
                     return@repeat
                 }
+                if (candidate?.is_decrypt_pending == true && attempt < 2) return@repeat
 
                 val candidate_sender = candidate?.let { resolve_sender(it) }
                 if (candidate != null &&
@@ -385,16 +386,12 @@ class MailPollingWorker(
                 posted_this_run = posted
                 return posted || !throttled
             }
-            val subject = if (fresh.is_undecryptable) {
-                localized(context).getString(org.astermail.android.R.string.decrypt_failed_title)
-            } else {
-                fresh.subject.trim()
-            }
-            val preview = if (fresh.is_undecryptable) {
-                localized(context).getString(org.astermail.android.R.string.undecryptable_message_preview)
-            } else {
-                fresh.preview
-            }
+            val (subject, preview) = notification_text(
+                fresh.subject,
+                fresh.preview,
+                fresh.is_undecryptable,
+                fresh.is_decrypt_pending,
+            )
             val message_id = message_notification_id(fresh.id.hashCode())
             val avatar_settings = notification_avatar_settings(
                 context,
@@ -434,24 +431,21 @@ class MailPollingWorker(
             avatar_budget: NotificationAvatarBudget,
             content_hidden: Boolean,
         ) {
-            val strings = localized(context)
             for (item in items) {
                 val item_sender = resolve_sender(item)
                 if (item_sender.isBlank()) continue
                 if (!claim_item_notification(context, item.id)) continue
+                val (item_subject, item_preview) = notification_text(
+                    item.subject,
+                    item.preview,
+                    item.is_undecryptable,
+                    item.is_decrypt_pending,
+                )
                 post_message_notification(
                     item_id = item.id,
                     sender = item_sender,
-                    subject = if (item.is_undecryptable) {
-                        strings.getString(org.astermail.android.R.string.decrypt_failed_title)
-                    } else {
-                        item.subject.trim()
-                    },
-                    preview = if (item.is_undecryptable) {
-                        strings.getString(org.astermail.android.R.string.undecryptable_message_preview)
-                    } else {
-                        item.preview
-                    },
+                    subject = item_subject,
+                    preview = item_preview,
                     message_id = message_notification_id(item.id.hashCode()),
                     silent = true,
                     large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget, content_hidden),
@@ -833,6 +827,17 @@ class MailPollingWorker(
             fetched_any_page -> FallbackAlert.None
             mute_filters_active -> FallbackAlert.Silent
             else -> FallbackAlert.Audible
+        }
+
+        fun notification_text(
+            subject: String,
+            preview: String,
+            is_undecryptable: Boolean,
+            is_decrypt_pending: Boolean,
+        ): Pair<String, String> = when {
+            !is_undecryptable -> subject.trim() to preview
+            is_decrypt_pending -> subject.trim() to ""
+            else -> "" to ""
         }
 
         fun is_candidate_silent(is_undecryptable: Boolean, muted_categories: Set<String>): Boolean =
