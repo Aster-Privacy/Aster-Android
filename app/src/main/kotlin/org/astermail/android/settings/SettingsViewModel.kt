@@ -3155,12 +3155,27 @@ class SettingsViewModel @Inject constructor(
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (gen != account_generation) return@launch
+                if (smtp_token_is_gone(t)) {
+                    _state.update { s ->
+                        s.copy(
+                            smtp_tokens = s.smtp_tokens.filter { it.id != token_id },
+                            smtp_token_renaming = false,
+                            smtp_token_rename_error = null,
+                            action_result = context.getString(R.string.smtp_token_unavailable),
+                        )
+                    }
+                    load_smtp_tokens(force = true)
+                    return@launch
+                }
                 _state.update {
                     it.copy(smtp_token_renaming = false, smtp_token_rename_error = smtp_token_rename_error_text(t))
                 }
             }
         }
     }
+
+    private fun smtp_token_is_gone(t: Throwable): Boolean =
+        t is ApiError.NotFoundError && _state.value.smtp_tokens.any { it.smtp_settings != null }
 
     fun clear_smtp_token_rename() {
         _state.update { it.copy(smtp_token_rename_error = null, smtp_token_renamed_id = null) }

@@ -485,6 +485,7 @@
     <string name="smtp_token_renamed_toast">Token renombrado</string>
     <string name="smtp_token_rename_failed">No se pudo renombrar el token. Inténtalo de nuevo.</string>
     <string name="smtp_token_rename_unavailable">Todavía no es posible renombrar tokens. Inténtalo de nuevo más tarde.</string>
+    <string name="smtp_token_unavailable">Este token ya no está disponible.</string>
     <string name="smtp_token_name_invalid">Introduce un nombre de hasta 64 caracteres.</string>
     <string name="smtp_token_not_e2e_title">Los mensajes enviados con tokens SMTP no están cifrados de extremo a extremo</string>
     <string name="smtp_token_not_e2e_body">El correo enviado a través de un token SMTP está protegido por TLS mientras está en tránsito y se almacena con cifrado de acceso cero en nuestros servidores, pero no está cifrado de extremo a extremo. Aster no puede aplicar cifrado de extremo a extremo al correo que se origina fuera de las aplicaciones de Aster. Usa los tokens SMTP solo para correo automatizado o transaccional donde no se requiera el cifrado de extremo a extremo.</string>

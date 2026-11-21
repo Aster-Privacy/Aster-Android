@@ -5172,13 +5172,13 @@ class SettingsViewModelTest {
         username = "a@example.com",
     )
 
-    private fun seed_smtp_tokens() {
+    private fun seed_smtp_tokens(with_settings: Boolean = true) {
         coEvery { settings_api.list_smtp_tokens() } returns ListSmtpTokensResponse(
             listOf(
                 SmtpTokenRow(
                     id = "t1",
                     bound_address = "a@example.com",
-                    smtp_settings = smtp_details,
+                    smtp_settings = if (with_settings) smtp_details else null,
                     decrypted_label = "Old name",
                 ),
                 SmtpTokenRow(id = "t2", bound_address = "b@example.com", decrypted_label = "Other"),
@@ -5187,6 +5187,7 @@ class SettingsViewModelTest {
         every { context.getString(R.string.smtp_token_renamed_toast) } returns "renamed"
         every { context.getString(R.string.smtp_token_rename_failed) } returns "rename_failed"
         every { context.getString(R.string.smtp_token_rename_unavailable) } returns "rename_unavailable"
+        every { context.getString(R.string.smtp_token_unavailable) } returns "token_unavailable"
         every { context.getString(R.string.smtp_token_name_invalid) } returns "name_invalid"
         every { context.getString(R.string.error_no_connection) } returns "no_connection"
         vm.load_smtp_tokens()
@@ -5228,7 +5229,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `renaming an smtp token reports it as unavailable when the route is missing`() = runTest {
-        seed_smtp_tokens()
+        seed_smtp_tokens(with_settings = false)
         advanceUntilIdle()
         coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.NotFoundError
 
@@ -5239,6 +5240,70 @@ class SettingsViewModelTest {
         assertEquals("Old name", smtp_label("t1"))
         assertFalse(vm.state.value.smtp_token_renaming)
         assertNull(vm.state.value.smtp_token_renamed_id)
+        assertNull(vm.state.value.action_result)
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `renaming an smtp token that no longer exists removes it and reloads the list`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.NotFoundError
+        coEvery { settings_api.list_smtp_tokens() } returns ListSmtpTokensResponse(
+            tokens = listOf(
+                SmtpTokenRow(
+                    id = "t2",
+                    bound_address = "b@example.com",
+                    smtp_settings = smtp_details,
+                    decrypted_label = "Other",
+                ),
+            ),
+        )
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals("token_unavailable", state.action_result)
+        assertNull(state.smtp_token_rename_error)
+        assertNull(state.smtp_token_renamed_id)
+        assertFalse(state.smtp_token_renaming)
+        assertEquals(listOf("t2"), state.smtp_tokens.map { it.id })
+        coVerify(exactly = 2) { settings_api.list_smtp_tokens() }
+    }
+
+    @Test
+    fun `closing the created token dialog drops the one time password from state`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.create_smtp_token(any()) } returns
+            org.astermail.android.api.settings.CreateSmtpTokenResponse(
+                id = "t3",
+                smtp_settings = org.astermail.android.api.settings.SmtpTokenSettings(password = "one-time-secret"),
+            )
+
+        vm.create_smtp_token("Billing server", "a", "example.com")
+        advanceUntilIdle()
+        assertEquals("one-time-secret", vm.state.value.smtp_token_created?.smtp_settings?.password)
+
+        vm.clear_created_smtp_token()
+
+        assertNull(vm.state.value.smtp_token_created)
+        assertFalse(vm.state.value.toString().contains("one-time-secret"))
+    }
+
+    @Test
+    fun `a method not allowed rename stays unavailable when the list carries settings`() = runTest {
+        seed_smtp_tokens()
+        advanceUntilIdle()
+        coEvery { settings_api.rename_smtp_token(any(), any()) } throws ApiError.ServerError(405)
+
+        vm.rename_smtp_token("t1", "Billing server")
+        advanceUntilIdle()
+
+        assertEquals("rename_unavailable", vm.state.value.smtp_token_rename_error)
+        assertEquals("Old name", smtp_label("t1"))
+        coVerify(exactly = 1) { settings_api.list_smtp_tokens() }
     }
 
     @Test

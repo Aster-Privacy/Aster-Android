@@ -484,6 +484,7 @@
     <string name="smtp_token_renamed_toast">Token hernoemd</string>
     <string name="smtp_token_rename_failed">Het token kan niet worden hernoemd. Probeer het opnieuw.</string>
     <string name="smtp_token_rename_unavailable">Hernoemen is nog niet beschikbaar. Probeer het later opnieuw.</string>
+    <string name="smtp_token_unavailable">Dit token is niet meer beschikbaar.</string>
     <string name="smtp_token_name_invalid">Voer een naam in van maximaal 64 tekens.</string>
     <string name="smtp_token_not_e2e_title">Berichten die met SMTP-tokens worden verzonden, zijn niet end-to-end versleuteld</string>
     <string name="smtp_token_not_e2e_body">E-mail die via een SMTP-token wordt verzonden, wordt onderweg beschermd met TLS en op onze servers opgeslagen met zero-access-versleuteling, maar is niet end-to-end versleuteld. Aster kan geen end-to-end-versleuteling toepassen op e-mail die buiten de Aster-apps ontstaat. Gebruik SMTP-tokens alleen voor geautomatiseerde of transactionele e-mail waarbij end-to-end-versleuteling niet vereist is.</string>

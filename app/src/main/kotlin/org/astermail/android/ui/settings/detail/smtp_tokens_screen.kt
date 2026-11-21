@@ -105,6 +105,18 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         if (state.smtp_token_created != null) show_create = false
     }
 
+    LaunchedEffect(state.smtp_tokens, rename_token_id) {
+        val open_id = rename_token_id
+        if (open_id != null && state.smtp_tokens.none { it.id == open_id }) {
+            rename_token_id = null
+            vm.clear_smtp_token_rename()
+        }
+    }
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { vm.clear_created_smtp_token() }
+    }
+
     LaunchedEffect(state.smtp_token_renamed_id) {
         if (state.smtp_token_renamed_id != null) {
             rename_token_id = null

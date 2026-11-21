@@ -485,6 +485,7 @@
     <string name="smtp_token_renamed_toast">Token umbenannt</string>
     <string name="smtp_token_rename_failed">Das Token konnte nicht umbenannt werden. Versuchen Sie es erneut.</string>
     <string name="smtp_token_rename_unavailable">Das Umbenennen ist noch nicht verfügbar. Versuchen Sie es später erneut.</string>
+    <string name="smtp_token_unavailable">Dieser Token ist nicht mehr verfügbar.</string>
     <string name="smtp_token_name_invalid">Geben Sie einen Namen mit bis zu 64 Zeichen ein.</string>
     <string name="smtp_token_not_e2e_title">Mit SMTP-Token gesendete Nachrichten sind nicht Ende-zu-Ende-verschlüsselt</string>
     <string name="smtp_token_not_e2e_body">E-Mails, die über einen SMTP-Token gesendet werden, sind während der Übertragung durch TLS geschützt und werden mit Zero-Access-Verschlüsselung auf unseren Servern gespeichert, sind jedoch nicht Ende-zu-Ende-verschlüsselt. Aster kann keine Ende-zu-Ende-Verschlüsselung auf E-Mails anwenden, die außerhalb der Aster-Apps entstehen. Verwenden Sie SMTP-Token nur für automatisierte oder transaktionale E-Mails, bei denen keine Ende-zu-Ende-Verschlüsselung erforderlich ist.</string>

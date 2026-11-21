@@ -732,6 +732,7 @@
     <string name="smtp_token_renamed_toast">टोकन का नाम बदल गया</string>
     <string name="smtp_token_rename_failed">टोकन का नाम नहीं बदला जा सका। फिर से कोशिश करें।</string>
     <string name="smtp_token_rename_unavailable">नाम बदलने की सुविधा अभी उपलब्ध नहीं है। बाद में फिर से कोशिश करें।</string>
+    <string name="smtp_token_unavailable">यह टोकन अब उपलब्ध नहीं है।</string>
     <string name="smtp_token_name_invalid">ज़्यादा से ज़्यादा 64 वर्णों का नाम डालें।</string>
     <string name="smtp_token_not_e2e_title">SMTP टोकन से भेजे गए संदेश एंड-टू-एंड एन्क्रिप्टेड नहीं होते</string>
     <string name="smtp_token_not_e2e_body">SMTP टोकन से भेजी गई ईमेल रास्ते में TLS से सुरक्षित रहती है और हमारे सर्वर पर ज़ीरो-एक्सेस एन्क्रिप्शन के साथ रखी जाती है, लेकिन वह एंड-टू-एंड एन्क्रिप्टेड नहीं होती। Aster ऐप के बाहर से भेजी गई मेल पर Aster एंड-टू-एंड एन्क्रिप्शन लागू नहीं कर सकता। SMTP टोकन सिर्फ़ ऐसी स्वचालित या लेन-देन वाली मेल के लिए इस्तेमाल करें जहां एंड-टू-एंड एन्क्रिप्शन ज़रूरी नहीं है।</string>

@@ -484,6 +484,7 @@
     <string name="smtp_token_renamed_toast">Jeton yeniden adlandırıldı</string>
     <string name="smtp_token_rename_failed">Jeton yeniden adlandırılamadı. Tekrar deneyin.</string>
     <string name="smtp_token_rename_unavailable">Yeniden adlandırma henüz kullanılamıyor. Daha sonra tekrar deneyin.</string>
+    <string name="smtp_token_unavailable">Bu jeton artık kullanılamıyor.</string>
     <string name="smtp_token_name_invalid">En fazla 64 karakterlik bir ad girin.</string>
     <string name="smtp_token_not_e2e_title">SMTP jetonlarıyla gönderilen mesajlar uçtan uca şifreli değildir</string>
     <string name="smtp_token_not_e2e_body">Bir SMTP jetonu üzerinden gönderilen e-posta, aktarım sırasında TLS ile korunur ve sunucularımızda sıfır erişimli şifrelemeyle depolanır, ancak uçtan uca şifreli değildir. Aster, Aster uygulamalarının dışından gelen e-postalara uçtan uca şifreleme uygulayamaz. SMTP jetonlarını yalnızca uçtan uca şifrelemenin gerekmediği otomatik veya işlemsel e-postalar için kullanın.</string>

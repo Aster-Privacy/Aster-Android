@@ -484,6 +484,7 @@
     <string name="smtp_token_renamed_toast">Zmieniono nazwę tokena</string>
     <string name="smtp_token_rename_failed">Nie udało się zmienić nazwy tokena. Spróbuj ponownie.</string>
     <string name="smtp_token_rename_unavailable">Zmiana nazwy nie jest jeszcze dostępna. Spróbuj ponownie później.</string>
+    <string name="smtp_token_unavailable">Ten token nie jest już dostępny.</string>
     <string name="smtp_token_name_invalid">Wpisz nazwę o długości do 64 znaków.</string>
     <string name="smtp_token_not_e2e_title">Wiadomości wysyłane za pomocą tokenów SMTP nie są szyfrowane end-to-end</string>
     <string name="smtp_token_not_e2e_body">Poczta wysłana przez token SMTP jest chroniona protokołem TLS podczas przesyłania i przechowywana z szyfrowaniem bez dostępu na naszych serwerach, ale nie jest szyfrowana end-to-end. Aster nie może zastosować szyfrowania end-to-end do poczty pochodzącej spoza aplikacji Aster. Używaj tokenów SMTP wyłącznie do poczty zautomatyzowanej lub transakcyjnej, gdzie szyfrowanie end-to-end nie jest wymagane.</string>

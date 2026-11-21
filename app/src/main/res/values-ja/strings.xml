@@ -484,6 +484,7 @@
     <string name="smtp_token_renamed_toast">トークンの名前を変更しました</string>
     <string name="smtp_token_rename_failed">トークンの名前を変更できませんでした。もう一度お試しください。</string>
     <string name="smtp_token_rename_unavailable">名前の変更はまだ利用できません。後でもう一度お試しください。</string>
+    <string name="smtp_token_unavailable">このトークンは利用できません。</string>
     <string name="smtp_token_name_invalid">64 文字以内で名前を入力してください。</string>
     <string name="smtp_token_not_e2e_title">SMTP トークンで送信したメッセージはエンドツーエンドで暗号化されません</string>
     <string name="smtp_token_not_e2e_body">SMTP トークンを通じて送信したメールは、転送中は TLS によって保護され、当社のサーバー上ではゼロアクセス暗号化で保管されますが、エンドツーエンドで暗号化されるわけではありません。Aster は、Aster アプリの外部から発信されたメールにエンドツーエンド暗号化を適用することはできません。SMTP トークンは、エンドツーエンド暗号化が不要な自動メールやトランザクションメールにのみご利用ください。</string>
