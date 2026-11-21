@@ -2288,6 +2288,16 @@
     <string name="app_lock_passphrase_too_short">De wachtwoordzin moet minstens 4 tekens hebben.</string>
     <string name="app_lock_title">Aster Mail is vergrendeld</string>
     <string name="app_lock_wrong_pin">Verkeerde pincode. Probeer het nog eens.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">Verkeerde pincode. Nog %d poging.</item>
+        <item quantity="other">Verkeerde pincode. Nog %d pogingen.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">Verkeerde pincode. Bij de volgende verkeerde pincode wordt de app vergrendeld.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">Nog %d poging</item>
+        <item quantity="other">Nog %d pogingen</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">Bij de volgende verkeerde pincode wordt de app vergrendeld.</string>
     <string name="app_lock_locked_out">Te veel pogingen. Wacht even voor je het opnieuw probeert.</string>
     <string name="app_lock_unlock">Ontgrendelen</string>
     <string name="app_lock_use_biometric">Biometrie gebruiken</string>

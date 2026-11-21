@@ -2298,6 +2298,20 @@
     <string name="app_lock_passphrase_too_short">Пароль должен быть не короче 4 символов.</string>
     <string name="app_lock_title">Aster Mail заблокирован</string>
     <string name="app_lock_wrong_pin">Неверный PIN-код. Попробуйте ещё раз.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">Неверный PIN-код. Осталась %d попытка.</item>
+        <item quantity="few">Неверный PIN-код. Осталось %d попытки.</item>
+        <item quantity="many">Неверный PIN-код. Осталось %d попыток.</item>
+        <item quantity="other">Неверный PIN-код. Осталось %d попытки.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">Неверный PIN-код. После следующей ошибки приложение заблокируется.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">Осталась %d попытка</item>
+        <item quantity="few">Осталось %d попытки</item>
+        <item quantity="many">Осталось %d попыток</item>
+        <item quantity="other">Осталось %d попытки</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">После следующей ошибки приложение заблокируется.</string>
     <string name="app_lock_locked_out">Слишком много попыток. Подождите, прежде чем пробовать снова.</string>
     <string name="app_lock_unlock">Разблокировать</string>
     <string name="app_lock_use_biometric">Использовать биометрию</string>

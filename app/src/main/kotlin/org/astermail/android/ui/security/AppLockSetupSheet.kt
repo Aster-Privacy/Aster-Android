@@ -63,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -417,9 +418,9 @@ fun AppLockVerifySheet(
     var shake_trigger by remember { mutableIntStateOf(0) }
     var locked_out by remember { mutableStateOf(store.is_locked_out()) }
     var lockout_secs by remember { mutableLongStateOf(store.lockout_remaining_seconds()) }
+    var attempt_notice by remember { mutableStateOf(store.attempt_notice()) }
     var show_passphrase by remember { mutableStateOf(false) }
-
-    val wrong_str = stringResource(R.string.app_lock_wrong_pin)
+    val context = LocalContext.current
 
     LaunchedEffect(locked_out) {
         if (!locked_out) return@LaunchedEffect
@@ -446,17 +447,21 @@ fun AppLockVerifySheet(
             }
             if (ok) { on_success(); return@launch }
             input = ""
+            attempt_notice = store.attempt_notice()
             if (store.is_locked_out()) {
                 locked_out = true
                 lockout_secs = store.lockout_remaining_seconds()
                 error_msg = null
             } else {
                 shake_trigger++
-                error_msg = wrong_str
-                launch { delay(2000); error_msg = null }
+                val message = pin_failure_message(context.resources, attempt_notice)
+                error_msg = message
+                launch { delay(2000); if (error_msg == message) error_msg = null }
             }
         }
     }
+
+    val attempt_hint = if (locked_out) null else pin_attempt_hint(attempt_notice)
 
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
@@ -497,6 +502,7 @@ fun AppLockVerifySheet(
                         when {
                             verifying -> androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
                             error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
+                            attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
                         }
                     }
                     PinPad(
@@ -521,7 +527,11 @@ fun AppLockVerifySheet(
                     shake_trigger = shake_trigger,
                     on_submit = { if (input.isNotEmpty()) attempt(input) },
                 )
-                if (error_msg != null) Text(text = error_msg!!, color = colors.danger, fontSize = 13.sp)
+                if (error_msg != null) {
+                    Text(text = error_msg!!, color = colors.danger, fontSize = 13.sp)
+                } else if (attempt_hint != null) {
+                    Text(text = attempt_hint, color = colors.text_muted, fontSize = 13.sp)
+                }
                 AsterButton(
                     label = stringResource(R.string.app_lock_unlock),
                     onClick = { if (input.isNotEmpty()) attempt(input) },

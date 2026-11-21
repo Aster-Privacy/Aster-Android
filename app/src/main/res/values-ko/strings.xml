@@ -2283,6 +2283,14 @@
     <string name="app_lock_passphrase_too_short">암호문은 4자 이상이어야 합니다.</string>
     <string name="app_lock_title">Aster Mail이 잠겨 있습니다</string>
     <string name="app_lock_wrong_pin">PIN이 틀렸습니다. 다시 시도하세요.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="other">PIN이 틀렸습니다. %d번 남았습니다.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">PIN이 틀렸습니다. 한 번 더 틀리면 앱이 잠깁니다.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="other">%d번 남음</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">한 번 더 틀리면 앱이 잠깁니다.</string>
     <string name="app_lock_locked_out">시도가 너무 많습니다. 잠시 후 다시 시도하세요.</string>
     <string name="app_lock_unlock">잠금 해제</string>
     <string name="app_lock_use_biometric">생체 인증 사용</string>

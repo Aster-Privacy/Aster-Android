@@ -254,6 +254,10 @@ class AppLockStore @Inject constructor(
 
     fun failed_attempt_count(): Int = prefs.getInt(KEY_LOCKOUT_COUNT, 0)
 
+    fun attempts_left(): Int = PinLockout.attempts_left(failed_attempt_count())
+
+    fun attempt_notice(): PinAttemptNotice = PinLockout.notice_for(failed_attempt_count())
+
     fun setup_pin(pin: String, pin_type: String, digits: Int?) {
         if (!LockKeyHolder.is_open() && stores_hold_sealed_values()) return
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }

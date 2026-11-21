@@ -2308,6 +2308,24 @@
     <string name="app_lock_passphrase_too_short">يجب ألا تقل عبارة المرور عن 4 أحرف.</string>
     <string name="app_lock_title">Aster Mail مقفل</string>
     <string name="app_lock_wrong_pin">رمز PIN غير صحيح. حاول مرة أخرى.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="zero">رمز PIN غير صحيح. لم تتبقَّ أي محاولة.</item>
+        <item quantity="one">رمز PIN غير صحيح. تتبقى محاولة واحدة.</item>
+        <item quantity="two">رمز PIN غير صحيح. تتبقى محاولتان.</item>
+        <item quantity="few">رمز PIN غير صحيح. تتبقى %d محاولات.</item>
+        <item quantity="many">رمز PIN غير صحيح. تتبقى %d محاولة.</item>
+        <item quantity="other">رمز PIN غير صحيح. تتبقى %d محاولة.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">رمز PIN غير صحيح. سيؤدي رمز PIN الخاطئ التالي إلى قفل التطبيق.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="zero">لم تتبقَّ أي محاولة</item>
+        <item quantity="one">تتبقى محاولة واحدة</item>
+        <item quantity="two">تتبقى محاولتان</item>
+        <item quantity="few">تتبقى %d محاولات</item>
+        <item quantity="many">تتبقى %d محاولة</item>
+        <item quantity="other">تتبقى %d محاولة</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">سيؤدي رمز PIN الخاطئ التالي إلى قفل التطبيق.</string>
     <string name="app_lock_locked_out">محاولات كثيرة جدًا. انتظر قبل المحاولة مجددًا.</string>
     <string name="app_lock_unlock">فتح القفل</string>
     <string name="app_lock_use_biometric">استخدام المقاييس الحيوية</string>

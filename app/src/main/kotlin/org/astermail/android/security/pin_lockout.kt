@@ -34,12 +34,27 @@ data class PinLockoutState(
     }
 }
 
+sealed interface PinAttemptNotice {
+    data object None : PinAttemptNotice
+    data class AttemptsLeft(val count: Int) : PinAttemptNotice
+    data object NextFailureLocks : PinAttemptNotice
+}
+
 object PinLockout {
     const val MAX_ATTEMPTS = 5
     const val BASE_LOCKOUT_MS = 5L * 60 * 1000
     const val MAX_LOCKOUT_MS = 60L * 60 * 1000
     const val BOOT_WALL_TOLERANCE_MS = 30L * 1000
     const val ANCHOR_STEP_MS = 30L * 1000
+
+    fun attempts_left(failed_attempts: Int): Int =
+        (MAX_ATTEMPTS - failed_attempts.coerceAtLeast(0)).coerceAtLeast(0)
+
+    fun notice_for(failed_attempts: Int): PinAttemptNotice {
+        if (failed_attempts <= 0) return PinAttemptNotice.None
+        val left = attempts_left(failed_attempts)
+        return if (left > 0) PinAttemptNotice.AttemptsLeft(left) else PinAttemptNotice.NextFailureLocks
+    }
 
     fun boot_wall_ms(now_wall_ms: Long?, now_elapsed_ms: Long): Long =
         now_wall_ms?.let { it - now_elapsed_ms } ?: PinLockoutState.UNKNOWN_BOOT_WALL

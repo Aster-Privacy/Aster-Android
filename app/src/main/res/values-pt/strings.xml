@@ -2293,6 +2293,18 @@
     <string name="app_lock_passphrase_too_short">A frase de acesso tem de ter pelo menos 4 caracteres.</string>
     <string name="app_lock_title">O Aster Mail está bloqueado</string>
     <string name="app_lock_wrong_pin">PIN incorreto. Tente novamente.</string>
+    <plurals name="app_lock_wrong_pin_attempts_left">
+        <item quantity="one">PIN incorreto. Resta %d tentativa.</item>
+        <item quantity="many">PIN incorreto. Restam %d tentativas.</item>
+        <item quantity="other">PIN incorreto. Restam %d tentativas.</item>
+    </plurals>
+    <string name="app_lock_wrong_pin_next_locks">PIN incorreto. O próximo PIN incorreto bloqueia a app.</string>
+    <plurals name="app_lock_attempts_left">
+        <item quantity="one">Resta %d tentativa</item>
+        <item quantity="many">Restam %d tentativas</item>
+        <item quantity="other">Restam %d tentativas</item>
+    </plurals>
+    <string name="app_lock_next_wrong_pin_locks">O próximo PIN incorreto bloqueia a app.</string>
     <string name="app_lock_locked_out">Demasiadas tentativas. Aguarde antes de tentar novamente.</string>
     <string name="app_lock_unlock">Desbloquear</string>
     <string name="app_lock_use_biometric">Usar biometria</string>
