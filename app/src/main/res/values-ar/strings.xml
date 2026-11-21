@@ -486,6 +486,7 @@
     <string name="smtp_token_rename_unavailable">إعادة التسمية غير متاحة بعد. حاول مرة أخرى لاحقًا.</string>
     <string name="smtp_token_unavailable">لم يعد هذا الرمز متاحًا.</string>
     <string name="smtp_token_name_invalid">أدخل اسمًا لا يزيد على 64 حرفًا.</string>
+    <string name="smtp_token_address_in_use">يوجد رمز نشط بالفعل لهذا العنوان. قم بإلغائه أولًا لإنشاء رمز جديد.</string>
     <string name="smtp_token_not_e2e_title">الرسائل المُرسَلة برموز SMTP ليست مشفرة من طرف إلى طرف</string>
     <string name="smtp_token_not_e2e_body">البريد المُرسَل عبر رمز SMTP محمي بواسطة TLS أثناء النقل ويُخزَّن بتشفير معدوم الوصول على خوادمنا، لكنه ليس مشفرًا من طرف إلى طرف. لا يمكن لـ Aster تطبيق التشفير من طرف إلى طرف على البريد الذي ينشأ خارج تطبيقات Aster. استخدم رموز SMTP فقط للبريد المؤتمت أو المعاملاتي حيث لا يكون التشفير من طرف إلى طرف مطلوبًا.</string>
     <string name="clipboard_label_smtp_token">إعدادات SMTP</string>

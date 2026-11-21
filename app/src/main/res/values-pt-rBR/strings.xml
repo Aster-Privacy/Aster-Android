@@ -485,6 +485,7 @@
     <string name="smtp_token_rename_unavailable">Ainda não é possível renomear. Tente novamente mais tarde.</string>
     <string name="smtp_token_unavailable">Este token não está mais disponível.</string>
     <string name="smtp_token_name_invalid">Digite um nome com até 64 caracteres.</string>
+    <string name="smtp_token_address_in_use">Já existe um token ativo para este endereço. Revogue-o primeiro para gerar um novo.</string>
     <string name="smtp_token_not_e2e_title">As mensagens enviadas com tokens SMTP não têm criptografia de ponta a ponta</string>
     <string name="smtp_token_not_e2e_body">O e-mail enviado por meio de um token SMTP é protegido por TLS em trânsito e armazenado com criptografia de acesso zero em nossos servidores, mas não tem criptografia de ponta a ponta. O Aster não pode aplicar criptografia de ponta a ponta a e-mails originados fora dos aplicativos Aster. Use tokens SMTP apenas para e-mails automatizados ou transacionais em que a criptografia de ponta a ponta não seja necessária.</string>
     <string name="clipboard_label_smtp_token">Configurações de SMTP</string>

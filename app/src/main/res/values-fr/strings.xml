@@ -513,6 +513,7 @@
     <string name="smtp_token_rename_unavailable">Le renommage n\'est pas encore disponible. Réessayez plus tard.</string>
     <string name="smtp_token_unavailable">Ce jeton n\'est plus disponible.</string>
     <string name="smtp_token_name_invalid">Saisissez un nom de 64 caractères maximum.</string>
+    <string name="smtp_token_address_in_use">Un jeton actif existe déjà pour cette adresse. Révoquez-le d\'abord pour en générer un nouveau.</string>
     <string name="smtp_token_not_e2e_title">Les messages envoyés avec des jetons SMTP ne sont pas chiffrés de bout en bout</string>
     <string name="smtp_token_not_e2e_body">Les e-mails envoyés via un jeton SMTP sont protégés par TLS en transit et stockés avec un chiffrement à accès zéro sur nos serveurs, mais ils ne sont pas chiffrés de bout en bout. Aster ne peut pas appliquer le chiffrement de bout en bout aux messages provenant de l\'extérieur des applications Aster. N\'utilisez les jetons SMTP que pour des messages automatisés ou transactionnels où le chiffrement de bout en bout n\'est pas requis.</string>
     <string name="clipboard_label_smtp_token">Réglages SMTP</string>

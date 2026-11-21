@@ -3085,7 +3085,12 @@ class SettingsViewModel @Inject constructor(
                 load_smtp_tokens(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.update { it.copy(smtp_token_creating = false, smtp_token_create_error = user_facing_error(t)) }
+                val message = if (t is ApiError.Conflict) {
+                    context.getString(R.string.smtp_token_address_in_use)
+                } else {
+                    user_facing_error(t)
+                }
+                _state.update { it.copy(smtp_token_creating = false, smtp_token_create_error = message) }
             }
         }
     }

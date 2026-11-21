@@ -841,6 +841,7 @@
     <string name="smtp_token_rename_unavailable">Renaming isn\'t available yet. Try again later.</string>
     <string name="smtp_token_unavailable">This token is no longer available.</string>
     <string name="smtp_token_name_invalid">Enter a name with up to 64 characters.</string>
+    <string name="smtp_token_address_in_use">An active token already exists for this address. Revoke it first to generate a new one.</string>
     <string name="smtp_token_not_e2e_title">Messages sent with SMTP tokens are not end-to-end encrypted</string>
     <string name="smtp_token_not_e2e_body">Email sent through an SMTP token is protected by TLS while in transit and stored with zero-access encryption on our servers, but it is not end-to-end encrypted. Aster cannot apply end-to-end encryption to mail that originates outside the Aster apps. Only use SMTP tokens for automated or transactional mail where end-to-end encryption is not required.</string>
     <string name="settings_aliases">Aliases</string>

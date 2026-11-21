@@ -486,6 +486,7 @@
     <string name="smtp_token_rename_unavailable">이름 바꾸기는 아직 사용할 수 없습니다. 나중에 다시 시도하세요.</string>
     <string name="smtp_token_unavailable">이 토큰은 더 이상 사용할 수 없습니다.</string>
     <string name="smtp_token_name_invalid">64자 이내의 이름을 입력하세요.</string>
+    <string name="smtp_token_address_in_use">이 주소에 대한 활성 토큰이 이미 존재합니다. 새 토큰을 생성하려면 먼저 폐기하세요.</string>
     <string name="smtp_token_not_e2e_title">SMTP 토큰으로 보낸 메시지는 종단간 암호화되지 않습니다</string>
     <string name="smtp_token_not_e2e_body">SMTP 토큰을 통해 보낸 이메일은 전송 중에는 TLS로 보호되고 당사 서버에는 무접근 암호화로 저장되지만, 종단간 암호화되지는 않습니다. Aster는 Aster 앱 외부에서 발신되는 메일에는 종단간 암호화를 적용할 수 없습니다. 종단간 암호화가 필요하지 않은 자동화 메일이나 거래 메일에만 SMTP 토큰을 사용하세요.</string>
     <string name="clipboard_label_smtp_token">SMTP 설정</string>
