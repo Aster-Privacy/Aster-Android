@@ -99,6 +99,7 @@ class AuthViewModel @Inject constructor(
         password: String,
         captcha_token: String? = null,
         remember_me: Boolean = true,
+        other_addresses: List<String> = emptyList(),
     ) {
         if (_ui_state.value == AuthUiState.Loading) return
         if (!is_supported_sign_in_domain(email)) {
@@ -109,9 +110,23 @@ class AuthViewModel @Inject constructor(
         }
         _ui_state.value = AuthUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
-            val result = runCatching {
-                kotlinx.coroutines.withTimeout(25_000L) {
-                    repository.login(email, password, captcha_token, remember_me).getOrThrow()
+            val attempt: suspend (String) -> Result<LoginOutcome> = { address ->
+                runCatching {
+                    kotlinx.coroutines.withTimeout(25_000L) {
+                        repository.login(address, password, captcha_token, remember_me).getOrThrow()
+                    }
+                }
+            }
+            var result = attempt(email)
+            if (result.exceptionOrNull() is ApiError.InvalidCredentials) {
+                for (address in other_addresses.filter { it != email && is_supported_sign_in_domain(it) }) {
+                    val next = attempt(address)
+                    val cause = next.exceptionOrNull()
+                    if (cause == null || (cause !is ApiError.InvalidCredentials && !is_captcha_failure(cause))) {
+                        result = next
+                        break
+                    }
+                    if (cause !is ApiError.InvalidCredentials) break
                 }
             }
             _ui_state.value = result.fold(
