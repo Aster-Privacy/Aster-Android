@@ -1352,6 +1352,7 @@
     <string name="csrf_unavailable">Этот сеанс повреждён. Войдите снова.</string>
     <string name="received_on_label">Получено на</string>
     <string name="forwarded_by_label">Переслано через</string>
+    <string name="forwarded_via_domain">через %1$s</string>
     <string name="auto_advance_label">После архивации или удаления</string>
     <string name="auto_advance_next">Перейти к следующему письму</string>
     <string name="auto_advance_previous">Перейти к предыдущему письму</string>

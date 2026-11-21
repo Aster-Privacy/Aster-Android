@@ -2800,6 +2800,16 @@ internal fun expanded_message(
                                 )
                             }
                         }
+                        custom_forward_via_label(msg.display_sender_email, msg.sender_email)?.let { via_label ->
+                            Text(
+                                text = via_label,
+                                color = colors.text_muted,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.testTag("message_forwarded_via_$message_index"),
+                            )
+                        }
                         email_auth_badge(
                             msg = msg,
                             unverified = trust?.auth_state == org.astermail.android.security.SenderAuthState.unverified,
