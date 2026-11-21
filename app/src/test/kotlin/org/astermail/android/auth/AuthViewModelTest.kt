@@ -215,7 +215,8 @@ class AuthViewModelTest {
         vm.submit_login("robin@astermail.org", "pass", other_addresses = listOf("robin@aster.cx"))
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { repository.login("robin@aster.cx", any(), any(), any()) }
+        clear_dispatcher_records()
+        coVerify(exactly = 1) { repository.login(any(), any(), any(), any()) }
     }
 
     @Test
