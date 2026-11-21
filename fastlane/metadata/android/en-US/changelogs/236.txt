@@ -1,0 +1,8 @@
+What's new:
+
+- Settings search finds every setting, even when you type a related word or make a typo.
+
+Fixed:
+
+- Messages you open stay marked as read in the conversation.
+- Contacts sync every phone number from your device with its label.
