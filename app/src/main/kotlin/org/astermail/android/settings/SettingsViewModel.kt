@@ -275,6 +275,7 @@ data class SettingsUiState(
     val recovery_email_known: Boolean = false,
     val recovery_email_verified: Boolean = false,
     val recovery_email_step_up_required: Boolean = false,
+    val recovery_email_totp_required: Boolean = false,
     val login_alerts_enabled: Boolean? = null,
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
@@ -4865,6 +4866,7 @@ class SettingsViewModel @Inject constructor(
                     recovery_email_known = true,
                     recovery_email_verified = false,
                     recovery_email_step_up_required = false,
+                    recovery_email_totp_required = false,
                     security_status = _state.value.security_status?.copy(
                         recovery_email_set = true,
                         recovery_email_verified = false,
@@ -4883,12 +4885,15 @@ class SettingsViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val needs_step_up = (t as? RecoveryEmailError)?.code ==
-                    RecoveryEmailApiImpl.STEP_UP_REQUIRED
+                val code = (t as? RecoveryEmailError)?.code
+                val needs_step_up = code == RecoveryEmailApiImpl.STEP_UP_REQUIRED
+                val needs_totp = code == RecoveryEmailApiImpl.TOTP_REQUIRED
                 _state.value = _state.value.copy(
                     save_status = SaveStatus.ERROR,
                     recovery_email_step_up_required =
-                        needs_step_up || _state.value.recovery_email_step_up_required,
+                        needs_step_up || needs_totp || _state.value.recovery_email_step_up_required,
+                    recovery_email_totp_required =
+                        needs_totp || _state.value.recovery_email_totp_required,
                     error = if (needs_step_up || is_key_check_cancelled(t)) null else recovery_email_error_message(t),
                 )
             }
@@ -4934,6 +4939,7 @@ class SettingsViewModel @Inject constructor(
                     recovery_email_known = true,
                     recovery_email_verified = false,
                     recovery_email_step_up_required = false,
+                    recovery_email_totp_required = false,
                     security_status = _state.value.security_status?.copy(
                         recovery_email_set = false,
                         recovery_email_verified = false,
@@ -4953,6 +4959,9 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     _state.value.copy(
                         save_status = SaveStatus.ERROR,
+                        recovery_email_totp_required =
+                            (t as? RecoveryEmailError)?.code == RecoveryEmailApiImpl.TOTP_REQUIRED ||
+                                _state.value.recovery_email_totp_required,
                         error = if (is_key_check_cancelled(t)) null else recovery_email_error_message(t),
                     )
                 }

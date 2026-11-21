@@ -323,7 +323,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     }
 
     if (show_step_up) {
-        val totp_on = state.security_status?.totp_enabled == true
+        val totp_on = state.security_status?.totp_enabled == true || state.recovery_email_totp_required
         val can_confirm = step_up_password.isNotBlank() &&
             (!totp_on || step_up_code.length == 6) &&
             state.save_status != SaveStatus.SAVING
