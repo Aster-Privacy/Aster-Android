@@ -57,3 +57,34 @@ fun all_ids_trashed(ids: List<String>, trashed_ids: Set<String>): Boolean =
 
 fun untrashed_ids(ids: List<String>, trashed_ids: Set<String>): List<String> =
     ids.filter { it !in trashed_ids }
+
+data class SelectionDeletePlan(
+    val trash_ids: List<String>,
+    val trash_row_count: Int,
+    val permanent_ids: List<String>,
+    val permanent_rows: List<String>,
+) {
+    val all_trashed: Boolean get() = trash_ids.isEmpty() && permanent_ids.isNotEmpty()
+}
+
+fun plan_selection_delete(
+    rows: Map<String, List<String>>,
+    shown_ids: Set<String>,
+    trashed_ids: Set<String>,
+): SelectionDeletePlan {
+    val trash_ids = LinkedHashSet<String>()
+    val permanent_ids = LinkedHashSet<String>()
+    val permanent_rows = ArrayList<String>()
+    var trash_row_count = 0
+    for ((row_id, row_members) in rows) {
+        val members = row_members.ifEmpty { listOf(row_id) }
+        val shown = members.filter { it in shown_ids }.ifEmpty { members }
+        if (shown.all { it in trashed_ids }) {
+            permanent_ids.addAll(members.filter { it in trashed_ids })
+            permanent_rows.add(row_id)
+        } else if (trash_ids.addAll(members.filter { it !in trashed_ids })) {
+            trash_row_count++
+        }
+    }
+    return SelectionDeletePlan(trash_ids.toList(), trash_row_count, permanent_ids.toList(), permanent_rows)
+}

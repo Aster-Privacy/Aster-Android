@@ -4126,6 +4126,7 @@ internal fun selection_overflow_sheet(
     current_folder: String = "inbox",
     selection_all_starred: Boolean = false,
     show_category: Boolean = false,
+    delete_is_permanent: Boolean = current_folder == "trash",
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -4177,7 +4178,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("category", TablerIcons.LayoutGrid, stringResource(R.string.move_to_category), colors.text_primary) { on_action("category") }
             }
             AsterDivider()
-            if (in_trash) {
+            if (delete_is_permanent) {
                 overflow_sheet_row("delete_permanent", TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), colors.danger) { on_action("delete_permanent") }
             } else {
                 overflow_sheet_row(

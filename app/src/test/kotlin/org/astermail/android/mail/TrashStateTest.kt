@@ -98,4 +98,95 @@ class TrashStateTest {
         assertFalse(all_ids_trashed(listOf("a", "b"), setOf("a")))
         assertFalse(all_ids_trashed(emptyList(), setOf("a")))
     }
+
+    @Test
+    fun mixed_rows_split_into_trash_and_permanent_delete() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a"), "b" to listOf("b"), "c" to listOf("c")),
+            shown_ids = setOf("a", "b", "c"),
+            trashed_ids = setOf("a", "c"),
+        )
+        assertEquals(listOf("b"), plan.trash_ids)
+        assertEquals(1, plan.trash_row_count)
+        assertEquals(listOf("a", "c"), plan.permanent_ids)
+        assertEquals(listOf("a", "c"), plan.permanent_rows)
+        assertFalse(plan.all_trashed)
+    }
+
+    @Test
+    fun rows_already_in_trash_are_only_deleted_forever() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a", "a2"), "c" to listOf("c")),
+            shown_ids = setOf("a", "c"),
+            trashed_ids = setOf("a", "a2", "c"),
+        )
+        assertEquals(emptyList<String>(), plan.trash_ids)
+        assertEquals(0, plan.trash_row_count)
+        assertEquals(listOf("a", "a2", "c"), plan.permanent_ids)
+        assertTrue(plan.all_trashed)
+    }
+
+    @Test
+    fun live_rows_only_move_to_trash() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a", "a2"), "b" to listOf("b")),
+            shown_ids = setOf("a", "b"),
+            trashed_ids = emptySet(),
+        )
+        assertEquals(listOf("a", "a2", "b"), plan.trash_ids)
+        assertEquals(2, plan.trash_row_count)
+        assertEquals(emptyList<String>(), plan.permanent_ids)
+        assertEquals(emptyList<String>(), plan.permanent_rows)
+        assertFalse(plan.all_trashed)
+    }
+
+    @Test
+    fun a_live_row_keeps_its_trashed_sibling_out_of_permanent_delete() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a", "old")),
+            shown_ids = setOf("a"),
+            trashed_ids = setOf("old"),
+        )
+        assertEquals(listOf("a"), plan.trash_ids)
+        assertEquals(1, plan.trash_row_count)
+        assertEquals(emptyList<String>(), plan.permanent_ids)
+    }
+
+    @Test
+    fun a_trashed_row_leaves_its_live_sibling_alone() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a", "live")),
+            shown_ids = setOf("a"),
+            trashed_ids = setOf("a"),
+        )
+        assertEquals(emptyList<String>(), plan.trash_ids)
+        assertEquals(listOf("a"), plan.permanent_ids)
+        assertTrue(plan.all_trashed)
+    }
+
+    @Test
+    fun an_empty_selection_plans_nothing() {
+        val plan = plan_selection_delete(emptyMap(), setOf("a"), setOf("a"))
+        assertEquals(emptyList<String>(), plan.trash_ids)
+        assertEquals(emptyList<String>(), plan.permanent_ids)
+        assertFalse(plan.all_trashed)
+    }
+
+    @Test
+    fun a_row_without_known_members_is_planned_by_its_own_id() {
+        val plan = plan_selection_delete(linkedMapOf("a" to emptyList(), "b" to emptyList()), emptySet(), setOf("a"))
+        assertEquals(listOf("b"), plan.trash_ids)
+        assertEquals(listOf("a"), plan.permanent_ids)
+    }
+
+    @Test
+    fun rows_sharing_a_message_count_it_once() {
+        val plan = plan_selection_delete(
+            rows = linkedMapOf("a" to listOf("a", "b"), "b" to listOf("a", "b")),
+            shown_ids = setOf("a", "b"),
+            trashed_ids = emptySet(),
+        )
+        assertEquals(listOf("a", "b"), plan.trash_ids)
+        assertEquals(1, plan.trash_row_count)
+    }
 }
