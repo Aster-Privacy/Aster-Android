@@ -24,7 +24,9 @@ package org.astermail.android.mail.ratchet
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -404,9 +406,17 @@ class RatchetDecryptor @Inject constructor(
                     bootstrap_claim = claim
                     state = recovered.first
                     plaintext = recovered.second
-                    consume_pq_prekey(recipient)
-                    consume_ec_one_time_prekey(recipient)
                 }
+            }
+            val bootstrapped = bootstrap_claim != null
+
+            suspend fun settle(resolved: String, unconfirmed: Boolean, saved_state: RatchetState?) {
+                withContext(NonCancellable) {
+                    cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed, binding = binding)
+                    saved_state?.let { state_store.save(it) }
+                    if (bootstrapped) consume_pq_prekey(recipient)
+                }
+                if (bootstrapped) consume_ec_one_time_prekey(recipient)
             }
 
             if (plaintext == null) {
@@ -489,7 +499,7 @@ class RatchetDecryptor @Inject constructor(
             if (!chained && state_loaded_locally &&
                 (bootstrap_claim != BootstrapClaim.FIRST || recipient.header.dh_public in loaded_dh_chains)
             ) {
-                cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
+                settle(resolved, unconfirmed_sender, null)
                 return@with_lock resolved
             }
             if (!chained && state_loaded_locally &&
@@ -503,7 +513,7 @@ class RatchetDecryptor @Inject constructor(
                 )
             ) {
                 flag_sender_rotation(conversation_id, sender_email, identity_key)
-                cache_plaintext(message_id, resolved, unconfirmed_sender = true, binding = binding)
+                settle(resolved, true, null)
                 return@with_lock resolved
             }
             if (chained && final_state.remote_identity_key == null && continuity == SenderIdentityContinuity.KNOWN) {
@@ -532,9 +542,8 @@ class RatchetDecryptor @Inject constructor(
             } else if (trusted_sighting) {
                 remember_sender_identity(sender_email, identity_key)
             }
-            cache_plaintext(message_id, resolved, unconfirmed_sender = unconfirmed_sender, binding = binding)
+            settle(resolved, unconfirmed_sender, final_state)
             upload_escrow(message_id, recipient, resolved, sender_email, conversation_id, unconfirmed_sender)
-            state_store.save(final_state)
             syncer.sync(conversation_id, final_state)
             resolved
         }
@@ -1300,7 +1309,7 @@ class RatchetDecryptor @Inject constructor(
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
         } catch (_: Throwable) {
-            null
+            return null
         }
         if (resp == null) {
             if (org.astermail.android.BuildConfig.DEBUG) {
