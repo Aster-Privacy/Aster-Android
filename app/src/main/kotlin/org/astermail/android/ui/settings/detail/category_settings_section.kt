@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -198,8 +199,13 @@ fun category_settings_section(
     on_custom_change: (List<CustomCategoryRule>) -> Unit,
     on_toggle_muted: (String) -> Unit,
     on_upgrade: () -> Unit,
+    learn_from_moves: Boolean,
+    learned_sender_count: Int,
+    on_learn_change: (Boolean) -> Unit,
+    on_forget_learned: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
+    var forget_open by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<CustomCategoryRule?>(null) }
     var editor_open by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<CustomCategoryRule?>(null) }
@@ -456,11 +462,44 @@ fun category_settings_section(
         }
 
         Spacer(Modifier.height(AsterSpacing.sm))
+        learned_senders_card(
+            learn_from_moves = learn_from_moves,
+            learned_sender_count = learned_sender_count,
+            on_learn_change = on_learn_change,
+            on_forget = { forget_open = true },
+        )
+
+        Spacer(Modifier.height(AsterSpacing.sm))
         Text(
             text = stringResource(R.string.category_tutorial_text),
             color = colors.text_tertiary,
             fontSize = 12.sp,
             modifier = Modifier.padding(horizontal = AsterSpacing.xs),
+        )
+    }
+
+    if (forget_open && learned_sender_count > 0) {
+        AsterDialog(
+            on_dismiss = { forget_open = false },
+            title = stringResource(R.string.forget_learned_senders_title),
+            message = pluralStringResource(
+                R.plurals.forget_learned_senders_description,
+                learned_sender_count,
+                learned_sender_count,
+            ),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { forget_open = false },
+                )
+                AsterDialogDestructiveButton(
+                    label = stringResource(R.string.forget_learned_senders_confirm),
+                    onClick = {
+                        on_forget_learned()
+                        forget_open = false
+                    },
+                )
+            },
         )
     }
 
@@ -504,6 +543,75 @@ fun category_settings_section(
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun learned_senders_card(
+    learn_from_moves: Boolean,
+    learned_sender_count: Int,
+    on_learn_change: (Boolean) -> Unit,
+    on_forget: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { on_learn_change(!learn_from_moves) }
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+                .testTag("learn_from_category_moves"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.learn_from_category_moves),
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = stringResource(R.string.learn_from_category_moves_description),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Spacer(Modifier.width(AsterSpacing.sm))
+            AsterSwitch(
+                checked = learn_from_moves,
+                onCheckedChange = { on_learn_change(it) },
+            )
+        }
+        if (learned_sender_count > 0) {
+            settings_row_gap(modifier = Modifier)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { on_forget() }
+                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
+                    .testTag("forget_learned_senders"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Trash,
+                    contentDescription = null,
+                    tint = colors.danger,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(AsterSpacing.md))
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.forget_learned_senders,
+                        learned_sender_count,
+                        learned_sender_count,
+                    ),
+                    color = colors.danger,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
     }
 }
 

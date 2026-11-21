@@ -174,6 +174,9 @@ data class UserPreferences(
     val locked_data_banner_dismissed: String = "",
     val external_account_health_banner_dismissed: String = "",
     val account_security_banner_dismissed: Boolean = false,
+    val learn_from_category_moves: Boolean = true,
+    @Serializable(with = LearnedCategorySendersSerializer::class)
+    val learned_category_senders: List<LearnedCategorySender> = emptyList(),
 )
 
 @Serializable

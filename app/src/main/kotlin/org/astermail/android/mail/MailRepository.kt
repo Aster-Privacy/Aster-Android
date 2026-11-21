@@ -1047,8 +1047,40 @@ class MailRepository @Inject constructor(
         return true
     }
 
+    @Volatile
+    private var learned_category_entries: List<org.astermail.android.api.preferences.LearnedCategorySender> =
+        emptyList()
+
+    @Volatile
+    private var learned_category_map: Map<String, String> = emptyMap()
+
+    @Volatile
+    private var learn_from_category_moves: Boolean = true
+
+    @Volatile
+    private var learned_categories_set = false
+
+    val learned_category_senders: List<org.astermail.android.api.preferences.LearnedCategorySender>
+        get() = learned_category_entries
+
+    val is_learning_from_category_moves: Boolean
+        get() = learn_from_category_moves
+
+    fun set_learned_categories(
+        enabled: Boolean,
+        entries: List<org.astermail.android.api.preferences.LearnedCategorySender>,
+    ): Boolean {
+        learned_categories_set = true
+        learn_from_category_moves = enabled
+        val sanitized = org.astermail.android.api.preferences.sanitize_learned_category_senders(entries)
+        if (learned_category_entries == sanitized) return false
+        learned_category_entries = sanitized
+        learned_category_map = learned_category_lookup(sanitized)
+        return true
+    }
+
     fun ensure_custom_categories_loaded() {
-        if (custom_categories_set) return
+        if (custom_categories_set && learned_categories_set) return
         val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return
         val raw = runCatching {
             PreferencesCacheStore(context).read(account_key)
@@ -1059,8 +1091,10 @@ class MailRepository @Inject constructor(
                 raw,
             )
         }.getOrNull() ?: return
-        if (custom_categories_set) return
-        set_custom_categories(cached.custom_categories.orEmpty())
+        if (!custom_categories_set) set_custom_categories(cached.custom_categories.orEmpty())
+        if (!learned_categories_set) {
+            set_learned_categories(cached.learn_from_category_moves, cached.learned_category_senders)
+        }
     }
 
     fun cached_avatar_preferences(): Pair<Boolean, Boolean>? {
@@ -1114,7 +1148,7 @@ class MailRepository @Inject constructor(
     }
 
     val custom_categories_fingerprint: Int
-        get() = custom_categories.toString().hashCode()
+        get() = (custom_categories.toString() + "|" + learned_category_map.toSortedMap().toString()).hashCode()
 
     @Volatile
     private var conversation_grouping: Boolean = true
@@ -4532,7 +4566,7 @@ class MailRepository @Inject constructor(
             labels = item.labels?.mapNotNull { it.folder_token } ?: emptyList(),
             tag_tokens = item.tag_tokens ?: emptyList(),
             category = if (envelope != null) {
-                classify(envelope, meta, item.rule_category, custom_categories)
+                classify(envelope, meta, item.rule_category, custom_categories, learned_category_map)
             } else {
                 "primary"
             },

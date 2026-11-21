@@ -100,4 +100,14 @@
         <item quantity="many">%1$d secondi</item>
         <item quantity="other">%1$d secondi</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Dimentica %1$d mittente appreso</item>
+        <item quantity="many">Dimentica %1$d mittenti appresi</item>
+        <item quantity="other">Dimentica %1$d mittenti appresi</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Le email di %1$d mittente tornano all\'ordinamento automatico. Non puoi annullare questa azione.</item>
+        <item quantity="many">Le email di %1$d mittenti tornano all\'ordinamento automatico. Non puoi annullare questa azione.</item>
+        <item quantity="other">Le email di %1$d mittenti tornano all\'ordinamento automatico. Non puoi annullare questa azione.</item>
+    </plurals>
 </resources>

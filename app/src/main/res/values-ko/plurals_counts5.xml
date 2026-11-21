@@ -60,4 +60,10 @@
     <plurals name="undo_send_delay_seconds">
         <item quantity="other">%1$d초</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="other">학습한 발신자 %1$d명 삭제</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="other">발신자 %1$d명의 메일이 다시 자동으로 분류됩니다. 이 작업은 취소할 수 없습니다.</item>
+    </plurals>
 </resources>

@@ -80,4 +80,12 @@
         <item quantity="one">%1$d saniye</item>
         <item quantity="other">%1$d saniye</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">%1$d öğrenilen göndericiyi unut</item>
+        <item quantity="other">%1$d öğrenilen göndericiyi unut</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">%1$d göndericiden gelen e-postalar yeniden otomatik olarak sıralanır. Bu işlem geri alınamaz.</item>
+        <item quantity="other">%1$d göndericiden gelen e-postalar yeniden otomatik olarak sıralanır. Bu işlem geri alınamaz.</item>
+    </plurals>
 </resources>

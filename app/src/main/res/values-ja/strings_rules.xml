@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">すべてのアクションに値を入力してください。</string>
     <string name="mute_category_notifications">%1$sの通知をミュート</string>
     <string name="unmute_category_notifications">%1$sの通知のミュートを解除</string>
+    <string name="learn_from_category_moves">移動から学習</string>
+    <string name="learn_from_category_moves_description">メールをカテゴリに移動すると、その送信者からの今後のメールもそのカテゴリに入ります。この情報は暗号化されたままで、当社と共有されることはありません。</string>
+    <string name="forget_learned_senders_title">学習した送信者を消去しますか？</string>
+    <string name="forget_learned_senders_confirm">消去</string>
 </resources>

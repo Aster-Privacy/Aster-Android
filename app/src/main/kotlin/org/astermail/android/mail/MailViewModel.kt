@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -229,7 +230,45 @@ class MailViewModel @Inject constructor(
     fun set_custom_categories(
         rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
     ) {
-        val changed = repository.set_custom_categories(rules)
+        apply_category_signature(repository.set_custom_categories(rules))
+    }
+
+    fun set_category_preferences(
+        rules: List<org.astermail.android.api.preferences.CustomCategoryRule>,
+        learn_enabled: Boolean,
+        learned: List<org.astermail.android.api.preferences.LearnedCategorySender>,
+    ) {
+        val rules_changed = repository.set_custom_categories(rules)
+        val learned_changed = repository.set_learned_categories(learn_enabled, learned)
+        apply_category_signature(rules_changed || learned_changed)
+    }
+
+    private val _learned_category_edits =
+        kotlinx.coroutines.channels.Channel<LearnedCategoryEdit>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+    val learned_category_edits: kotlinx.coroutines.flow.Flow<LearnedCategoryEdit> =
+        _learned_category_edits.receiveAsFlow()
+
+    private fun learn_category_move(category: String, items: Collection<InboxItem>): LearnedCategoryEdit? {
+        val move = learn_from_category_move(
+            current = repository.learned_category_senders,
+            learning_enabled = repository.is_learning_from_category_moves,
+            sources = items.map { learned_move_source(it) },
+            category = category,
+            now_seconds = System.currentTimeMillis() / 1000L,
+        ) ?: return null
+        publish_learned_category_edit(move.apply)
+        return move.undo
+    }
+
+    private fun publish_learned_category_edit(edit: LearnedCategoryEdit) {
+        if (edit.is_empty()) return
+        val next = apply_learned_category_edit(repository.learned_category_senders, edit)
+        val changed = repository.set_learned_categories(repository.is_learning_from_category_moves, next)
+        _learned_category_edits.trySend(edit)
+        if (changed) apply_category_signature(true)
+    }
+
+    private fun apply_category_signature(changed: Boolean) {
         val signature = repository.custom_categories_fingerprint.toString(16)
         if (!changed && folder_cache_store.categories_signature() == signature) return
         folder_cache_store.set_categories_signature(signature)
@@ -3339,10 +3378,11 @@ class MailViewModel @Inject constructor(
                 return@launch
             }
             if (failed.isNotEmpty()) emit_toast(category_failure_message(failed.values))
+            val learned_undo = learn_category_move(category, anchors.filter { it.id in written })
             emit_toast_undo(
                 context.getString(R.string.moved_to_category),
                 context.getString(R.string.undo),
-            ) { undo_category_move(category, written, local, previous_overrides) }
+            ) { undo_category_move(category, written, local, previous_overrides, learned_undo) }
         }
     }
 
@@ -3351,6 +3391,7 @@ class MailViewModel @Inject constructor(
         written: Map<String, CategoryWrite>,
         local: Map<String, InboxItem>,
         previous_overrides: Map<String, CategoryOverride?>,
+        learned_undo: LearnedCategoryEdit? = null,
     ) {
         val started = override_clock_ms()
         written.forEach { (id, write) ->
@@ -3364,6 +3405,7 @@ class MailViewModel @Inject constructor(
                 with_category_state(it, before.category, write.prior_category, write.prior_pinned)
             }
         }
+        if (learned_undo != null) publish_learned_category_edit(learned_undo)
         viewModelScope.launch {
             val failed = ArrayList<Throwable>()
             for ((id, write) in written) {

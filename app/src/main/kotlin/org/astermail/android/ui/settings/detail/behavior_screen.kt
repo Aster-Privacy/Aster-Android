@@ -567,6 +567,10 @@ fun BehaviorScreen(
                     on_custom_change = { custom_categories = it; save_trigger++ },
                     on_toggle_muted = { vm.toggle_category_notifications(it) },
                     on_upgrade = { on_open("billing") },
+                    learn_from_moves = prefs?.learn_from_category_moves ?: true,
+                    learned_sender_count = prefs?.learned_category_senders?.size ?: 0,
+                    on_learn_change = { vm.set_learn_from_category_moves(it) },
+                    on_forget_learned = { vm.forget_learned_category_senders() },
                 )
             }
 

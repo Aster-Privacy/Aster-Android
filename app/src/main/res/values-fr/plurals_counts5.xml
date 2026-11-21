@@ -100,4 +100,14 @@
         <item quantity="many">%1$d secondes</item>
         <item quantity="other">%1$d secondes</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">Oublier %1$d expéditeur appris</item>
+        <item quantity="many">Oublier %1$d expéditeurs appris</item>
+        <item quantity="other">Oublier %1$d expéditeurs appris</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">Les e-mails de %1$d expéditeur reviennent au tri automatique. Cette action est irréversible.</item>
+        <item quantity="many">Les e-mails de %1$d expéditeurs reviennent au tri automatique. Cette action est irréversible.</item>
+        <item quantity="other">Les e-mails de %1$d expéditeurs reviennent au tri automatique. Cette action est irréversible.</item>
+    </plurals>
 </resources>

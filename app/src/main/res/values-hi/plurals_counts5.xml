@@ -80,4 +80,12 @@
         <item quantity="one">%1$d सेकंड</item>
         <item quantity="other">%1$d सेकंड</item>
     </plurals>
+    <plurals name="forget_learned_senders">
+        <item quantity="one">%1$d सीखा गया प्रेषक भूलें</item>
+        <item quantity="other">%1$d सीखे गए प्रेषक भूलें</item>
+    </plurals>
+    <plurals name="forget_learned_senders_description">
+        <item quantity="one">%1$d प्रेषक के ईमेल फिर से अपने-आप छांटे जाएंगे। आप इसे पूर्ववत नहीं कर सकते।</item>
+        <item quantity="other">%1$d प्रेषकों के ईमेल फिर से अपने-आप छांटे जाएंगे। आप इसे पूर्ववत नहीं कर सकते।</item>
+    </plurals>
 </resources>

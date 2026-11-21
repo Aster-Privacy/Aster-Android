@@ -133,10 +133,17 @@ fun rebase_preferences_changes(
     val merged = buildJsonObject {
         for ((k, base_value) in base_obj) {
             val new_value = updated_obj[k]
+            if (k == LEARNED_CATEGORY_SENDERS_KEY) continue
             put(k, if (new_value != null && new_value != baseline_obj[k]) new_value else base_value)
         }
     }
-    return json.decodeFromJsonElement(UserPreferences.serializer(), merged)
+    return json.decodeFromJsonElement(UserPreferences.serializer(), merged).copy(
+        learned_category_senders = rebase_learned_category_senders(
+            server = base.learned_category_senders,
+            baseline = baseline?.learned_category_senders.orEmpty(),
+            local = updated.learned_category_senders,
+        ),
+    )
 }
 
 fun encode_preferences_preserving_unknown(

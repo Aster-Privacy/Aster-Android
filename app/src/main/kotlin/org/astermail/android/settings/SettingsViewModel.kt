@@ -7032,6 +7032,40 @@ class SettingsViewModel @Inject constructor(
         _preference_save_failures.trySend(message)
     }
 
+    fun apply_learned_category_edit(edit: org.astermail.android.mail.LearnedCategoryEdit) {
+        if (edit.is_empty() || !prefs_load_succeeded) return
+        val base = _state.value.preferences ?: return
+        val next = org.astermail.android.mail.apply_learned_category_edit(base.learned_category_senders, edit)
+        if (next == base.learned_category_senders) return
+        save_preferences(base.copy(learned_category_senders = next))
+    }
+
+    fun set_learn_from_category_moves(enabled: Boolean) {
+        if (!prefs_load_succeeded) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            return
+        }
+        val base = _state.value.preferences ?: UserPreferences()
+        if (base.learn_from_category_moves == enabled) return
+        save_preferences(base.copy(learn_from_category_moves = enabled))
+    }
+
+    fun forget_learned_category_senders() {
+        if (!prefs_load_succeeded) {
+            _state.value = _state.value.copy(
+                save_status = SaveStatus.ERROR,
+                error = context.getString(R.string.preferences_locked_retry),
+            )
+            return
+        }
+        val base = _state.value.preferences ?: UserPreferences()
+        if (base.learned_category_senders.isEmpty()) return
+        save_preferences(base.copy(learned_category_senders = emptyList()))
+    }
+
     fun save_preferences(prefs: UserPreferences) {
         val load_confirmed = prefs_load_succeeded
         if (!load_confirmed && !account_uses_encrypted_prefs) {

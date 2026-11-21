@@ -110,4 +110,8 @@
     <string name="rules_hint_finish_action">Vul voor elke actie een waarde in.</string>
     <string name="mute_category_notifications">Meldingen voor %1$s dempen</string>
     <string name="unmute_category_notifications">Dempen van meldingen voor %1$s opheffen</string>
+    <string name="learn_from_category_moves">Leren van je verplaatsingen</string>
+    <string name="learn_from_category_moves_description">Als je een e-mail naar een categorie verplaatst, gaat toekomstige e-mail van die afzender daar ook naartoe. Dit blijft versleuteld en wordt nooit met ons gedeeld.</string>
+    <string name="forget_learned_senders_title">Geleerde afzenders vergeten?</string>
+    <string name="forget_learned_senders_confirm">Vergeten</string>
 </resources>

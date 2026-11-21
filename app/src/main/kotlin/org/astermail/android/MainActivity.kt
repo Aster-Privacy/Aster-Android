@@ -1216,6 +1216,9 @@ private fun AsterNavHost() {
             org.astermail.android.ui.common.on_return_to_foreground {
                 shared_mail_vm.refresh_after_background()
             }
+            androidx.compose.runtime.LaunchedEffect(shared_mail_vm, shared_settings_vm) {
+                shared_mail_vm.learned_category_edits.collect { shared_settings_vm.apply_learned_category_edit(it) }
+            }
             val visible_order by shared_mail_vm.visible_order.collectAsStateWithLifecycle()
             val stable_order = androidx.compose.runtime.remember {
                 androidx.compose.runtime.mutableStateOf(visible_order)
@@ -2393,8 +2396,22 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         colors.bg_primary
     }
 
-    androidx.compose.runtime.LaunchedEffect(prefs?.custom_categories) {
-        if (prefs != null) mail_vm.set_custom_categories(prefs.custom_categories.orEmpty())
+    androidx.compose.runtime.LaunchedEffect(
+        prefs?.custom_categories,
+        prefs?.learn_from_category_moves,
+        prefs?.learned_category_senders,
+    ) {
+        if (prefs != null) {
+            mail_vm.set_category_preferences(
+                prefs.custom_categories.orEmpty(),
+                prefs.learn_from_category_moves,
+                prefs.learned_category_senders,
+            )
+        }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(mail_vm, settings_vm) {
+        mail_vm.learned_category_edits.collect { settings_vm.apply_learned_category_edit(it) }
     }
 
     androidx.compose.runtime.LaunchedEffect(prefs?.conversation_grouping) {
