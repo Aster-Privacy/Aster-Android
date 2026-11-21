@@ -96,6 +96,12 @@ data class IndexProgress(
     val started_at_ms: Long,
 )
 
+internal fun body_index_progress_of(indexed: Int, skipped: Int, total: Int, started_at_ms: Long): IndexProgress? {
+    val handled = indexed.coerceAtLeast(0) + skipped.coerceAtLeast(0)
+    if (total <= 0 || handled >= total) return null
+    return IndexProgress(indexed = handled, total = total, started_at_ms = started_at_ms)
+}
+
 @Singleton
 class SearchIndexManager @Inject constructor(
     private val db_provider: dagger.Lazy<AsterDatabase>,
@@ -172,11 +178,7 @@ class SearchIndexManager @Inject constructor(
     private suspend fun publish_body_progress(started_at: Long) {
         val total = body_dao.cached_mail_count()
         val indexed = body_dao.indexed_cached_count()
-        _body_index_progress.value = if (total == 0 || indexed + body_failed_ids.size >= total) {
-            null
-        } else {
-            IndexProgress(indexed = indexed, total = total, started_at_ms = started_at)
-        }
+        _body_index_progress.value = body_index_progress_of(indexed, body_failed_ids.size, total, started_at)
     }
 
     private suspend fun run_body_backfill(started_epoch: Int) {
@@ -197,9 +199,9 @@ class SearchIndexManager @Inject constructor(
                     repository.index_thread_bodies(thread_token, ids)
                 }
                 if (result?.isSuccess != true) body_failed_ids.addAll(ids)
+                publish_body_progress(started_at)
                 delay(BODY_BACKFILL_PAUSE_MS)
             }
-            publish_body_progress(started_at)
         }
     }
 

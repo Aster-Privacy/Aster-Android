@@ -24,6 +24,7 @@ import java.time.ZonedDateTime
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.SearchUiState
+import org.astermail.android.mail.body_index_progress_of
 import org.astermail.android.mail.search_state_after_index_failure
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -95,5 +96,46 @@ class SearchIndexStateTest {
             search_local_day(instant, ZoneId.of("UTC")) + 1,
             search_local_day(instant, ZoneId.of("Asia/Tokyo")),
         )
+    }
+
+    @Test
+    fun body_progress_counts_skipped_mail_as_handled() {
+        val progress = body_index_progress_of(indexed = 100, skipped = 20, total = 153, started_at_ms = 5L)
+        assertEquals(120, progress?.indexed)
+        assertEquals(153, progress?.total)
+        assertEquals(5L, progress?.started_at_ms)
+    }
+
+    @Test
+    fun body_progress_clears_once_every_message_is_handled() {
+        assertNull(body_index_progress_of(indexed = 153, skipped = 0, total = 153, started_at_ms = 0L))
+        assertNull(body_index_progress_of(indexed = 120, skipped = 33, total = 153, started_at_ms = 0L))
+        assertNull(body_index_progress_of(indexed = 200, skipped = 0, total = 153, started_at_ms = 0L))
+        assertNull(body_index_progress_of(indexed = 0, skipped = 0, total = 0, started_at_ms = 0L))
+    }
+
+    @Test
+    fun body_progress_ignores_negative_counts() {
+        val progress = body_index_progress_of(indexed = -4, skipped = -2, total = 10, started_at_ms = 0L)
+        assertEquals(0, progress?.indexed)
+    }
+
+    @Test
+    fun body_index_step_changes_in_coarse_steps() {
+        assertEquals(-1, body_index_step(null))
+        assertEquals(0, body_index_step(0))
+        assertEquals(0, body_index_step(19))
+        assertEquals(1, body_index_step(20))
+        assertEquals(6, body_index_step(120))
+        assertEquals(0, body_index_step(-5))
+    }
+
+    @Test
+    fun body_index_fraction_stays_between_zero_and_one() {
+        assertEquals(0f, body_index_fraction(0, 0), 0f)
+        assertEquals(0f, body_index_fraction(5, -1), 0f)
+        assertEquals(0.5f, body_index_fraction(50, 100), 0.0001f)
+        assertEquals(1f, body_index_fraction(300, 100), 0f)
+        assertEquals(0f, body_index_fraction(-3, 100), 0f)
     }
 }

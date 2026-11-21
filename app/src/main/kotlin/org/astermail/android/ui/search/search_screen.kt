@@ -148,6 +148,69 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
     },
 )
 
+private const val BODY_HITS_TIMEOUT_MS = 2_000L
+
+private const val BODY_INDEX_STEP_SIZE = 20
+
+internal fun body_index_step(indexed: Int?): Int =
+    if (indexed == null) -1 else indexed.coerceAtLeast(0) / BODY_INDEX_STEP_SIZE
+
+internal fun body_index_fraction(indexed: Int, total: Int): Float =
+    if (total <= 0) 0f else (indexed.toFloat() / total).coerceIn(0f, 1f)
+
+@Composable
+private fun body_index_banner(indexed: Int, total: Int) {
+    val colors = AsterMaterial.colors
+    val fraction = body_index_fraction(indexed, total)
+    val animated by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = fraction,
+        label = "body_index_progress",
+    )
+    val percent = remember(fraction) {
+        java.text.NumberFormat.getPercentInstance().format(fraction.toDouble())
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .testTag("body_index_banner"),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+        ) {
+            Text(
+                text = stringResource(R.string.body_index_status, indexed, total),
+                color = colors.text_muted,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = percent,
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        androidx.compose.material3.LinearProgressIndicator(
+            progress = { animated },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .clip(SquircleShape(2.dp)),
+            color = colors.accent_blue,
+            trackColor = colors.bg_secondary,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+        )
+    }
+}
+
 private object search_screen_cache {
     var source: List<org.astermail.android.mail.InboxItem>? = null
     var lock_revision: Long = Long.MIN_VALUE
@@ -159,6 +222,7 @@ private object search_screen_cache {
     var outcome: SearchOutcome? = null
     var outcome_corpus: List<org.astermail.android.mail.InboxItem>? = null
     var outcome_day: Long = Long.MIN_VALUE
+    var outcome_body_step: Int = Int.MIN_VALUE
     var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
     var people: ChipPeopleLists? = null
 
@@ -375,9 +439,12 @@ fun SearchScreen(
         value = sorted
     }
 
+    val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
+    val body_step = body_index_step(body_progress?.indexed)
+
     val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
         initialValue = search_screen_cache.outcome_for(parsed, search_labels, sorted_corpus),
-        parsed, search_labels, sorted_corpus, has_query,
+        parsed, search_labels, sorted_corpus, has_query, body_step,
     ) {
         if (!has_query) {
             value = SearchOutcome(emptyList(), 0)
@@ -388,15 +455,24 @@ fun SearchScreen(
             value = null
             return@produceState
         }
-        search_screen_cache.outcome_for(parsed, search_labels, corpus)?.let {
+        val body_terms = body_search_terms(parsed)
+        val body_current = body_terms.isEmpty() || search_screen_cache.outcome_body_step == body_step
+        search_screen_cache.outcome_for(parsed, search_labels, corpus)?.takeIf { body_current }?.let {
             value = it
             return@produceState
         }
-        value = null
+        val same_query = search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels
+        if (!same_query) value = null
         if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
-        val body_terms = body_search_terms(parsed)
         val base_env = current_search_env(search_labels).let { env ->
-            if (body_terms.isEmpty()) env else env.copy(body_hits = mail_vm.search_body_hits(body_terms))
+            if (body_terms.isEmpty()) {
+                env
+            } else {
+                val hits = kotlinx.coroutines.withTimeoutOrNull(BODY_HITS_TIMEOUT_MS) {
+                    mail_vm.search_body_hits(body_terms)
+                }
+                env.copy(body_hits = hits ?: emptyMap())
+            }
         }
         val env = if (parsed.operators.any { needs_attachment_details(it) }) {
             val untyped = parsed.copy(operators = parsed.operators.filterNot { needs_attachment_details(it) })
@@ -433,6 +509,7 @@ fun SearchScreen(
         search_screen_cache.outcome = outcome
         search_screen_cache.outcome_corpus = corpus
         search_screen_cache.outcome_day = env_day
+        search_screen_cache.outcome_body_step = body_step
         value = outcome
     }
 
@@ -756,17 +833,9 @@ fun SearchScreen(
             }
         }
 
-        val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
         val body_status = body_progress
         if (has_query && body_status != null && body_status.total > 0 && !search_state.is_indexing && !index_paused) {
-            Text(
-                text = stringResource(R.string.body_index_status, body_status.indexed, body_status.total),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xs),
-            )
+            body_index_banner(indexed = body_status.indexed, total = body_status.total)
         }
 
         if (has_query && search_state.is_partial && !search_state.is_indexing && !index_paused) {
