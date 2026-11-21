@@ -97,6 +97,8 @@ import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.recovery.RecoveryApi
 import org.astermail.android.api.recovery_email.RecoveryEmailApi
 import org.astermail.android.api.recovery_email.RecoveryEmailStateResponse
+import org.astermail.android.api.recovery_email.RecoveryEmailApiImpl
+import org.astermail.android.api.recovery_email.RecoveryEmailError
 import org.astermail.android.api.security.SecurityApi
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.AliasListResponse
@@ -593,6 +595,38 @@ class SettingsViewModelTest {
 
         assertTrue(vm.state.value.recovery_email_known)
         assertTrue(vm.state.value.recovery_email_set)
+    }
+
+    @Test
+    fun `recovery email save asks for a password when the server requires one`() = runTest {
+        every { session_key_store.get_identity_key() } returns "identity-key"
+        coEvery { recovery_email_api.get_state() } returns RecoveryEmailStateResponse()
+        coEvery { recovery_email_api.save(any()) } throws
+            RecoveryEmailError(RecoveryEmailApiImpl.STEP_UP_REQUIRED, "To make this change, confirm your password.")
+
+        vm.save_recovery_email("new.address@example.com", null, null, get_credential = { "" })
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
+        assertTrue(vm.state.value.recovery_email_step_up_required)
+        assertFalse(vm.state.value.recovery_email_totp_required)
+        assertNull(vm.state.value.error)
+    }
+
+    @Test
+    fun `recovery email save asks for a code when the server requires one`() = runTest {
+        every { session_key_store.get_identity_key() } returns "identity-key"
+        coEvery { auth_repository.derive_password_hash_b64("pw") } returns "hash"
+        coEvery { recovery_email_api.get_state() } returns RecoveryEmailStateResponse()
+        coEvery { recovery_email_api.save(any()) } throws
+            RecoveryEmailError(RecoveryEmailApiImpl.TOTP_REQUIRED, "Enter your authenticator code.")
+
+        vm.save_recovery_email("new.address@example.com", "pw", null, get_credential = { "" })
+        advanceUntilIdle()
+
+        assertEquals(SaveStatus.ERROR, vm.state.value.save_status)
+        assertTrue(vm.state.value.recovery_email_step_up_required)
+        assertTrue(vm.state.value.recovery_email_totp_required)
     }
 
     @Test
