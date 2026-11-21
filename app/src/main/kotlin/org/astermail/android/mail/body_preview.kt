@@ -252,31 +252,31 @@ fun strip_quote_attribution(html: String): String {
 
 fun thread_card_preview(body_html: String?, display_body: String): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
-        val unquoted = strip_body_html(strip_quoted_html(body_html))
+        val unquoted = strip_leading_css(strip_body_html(strip_quoted_html(body_html)))
         if (unquoted.length > 4) return unquoted
         if (has_quote_attribution(body_html)) {
-            val quoted = strip_body_html(strip_quote_attribution(body_html))
+            val quoted = strip_leading_css(strip_body_html(strip_quote_attribution(body_html)))
             if (quoted.length > 4) return quoted
         }
     }
-    return display_body
+    return strip_leading_css(display_body)
 }
 
 fun clean_body_preview(body_text: String, body_html: String?): String {
     if (body_html != null && !looks_like_ciphertext(body_html)) {
         val preheader = extract_preheader_text(body_html)
         if (preheader.isNotEmpty()) return take_whole_chars(preheader, PREVIEW_MAX_LENGTH)
-        val unquoted = strip_body_html(strip_quoted_html(body_html))
+        val unquoted = strip_leading_css(strip_body_html(strip_quoted_html(body_html)))
         if (unquoted.length > 4) return take_whole_chars(unquoted, PREVIEW_MAX_LENGTH)
-        val from_html = strip_body_html(strip_quote_attribution(body_html))
+        val from_html = strip_leading_css(strip_body_html(strip_quote_attribution(body_html)))
         if (from_html.length > 4) return take_whole_chars(from_html, PREVIEW_MAX_LENGTH)
     }
     if (looks_like_ciphertext(body_text)) return ""
-    return take_whole_chars(strip_body_html(body_text), PREVIEW_MAX_LENGTH)
+    return take_whole_chars(strip_leading_css(strip_body_html(body_text)), PREVIEW_MAX_LENGTH)
 }
 
 fun safe_display_text(text: String, max_length: Int = PREVIEW_MAX_LENGTH): String {
     if (text.isBlank()) return ""
     if (looks_like_ciphertext(text)) return ""
-    return take_whole_chars(strip_body_html(text), max_length)
+    return take_whole_chars(strip_leading_css(strip_body_html(text)), max_length)
 }
