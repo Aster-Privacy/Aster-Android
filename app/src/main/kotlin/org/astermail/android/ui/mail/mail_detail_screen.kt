@@ -1827,7 +1827,7 @@ fun MailDetailScreen(
                                 is_downloading_attachment = true
                                 mail_vm.download_attachment(att) { result ->
                                     result.onSuccess { (resolved_att, bytes) ->
-                                        preview_attachment = resolved_att
+                                        preview_attachment = resolved_att.copy(is_unverified = att.is_unverified)
                                         preview_bytes = bytes
                                     }.onFailure { error ->
                                         show_toast(

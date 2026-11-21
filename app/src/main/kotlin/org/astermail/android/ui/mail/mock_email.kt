@@ -303,6 +303,12 @@ val ThreadMessage.reaches_outside_with_pgp: Boolean
 val ThreadMessage.shows_pgp_label: Boolean
     get() = has_end_to_end_pgp || reaches_outside_with_pgp
 
+val ThreadMessage.expects_verified_attachments: Boolean
+    get() = is_e2e_encrypted || pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.INVALID
+
+fun attachment_shows_unverified(msg: ThreadMessage, attachment: MessageAttachment): Boolean =
+    attachment.is_unverified && msg.expects_verified_attachments
+
 enum class SenderAuthStatus { verified, failed, unknown }
 
 private val aster_sender_domains = listOf("@astermail.org", "@aster.cx")
@@ -542,7 +548,13 @@ fun thread_message_with_attachments(
     msg: ThreadMessage,
     attachments: List<MessageAttachment>,
 ): ThreadMessage {
-    return msg.copy(attachments = attachments)
+    return msg.copy(
+        attachments = attachments.map { attachment ->
+            val shows_unverified = attachment_shows_unverified(msg, attachment)
+            if (attachment.is_unverified == shows_unverified) attachment
+            else attachment.copy(is_unverified = shows_unverified)
+        },
+    )
 }
 
 private val re_strip_style = Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE)
