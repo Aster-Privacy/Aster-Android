@@ -128,13 +128,17 @@ private val mark_read_toolbar_action = ToolbarAction("read", R.string.mark_as_re
 fun selection_read_toolbar_action(selection_all_read: Boolean): ToolbarAction =
     if (selection_all_read) mark_unread_toolbar_action else mark_read_toolbar_action
 
+private val delete_forever_toolbar_action = ToolbarAction("trash", R.string.swipe_delete_forever, TablerIcons.TrashOff)
+
 fun selection_toolbar_action_for(
     id: String,
     selection_all_starred: Boolean,
     selection_all_read: Boolean = false,
+    selection_all_trashed: Boolean = false,
 ): ToolbarAction? {
     val base = selection_toolbar_action_by_id(id) ?: return null
     return when {
+        base.id == "trash" && selection_all_trashed -> delete_forever_toolbar_action
         base.id == "star" && selection_all_starred -> star_off_toolbar_action
         base.id == "read" -> selection_read_toolbar_action(selection_all_read)
         else -> base

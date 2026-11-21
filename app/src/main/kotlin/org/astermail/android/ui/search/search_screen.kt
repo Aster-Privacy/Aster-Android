@@ -238,6 +238,7 @@ fun SearchScreen(
     var show_label_sheet by remember { mutableStateOf(false) }
     var show_snooze_sheet by remember { mutableStateOf(false) }
     var advanced_open by remember { mutableStateOf(false) }
+    var pending_permanent_ids by remember { mutableStateOf<List<String>>(emptyList()) }
 
     LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
         val raw = settings_state.preferences?.selection_toolbar_actions
@@ -316,18 +317,17 @@ fun SearchScreen(
         SearchLabelIndex(
             settings_state.labels.mapNotNull { label ->
                 org.astermail.android.labels.readable_label_name(label)
-                    ?.let { SearchLabelEntry(it, label.label_token) }
+                    ?.let { SearchLabelEntry(it, label.label_token, is_folder = true) }
             } + settings_state.tags
                 .filter { org.astermail.android.labels.tag_name_readable(it) }
                 .map { SearchLabelEntry(it.encrypted_name, it.tag_token) },
         )
     }
-    val uses_labels = parsed.operators.any { it.key == "label" }
-    LaunchedEffect(uses_labels) {
-        if (uses_labels) {
-            if (settings_state.labels.isEmpty()) settings_vm.load_labels()
-            if (settings_state.tags.isEmpty()) settings_vm.load_tags()
-        }
+    val uses_tags = parsed.operators.any { it.key == "label" }
+    val uses_labels = uses_tags || parsed.operators.any { it.key == "folder" }
+    LaunchedEffect(uses_labels, uses_tags) {
+        if (uses_labels && settings_state.labels.isEmpty()) settings_vm.load_labels()
+        if (uses_tags && settings_state.tags.isEmpty()) settings_vm.load_tags()
     }
     val search_labels = if (uses_labels) label_index else NO_SEARCH_LABELS
 
@@ -525,11 +525,26 @@ fun SearchScreen(
         exit_select_mode()
     }
 
+    val selection_delete_plan = if (selected_ids.isEmpty()) {
+        org.astermail.android.mail.plan_selection_delete(emptyMap(), emptySet(), emptySet())
+    } else {
+        org.astermail.android.mail.plan_selection_delete(
+            rows = selected_ids.associateWith { expand_selection(listOf(it)) },
+            shown_ids = filtered.mapTo(HashSet()) { it.id },
+            trashed_ids = visible_corpus.filter { it.is_trashed }.mapTo(HashSet()) { it.id },
+        )
+    }
+    val selection_all_trashed = selection_delete_plan.all_trashed
+
     fun delete_selected() {
-        val trashed_ids = visible_corpus.filter { it.is_trashed }.map { it.id }.toSet()
-        val ids = org.astermail.android.mail.untrashed_ids(expand_selection(selected_ids.toList()), trashed_ids)
-        if (ids.isNotEmpty()) mail_vm.trash(ids, minOf(selected_ids.size, ids.size))
-        exit_select_mode()
+        val plan = selection_delete_plan
+        if (plan.trash_ids.isNotEmpty()) mail_vm.trash(plan.trash_ids, plan.trash_row_count)
+        if (plan.permanent_ids.isEmpty()) {
+            exit_select_mode()
+        } else {
+            selected_ids.retainAll(plan.permanent_rows.toSet())
+            pending_permanent_ids = plan.permanent_ids
+        }
     }
 
     fun mark_unread_selected() {
@@ -554,7 +569,7 @@ fun SearchScreen(
         when (action_id) {
             "read" -> mark_read_selected()
             "unread" -> mark_unread_selected()
-            "trash" -> delete_selected()
+            "trash", "delete", "delete_permanent" -> delete_selected()
             "archive" -> archive_selected()
             "star" -> star_selected()
             "spam" -> mark_spam_selected()
@@ -916,9 +931,34 @@ fun SearchScreen(
                     on_more = { show_selection_overflow = true },
                     selection_all_starred = selection_all_starred,
                     selection_all_read = selection_all_read,
+                    selection_all_trashed = selection_all_trashed,
                 )
             }
         }
+    }
+
+    if (pending_permanent_ids.isNotEmpty()) {
+        val permanent_ids = pending_permanent_ids
+        org.astermail.android.design.components.AsterAlertDialog(
+            on_dismiss = { pending_permanent_ids = emptyList() },
+            title = stringResource(R.string.confirm_delete_permanent_title),
+            message = stringResource(
+                R.string.confirm_delete_permanent_message_count,
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.common_messages_count,
+                    permanent_ids.size,
+                    permanent_ids.size,
+                ),
+            ),
+            confirm_label = stringResource(R.string.swipe_delete_forever),
+            cancel_label = stringResource(R.string.cancel),
+            confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
+            on_confirm = {
+                pending_permanent_ids = emptyList()
+                mail_vm.delete_permanent_bulk(permanent_ids)
+                exit_select_mode()
+            },
+        )
     }
 
     if (show_selection_overflow) {
@@ -929,6 +969,7 @@ fun SearchScreen(
                 run_selection_action(id)
             },
             selection_all_starred = selection_all_starred,
+            delete_is_permanent = selection_all_trashed,
         )
     }
 
@@ -1465,6 +1506,7 @@ internal fun search_select_bottom_bar(
     on_more: () -> Unit,
     selection_all_starred: Boolean = false,
     selection_all_read: Boolean = false,
+    selection_all_trashed: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -1490,6 +1532,7 @@ internal fun search_select_bottom_bar(
                         action_id,
                         selection_all_starred,
                         selection_all_read,
+                        selection_all_trashed,
                     ) ?: return@forEach
                     search_select_action(
                         icon = action.icon,

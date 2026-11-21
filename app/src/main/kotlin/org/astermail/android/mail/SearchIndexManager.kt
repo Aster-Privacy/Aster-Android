@@ -610,12 +610,20 @@ class SearchIndexManager @Inject constructor(
         val is_trashed: Boolean?,
         val is_archived: Boolean?,
         val is_spam: Boolean?,
+        val item_type: String = "received",
+        val archived_from_item: Boolean = false,
     )
 
     private val attachment_probe_batch = 50
 
     private val index_scopes = listOf(
-        IndexScope(is_trashed = false, is_archived = false, is_spam = false),
+        IndexScope(
+            is_trashed = false,
+            is_archived = false,
+            is_spam = false,
+            item_type = "all",
+            archived_from_item = true,
+        ),
         IndexScope(is_trashed = true, is_archived = null, is_spam = null),
         IndexScope(is_trashed = null, is_archived = true, is_spam = null),
         IndexScope(is_trashed = null, is_archived = null, is_spam = true),
@@ -668,31 +676,39 @@ class SearchIndexManager @Inject constructor(
                     val response = mail_api.list_messages(
                         limit = page_size,
                         cursor = cursor,
-                        item_type = "received",
+                        item_type = scope.item_type,
                         is_trashed = scope.is_trashed,
                         is_archived = scope.is_archived,
                         is_spam = scope.is_spam,
                         skip_total = if (page > 0) true else null,
                     )
+                    val scoped_items = response.items.filter { is_indexed_item_type(it.item_type) }
                     if (quiet && page == 0 && response.total >= 0) {
                         total_target += minOf(response.total, max_pages * page_size)
                     }
                     response.items.mapTo(walked_ids) { it.id }
-                    val new_items = response.items.filter { it.id !in existing_ids && it.id !in poisoned_ids }
-                    val known_ids = response.items.map { it.id }.filter { it in existing_ids }
+                    val new_items = scoped_items.filter { it.id !in existing_ids && it.id !in poisoned_ids }
+                    val known_ids = scoped_items.map { it.id }.filter { it in existing_ids }
                     if (known_ids.isNotEmpty()) {
                         val known_set = known_ids.toHashSet()
-                        val known_items = response.items.filter { it.id in known_set }
+                        val known_items = scoped_items.filter { it.id in known_set }
                         refresh_known_flags(known_items)
                         when (scope.is_trashed) {
                             true -> dao.mark_trashed(known_ids)
                             false -> dao.mark_untrashed(known_ids)
                             else -> {}
                         }
-                        when (scope.is_archived) {
-                            true -> dao.mark_archived(known_ids)
-                            false -> dao.mark_unarchived(known_ids)
-                            else -> {}
+                        if (scope.archived_from_item) {
+                            val archived = known_items.filter { it.is_archived == true }.map { it.id }
+                            val unarchived = known_items.filter { it.is_archived != true }.map { it.id }
+                            if (archived.isNotEmpty()) dao.mark_archived(archived)
+                            if (unarchived.isNotEmpty()) dao.mark_unarchived(unarchived)
+                        } else {
+                            when (scope.is_archived) {
+                                true -> dao.mark_archived(known_ids)
+                                false -> dao.mark_unarchived(known_ids)
+                                else -> {}
+                            }
                         }
                         when (scope.is_spam) {
                             true -> dao.mark_spam(known_ids)
@@ -704,7 +720,7 @@ class SearchIndexManager @Inject constructor(
                         val decrypted = repository.decrypt_items_for_cache(new_items).map {
                             it.copy(
                                 is_trashed = scope.is_trashed ?: it.is_trashed,
-                                is_archived = scope.is_archived ?: it.is_archived,
+                                is_archived = if (scope.archived_from_item) it.is_archived else scope.is_archived ?: it.is_archived,
                                 is_spam = scope.is_spam ?: it.is_spam,
                             )
                         }
@@ -765,13 +781,16 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
+    private fun is_indexed_item_type(item_type: String?): Boolean =
+        item_type == null || item_type == "received"
+
     private suspend fun count_index_target(cap: Int): Int {
         var total = 0
         for (scope in index_scopes) {
             val response = mail_api.list_messages(
                 limit = 1,
                 cursor = null,
-                item_type = "received",
+                item_type = scope.item_type,
                 is_trashed = scope.is_trashed,
                 is_archived = scope.is_archived,
                 is_spam = scope.is_spam,

@@ -1125,6 +1125,54 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `trash keeps the mail searchable as trashed and restore clears the flag`() = runTest {
+        val item = fake_inbox_page(1).items.first().copy(id = "search_1", thread_token = "")
+        coEvery { repository.fetch_all_for_search(any()) } returns Result.success(listOf(item))
+        coEvery { repository.trash(any(), any(), any(), any()) } returns Result.success(Unit)
+        coEvery { repository.restore_trash(any()) } returns Result.success(BulkScopeResponse(affected_count = 1))
+        vm.build_search_index()
+        advanceUntilIdle()
+
+        vm.trash(listOf("search_1"))
+        advanceUntilIdle()
+
+        assertTrue(vm.search_state.value.all_items.single { it.id == "search_1" }.is_trashed)
+
+        vm.restore_trash(listOf("search_1"))
+        advanceUntilIdle()
+
+        assertFalse(vm.search_state.value.all_items.single { it.id == "search_1" }.is_trashed)
+    }
+
+    @Test
+    fun `a failed trash leaves the search copy out of trash`() = runTest {
+        val item = fake_inbox_page(1).items.first().copy(id = "search_1", thread_token = "")
+        coEvery { repository.fetch_all_for_search(any()) } returns Result.success(listOf(item))
+        coEvery { repository.trash(any(), any(), any(), any()) } returns Result.failure(RuntimeException("offline"))
+        vm.build_search_index()
+        advanceUntilIdle()
+
+        vm.trash(listOf("search_1"))
+        advanceUntilIdle()
+
+        assertFalse(vm.search_state.value.all_items.single { it.id == "search_1" }.is_trashed)
+    }
+
+    @Test
+    fun `mark_spam keeps the mail searchable as spam`() = runTest {
+        val item = fake_inbox_page(1).items.first().copy(id = "search_1", thread_token = "")
+        coEvery { repository.fetch_all_for_search(any()) } returns Result.success(listOf(item))
+        coEvery { repository.mark_spam(any(), any(), any()) } returns Result.success(Unit)
+        vm.build_search_index()
+        advanceUntilIdle()
+
+        vm.mark_spam(listOf("search_1"))
+        advanceUntilIdle()
+
+        assertTrue(vm.search_state.value.all_items.single { it.id == "search_1" }.is_spam)
+    }
+
+    @Test
     fun `mark_spam removes items from state and calls repository`() = runTest {
         val page = fake_inbox_page(3)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

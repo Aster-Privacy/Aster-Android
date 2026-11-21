@@ -592,7 +592,14 @@ private object routes {
     fun search_for(query: String): String {
         return "search?q=" + android.net.Uri.encode(query)
     }
-    fun search_for_folder(folder: String): String {
+    fun search_for_folder(
+        folder: String,
+        filter_kind: String? = null,
+        filter_name: String = "",
+        placeholder_name: String? = null,
+    ): String {
+        val filter_scope = org.astermail.android.mail.search_filter_scope_query(filter_kind, filter_name, placeholder_name)
+        if (filter_scope != null) return search_for(filter_scope)
         if (org.astermail.android.mail.search_narrow_query(folder) == null) return search
         val scope = org.astermail.android.mail.search_scope_query(folder)
         val from = "from=" + android.net.Uri.encode(folder)
@@ -2834,7 +2841,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         )
                         InboxScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
-                            on_open_search = { nav_controller.navigate(routes.search_for_folder(effective_folder)) },
+                            on_open_search = {
+                                nav_controller.navigate(
+                                    routes.search_for_folder(
+                                        effective_folder,
+                                        slot_filter_kind,
+                                        slot_filter_name,
+                                        drawer_context.getString(R.string.folder_decrypt_failed),
+                                    ),
+                                )
+                            },
                             on_compose = {
                                 drawer_context.startActivity(
                                     ComposeActivity.intent_for(
@@ -2863,6 +2879,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             current_folder = effective_folder,
                             display_title = slot_filter_name,
+                            search_scoped_to_title = org.astermail.android.mail.search_filter_scope_query(
+                                slot_filter_kind,
+                                slot_filter_name,
+                            ) != null,
                             alias_direction = if (slot_filter_kind == org.astermail.android.mail.filter_kind_alias) alias_direction else null,
                             on_alias_direction_change = { alias_direction = it },
                             on_folder_change = { id ->

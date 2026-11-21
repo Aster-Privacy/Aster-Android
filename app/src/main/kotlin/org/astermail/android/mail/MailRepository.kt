@@ -3065,18 +3065,25 @@ class MailRepository @Inject constructor(
     suspend fun fetch_all_for_search(max_pages: Int = 100): Result<List<InboxItem>> = runCatching {
         val seen = HashSet<String>()
         val all = mutableListOf<InboxItem>()
-        suspend fun drain(is_trashed: Boolean? = null, is_archived: Boolean? = null, is_spam: Boolean? = null) {
+        suspend fun drain(
+            is_trashed: Boolean? = null,
+            is_archived: Boolean? = null,
+            is_spam: Boolean? = null,
+            item_type: String? = null,
+        ) {
             var cursor: String? = null
             repeat(max_pages) {
                 val response = mail_api.list_messages(
                     limit = 200,
                     cursor = cursor,
+                    item_type = item_type,
                     is_trashed = is_trashed,
                     is_archived = is_archived,
                     is_spam = is_spam,
                     skip_total = true,
                 )
-                val items = decrypt_items_parallel(response.items).map {
+                val received = response.items.filter { it.item_type == null || it.item_type == "received" }
+                val items = decrypt_items_parallel(received).map {
                     it.copy(
                         is_trashed = is_trashed ?: it.is_trashed,
                         is_archived = is_archived ?: it.is_archived,
@@ -3091,7 +3098,7 @@ class MailRepository @Inject constructor(
         drain(is_trashed = true)
         drain(is_archived = true)
         drain(is_spam = true)
-        drain()
+        drain(item_type = "all")
         all.toList()
     }
 

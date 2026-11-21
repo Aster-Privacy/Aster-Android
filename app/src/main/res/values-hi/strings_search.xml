@@ -12,6 +12,7 @@
     <string name="search_chip_after">इसके बाद</string>
     <string name="search_chip_date">तारीख</string>
     <string name="search_chip_label">लेबल</string>
+    <string name="search_chip_folder">फ़ोल्डर</string>
     <string name="search_chip_not_prefix">नहीं</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

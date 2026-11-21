@@ -11,6 +11,7 @@
     <string name="search_chip_after">After</string>
     <string name="search_chip_date">Date</string>
     <string name="search_chip_label">Label</string>
+    <string name="search_chip_folder">Folder</string>
     <string name="search_chip_not_prefix">Not</string>
     <string name="search_chip_format">%1$s: %2$s</string>
     <string name="search_chip_format_negated">%1$s %2$s: %3$s</string>

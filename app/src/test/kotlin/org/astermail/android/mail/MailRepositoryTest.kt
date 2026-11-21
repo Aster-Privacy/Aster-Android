@@ -1685,6 +1685,41 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `fetch_all_for_search reads every folder and keeps received mail only`() = runTest {
+        coEvery {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = any(),
+                is_trashed = any(),
+                is_archived = any(),
+                is_spam = any(),
+                skip_total = any(),
+            )
+        } returns MailItemsListResponse(emptyList(), has_more = false, next_cursor = null, total = 0)
+        coEvery {
+            mail_api.list_messages(
+                limit = any(),
+                cursor = any(),
+                item_type = "all",
+                is_trashed = any(),
+                is_archived = any(),
+                is_spam = any(),
+                skip_total = any(),
+            )
+        } returns MailItemsListResponse(
+            listOf(fake_mail_item("filed_1"), fake_mail_item("sent_1").copy(item_type = "sent")),
+            has_more = false,
+            next_cursor = null,
+            total = 2,
+        )
+
+        val result = repo.fetch_all_for_search()
+
+        assertEquals(listOf("filed_1"), result.getOrThrow().map { it.id })
+    }
+
+    @Test
     fun `fetch_all_for_search stops at max_pages`() = runTest {
         val page1_items = (1..50).map { fake_mail_item("p1_$it") }
         val page2_items = (1..50).map { fake_mail_item("p2_$it") }

@@ -344,6 +344,7 @@ fun InboxScreen(
     on_open_external_accounts: () -> Unit = {},
     current_folder: String = "inbox",
     display_title: String? = null,
+    search_scoped_to_title: Boolean = false,
     inbox_category: String = "primary",
     on_folder_change: (String) -> Unit = {},
     custom_folders: List<quick_folder_node> = emptyList(),
@@ -2817,7 +2818,7 @@ fun InboxScreen(
             Spacer(Modifier.height(status_bar_top))
                     inbox_top_bar(
                         folder_title = display_title ?: folder_display_name(current_folder),
-                        search_scoped = org.astermail.android.mail.search_scope_query(current_folder) != null,
+                        search_scoped = search_scoped_to_title || org.astermail.android.mail.search_scope_query(current_folder) != null,
                         unread_count = folder_count,
                         on_open_drawer = on_open_drawer,
                         on_open_search = on_open_search,
@@ -4125,6 +4126,7 @@ internal fun selection_overflow_sheet(
     current_folder: String = "inbox",
     selection_all_starred: Boolean = false,
     show_category: Boolean = false,
+    delete_is_permanent: Boolean = current_folder == "trash",
 ) {
     val colors = AsterMaterial.colors
     val state = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -4176,7 +4178,7 @@ internal fun selection_overflow_sheet(
                 overflow_sheet_row("category", TablerIcons.LayoutGrid, stringResource(R.string.move_to_category), colors.text_primary) { on_action("category") }
             }
             AsterDivider()
-            if (in_trash) {
+            if (delete_is_permanent) {
                 overflow_sheet_row("delete_permanent", TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), colors.danger) { on_action("delete_permanent") }
             } else {
                 overflow_sheet_row(
