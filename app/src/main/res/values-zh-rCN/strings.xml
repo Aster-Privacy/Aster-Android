@@ -2842,6 +2842,10 @@
     <string name="passkey_add_reauth_description">若要添加通行密钥，请输入密码。</string>
     <string name="totp_setup_reauth_description">若要设置双重验证，请输入密码。</string>
     <string name="reauth_key_check_failed">无法验证您的通行密钥或安全密钥。请重试。</string>
+    <string name="passkey_add_reauth_existing_key_description">若要添加通行密钥，请输入密码。如果 Aster 随后要求使用通行密钥或安全密钥，请使用已添加到您账户的密钥。</string>
+    <string name="reauth_key_check_no_credential">Aster 在此设备上找不到您账户的通行密钥或安全密钥。请使用已添加到您账户的密钥，然后重试。</string>
+    <string name="reauth_key_check_unavailable">此设备目前无法验证通行密钥或安全密钥。请确认已开启屏幕锁定，然后重试。</string>
+    <string name="reauth_key_check_interrupted">验证未完成。请使用已添加到您账户的通行密钥或安全密钥，然后重试。</string>
     <string name="image_insert_failed">无法添加该图片。它可能太大或格式不受支持。</string>
     <string name="invalid_recipient_address">“%1$s”不是有效的邮箱地址</string>
     <string name="label_name_taken">已存在同名标签。</string>

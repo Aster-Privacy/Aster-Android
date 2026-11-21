@@ -57,7 +57,7 @@ import org.astermail.android.crypto.hkdf_sha256
 import org.json.JSONArray
 import org.json.JSONObject
 
-class PasskeyCancelledException : Exception()
+class PasskeyCancelledException(val interrupted: Boolean = false) : Exception()
 
 class PasskeyUnavailableException(cause: Throwable? = null, val no_provider: Boolean = false) : Exception(cause)
 
@@ -404,7 +404,7 @@ fun map_get_credential_failure(failure: Throwable): Exception = when (failure) {
     is GetCredentialProviderConfigurationException -> PasskeyUnavailableException(failure, no_provider = true)
     is GetCredentialUnsupportedException -> PasskeyUnavailableException(failure, no_provider = true)
     is GetPublicKeyCredentialDomException -> when (failure.domError) {
-        is NotAllowedError -> PasskeyCancelledException()
+        is NotAllowedError -> PasskeyCancelledException(interrupted = true)
         else -> PasskeyFailedException(failure)
     }
     is NoClassDefFoundError -> PasskeyUnavailableException(failure, no_provider = true)

@@ -2903,6 +2903,10 @@
     <string name="passkey_add_reauth_description">Pour ajouter une clé d\'accès, saisissez votre mot de passe.</string>
     <string name="totp_setup_reauth_description">Pour configurer l\'authentification à deux facteurs, saisissez votre mot de passe.</string>
     <string name="reauth_key_check_failed">Impossible de vérifier votre clé d\'accès ou votre clé de sécurité. Réessayez.</string>
+    <string name="passkey_add_reauth_existing_key_description">Pour ajouter une clé d\'accès, saisissez votre mot de passe. Si Aster vous demande ensuite une clé d\'accès ou une clé de sécurité, utilisez-en une qui figure déjà sur votre compte.</string>
+    <string name="reauth_key_check_no_credential">Aster n\'a trouvé sur cet appareil aucune clé d\'accès ni clé de sécurité pour votre compte. Utilisez-en une qui figure déjà sur votre compte, puis réessayez.</string>
+    <string name="reauth_key_check_unavailable">Cet appareil ne peut pas vérifier les clés d\'accès ni les clés de sécurité pour le moment. Assurez-vous que le verrouillage de l\'écran est activé, puis réessayez.</string>
+    <string name="reauth_key_check_interrupted">La vérification n\'a pas abouti. Utilisez une clé d\'accès ou une clé de sécurité qui figure déjà sur votre compte, puis réessayez.</string>
     <string name="image_insert_failed">Impossible d\'ajouter cette image. Elle est peut-être trop volumineuse ou dans un format non pris en charge.</string>
     <string name="invalid_recipient_address">« %1$s » n\'est pas une adresse e-mail valide</string>
     <string name="label_name_taken">Un libellé portant ce nom existe déjà.</string>

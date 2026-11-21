@@ -2802,6 +2802,10 @@
     <string name="passkey_add_reauth_description">पासकी जोड़ने के लिए अपना पासवर्ड डालें।</string>
     <string name="totp_setup_reauth_description">दो-चरणीय सत्यापन सेट अप करने के लिए अपना पासवर्ड डालें।</string>
     <string name="reauth_key_check_failed">आपकी पासकी या सुरक्षा कुंजी की जांच नहीं हो सकी। फिर से कोशिश करें।</string>
+    <string name="passkey_add_reauth_existing_key_description">पासकी जोड़ने के लिए अपना पासवर्ड डालें। अगर इसके बाद Aster पासकी या सुरक्षा कुंजी मांगे, तो वही इस्तेमाल करें जो आपके खाते में पहले से जुड़ी है।</string>
+    <string name="reauth_key_check_no_credential">Aster को इस डिवाइस पर आपके खाते की कोई पासकी या सुरक्षा कुंजी नहीं मिली। वही इस्तेमाल करें जो आपके खाते में पहले से जुड़ी है, फिर दोबारा कोशिश करें।</string>
+    <string name="reauth_key_check_unavailable">यह डिवाइस अभी पासकी या सुरक्षा कुंजी की जांच नहीं कर सकता। पक्का करें कि स्क्रीन लॉक चालू है, फिर दोबारा कोशिश करें।</string>
+    <string name="reauth_key_check_interrupted">जांच पूरी नहीं हुई। ऐसी पासकी या सुरक्षा कुंजी इस्तेमाल करें जो आपके खाते में पहले से जुड़ी है, फिर दोबारा कोशिश करें।</string>
     <string name="image_insert_failed">वह तस्वीर जोड़ी नहीं जा सकी। हो सकता है वह बहुत बड़ी हो या उसका प्रारूप समर्थित न हो।</string>
     <string name="invalid_recipient_address">“%1$s” कोई मान्य ईमेल पता नहीं है</string>
     <string name="label_name_taken">इस नाम का लेबल पहले से मौजूद है।</string>

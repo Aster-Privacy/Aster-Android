@@ -2858,6 +2858,10 @@
     <string name="passkey_add_reauth_description">Geben Sie Ihr Passwort ein, um einen Passkey hinzuzufügen.</string>
     <string name="totp_setup_reauth_description">Geben Sie Ihr Passwort ein, um die Zwei-Faktor-Authentifizierung einzurichten.</string>
     <string name="reauth_key_check_failed">Ihr Passkey oder Sicherheitsschlüssel konnte nicht geprüft werden. Versuchen Sie es noch einmal.</string>
+    <string name="passkey_add_reauth_existing_key_description">Geben Sie Ihr Passwort ein, um einen Passkey hinzuzufügen. Wenn Aster danach nach einem Passkey oder Sicherheitsschlüssel fragt, verwenden Sie einen, der bereits zu Ihrem Konto gehört.</string>
+    <string name="reauth_key_check_no_credential">Aster hat auf diesem Gerät keinen Passkey oder Sicherheitsschlüssel für Ihr Konto gefunden. Verwenden Sie einen, der bereits zu Ihrem Konto gehört, und versuchen Sie es noch einmal.</string>
+    <string name="reauth_key_check_unavailable">Dieses Gerät kann Passkeys und Sicherheitsschlüssel derzeit nicht prüfen. Stellen Sie sicher, dass die Displaysperre aktiviert ist, und versuchen Sie es noch einmal.</string>
+    <string name="reauth_key_check_interrupted">Die Prüfung wurde nicht abgeschlossen. Verwenden Sie einen Passkey oder Sicherheitsschlüssel, der bereits zu Ihrem Konto gehört, und versuchen Sie es noch einmal.</string>
     <string name="image_insert_failed">Dieses Bild konnte nicht hinzugefügt werden. Es ist möglicherweise zu groß oder hat ein nicht unterstütztes Format.</string>
     <string name="invalid_recipient_address">„%1$s“ ist keine gültige E-Mail-Adresse</string>
     <string name="label_name_taken">Ein Label mit diesem Namen existiert bereits.</string>

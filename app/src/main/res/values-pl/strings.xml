@@ -2891,6 +2891,10 @@
     <string name="passkey_add_reauth_description">Aby dodać klucz dostępu, wprowadź hasło.</string>
     <string name="totp_setup_reauth_description">Aby skonfigurować uwierzytelnianie dwuskładnikowe, wprowadź hasło.</string>
     <string name="reauth_key_check_failed">Nie udało się sprawdzić klucza dostępu ani klucza bezpieczeństwa. Spróbuj ponownie.</string>
+    <string name="passkey_add_reauth_existing_key_description">Aby dodać klucz dostępu, wprowadź hasło. Jeśli Aster poprosi potem o klucz dostępu lub klucz bezpieczeństwa, użyj takiego, który jest już dodany do konta.</string>
+    <string name="reauth_key_check_no_credential">Aster nie znalazł na tym urządzeniu klucza dostępu ani klucza bezpieczeństwa dla Twojego konta. Użyj takiego, który jest już dodany do konta, i spróbuj ponownie.</string>
+    <string name="reauth_key_check_unavailable">To urządzenie nie może teraz sprawdzić kluczy dostępu ani kluczy bezpieczeństwa. Upewnij się, że blokada ekranu jest włączona, i spróbuj ponownie.</string>
+    <string name="reauth_key_check_interrupted">Sprawdzanie nie zostało ukończone. Użyj klucza dostępu lub klucza bezpieczeństwa, który jest już dodany do konta, i spróbuj ponownie.</string>
     <string name="image_insert_failed">Nie udało się dodać tego obrazu. Może być za duży lub w nieobsługiwanym formacie.</string>
     <string name="invalid_recipient_address">„%1$s” nie jest prawidłowym adresem e-mail</string>
     <string name="label_name_taken">Etykieta o tej nazwie już istnieje.</string>

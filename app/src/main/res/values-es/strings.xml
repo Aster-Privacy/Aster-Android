@@ -2875,6 +2875,10 @@
     <string name="passkey_add_reauth_description">Para añadir una llave de acceso, introduce tu contraseña.</string>
     <string name="totp_setup_reauth_description">Para configurar la autenticación en dos pasos, introduce tu contraseña.</string>
     <string name="reauth_key_check_failed">No se pudo comprobar tu llave de acceso o llave de seguridad. Inténtalo de nuevo.</string>
+    <string name="passkey_add_reauth_existing_key_description">Para añadir una llave de acceso, introduce tu contraseña. Si Aster te pide después una llave de acceso o una llave de seguridad, usa una que ya esté en tu cuenta.</string>
+    <string name="reauth_key_check_no_credential">Aster no encontró en este dispositivo ninguna llave de acceso ni llave de seguridad de tu cuenta. Usa una que ya esté en tu cuenta e inténtalo de nuevo.</string>
+    <string name="reauth_key_check_unavailable">Este dispositivo no puede comprobar llaves de acceso ni llaves de seguridad en este momento. Asegúrate de que el bloqueo de pantalla esté activado e inténtalo de nuevo.</string>
+    <string name="reauth_key_check_interrupted">La comprobación no terminó. Usa una llave de acceso o una llave de seguridad que ya esté en tu cuenta e inténtalo de nuevo.</string>
     <string name="image_insert_failed">No se pudo añadir esa imagen. Puede que sea demasiado grande o tenga un formato no compatible.</string>
     <string name="invalid_recipient_address">“%1$s” no es una dirección de correo válida</string>
     <string name="label_name_taken">Ya existe una etiqueta con este nombre.</string>
