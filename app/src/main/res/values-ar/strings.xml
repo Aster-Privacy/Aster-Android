@@ -1892,7 +1892,7 @@
     <string name="show_encryption_indicators">إظهار مؤشرات التشفير</string>
     <string name="show_encryption_indicators_sub">عرض أيقونة القفل على الرسائل المشفّرة</string>
     <string name="publish_to_wkd">النشر إلى WKD</string>
-    <string name="publish_to_wkd_sub">نشر مفتاحك العام في دليل مفاتيح الويب</string>
+    <string name="publish_to_wkd_sub">نشر مفتاح عنوانك الأساسي في دليل مفاتيح الويب. لا تُنشر مفاتيح الأسماء المستعارة أو عناوين النطاق المخصص.</string>
     <string name="publish_to_keyservers">النشر إلى خوادم المفاتيح</string>
     <string name="publish_to_keyservers_sub">نشر مفتاحك على خوادم المفاتيح العامة</string>
     <string name="keyserver_publish_failed">لم يُنشر مفتاحك العام على خادم المفاتيح. من المرجّح أن تنجح المحاولة التالية.</string>

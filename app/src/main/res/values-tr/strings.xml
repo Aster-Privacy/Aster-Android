@@ -1876,7 +1876,7 @@
     <string name="show_encryption_indicators">Şifreleme göstergelerini göster</string>
     <string name="show_encryption_indicators_sub">Şifreli e-postalarda kilit simgesi gösterir</string>
     <string name="publish_to_wkd">WKD\'ye yayımla</string>
-    <string name="publish_to_wkd_sub">Açık anahtarınızı Web Key Directory\'de yayımlar</string>
+    <string name="publish_to_wkd_sub">Birincil adresinizin anahtarını Web Key Directory'de yayımlar. Takma adlar ve özel alan adı adresleri yayımlanmaz.</string>
     <string name="publish_to_keyservers">Anahtar sunucularına yayınla</string>
     <string name="publish_to_keyservers_sub">Anahtarınızı herkese açık anahtar sunucularında yayımlar</string>
     <string name="keyserver_publish_failed">Genel anahtarınız anahtar sunucusuna yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>

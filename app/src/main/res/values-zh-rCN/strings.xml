@@ -1872,7 +1872,7 @@
     <string name="show_encryption_indicators">显示加密指示器</string>
     <string name="show_encryption_indicators_sub">在加密邮件上显示锁形图标</string>
     <string name="publish_to_wkd">发布到 WKD</string>
-    <string name="publish_to_wkd_sub">把您的公钥发布到 Web Key Directory</string>
+    <string name="publish_to_wkd_sub">把您主地址的密钥发布到 Web Key Directory。别名和自定义域名地址不会发布。</string>
     <string name="publish_to_keyservers">发布到密钥服务器</string>
     <string name="publish_to_keyservers_sub">把您的公钥发布到公共密钥服务器</string>
     <string name="keyserver_publish_failed">您的公钥未能发布到密钥服务器。请再试一次。</string>

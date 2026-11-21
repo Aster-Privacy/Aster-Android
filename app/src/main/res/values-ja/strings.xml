@@ -1872,7 +1872,7 @@
     <string name="show_encryption_indicators">暗号化インジケーターを表示</string>
     <string name="show_encryption_indicators_sub">暗号化されたメールに鍵アイコンを表示します</string>
     <string name="publish_to_wkd">WKD に公開</string>
-    <string name="publish_to_wkd_sub">公開鍵を Web Key Directory に公開します</string>
+    <string name="publish_to_wkd_sub">プライマリアドレスの鍵を Web Key Directory に公開します。エイリアスとカスタムドメインのアドレスは公開されません。</string>
     <string name="publish_to_keyservers">キーサーバーに公開</string>
     <string name="publish_to_keyservers_sub">公開鍵サーバーに鍵を公開します</string>
     <string name="keyserver_publish_failed">公開鍵は鍵サーバーに公開されませんでした。もう一度試すと通ることが多いです。</string>

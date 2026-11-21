@@ -1877,7 +1877,7 @@
     <string name="show_encryption_indicators">Verschlüsselungsindikatoren anzeigen</string>
     <string name="show_encryption_indicators_sub">Schlosssymbole auf verschlüsselten E-Mails zeigen</string>
     <string name="publish_to_wkd">In WKD veröffentlichen</string>
-    <string name="publish_to_wkd_sub">Ihren öffentlichen Schlüssel im Web Key Directory veröffentlichen</string>
+    <string name="publish_to_wkd_sub">Den Schlüssel Ihrer primären Adresse im Web Key Directory veröffentlichen. Aliase und Adressen eigener Domains werden nicht veröffentlicht.</string>
     <string name="publish_to_keyservers">Auf Schlüsselservern veröffentlichen</string>
     <string name="publish_to_keyservers_sub">Ihren Schlüssel auf öffentlichen Keyservern veröffentlichen</string>
     <string name="keyserver_publish_failed">Ihr öffentlicher Schlüssel wurde nicht auf dem Keyserver veröffentlicht. Ein erneuter Versuch genügt meist.</string>

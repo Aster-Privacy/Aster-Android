@@ -1880,7 +1880,7 @@
     <string name="show_encryption_indicators">Mostra indicatori di crittografia</string>
     <string name="show_encryption_indicators_sub">Mostra l\'icona del lucchetto sulle email crittografate</string>
     <string name="publish_to_wkd">Pubblica su WKD</string>
-    <string name="publish_to_wkd_sub">Pubblica la tua chiave pubblica nella Web Key Directory</string>
+    <string name="publish_to_wkd_sub">Pubblica la chiave del tuo indirizzo principale nella Web Key Directory. Gli alias e gli indirizzi di dominio personalizzato non vengono pubblicati.</string>
     <string name="publish_to_keyservers">Pubblica sui keyserver</string>
     <string name="publish_to_keyservers_sub">Pubblica la tua chiave sui keyserver pubblici</string>
     <string name="keyserver_publish_failed">La tua chiave pubblica non è stata pubblicata sul keyserver. Riprova.</string>
