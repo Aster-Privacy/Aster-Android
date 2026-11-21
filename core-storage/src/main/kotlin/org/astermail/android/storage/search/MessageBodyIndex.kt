@@ -97,12 +97,16 @@ abstract class MessageBodyIndexDao {
     )
     abstract suspend fun unindexed_rows(skip: List<String>, limit: Int): List<InboxWindowRow>
 
-    @Query("SELECT COUNT(*) FROM decrypted_mail_cache")
+    @Query(
+        "SELECT COUNT(*) FROM decrypted_mail_cache " +
+            "WHERE thread_token IS NOT NULL AND thread_token != ''",
+    )
     abstract suspend fun cached_mail_count(): Int
 
     @Query(
         "SELECT COUNT(*) FROM message_body_index b " +
-            "JOIN decrypted_mail_cache d ON d.id = b.message_id",
+            "JOIN decrypted_mail_cache d ON d.id = b.message_id " +
+            "WHERE d.thread_token IS NOT NULL AND d.thread_token != ''",
     )
     abstract suspend fun indexed_cached_count(): Int
 

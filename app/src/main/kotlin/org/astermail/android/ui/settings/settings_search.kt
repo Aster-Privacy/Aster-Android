@@ -215,6 +215,8 @@ fun settings_search_screen(
     }
 }
 
+private val settings_search_trailing_inset = 48.dp
+
 @Composable
 private fun settings_search_input_bar(
     query: String,
@@ -300,6 +302,7 @@ private fun settings_search_input_bar(
                 }
             }
         }
+        Spacer(Modifier.width(settings_search_trailing_inset))
     }
 }
 
