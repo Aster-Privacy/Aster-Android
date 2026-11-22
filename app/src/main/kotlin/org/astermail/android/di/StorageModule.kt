@@ -108,17 +108,9 @@ object StorageModule {
                     },
                 ),
             )
-            org.astermail.android.mail.InboundMarkerFloor.bind(
-                account = { store.get_user_id() },
-                floor_store = org.astermail.android.mail.SecureInboundMarkerFloorStore {
-                    runCatching {
-                        org.astermail.android.storage.SecurePrefs.open(
-                            context,
-                            org.astermail.android.mail.SecureInboundMarkerFloorStore.PREFS_NAME,
-                        )
-                    }.getOrNull()
-                },
-            )
+            org.astermail.android.mail.InboundSealOpener.RETIRED_FLOOR_PREFS_FILES.forEach { name ->
+                runCatching { context.deleteSharedPreferences(name) }
+            }
             org.astermail.android.crypto.BoundFieldRecords.bind(
                 SecureBoundFieldRecordStore {
                     runCatching {
