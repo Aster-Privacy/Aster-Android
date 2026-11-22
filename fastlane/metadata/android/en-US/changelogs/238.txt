@@ -1,0 +1,11 @@
+What's new:
+
+- You can confirm Aster Guard steps with a passkey from the system passkey sheet.
+- You can attach videos from the photo picker.
+
+Fixed:
+
+- Sign-in alerts and other Aster system mail always stay in Primary.
+- Forwards on custom domains show the original sender.
+- Reply notifications from iOS show a preview.
+- Sign-in accepts usernames and domains the same way as the web app.
