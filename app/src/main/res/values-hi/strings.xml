@@ -534,7 +534,7 @@
     <string name="link_url_placeholder">example.com</string>
     <string name="image">छवि</string>
     <string name="device_file">डिवाइस फ़ाइल</string>
-    <string name="photo">फ़ोटो</string>
+    <string name="photos_and_videos">फ़ोटो और वीडियो</string>
     <string name="camera">कैमरा</string>
     <string name="cloud">क्लाउड</string>
     <string name="send_from">इससे भेजें</string>

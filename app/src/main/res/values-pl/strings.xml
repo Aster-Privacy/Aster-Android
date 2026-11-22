@@ -313,7 +313,7 @@
     <string name="underline">Podkreślenie</string>
     <string name="image">Obraz</string>
     <string name="device_file">Plik z urządzenia</string>
-    <string name="photo">Zdjęcie</string>
+    <string name="photos_and_videos">Zdjęcia i filmy</string>
     <string name="camera">Aparat</string>
     <string name="cloud">Chmura</string>
     <string name="send_from">Wyślij z</string>

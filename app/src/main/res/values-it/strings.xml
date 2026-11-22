@@ -313,7 +313,7 @@
     <string name="underline">Sottolineato</string>
     <string name="image">Immagine</string>
     <string name="device_file">File dal dispositivo</string>
-    <string name="photo">Foto</string>
+    <string name="photos_and_videos">Foto e video</string>
     <string name="camera">Fotocamera</string>
     <string name="cloud">Nuvola</string>
     <string name="send_from">Invia da</string>

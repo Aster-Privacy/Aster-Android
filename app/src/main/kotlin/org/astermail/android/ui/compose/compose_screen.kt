@@ -4523,7 +4523,7 @@ private fun AttachSheet(
                 ),
             )
             sheet_row(TablerIcons.Folder, stringResource(R.string.device_file), colors.text_primary, on_pick_file)
-            sheet_row(TablerIcons.Stack, stringResource(R.string.photo), colors.text_primary, on_pick_photo)
+            sheet_row(TablerIcons.Stack, stringResource(R.string.photos_and_videos), colors.text_primary, on_pick_photo)
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }

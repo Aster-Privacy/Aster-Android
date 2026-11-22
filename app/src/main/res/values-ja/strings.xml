@@ -313,7 +313,7 @@
     <string name="underline">下線</string>
     <string name="image">画像</string>
     <string name="device_file">デバイスファイル</string>
-    <string name="photo">写真</string>
+    <string name="photos_and_videos">写真と動画</string>
     <string name="camera">カメラ</string>
     <string name="cloud">クラウド</string>
     <string name="send_from">送信元</string>

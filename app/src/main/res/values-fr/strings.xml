@@ -336,7 +336,7 @@
     <string name="numbered_list">Liste numérotée</string>
     <string name="image">Image</string>
     <string name="device_file">Fichier de l\'appareil</string>
-    <string name="photo">Photo</string>
+    <string name="photos_and_videos">Photos et vidéos</string>
     <string name="camera">Appareil photo</string>
     <string name="cloud">Nuage</string>
     <string name="send_from">Envoyer depuis</string>
