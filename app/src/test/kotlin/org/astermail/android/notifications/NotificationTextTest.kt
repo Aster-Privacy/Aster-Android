@@ -49,4 +49,44 @@ class NotificationTextTest {
             MailPollingWorker.notification_text("Re: Lunch", "leftover", is_undecryptable = true, is_decrypt_pending = false),
         )
     }
+
+    @Test
+    fun `an unreadable message heals keys and retries before posting`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.Heal,
+            MailPollingWorker.unreadable_retry(is_undecryptable = true, is_decrypt_pending = false, attempt = 0),
+        )
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.Heal,
+            MailPollingWorker.unreadable_retry(is_undecryptable = true, is_decrypt_pending = false, attempt = 1),
+        )
+    }
+
+    @Test
+    fun `a message still decrypting waits without a key refresh`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.Wait,
+            MailPollingWorker.unreadable_retry(is_undecryptable = true, is_decrypt_pending = true, attempt = 0),
+        )
+    }
+
+    @Test
+    fun `a readable message posts at once`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.None,
+            MailPollingWorker.unreadable_retry(is_undecryptable = false, is_decrypt_pending = false, attempt = 0),
+        )
+    }
+
+    @Test
+    fun `the last attempt posts whatever it has`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.None,
+            MailPollingWorker.unreadable_retry(
+                is_undecryptable = true,
+                is_decrypt_pending = false,
+                attempt = MailPollingWorker.UNREADABLE_RETRY_ATTEMPTS - 1,
+            ),
+        )
+    }
 }
