@@ -1272,7 +1272,6 @@ private fun protection_banner(
     val pending = items.filterNot { it.done }
     val protected_items = items.filter { it.done }
     var show_protected by rememberSaveable { mutableStateOf(false) }
-    val tone_background = tone.copy(alpha = if (colors.is_dark) 0.18f else 0.14f)
     AsterCard(modifier = Modifier.fillMaxWidth().testTag("protection_banner")) {
         Column(
             modifier = Modifier
@@ -1281,9 +1280,7 @@ private fun protection_banner(
         ) {
             Row(verticalAlignment = Alignment.Top) {
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .background(tone_background, SquircleShape(12.dp)),
+                    modifier = Modifier.size(44.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
