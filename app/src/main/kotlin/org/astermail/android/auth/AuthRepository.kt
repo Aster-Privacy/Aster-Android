@@ -506,8 +506,8 @@ class AuthRepository @Inject constructor(
         captcha_token: String? = null,
         remember_me: Boolean = true,
     ): Result<LoginOutcome> =
-        PasswordForms.first_accepted(password) { form ->
-            login_with_form(email, form, captcha_token, remember_me)
+        PasswordForms.first_accepted(SignInAddress.clamp_password(password)) { form ->
+            login_with_form(email, SignInAddress.clamp_password(form), captcha_token, remember_me)
         }
 
     private suspend fun login_with_form(

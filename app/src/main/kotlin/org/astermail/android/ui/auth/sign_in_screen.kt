@@ -135,6 +135,7 @@ fun SignInScreen(
 
     var email by rememberSaveable(prefill_email) { mutableStateOf(prefill_email) }
     var email_domain by rememberSaveable { mutableStateOf("astermail.org") }
+    var domain_explicit by rememberSaveable { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var password_visible by remember { mutableStateOf(false) }
     var remember_me by rememberSaveable { mutableStateOf(true) }
@@ -172,9 +173,14 @@ fun SignInScreen(
     val submit: () -> Unit = {
         if (can_submit) {
             keyboard_controller?.hide()
-            val trimmed = email.trim()
-            val full_email = if (trimmed.contains("@")) trimmed else "$trimmed@$email_domain"
-            view_model.submit_login(full_email, password, captcha_token, remember_me)
+            val addresses = org.astermail.android.auth.SignInAddress.candidates(email, email_domain, domain_explicit)
+            view_model.submit_login(
+                addresses.first(),
+                password,
+                captcha_token,
+                remember_me,
+                other_addresses = addresses.drop(1),
+            )
         }
     }
 
@@ -252,6 +258,7 @@ fun SignInScreen(
             }
             if (matched != null) {
                 email_domain = matched
+                domain_explicit = true
                 email = raw.substring(0, at_index)
             } else {
                 email = raw
@@ -264,7 +271,10 @@ fun SignInScreen(
         },
         on_toggle_password_visible = { password_visible = !password_visible },
         on_toggle_remember_me = { remember_me = !remember_me },
-        on_domain_select = { email_domain = it },
+        on_domain_select = {
+            email_domain = it
+            domain_explicit = true
+        },
         on_submit = submit,
         on_captcha_token = {
             captcha_token = it

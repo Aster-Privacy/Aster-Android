@@ -181,6 +181,45 @@ class AuthViewModelTest {
     }
 
     @Test
+    fun `submit_login tries the other domain when the domain was not chosen`() = runTest {
+        coEvery { repository.login("robin@astermail.org", any(), any(), any()) } returns
+            Result.failure(ApiError.InvalidCredentials)
+        coEvery { repository.login("robin@aster.cx", any(), any(), any()) } returns
+            Result.success(LoginOutcome.Success)
+
+        vm.submit_login("robin@astermail.org", "pass", other_addresses = listOf("robin@aster.cx"))
+        advanceUntilIdle()
+
+        assertEquals(AuthUiState.Success, vm.ui_state.value)
+        coVerify { repository.login("robin@aster.cx", "pass", null, true) }
+    }
+
+    @Test
+    fun `submit_login reports the first failure when no domain matches`() = runTest {
+        coEvery { repository.login(any(), any(), any(), any()) } returns
+            Result.failure(ApiError.InvalidCredentials)
+
+        vm.submit_login("robin@astermail.org", "wrong", other_addresses = listOf("robin@aster.cx"))
+        advanceUntilIdle()
+
+        val state = vm.ui_state.value
+        assertTrue(state is AuthUiState.Error)
+        assertEquals("Invalid username or password", (state as AuthUiState.Error).message)
+    }
+
+    @Test
+    fun `submit_login does not try another domain after a different error`() = runTest {
+        coEvery { repository.login("robin@astermail.org", any(), any(), any()) } returns
+            Result.failure(ApiError.NetworkError)
+
+        vm.submit_login("robin@astermail.org", "pass", other_addresses = listOf("robin@aster.cx"))
+        advanceUntilIdle()
+
+        clear_dispatcher_records()
+        coVerify(exactly = 1) { repository.login(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `submit_login network error maps correctly`() = runTest {
         coEvery { repository.login(any(), any(), any(), any()) } returns
             Result.failure(ApiError.NetworkError)
