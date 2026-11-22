@@ -362,4 +362,13 @@
     <string name="guard_wait_resume_retry">Try again</string>
     <string name="guard_approve_mismatch_title">The number didn\'t match</string>
     <string name="guard_approve_mismatch">This sign-in request was stopped. To continue, sign in again on the other device.</string>
+    <string name="guard_passkey_use">Use a passkey</string>
+    <string name="guard_changes_skip_passkey">Skip the wait with a passkey</string>
+    <string name="guard_passkey_interrupted">The passkey request was interrupted. Try again.</string>
+    <string name="guard_passkey_none">No passkey for this account is saved on this device. Use your password instead.</string>
+    <string name="guard_passkey_unavailable">Passkeys aren\'t available on this device. Use your password instead.</string>
+    <string name="guard_passkey_wrong_account">That passkey belongs to a different account. Choose a passkey for the account you\'re using now.</string>
+    <string name="guard_passkey_account_changed">You switched accounts while confirming. Switch back to that account, then try again.</string>
+    <string name="guard_passkey_expired">The passkey request expired. Try again.</string>
+    <string name="guard_passkey_failed">Your passkey couldn\'t be verified. Try again, or use your password.</string>
 </resources>

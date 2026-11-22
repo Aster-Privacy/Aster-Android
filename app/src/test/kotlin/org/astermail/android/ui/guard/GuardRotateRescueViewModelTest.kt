@@ -41,6 +41,9 @@ import org.astermail.android.api.guard.StepUpProof
 import org.astermail.android.crypto.DeviceEnvelope
 import org.astermail.android.crypto.guard.GuardActionCode
 import org.astermail.android.crypto.guard.GuardDigests
+import org.astermail.android.api.auth.WebAuthnAssertionOptions
+import org.astermail.android.guard.guard_passkey_failure
+import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_hold_kind
 import org.astermail.android.guard.guard_sign_result
 import org.astermail.android.guard.guard_signer
@@ -178,5 +181,68 @@ class GuardRotateRescueViewModelTest {
         assertFalse(vm.state.value.can_submit)
         vm.on_password("pw")
         assertTrue(vm.state.value.can_submit)
+    }
+
+    private val passkey_sheet = guard_passkey_sheet {
+        """{"id":"AQID","rawId":"AQID","type":"public-key","response":{"authenticatorData":"YXV0aA","clientDataJSON":"Y2xpZW50","signature":"c2ln"}}"""
+    }
+
+    private fun stub_passkey_options() {
+        coEvery { api.step_up_passkey_options() } returns
+            WebAuthnAssertionOptions(challenge = "Y2hhbGxlbmdl", challenge_token = "token-1", rpId = "app.astermail.org")
+    }
+
+    @Test
+    fun `passkey rotates without a password`() = runTest(dispatcher) {
+        stub_passkey_options()
+        val action = slot<SignedAction>()
+        coEvery { api.rotate_rescue(any(), capture(action)) } returns Unit
+        val vm = vm()
+        vm.on_confirm_input("45678")
+
+        assertTrue(vm.state.value.can_use_passkey)
+        assertFalse(vm.state.value.can_submit)
+        vm.submit_passkey(signer, passkey_sheet)
+        advanceUntilIdle()
+
+        val proof = action.captured.proof
+        assertTrue(proof is StepUpProof.Passkey)
+        assertEquals("token-1", (proof as StepUpProof.Passkey).assertion.challenge_token)
+        coVerify(exactly = 0) { deps.password_hash(any()) }
+        assertEquals(guard_rotate_result.applied, vm.state.value.result)
+    }
+
+    @Test
+    fun `a passkey from another account shows the wrong account error`() = runTest(dispatcher) {
+        stub_passkey_options()
+        coEvery { api.rotate_rescue(any(), any()) } throws ApiError.ValidationError(listOf("Unknown credential"))
+        val vm = vm()
+        vm.on_confirm_input("45678")
+
+        vm.submit_passkey(signer, passkey_sheet)
+        advanceUntilIdle()
+
+        assertEquals(guard_passkey_failure.wrong_account, vm.state.value.passkey_failure)
+        assertNull(vm.state.value.notice)
+        assertNull(vm.state.value.result)
+        assertFalse(vm.state.value.working)
+    }
+
+    @Test
+    fun `switching accounts during the passkey sheet stops the rotation`() = runTest(dispatcher) {
+        stub_passkey_options()
+        var current: UUID? = user_id
+        val vm = GuardRotateRescueViewModel(api, mockk(relaxed = true), guard_current_user { current }, deps)
+        vm.on_confirm_input("45678")
+
+        vm.submit_passkey(signer) {
+            current = UUID.randomUUID()
+            """{"id":"AQID","rawId":"AQID","response":{"authenticatorData":"YXV0aA","clientDataJSON":"Y2xpZW50","signature":"c2ln"}}"""
+        }
+        advanceUntilIdle()
+
+        assertEquals(guard_passkey_failure.account_changed, vm.state.value.passkey_failure)
+        coVerify(exactly = 0) { api.rotate_rescue(any(), any()) }
+        assertTrue(captured.isEmpty())
     }
 }

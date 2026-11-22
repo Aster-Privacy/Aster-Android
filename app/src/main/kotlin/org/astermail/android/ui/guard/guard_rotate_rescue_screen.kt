@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import org.astermail.android.R
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_prompt_text
@@ -62,6 +63,7 @@ fun guard_rotate_rescue_host(view_model: GuardRotateRescueViewModel, on_back: ()
         on_password = view_model::on_password,
         on_totp = view_model::on_totp,
         on_submit = { view_model.submit(guard_prompt_signer(activity, prompt)) },
+        on_passkey = { view_model.submit_passkey(guard_prompt_signer(activity, prompt), guard_passkey_sheet_for(context)) },
         on_back = on_back,
     )
 }
@@ -77,6 +79,7 @@ fun guard_rotate_rescue_screen(
     on_totp: (String) -> Unit,
     on_submit: () -> Unit,
     on_back: () -> Unit,
+    on_passkey: () -> Unit = {},
 ) {
     secure_screen()
     detail_scaffold(title = stringResource(R.string.guard_rotate_title), on_back = on_back) {
@@ -98,7 +101,17 @@ fun guard_rotate_rescue_screen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            null -> guard_rotate_form(state, on_save_file, on_print, on_copy, on_confirm_input, on_password, on_totp, on_submit)
+            null -> guard_rotate_form(
+                state,
+                on_save_file,
+                on_print,
+                on_copy,
+                on_confirm_input,
+                on_password,
+                on_totp,
+                on_submit,
+                on_passkey,
+            )
         }
     }
 }
@@ -113,8 +126,9 @@ private fun guard_rotate_form(
     on_password: (String) -> Unit,
     on_totp: (String) -> Unit,
     on_submit: () -> Unit,
+    on_passkey: () -> Unit,
 ) {
-    guard_rotate_notice_text(state.notice)?.let {
+    (guard_rotate_notice_text(state.notice) ?: guard_passkey_failure_text(state.passkey_failure))?.let {
         error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -152,6 +166,13 @@ private fun guard_rotate_form(
         onClick = on_submit,
         modifier = Modifier.fillMaxWidth().testTag("guard_rotate_submit"),
         enabled = state.can_submit,
+    )
+    Spacer(Modifier.height(AsterSpacing.sm))
+    AsterGhostButton(
+        label = stringResource(R.string.guard_passkey_use),
+        onClick = on_passkey,
+        modifier = Modifier.fillMaxWidth().testTag("guard_rotate_passkey"),
+        enabled = state.can_use_passkey,
     )
 }
 

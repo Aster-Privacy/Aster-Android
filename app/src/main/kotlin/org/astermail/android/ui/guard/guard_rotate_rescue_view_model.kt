@@ -37,8 +37,13 @@ import org.astermail.android.api.guard.StepUpProof
 import org.astermail.android.crypto.guard.GuardActionCode
 import org.astermail.android.crypto.guard.GuardDigests
 import org.astermail.android.guard.GuardDeviceStore
+import org.astermail.android.guard.GuardPasskeyException
 import org.astermail.android.guard.GuardRepository
 import org.astermail.android.guard.guard_held_notice
+import org.astermail.android.guard.guard_passkey_failure
+import org.astermail.android.guard.guard_passkey_failure_for
+import org.astermail.android.guard.guard_passkey_proof
+import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_signer
 import org.astermail.android.guard.to_notice
 
@@ -67,10 +72,12 @@ data class guard_rotate_ui(
     val working: Boolean = false,
     val result: guard_rotate_result? = null,
     val notice: guard_rotate_notice? = null,
+    val passkey_failure: guard_passkey_failure? = null,
 ) {
+    val can_use_passkey: Boolean
+        get() = !working && result == null && rescue_code.isNotEmpty() && confirm_input.isNotBlank()
     val can_submit: Boolean
-        get() = !working && result == null && rescue_code.isNotEmpty() && confirm_input.isNotBlank() &&
-            password.isNotEmpty() && (!show_totp || totp.isNotBlank())
+        get() = can_use_passkey && password.isNotEmpty() && (!show_totp || totp.isNotBlank())
 }
 
 fun guard_rotate_notice_for(t: Throwable): guard_rotate_notice {
@@ -104,43 +111,54 @@ class GuardRotateRescueViewModel @Inject constructor(
     private val _state = MutableStateFlow(guard_rotate_ui(rescue_code = deps.rescue_code()))
     val state: StateFlow<guard_rotate_ui> = _state.asStateFlow()
 
-    fun on_confirm_input(value: String) = _state.update { it.copy(confirm_input = value, notice = null) }
+    fun on_confirm_input(value: String) = _state.update { it.copy(confirm_input = value, notice = null, passkey_failure = null) }
 
-    fun on_password(value: String) = _state.update { it.copy(password = value, notice = null) }
+    fun on_password(value: String) = _state.update { it.copy(password = value, notice = null, passkey_failure = null) }
 
-    fun on_totp(value: String) = _state.update { it.copy(totp = value, notice = null) }
+    fun on_totp(value: String) = _state.update { it.copy(totp = value, notice = null, passkey_failure = null) }
 
     fun submit(signer: guard_signer) {
         if (_state.value.working) return
         viewModelScope.launch { run_rotate(signer) }
     }
 
-    suspend fun run_rotate(signer: guard_signer) {
+    fun submit_passkey(signer: guard_signer, sheet: guard_passkey_sheet) {
+        if (_state.value.working) return
+        viewModelScope.launch { run_rotate(signer, sheet) }
+    }
+
+    suspend fun run_rotate(signer: guard_signer, sheet: guard_passkey_sheet? = null) {
         val ui = _state.value
-        if (!ui.can_submit) return
+        val ready = if (sheet == null) ui.can_submit else ui.can_use_passkey
+        if (!ready) return
         if (!guard_rescue_group_matches(ui.rescue_code, ui.confirm_input)) {
-            _state.update { it.copy(notice = guard_rotate_notice.wrong_group) }
+            _state.update { it.copy(notice = guard_rotate_notice.wrong_group, passkey_failure = null) }
             return
         }
         val user_id = user.user_id()
         if (user_id == null) {
-            _state.update { it.copy(notice = guard_rotate_notice.no_device) }
+            _state.update { it.copy(notice = guard_rotate_notice.no_device, passkey_failure = null) }
             return
         }
-        _state.update { it.copy(working = true, notice = null) }
+        _state.update { it.copy(working = true, notice = null, passkey_failure = null) }
         try {
-            val hash = deps.password_hash(ui.password)
-            if (hash == null) {
-                _state.update { it.copy(working = false, notice = guard_rotate_notice.failed) }
-                return
+            val proof: StepUpProof = if (sheet != null) {
+                guard_passkey_proof(api, user_id, user::user_id, sheet)
+            } else {
+                val hash = deps.password_hash(ui.password)
+                if (hash == null) {
+                    _state.update { it.copy(working = false, notice = guard_rotate_notice.failed) }
+                    return
+                }
+                StepUpProof.Password(hash, ui.totp.takeIf { ui.show_totp && it.isNotBlank() })
             }
-            val proof = StepUpProof.Password(hash, ui.totp.takeIf { ui.show_totp && it.isNotBlank() })
             val action = GuardRepository(api, store) { user_id }
                 .signed_with(signer, GuardActionCode.ROTATE_RESCUE, GuardDigests.rescue_rotate_subject(ui.rescue_code), proof)
             if (action == null) {
                 _state.update { it.copy(working = false, notice = guard_rotate_notice.canceled) }
                 return
             }
+            if (user.user_id() != user_id) throw GuardPasskeyException(guard_passkey_failure.account_changed)
             api.rotate_rescue(ui.rescue_code, action)
             _state.update {
                 it.copy(working = false, result = guard_rotate_result.applied, password = "", totp = "", confirm_input = "")
@@ -158,7 +176,18 @@ class GuardRotateRescueViewModel @Inject constructor(
                 )
             }
         } catch (t: Throwable) {
+            val passkey_failure = guard_passkey_failure_for(t)
+            if (passkey_failure != null) {
+                _state.update {
+                    it.copy(working = false, passkey_failure = passkey_failure.takeUnless { f -> f == guard_passkey_failure.canceled })
+                }
+                return
+            }
             val notice = guard_rotate_notice_for(t)
+            if (sheet != null && notice == guard_rotate_notice.wrong_password) {
+                _state.update { it.copy(working = false, passkey_failure = guard_passkey_failure.failed) }
+                return
+            }
             _state.update {
                 it.copy(working = false, notice = notice, show_totp = it.show_totp || notice == guard_rotate_notice.totp_required)
             }
