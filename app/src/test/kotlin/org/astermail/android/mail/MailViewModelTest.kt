@@ -103,6 +103,10 @@ class MailViewModelTest {
         coEvery { repository.get_stats() } returns Result.success(MailUserStatsResponse())
         coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
             Result.success(emptyMap())
+        coEvery { repository.fetch_raw_attachment_metas(any()) } returns Result.success(emptyMap())
+        coEvery { repository.decrypt_attachment_metas(any(), any()) } returns emptyMap()
+        every { repository.cached_attachment_metas(any()) } returns emptyMap()
+        every { repository.local_attachment_metas(any()) } returns emptyMap()
         coEvery { repository.fetch_attachments_for_message(any()) } returns
             Result.success(emptyList())
         identity_pins = mockk(relaxed = true)
@@ -1966,7 +1970,7 @@ class MailViewModelTest {
         coEvery { repository.fetch_single_message("id_1") } returns Result.success(inbox_item)
         coEvery { repository.fetch_thread("thread_1") } returns
             Result.success(listOf(thread_message("msg_1", true)))
-        coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
+        coEvery { repository.fetch_raw_attachment_metas(any()) } returns
             Result.failure(RuntimeException("meta api down"))
         vm.load_thread("id_1")
         return vm
@@ -1980,6 +1984,85 @@ class MailViewModelTest {
         val state = vm.thread_state.value
         assertTrue(state.attachments_failed)
         assertTrue(state.attachments.isEmpty())
+    }
+
+    private fun report_attachment(message_id: String) = MessageAttachment(
+        id = "att_" + message_id,
+        filename = "report.pdf",
+        content_type = "application/pdf",
+        size_bytes = 10,
+        mail_item_id = message_id,
+        seq_num = 0,
+    )
+
+    @Test
+    fun `the attachment list request starts before the thread finishes loading`() = runTest {
+        val inbox_item = fake_inbox_page(1).items[0].copy(has_attachments = true)
+        val order = java.util.Collections.synchronizedList(mutableListOf<String>())
+        coEvery { repository.fetch_single_message("id_1") } coAnswers {
+            order.add("message")
+            Result.success(inbox_item)
+        }
+        coEvery { repository.fetch_thread("thread_1") } coAnswers {
+            order.add("thread")
+            Result.success(listOf(thread_message("id_1", true)))
+        }
+        val requested = java.util.Collections.synchronizedList(mutableListOf<List<String>>())
+        coEvery { repository.fetch_raw_attachment_metas(any()) } coAnswers {
+            order.add("attachments")
+            requested.add(firstArg())
+            Result.success(emptyMap())
+        }
+        coEvery { repository.fetch_attachment_metas_for_messages(any()) } coAnswers {
+            order.add("legacy")
+            Result.success(emptyMap())
+        }
+        coEvery { repository.decrypt_attachment_metas(any(), any()) } returns
+            mapOf("id_1" to listOf(report_attachment("id_1")))
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+        Thread.sleep(200)
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertEquals(listOf("report.pdf"), state.attachments["id_1"]?.map { it.filename })
+        assertTrue(state.attachments_loading.isEmpty())
+        assertEquals(listOf(listOf("id_1")), requested.toList())
+        assertTrue("legacy" !in order)
+    }
+
+    @Test
+    fun `a reopened message shows its cached attachments at once`() = runTest {
+        val inbox_item = fake_inbox_page(1).items[0].copy(has_attachments = true)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(1))
+        every { repository.cached_attachment_metas(match { "id_1" in it }) } returns
+            mapOf("id_1" to listOf(report_attachment("id_1")))
+        coEvery { repository.fetch_single_message("id_1") } coAnswers {
+            kotlinx.coroutines.delay(60_000)
+            Result.success(inbox_item)
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.load_thread("id_1")
+        runCurrent()
+
+        assertEquals(listOf("report.pdf"), vm.thread_state.value.attachments["id_1"]?.map { it.filename })
+    }
+
+    @Test
+    fun `attachments found in the message body survive a failed list request`() = runTest {
+        every { repository.local_attachment_metas(any()) } returns
+            mapOf("msg_1" to listOf(report_attachment("msg_1")))
+        load_thread_with_attachment_failure()
+        advanceUntilIdle()
+        Thread.sleep(200)
+        advanceUntilIdle()
+
+        val state = vm.thread_state.value
+        assertEquals(listOf("report.pdf"), state.attachments["msg_1"]?.map { it.filename })
+        assertTrue(state.attachments_loading.isEmpty())
     }
 
     @Test
@@ -1996,8 +2079,9 @@ class MailViewModelTest {
             mail_item_id = "msg_1",
             seq_num = 0,
         )
-        coEvery { repository.fetch_attachment_metas_for_messages(any()) } returns
-            Result.success(mapOf("msg_1" to listOf(attachment)))
+        coEvery { repository.fetch_raw_attachment_metas(any()) } returns Result.success(emptyMap())
+        coEvery { repository.decrypt_attachment_metas(any(), any()) } returns
+            mapOf("msg_1" to listOf(attachment))
 
         vm.retry_thread_attachments()
         advanceUntilIdle()

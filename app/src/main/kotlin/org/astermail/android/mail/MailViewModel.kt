@@ -143,6 +143,7 @@ data class ThreadUiState(
     val item: InboxItem? = null,
     val attachments: Map<String, List<MessageAttachment>> = emptyMap(),
     val attachments_failed: Boolean = false,
+    val attachments_loading: Set<String> = emptySet(),
 )
 
 data class SearchUiState(
@@ -2253,8 +2254,15 @@ class MailViewModel @Inject constructor(
         val cached = runCatching { repository.cached_thread_messages(thread_token) }.getOrNull()
         if (cached.isNullOrEmpty() || thread_gen != thread_load_generation) return false
         if (cached.none { it.id == item_id }) return false
+        val cached_attachments = repository.cached_attachment_metas(cached.map { it.id })
         _thread_state.update { state ->
-            if (state.item?.id != item_id) state else apply_thread_read_overrides(state.copy(messages = cached))
+            if (state.item?.id != item_id) {
+                state
+            } else {
+                apply_thread_read_overrides(
+                    state.copy(messages = cached, attachments = cached_attachments + state.attachments),
+                )
+            }
         }
         log_body_paint("snapshot")
         return true
@@ -2310,6 +2318,7 @@ class MailViewModel @Inject constructor(
                     is_loading = true,
                     item = seed,
                     messages = listOf(seed_message_from_inbox_item(seed)),
+                    attachments = repository.cached_attachment_metas(listOf(item_id)),
                 )
             } else {
                 ThreadUiState(is_loading = true)
@@ -2328,6 +2337,7 @@ class MailViewModel @Inject constructor(
             if (!paint_cached_thread(item_id, seed_token, thread_gen)) {
                 paint_cached_bodies(item_id, thread_gen)
             }
+            val early_attachments = start_early_attachment_fetch(item_id)
             val early_thread = if (seed_token != null) {
                 async(Dispatchers.IO) {
                     withTimeoutOrNull(thread_open_timeout_ms()) { repository.fetch_thread(seed_token) }
@@ -2380,7 +2390,7 @@ class MailViewModel @Inject constructor(
                             ThreadUiState(
                                 messages = resolved,
                                 item = item,
-                                attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
+                                attachments = carried_attachments(item_id),
                             ),
                         )
                         log_body_paint("network")
@@ -2388,7 +2398,7 @@ class MailViewModel @Inject constructor(
                         if (messages.isNotEmpty()) {
                             record_thread_count(thread_token, item.thread_message_count, messages)
                         }
-                        load_attachments_for_thread(resolved)
+                        load_attachments_for_thread(resolved, early_attachments)
                         load_reactions(resolved)
                         if (resolved.any { message -> message.raw_item.reactions.orEmpty().any { it.is_unseen } }) {
                             runCatching {
@@ -2404,11 +2414,11 @@ class MailViewModel @Inject constructor(
                                 messages = kept,
                                 error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)),
                                 item = item,
-                                attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
+                                attachments = carried_attachments(item_id),
                             ),
                         )
                         cache_thread_participants(thread_token, kept)
-                        load_attachments_for_thread(kept)
+                        load_attachments_for_thread(kept, early_attachments)
                     },
                 )
             } else if (item != null) {
@@ -2417,10 +2427,10 @@ class MailViewModel @Inject constructor(
                     ThreadUiState(
                         messages = msgs,
                         item = item,
-                        attachments = if (cur_thread.item?.id == item_id) cur_thread.attachments else emptyMap(),
+                        attachments = carried_attachments(item_id),
                     ),
                 )
-                load_attachments_for_thread(msgs)
+                load_attachments_for_thread(msgs, early_attachments)
                 load_reactions(msgs)
             } else {
                 val keep = _thread_state.value
@@ -2526,39 +2536,103 @@ class MailViewModel @Inject constructor(
         )
     }
 
-    private fun load_attachments_for_thread(messages: List<ThreadMessageDecrypted>) {
-        val ids = messages.map { it.id }
+    private class EarlyAttachmentFetch(
+        val ids: Set<String>,
+        val rows: kotlinx.coroutines.Deferred<Result<Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>>>,
+    )
+
+    private fun start_early_attachment_fetch(item_id: String): EarlyAttachmentFetch {
+        val state = _thread_state.value
+        val known = if (state.item?.id == item_id) state.messages.map { it.id } else emptyList()
+        val ids = (listOf(item_id) + known).filter { it.isNotBlank() }.distinct()
+        return EarlyAttachmentFetch(
+            ids = ids.toSet(),
+            rows = viewModelScope.async(Dispatchers.IO) { repository.fetch_raw_attachment_metas(ids) },
+        )
+    }
+
+    private fun carried_attachments(item_id: String): Map<String, List<MessageAttachment>> {
+        val state = _thread_state.value
+        val current = if (state.item?.id == item_id) state.attachments else emptyMap()
+        return repository.cached_attachment_metas(listOf(item_id)) + current
+    }
+
+    private fun load_attachments_for_thread(
+        messages: List<ThreadMessageDecrypted>,
+        early: EarlyAttachmentFetch? = null,
+    ) {
+        val ids = messages.map { it.id }.filter { it.isNotBlank() }.distinct()
         if (ids.isEmpty()) return
         val expected_ids = ids.toSet()
+        val loading_ids = messages.filter { it.has_attachments && it.id.isNotBlank() }.map { it.id }.toSet()
+        _thread_state.update { state ->
+            if (state.messages.none { it.id in expected_ids }) return@update state
+            state.copy(attachments_loading = state.attachments_loading + loading_ids)
+        }
         viewModelScope.launch(Dispatchers.IO) {
-            val metas = repository.fetch_attachment_metas_for_messages(ids).getOrElse {
+            try {
+                val known = repository.cached_attachment_metas(ids) + repository.local_attachment_metas(ids)
+                if (known.isNotEmpty()) {
+                    _thread_state.update { state ->
+                        if (state.messages.none { it.id in expected_ids }) return@update state
+                        val missing = known.filterKeys { state.attachments[it].isNullOrEmpty() }
+                        if (missing.isEmpty()) state else state.copy(attachments = state.attachments + missing)
+                    }
+                }
+                val early_rows = early?.let { fetch ->
+                    try {
+                        fetch.rows.await().getOrNull()
+                    } catch (cancelled: CancellationException) {
+                        if (!fetch.rows.isCancelled) throw cancelled
+                        null
+                    }
+                }
+                val covered = if (early_rows != null && early != null) early.ids else emptySet()
+                val remaining = ids.filter { it !in covered }
+                val rows = if (remaining.isEmpty()) {
+                    Result.success(early_rows.orEmpty())
+                } else {
+                    repository.fetch_raw_attachment_metas(remaining).map { early_rows.orEmpty() + it }
+                }
+                val metas = rows.mapCatching { repository.decrypt_attachment_metas(it, ids) }.getOrElse { error ->
+                    if (error is CancellationException) throw error
+                    _thread_state.update { state ->
+                        if (state.messages.none { it.id in expected_ids }) return@update state
+                        state.copy(attachments_failed = true)
+                    }
+                    return@launch
+                }
                 _thread_state.update { state ->
                     if (state.messages.none { it.id in expected_ids }) return@update state
-                    state.copy(attachments_failed = true)
+                    val fresh = metas.filterKeys { k ->
+                        state.attachments[k].orEmpty().none { a -> a.encrypted_data != null }
+                    }
+                    state.copy(
+                        attachments = state.attachments + fresh,
+                        attachments_failed = false,
+                        attachments_loading = state.attachments_loading - loading_ids,
+                    )
                 }
-                return@launch
-            }
-            _thread_state.update { state ->
-                if (state.messages.none { it.id in expected_ids }) return@update state
-                val fresh = metas.filterKeys { k ->
-                    state.attachments[k].orEmpty().none { a -> a.encrypted_data != null }
-                }
-                state.copy(
-                    attachments = state.attachments + fresh,
-                    attachments_failed = false,
+                if (metas.isEmpty()) return@launch
+                val results = prefetch_thread_attachments(
+                    plan = plan_attachment_prefetch(metas),
+                    metas = metas,
+                    fetch_message = { id -> repository.fetch_attachments_for_message(id) },
+                    fetch_attachment = { id -> repository.fetch_attachment(id) },
                 )
-            }
-            if (metas.isEmpty()) return@launch
-            val results = prefetch_thread_attachments(
-                plan = plan_attachment_prefetch(metas),
-                metas = metas,
-                fetch_message = { id -> repository.fetch_attachments_for_message(id) },
-                fetch_attachment = { id -> repository.fetch_attachment(id) },
-            )
-            if (results.isEmpty()) return@launch
-            _thread_state.update { state ->
-                if (state.messages.none { it.id in expected_ids }) return@update state
-                state.copy(attachments = state.attachments + results)
+                if (results.isEmpty()) return@launch
+                _thread_state.update { state ->
+                    if (state.messages.none { it.id in expected_ids }) return@update state
+                    state.copy(attachments = state.attachments + results)
+                }
+            } finally {
+                _thread_state.update { state ->
+                    if (state.attachments_loading.none { it in loading_ids }) {
+                        state
+                    } else {
+                        state.copy(attachments_loading = state.attachments_loading - loading_ids)
+                    }
+                }
             }
         }
     }
