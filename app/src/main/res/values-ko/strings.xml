@@ -313,7 +313,7 @@
     <string name="underline">밑줄</string>
     <string name="image">이미지</string>
     <string name="device_file">기기 파일</string>
-    <string name="photo">사진</string>
+    <string name="photos_and_videos">사진 및 동영상</string>
     <string name="camera">카메라</string>
     <string name="cloud">클라우드</string>
     <string name="send_from">보내는 주소</string>

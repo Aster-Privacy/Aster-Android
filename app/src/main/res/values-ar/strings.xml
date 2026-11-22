@@ -313,7 +313,7 @@
     <string name="underline">تسطير</string>
     <string name="image">صورة</string>
     <string name="device_file">ملف الجهاز</string>
-    <string name="photo">صورة</string>
+    <string name="photos_and_videos">الصور ومقاطع الفيديو</string>
     <string name="camera">الكاميرا</string>
     <string name="cloud">السحابة</string>
     <string name="send_from">الإرسال من</string>

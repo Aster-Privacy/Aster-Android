@@ -314,7 +314,7 @@
     <string name="underline">Subrayado</string>
     <string name="image">Imagen</string>
     <string name="device_file">Archivo del dispositivo</string>
-    <string name="photo">Foto</string>
+    <string name="photos_and_videos">Fotos y vídeos</string>
     <string name="camera">Cámara</string>
     <string name="cloud">Nube</string>
     <string name="send_from">Enviar desde</string>

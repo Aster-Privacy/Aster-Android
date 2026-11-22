@@ -617,7 +617,7 @@
     <string name="link_url_placeholder">example.com</string>
     <string name="image">Image</string>
     <string name="device_file">Device file</string>
-    <string name="photo">Photo</string>
+    <string name="photos_and_videos">Photos and videos</string>
     <string name="camera">Camera</string>
     <string name="cloud">Cloud</string>
     <string name="send_from">Send from</string>

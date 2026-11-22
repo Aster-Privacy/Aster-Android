@@ -313,7 +313,7 @@
     <string name="underline">Подчёркнутый</string>
     <string name="image">Изображение</string>
     <string name="device_file">Файл устройства</string>
-    <string name="photo">Фото</string>
+    <string name="photos_and_videos">Фото и видео</string>
     <string name="camera">Камера</string>
     <string name="cloud">Облако</string>
     <string name="send_from">Отправлять с</string>

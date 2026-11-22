@@ -313,7 +313,7 @@
     <string name="underline">Altı çizili</string>
     <string name="image">Görsel</string>
     <string name="device_file">Cihaz dosyası</string>
-    <string name="photo">Fotoğraf</string>
+    <string name="photos_and_videos">Fotoğraflar ve videolar</string>
     <string name="camera">Kamera</string>
     <string name="cloud">Bulut</string>
     <string name="send_from">Gönderen</string>
