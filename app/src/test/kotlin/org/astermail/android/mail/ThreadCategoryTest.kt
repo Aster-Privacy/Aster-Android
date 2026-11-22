@@ -35,12 +35,14 @@ class ThreadCategoryTest {
         timestamp: String,
         pinned: Boolean = false,
         is_read: Boolean = false,
+        sender_email: String = "sender@example.test",
+        system_origin: Boolean = false,
     ) = InboxItem(
         id = id,
         thread_token = thread,
         thread_message_count = 1,
         sender_name = "Sender",
-        sender_email = "sender@example.test",
+        sender_email = sender_email,
         subject = "Subject",
         preview = "Preview",
         timestamp = timestamp,
@@ -56,6 +58,7 @@ class ThreadCategoryTest {
         raw_item = MailItem(
             id = id,
             item_type = "received",
+            system_origin = system_origin,
             metadata = if (pinned) MailItemMetadata(category = category, category_pinned = true) else null,
         ),
     )
@@ -105,5 +108,66 @@ class ThreadCategoryTest {
         val flat = category_unread_counts(items, CATEGORY_TABS, grouping_enabled = false)
         assertEquals(1, flat["primary"])
         assertEquals(1, flat["promotions"])
+    }
+
+    @Test
+    fun system_mail_keeps_a_thread_pinned_to_deals_in_primary() {
+        val items = listOf(
+            item(
+                "alert",
+                "t1",
+                "primary",
+                "2026-11-19T08:00:00Z",
+                sender_email = "no-reply@astermail.org",
+                system_origin = true,
+            ),
+            item("moved", "t1", "promotions", "2026-11-20T08:00:00Z", pinned = true),
+        )
+        val result = thread_categories(
+            items,
+            thread_key = { it.thread_token!! },
+            order = compareBy { it.timestamp },
+            category = { it.category },
+            pinned = { is_category_pinned(it) },
+            locked = { is_primary_locked_item(it) },
+        )
+        assertEquals(mapOf("t1" to "primary"), result)
+
+        val counts = category_unread_counts(items, CATEGORY_TABS)
+        assertEquals(1, counts["primary"])
+        assertEquals(0, counts["promotions"])
+    }
+
+    @Test
+    fun a_pin_on_system_mail_is_ignored() {
+        val alert = item(
+            "alert",
+            "t1",
+            "promotions",
+            "2026-11-20T08:00:00Z",
+            pinned = true,
+            sender_email = "no-reply@astermail.org",
+            system_origin = true,
+        )
+        assertEquals(false, is_category_pinned(alert))
+        assertEquals(false, is_category_movable(alert))
+    }
+
+    @Test
+    fun a_pin_on_normal_mail_still_decides_the_thread() {
+        val items = listOf(
+            item("old", "t1", "primary", "2026-11-19T08:00:00Z"),
+            item("moved", "t1", "promotions", "2026-11-20T08:00:00Z", pinned = true),
+        )
+        val result = thread_categories(
+            items,
+            thread_key = { it.thread_token!! },
+            order = compareBy { it.timestamp },
+            category = { it.category },
+            pinned = { is_category_pinned(it) },
+            locked = { is_primary_locked_item(it) },
+        )
+        assertEquals(mapOf("t1" to "promotions"), result)
+        assertEquals(true, is_category_movable(items[1]))
     }
 }

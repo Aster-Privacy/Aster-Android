@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import org.astermail.android.api.mail.MailItemMetadata
 import org.astermail.android.api.preferences.CustomCategoryRule
 import org.astermail.android.api.preferences.normalize_learned_sender
+import org.astermail.android.ui.mail.is_aster_system_address
 
 val CATEGORY_TABS: List<String> = listOf("primary") + DEFAULT_ENABLED_CATEGORIES
 
@@ -191,6 +192,12 @@ fun resolve_learned_category(
     return if (custom_categories.any { it.id == category && it.enabled }) category else null
 }
 
+fun is_primary_locked_mail(sender_email: String, system_origin: Boolean, is_external: Boolean): Boolean =
+    system_origin && !is_external && is_aster_system_address(sender_email)
+
+fun is_primary_locked_item(item: InboxItem): Boolean =
+    is_primary_locked_mail(item.sender_email, item.raw_item.system_origin, item.raw_item.is_external)
+
 fun classify(
     envelope: DecryptedEnvelope,
     metadata: MailItemMetadata?,
@@ -198,7 +205,10 @@ fun classify(
     custom_categories: List<CustomCategoryRule> = emptyList(),
     learned: Map<String, String> = emptyMap(),
     auth_failed: Boolean = false,
+    system_locked: Boolean = false,
 ): String {
+    if (system_locked) return "primary"
+
     val pinned_category = metadata?.category
     if (metadata?.category_pinned == true && pinned_category != null) {
         return pinned_category
@@ -404,6 +414,7 @@ fun category_for_tab(category: String?, active_tabs: List<String> = CATEGORY_TAB
 }
 
 fun is_category_pinned(item: InboxItem): Boolean {
+    if (is_primary_locked_item(item)) return false
     val meta = item.raw_item.metadata ?: return false
     return meta.category_pinned && meta.category != null
 }
@@ -414,11 +425,14 @@ fun <T> thread_categories(
     order: Comparator<T>,
     category: (T) -> String,
     pinned: (T) -> Boolean,
+    locked: (T) -> Boolean = { false },
 ): Map<String, String> {
     val newest = HashMap<String, T>()
     val newest_pinned = HashMap<String, T>()
+    val locked_keys = HashSet<String>()
     for (item in items) {
         val key = thread_key(item)
+        if (locked(item)) locked_keys.add(key)
         val current = newest[key]
         if (current == null || order.compare(item, current) > 0) newest[key] = item
         if (pinned(item)) {
@@ -426,7 +440,9 @@ fun <T> thread_categories(
             if (current_pinned == null || order.compare(item, current_pinned) > 0) newest_pinned[key] = item
         }
     }
-    return newest.mapValues { (key, item) -> category(newest_pinned[key] ?: item) }
+    return newest.mapValues { (key, item) ->
+        if (key in locked_keys) "primary" else category(newest_pinned[key] ?: item)
+    }
 }
 
 fun category_unread_counts(
@@ -446,7 +462,11 @@ fun category_unread_counts(
         if (msgs.none { !it.is_read }) continue
         val newest = msgs.maxByOrNull { it.timestamp } ?: continue
         val source = msgs.filter { is_category_pinned(it) }.maxByOrNull { it.timestamp } ?: newest
-        val tab = category_for_tab(source.category, active_tabs)
+        val tab = if (msgs.any { is_primary_locked_item(it) }) {
+            "primary"
+        } else {
+            category_for_tab(source.category, active_tabs)
+        }
         counts[tab] = (counts[tab] ?: 0) + 1
     }
     return counts
