@@ -203,6 +203,7 @@ private const val SEND_FAILURE_REASON_PREFIX = "reason_"
 private const val SEND_FAILURE_ACKNOWLEDGED_KEY = "acknowledged"
 private const val SENDING_CLAIM_STALE_MS = 5 * 60 * 1000L
 private const val MAX_ATTACHMENT_META_BATCH_SIZE = 50
+private const val MAX_ATTACHMENT_META_CACHE_SIZE = 200
 
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
 private const val RATCHET_PREFETCH_CONCURRENCY = 8
@@ -2612,6 +2613,7 @@ class MailRepository @Inject constructor(
         InboundAttachmentKeyStore.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
         DecryptedMimeAttachments.clear()
+        synchronized(attachment_meta_cache) { attachment_meta_cache.clear() }
     }
 
     fun clear_account_data() {
@@ -5675,42 +5677,77 @@ class MailRepository @Inject constructor(
         return (server + local).distinct()
     }
 
+    private val attachment_meta_cache = object :
+        LinkedHashMap<String, List<org.astermail.android.ui.mail.MessageAttachment>>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, List<org.astermail.android.ui.mail.MessageAttachment>>?,
+        ): Boolean = size > MAX_ATTACHMENT_META_CACHE_SIZE
+    }
+
+    fun cached_attachment_metas(
+        mail_item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> = synchronized(attachment_meta_cache) {
+        mail_item_ids.distinct().mapNotNull { id ->
+            attachment_meta_cache[id]?.takeIf { it.isNotEmpty() }?.let { id to it }
+        }.toMap()
+    }
+
+    fun local_attachment_metas(
+        mail_item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> =
+        mail_item_ids.distinct()
+            .filter { DecryptedMimeAttachments.has(it) }
+            .associateWith { DecryptedMimeAttachments.merge_into(it, emptyList()) }
+            .filterValues { it.isNotEmpty() }
+
+    suspend fun fetch_raw_attachment_metas(
+        mail_item_ids: List<String>,
+    ): Result<Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>> = try {
+        Result.success(batch_attachment_meta_chunked(mail_item_ids))
+    } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+        throw t
+    } catch (t: Throwable) {
+        Result.failure(t)
+    }
+
     suspend fun fetch_attachment_metas_for_messages(
         mail_item_ids: List<String>,
-    ): Result<Map<String, List<org.astermail.android.ui.mail.MessageAttachment>>> {
-        return try {
-            val batch_items = batch_attachment_meta_chunked(mail_item_ids)
-            var metas = decrypt_batch_attachment_metas(batch_items)
-            val stale_parents = metas.filterValues { list ->
-                list.any { (_, meta) -> attachment_meta_needs_heal(meta) }
-            }.keys
-            if (stale_parents.isNotEmpty() && heal_attachment_keys_for_messages(stale_parents)) {
-                metas = decrypt_batch_attachment_metas(batch_items)
-            }
-            metas.mapValues { (_, list) ->
-                list.map { (att, meta) ->
-                    org.astermail.android.ui.mail.MessageAttachment(
-                        id = att.id,
-                        filename = meta.filename,
-                        content_type = meta.content_type,
-                        size_bytes = meta.size_bytes ?: att.size_bytes,
-                        session_key = meta.session_key,
-                        content_id = meta.content_id,
-                        mail_item_id = att.mail_item_id,
-                        seq_num = att.seq_num,
-                        is_unverified = meta.is_unverified,
-                    )
-                }
-            }.let { server ->
-                mail_item_ids.distinct().associateWith { id ->
-                    DecryptedMimeAttachments.merge_into(id, server[id].orEmpty())
-                }
-            }.filterValues { it.isNotEmpty() }.let { Result.success(it) }
-        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
-            throw t
-        } catch (t: Throwable) {
-            Result.failure(t)
+    ): Result<Map<String, List<org.astermail.android.ui.mail.MessageAttachment>>> =
+        fetch_raw_attachment_metas(mail_item_ids).mapCatching { decrypt_attachment_metas(it, mail_item_ids) }
+
+    suspend fun decrypt_attachment_metas(
+        batch_items: Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>,
+        mail_item_ids: List<String>,
+    ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> {
+        var metas = decrypt_batch_attachment_metas(batch_items)
+        val stale_parents = metas.filterValues { list ->
+            list.any { (_, meta) -> attachment_meta_needs_heal(meta) }
+        }.keys
+        if (stale_parents.isNotEmpty() && heal_attachment_keys_for_messages(stale_parents)) {
+            metas = decrypt_batch_attachment_metas(batch_items)
         }
+        val server = metas.mapValues { (_, list) ->
+            list.map { (att, meta) ->
+                org.astermail.android.ui.mail.MessageAttachment(
+                    id = att.id,
+                    filename = meta.filename,
+                    content_type = meta.content_type,
+                    size_bytes = meta.size_bytes ?: att.size_bytes,
+                    session_key = meta.session_key,
+                    content_id = meta.content_id,
+                    mail_item_id = att.mail_item_id,
+                    seq_num = att.seq_num,
+                    is_unverified = meta.is_unverified,
+                )
+            }
+        }
+        val merged = mail_item_ids.distinct().associateWith { id ->
+            DecryptedMimeAttachments.merge_into(id, server[id].orEmpty())
+        }
+        synchronized(attachment_meta_cache) {
+            merged.forEach { (id, list) -> attachment_meta_cache[id] = list }
+        }
+        return merged.filterValues { it.isNotEmpty() }
     }
 
     private fun decrypt_batch_attachment_metas(

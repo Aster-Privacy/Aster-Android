@@ -291,7 +291,7 @@ class MailPollingWorker(
             var also_arrived: List<org.astermail.android.mail.InboxItem> = emptyList()
             fun resolve_sender(item: org.astermail.android.mail.InboxItem): String =
                 if (item.is_undecryptable) {
-                    localized(context).getString(org.astermail.android.R.string.encrypted)
+                    localized(context).getString(org.astermail.android.R.string.app_name)
                 } else {
                     MailPollingWorker.notification_sender_label(
                         org.astermail.android.security.trusted_sender_name(
@@ -306,11 +306,11 @@ class MailPollingWorker(
                     )
                 }
             var fetched_any_page = false
-            var forced_heal_armed = false
+            var retry_delay_ms = 1_500L
             var protected_pending = false
-            repeat(3) { attempt ->
+            repeat(UNREADABLE_RETRY_ATTEMPTS) { attempt ->
                 if (newest != null) return@repeat
-                if (attempt > 0) kotlinx.coroutines.delay(1_500L)
+                if (attempt > 0) kotlinx.coroutines.delay(retry_delay_ms)
                 val page = try {
                     kotlinx.coroutines.withTimeout(20_000L) {
                         repo.fetch_inbox(limit = fetch_limit)
@@ -347,16 +347,18 @@ class MailPollingWorker(
                     }
                 }
 
-                if (candidate?.is_undecryptable == true &&
-                    !forced_heal_armed &&
-                    attempt < 2 &&
-                    repo.is_sealed_inbound_nonce(candidate.raw_item.envelope_nonce)
-                ) {
-                    forced_heal_armed = true
+                val retry = candidate?.let {
+                    unreadable_retry(it.is_undecryptable, it.is_decrypt_pending, attempt)
+                } ?: UnreadableRetry.None
+                if (retry == UnreadableRetry.Heal) {
                     repo.begin_decrypt_retry()
+                    retry_delay_ms = UNREADABLE_HEAL_DELAY_MS
                     return@repeat
                 }
-                if (candidate?.is_decrypt_pending == true && attempt < 2) return@repeat
+                if (retry == UnreadableRetry.Wait) {
+                    retry_delay_ms = 1_500L
+                    return@repeat
+                }
 
                 val candidate_sender = candidate?.let { resolve_sender(it) }
                 if (candidate != null &&
@@ -532,6 +534,8 @@ class MailPollingWorker(
         fun api_client(): ApiClient
         fun account_store(): org.astermail.android.storage.AccountStore
     }
+
+    enum class UnreadableRetry { None, Wait, Heal }
 
     companion object {
         const val CHANNEL_ID = "aster_new_mail_v3"
@@ -827,6 +831,16 @@ class MailPollingWorker(
             fetched_any_page -> FallbackAlert.None
             mute_filters_active -> FallbackAlert.Silent
             else -> FallbackAlert.Audible
+        }
+
+        const val UNREADABLE_RETRY_ATTEMPTS = 4
+        const val UNREADABLE_HEAL_DELAY_MS = 2_500L
+
+        fun unreadable_retry(is_undecryptable: Boolean, is_decrypt_pending: Boolean, attempt: Int): UnreadableRetry = when {
+            attempt >= UNREADABLE_RETRY_ATTEMPTS - 1 -> UnreadableRetry.None
+            !is_undecryptable -> UnreadableRetry.None
+            is_decrypt_pending -> UnreadableRetry.Wait
+            else -> UnreadableRetry.Heal
         }
 
         fun notification_text(

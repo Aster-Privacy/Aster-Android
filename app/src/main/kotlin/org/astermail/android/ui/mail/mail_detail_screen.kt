@@ -741,6 +741,13 @@ fun MailDetailScreen(
         }
     }
 
+    val attachment_loading_ids = remember(thread_state.messages, thread_state.attachments_loading, thread_attachments) {
+        thread_state.messages
+            .filter { it.id in thread_state.attachments_loading && thread_attachments[it.id].isNullOrEmpty() }
+            .map { it.id }
+            .toSet()
+    }
+
     val thread_ghost_email = remember(thread_state.messages) {
         val latest_sent = thread_state.messages
             .filter { it.raw_item.item_type == "sent" }
@@ -1712,6 +1719,7 @@ fun MailDetailScreen(
                                 null
                             },
                             attachments_failed = msg.id in attachment_failure_ids,
+                            attachments_loading = msg.id in attachment_loading_ids,
                             on_retry_attachments = { mail_vm.retry_thread_attachments() },
                             identity_changed = identity_changed_senders.contains(
                                 org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
@@ -2621,6 +2629,7 @@ internal fun expanded_message(
     on_attachment_download: (MessageAttachment) -> Unit = {},
     on_attachment_options: (MessageAttachment) -> Unit = {},
     attachments_failed: Boolean = false,
+    attachments_loading: Boolean = false,
     on_retry_attachments: () -> Unit = {},
     reactions: List<DecryptedReaction> = emptyList(),
     on_react: (String) -> Unit = {},
@@ -3335,6 +3344,8 @@ internal fun expanded_message(
                 on_download = on_attachment_download,
                 on_options = on_attachment_options,
             )
+        } else if (attachments_loading && !attachments_failed) {
+            attachment_section_placeholder()
         } else if (attachments_failed) {
             Box(
                 modifier = Modifier
@@ -7960,6 +7971,42 @@ private fun link_options_sheet(
             }
             Spacer(Modifier.height(AsterSpacing.sm))
         }
+    }
+}
+
+@Composable
+private fun attachment_section_placeholder() {
+    val state = org.astermail.android.design.components.shimmer_state()
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.md)
+            .testTag("attachments_loading"),
+    ) {
+        Spacer(Modifier.height(AsterSpacing.sm))
+        AsterDivider()
+        Spacer(Modifier.height(AsterSpacing.md))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.3f)
+                .height(14.dp)
+                .shimmer(state, shape),
+        )
+        Spacer(Modifier.height(AsterSpacing.sm))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .shimmer(state, AsterShapes.island_lg),
+            )
+            Spacer(Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
