@@ -63,8 +63,13 @@ import org.astermail.android.crypto.guard.GuardContextSeal
 import org.astermail.android.crypto.guard.GuardDigests
 import org.astermail.android.guard.GuardActionKey
 import org.astermail.android.guard.GuardDeviceStore
+import org.astermail.android.guard.GuardPasskeyException
 import org.astermail.android.guard.generate_box_keys
 import org.astermail.android.guard.guard_box_keys
+import org.astermail.android.guard.guard_passkey_failure
+import org.astermail.android.guard.guard_passkey_failure_for
+import org.astermail.android.guard.guard_passkey_proof
+import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_sign_result
 import org.astermail.android.guard.guard_signer
 import org.astermail.android.storage.AccountStore
@@ -154,11 +159,13 @@ data class guard_setup_ui(
     val totp: String = "",
     val show_totp: Boolean = false,
     val notice: guard_setup_notice? = null,
+    val passkey_failure: guard_passkey_failure? = null,
     val join_number: Int? = null,
     val join_expires_at: String = "",
 ) {
     val can_continue_choose: Boolean get() = valid_switches(switches, scopes)
     val can_submit: Boolean get() = password.isNotEmpty() && (!show_totp || totp.isNotBlank())
+    val can_use_passkey: Boolean get() = step == guard_setup_step.password && valid_switches(switches, scopes)
 }
 
 interface guard_setup_deps {
@@ -289,35 +296,47 @@ class GuardSetupViewModel @Inject constructor(
             guard_setup_step.password -> guard_setup_step.confirm_rescue
             else -> it.step
         }
-        it.copy(step = step, notice = null)
+        it.copy(step = step, notice = null, passkey_failure = null)
     }
 
-    fun on_password(value: String) = _state.update { it.copy(password = value, notice = null) }
+    fun on_password(value: String) = _state.update { it.copy(password = value, notice = null, passkey_failure = null) }
 
-    fun on_totp(value: String) = _state.update { it.copy(totp = value.filter { c -> c.isDigit() }.take(8), notice = null) }
+    fun on_totp(value: String) = _state.update {
+        it.copy(totp = value.filter { c -> c.isDigit() }.take(8), notice = null, passkey_failure = null)
+    }
 
     fun submit(signer: guard_signer) {
         if (_state.value.step == guard_setup_step.working) return
         viewModelScope.launch { run_setup(signer) }
     }
 
-    suspend fun run_setup(signer: guard_signer) {
+    fun submit_passkey(signer: guard_signer, sheet: guard_passkey_sheet) {
+        if (_state.value.step == guard_setup_step.working) return
+        viewModelScope.launch { run_setup(signer, sheet) }
+    }
+
+    suspend fun run_setup(signer: guard_signer, sheet: guard_passkey_sheet? = null) {
         val ui = _state.value
         val user = deps.user_id()
-        if (user == null || !ui.can_submit || !valid_switches(ui.switches, ui.scopes)) {
-            _state.update { it.copy(notice = guard_setup_notice.failed) }
+        val ready = if (sheet == null) ui.can_submit else ui.can_use_passkey
+        if (user == null || !ready || !valid_switches(ui.switches, ui.scopes)) {
+            _state.update { it.copy(notice = guard_setup_notice.failed, passkey_failure = null) }
             return
         }
-        _state.update { it.copy(step = guard_setup_step.working, notice = null) }
+        _state.update { it.copy(step = guard_setup_step.working, notice = null, passkey_failure = null) }
         var alias: String? = null
         var saved = false
         try {
-            val hash = deps.password_hash(ui.password)
-            if (hash == null) {
-                to_password(guard_setup_notice.failed)
-                return
+            val proof: StepUpProof = if (sheet != null) {
+                guard_passkey_proof(api, user, deps::user_id, sheet)
+            } else {
+                val hash = deps.password_hash(ui.password)
+                if (hash == null) {
+                    to_password(guard_setup_notice.failed)
+                    return
+                }
+                StepUpProof.Password(hash, ui.totp.takeIf { ui.show_totp && it.isNotBlank() })
             }
-            val proof = StepUpProof.Password(hash, ui.totp.takeIf { ui.show_totp && it.isNotBlank() })
             val keys = deps.new_box_keys()
             val fresh_alias = deps.new_action_alias()
             alias = fresh_alias
@@ -332,6 +351,7 @@ class GuardSetupViewModel @Inject constructor(
                     return
                 }
             }
+            if (deps.user_id() != user) throw GuardPasskeyException(guard_passkey_failure.account_changed)
             val response = api.setup(
                 GuardSetupRequest(
                     device = device_keys(keys, action_pk),
@@ -352,7 +372,9 @@ class GuardSetupViewModel @Inject constructor(
             throw t
         } catch (t: Throwable) {
             val code = api_error_code(t)
+            val passkey_failure = guard_passkey_failure_for(t)
             when {
+                passkey_failure != null -> to_passkey_failure(passkey_failure)
                 code == GUARD_ALREADY_ON_CODE -> _state.update { it.copy(step = guard_setup_step.already_on, password = "") }
                 guard_is_disabled(t) -> _state.update { it.copy(step = guard_setup_step.hidden, password = "") }
                 code == TOTP_REQUIRED_CODE -> {
@@ -361,7 +383,11 @@ class GuardSetupViewModel @Inject constructor(
                 }
                 t is ApiError.InvalidCredentials || t is ApiError.StepUpRequired ||
                     code == STEP_UP_REQUIRED_CODE || code == INVALID_CREDENTIALS_CODE || code == INVALID_PASSWORD_CODE ->
-                    to_password(guard_setup_notice.wrong_password)
+                    if (sheet != null) {
+                        to_passkey_failure(guard_passkey_failure.failed)
+                    } else {
+                        to_password(guard_setup_notice.wrong_password)
+                    }
                 else -> to_password(guard_setup_notice.failed)
             }
         } finally {
@@ -506,7 +532,15 @@ class GuardSetupViewModel @Inject constructor(
     }
 
     private fun to_password(notice: guard_setup_notice) =
-        _state.update { it.copy(step = guard_setup_step.password, notice = notice) }
+        _state.update { it.copy(step = guard_setup_step.password, notice = notice, passkey_failure = null) }
+
+    private fun to_passkey_failure(failure: guard_passkey_failure) = _state.update {
+        it.copy(
+            step = guard_setup_step.password,
+            notice = null,
+            passkey_failure = failure.takeUnless { f -> f == guard_passkey_failure.canceled },
+        )
+    }
 
     private fun sign_notice(result: guard_sign_result): guard_setup_notice = when (result) {
         guard_sign_result.no_lock_screen -> guard_setup_notice.no_lock_screen

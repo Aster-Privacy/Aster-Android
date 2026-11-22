@@ -333,4 +333,13 @@
     <string name="guard_rotate_prompt_subtitle">복구 코드 교체</string>
     <string name="guard_rotate_done_title">복구 코드를 교체했습니다</string>
     <string name="guard_rotate_done_body">이전 복구 코드는 더 이상 작동하지 않습니다. 새 코드는 오프라인의 안전한 곳에 보관하세요.</string>
+    <string name="guard_passkey_use">Use a passkey</string>
+    <string name="guard_changes_skip_passkey">Skip the wait with a passkey</string>
+    <string name="guard_passkey_interrupted">The passkey request was interrupted. Try again.</string>
+    <string name="guard_passkey_none">No passkey for this account is saved on this device. Use your password instead.</string>
+    <string name="guard_passkey_unavailable">Passkeys aren\'t available on this device. Use your password instead.</string>
+    <string name="guard_passkey_wrong_account">That passkey belongs to a different account. Choose a passkey for the account you\'re using now.</string>
+    <string name="guard_passkey_account_changed">You switched accounts while confirming. Switch back to that account, then try again.</string>
+    <string name="guard_passkey_expired">The passkey request expired. Try again.</string>
+    <string name="guard_passkey_failed">Your passkey couldn\'t be verified. Try again, or use your password.</string>
 </resources>

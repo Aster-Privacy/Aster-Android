@@ -300,7 +300,7 @@ class GuardSetupViewModelTest {
         val vm = GuardSetupViewModel(api, GuardDeviceStore(InMemoryPrefs()), deps)
         advanceUntilIdle()
         walk_to_password(vm)
-        vm.run_setup { guard_sign_result.canceled }
+        vm.run_setup(guard_signer { guard_sign_result.canceled })
         coVerify(exactly = 0) { api.setup(any()) }
         assertEquals(deps.created, deps.deleted)
         assertEquals(guard_setup_step.password, vm.state.value.step)

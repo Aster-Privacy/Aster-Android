@@ -36,12 +36,18 @@ import kotlinx.coroutines.launch
 import org.astermail.android.api.api_error_code
 import org.astermail.android.api.guard.GuardApi
 import org.astermail.android.api.guard.GuardPendingChange
+import org.astermail.android.api.guard.StepUpProof
 import org.astermail.android.crypto.guard.GuardActionCode
 import org.astermail.android.crypto.guard.GuardDigests
 import org.astermail.android.guard.GuardDeviceStore
+import org.astermail.android.guard.GuardPasskeyException
 import org.astermail.android.guard.GuardRepository
 import org.astermail.android.guard.guard_hold_kind
 import org.astermail.android.guard.guard_parse_instant
+import org.astermail.android.guard.guard_passkey_failure
+import org.astermail.android.guard.guard_passkey_failure_for
+import org.astermail.android.guard.guard_passkey_proof
+import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_signer
 
 const val GUARD_STEP_UP_REQUIRED_CODE = "STEP_UP_REQUIRED"
@@ -87,9 +93,11 @@ data class guard_changes_ui(
     val long_trusted: Boolean = false,
     val working_id: String? = null,
     val notice: guard_changes_notice? = null,
+    val passkey_failure: guard_passkey_failure? = null,
 ) {
     fun can_skip(row: guard_change_row): Boolean = is_guard_device && long_trusted && row.skippable()
     fun skip_needs_trust(row: guard_change_row): Boolean = is_guard_device && !long_trusted && row.skippable()
+    fun can_skip_with_passkey(row: guard_change_row): Boolean = skip_needs_trust(row)
     fun can_stop(row: guard_change_row): Boolean = is_guard_device && row.kind.can_veto
     fun can_cancel(row: guard_change_row): Boolean = is_guard_device && !row.kind.can_veto && row.server_cancellable
 
@@ -149,6 +157,14 @@ class GuardChangesViewModel @Inject constructor(
 
     fun stop(signer: guard_signer, id: String) = launch_op(signer, id, guard_change_op.stop)
 
+    fun skip_with_passkey(signer: guard_signer, sheet: guard_passkey_sheet, id: String) {
+        if (_state.value.working_id != null) return
+        viewModelScope.launch { run_op(signer, id, guard_change_op.skip, sheet) }
+    }
+
+    suspend fun run_skip_with_passkey(signer: guard_signer, sheet: guard_passkey_sheet, id: String) =
+        run_op(signer, id, guard_change_op.skip, sheet)
+
     suspend fun run_cancel(signer: guard_signer, id: String) = run_op(signer, id, guard_change_op.cancel)
 
     suspend fun run_skip(signer: guard_signer, id: String) = run_op(signer, id, guard_change_op.skip)
@@ -160,16 +176,20 @@ class GuardChangesViewModel @Inject constructor(
         viewModelScope.launch { run_op(signer, id, op) }
     }
 
-    private suspend fun run_op(signer: guard_signer, id: String, op: guard_change_op) {
+    private suspend fun run_op(signer: guard_signer, id: String, op: guard_change_op, sheet: guard_passkey_sheet? = null) {
         val user_id = user.user_id() ?: return
         val change_uuid = runCatching { UUID.fromString(id) }.getOrNull() ?: return
-        _state.update { it.copy(working_id = id, notice = null) }
+        _state.update { it.copy(working_id = id, notice = null, passkey_failure = null) }
         try {
+            val proof: StepUpProof? = sheet?.let { guard_passkey_proof(api, user_id, user::user_id, it) }
             val action = GuardRepository(api, store) { user_id }
-                .signed_with(signer, op.code, GuardDigests.id_subject(change_uuid))
+                .signed_with(signer, op.code, GuardDigests.id_subject(change_uuid), proof)
             if (action == null) {
                 _state.update { it.copy(working_id = null, notice = guard_changes_notice.canceled) }
                 return
+            }
+            if (sheet != null && user.user_id() != user_id) {
+                throw GuardPasskeyException(guard_passkey_failure.account_changed)
             }
             val done = when (op) {
                 guard_change_op.cancel ->
@@ -186,7 +206,18 @@ class GuardChangesViewModel @Inject constructor(
         } catch (t: CancellationException) {
             throw t
         } catch (t: Throwable) {
+            val passkey_failure = guard_passkey_failure_for(t)
+            if (passkey_failure != null) {
+                _state.update {
+                    it.copy(working_id = null, passkey_failure = passkey_failure.takeUnless { f -> f == guard_passkey_failure.canceled })
+                }
+                return
+            }
             val notice = when {
+                sheet != null && api_error_code(t) == GUARD_STEP_UP_REQUIRED_CODE -> {
+                    _state.update { it.copy(working_id = null, passkey_failure = guard_passkey_failure.failed) }
+                    return
+                }
                 api_error_code(t) == GUARD_STEP_UP_REQUIRED_CODE -> guard_changes_notice.step_up_required
                 else -> when (guard_action_notice_for(t)) {
                     guard_action_notice.key_lost -> guard_changes_notice.key_lost
@@ -199,5 +230,5 @@ class GuardChangesViewModel @Inject constructor(
         }
     }
 
-    fun dismiss_notice() = _state.update { it.copy(notice = null) }
+    fun dismiss_notice() = _state.update { it.copy(notice = null, passkey_failure = null) }
 }

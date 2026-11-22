@@ -60,6 +60,7 @@ import compose.icons.tablericons.Copy
 import compose.icons.tablericons.Download
 import compose.icons.tablericons.Printer
 import org.astermail.android.R
+import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.api.guard.GuardSwitch
 import org.astermail.android.crypto.guard.GuardCode
 import org.astermail.android.design.AsterMaterial
@@ -67,6 +68,8 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
+import org.astermail.android.guard.guard_passkey_failure
+import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_prompt_text
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.ui.common.print_recovery_codes
@@ -107,6 +110,7 @@ fun guard_setup_host(view_model: GuardSetupViewModel, on_back: () -> Unit) {
         on_password = view_model::on_password,
         on_totp = view_model::on_totp,
         on_submit = { view_model.submit(guard_prompt_signer(activity, setup_prompt)) },
+        on_passkey = { view_model.submit_passkey(guard_prompt_signer(activity, setup_prompt), guard_passkey_sheet_for(context)) },
         on_join = { view_model.start_join(guard_prompt_signer(activity, join_prompt)) },
         on_restart_join = view_model::restart_join,
         on_retry = view_model::retry,
@@ -119,6 +123,10 @@ fun guard_setup_host(view_model: GuardSetupViewModel, on_back: () -> Unit) {
         },
         on_close = on_back,
     )
+}
+
+internal fun guard_passkey_sheet_for(context: Context): guard_passkey_sheet = guard_passkey_sheet { request_json ->
+    request_passkey_json(find_fragment_activity(context) ?: context, request_json)
 }
 
 internal fun guard_save_rescue(context: Context, code: String) {
@@ -160,6 +168,7 @@ fun guard_setup_screen(
     on_password: (String) -> Unit,
     on_totp: (String) -> Unit,
     on_submit: () -> Unit,
+    on_passkey: () -> Unit = {},
     on_join: () -> Unit,
     on_restart_join: () -> Unit,
     on_retry: () -> Unit,
@@ -324,6 +333,12 @@ fun guard_setup_screen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = state.can_submit,
                     )
+                    AsterGhostButton(
+                        label = stringResource(R.string.guard_passkey_use),
+                        onClick = on_passkey,
+                        modifier = Modifier.fillMaxWidth().testTag("guard_setup_passkey"),
+                        enabled = state.can_use_passkey,
+                    )
                 },
             ) {
                 AsterTextField(
@@ -331,7 +346,7 @@ fun guard_setup_screen(
                     onValueChange = on_password,
                     modifier = Modifier.fillMaxWidth(),
                     label = stringResource(R.string.guard_setup_password_label),
-                    error_text = guard_setup_notice_text(state.notice),
+                    error_text = guard_setup_notice_text(state.notice) ?: guard_passkey_failure_text(state.passkey_failure),
                     keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
                     visual_transformation = PasswordVisualTransformation(),
                 )
@@ -469,6 +484,18 @@ private fun guard_rescue_action(icon: ImageVector, label: Int, on_click: () -> U
         icon = icon,
         on_click = on_click,
     )
+}
+
+@Composable
+internal fun guard_passkey_failure_text(failure: guard_passkey_failure?): String? = when (failure) {
+    null, guard_passkey_failure.canceled -> null
+    guard_passkey_failure.interrupted -> stringResource(R.string.guard_passkey_interrupted)
+    guard_passkey_failure.no_passkey -> stringResource(R.string.guard_passkey_none)
+    guard_passkey_failure.unavailable -> stringResource(R.string.guard_passkey_unavailable)
+    guard_passkey_failure.wrong_account -> stringResource(R.string.guard_passkey_wrong_account)
+    guard_passkey_failure.account_changed -> stringResource(R.string.guard_passkey_account_changed)
+    guard_passkey_failure.expired -> stringResource(R.string.guard_passkey_expired)
+    guard_passkey_failure.failed -> stringResource(R.string.guard_passkey_failed)
 }
 
 @Composable

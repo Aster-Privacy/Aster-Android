@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -92,7 +93,8 @@ fun guard_changes_host(
     on_change_password: (() -> Unit)? = null,
 ) {
     val state by view_model.state.collectAsState()
-    val activity = find_fragment_activity(LocalContext.current)
+    val context = LocalContext.current
+    val activity = find_fragment_activity(context)
     val prompt = guard_prompt_text(
         title = stringResource(R.string.guard_prompt_title),
         subtitle = stringResource(R.string.guard_changes_prompt_subtitle),
@@ -104,6 +106,9 @@ fun guard_changes_host(
         on_skip = { id -> view_model.skip(guard_prompt_signer(activity, prompt), id) },
         on_stop = { id -> view_model.stop(guard_prompt_signer(activity, prompt), id) },
         on_retry = view_model::refresh,
+        on_skip_passkey = { id ->
+            view_model.skip_with_passkey(guard_prompt_signer(activity, prompt), guard_passkey_sheet_for(context), id)
+        },
         on_not_me = on_not_me,
         on_change_password = on_change_password,
     )
@@ -120,6 +125,7 @@ fun guard_changes_screen(
     live: Boolean = true,
     on_not_me: () -> Unit = {},
     on_change_password: (() -> Unit)? = null,
+    on_skip_passkey: (String) -> Unit = {},
 ) {
     detail_scaffold(title = stringResource(R.string.guard_changes_title), on_back = on_back) {
         when {
@@ -137,7 +143,7 @@ fun guard_changes_screen(
             state.hidden -> error_banner(stringResource(R.string.guard_setup_unavailable))
             state.load_failed && state.changes.isEmpty() -> load_failed_card(null, on_retry)
             state.loading -> Unit
-            else -> guard_changes_content(state, on_cancel, on_skip, on_stop, on_not_me, live)
+            else -> guard_changes_content(state, on_cancel, on_skip, on_stop, on_not_me, live, on_skip_passkey)
         }
     }
 }
@@ -184,9 +190,14 @@ private fun guard_changes_content(
     on_stop: (String) -> Unit,
     on_not_me: () -> Unit,
     live: Boolean,
+    on_skip_passkey: (String) -> Unit,
 ) {
     guard_changes_notice_text(state.notice)?.let {
         if (state.notice in guard_changes_success) recommendation_note(it) else error_banner(it)
+        Spacer(Modifier.height(AsterSpacing.md))
+    }
+    guard_passkey_failure_text(state.passkey_failure)?.let {
+        error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
     if (state.changes.isEmpty()) {
@@ -215,6 +226,7 @@ private fun guard_changes_content(
                 on_skip = { on_skip(row.id) },
                 on_stop = { on_stop(row.id) },
                 on_not_me = on_not_me,
+                on_skip_passkey = { on_skip_passkey(row.id) },
             )
         }
     }
@@ -247,6 +259,7 @@ private fun guard_change_card(
     on_skip: () -> Unit,
     on_stop: () -> Unit,
     on_not_me: () -> Unit,
+    on_skip_passkey: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val busy = state.working_id != null
@@ -367,6 +380,15 @@ private fun guard_change_card(
                     onClick = on_skip,
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (state.can_skip_with_passkey(row)) {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                AsterGhostButton(
+                    label = stringResource(R.string.guard_changes_skip_passkey),
+                    onClick = on_skip_passkey,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("guard_changes_skip_passkey"),
                 )
             }
         }

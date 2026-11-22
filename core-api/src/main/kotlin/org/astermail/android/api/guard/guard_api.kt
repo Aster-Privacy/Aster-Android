@@ -415,6 +415,11 @@ class GuardApiImpl(private val client: ApiClient) : GuardApi {
         setBody(value)
     }
 
+    private fun HttpRequestBuilder.step_up_body(value: Any) {
+        json_body(value)
+        header(HttpHeaders.Origin, client.webauthn_origin.trimEnd('/'))
+    }
+
     private fun HttpRequestBuilder.guard_token(token: String) {
         header(GUARD_TOKEN_HEADER, token)
     }
@@ -426,18 +431,18 @@ class GuardApiImpl(private val client: ApiClient) : GuardApi {
         decode_or_throw(client.http.get(url("")))
 
     override suspend fun step_up_passkey_options(): WebAuthnAssertionOptions =
-        decode_or_throw(client.http.post(url("/step-up/passkey/options")) { json_body(JsonObject(emptyMap())) })
+        decode_or_throw(client.http.post(url("/step-up/passkey/options")) { step_up_body(JsonObject(emptyMap())) })
 
     override suspend fun setup_nonce(): GuardSetupNonce =
         decode_or_throw(client.http.post(url("/setup/nonce")) { json_body(JsonObject(emptyMap())) })
 
     override suspend fun setup(req: GuardSetupRequest): GuardSetupResponse =
-        decode_or_throw(client.http.post(url("/setup")) { json_body(req) })
+        decode_or_throw(client.http.post(url("/setup")) { step_up_body(req) })
 
     override suspend fun put_switches(switches: Int, hold_scopes: Int, action: SignedAction): GuardStatus =
         decode_or_throw(
             client.http.put(url("/switches")) {
-                json_body(GuardSwitchesRequest(switches, hold_scopes, action))
+                step_up_body(GuardSwitchesRequest(switches, hold_scopes, action))
             },
         )
 
@@ -447,37 +452,37 @@ class GuardApiImpl(private val client: ApiClient) : GuardApi {
     override suspend fun approve(id: String, number: Int, approval_envelope: String?, action: SignedAction) {
         expect_ok(
             client.http.post(url("/requests/${safe_id(id)}/approve")) {
-                json_body(GuardApproveRequest(number, approval_envelope, action))
+                step_up_body(GuardApproveRequest(number, approval_envelope, action))
             },
         )
     }
 
     override suspend fun deny(id: String, action: SignedAction) {
-        expect_ok(client.http.post(url("/requests/${safe_id(id)}/deny")) { json_body(GuardActionRequest(action)) })
+        expect_ok(client.http.post(url("/requests/${safe_id(id)}/deny")) { step_up_body(GuardActionRequest(action)) })
     }
 
     override suspend fun changes(): GuardChangeList =
         decode_or_throw(client.http.get(url("/changes")))
 
     override suspend fun cancel_change(id: String, action: SignedAction): GuardCancelResult =
-        decode_or_throw(client.http.post(url("/changes/${safe_id(id)}/cancel")) { json_body(GuardActionRequest(action)) })
+        decode_or_throw(client.http.post(url("/changes/${safe_id(id)}/cancel")) { step_up_body(GuardActionRequest(action)) })
 
     override suspend fun skip_change(id: String, action: SignedAction): GuardSkipResult =
-        decode_or_throw(client.http.post(url("/changes/${safe_id(id)}/skip")) { json_body(GuardActionRequest(action)) })
+        decode_or_throw(client.http.post(url("/changes/${safe_id(id)}/skip")) { step_up_body(GuardActionRequest(action)) })
 
     override suspend fun change_result(id: String): GuardChangeResult =
         decode_or_throw(client.http.get(url("/changes/${safe_id(id)}/result")))
 
     override suspend fun remove_device(id: String, action: SignedAction) {
-        expect_ok(client.http.post(url("/devices/${safe_id(id)}/remove")) { json_body(GuardActionRequest(action)) })
+        expect_ok(client.http.post(url("/devices/${safe_id(id)}/remove")) { step_up_body(GuardActionRequest(action)) })
     }
 
     override suspend fun rotate_rescue(rescue_code: String, action: SignedAction) {
-        expect_ok(client.http.post(url("/rescue-code")) { json_body(GuardRotateRescueBody(rescue_code, action)) })
+        expect_ok(client.http.post(url("/rescue-code")) { step_up_body(GuardRotateRescueBody(rescue_code, action)) })
     }
 
     override suspend fun panic(action: SignedAction): GuardPanicResult =
-        decode_or_throw(client.http.post(url("/panic")) { json_body(GuardActionRequest(action)) })
+        decode_or_throw(client.http.post(url("/panic")) { step_up_body(GuardActionRequest(action)) })
 
     override suspend fun join(req: GuardJoinRequest): GuardJoinStarted =
         decode_or_throw(client.http.post(url("/join")) { json_body(req) })
@@ -547,7 +552,7 @@ class GuardApiImpl(private val client: ApiClient) : GuardApi {
         decode_or_throw(client.http.post(url("/veto")) { json_body(GuardVetoTokenBody(id, t)) })
 
     override suspend fun veto_signed(id: String, action: SignedAction): GuardVetoResult =
-        decode_or_throw(client.http.post(url("/veto")) { json_body(GuardVetoSignedBody(id, action)) })
+        decode_or_throw(client.http.post(url("/veto")) { step_up_body(GuardVetoSignedBody(id, action)) })
 
     private fun safe_id(id: String): String {
         if (id.isEmpty() || !id.all { it.isLetterOrDigit() || it == '-' }) throw ApiError.NotFoundError
