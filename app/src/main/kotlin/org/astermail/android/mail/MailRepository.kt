@@ -4831,7 +4831,7 @@ class MailRepository @Inject constructor(
                 else -> {
                     val allow_legacy = !session_key_store.mail_legacy_retired()
                     (if (own_authored_only) open_with_draft_write_key(encrypted_envelope, nonce_bytes) else null)
-                        ?: decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value, received_at)
+                        ?: decrypt_inbound_envelope(encrypted_envelope, nonce_bytes, key_sets?.value)
                         ?.also { opened ->
                             own_sealed = false
                             if (own_authored_only) {
@@ -5292,22 +5292,12 @@ class MailRepository @Inject constructor(
         encrypted_b64: String,
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>?,
-        received_at: String?,
-    ): ByteArray? {
-        val plaintext = InboundEnvelopeDecryptor.decrypt(
-            encrypted_b64,
-            nonce,
-            key_sets ?: inbound_ratchet_key_sets(),
-            session_key_store.get_user_id(),
-            legacy_markers = InboundMarkerFloor.accepts_legacy(
-                received_at?.let { parse_timestamp_ms(it) },
-                encrypted_b64 = encrypted_b64,
-            ),
-        ) ?: return null
-        val marker = InboundEnvelopeDecryptor.marker_of(encrypted_b64)
-        if (marker != null && InboundEnvelopeDecryptor.is_owner_bound(marker)) InboundMarkerFloor.note_bound()
-        return plaintext
-    }
+    ): ByteArray? = InboundSealOpener.open(
+        encrypted_b64,
+        nonce,
+        key_sets ?: inbound_ratchet_key_sets(),
+        session_key_store.get_user_id(),
+    )
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
