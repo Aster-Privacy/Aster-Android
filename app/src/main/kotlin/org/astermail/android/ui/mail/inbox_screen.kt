@@ -245,6 +245,7 @@ fun emails_in_category_tab(
             order = compareBy { it.received_at },
             category = { it.category },
             pinned = { it.category_pinned },
+            locked = { is_aster_system_sender(it) },
         )
     } else {
         emptyMap()

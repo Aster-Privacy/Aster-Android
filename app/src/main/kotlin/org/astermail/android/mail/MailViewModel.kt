@@ -6280,6 +6280,7 @@ internal data class CategoryOverride(
 
 internal fun is_category_movable(item: InboxItem): Boolean {
     if (item.is_trashed || item.is_spam || item.is_archived) return false
+    if (is_primary_locked_item(item)) return false
     val item_type = item.raw_item.item_type
     return item_type == null || item_type == "received"
 }

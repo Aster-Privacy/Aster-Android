@@ -653,4 +653,36 @@ class MailCategorizerTest {
         val meta = MailItemMetadata(category = "promotions", category_pinned = true)
         assertEquals("promotions", classify(env, meta))
     }
+
+    @Test
+    fun official_system_mail_pinned_to_deals_stays_primary() {
+        val env = envelope(
+            from_email = "no-reply@astermail.org",
+            from_name = "Aster Mail",
+            subject = "A new sign-in on Windows PC",
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        val locked = is_primary_locked_mail(env.from_email, system_origin = true, is_external = false)
+        assertEquals(true, locked)
+        assertEquals("primary", classify(env, meta, rule_category = "promotions", system_locked = locked))
+    }
+
+    @Test
+    fun aster_display_name_from_another_domain_keeps_its_pin() {
+        val env = envelope(
+            from_email = "no-reply@aster-mail-security.com",
+            from_name = "Aster Mail",
+            subject = "A new sign-in on Windows PC",
+        )
+        val meta = MailItemMetadata(category = "promotions", category_pinned = true)
+        val locked = is_primary_locked_mail(env.from_email, system_origin = true, is_external = false)
+        assertEquals(false, locked)
+        assertEquals("promotions", classify(env, meta, system_locked = locked))
+    }
+
+    @Test
+    fun external_copy_of_an_aster_address_is_not_locked() {
+        assertEquals(false, is_primary_locked_mail("no-reply@astermail.org", system_origin = true, is_external = true))
+        assertEquals(false, is_primary_locked_mail("no-reply@astermail.org", system_origin = false, is_external = false))
+    }
 }

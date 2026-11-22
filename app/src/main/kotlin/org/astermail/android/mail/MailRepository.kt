@@ -4573,6 +4573,7 @@ class MailRepository @Inject constructor(
                     custom_categories,
                     learned_category_map,
                     sender_auth_failed(item.spf_result, item.dkim_result, item.dmarc_result),
+                    is_primary_locked_mail(envelope.from_email, item.system_origin, item.is_external),
                 )
             } else {
                 "primary"
