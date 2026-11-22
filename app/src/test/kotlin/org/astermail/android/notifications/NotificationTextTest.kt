@@ -122,4 +122,16 @@ class NotificationTextTest {
             ),
         )
     }
+
+    @Test
+    fun `an unreadable message gets no notification of its own`() {
+        assertEquals(false, MailPollingWorker.has_notifiable_text(is_envelope_missing = false, is_undecryptable = true, is_decrypt_pending = false))
+        assertEquals(false, MailPollingWorker.has_notifiable_text(is_envelope_missing = true, is_undecryptable = false, is_decrypt_pending = false))
+    }
+
+    @Test
+    fun `a readable or still decrypting message keeps its notification`() {
+        assertEquals(true, MailPollingWorker.has_notifiable_text(is_envelope_missing = false, is_undecryptable = false, is_decrypt_pending = false))
+        assertEquals(true, MailPollingWorker.has_notifiable_text(is_envelope_missing = false, is_undecryptable = true, is_decrypt_pending = true))
+    }
 }

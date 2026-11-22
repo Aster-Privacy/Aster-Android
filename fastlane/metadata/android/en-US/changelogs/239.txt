@@ -1,0 +1,7 @@
+Fixed:
+
+- Your inbox shows the sender and subject of every message, even when a server is slow to respond.
+- Messages that are still loading fill in automatically and open with their full contents.
+- Notifications wait for the sender and subject, and messages this device can't read no longer send alerts.
+- You can choose a profile picture from the gallery again.
+- Printing or saving your recovery codes as a PDF is faster and more reliable.

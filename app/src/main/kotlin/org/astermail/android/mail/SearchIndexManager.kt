@@ -955,6 +955,6 @@ class SearchIndexManager @Inject constructor(
 }
 
 internal fun is_index_poisoned(item: InboxItem): Boolean {
-    if (item.is_undecryptable) return true
+    if (item.is_undecryptable || item.is_envelope_missing) return true
     return item.sender_email.isBlank() && item.subject.isBlank() && item.preview.isBlank()
 }

@@ -498,6 +498,7 @@ data class InboxItem(
     val sender_verification: String? = null,
     val has_unseen_reaction: Boolean = false,
     val is_pgp_placeholder: Boolean = false,
+    val is_envelope_missing: Boolean = false,
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
@@ -4430,13 +4431,18 @@ class MailRepository @Inject constructor(
         )
     }
 
-    private fun fallback_undecryptable_item(item: MailItem): InboxItem = InboxItem(
+    private fun fallback_undecryptable_item(item: MailItem): InboxItem {
+        val missing = needs_envelope_backfill(item)
+        return fallback_row(item, missing)
+    }
+
+    private fun fallback_row(item: MailItem, missing: Boolean): InboxItem = InboxItem(
         id = item.id,
         thread_token = item.thread_token,
         thread_message_count = item.thread_message_count ?: 1,
-        sender_name = "",
+        sender_name = context.getString(if (missing) R.string.loading else R.string.encrypted),
         sender_email = "",
-        subject = "",
+        subject = context.getString(if (missing) R.string.loading else R.string.decrypt_failed_title),
         preview = "",
         timestamp = item.message_ts ?: item.created_at ?: "",
         is_read = item.is_read ?: item.metadata?.is_read ?: false,
@@ -4449,7 +4455,9 @@ class MailRepository @Inject constructor(
         labels = emptyList(),
         tag_tokens = item.tag_tokens ?: emptyList(),
         routing_token = item.routing_token,
-        is_undecryptable = true,
+        is_undecryptable = !missing,
+        is_decrypt_pending = missing,
+        is_envelope_missing = missing,
         raw_item = item,
         has_unseen_reaction = item.has_unseen_reaction == true,
     )
@@ -4465,8 +4473,54 @@ class MailRepository @Inject constructor(
         val server_ids: Set<String>,
     )
 
-    private suspend fun decrypt_items_batch(items: List<MailItem>): DecryptBatch =
+    private suspend fun fetch_envelope_batch(ids: List<String>): List<MailItem> =
+        mail_api.batch_messages(ids).items
+
+    suspend fun refill_missing_envelopes(items: List<InboxItem>): Map<String, InboxItem> =
         withContext(Dispatchers.IO) {
+            val raw = items.filter { it.is_envelope_missing }.map { it.raw_item }
+            if (raw.isEmpty()) return@withContext emptyMap()
+            val filled = backfill_missing_envelopes(raw, ::fetch_envelope_batch, budget_ms = envelope_refill_budget_ms)
+            val ready = filled.filterNot(::needs_envelope_backfill)
+            if (ready.isEmpty()) return@withContext emptyMap()
+            decrypt_items_batch(ready, backfill = false).visible
+                .filterNot { it.is_envelope_missing }
+                .associateBy { it.id }
+        }
+
+    suspend fun resolve_missing_envelope(item: InboxItem): InboxItem {
+        if (!item.is_envelope_missing) return item
+        val refilled = runCatching { refill_missing_envelopes(listOf(item)) }
+            .getOrElse { if (it is CancellationException) throw it else emptyMap() }
+        refilled[item.id]?.let { return replace_refilled_items(listOf(item), refilled).first() }
+        val fetched = runCatching { mail_api.get_message(item.id) }
+            .getOrElse { if (it is CancellationException) throw it else null }
+            ?: return item
+        val merged = merge_backfilled_envelope(item.raw_item, fetched)
+        if (needs_envelope_backfill(merged)) return item
+        val decrypted = withContext(Dispatchers.IO) {
+            decrypt_items_batch(listOf(merged), backfill = false).visible.firstOrNull()
+        } ?: return item
+        if (decrypted.is_envelope_missing) return item
+        return replace_refilled_items(listOf(item), mapOf(item.id to decrypted)).first()
+    }
+
+    private suspend fun decrypt_items_batch(
+        source: List<MailItem>,
+        backfill: Boolean = true,
+    ): DecryptBatch =
+        withContext(Dispatchers.IO) {
+            val items = if (backfill) {
+                try {
+                    backfill_missing_envelopes(source, ::fetch_envelope_batch, budget_ms = envelope_inline_budget_ms)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    source
+                }
+            } else {
+                source
+            }
             val key_sets = lazy { inbound_ratchet_key_sets() }
             val base_envelopes = java.util.concurrent.ConcurrentHashMap<String, DecryptedEnvelope>()
             val overrides = prefetch_ratchet_plaintexts(items, key_sets, base_envelopes)
@@ -4519,10 +4573,12 @@ class MailRepository @Inject constructor(
             base_envelope = base_envelope,
             allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
         )
+        val is_envelope_missing = envelope == null && needs_envelope_backfill(item)
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
-        val is_decrypt_pending = is_undecryptable && envelope?.is_decrypt_pending == true
+        val is_decrypt_pending = (is_undecryptable && envelope?.is_decrypt_pending == true) || is_envelope_missing
         val show_placeholder = is_undecryptable && !is_decrypt_pending
+        val loading_text = if (is_envelope_missing) context.getString(R.string.loading) else null
         val decrypted_meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
         val meta = decrypted_meta?.let { merge_server_flags(it, item) }
@@ -4541,12 +4597,16 @@ class MailRepository @Inject constructor(
             id = item.id,
             thread_token = item.thread_token,
             thread_message_count = item.thread_message_count ?: 1,
-            sender_name = if (show_placeholder) context.getString(R.string.encrypted) else envelope?.from_name ?: "",
+            sender_name = when {
+                show_placeholder -> context.getString(R.string.encrypted)
+                loading_text != null -> loading_text
+                else -> envelope?.from_name ?: ""
+            },
             sender_email = envelope?.from_email ?: "",
-            subject = if (show_placeholder) {
-                context.getString(R.string.decrypt_failed_title)
-            } else {
-                envelope?.subject ?: ""
+            subject = when {
+                show_placeholder -> context.getString(R.string.decrypt_failed_title)
+                loading_text != null -> loading_text
+                else -> envelope?.subject ?: ""
             },
             preview = when {
                 show_placeholder -> context.getString(R.string.undecryptable_message_preview)
@@ -4599,6 +4659,7 @@ class MailRepository @Inject constructor(
             sender_verification = envelope?.sender_verification,
             has_unseen_reaction = item.has_unseen_reaction == true,
             is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
+            is_envelope_missing = is_envelope_missing,
         )
     }
 

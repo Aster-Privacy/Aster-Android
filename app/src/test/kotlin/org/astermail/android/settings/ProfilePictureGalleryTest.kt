@@ -60,6 +60,7 @@ class ProfilePictureGalleryTest {
     private fun gallery(): ProfilePictureGallery = ProfilePictureGallery(
         base_url = server.url("/").toString().trimEnd('/'),
         is_available = { available },
+        fallback_base_url = null,
     )
 
     private fun manifest_response(body: String) =
@@ -377,5 +378,82 @@ class ProfilePictureGalleryTest {
             assertEquals(url, "app.astermail.org", uri.host)
             assertTrue(url, uri.path.startsWith("/gallery/"))
         }
+    }
+
+    private fun html_response() =
+        MockResponse().setResponseCode(200).setHeader("Content-Type", "text/html").setBody("<!doctype html><html></html>")
+
+    private fun with_fallback(block: suspend (ProfilePictureGallery, MockWebServer) -> Unit) = runBlocking {
+        val fallback = MockWebServer()
+        fallback.start()
+        try {
+            val gallery = ProfilePictureGallery(
+                base_url = server.url("/").toString().trimEnd('/'),
+                is_available = { available },
+                fallback_base_url = fallback.url("/").toString().trimEnd('/'),
+            )
+            block(gallery, fallback)
+        } finally {
+            fallback.shutdown()
+        }
+    }
+
+    @Test
+    fun an_app_page_instead_of_the_manifest_falls_back_to_the_gallery_host() = with_fallback { gallery, fallback ->
+        server.enqueue(html_response())
+        fallback.enqueue(manifest_response("""{"items":[{"slug":"a","category":"space"}]}"""))
+        fallback.enqueue(MockResponse().setResponseCode(200).setHeader("Content-Type", "image/webp").setBody("img"))
+        val items = gallery.load_manifest()
+        assertEquals(listOf("a"), items.map { it.slug })
+        assertTrue(gallery.thumb_url("a").startsWith(fallback.url("/").toString().trimEnd('/')))
+        assertEquals("img", gallery.fetch_image("a").decodeToString())
+        assertEquals(1, server.requestCount)
+        assertEquals("/manifest.json", fallback.takeRequest().path)
+        assertEquals("/full/a.webp", fallback.takeRequest().path)
+    }
+
+    @Test
+    fun a_failed_app_origin_falls_back_to_the_gallery_host() = with_fallback { gallery, fallback ->
+        server.enqueue(MockResponse().setResponseCode(502))
+        fallback.enqueue(manifest_response("""{"items":[{"slug":"a","category":"space"}]}"""))
+        assertEquals(listOf("a"), gallery.load_manifest().map { it.slug })
+    }
+
+    @Test
+    fun the_app_origin_is_used_when_it_serves_the_manifest() = with_fallback { gallery, fallback ->
+        server.enqueue(manifest_response("""{"items":[{"slug":"a","category":"space"}]}"""))
+        gallery.load_manifest()
+        assertEquals(0, fallback.requestCount)
+        assertTrue(gallery.thumb_url("a").startsWith(server.url("/").toString().trimEnd('/')))
+    }
+
+    @Test
+    fun an_html_image_response_is_not_used_as_a_picture() = runBlocking {
+        server.enqueue(html_response())
+        server.enqueue(html_response())
+        try {
+            gallery().fetch_image("a")
+            fail("expected failure")
+        } catch (_: IOException) {
+        }
+    }
+
+    @Test
+    fun both_hosts_failing_reports_the_error() = with_fallback { gallery, fallback ->
+        server.enqueue(html_response())
+        fallback.enqueue(MockResponse().setResponseCode(500))
+        try {
+            gallery.load_manifest()
+            fail("expected failure")
+        } catch (_: IOException) {
+        }
+    }
+
+    @Test
+    fun the_fallback_gallery_host_is_our_wallpaper_site() {
+        assertEquals(
+            listOf("https://app.astermail.org/gallery", "https://aster-wallpapers.pages.dev"),
+            gallery_base_urls(),
+        )
     }
 }

@@ -44,6 +44,7 @@ import org.astermail.android.AsterApplication
 import org.astermail.android.security.LockdownStore
 
 const val profile_picture_gallery_base_url = "https://app.astermail.org/gallery"
+const val profile_picture_gallery_fallback_base_url = "https://aster-wallpapers.pages.dev"
 
 val profile_picture_gallery_categories: List<String> = listOf(
     "space",
@@ -121,52 +122,76 @@ fun gallery_categories_present(items: List<GalleryItem>): List<String> {
     return profile_picture_gallery_categories.filter { it in present }
 }
 
-private fun gallery_origin_only(base_url: String): Interceptor {
-    val base = base_url.toHttpUrl()
+private fun gallery_origin_only(base_urls: List<String>): Interceptor {
+    val bases = base_urls.map { it.toHttpUrl() }
     return Interceptor { chain ->
         val url = chain.request().url
-        if (url.scheme != base.scheme || url.host != base.host || url.port != base.port) {
+        if (bases.none { url.scheme == it.scheme && url.host == it.host && url.port == it.port }) {
             throw IOException("gallery host not allowed")
         }
         chain.proceed(chain.request().newBuilder().removeHeader("Authorization").build())
     }
 }
 
-private fun gallery_http_builder(base_url: String): OkHttpClient.Builder = OkHttpClient.Builder()
+fun gallery_base_urls(
+    base_url: String = profile_picture_gallery_base_url,
+    fallback_base_url: String? = profile_picture_gallery_fallback_base_url,
+): List<String> = listOfNotNull(base_url, fallback_base_url?.takeIf { it != base_url })
+
+private fun gallery_http_builder(base_urls: List<String>): OkHttpClient.Builder = OkHttpClient.Builder()
     .cookieJar(CookieJar.NO_COOKIES)
     .followRedirects(false)
     .followSslRedirects(false)
     .connectTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
     .callTimeout(gallery_timeout_seconds, TimeUnit.SECONDS)
-    .addInterceptor(gallery_origin_only(base_url))
+    .addInterceptor(gallery_origin_only(base_urls))
 
 fun gallery_thumb_client(
     shared: OkHttpClient,
     base_url: String = profile_picture_gallery_base_url,
-): OkHttpClient = gallery_http_builder(base_url)
+    fallback_base_url: String? = profile_picture_gallery_fallback_base_url,
+): OkHttpClient = gallery_http_builder(gallery_base_urls(base_url, fallback_base_url))
     .dns(shared.dns)
     .dispatcher(shared.dispatcher)
     .connectionPool(shared.connectionPool)
     .build()
 
 class ProfilePictureGallery(
-    private val base_url: String = profile_picture_gallery_base_url,
+    base_url: String = profile_picture_gallery_base_url,
     private val is_available: () -> Boolean,
     client: OkHttpClient? = null,
+    fallback_base_url: String? = profile_picture_gallery_fallback_base_url,
 ) {
-    private val http: OkHttpClient = client ?: gallery_http_builder(base_url).build()
+    private val base_urls: List<String> = gallery_base_urls(base_url, fallback_base_url)
+    private val http: OkHttpClient = client ?: gallery_http_builder(base_urls).build()
 
     private val mutex = Mutex()
     private var cached: List<GalleryItem>? = null
 
+    @Volatile
+    private var active_base: String = base_urls.first()
+
+    fun thumb_url(slug: String): String = gallery_thumb_url(slug, active_base)
+
     suspend fun load_manifest(): List<GalleryItem> = mutex.withLock {
         cached?.let { return@withLock it }
         if (!is_available()) throw GalleryUnavailableException()
-        val items = withContext(Dispatchers.IO) {
-            val body = get("$base_url/manifest.json").decodeToString()
-            curate_gallery_items(parse_gallery_manifest(body))
+        val (base, items) = withContext(Dispatchers.IO) {
+            var last_error: IOException? = null
+            for (base in base_urls) {
+                if (!is_available()) throw GalleryUnavailableException()
+                val found = try {
+                    curate_gallery_items(parse_gallery_manifest(get("$base/manifest.json").decodeToString()))
+                } catch (error: IOException) {
+                    last_error = error
+                    continue
+                }
+                if (found.isNotEmpty()) return@withContext base to found
+                last_error = IOException("gallery manifest empty")
+            }
+            throw last_error ?: IOException("gallery manifest empty")
         }
-        if (items.isEmpty()) throw IOException("gallery manifest empty")
+        active_base = base
         cached = items
         items
     }
@@ -177,12 +202,19 @@ class ProfilePictureGallery(
         if (!is_gallery_slug(slug)) throw IOException("gallery image not allowed")
         if (!is_available()) throw GalleryUnavailableException()
         return withContext(Dispatchers.IO) {
-            try {
-                get(gallery_full_url(slug, base_url))
-            } catch (_: IOException) {
-                if (!is_available()) throw GalleryUnavailableException()
-                get(gallery_thumb_url(slug, base_url))
+            val bases = listOf(active_base) + base_urls.filter { it != active_base }
+            var last_error: IOException? = null
+            for (base in bases) {
+                for (url in listOf(gallery_full_url(slug, base), gallery_thumb_url(slug, base))) {
+                    if (!is_available()) throw GalleryUnavailableException()
+                    try {
+                        return@withContext get(url)
+                    } catch (error: IOException) {
+                        last_error = error
+                    }
+                }
             }
+            throw last_error ?: IOException("gallery image unavailable")
         }
     }
 
@@ -191,6 +223,7 @@ class ProfilePictureGallery(
         http.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("http ${response.code}")
             val body = response.body
+            if (body.contentType()?.subtype == "html") throw IOException("gallery page missing")
             if (body.contentLength() > gallery_max_image_bytes) throw IOException("oversize")
             val out = java.io.ByteArrayOutputStream()
             body.byteStream().use { stream ->

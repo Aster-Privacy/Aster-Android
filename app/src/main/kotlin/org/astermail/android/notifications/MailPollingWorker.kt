@@ -290,7 +290,9 @@ class MailPollingWorker(
             var sender: String? = null
             var also_arrived: List<org.astermail.android.mail.InboxItem> = emptyList()
             fun resolve_sender(item: org.astermail.android.mail.InboxItem): String =
-                if (item.is_undecryptable) {
+                if (!MailPollingWorker.has_notifiable_text(item.is_envelope_missing, item.is_undecryptable, item.is_decrypt_pending)) {
+                    ""
+                } else if (item.is_undecryptable) {
                     localized(context).getString(org.astermail.android.R.string.app_name)
                 } else {
                     MailPollingWorker.notification_sender_label(
@@ -369,14 +371,15 @@ class MailPollingWorker(
                     return@repeat
                 }
 
-                val candidate_sender = candidate?.let { resolve_sender(it) }
-                if (candidate != null &&
+                val readable = candidates.firstOrNull { resolve_sender(it).isNotBlank() }
+                val candidate_sender = readable?.let { resolve_sender(it) }
+                if (readable != null &&
                     !candidate_sender.isNullOrBlank() &&
-                    claim_item_notification(context, candidate.id)
+                    claim_item_notification(context, readable.id)
                 ) {
-                    newest = candidate
+                    newest = readable
                     sender = candidate_sender
-                    also_arrived = candidates.drop(1).take(fetch_limit - 1)
+                    also_arrived = candidates.filter { it.id != readable.id }.take(fetch_limit - 1)
                 }
             }
             val fresh = newest
@@ -868,6 +871,12 @@ class MailPollingWorker(
             is_decrypt_pending -> subject.trim() to ""
             else -> "" to ""
         }
+
+        fun has_notifiable_text(
+            is_envelope_missing: Boolean,
+            is_undecryptable: Boolean,
+            is_decrypt_pending: Boolean,
+        ): Boolean = !is_envelope_missing && (!is_undecryptable || is_decrypt_pending)
 
         fun is_candidate_silent(is_undecryptable: Boolean, muted_categories: Set<String>): Boolean =
             is_undecryptable && muted_categories.isNotEmpty()

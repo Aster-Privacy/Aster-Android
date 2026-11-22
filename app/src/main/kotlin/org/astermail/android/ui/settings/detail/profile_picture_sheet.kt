@@ -135,7 +135,6 @@ import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.security.LockdownStore
 import org.astermail.android.settings.GalleryItem
 import org.astermail.android.settings.gallery_categories_present
-import org.astermail.android.settings.gallery_thumb_url
 import org.astermail.android.settings.profile_picture_gallery_holder
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.common.current_user_avatar
@@ -850,7 +849,7 @@ private fun gallery_tile(
     val context = LocalContext.current
     val request = remember(slug, context) {
         ImageRequest.Builder(context)
-            .data(gallery_thumb_url(slug))
+            .data(profile_picture_gallery_holder.get(context).thumb_url(slug))
             .crossfade(150)
             .build()
     }

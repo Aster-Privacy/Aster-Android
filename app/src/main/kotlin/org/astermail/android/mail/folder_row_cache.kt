@@ -44,7 +44,7 @@ fun folder_cache_rows(
     val rows = ArrayList<FolderRowEntity>(minOf(items.size, limit))
     for (item in items) {
         if (rows.size >= limit) break
-        if (item.id.isBlank() || !seen.add(item.id)) continue
+        if (item.id.isBlank() || item.is_envelope_missing || !seen.add(item.id)) continue
         rows.add(
             FolderRowEntity(
                 folder = folder,
@@ -210,7 +210,9 @@ fun folder_cache_apply_overrides(
 }
 
 fun carry_decrypted_content(item: InboxItem, previous: InboxItem?): InboxItem {
-    if (!item.is_undecryptable || previous == null || previous.is_undecryptable) return item
+    if (!item.is_undecryptable && !item.is_envelope_missing) return item
+    if (previous == null || previous.is_undecryptable || previous.is_envelope_missing) return item
+    if (inbox_row_is_blank(previous)) return item
     return item.copy(
         sender_name = previous.sender_name,
         sender_email = previous.sender_email,
@@ -224,23 +226,35 @@ fun carry_decrypted_content(item: InboxItem, previous: InboxItem?): InboxItem {
         sender_verification = previous.sender_verification,
         is_undecryptable = false,
         is_decrypt_pending = false,
+        is_envelope_missing = false,
     )
 }
 
 fun folder_cache_carry_decrypted(items: List<InboxItem>, previous: List<InboxItem>): List<InboxItem> {
-    if (previous.isEmpty() || items.none { it.is_undecryptable }) return items
+    if (previous.isEmpty() || items.none { it.is_undecryptable || it.is_envelope_missing }) return items
     val previous_by_id = previous.associateBy { it.id }
     return items.map { carry_decrypted_content(it, previous_by_id[it.id]) }
 }
+
+fun inbox_row_is_blank(item: InboxItem): Boolean =
+    item.sender_email.isBlank() && item.subject.isBlank() && item.preview.isBlank()
 
 fun folder_cache_mark_placeholders(
     rows: List<InboxItem>,
     placeholder_sender: String,
     placeholder_subject: String,
+    loading_text: String? = null,
 ): List<InboxItem> = rows.map { row ->
-    if (!row.is_undecryptable && row.sender_name == placeholder_sender && row.subject == placeholder_subject) {
-        row.copy(is_undecryptable = true)
-    } else {
-        row
+    when {
+        loading_text != null && !row.is_undecryptable && (inbox_row_is_blank(row) || row.subject == loading_text && row.sender_name == loading_text) ->
+            row.copy(
+                sender_name = loading_text,
+                subject = loading_text,
+                is_decrypt_pending = true,
+                is_envelope_missing = true,
+            )
+        !row.is_undecryptable && row.sender_name == placeholder_sender && row.subject == placeholder_subject ->
+            row.copy(is_undecryptable = true)
+        else -> row
     }
 }

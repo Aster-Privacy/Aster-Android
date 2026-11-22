@@ -74,6 +74,8 @@ interface MailApi {
 
     suspend fun get_message(item_id: String): MailItem
 
+    suspend fun batch_messages(ids: List<String>): MailItemsListResponse = MailItemsListResponse()
+
     suspend fun list_drafts(limit: Int? = null, cursor: String? = null): DraftsListResponse
 
     suspend fun create_draft(request: CreateDraftRequestBody): CreateDraftResponse
@@ -275,6 +277,19 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun batch_messages(ids: List<String>): MailItemsListResponse {
+        if (ids.isEmpty()) return MailItemsListResponse()
+        val response = client.http.post("${client.base_url}$base/messages/batch") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            timeout {
+                requestTimeoutMillis = list_messages_timeout_millis
+            }
+            setBody(BatchMessagesRequest(ids))
         }
         return decode_or_throw(response)
     }
