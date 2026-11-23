@@ -195,6 +195,7 @@
     <string name="swipe_unread">Non letto</string>
     <string name="swipe_star">Speciale</string>
     <string name="swipe_spam">Spam</string>
+    <string name="swipe_move">Sposta</string>
     <string name="swipe_inbox">Posta in arrivo</string>
     <string name="swipe_mark_read_or_unread">Segna come letto o non letto</string>
     <string name="swipe_report_spam">Segnala spam</string>

@@ -910,6 +910,7 @@ fun InboxScreen(
     var show_bulk_category_sheet by remember { mutableStateOf(false) }
     var show_bulk_snooze_sheet by remember { mutableStateOf(false) }
     var swipe_snooze_ids by remember { mutableStateOf<List<String>>(emptyList()) }
+    var swipe_folder_ids by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(settings_state.preferences?.selection_toolbar_actions) {
         val raw = settings_state.preferences?.selection_toolbar_actions
         if (raw != null) {
@@ -2626,9 +2627,9 @@ fun InboxScreen(
                                                 swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                                 on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
-                                            ) { snooze_ids ->
-                                                swipe_snooze_ids = snooze_ids
-                                            }
+                                                on_snooze = { snooze_ids -> swipe_snooze_ids = snooze_ids },
+                                                on_move_to_folder = { folder_ids -> swipe_folder_ids = folder_ids },
+                                            )
                                         }
                                     },
                                     on_swipe_end = {
@@ -2648,9 +2649,9 @@ fun InboxScreen(
                                                 swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
                                                 on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
                                                 on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
-                                            ) { snooze_ids ->
-                                                swipe_snooze_ids = snooze_ids
-                                            }
+                                                on_snooze = { snooze_ids -> swipe_snooze_ids = snooze_ids },
+                                                on_move_to_folder = { folder_ids -> swipe_folder_ids = folder_ids },
+                                            )
                                         }
                                     },
                                     haptic_enabled = haptic_enabled,
@@ -3087,6 +3088,33 @@ fun InboxScreen(
                     show_bulk_snooze_sheet = false
                     snooze_selected(iso, label)
                 },
+            )
+        }
+
+        if (swipe_folder_ids.isNotEmpty()) {
+            val pending_folder_ids = swipe_folder_ids
+            val unnamed_folder_label = stringResource(R.string.unnamed_folder)
+            val folder_decrypt_failed_label = stringResource(R.string.folder_decrypt_failed)
+            val folder_nodes = org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
+            val folder_items = folder_nodes
+                .map { node ->
+                    val label = node.label
+                    val readable = org.astermail.android.labels.readable_label_name(label)
+                    label.copy(encrypted_name = readable ?: folder_decrypt_failed_label)
+                }
+            label_picker_sheet(
+                title = stringResource(R.string.move_to_folder),
+                empty_message = stringResource(R.string.no_folders_yet_create),
+                items = folder_items,
+                depths = folder_nodes.associate { it.label.label_token to it.depth },
+                on_close = { swipe_folder_ids = emptyList() },
+                on_pick = { picked ->
+                    val display = picked.encrypted_name?.takeIf { it.isNotBlank() }
+                        ?: unnamed_folder_label
+                    swipe_folder_ids = emptyList()
+                    mail_vm.move_to_folder_bulk(pending_folder_ids, picked.label_token, display, with_undo = true)
+                },
+                on_move_to_inbox = null,
             )
         }
 
@@ -4459,6 +4487,7 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
     "toggle_read" -> colors.success
     "snooze" -> colors.warning
     "star" -> colors.warning
+    "move_to_folder" -> colors.accent_blue
     else -> colors.accent_blue
 }
 
@@ -4496,6 +4525,7 @@ private fun swipe_action_label(action: String): String = when (action) {
     "snooze" -> stringResource(R.string.snooze)
     "star" -> stringResource(R.string.swipe_star)
     "spam" -> stringResource(R.string.swipe_spam)
+    "move_to_folder" -> stringResource(R.string.swipe_move)
     "move_to_inbox" -> stringResource(R.string.swipe_inbox)
     "unarchive" -> stringResource(R.string.swipe_restore)
     "restore_trash" -> stringResource(R.string.swipe_restore)
@@ -4512,6 +4542,7 @@ internal fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vec
     "snooze" -> TablerIcons.Clock
     "star" -> TablerIcons.Star
     "spam" -> spam_action_icon(is_spam = false)
+    "move_to_folder" -> TablerIcons.Folder
     "move_to_inbox" -> TablerIcons.Inbox
     "unarchive" -> TablerIcons.Inbox
     "restore_trash" -> TablerIcons.Inbox
@@ -4531,6 +4562,7 @@ private fun execute_swipe_action(
     on_read_mutation: (List<String>) -> Unit = {},
     on_star_mutation: (List<String>) -> Unit = {},
     on_snooze: (List<String>) -> Unit = {},
+    on_move_to_folder: (List<String>) -> Unit = {},
 ) {
     if (current_folder == "scheduled") {
         if (action == "delete" || action == "trash" || action == "delete_permanent") {
@@ -4576,6 +4608,7 @@ private fun execute_swipe_action(
             on_read_mutation(mutated)
         }
         "snooze" -> on_snooze(ids)
+        "move_to_folder" -> if (current_folder != "drafts") on_move_to_folder(ids)
         "star" -> {
             val target = !emails.filter { (thread_row_covers(it, thread_id, grouping_enabled)) }.all { it.is_starred }
             mail_vm.toggle_thread_star(ids, target)

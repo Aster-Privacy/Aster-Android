@@ -27,6 +27,7 @@ const val SWIPE_ACTION_TOGGLE_READ = "toggle_read"
 const val SWIPE_ACTION_SNOOZE = "snooze"
 const val SWIPE_ACTION_STAR = "star"
 const val SWIPE_ACTION_SPAM = "spam"
+const val SWIPE_ACTION_MOVE_TO_FOLDER = "move_to_folder"
 const val SWIPE_ACTION_NONE = "none"
 
 const val DEFAULT_SWIPE_RIGHT_ACTION = SWIPE_ACTION_TOGGLE_READ
@@ -39,6 +40,7 @@ val SWIPE_ACTION_IDS = listOf(
     SWIPE_ACTION_SNOOZE,
     SWIPE_ACTION_STAR,
     SWIPE_ACTION_SPAM,
+    SWIPE_ACTION_MOVE_TO_FOLDER,
     SWIPE_ACTION_NONE,
 )
 
@@ -47,8 +49,15 @@ fun normalize_swipe_action(raw: String?, fallback: String = SWIPE_ACTION_NONE): 
     return when {
         id.isEmpty() -> fallback
         id == "trash" -> SWIPE_ACTION_DELETE
+        id == "move" -> SWIPE_ACTION_MOVE_TO_FOLDER
         id == "mark_read" || id == "mark_unread" || id == "read" || id == "unread" -> SWIPE_ACTION_TOGGLE_READ
         SWIPE_ACTION_IDS.contains(id) -> id
         else -> fallback
     }
 }
+
+fun folder_move_undo_strip_ids(
+    ids: List<String>,
+    folder_token: String,
+    labels_before: Map<String, List<String>>,
+): List<String> = ids.filter { folder_token !in labels_before[it].orEmpty() }

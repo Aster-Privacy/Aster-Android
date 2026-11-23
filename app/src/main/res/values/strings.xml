@@ -296,6 +296,7 @@
     <string name="swipe_unread">Unread</string>
     <string name="swipe_star">Star</string>
     <string name="swipe_spam">Spam</string>
+    <string name="swipe_move">Move</string>
     <string name="swipe_inbox">Inbox</string>
     <string name="swipe_mark_read_or_unread">Mark as read or unread</string>
     <string name="swipe_report_spam">Report spam</string>
