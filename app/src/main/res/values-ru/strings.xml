@@ -1390,6 +1390,9 @@
     <string name="translation_translating">Перевод на вашем устройстве…</string>
     <string name="translation_translated">Переведено с языка %1$s на вашем устройстве</string>
     <string name="translation_show_original">Показать оригинал</string>
+    <string name="translation_show_translation">Показать перевод</string>
+    <string name="translation_showing_original">Показано исходное сообщение.</string>
+    <string name="translation_limited_quality">Качество перевода для этого языка может быть ниже.</string>
     <string name="translation_failed">Не удалось перевести</string>
     <string name="translation_wifi_required">Чтобы загрузить этот языковой пакет, подключитесь к Wi-Fi или отключите параметр «Загружать только по Wi-Fi» в настройках.</string>
     <string name="translation_webview_outdated">Чтобы переводить письма, обновите %1$s.</string>

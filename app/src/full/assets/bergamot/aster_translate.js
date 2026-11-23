@@ -42,28 +42,21 @@ function bridge() {
   return typeof window !== "undefined" ? window.AsterTranslateBridge : undefined;
 }
 
-function post_status(payload) {
+function post(method, payload) {
   const b = bridge();
-  if (b && typeof b.on_status === "function") {
-    try { b.on_status(JSON.stringify(payload)); return; } catch (e) { /* fall through */ }
-  }
-  try { console.log("ASTER_TR_STATUS:" + JSON.stringify(payload)); } catch (e) { /* ignore */ }
+  if (!b || typeof b[method] !== "function") return;
+  try { b[method](JSON.stringify(payload)); } catch (e) { return; }
 }
 
-function post_detect(payload) {
-  const b = bridge();
-  if (b && typeof b.on_detect === "function") {
-    try { b.on_detect(JSON.stringify(payload)); return; } catch (e) { /* fall through */ }
-  }
-  try { console.log("ASTER_TR_DETECT:" + JSON.stringify(payload)); } catch (e) { /* ignore */ }
-}
+function post_status(payload) { post("on_status", payload); }
 
-function post_result(payload) {
-  const b = bridge();
-  if (b && typeof b.on_result === "function") {
-    try { b.on_result(JSON.stringify(payload)); return; } catch (e) { /* fall through */ }
-  }
-  try { console.log("ASTER_TR_RESULT:" + JSON.stringify(payload)); } catch (e) { /* ignore */ }
+function post_detect(payload) { post("on_detect", payload); }
+
+function post_result(payload) { post("on_result", payload); }
+
+function with_id(payload, request_id) {
+  if (typeof request_id === "string" && request_id.length > 0) payload.id = request_id;
+  return payload;
 }
 
 function normalize_language(value) {
@@ -422,12 +415,20 @@ async function get_translator() {
   return engine_promise;
 }
 
-async function translate_segments(translator, segments, from, to) {
-  const results = [];
-  for (const text of segments) {
-    if (!text.trim()) { results.push(text); continue; }
-    const response = await translator.translate({ from, to, text, html: false });
-    results.push(response.target.text);
+const TRANSLATE_CHUNK_SIZE = 24;
+
+async function translate_segments(translator, segments, from, to, on_progress) {
+  const results = new Array(segments.length);
+  let done = 0;
+  for (let start = 0; start < segments.length; start += TRANSLATE_CHUNK_SIZE) {
+    const chunk = segments.slice(start, start + TRANSLATE_CHUNK_SIZE);
+    const translated = await Promise.all(chunk.map((text) => {
+      if (!text.trim()) return Promise.resolve(text);
+      return translator.translate({ from, to, text, html: false }).then((response) => response.target.text);
+    }));
+    translated.forEach((text, offset) => { results[start + offset] = text; });
+    done += chunk.length;
+    if (typeof on_progress === "function") on_progress(done, segments.length);
   }
   return results;
 }
@@ -482,7 +483,7 @@ async function run(from, to) {
     if (typeof window.__aster_fit === "function") { try { window.__aster_fit(); } catch (e) { /* ignore */ } }
     post_status({ state: "translated", from: normalized_from, to: normalized_to, swapped });
   } catch (error) {
-    post_status({ state: "error", reason: String(error && error.message ? error.message : error) });
+    post_status({ state: "error", reason: "engine" });
   }
 }
 
@@ -510,25 +511,25 @@ function detect(accepted_csv) {
   post_detect({ detected: true, language: result.language, confidence: result.confidence });
 }
 
-async function translate_texts(payload_json, from, to) {
+async function translate_texts(payload_json, from, to, request_id) {
   const normalized_from = normalize_language(from);
   const normalized_to = normalize_language(to);
   if (!normalized_from || !normalized_to || normalized_from === normalized_to) {
-    post_status({ state: "error", reason: "unsupported_pair" });
+    post_status(with_id({ state: "error", reason: "unsupported_pair" }, request_id));
     return;
   }
   let originals;
   try {
     originals = JSON.parse(payload_json);
   } catch (error) {
-    post_status({ state: "error", reason: "bad_payload" });
+    post_status(with_id({ state: "error", reason: "bad_payload" }, request_id));
     return;
   }
   if (!Array.isArray(originals) || originals.length === 0) {
-    post_status({ state: "empty", from: normalized_from, to: normalized_to });
+    post_status(with_id({ state: "empty", from: normalized_from, to: normalized_to }, request_id));
     return;
   }
-  post_status({ state: "translating", from: normalized_from, to: normalized_to });
+  post_status(with_id({ state: "translating", from: normalized_from, to: normalized_to }, request_id));
   try {
     const protections = originals.map((text) => protect_entities(String(text)));
     const segmented = protections.map((entry) => segment_sentences(entry.masked, normalized_from));
@@ -536,8 +537,10 @@ async function translate_texts(payload_json, from, to) {
     segmented.forEach((segments) => { segments.forEach((segment) => { flat.push(segment); }); });
 
     const translator = await get_translator();
-    const translated_flat = await translate_segments(translator, flat, normalized_from, normalized_to);
-    if (translated_flat.length !== flat.length) { post_status({ state: "error", reason: "count_mismatch" }); return; }
+    const translated_flat = await translate_segments(translator, flat, normalized_from, normalized_to, (done, total) => {
+      post_status(with_id({ state: "progress", done, total }, request_id));
+    });
+    if (translated_flat.length !== flat.length) { post_status(with_id({ state: "error", reason: "count_mismatch" }, request_id)); return; }
 
     const per_node_masked = segmented.map(() => "");
     let cursor = 0;
@@ -552,24 +555,24 @@ async function translate_texts(payload_json, from, to) {
       return restored.missing > 0 || !preserves_digits(originals[index], restored.text) ? String(originals[index]) : restored.text;
     });
 
-    post_result({ segments: per_node, from: normalized_from, to: normalized_to });
-    post_status({ state: "translated", from: normalized_from, to: normalized_to, swapped: per_node.length });
+    post_result(with_id({ segments: per_node, from: normalized_from, to: normalized_to }, request_id));
+    post_status(with_id({ state: "translated", from: normalized_from, to: normalized_to, swapped: per_node.length }, request_id));
   } catch (error) {
-    post_status({ state: "error", reason: String(error && error.message ? error.message : error) });
+    post_status(with_id({ state: "error", reason: "engine" }, request_id));
   }
 }
 
-function detect_text(text, accepted_csv) {
+function detect_text(text, accepted_csv, request_id) {
   const accepted = String(accepted_csv || "")
     .split(",")
     .map((code) => normalize_language(code))
     .filter(Boolean);
   const result = detect_language(String(text || ""));
   if (!result || result.confidence < MIN_DETECTION_CONFIDENCE || accepted.indexOf(result.language) >= 0) {
-    post_detect({ detected: false });
+    post_detect(with_id({ detected: false }, request_id));
     return;
   }
-  post_detect({ detected: true, language: result.language, confidence: result.confidence });
+  post_detect(with_id({ detected: true, language: result.language, confidence: result.confidence }, request_id));
 }
 
 window.__aster_translate = {

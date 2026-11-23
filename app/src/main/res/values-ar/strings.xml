@@ -1396,6 +1396,9 @@
     <string name="translation_translating">جارٍ الترجمة على جهازك…</string>
     <string name="translation_translated">تُرجِم من %1$s على جهازك</string>
     <string name="translation_show_original">عرض النص الأصلي</string>
+    <string name="translation_show_translation">عرض الترجمة</string>
+    <string name="translation_showing_original">يتم عرض الرسالة الأصلية.</string>
+    <string name="translation_limited_quality">قد تكون جودة الترجمة أقل لهذه اللغة.</string>
     <string name="translation_failed">فشلت الترجمة</string>
     <string name="translation_wifi_required">لتنزيل حزمة اللغة هذه، اتصل بشبكة Wi-Fi أو أوقف خيار التنزيل عبر Wi-Fi فقط في الإعدادات.</string>
     <string name="translation_webview_outdated">لترجمة البريد، حدّث %1$s.</string>

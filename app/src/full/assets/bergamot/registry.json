@@ -1,0 +1,459 @@
+{
+  "aren": {
+    "lex": {
+      "name": "aren/lex.50.50.aren.s2t.bin",
+      "size": 4627200,
+      "expectedSha256Hash": "4b45f14dbea40d368093a13563fc1ca48457ee70c1291c82b206f3baff210081"
+    },
+    "model": {
+      "name": "aren/model.aren.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "7b7af0282dc5f4d8805b9a298c2fa828967e3f09ca10f1942ebeea0b2cfc12fa"
+    },
+    "vocab": {
+      "name": "aren/vocab.aren.spm",
+      "size": 860035,
+      "expectedSha256Hash": "51b4ee3f828d10015464523d0b4f5a6c086b0b2a9bde716a581001cf6c260366"
+    }
+  },
+  "deen": {
+    "lex": {
+      "name": "deen/lex.50.50.deen.s2t.bin",
+      "size": 5047568,
+      "expectedSha256Hash": "2f7c0f7bbce97ae5b52454074a892ba7b7610fb98e3c5d341e4ca79f0850c4de"
+    },
+    "model": {
+      "name": "deen/model.deen.intgemm.alphas.bin",
+      "size": 17140837,
+      "expectedSha256Hash": "1980225d00dc5645491777accff5b3c9d20b92eff67a25135f1cf8fe2ed8fb8f"
+    },
+    "vocab": {
+      "name": "deen/vocab.deen.spm",
+      "size": 784269,
+      "expectedSha256Hash": "417668f2ed297970febafb5b079a9d5ebc4ed0b3550ac8386d67a90473a09bd7"
+    }
+  },
+  "enar": {
+    "lex": {
+      "name": "enar/lex.50.50.enar.s2t.bin",
+      "size": 3139692,
+      "expectedSha256Hash": "2b7194817c5dd9225ca90c0d908cc92e1d6d1f45625781a5feb037ac568d6a61"
+    },
+    "model": {
+      "name": "enar/model.enar.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "ae659d7045fc2e5d6ba50583586a5d94ee4358d92c019847e37b57a0e627faa8"
+    },
+    "vocab": {
+      "name": "enar/vocab.enar.spm",
+      "size": 863591,
+      "expectedSha256Hash": "8d93c54aa5e2044c416ec680b5ff9af0227bd698521666e8b1a1ea1b041fbae8"
+    }
+  },
+  "ende": {
+    "lex": {
+      "name": "ende/lex.50.50.ende.s2t.bin",
+      "size": 3943644,
+      "expectedSha256Hash": "f03eb8245042feb7a5800815b8d0dc215d7a60691632405b65c461d250cedbe6"
+    },
+    "model": {
+      "name": "ende/model.ende.intgemm.alphas.bin",
+      "size": 17140835,
+      "expectedSha256Hash": "b3e980d6602ab0bdfe8d9315cb5fc282a16bb1c8dccf38e70945c584551c4318"
+    },
+    "vocab": {
+      "name": "ende/vocab.deen.spm",
+      "size": 784269,
+      "expectedSha256Hash": "417668f2ed297970febafb5b079a9d5ebc4ed0b3550ac8386d67a90473a09bd7"
+    }
+  },
+  "enes": {
+    "lex": {
+      "name": "enes/lex.50.50.enes.s2t.bin",
+      "size": 3347104,
+      "expectedSha256Hash": "3a113d713dec3cf1d12bba5b138ae616e28bba4bbc7fe7fd39ba145e26b86d7f"
+    },
+    "model": {
+      "name": "enes/model.enes.intgemm.alphas.bin",
+      "size": 17140755,
+      "expectedSha256Hash": "fa7460037a3163e03fe1d23602f964bff2331da6ee813637e092ddf37156ef53"
+    },
+    "vocab": {
+      "name": "enes/vocab.esen.spm",
+      "size": 825463,
+      "expectedSha256Hash": "909b1eea1face0d7f90a474fe29a8c0fef8d104b6e41e65616f864c964ba8845"
+    }
+  },
+  "enfr": {
+    "lex": {
+      "name": "enfr/lex.s2t.bin",
+      "size": 7886500,
+      "expectedSha256Hash": "38fb44bad1fd5f1e6bfdcf15cc8baa09d61aad2a4f9c587914e24e7b5c25c32c"
+    },
+    "model": {
+      "name": "enfr/model.intgemm.alphas.bin",
+      "size": 17140961,
+      "expectedSha256Hash": "0678019c4d74c8c81d2de17e3e58d3aba5f5eb48f5595d9240c17f69d30461de"
+    },
+    "vocab": {
+      "name": "enfr/vocab.fren.spm",
+      "size": 831382,
+      "expectedSha256Hash": "4c84b95b62c930f0791466d73eb996841eef474c96d0c2f0e6c6d80640f2005a"
+    }
+  },
+  "enit": {
+    "lex": {
+      "name": "enit/lex.50.50.enit.s2t.bin",
+      "size": 4133192,
+      "expectedSha256Hash": "8b21914804625b2777dae7fdb636eb78f02a3eb8b7bceaa50f29ac740961da93"
+    },
+    "model": {
+      "name": "enit/model.enit.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "248f47568788ecc351da7e5e07064d4153b4f71e011364ae2c931ffeec4d1cc2"
+    },
+    "vocab": {
+      "name": "enit/vocab.enit.spm",
+      "size": 812724,
+      "expectedSha256Hash": "3ef0211d4ae6db21440892f180f2019fe2bfc110a330ffa9d2eca9665e4f2bc5"
+    }
+  },
+  "enja": {
+    "lex": {
+      "name": "enja/lex.50.50.enja.s2t.bin",
+      "size": 4128360,
+      "expectedSha256Hash": "edfb7eb47b98a2689b804ab3614c31b24f1257aa54b1154da3d85e1ae8152d9f"
+    },
+    "model": {
+      "name": "enja/model.enja.intgemm.alphas.bin",
+      "size": 43849787,
+      "expectedSha256Hash": "59ae659f9bb63e4f81f474fe3c03d3f4499434b5f9e779fab7c12a45f31fd562"
+    },
+    "srcvocab": {
+      "name": "enja/srcvocab.enja.spm",
+      "size": 796275,
+      "expectedSha256Hash": "970c98d174fc01e0339fbabbf45af36a4be3f26f819ec1a5ea1189f71e091889"
+    },
+    "trgvocab": {
+      "name": "enja/trgvocab.enja.spm",
+      "size": 827144,
+      "expectedSha256Hash": "3b3d9f8f3a034d98d0a476f1794fa79c01e4e98a967ceb6777a66ba2d03ec1e1"
+    }
+  },
+  "enko": {
+    "lex": {
+      "name": "enko/lex.50.50.enko.s2t.bin",
+      "size": 6449612,
+      "expectedSha256Hash": "96efba97d4bb93ab362e5569bea0f115184d2f68d63b67305ee663c18e32fbeb"
+    },
+    "model": {
+      "name": "enko/model.enko.intgemm.alphas.bin",
+      "size": 43849787,
+      "expectedSha256Hash": "ffe5ef2ce3f2e944055e35310bab186f6a70d533a0ee4394adf716a0e383afbb"
+    },
+    "srcvocab": {
+      "name": "enko/srcvocab.enko.spm",
+      "size": 791280,
+      "expectedSha256Hash": "8d4e3141868efd410eb86c2b60d41aa6bc6b46e4c4b2c0b85e3792493c69d802"
+    },
+    "trgvocab": {
+      "name": "enko/trgvocab.enko.spm",
+      "size": 815353,
+      "expectedSha256Hash": "2ece21b28dd7022d36127d17423a74dabf544787dfc1cf614f7b565f93a4a1d3"
+    }
+  },
+  "ennl": {
+    "lex": {
+      "name": "ennl/lex.50.50.ennl.s2t.bin",
+      "size": 4030624,
+      "expectedSha256Hash": "bb4922718f8ca6d746ad090c0a88110a664dc050ee3f311bce33698b4e1679e9"
+    },
+    "model": {
+      "name": "ennl/model.ennl.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "7e8402da61972dc2fdcf7147c7f1e12f7916a6d9349514ee7a731288357575a9"
+    },
+    "vocab": {
+      "name": "ennl/vocab.ennl.spm",
+      "size": 807708,
+      "expectedSha256Hash": "c09588ca5662b230ed65bd39a07f58d9f7dd21c3a19e4aeb1bff39bf3b297c56"
+    }
+  },
+  "enpl": {
+    "lex": {
+      "name": "enpl/lex.50.50.enpl.s2t.bin",
+      "size": 3540052,
+      "expectedSha256Hash": "d7d7b364673f633763c9f8f2e8ee9c7a184e92f4086e8b84abe870a2a8dbe5d5"
+    },
+    "model": {
+      "name": "enpl/model.enpl.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "b0b59716bcc8f46b8dc6ab5c32a2732acaad42a5a6d9ae9b472526a1bb0d71d4"
+    },
+    "vocab": {
+      "name": "enpl/vocab.enpl.spm",
+      "size": 821612,
+      "expectedSha256Hash": "2000f182efa8ce5f69bc3f9e574666b5bc2c0af684eedd32f69d15aa9021ea85"
+    }
+  },
+  "enpt": {
+    "lex": {
+      "name": "enpt/lex.50.50.enpt.s2t.bin",
+      "size": 3970340,
+      "expectedSha256Hash": "ccb4c31c9e1899d77a200e71a86958e6ef6c8649627d0bbf3f873b57d9f236bd"
+    },
+    "model": {
+      "name": "enpt/model.enpt.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "07892fd2544ee79dcb643615d8f2debb9793fae16842e87c328e27a3dd26a770"
+    },
+    "vocab": {
+      "name": "enpt/vocab.enpt.spm",
+      "size": 816726,
+      "expectedSha256Hash": "d9f46182823d5bbc84201252b2dfcac28f63e561f0ec827ed858f241864c9def"
+    }
+  },
+  "enru": {
+    "lex": {
+      "name": "enru/lex.50.50.enru.s2t.bin",
+      "size": 2774540,
+      "expectedSha256Hash": "4d91839726b960e70b6d05c53d0cffd16262832b1c0e1ea99d66f412dcc6a239"
+    },
+    "model": {
+      "name": "enru/model.enru.intgemm.alphas.bin",
+      "size": 31561787,
+      "expectedSha256Hash": "184cb5cda528eeefc0f75f5d0035d787b71d74af135e3c5608d01ae02ecfb920"
+    },
+    "vocab": {
+      "name": "enru/vocab.enru.spm",
+      "size": 904455,
+      "expectedSha256Hash": "56ee63e14e8cb926c394242adc3ed7cc602644c3d33058cff2ce2959d52a6258"
+    }
+  },
+  "entr": {
+    "lex": {
+      "name": "entr/lex.50.50.entr.s2t.bin",
+      "size": 3261300,
+      "expectedSha256Hash": "3aba0be842bd4c192659c781e6fdce8eb9b2b1fff29a40d22f75da369d59f46f"
+    },
+    "model": {
+      "name": "entr/model.entr.intgemm.alphas.bin",
+      "size": 17141051,
+      "expectedSha256Hash": "ea3cd4ee09de190df265c78d84260e277a9a8a3ddff05eb55d72afe7fc0fdbf4"
+    },
+    "vocab": {
+      "name": "entr/vocab.entr.spm",
+      "size": 798793,
+      "expectedSha256Hash": "a220363d60391f7ce3df8ec9785424dbc00c24d5786d1a4308cf8ca3ed3385c2"
+    }
+  },
+  "enzh": {
+    "lex": {
+      "name": "enzh/lex.50.50.enzh.s2t.bin",
+      "size": 6506248,
+      "expectedSha256Hash": "4a5e5827788060f1d718a8132b69440929387514a045796e9b77f935db68c055"
+    },
+    "model": {
+      "name": "enzh/model.enzh.intgemm.alphas.bin",
+      "size": 43849787,
+      "expectedSha256Hash": "4e5accc141373565ddc8fa1565bceaa8d0c3482a82cab8131c719ebcc6c2157c"
+    },
+    "srcvocab": {
+      "name": "enzh/srcvocab.enzh.spm",
+      "size": 806952,
+      "expectedSha256Hash": "bd9b65504acc6d9726dd281f7defc2adb7c2c22d0688fe2f84697de25197c8c5"
+    },
+    "trgvocab": {
+      "name": "enzh/trgvocab.enzh.spm",
+      "size": 772004,
+      "expectedSha256Hash": "aded6993c36e440284d11cec3f6b8aef9c0e43188a772d80be342a713adf223d"
+    }
+  },
+  "esen": {
+    "lex": {
+      "name": "esen/lex.50.50.esen.s2t.bin",
+      "size": 3860888,
+      "expectedSha256Hash": "f11a2c23ef85ab1fee1c412b908d69bc20d66fd59faa8f7da5a5f0347eddf969"
+    },
+    "model": {
+      "name": "esen/model.esen.intgemm.alphas.bin",
+      "size": 17140755,
+      "expectedSha256Hash": "4b6b7f451094aaa447d012658af158ffc708fc8842dde2f871a58404f5457fe0"
+    },
+    "vocab": {
+      "name": "esen/vocab.esen.spm",
+      "size": 825463,
+      "expectedSha256Hash": "909b1eea1face0d7f90a474fe29a8c0fef8d104b6e41e65616f864c964ba8845"
+    }
+  },
+  "fren": {
+    "lex": {
+      "name": "fren/lex.s2t.bin",
+      "size": 8818768,
+      "expectedSha256Hash": "3148abf21ea98a4d69d0e4504e0d68a6c060204a9b9a39b76855aee1d5b2c8ea"
+    },
+    "model": {
+      "name": "fren/model.intgemm.alphas.bin",
+      "size": 17140961,
+      "expectedSha256Hash": "185f76d24c2d400fe4ea0cb2487df77722641b97a3ef10633872e8a7fdf40e09"
+    },
+    "vocab": {
+      "name": "fren/vocab.fren.spm",
+      "size": 831382,
+      "expectedSha256Hash": "4c84b95b62c930f0791466d73eb996841eef474c96d0c2f0e6c6d80640f2005a"
+    }
+  },
+  "iten": {
+    "lex": {
+      "name": "iten/lex.50.50.iten.s2t.bin",
+      "size": 4977500,
+      "expectedSha256Hash": "e30ec549bd0da9ac42cccdcd3806d3be84d485f7fd329f90f6e40ee027e841d9"
+    },
+    "model": {
+      "name": "iten/model.iten.intgemm.alphas.bin",
+      "size": 17140899,
+      "expectedSha256Hash": "7dfdf189146d9353fdea264b9e4c8ac36441c770dc4353a8380b64e589dc035b"
+    },
+    "vocab": {
+      "name": "iten/vocab.iten.spm",
+      "size": 812781,
+      "expectedSha256Hash": "603f3349657c3deb9736a0c567452d102a5a03c377dfdf1d32c428608f2cff1b"
+    }
+  },
+  "jaen": {
+    "lex": {
+      "name": "jaen/lex.50.50.jaen.s2t.bin",
+      "size": 9348172,
+      "expectedSha256Hash": "525f412f0d210536c2933c78ae395fa0bf2b5ee6cc5dda61ebc2e79410ebaee4"
+    },
+    "model": {
+      "name": "jaen/model.jaen.intgemm.alphas.bin",
+      "size": 43977787,
+      "expectedSha256Hash": "3a603e20bfe1be86071913f9e23ab5129075bc0a8490151020ac4821e4f17302"
+    },
+    "vocab": {
+      "name": "jaen/vocab.jaen.spm",
+      "size": 1443222,
+      "expectedSha256Hash": "5cb217758bae05877bb3f0c2f612e4e7c1e4cb03c10db11f4a47098d7ae62919"
+    }
+  },
+  "koen": {
+    "lex": {
+      "name": "koen/lex.50.50.koen.s2t.bin",
+      "size": 8617516,
+      "expectedSha256Hash": "b26291f063ce216a74239275f0485534a38111203e59d42a2a56ba62d6eeb196"
+    },
+    "model": {
+      "name": "koen/model.koen.intgemm.alphas.bin",
+      "size": 43977787,
+      "expectedSha256Hash": "7cb30cbc0a86e242084756445268a2346136771c92b884d9b4ebb077f67d5507"
+    },
+    "vocab": {
+      "name": "koen/vocab.koen.spm",
+      "size": 1410063,
+      "expectedSha256Hash": "1c72b740ab793cdc3a8f16913dd6b4e806c77421077dd2d85edeb7be38418598"
+    }
+  },
+  "nlen": {
+    "lex": {
+      "name": "nlen/lex.50.50.nlen.s2t.bin",
+      "size": 4940304,
+      "expectedSha256Hash": "15c473e6e5aef1fa3fe5cc804844e19a2c671d2e39169dcbc06f456ca4f9b2c0"
+    },
+    "model": {
+      "name": "nlen/model.nlen.intgemm.alphas.bin",
+      "size": 17140899,
+      "expectedSha256Hash": "187f9c8f1ffbcc8ecf0724b608ffed9f15bde262b9de5c4754f8d763b585969d"
+    },
+    "vocab": {
+      "name": "nlen/vocab.nlen.spm",
+      "size": 807730,
+      "expectedSha256Hash": "48a6331cb8a69d21dd24c6c2a15de44a07bcfd4a4470eaf4616849d77945f6b9"
+    }
+  },
+  "plen": {
+    "lex": {
+      "name": "plen/lex.50.50.plen.s2t.bin",
+      "size": 4898024,
+      "expectedSha256Hash": "863afade0ba058fb0173fedef3d1fb14d0dcabc24c3b4584cb1fed8f84d6d879"
+    },
+    "model": {
+      "name": "plen/model.plen.intgemm.alphas.bin",
+      "size": 17140899,
+      "expectedSha256Hash": "172a5f1d44bf8dd6a6eec3868b13b33ce265f3530e898fe11a80b739b821726e"
+    },
+    "vocab": {
+      "name": "plen/vocab.plen.spm",
+      "size": 822587,
+      "expectedSha256Hash": "a1d27e6f5c0d29f406364ebf0382949d1c0affc750cec4380f3173150552f43e"
+    }
+  },
+  "pten": {
+    "lex": {
+      "name": "pten/lex.50.50.pten.s2t.bin",
+      "size": 4801740,
+      "expectedSha256Hash": "702d9b09fbc020168998bb81afc927e74262f5a1455e9b443608a5d8efa4b52d"
+    },
+    "model": {
+      "name": "pten/model.pten.intgemm.alphas.bin",
+      "size": 17140899,
+      "expectedSha256Hash": "b4a1fd101f59ca258bfb051a3a4e5762497b9f91d7e74f28b7a2d68dc075f8fa"
+    },
+    "vocab": {
+      "name": "pten/vocab.pten.spm",
+      "size": 817234,
+      "expectedSha256Hash": "2326a27577b5ffa0b822c55fe850986961728097521de35fcc186f7d6dce72d4"
+    }
+  },
+  "ruen": {
+    "lex": {
+      "name": "ruen/lex.50.50.ruen.s2t.bin",
+      "size": 4483844,
+      "expectedSha256Hash": "f654693577505fd38b1f3d220cdd4ffffbb45afb900a60cf751f0724eadc74e0"
+    },
+    "model": {
+      "name": "ruen/model.ruen.intgemm.alphas.bin",
+      "size": 17141051,
+      "expectedSha256Hash": "b1d85c13cfbb05e1d326dd6f0fb5ef270a2011b547450260f96567a93f446c94"
+    },
+    "vocab": {
+      "name": "ruen/vocab.ruen.spm",
+      "size": 905257,
+      "expectedSha256Hash": "93bdc941b16e523695c319f74778bca9fd8b75a25ad75020cdc98aef74cdc0fc"
+    }
+  },
+  "tren": {
+    "lex": {
+      "name": "tren/lex.50.50.tren.s2t.bin",
+      "size": 4662492,
+      "expectedSha256Hash": "d3374ab5267a73ee1aa1d926a298bd349426835f40856991ee959bc5cd4f9fce"
+    },
+    "model": {
+      "name": "tren/model.tren.intgemm.alphas.bin",
+      "size": 17140836,
+      "expectedSha256Hash": "bd18594ac5a7f1d9997e7ea5bd80272082219cf8b1ce604766e4f207eb86abbf"
+    },
+    "vocab": {
+      "name": "tren/vocab.tren.spm",
+      "size": 811353,
+      "expectedSha256Hash": "ed328e589a3ccd70fd3ce7773fc3c01d8b7b18c687464cacf17fd40a8c0daadd"
+    }
+  },
+  "zhen": {
+    "lex": {
+      "name": "zhen/lex.50.50.zhen.s2t.bin",
+      "size": 9219192,
+      "expectedSha256Hash": "8524dd4c93ffd7f0ae7be32f77a7c14fea7cdbbebe34ea6ad0ec368d5ddd8b13"
+    },
+    "model": {
+      "name": "zhen/model.zhen.intgemm.alphas.bin",
+      "size": 43977787,
+      "expectedSha256Hash": "5cd149601802fc8a18124a1c1306144dbbedc058630c4ddb2d53aa76fa9c7c06"
+    },
+    "vocab": {
+      "name": "zhen/vocab.zhen.spm",
+      "size": 1359697,
+      "expectedSha256Hash": "dff594318ab7d8b7b60b844ab98ebe6b932ae8045fab15235404c787715965b3"
+    }
+  }
+}

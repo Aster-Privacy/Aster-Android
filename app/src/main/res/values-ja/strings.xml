@@ -1381,6 +1381,9 @@
     <string name="translation_translating">お使いの端末で翻訳しています…</string>
     <string name="translation_translated">端末上で%1$sから翻訳しました</string>
     <string name="translation_show_original">原文を表示</string>
+    <string name="translation_show_translation">翻訳を表示</string>
+    <string name="translation_showing_original">元のメッセージを表示しています。</string>
+    <string name="translation_limited_quality">この言語の翻訳品質は低くなる場合があります。</string>
     <string name="translation_failed">翻訳に失敗しました</string>
     <string name="translation_wifi_required">この言語パックをダウンロードするには、Wi-Fi に接続するか、設定で「Wi-Fi 接続時のみダウンロード」をオフにしてください。</string>
     <string name="translation_webview_outdated">メールを翻訳するには、%1$s を更新してください。</string>

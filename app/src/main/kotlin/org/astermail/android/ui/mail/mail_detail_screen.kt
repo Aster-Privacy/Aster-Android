@@ -966,6 +966,10 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
+    var translated_thread_subject by remember(email_id) { mutableStateOf<String?>(null) }
+    val subject_translation_owner = remember(email_id, messages) {
+        messages.firstOrNull { it.id == email_id }?.id ?: messages.lastOrNull()?.id
+    }
     val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
     val thread_send_aliases by mail_vm.thread_send_aliases.collectAsStateWithLifecycle()
     val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email, detail_grouping) {
@@ -1267,7 +1271,8 @@ fun MailDetailScreen(
                         .padding(horizontal = 52.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val topbar_subject = email?.subject?.ifBlank { stringResource(R.string.no_subject) }
+                    val topbar_subject = translated_thread_subject?.ifBlank { null }
+                        ?: email?.subject?.ifBlank { stringResource(R.string.no_subject) }
                         ?: stringResource(R.string.no_subject)
                     androidx.compose.animation.AnimatedVisibility(
                         visible = show_topbar_subject && email != null,
@@ -1514,7 +1519,8 @@ fun MailDetailScreen(
                 }
             }
 
-            val subject_base = email?.subject?.ifBlank { stringResource(R.string.no_subject) }
+            val subject_base = translated_thread_subject?.ifBlank { null }
+                ?: email?.subject?.ifBlank { stringResource(R.string.no_subject) }
                 ?: stringResource(R.string.no_subject)
             val subject_thread_count = if (thread_settled) messages.size else expected_message_count
             val subject_count_format = stringResource(R.string.inbox_subject_with_count, subject_base, subject_thread_count)
@@ -1691,6 +1697,11 @@ fun MailDetailScreen(
                             msg = msg,
                             is_last = is_last,
                             message_index = idx,
+                            allow_auto_translate = !is_spam,
+                            translation_subject = if (msg.id == subject_translation_owner) email?.subject else null,
+                            on_subject_translated = { translated ->
+                                if (msg.id == subject_translation_owner) translated_thread_subject = translated
+                            },
                             thread_attachments = all_thread_attachments,
                             my_email = my_email,
                             my_profile_pic = my_profile_pic,
@@ -2642,6 +2653,10 @@ internal fun expanded_message(
     sender_unauthenticated: Boolean = false,
     on_acknowledge_identity: () -> Unit = {},
     is_pending_send: Boolean = false,
+    translation_enabled: Boolean = true,
+    allow_auto_translate: Boolean = true,
+    translation_subject: String? = null,
+    on_subject_translated: (String?) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -3182,6 +3197,11 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
+                translation_enabled = translation_enabled && !is_pending_send,
+                allow_auto_translate = allow_auto_translate &&
+                    phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
+                subject = translation_subject,
+                on_subject_translated = on_subject_translated,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -3329,6 +3349,11 @@ internal fun expanded_message(
                 on_ready = on_body_ready,
                 on_link_click = on_link_click,
                 on_image_click = on_image_click,
+                translation_enabled = translation_enabled && !is_pending_send,
+                allow_auto_translate = allow_auto_translate &&
+                    phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
+                subject = translation_subject,
+                on_subject_translated = on_subject_translated,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -6490,6 +6515,7 @@ private sealed interface TranslationBannerState {
     data class Offer(val language: String, val needs_download: Boolean) : TranslationBannerState
     object Translating : TranslationBannerState
     data class Translated(val language: String) : TranslationBannerState
+    data class ShowingOriginal(val language: String) : TranslationBannerState
     object Failed : TranslationBannerState
     object WifiRequired : TranslationBannerState
     object WebViewOutdated : TranslationBannerState
@@ -6500,6 +6526,7 @@ private fun translation_banner(
     state: TranslationBannerState,
     on_translate: (String) -> Unit,
     on_show_original: () -> Unit,
+    on_show_translation: () -> Unit,
     on_dismiss: () -> Unit,
     on_update_webview: () -> Unit,
 ) {
@@ -6561,12 +6588,20 @@ private fun translation_banner(
             }
             is TranslationBannerState.Translated -> {
                 val name = org.astermail.android.translation.language_display_name(state.language)
-                Text(
-                    text = stringResource(R.string.translation_translated, name),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.weight(1f),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.translation_translated, name),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                    )
+                    if (org.astermail.android.translation.translation_quality_limited(state.language)) {
+                        Text(
+                            text = stringResource(R.string.translation_limited_quality),
+                            color = colors.text_tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
                 Text(
                     text = stringResource(R.string.translation_show_original),
                     color = colors.accent_blue,
@@ -6574,6 +6609,23 @@ private fun translation_banner(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clickable { on_show_original() }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            is TranslationBannerState.ShowingOriginal -> {
+                Text(
+                    text = stringResource(R.string.translation_showing_original),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.translation_show_translation),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable { on_show_translation() }
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
@@ -6653,6 +6705,10 @@ internal fun email_html_view(
     on_ready: () -> Unit = {},
     on_link_click: (String) -> Unit = {},
     on_image_click: (String) -> Unit = {},
+    translation_enabled: Boolean = true,
+    allow_auto_translate: Boolean = true,
+    subject: String? = null,
+    on_subject_translated: (String?) -> Unit = {},
 ) {
     val webview_usable = org.astermail.android.ui.common.remember_webview_usable()
     LaunchedEffect(webview_usable) {
@@ -6698,7 +6754,7 @@ internal fun email_html_view(
         settings_state.preferences?.font_choice,
     )
 
-    val translate_mode = if (org.astermail.android.translation.translation_supported) {
+    val translate_mode = if (org.astermail.android.translation.translation_supported && translation_enabled) {
         settings_state.preferences?.translate_incoming ?: "off"
     } else {
         "off"
@@ -6732,13 +6788,48 @@ internal fun email_html_view(
     set_translation_state[0] = { translation_state = it }
 
     val translation_engine_ref = remember {
-        arrayOfNulls<org.astermail.android.translation.translation_engine>(1)
+        arrayOfNulls<org.astermail.android.translation.translation_session>(1)
     }
     val source_body_ref = remember(html) { arrayOfNulls<String>(1) }
     var source_body_version by remember(html) { mutableStateOf(0) }
     var translated_body by remember(html) { mutableStateOf<String?>(null) }
     val translation_scope = androidx.compose.runtime.rememberCoroutineScope()
     val translation_from_ref = remember { arrayOfNulls<String>(1) }
+    val translation_subject_ref = remember { arrayOfNulls<String>(1) }
+    val translation_subject_sent = remember(html) { booleanArrayOf(false) }
+    val translation_source_ref = remember(html) { arrayOfNulls<String>(1) }
+    val kept_translation = remember(html) {
+        arrayOfNulls<org.astermail.android.translation.remembered_translation>(1)
+    }
+    val translation_watchdog = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
+    val current_translation_state = remember { arrayOfNulls<TranslationBannerState>(1) }
+    val on_subject_translated_ref = remember { arrayOfNulls<(String?) -> Unit>(1) }
+    val allow_auto_translate_ref = remember { booleanArrayOf(true) }
+    translation_subject_ref[0] = subject?.takeIf { it.isNotBlank() }
+    on_subject_translated_ref[0] = on_subject_translated
+    allow_auto_translate_ref[0] = allow_auto_translate
+    current_translation_state[0] = translation_state
+
+    fun translation_memory_key(source: String): String =
+        org.astermail.android.translation.TranslationMemory.key(
+            source.hashCode() * 31 + (translation_subject_ref[0]?.hashCode() ?: 0),
+            translate_target_ref[0],
+        )
+
+    fun stop_translation_watchdog() {
+        translation_watchdog[0]?.cancel()
+        translation_watchdog[0] = null
+    }
+
+    fun arm_translation_watchdog() {
+        translation_watchdog[0]?.cancel()
+        translation_watchdog[0] = translation_scope.launch {
+            delay(org.astermail.android.translation.TRANSLATION_INACTIVITY_TIMEOUT_MS)
+            if (current_translation_state[0] is TranslationBannerState.Translating) {
+                set_translation_state[0]?.invoke(TranslationBannerState.Failed)
+            }
+        }
+    }
 
     fun run_translation(from: String) {
         val source = source_body_ref[0] ?: return
@@ -6749,12 +6840,20 @@ internal fun email_html_view(
             }
             if (source_body_ref[0] !== source) return@launch
             val engine = translation_engine_ref[0] ?: return@launch
-            if (segments.isEmpty()) {
+            val subject_text = translation_subject_ref[0]
+            if (segments.isEmpty() && subject_text == null) {
                 set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
                 return@launch
             }
+            translation_subject_sent[0] = subject_text != null
+            translation_source_ref[0] = source
             set_translation_state[0]?.invoke(TranslationBannerState.Translating)
-            engine.translate(segments, from, translate_target_ref[0])
+            arm_translation_watchdog()
+            engine.translate(
+                if (subject_text != null) segments + subject_text else segments,
+                from,
+                translate_target_ref[0],
+            )
         }
     }
 
@@ -6770,8 +6869,19 @@ internal fun email_html_view(
     }
 
     fun show_original() {
+        val kept = kept_translation[0]
         translated_body = null
-        set_translation_state[0]?.invoke(TranslationBannerState.Hidden)
+        on_subject_translated_ref[0]?.invoke(null)
+        set_translation_state[0]?.invoke(
+            if (kept != null) TranslationBannerState.ShowingOriginal(kept.from) else TranslationBannerState.Hidden,
+        )
+    }
+
+    fun show_translation() {
+        val kept = kept_translation[0] ?: return
+        translated_body = kept.body
+        on_subject_translated_ref[0]?.invoke(kept.subject)
+        set_translation_state[0]?.invoke(TranslationBannerState.Translated(kept.from))
     }
 
     fun handle_translation_detect(json: String) {
@@ -6779,6 +6889,7 @@ internal fun email_html_view(
         val detected = json.contains("\"detected\":true") || json.contains("\"detected\": true")
         if (!detected || language == null) return
         if (language == translate_target_ref[0]) return
+        if (translated_body != null || kept_translation[0] != null) return
         val mode = translate_mode_ref[0]
         if (mode == "off") return
         val granted = TranslationDownloadPolicy.route_consent_granted(
@@ -6788,7 +6899,7 @@ internal fun email_html_view(
         )
         if (!org.astermail.android.translation.TranslationRuntime.webview_supported(translate_context)) {
             set_translation_state[0]?.invoke(TranslationBannerState.WebViewOutdated)
-        } else if (mode == "always" && granted) {
+        } else if (mode == "always" && granted && allow_auto_translate_ref[0]) {
             start_translation(language)
         } else {
             set_translation_state[0]?.invoke(TranslationBannerState.Offer(language, !granted))
@@ -6797,12 +6908,18 @@ internal fun email_html_view(
 
     fun handle_translation_status(json: String) {
         val state = Regex("\"state\"\\s*:\\s*\"([a-z_]+)\"").find(json)?.groupValues?.get(1)
-        val from = Regex("\"from\"\\s*:\\s*\"([a-z]{2})\"").find(json)?.groupValues?.get(1)
         val apply_state = set_translation_state[0]
         when (state) {
-            "translating" -> apply_state?.invoke(TranslationBannerState.Translating)
-            "translated" -> apply_state?.invoke(TranslationBannerState.Translated(from ?: ""))
+            "translating", "progress" -> {
+                if (current_translation_state[0] !is TranslationBannerState.Translating) {
+                    apply_state?.invoke(TranslationBannerState.Translating)
+                }
+                arm_translation_watchdog()
+            }
+            "translated", "empty" -> stop_translation_watchdog()
             "error" -> {
+                stop_translation_watchdog()
+                if (current_translation_state[0] !is TranslationBannerState.Translating) return
                 val failed_from = translation_from_ref[0]
                 val blocked = failed_from != null &&
                     TranslationDownloadPolicy.route_download_blocked(translate_context, failed_from, translate_target_ref[0])
@@ -6813,20 +6930,40 @@ internal fun email_html_view(
     }
 
     fun handle_translation_result(json: String) {
-        val segments = org.astermail.android.translation.translated_segments_of(json) ?: return
+        stop_translation_watchdog()
+        val all_segments = org.astermail.android.translation.translated_segments_of(json) ?: return
         val source = source_body_ref[0] ?: return
+        if (translation_source_ref[0] !== source) return
+        val from = translation_from_ref[0] ?: return
+        val split = org.astermail.android.translation.split_subject_segment(all_segments, translation_subject_sent[0])
         translation_scope.launch {
             val applied = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                apply_translated_segments(source, segments)
+                apply_translated_segments(source, split.body)
             }
-            if (source_body_ref[0] === source && applied != source) translated_body = applied
+            if (source_body_ref[0] !== source) return@launch
+            val remembered = org.astermail.android.translation.remembered_translation(from, applied, split.subject)
+            kept_translation[0] = remembered
+            org.astermail.android.translation.TranslationMemory.put(translation_memory_key(source), remembered)
+            translated_body = applied
+            on_subject_translated_ref[0]?.invoke(split.subject)
+            set_translation_state[0]?.invoke(TranslationBannerState.Translated(from))
         }
+    }
+
+    fun restore_remembered_translation(source: String): Boolean {
+        val remembered = org.astermail.android.translation.TranslationMemory.get(translation_memory_key(source))
+            ?: return false
+        kept_translation[0] = remembered
+        translated_body = remembered.body
+        on_subject_translated_ref[0]?.invoke(remembered.subject)
+        set_translation_state[0]?.invoke(TranslationBannerState.Translated(remembered.from))
+        return true
     }
 
     DisposableEffect(translate_active_early) {
         if (translate_active_early && translation_engine_ref[0] == null) {
             translation_engine_ref[0] = runCatching {
-                org.astermail.android.translation.translation_engine(
+                org.astermail.android.translation.TranslationEngineHost.shared.open(
                     translate_context,
                     on_detect = { json -> handle_translation_detect(json) },
                     on_status = { json -> handle_translation_status(json) },
@@ -6835,9 +6972,14 @@ internal fun email_html_view(
             }.getOrNull()
         }
         onDispose {
-            translation_engine_ref[0]?.destroy()
+            stop_translation_watchdog()
+            translation_engine_ref[0]?.close()
             translation_engine_ref[0] = null
         }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { on_subject_translated_ref[0]?.invoke(null) }
     }
 
     val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
@@ -6917,8 +7059,6 @@ internal fun email_html_view(
     )
 
     val translate_active = translate_active_early
-    val translate_active_ref = remember { booleanArrayOf(false) }
-    translate_active_ref[0] = translate_active
     val allow_external_ref = remember { booleanArrayOf(false) }
     allow_external_ref[0] = allow_external
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, overflow_fit_width) { (((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)) * 31L + (overflow_fit_width ?: 0).toLong() }
@@ -7367,17 +7507,27 @@ internal fun email_html_view(
         }
     }
 
+    val translation_consent_version by TranslationDownloadPolicy.consent_version.collectAsStateWithLifecycle()
+    LaunchedEffect(translation_consent_version) {
+        val offer = translation_state as? TranslationBannerState.Offer ?: return@LaunchedEffect
+        if (!offer.needs_download) return@LaunchedEffect
+        if (TranslationDownloadPolicy.route_consent_granted(translate_context, offer.language, translate_target_ref[0])) {
+            translation_state = TranslationBannerState.Offer(offer.language, false)
+        }
+    }
+
     LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html, source_body_version) {
         if (!has_measured || translate_mode == "off") return@LaunchedEffect
-        if (translated_body != null) return@LaunchedEffect
+        if (translated_body != null || kept_translation[0] != null) return@LaunchedEffect
         delay(150)
         val engine = translation_engine_ref[0] ?: return@LaunchedEffect
         val source = source_body_ref[0] ?: return@LaunchedEffect
+        if (restore_remembered_translation(source)) return@LaunchedEffect
         val text = withContext(Dispatchers.Default) {
             runCatching { org.astermail.android.mail.html_to_plain_text(source) }.getOrDefault("")
         }
         if (text.isBlank()) return@LaunchedEffect
-        engine.detect(text, translate_accepted)
+        engine.detect(org.astermail.android.translation.detection_text_of(text), translate_accepted)
     }
 
     val webview_client = remember {
@@ -7495,16 +7645,6 @@ internal fun email_html_view(
                         }
                         return null
                     }
-                    val ctx0 = view?.context
-                    if (ctx0 != null) {
-                        val served = org.astermail.android.translation.TranslationAssets.serve(
-                            ctx0,
-                            req_uri.host,
-                            req_uri.path,
-                            translate_active_ref[0],
-                        )
-                        if (served != null) return served
-                    }
                     return null
                 }
                 if (request.isForMainFrame) return null
@@ -7616,6 +7756,7 @@ internal fun email_html_view(
             start_translation(lang)
         },
         on_show_original = { show_original() },
+        on_show_translation = { show_translation() },
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
         on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )

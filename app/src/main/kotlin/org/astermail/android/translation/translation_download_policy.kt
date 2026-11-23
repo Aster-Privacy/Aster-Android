@@ -24,11 +24,16 @@ package org.astermail.android.translation
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 object TranslationDownloadPolicy {
     private const val PREFS_NAME = "aster_translation"
     private const val KEY_WIFI_ONLY = "wifi_only"
     private const val KEY_CONSENT = "granted_packs"
+
+    private val consent_version_flow = MutableStateFlow(0)
+    val consent_version: StateFlow<Int> = consent_version_flow
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -67,13 +72,18 @@ object TranslationDownloadPolicy {
         return granted(context).containsAll(packs)
     }
 
+    fun pack_consent_granted(context: Context, pack: String): Boolean =
+        granted(context).contains(pack)
+
     fun grant_route_consent(context: Context, from: String, to: String) {
         val updated = granted(context).toMutableSet()
         updated.addAll(route_packs(from, to))
         prefs(context).edit().putStringSet(KEY_CONSENT, updated).apply()
+        consent_version_flow.value += 1
     }
 
     fun clear_consent(context: Context) {
         prefs(context).edit().remove(KEY_CONSENT).apply()
+        consent_version_flow.value += 1
     }
 }

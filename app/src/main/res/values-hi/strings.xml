@@ -2297,6 +2297,9 @@
     <string name="translation_translating">आपके डिवाइस पर अनुवाद हो रहा है…</string>
     <string name="translation_translated">आपके डिवाइस पर %1$s से अनुवाद किया गया</string>
     <string name="translation_show_original">मूल दिखाएं</string>
+    <string name="translation_show_translation">अनुवाद दिखाएं</string>
+    <string name="translation_showing_original">मूल संदेश दिख रहा है।</string>
+    <string name="translation_limited_quality">इस भाषा के लिए अनुवाद की गुणवत्ता कम हो सकती है।</string>
     <string name="translation_failed">अनुवाद नहीं हो सका</string>
     <string name="translation_wifi_required">यह भाषा पैक डाउनलोड करने के लिए, Wi-Fi से कनेक्ट करें या सेटिंग में सिर्फ़ Wi-Fi पर डाउनलोड करें को बंद करें।</string>
     <string name="translation_webview_outdated">ईमेल का अनुवाद करने के लिए, %1$s अपडेट करें।</string>

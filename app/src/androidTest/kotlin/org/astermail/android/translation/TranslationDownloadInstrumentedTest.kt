@@ -107,15 +107,44 @@ class TranslationDownloadInstrumentedTest {
     }
 
     @Test
-    fun a_model_request_is_refused_while_translation_is_off() {
+    fun a_model_request_is_refused_without_consent_for_its_pack() {
+        TranslationDownloadPolicy.set_wifi_only(context, false)
+
         assertNull(
             TranslationAssets.serve(
                 context,
                 TranslationAssets.CONTENT_HOST,
-                TranslationAssets.MODEL_PREFIX + "model.deen.bin",
-                allow_models = false,
+                TranslationAssets.MODEL_PREFIX + "deen/lex.50.50.deen.s2t.bin",
             ),
         )
+        assertEquals(0L, TranslationAssets.cached_bytes(context))
+    }
+
+    @Test
+    fun a_model_missing_from_the_bundled_registry_is_refused() {
+        TranslationDownloadPolicy.set_wifi_only(context, false)
+        TranslationDownloadPolicy.grant_route_consent(context, "de", "en")
+
+        assertNull(
+            TranslationAssets.serve(
+                context,
+                TranslationAssets.CONTENT_HOST,
+                TranslationAssets.MODEL_PREFIX + "deen/model.deen.bin",
+            ),
+        )
+        assertEquals(0L, TranslationAssets.cached_bytes(context))
+    }
+
+    @Test
+    fun the_registry_is_served_from_the_bundled_copy() {
+        val response = TranslationAssets.serve(
+            context,
+            TranslationAssets.CONTENT_HOST,
+            TranslationAssets.MODEL_PREFIX + TranslationAssets.REGISTRY_NAME,
+        )
+        val bytes = response?.data?.use { it.readBytes() }
+
+        assertEquals(TranslationAssets.BUNDLED_REGISTRY_SHA256, bytes?.let { TranslationAssets.sha256_hex(it) })
         assertEquals(0L, TranslationAssets.cached_bytes(context))
     }
 
@@ -126,7 +155,6 @@ class TranslationDownloadInstrumentedTest {
                 context,
                 "example.invalid",
                 TranslationAssets.MODEL_PREFIX + "model.deen.bin",
-                allow_models = true,
             ),
         )
     }
@@ -138,7 +166,6 @@ class TranslationDownloadInstrumentedTest {
                 context,
                 TranslationAssets.CONTENT_HOST,
                 TranslationAssets.MODEL_PREFIX + "../../etc/hosts",
-                allow_models = true,
             ),
         )
         assertEquals(0L, TranslationAssets.cached_bytes(context))
