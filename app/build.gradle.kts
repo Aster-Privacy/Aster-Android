@@ -188,7 +188,7 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation("net.zetetic:sqlcipher-android:4.19.1")
+    implementation("net.zetetic:sqlcipher-android:4.20.0")
     implementation("androidx.sqlite:sqlite:2.4.0")
 
     implementation(libs.work.runtime.ktx)
@@ -232,7 +232,7 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(platform(libs.compose.bom))
     testImplementation("androidx.compose.ui:ui-test-junit4")
-    testImplementation("org.robolectric:robolectric:4.17")
+    testImplementation("org.robolectric:robolectric:4.18.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.security.crypto)
     androidTestImplementation(libs.androidx.espresso.core)
