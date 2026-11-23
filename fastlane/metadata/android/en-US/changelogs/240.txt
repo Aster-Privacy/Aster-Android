@@ -1,6 +1,7 @@
 Fixed:
 
 - New messages open on this device even when the keys it saved fall out of step with your account.
+- The app opens to your inbox right away again, even when a server is slow to respond.
 - Your inbox shows the sender and subject of every message, even when a server is slow to respond.
 - Notifications wait for the sender and subject, and messages this device can't read no longer send alerts.
 - You can choose a profile picture from the gallery again.
