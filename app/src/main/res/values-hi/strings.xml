@@ -2442,9 +2442,8 @@
     <string name="alias_delivery_label_subtitle">इस एलियास पर आई मेल पर लेबल लगाएं</string>
     <string name="alias_delivery_label_none">कोई लेबल नहीं</string>
     <string name="alias_delivery_label_missing">अनुपलब्ध लेबल</string>
-    <string name="alias_apply_existing">मौजूदा मेल पर लागू करें</string>
+    <string name="alias_apply_existing">मौजूदा मेल पर चलाएं</string>
     <string name="alias_apply_existing_desc">इस एलियास पर पहले मिल चुके मेल को अपने चुने हुए फ़ोल्डर और लेबल में छांटें।</string>
-    <string name="alias_apply_existing_action">अभी लागू करें</string>
     <string name="alias_apply_existing_cancel">रोकें</string>
     <string name="alias_apply_existing_failed">ये सेटिंग लागू करना शुरू नहीं हो सका।</string>
     <string name="alias_apply_existing_cancel_failed">यह प्रक्रिया रोकी नहीं जा सकी।</string>
@@ -2454,6 +2453,9 @@
     <string name="alias_apply_existing_done">पूरा हुआ: %1$d जांचे गए, %2$d अपडेट हुए</string>
     <string name="alias_apply_existing_error">मौजूदा मेल पर लागू करना विफल रहा। फिर से कोशिश करें।</string>
     <string name="alias_apply_existing_unavailable">आपके खाते में पहले से मौजूद मेल को स्पैम में नहीं ले जाया जा सकता।</string>
+    <string name="alias_apply_existing_confirm_folder_label">इस उपनाम को पहले से मिली मेल %1$s में चली जाएगी और उस पर %2$s लेबल लगेगा। ट्रैश और स्पैम में मौजूद मेल वहीं रहेगी।</string>
+    <string name="alias_apply_existing_confirm_folder">इस उपनाम को पहले से मिली मेल %1$s में चली जाएगी। ट्रैश और स्पैम में मौजूद मेल वहीं रहेगी।</string>
+    <string name="alias_apply_existing_confirm_label">इस उपनाम को पहले से मिली मेल पर %1$s लेबल लगेगा। ट्रैश और स्पैम में मौजूद मेल वहीं रहेगी।</string>
     <string name="alias_delivery_label_rule_note">मेल नियम \"%1$s\" इस एलियास की मेल पर पहले से %2$s लेबल लगाता है।</string>
     <string name="alias_delivery_label_rule_conflict">मेल नियम \"%1$s\" इस एलियास की मेल पर %3$s के अलावा %2$s लेबल भी लगाता है।</string>
     <string name="mail_rules_alias_label_conflict">%1$s पहले से अपनी मेल पर %2$s लेबल लगाता है। यह नियम %3$s भी जोड़ता है।</string>

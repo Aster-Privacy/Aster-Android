@@ -2388,7 +2388,6 @@
     <string name="alias_delivery_label_missing">Etiqueta no disponible</string>
     <string name="alias_apply_existing">Aplicar al correo existente</string>
     <string name="alias_apply_existing_desc">Organiza el correo que este alias ya recibió en la carpeta y la etiqueta que elegiste.</string>
-    <string name="alias_apply_existing_action">Aplicar ahora</string>
     <string name="alias_apply_existing_cancel">Detener</string>
     <string name="alias_apply_existing_failed">No se pudo empezar a aplicar esta configuración.</string>
     <string name="alias_apply_existing_cancel_failed">No se pudo detener esta ejecución.</string>
@@ -2398,6 +2397,9 @@
     <string name="alias_apply_existing_done">Listo. Revisados: %1$d, actualizados: %2$d</string>
     <string name="alias_apply_existing_error">No se pudo aplicar al correo existente. Inténtalo de nuevo.</string>
     <string name="alias_apply_existing_unavailable">El correo que ya está en tu cuenta no se puede mover a Spam.</string>
+    <string name="alias_apply_existing_confirm_folder_label">El correo que este alias ya recibió se mueve a %1$s y recibe la etiqueta %2$s. El correo de la papelera y de spam se queda donde está.</string>
+    <string name="alias_apply_existing_confirm_folder">El correo que este alias ya recibió se mueve a %1$s. El correo de la papelera y de spam se queda donde está.</string>
+    <string name="alias_apply_existing_confirm_label">El correo que este alias ya recibió recibe la etiqueta %1$s. El correo de la papelera y de spam se queda donde está.</string>
     <string name="alias_delivery_label_rule_note">La regla de correo \"%1$s\" ya etiqueta el correo de este alias con %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">La regla de correo \"%1$s\" etiqueta el correo de este alias con %2$s, además de %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s ya etiqueta su correo con %2$s. Esta regla añade además %3$s.</string>

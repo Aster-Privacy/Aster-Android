@@ -2415,9 +2415,8 @@
     <string name="alias_delivery_label_subtitle">ضع تصنيفًا على البريد المرسل إلى هذا الاسم المستعار</string>
     <string name="alias_delivery_label_none">بدون تصنيف</string>
     <string name="alias_delivery_label_missing">تصنيف غير متاح</string>
-    <string name="alias_apply_existing">تطبيق على البريد الحالي</string>
+    <string name="alias_apply_existing">تشغيل على البريد الموجود</string>
     <string name="alias_apply_existing_desc">انقل البريد الذي استلمه هذا الاسم المستعار مسبقًا إلى المجلد والتسمية اللذين اخترتهما.</string>
-    <string name="alias_apply_existing_action">تطبيق الآن</string>
     <string name="alias_apply_existing_cancel">إيقاف</string>
     <string name="alias_apply_existing_failed">تعذّر بدء تطبيق هذه الإعدادات.</string>
     <string name="alias_apply_existing_cancel_failed">تعذّر إيقاف هذه العملية.</string>
@@ -2427,6 +2426,9 @@
     <string name="alias_apply_existing_done">تم: فحص %1$d، وتحديث %2$d</string>
     <string name="alias_apply_existing_error">فشل التطبيق على البريد الحالي. حاول مرة أخرى.</string>
     <string name="alias_apply_existing_unavailable">لا يمكن نقل البريد الموجود في حسابك بالفعل إلى البريد العشوائي.</string>
+    <string name="alias_apply_existing_confirm_folder_label">يُنقل البريد الذي استلمه هذا الاسم المستعار مسبقًا إلى %1$s ويحصل على التصنيف %2$s. يبقى البريد الموجود في المهملات والبريد العشوائي في مكانه.</string>
+    <string name="alias_apply_existing_confirm_folder">يُنقل البريد الذي استلمه هذا الاسم المستعار مسبقًا إلى %1$s. يبقى البريد الموجود في المهملات والبريد العشوائي في مكانه.</string>
+    <string name="alias_apply_existing_confirm_label">يحصل البريد الذي استلمه هذا الاسم المستعار مسبقًا على التصنيف %1$s. يبقى البريد الموجود في المهملات والبريد العشوائي في مكانه.</string>
     <string name="alias_delivery_label_rule_note">قاعدة البريد \"%1$s\" تضع بالفعل التصنيف %2$s على بريد هذا الاسم المستعار.</string>
     <string name="alias_delivery_label_rule_conflict">قاعدة البريد \"%1$s\" تضع التصنيف %2$s على بريد هذا الاسم المستعار، إضافة إلى %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s يضع بالفعل التصنيف %2$s على بريده. وهذه القاعدة تضيف %3$s أيضًا.</string>

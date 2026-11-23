@@ -2375,9 +2375,8 @@
     <string name="alias_delivery_label_subtitle">Geef mail naar deze alias een label</string>
     <string name="alias_delivery_label_none">Geen label</string>
     <string name="alias_delivery_label_missing">Label niet beschikbaar</string>
-    <string name="alias_apply_existing">Toepassen op bestaande e-mail</string>
+    <string name="alias_apply_existing">Uitvoeren op bestaande e-mail</string>
     <string name="alias_apply_existing_desc">Verplaats e-mail die dit alias al heeft ontvangen naar de map en het label die je hebt gekozen.</string>
-    <string name="alias_apply_existing_action">Nu toepassen</string>
     <string name="alias_apply_existing_cancel">Stoppen</string>
     <string name="alias_apply_existing_failed">Deze instellingen konden niet worden toegepast.</string>
     <string name="alias_apply_existing_cancel_failed">Deze bewerking kon niet worden gestopt.</string>
@@ -2387,6 +2386,9 @@
     <string name="alias_apply_existing_done">Klaar: %1$d gescand, %2$d bijgewerkt</string>
     <string name="alias_apply_existing_error">Toepassen op bestaande e-mail is mislukt. Probeer het opnieuw.</string>
     <string name="alias_apply_existing_unavailable">E-mail die al in je account staat, kan niet naar Spam worden verplaatst.</string>
+    <string name="alias_apply_existing_confirm_folder_label">E-mail die deze alias al heeft ontvangen, wordt verplaatst naar %1$s en krijgt het label %2$s. E-mail in de prullenbak en spam blijft waar hij is.</string>
+    <string name="alias_apply_existing_confirm_folder">E-mail die deze alias al heeft ontvangen, wordt verplaatst naar %1$s. E-mail in de prullenbak en spam blijft waar hij is.</string>
+    <string name="alias_apply_existing_confirm_label">E-mail die deze alias al heeft ontvangen, krijgt het label %1$s. E-mail in de prullenbak en spam blijft waar hij is.</string>
     <string name="alias_delivery_label_rule_note">Mailregel \"%1$s\" geeft mail voor deze alias al het label %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">Mailregel \"%1$s\" geeft mail voor deze alias het label %2$s, naast %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s geeft de mail al het label %2$s. Deze regel voegt ook %3$s toe.</string>

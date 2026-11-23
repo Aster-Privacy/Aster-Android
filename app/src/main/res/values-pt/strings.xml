@@ -2385,9 +2385,8 @@
     <string name="alias_delivery_label_subtitle">Aplicar uma etiqueta ao correio enviado para este alias</string>
     <string name="alias_delivery_label_none">Sem etiqueta</string>
     <string name="alias_delivery_label_missing">Etiqueta indisponível</string>
-    <string name="alias_apply_existing">Aplicar ao correio existente</string>
+    <string name="alias_apply_existing">Executar no e-mail existente</string>
     <string name="alias_apply_existing_desc">Organize o correio que este alias já recebeu na pasta e na etiqueta escolhidas.</string>
-    <string name="alias_apply_existing_action">Aplicar agora</string>
     <string name="alias_apply_existing_cancel">Parar</string>
     <string name="alias_apply_existing_failed">Não foi possível começar a aplicar estas definições.</string>
     <string name="alias_apply_existing_cancel_failed">Não foi possível parar esta execução.</string>
@@ -2397,6 +2396,9 @@
     <string name="alias_apply_existing_done">Concluído. Analisados: %1$d, atualizados: %2$d</string>
     <string name="alias_apply_existing_error">Não foi possível aplicar ao correio existente. Tente novamente.</string>
     <string name="alias_apply_existing_unavailable">O correio que já está na sua conta não pode ser movido para Spam.</string>
+    <string name="alias_apply_existing_confirm_folder_label">Os e-mails que este alias já recebeu são movidos para %1$s e recebem a etiqueta %2$s. Os e-mails na lixeira e no spam ficam onde estão.</string>
+    <string name="alias_apply_existing_confirm_folder">Os e-mails que este alias já recebeu são movidos para %1$s. Os e-mails na lixeira e no spam ficam onde estão.</string>
+    <string name="alias_apply_existing_confirm_label">Os e-mails que este alias já recebeu recebem a etiqueta %1$s. Os e-mails na lixeira e no spam ficam onde estão.</string>
     <string name="alias_delivery_label_rule_note">A regra \"%1$s\" já etiqueta o correio deste alias com %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">A regra \"%1$s\" etiqueta o correio deste alias com %2$s, além de %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s já etiqueta o seu correio com %2$s. Esta regra acrescenta ainda %3$s.</string>

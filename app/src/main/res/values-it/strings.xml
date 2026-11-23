@@ -2385,9 +2385,8 @@
     <string name="alias_delivery_label_subtitle">Applica un\'etichetta alla posta inviata a questo alias</string>
     <string name="alias_delivery_label_none">Nessuna etichetta</string>
     <string name="alias_delivery_label_missing">Etichetta non disponibile</string>
-    <string name="alias_apply_existing">Applica alla posta esistente</string>
+    <string name="alias_apply_existing">Esegui sulla posta esistente</string>
     <string name="alias_apply_existing_desc">Sposta la posta già ricevuta da questo alias nella cartella e nell\'etichetta che hai scelto.</string>
-    <string name="alias_apply_existing_action">Applica ora</string>
     <string name="alias_apply_existing_cancel">Interrompi</string>
     <string name="alias_apply_existing_failed">Impossibile avviare l\'applicazione di queste impostazioni.</string>
     <string name="alias_apply_existing_cancel_failed">Impossibile interrompere questa operazione.</string>
@@ -2397,6 +2396,9 @@
     <string name="alias_apply_existing_done">Fatto. Analizzati: %1$d, aggiornati: %2$d</string>
     <string name="alias_apply_existing_error">Applicazione alla posta esistente non riuscita. Riprova.</string>
     <string name="alias_apply_existing_unavailable">La posta già presente nel tuo account non può essere spostata in Spam.</string>
+    <string name="alias_apply_existing_confirm_folder_label">La posta già ricevuta da questo alias viene spostata in %1$s e riceve l\'etichetta %2$s. La posta nel cestino e nello spam resta dov\'è.</string>
+    <string name="alias_apply_existing_confirm_folder">La posta già ricevuta da questo alias viene spostata in %1$s. La posta nel cestino e nello spam resta dov\'è.</string>
+    <string name="alias_apply_existing_confirm_label">La posta già ricevuta da questo alias riceve l\'etichetta %1$s. La posta nel cestino e nello spam resta dov\'è.</string>
     <string name="alias_delivery_label_rule_note">La regola \"%1$s\" etichetta già la posta di questo alias con %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">La regola \"%1$s\" etichetta la posta di questo alias con %2$s, oltre a %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s etichetta già la sua posta con %2$s. Questa regola aggiunge anche %3$s.</string>

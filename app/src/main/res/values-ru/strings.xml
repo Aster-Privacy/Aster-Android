@@ -2395,9 +2395,8 @@
     <string name="alias_delivery_label_subtitle">Ставить метку на письма, отправленные на этот псевдоним</string>
     <string name="alias_delivery_label_none">Без метки</string>
     <string name="alias_delivery_label_missing">Метка недоступна</string>
-    <string name="alias_apply_existing">Применить к имеющейся почте</string>
+    <string name="alias_apply_existing">Применить к существующей почте</string>
     <string name="alias_apply_existing_desc">Переместите письма, которые этот алиас уже получил, в выбранную папку и присвойте им выбранную метку.</string>
-    <string name="alias_apply_existing_action">Применить</string>
     <string name="alias_apply_existing_cancel">Остановить</string>
     <string name="alias_apply_existing_failed">Не удалось применить эти настройки.</string>
     <string name="alias_apply_existing_cancel_failed">Не удалось остановить эту операцию.</string>
@@ -2407,6 +2406,9 @@
     <string name="alias_apply_existing_done">Готово: проверено %1$d, обновлено %2$d</string>
     <string name="alias_apply_existing_error">Не удалось применить к имеющейся почте. Повторите попытку.</string>
     <string name="alias_apply_existing_unavailable">Письма, которые уже есть в вашем аккаунте, нельзя переместить в спам.</string>
+    <string name="alias_apply_existing_confirm_folder_label">Письма, которые этот псевдоним уже получил, будут перемещены в %1$s и получат метку %2$s. Письма в корзине и спаме останутся на месте.</string>
+    <string name="alias_apply_existing_confirm_folder">Письма, которые этот псевдоним уже получил, будут перемещены в %1$s. Письма в корзине и спаме останутся на месте.</string>
+    <string name="alias_apply_existing_confirm_label">Письма, которые этот псевдоним уже получил, получат метку %1$s. Письма в корзине и спаме останутся на месте.</string>
     <string name="alias_delivery_label_rule_note">Правило «%1$s» уже помечает письма этого псевдонима меткой %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">Правило «%1$s» помечает письма этого псевдонима меткой %2$s в дополнение к %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s уже помечает почту меткой %2$s. Это правило добавляет ещё %3$s.</string>

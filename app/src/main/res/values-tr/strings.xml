@@ -2375,9 +2375,8 @@
     <string name="alias_delivery_label_subtitle">Bu takma ada gelen postalara etiket uygulayın</string>
     <string name="alias_delivery_label_none">Etiket yok</string>
     <string name="alias_delivery_label_missing">Kullanılamayan etiket</string>
-    <string name="alias_apply_existing">Mevcut postaya uygula</string>
+    <string name="alias_apply_existing">Mevcut postada çalıştır</string>
     <string name="alias_apply_existing_desc">Bu takma adın daha önce aldığı postaları seçtiğiniz klasöre ve etikete taşıyın.</string>
-    <string name="alias_apply_existing_action">Şimdi uygula</string>
     <string name="alias_apply_existing_cancel">Durdur</string>
     <string name="alias_apply_existing_failed">Bu ayarlar uygulanmaya başlanamadı.</string>
     <string name="alias_apply_existing_cancel_failed">Bu işlem durdurulamadı.</string>
@@ -2387,6 +2386,9 @@
     <string name="alias_apply_existing_done">Tamamlandı: %1$d tarandı, %2$d güncellendi</string>
     <string name="alias_apply_existing_error">Mevcut postaya uygulama başarısız oldu. Yeniden deneyin.</string>
     <string name="alias_apply_existing_unavailable">Hesabınızda zaten bulunan postalar Spam klasörüne taşınamaz.</string>
+    <string name="alias_apply_existing_confirm_folder_label">Bu takma adın daha önce aldığı postalar %1$s klasörüne taşınır ve %2$s etiketini alır. Çöp kutusu ve spam klasöründeki postalar olduğu yerde kalır.</string>
+    <string name="alias_apply_existing_confirm_folder">Bu takma adın daha önce aldığı postalar %1$s klasörüne taşınır. Çöp kutusu ve spam klasöründeki postalar olduğu yerde kalır.</string>
+    <string name="alias_apply_existing_confirm_label">Bu takma adın daha önce aldığı postalar %1$s etiketini alır. Çöp kutusu ve spam klasöründeki postalar olduğu yerde kalır.</string>
     <string name="alias_delivery_label_rule_note">\"%1$s\" posta kuralı bu takma adın postasını zaten %2$s ile etiketliyor.</string>
     <string name="alias_delivery_label_rule_conflict">\"%1$s\" posta kuralı bu takma adın postasını %3$s dışında %2$s ile de etiketliyor.</string>
     <string name="mail_rules_alias_label_conflict">%1$s postasını zaten %2$s ile etiketliyor. Bu kural ayrıca %3$s ekler.</string>
