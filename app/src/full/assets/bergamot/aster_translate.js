@@ -26,7 +26,7 @@ const MODEL_VERSION = "v1";
 const ROOT_ID = "m";
 const TRANSLATED_MARKER_ATTR = "data-aster-translated";
 const MIN_DETECTION_LENGTH = 40;
-const MIN_DETECTION_CONFIDENCE = 0.85;
+const MIN_DETECTION_CONFIDENCE = 0.62;
 const MIN_STOPWORD_HIT_RATE = 0.04;
 const MIN_STOPWORD_HITS = 2;
 const SCRIPT_CONFIDENCE = 0.95;
@@ -112,12 +112,12 @@ function detect_by_script(text) {
 }
 
 const STOPWORDS = {
-  en: ["the", "and", "you", "your", "for", "with", "this", "that", "have", "from", "please", "will", "not", "are", "was", "been", "our", "we", "can", "if"],
-  de: ["und", "der", "die", "das", "sie", "ist", "nicht", "mit", "für", "ein", "eine", "auf", "wir", "ihre", "haben", "bitte", "wird", "auch", "dass", "von"],
-  es: ["que", "los", "las", "una", "por", "para", "con", "del", "está", "como", "más", "pero", "este", "esta", "sus", "puede", "hemos", "gracias", "ser", "todo", "hola", "puedes", "tus", "tenemos", "nunca", "ademas", "además", "muy", "también", "tambien", "desde", "hasta", "cuando", "donde", "porque", "estamos", "somos", "tienen", "saludo", "usted"],
-  fr: ["les", "des", "une", "vous", "pour", "avec", "dans", "sur", "est", "pas", "votre", "nous", "que", "qui", "plus", "être", "cette", "sont", "merci", "par"],
+  en: ["the", "and", "you", "your", "for", "with", "this", "that", "have", "from", "please", "will", "not", "are", "was", "been", "our", "we", "can", "if", "is", "it", "to", "of", "my", "me"],
+  de: ["und", "der", "die", "das", "sie", "ist", "nicht", "mit", "für", "ein", "eine", "auf", "wir", "ihre", "haben", "bitte", "wird", "auch", "dass", "von", "ich", "den", "dem", "sich", "noch", "nur", "aber", "oder", "kann", "danke", "mich", "mir", "schon", "jetzt"],
+  es: ["que", "los", "las", "una", "por", "para", "con", "del", "está", "como", "más", "pero", "este", "esta", "sus", "puede", "hemos", "gracias", "ser", "todo", "hola", "puedes", "tus", "tenemos", "nunca", "ademas", "además", "muy", "también", "tambien", "desde", "hasta", "cuando", "donde", "porque", "estamos", "somos", "tienen", "saludo", "usted", "el", "y", "qué", "sí", "cómo", "aquí", "ahora", "hay", "eso", "esto", "ya", "tengo", "tiene", "estoy", "están", "entonces", "aunque", "mucho", "mucha", "siempre", "después", "quién", "cuál", "pues", "buenas", "buenos", "saludos", "mensaje", "mensajes", "correo", "cuenta"],
+  fr: ["les", "des", "une", "vous", "pour", "avec", "dans", "sur", "est", "pas", "votre", "nous", "que", "qui", "plus", "être", "cette", "sont", "merci", "par", "je", "elle", "ce", "du", "ne", "très", "bonjour", "aussi", "avez", "suis", "mon", "mes", "ai"],
   it: ["che", "non", "per", "con", "una", "sono", "questo", "come", "della", "dei", "alla", "più", "tuo", "vostro", "grazie", "essere", "anche", "nella", "delle", "gli", "il", "è", "sarà", "dalle", "alle", "nostro", "nostra", "ogni", "viene", "gentile", "cordiali", "saluti", "ciao", "questa", "siamo", "abbiamo", "molto", "tutti", "ancora", "perché", "presso"],
-  nl: ["een", "het", "van", "niet", "voor", "met", "aan", "zijn", "wij", "uw", "dat", "dit", "maar", "ook", "worden", "heeft", "kunt", "bedankt", "onze", "naar"],
+  nl: ["een", "het", "van", "niet", "voor", "met", "aan", "zijn", "wij", "uw", "dat", "dit", "maar", "ook", "worden", "heeft", "kunt", "bedankt", "onze", "naar", "ik", "op", "te", "om", "er", "nog", "wel", "graag"],
   pl: ["nie", "jest", "się", "oraz", "dla", "przez", "jako", "tego", "które", "wszystkie", "twoje", "proszę", "można", "będzie", "jeśli", "aby", "przy", "tym", "już"],
   pt: ["que", "não", "para", "com", "uma", "por", "seu", "sua", "está", "como", "mais", "você", "isso", "pelo", "obrigado", "ser", "nós", "são", "das", "dos", "esta", "este", "todo", "pode", "os", "até", "olá", "tudo", "vou", "também", "muito", "obrigada", "seus", "suas", "ao", "às", "é", "nosso", "nossa", "vocês", "então", "hoje", "amanhã", "abraços", "em", "já", "onde", "neste", "nesta", "deste", "desta", "nisso", "vosso", "vossa", "vossos", "vossas", "agradeço", "boa", "bom", "pela", "pelos", "pelas", "foi", "tem", "têm", "há", "estou", "estão", "ainda", "agora", "depois", "lhe", "fazer", "gostaria", "desde", "porque"],
   tr: ["için", "bir", "ile", "olan", "daha", "veya", "bu", "ve", "size", "olarak", "sonra", "kadar", "üzere", "değil", "gibi", "lütfen", "sizin", "her", "çok", "var"],
@@ -153,31 +153,52 @@ function token_language(token) {
   return null;
 }
 
-const TOKEN_SPLIT = /[^\p{L}]+/u;
+const TOKEN_SPLIT = /[^\p{L}¿¡]+/u;
+const SPANISH_OPENING_MARK = /^[¿¡]+/;
+const TRAILING_WEIGHT_FLOOR = 0.35;
+
+function position_weight(index, count) {
+  if (count <= 1) return 1;
+  const progress = index / (count - 1);
+  return 1 - (1 - TRAILING_WEIGHT_FLOOR) * progress;
+}
 
 function detect_by_stopwords(text) {
-  const tokens = text.toLowerCase().split(TOKEN_SPLIT).filter(Boolean);
-  if (tokens.length < 8) return null;
-  const scores = new Map();
-  for (const token of tokens) {
-    const language = token_language(token);
-    if (language) scores.set(language, (scores.get(language) || 0) + 1);
-  }
+  const entries = text
+    .toLowerCase()
+    .split(TOKEN_SPLIT)
+    .map((raw) => {
+      const token = raw.replace(SPANISH_OPENING_MARK, "");
+      return { token: token, opens_spanish: token !== raw };
+    })
+    .filter((entry) => entry.token);
+  if (entries.length < 8) return null;
+  const weighted = new Map();
+  const raw_hits = new Map();
+  let top_raw_hits = 0;
+  entries.forEach((entry, index) => {
+    const language = entry.opens_spanish ? "es" : token_language(entry.token);
+    if (!language) return;
+    const next_raw = (raw_hits.get(language) || 0) + 1;
+    raw_hits.set(language, next_raw);
+    if (next_raw > top_raw_hits) top_raw_hits = next_raw;
+    weighted.set(language, (weighted.get(language) || 0) + position_weight(index, entries.length));
+  });
   let top_language = null;
-  let top_hits = 0;
-  let second_hits = 0;
-  scores.forEach((hits, language) => {
-    if (hits > top_hits) {
-      second_hits = top_hits;
-      top_hits = hits;
+  let top_weight = 0;
+  let second_weight = 0;
+  weighted.forEach((weight, language) => {
+    if (weight > top_weight) {
+      second_weight = top_weight;
+      top_weight = weight;
       top_language = language;
-    } else if (hits > second_hits) {
-      second_hits = hits;
+    } else if (weight > second_weight) {
+      second_weight = weight;
     }
   });
-  if (!top_language || top_hits / tokens.length < MIN_STOPWORD_HIT_RATE) return null;
-  if (top_hits < MIN_STOPWORD_HITS) return null;
-  return { language: top_language, confidence: top_hits / (top_hits + second_hits) };
+  if (!top_language || top_raw_hits / entries.length < MIN_STOPWORD_HIT_RATE) return null;
+  if ((raw_hits.get(top_language) || 0) < MIN_STOPWORD_HITS) return null;
+  return { language: top_language, confidence: top_weight / (top_weight + second_weight) };
 }
 
 function detect_language(text) {
