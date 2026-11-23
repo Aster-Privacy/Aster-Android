@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">Este pedido expirou</string>
     <string name="guard_time_just_now">Agora mesmo</string>
     <string name="guard_device_unknown">Novo dispositivo</string>
+    <string name="guard_device_named">Nome: «%1$s»</string>
     <string name="guard_approve_place_unknown">Não disponível</string>
     <string name="guard_approve_unlock">Desbloquear</string>
     <string name="guard_approve_denied_title">Início de sessão bloqueado</string>

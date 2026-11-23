@@ -63,6 +63,7 @@
     <string name="guard_approve_expired">Questa richiesta è scaduta</string>
     <string name="guard_time_just_now">Proprio adesso</string>
     <string name="guard_device_unknown">Nuovo dispositivo</string>
+    <string name="guard_device_named">Nome: «%1$s»</string>
     <string name="guard_approve_place_unknown">Non disponibile</string>
     <string name="guard_approve_unlock">Sblocca</string>
     <string name="guard_approve_denied_title">Accesso bloccato</string>

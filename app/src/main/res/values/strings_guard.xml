@@ -287,6 +287,7 @@
     <string name="guard_approve_expired">This request expired</string>
     <string name="guard_time_just_now">Just now</string>
     <string name="guard_device_unknown">New device</string>
+    <string name="guard_device_named">Named “%1$s”</string>
     <string name="guard_approve_place_unknown">Not available</string>
     <string name="guard_approve_unlock_title">Unlock to continue</string>
     <string name="guard_approve_unlock">Unlock</string>

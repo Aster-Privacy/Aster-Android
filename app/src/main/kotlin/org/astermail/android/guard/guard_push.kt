@@ -279,7 +279,6 @@ data class guard_context_view(
     fun region_code(): String? = listOfNotNull(country_code, country).map { it.trim() }.firstOrNull { it.length == 2 }
 
     fun device_summary(on_os: (String, String) -> String = { b, o -> "$o · $b" }): String {
-        guard_known_label(device_name)?.let { return it }
         val b = guard_known_label(browser)
         val o = guard_known_label(os)
         return when {
@@ -287,6 +286,9 @@ data class guard_context_view(
             else -> b ?: o ?: guard_known_label(device_type).orEmpty()
         }
     }
+
+    fun sent_name(summary: String): String? =
+        guard_known_label(device_name)?.takeIf { !it.equals(summary.trim(), ignoreCase = true) }
 
     fun has_place(): Boolean = listOfNotNull(city, country, country_code).any { it.isNotBlank() }
 

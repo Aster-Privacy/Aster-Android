@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">このリクエストは期限切れです</string>
     <string name="guard_time_just_now">たった今</string>
     <string name="guard_device_unknown">新しいデバイス</string>
+    <string name="guard_device_named">名前:「%1$s」</string>
     <string name="guard_approve_place_unknown">利用不可</string>
     <string name="guard_approve_unlock">ロック解除</string>
     <string name="guard_approve_denied_title">サインインをブロックしました</string>

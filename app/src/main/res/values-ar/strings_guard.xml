@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">انتهت صلاحية هذا الطلب</string>
     <string name="guard_time_just_now">الآن</string>
     <string name="guard_device_unknown">جهاز جديد</string>
+    <string name="guard_device_named">الاسم: «%1$s»</string>
     <string name="guard_approve_place_unknown">غير متاح</string>
     <string name="guard_approve_unlock">إلغاء القفل</string>
     <string name="guard_approve_denied_title">تم حظر تسجيل الدخول</string>

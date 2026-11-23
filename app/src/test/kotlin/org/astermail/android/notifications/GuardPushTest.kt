@@ -591,7 +591,10 @@ class GuardPushTest {
     fun device_summary_prefers_the_device_name_and_drops_unknown() {
         val on = { b: String, o: String -> "$b on $o" }
         val named = org.astermail.android.guard.guard_context_view(device_type = "mobile", browser = "Chrome", os = "Android", device_name = "Google Pixel 8")
-        assertEquals("Google Pixel 8", named.device_summary(on))
+        assertEquals("Chrome on Android", named.device_summary(on))
+        assertEquals("Google Pixel 8", named.sent_name(named.device_summary(on)))
+        val spoof = org.astermail.android.guard.guard_context_view(browser = "Firefox", os = "Linux", device_name = "firefox on linux")
+        assertNull(spoof.sent_name(spoof.device_summary(on)))
         val pair = org.astermail.android.guard.guard_context_view(device_type = "desktop", browser = "Firefox", os = "Linux", device_name = " ")
         assertEquals("Firefox on Linux", pair.device_summary(on))
         val partial = org.astermail.android.guard.guard_context_view(device_type = "desktop", browser = "Unknown", os = "Windows")
@@ -657,6 +660,25 @@ class GuardPushTest {
         )
         assertFalse(NotificationDedupe.is_probable_guard_notice_mail(0L, "no-reply@astermail.org", marks.now))
         assertTrue(NotificationDedupe.has_guard_mark(marks.entries, NotificationDedupe.GUARD_ANY_ACCOUNT, "change_held", marks.now))
+    }
+
+    @Test
+    fun one_guard_alert_quiets_only_one_notice_mail() {
+        val marks = fake_marks()
+        handle_guard_push(payload(event = "change_held", id = x1), { listOf(account) }, fake_dedupe()::claim, { }, marks)
+        assertNull(NotificationDedupe.take_guard_notice_mark(marks.entries, "friend@example.com", marks.now + 1_000L))
+        val after = NotificationDedupe.take_guard_notice_mark(marks.entries, "no-reply@astermail.org", marks.now + 1_000L)
+        assertNotNull(after)
+        assertNull(NotificationDedupe.take_guard_notice_mark(after!!, "no-reply@astermail.org", marks.now + 2_000L))
+    }
+
+    @Test
+    fun a_sign_in_prompt_never_quiets_later_security_mail() {
+        val marks = fake_marks()
+        val shown = handle_guard_push(payload(), { listOf(account) }, fake_dedupe()::claim, { }, marks)
+        assertEquals(PushResult.Shown, shown)
+        assertEquals(0L, NotificationDedupe.last_guard_mark_ms(marks.entries))
+        assertNull(NotificationDedupe.take_guard_notice_mark(marks.entries, "no-reply@astermail.org", marks.now + 1_000L))
     }
 
     @Test

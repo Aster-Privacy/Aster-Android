@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">Diese Anfrage ist abgelaufen</string>
     <string name="guard_time_just_now">Gerade eben</string>
     <string name="guard_device_unknown">Neues Gerät</string>
+    <string name="guard_device_named">Name: „%1$s“</string>
     <string name="guard_approve_place_unknown">Nicht verfügbar</string>
     <string name="guard_approve_unlock">Entsperren</string>
     <string name="guard_approve_denied_title">Anmeldung blockiert</string>

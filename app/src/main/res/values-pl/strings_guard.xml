@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">To żądanie wygasło</string>
     <string name="guard_time_just_now">Właśnie teraz</string>
     <string name="guard_device_unknown">Nowe urządzenie</string>
+    <string name="guard_device_named">Nazwa: „%1$s”</string>
     <string name="guard_approve_place_unknown">Niedostępne</string>
     <string name="guard_approve_unlock">Odblokuj</string>
     <string name="guard_approve_denied_title">Logowanie zablokowane</string>

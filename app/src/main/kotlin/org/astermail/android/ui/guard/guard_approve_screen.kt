@@ -270,9 +270,11 @@ private fun approve_request_card(state: guard_approve_state.ready, now: Long) {
     val view = state.view
     val os_kind = guard_os_kind_for(view?.os, view?.device_type.orEmpty())
     val on_os = stringResource(R.string.guard_device_browser_on_os)
-    val device = view?.device_summary { b, o -> on_os.format(b, o) }?.takeIf { it.isNotBlank() }
-        ?: guard_known_label(state.device_name)
-        ?: stringResource(R.string.guard_device_unknown)
+    val summary = view?.device_summary { b, o -> on_os.format(b, o) }?.takeIf { it.isNotBlank() }
+    val device = summary ?: stringResource(R.string.guard_device_unknown)
+    val sent_name = (view?.sent_name(device) ?: guard_known_label(state.device_name))
+        ?.takeIf { !it.equals(device, ignoreCase = true) }
+    val named_format = stringResource(R.string.guard_device_named)
     val place = if (view?.has_place() == true) guard_place_text(view.city, view.region_code() ?: view.country) else ""
     val flag = guard_flag_emoji(view?.region_code())
     val time_iso = view?.requested_at?.takeIf { it.isNotBlank() } ?: state.created_at
@@ -285,6 +287,7 @@ private fun approve_request_card(state: guard_approve_state.ready, now: Long) {
             label = stringResource(R.string.guard_approve_device),
             value = device,
             value_leading = view?.browser?.takeIf { it.isNotBlank() }?.let { browser -> { guard_browser_mark(browser) } },
+            supporting = sent_name?.let { named_format.format(it) },
         )
         if (place.isNotBlank()) {
             guard_detail_row(

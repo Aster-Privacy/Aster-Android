@@ -215,7 +215,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             envelope.from_email,
             envelope.sent_at.orEmpty(),
         ) ||
-        NotificationDedupe.is_probable_guard_notice_mail(NotificationDedupe.guard_mark_ms(context), envelope.from_email)
+        NotificationDedupe.claim_guard_notice_mail(context, envelope.from_email)
     ) {
         MailPollingWorker.claim_item_notification(context, item_id)
         return PushResult.Ignore

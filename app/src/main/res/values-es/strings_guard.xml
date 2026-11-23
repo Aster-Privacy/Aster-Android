@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">Esta solicitud caducó</string>
     <string name="guard_time_just_now">Ahora mismo</string>
     <string name="guard_device_unknown">Dispositivo nuevo</string>
+    <string name="guard_device_named">Nombre: «%1$s»</string>
     <string name="guard_approve_place_unknown">No disponible</string>
     <string name="guard_approve_unlock">Desbloquear</string>
     <string name="guard_approve_denied_title">Inicio de sesión bloqueado</string>

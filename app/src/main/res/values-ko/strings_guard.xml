@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">이 요청이 만료되었습니다</string>
     <string name="guard_time_just_now">방금</string>
     <string name="guard_device_unknown">새 기기</string>
+    <string name="guard_device_named">이름: ‘%1$s’</string>
     <string name="guard_approve_place_unknown">사용할 수 없음</string>
     <string name="guard_approve_unlock">잠금 해제</string>
     <string name="guard_approve_denied_title">로그인 차단됨</string>

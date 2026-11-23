@@ -38,6 +38,7 @@ object NotificationDedupe {
     const val NEW_MAIL_EVENT = "new_mail"
     const val GUARD_MARK_EVENT = "guard_mark"
     const val GUARD_ANY_ACCOUNT = "*"
+    val GUARD_NOTICE_EVENTS = setOf("change_held", "rescue_started")
 
     private const val PREFS_NAME = "notification_dedupe_prefs"
     private const val KEY_SEEN_EVENTS = "seen_events"
@@ -137,7 +138,30 @@ object NotificationDedupe {
     ): Map<String, Long> {
         val with_account = record_seen(entries, guard_mark_key(account_id, event), now_ms)
         val with_any = record_seen(with_account, guard_mark_key(GUARD_ANY_ACCOUNT, event), now_ms)
+        if (event !in GUARD_NOTICE_EVENTS) return with_any
         return record_seen(with_any, guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT), now_ms)
+    }
+
+    fun take_guard_notice_mark(
+        entries: Map<String, Long>,
+        sender_email: String,
+        now_ms: Long,
+    ): Map<String, Long>? {
+        if (!is_probable_guard_notice_mail(last_guard_mark_ms(entries), sender_email, now_ms)) return null
+        return entries - guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT)
+    }
+
+    @Synchronized
+    fun claim_guard_notice_mail(
+        context: Context,
+        sender_email: String,
+        now_ms: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        val remaining = take_guard_notice_mark(entries, sender_email, now_ms) ?: return false
+        prefs.edit().putString(KEY_SEEN_EVENTS, encode_seen(remaining)).commit()
+        return true
     }
 
     fun has_guard_mark(entries: Map<String, Long>, account_id: String, event: String, now_ms: Long): Boolean =

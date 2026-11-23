@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">Bu isteğin süresi doldu</string>
     <string name="guard_time_just_now">Az önce</string>
     <string name="guard_device_unknown">Yeni cihaz</string>
+    <string name="guard_device_named">Adı: “%1$s”</string>
     <string name="guard_approve_place_unknown">Kullanılamaz</string>
     <string name="guard_approve_unlock">Kilidi aç</string>
     <string name="guard_approve_denied_title">Oturum açma engellendi</string>

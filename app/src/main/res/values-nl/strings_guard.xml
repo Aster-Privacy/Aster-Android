@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">Dit verzoek is verlopen</string>
     <string name="guard_time_just_now">Zojuist</string>
     <string name="guard_device_unknown">Nieuw apparaat</string>
+    <string name="guard_device_named">Naam: ‘%1$s’</string>
     <string name="guard_approve_place_unknown">Niet beschikbaar</string>
     <string name="guard_approve_unlock">Ontgrendelen</string>
     <string name="guard_approve_denied_title">Aanmelding geblokkeerd</string>

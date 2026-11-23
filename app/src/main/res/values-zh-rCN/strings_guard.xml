@@ -64,6 +64,7 @@
     <string name="guard_approve_expired">此请求已过期</string>
     <string name="guard_time_just_now">刚刚</string>
     <string name="guard_device_unknown">新设备</string>
+    <string name="guard_device_named">名称:“%1$s”</string>
     <string name="guard_approve_place_unknown">不可用</string>
     <string name="guard_approve_unlock">解锁</string>
     <string name="guard_approve_denied_title">登录已阻止</string>
