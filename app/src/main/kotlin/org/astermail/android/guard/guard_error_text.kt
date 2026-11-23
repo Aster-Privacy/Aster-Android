@@ -111,5 +111,10 @@ fun guard_error_message.resolve(): String =
 
 fun guard_error_text(context: Context, t: Throwable): String? = guard_error_message_for(t)?.text(context)
 
+fun guard_specific_error_text(context: Context, t: Throwable): String? = when (t) {
+    is ApiError.NetworkError, is java.io.IOException, is ApiError.ServerError -> null
+    else -> guard_error_text(context, t)
+}
+
 fun guard_error_text_or(context: Context, t: Throwable, @StringRes fallback: Int): String =
     guard_error_text(context, t) ?: context.getString(fallback)

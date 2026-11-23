@@ -27,7 +27,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.server_supplied_detail
 import org.astermail.android.auth.LegacyLoginSaltException
 import org.astermail.android.auth.LoginSaltCheck
-import org.astermail.android.guard.guard_error_text
+import org.astermail.android.guard.guard_specific_error_text
 
 const val FAMILY_2FA_REQUIRED_CODE = "FAMILY_2FA_REQUIRED"
 const val PENDING_LOGIN_EXPIRED_CODE = "PENDING_LOGIN_EXPIRED"
@@ -149,7 +149,7 @@ private fun localized_server_code_string(context: Context, code: String): String
 fun localized_api_error(context: Context, t: Throwable, fallback: String): String {
     if (t is CancellationException) throw t
     localized_server_code(context, t)?.let { return it }
-    guard_error_text(context, t)?.let { return it }
+    guard_specific_error_text(context, t)?.let { return it }
     server_code_of(t)?.let { code ->
         localized_server_code_string(context, code)?.let { return it }
     }
