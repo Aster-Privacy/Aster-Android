@@ -2541,14 +2541,16 @@ class MailViewModel @Inject constructor(
         val rows: kotlinx.coroutines.Deferred<Result<Map<String, List<org.astermail.android.api.mail.AttachmentMetaItem>>>>,
     )
 
+    private val early_attachment_rows =
+        java.util.concurrent.atomic.AtomicReference<kotlinx.coroutines.Deferred<*>?>(null)
+
     private fun start_early_attachment_fetch(item_id: String): EarlyAttachmentFetch {
         val state = _thread_state.value
         val known = if (state.item?.id == item_id) state.messages.map { it.id } else emptyList()
         val ids = (listOf(item_id) + known).filter { it.isNotBlank() }.distinct()
-        return EarlyAttachmentFetch(
-            ids = ids.toSet(),
-            rows = viewModelScope.async(Dispatchers.IO) { repository.fetch_raw_attachment_metas(ids) },
-        )
+        val rows = viewModelScope.async(Dispatchers.IO) { repository.fetch_raw_attachment_metas(ids) }
+        early_attachment_rows.getAndSet(rows)?.cancel()
+        return EarlyAttachmentFetch(ids = ids.toSet(), rows = rows)
     }
 
     private fun carried_attachments(item_id: String): Map<String, List<MessageAttachment>> {
