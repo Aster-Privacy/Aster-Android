@@ -262,6 +262,7 @@
     <string name="failed_to_save">فشل في حفظ الملف</string>
     <string name="failed_to_download">فشل في تنزيل %s</string>
     <string name="could_not_open_link">تعذر فتح الرابط</string>
+    <string name="open_address_in_maps">فتح في تطبيق الخرائط</string>
     <string name="move_to_trash">نقل إلى سلة المهملات</string>
     <string name="archived">تمت الأرشفة</string>
     <string name="unstarred">تمت إزالة النجمة</string>

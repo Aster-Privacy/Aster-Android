@@ -262,6 +262,7 @@
     <string name="failed_to_save">Nie udało się zapisać pliku</string>
     <string name="failed_to_download">Nie udało się pobrać %s</string>
     <string name="could_not_open_link">Nie udało się otworzyć linku</string>
+    <string name="open_address_in_maps">Otwórz w aplikacji map</string>
     <string name="move_to_trash">Przenieś do kosza</string>
     <string name="archived">Zarchiwizowano</string>
     <string name="unstarred">Usunięto gwiazdkę</string>

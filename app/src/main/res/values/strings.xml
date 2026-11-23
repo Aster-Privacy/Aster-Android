@@ -426,6 +426,7 @@
     <string name="failed_to_save">Failed to save file</string>
     <string name="failed_to_download">Failed to download %s</string>
     <string name="could_not_open_link">Could not open link</string>
+    <string name="open_address_in_maps">Open in maps app</string>
     <string name="move_to_trash">Move to trash</string>
     <string name="trash">Trash</string>
     <string name="archive">Archive</string>

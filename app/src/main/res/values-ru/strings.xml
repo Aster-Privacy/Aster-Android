@@ -262,6 +262,7 @@
     <string name="failed_to_save">Не удалось сохранить файл</string>
     <string name="failed_to_download">Не удалось скачать %s</string>
     <string name="could_not_open_link">Не удалось открыть ссылку</string>
+    <string name="open_address_in_maps">Открыть в приложении карт</string>
     <string name="move_to_trash">Переместить в корзину</string>
     <string name="archived">Архивировано</string>
     <string name="unstarred">Убрано из избранного</string>

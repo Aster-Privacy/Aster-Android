@@ -263,6 +263,7 @@
     <string name="failed_to_save">Error al guardar el archivo</string>
     <string name="failed_to_download">Error al descargar %s</string>
     <string name="could_not_open_link">No se pudo abrir el enlace</string>
+    <string name="open_address_in_maps">Abrir en la app de mapas</string>
     <string name="move_to_trash">Mover a la papelera</string>
     <string name="archived">Archivado</string>
     <string name="unstarred">Quitado de destacados</string>

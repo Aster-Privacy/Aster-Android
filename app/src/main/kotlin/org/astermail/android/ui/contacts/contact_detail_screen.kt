@@ -27,6 +27,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.content.ClipData
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
 import android.net.Uri
@@ -343,6 +344,24 @@ fun ContactDetailScreen(
                     ).show()
                 }
             }
+            fun open_in_maps(postal: ContactPostal) {
+                val query = build_contact_map_query(postal)
+                val targets = listOfNotNull(build_contact_geo_uri(query), build_contact_map_web_url(query))
+                if (targets.isEmpty()) return
+                for (target in targets) {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)))
+                        return
+                    } catch (_: ActivityNotFoundException) {
+                    } catch (_: SecurityException) {
+                    }
+                }
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.could_not_open_link),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
             val can_mail = on_compose != null && primary_email.isNotBlank()
             val can_call = primary_phone.isNotBlank()
             val can_search = on_search_mail != null && mail_query.isNotEmpty()
@@ -453,6 +472,9 @@ fun ContactDetailScreen(
                         DetailRow(
                             label = contact_entry_type_label(postal.type, postal.label),
                             value = postal.lines().joinToString("\n"),
+                            on_open = { open_in_maps(postal) },
+                            on_copy = copy_value,
+                            open_label = stringResource(R.string.open_address_in_maps),
                         )
                     }
                 }
@@ -700,6 +722,7 @@ private fun DetailRow(
     on_open: (() -> Unit)? = null,
     on_copy: ((String) -> Unit)? = null,
     a11y_text: String? = null,
+    open_label: String? = null,
 ) {
     val colors = AsterMaterial.colors
     val interactive = on_open != null
@@ -716,6 +739,7 @@ private fun DetailRow(
             .then(
                 if (interactive) {
                     Modifier.combinedClickable(
+                        onClickLabel = open_label,
                         onClick = { on_open?.invoke() },
                         onLongClick = on_copy?.let { copy -> { copy(value) } },
                     )

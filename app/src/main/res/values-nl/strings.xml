@@ -262,6 +262,7 @@
     <string name="failed_to_save">Bestand opslaan mislukt</string>
     <string name="failed_to_download">%s downloaden mislukt</string>
     <string name="could_not_open_link">Link kon niet worden geopend</string>
+    <string name="open_address_in_maps">Openen in kaarten-app</string>
     <string name="move_to_trash">Naar prullenbak verplaatsen</string>
     <string name="archived">Gearchiveerd</string>
     <string name="unstarred">Ster verwijderd</string>
