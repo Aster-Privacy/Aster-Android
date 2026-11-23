@@ -196,7 +196,7 @@
     <string name="swipe_star">スター</string>
     <string name="swipe_spam">スパム</string>
     <string name="swipe_inbox">受信トレイ</string>
-    <string name="swipe_mark_as_read">既読にする</string>
+    <string name="swipe_mark_read_or_unread">既読または未読にする</string>
     <string name="swipe_report_spam">スパムを報告</string>
     <string name="swipe_move_to_inbox">受信トレイに移動</string>
     <string name="swipe_none">なし</string>

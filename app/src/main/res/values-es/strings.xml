@@ -197,7 +197,7 @@
     <string name="swipe_star">Destacar</string>
     <string name="swipe_spam">Correo no deseado</string>
     <string name="swipe_inbox">Bandeja de entrada</string>
-    <string name="swipe_mark_as_read">Marcar como leído</string>
+    <string name="swipe_mark_read_or_unread">Marcar como leído o no leído</string>
     <string name="swipe_report_spam">Reportar spam</string>
     <string name="swipe_move_to_inbox">Mover a la bandeja de entrada</string>
     <string name="swipe_none">Ninguno</string>

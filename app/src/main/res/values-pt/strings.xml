@@ -196,7 +196,7 @@
     <string name="swipe_star">Estrela</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Caixa de entrada</string>
-    <string name="swipe_mark_as_read">Marcar como lido</string>
+    <string name="swipe_mark_read_or_unread">Marcar como lido ou não lido</string>
     <string name="swipe_report_spam">Denunciar como spam</string>
     <string name="swipe_move_to_inbox">Mover para a caixa de entrada</string>
     <string name="swipe_none">Nenhuma</string>

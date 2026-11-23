@@ -196,7 +196,7 @@
     <string name="swipe_star">Gwiazdka</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Odebrane</string>
-    <string name="swipe_mark_as_read">Oznacz jako przeczytane</string>
+    <string name="swipe_mark_read_or_unread">Oznacz jako przeczytane lub nieprzeczytane</string>
     <string name="swipe_report_spam">Zgłoś spam</string>
     <string name="swipe_move_to_inbox">Przenieś do skrzynki odbiorczej</string>
     <string name="swipe_none">Brak</string>
