@@ -601,7 +601,7 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_actions, true),
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_archive, false),
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_delete, false),
-    settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_mark_as_read, false),
+    settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_mark_read_or_unread, false),
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.snooze, false),
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_star, false),
     settings_index_entry("swipe_actions", R.string.swipe_actions, R.string.swipe_report_spam, false),

@@ -196,7 +196,7 @@
     <string name="swipe_star">Ster</string>
     <string name="swipe_spam">Spam</string>
     <string name="swipe_inbox">Postvak IN</string>
-    <string name="swipe_mark_as_read">Als gelezen markeren</string>
+    <string name="swipe_mark_read_or_unread">Als gelezen of ongelezen markeren</string>
     <string name="swipe_report_spam">Als spam melden</string>
     <string name="swipe_move_to_inbox">Naar inbox verplaatsen</string>
     <string name="swipe_none">Geen</string>

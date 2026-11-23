@@ -204,7 +204,7 @@
     <string name="swipe_star">Étoile</string>
     <string name="swipe_spam">Indésirables</string>
     <string name="swipe_inbox">Boîte de réception</string>
-    <string name="swipe_mark_as_read">Marquer comme lu</string>
+    <string name="swipe_mark_read_or_unread">Marquer comme lu ou non lu</string>
     <string name="swipe_report_spam">Signaler comme indésirable</string>
     <string name="swipe_move_to_inbox">Déplacer vers la boîte de réception</string>
     <string name="swipe_none">Aucun</string>

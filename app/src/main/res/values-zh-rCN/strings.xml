@@ -196,7 +196,7 @@
     <string name="swipe_star">星标</string>
     <string name="swipe_spam">垃圾邮件</string>
     <string name="swipe_inbox">收件箱</string>
-    <string name="swipe_mark_as_read">标为已读</string>
+    <string name="swipe_mark_read_or_unread">标为已读或未读</string>
     <string name="swipe_report_spam">举报垃圾邮件</string>
     <string name="swipe_move_to_inbox">移至收件箱</string>
     <string name="swipe_none">无</string>

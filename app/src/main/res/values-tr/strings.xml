@@ -196,7 +196,7 @@
     <string name="swipe_star">Yıldız</string>
     <string name="swipe_spam">Önemsiz</string>
     <string name="swipe_inbox">Gelen Kutusu</string>
-    <string name="swipe_mark_as_read">Okundu olarak işaretle</string>
+    <string name="swipe_mark_read_or_unread">Okundu veya okunmadı olarak işaretle</string>
     <string name="swipe_report_spam">Spam olarak bildir</string>
     <string name="swipe_move_to_inbox">Gelen kutusuna taşı</string>
     <string name="swipe_none">Yok</string>

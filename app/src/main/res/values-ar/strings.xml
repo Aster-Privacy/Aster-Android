@@ -196,7 +196,7 @@
     <string name="swipe_star">نجمة</string>
     <string name="swipe_spam">بريد مزعج</string>
     <string name="swipe_inbox">صندوق الوارد</string>
-    <string name="swipe_mark_as_read">تعليم كمقروء</string>
+    <string name="swipe_mark_read_or_unread">تعليم كمقروء أو غير مقروء</string>
     <string name="swipe_report_spam">الإبلاغ عن بريد مزعج</string>
     <string name="swipe_move_to_inbox">نقل إلى صندوق الوارد</string>
     <string name="swipe_none">بدون</string>

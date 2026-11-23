@@ -113,7 +113,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
     val action_options = listOf(
         SwipeActionOption(SWIPE_ACTION_ARCHIVE, stringResource(R.string.swipe_archive), TablerIcons.Archive, colors.accent_blue),
         SwipeActionOption(SWIPE_ACTION_DELETE, stringResource(R.string.swipe_delete), TablerIcons.Trash, colors.danger),
-        SwipeActionOption(SWIPE_ACTION_TOGGLE_READ, stringResource(R.string.swipe_mark_as_read), TablerIcons.MailOpened, colors.success),
+        SwipeActionOption(SWIPE_ACTION_TOGGLE_READ, stringResource(R.string.swipe_mark_read_or_unread), TablerIcons.MailOpened, colors.success),
         SwipeActionOption(SWIPE_ACTION_SNOOZE, stringResource(R.string.snooze), TablerIcons.Clock, colors.warning),
         SwipeActionOption(SWIPE_ACTION_STAR, stringResource(R.string.swipe_star), TablerIcons.Star, colors.star),
         SwipeActionOption(SWIPE_ACTION_SPAM, stringResource(R.string.swipe_report_spam), spam_action_icon(is_spam = false), colors.danger),
