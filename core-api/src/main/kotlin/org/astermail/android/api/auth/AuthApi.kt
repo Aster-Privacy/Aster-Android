@@ -51,6 +51,7 @@ data class LoginRequest(
     @EncodeDefault val client_platform: String = "android",
     val integrity_token: String? = null,
     val integrity_nonce: String? = null,
+    val device_label: String? = null,
 )
 
 @Serializable
@@ -164,6 +165,7 @@ data class LoginV3StartRequest(
     @EncodeDefault val client_platform: String = "android",
     val integrity_token: String? = null,
     val integrity_nonce: String? = null,
+    val device_label: String? = null,
 )
 
 @Serializable

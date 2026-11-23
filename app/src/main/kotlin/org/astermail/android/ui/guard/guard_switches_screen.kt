@@ -55,6 +55,7 @@ import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_format_instant
 import org.astermail.android.guard.guard_parse_instant
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.ui.settings.detail.detail_row
 import org.astermail.android.ui.settings.detail.detail_scaffold
 import org.astermail.android.ui.settings.detail.error_banner
@@ -158,7 +159,7 @@ private fun guard_switches_on_content(
         GuardHeldBanner(notice = it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
-    guard_notice_text(state.notice)?.let {
+    guard_notice_text(state.notice, state.error)?.let {
         error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -323,13 +324,16 @@ private fun guard_device_row(
 }
 
 @Composable
-internal fun guard_notice_text(notice: guard_action_notice?): String? = when (notice) {
+internal fun guard_notice_text(
+    notice: guard_action_notice?,
+    error: org.astermail.android.guard.guard_error_message? = null,
+): String? = when (notice) {
     null -> null
     guard_action_notice.canceled -> stringResource(R.string.guard_switches_canceled)
     guard_action_notice.key_lost -> stringResource(R.string.guard_approve_key_lost)
     guard_action_notice.no_lock_screen -> stringResource(R.string.guard_setup_no_lock_screen)
     guard_action_notice.no_device -> stringResource(R.string.guard_approve_no_device)
-    guard_action_notice.failed -> stringResource(R.string.guard_setup_failed)
+    guard_action_notice.failed -> error?.resolve() ?: stringResource(R.string.guard_setup_failed)
 }
 
 @Composable

@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.guard
 
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.Module
@@ -147,6 +146,8 @@ enum class guard_setup_step {
     failed,
 }
 
+enum class guard_setup_phase { keys, confirm, register }
+
 enum class guard_setup_notice { wrong_group, wrong_password, totp_required, canceled, no_lock_screen, failed }
 
 data class guard_setup_ui(
@@ -162,6 +163,9 @@ data class guard_setup_ui(
     val passkey_failure: guard_passkey_failure? = null,
     val join_number: Int? = null,
     val join_expires_at: String = "",
+    val phase: guard_setup_phase? = null,
+    val failed_phase: guard_setup_phase? = null,
+    val error: org.astermail.android.guard.guard_error_message? = null,
 ) {
     val can_continue_choose: Boolean get() = valid_switches(switches, scopes)
     val can_submit: Boolean get() = password.isNotEmpty() && (!show_totp || totp.isNotBlank())
@@ -191,7 +195,7 @@ class default_guard_setup_deps(
     override fun new_action_alias(): String = GuardActionKey.new_alias()
     override fun create_action_key(alias: String): ByteArray = GuardActionKey.create(alias)
     override fun delete_action_key(alias: String) = GuardActionKey.delete(alias)
-    override fun device_name(): String = Build.MODEL.orEmpty().trim().take(MAX_DEVICE_NAME)
+    override fun device_name(): String = org.astermail.android.guard.guard_device_label()
     override fun pick_number(): Int = guard_pick_number(random)
     override fun new_request_id(): UUID = UUID.randomUUID()
     override fun rescue_code(): String = generate_rescue_code(random)
@@ -230,14 +234,17 @@ class GuardSetupViewModel @Inject constructor(
     }
 
     suspend fun load() {
-        _state.update { it.copy(step = guard_setup_step.loading, notice = null) }
+        _state.update { it.copy(step = guard_setup_step.loading, notice = null, error = null, failed_phase = null, phase = null) }
         val status = try {
             api.status()
         } catch (t: CancellationException) {
             throw t
         } catch (t: Throwable) {
             _state.update {
-                it.copy(step = if (guard_is_disabled(t)) guard_setup_step.hidden else guard_setup_step.failed)
+                it.copy(
+                    step = if (guard_is_disabled(t)) guard_setup_step.hidden else guard_setup_step.failed,
+                    error = org.astermail.android.guard.guard_error_message_for(t),
+                )
             }
             return
         }
@@ -323,7 +330,16 @@ class GuardSetupViewModel @Inject constructor(
             _state.update { it.copy(notice = guard_setup_notice.failed, passkey_failure = null) }
             return
         }
-        _state.update { it.copy(step = guard_setup_step.working, notice = null, passkey_failure = null) }
+        _state.update {
+            it.copy(
+                step = guard_setup_step.working,
+                notice = null,
+                passkey_failure = null,
+                phase = guard_setup_phase.keys,
+                failed_phase = null,
+                error = null,
+            )
+        }
         var alias: String? = null
         var saved = false
         try {
@@ -343,6 +359,7 @@ class GuardSetupViewModel @Inject constructor(
             val action_pk = GuardDigests.compress_p256(deps.create_action_key(fresh_alias))
             val digest = GuardDigests.keys_digest(keys.ed25519_pk, keys.mlkem_pk, keys.x25519_pk, action_pk)
             val nonce = api.setup_nonce().nonce
+            set_phase(guard_setup_phase.confirm)
             val message = GuardDigests.action_message(GuardActionCode.ENROLL, user, DeviceEnvelope.base64url_decode(nonce), digest)
             val der = when (val result = signer.with_alias(fresh_alias).sign(message)) {
                 is guard_sign_result.signed -> result.der
@@ -352,6 +369,7 @@ class GuardSetupViewModel @Inject constructor(
                 }
             }
             if (deps.user_id() != user) throw GuardPasskeyException(guard_passkey_failure.account_changed)
+            set_phase(guard_setup_phase.register)
             val response = api.setup(
                 GuardSetupRequest(
                     device = device_keys(keys, action_pk),
@@ -375,7 +393,10 @@ class GuardSetupViewModel @Inject constructor(
             val passkey_failure = guard_passkey_failure_for(t)
             when {
                 passkey_failure != null -> to_passkey_failure(passkey_failure)
-                code == GUARD_ALREADY_ON_CODE -> _state.update { it.copy(step = guard_setup_step.already_on, password = "") }
+                code == GUARD_ALREADY_ON_CODE -> {
+                    _state.update { it.copy(password = "", totp = "") }
+                    load()
+                }
                 guard_is_disabled(t) -> _state.update { it.copy(step = guard_setup_step.hidden, password = "") }
                 code == TOTP_REQUIRED_CODE -> {
                     _state.update { it.copy(show_totp = true) }
@@ -388,7 +409,7 @@ class GuardSetupViewModel @Inject constructor(
                     } else {
                         to_password(guard_setup_notice.wrong_password)
                     }
-                else -> to_password(guard_setup_notice.failed)
+                else -> to_failed_phase(guard_setup_step.password, t)
             }
         } finally {
             if (!saved) alias?.let { deps.delete_action_key(it) }
@@ -406,7 +427,9 @@ class GuardSetupViewModel @Inject constructor(
             _state.update { it.copy(step = guard_setup_step.failed) }
             return
         }
-        _state.update { it.copy(step = guard_setup_step.working, notice = null) }
+        _state.update {
+            it.copy(step = guard_setup_step.working, notice = null, phase = guard_setup_phase.keys, failed_phase = null, error = null)
+        }
         drop_join_alias()
         val fresh_alias = deps.new_action_alias()
         var joined = false
@@ -415,6 +438,7 @@ class GuardSetupViewModel @Inject constructor(
             val action_pk = GuardDigests.compress_p256(deps.create_action_key(fresh_alias))
             val digest = GuardDigests.keys_digest(keys.ed25519_pk, keys.mlkem_pk, keys.x25519_pk, action_pk)
             val nonce = api.setup_nonce().nonce
+            set_phase(guard_setup_phase.confirm)
             val message = GuardDigests.action_message(GuardActionCode.JOIN, user, DeviceEnvelope.base64url_decode(nonce), digest)
             val der = when (val result = signer.with_alias(fresh_alias).sign(message)) {
                 is guard_sign_result.signed -> result.der
@@ -423,6 +447,7 @@ class GuardSetupViewModel @Inject constructor(
                     return
                 }
             }
+            set_phase(guard_setup_phase.register)
             val number = deps.pick_number()
             val client_request_id = deps.new_request_id()
             val started = api.join(
@@ -444,7 +469,7 @@ class GuardSetupViewModel @Inject constructor(
         } catch (t: CancellationException) {
             throw t
         } catch (t: Throwable) {
-            _state.update { it.copy(step = guard_setup_step.join_intro, notice = guard_setup_notice.failed) }
+            if (api_error_code(t) == GUARD_ALREADY_ON_CODE) load() else to_failed_phase(guard_setup_step.join_intro, t)
         } finally {
             if (!joined) deps.delete_action_key(fresh_alias)
         }
@@ -529,6 +554,19 @@ class GuardSetupViewModel @Inject constructor(
             secret.fill(0)
         }
         if (previous != null && previous != alias) deps.delete_action_key(previous)
+    }
+
+    private fun set_phase(phase: guard_setup_phase) = _state.update { it.copy(phase = phase) }
+
+    private fun to_failed_phase(step: guard_setup_step, t: Throwable) = _state.update {
+        it.copy(
+            step = step,
+            notice = guard_setup_notice.failed,
+            passkey_failure = null,
+            failed_phase = it.phase,
+            phase = null,
+            error = org.astermail.android.guard.guard_error_message_for(t),
+        )
     }
 
     private fun to_password(notice: guard_setup_notice) =

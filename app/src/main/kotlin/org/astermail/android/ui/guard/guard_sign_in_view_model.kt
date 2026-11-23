@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.guard
 
-import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.Module
@@ -41,6 +40,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.astermail.android.api.ApiError
+import org.astermail.android.api.GUARD_CODE_INVALID_CODE
+import org.astermail.android.api.GUARD_PAUSED_CODE
 import org.astermail.android.api.GUARD_REQUEST_GONE_CODE
 import org.astermail.android.api.GUARD_WRONG_NUMBER_CODE
 import org.astermail.android.api.api_error_code
@@ -97,7 +98,7 @@ class default_guard_sign_in_deps(
     override fun action_public_key(alias: String): ByteArray? = GuardActionKey.public_key_sec1(alias)
     override fun current_user_id(): UUID? =
         accounts.get_current_id()?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-    override fun device_name(): String = Build.MODEL.orEmpty().trim().take(MAX_DEVICE_NAME)
+    override fun device_name(): String = org.astermail.android.guard.guard_device_label()
     override fun now_ms(): Long = org.astermail.android.api.network.server_clock.now_ms()
     override fun pick_number(): Int = guard_pick_number(random)
     override fun open_envelope(envelope: ByteArray, keys: guard_box_keys): ByteArray =
@@ -146,6 +147,7 @@ object GuardSignInModule {
 sealed interface guard_wait_notice {
     data object wrong_code : guard_wait_notice
     data class retry(val retry_after_secs: Long) : guard_wait_notice
+    data class error(val message: org.astermail.android.guard.guard_error_message) : guard_wait_notice
 }
 
 enum class guard_resume_block { unlock, network }
@@ -153,12 +155,20 @@ enum class guard_resume_block { unlock, network }
 sealed interface guard_rescue_notice {
     data object invalid : guard_rescue_notice
     data class retry(val retry_after_secs: Long) : guard_rescue_notice
+    data class error(val message: org.astermail.android.guard.guard_error_message) : guard_rescue_notice
 }
 
 sealed interface guard_wait_state {
     data object starting : guard_wait_state
-    data class waiting(val number: Int, val seconds_left: Long, val notice: guard_wait_notice? = null) : guard_wait_state
+    data class waiting(
+        val number: Int,
+        val seconds_left: Long,
+        val notice: guard_wait_notice? = null,
+        val expires_at_ms: Long = 0L,
+    ) : guard_wait_state
     data class retry(val retry_after_secs: Long) : guard_wait_state
+    data class paused(val retry_after_secs: Long, val ends_at_ms: Long) : guard_wait_state
+    data class error(val message: org.astermail.android.guard.guard_error_message) : guard_wait_state
     data class resume_blocked(val reason: guard_resume_block) : guard_wait_state
     data object approved : guard_wait_state
     data object done : guard_wait_state
@@ -298,7 +308,7 @@ class GuardSignInViewModel @Inject constructor(
                     t is ApiError.GuardRetry ->
                         _state.value = guard_wait_state.rescue_entry(guard_rescue_notice.retry(t.retry_after_secs))
                     api_error_code(t) == GUARD_REQUEST_GONE_CODE -> to_expired()
-                    else -> _state.value = guard_wait_state.rescue_entry(guard_rescue_notice.invalid)
+                    else -> _state.value = guard_wait_state.rescue_entry(rescue_notice_for(t))
                 }
             }
         }
@@ -353,7 +363,10 @@ class GuardSignInViewModel @Inject constructor(
             } catch (t: Throwable) {
                 when {
                     t is ApiError.GuardRetry -> set_notice(guard_wait_notice.retry(t.retry_after_secs))
-                    api_error_code(t) == GUARD_WRONG_NUMBER_CODE -> set_notice(guard_wait_notice.wrong_code)
+                    api_error_code(t) == GUARD_WRONG_NUMBER_CODE || api_error_code(t) == GUARD_CODE_INVALID_CODE ->
+                        set_notice(guard_wait_notice.wrong_code)
+                    is_transient_error(t) -> org.astermail.android.guard.guard_error_message_for(t)
+                        ?.let { set_notice(guard_wait_notice.error(it)) } ?: handle_error(t)
                     else -> handle_error(t)
                 }
             }
@@ -400,12 +413,19 @@ class GuardSignInViewModel @Inject constructor(
             throw t
         } catch (t: Throwable) {
             if (t is ApiError.GuardRetry) {
-                _state.value = guard_wait_state.retry(t.retry_after_secs)
+                _state.value = retry_state(t)
             } else {
                 handle_error(t)
             }
         }
     }
+
+    private fun retry_state(t: ApiError.GuardRetry): guard_wait_state =
+        if (t.code == GUARD_PAUSED_CODE) {
+            guard_wait_state.paused(t.retry_after_secs, deps.now_ms() + t.retry_after_secs.coerceAtLeast(0) * 1000)
+        } else {
+            guard_wait_state.retry(t.retry_after_secs)
+        }
 
     private suspend fun try_resume(
         c: GuardSignInChallenge,
@@ -621,8 +641,21 @@ class GuardSignInViewModel @Inject constructor(
         when {
             t is ApiError.GuardDevicePending -> stop_with(guard_wait_state.held(t.activates_at))
             api_error_code(t) == GUARD_REQUEST_GONE_CODE -> to_expired()
-            else -> stop_with(guard_wait_state.failed)
+            else -> stop_with(
+                org.astermail.android.guard.guard_error_message_for(t, Instant.ofEpochMilli(deps.now_ms()))
+                    ?.let { guard_wait_state.error(it) }
+                    ?: guard_wait_state.failed,
+            )
         }
+    }
+
+    private fun is_transient_error(t: Throwable): Boolean =
+        t is ApiError.NetworkError || t is ApiError.ServerError || t is java.io.IOException
+
+    private fun rescue_notice_for(t: Throwable): guard_rescue_notice {
+        if (!is_transient_error(t)) return guard_rescue_notice.invalid
+        return org.astermail.android.guard.guard_error_message_for(t)?.let { guard_rescue_notice.error(it) }
+            ?: guard_rescue_notice.invalid
     }
 
     private fun is_final_error(t: Throwable): Boolean =
@@ -633,7 +666,7 @@ class GuardSignInViewModel @Inject constructor(
         if (current is guard_wait_state.waiting) _state.value = current.copy(notice = notice)
     }
 
-    private fun waiting_state(notice: guard_wait_notice?) = guard_wait_state.waiting(number, seconds_left(), notice)
+    private fun waiting_state(notice: guard_wait_notice?) = guard_wait_state.waiting(number, seconds_left(), notice, expires_at_ms)
 
     private fun seconds_left(): Long = ((expires_at_ms - deps.now_ms()) / 1000).coerceAtLeast(0)
 

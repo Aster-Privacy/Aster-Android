@@ -22,6 +22,9 @@
 package org.astermail.android.guard
 
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.astermail.android.crypto.DeviceEnvelope
@@ -94,19 +97,42 @@ fun guard_event.needs_id(): Boolean = when (this) {
 
 fun guard_dedupe_key(push: guard_push): String = "guard:${push.event.name}:${push.id}"
 
+interface guard_alert_marks {
+    fun recent(account_id: String, event: guard_event): Boolean
+    fun note(account_id: String, event: guard_event)
+
+    object none : guard_alert_marks {
+        override fun recent(account_id: String, event: guard_event): Boolean = false
+        override fun note(account_id: String, event: guard_event) = Unit
+    }
+}
+
+object guard_live_events {
+    private val flow = MutableSharedFlow<guard_push>(extraBufferCapacity = 16)
+    val events: SharedFlow<guard_push> = flow.asSharedFlow()
+
+    fun emit(push: guard_push) {
+        flow.tryEmit(push)
+    }
+}
+
 fun handle_guard_push(
     payload: JSONObject,
     known_accounts: () -> Collection<String>,
     claim: (String) -> Boolean,
     enqueue: (guard_push) -> Unit,
+    marks: guard_alert_marks = guard_alert_marks.none,
 ): PushResult {
     val push = parse_guard_push(payload) ?: return PushResult.Ignore
     val known = runCatching { known_accounts() }.getOrDefault(emptyList())
     if (known.none { it.equals(push.account_id, ignoreCase = true) }) return PushResult.Ignore
     if (!claim(guard_dedupe_key(push))) return PushResult.Ignore
-    if (guard_notification_spec_for(push.event).cancels_prompt) claim(guard_dedupe_key(guard_prompt_push(push)))
+    val spec = guard_notification_spec_for(push.event)
+    guard_cancelled_push(push)?.let { claim(guard_dedupe_key(it)) }
+    if (spec.shows) runCatching { marks.note(push.account_id, push.event) }
+    guard_live_events.emit(push)
     enqueue(push)
-    return PushResult.Shown
+    return if (spec.shows) PushResult.Shown else PushResult.Ignore
 }
 
 enum class guard_open_target { request, changes, guard_settings, app }
@@ -116,11 +142,36 @@ data class guard_notification_spec(
     val review_action: Boolean,
     val private_details: Boolean,
     val panic_action: Boolean = false,
-    val cancels_prompt: Boolean = false,
+    val cancels: guard_event? = null,
     val shows: Boolean = true,
-)
+) {
+    val cancels_prompt: Boolean get() = cancels == guard_event.sign_in_request
+}
 
 fun guard_prompt_push(push: guard_push): guard_push = guard_push(guard_event.sign_in_request, push.id, push.account_id)
+
+fun guard_cancelled_push(push: guard_push): guard_push? =
+    guard_notification_spec_for(push.event).cancels?.let { guard_push(it, push.id, push.account_id) }
+
+object guard_local_holds {
+    private const val MAX_ENTRIES = 32
+    private val held = LinkedHashSet<String>()
+
+    @Synchronized
+    fun record(change_id: String) {
+        val k = change_id.lowercase()
+        if (k.isBlank()) return
+        held.remove(k)
+        held.add(k)
+        while (held.size > MAX_ENTRIES) held.remove(held.first())
+    }
+
+    @Synchronized
+    fun made_here(change_id: String): Boolean = change_id.lowercase() in held
+
+    @Synchronized
+    fun clear() = held.clear()
+}
 
 object guard_local_approvals {
     private const val MAX_ENTRIES = 32
@@ -156,21 +207,35 @@ object guard_local_approvals {
 
 enum class guard_prompt_lookup { found, absent, unknown }
 
-fun guard_prompt_should_post(push_account: String, current_account: String?, lookup: guard_prompt_lookup): Boolean {
-    if (current_account == null || !current_account.equals(push_account, ignoreCase = true)) return false
-    return lookup != guard_prompt_lookup.absent
-}
+fun guard_prompt_can_look_up(push_account: String, current_account: String?): Boolean =
+    current_account != null && current_account.equals(push_account, ignoreCase = true)
+
+fun guard_prompt_should_post(lookup: guard_prompt_lookup, timeout_ms: Long): Boolean =
+    lookup != guard_prompt_lookup.absent && timeout_ms > 0L
 
 fun guard_prompt_timeout_ms(expires_at: String?, now_ms: Long): Long {
     val expires = expires_at?.takeIf { it.isNotBlank() }
         ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
         ?: return GUARD_PROMPT_DEFAULT_TIMEOUT_MS
-    return (expires - now_ms).coerceIn(GUARD_PROMPT_MIN_TIMEOUT_MS, GUARD_PROMPT_DEFAULT_TIMEOUT_MS)
+    val left = expires - now_ms
+    if (left <= 0L) return 0L
+    return left.coerceIn(GUARD_PROMPT_MIN_TIMEOUT_MS, GUARD_PROMPT_DEFAULT_TIMEOUT_MS)
 }
 
-fun guard_should_show(push: guard_push, approved_here: (String, String) -> Boolean): Boolean {
+fun guard_is_own_device_event(push: guard_push, own_device_id: UUID?): Boolean {
+    if (own_device_id == null) return false
+    if (push.event != guard_event.device_added) return false
+    return push.id.equals(own_device_id.toString(), ignoreCase = true)
+}
+
+fun guard_should_show(
+    push: guard_push,
+    held_here: (String) -> Boolean = guard_local_holds::made_here,
+    approved_here: (String, String) -> Boolean,
+): Boolean {
     if (!guard_notification_spec_for(push.event).shows) return false
     if (push.event == guard_event.sign_in_approved && approved_here(push.id, push.account_id)) return false
+    if (push.event == guard_event.change_held && held_here(push.id)) return false
     return true
 }
 
@@ -179,32 +244,25 @@ fun guard_notification_spec_for(event: guard_event): guard_notification_spec = w
     guard_event.rescue_started -> guard_notification_spec(guard_open_target.guard_settings, review_action = true, private_details = false)
     guard_event.change_held ->
         guard_notification_spec(guard_open_target.changes, review_action = false, private_details = false, panic_action = true)
-    guard_event.change_applied ->
-        guard_notification_spec(guard_open_target.changes, review_action = false, private_details = false, panic_action = true)
-    guard_event.change_cancelled ->
-        guard_notification_spec(guard_open_target.changes, review_action = false, private_details = false)
-    guard_event.panic, guard_event.rescue_vetoed, guard_event.guard_enabled, guard_event.prompts_paused ->
-        guard_notification_spec(guard_open_target.guard_settings, review_action = false, private_details = false)
-    guard_event.sign_in_approved ->
+    guard_event.change_applied, guard_event.change_cancelled ->
         guard_notification_spec(
-            guard_open_target.guard_settings,
+            guard_open_target.changes,
             review_action = false,
             private_details = false,
-            panic_action = true,
-            cancels_prompt = true,
-        )
-    guard_event.sign_in_denied, guard_event.sign_in_expired ->
-        guard_notification_spec(
-            guard_open_target.guard_settings,
-            review_action = false,
-            private_details = false,
-            cancels_prompt = true,
+            cancels = guard_event.change_held,
             shows = false,
         )
-    guard_event.device_added ->
-        guard_notification_spec(guard_open_target.guard_settings, review_action = false, private_details = false, panic_action = true)
-    guard_event.device_removed, guard_event.rescue_completed, guard_event.guard_disabled ->
-        guard_notification_spec(guard_open_target.guard_settings, review_action = false, private_details = false)
+    guard_event.sign_in_approved, guard_event.sign_in_denied, guard_event.sign_in_expired ->
+        guard_notification_spec(
+            guard_open_target.guard_settings,
+            review_action = false,
+            private_details = false,
+            cancels = guard_event.sign_in_request,
+            shows = false,
+        )
+    guard_event.panic, guard_event.rescue_vetoed, guard_event.guard_enabled, guard_event.prompts_paused,
+    guard_event.device_added, guard_event.device_removed, guard_event.rescue_completed, guard_event.guard_disabled ->
+        guard_notification_spec(guard_open_target.guard_settings, review_action = false, private_details = false, shows = false)
 }
 
 @Serializable
@@ -216,16 +274,32 @@ data class guard_context_view(
     val country: String? = null,
     val country_code: String? = null,
     val requested_at: String = "",
+    val device_name: String? = null,
 ) {
     fun region_code(): String? = listOfNotNull(country_code, country).map { it.trim() }.firstOrNull { it.length == 2 }
 
-    fun device_summary(): String =
-        listOfNotNull(os, browser).map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" · ")
-            .ifEmpty { device_type.trim() }
+    fun device_summary(on_os: (String, String) -> String = { b, o -> "$o · $b" }): String {
+        val b = guard_known_label(browser)
+        val o = guard_known_label(os)
+        return when {
+            b != null && o != null -> on_os(b, o)
+            else -> b ?: o ?: guard_known_label(device_type).orEmpty()
+        }
+    }
+
+    fun sent_name(summary: String): String? =
+        guard_known_label(device_name)?.takeIf { !it.equals(summary.trim(), ignoreCase = true) }
+
+    fun has_place(): Boolean = listOfNotNull(city, country, country_code).any { it.isNotBlank() }
 
     fun place(): String =
         listOfNotNull(city, country).map { it.trim() }.filter { it.isNotEmpty() }.joinToString(", ")
 }
+
+private val guard_unknown_labels = setOf("unknown", "unknown device", "unknown browser", "unknown os")
+
+fun guard_known_label(value: String?): String? =
+    value?.trim()?.takeIf { it.isNotEmpty() && it.lowercase() !in guard_unknown_labels }
 
 private val context_json = Json { ignoreUnknownKeys = true }
 

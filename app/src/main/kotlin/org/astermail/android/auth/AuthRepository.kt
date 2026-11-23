@@ -585,6 +585,7 @@ class AuthRepository @Inject constructor(
                         remember_me = remember_me,
                         integrity_token = integrity?.token,
                         integrity_nonce = integrity?.nonce,
+                        device_label = login_device_label(),
                     ),
                     trusted_token,
                 )
@@ -602,6 +603,7 @@ class AuthRepository @Inject constructor(
                         remember_me = remember_me,
                         integrity_token = integrity?.token,
                         integrity_nonce = integrity?.nonce,
+                        device_label = login_device_label(),
                     ),
                     trusted_device_token = trusted_token,
                 )
@@ -780,16 +782,7 @@ class AuthRepository @Inject constructor(
 
     fun webauthn_origin(): String = api_client.webauthn_origin.trimEnd('/')
 
-    fun login_device_label(): String? {
-        val manufacturer = android.os.Build.MANUFACTURER.orEmpty().trim()
-        val model = android.os.Build.MODEL.orEmpty().trim()
-        val label = when {
-            model.isEmpty() -> manufacturer
-            manufacturer.isEmpty() || model.startsWith(manufacturer, ignoreCase = true) -> model
-            else -> "${manufacturer.replaceFirstChar { it.titlecase(Locale.ROOT) }} $model"
-        }
-        return label.take(64).takeIf { it.isNotBlank() }
-    }
+    fun login_device_label(): String = org.astermail.android.guard.guard_device_label()
 
     private suspend fun finish_second_factor_login(
         outcome: org.astermail.android.api.auth.TotpVerifyOutcome,

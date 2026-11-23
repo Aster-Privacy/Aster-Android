@@ -71,6 +71,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.guard.guard_passkey_failure
 import org.astermail.android.guard.guard_passkey_sheet
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.ui.common.print_recovery_codes
 import org.astermail.android.ui.common.secure_screen
@@ -189,6 +190,10 @@ fun guard_setup_screen(
                 guard_wordmark()
                 Spacer(Modifier.height(AsterSpacing.xxl + AsterSpacing.sm))
                 guard_wizard_body(stringResource(R.string.guard_setup_working), Modifier.fillMaxWidth(), TextAlign.Center)
+                state.phase?.let { current ->
+                    Spacer(Modifier.height(AsterSpacing.xl))
+                    guard_setup_phase_list(current)
+                }
             }
             guard_setup_step.hidden -> guard_wizard_result {
                 guard_result_block(
@@ -209,7 +214,7 @@ fun guard_setup_screen(
             guard_setup_step.failed -> guard_wizard_result {
                 guard_result_block(
                     title = stringResource(R.string.guard_setup_failed_title),
-                    body = stringResource(R.string.guard_setup_failed),
+                    body = state.error?.resolve() ?: stringResource(R.string.guard_setup_failed),
                     primary_label = stringResource(R.string.guard_setup_retry),
                     on_primary = on_retry,
                     secondary_label = stringResource(R.string.close),
@@ -346,7 +351,7 @@ fun guard_setup_screen(
                     onValueChange = on_password,
                     modifier = Modifier.fillMaxWidth(),
                     label = stringResource(R.string.guard_setup_password_label),
-                    error_text = guard_setup_notice_text(state.notice) ?: guard_passkey_failure_text(state.passkey_failure),
+                    error_text = guard_setup_notice_text(state) ?: guard_passkey_failure_text(state.passkey_failure),
                     keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
                     visual_transformation = PasswordVisualTransformation(),
                 )
@@ -384,7 +389,7 @@ fun guard_setup_screen(
                     )
                 },
             ) {
-                guard_setup_notice_text(state.notice)?.let { error_banner(it) }
+                guard_setup_notice_text(state)?.let { error_banner(it) }
             }
             guard_setup_step.join_waiting -> guard_wizard_scaffold(
                 step = 0,
@@ -496,6 +501,53 @@ internal fun guard_passkey_failure_text(failure: guard_passkey_failure?): String
     guard_passkey_failure.account_changed -> stringResource(R.string.guard_passkey_account_changed)
     guard_passkey_failure.expired -> stringResource(R.string.guard_passkey_expired)
     guard_passkey_failure.failed -> stringResource(R.string.guard_passkey_failed)
+}
+
+@Composable
+private fun guard_setup_phase_list(current: guard_setup_phase) {
+    val colors = AsterMaterial.colors
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+        guard_setup_phase.entries.forEach { phase ->
+            val done = phase.ordinal < current.ordinal
+            val active = phase == current
+            Text(
+                text = stringResource(
+                    when {
+                        done -> R.string.guard_setup_phase_done
+                        active -> R.string.guard_setup_phase_active
+                        else -> R.string.guard_setup_phase_pending
+                    },
+                    stringResource(guard_setup_phase_label(phase)),
+                ),
+                color = if (active) colors.text_primary else colors.text_tertiary,
+                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+internal fun guard_setup_phase_label(phase: guard_setup_phase): Int = when (phase) {
+    guard_setup_phase.keys -> R.string.guard_setup_phase_keys
+    guard_setup_phase.confirm -> R.string.guard_setup_phase_confirm
+    guard_setup_phase.register -> R.string.guard_setup_phase_register
+}
+
+internal fun guard_setup_phase_failure(phase: guard_setup_phase?): Int = when (phase) {
+    guard_setup_phase.keys -> R.string.guard_setup_failed_keys
+    guard_setup_phase.confirm -> R.string.guard_setup_failed_confirm
+    guard_setup_phase.register -> R.string.guard_setup_failed_register
+    null -> R.string.guard_setup_failed
+}
+
+@Composable
+private fun guard_setup_notice_text(state: guard_setup_ui): String? {
+    if (state.notice != guard_setup_notice.failed) return guard_setup_notice_text(state.notice)
+    val lead = stringResource(guard_setup_phase_failure(state.failed_phase))
+    val detail = state.error?.resolve()
+    return if (state.failed_phase != null && detail != null) "$lead $detail" else detail ?: lead
 }
 
 @Composable

@@ -43,7 +43,10 @@ sealed interface guard_panic_state {
     data class done(val result: GuardPanicResult) : guard_panic_state {
         val offers_password_change: Boolean get() = result.can_reset_password_now
     }
-    data class failed(val notice: guard_action_notice) : guard_panic_state
+    data class failed(
+        val notice: guard_action_notice,
+        val error: org.astermail.android.guard.guard_error_message? = null,
+    ) : guard_panic_state
 }
 
 @HiltViewModel
@@ -83,7 +86,7 @@ class GuardPanicViewModel @Inject constructor(
         } catch (t: CancellationException) {
             throw t
         } catch (t: Throwable) {
-            _state.value = guard_panic_state.failed(guard_action_notice_for(t))
+            _state.value = guard_panic_state.failed(guard_action_notice_for(t), org.astermail.android.guard.guard_error_message_for(t))
         }
     }
 }

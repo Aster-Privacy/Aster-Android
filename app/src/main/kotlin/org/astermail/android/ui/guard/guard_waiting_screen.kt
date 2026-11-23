@@ -70,6 +70,7 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.auth.GuardSignInChallenge
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.guard.guard_sign_result
 import org.astermail.android.guard.guard_signer
 import org.astermail.android.guard.keystore_signer
@@ -85,6 +86,11 @@ fun guard_format_duration(seconds: Long): String {
     val s = seconds.coerceAtLeast(0)
     return "%d:%02d".format(s / 60, s % 60)
 }
+
+fun guard_format_clock(epoch_ms: Long): String =
+    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+        .withZone(ZoneId.systemDefault())
+        .format(Instant.ofEpochMilli(epoch_ms))
 
 fun guard_format_time(iso: String): String =
     runCatching {
@@ -201,7 +207,15 @@ fun guard_waiting_screen(
                     guard_number_tiles(state.number, stringResource(R.string.guard_number_description, state.number))
                     Spacer(Modifier.height(AsterSpacing.lg))
                     guard_chip(
-                        text = stringResource(R.string.guard_wait_expires_in, guard_format_duration(state.seconds_left)),
+                        text = if (state.expires_at_ms > 0L) {
+                            stringResource(
+                                R.string.guard_wait_expires_at,
+                                guard_format_duration(state.seconds_left),
+                                guard_format_clock(state.expires_at_ms),
+                            )
+                        } else {
+                            stringResource(R.string.guard_wait_expires_in, guard_format_duration(state.seconds_left))
+                        },
                         icon = TablerIcons.Clock,
                         color = guard_expiry_tone(colors, state.seconds_left),
                     )
@@ -218,6 +232,7 @@ fun guard_waiting_screen(
                                 R.string.guard_wait_retry,
                                 guard_format_duration(n.retry_after_secs),
                             )
+                            is guard_wait_notice.error -> n.message.resolve()
                             null -> null
                         },
                         keyboard_options = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii),
@@ -258,6 +273,7 @@ fun guard_waiting_screen(
                             R.string.guard_wait_retry,
                             guard_format_duration(n.retry_after_secs),
                         )
+                        is guard_rescue_notice.error -> n.message.resolve()
                         null -> null
                     },
                     keyboard_options = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii),
@@ -274,6 +290,11 @@ fun guard_waiting_screen(
                             is guard_wait_state.retry -> stringResource(result.body, guard_format_duration(state.retry_after_secs))
                             is guard_wait_state.held -> stringResource(result.body, guard_format_time(state.apply_after))
                             is guard_wait_state.rescue_waiting -> stringResource(result.body, guard_format_time(state.apply_after))
+                            is guard_wait_state.paused -> stringResource(
+                                result.body,
+                                org.astermail.android.guard.guard_format_instant(Instant.ofEpochMilli(state.ends_at_ms)),
+                            )
+                            is guard_wait_state.error -> state.message.resolve()
                             else -> stringResource(result.body)
                         },
                         primary_label = stringResource(result.action),
@@ -293,8 +314,18 @@ internal fun guard_wait_offers_rescue(code_open: Boolean, notice: guard_wait_not
 
 internal fun guard_wait_result_for(state: guard_wait_state): guard_wait_result = when (state) {
     is guard_wait_state.retry -> guard_wait_result(R.string.guard_wait_retry_title, R.string.guard_wait_retry)
+    is guard_wait_state.paused -> guard_wait_result(R.string.guard_wait_paused_title, R.string.guard_wait_paused)
     guard_wait_state.denied -> guard_wait_result(R.string.guard_wait_denied_title, R.string.guard_wait_denied)
-    guard_wait_state.expired -> guard_wait_result(R.string.guard_wait_expired_title, R.string.guard_wait_expired)
+    guard_wait_state.expired -> guard_wait_result(
+        R.string.guard_wait_expired_title,
+        R.string.guard_wait_expired,
+        R.string.guard_wait_sign_in_again,
+    )
+    is guard_wait_state.error -> guard_wait_result(
+        R.string.guard_wait_failed_title,
+        R.string.guard_wait_failed,
+        R.string.guard_wait_sign_in_again,
+    )
     is guard_wait_state.held -> guard_wait_result(R.string.guard_wait_held_title, R.string.guard_wait_held)
     guard_wait_state.needs_password -> guard_wait_result(R.string.guard_wait_needs_password_title, R.string.guard_wait_needs_password)
     is guard_wait_state.rescue_waiting -> guard_wait_result(R.string.guard_rescue_waiting_title, R.string.guard_rescue_started)
@@ -316,7 +347,7 @@ internal fun guard_wait_result_for(state: guard_wait_state): guard_wait_result =
             R.string.guard_wait_resume_retry,
         )
     }
-    else -> guard_wait_result(R.string.guard_wait_failed_title, R.string.guard_wait_failed)
+    else -> guard_wait_result(R.string.guard_wait_failed_title, R.string.guard_wait_failed, R.string.guard_wait_sign_in_again)
 }
 
 internal fun guard_wait_title_for(state: guard_wait_state): Int = when (state) {

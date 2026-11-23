@@ -1478,8 +1478,18 @@ class MailPollingWorker(
                     !is_item_in_protected_folder(it, protected_tokens) &&
                     !is_item_in_muted_category(it, muted_categories, category_tabs) &&
                     !NotificationDedupe.is_probable_sign_in_alert_mail(sign_in_marker, it.sender_email) &&
-                    is_item_notifiable_by_type(context, it)
+                    is_item_notifiable_by_type(context, it) &&
+                    !claim_guard_notice_item(context, it)
             }
+        }
+
+        private fun claim_guard_notice_item(
+            context: Context,
+            item: org.astermail.android.mail.InboxItem,
+        ): Boolean {
+            if (!NotificationDedupe.claim_guard_notice_mail(context, item.sender_email)) return false
+            claim_item_notification(context, item.id)
+            return true
         }
 
         @Synchronized

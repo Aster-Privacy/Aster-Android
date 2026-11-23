@@ -128,7 +128,7 @@ private fun guard_rotate_form(
     on_submit: () -> Unit,
     on_passkey: () -> Unit,
 ) {
-    (guard_rotate_notice_text(state.notice) ?: guard_passkey_failure_text(state.passkey_failure))?.let {
+    (guard_rotate_notice_text(state.notice, state.error) ?: guard_passkey_failure_text(state.passkey_failure))?.let {
         error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -177,7 +177,10 @@ private fun guard_rotate_form(
 }
 
 @Composable
-private fun guard_rotate_notice_text(notice: guard_rotate_notice?): String? = when (notice) {
+private fun guard_rotate_notice_text(
+    notice: guard_rotate_notice?,
+    error: org.astermail.android.guard.guard_error_message? = null,
+): String? = when (notice) {
     null -> null
     guard_rotate_notice.wrong_password -> stringResource(R.string.guard_setup_wrong_password)
     guard_rotate_notice.totp_required -> stringResource(R.string.guard_setup_totp_required)
@@ -186,5 +189,5 @@ private fun guard_rotate_notice_text(notice: guard_rotate_notice?): String? = wh
     guard_rotate_notice.key_lost -> guard_notice_text(guard_action_notice.key_lost)
     guard_rotate_notice.no_lock_screen -> guard_notice_text(guard_action_notice.no_lock_screen)
     guard_rotate_notice.no_device -> guard_notice_text(guard_action_notice.no_device)
-    guard_rotate_notice.failed -> guard_notice_text(guard_action_notice.failed)
+    guard_rotate_notice.failed -> guard_notice_text(guard_action_notice.failed, error)
 }

@@ -73,6 +73,7 @@ data class guard_rotate_ui(
     val result: guard_rotate_result? = null,
     val notice: guard_rotate_notice? = null,
     val passkey_failure: guard_passkey_failure? = null,
+    val error: org.astermail.android.guard.guard_error_message? = null,
 ) {
     val can_use_passkey: Boolean
         get() = !working && result == null && rescue_code.isNotEmpty() && confirm_input.isNotBlank()
@@ -189,7 +190,12 @@ class GuardRotateRescueViewModel @Inject constructor(
                 return
             }
             _state.update {
-                it.copy(working = false, notice = notice, show_totp = it.show_totp || notice == guard_rotate_notice.totp_required)
+                it.copy(
+                    working = false,
+                    notice = notice,
+                    error = org.astermail.android.guard.guard_error_message_for(t),
+                    show_totp = it.show_totp || notice == guard_rotate_notice.totp_required,
+                )
             }
         }
     }

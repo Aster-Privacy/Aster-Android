@@ -80,6 +80,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.guard.GuardDeviceStore
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.common.page_surface
@@ -92,6 +93,11 @@ fun guard_code_state(secret: ByteArray?, now_seconds: Long): guard_code_view {
     if (secret == null || secret.isEmpty()) return guard_code_view(code = null, seconds_left = left, missing = true)
     return guard_code_view(code = GuardCode.now(secret, now_seconds), seconds_left = left, missing = false)
 }
+
+const val GUARD_CODE_MASK = "•"
+
+fun guard_code_cells(code: String?): List<String> =
+    if (code == null) List(GuardCode.CODE_LEN) { GUARD_CODE_MASK } else code.map { it.toString() }
 
 @HiltViewModel
 class GuardCodeViewModel @Inject constructor(
@@ -176,7 +182,10 @@ fun guard_code_host(view_model: GuardCodeViewModel, on_back: () -> Unit, on_join
         on_reveal = {
             scope.launch {
                 val ok = activity != null && guard_confirm_user(activity, title, subtitle)
-                if (ok) revealed = true
+                if (ok) {
+                    view = view_model.view(System.currentTimeMillis() / 1000)
+                    revealed = true
+                }
             }
         },
         on_back = on_back,
@@ -210,38 +219,53 @@ fun guard_code_screen(
                     secondary_label = if (on_join != null) stringResource(R.string.guard_approve_close) else null,
                     on_secondary = if (on_join != null) on_back else null,
                 )
-            } else if (revealed && view?.code != null) {
+            } else {
+                val shown = if (revealed) view?.code else null
                 guard_wordmark()
                 Spacer(Modifier.height(AsterSpacing.xxl + AsterSpacing.sm))
                 guard_wizard_title(stringResource(R.string.guard_code_title), Modifier.fillMaxWidth(), TextAlign.Center)
                 Spacer(Modifier.height(AsterSpacing.sm))
-                guard_wizard_body(stringResource(R.string.guard_code_body), Modifier.fillMaxWidth(), TextAlign.Center)
-                Spacer(Modifier.height(AsterSpacing.xxl))
-                guard_code_card(view.code, view.seconds_left)
-                Spacer(Modifier.height(AsterSpacing.xxl))
-                AsterButton(
-                    label = stringResource(R.string.done),
-                    onClick = on_back,
-                    modifier = Modifier.fillMaxWidth(),
+                guard_wizard_body(
+                    stringResource(if (shown != null) R.string.guard_code_body else R.string.guard_code_hidden),
+                    Modifier.fillMaxWidth(),
+                    TextAlign.Center,
                 )
-            } else {
-                guard_result_block(
-                    title = stringResource(R.string.guard_code_title),
-                    body = stringResource(R.string.guard_code_hidden),
-                    primary_label = stringResource(R.string.guard_code_show),
-                    on_primary = on_reveal,
-                    secondary_label = stringResource(R.string.guard_approve_close),
-                    on_secondary = on_back,
-                )
+                Spacer(Modifier.height(AsterSpacing.xxl))
+                guard_code_card(shown, view?.seconds_left ?: GuardCode.STEP_SECONDS.toInt())
+                Spacer(Modifier.height(AsterSpacing.xxl))
+                if (shown != null) {
+                    AsterButton(
+                        label = stringResource(R.string.done),
+                        onClick = on_back,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    AsterButton(
+                        label = stringResource(R.string.guard_code_show),
+                        onClick = on_reveal,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(AsterSpacing.sm))
+                    AsterGhostButton(
+                        label = stringResource(R.string.guard_approve_close),
+                        onClick = on_back,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun guard_code_card(code: String, seconds_left: Int) {
+private fun guard_code_card(code: String?, seconds_left: Int) {
     val colors = AsterMaterial.colors
-    val description = stringResource(R.string.guard_code_description, code.toCharArray().joinToString(" "))
+    val cells = guard_code_cells(code)
+    val description = if (code != null) {
+        stringResource(R.string.guard_code_description, code.toCharArray().joinToString(" "))
+    } else {
+        stringResource(R.string.guard_code_hidden)
+    }
     val tone = if (seconds_left <= 5) colors.warning else colors.accent_blue
     val shape = SquircleShape(12.dp)
     guard_card {
@@ -256,8 +280,8 @@ private fun guard_code_card(code: String, seconds_left: Int) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                code.forEachIndexed { index, digit ->
-                    if (index > 0 && index == code.length / 2) Spacer(Modifier.size(8.dp))
+                cells.forEachIndexed { index, digit ->
+                    if (index > 0 && index == cells.size / 2) Spacer(Modifier.size(8.dp))
                     Box(
                         modifier = Modifier
                             .size(width = 40.dp, height = 52.dp)
@@ -265,8 +289,8 @@ private fun guard_code_card(code: String, seconds_left: Int) {
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = digit.toString(),
-                            color = colors.text_primary,
+                            text = digit,
+                            color = if (code != null) colors.text_primary else colors.text_tertiary,
                             fontSize = 26.sp,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -274,6 +298,7 @@ private fun guard_code_card(code: String, seconds_left: Int) {
                     }
                 }
             }
+            if (code == null) return@Column
             Spacer(Modifier.height(AsterSpacing.lg))
             guard_progress_bar(
                 progress = (seconds_left.toFloat() / GuardCode.STEP_SECONDS.toFloat()).coerceIn(0f, 1f),
