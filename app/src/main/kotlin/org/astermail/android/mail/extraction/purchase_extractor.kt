@@ -495,10 +495,12 @@ private val subtotal_patterns = listOf(
     money_after("\\bitems?\\s+total\\b"),
 )
 
+private const val tax_rate = "(?:\\s*\\(?\\d{1,2}(?:[.,]\\d+)?\\s*%\\)?)?"
+
 private val tax_patterns = listOf(
-    money_after("\\b(?:sales\\s+)?tax\\b"),
-    money_after("\\bvat\\b"),
-    money_after("\\bgst\\b"),
+    money_after("\\b(?:sales\\s+)?tax(?:es)?\\b" + tax_rate),
+    money_after("\\bvat\\b" + tax_rate),
+    money_after("\\bgst\\b" + tax_rate),
 )
 
 private val shipping_cost_patterns = listOf(

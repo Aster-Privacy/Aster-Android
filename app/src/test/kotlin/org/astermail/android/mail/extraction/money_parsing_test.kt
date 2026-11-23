@@ -214,6 +214,17 @@ class money_parsing_test {
     }
 
     @Test
+    fun `reads tax rows that carry a rate`() {
+        val details = receipt("Tax (25%): 134,04 kr\nTotal: 670,20 kr", from = "order@butik.se")
+        assertEquals(670.20, details.total!!.value, 0.0001)
+        assertEquals(134.04, details.tax!!.value, 0.0001)
+        assertEquals("SEK", details.tax!!.currency)
+        val vat = receipt("VAT 20%: £3.33\nTotal: £19.99", from = "orders@shop.co.uk")
+        assertEquals(3.33, vat.tax!!.value, 0.0001)
+        assertEquals("GBP", vat.tax!!.currency)
+    }
+
+    @Test
     fun `parses numbers by separator rules`() {
         assertEquals(690.06, parse_number("690,06", "SEK")!!, 0.0001)
         assertEquals(1234.0, parse_number("1,234", "USD")!!, 0.0001)
