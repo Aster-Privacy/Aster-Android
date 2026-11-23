@@ -5322,25 +5322,30 @@ class MailRepository @Inject constructor(
 
     @Volatile private var vault_inbound_keys: VaultInboundKeys? = null
 
-    private fun cached_vault_inbound_key_sets(): List<InboundRatchetKeySet> {
-        val (vault_b64, vault_nonce_b64) = session_key_store.get_encrypted_vault() ?: return emptyList()
+    private fun cached_vault_inbound_key_sets(): List<InboundRatchetKeySet> =
+        runCatching { load_vault_inbound_key_sets() }.getOrNull().orEmpty()
+
+    private fun load_vault_inbound_key_sets(): List<InboundRatchetKeySet> {
+        val vault = session_key_store.get_encrypted_vault() ?: return emptyList()
+        val vault_b64: String = vault.first
+        val vault_nonce_b64: String = vault.second
         vault_inbound_keys?.takeIf { it.vault_b64 == vault_b64 }?.let { return it.key_sets }
         val passphrase = session_key_store.get_passphrase() ?: return emptyList()
         val key_sets = try {
-            runCatching {
-                val plain = CryptoNative.unwrap_vault(
-                    android.util.Base64.decode(vault_b64, android.util.Base64.DEFAULT),
-                    android.util.Base64.decode(vault_nonce_b64, android.util.Base64.DEFAULT),
-                    passphrase,
-                    session_key_store.get_vault_kdf_iterations(),
-                ).plaintext
-                val vault_obj = org.json.JSONObject(String(plain, Charsets.UTF_8))
+            val plain = CryptoNative.unwrap_vault(
+                android.util.Base64.decode(vault_b64, android.util.Base64.DEFAULT),
+                android.util.Base64.decode(vault_nonce_b64, android.util.Base64.DEFAULT),
+                passphrase,
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
+            try {
+                vault_inbound_key_sets(org.json.JSONObject(String(plain, Charsets.UTF_8)), ::expand_pq_identity_secret)
+            } finally {
                 plain.fill(0)
-                vault_inbound_key_sets(vault_obj, ::expand_pq_identity_secret)
-            }.getOrNull()
+            }
         } finally {
             passphrase.fill(0)
-        } ?: return emptyList()
+        }
         vault_inbound_keys = VaultInboundKeys(vault_b64, key_sets)
         return key_sets
     }
