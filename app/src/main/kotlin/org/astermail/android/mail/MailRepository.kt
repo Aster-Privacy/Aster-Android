@@ -69,6 +69,7 @@ import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.labels.LabelsApi
 import org.astermail.android.crypto.ratchet.RatchetCrypto
 import org.astermail.android.mail.ratchet.PostQuantumCoverage
+import org.astermail.android.mail.ratchet.expand_pq_identity_secret
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.api.scheduled.CreateScheduledRequest
 import org.astermail.android.api.scheduled.ScheduledApi
@@ -5310,48 +5311,42 @@ class MailRepository @Inject constructor(
         throw EnvelopeKeysMissingException()
     }
 
-    private fun inbound_ratchet_key_sets(): List<InboundRatchetKeySet> {
-        val key_sets = mutableListOf<InboundRatchetKeySet>()
+    private fun inbound_ratchet_key_sets(): List<InboundRatchetKeySet> = inbound_key_sets_from(
+        identity_jwk = session_key_store.get_ratchet_identity_jwk(),
+        pq_identity_secret_b64 = session_key_store.get_ratchet_pq_identity_secret(),
+        previous_keys_json = session_key_store.get_ratchet_previous_keys_json(),
+        expand_seed = ::expand_pq_identity_secret,
+    )
 
-        val identity_jwk = session_key_store.get_ratchet_identity_jwk()
-        if (!identity_jwk.isNullOrBlank()) {
-            key_sets.add(
-                InboundRatchetKeySet(
-                    identity_jwk = identity_jwk,
-                    pq_identity_secret_b64 = session_key_store
-                        .get_ratchet_pq_identity_secret()
-                        ?.ifBlank { null },
-                ),
-            )
-        }
+    private class VaultInboundKeys(val vault_b64: String, val key_sets: List<InboundRatchetKeySet>)
 
-        val previous_json = session_key_store.get_ratchet_previous_keys_json()
-        if (!previous_json.isNullOrBlank()) {
-            runCatching {
-                val entries = org.json.JSONArray(previous_json)
-                for (index in 0 until entries.length()) {
-                    val entry = entries.optJSONObject(index) ?: continue
-                    val previous_jwk = entry.optString("ratchet_identity_key", "")
-                    val previous_pq_secret = entry
-                        .optString("ratchet_pq_identity_key", "")
-                        .ifBlank {
-                            entry.optString("ratchet_pq_identity_seed", "")
-                                .takeIf { it.isNotBlank() }
-                                ?.let { org.astermail.android.mail.ratchet.expand_pq_identity_secret(it) }
-                                .orEmpty()
-                        }
-                        .ifBlank { null }
-                    if (previous_jwk.isBlank() && previous_pq_secret == null) continue
-                    key_sets.add(
-                        InboundRatchetKeySet(
-                            identity_jwk = previous_jwk,
-                            pq_identity_secret_b64 = previous_pq_secret,
-                        ),
-                    )
-                }
+    @Volatile private var vault_inbound_keys: VaultInboundKeys? = null
+
+    private fun cached_vault_inbound_key_sets(): List<InboundRatchetKeySet> =
+        runCatching { load_vault_inbound_key_sets() }.getOrNull().orEmpty()
+
+    private fun load_vault_inbound_key_sets(): List<InboundRatchetKeySet> {
+        val vault = session_key_store.get_encrypted_vault() ?: return emptyList()
+        val vault_b64: String = vault.first
+        val vault_nonce_b64: String = vault.second
+        vault_inbound_keys?.takeIf { it.vault_b64 == vault_b64 }?.let { return it.key_sets }
+        val passphrase = session_key_store.get_passphrase() ?: return emptyList()
+        val key_sets = try {
+            val plain = CryptoNative.unwrap_vault(
+                android.util.Base64.decode(vault_b64, android.util.Base64.DEFAULT),
+                android.util.Base64.decode(vault_nonce_b64, android.util.Base64.DEFAULT),
+                passphrase,
+                session_key_store.get_vault_kdf_iterations(),
+            ).plaintext
+            try {
+                vault_inbound_key_sets(org.json.JSONObject(String(plain, Charsets.UTF_8)), ::expand_pq_identity_secret)
+            } finally {
+                plain.fill(0)
             }
+        } finally {
+            passphrase.fill(0)
         }
-
+        vault_inbound_keys = VaultInboundKeys(vault_b64, key_sets)
         return key_sets
     }
 
@@ -5359,12 +5354,14 @@ class MailRepository @Inject constructor(
         encrypted_b64: String,
         nonce: ByteArray,
         key_sets: List<InboundRatchetKeySet>?,
-    ): ByteArray? = InboundSealOpener.open(
-        encrypted_b64,
-        nonce,
-        key_sets ?: inbound_ratchet_key_sets(),
-        session_key_store.get_user_id(),
-    )
+    ): ByteArray? {
+        val owner_user_id = session_key_store.get_user_id()
+        val local = key_sets ?: inbound_ratchet_key_sets()
+        InboundSealOpener.open(encrypted_b64, nonce, local, owner_user_id)?.let { return it }
+        val fallback = fallback_inbound_key_sets(local, cached_vault_inbound_key_sets())
+        if (fallback.isEmpty()) return null
+        return InboundSealOpener.open(encrypted_b64, nonce, fallback, owner_user_id)
+    }
 
     private fun aes_gcm_decrypt(ciphertext: ByteArray, key: ByteArray, iv: ByteArray): ByteArray =
         aes_gcm_decrypt_bytes(ciphertext, key, iv)
