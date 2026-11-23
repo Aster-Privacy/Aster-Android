@@ -563,4 +563,124 @@ class ForwardingAliasTest {
         assertNull(custom_forward_via_domain("other@example.com", custom_from))
         assertNull(custom_forward_via_domain("", custom_from))
     }
+
+
+    private val reply_mode_from = "shop@mail.custom.example"
+    private val reply_mode_reply_to = "shop+jane.doe=example.com@mail.custom.example"
+
+    private fun reply_mode_headers(
+        reply_to: String = reply_mode_reply_to,
+        vararg extra: Pair<String, String>,
+    ): List<Pair<String, String>> = custom_headers("Reply-To" to reply_to, *extra)
+
+    @Test
+    fun reply_to_mode_resolves_original_sender() {
+        val result = resolve_forwarding_display(reply_mode_from, reply_mode_headers(), strict_auth)
+        assertEquals("Jane Doe", result?.display_sender_name)
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+        assertEquals(addy_custom_service, result?.forwarding_service)
+    }
+
+    @Test
+    fun reply_to_mode_accepts_quoted_reply_to_with_name() {
+        val result = resolve_forwarding_display(
+            reply_mode_from,
+            reply_mode_headers("\"Jane Doe 'jane.doe at example.com'\" <$reply_mode_reply_to>"),
+            strict_auth,
+        )
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+    }
+
+    @Test
+    fun reply_to_mode_binds_original_reply_to_header() {
+        val result = resolve_forwarding_display(
+            reply_mode_from,
+            reply_mode_headers(
+                "shop+help=example.com@mail.custom.example",
+                "X-AnonAddy-Original-Reply-To-Header" to "Support <help@example.com>",
+            ),
+            strict_auth,
+        )
+        assertEquals("Jane Doe", result?.display_sender_name)
+        assertEquals("jane.doe@example.com", result?.display_sender_email)
+    }
+
+    @Test
+    fun reply_to_mode_decodes_sender_with_plus_sign() {
+        val result = resolve_forwarding_display(
+            reply_mode_from,
+            headers(
+                "X-AnonAddy-Original-Sender" to "orders+es@shop.example",
+                "Reply-To" to "shop+orders+es=shop.example@mail.custom.example",
+            ),
+            strict_auth,
+        )
+        assertEquals("orders+es@shop.example", result?.display_sender_email)
+        assertEquals("orders+es", result?.display_sender_name)
+    }
+
+    @Test
+    fun reply_to_mode_rejects_reply_to_without_encoded_address() {
+        for (reply_to in listOf(
+            "shop@mail.custom.example",
+            "shop+jane.doe@mail.custom.example",
+            "shop+=example.com@mail.custom.example",
+            "shop+jane.doe=exa_mple.com@mail.custom.example",
+        )) {
+            assertNull(resolve_forwarding_display(reply_mode_from, reply_mode_headers(reply_to), strict_auth))
+        }
+    }
+
+    @Test
+    fun reply_to_mode_rejects_other_domain_alias_or_sender() {
+        for (reply_to in listOf(
+            "shop+jane.doe=example.com@evil.example",
+            "other+jane.doe=example.com@mail.custom.example",
+            "shop+ceo=bank.example@mail.custom.example",
+        )) {
+            assertNull(resolve_forwarding_display(reply_mode_from, reply_mode_headers(reply_to), strict_auth))
+        }
+    }
+
+    @Test
+    fun reply_to_mode_rejects_conflicting_or_multiple_reply_to() {
+        assertNull(
+            resolve_forwarding_display(
+                reply_mode_from,
+                reply_mode_headers(
+                    reply_mode_reply_to,
+                    "Reply-To" to "shop+ceo=bank.example@mail.custom.example",
+                ),
+                strict_auth,
+            ),
+        )
+        assertNull(
+            resolve_forwarding_display(
+                reply_mode_from,
+                reply_mode_headers("$reply_mode_reply_to, attacker@evil.example"),
+                strict_auth,
+            ),
+        )
+    }
+
+    @Test
+    fun reply_to_mode_rejects_weak_dmarc_and_forwarder_failure() {
+        assertNull(
+            resolve_forwarding_display(
+                reply_mode_from,
+                reply_mode_headers(),
+                ForwardingAuthResults(dmarc_result = "none", sender_aligned = true),
+            ),
+        )
+        assertNull(
+            resolve_forwarding_display(
+                reply_mode_from,
+                reply_mode_headers(
+                    reply_mode_reply_to,
+                    "X-AnonAddy-Authentication-Results" to "mx.example.net; dmarc=fail (p=reject)",
+                ),
+                strict_auth,
+            ),
+        )
+    }
 }
