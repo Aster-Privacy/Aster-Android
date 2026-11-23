@@ -25,11 +25,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import org.json.JSONArray
@@ -37,6 +39,8 @@ import org.json.JSONObject
 import java.io.ByteArrayInputStream
 
 internal const val TRANSLATION_ENGINE_ORIGIN = "https://mail-content.invalid/"
+
+internal const val TRANSLATION_ENGINE_PAGE_PATH = "/engine.html"
 
 internal const val MAX_DETECTION_CHARACTERS = 4000
 
@@ -62,8 +66,6 @@ internal fun translated_segments_of(json: String): List<String>? = try {
     null
 }
 
-private const val RENDERER_GONE_STATUS = "{\"state\":\"error\"}"
-
 internal fun translation_engine_nonce(): String {
     val bytes = ByteArray(16)
     java.security.SecureRandom().nextBytes(bytes)
@@ -76,7 +78,8 @@ internal class translation_engine(
     private val on_detect: (String) -> Unit,
     private val on_status: (String) -> Unit,
     private val on_result: (String) -> Unit,
-) {
+    private val on_gone: () -> Unit = {},
+) : translation_engine_port {
     private val app_context = context.applicationContext
     private val main_handler = Handler(Looper.getMainLooper())
     private val pending = ArrayDeque<String>()
@@ -107,6 +110,9 @@ internal class translation_engine(
         }
     }
 
+    private val engine_document: ByteArray =
+        translation_engine_document(translation_engine_nonce()).toByteArray(Charsets.UTF_8)
+
     private val web = WebView(app_context).apply {
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = false
@@ -129,7 +135,10 @@ internal class translation_engine(
             ): WebResourceResponse? {
                 val uri = request?.url ?: return denied()
                 if (uri.host != TranslationAssets.CONTENT_HOST) return denied()
-                return TranslationAssets.serve(app_context, uri.host, uri.path, true) ?: denied()
+                if (request.isForMainFrame) {
+                    return if (uri.path == TRANSLATION_ENGINE_PAGE_PATH) engine_page() else denied()
+                }
+                return TranslationAssets.serve(app_context, uri.host, uri.path) ?: denied()
             }
 
             override fun onRenderProcessGone(
@@ -138,42 +147,52 @@ internal class translation_engine(
             ): Boolean {
                 main_handler.post {
                     if (destroyed) return@post
-                    this@translation_engine.on_status(RENDERER_GONE_STATUS)
                     destroy()
+                    on_gone()
                 }
                 return true
             }
+        }
+        webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(message: ConsoleMessage?): Boolean = true
         }
         addJavascriptInterface(bridge, "AsterTranslateBridge")
     }
 
     init {
-        web.loadDataWithBaseURL(
-            TRANSLATION_ENGINE_ORIGIN,
-            translation_engine_document(translation_engine_nonce()),
-            "text/html",
-            "UTF-8",
-            null,
-        )
+        web.loadUrl(TRANSLATION_ENGINE_ORIGIN + TRANSLATION_ENGINE_PAGE_PATH.removePrefix("/"))
     }
 
-    fun detect(text: String, accepted: String) {
+    private fun engine_page(): WebResourceResponse =
+        WebResourceResponse(
+            "text/html",
+            "utf-8",
+            200,
+            "OK",
+            mapOf("Cache-Control" to "no-store"),
+            ByteArrayInputStream(engine_document),
+        )
+
+    override fun detect(text: String, accepted: String, request_id: String) {
         val trimmed = text.take(MAX_DETECTION_CHARACTERS)
         enqueue(
             "window.__aster_translate&&window.__aster_translate.detect_text(" +
-                "${JSONObject.quote(trimmed)},${JSONObject.quote(accepted)})",
+                "${JSONObject.quote(trimmed)},${JSONObject.quote(accepted)},${JSONObject.quote(request_id)})",
         )
     }
 
-    fun translate(segments: List<String>, from: String, to: String) {
+    override fun translate(segments: List<String>, from: String, to: String, request_id: String) {
         val payload = JSONArray(segments).toString()
         enqueue(
             "window.__aster_translate&&window.__aster_translate.translate_texts(" +
-                "${JSONObject.quote(payload)},${JSONObject.quote(from)},${JSONObject.quote(to)})",
+                "${JSONObject.quote(payload)},${JSONObject.quote(from)},${JSONObject.quote(to)}," +
+                "${JSONObject.quote(request_id)})",
         )
     }
 
-    fun destroy() {
+    override fun is_destroyed(): Boolean = destroyed
+
+    override fun destroy() {
         if (destroyed) return
         destroyed = true
         pending.clear()

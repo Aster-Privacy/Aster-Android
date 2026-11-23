@@ -197,6 +197,7 @@ fun pending_send_preview_screen(
                 expanded_message(
                     msg = message,
                     is_last = true,
+                    translation_enabled = false,
                     can_collapse = false,
                     show_header_reply = false,
                     on_collapse = {},

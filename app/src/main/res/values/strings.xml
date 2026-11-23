@@ -2595,6 +2595,9 @@
     <string name="translation_translating">Translating on your device…</string>
     <string name="translation_translated">Translated from %1$s on your device</string>
     <string name="translation_show_original">Show original</string>
+    <string name="translation_show_translation">Show translation</string>
+    <string name="translation_showing_original">Showing the original message.</string>
+    <string name="translation_limited_quality">Translation quality may be lower for this language.</string>
     <string name="translation_failed">Translation failed</string>
     <string name="translation_wifi_required">To download this language pack, connect to Wi-Fi or turn off Download over Wi-Fi only in Settings.</string>
     <string name="translation_webview_outdated">To translate mail, update %1$s.</string>

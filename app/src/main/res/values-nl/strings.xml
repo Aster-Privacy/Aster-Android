@@ -1384,6 +1384,9 @@
     <string name="translation_translating">Vertalen op je apparaat…</string>
     <string name="translation_translated">Vertaald vanuit %1$s op je apparaat</string>
     <string name="translation_show_original">Origineel tonen</string>
+    <string name="translation_show_translation">Vertaling tonen</string>
+    <string name="translation_showing_original">Het oorspronkelijke bericht wordt getoond.</string>
+    <string name="translation_limited_quality">De vertaalkwaliteit kan lager zijn voor deze taal.</string>
     <string name="translation_failed">Vertalen mislukt</string>
     <string name="translation_wifi_required">Maak verbinding met wifi of zet Alleen downloaden via wifi uit in Instellingen om dit taalpakket te downloaden.</string>
     <string name="translation_webview_outdated">Werk %1$s bij om e-mail te vertalen.</string>

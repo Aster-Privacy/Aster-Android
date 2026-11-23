@@ -1384,6 +1384,9 @@
     <string name="translation_translating">Cihazınızda çevriliyor…</string>
     <string name="translation_translated">Cihazınızda %1$s dilinden çevrildi</string>
     <string name="translation_show_original">Orijinali göster</string>
+    <string name="translation_show_translation">Çeviriyi göster</string>
+    <string name="translation_showing_original">Orijinal ileti gösteriliyor.</string>
+    <string name="translation_limited_quality">Bu dil için çeviri kalitesi daha düşük olabilir.</string>
     <string name="translation_failed">Çeviri başarısız oldu</string>
     <string name="translation_wifi_required">Bu dil paketini indirmek için Wi-Fi\'ye bağlanın veya Ayarlar\'da Yalnızca Wi-Fi ile indir seçeneğini kapatın.</string>
     <string name="translation_webview_outdated">E-postaları çevirmek için %1$s uygulamasını güncelleyin.</string>

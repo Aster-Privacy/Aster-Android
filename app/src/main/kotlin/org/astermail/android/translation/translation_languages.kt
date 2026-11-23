@@ -44,3 +44,32 @@ fun language_display_name(code: String): String {
         name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 }
+
+const val TRANSLATION_INACTIVITY_TIMEOUT_MS = 90_000L
+
+val limited_quality_languages: Set<String> = setOf("ja", "ko", "zh")
+
+fun translation_quality_limited(code: String?): Boolean =
+    code != null && limited_quality_languages.contains(code)
+
+data class translated_parts(val body: List<String>, val subject: String?)
+
+fun split_subject_segment(segments: List<String>, subject_included: Boolean): translated_parts {
+    if (!subject_included || segments.isEmpty()) return translated_parts(segments, null)
+    val subject = segments.last().trim().ifEmpty { null }
+    return translated_parts(segments.dropLast(1), subject)
+}
+
+private const val MIN_REPLY_DETECTION_CHARACTERS = 40
+
+fun detection_text_of(text: String): String {
+    val lines = text.lines().map { org.astermail.android.ui.mail.normalize_quote_line(it) }
+    val quote = org.astermail.android.ui.mail.find_quote_start(lines)
+        ?: org.astermail.android.ui.mail.find_trailing_quote(lines)
+    val reply_lines = if (quote != null) lines.subList(0, quote.start) else lines
+    val reply = reply_lines
+        .filterNot { org.astermail.android.ui.mail.is_quoted_line(it) }
+        .joinToString("\n")
+        .trim()
+    return if (reply.count { !it.isWhitespace() } >= MIN_REPLY_DETECTION_CHARACTERS) reply else text
+}

@@ -1387,6 +1387,9 @@
     <string name="translation_translating">A traduzir no seu dispositivo…</string>
     <string name="translation_translated">Traduzido de %1$s no seu dispositivo</string>
     <string name="translation_show_original">Mostrar original</string>
+    <string name="translation_show_translation">Mostrar tradução</string>
+    <string name="translation_showing_original">A mostrar a mensagem original.</string>
+    <string name="translation_limited_quality">A qualidade da tradução pode ser inferior para este idioma.</string>
     <string name="translation_failed">Falha na tradução</string>
     <string name="translation_wifi_required">Para transferir este pacote de idioma, ligue-se a uma rede Wi-Fi ou desative Transferir apenas por Wi-Fi nas Definições.</string>
     <string name="translation_webview_outdated">Para traduzir o correio, atualize o %1$s.</string>

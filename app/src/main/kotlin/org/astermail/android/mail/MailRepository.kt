@@ -2618,6 +2618,7 @@ class MailRepository @Inject constructor(
         clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
+        org.astermail.android.translation.TranslationMemory.clear()
         DecryptedMimeAttachments.clear()
         synchronized(attachment_meta_cache) { attachment_meta_cache.clear() }
     }

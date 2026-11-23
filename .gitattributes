@@ -4,3 +4,4 @@
 Cargo.lock text eol=lf
 *.html text eol=lf
 *.js   text eol=lf
+app/src/full/assets/bergamot/registry.json -text

@@ -1385,6 +1385,9 @@
     <string name="translation_translating">Wird auf Ihrem Gerät übersetzt…</string>
     <string name="translation_translated">Aus %1$s auf Ihrem Gerät übersetzt</string>
     <string name="translation_show_original">Original anzeigen</string>
+    <string name="translation_show_translation">Übersetzung anzeigen</string>
+    <string name="translation_showing_original">Originalnachricht wird angezeigt.</string>
+    <string name="translation_limited_quality">Die Übersetzungsqualität kann für diese Sprache geringer sein.</string>
     <string name="translation_failed">Übersetzung fehlgeschlagen</string>
     <string name="translation_wifi_required">Um dieses Sprachpaket herunterzuladen, verbinden Sie sich mit einem WLAN oder deaktivieren Sie „Nur über WLAN laden“ in den Einstellungen.</string>
     <string name="translation_webview_outdated">Aktualisieren Sie %1$s, um E-Mails zu übersetzen.</string>
