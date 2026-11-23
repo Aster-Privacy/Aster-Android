@@ -348,6 +348,18 @@ class GuardSignInViewModelTest {
         val vm = GuardSignInViewModel(api, GuardDeviceStore(InMemoryPrefs()), deps())
         vm.start(challenge(), no_signer)
         runCurrent()
+        val paused = vm.state.value as guard_wait_state.paused
+        assertEquals(120L, paused.retry_after_secs)
+        assertTrue(paused.ends_at_ms > 0L)
+    }
+
+    @Test
+    fun too_many_requests_shows_retry() = runTest(dispatcher) {
+        val api = api()
+        coEvery { api.sign_in_begin(any(), any()) } throws ApiError.GuardRetry(org.astermail.android.api.GUARD_TOO_MANY_REQUESTS_CODE, 120)
+        val vm = GuardSignInViewModel(api, GuardDeviceStore(InMemoryPrefs()), deps())
+        vm.start(challenge(), no_signer)
+        runCurrent()
         assertEquals(guard_wait_state.retry(120), vm.state.value)
     }
 

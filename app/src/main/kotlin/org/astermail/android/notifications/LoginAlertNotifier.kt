@@ -60,10 +60,13 @@ import org.astermail.android.guard.guard_open_target
 import org.astermail.android.guard.guard_prompt_push
 import org.astermail.android.guard.GUARD_PROMPT_DEFAULT_TIMEOUT_MS
 import org.astermail.android.guard.guard_prompt_lookup
+import org.astermail.android.guard.guard_is_own_device_event
+import org.astermail.android.guard.guard_prompt_can_look_up
 import org.astermail.android.guard.guard_prompt_should_post
 import org.astermail.android.guard.guard_prompt_timeout_ms
 import org.astermail.android.guard.guard_push
 import org.astermail.android.guard.guard_should_show
+import org.astermail.android.guard.guard_cancelled_push
 import org.astermail.android.storage.AccountStore
 import org.astermail.android.storage.TokenStore
 import java.util.UUID
@@ -366,8 +369,8 @@ object LoginAlertNotifier {
     fun guard_work_name(push: guard_push): String = "guard_${push.event.name}_${push.id}"
 
     fun enqueue_guard(context: Context, push: guard_push) {
-        if (guard_notification_spec_for(push.event).cancels_prompt) cancel_guard_prompt(context, push)
-        if (!guard_should_show(push, guard_local_approvals::approved_here)) return
+        guard_cancelled_push(push)?.let { cancel_guard_target(context, it) }
+        if (!guard_should_show(push, approved_here = guard_local_approvals::approved_here)) return
         val request = OneTimeWorkRequestBuilder<GuardAlertWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.SECONDS)
@@ -389,37 +392,15 @@ object LoginAlertNotifier {
     fun guard_title_res(event: guard_event): Int? = when (event) {
         guard_event.sign_in_request -> R.string.notif_guard_sign_in_title
         guard_event.change_held -> R.string.notif_guard_change_held_title
-        guard_event.change_applied -> R.string.notif_guard_change_applied_title
-        guard_event.change_cancelled -> R.string.notif_guard_change_cancelled_title
-        guard_event.panic -> R.string.notif_guard_panic_title
         guard_event.rescue_started -> R.string.notif_guard_rescue_started_title
-        guard_event.rescue_vetoed -> R.string.notif_guard_rescue_vetoed_title
-        guard_event.guard_enabled -> R.string.notif_guard_enabled_title
-        guard_event.prompts_paused -> R.string.notif_guard_paused_title
-        guard_event.sign_in_approved -> R.string.notif_guard_sign_in_approved_title
-        guard_event.device_added -> R.string.notif_guard_device_added_title
-        guard_event.device_removed -> R.string.notif_guard_device_removed_title
-        guard_event.rescue_completed -> R.string.notif_guard_rescue_completed_title
-        guard_event.guard_disabled -> R.string.notif_guard_disabled_title
-        guard_event.sign_in_denied, guard_event.sign_in_expired -> null
+        else -> null
     }
 
     fun guard_body_res(event: guard_event): Int? = when (event) {
         guard_event.sign_in_request -> R.string.notif_guard_sign_in_body
         guard_event.change_held -> R.string.notif_guard_change_held_body
-        guard_event.change_applied -> R.string.notif_guard_change_applied_body
-        guard_event.change_cancelled -> R.string.notif_guard_change_cancelled_body
-        guard_event.panic -> R.string.notif_guard_panic_body
         guard_event.rescue_started -> R.string.notif_guard_rescue_started_body
-        guard_event.rescue_vetoed -> R.string.notif_guard_rescue_vetoed_body
-        guard_event.guard_enabled -> R.string.notif_guard_enabled_body
-        guard_event.prompts_paused -> R.string.notif_guard_paused_body
-        guard_event.sign_in_approved -> R.string.notif_guard_sign_in_approved_body
-        guard_event.device_added -> R.string.notif_guard_device_added_body
-        guard_event.device_removed -> R.string.notif_guard_device_removed_body
-        guard_event.rescue_completed -> R.string.notif_guard_rescue_completed_body
-        guard_event.guard_disabled -> R.string.notif_guard_disabled_body
-        guard_event.sign_in_denied, guard_event.sign_in_expired -> null
+        else -> null
     }
 
     fun guard_open_intent(context: Context, push: guard_push): Intent {
@@ -535,9 +516,12 @@ object LoginAlertNotifier {
         tag != null && tag.startsWith("guard:") && tag.endsWith(suffix)
 
     fun cancel_guard_prompt(context: Context, push: guard_push) {
-        val prompt = guard_prompt_push(push)
-        runCatching { WorkManager.getInstance(context).cancelUniqueWork(guard_work_name(prompt)) }
-        cancel_guard(context, prompt)
+        cancel_guard_target(context, guard_prompt_push(push))
+    }
+
+    fun cancel_guard_target(context: Context, target: guard_push) {
+        runCatching { WorkManager.getInstance(context).cancelUniqueWork(guard_work_name(target)) }
+        cancel_guard(context, target)
     }
 
     private fun guard_builder(context: Context): NotificationCompat.Builder =
@@ -691,25 +675,33 @@ class GuardAlertWorker(
         val account_id = inputData.getString(LoginAlertNotifier.KEY_GUARD_ACCOUNT).orEmpty()
         if (account_id.isBlank()) return Result.success()
         val push = guard_push(event, inputData.getString(LoginAlertNotifier.KEY_GUARD_ID).orEmpty(), account_id)
-        if (!guard_should_show(push, guard_local_approvals::approved_here)) return Result.success()
-        if (event != guard_event.sign_in_request) {
-            LoginAlertNotifier.show_guard(applicationContext, push)
-            return Result.success()
-        }
+        if (!guard_should_show(push, approved_here = guard_local_approvals::approved_here)) return Result.success()
         val entry = runCatching {
             EntryPointAccessors.fromApplication(
                 applicationContext,
                 LoginAlertNotifier.GuardAlertEntryPoint::class.java,
             )
-        }.getOrNull() ?: return Result.success()
+        }.getOrNull()
+        if (event != guard_event.sign_in_request) {
+            val own = runCatching {
+                entry?.guard_device_store()?.device_id(UUID.fromString(push.account_id))
+            }.getOrNull()
+            if (guard_is_own_device_event(push, own)) return Result.success()
+            LoginAlertNotifier.show_guard(applicationContext, push)
+            return Result.success()
+        }
+        if (entry == null) return Result.success()
         val current = runCatching { entry.account_store().get_current_id() }.getOrNull()
-        if (!guard_prompt_should_post(push.account_id, current, guard_prompt_lookup.unknown)) return Result.success()
-        val (lookup, item) = find_request(entry, push)
-        if (!guard_prompt_should_post(push.account_id, current, lookup)) {
+        val (lookup, item) = if (guard_prompt_can_look_up(push.account_id, current)) {
+            find_request(entry, push)
+        } else {
+            guard_prompt_lookup.unknown to null
+        }
+        val timeout = guard_prompt_timeout_ms(item?.expires_at, org.astermail.android.api.network.server_clock.now_ms())
+        if (!guard_prompt_should_post(lookup, timeout)) {
             LoginAlertNotifier.cancel_guard(applicationContext, push)
             return Result.success()
         }
-        val timeout = guard_prompt_timeout_ms(item?.expires_at, org.astermail.android.api.network.server_clock.now_ms())
         LoginAlertNotifier.show_guard(applicationContext, push, timeout)
         return Result.success()
     }

@@ -154,7 +154,7 @@ class GuardPanicViewModelTest {
     @Test
     fun `held change notifications carry this was not me and sign in requests do not`() {
         assertTrue(guard_notification_spec_for(guard_event.change_held).panic_action)
-        assertTrue(guard_notification_spec_for(guard_event.change_applied).panic_action)
+        assertFalse(guard_notification_spec_for(guard_event.change_applied).shows)
         assertFalse(guard_notification_spec_for(guard_event.sign_in_request).panic_action)
     }
 

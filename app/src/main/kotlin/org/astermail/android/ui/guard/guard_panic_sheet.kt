@@ -95,7 +95,7 @@ fun guard_panic_screen(
             guard_panic_state.working -> guard_panic_confirm(null, working = true, on_confirm = on_confirm)
             is guard_panic_state.done -> guard_panic_done(state, on_back, on_change_password)
             is guard_panic_state.failed -> {
-                guard_notice_text(state.notice)?.let { error_banner(it) }
+                guard_notice_text(state.notice, state.error)?.let { error_banner(it) }
                 Spacer(Modifier.height(AsterSpacing.md))
                 AsterButton(
                     label = stringResource(R.string.guard_panic_try_again),

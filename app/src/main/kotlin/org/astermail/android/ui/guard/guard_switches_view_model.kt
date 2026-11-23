@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.astermail.android.R
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.guard.GuardApi
 import org.astermail.android.api.guard.GuardStatus
@@ -47,6 +48,8 @@ import org.astermail.android.guard.GuardKeyLostException
 import org.astermail.android.guard.GuardNoDeviceException
 import org.astermail.android.guard.GuardNoLockScreenException
 import org.astermail.android.guard.GuardRepository
+import org.astermail.android.guard.guard_error_message
+import org.astermail.android.guard.guard_error_message_for
 import org.astermail.android.guard.guard_held_notice
 import org.astermail.android.guard.guard_signer
 import org.astermail.android.guard.to_notice
@@ -66,6 +69,12 @@ object GuardCurrentUserModule {
 }
 
 enum class guard_action_notice { canceled, key_lost, no_lock_screen, no_device, failed }
+
+fun guard_removal_strands(status: GuardStatus?, device_id: String): Boolean {
+    val devices = status?.devices ?: return false
+    if (status.switches == 0 || devices.none { it.id == device_id }) return false
+    return devices.none { it.id != device_id }
+}
 
 fun guard_action_notice_for(t: Throwable): guard_action_notice = when (t) {
     is GuardKeyLostException -> guard_action_notice.key_lost
@@ -88,6 +97,7 @@ data class guard_switches_ui(
     val saving: Boolean = false,
     val removing_id: String? = null,
     val notice: guard_action_notice? = null,
+    val error: guard_error_message? = null,
 ) {
     val guard_on: Boolean get() = status?.let { guard_is_on(it) } == true
     val is_guard_device: Boolean get() = status?.this_device != null
@@ -109,6 +119,7 @@ class GuardSwitchesViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { load() }
+        viewModelScope.launch { org.astermail.android.guard.guard_live_events.events.collect { load_quietly() } }
     }
 
     fun refresh() {
@@ -200,7 +211,7 @@ class GuardSwitchesViewModel @Inject constructor(
             if (guard_is_disabled(t)) {
                 _state.update { it.copy(saving = false, hidden = true) }
             } else {
-                _state.update { it.copy(saving = false, notice = guard_action_notice_for(t)) }
+                _state.update { it.copy(saving = false, notice = guard_action_notice_for(t), error = guard_error_message_for(t)) }
             }
         }
     }
@@ -213,6 +224,12 @@ class GuardSwitchesViewModel @Inject constructor(
     suspend fun run_remove_device(signer: guard_signer, device_id: String) {
         val id = user.user_id() ?: return
         val device_uuid = runCatching { UUID.fromString(device_id) }.getOrNull() ?: return
+        if (guard_removal_strands(_state.value.status, device_id)) {
+            _state.update {
+                it.copy(notice = guard_action_notice.failed, error = guard_error_message(R.string.guard_error_last_device))
+            }
+            return
+        }
         _state.update { it.copy(removing_id = device_id, notice = null) }
         try {
             val action = GuardRepository(api, store) { id }
@@ -230,7 +247,7 @@ class GuardSwitchesViewModel @Inject constructor(
             _state.update { it.copy(removing_id = null, held_notice = held.to_notice()) }
             load_quietly()
         } catch (t: Throwable) {
-            _state.update { it.copy(removing_id = null, notice = guard_action_notice_for(t)) }
+            _state.update { it.copy(removing_id = null, notice = guard_action_notice_for(t), error = guard_error_message_for(t)) }
         }
     }
 

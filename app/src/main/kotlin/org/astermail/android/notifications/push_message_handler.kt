@@ -131,6 +131,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             known_accounts = { guard_known_accounts(context) },
             claim = { NotificationDedupe.claim_event(context, it) },
             enqueue = { LoginAlertNotifier.enqueue_guard(context, it) },
+            marks = NotificationDedupe.guard_marks(context),
         )
     }
     if (type != "new_mail" && type != "wake") return PushResult.Ignore
@@ -213,7 +214,8 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             NotificationDedupe.sign_in_marker(context),
             envelope.from_email,
             envelope.sent_at.orEmpty(),
-        )
+        ) ||
+        NotificationDedupe.is_probable_guard_notice_mail(NotificationDedupe.guard_mark_ms(context), envelope.from_email)
     ) {
         MailPollingWorker.claim_item_notification(context, item_id)
         return PushResult.Ignore

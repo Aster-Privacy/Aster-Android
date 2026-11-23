@@ -21,7 +21,7 @@
 -->
 <resources>
     <string name="guard_wait_title">Approve this sign-in</string>
-    <string name="guard_wait_body">On a phone where you\'re already signed in, open the Aster Guard notification and enter this number.</string>
+    <string name="guard_wait_body">Open Aster on a device where Aster Guard is on, such as the browser or desktop app you used to turn it on. Open the request there and enter this number to approve it.</string>
     <string name="guard_wait_code_action">Use a Guard code instead</string>
     <string name="guard_wait_rescue_action">Use your rescue code</string>
     <string name="guard_wait_expired">This request expired. To try again, sign in again.</string>
@@ -35,7 +35,7 @@
     <string name="guard_wait_code_submit">Submit code</string>
     <string name="guard_wait_wrong_code">That code doesn\'t match. Check the code and try again.</string>
     <string name="guard_wait_needs_password">This sign-in was approved. To finish, enter your password again.</string>
-    <string name="guard_wait_failed">Something went wrong. To try again, sign in again.</string>
+    <string name="guard_wait_failed">Aster couldn\'t finish this sign-in. To try again, sign in again.</string>
     <string name="guard_wait_back">Start over</string>
     <string name="guard_number_description">Number to enter on your other phone: %1$d</string>
     <string name="guard_prompt_title">Confirm it\'s you</string>
@@ -73,7 +73,7 @@
     <string name="guard_approve_number_label">Number on the new device</string>
     <string name="guard_approve_number_help">Enter the 2-digit number.</string>
     <string name="guard_approve_wrong_number">That number doesn\'t match. Check the number on the other device.</string>
-    <string name="guard_approve_failed">Something went wrong. Try again.</string>
+    <string name="guard_approve_failed">Aster couldn\'t send your answer. Check your connection and try again.</string>
     <string name="guard_approve_action">Approve</string>
     <string name="guard_deny_action">Deny, this wasn\'t me</string>
     <string name="guard_approve_unlock_first">Aster Guard keeps your approval key locked until you unlock Aster Mail. Unlock it to review this sign-in.</string>
@@ -98,7 +98,7 @@
     <string name="guard_setup_start">Set up Aster Guard</string>
     <string name="guard_setup_working">This takes a moment.</string>
     <string name="guard_setup_unavailable">Aster Guard isn\'t available for your account yet.</string>
-    <string name="guard_setup_failed">Something went wrong. Try again.</string>
+    <string name="guard_setup_failed">Aster Guard couldn\'t turn on. Check your connection and try again.</string>
     <string name="guard_setup_retry">Try again</string>
     <string name="guard_setup_already_on_title">Aster Guard is on</string>
     <string name="guard_setup_already_on_body">This phone already approves sign-ins and changes for your account.</string>
@@ -183,7 +183,7 @@
     </plurals>
     <string name="guard_switches_save">Save changes</string>
     <string name="guard_switches_discard">Discard changes</string>
-    <string name="guard_switches_off_waits">When you turn a protection off, the change can wait 24 hours. When you turn one on, it takes effect right away.</string>
+    <string name="guard_switches_off_waits">When you turn a protection off, including Aster Guard itself, the change waits 24 hours. When you turn one on, it takes effect right away.</string>
     <string name="guard_switches_turns_off_at">This turns off on %1$s.</string>
     <string name="guard_switches_turns_off_later">This turns off after the waiting period.</string>
     <string name="guard_switches_paused">Sign-in prompts are paused until %1$s.</string>
@@ -286,7 +286,7 @@
     <string name="guard_approve_expires_in">This request expires in %1$s</string>
     <string name="guard_approve_expired">This request expired</string>
     <string name="guard_time_just_now">Just now</string>
-    <string name="guard_device_unknown">Unknown device</string>
+    <string name="guard_device_unknown">New device</string>
     <string name="guard_approve_place_unknown">Not available</string>
     <string name="guard_approve_unlock_title">Unlock to continue</string>
     <string name="guard_approve_unlock">Unlock</string>
@@ -313,14 +313,14 @@
     <string name="guard_veto_error">The rescue couldn\'t be stopped. Try again, or sign in on an approved device to stop it.</string>
     <string name="guard_rescue_banner">Someone started a rescue that turns off Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Stop rescue</string>
-    <string name="guard_intro_lead">Your phone approves every new sign-in, so a stolen password isn\'t enough.</string>
+    <string name="guard_intro_lead">Aster Guard is for high-risk accounts. Every new sign-in needs approval from a device you already approved, so a stolen password isn\'t enough.</string>
     <string name="guard_intro_approve_title">Approve new sign-ins</string>
     <string name="guard_intro_approve_body">Type the number from the new device on a phone you trust.</string>
     <string name="guard_intro_hold_title">Hold risky changes</string>
     <string name="guard_intro_hold_body">Password, recovery, and forwarding changes wait 24 hours, so you can stop them.</string>
     <string name="guard_intro_rescue_title">Keep a rescue code</string>
     <string name="guard_intro_rescue_body">Get back in if you lose every device. Nobody at Aster can turn Guard off.</string>
-    <string name="guard_intro_note">Aster Guard is free on every plan, and setup takes about a minute.</string>
+    <string name="guard_intro_note">Approve a device that\'s always with you, such as your phone. Turning Aster Guard off waits 24 hours. Aster Guard is free on every plan.</string>
     <string name="guard_intro_not_now">Not now</string>
     <string name="guard_status_on_body">New sign-ins need approval from one of your devices.</string>
     <string name="guard_status_more_devices">+%1$d</string>
@@ -337,7 +337,7 @@
     <string name="guard_wait_expired_title">This request ended</string>
     <string name="guard_wait_held_title">Your sign-in is on hold</string>
     <string name="guard_wait_needs_password_title">Enter your password again</string>
-    <string name="guard_wait_failed_title">Something went wrong</string>
+    <string name="guard_wait_failed_title">Sign-in didn\'t finish</string>
     <string name="guard_veto_invalid_title">This link no longer works</string>
     <string name="guard_veto_error_title">The rescue is still running</string>
     <string name="guard_rescued_notice">The rescue is complete, and Aster Guard is off. To protect your account again, turn on Aster Guard.</string>
@@ -371,4 +371,38 @@
     <string name="guard_passkey_account_changed">You switched accounts while confirming. Switch back to that account, then try again.</string>
     <string name="guard_passkey_expired">The passkey request expired. Try again.</string>
     <string name="guard_passkey_failed">Your passkey couldn\'t be verified. Try again, or use your password.</string>
+    <string name="guard_device_browser_on_os">%1$s on %2$s</string>
+    <string name="guard_error_action_invalid">This request changed or expired before Aster could check it. Start again.</string>
+    <string name="guard_error_already_on">Aster Guard is already on for your account.</string>
+    <string name="guard_error_device_pending">This device can approve requests after %1$s.</string>
+    <string name="guard_error_device_pending_no_time">This device can approve requests after its waiting period ends.</string>
+    <string name="guard_error_device_required">Only an approved Aster Guard device can do this. Use a device where Aster Guard is on.</string>
+    <string name="guard_error_device_type_invalid">This kind of device can\'t be added to Aster Guard. Update Aster and try again.</string>
+    <string name="guard_error_device_unknown">Aster doesn\'t recognize this device as one of your Guard devices. Add it again from a device where Aster Guard is on.</string>
+    <string name="guard_error_disabled">Aster Guard isn\'t available for your account.</string>
+    <string name="guard_error_envelope">This version of Aster can\'t finish this step. Update Aster and try again.</string>
+    <string name="guard_error_invalid_key">This device\'s Aster Guard key didn\'t match. Remove the device and add it again.</string>
+    <string name="guard_error_last_device">This is the last device that can approve sign-ins. To remove it, add another device first or turn Aster Guard off.</string>
+    <string name="guard_error_not_allowed">Your account doesn\'t allow this Aster Guard action.</string>
+    <string name="guard_error_paused">To protect your account, Aster Guard paused new sign-in requests for a while. Try again later.</string>
+    <string name="guard_error_paused_until">To protect your account, Aster Guard paused new sign-in requests. Try again after %1$s.</string>
+    <string name="guard_error_request_conflict">Another device already answered this request.</string>
+    <string name="guard_error_request_gone">This request expired or was already answered. To try again, start a new request.</string>
+    <string name="guard_error_required">Aster Guard is on for this account, so a Guard device must approve this sign-in.</string>
+    <string name="guard_error_server">Aster couldn\'t finish this step because of a server problem. Try again in a few minutes.</string>
+    <string name="guard_error_too_many">Too many attempts. Wait a moment and try again.</string>
+    <string name="guard_error_too_many_until">Too many attempts. Try again after %1$s.</string>
+    <string name="guard_setup_failed_confirm">Aster couldn\'t confirm it\'s you.</string>
+    <string name="guard_setup_failed_keys">Aster couldn\'t create keys on this phone.</string>
+    <string name="guard_setup_failed_register">Aster couldn\'t register this phone.</string>
+    <string name="guard_setup_phase_active">%1$s: in progress</string>
+    <string name="guard_setup_phase_done">%1$s: done</string>
+    <string name="guard_setup_phase_pending">%1$s</string>
+    <string name="guard_setup_phase_keys">Create keys</string>
+    <string name="guard_setup_phase_confirm">Confirm it\'s you</string>
+    <string name="guard_setup_phase_register">Register this phone</string>
+    <string name="guard_wait_expires_at">Expires in %1$s, at %2$s</string>
+    <string name="guard_wait_paused_title">Sign-in requests are paused</string>
+    <string name="guard_wait_paused">To protect your account, Aster Guard paused new sign-in requests. Try again after %1$s.</string>
+    <string name="guard_wait_sign_in_again">Sign in again</string>
 </resources>

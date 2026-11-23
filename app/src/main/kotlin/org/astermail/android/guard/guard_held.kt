@@ -98,8 +98,10 @@ fun guard_held_of(t: Throwable?): guard_held_notice? {
 fun guard_parse_instant(value: String?): Instant? =
     value?.takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() }
 
-fun ApiError.GuardHeld.to_notice(): guard_held_notice =
-    guard_held_notice(id = id, kind = guard_hold_kind.from_wire(kind), apply_after = guard_parse_instant(apply_after))
+fun ApiError.GuardHeld.to_notice(): guard_held_notice {
+    guard_local_holds.record(id)
+    return guard_held_notice(id = id, kind = guard_hold_kind.from_wire(kind), apply_after = guard_parse_instant(apply_after))
+}
 
 fun guard_format_instant(instant: Instant): String =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)

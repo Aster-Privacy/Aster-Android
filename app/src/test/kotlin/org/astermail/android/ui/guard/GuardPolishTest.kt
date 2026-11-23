@@ -100,6 +100,11 @@ class GuardPolishTest {
         assertEquals(R.string.guard_wait_failed_title, guard_wait_result_for(guard_wait_state.failed).title)
         assertEquals(R.string.guard_rescue_sign_in, guard_wait_result_for(guard_wait_state.rescue_applied).action)
         assertEquals(R.string.guard_wait_back, guard_wait_result_for(guard_wait_state.denied).action)
+        assertEquals(R.string.guard_wait_sign_in_again, guard_wait_result_for(guard_wait_state.expired).action)
+        assertEquals(R.string.guard_wait_sign_in_again, guard_wait_result_for(guard_wait_state.failed).action)
+        assertEquals(R.string.guard_wait_paused_title, guard_wait_result_for(guard_wait_state.paused(600, 0)).title)
+        val err = guard_wait_state.error(org.astermail.android.guard.guard_error_message(R.string.guard_error_disabled))
+        assertEquals(R.string.guard_wait_sign_in_again, guard_wait_result_for(err).action)
         assertEquals(R.string.guard_wait_approved_title, guard_wait_title_for(guard_wait_state.approved))
     }
 

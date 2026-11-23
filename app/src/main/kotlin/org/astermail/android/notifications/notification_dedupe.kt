@@ -36,6 +36,8 @@ object NotificationDedupe {
     const val SEEN_MAX_ENTRIES = 64
     const val LOGIN_ALERT_EVENT = "login_alert"
     const val NEW_MAIL_EVENT = "new_mail"
+    const val GUARD_MARK_EVENT = "guard_mark"
+    const val GUARD_ANY_ACCOUNT = "*"
 
     private const val PREFS_NAME = "notification_dedupe_prefs"
     private const val KEY_SEEN_EVENTS = "seen_events"
@@ -123,6 +125,76 @@ object NotificationDedupe {
         if (entries.remove(key) == null) return
         prefs.edit().putString(KEY_SEEN_EVENTS, encode_seen(entries)).commit()
     }
+
+    fun guard_mark_key(account_id: String, event: String): String =
+        event_key(GUARD_MARK_EVENT, "${account_id.lowercase()}:$event")
+
+    fun record_guard_mark(
+        entries: Map<String, Long>,
+        account_id: String,
+        event: String,
+        now_ms: Long,
+    ): Map<String, Long> {
+        val with_account = record_seen(entries, guard_mark_key(account_id, event), now_ms)
+        val with_any = record_seen(with_account, guard_mark_key(GUARD_ANY_ACCOUNT, event), now_ms)
+        return record_seen(with_any, guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT), now_ms)
+    }
+
+    fun has_guard_mark(entries: Map<String, Long>, account_id: String, event: String, now_ms: Long): Boolean =
+        is_seen(entries, guard_mark_key(account_id, event), now_ms)
+
+    fun last_guard_mark_ms(entries: Map<String, Long>): Long =
+        entries[guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT)] ?: 0L
+
+    fun is_probable_guard_notice_mail(
+        last_guard_mark_ms: Long,
+        sender_email: String,
+        now_ms: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (!is_within_window(last_guard_mark_ms, now_ms, SIGN_IN_MAIL_WINDOW_MS)) return false
+        return is_aster_system_address(sender_email)
+    }
+
+    @Synchronized
+    fun note_guard_alert(
+        context: Context,
+        account_id: String,
+        event: String,
+        now_ms: Long = System.currentTimeMillis(),
+    ) {
+        if (account_id.isBlank() || event.isBlank()) return
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        prefs.edit()
+            .putString(KEY_SEEN_EVENTS, encode_seen(record_guard_mark(entries, account_id, event, now_ms)))
+            .commit()
+    }
+
+    @Synchronized
+    fun guard_alert_recent(
+        context: Context,
+        account_id: String,
+        event: String,
+        now_ms: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return has_guard_mark(parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty()), account_id, event, now_ms)
+    }
+
+    @Synchronized
+    fun guard_mark_ms(context: Context): Long {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return last_guard_mark_ms(parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty()))
+    }
+
+    fun guard_marks(context: Context): org.astermail.android.guard.guard_alert_marks =
+        object : org.astermail.android.guard.guard_alert_marks {
+            override fun recent(account_id: String, event: org.astermail.android.guard.guard_event): Boolean =
+                guard_alert_recent(context, account_id, event.name)
+
+            override fun note(account_id: String, event: org.astermail.android.guard.guard_event) =
+                note_guard_alert(context, account_id, event.name)
+        }
 
     @Synchronized
     fun note_sign_in_alert(

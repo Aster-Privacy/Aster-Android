@@ -76,6 +76,7 @@ sealed interface guard_approve_state {
         val number_input: String = "",
         val expires_at: String = "",
         val notice: guard_approve_notice? = null,
+        val error: org.astermail.android.guard.guard_error_message? = null,
     ) : guard_approve_state {
         val can_approve: Boolean get() = guard_parse_number(number_input) != null
         val is_join: Boolean get() = kind == GUARD_KIND_JOIN
@@ -222,7 +223,7 @@ class GuardApproveViewModel @Inject constructor(
     fun on_number(input: String) {
         val current = _state.value as? guard_approve_state.ready ?: return
         val digits = input.filter { it in '0'..'9' }.take(GUARD_NUMBER_DIGITS)
-        val next = current.copy(number_input = digits, notice = null)
+        val next = current.copy(number_input = digits, notice = null, error = null)
         last_ready = next
         set(next)
     }
@@ -310,7 +311,7 @@ class GuardApproveViewModel @Inject constructor(
             }
             api_error_code(t) == GUARD_REQUEST_GONE_CODE -> gone(user)
             api_error_code(t) == GUARD_ENVELOPE_REQUIRED_CODE -> set(guard_approve_state.unlock_first)
-            else -> set(current.copy(notice = guard_approve_notice.failed))
+            else -> set(current.copy(notice = guard_approve_notice.failed, error = org.astermail.android.guard.guard_error_message_for(t)))
         }
     }
 

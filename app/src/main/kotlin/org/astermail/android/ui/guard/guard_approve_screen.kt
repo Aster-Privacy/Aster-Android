@@ -61,7 +61,9 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDestructiveButton
+import org.astermail.android.guard.guard_known_label
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.guard.guard_sign_result
 import org.astermail.android.guard.guard_signer
 import org.astermail.android.guard.keystore_signer
@@ -227,7 +229,7 @@ private fun approve_ready_body(
     )
     Spacer(Modifier.height(AsterSpacing.sm))
     val notice_text = when (state.notice) {
-        guard_approve_notice.failed -> stringResource(R.string.guard_approve_failed)
+        guard_approve_notice.failed -> state.error?.resolve() ?: stringResource(R.string.guard_approve_failed)
         null -> stringResource(R.string.guard_approve_number_help)
     }
     Text(
@@ -267,10 +269,11 @@ private fun approve_request_card(state: guard_approve_state.ready, now: Long) {
     val colors = AsterMaterial.colors
     val view = state.view
     val os_kind = guard_os_kind_for(view?.os, view?.device_type.orEmpty())
-    val device = view?.device_summary()?.takeIf { it.isNotBlank() }
-        ?: state.device_name.takeIf { it.isNotBlank() }
+    val on_os = stringResource(R.string.guard_device_browser_on_os)
+    val device = view?.device_summary { b, o -> on_os.format(b, o) }?.takeIf { it.isNotBlank() }
+        ?: guard_known_label(state.device_name)
         ?: stringResource(R.string.guard_device_unknown)
-    val place = guard_place_text(view?.city, view?.region_code() ?: view?.country)
+    val place = if (view?.has_place() == true) guard_place_text(view.city, view.region_code() ?: view.country) else ""
     val flag = guard_flag_emoji(view?.region_code())
     val time_iso = view?.requested_at?.takeIf { it.isNotBlank() } ?: state.created_at
     val relative = guard_relative_time(time_iso, now)
@@ -283,18 +286,23 @@ private fun approve_request_card(state: guard_approve_state.ready, now: Long) {
             value = device,
             value_leading = view?.browser?.takeIf { it.isNotBlank() }?.let { browser -> { guard_browser_mark(browser) } },
         )
-        guard_detail_row(
-            tile = { guard_vector_tile(TablerIcons.MapPin, colors.text_secondary) },
-            label = stringResource(R.string.guard_approve_place),
-            value = place.ifBlank { stringResource(R.string.guard_approve_place_unknown) },
-            value_leading = flag?.let { emoji -> { Text(text = emoji, fontSize = 16.sp, lineHeight = 20.sp) } },
-        )
-        guard_detail_row(
-            tile = { guard_vector_tile(TablerIcons.Clock, colors.text_secondary) },
-            label = stringResource(R.string.guard_approve_time),
-            value = relative ?: absolute ?: stringResource(R.string.guard_approve_place_unknown),
-            supporting = if (relative != null) absolute else null,
-        )
+        if (place.isNotBlank()) {
+            guard_detail_row(
+                tile = { guard_vector_tile(TablerIcons.MapPin, colors.text_secondary) },
+                label = stringResource(R.string.guard_approve_place),
+                value = place,
+                value_leading = flag?.let { emoji -> { Text(text = emoji, fontSize = 16.sp, lineHeight = 20.sp) } },
+            )
+        }
+        val time_value = relative ?: absolute
+        if (time_value != null) {
+            guard_detail_row(
+                tile = { guard_vector_tile(TablerIcons.Clock, colors.text_secondary) },
+                label = stringResource(R.string.guard_approve_time),
+                value = time_value,
+                supporting = if (relative != null) absolute else null,
+            )
+        }
         Spacer(Modifier.height(AsterSpacing.sm))
     }
 }

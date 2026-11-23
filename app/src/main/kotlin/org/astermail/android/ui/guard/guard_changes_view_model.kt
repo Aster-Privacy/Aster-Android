@@ -93,6 +93,7 @@ data class guard_changes_ui(
     val long_trusted: Boolean = false,
     val working_id: String? = null,
     val notice: guard_changes_notice? = null,
+    val error: org.astermail.android.guard.guard_error_message? = null,
     val passkey_failure: guard_passkey_failure? = null,
 ) {
     fun can_skip(row: guard_change_row): Boolean = is_guard_device && long_trusted && row.skippable()
@@ -122,6 +123,7 @@ class GuardChangesViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { load() }
+        viewModelScope.launch { org.astermail.android.guard.guard_live_events.events.collect { load() } }
     }
 
     fun refresh() {
@@ -226,7 +228,7 @@ class GuardChangesViewModel @Inject constructor(
                     else -> guard_changes_notice.failed
                 }
             }
-            _state.update { it.copy(working_id = null, notice = notice) }
+            _state.update { it.copy(working_id = null, notice = notice, error = org.astermail.android.guard.guard_error_message_for(t)) }
         }
     }
 

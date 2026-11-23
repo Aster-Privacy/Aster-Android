@@ -40,10 +40,15 @@ import org.astermail.android.guard.guard_notification_spec_for
 import org.astermail.android.guard.guard_open_target
 import org.astermail.android.guard.guard_prompt_lookup
 import org.astermail.android.guard.guard_prompt_push
+import org.astermail.android.guard.guard_prompt_can_look_up
 import org.astermail.android.guard.guard_prompt_should_post
+import org.astermail.android.guard.guard_alert_marks
+import org.astermail.android.guard.guard_is_own_device_event
 import org.astermail.android.guard.guard_prompt_timeout_ms
 import org.astermail.android.guard.guard_push
 import org.astermail.android.guard.guard_should_show
+import org.astermail.android.guard.guard_cancelled_push
+import org.astermail.android.guard.guard_local_holds
 import org.astermail.android.guard.guard_uuid_field
 import org.astermail.android.guard.handle_guard_push
 import org.astermail.android.guard.needs_id
@@ -279,12 +284,14 @@ class GuardPushTest {
     }
 
     @Test
-    fun prompt_posts_only_for_current_account_and_live_request() {
-        assertTrue(guard_prompt_should_post(account, account, guard_prompt_lookup.found))
-        assertTrue(guard_prompt_should_post(account, account.uppercase(), guard_prompt_lookup.unknown))
-        assertFalse(guard_prompt_should_post(account, account, guard_prompt_lookup.absent))
-        assertFalse(guard_prompt_should_post(account, other_account, guard_prompt_lookup.found))
-        assertFalse(guard_prompt_should_post(account, null, guard_prompt_lookup.found))
+    fun prompt_posts_for_any_signed_in_account_while_live() {
+        assertTrue(guard_prompt_should_post(guard_prompt_lookup.found, 60_000L))
+        assertTrue(guard_prompt_should_post(guard_prompt_lookup.unknown, 60_000L))
+        assertFalse(guard_prompt_should_post(guard_prompt_lookup.absent, 60_000L))
+        assertFalse(guard_prompt_should_post(guard_prompt_lookup.found, 0L))
+        assertTrue(guard_prompt_can_look_up(account, account.uppercase()))
+        assertFalse(guard_prompt_can_look_up(account, other_account))
+        assertFalse(guard_prompt_can_look_up(account, null))
     }
 
     @Test
@@ -295,7 +302,9 @@ class GuardPushTest {
         assertEquals(GUARD_PROMPT_DEFAULT_TIMEOUT_MS, guard_prompt_timeout_ms("garbage", now))
         assertEquals(120_000L, guard_prompt_timeout_ms("2026-11-16T10:02:00Z", now))
         assertEquals(GUARD_PROMPT_DEFAULT_TIMEOUT_MS, guard_prompt_timeout_ms("2026-11-16T11:00:00Z", now))
-        assertEquals(GUARD_PROMPT_MIN_TIMEOUT_MS, guard_prompt_timeout_ms("2026-11-16T09:00:00Z", now))
+        assertEquals(0L, guard_prompt_timeout_ms("2026-11-16T09:00:00Z", now))
+        assertEquals(0L, guard_prompt_timeout_ms("2026-11-16T10:00:00Z", now))
+        assertEquals(GUARD_PROMPT_MIN_TIMEOUT_MS, guard_prompt_timeout_ms("2026-11-16T10:00:10Z", now))
     }
 
     @Test
@@ -368,14 +377,53 @@ class GuardPushTest {
     }
 
     @Test
-    fun approved_cancels_prompt_and_offers_panic() {
+    fun approved_cancels_prompt_silently() {
         val spec = guard_notification_spec_for(guard_event.sign_in_approved)
         assertTrue(spec.cancels_prompt)
-        assertTrue(spec.shows)
-        assertTrue(spec.panic_action)
+        assertFalse(spec.shows)
+        assertFalse(spec.panic_action)
         assertFalse(spec.review_action)
         assertFalse(spec.private_details)
-        assertEquals(guard_open_target.guard_settings, spec.target)
+    }
+
+    @Test
+    fun only_actionable_events_notify() {
+        val shown = guard_event.entries.filter { guard_notification_spec_for(it).shows }
+        assertEquals(listOf(guard_event.sign_in_request, guard_event.change_held, guard_event.rescue_started), shown)
+    }
+
+    @Test
+    fun applied_and_cancelled_changes_clear_the_held_notice() {
+        listOf(guard_event.change_applied, guard_event.change_cancelled).forEach {
+            val spec = guard_notification_spec_for(it)
+            assertFalse(spec.shows)
+            assertEquals(guard_event.change_held, spec.cancels)
+            assertEquals(guard_push(guard_event.change_held, x1, account), guard_cancelled_push(guard_push(it, x1, account)))
+        }
+    }
+
+    @Test
+    fun held_change_made_here_is_not_shown() {
+        guard_local_holds.clear()
+        val push = guard_push(guard_event.change_held, x1, account)
+        assertTrue(guard_should_show(push, approved_here = { _, _ -> false }))
+        guard_local_holds.record(x1.uppercase())
+        assertFalse(guard_should_show(push, approved_here = { _, _ -> false }))
+        guard_local_holds.clear()
+    }
+
+    @Test
+    fun silent_events_still_cancel_and_refresh() {
+        val dedupe = fake_dedupe()
+        val enqueued = mutableListOf<guard_push>()
+        val known = { listOf(account) }
+        val result = handle_guard_push(payload(event = "change_applied", id = x1), known, dedupe::claim, { enqueued += it })
+        assertEquals(PushResult.Ignore, result)
+        assertEquals(listOf(guard_push(guard_event.change_applied, x1, account)), enqueued)
+        assertTrue("guard:change_held:$x1" in dedupe.claimed)
+        val late = handle_guard_push(payload(event = "change_held", id = x1), known, dedupe::claim, { enqueued += it })
+        assertEquals(PushResult.Ignore, late)
+        assertEquals(1, enqueued.size)
     }
 
     @Test
@@ -389,21 +437,18 @@ class GuardPushTest {
         listOf(guard_event.device_added, guard_event.device_removed, guard_event.rescue_completed, guard_event.guard_disabled).forEach {
             val spec = guard_notification_spec_for(it)
             assertEquals(guard_open_target.guard_settings, spec.target)
-            assertTrue(spec.shows)
+            assertFalse(spec.shows)
             assertFalse(spec.cancels_prompt)
             assertFalse(spec.review_action)
+            assertFalse(spec.panic_action)
         }
-        assertTrue(guard_notification_spec_for(guard_event.device_added).panic_action)
-        assertFalse(guard_notification_spec_for(guard_event.device_removed).panic_action)
-        assertFalse(guard_notification_spec_for(guard_event.rescue_completed).panic_action)
-        assertFalse(guard_notification_spec_for(guard_event.guard_disabled).panic_action)
     }
 
     @Test
     fun panic_action_events() {
         val with_panic = guard_event.entries.filter { guard_notification_spec_for(it).panic_action }
         assertEquals(
-            listOf(guard_event.change_held, guard_event.change_applied, guard_event.sign_in_approved, guard_event.device_added),
+            listOf(guard_event.change_held),
             with_panic,
         )
     }
@@ -424,12 +469,8 @@ class GuardPushTest {
     fun approval_from_this_device_is_not_shown() {
         guard_local_approvals.clear()
         val push = guard_push(guard_event.sign_in_approved, "r9", account)
-        assertTrue(guard_should_show(push, guard_local_approvals::approved_here))
         guard_local_approvals.record("r9", account.uppercase())
-        assertFalse(guard_should_show(push, guard_local_approvals::approved_here))
-        assertTrue(guard_should_show(guard_push(guard_event.sign_in_approved, "r10", account), guard_local_approvals::approved_here))
-        guard_local_approvals.forget("r9", account)
-        assertTrue(guard_should_show(push, guard_local_approvals::approved_here))
+        assertFalse(guard_should_show(push, approved_here = guard_local_approvals::approved_here))
         guard_local_approvals.clear()
     }
 
@@ -448,7 +489,7 @@ class GuardPushTest {
         val enqueued = mutableListOf<guard_push>()
         val outcome = handle_guard_push(payload(event = "sign_in_expired"), { listOf(account) }, dedupe::claim, { enqueued += it })
         val late = handle_guard_push(payload(), { listOf(account) }, dedupe::claim, { enqueued += it })
-        assertEquals(PushResult.Shown, outcome)
+        assertEquals(PushResult.Ignore, outcome)
         assertEquals(PushResult.Ignore, late)
         assertEquals(listOf("guard:sign_in_expired:$r1", "guard:sign_in_request:$r1"), dedupe.claimed)
         assertEquals(listOf(guard_push(guard_event.sign_in_expired, r1, account)), enqueued)
@@ -465,7 +506,7 @@ class GuardPushTest {
     fun cancel_only_push_is_still_claimed_and_enqueued() {
         val enqueued = mutableListOf<guard_push>()
         val result = handle_guard_push(payload(event = "sign_in_denied"), { listOf(account) }, { true }, { enqueued += it })
-        assertEquals(PushResult.Shown, result)
+        assertEquals(PushResult.Ignore, result)
         assertEquals(listOf(guard_push(guard_event.sign_in_denied, r1, account)), enqueued)
     }
 
@@ -543,6 +584,94 @@ class GuardPushTest {
         val view = org.astermail.android.guard.guard_context_view(device_type = "tablet")
         assertEquals("tablet", view.device_summary())
         assertEquals("", view.place())
-        assertFalse(view.device_summary().isEmpty())
+        assertFalse(view.has_place())
+    }
+
+    @Test
+    fun device_summary_prefers_the_device_name_and_drops_unknown() {
+        val on = { b: String, o: String -> "$b on $o" }
+        val named = org.astermail.android.guard.guard_context_view(device_type = "mobile", browser = "Chrome", os = "Android", device_name = "Google Pixel 8")
+        assertEquals("Google Pixel 8", named.device_summary(on))
+        val pair = org.astermail.android.guard.guard_context_view(device_type = "desktop", browser = "Firefox", os = "Linux", device_name = " ")
+        assertEquals("Firefox on Linux", pair.device_summary(on))
+        val partial = org.astermail.android.guard.guard_context_view(device_type = "desktop", browser = "Unknown", os = "Windows")
+        assertEquals("Windows", partial.device_summary(on))
+        val nothing = org.astermail.android.guard.guard_context_view(device_type = "Unknown Device", browser = "unknown", os = null, device_name = "Unknown")
+        assertEquals("", nothing.device_summary(on))
+        assertTrue(org.astermail.android.guard.guard_context_view(city = "Berlin").has_place())
+        assertFalse(org.astermail.android.guard.guard_context_view(city = " ", country = null, country_code = null).has_place())
+    }
+
+    private class fake_marks : guard_alert_marks {
+        var entries: Map<String, Long> = emptyMap()
+        var now = 1_000L
+        override fun recent(account_id: String, event: guard_event): Boolean =
+            NotificationDedupe.has_guard_mark(entries, account_id, event.name, now)
+
+        override fun note(account_id: String, event: guard_event) {
+            entries = NotificationDedupe.record_guard_mark(entries, account_id, event.name, now)
+        }
+    }
+
+    @Test
+    fun one_request_gives_one_notification_across_channels() {
+        val dedupe = fake_dedupe()
+        val marks = fake_marks()
+        val enqueued = mutableListOf<guard_push>()
+        val known = { listOf(account) }
+        val ws = handle_guard_push(payload(), known, dedupe::claim, { enqueued += it }, marks)
+        val web_push = handle_guard_push(payload(), known, dedupe::claim, { enqueued += it }, marks)
+        val fcm = handle_guard_push(payload(), known, dedupe::claim, { enqueued += it }, marks)
+        assertEquals(PushResult.Shown, ws)
+        assertEquals(PushResult.Ignore, web_push)
+        assertEquals(PushResult.Ignore, fcm)
+        assertEquals(listOf(guard_push(guard_event.sign_in_request, r1, account)), enqueued)
+    }
+
+    @Test
+    fun approved_sign_in_and_its_device_add_post_nothing() {
+        val dedupe = fake_dedupe()
+        val marks = fake_marks()
+        val known = { listOf(account) }
+        val approved = handle_guard_push(payload(event = "sign_in_approved"), known, dedupe::claim, { }, marks)
+        val added = handle_guard_push(payload(event = "device_added", id = x1), known, dedupe::claim, { }, marks)
+        assertEquals(PushResult.Ignore, approved)
+        assertEquals(PushResult.Ignore, added)
+        assertEquals(0L, NotificationDedupe.last_guard_mark_ms(marks.entries))
+    }
+
+    @Test
+    fun guard_notice_mail_is_quiet_right_after_a_guard_alert() {
+        val marks = fake_marks()
+        handle_guard_push(payload(event = "change_held", id = x1), { listOf(account) }, fake_dedupe()::claim, { }, marks)
+        val mark = NotificationDedupe.last_guard_mark_ms(marks.entries)
+        assertEquals(marks.now, mark)
+        assertTrue(NotificationDedupe.is_probable_guard_notice_mail(mark, "no-reply@astermail.org", marks.now + 5_000L))
+        assertFalse(NotificationDedupe.is_probable_guard_notice_mail(mark, "friend@example.com", marks.now + 5_000L))
+        assertFalse(
+            NotificationDedupe.is_probable_guard_notice_mail(
+                mark,
+                "no-reply@astermail.org",
+                marks.now + NotificationDedupe.SIGN_IN_MAIL_WINDOW_MS,
+            ),
+        )
+        assertFalse(NotificationDedupe.is_probable_guard_notice_mail(0L, "no-reply@astermail.org", marks.now))
+        assertTrue(NotificationDedupe.has_guard_mark(marks.entries, NotificationDedupe.GUARD_ANY_ACCOUNT, "change_held", marks.now))
+    }
+
+    @Test
+    fun hidden_events_leave_no_mark() {
+        val marks = fake_marks()
+        handle_guard_push(payload(event = "sign_in_expired"), { listOf(account) }, fake_dedupe()::claim, { }, marks)
+        assertEquals(0L, NotificationDedupe.last_guard_mark_ms(marks.entries))
+    }
+
+    @Test
+    fun own_device_add_is_not_announced_to_itself() {
+        val own = UUID.fromString(x1)
+        assertTrue(guard_is_own_device_event(guard_push(guard_event.device_added, x1.uppercase(), account), own))
+        assertFalse(guard_is_own_device_event(guard_push(guard_event.device_added, r7, account), own))
+        assertFalse(guard_is_own_device_event(guard_push(guard_event.device_removed, x1, account), own))
+        assertFalse(guard_is_own_device_event(guard_push(guard_event.device_added, x1, account), null))
     }
 }

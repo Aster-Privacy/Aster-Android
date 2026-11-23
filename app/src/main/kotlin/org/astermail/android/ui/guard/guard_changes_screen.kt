@@ -79,6 +79,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.guard.guard_format_instant
 import org.astermail.android.guard.guard_hold_kind
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.guard.label
 import org.astermail.android.ui.settings.detail.detail_scaffold
 import org.astermail.android.ui.settings.detail.error_banner
@@ -192,7 +193,7 @@ private fun guard_changes_content(
     live: Boolean,
     on_skip_passkey: (String) -> Unit,
 ) {
-    guard_changes_notice_text(state.notice)?.let {
+    guard_changes_notice_text(state.notice, state.error)?.let {
         if (state.notice in guard_changes_success) recommendation_note(it) else error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
@@ -422,13 +423,16 @@ fun guard_progress_bar(progress: Float, color: Color, modifier: Modifier = Modif
 }
 
 @Composable
-private fun guard_changes_notice_text(notice: guard_changes_notice?): String? = when (notice) {
+private fun guard_changes_notice_text(
+    notice: guard_changes_notice?,
+    error: org.astermail.android.guard.guard_error_message? = null,
+): String? = when (notice) {
     null -> null
     guard_changes_notice.canceled -> stringResource(R.string.guard_changes_prompt_canceled)
     guard_changes_notice.key_lost -> stringResource(R.string.guard_approve_key_lost)
     guard_changes_notice.no_lock_screen -> stringResource(R.string.guard_setup_no_lock_screen)
     guard_changes_notice.no_device -> stringResource(R.string.guard_approve_no_device)
-    guard_changes_notice.failed -> stringResource(R.string.guard_setup_failed)
+    guard_changes_notice.failed -> error?.resolve() ?: stringResource(R.string.guard_setup_failed)
     guard_changes_notice.step_up_required -> stringResource(R.string.guard_changes_step_up_required)
     guard_changes_notice.change_canceled -> stringResource(R.string.guard_changes_done_canceled)
     guard_changes_notice.change_skipped -> stringResource(R.string.guard_changes_done_skipped)
