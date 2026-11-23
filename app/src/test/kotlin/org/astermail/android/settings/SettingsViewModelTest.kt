@@ -3751,6 +3751,86 @@ class SettingsViewModelTest {
         verify(exactly = 0) { preferences_cache.drop_archived("archive_r1") }
     }
 
+    private fun locked_key_setup(identity_events: MutableStateFlow<Long>): String {
+        val identity_key = "user_identity_key"
+        every { session_key_store.identity_key_events() } returns identity_events
+        every { context.getString(R.string.preferences_locked_retry) } returns "locked"
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+        val blob = encrypt_test_blob("""{"show_aster_branding":false}""", identity_key)
+        coEvery { preferences_api.get_encrypted_preferences() } returns
+            EncryptedPreferencesResponse(encrypted_preferences = blob.first, preferences_nonce = blob.second)
+        return identity_key
+    }
+
+    @Test
+    fun `preferences held by a sealed key store load once the identity key arrives`() = runTest {
+        advanceUntilIdle()
+        vault_ready(true)
+        val identity_events = MutableStateFlow(0L)
+        val identity_key = locked_key_setup(identity_events)
+        every { session_key_store.is_locked() } returns true
+
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertTrue(target.state.value.preferences_locked)
+        assertNull(target.state.value.error)
+
+        every { session_key_store.is_locked() } returns false
+        every { session_key_store.get_identity_key() } returns identity_key
+        identity_events.value = 1L
+        advanceUntilIdle()
+
+        assertFalse(target.state.value.preferences_locked)
+        assertTrue(target.state.value.preferences_authoritative)
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+        assertNull(target.state.value.error)
+    }
+
+    @Test
+    fun `preferences locked after the key wait reload when account keys finish`() = runTest {
+        advanceUntilIdle()
+        vault_ready(true)
+        val identity_events = MutableStateFlow(0L)
+        val ready_events = MutableStateFlow(0L)
+        every { session_key_store.account_keys_ready_events() } returns ready_events
+        val identity_key = locked_key_setup(identity_events)
+
+        val target = new_vm()
+        advanceUntilIdle()
+
+        assertTrue(target.state.value.preferences_locked)
+        assertEquals("locked", target.state.value.error)
+
+        every { session_key_store.get_identity_key() } returns identity_key
+        ready_events.value = 1L
+        advanceUntilIdle()
+
+        assertFalse(target.state.value.preferences_locked)
+        assertTrue(target.state.value.preferences_authoritative)
+        assertEquals(false, target.state.value.preferences?.show_aster_branding)
+    }
+
+    @Test
+    fun `an identity key change does not reload preferences that already loaded`() = runTest {
+        advanceUntilIdle()
+        vault_ready(true)
+        val identity_events = MutableStateFlow(0L)
+        val identity_key = locked_key_setup(identity_events)
+        every { session_key_store.get_identity_key() } returns identity_key
+
+        val target = new_vm()
+        advanceUntilIdle()
+        assertFalse(target.state.value.preferences_locked)
+        io.mockk.clearMocks(preferences_api, answers = false, childMocks = false, exclusionRules = false)
+
+        identity_events.value = 1L
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { preferences_api.get_encrypted_preferences() }
+    }
+
     @Test
     fun `restore does not bring back a tag color the user cleared`() = runTest {
         advanceUntilIdle()

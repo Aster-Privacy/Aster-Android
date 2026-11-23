@@ -744,6 +744,7 @@ class MailViewModel @Inject constructor(
             ?.let { repository.set_conversation_grouping(it) }
         search_index_manager.add_read_overlay(index_read_overlay)
         prime_folder_cache(_inbox_state.value.current_folder)
+        watch_identity_key_arrival()
         viewModelScope.launch {
             _inbox_state
                 .map { state -> state.stats?.let { Triple(it, stats_owner_account, account_generation) } }
@@ -778,6 +779,30 @@ class MailViewModel @Inject constructor(
                 .debounce(folder_cache_persist_debounce_ms)
                 .collect { key -> if (key != null) persist_folder_rows(key.first, key.second) }
         }
+    }
+
+    private fun watch_identity_key_arrival() {
+        val events = runCatching { repository.identity_key_events() }.getOrNull() ?: return
+        var had_key = runCatching { repository.has_identity_key() }.getOrDefault(true)
+        viewModelScope.launch {
+            try {
+                events.collect {
+                    val has_key = runCatching { repository.has_identity_key() }.getOrDefault(false)
+                    val arrived = has_key && !had_key
+                    had_key = has_key
+                    if (arrived) reload_after_key_arrival()
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+            }
+        }
+    }
+
+    private fun reload_after_key_arrival() {
+        val state = _inbox_state.value
+        if (state.is_refreshing && refresh_job?.isActive == true) return
+        load_stats()
+        reload_keeping_items(replace_items = true)
     }
 
     private fun folder_cache_persist_key(
