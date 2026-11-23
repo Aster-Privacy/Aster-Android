@@ -368,6 +368,43 @@ class RatchetDecryptorTest {
     }
 
     @Test
+    fun `a device without ratchet keys opens the escrowed copy`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "from escrow")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val decryptor = new_decryptor(
+            mockk(relaxed = true),
+            SessionKeyStore(null),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            escrow = escrow_returning("from escrow"),
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_escrow")
+
+        assertEquals("from escrow", result)
+    }
+
+    @Test
+    fun `a device without ratchet keys and no escrow stays undecryptable`() = runTest {
+        val fixture = build_fixture()
+        val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "nothing")
+        val body = envelope_json(fixture.sender_identity_raw, recipient_data_for(fixture, enc0))
+
+        val decryptor = new_decryptor(
+            mockk(relaxed = true),
+            SessionKeyStore(null),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
+        val result = decryptor.try_decrypt(body, listOf(recipient_email), sender_email, "msg_none")
+
+        assertEquals(RATCHET_UNDECRYPTABLE_SENTINEL, result)
+    }
+
+    @Test
     fun `fresh bootstrap recovers via vault refresh when local keys are stale`() = runTest {
         val fixture = build_fixture()
         val enc0 = DoubleRatchet.encrypt(fixture.sender_state, "hello again")
