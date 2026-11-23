@@ -650,6 +650,11 @@ fun MailDetailScreen(
         mail_vm.set_reactions_enabled(reactions_enabled)
     }
 
+    val current_on_back by rememberUpdatedState(on_back)
+    LaunchedEffect(mail_vm) {
+        mail_vm.thread_locked_away.collect { current_on_back() }
+    }
+
     val detail_grouping = detail_conversation_grouping(
         preference = settings_state.preferences?.conversation_grouping,
         preferences_locked = settings_state.preferences_locked,

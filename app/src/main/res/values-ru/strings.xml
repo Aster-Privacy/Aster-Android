@@ -2728,6 +2728,8 @@
     <string name="ext_account_removed">Аккаунт удалён</string>
     <string name="folder_created">Папка создана</string>
     <string name="folder_locked">Папка заблокирована</string>
+    <string name="lock_all_folders">Заблокировать все защищенные папки</string>
+    <string name="folders_locked">Защищенные папки заблокированы</string>
     <string name="folder_unlocked">Папка разблокирована</string>
     <string name="folder_lock_set">Блокировка папки установлена</string>
     <string name="folder_relock_required">Эта папка была повторно заблокирована на другом устройстве. Чтобы открыть её здесь, снимите блокировку и установите её снова.</string>

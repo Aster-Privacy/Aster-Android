@@ -2713,6 +2713,8 @@
     <string name="ext_account_removed">Cuenta eliminada</string>
     <string name="folder_created">Carpeta creada</string>
     <string name="folder_locked">Carpeta bloqueada</string>
+    <string name="lock_all_folders">Bloquear todas las carpetas protegidas</string>
+    <string name="folders_locked">Carpetas protegidas bloqueadas</string>
     <string name="folder_unlocked">Carpeta desbloqueada</string>
     <string name="folder_lock_set">Bloqueo de carpeta activado</string>
     <string name="folder_relock_required">Esta carpeta se volvió a bloquear en otro dispositivo. Para abrirla aquí, quita el bloqueo y vuelve a configurarlo.</string>

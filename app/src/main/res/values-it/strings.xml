@@ -2712,6 +2712,8 @@
     <string name="ext_account_removed">Account rimosso</string>
     <string name="folder_created">Cartella creata</string>
     <string name="folder_locked">Cartella bloccata</string>
+    <string name="lock_all_folders">Blocca tutte le cartelle protette</string>
+    <string name="folders_locked">Cartelle protette bloccate</string>
     <string name="folder_unlocked">Cartella sbloccata</string>
     <string name="folder_lock_set">Blocco cartella impostato</string>
     <string name="folder_relock_required">Questa cartella è stata bloccata di nuovo su un altro dispositivo. Per aprirla qui, rimuovi il blocco e impostalo di nuovo.</string>

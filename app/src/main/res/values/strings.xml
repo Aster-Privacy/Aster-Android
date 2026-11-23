@@ -2936,6 +2936,8 @@
     <string name="ext_account_removed">Account removed</string>
     <string name="folder_created">Folder created</string>
     <string name="folder_locked">Folder locked</string>
+    <string name="lock_all_folders">Lock all protected folders</string>
+    <string name="folders_locked">Protected folders locked</string>
     <string name="folder_unlocked">Folder unlocked</string>
     <string name="folder_lock_set">Folder lock set</string>
     <string name="folder_relock_required">This folder was locked again on another device. To open it here, remove the lock and set it again.</string>

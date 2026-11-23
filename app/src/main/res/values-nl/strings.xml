@@ -2696,6 +2696,8 @@
     <string name="ext_account_removed">Account verwijderd</string>
     <string name="folder_created">Map aangemaakt</string>
     <string name="folder_locked">Map vergrendeld</string>
+    <string name="lock_all_folders">Alle beveiligde mappen vergrendelen</string>
+    <string name="folders_locked">Beveiligde mappen vergrendeld</string>
     <string name="folder_unlocked">Map ontgrendeld</string>
     <string name="folder_lock_set">Mapvergrendeling ingesteld</string>
     <string name="folder_relock_required">Deze map is op een ander apparaat opnieuw vergrendeld. Om de map hier te openen, verwijder je de vergrendeling en stel je die opnieuw in.</string>

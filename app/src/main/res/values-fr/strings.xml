@@ -2741,6 +2741,8 @@
     <string name="ext_account_removed">Compte supprimé</string>
     <string name="folder_created">Dossier créé</string>
     <string name="folder_locked">Dossier verrouillé</string>
+    <string name="lock_all_folders">Verrouiller tous les dossiers protégés</string>
+    <string name="folders_locked">Dossiers protégés verrouillés</string>
     <string name="folder_unlocked">Dossier déverrouillé</string>
     <string name="folder_lock_set">Verrouillage du dossier activé</string>
     <string name="folder_relock_required">Ce dossier a été verrouillé à nouveau sur un autre appareil. Pour l\'ouvrir ici, supprimez le verrouillage puis définissez-le à nouveau.</string>

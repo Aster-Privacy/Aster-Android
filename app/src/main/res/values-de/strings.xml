@@ -2697,6 +2697,8 @@
     <string name="ext_account_removed">Konto entfernt</string>
     <string name="folder_created">Ordner erstellt</string>
     <string name="folder_locked">Ordner gesperrt</string>
+    <string name="lock_all_folders">Alle geschützten Ordner sperren</string>
+    <string name="folders_locked">Geschützte Ordner gesperrt</string>
     <string name="folder_unlocked">Ordner entsperrt</string>
     <string name="folder_lock_set">Ordnersperre eingerichtet</string>
     <string name="folder_relock_required">Dieser Ordner wurde auf einem anderen Gerät neu gesperrt. Um ihn hier zu öffnen, entferne die Sperre und richte sie erneut ein.</string>
