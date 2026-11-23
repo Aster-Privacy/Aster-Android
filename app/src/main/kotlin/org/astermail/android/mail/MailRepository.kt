@@ -5688,7 +5688,12 @@ class MailRepository @Inject constructor(
         mail_item_ids: List<String>,
     ): Map<String, List<org.astermail.android.ui.mail.MessageAttachment>> = synchronized(attachment_meta_cache) {
         mail_item_ids.distinct().mapNotNull { id ->
-            attachment_meta_cache[id]?.takeIf { it.isNotEmpty() }?.let { id to it }
+            attachment_meta_cache[id]
+                ?.let { cached ->
+                    DecryptedMimeAttachments.merge_into(id, cached.filterNot { DecryptedMimeAttachments.is_local(it.id) })
+                }
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { id to it }
         }.toMap()
     }
 

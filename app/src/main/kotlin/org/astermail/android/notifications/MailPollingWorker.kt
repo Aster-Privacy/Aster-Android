@@ -308,6 +308,7 @@ class MailPollingWorker(
             var fetched_any_page = false
             var retry_delay_ms = 1_500L
             var protected_pending = false
+            var healed = false
             repeat(UNREADABLE_RETRY_ATTEMPTS) { attempt ->
                 if (newest != null) return@repeat
                 if (attempt > 0) kotlinx.coroutines.delay(retry_delay_ms)
@@ -347,11 +348,19 @@ class MailPollingWorker(
                     }
                 }
 
-                val retry = candidate?.let {
-                    unreadable_retry(it.is_undecryptable, it.is_decrypt_pending, attempt)
-                } ?: UnreadableRetry.None
+                val retry = if (candidate == null) {
+                    UnreadableRetry.None
+                } else {
+                    combine_unreadable_retry(
+                        candidates.take(fetch_limit).map {
+                            unreadable_retry(it.is_undecryptable, it.is_decrypt_pending, attempt)
+                        },
+                        healed,
+                    )
+                }
                 if (retry == UnreadableRetry.Heal) {
                     repo.begin_decrypt_retry()
+                    healed = true
                     retry_delay_ms = UNREADABLE_HEAL_DELAY_MS
                     return@repeat
                 }
@@ -841,6 +850,12 @@ class MailPollingWorker(
             !is_undecryptable -> UnreadableRetry.None
             is_decrypt_pending -> UnreadableRetry.Wait
             else -> UnreadableRetry.Heal
+        }
+
+        fun combine_unreadable_retry(retries: List<UnreadableRetry>, healed: Boolean): UnreadableRetry = when {
+            UnreadableRetry.Heal in retries && !healed -> UnreadableRetry.Heal
+            UnreadableRetry.Heal in retries || UnreadableRetry.Wait in retries -> UnreadableRetry.Wait
+            else -> UnreadableRetry.None
         }
 
         fun notification_text(

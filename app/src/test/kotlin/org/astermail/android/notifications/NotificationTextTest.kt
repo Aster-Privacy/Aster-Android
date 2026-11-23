@@ -89,4 +89,37 @@ class NotificationTextTest {
             ),
         )
     }
+
+    @Test
+    fun `an unreadable message later in the batch still heals`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.Heal,
+            MailPollingWorker.combine_unreadable_retry(
+                listOf(MailPollingWorker.UnreadableRetry.None, MailPollingWorker.UnreadableRetry.Heal),
+                healed = false,
+            ),
+        )
+    }
+
+    @Test
+    fun `keys heal once per run and later attempts wait`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.Wait,
+            MailPollingWorker.combine_unreadable_retry(
+                listOf(MailPollingWorker.UnreadableRetry.Heal),
+                healed = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `a readable batch posts at once`() {
+        assertEquals(
+            MailPollingWorker.UnreadableRetry.None,
+            MailPollingWorker.combine_unreadable_retry(
+                listOf(MailPollingWorker.UnreadableRetry.None, MailPollingWorker.UnreadableRetry.None),
+                healed = true,
+            ),
+        )
+    }
 }
