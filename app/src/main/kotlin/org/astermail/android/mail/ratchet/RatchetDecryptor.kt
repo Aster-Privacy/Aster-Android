@@ -129,19 +129,45 @@ class RatchetDecryptor @Inject constructor(
         if (!session_key_store.has_ratchet_keys()) {
             refresh_vault_keys()
             if (!session_key_store.has_ratchet_keys()) {
-                return RATCHET_UNDECRYPTABLE_SENTINEL
+                return open_from_escrow(envelope, our_addresses, sender_email, message_id)
+                    ?: RATCHET_UNDECRYPTABLE_SENTINEL
             }
         }
-        return try {
-            val result = decrypt(envelope, our_addresses, sender_email, message_id)
-            if (result == null && org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("AsterRatchet", "decrypt() returned null")
-            result ?: RATCHET_UNDECRYPTABLE_SENTINEL
+        val result = try {
+            decrypt(envelope, our_addresses, sender_email, message_id)
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
+        } catch (_: ReplayedOpeningException) {
+            return RATCHET_UNDECRYPTABLE_SENTINEL
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.e("AsterRatchet", "decrypt threw")
-            RATCHET_UNDECRYPTABLE_SENTINEL
+            null
         }
+        if (result != null) return result
+        return open_from_escrow(envelope, our_addresses, sender_email, message_id)
+            ?: RATCHET_UNDECRYPTABLE_SENTINEL
+    }
+
+    private suspend fun open_from_escrow(
+        envelope: RatchetEnvelope,
+        our_addresses: List<String>,
+        sender_email: String,
+        message_id: String?,
+    ): String? {
+        if (message_id.isNullOrBlank()) return null
+        for ((address, recipient) in escrow_candidates(envelope, our_addresses, sender_email)) {
+            val conversation_id = X3dh.derive_conversation_id(address, sender_email)
+            val escrowed = fetch_escrow(message_id, recipient, sender_email, conversation_id) ?: continue
+            cache_plaintext(
+                message_id,
+                escrowed.plaintext,
+                sender_unauthenticated = !escrowed.verified,
+                unconfirmed_sender = escrowed.unconfirmed_sender,
+                binding = PlaintextBinding(sender_email, conversation_id),
+            )
+            return escrowed.plaintext
+        }
+        return null
     }
 
     suspend fun settle_cached_sender(
@@ -285,16 +311,21 @@ class RatchetDecryptor @Inject constructor(
             .filter { it.key.trim().lowercase(java.util.Locale.ROOT) !in owned_lower && it.key.trim().lowercase(java.util.Locale.ROOT) != sender_lower }
             .take(MAX_ALIAS_RECIPIENT_ATTEMPTS)
 
+        var replayed: ReplayedOpeningException? = null
         for (entry in fallback) {
             val plaintext = try {
                 decrypt_entry(envelope, entry.key, entry.value, sender_email, message_id)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
+            } catch (r: ReplayedOpeningException) {
+                replayed = r
+                null
             } catch (_: Throwable) {
                 null
             }
             if (plaintext != null) return plaintext
         }
+        replayed?.let { throw it }
 
         return null
     }
@@ -339,6 +370,7 @@ class RatchetDecryptor @Inject constructor(
             var decrypt_error: Throwable? = null
             var chained = false
             var bootstrap_claim: BootstrapClaim? = null
+            var unadopted_plaintext: String? = null
 
             if (state != null) {
                 try {
@@ -393,6 +425,26 @@ class RatchetDecryptor @Inject constructor(
                         matched_address,
                     )
                 }
+                if (recovered == null) {
+                    val reused = decrypt_with_key_sets(
+                        conversation_id,
+                        envelope.sender_identity_key,
+                        recipient,
+                        mutableSetOf(),
+                        matched_address,
+                        allow_reused_pq_prekey = true,
+                    )
+                    if (reused != null) {
+                        val claim = identity_pins.claim_bootstrap(
+                            sender_email,
+                            envelope.sender_identity_key,
+                            recipient,
+                            message_id,
+                        )
+                        if (claim == BootstrapClaim.REPLAYED) throw ReplayedOpeningException()
+                        unadopted_plaintext = reused.second
+                    }
+                }
                 if (recovered != null) {
                     val claim = identity_pins.claim_bootstrap(
                         sender_email,
@@ -400,9 +452,7 @@ class RatchetDecryptor @Inject constructor(
                         recipient,
                         message_id,
                     )
-                    if (claim == BootstrapClaim.REPLAYED) {
-                        throw IllegalStateException("opening message was already used")
-                    }
+                    if (claim == BootstrapClaim.REPLAYED) throw ReplayedOpeningException()
                     bootstrap_claim = claim
                     state = recovered.first
                     plaintext = recovered.second
@@ -476,6 +526,10 @@ class RatchetDecryptor @Inject constructor(
                         binding = binding,
                     )
                     return@with_lock final_recovery.plaintext
+                }
+                unadopted_plaintext?.let { opened ->
+                    cache_plaintext(message_id, opened, sender_unauthenticated = true, binding = binding)
+                    return@with_lock opened
                 }
                 decrypt_error?.let { throw it }
                 return@with_lock null
@@ -1106,6 +1160,7 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         tried: MutableSet<String>,
         own_address: String? = null,
+        allow_reused_pq_prekey: Boolean = false,
     ): Pair<RatchetState, String>? {
         val key_sets = order_receiver_key_sets(receiver_key_sets(own_address), recipient)
         if (org.astermail.android.BuildConfig.DEBUG) {
@@ -1115,7 +1170,7 @@ class RatchetDecryptor @Inject constructor(
             val tag = receiver_key_set_tag(keys.identity_public_b64, keys.identity_jwk, keys.signed_prekey_public_b64)
             if (!tried.add(tag)) continue
             val candidates = try {
-                bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
+                bootstrap(conversation_id, sender_identity_key_b64, recipient, keys, allow_reused_pq_prekey)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
             } catch (t: Throwable) {
@@ -1171,6 +1226,7 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key_b64: String,
         recipient: RatchetRecipientData,
         keys: ReceiverKeySet,
+        allow_reused_pq_prekey: Boolean = false,
     ): List<RatchetState> {
         val ephemeral_b64 = recipient.ephemeral_key ?: return emptyList()
         val offered_x3dh_version = recipient.x3dh_v ?: 1
@@ -1193,7 +1249,7 @@ class RatchetDecryptor @Inject constructor(
 
         if (pq_ciphertext != null && pq_key_id != null && !from_identity) {
             val consumer = runCatching { identity_pins.pq_prekey_consumer(pq_key_id) }.getOrNull()
-            if (!RatchetIdentityPinRules.pq_prekey_accepts(consumer, ephemeral_b64)) {
+            if (!allow_reused_pq_prekey && !RatchetIdentityPinRules.pq_prekey_accepts(consumer, ephemeral_b64)) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("AsterRatchet", "refusing a reused one-time pq prekey")
                 }
@@ -1347,3 +1403,5 @@ class RatchetDecryptor @Inject constructor(
     }
 
 }
+
+private class ReplayedOpeningException : IllegalStateException("opening message was already used")
