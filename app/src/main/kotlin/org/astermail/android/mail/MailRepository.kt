@@ -2642,6 +2642,7 @@ class MailRepository @Inject constructor(
         include_trash: Boolean? = null,
         direction: String? = null,
         is_read: Boolean? = null,
+        backfill_envelopes: Boolean = false,
     ): Result<InboxPage> = runCatching {
         val is_received = item_type == "received"
         val is_plain_inbox = is_received && label_token == null && tag_token == null && routing_token == null
@@ -2678,7 +2679,7 @@ class MailRepository @Inject constructor(
             filtered_raw.forEach { remember_own_authored(it.id) }
         }
         if (label_token != null) offer_unlocked_folder_rekey(label_token, response.items)
-        val batch = decrypt_items_batch(filtered_raw)
+        val batch = decrypt_items_batch(filtered_raw, list_envelope_backfill_budget_ms(backfill_envelopes))
         val next_cursor = if (is_token_scope && response.next_cursor == null && response.has_more) {
             ((offset ?: 0) + response.items.size).toString()
         } else {
@@ -4481,21 +4482,24 @@ class MailRepository @Inject constructor(
     private suspend fun fetch_envelope_batch(ids: List<String>): List<MailItem> =
         mail_api.batch_messages(ids).items
 
-    suspend fun refill_missing_envelopes(items: List<InboxItem>): Map<String, InboxItem> =
+    suspend fun refill_missing_envelopes(
+        items: List<InboxItem>,
+        budget_ms: Long = envelope_refill_budget_ms,
+    ): Map<String, InboxItem> =
         withContext(Dispatchers.IO) {
             val raw = items.filter { it.is_envelope_missing }.map { it.raw_item }
             if (raw.isEmpty()) return@withContext emptyMap()
-            val filled = backfill_missing_envelopes(raw, ::fetch_envelope_batch, budget_ms = envelope_refill_budget_ms)
+            val filled = backfill_missing_envelopes(raw, ::fetch_envelope_batch, budget_ms = budget_ms)
             val ready = filled.filterNot(::needs_envelope_backfill)
             if (ready.isEmpty()) return@withContext emptyMap()
-            decrypt_items_batch(ready, backfill = false).visible
+            decrypt_items_batch(ready).visible
                 .filterNot { it.is_envelope_missing }
                 .associateBy { it.id }
         }
 
     suspend fun resolve_missing_envelope(item: InboxItem): InboxItem {
         if (!item.is_envelope_missing) return item
-        val refilled = runCatching { refill_missing_envelopes(listOf(item)) }
+        val refilled = runCatching { refill_missing_envelopes(listOf(item), envelope_open_budget_ms) }
             .getOrElse { if (it is CancellationException) throw it else emptyMap() }
         refilled[item.id]?.let { return replace_refilled_items(listOf(item), refilled).first() }
         val fetched = runCatching { mail_api.get_message(item.id) }
@@ -4504,7 +4508,7 @@ class MailRepository @Inject constructor(
         val merged = merge_backfilled_envelope(item.raw_item, fetched)
         if (needs_envelope_backfill(merged)) return item
         val decrypted = withContext(Dispatchers.IO) {
-            decrypt_items_batch(listOf(merged), backfill = false).visible.firstOrNull()
+            decrypt_items_batch(listOf(merged)).visible.firstOrNull()
         } ?: return item
         if (decrypted.is_envelope_missing) return item
         return replace_refilled_items(listOf(item), mapOf(item.id to decrypted)).first()
@@ -4512,12 +4516,12 @@ class MailRepository @Inject constructor(
 
     private suspend fun decrypt_items_batch(
         source: List<MailItem>,
-        backfill: Boolean = true,
+        backfill_budget_ms: Long = 0L,
     ): DecryptBatch =
         withContext(Dispatchers.IO) {
-            val items = if (backfill) {
+            val items = if (backfill_budget_ms > 0L) {
                 try {
-                    backfill_missing_envelopes(source, ::fetch_envelope_batch, budget_ms = envelope_inline_budget_ms)
+                    backfill_missing_envelopes(source, ::fetch_envelope_batch, budget_ms = backfill_budget_ms)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Throwable) {

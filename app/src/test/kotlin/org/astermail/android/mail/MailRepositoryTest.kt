@@ -912,6 +912,29 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `fetch_inbox shows rows without an envelope at once and leaves the refill for later`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(fake_mail_item("i1"), fake_mail_item("i2")), has_more = false, next_cursor = null, total = 2)
+
+        val page = repo.fetch_inbox().getOrThrow()
+
+        assertEquals(2, page.items.size)
+        assertTrue(page.items.all { it.is_envelope_missing })
+        coVerify(exactly = 0) { mail_api.batch_messages(any()) }
+    }
+
+    @Test
+    fun `fetch_inbox fills missing envelopes inline only when asked`() = runTest {
+        coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = listOf(fake_mail_item("i1")), has_more = false, next_cursor = null, total = 1)
+        coEvery { mail_api.batch_messages(any()) } returns MailItemsListResponse()
+
+        repo.fetch_inbox(backfill_envelopes = true).getOrThrow()
+
+        coVerify(atLeast = 1) { mail_api.batch_messages(listOf("i1")) }
+    }
+
+    @Test
     fun `fetch_inbox plain inbox excludes archived trashed spam server-side`() = runTest {
         coEvery { mail_api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(items = emptyList(), has_more = false, next_cursor = null, total = 0)

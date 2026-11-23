@@ -316,7 +316,7 @@ class MailPollingWorker(
                 if (attempt > 0) kotlinx.coroutines.delay(retry_delay_ms)
                 val page = try {
                     kotlinx.coroutines.withTimeout(20_000L) {
-                        repo.fetch_inbox(limit = fetch_limit)
+                        repo.fetch_inbox(limit = fetch_limit, backfill_envelopes = true)
                     }.getOrNull()
                 } catch (_: Throwable) { null }
                 if (page != null) fetched_any_page = true
@@ -337,7 +337,7 @@ class MailPollingWorker(
                         if (folder.label_token in muted) continue
                         val folder_page = try {
                             kotlinx.coroutines.withTimeout(20_000L) {
-                                repo.fetch_inbox(limit = fetch_limit, label_token = folder.label_token)
+                                repo.fetch_inbox(limit = fetch_limit, label_token = folder.label_token, backfill_envelopes = true)
                             }.getOrNull()
                         } catch (_: Throwable) { null }
                         if (folder_page != null) fetched_any_page = true

@@ -158,6 +158,30 @@ class EnvelopeBackfillTest {
     }
 
     @Test
+    fun list_pages_skip_the_inline_backfill_unless_asked() {
+        assertEquals(0L, list_envelope_backfill_budget_ms(inline = false))
+        assertEquals(envelope_inline_budget_ms, list_envelope_backfill_budget_ms(inline = true))
+    }
+
+    @Test
+    fun a_zero_budget_never_calls_the_server() = runBlocking {
+        val calls = AtomicInteger()
+        val items = listOf(raw("a"), raw("b"))
+        val result = backfill_missing_envelopes(items, { ids -> calls.incrementAndGet(); ids.map { raw(it, envelope = "env-$it") } }, budget_ms = 0L)
+        assertEquals(items, result)
+        assertEquals(0, calls.get())
+        assertTrue(fetch_missing_envelopes(listOf("a"), { calls.incrementAndGet(); emptyList() }, budget_ms = 0L).isEmpty())
+        assertEquals(0, calls.get())
+    }
+
+    @Test
+    fun the_first_refill_starts_soon_and_opening_mail_waits_less_than_a_refill() {
+        assertTrue(envelope_refill_delays_ms.first() <= 1_000L)
+        assertTrue(envelope_refill_delays_ms.zipWithNext().all { (a, b) -> a < b })
+        assertTrue(envelope_open_budget_ms < envelope_refill_budget_ms)
+    }
+
+    @Test
     fun backfill_fills_only_the_missing_rows_and_keeps_list_fields() = runBlocking {
         val items = listOf(
             raw("a").copy(thread_message_count = 4),
