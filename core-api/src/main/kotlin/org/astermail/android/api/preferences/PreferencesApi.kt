@@ -79,6 +79,7 @@ data class UserPreferences(
     val high_contrast: Boolean = false,
     val reduce_transparency: Boolean = false,
     val underline_links: Boolean = false,
+    val hide_scrollbars: Boolean = false,
     val color_vision: String = "none",
     val dyslexia_font: Boolean = false,
     val text_spacing: Boolean = false,

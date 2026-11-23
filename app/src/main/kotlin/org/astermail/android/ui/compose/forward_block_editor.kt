@@ -173,6 +173,7 @@ internal fun forward_block_editor(
         .coerceAtLeast(forward_editor_min_height_dp)
     val target_height_dp = measured_height_dp.coerceIn(forward_editor_min_height_dp, max_height_dp)
 
+    val show_scroll_bar = !org.astermail.android.ui.theme.local_accessibility.current.hide_scrollbars
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { context ->
             android.webkit.WebView(context).apply {
@@ -207,7 +208,7 @@ internal fun forward_block_editor(
                     ),
                     "aster_forward",
                 )
-                isVerticalScrollBarEnabled = true
+                isVerticalScrollBarEnabled = show_scroll_bar
                 isHorizontalScrollBarEnabled = false
                 setOnTouchListener { view, _ ->
                     val scrollable = view.canScrollVertically(1) || view.canScrollVertically(-1)

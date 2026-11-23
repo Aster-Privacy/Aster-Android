@@ -295,6 +295,7 @@ class SettingsViewModelTest {
         every { theme_store.compact_mode } returns MutableStateFlow(false)
         every { theme_store.text_spacing } returns MutableStateFlow(false)
         every { theme_store.underline_links } returns MutableStateFlow(false)
+        every { theme_store.hide_scrollbars } returns MutableStateFlow(false)
         every { theme_store.dyslexia_font } returns MutableStateFlow(false)
         every { theme_store.haptic_enabled } returns MutableStateFlow(true)
         context = mockk(relaxed = true)

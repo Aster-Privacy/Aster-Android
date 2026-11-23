@@ -581,6 +581,9 @@ class SettingsViewModel @Inject constructor(
         if (theme_store.underline_links.value != prefs.underline_links) {
             theme_store.set_underline_links(prefs.underline_links)
         }
+        if (theme_store.hide_scrollbars.value != prefs.hide_scrollbars) {
+            theme_store.set_hide_scrollbars(prefs.hide_scrollbars)
+        }
         if (theme_store.dyslexia_font.value != prefs.dyslexia_font) {
             theme_store.set_dyslexia_font(prefs.dyslexia_font)
         }

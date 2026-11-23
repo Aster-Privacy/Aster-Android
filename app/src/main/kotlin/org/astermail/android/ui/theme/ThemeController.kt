@@ -37,6 +37,7 @@ data class AccessibilityState(
     val compact_mode: Boolean = false,
     val text_spacing: Boolean = false,
     val underline_links: Boolean = false,
+    val hide_scrollbars: Boolean = false,
     val dyslexia_font: Boolean = false,
     val haptic_enabled: Boolean = true,
 )
@@ -54,6 +55,7 @@ class ThemeViewModel @Inject constructor(
     val compact_mode: StateFlow<Boolean> = theme_store.compact_mode
     val text_spacing: StateFlow<Boolean> = theme_store.text_spacing
     val underline_links: StateFlow<Boolean> = theme_store.underline_links
+    val hide_scrollbars: StateFlow<Boolean> = theme_store.hide_scrollbars
     val dyslexia_font: StateFlow<Boolean> = theme_store.dyslexia_font
     val onboarding_seen: StateFlow<Boolean> = theme_store.onboarding_seen
     val first_run_setup_pending: StateFlow<Boolean> = theme_store.first_run_setup_pending
@@ -81,6 +83,7 @@ class ThemeViewModel @Inject constructor(
     fun set_compact_mode(v: Boolean) = theme_store.set_compact_mode(v)
     fun set_text_spacing(v: Boolean) = theme_store.set_text_spacing(v)
     fun set_underline_links(v: Boolean) = theme_store.set_underline_links(v)
+    fun set_hide_scrollbars(v: Boolean) = theme_store.set_hide_scrollbars(v)
     fun set_haptic_enabled(v: Boolean) = theme_store.set_haptic_enabled(v)
     fun set_dyslexia_font(v: Boolean) = theme_store.set_dyslexia_font(v)
     fun mark_onboarding_seen() = theme_store.set_onboarding_seen(true)

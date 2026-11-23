@@ -3017,6 +3017,8 @@
     <string name="show_sender_pictures_subtitle">Muestra una foto o las iniciales de cada remitente en tu bandeja de entrada</string>
     <string name="theme_sync_across_devices">Sincronizar el tema entre dispositivos</string>
     <string name="theme_sync_across_devices_subtitle">Desactívalo para usar un tema distinto en este dispositivo.</string>
+    <string name="hide_scrollbars">Ocultar barras de desplazamiento</string>
+    <string name="hide_scrollbars_subtitle">Oculta las barras de desplazamiento en todos tus dispositivos. Puedes seguir desplazándote por las listas y los mensajes.</string>
     <string name="view_security_details">Ver detalles de seguridad</string>
     <string name="resubscribe">Volver a suscribirte</string>
     <string name="translate_confirm_title">¿Activar la traducción?</string>

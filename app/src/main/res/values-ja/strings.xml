@@ -2978,6 +2978,8 @@
     <string name="show_sender_pictures_subtitle">受信トレイで各差出人の写真またはイニシャルを表示します</string>
     <string name="theme_sync_across_devices">デバイス間でテーマを同期</string>
     <string name="theme_sync_across_devices_subtitle">オフにすると、この端末だけ別のテーマを使えます。</string>
+    <string name="hide_scrollbars">スクロールバーを非表示</string>
+    <string name="hide_scrollbars_subtitle">すべてのデバイスでスクロールバーを非表示にします。リストやメッセージは引き続きスクロールできます。</string>
     <string name="view_security_details">セキュリティの詳細を表示</string>
     <string name="resubscribe">再登録</string>
     <string name="translate_confirm_title">翻訳を有効にしますか？</string>

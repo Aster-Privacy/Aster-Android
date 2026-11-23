@@ -231,6 +231,7 @@ class FolderUnlockPinTest {
         every { theme_store.compact_mode } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         every { theme_store.text_spacing } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         every { theme_store.underline_links } returns kotlinx.coroutines.flow.MutableStateFlow(false)
+        every { theme_store.hide_scrollbars } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         every { theme_store.dyslexia_font } returns kotlinx.coroutines.flow.MutableStateFlow(false)
         every { theme_store.haptic_enabled } returns kotlinx.coroutines.flow.MutableStateFlow(true)
         context = mockk(relaxed = true)

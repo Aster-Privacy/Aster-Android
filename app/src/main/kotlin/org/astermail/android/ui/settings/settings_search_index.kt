@@ -966,6 +966,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("appearance", R.string.settings_appearance, R.string.sync, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_sync_across_devices, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.theme_sync_across_devices_subtitle, false),
+    settings_index_entry("appearance", R.string.settings_appearance, R.string.hide_scrollbars, false),
+    settings_index_entry("appearance", R.string.settings_appearance, R.string.hide_scrollbars_subtitle, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.compose_text_size_subtitle, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.color_theme_custom, false),
     settings_index_entry("appearance", R.string.settings_appearance, R.string.glass_mode_subtitle, false),

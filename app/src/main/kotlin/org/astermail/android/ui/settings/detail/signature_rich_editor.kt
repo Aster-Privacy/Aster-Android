@@ -341,6 +341,7 @@ fun signature_rich_editor(
         onDispose { controller.editor_view = null }
     }
 
+    val show_scroll_bar = !org.astermail.android.ui.theme.local_accessibility.current.hide_scrollbars
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { context ->
             android.webkit.WebView(context).apply {
@@ -368,7 +369,7 @@ fun signature_rich_editor(
                     }
                 }
                 addJavascriptInterface(signature_editor_bridge(on_html_change), "aster_bridge")
-                isVerticalScrollBarEnabled = true
+                isVerticalScrollBarEnabled = show_scroll_bar
                 isHorizontalScrollBarEnabled = false
                 setBackgroundColor(android.graphics.Color.WHITE)
                 loadDataWithBaseURL(null, document, "text/html", "utf-8", null)

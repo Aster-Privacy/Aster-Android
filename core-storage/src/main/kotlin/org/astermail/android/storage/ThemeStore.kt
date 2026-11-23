@@ -121,6 +121,7 @@ class ThemeStore(context: Context) {
     private val key_compact_mode = booleanPreferencesKey("compact_mode")
     private val key_text_spacing = booleanPreferencesKey("text_spacing")
     private val key_underline_links = booleanPreferencesKey("underline_links")
+    private val key_hide_scrollbars = booleanPreferencesKey("hide_scrollbars")
     private val key_haptic_enabled = booleanPreferencesKey("haptic_enabled")
     private val key_dyslexia_font = booleanPreferencesKey("dyslexia_font")
     private val key_onboarding_seen = booleanPreferencesKey("onboarding_seen")
@@ -181,6 +182,11 @@ class ThemeStore(context: Context) {
         .map { prefs -> prefs[key_underline_links] ?: false }
         .onEach { cache_bool("underline_links", it) }
         .stateIn(scope, SharingStarted.Eagerly, cached_bool("underline_links", false))
+
+    val hide_scrollbars: StateFlow<Boolean> = app_context.theme_data_store.data
+        .map { prefs -> prefs[key_hide_scrollbars] ?: false }
+        .onEach { cache_bool("hide_scrollbars", it) }
+        .stateIn(scope, SharingStarted.Eagerly, cached_bool("hide_scrollbars", false))
 
     val haptic_enabled: StateFlow<Boolean> = app_context.theme_data_store.data
         .map { prefs -> prefs[key_haptic_enabled] ?: true }
@@ -306,6 +312,10 @@ class ThemeStore(context: Context) {
 
     fun set_underline_links(enabled: Boolean) {
         scope.launch { app_context.theme_data_store.edit { it[key_underline_links] = enabled } }
+    }
+
+    fun set_hide_scrollbars(enabled: Boolean) {
+        scope.launch { app_context.theme_data_store.edit { it[key_hide_scrollbars] = enabled } }
     }
 
     fun set_haptic_enabled(enabled: Boolean) {

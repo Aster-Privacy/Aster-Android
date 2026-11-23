@@ -3079,6 +3079,8 @@
     <string name="show_sender_pictures_subtitle">اعرض صورة أو الأحرف الأولى لكل مرسل في بريدك الوارد</string>
     <string name="theme_sync_across_devices">مزامنة السمة بين الأجهزة</string>
     <string name="theme_sync_across_devices_subtitle">أوقف هذا الخيار للاحتفاظ بسمة مختلفة على هذا الجهاز.</string>
+    <string name="hide_scrollbars">إخفاء أشرطة التمرير</string>
+    <string name="hide_scrollbars_subtitle">يخفي أشرطة التمرير على جميع أجهزتك. لا يزال بإمكانك التمرير عبر القوائم والرسائل.</string>
     <string name="view_security_details">عرض تفاصيل الأمان</string>
     <string name="resubscribe">إعادة الاشتراك</string>
     <string name="translate_confirm_title">هل تريد تشغيل الترجمة؟</string>

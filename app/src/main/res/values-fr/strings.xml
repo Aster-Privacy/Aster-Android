@@ -3045,6 +3045,8 @@
     <string name="show_sender_pictures_subtitle">Afficher une photo ou les initiales de chaque expéditeur dans votre boîte de réception</string>
     <string name="theme_sync_across_devices">Synchroniser le thème entre les appareils</string>
     <string name="theme_sync_across_devices_subtitle">Désactivez cette option pour conserver un thème différent sur cet appareil.</string>
+    <string name="hide_scrollbars">Masquer les barres de défilement</string>
+    <string name="hide_scrollbars_subtitle">Masque les barres de défilement sur tous vos appareils. Vous pouvez toujours faire défiler les listes et les messages.</string>
     <string name="view_security_details">Voir les détails de sécurité</string>
     <string name="resubscribe">Se réabonner</string>
     <string name="translate_confirm_title">Activer la traduction ?</string>

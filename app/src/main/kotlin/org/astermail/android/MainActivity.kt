@@ -2432,6 +2432,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         theme_vm_inbox.set_compact_mode(prefs.compact_mode)
         theme_vm_inbox.set_text_spacing(prefs.text_spacing)
         theme_vm_inbox.set_underline_links(prefs.underline_links)
+        theme_vm_inbox.set_hide_scrollbars(prefs.hide_scrollbars)
         theme_vm_inbox.set_haptic_enabled(prefs.haptic_enabled)
         theme_vm_inbox.set_dyslexia_font(prefs.dyslexia_font)
         theme_vm_inbox.set_text_size_from_key(prefs.font_size_scale)

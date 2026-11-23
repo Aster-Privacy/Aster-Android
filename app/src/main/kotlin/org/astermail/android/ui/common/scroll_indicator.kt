@@ -239,6 +239,7 @@ fun Modifier.horizontal_scroll_indicator(
     signal: horizontal_pan_signal,
     bottom_inset: Dp = 0.dp,
 ): Modifier {
+    if (local_accessibility.current.hide_scrollbars) return this
     val color = AsterMaterial.colors.text_muted.copy(alpha = indicator_alpha)
     val reduce_motion = aster_reduce_motion()
     val live_reduce_motion by rememberUpdatedState(reduce_motion)
@@ -309,6 +310,7 @@ fun Modifier.vertical_scroll_indicator(
     top_inset: Dp = 0.dp,
     bottom_inset: Dp = 0.dp,
 ): Modifier {
+    if (local_accessibility.current.hide_scrollbars) return this
     val color = AsterMaterial.colors.text_muted.copy(alpha = indicator_alpha)
     val alpha = remember_bar_alpha(state) { state.isScrollInProgress }
     return drawWithContent {
@@ -388,6 +390,7 @@ fun vertical_scroll_bar(
     top_inset: Dp = 0.dp,
     bottom_inset: Dp = 0.dp,
 ) {
+    if (local_accessibility.current.hide_scrollbars) return
     val colors = AsterMaterial.colors
     val idle_color = colors.text_muted.copy(alpha = indicator_alpha)
     val active_color = colors.accent_blue
