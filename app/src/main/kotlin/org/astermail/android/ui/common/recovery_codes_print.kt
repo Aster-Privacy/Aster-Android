@@ -22,11 +22,43 @@
 package org.astermail.android.ui.common
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Typeface
+import android.os.Bundle
+import android.os.CancellationSignal
+import android.os.ParcelFileDescriptor
+import android.print.PageRange
+import android.print.PrintAttributes
+import android.print.PrintDocumentAdapter
+import android.print.PrintDocumentInfo
+import android.print.PrintManager
+import android.print.pdf.PrintedPdfDocument
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
+import java.io.FileOutputStream
 import java.text.DateFormat
 import java.util.Date
 import org.astermail.android.R
-import org.astermail.android.ui.mail.escape_print_text
-import org.astermail.android.ui.mail.print_email_document
+import org.astermail.android.ui.mail.find_activity
+
+internal data class recovery_codes_print_content(
+    val title: String,
+    val account_email: String,
+    val created: String,
+    val note: String,
+    val codes: List<String>,
+)
+
+private const val PAGE_MARGIN_POINTS = 48f
+private const val TITLE_SIZE_POINTS = 18f
+private const val DETAIL_SIZE_POINTS = 10f
+private const val CODE_SIZE_POINTS = 13f
+private const val BLOCK_GAP_POINTS = 6f
+private const val SECTION_GAP_POINTS = 18f
+private const val CODE_GAP_POINTS = 4f
+private const val TEXT_COLOR = 0xFF111111.toInt()
+private const val DETAIL_COLOR = 0xFF444444.toInt()
 
 fun print_recovery_codes(
     context: Context,
@@ -35,49 +67,167 @@ fun print_recovery_codes(
     created_at: Date = Date(),
     on_failure: () -> Unit,
 ) {
-    val title = context.getString(R.string.recovery_codes_print_title)
-    val created = context.getString(
-        R.string.recovery_codes_print_created,
-        DateFormat.getDateInstance(DateFormat.LONG).format(created_at),
+    val activity = find_activity(context)
+    val print_manager = activity?.getSystemService(Context.PRINT_SERVICE) as? PrintManager
+    if (activity == null || print_manager == null || codes.isEmpty()) {
+        on_failure()
+        return
+    }
+    val content = recovery_codes_print_content(
+        title = context.getString(R.string.recovery_codes_print_title),
+        account_email = account_email,
+        created = context.getString(
+            R.string.recovery_codes_print_created,
+            DateFormat.getDateInstance(DateFormat.LONG).format(created_at),
+        ),
+        note = context.getString(R.string.recovery_codes_print_note),
+        codes = codes,
     )
-    val note = context.getString(R.string.recovery_codes_print_note)
-    val html = build_recovery_codes_print_html(title, account_email, created, note, codes)
-
-    print_email_document(
-        context = context,
-        job_name = title,
-        html = html,
-        allow_network = false,
+    val adapter = recovery_codes_print_adapter(
+        context = activity.applicationContext,
+        content = content,
         failure_message = context.getString(R.string.print_not_available),
-        on_failure = on_failure,
     )
+    val job = runCatching {
+        print_manager.print(content.title, adapter, PrintAttributes.Builder().build())
+    }.getOrNull()
+    if (job == null) on_failure()
 }
 
-private fun build_recovery_codes_print_html(
-    title: String,
-    account_email: String,
-    created: String,
-    note: String,
-    codes: List<String>,
-): String = buildString {
-    append("<!DOCTYPE html><html><head><meta charset=\"utf-8\">")
-    append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
-    append("<style>")
-    append("body{font-family:sans-serif;color:#111;background:#fff;margin:0;padding:24px;}")
-    append("h1{font-size:20px;margin:0 0 8px 0;}")
-    append("p{font-size:12px;color:#444;margin:0 0 4px 0;}")
-    append("ol{font-family:monospace;font-size:14px;margin:20px 0;padding-left:28px;}")
-    append("li{padding:3px 0;letter-spacing:0.5px;}")
-    append(".note{margin-top:20px;font-size:12px;color:#444;}")
-    append("</style></head><body dir=\"auto\">")
-    append("<h1>").append(escape_print_text(title)).append("</h1>")
-    if (account_email.isNotBlank()) {
-        append("<p>").append(escape_print_text(account_email)).append("</p>")
+internal fun paginate_blocks(heights: List<Float>, page_height: Float): List<List<Int>> {
+    if (heights.isEmpty()) return listOf(emptyList())
+    val pages = mutableListOf<List<Int>>()
+    var current = mutableListOf<Int>()
+    var used = 0f
+    heights.forEachIndexed { index, height ->
+        if (current.isNotEmpty() && used + height > page_height) {
+            pages.add(current)
+            current = mutableListOf()
+            used = 0f
+        }
+        current.add(index)
+        used += height
     }
-    append("<p>").append(escape_print_text(created)).append("</p>")
-    append("<ol>")
-    codes.forEach { append("<li>").append(escape_print_text(it)).append("</li>") }
-    append("</ol>")
-    append("<p class=\"note\">").append(escape_print_text(note)).append("</p>")
-    append("</body></html>")
+    pages.add(current)
+    return pages
+}
+
+private class print_block(val layout: StaticLayout, val gap_after: Float) {
+    val height: Float get() = layout.height + gap_after
+}
+
+internal class recovery_codes_print_adapter(
+    private val context: Context,
+    private val content: recovery_codes_print_content,
+    private val failure_message: CharSequence,
+) : PrintDocumentAdapter() {
+
+    private var attributes: PrintAttributes? = null
+
+    override fun onLayout(
+        old_attributes: PrintAttributes?,
+        new_attributes: PrintAttributes?,
+        cancellation_signal: CancellationSignal?,
+        callback: LayoutResultCallback?,
+        extras: Bundle?,
+    ) {
+        if (cancellation_signal?.isCanceled == true) {
+            callback?.onLayoutCancelled()
+            return
+        }
+        try {
+            val target = new_attributes ?: PrintAttributes.Builder().build()
+            attributes = target
+            val document = PrintedPdfDocument(context, target)
+            val page_count = try {
+                val area = document_area(document)
+                paginate_blocks(build_blocks(area.first).map { it.height }, area.second).size
+            } finally {
+                runCatching { document.close() }
+            }
+            val info = PrintDocumentInfo.Builder(content.title)
+                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                .setPageCount(page_count)
+                .build()
+            callback?.onLayoutFinished(info, new_attributes != old_attributes)
+        } catch (failure: RuntimeException) {
+            callback?.onLayoutFailed(failure_message)
+        }
+    }
+
+    override fun onWrite(
+        pages: Array<PageRange>?,
+        destination: ParcelFileDescriptor?,
+        cancellation_signal: CancellationSignal?,
+        callback: WriteResultCallback?,
+    ) {
+        val target = attributes
+        if (destination == null || target == null) {
+            callback?.onWriteFailed(failure_message)
+            return
+        }
+        val document = PrintedPdfDocument(context, target)
+        try {
+            val area = document_area(document)
+            val blocks = build_blocks(area.first)
+            val layout_pages = paginate_blocks(blocks.map { it.height }, area.second)
+            layout_pages.forEachIndexed { page_index, indices ->
+                if (cancellation_signal?.isCanceled == true) {
+                    callback?.onWriteCancelled()
+                    return
+                }
+                val page = document.startPage(page_index)
+                draw_blocks(page.canvas, indices.map { blocks[it] })
+                document.finishPage(page)
+            }
+            FileOutputStream(destination.fileDescriptor).use { document.writeTo(it) }
+            callback?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
+        } catch (failure: Exception) {
+            callback?.onWriteFailed(failure_message)
+        } finally {
+            runCatching { document.close() }
+        }
+    }
+
+    private fun document_area(document: PrintedPdfDocument): Pair<Int, Float> {
+        val width = (document.pageWidth - PAGE_MARGIN_POINTS * 2).toInt().coerceAtLeast(1)
+        val height = (document.pageHeight - PAGE_MARGIN_POINTS * 2).coerceAtLeast(1f)
+        return width to height
+    }
+
+    private fun build_blocks(width: Int): List<print_block> {
+        val blocks = mutableListOf<print_block>()
+        blocks.add(print_block(text_layout(content.title, width, TITLE_SIZE_POINTS, TEXT_COLOR, Typeface.DEFAULT_BOLD), BLOCK_GAP_POINTS))
+        if (content.account_email.isNotBlank()) {
+            blocks.add(print_block(text_layout(content.account_email, width, DETAIL_SIZE_POINTS, DETAIL_COLOR, Typeface.DEFAULT), BLOCK_GAP_POINTS))
+        }
+        blocks.add(print_block(text_layout(content.created, width, DETAIL_SIZE_POINTS, DETAIL_COLOR, Typeface.DEFAULT), SECTION_GAP_POINTS))
+        content.codes.forEachIndexed { index, code ->
+            val gap = if (index == content.codes.lastIndex) SECTION_GAP_POINTS else CODE_GAP_POINTS
+            blocks.add(print_block(text_layout("${index + 1}.  $code", width, CODE_SIZE_POINTS, TEXT_COLOR, Typeface.MONOSPACE), gap))
+        }
+        blocks.add(print_block(text_layout(content.note, width, DETAIL_SIZE_POINTS, DETAIL_COLOR, Typeface.DEFAULT), 0f))
+        return blocks
+    }
+
+    private fun text_layout(text: String, width: Int, size: Float, color: Int, typeface: Typeface): StaticLayout {
+        val paint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
+            textSize = size
+            this.color = color
+            this.typeface = typeface
+        }
+        return StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .build()
+    }
+
+    private fun draw_blocks(canvas: Canvas, blocks: List<print_block>) {
+        canvas.save()
+        canvas.translate(PAGE_MARGIN_POINTS, PAGE_MARGIN_POINTS)
+        blocks.forEach { block ->
+            block.layout.draw(canvas)
+            canvas.translate(0f, block.height)
+        }
+        canvas.restore()
+    }
 }

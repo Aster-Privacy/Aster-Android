@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -757,6 +758,12 @@ class MailViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _inbox_state
+                .map { envelope_missing_ids(it.items) }
+                .distinctUntilChanged()
+                .collectLatest { ids -> if (ids.isNotEmpty()) refill_missing_rows() }
+        }
+        viewModelScope.launch {
+            _inbox_state
                 .map {
                     folder_cache_persist_key(
                         it.current_folder,
@@ -786,6 +793,25 @@ class MailViewModel @Inject constructor(
         return folder to items.take(folder_cache_row_limit)
     }
 
+    private suspend fun refill_missing_rows() {
+        for (wait in envelope_refill_delays_ms) {
+            delay(wait)
+            val missing = _inbox_state.value.items.filter { it.is_envelope_missing }
+            if (missing.isEmpty()) return
+            val refilled = try {
+                repository.refill_missing_envelopes(missing)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                emptyMap()
+            }
+            if (refilled.isNotEmpty()) {
+                _inbox_state.update { it.copy(items = replace_refilled_items(it.items, refilled)) }
+                return
+            }
+        }
+    }
+
     private fun persist_folder_rows(folder: String, items: List<InboxItem>) {
         val snapshot = folder_cache_carry_decrypted(
             items.take(folder_cache_row_limit),
@@ -806,6 +832,7 @@ class MailViewModel @Inject constructor(
                 runCatching { folder_cache_store.rows(folder) }.getOrNull().orEmpty(),
                 context.getString(R.string.encrypted),
                 context.getString(R.string.decrypt_failed_title),
+                context.getString(R.string.loading),
             )
             disk_probed.add(folder)
             if (rows.isNotEmpty()) disk_rows[folder] = rows
@@ -2502,7 +2529,8 @@ class MailViewModel @Inject constructor(
     }
 
     private suspend fun single_message_from_item(item: InboxItem): ThreadMessageDecrypted {
-        val thread_item = thread_item_from_mail_item(item.raw_item)
+        val source = repository.resolve_missing_envelope(item)
+        val thread_item = thread_item_from_mail_item(source.raw_item)
         return repository.decrypt_single_thread_message(thread_item)
     }
 
@@ -6235,7 +6263,8 @@ class MailViewModel @Inject constructor(
             routing_token = if (raw.item_type == "received") raw.routing_token else null,
         )
 
-    private suspend fun item_to_single_message(item: InboxItem): ThreadMessageDecrypted {
+    private suspend fun item_to_single_message(source_item: InboxItem): ThreadMessageDecrypted {
+        val item = repository.resolve_missing_envelope(source_item)
         val thread_item = thread_item_from_mail_item(item.raw_item)
         val decrypted = repository.decrypt_single_thread_message(thread_item)
         return if (decrypted.sender_name.isNotBlank() || decrypted.body_text.isNotBlank() || decrypted.body_html != null) {

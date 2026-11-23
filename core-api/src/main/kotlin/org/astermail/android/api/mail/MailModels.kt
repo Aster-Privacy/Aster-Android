@@ -136,6 +136,11 @@ data class SpamSenderResponse(
 )
 
 @Serializable
+data class BatchMessagesRequest(
+    val ids: List<String>,
+)
+
+@Serializable
 data class MailItemsListResponse(
     val items: List<MailItem> = emptyList(),
     val total: Int = 0,

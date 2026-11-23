@@ -117,6 +117,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
     var used_codes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var total_codes by remember { mutableStateOf(0) }
     var created_at by remember { mutableStateOf<String?>(null) }
+    var created_on by remember { mutableStateOf(Date()) }
     var codes by remember { mutableStateOf<List<String>>(emptyList()) }
     var show_rotate_confirm by remember { mutableStateOf(false) }
     var rotated by remember { mutableStateOf(false) }
@@ -151,6 +152,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                 used_codes = emptySet()
                 total_codes = rotation.codes.size
                 created_at = format_codes_date(null)
+                created_on = Date()
                 rotated = true
                 codes_saved = false
                 token_spent = true
@@ -269,7 +271,9 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                     runCatching { used_recovery_codes(shown_codes, stored_hashes) }
                                         .getOrDefault(emptySet())
                                 }
-                                created_at = format_codes_date(vm.recovery_codes_status_now()?.created_at)
+                                val stored_created_at = vm.recovery_codes_status_now()?.created_at
+                                created_at = format_codes_date(stored_created_at)
+                                created_on = parse_codes_date(stored_created_at)
                                 if (rotate_after_verify) {
                                     rotate_after_verify = false
                                     show_rotate_confirm = true
@@ -397,6 +401,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                 context = context,
                                 account_email = account_email,
                                 codes = codes,
+                                created_at = created_on,
                                 on_failure = {
                                     Toast.makeText(
                                         context,
@@ -491,6 +496,11 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
 }
 
 private const val STEP_UP_REUSE_WINDOW_MS = 4 * 60_000L
+
+private fun parse_codes_date(iso: String?): Date {
+    if (iso.isNullOrBlank()) return Date()
+    return runCatching { Date(java.time.Instant.parse(iso).toEpochMilli()) }.getOrDefault(Date())
+}
 
 private fun format_codes_date(iso: String?): String {
     val formatter = DateFormat.getDateInstance(DateFormat.LONG)
