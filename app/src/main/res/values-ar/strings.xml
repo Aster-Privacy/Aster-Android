@@ -2757,6 +2757,8 @@
     <string name="ext_account_removed">تمت إزالة الحساب</string>
     <string name="folder_created">تم إنشاء المجلد</string>
     <string name="folder_locked">تم قفل المجلد</string>
+    <string name="lock_all_folders">قفل كل المجلدات المحمية</string>
+    <string name="folders_locked">تم قفل المجلدات المحمية</string>
     <string name="folder_unlocked">تم إلغاء قفل المجلد</string>
     <string name="folder_lock_set">تم تعيين قفل المجلد</string>
     <string name="folder_relock_required">تم قفل هذا المجلد مرة أخرى على جهاز آخر. لفتحه هنا، أزل القفل ثم عيّنه مرة أخرى.</string>

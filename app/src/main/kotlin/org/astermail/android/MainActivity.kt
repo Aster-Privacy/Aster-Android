@@ -2511,6 +2511,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             label_id = label.id,
             color = label.encrypted_color?.takeIf { it.startsWith("#") },
             password_set = label.password_set || label.is_password_protected,
+            is_unlocked = org.astermail.android.folders.is_folder_protected(label) &&
+                org.astermail.android.folders.folder_lock_store.is_unlocked(label.id),
             muted = label.label_token in muted_folder_tokens,
             can_move_up = sibling_index > 0,
             can_move_down = sibling_index >= 0 && sibling_index < siblings.lastIndex,
@@ -2682,6 +2684,12 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 
     val active_folder_token = if (filter_kind == "folder") filter_value else selected_folder
+    val leave_protected_folder: () -> Unit = {
+        filter_kind = null
+        filter_value = ""
+        filter_name = ""
+        selected_folder = "inbox"
+    }
     androidx.compose.runtime.LaunchedEffect(active_folder_token) {
         org.astermail.android.folders.folder_lock_store.set_active_folder_token(active_folder_token)
     }
@@ -2864,7 +2872,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     on_toggle_mute = { item -> settings_vm.toggle_folder_notifications(item.id) },
                     on_set_lock = { item, password -> settings_vm.set_folder_lock(item.label_id, password) {} },
                     on_remove_lock = { item, password -> settings_vm.remove_folder_lock(item.label_id, password) {} },
-                    on_lock_now = { item -> settings_vm.lock_folder(item.label_id) },
+                    on_lock_now = { item ->
+                        if (item.id == active_folder_token) leave_protected_folder()
+                        settings_vm.lock_folder(item.label_id)
+                    },
+                    on_lock_all = {
+                        if (active_folder_token in org.astermail.android.folders.folder_lock_store.protected_tokens()) {
+                            leave_protected_folder()
+                        }
+                        settings_vm.lock_all_folders()
+                    },
                     on_delete = { item, password, totp_code, purge ->
                         settings_vm.delete_label(
                             label_id = item.label_id,

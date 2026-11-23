@@ -5271,6 +5271,16 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    fun lock_all_folders() {
+        val locked = org.astermail.android.folders.folder_lock_store.lock_unlocked_folders()
+        if (locked == 0) return
+        _state.value = _state.value.copy(
+            action_result = context.getString(
+                if (locked == 1) R.string.folder_locked else R.string.folders_locked,
+            ),
+        )
+    }
+
     fun toggle_folder_notifications(label_token: String) {
         if (label_token.isBlank()) return
         if (!prefs_load_succeeded) {

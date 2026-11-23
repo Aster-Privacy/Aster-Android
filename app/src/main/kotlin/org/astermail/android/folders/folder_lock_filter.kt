@@ -59,3 +59,10 @@ fun filter_locked_items(items: List<InboxItem>): List<InboxItem> {
     if (locked.isEmpty()) return items
     return items.filterNot { is_item_in_locked_folder(it, locked) }
 }
+
+fun is_thread_in_locked_folder(item: InboxItem?, item_id: String?): Boolean {
+    val locked = folder_lock_store.locked_folder_tokens()
+    if (locked.isEmpty()) return false
+    if (item != null && is_item_in_locked_folder(item, locked)) return true
+    return folder_lock_store.is_routed_to_locked_folder(item_id ?: item?.id, item?.thread_token)
+}

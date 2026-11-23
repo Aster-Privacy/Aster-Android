@@ -148,6 +148,7 @@ data class drawer_folder_item(
     val label_id: String = "",
     val color: String? = null,
     val password_set: Boolean = false,
+    val is_unlocked: Boolean = false,
     val muted: Boolean = false,
     val can_move_up: Boolean = false,
     val can_move_down: Boolean = false,
@@ -165,6 +166,7 @@ data class folder_menu_actions(
     val on_set_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
     val on_remove_lock: (drawer_folder_item, String) -> Unit = { _, _ -> },
     val on_lock_now: (drawer_folder_item) -> Unit = {},
+    val on_lock_all: () -> Unit = {},
     val on_delete: (drawer_folder_item, String?, String?, Boolean) -> Unit = { _, _, _, _ -> },
 )
 
@@ -624,6 +626,11 @@ fun DrawerContent(
                                 add_test_tag = "create_folder",
                                 add_description = stringResource(R.string.create_folder),
                                 on_sort = on_sort_folders,
+                                on_lock_all = if (folder_items.any { it.is_unlocked }) {
+                                    { folder_actions.on_lock_all() }
+                                } else {
+                                    null
+                                },
                             )
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = folders_expanded,
@@ -704,8 +711,16 @@ fun DrawerContent(
                                                     on_move_up = { folder_actions.on_move_order(item, -1) },
                                                     on_move_down = { folder_actions.on_move_order(item, 1) },
                                                     on_sort_a_to_z = on_sort_folders,
-                                                    on_lock_now = if (item.password_set) {
+                                                    on_lock_now = if (item.password_set && item.is_unlocked) {
                                                         { folder_actions.on_lock_now(item) }
+                                                    } else {
+                                                        null
+                                                    },
+                                                    on_unlock = if (item.password_set && !item.is_unlocked) {
+                                                        {
+                                                            on_navigate_folder(item.id, item.label)
+                                                            on_close()
+                                                        }
                                                     } else {
                                                         null
                                                     },
@@ -1193,6 +1208,7 @@ private fun folder_actions_menu(
     on_move_to: () -> Unit,
     on_lock: () -> Unit,
     on_lock_now: (() -> Unit)?,
+    on_unlock: (() -> Unit)?,
     on_toggle_mute: () -> Unit,
     on_move_up: () -> Unit,
     on_move_down: () -> Unit,
@@ -1254,6 +1270,17 @@ private fun folder_actions_menu(
                 on_click = {
                     on_dismiss()
                     on_lock_now()
+                },
+            )
+        }
+        if (on_unlock != null) {
+            aster_menu_item(
+                label = stringResource(R.string.folder_unlock_action),
+                icon = TablerIcons.LockOpen,
+                test_tag = "folder_action_unlock",
+                on_click = {
+                    on_dismiss()
+                    on_unlock()
                 },
             )
         }
@@ -2640,6 +2667,7 @@ private fun collapsible_section_header(
     add_test_tag: String? = null,
     add_description: String? = null,
     on_sort: (() -> Unit)? = null,
+    on_lock_all: (() -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val chevron_rotation by animateFloatAsState(
@@ -2674,7 +2702,24 @@ private fun collapsible_section_header(
                 .size(16.dp)
                 .graphicsLayer { rotationZ = chevron_rotation },
         )
-        Spacer(Modifier.width(if (show_add || on_sort != null) 8.dp else 0.dp))
+        Spacer(Modifier.width(if (show_add || on_sort != null || on_lock_all != null) 8.dp else 0.dp))
+        if (on_lock_all != null) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = on_lock_all)
+                    .testTag("lock_all_folders"),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Lock,
+                    contentDescription = stringResource(R.string.lock_all_folders),
+                    tint = colors.text_muted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
         if (on_sort != null) {
             Box(
                 modifier = Modifier

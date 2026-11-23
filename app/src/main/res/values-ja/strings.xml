@@ -2680,6 +2680,8 @@
     <string name="ext_account_removed">アカウントを削除しました</string>
     <string name="folder_created">フォルダを作成しました</string>
     <string name="folder_locked">フォルダをロックしました</string>
+    <string name="lock_all_folders">保護されたフォルダをすべてロック</string>
+    <string name="folders_locked">保護されたフォルダをロックしました</string>
     <string name="folder_unlocked">フォルダのロックを解除しました</string>
     <string name="folder_lock_set">フォルダロックを設定しました</string>
     <string name="folder_relock_required">このフォルダは別のデバイスで再びロックされました。ここで開くには、ロックを解除してから再度設定してください。</string>

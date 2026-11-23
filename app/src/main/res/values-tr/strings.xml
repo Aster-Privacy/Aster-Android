@@ -2693,6 +2693,8 @@
     <string name="ext_account_removed">Hesap kaldırıldı</string>
     <string name="folder_created">Klasör oluşturuldu</string>
     <string name="folder_locked">Klasör kilitlendi</string>
+    <string name="lock_all_folders">Tüm korumalı klasörleri kilitle</string>
+    <string name="folders_locked">Korumalı klasörler kilitlendi</string>
     <string name="folder_unlocked">Klasörün kilidi açıldı</string>
     <string name="folder_lock_set">Klasör kilidi ayarlandı</string>
     <string name="folder_relock_required">Bu klasör başka bir cihazda yeniden kilitlendi. Burada açmak için kilidi kaldırıp yeniden ayarlayın.</string>

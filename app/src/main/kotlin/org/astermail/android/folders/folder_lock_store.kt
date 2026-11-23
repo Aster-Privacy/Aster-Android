@@ -269,6 +269,28 @@ object folder_lock_store {
     }
 
     @Synchronized
+    fun unlocked_folder_count(): Int = unlocked.keys.toList().count { session_for(it) != null }
+
+    @Synchronized
+    fun lock_unlocked_folders(): Int {
+        val live = unlocked_folder_count()
+        for (folder_id in unlocked.keys.toList()) {
+            lock_internal(folder_id)
+        }
+        return live
+    }
+
+    @Synchronized
+    fun is_routed_to_locked_folder(item_id: String?, thread_token: String?): Boolean {
+        val tokens = mutableSetOf<String>()
+        if (!item_id.isNullOrBlank()) item_folder_index[item_id]?.let { tokens.addAll(it) }
+        if (!thread_token.isNullOrBlank()) thread_folder_index[thread_token]?.let { tokens.addAll(it) }
+        if (tokens.isEmpty()) return false
+        val locked = locked_folder_tokens()
+        return tokens.any { it in locked }
+    }
+
+    @Synchronized
     fun lock_all() {
         val entries = unlocked.toMap()
         unlocked.clear()

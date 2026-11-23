@@ -2678,6 +2678,8 @@
     <string name="ext_account_removed">已移除账户</string>
     <string name="folder_created">已创建文件夹</string>
     <string name="folder_locked">已锁定文件夹</string>
+    <string name="lock_all_folders">锁定所有受保护的文件夹</string>
+    <string name="folders_locked">已锁定所有受保护的文件夹</string>
     <string name="folder_unlocked">已解锁文件夹</string>
     <string name="folder_lock_set">已设置文件夹锁</string>
     <string name="folder_relock_required">此文件夹已在另一台设备上重新锁定。要在此处打开，请移除锁定后重新设置。</string>

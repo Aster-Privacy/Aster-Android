@@ -2708,6 +2708,8 @@
     <string name="ext_account_removed">Conta removida</string>
     <string name="folder_created">Pasta criada</string>
     <string name="folder_locked">Pasta bloqueada</string>
+    <string name="lock_all_folders">Bloquear todas as pastas protegidas</string>
+    <string name="folders_locked">Pastas protegidas bloqueadas</string>
     <string name="folder_unlocked">Pasta desbloqueada</string>
     <string name="folder_lock_set">Bloqueio de pasta definido</string>
     <string name="folder_relock_required">Esta pasta foi bloqueada novamente em outro dispositivo. Para abri-la aqui, remova o bloqueio e defina-o novamente.</string>

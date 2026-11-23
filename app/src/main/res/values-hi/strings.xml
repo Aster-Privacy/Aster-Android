@@ -2632,6 +2632,8 @@
     <string name="ext_account_removed">खाता हटाया गया</string>
     <string name="folder_created">फ़ोल्डर बन गया</string>
     <string name="folder_locked">फ़ोल्डर लॉक हुआ</string>
+    <string name="lock_all_folders">सभी सुरक्षित फ़ोल्डर लॉक करें</string>
+    <string name="folders_locked">सुरक्षित फ़ोल्डर लॉक हुए</string>
     <string name="folder_unlocked">फ़ोल्डर अनलॉक हुआ</string>
     <string name="folder_lock_set">फ़ोल्डर पर लॉक लगाया गया</string>
     <string name="folder_relock_required">इस फ़ोल्डर को किसी दूसरे डिवाइस पर फिर से लॉक किया गया है. इसे यहां खोलने के लिए, लॉक हटाएं और फिर से लगाएं.</string>

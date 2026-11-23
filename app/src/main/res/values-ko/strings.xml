@@ -2678,6 +2678,8 @@
     <string name="ext_account_removed">계정이 삭제되었습니다</string>
     <string name="folder_created">폴더가 생성되었습니다</string>
     <string name="folder_locked">폴더가 잠겼습니다</string>
+    <string name="lock_all_folders">보호된 폴더 모두 잠그기</string>
+    <string name="folders_locked">보호된 폴더가 잠겼습니다</string>
     <string name="folder_unlocked">폴더 잠금이 해제되었습니다</string>
     <string name="folder_lock_set">폴더 잠금이 설정되었습니다</string>
     <string name="folder_relock_required">이 폴더는 다른 기기에서 다시 잠겼습니다. 여기에서 열려면 잠금을 해제한 후 다시 설정하세요.</string>

@@ -201,6 +201,8 @@ class MailViewModel @Inject constructor(
 
     private val _thread_state = MutableStateFlow(ThreadUiState())
     val thread_state: StateFlow<ThreadUiState> = _thread_state.asStateFlow()
+    private val _thread_locked_away = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val thread_locked_away: SharedFlow<Unit> = _thread_locked_away.asSharedFlow()
 
     val thread_optimistic_messages: StateFlow<List<ThreadMessageDecrypted>> =
         combine(_thread_state, repository.optimistic_sends) { state, sends ->
@@ -745,6 +747,7 @@ class MailViewModel @Inject constructor(
         search_index_manager.add_read_overlay(index_read_overlay)
         prime_folder_cache(_inbox_state.value.current_folder)
         watch_identity_key_arrival()
+        watch_folder_locks()
         viewModelScope.launch {
             _inbox_state
                 .map { state -> state.stats?.let { Triple(it, stats_owner_account, account_generation) } }
@@ -778,6 +781,33 @@ class MailViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .debounce(folder_cache_persist_debounce_ms)
                 .collect { key -> if (key != null) persist_folder_rows(key.first, key.second) }
+        }
+    }
+
+    private fun watch_folder_locks() {
+        viewModelScope.launch {
+            org.astermail.android.folders.folder_lock_store.revision.drop(1).collect {
+                hide_locked_folder_content()
+            }
+        }
+    }
+
+    private fun hide_locked_folder_content() {
+        _inbox_state.update { state ->
+            val visible = org.astermail.android.folders.filter_locked_items(state.items)
+            if (visible.size == state.items.size) state else state.copy(items = visible)
+        }
+        _search_state.update { state ->
+            val visible = org.astermail.android.folders.filter_locked_items(state.all_items)
+            if (visible.size == state.all_items.size) state else state.copy(all_items = visible)
+        }
+        val thread = _thread_state.value
+        if (thread.item != null || thread.messages.isNotEmpty()) {
+            val first_id = thread.item?.id ?: thread.messages.firstOrNull()?.id
+            if (org.astermail.android.folders.is_thread_in_locked_folder(thread.item, first_id)) {
+                _thread_state.value = ThreadUiState()
+                _thread_locked_away.tryEmit(Unit)
+            }
         }
     }
 

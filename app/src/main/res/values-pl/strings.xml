@@ -2725,6 +2725,8 @@
     <string name="ext_account_removed">Konto usunięte</string>
     <string name="folder_created">Folder utworzony</string>
     <string name="folder_locked">Folder zablokowany</string>
+    <string name="lock_all_folders">Zablokuj wszystkie chronione foldery</string>
+    <string name="folders_locked">Chronione foldery zablokowane</string>
     <string name="folder_unlocked">Folder odblokowany</string>
     <string name="folder_lock_set">Ustawiono blokadę folderu</string>
     <string name="folder_relock_required">Ten folder został ponownie zablokowany na innym urządzeniu. Aby otworzyć go tutaj, usuń blokadę i ustaw ją ponownie.</string>
