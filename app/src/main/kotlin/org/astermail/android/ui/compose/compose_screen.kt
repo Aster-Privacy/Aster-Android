@@ -2681,13 +2681,16 @@ private fun compose_screen_content(
                                 on_click = {
                                     mode_menu_open = false
                                     if (option.first != effective_mode) {
+                                        val keep_subject = keeps_subject_on_mode_switch(subject, prefill.subject)
                                         mode_override = option.first
                                         to_chips_set = false
-                                        subject_set = false
                                         to_chips = emptyList()
                                         cc_chips = emptyList()
                                         cc_expanded = false
-                                        subject = ""
+                                        if (!keep_subject) {
+                                            subject_set = false
+                                            subject = ""
+                                        }
                                     }
                                 },
                             )

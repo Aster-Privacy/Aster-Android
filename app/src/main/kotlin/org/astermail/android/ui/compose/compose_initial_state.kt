@@ -116,6 +116,11 @@ private fun apply_subject_prefix(
     )
 }
 
+fun keeps_subject_on_mode_switch(current: String, current_default: String): Boolean {
+    val typed = current.trim()
+    return typed.isNotEmpty() && typed != current_default.trim()
+}
+
 fun resolve_thread_ghost_match(
     thread_ghost_email: String?,
     ghost_addresses: List<String>,
