@@ -256,6 +256,66 @@ fun emails_in_category_tab(
     }
 }
 
+data class TabThreadRows(
+    val by_tab: Map<String, List<ThreadRow>>,
+    val participants: Map<String, List<Pair<String, String>>>,
+)
+
+fun tab_rows_for(rows: TabThreadRows, categories_enabled: Boolean, active_category: String): List<ThreadRow> =
+    rows.by_tab[if (categories_enabled) active_category else ""] ?: emptyList()
+
+fun build_tab_thread_rows(
+    emails: List<Email>,
+    categories_enabled: Boolean,
+    active_tabs: List<String>,
+    sort_mode: InboxSortMode,
+    cached_participants: Map<String, List<Pair<String, String>>>,
+    sticky_participants: Map<String, List<Pair<String, String>>>,
+    grouping_enabled: Boolean = true,
+    count_corrections: Map<String, ThreadCountCorrection> = emptyMap(),
+): TabThreadRows {
+    val partitions = LinkedHashMap<String, MutableList<Email>>()
+    if (categories_enabled) {
+        active_tabs.forEach { partitions[it] = mutableListOf() }
+        val by_thread = if (grouping_enabled) {
+            org.astermail.android.mail.thread_categories(
+                emails,
+                thread_key = { it.thread_id },
+                order = compareBy { it.received_at },
+                category = { it.category },
+                pinned = { it.category_pinned },
+                locked = { is_aster_system_sender(it) },
+            )
+        } else {
+            emptyMap()
+        }
+        emails.forEach {
+            val category = if (grouping_enabled) by_thread[it.thread_id] ?: it.category else it.category
+            val tab = org.astermail.android.mail.category_for_tab(category, active_tabs)
+            partitions.getOrPut(tab) { mutableListOf() }.add(it)
+        }
+    } else {
+        partitions[""] = emails.toMutableList()
+    }
+    val participants = HashMap<String, List<Pair<String, String>>>()
+    val by_tab = partitions.mapValues { (_, source) ->
+        val result = build_thread_rows(
+            emails = source,
+            categories_enabled = false,
+            active_category = "",
+            active_tabs = active_tabs,
+            sort_mode = sort_mode,
+            cached_participants = cached_participants,
+            sticky_participants = sticky_participants,
+            grouping_enabled = grouping_enabled,
+            count_corrections = count_corrections,
+        )
+        participants.putAll(result.participants)
+        result.rows
+    }
+    return TabThreadRows(by_tab, participants)
+}
+
 fun thread_row_covers(email: Email, thread_id: String, grouping_enabled: Boolean): Boolean =
     if (grouping_enabled) email.thread_id == thread_id || email.id == thread_id else email.id == thread_id
 
@@ -986,54 +1046,54 @@ fun InboxScreen(
         }
     }
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
-    val initial_threads = remember {
+    val initial_tab_rows = remember {
         if (emails.isEmpty()) {
-            emptyList()
+            TabThreadRows(emptyMap(), emptyMap())
         } else {
-            build_thread_rows(
+            build_tab_thread_rows(
                 emails = emails.toList(),
                 categories_enabled = categories_enabled,
-                active_category = active_category,
                 active_tabs = active_tabs,
                 sort_mode = sort_mode,
                 cached_participants = cached_participants,
                 sticky_participants = HashMap(sticky_participants),
                 grouping_enabled = grouping_enabled,
                 count_corrections = count_corrections,
-            ).rows
+            )
         }
     }
-    var threads by remember { mutableStateOf(initial_threads) }
-    var threads_pending by remember { mutableStateOf(initial_threads.isEmpty()) }
+    var tab_rows by remember { mutableStateOf(initial_tab_rows) }
+    val threads = tab_rows_for(tab_rows, categories_enabled, active_category)
+    var threads_pending by remember {
+        mutableStateOf(tab_rows_for(initial_tab_rows, categories_enabled, active_category).isEmpty())
+    }
     var threads_folder by remember { mutableStateOf(current_folder) }
     var threads_source_ids by remember { mutableStateOf(email_ids_signature(emails)) }
     val loaded_ids_signature = remember(api_emails) { api_emails?.let { email_ids_signature(it) } }
     val thread_gate = remember { InboxThreadGate() }
+    val category_only = thread_gate.observe(current_folder, active_category, emails_fingerprint)
     LaunchedEffect(
         current_folder,
         emails_fingerprint,
         categories_enabled,
-        active_category,
         active_tabs,
         sort_mode,
         cached_participants,
         count_corrections,
         grouping_enabled,
     ) {
-        thread_gate.observe(threads_folder == current_folder, active_category, emails_fingerprint)
         threads_pending = true
         if (threads_folder != current_folder) {
-            threads = emptyList()
+            tab_rows = TabThreadRows(emptyMap(), emptyMap())
             threads_folder = current_folder
         }
         val snapshot = emails.toList()
         val snapshot_ids = email_ids_signature(snapshot)
         val sticky_snapshot = HashMap(sticky_participants)
         val computed = withContext(Dispatchers.Default) {
-            build_thread_rows(
+            build_tab_thread_rows(
                 emails = snapshot,
                 categories_enabled = categories_enabled,
-                active_category = active_category,
                 active_tabs = active_tabs,
                 sort_mode = sort_mode,
                 cached_participants = cached_participants,
@@ -1044,7 +1104,7 @@ fun InboxScreen(
         }
         sticky_participants.keys.retainAll(computed.participants.keys)
         sticky_participants.putAll(computed.participants)
-        threads = computed.rows
+        tab_rows = computed
         threads_source_ids = snapshot_ids
         threads_pending = false
     }
@@ -2111,7 +2171,7 @@ fun InboxScreen(
                     (inbox_state.is_loading || inbox_state.initial)
                 val skeleton_target = (inbox_state.initial && threads.isEmpty()) ||
                     (
-                        !thread_gate.category_only &&
+                        !category_only &&
                             (inbox_state.is_loading || threads_pending) &&
                             threads.isEmpty()
                         )
@@ -2147,12 +2207,12 @@ fun InboxScreen(
                 val category_skeleton = hidden_by_category &&
                     (
                         (category_drain_active && inbox_state.is_loading_more && !category_drain_expired) ||
-                            (!thread_gate.category_only && !empty_settled)
+                            (!category_only && !empty_settled)
                         )
                 val empty_skeleton = !hidden_by_category &&
                     threads.isEmpty() &&
                     !empty_settled &&
-                    !thread_gate.category_only
+                    !category_only
                 var empty_state_seen by remember(current_folder, active_category_label) {
                     mutableStateOf(false)
                 }

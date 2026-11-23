@@ -21,23 +21,24 @@
 
 package org.astermail.android.ui.mail
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-
 internal class InboxThreadGate {
-    private var category by mutableStateOf<String?>(null)
-    private var fingerprint by mutableIntStateOf(0)
-    var category_only by mutableStateOf(false)
+    private var folder: String? = null
+    private var category: String? = null
+    private var fingerprint = 0
+    var category_only = false
         private set
 
-    fun observe(same_folder: Boolean, next_category: String, next_fingerprint: Int) {
-        category_only = same_folder &&
+    fun observe(next_folder: String, next_category: String, next_fingerprint: Int): Boolean {
+        if (next_folder == folder && next_category == category && next_fingerprint == fingerprint) {
+            return category_only
+        }
+        category_only = next_folder == folder &&
             category != null &&
             fingerprint == next_fingerprint &&
             category != next_category
+        folder = next_folder
         category = next_category
         fingerprint = next_fingerprint
+        return category_only
     }
 }
