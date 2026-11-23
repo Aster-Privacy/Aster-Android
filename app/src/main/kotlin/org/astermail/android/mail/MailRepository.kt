@@ -749,6 +749,10 @@ class MailRepository @Inject constructor(
         }
     }
 
+    fun identity_key_events(): kotlinx.coroutines.flow.StateFlow<Long> = session_key_store.identity_key_events()
+
+    fun has_identity_key(): Boolean = !session_key_store.get_identity_key().isNullOrBlank()
+
     suspend fun drain_pending_actions_now() {
         val queue = pending_action_queue ?: return
         if (!queue.has_pending(current_account_id())) return

@@ -470,6 +470,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_storage()
         load_preferences()
         watch_account_key_readiness()
+        watch_identity_key()
         viewModelScope.launch {
             org.astermail.android.billing.SubscriptionEvents.changed.collect { load_subscription(force = true) }
         }
@@ -6215,11 +6216,12 @@ class SettingsViewModel @Inject constructor(
                         identity_key = await_identity_key()
                     }
                     if (identity_key.isNullOrBlank()) {
+                        val retry_on_key = keys_still_arriving()
                         _state.value = _state.value.copy(
                             preferences = _state.value.preferences ?: UserPreferences(),
                             preferences_locked = true,
                             is_loading = false,
-                            error = context.getString(R.string.preferences_locked_retry),
+                            error = if (retry_on_key) null else context.getString(R.string.preferences_locked_retry),
                         )
                         return@launch
                     }
@@ -6909,6 +6911,34 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun keys_still_arriving(): Boolean =
+        runCatching { session_key_store.is_locked() || session_key_store.account_key_load_pending() }
+            .getOrDefault(false)
+
+    private fun watch_identity_key() {
+        val events = runCatching { session_key_store.identity_key_events() }.getOrNull() ?: return
+        var seen = runCatching { events.value }.getOrNull() ?: return
+        viewModelScope.launch {
+            try {
+                events.collect { count ->
+                    if (count != seen) {
+                        seen = count
+                        reload_locked_preferences()
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+            }
+        }
+    }
+
+    private fun reload_locked_preferences(): Boolean {
+        if (!_state.value.preferences_locked) return false
+        if (session_key_store.get_identity_key().isNullOrBlank()) return false
+        load_preferences(force = true)
+        return true
+    }
+
     private fun watch_account_key_readiness() {
         val events = runCatching { session_key_store.account_keys_ready_events() }.getOrNull() ?: return
         var seen = runCatching { events.value }.getOrNull() ?: return
@@ -6935,6 +6965,7 @@ class SettingsViewModel @Inject constructor(
             }
             return
         }
+        if (reload_locked_preferences()) return
         if (!prefs_load_succeeded || !account_uses_encrypted_prefs) return
         val account = cache_account_key() ?: return
         val pending = (listOf(archive_kind_preferences) + field_archive_kinds - archive_kind_recovery_email).any { kind ->

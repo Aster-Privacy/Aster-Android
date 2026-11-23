@@ -1818,6 +1818,65 @@ class MailViewModelTest {
         coVerify(exactly = 0) { repository.fetch_thread(any()) }
     }
 
+    private fun key_watching_vm(events: kotlinx.coroutines.flow.MutableStateFlow<Long>): MailViewModel {
+        every { repository.identity_key_events() } returns events
+        return MailViewModel(
+            context,
+            repository,
+            search_index_manager,
+            folder_cache_store,
+            identity_pins,
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
+    }
+
+    @Test
+    fun `an inbox loaded before the identity key reloads when the key arrives`() = runTest {
+        val events = kotlinx.coroutines.flow.MutableStateFlow(0L)
+        every { repository.has_identity_key() } returns false
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.failure(RuntimeException("no key"))
+        val target = key_watching_vm(events)
+        target.load_inbox(force = true)
+        advanceUntilIdle()
+        assertTrue(target.inbox_state.value.items.isEmpty())
+
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(2))
+        every { repository.has_identity_key() } returns true
+        events.value = 1L
+        advanceUntilIdle()
+
+        val state = target.inbox_state.value
+        assertEquals(2, state.items.size)
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+        assertNull(state.error)
+    }
+
+    @Test
+    fun `a key change while the key was already present does not reload the inbox`() = runTest {
+        val events = kotlinx.coroutines.flow.MutableStateFlow(0L)
+        every { repository.has_identity_key() } returns true
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            fetches++
+            Result.success(fake_inbox_page(2))
+        }
+        val target = key_watching_vm(events)
+        target.load_inbox(force = true)
+        advanceUntilIdle()
+        val before = fetches
+
+        events.value = 1L
+        advanceUntilIdle()
+
+        assertEquals(before, fetches)
+        assertEquals(2, target.inbox_state.value.items.size)
+    }
+
     @Test
     fun `a new view model restores the saved conversation grouping before opening mail`() = runTest {
         every { folder_cache_store.layout_signature() } returns

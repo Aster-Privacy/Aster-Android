@@ -150,6 +150,8 @@ class SessionKeyStore(context: Context? = null) {
 
     private val account_keys_ready_count = MutableStateFlow(0L)
 
+    private val identity_key_count = MutableStateFlow(0L)
+
     @Volatile
     private var data_kek: ByteArray? = null
     private var storage_kdf_version: Int? = null
@@ -213,7 +215,7 @@ class SessionKeyStore(context: Context? = null) {
             runCatching {
                 key_material = decode_b64_field(p, key_session_key)
                 passphrase = decode_b64_field(p, key_passphrase)
-                identity_key = p.getString(key_identity, null)
+                set_identity_key_locked(p.getString(key_identity, null))
                 encrypted_vault = p.getString(key_enc_vault, null)
                 encrypted_vault?.let { remember_vault_salt_locked(it) }
                 vault_nonce = p.getString(key_vault_nonce, null)
@@ -429,7 +431,7 @@ class SessionKeyStore(context: Context? = null) {
     fun put_identity_key(key: String) {
         synchronized(lock) {
             if (identity_key != key) drop_account_write_keks_locked()
-            identity_key = key
+            set_identity_key_locked(key)
             prefs?.edit()?.putString(key_identity, key)?.commit()
         }
     }
@@ -762,6 +764,14 @@ class SessionKeyStore(context: Context? = null) {
 
     fun account_keys_ready_events(): StateFlow<Long> = account_keys_ready_count
 
+    fun identity_key_events(): StateFlow<Long> = identity_key_count
+
+    private fun set_identity_key_locked(key: String?) {
+        if (identity_key == key) return
+        identity_key = key
+        identity_key_count.value = identity_key_count.value + 1
+    }
+
     fun account_key_load_pending(): Boolean = account_load_pending.value
 
     fun complete_account_key_load(ticket: AccountKeyLoadTicket, generation: Long): Boolean {
@@ -1009,7 +1019,7 @@ class SessionKeyStore(context: Context? = null) {
             key_material = null
             passphrase?.fill(0)
             passphrase = null
-            identity_key = null
+            set_identity_key_locked(null)
             encrypted_vault = null
             vault_nonce = null
             vault_kdf_iterations = default_vault_kdf_iterations
