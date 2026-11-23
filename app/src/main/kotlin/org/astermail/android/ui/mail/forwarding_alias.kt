@@ -300,6 +300,33 @@ private fun is_custom_forward_authenticated(auth: ForwardingAuthResults?): Boole
 private fun header_present(raw_headers: List<Pair<String, String>>, name: String): Boolean =
     raw_headers.any { it.first.equals(name, ignoreCase = true) }
 
+private val reply_to_separator = Regex(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)")
+
+private fun local_part_of(email: String): String {
+    val at = email.lastIndexOf('@')
+    return if (at >= 0) email.substring(0, at).lowercase() else ""
+}
+
+private fun decode_reply_to_forward_address(
+    raw_headers: List<Pair<String, String>>,
+    from_email: String,
+): String? {
+    val reply_to_value = find_header(raw_headers, "Reply-To") ?: return null
+    val addresses = reply_to_value.split(reply_to_separator)
+    if (addresses.size != 1) return null
+    val reply_to = parse_email_address(addresses[0]) ?: return null
+    val reply_email = reply_to.email.trim()
+    if (domain_of(reply_email) != domain_of(from_email.trim())) return null
+    val from_local = local_part_of(from_email.trim())
+    val reply_local = local_part_of(reply_email)
+    if (from_local.isEmpty() || !reply_local.startsWith("$from_local+")) return null
+    val tag = reply_email.substring(from_local.length + 1, reply_email.lastIndexOf('@'))
+    val eq = tag.lastIndexOf('=')
+    if (eq <= 0) return null
+    val decoded = tag.substring(0, eq) + "@" + tag.substring(eq + 1)
+    return decoded.takeIf { email_address_pattern.matches(it) }
+}
+
 fun detect_custom_domain_forward(
     raw_headers: List<Pair<String, String>>,
     from_email: String,
@@ -307,7 +334,13 @@ fun detect_custom_domain_forward(
 ): ForwardedAliasInfo? {
     if (raw_headers.isEmpty() || from_email.isBlank()) return null
     if (is_known_forwarder(from_email)) return null
-    val decoded = decode_custom_domain_forward_address(from_email) ?: return null
+    val from_decoded = decode_custom_domain_forward_address(from_email)
+    val reply_decoded = if (from_decoded == null) {
+        decode_reply_to_forward_address(raw_headers, from_email)
+    } else {
+        null
+    }
+    val decoded = from_decoded ?: reply_decoded ?: return null
     if (!is_custom_forward_authenticated(auth)) return null
     if (addy_reports_dmarc_failure(raw_headers)) return null
 
@@ -320,10 +353,19 @@ fun detect_custom_domain_forward(
 
     val from_header = parse_original_sender(from_header_value)
     val bound = if (sender_value != null) parse_original_sender(sender_value) else from_header
-    if (bound == null || !same_email(bound.email, decoded)) return null
+    if (bound == null) return null
     if (same_email(bound.email, from_email)) return null
 
-    val name = from_header?.takeIf { same_email(it.email, decoded) }?.name
+    val original_reply_to = if (reply_decoded != null) {
+        parse_original_sender(find_header(raw_headers, "X-AnonAddy-Original-Reply-To-Header"))
+    } else {
+        null
+    }
+    val is_bound = same_email(bound.email, decoded) ||
+        (original_reply_to != null && same_email(original_reply_to.email, decoded))
+    if (!is_bound) return null
+
+    val name = from_header?.takeIf { same_email(it.email, bound.email) }?.name
     return ForwardedAliasInfo(addy_custom_service, ParsedEmailAddress(name, bound.email))
 }
 
