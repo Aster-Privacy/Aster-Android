@@ -3040,6 +3040,8 @@
     <string name="show_sender_pictures_subtitle">Pokazuj zdjęcie lub inicjały każdego nadawcy w skrzynce odbiorczej</string>
     <string name="theme_sync_across_devices">Synchronizuj motyw między urządzeniami</string>
     <string name="theme_sync_across_devices_subtitle">Wyłącz, aby na tym urządzeniu zachować osobny motyw.</string>
+    <string name="hide_scrollbars">Ukryj paski przewijania</string>
+    <string name="hide_scrollbars_subtitle">Ukrywa paski przewijania na wszystkich Twoich urządzeniach. Nadal możesz przewijać listy i wiadomości.</string>
     <string name="view_security_details">Zobacz szczegóły zabezpieczeń</string>
     <string name="resubscribe">Subskrybuj ponownie</string>
     <string name="translate_confirm_title">Włączyć tłumaczenie?</string>

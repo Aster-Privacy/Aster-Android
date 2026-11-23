@@ -2998,6 +2998,8 @@
     <string name="show_sender_pictures_subtitle">Gelen kutunuzda her gönderen için bir fotoğraf veya baş harfler gösterin</string>
     <string name="theme_sync_across_devices">Temayı cihazlar arasında eşitle</string>
     <string name="theme_sync_across_devices_subtitle">Bu cihazda farklı bir tema kullanmak için kapatın.</string>
+    <string name="hide_scrollbars">Kaydırma çubuklarını gizle</string>
+    <string name="hide_scrollbars_subtitle">Tüm cihazlarınızda kaydırma çubuklarını gizler. Listelerde ve iletilerde kaydırmaya devam edebilirsiniz.</string>
     <string name="view_security_details">Güvenlik ayrıntılarını görüntüle</string>
     <string name="resubscribe">Yeniden abone ol</string>
     <string name="translate_confirm_title">Çeviri açılsın mı?</string>

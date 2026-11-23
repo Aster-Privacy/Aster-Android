@@ -3018,6 +3018,8 @@
     <string name="show_sender_pictures_subtitle">Mostrar uma foto ou as iniciais de cada remetente na sua caixa de entrada</string>
     <string name="theme_sync_across_devices">Sincronizar o tema entre dispositivos</string>
     <string name="theme_sync_across_devices_subtitle">Desative para manter um tema diferente neste dispositivo.</string>
+    <string name="hide_scrollbars">Ocultar barras de rolagem</string>
+    <string name="hide_scrollbars_subtitle">Oculta as barras de rolagem em todos os seus dispositivos. Você ainda pode rolar listas e mensagens.</string>
     <string name="view_security_details">Ver detalhes de segurança</string>
     <string name="resubscribe">Assinar novamente</string>
     <string name="translate_confirm_title">Ativar a tradução?</string>

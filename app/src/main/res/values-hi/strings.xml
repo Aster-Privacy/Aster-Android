@@ -807,6 +807,8 @@
     <string name="theme_dynamic_subtitle">अपने डिवाइस के रंगों से मिलाएं</string>
     <string name="theme_sync_across_devices">सभी डिवाइस पर थीम सिंक करें</string>
     <string name="theme_sync_across_devices_subtitle">इस डिवाइस पर अलग थीम रखने के लिए इसे बंद करें।</string>
+    <string name="hide_scrollbars">स्क्रॉल बार छिपाएं</string>
+    <string name="hide_scrollbars_subtitle">आपके सभी डिवाइस पर स्क्रॉल बार छिपाता है। आप अब भी सूचियों और संदेशों में स्क्रॉल कर सकते हैं।</string>
     <string name="color_theme">रंग थीम</string>
     <string name="color_theme_default">Aster डिफ़ॉल्ट</string>
     <string name="color_theme_custom">अपनी थीम</string>

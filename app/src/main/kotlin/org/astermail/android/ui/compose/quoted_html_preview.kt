@@ -176,11 +176,12 @@ internal fun quoted_html_preview(html: String, modifier: Modifier = Modifier) {
         label = "quoted_preview_height",
     )
 
+    val show_scroll_bar = !org.astermail.android.ui.theme.local_accessibility.current.hide_scrollbars
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { ctx ->
             android.webkit.WebView(ctx).apply {
                 configure_mail_body_web_view(this, text_zoom, allow_external)
-                isVerticalScrollBarEnabled = true
+                isVerticalScrollBarEnabled = show_scroll_bar
                 isHorizontalScrollBarEnabled = false
                 setOnTouchListener { view, _ ->
                     val scrollable = view.canScrollVertically(1) || view.canScrollVertically(-1)

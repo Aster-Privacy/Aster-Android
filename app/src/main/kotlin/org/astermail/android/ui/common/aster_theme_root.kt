@@ -71,6 +71,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
     val compact_mode by theme_vm.compact_mode.collectAsStateWithLifecycle()
     val text_spacing by theme_vm.text_spacing.collectAsStateWithLifecycle()
     val underline_links by theme_vm.underline_links.collectAsStateWithLifecycle()
+    val hide_scrollbars by theme_vm.hide_scrollbars.collectAsStateWithLifecycle()
     val dyslexia_font by theme_vm.dyslexia_font.collectAsStateWithLifecycle()
     val haptic_enabled by theme_vm.haptic_enabled.collectAsStateWithLifecycle()
     val color_theme by theme_vm.color_theme.collectAsStateWithLifecycle()
@@ -96,6 +97,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         compact_mode,
         text_spacing,
         underline_links,
+        hide_scrollbars,
         dyslexia_font,
         haptic_enabled,
     ) {
@@ -106,6 +108,7 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             compact_mode = compact_mode,
             text_spacing = text_spacing,
             underline_links = underline_links,
+            hide_scrollbars = hide_scrollbars,
             dyslexia_font = dyslexia_font,
             haptic_enabled = haptic_enabled,
         )

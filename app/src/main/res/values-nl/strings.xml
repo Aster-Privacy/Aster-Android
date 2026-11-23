@@ -2998,6 +2998,8 @@
     <string name="show_sender_pictures_subtitle">Toon een foto of initialen voor elke afzender in je Postvak IN</string>
     <string name="theme_sync_across_devices">Thema synchroniseren tussen apparaten</string>
     <string name="theme_sync_across_devices_subtitle">Zet dit uit om op dit apparaat een eigen thema te houden.</string>
+    <string name="hide_scrollbars">Schuifbalken verbergen</string>
+    <string name="hide_scrollbars_subtitle">Verbergt schuifbalken op al je apparaten. Je kunt nog steeds door lijsten en berichten scrollen.</string>
     <string name="view_security_details">Beveiligingsdetails bekijken</string>
     <string name="resubscribe">Opnieuw abonneren</string>
     <string name="translate_confirm_title">Vertaling inschakelen?</string>

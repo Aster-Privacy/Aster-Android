@@ -294,6 +294,7 @@ fun AppearanceScreen(
     val background_opacity by vm.background_opacity.collectAsStateWithLifecycle()
     val reduce_transparency by vm.reduce_transparency.collectAsStateWithLifecycle()
     val animate_background by vm.animate_background.collectAsStateWithLifecycle()
+    val hide_scrollbars by vm.hide_scrollbars.collectAsStateWithLifecycle()
     val appearance_custom_meta by org.astermail.android.ui.theme.custom_theme_image.meta.collectAsState()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
@@ -444,6 +445,13 @@ fun AppearanceScreen(
         settings_vm.save_preferences(base.copy(custom_theme_overrides = emptyMap()))
     }
 
+    fun apply_hide_scrollbars(enabled: Boolean) {
+        val base = prefs ?: return
+        remote_prefs_adopted = true
+        vm.set_hide_scrollbars(enabled)
+        if (base.hide_scrollbars != enabled) settings_vm.save_preferences(base.copy(hide_scrollbars = enabled))
+    }
+
     fun apply_theme_sync(enabled: Boolean) {
         val base = prefs ?: return
         remote_prefs_adopted = true
@@ -572,6 +580,16 @@ fun AppearanceScreen(
                     color_theme == ColorThemeId.dynamic,
                 ) { apply_color_theme(ColorThemeId.dynamic, clear_background = true) }
             }
+        }
+        v_gap(AsterSpacing.md)
+        AsterCard(modifier = Modifier.fillMaxWidth()) {
+            settings_toggle_row(
+                title = stringResource(R.string.hide_scrollbars),
+                subtitle = stringResource(R.string.hide_scrollbars_subtitle),
+                checked = hide_scrollbars,
+                test_tag = "hide_scrollbars_toggle",
+                on_change = { on -> apply_hide_scrollbars(on) },
+            )
         }
 
 

@@ -2979,6 +2979,8 @@
     <string name="show_sender_pictures_subtitle">在收件箱中为每位发件人显示照片或姓名首字母</string>
     <string name="theme_sync_across_devices">在设备之间同步主题</string>
     <string name="theme_sync_across_devices_subtitle">关闭后，此设备可以使用不同的主题。</string>
+    <string name="hide_scrollbars">隐藏滚动条</string>
+    <string name="hide_scrollbars_subtitle">在您的所有设备上隐藏滚动条。您仍然可以滚动浏览列表和邮件。</string>
     <string name="view_security_details">查看安全详情</string>
     <string name="resubscribe">重新订阅</string>
     <string name="translate_confirm_title">要开启翻译吗？</string>

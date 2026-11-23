@@ -920,6 +920,8 @@
     <string name="theme_dynamic_subtitle">Match your device colors</string>
     <string name="theme_sync_across_devices">Sync theme across devices</string>
     <string name="theme_sync_across_devices_subtitle">Turn this off to keep a separate theme on this device.</string>
+    <string name="hide_scrollbars">Hide scroll bars</string>
+    <string name="hide_scrollbars_subtitle">Hides scroll bars on all your devices. You can still scroll through lists and messages.</string>
     <string name="color_theme">Color theme</string>
     <string name="color_theme_default">Aster Default</string>
     <string name="color_theme_custom">Custom theme</string>
