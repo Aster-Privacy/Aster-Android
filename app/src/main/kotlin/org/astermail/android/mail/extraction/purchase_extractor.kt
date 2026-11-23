@@ -22,7 +22,6 @@ package org.astermail.android.mail.extraction
 
 import org.astermail.android.mail.html_to_plain_text
 import org.astermail.android.mail.looks_like_html_body
-import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
@@ -60,41 +59,6 @@ internal fun clean_text_field(value: String?): String? {
     return trimmed
 }
 
-private val currency_symbols = mapOf(
-    "$" to "USD",
-    "€" to "EUR",
-    "£" to "GBP",
-    "¥" to "JPY",
-    "₹" to "INR",
-    "C$" to "CAD",
-    "A$" to "AUD",
-    "R$" to "BRL",
-)
-
-private val currency_to_symbol = mapOf(
-    "USD" to "$",
-    "EUR" to "€",
-    "GBP" to "£",
-    "JPY" to "¥",
-    "INR" to "₹",
-    "CAD" to "C$",
-    "AUD" to "A$",
-    "BRL" to "R$",
-)
-
-private val zero_decimal_currencies = setOf("JPY", "KRW")
-
-internal fun format_amount(value: Double, currency: String, locale: Locale): String {
-    val digits = if (currency in zero_decimal_currencies) 0 else 2
-    val formatter = NumberFormat.getNumberInstance(locale).apply {
-        minimumFractionDigits = digits
-        maximumFractionDigits = digits
-    }
-    val number = formatter.format(value)
-    val symbol = currency_to_symbol[currency]
-    return if (symbol != null) symbol + number else "$currency $number"
-}
-
 private const val id_marker = "(?:#|no\\.?|num(?:ber)?|id)"
 private const val id_value = "([A-Za-z0-9](?:[\\w-]|\\.(?=[\\w-])){3,29})"
 
@@ -114,28 +78,8 @@ private val order_id_patterns = listOf(
 private val confirmation_number_pattern = labelled_id("confirmation", "(?:#|no\\.?|num(?:ber)?|code)")
 private val transaction_id_pattern = labelled_id("transaction")
 
-private const val currency_token = "C\\$|A\\$|R\\$|[\$€£¥₹]|USD|EUR|GBP|JPY|INR|CAD|AUD|CHF"
-private const val number_token = "[0-9][0-9,]*(?:\\.[0-9]{1,2})?(?![0-9])"
-private const val money_token =
-    "(?:(?:" + currency_token + ")\\s*)?(?:" + number_token + ")(?:\\s*(?:" + currency_token + "))?"
-
-private val amount_pattern = Regex("(" + currency_token + ")?\\s*(" + number_token + ")\\s*(" + currency_token + ")?")
-private val currency_scan = Regex(currency_token, RegexOption.IGNORE_CASE)
-private val thousands_regex = Regex(",")
-
 internal fun money_after(label: String): Regex =
     Regex(label + "\\s*[:=-]?\\s*-?\\s*(" + money_token + ")", RegexOption.IGNORE_CASE)
-
-internal fun parse_amount(text: String, fallback_currency: String, locale: Locale): ExtractedAmount? {
-    val match = amount_pattern.find(text) ?: return null
-    val prefix = match.groupValues[1]
-    val value_str = match.groupValues[2]
-    val suffix = match.groupValues[3]
-    val symbol = prefix.ifEmpty { suffix }.uppercase(Locale.ROOT)
-    val currency = if (symbol.isEmpty()) fallback_currency else currency_symbols[symbol] ?: symbol
-    val value = value_str.replace(thousands_regex, "").toDoubleOrNull() ?: return null
-    return ExtractedAmount(value, currency, format_amount(value, currency, locale))
-}
 
 private val trailing_punctuation_regex = Regex("[.,;:]+$")
 private val any_digit_regex = Regex("[0-9]")
@@ -171,34 +115,16 @@ private fun reconcile_amounts(amounts: purchase_amounts): purchase_amounts {
     return amounts
 }
 
-internal fun detect_dominant_currency(text: String): String {
-    val counts = HashMap<String, Int>()
-    for (match in currency_scan.findAll(text)) {
-        val symbol = match.value.uppercase(Locale.ROOT)
-        val currency = currency_symbols[symbol] ?: symbol
-        counts[currency] = (counts[currency] ?: 0) + 1
-    }
-    var winner = "USD"
-    var best = 0
-    for ((currency, count) in counts) {
-        if (count > best) {
-            winner = currency
-            best = count
-        }
-    }
-    return winner
-}
-
 private fun extract_amount_from_line(
     text: String,
     patterns: List<Regex>,
-    fallback_currency: String,
+    context: currency_context,
     locale: Locale,
 ): ExtractedAmount? {
     for (pattern in patterns) {
         val match = pattern.find(text) ?: continue
         val amount_str = match.groups[1]?.value?.ifEmpty { null } ?: match.value
-        return parse_amount(amount_str, fallback_currency, locale)
+        return parse_amount(amount_str, context, locale)
     }
     return null
 }
@@ -213,16 +139,20 @@ internal fun extract_date(text: String, patterns: List<Regex>): String? {
 
 private class item_pattern(val regex: Regex, val price_is_line_total: Boolean)
 
+private val required_money: String =
+    "(?:" + currency_token + ")" + money_gap + number_body + "(?:" + money_gap + "(?:" + currency_token + "))?" +
+        "|" + number_body + money_gap + "(?:" + currency_token + ")"
+
 private val item_patterns = listOf(
-    item_pattern(Regex("(\\d+)\\s*x\\s+(.+?)\\s*[-–]\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE), false),
-    item_pattern(Regex("(.+?)\\s*\\(Qty:\\s*(\\d+)\\)\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE), false),
+    item_pattern(Regex("""(\d+)\s*x\s+(.+?)\s*[-–]\s*(""" + money_token + ")", RegexOption.IGNORE_CASE), false),
+    item_pattern(Regex("""(.+?)\s*\(Qty:\s*(\d+)\)\s*(""" + money_token + ")", RegexOption.IGNORE_CASE), false),
     item_pattern(
-        Regex("Item:\\s*(.+?)(?:\\s*Qty:\\s*(\\d+))?\\s*Price:\\s*([\$€£¥₹]?\\s*[\\d,.]+)", RegexOption.IGNORE_CASE),
+        Regex("""Item:\s*(.+?)(?:\s*Qty:\s*(\d+))?\s*Price:\s*(""" + money_token + ")", RegexOption.IGNORE_CASE),
         false,
     ),
     item_pattern(
         Regex(
-            "(?:^|\\n)[ \\t]*([^\\n\$€£¥₹]{2,160}?)\\s+[×x]\\s*(\\d{1,3})\\s+([\$€£¥₹]\\s*[\\d,.]+)[ \\t]*(?=\\n|$)",
+            """(?:^|\n)[ \t]*([^\n\$€£¥₹]{2,160}?)\s+[×x]\s*(\d{1,3})\s+(""" + required_money + """)[ \t]*(?=\n|$)""",
             RegexOption.IGNORE_CASE,
         ),
         true,
@@ -232,7 +162,7 @@ private val item_patterns = listOf(
 private val all_digits_regex = Regex("^\\d+$")
 private val item_summary_word = Regex("\\b(?:sub\\s?total|total|amount|tax|vat|shipping|discount)\\b", RegexOption.IGNORE_CASE)
 
-private fun extract_items_from_body(body: String, fallback_currency: String, locale: Locale): List<ExtractedItem> {
+private fun extract_items_from_body(body: String, context: currency_context, locale: Locale): List<ExtractedItem> {
     val items = ArrayList<ExtractedItem>()
     for (pattern in item_patterns) {
         for (match in pattern.regex.findAll(body)) {
@@ -246,7 +176,7 @@ private fun extract_items_from_body(body: String, fallback_currency: String, loc
             } else {
                 name_or_qty.trim().toIntOrNull() ?: 1
             }
-            val price = parse_amount(price_str, fallback_currency, locale)
+            val price = parse_amount(price_str, context, locale)
             if (item_name != null && item_name.length > 2 && item_name.length < 200 && !item_summary_word.containsMatchIn(item_name)) {
                 val unit_price = price?.let {
                     if (!pattern.price_is_line_total || quantity <= 1) {
@@ -618,7 +548,7 @@ fun extract_purchase_details(
         break
     }
 
-    val currency = detect_dominant_currency(combined)
+    val currency = build_currency_context(combined, forwarded?.from_email ?: from_email, locale)
     val total = extract_amount_from_line(combined, total_patterns, currency, locale)
     if (total != null) signals.add("total:" + total.formatted)
     val subtotal = extract_amount_from_line(combined, subtotal_patterns, currency, locale)
