@@ -37,7 +37,10 @@ const val envelope_backfill_attempts = 3
 const val envelope_backfill_budget_ms = 9_000L
 const val envelope_inline_budget_ms = 7_000L
 const val envelope_refill_budget_ms = 15_000L
-val envelope_refill_delays_ms = listOf(2_000L, 5_000L, 12_000L, 30_000L, 60_000L, 120_000L)
+const val envelope_open_budget_ms = 4_000L
+val envelope_refill_delays_ms = listOf(500L, 3_000L, 12_000L, 30_000L, 60_000L, 120_000L)
+
+fun list_envelope_backfill_budget_ms(inline: Boolean): Long = if (inline) envelope_inline_budget_ms else 0L
 
 fun needs_envelope_backfill(item: MailItem): Boolean =
     item.id.isNotBlank() &&
@@ -67,7 +70,7 @@ suspend fun fetch_missing_envelopes(
     backoff_ms: (Int) -> Long = { attempt -> 300L * (1L shl attempt) },
     now_ms: () -> Long = System::currentTimeMillis,
 ): Map<String, MailItem> {
-    if (ids.isEmpty()) return emptyMap()
+    if (ids.isEmpty() || budget_ms <= 0L) return emptyMap()
     val pending = LinkedHashSet(ids)
     val found = LinkedHashMap<String, MailItem>()
     val deadline = now_ms() + budget_ms
@@ -114,6 +117,7 @@ suspend fun backfill_missing_envelopes(
     attempts: Int = envelope_backfill_attempts,
     budget_ms: Long = envelope_backfill_budget_ms,
 ): List<MailItem> {
+    if (budget_ms <= 0L) return items
     val ids = envelope_backfill_ids(items)
     if (ids.isEmpty()) return items
     val found = fetch_missing_envelopes(ids, fetch, attempts, budget_ms)
