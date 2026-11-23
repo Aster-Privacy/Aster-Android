@@ -3815,7 +3815,12 @@ class MailViewModel @Inject constructor(
         patch_search_labels(by_id)
     }
 
-    fun move_to_folder_bulk(item_ids: List<String>, folder_token: String, display_name: String) {
+    fun move_to_folder_bulk(
+        item_ids: List<String>,
+        folder_token: String,
+        display_name: String,
+        with_undo: Boolean = false,
+    ) {
         val ids = item_ids.filter { it != DEMO_PHISH_ITEM_ID }
         if (ids.isEmpty()) return
         val id_set = ids.toSet()
@@ -3851,7 +3856,25 @@ class MailViewModel @Inject constructor(
                             search_index_manager.remove_label_token(ids, from_label)
                         }
                     }
-                    emit_toast(context.getString(R.string.moved_to_folder, display_name))
+                    val moved_message = context.getString(R.string.moved_to_folder, display_name)
+                    if (with_undo) {
+                        emit_toast_undo(moved_message, context.getString(R.string.undo)) {
+                            undo_folder_move(
+                                FolderMoveUndo(
+                                    ids = ids,
+                                    folder_token = folder_token,
+                                    from_label = from_label,
+                                    folder = current_folder,
+                                    stays_visible = stays_visible,
+                                    before = removed_items,
+                                    search_before = search_before,
+                                    search_removed = search_removed,
+                                ),
+                            )
+                        }
+                    } else {
+                        emit_toast(moved_message)
+                    }
                     load_stats(force = true)
                 } else {
                     revert_move_labels(removed_items.filter { it.id in failed_ids })
@@ -3867,6 +3890,53 @@ class MailViewModel @Inject constructor(
             } finally {
                 pending_removed_ids.removeAll(id_set)
             }
+        }
+    }
+
+    private data class FolderMoveUndo(
+        val ids: List<String>,
+        val folder_token: String,
+        val from_label: String?,
+        val folder: String,
+        val stays_visible: Boolean,
+        val before: List<InboxItem>,
+        val search_before: List<InboxItem>,
+        val search_removed: List<InboxItem>,
+    )
+
+    private fun undo_folder_move(move: FolderMoveUndo) {
+        val strip_ids = folder_move_undo_strip_ids(
+            move.ids,
+            move.folder_token,
+            (move.search_before + move.before).associate { it.id to it.labels },
+        )
+        val restore_label = move.from_label?.takeIf { it != move.folder_token }
+        revert_move_labels(move.before)
+        patch_search_labels(move.search_before.associate { it.id to it.labels })
+        if (!move.stays_visible) {
+            undo_local_restore(move.before)
+            undo_search_restore(move.search_removed)
+        }
+        protect_restored(move.ids)
+        invalidate_caches_except_current(
+            listOf("label:${move.folder_token}", "inbox", move.folder) +
+                move.before.flatMap { it.labels }.map { "label:$it" },
+        )
+        viewModelScope.launch {
+            val failed = mutableSetOf<String>()
+            if (strip_ids.isNotEmpty()) {
+                failed.addAll(repository.remove_label_bulk(strip_ids, move.folder_token))
+            }
+            if (restore_label != null) {
+                failed.addAll(repository.add_label_bulk(move.ids, restore_label))
+            }
+            runCatching {
+                if (strip_ids.isNotEmpty()) search_index_manager.remove_label_token(strip_ids, move.folder_token)
+                if (restore_label != null) search_index_manager.add_label_token(move.ids, restore_label)
+            }
+            if (failed.isNotEmpty()) emit_toast(context.getString(R.string.failed_to_move_items))
+            load_inbox(_inbox_state.value.current_folder, force = true)
+            load_stats(force = true)
         }
     }
 

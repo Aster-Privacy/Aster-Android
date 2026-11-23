@@ -195,6 +195,7 @@
     <string name="swipe_unread">Непрочитано</string>
     <string name="swipe_star">Избранное</string>
     <string name="swipe_spam">Спам</string>
+    <string name="swipe_move">Переместить</string>
     <string name="swipe_inbox">Входящие</string>
     <string name="swipe_mark_read_or_unread">Отметить как прочитанное или непрочитанное</string>
     <string name="swipe_report_spam">Сообщить о спаме</string>

@@ -64,6 +64,7 @@ import org.astermail.android.mail.DEFAULT_SWIPE_LEFT_ACTION
 import org.astermail.android.mail.DEFAULT_SWIPE_RIGHT_ACTION
 import org.astermail.android.mail.SWIPE_ACTION_ARCHIVE
 import org.astermail.android.mail.SWIPE_ACTION_DELETE
+import org.astermail.android.mail.SWIPE_ACTION_MOVE_TO_FOLDER
 import org.astermail.android.mail.SWIPE_ACTION_NONE
 import org.astermail.android.mail.SWIPE_ACTION_SNOOZE
 import org.astermail.android.mail.SWIPE_ACTION_SPAM
@@ -117,6 +118,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
         SwipeActionOption(SWIPE_ACTION_SNOOZE, stringResource(R.string.snooze), TablerIcons.Clock, colors.warning),
         SwipeActionOption(SWIPE_ACTION_STAR, stringResource(R.string.swipe_star), TablerIcons.Star, colors.star),
         SwipeActionOption(SWIPE_ACTION_SPAM, stringResource(R.string.swipe_report_spam), spam_action_icon(is_spam = false), colors.danger),
+        SwipeActionOption(SWIPE_ACTION_MOVE_TO_FOLDER, stringResource(R.string.move_to_folder), TablerIcons.Folder, colors.accent_blue),
         SwipeActionOption(SWIPE_ACTION_NONE, stringResource(R.string.swipe_none), TablerIcons.CircleOff, colors.text_muted),
     )
 

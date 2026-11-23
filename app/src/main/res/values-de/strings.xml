@@ -196,6 +196,7 @@
     <string name="swipe_unread">Ungelesen</string>
     <string name="swipe_star">Markieren</string>
     <string name="swipe_spam">Spam</string>
+    <string name="swipe_move">Verschieben</string>
     <string name="swipe_inbox">Posteingang</string>
     <string name="swipe_mark_read_or_unread">Als gelesen oder ungelesen markieren</string>
     <string name="swipe_report_spam">Als Spam melden</string>

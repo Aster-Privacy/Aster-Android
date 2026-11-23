@@ -240,6 +240,7 @@
     <string name="swipe_unread">अपठित</string>
     <string name="swipe_star">तारा</string>
     <string name="swipe_spam">स्पैम</string>
+    <string name="swipe_move">ले जाएं</string>
     <string name="swipe_inbox">इनबॉक्स</string>
     <string name="swipe_mark_read_or_unread">पढ़ा हुआ या बिना पढ़ा चिह्नित करें</string>
     <string name="swipe_report_spam">स्पैम की शिकायत करें</string>
