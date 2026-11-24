@@ -1255,6 +1255,14 @@
     <string name="unsubscribe_failed">Anulowanie subskrypcji nie powiodło się</string>
     <string name="unsubscribe_manual_required">Ten nadawca nie obsługuje automatycznej rezygnacji. Link w wiadomości pozwala zrobić to samodzielnie.</string>
     <string name="bulk_unsubscribe_failed">Masowe anulowanie subskrypcji nie powiodło się</string>
+    <string name="unsubscribe_in_progress">Anulowanie subskrypcji</string>
+    <string name="subscription_hero_summary">Aktywni nadawcy: %1$s, anulowane: %2$s, e-maile: %3$s</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d nadawca wymaga anulowania subskrypcji na swojej stronie</item>
+        <item quantity="few">%d nadawców wymaga anulowania subskrypcji na swoich stronach</item>
+        <item quantity="many">%d nadawców wymaga anulowania subskrypcji na swoich stronach</item>
+        <item quantity="other">%d nadawcy wymaga anulowania subskrypcji na swoich stronach</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">Anulowano subskrypcję od %d nadawcy</item>
         <item quantity="few">Anulowano subskrypcję od %d nadawców</item>

@@ -24,6 +24,7 @@ package org.astermail.android.design.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -53,16 +54,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterExpandVisibility
@@ -98,6 +103,10 @@ fun AsterTextField(
     val colors = AsterMaterial.colors
     val interaction_source = remember { MutableInteractionSource() }
     val is_focused by interaction_source.collectIsFocusedAsState()
+    val focus_requester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val container_interaction = remember { MutableInteractionSource() }
+    val vertical_inset = if (singleLine) 0.dp else 14.dp
     val has_error = error_text != null
     var field_state by remember {
         mutableStateOf(TextFieldValue(value, TextRange(value.length)))
@@ -148,7 +157,15 @@ fun AsterTextField(
                 .heightIn(min = min_height)
                 .background(field_surface_color(colors), AsterShapes.control)
                 .border(ring_width, ring_color, AsterShapes.control)
-                .padding(horizontal = AsterSpacing.md, vertical = if (singleLine) 0.dp else 14.dp),
+                .clickable(
+                    interactionSource = container_interaction,
+                    indication = null,
+                    enabled = enabled,
+                ) {
+                    focus_requester.requestFocus()
+                    keyboard?.show()
+                }
+                .padding(horizontal = AsterSpacing.md, vertical = vertical_inset),
             contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
         ) {
             Row(
@@ -199,6 +216,14 @@ fun AsterTextField(
                         visualTransformation = visual_transformation,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .then(
+                                if (singleLine) {
+                                    Modifier
+                                } else {
+                                    Modifier.heightIn(min = (min_height - vertical_inset * 2).coerceAtLeast(0.dp))
+                                }
+                            )
+                            .focusRequester(focus_requester)
                             .then(
                                 if (content_type != null) {
                                     Modifier.semantics { contentType = content_type }

@@ -1249,6 +1249,11 @@
     <string name="unsubscribe_failed">구독 취소에 실패했습니다</string>
     <string name="unsubscribe_manual_required">이 발신자는 자동 구독 취소를 지원하지 않습니다. 메일에 있는 링크에서 직접 구독을 취소할 수 있습니다.</string>
     <string name="bulk_unsubscribe_failed">일괄 구독 취소에 실패했습니다</string>
+    <string name="unsubscribe_in_progress">구독 취소 중</string>
+    <string name="subscription_hero_summary">활성 발신자 %1$s명, 구독 취소 %2$s명, 이메일 %3$s개</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="other">발신자 %d명은 해당 웹사이트에서 직접 구독을 취소해야 합니다</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="other">발신자 %d명의 구독을 취소했습니다</item>
     </plurals>

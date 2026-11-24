@@ -1255,6 +1255,14 @@
     <string name="unsubscribe_failed">Не удалось отписаться</string>
     <string name="unsubscribe_manual_required">Этот отправитель не поддерживает автоматическую отписку. Ссылка в письме позволяет отписаться вручную.</string>
     <string name="bulk_unsubscribe_failed">Не удалось выполнить массовую отписку</string>
+    <string name="unsubscribe_in_progress">Отмена подписки</string>
+    <string name="subscription_hero_summary">Активные отправители: %1$s, отписано: %2$s, писем: %3$s</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">От %d отправителя нужно отписаться на его сайте</item>
+        <item quantity="few">От %d отправителей нужно отписаться на их сайтах</item>
+        <item quantity="many">От %d отправителей нужно отписаться на их сайтах</item>
+        <item quantity="other">От %d отправителя нужно отписаться на их сайтах</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">Отписан %d отправитель</item>
         <item quantity="few">Отписано %d отправителя</item>

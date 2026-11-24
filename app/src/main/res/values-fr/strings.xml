@@ -1310,6 +1310,12 @@
     <string name="unsubscribe_failed">Échec du désabonnement</string>
     <string name="unsubscribe_manual_required">Cet expéditeur ne prend pas en charge la désinscription automatique. Le lien dans l\'e-mail vous permet de le faire vous-même.</string>
     <string name="bulk_unsubscribe_failed">Échec du désabonnement groupé</string>
+    <string name="unsubscribe_in_progress">Désabonnement en cours</string>
+    <string name="subscription_hero_summary">%1$s expéditeurs actifs, %2$s désabonnés, %3$s e-mails</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d expéditeur exige que vous vous désabonniez sur son site web</item>
+        <item quantity="other">%d expéditeurs exigent que vous vous désabonniez sur leurs sites web</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d expéditeur désabonné</item>
         <item quantity="many">%d expéditeurs désabonnés</item>

@@ -1249,6 +1249,11 @@
     <string name="unsubscribe_failed">退订失败</string>
     <string name="unsubscribe_manual_required">此发件人不支持自动退订。您可以通过邮件中的链接自行退订。</string>
     <string name="bulk_unsubscribe_failed">批量退订失败</string>
+    <string name="unsubscribe_in_progress">正在退订</string>
+    <string name="subscription_hero_summary">%1$s 个活跃发件人，%2$s 个已退订，%3$s 封邮件</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="other">%d 个发件人需要你在其网站上退订</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="other">已退订 %d 个发件人</item>
     </plurals>

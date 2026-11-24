@@ -1630,6 +1630,12 @@
         <item quantity="one">%d नई सदस्यता मिली</item>
         <item quantity="other">%d नई सदस्यताएं मिलीं</item>
     </plurals>
+    <string name="unsubscribe_in_progress">सदस्यता रद्द की जा रही है</string>
+    <string name="subscription_hero_summary">%1$s सक्रिय प्रेषक, %2$s की सदस्यता रद्द, %3$s ईमेल</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d प्रेषक की सदस्यता आपको उसकी वेबसाइट पर रद्द करनी होगी</item>
+        <item quantity="other">%d प्रेषकों की सदस्यता आपको उनकी वेबसाइटों पर रद्द करनी होगी</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d प्रेषक की सदस्यता छोड़ी गई</item>
         <item quantity="other">%d प्रेषकों की सदस्यता छोड़ी गई</item>

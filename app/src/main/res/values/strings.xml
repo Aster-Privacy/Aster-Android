@@ -1843,6 +1843,12 @@
         <item quantity="one">Found %d new subscription</item>
         <item quantity="other">Found %d new subscriptions</item>
     </plurals>
+    <string name="unsubscribe_in_progress">Unsubscribing</string>
+    <string name="subscription_hero_summary">%1$s active senders, %2$s unsubscribed, %3$s emails</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d sender needs you to unsubscribe on its website</item>
+        <item quantity="other">%d senders need you to unsubscribe on their websites</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">Unsubscribed %d sender</item>
         <item quantity="other">Unsubscribed %d senders</item>

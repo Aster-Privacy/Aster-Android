@@ -123,10 +123,11 @@ internal fun search_status_strip(
     status: SearchStatus?,
     on_action: (SearchStatusAction) -> Unit,
 ) {
+    val steady = org.astermail.android.design.remember_steady_value(status)
     val retained = remember { arrayOfNulls<SearchStatus>(1) }
-    if (status != null) retained[0] = status
-    AsterExpandVisibility(visible = status != null) {
-        val shown = status ?: retained[0]
+    if (steady != null) retained[0] = steady
+    AsterExpandVisibility(visible = steady != null) {
+        val shown = steady ?: retained[0]
         if (shown != null) search_status_content(shown, on_action)
     }
 }

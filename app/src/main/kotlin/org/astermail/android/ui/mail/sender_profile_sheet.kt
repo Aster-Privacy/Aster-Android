@@ -86,7 +86,6 @@ import org.astermail.android.ui.settings.detail.settings_row_gap
 private val internal_sender_domains =
     setOf("aster.cx", "astermail.org", "astermail.me", "astermail.net")
 
-private const val copied_feedback_ms = 1600L
 private const val contact_save_timeout_ms = 15_000L
 
 fun is_internal_sender(email: String): Boolean {
@@ -144,16 +143,9 @@ fun sender_profile_sheet(
 
     var adding_contact by remember { mutableStateOf(false) }
     var contact_added by remember { mutableStateOf(false) }
-    var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         contacts_vm.load_contacts(quiet = contacts_vm.state.value.contacts.isNotEmpty())
-    }
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(copied_feedback_ms)
-            copied = false
-        }
     }
     LaunchedEffect(adding_contact) {
         if (adding_contact) {
@@ -169,12 +161,9 @@ fun sender_profile_sheet(
         else -> sender_contact_slot.add
     }
 
-    val label_copied = stringResource(R.string.copied)
-
     val copy_address = {
         aster_haptics(aster_haptic.tap)
         on_copy(normalized)
-        copied = true
     }
 
     val add_contact = {
@@ -233,7 +222,6 @@ fun sender_profile_sheet(
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             on_copy(identity_text)
-                            copied = true
                         },
                     )
                     .padding(horizontal = AsterSpacing.xs)
@@ -255,8 +243,8 @@ fun sender_profile_sheet(
                     if (display_name != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = if (copied) label_copied else normalized,
-                            color = if (copied) colors.accent_blue else colors.text_secondary,
+                            text = normalized,
+                            color = colors.text_secondary,
                             fontSize = 14.sp,
                             lineHeight = 19.sp,
                             maxLines = 1,
@@ -295,10 +283,8 @@ fun sender_profile_sheet(
                     )
                     settings_row_gap()
                     sender_sheet_row(
-                        label = if (copied) label_copied else stringResource(R.string.copy_address),
-                        icon = if (copied) TablerIcons.Check else TablerIcons.Copy,
-                        highlighted = copied,
-                        state_description = if (copied) label_copied else null,
+                        label = stringResource(R.string.copy_address),
+                        icon = TablerIcons.Copy,
                         on_click = copy_address,
                     )
                     settings_row_gap()

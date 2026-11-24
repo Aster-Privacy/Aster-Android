@@ -1249,6 +1249,11 @@
     <string name="unsubscribe_failed">購読を解除できませんでした</string>
     <string name="unsubscribe_manual_required">この送信者は自動の購読解除に対応していません。メール内のリンクから自分で手続きできます。</string>
     <string name="bulk_unsubscribe_failed">一括購読解除に失敗しました</string>
+    <string name="unsubscribe_in_progress">購読を解除しています</string>
+    <string name="subscription_hero_summary">アクティブな送信者 %1$s 人、購読解除 %2$s 人、メール %3$s 件</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="other">%d 人の送信者は、各ウェブサイトで購読を解除する必要があります</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="other">%d 人の送信者の購読を解除しました</item>
     </plurals>

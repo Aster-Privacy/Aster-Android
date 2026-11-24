@@ -32,6 +32,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.mail.MailRepository
+import org.astermail.android.ui.mail.UnsubscribeInfo
 import org.astermail.android.ui.mail.detect_unsubscribe_info
 
 data class DiscoveredSubscription(
@@ -43,6 +44,8 @@ data class DiscoveredSubscription(
     val unsubscribe_link: String?,
     val list_unsubscribe_header: String?,
     val category: String,
+    val list_unsubscribe_post: String? = null,
+    val unsubscribe_info: UnsubscribeInfo? = null,
 )
 
 private const val PREFS_NAME = "aster_subscription_scan"
@@ -174,6 +177,7 @@ class SubscriptionScanner @Inject constructor(
         page_size: Int = 100,
         force_full: Boolean = false,
         budget_ms: Long = SCAN_BUDGET_MS,
+        persist_watermark: Boolean = true,
     ): List<DiscoveredSubscription> = withContext(Dispatchers.Default) {
         val watermark = if (force_full) "" else last_scan_watermark()
         val senders = LinkedHashMap<String, DiscoveredSubscription>()
@@ -260,6 +264,8 @@ class SubscriptionScanner @Inject constructor(
                             envelope.from_name.ifBlank { email },
                             info.has_unsubscribe,
                         ),
+                        list_unsubscribe_post = info.list_unsubscribe_post,
+                        unsubscribe_info = info,
                     )
                 } else {
                     senders[email] = existing.copy(
@@ -270,6 +276,8 @@ class SubscriptionScanner @Inject constructor(
                         unsubscribe_link = existing.unsubscribe_link ?: info.unsubscribe_link,
                         list_unsubscribe_header = existing.list_unsubscribe_header
                             ?: info.list_unsubscribe_header,
+                        list_unsubscribe_post = existing.list_unsubscribe_post ?: info.list_unsubscribe_post,
+                        unsubscribe_info = better_unsubscribe_info(existing.unsubscribe_info, info),
                     )
                 }
             }
@@ -280,7 +288,7 @@ class SubscriptionScanner @Inject constructor(
             cursor = next_cursor
         }
 
-        if (newest_seen.isNotEmpty() && !heal_pending_failure) save_watermark(newest_seen)
+        if (persist_watermark && newest_seen.isNotEmpty() && !heal_pending_failure) save_watermark(newest_seen)
         senders.values.toList()
     }
 }

@@ -1251,6 +1251,12 @@
     <string name="unsubscribe_failed">Uitschrijven mislukt</string>
     <string name="unsubscribe_manual_required">Deze afzender ondersteunt geen automatisch uitschrijven. Via de link in de e-mail kun je je zelf uitschrijven.</string>
     <string name="bulk_unsubscribe_failed">Bulksgewijs uitschrijven mislukt</string>
+    <string name="unsubscribe_in_progress">Afmelden</string>
+    <string name="subscription_hero_summary">%1$s actieve afzenders, %2$s afgemeld, %3$s e-mails</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">Voor %d afzender moet je je afmelden op de website</item>
+        <item quantity="other">Voor %d afzenders moet je je afmelden op hun websites</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d afzender uitgeschreven</item>
         <item quantity="other">%d afzenders uitgeschreven</item>

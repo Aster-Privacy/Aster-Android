@@ -746,7 +746,12 @@ fun SearchScreen(
                 .fillMaxWidth()
                 .height(2.dp),
         ) {
-            if (search_refreshing && search_status == null) {
+            val refresh_bar_visible = org.astermail.android.design.remember_steady_flag(search_refreshing && search_status == null)
+            androidx.compose.animation.AnimatedVisibility(
+                visible = refresh_bar_visible,
+                enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 160)),
+                exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 220)),
+            ) {
                 org.astermail.android.design.components.aster_linear_progress(
                     modifier = Modifier
                         .fillMaxWidth()

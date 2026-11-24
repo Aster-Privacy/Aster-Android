@@ -1251,6 +1251,12 @@
     <string name="unsubscribe_failed">Abonelik iptali başarısız</string>
     <string name="unsubscribe_manual_required">Bu gönderen otomatik abonelik iptalini desteklemiyor. E-postadaki bağlantı ile kendiniz iptal edebilirsiniz.</string>
     <string name="bulk_unsubscribe_failed">Toplu abonelik iptali başarısız</string>
+    <string name="unsubscribe_in_progress">Abonelik iptal ediliyor</string>
+    <string name="subscription_hero_summary">%1$s etkin gönderen, %2$s abonelik iptal edildi, %3$s e-posta</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d gönderen için aboneliği web sitesinden iptal etmeniz gerekiyor</item>
+        <item quantity="other">%d gönderen için aboneliği web sitelerinden iptal etmeniz gerekiyor</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d göndericinin aboneliği iptal edildi</item>
         <item quantity="other">%d göndericinin aboneliği iptal edildi</item>

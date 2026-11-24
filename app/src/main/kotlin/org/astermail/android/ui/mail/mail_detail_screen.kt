@@ -500,6 +500,15 @@ internal fun normalized_content_id(raw: String?): String =
 internal fun inline_reference_key(raw: String?): String =
     normalized_content_id(raw).lowercase()
 
+internal const val INLINE_IMAGE_WAIT_MS = 1500L
+
+internal fun inline_cid_references(html: String): Set<String> =
+    if (!html.contains("cid:", ignoreCase = true)) emptySet()
+    else CID_SRC_PATTERN.findAll(html).map { inline_reference_key(it.groupValues[2]) }.filter { it.isNotBlank() }.toSet()
+
+internal fun inline_cids_resolved(references: Set<String>, inline_images: Map<String, String>): Boolean =
+    references.all { inline_images.containsKey(it) || inline_images.containsKey(it.substringBefore('@')) }
+
 internal fun resolve_inline_cids(html: String, inline_images: Map<String, String>): String =
     CID_SRC_PATTERN.replace(html) { match ->
         val reference = inline_reference_key(match.groupValues[2])
@@ -7114,6 +7123,15 @@ internal fun email_html_view(
     }
 
     val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
+    val inline_refs = remember(html) { inline_cid_references(html) }
+    val inline_complete = remember(inline_refs, inline_images) { inline_cids_resolved(inline_refs, inline_images) }
+    var inline_wait_over by remember(html) { mutableStateOf(inline_refs.isEmpty()) }
+    LaunchedEffect(html) {
+        if (inline_wait_over) return@LaunchedEffect
+        delay(INLINE_IMAGE_WAIT_MS)
+        inline_wait_over = true
+    }
+    val inline_ready = inline_complete || inline_wait_over
     val html_hash = remember(html, inline_sig) { html.hashCode() * 31 + inline_sig }
     val base_height_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links) {
         ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
@@ -7296,11 +7314,12 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
+    LaunchedEffect(html, inline_sig, inline_ready, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
         if (html.isEmpty()) {
             prebuilt_html = null
             return@LaunchedEffect
         }
+        if (!inline_ready && prebuilt_html == null) return@LaunchedEffect
         val override = translated_body
         if (override != null) {
             prebuilt_html = withContext(Dispatchers.Default) {

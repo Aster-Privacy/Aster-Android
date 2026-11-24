@@ -81,11 +81,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -120,6 +117,16 @@ import org.astermail.android.design.aster_fade_in
 import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.stateDescription
+import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.field_surface_color
+import org.astermail.android.design.island_press_color
+import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.design.auto_mirrored
@@ -172,6 +179,36 @@ fun MailingListsScreen(
             org.astermail.android.ui.common.app_toast.show(err.toString())
             vm.clear_error()
         }
+    }
+
+    LaunchedEffect(state.manual_prompt) {
+        val prompt = state.manual_prompt ?: return@LaunchedEffect
+        vm.dismiss_manual_prompt()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.unsubscribe_manual_required),
+                undo_label = context.getString(R.string.open_unsubscribe_page),
+                duration_ms = 15000L,
+                on_undo = {
+                    val opened = try {
+                        context.startActivity(
+                            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(prompt.url))
+                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                        true
+                    } catch (_: android.content.ActivityNotFoundException) {
+                        false
+                    } catch (_: SecurityException) {
+                        false
+                    }
+                    if (opened) {
+                        vm.confirm_manual_unsubscribe(prompt)
+                    } else {
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_unsubscribe))
+                    }
+                },
+            ),
+        )
     }
 
     val haptic_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
@@ -397,6 +434,7 @@ fun MailingListsScreen(
                         ?.takeIf { items.size == state.items.size }
                         ?: items.sumOf { it.email_count },
                     is_scanning = state.is_scanning,
+                    is_loading = state.is_loading || blocked_pending,
                     modifier = Modifier.padding(horizontal = inbox_card_horizontal_margin),
                 )
                 Spacer(Modifier.height(AsterSpacing.md))
@@ -457,6 +495,8 @@ fun MailingListsScreen(
                         modifier = Modifier.animateItem(fadeInSpec = null),
                         item = item,
                         is_pending = item.id in state.pending_ids,
+                        is_succeeded = item.id in state.succeeded_ids,
+                        is_failed = item.id in state.failed_ids,
                         is_selected = item.id in selected_ids,
                         is_first = idx == 0,
                         is_last = idx == visible.lastIndex,
@@ -730,159 +770,321 @@ private fun subscription_hero(
     unsubscribed_count: Int,
     email_count: Int,
     is_scanning: Boolean,
+    is_loading: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
     val total = active_count + unsubscribed_count
+    val show_placeholder = is_loading && total == 0
     val target_fraction = if (total == 0) 0f else active_count.toFloat() / total.toFloat()
     val fraction by animateFloatAsState(
         targetValue = target_fraction,
-        animationSpec = tween(durationMillis = org.astermail.android.design.AsterDuration.long_2),
-        label = "subscription_gauge",
+        animationSpec = tween(
+            durationMillis = if (reduce_motion) 0 else org.astermail.android.design.AsterDuration.long_2,
+            easing = AsterEasing.emphasized,
+        ),
+        label = "subscription_hero_split",
+    )
+    val number_format = remember { java.text.NumberFormat.getIntegerInstance() }
+    val summary = stringResource(
+        R.string.subscription_hero_summary,
+        number_format.format(active_count),
+        number_format.format(unsubscribed_count),
+        number_format.format(email_count),
     )
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SquircleShape(20.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        colors.accent_blue,
-                        colors.accent_blue.copy(alpha = 0.78f),
-                    ),
-                ),
-            )
+            .clip(AsterShapes.island)
+            .background(island_surface_color(colors))
+            .clearAndSetSemantics { contentDescription = summary }
             .padding(AsterSpacing.lg),
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(92.dp),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val stroke = 11.dp.toPx()
-                val diameter = minOf(size.width, size.height * 2f) - stroke
-                if (diameter > 0f) {
-                    val arc_size = Size(diameter, diameter)
-                    val top_left = Offset(
-                        (size.width - diameter) / 2f,
-                        size.height - stroke / 2f - diameter / 2f,
+        Row(verticalAlignment = Alignment.Top) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(colors.accent_blue),
                     )
-                    drawArc(
-                        color = colors.on_accent.copy(alpha = 0.24f),
-                        startAngle = 180f,
-                        sweepAngle = 180f,
-                        useCenter = false,
-                        topLeft = top_left,
-                        size = arc_size,
-                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.active_senders),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                    if (fraction > 0f) {
-                        drawArc(
-                            color = colors.on_accent,
-                            startAngle = 180f,
-                            sweepAngle = 180f * fraction,
-                            useCenter = false,
-                            topLeft = top_left,
-                            size = arc_size,
-                            style = Stroke(width = stroke, cap = StrokeCap.Round),
-                        )
-                    }
+                }
+                Spacer(Modifier.height(AsterSpacing.xs))
+                if (show_placeholder) {
+                    hero_placeholder(width = 72.dp, height = 40.dp)
+                } else {
+                    hero_animated_number(
+                        value = active_count,
+                        text = number_format.format(active_count),
+                        color = colors.text_primary,
+                        font_size = 36,
+                    )
                 }
             }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 6.dp),
+            androidx.compose.animation.AnimatedVisibility(
+                visible = is_scanning,
+                enter = aster_fade_in(reduce_motion) + androidx.compose.animation.scaleIn(initialScale = 0.9f),
+                exit = aster_fade_out(reduce_motion) + androidx.compose.animation.scaleOut(targetScale = 0.9f),
             ) {
-                Text(
-                    text = active_count.toString(),
-                    color = colors.on_accent,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.active_senders),
-                    color = colors.on_accent.copy(alpha = 0.86f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+                Row(
+                    modifier = Modifier
+                        .clip(AsterShapes.pill)
+                        .background(field_surface_color(colors))
+                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    org.astermail.android.design.components.aster_spinner(
+                        color = colors.accent_blue,
+                        stroke_width = 2.dp,
+                        modifier = Modifier.size(12.dp),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.scanning),
+                        color = colors.text_secondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                }
             }
         }
+        Spacer(Modifier.height(AsterSpacing.lg))
+        hero_split_bar(
+            fraction = fraction,
+            has_data = total > 0,
+            active_color = colors.accent_blue,
+            unsubscribed_color = colors.success,
+            track_color = field_surface_color(colors),
+        )
         Spacer(Modifier.height(AsterSpacing.md))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {
-            hero_stat_pill(
+            hero_stat_tile(
                 modifier = Modifier.weight(1f),
-                value = unsubscribed_count.toString(),
+                value = unsubscribed_count,
+                text = number_format.format(unsubscribed_count),
                 label = stringResource(R.string.stat_unsubscribed),
+                dot_color = colors.success,
+                show_placeholder = show_placeholder,
             )
-            hero_stat_pill(
+            hero_stat_tile(
                 modifier = Modifier.weight(1f),
-                value = email_count.toString(),
+                value = email_count,
+                text = number_format.format(email_count),
                 label = stringResource(R.string.stat_emails),
-            )
-        }
-        if (is_scanning) {
-            Spacer(Modifier.height(AsterSpacing.md))
-            Text(
-                text = stringResource(R.string.scanning),
-                color = colors.on_accent.copy(alpha = 0.86f),
-                fontSize = 12.sp,
+                dot_color = colors.text_tertiary,
+                show_placeholder = show_placeholder,
             )
         }
     }
 }
 
 @Composable
-private fun hero_stat_pill(modifier: Modifier = Modifier, value: String, label: String) {
+private fun hero_split_bar(
+    fraction: Float,
+    has_data: Boolean,
+    active_color: androidx.compose.ui.graphics.Color,
+    unsubscribed_color: androidx.compose.ui.graphics.Color,
+    track_color: androidx.compose.ui.graphics.Color,
+) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(8.dp)
+            .clip(AsterShapes.pill),
+    ) {
+        drawRect(color = track_color)
+        if (!has_data) return@Canvas
+        val gap = 3.dp.toPx()
+        val radius = size.height / 2f
+        val active_width = size.width * fraction.coerceIn(0f, 1f)
+        val unsubscribed_start = active_width + if (active_width > 0f) gap else 0f
+        if (active_width > 0f) {
+            drawRoundRect(
+                color = active_color,
+                size = Size(active_width, size.height),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radius, radius),
+            )
+        }
+        if (unsubscribed_start < size.width && fraction < 1f) {
+            drawRoundRect(
+                color = unsubscribed_color,
+                topLeft = Offset(unsubscribed_start, 0f),
+                size = Size(size.width - unsubscribed_start, size.height),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radius, radius),
+            )
+        }
+    }
+}
+
+@Composable
+private fun hero_stat_tile(
+    modifier: Modifier = Modifier,
+    value: Int,
+    text: String,
+    label: String,
+    dot_color: androidx.compose.ui.graphics.Color,
+    show_placeholder: Boolean,
+) {
     val colors = AsterMaterial.colors
     Column(
         modifier = modifier
-            .clip(SquircleShape(14.dp))
-            .background(colors.on_accent.copy(alpha = 0.18f))
-            .padding(horizontal = AsterSpacing.md, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .clip(AsterShapes.item)
+            .background(field_surface_color(colors))
+            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(dot_color),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = label,
+                color = colors.text_tertiary,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(AsterSpacing.xs))
+        if (show_placeholder) {
+            hero_placeholder(width = 40.dp, height = 22.dp)
+        } else {
+            hero_animated_number(
+                value = value,
+                text = text,
+                color = colors.text_primary,
+                font_size = 18,
+            )
+        }
+    }
+}
+
+@Composable
+private fun hero_animated_number(
+    value: Int,
+    text: String,
+    color: androidx.compose.ui.graphics.Color,
+    font_size: Int,
+) {
+    val reduce_motion = aster_reduce_motion()
+    androidx.compose.animation.AnimatedContent(
+        targetState = value to text,
+        transitionSpec = {
+            val direction = if (targetState.first >= initialState.first) 1 else -1
+            val transform = if (reduce_motion) {
+                androidx.compose.animation.fadeIn(tween(AsterMotionSpec.reduced_fade_ms)) togetherWith
+                    androidx.compose.animation.fadeOut(tween(AsterMotionSpec.reduced_fade_ms))
+            } else {
+                val enter = androidx.compose.animation.slideInVertically(
+                    animationSpec = tween(AsterMotionSpec.icon_ms, easing = AsterEasing.emphasized_decelerate),
+                    initialOffsetY = { height -> height / 2 * direction },
+                ) + androidx.compose.animation.fadeIn(tween(AsterMotionSpec.icon_ms))
+                val exit = androidx.compose.animation.slideOutVertically(
+                    animationSpec = tween(AsterMotionSpec.icon_ms, easing = AsterEasing.emphasized_accelerate),
+                    targetOffsetY = { height -> -height / 2 * direction },
+                ) + androidx.compose.animation.fadeOut(tween(AsterMotionSpec.icon_ms))
+                enter togetherWith exit
+            }
+            transform.using(androidx.compose.animation.SizeTransform(clip = false))
+        },
+        label = "subscription_hero_number",
+    ) { (_, shown) ->
         Text(
-            text = value,
-            color = colors.on_accent,
-            fontSize = 17.sp,
+            text = shown,
+            color = color,
+            fontSize = font_size.sp,
+            lineHeight = (font_size + 4).sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = label,
-            color = colors.on_accent.copy(alpha = 0.8f),
-            fontSize = 11.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+@Composable
+private fun hero_placeholder(width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
+    val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
+    val pulse = if (reduce_motion) {
+        0.6f
+    } else {
+        val transition = androidx.compose.animation.core.rememberInfiniteTransition(label = "hero_placeholder")
+        val animated by transition.animateFloat(
+            initialValue = 0.45f,
+            targetValue = 0.9f,
+            animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                animation = tween(900, easing = AsterEasing.emphasized),
+                repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+            ),
+            label = "hero_placeholder_alpha",
+        )
+        animated
+    }
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .graphicsLayer { alpha = pulse }
+            .clip(AsterShapes.item)
+            .background(field_surface_color(colors)),
+    )
 }
 
 @Composable
 private fun subscription_chip(text: String, selected: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (selected) colors.accent_blue else search_field_bg_color(colors)
+    val interaction_source = remember { MutableInteractionSource() }
+    val pressed by interaction_source.collectIsPressedAsState()
+    val bg = when {
+        selected -> colors.accent_blue
+        pressed -> island_press_color(colors)
+        else -> field_surface_color(colors)
+    }
     val text_color = if (selected) colors.on_accent else colors.text_secondary
     val animated_bg by aster_animate_color(target = bg, label = "subscription_chip_bg")
     val animated_text by aster_animate_color(target = text_color, label = "subscription_chip_text")
     Box(
         modifier = Modifier
-            .clip(SquircleShape(999.dp))
-            .background(animated_bg)
-            .clickable(onClick = on_click)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
+            .heightIn(min = 48.dp)
+            .selectable(
+                selected = selected,
+                interactionSource = interaction_source,
+                indication = null,
+                role = androidx.compose.ui.semantics.Role.Tab,
+                onClick = on_click,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = text,
-            color = animated_text,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-        )
+        Box(
+            modifier = Modifier
+                .clip(AsterShapes.pill)
+                .background(animated_bg)
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
+        ) {
+            Text(
+                text = text,
+                color = animated_text,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -929,6 +1131,8 @@ private fun subscription_row(
     modifier: Modifier = Modifier,
     item: MailingListSubscription,
     is_pending: Boolean,
+    is_succeeded: Boolean = false,
+    is_failed: Boolean = false,
     is_selected: Boolean,
     is_first: Boolean,
     is_last: Boolean,
@@ -1062,9 +1266,9 @@ private fun subscription_row(
                     Spacer(Modifier.width(AsterSpacing.xs))
                     Box(
                         modifier = Modifier
-                            .clip(SquircleShape(6.dp))
+                            .clip(AsterShapes.item)
                             .background(colors.danger.copy(alpha = 0.12f))
-                            .padding(horizontal = AsterSpacing.xs, vertical = 1.dp),
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.risky),
@@ -1105,9 +1309,13 @@ private fun subscription_row(
             is_destructive = is_destructive,
             is_loading = is_pending,
             on_click = on_action,
+            is_succeeded = is_succeeded,
+            is_failed = is_failed,
         )
     }
 }
+
+private enum class row_action_phase { idle, loading, succeeded, failed }
 
 @Composable
 private fun row_action_button(
@@ -1116,45 +1324,119 @@ private fun row_action_button(
     is_destructive: Boolean,
     is_loading: Boolean,
     on_click: () -> Unit,
+    is_succeeded: Boolean = false,
+    is_failed: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
+    val density = LocalDensity.current
     val interaction_source = remember { MutableInteractionSource() }
     val pressed by interaction_source.collectIsPressedAsState()
+    val phase = when {
+        is_succeeded -> row_action_phase.succeeded
+        is_loading -> row_action_phase.loading
+        is_failed -> row_action_phase.failed
+        else -> row_action_phase.idle
+    }
     val intent = if (is_destructive) colors.danger else colors.accent_blue
     val tint by aster_animate_color(
-        target = if (is_loading || pressed) intent else colors.text_secondary,
+        target = when (phase) {
+            row_action_phase.succeeded -> colors.success
+            row_action_phase.failed -> colors.danger
+            row_action_phase.loading -> intent
+            row_action_phase.idle -> if (pressed) intent else colors.text_secondary
+        },
         label = "subscription_action_tint",
     )
     val container by aster_animate_color(
-        target = intent.copy(alpha = if (pressed) 0.2f else 0.1f),
+        target = when (phase) {
+            row_action_phase.succeeded -> colors.success.copy(alpha = 0.16f)
+            row_action_phase.failed -> colors.danger.copy(alpha = 0.16f)
+            else -> intent.copy(alpha = if (pressed) 0.2f else 0.1f)
+        },
         label = "subscription_action_container",
     )
+    val shake = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(phase) {
+        if (phase != row_action_phase.failed || reduce_motion) {
+            shake.snapTo(0f)
+            return@LaunchedEffect
+        }
+        val amplitude = with(density) { 4.dp.toPx() }
+        listOf(1f, -1f, 0.6f, -0.6f, 0f).forEach { step ->
+            shake.animateTo(step * amplitude, tween(60, easing = AsterEasing.emphasized))
+        }
+    }
+    val status_label = when (phase) {
+        row_action_phase.loading -> stringResource(R.string.unsubscribe_in_progress)
+        row_action_phase.succeeded -> stringResource(R.string.toast_unsubscribed)
+        row_action_phase.failed -> stringResource(R.string.could_not_unsubscribe)
+        row_action_phase.idle -> null
+    }
     Box(
         modifier = Modifier
-            .size(40.dp)
-            .clip(SquircleShape(14.dp))
+            .size(48.dp)
+            .graphicsLayer { translationX = shake.value }
+            .clip(AsterShapes.control)
             .background(container)
             .clickable(
-                enabled = !is_loading,
+                enabled = phase == row_action_phase.idle || phase == row_action_phase.failed,
                 interactionSource = interaction_source,
                 indication = ripple(bounded = true, color = intent),
+                role = androidx.compose.ui.semantics.Role.Button,
+                onClickLabel = label,
                 onClick = on_click,
-            ),
+            )
+            .semantics {
+                contentDescription = label
+                if (status_label != null) stateDescription = status_label
+            },
         contentAlignment = Alignment.Center,
     ) {
-        if (is_loading) {
-            org.astermail.android.design.components.aster_spinner(
-                color = tint,
-                stroke_width = 2.dp,
-                modifier = Modifier.size(16.dp),
-            )
-        } else {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = tint,
-                modifier = Modifier.size(20.dp),
-            )
+        androidx.compose.animation.AnimatedContent(
+            targetState = phase,
+            transitionSpec = {
+                val duration = if (reduce_motion) AsterMotionSpec.reduced_fade_ms else AsterMotionSpec.icon_ms
+                val enter = androidx.compose.animation.fadeIn(tween(duration)) +
+                    androidx.compose.animation.scaleIn(
+                        animationSpec = tween(duration, easing = AsterEasing.emphasized_decelerate),
+                        initialScale = if (reduce_motion) 1f else AsterMotionSpec.icon_from,
+                    )
+                val exit = androidx.compose.animation.fadeOut(tween(duration / 2)) +
+                    androidx.compose.animation.scaleOut(
+                        animationSpec = tween(duration / 2, easing = AsterEasing.emphasized_accelerate),
+                        targetScale = if (reduce_motion) 1f else AsterMotionSpec.icon_from,
+                    )
+                enter togetherWith exit
+            },
+            contentAlignment = Alignment.Center,
+            label = "subscription_action_phase",
+        ) { shown ->
+            when (shown) {
+                row_action_phase.loading -> org.astermail.android.design.components.aster_spinner(
+                    color = tint,
+                    stroke_width = 2.dp,
+                    modifier = Modifier.size(18.dp),
+                )
+                row_action_phase.succeeded -> Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(22.dp),
+                )
+                row_action_phase.failed -> Icon(
+                    imageVector = TablerIcons.X,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp),
+                )
+                row_action_phase.idle -> Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }

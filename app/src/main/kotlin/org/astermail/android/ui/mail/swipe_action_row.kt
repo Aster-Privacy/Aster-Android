@@ -70,7 +70,6 @@ import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterSpring
-import org.astermail.android.design.aster_animate_color
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.mail.folder_keeps_archived
 
@@ -151,6 +150,8 @@ private data class SwipeFaces(
     val end_label: String,
     val start_icon: ImageVector,
     val end_icon: ImageVector,
+    val start_color: Color,
+    val end_color: Color,
 )
 
 @Composable
@@ -177,7 +178,7 @@ fun swipe_action_row(
     val haptics = org.astermail.android.design.remember_haptic()
     var is_dismissed by remember { mutableStateOf(false) }
     val offset_x = remember { Animatable(0f) }
-    val current_faces by rememberUpdatedState(SwipeFaces(start_label, end_label, start_icon, end_icon))
+    val current_faces by rememberUpdatedState(SwipeFaces(start_label, end_label, start_icon, end_icon, start_color, end_color))
     var shown_faces by remember { mutableStateOf<SwipeFaces?>(null) }
     val scope = rememberCoroutineScope()
     val current_removes_row by rememberUpdatedState(removes_row)
@@ -300,8 +301,12 @@ fun swipe_action_row(
     ) {
         val travelled = offset_x.value
         val towards_start = travelled > 0f
-        val surface by aster_animate_color(swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors), label = "swipe_surface")
-        val ink by aster_animate_color(swipe_ink(surface), label = "swipe_ink")
+        val frozen_faces = shown_faces ?: current_faces
+        val semantic_colors = AsterMaterial.colors
+        val surface = remember(frozen_faces, towards_start, semantic_colors) {
+            swipe_tone(if (towards_start) frozen_faces.start_color else frozen_faces.end_color, semantic_colors)
+        }
+        val ink = remember(surface) { swipe_ink(surface) }
         val icon_scale = remember { Animatable(1f) }
         LaunchedEffect(armed, reduce_motion) {
             if (!armed || reduce_motion) {
@@ -312,7 +317,7 @@ fun swipe_action_row(
             icon_scale.animateTo(1f, tween(100, easing = AsterEasing.standard))
         }
         if (travelled != 0f) {
-            val faces = shown_faces ?: current_faces
+            val faces = frozen_faces
             Box(
                 modifier = Modifier
                     .matchParentSize()

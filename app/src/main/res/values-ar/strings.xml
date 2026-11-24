@@ -1259,6 +1259,16 @@
     <string name="unsubscribe_failed">فشل إلغاء الاشتراك</string>
     <string name="unsubscribe_manual_required">لا يدعم هذا المرسل إلغاء الاشتراك التلقائي. يتيح لك الرابط الموجود في الرسالة إلغاء الاشتراك بنفسك.</string>
     <string name="bulk_unsubscribe_failed">فشل إلغاء الاشتراك المجمع</string>
+    <string name="unsubscribe_in_progress">جارٍ إلغاء الاشتراك</string>
+    <string name="subscription_hero_summary">%1$s من المرسلين النشطين، و%2$s تم إلغاء الاشتراك منهم، و%3$s من الرسائل</string>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="zero">لا يوجد مرسلون يتطلبون إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="one">مرسل واحد يتطلب منك إلغاء الاشتراك من موقعه</item>
+        <item quantity="two">مرسلان يتطلبان منك إلغاء الاشتراك من موقعيهما</item>
+        <item quantity="few">%d مرسلين يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="many">%d مرسلًا يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="other">%d مرسل يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="zero">تم إلغاء الاشتراك من %d مرسل</item>
         <item quantity="one">تم إلغاء الاشتراك من مرسل واحد</item>
