@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">需要解锁</string>
     <string name="app_lock_off_description">每次打开 Aster Mail 时，要求使用屏幕锁定或应用 PIN 码。</string>
     <string name="app_lock_status_screen_lock">使用屏幕锁定解锁</string>
     <string name="app_lock_status_app_pin">使用应用 PIN 码或密码短语解锁</string>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">ロック解除を必須にする</string>
     <string name="app_lock_off_description">Aster Mail を開くたびに、画面ロックまたはアプリの PIN を求めます。</string>
     <string name="app_lock_status_screen_lock">画面ロックで解除します</string>
     <string name="app_lock_status_app_pin">アプリの PIN またはパスフレーズで解除します</string>

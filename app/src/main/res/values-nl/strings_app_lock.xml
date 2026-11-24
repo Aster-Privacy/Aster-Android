@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Ontgrendelen vereisen</string>
     <string name="app_lock_off_description">Vraag om je schermvergrendeling of een app-pincode telkens als je Aster Mail opent.</string>
     <string name="app_lock_status_screen_lock">Ontgrendelt met je schermvergrendeling</string>
     <string name="app_lock_status_app_pin">Ontgrendelt met je app-pincode of wachtwoordzin</string>

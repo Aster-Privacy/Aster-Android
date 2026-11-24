@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Требовать разблокировку</string>
     <string name="app_lock_off_description">Запрашивать блокировку экрана или PIN-код приложения при каждом открытии Aster Mail.</string>
     <string name="app_lock_status_screen_lock">Разблокировка с помощью блокировки экрана</string>
     <string name="app_lock_status_app_pin">Разблокировка с помощью PIN-кода или парольной фразы приложения</string>

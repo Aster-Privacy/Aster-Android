@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Exiger le déverrouillage</string>
     <string name="app_lock_off_description">Demander le verrouillage de l\'écran ou un code PIN de l\'application à chaque ouverture d\'Aster Mail.</string>
     <string name="app_lock_status_screen_lock">Se déverrouille avec le verrouillage de l\'écran</string>
     <string name="app_lock_status_app_pin">Se déverrouille avec le code PIN ou la phrase secrète de l\'application</string>

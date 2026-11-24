@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Entsperren verlangen</string>
     <string name="app_lock_off_description">Bei jedem Öffnen von Aster Mail nach Ihrer Displaysperre oder einer App-PIN fragen.</string>
     <string name="app_lock_status_screen_lock">Entsperren mit Ihrer Displaysperre</string>
     <string name="app_lock_status_app_pin">Entsperren mit Ihrer App-PIN oder Passphrase</string>

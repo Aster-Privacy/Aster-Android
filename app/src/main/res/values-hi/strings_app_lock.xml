@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">अनलॉक ज़रूरी करें</string>
     <string name="app_lock_off_description">हर बार Aster Mail खोलने पर स्क्रीन लॉक या ऐप PIN मांगें।</string>
     <string name="app_lock_status_screen_lock">आपके स्क्रीन लॉक से अनलॉक होता है</string>
     <string name="app_lock_status_app_pin">आपके ऐप PIN या पासफ़्रेज़ से अनलॉक होता है</string>

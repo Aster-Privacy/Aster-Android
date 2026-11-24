@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">잠금 해제 필요</string>
     <string name="app_lock_off_description">Aster Mail을 열 때마다 화면 잠금 또는 앱 PIN을 요청합니다.</string>
     <string name="app_lock_status_screen_lock">화면 잠금으로 해제</string>
     <string name="app_lock_status_app_pin">앱 PIN 또는 암호 문구로 해제</string>

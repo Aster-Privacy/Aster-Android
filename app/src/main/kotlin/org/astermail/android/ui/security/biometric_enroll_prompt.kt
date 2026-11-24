@@ -68,11 +68,13 @@ fun launch_biometric_enroll(
             on_finished(false)
         }
     }
-    try {
-        BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback)
-            .authenticate(info, BiometricPrompt.CryptoObject(cipher))
-    } catch (t: Throwable) {
-        BiometricUnlockGate.reset(app_context)
-        on_finished(false)
+    activity.after_prompt_closed {
+        try {
+            BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback)
+                .authenticate(info, BiometricPrompt.CryptoObject(cipher))
+        } catch (t: Throwable) {
+            BiometricUnlockGate.reset(app_context)
+            on_finished(false)
+        }
     }
 }

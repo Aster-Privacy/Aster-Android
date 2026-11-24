@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -856,8 +857,7 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        app_lock_section(store = lock_vm.store)
-        vanguard_section(vm = vm, on_upgrade = { on_open("billing") })
+        vanguard_section(vm = vm, lock_store = lock_vm.store, on_upgrade = { on_open("billing") })
 
         v_gap(AsterSpacing.lg)
 
@@ -938,6 +938,7 @@ fun SecurityScreen(
 @Composable
 private fun vanguard_section(
     vm: SettingsViewModel,
+    lock_store: org.astermail.android.security.AppLockStore,
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -949,70 +950,85 @@ private fun vanguard_section(
     var show_disable_confirm by remember { mutableStateOf(false) }
     val lock_context = LocalContext.current
 
+    val lock_config_version by lock_store.config_version.collectAsState()
+    val lock_configured = remember(lock_config_version) { lock_store.is_configured() }
+
     section_label(stringResource(R.string.section_vanguard))
 
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(AsterSpacing.md)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+    AsterCard(modifier = Modifier.fillMaxWidth().testTag("vanguard_card")) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.md)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = stringResource(R.string.vanguard_enable),
+                                color = colors.text_primary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            if (vanguard_enabled) {
+                                Spacer(Modifier.width(AsterSpacing.xs))
+                                verified_badge(stringResource(R.string.vanguard_active))
+                            }
+                        }
+                        Spacer(Modifier.height(2.dp))
                         Text(
-                            text = stringResource(R.string.vanguard_enable),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
+                            text = stringResource(R.string.vanguard_description),
+                            color = colors.text_muted,
+                            fontSize = 13.sp,
                         )
-                        if (vanguard_enabled) {
-                            Spacer(Modifier.width(AsterSpacing.xs))
-                            verified_badge(stringResource(R.string.vanguard_active))
+                    }
+                    if (state.vanguard_enabled == null && state.vanguard_status_load_failed) {
+                        AsterGhostButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { vm.load_vanguard_status() },
+                        )
+                    } else if (state.vanguard_enabled == null) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.text_muted,
+                        )
+                    } else if (is_nova_plus || state.subscription == null) {
+                        AsterSwitch(
+                            checked = vanguard_enabled,
+                            onCheckedChange = { v ->
+                                if (v) vm.enable_vanguard()
+                                else show_disable_confirm = true
+                            },
+                            enabled = state.vanguard_enabled != null,
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(SquircleShape(10.dp))
+                                .background(colors.accent_blue)
+                                .clickable(onClick = on_upgrade)
+                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.vanguard_upgrade_cta),
+                                color = colors.on_accent,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
                         }
                     }
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(R.string.vanguard_description),
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                    )
                 }
-                if (state.vanguard_enabled == null && state.vanguard_status_load_failed) {
-                    AsterGhostButton(
-                        label = stringResource(R.string.retry),
-                        onClick = { vm.load_vanguard_status() },
-                    )
-                } else if (state.vanguard_enabled == null) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = colors.text_muted,
-                    )
-                } else if (is_nova_plus || state.subscription == null) {
-                    AsterSwitch(
-                        checked = vanguard_enabled,
-                        onCheckedChange = { v ->
-                            if (v) vm.enable_vanguard()
-                            else show_disable_confirm = true
-                        },
-                        enabled = state.vanguard_enabled != null,
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .clip(SquircleShape(10.dp))
-                            .background(colors.accent_blue)
-                            .clickable(onClick = on_upgrade)
-                            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.vanguard_upgrade_cta),
-                            color = colors.on_accent,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
+            }
+            AnimatedVisibility(
+                visible = app_lock_rows_visible(state.vanguard_enabled, lock_configured),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut(),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    settings_row_gap()
+                    app_lock_rows(store = lock_store)
                 }
             }
         }

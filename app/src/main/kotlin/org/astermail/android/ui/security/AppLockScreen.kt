@@ -334,10 +334,12 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
         }
-        try {
-            BiometricPrompt(activity, executor, callback).authenticate(info, BiometricPrompt.CryptoObject(cipher))
-        } catch (e: Exception) {
-            error_msg = biometric_error_str
+        activity.after_prompt_closed {
+            try {
+                BiometricPrompt(activity, executor, callback).authenticate(info, BiometricPrompt.CryptoObject(cipher))
+            } catch (e: Exception) {
+                error_msg = biometric_error_str
+            }
         }
     }
 

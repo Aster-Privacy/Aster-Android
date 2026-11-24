@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Kilit açmayı zorunlu tut</string>
     <string name="app_lock_off_description">Aster Mail\'i her açtığınızda ekran kilidinizi veya bir uygulama PIN\'ini isteyin.</string>
     <string name="app_lock_status_screen_lock">Ekran kilidinizle açılır</string>
     <string name="app_lock_status_app_pin">Uygulama PIN\'iniz veya parolanızla açılır</string>

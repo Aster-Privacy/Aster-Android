@@ -70,8 +70,11 @@ internal fun app_lock_timeout_label(timeout: AppLockTimeout): Int = when (timeou
     AppLockTimeout.ONE_HOUR -> R.string.app_lock_timeout_one_hour
 }
 
+internal fun app_lock_rows_visible(vanguard_enabled: Boolean?, lock_configured: Boolean): Boolean =
+    vanguard_enabled == true || lock_configured
+
 @Composable
-internal fun app_lock_section(store: AppLockStore) {
+internal fun app_lock_rows(store: AppLockStore) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val config_version by store.config_version.collectAsState()
@@ -176,9 +179,9 @@ internal fun app_lock_section(store: AppLockStore) {
     val settings_change_str = stringResource(R.string.app_lock_confirm_to_change_settings)
     val device_mode = mode == AppLockMode.DEVICE
 
-    settings_group(title = stringResource(R.string.app_lock_pin)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = settings_group_inset)) {
         settings_toggle_row(
-            title = stringResource(R.string.app_lock_require_unlock),
+            title = stringResource(R.string.app_lock_pin),
             subtitle = stringResource(
                 if (!enabled) R.string.app_lock_off_description
                 else if (device_mode) R.string.app_lock_status_screen_lock

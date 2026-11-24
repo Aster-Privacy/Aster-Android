@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Richiedi sblocco</string>
     <string name="app_lock_off_description">Chiedi il blocco schermo o un PIN dell\'app a ogni apertura di Aster Mail.</string>
     <string name="app_lock_status_screen_lock">Si sblocca con il blocco schermo</string>
     <string name="app_lock_status_app_pin">Si sblocca con il PIN o la passphrase dell\'app</string>

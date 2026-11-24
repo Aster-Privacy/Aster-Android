@@ -94,11 +94,14 @@ fun launch_device_credential(
             }
         }
         store.begin_external_flow()
-        try {
-            BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback)
-                .authenticate(info, BiometricPrompt.CryptoObject(cipher))
-        } catch (t: Throwable) {
-            on_result(DeviceCredentialResult.FAILED)
+        activity.after_prompt_closed {
+            try {
+                BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), callback)
+                    .authenticate(info, BiometricPrompt.CryptoObject(cipher))
+            } catch (t: Throwable) {
+                store.end_external_flow()
+                on_result(DeviceCredentialResult.FAILED)
+            }
         }
         return
     }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">Require unlock</string>
     <string name="app_lock_off_description">Ask for your screen lock or an app PIN each time you open Aster Mail.</string>
     <string name="app_lock_status_screen_lock">Unlocks with your screen lock</string>
     <string name="app_lock_status_app_pin">Unlocks with your app PIN or passphrase</string>

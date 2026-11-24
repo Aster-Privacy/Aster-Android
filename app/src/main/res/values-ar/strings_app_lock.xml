@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_require_unlock">طلب فتح القفل</string>
     <string name="app_lock_off_description">اطلب قفل الشاشة أو رمز PIN للتطبيق في كل مرة تفتح فيها Aster Mail.</string>
     <string name="app_lock_status_screen_lock">يُفتح بقفل الشاشة</string>
     <string name="app_lock_status_app_pin">يُفتح برمز PIN للتطبيق أو بعبارة المرور</string>
