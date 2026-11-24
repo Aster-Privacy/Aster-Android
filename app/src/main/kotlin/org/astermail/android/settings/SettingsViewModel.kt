@@ -7440,6 +7440,8 @@ class SettingsViewModel @Inject constructor(
             "sidebar_labels_collapsed" -> current.copy(sidebar_labels_collapsed = value)
             "sidebar_aliases_collapsed" -> current.copy(sidebar_aliases_collapsed = value)
             "sidebar_categories_collapsed" -> current.copy(sidebar_categories_collapsed = value)
+            "sidebar_folders_show_all" -> current.copy(sidebar_folders_show_all = value)
+            "sidebar_aliases_show_all" -> current.copy(sidebar_aliases_show_all = value)
             else -> return
         }
         _state.value = _state.value.copy(preferences = updated)

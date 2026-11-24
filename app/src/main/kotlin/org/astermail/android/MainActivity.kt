@@ -3002,6 +3002,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 initial_labels_collapsed = prefs?.sidebar_labels_collapsed ?: false,
                 initial_aliases_collapsed = prefs?.sidebar_aliases_collapsed ?: false,
                 initial_categories_collapsed = prefs?.sidebar_categories_collapsed ?: false,
+                initial_folders_show_all = prefs?.sidebar_folders_show_all ?: false,
+                initial_aliases_show_all = prefs?.sidebar_aliases_show_all ?: false,
                 preferences_loaded = prefs != null,
                 totp_enabled = settings_state.security_status?.totp_enabled == true,
                 purge_locked_folder_default = prefs?.purge_locked_folder_on_delete ?: false,
