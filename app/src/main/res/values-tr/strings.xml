@@ -262,6 +262,7 @@
     <string name="failed_to_save">Dosya kaydedilemedi</string>
     <string name="failed_to_download">%s indirilemedi</string>
     <string name="could_not_open_link">Bağlantı açılamadı</string>
+    <string name="open_address_in_maps">Harita uygulamasında aç</string>
     <string name="move_to_trash">Çöp kutusuna taşı</string>
     <string name="archived">Arşivlendi</string>
     <string name="unstarred">Yıldız kaldırıldı</string>

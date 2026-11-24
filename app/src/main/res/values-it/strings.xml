@@ -262,6 +262,7 @@
     <string name="failed_to_save">Salvataggio file non riuscito</string>
     <string name="failed_to_download">Download di %s non riuscito</string>
     <string name="could_not_open_link">Impossibile aprire il link</string>
+    <string name="open_address_in_maps">Apri nell\'app di mappe</string>
     <string name="move_to_trash">Sposta nel cestino</string>
     <string name="archived">Archiviata</string>
     <string name="unstarred">Rimossa da Speciali</string>

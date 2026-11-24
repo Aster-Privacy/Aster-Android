@@ -262,6 +262,7 @@
     <string name="failed_to_save">파일 저장 실패</string>
     <string name="failed_to_download">%s 다운로드 실패</string>
     <string name="could_not_open_link">링크를 열 수 없습니다</string>
+    <string name="open_address_in_maps">지도 앱에서 열기</string>
     <string name="move_to_trash">휴지통으로 이동</string>
     <string name="archived">보관됨</string>
     <string name="unstarred">별표 해제됨</string>

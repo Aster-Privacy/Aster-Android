@@ -262,6 +262,7 @@
     <string name="failed_to_save">ファイルの保存に失敗しました</string>
     <string name="failed_to_download">%sのダウンロードに失敗しました</string>
     <string name="could_not_open_link">リンクを開けませんでした</string>
+    <string name="open_address_in_maps">マップアプリで開く</string>
     <string name="move_to_trash">ゴミ箱に移動</string>
     <string name="archived">アーカイブしました</string>
     <string name="unstarred">スターを外しました</string>

@@ -272,6 +272,7 @@
     <string name="failed_to_save">Échec de l\'enregistrement</string>
     <string name="failed_to_download">Échec du téléchargement de %s</string>
     <string name="could_not_open_link">Impossible d\'ouvrir le lien</string>
+    <string name="open_address_in_maps">Ouvrir dans l\'app de cartes</string>
     <string name="move_to_trash">Déplacer vers la corbeille</string>
     <string name="archived">Archivé</string>
     <string name="unstarred">Étoile retirée</string>

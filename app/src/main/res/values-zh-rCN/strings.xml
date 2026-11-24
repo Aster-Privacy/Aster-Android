@@ -262,6 +262,7 @@
     <string name="failed_to_save">文件保存失败</string>
     <string name="failed_to_download">%s 下载失败</string>
     <string name="could_not_open_link">无法打开链接</string>
+    <string name="open_address_in_maps">在地图应用中打开</string>
     <string name="move_to_trash">移至回收站</string>
     <string name="archived">已归档</string>
     <string name="unstarred">已取消星标</string>

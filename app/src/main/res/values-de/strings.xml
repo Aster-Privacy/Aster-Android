@@ -263,6 +263,7 @@
     <string name="failed_to_save">Speichern fehlgeschlagen</string>
     <string name="failed_to_download">Download von %s fehlgeschlagen</string>
     <string name="could_not_open_link">Link konnte nicht geöffnet werden</string>
+    <string name="open_address_in_maps">In Karten-App öffnen</string>
     <string name="move_to_trash">In den Papierkorb verschieben</string>
     <string name="archived">Archiviert</string>
     <string name="unstarred">Stern entfernt</string>
