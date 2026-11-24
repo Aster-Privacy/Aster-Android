@@ -203,6 +203,8 @@ import org.astermail.android.ui.common.sender_id_for_email
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.mail.ComposePrefill
+import org.astermail.android.ui.mail.priority_badge_label
+import org.astermail.android.ui.mail.priority_option_label
 import org.astermail.android.ui.mail.format_full_datetime
 import org.astermail.android.ui.mail.subject_prefix
 import org.astermail.android.ui.mail.thread_message_to_mock
@@ -805,6 +807,8 @@ private fun compose_screen_content(
     var expires_at_iso by remember { mutableStateOf<String?>(null) }
     var expiry_password by remember { mutableStateOf<String?>(null) }
     var show_expiring_sheet by remember { mutableStateOf(false) }
+    var priority by remember { mutableStateOf(org.astermail.android.mail.MailPriority.NORMAL) }
+    var show_priority_sheet by remember { mutableStateOf(false) }
     var to_chips_set by rememberSaveable {
         mutableStateOf(!initial_state.thread_is_skeleton && initial_state.to_chips.isNotEmpty())
     }
@@ -2068,6 +2072,7 @@ private fun compose_screen_content(
                 force_pgp = snapshot_force_pgp,
                 pgp_recipients = snapshot_pgp_recipients,
                 ack_scope = draft_session_id,
+                priority = org.astermail.android.mail.MailPriorityRules.outgoing(priority),
             )
             result.fold(
                 onSuccess = { resp ->
@@ -2467,6 +2472,7 @@ private fun compose_screen_content(
                     force_pgp = snap_force_pgp,
                     pgp_recipients = snap_pgp_recipients,
                     ack_scope = draft_session_id,
+                    priority = org.astermail.android.mail.MailPriorityRules.outgoing(priority),
                 )
                 is_sending = false
                 send_lock.set(false)
@@ -2705,6 +2711,16 @@ private fun compose_screen_content(
                         expiry_password = null
                     },
                     test_tag = "expiring_banner",
+                )
+            }
+            if (priority != org.astermail.android.mail.MailPriority.NORMAL) {
+                compose_status_banner(
+                    icon = TablerIcons.Flag,
+                    text = stringResource(priority_badge_label(priority)),
+                    change_label = stringResource(R.string.change),
+                    on_change = { show_priority_sheet = true },
+                    on_cancel = { priority = org.astermail.android.mail.MailPriority.NORMAL },
+                    test_tag = "priority_banner",
                 )
             }
             compose_from_row(
@@ -3365,6 +3381,7 @@ private fun compose_screen_content(
         OverflowSheet(
             scheduled_send = scheduled_send,
             expiring = expiring,
+            priority = priority,
             on_close = { show_overflow_sheet = false },
             on_toggle_scheduled = {
                 if (scheduled_send) {
@@ -3400,6 +3417,21 @@ private fun compose_screen_content(
             on_open_signature = {
                 show_overflow_sheet = false
                 show_signature_sheet = true
+            },
+            on_open_priority = {
+                show_overflow_sheet = false
+                show_priority_sheet = true
+            },
+        )
+    }
+
+    if (show_priority_sheet) {
+        PrioritySheet(
+            selected = priority,
+            on_close = { show_priority_sheet = false },
+            on_pick = { picked ->
+                priority = picked
+                show_priority_sheet = false
             },
         )
     }
@@ -4829,11 +4861,13 @@ private fun sender_mismatch_banner(
 private fun OverflowSheet(
     scheduled_send: Boolean,
     expiring: Boolean,
+    priority: org.astermail.android.mail.MailPriority,
     on_close: () -> Unit,
     on_toggle_scheduled: () -> Unit,
     on_toggle_expiring: () -> Unit,
     on_open_templates: () -> Unit,
     on_open_signature: () -> Unit,
+    on_open_priority: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -4872,6 +4906,12 @@ private fun OverflowSheet(
                 expiring,
                 on_toggle_expiring,
             )
+            toggle_sheet_row(
+                TablerIcons.Flag,
+                stringResource(R.string.mail_priority),
+                priority != org.astermail.android.mail.MailPriority.NORMAL,
+                on_open_priority,
+            )
             sheet_row(
                 TablerIcons.FileText,
                 stringResource(R.string.use_template),
@@ -4884,6 +4924,51 @@ private fun OverflowSheet(
                 colors.text_primary,
                 on_open_signature,
             )
+            Spacer(Modifier.height(AsterSpacing.md))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PrioritySheet(
+    selected: org.astermail.android.mail.MailPriority,
+    on_close: () -> Unit,
+    on_pick: (org.astermail.android.mail.MailPriority) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val state = rememberModalBottomSheetState()
+    aster_modal_sheet(
+        shape = org.astermail.android.ui.common.aster_sheet_shape,
+        on_dismiss_request = on_close,
+        sheet_state = state,
+        container_color = sheet_container_color(colors),
+        drag_handle = { AsterDragHandle() },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.md)
+                .testTag("priority_sheet"),
+        ) {
+            Text(
+                text = stringResource(R.string.mail_priority),
+                color = colors.text_primary,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(
+                    start = AsterSpacing.sm,
+                    top = AsterSpacing.xs,
+                    bottom = AsterSpacing.xs,
+                ),
+            )
+            org.astermail.android.mail.MailPriority.entries.forEach { option ->
+                toggle_sheet_row(
+                    TablerIcons.Flag,
+                    stringResource(priority_option_label(option)),
+                    option == selected,
+                ) { on_pick(option) }
+            }
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }

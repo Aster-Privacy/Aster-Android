@@ -3613,4 +3613,10 @@
     <string name="attachment_unverified">असत्यापित अटैचमेंट</string>
     <string name="confirm_back_exit">बाहर निकलने से पहले पुष्टि करें</string>
     <string name="confirm_back_exit_subtitle">इनबॉक्स से ऐप छोड़ने के लिए दो बार वापस दबाएं</string>
+    <string name="mail_priority">प्राथमिकता</string>
+    <string name="mail_priority_high">उच्च</string>
+    <string name="mail_priority_normal">सामान्य</string>
+    <string name="mail_priority_low">निम्न</string>
+    <string name="mail_high_priority">उच्च प्राथमिकता</string>
+    <string name="mail_low_priority">निम्न प्राथमिकता</string>
 </resources>

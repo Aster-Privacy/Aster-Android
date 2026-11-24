@@ -3721,4 +3721,10 @@
     <string name="attachment_unverified">Doğrulanmamış ek</string>
     <string name="confirm_back_exit">Çıkmadan önce onayla</string>
     <string name="confirm_back_exit_subtitle">Gelen kutusundan uygulamadan çıkmak için Geri tuşuna iki kez basın</string>
+    <string name="mail_priority">Öncelik</string>
+    <string name="mail_priority_high">Yüksek</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Düşük</string>
+    <string name="mail_high_priority">Yüksek öncelik</string>
+    <string name="mail_low_priority">Düşük öncelik</string>
 </resources>

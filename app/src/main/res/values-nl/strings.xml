@@ -3721,4 +3721,10 @@
     <string name="attachment_unverified">Niet-geverifieerde bijlage</string>
     <string name="confirm_back_exit">Bevestigen voor afsluiten</string>
     <string name="confirm_back_exit_subtitle">Druk twee keer op Terug om de app vanuit de inbox te verlaten</string>
+    <string name="mail_priority">Prioriteit</string>
+    <string name="mail_priority_high">Hoog</string>
+    <string name="mail_priority_normal">Normaal</string>
+    <string name="mail_priority_low">Laag</string>
+    <string name="mail_high_priority">Hoge prioriteit</string>
+    <string name="mail_low_priority">Lage prioriteit</string>
 </resources>

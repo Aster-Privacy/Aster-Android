@@ -3783,4 +3783,10 @@
     <string name="attachment_unverified">Непроверенное вложение</string>
     <string name="confirm_back_exit">Подтверждать выход</string>
     <string name="confirm_back_exit_subtitle">Нажмите «Назад» дважды, чтобы выйти из приложения из папки «Входящие»</string>
+    <string name="mail_priority">Приоритет</string>
+    <string name="mail_priority_high">Высокий</string>
+    <string name="mail_priority_normal">Обычный</string>
+    <string name="mail_priority_low">Низкий</string>
+    <string name="mail_high_priority">Высокий приоритет</string>
+    <string name="mail_low_priority">Низкий приоритет</string>
 </resources>

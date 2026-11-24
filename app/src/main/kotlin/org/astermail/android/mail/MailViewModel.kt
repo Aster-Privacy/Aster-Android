@@ -6046,6 +6046,7 @@ class MailViewModel @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<org.astermail.android.api.send.SimpleSendResponse> = repository.durable_async {
         val result = repository.send_email(
             to = to,
@@ -6065,6 +6066,7 @@ class MailViewModel @Inject constructor(
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
             ack_scope = ack_scope,
+            priority = priority,
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
@@ -6212,6 +6214,7 @@ class MailViewModel @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -6234,6 +6237,7 @@ class MailViewModel @Inject constructor(
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
             ack_scope = ack_scope,
+            priority = priority,
         )
     }
 

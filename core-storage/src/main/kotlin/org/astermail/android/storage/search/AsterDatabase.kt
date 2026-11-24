@@ -34,7 +34,7 @@ import org.astermail.android.storage.contacts.ContactGroupCacheEntity
 import org.astermail.android.storage.outbox.PendingSendDao
 import org.astermail.android.storage.outbox.PendingSendEntity
 
-const val aster_database_version = 24
+const val aster_database_version = 25
 
 data class schema_column(val table: String, val name: String, val definition: String)
 
@@ -231,6 +231,7 @@ val migration_columns: Map<Int, List<schema_column>> = mapOf(
         schema_column(pending_send_table, "pgp_recipients_json", "TEXT"),
     ),
     23 to listOf(schema_column(decrypted_mail_table, "expires_at", "TEXT")),
+    25 to listOf(schema_column(pending_send_table, "priority", "TEXT")),
 )
 
 val migration_statements: Map<Int, List<String>> = mapOf(
@@ -336,6 +337,7 @@ abstract class AsterDatabase : RoomDatabase() {
         val migration_21_22 = step_migration(22)
         val migration_22_23 = step_migration(23)
         val migration_23_24 = step_migration(24)
+        val migration_24_25 = step_migration(25)
 
         val all_migrations: Array<Migration> = arrayOf(
             migration_1_2,
@@ -361,6 +363,7 @@ abstract class AsterDatabase : RoomDatabase() {
             migration_21_22,
             migration_22_23,
             migration_23_24,
+            migration_24_25,
         )
     }
 }

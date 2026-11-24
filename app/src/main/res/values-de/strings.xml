@@ -3722,4 +3722,10 @@
     <string name="attachment_unverified">Nicht bestätigter Anhang</string>
     <string name="confirm_back_exit">Vor dem Beenden bestätigen</string>
     <string name="confirm_back_exit_subtitle">Zweimal Zurück drücken, um die App im Posteingang zu verlassen</string>
+    <string name="mail_priority">Priorität</string>
+    <string name="mail_priority_high">Hoch</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Niedrig</string>
+    <string name="mail_high_priority">Hohe Priorität</string>
+    <string name="mail_low_priority">Niedrige Priorität</string>
 </resources>

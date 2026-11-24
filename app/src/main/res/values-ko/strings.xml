@@ -3692,4 +3692,10 @@
     <string name="attachment_unverified">확인되지 않은 첨부 파일</string>
     <string name="confirm_back_exit">종료 전에 확인</string>
     <string name="confirm_back_exit_subtitle">받은편지함에서 뒤로를 두 번 눌러 앱을 종료합니다</string>
+    <string name="mail_priority">중요도</string>
+    <string name="mail_priority_high">높음</string>
+    <string name="mail_priority_normal">보통</string>
+    <string name="mail_priority_low">낮음</string>
+    <string name="mail_high_priority">높은 중요도</string>
+    <string name="mail_low_priority">낮은 중요도</string>
 </resources>
