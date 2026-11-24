@@ -35,6 +35,10 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.astermail.android.crypto.StorageWriteKey
 import org.astermail.android.crypto.AesGcm
+import org.astermail.android.mail.DecryptVerdict
+import org.astermail.android.mail.capture_decrypt_readiness
+import org.astermail.android.mail.classify_decrypt_failure
+import org.astermail.android.mail.decrypt_settle_delays_ms
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -42,6 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CoroutineDispatcher
@@ -366,6 +371,17 @@ private const val SYNC_RELOAD_DEBOUNCE_MS = 300L
 private const val PREFERENCES_TTL_MS = 30_000L
 private const val PROFILE_TTL_MS = 60_000L
 private const val LIST_TTL_MS = 60_000L
+private const val KEY_SETTLE_POLL_MS = 60_000L
+
+private fun <T> keep_settled_rows(
+    fresh: List<T>,
+    previous: List<T>,
+    id_of: (T) -> String,
+    failed: (T) -> Boolean,
+): List<T> {
+    val previous_by_id = previous.filterNot(failed).associateBy(id_of)
+    return fresh.mapNotNull { row -> if (!failed(row)) row else previous_by_id[id_of(row)] }
+}
 private const val MAX_ALIAS_WEBSITES = 10
 private const val IMPORT_BATCH_SIZE = 100
 private const val ALIAS_RUN_POLL_MIN_MS = 1200L
@@ -449,6 +465,10 @@ class SettingsViewModel @Inject constructor(
     private var last_product_updates_load_ms = 0L
     private var last_profile_load_ms = 0L
     private var last_aliases_load_ms = 0L
+    private var alias_key_wait: kotlinx.coroutines.Job? = null
+    private var alias_key_wait_attempt = 0
+    private var domain_key_wait: kotlinx.coroutines.Job? = null
+    private var domain_key_wait_attempt = 0
     private var legacy_routing_heal_done = false
     private var last_mail_rules_load_ms = 0L
     private var last_domain_addresses_load_ms = 0L
@@ -1020,6 +1040,12 @@ class SettingsViewModel @Inject constructor(
         recovery_outdated_epoch++
         tags_load_job?.cancel()
         tags_load_job = null
+        alias_key_wait?.cancel()
+        alias_key_wait = null
+        alias_key_wait_attempt = 0
+        domain_key_wait?.cancel()
+        domain_key_wait = null
+        domain_key_wait_attempt = 0
         tags_reload_job?.cancel()
         tags_reload_job = null
         labels_reload_job?.cancel()
@@ -1484,19 +1510,36 @@ class SettingsViewModel @Inject constructor(
                         }
                     }
                 }
+                val readiness_before = capture_decrypt_readiness(session_key_store)
                 var decrypted = decrypt_all()
                 if (decrypted.any { it.decryption_failed } && auth_repository.try_refresh_vault_keys()) {
                     decrypted = decrypt_all()
                 }
-                prime_own_alias_avatars(decrypted)
+                val keys_pending = decrypted.any { it.decryption_failed } &&
+                    classify_decrypt_failure(readiness_before, capture_decrypt_readiness(session_key_store)) ==
+                    DecryptVerdict.pending
+                val shown = if (keys_pending) {
+                    keep_settled_rows(decrypted, _state.value.aliases, { it.id }, { it.decryption_failed })
+                } else {
+                    decrypted
+                }
+                prime_own_alias_avatars(shown)
                 _state.value = _state.value.copy(
-                    aliases = decrypted,
+                    aliases = shown,
                     aliases_loaded = true,
                     aliases_settled = true,
                     max_aliases = max_aliases,
                     is_loading = false,
                     aliases_loading = false,
                 )
+                if (keys_pending) {
+                    last_aliases_load_ms = 0L
+                    if (alias_key_wait?.isActive != true) {
+                        alias_key_wait = reload_after_keys_settle(alias_key_wait_attempt++) { load_aliases(force = true) }
+                    }
+                    return@launch
+                }
+                alias_key_wait_attempt = 0
                 if (heal_legacy_routing_hashes(decrypted)) load_aliases(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -1518,6 +1561,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = settings_api.list_all_domain_addresses()
+                val readiness_before = capture_decrypt_readiness(session_key_store)
                 val decrypted = response.addresses.map { addr ->
                     if (addr.encrypted_local_part.isBlank()) return@map addr
                     val local_part = try {
@@ -1538,12 +1582,30 @@ class SettingsViewModel @Inject constructor(
                         }
                     addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
                 }
-                prime_own_domain_address_avatars(decrypted)
+                val keys_pending = decrypted.any { it.decryption_failed } &&
+                    classify_decrypt_failure(readiness_before, capture_decrypt_readiness(session_key_store)) ==
+                    DecryptVerdict.pending
+                val shown = if (keys_pending) {
+                    keep_settled_rows(decrypted, _state.value.custom_domain_addresses, { it.id }, { it.decryption_failed })
+                } else {
+                    decrypted
+                }
+                prime_own_domain_address_avatars(shown)
                 _state.value = _state.value.copy(
-                    custom_domain_addresses = decrypted,
+                    custom_domain_addresses = shown,
                     custom_domain_addresses_loaded = true,
                     custom_domain_addresses_settled = true,
                 )
+                if (keys_pending) {
+                    last_domain_addresses_load_ms = 0L
+                    if (domain_key_wait?.isActive != true) {
+                        domain_key_wait = reload_after_keys_settle(domain_key_wait_attempt++) {
+                            load_custom_domain_addresses(force = true)
+                        }
+                    }
+                } else {
+                    domain_key_wait_attempt = 0
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(custom_domain_addresses_settled = true) }
@@ -6977,6 +7039,34 @@ class SettingsViewModel @Inject constructor(
             archive_kind_tag -> load_tags()
             archive_kind_label -> load_labels(force = true)
             archive_kind_signature -> load_signature()
+        }
+    }
+
+    private fun owned_address_keys_settled(): Boolean =
+        runCatching { session_key_store.keys_settled() }.getOrDefault(true)
+
+    private fun reload_after_keys_settle(attempt: Int, reload: () -> Unit): kotlinx.coroutines.Job? {
+        val backoff = decrypt_settle_delays_ms.getOrNull(attempt) ?: return null
+        val events = runCatching {
+            kotlinx.coroutines.flow.combine(
+                session_key_store.identity_key_events(),
+                session_key_store.account_keys_ready_events(),
+                session_key_store.key_material_events(),
+            ) { identity, account, material -> identity + account + material }
+        }.getOrNull() ?: return null
+        return viewModelScope.launch {
+            delay(backoff)
+            while (!owned_address_keys_settled()) {
+                try {
+                    kotlinx.coroutines.withTimeoutOrNull(KEY_SETTLE_POLL_MS) {
+                        events.first { owned_address_keys_settled() }
+                    }
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    delay(KEY_SETTLE_POLL_MS)
+                }
+            }
+            reload()
         }
     }
 

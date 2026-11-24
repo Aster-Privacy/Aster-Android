@@ -275,6 +275,7 @@ class SettingsViewModelTest {
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
         every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
+        every { session_key_store.keys_settled() } returns true
         token_store = mockk(relaxed = true)
         account_store = mockk(relaxed = true)
         preferences_cache = mockk(relaxed = true)
@@ -1114,6 +1115,114 @@ class SettingsViewModelTest {
         coVerify(exactly = 0) { settings_api.update_domain_address(any(), any(), any()) }
         coVerify(exactly = 0) { settings_api.delete_domain_address(any(), any(), any()) }
         coVerify(exactly = 0) { settings_api.normalize_alias(any(), any()) }
+    }
+
+    private class KeyGate(private val store: SessionKeyStore, private val data_kek: ByteArray) {
+        var open = false
+        val material = MutableStateFlow(0L)
+
+        init {
+            every { store.keys_settled() } answers { open }
+            every { store.is_locked() } answers { !open }
+            every { store.get_data_kek() } answers { if (open) data_kek.copyOf() else null }
+            every { store.get_identity_key() } returns null
+            every { store.identity_key_events() } returns MutableStateFlow(0L)
+            every { store.account_keys_ready_events() } returns MutableStateFlow(0L)
+            every { store.key_material_events() } returns material
+            every { store.key_readiness_epoch() } answers { material.value }
+        }
+
+        fun unlock() {
+            open = true
+            material.value = material.value + 1
+        }
+    }
+
+    @Test
+    fun `aliases loaded before sealed keys open are not shown as locked`() = runTest {
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_aliases()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertTrue(vm.state.value.aliases.none { it.decryption_failed })
+        assertTrue(vm.state.value.aliases.none { vm.alias_is_restorable(it) })
+
+        gate.unlock()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        val shown = vm.state.value.aliases.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("news", shown.encrypted_local_part)
+    }
+
+    @Test
+    fun `aliases screen reload inside the list ttl still decrypts after keys open`() = runTest {
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_aliases()
+        runCurrent()
+        gate.open = true
+        vm.load_aliases()
+        runCurrent()
+
+        val shown = vm.state.value.aliases.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("news", shown.encrypted_local_part)
+    }
+
+    @Test
+    fun `domain addresses loaded before sealed keys open are not shown as locked`() = runTest {
+        val sealed = sealed_alias("seal", "billing", "", domain = "custom.example")
+        val address = CustomDomainAddressInfo(
+            id = "addr-1",
+            domain_name = "custom.example",
+            encrypted_local_part = sealed.encrypted_local_part,
+            local_part_nonce = sealed.local_part_nonce,
+        )
+        coEvery { settings_api.list_all_domain_addresses() } returns AllDomainAddressesResponse(listOf(address))
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_custom_domain_addresses()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertTrue(vm.state.value.custom_domain_addresses.none { it.decryption_failed })
+
+        gate.unlock()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        val shown = vm.state.value.custom_domain_addresses.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("billing@custom.example", shown.address)
+    }
+
+    @Test
+    fun `aliases sealed under a changed password stay locked once keys are settled`() = runTest {
+        val other_key = ByteArray(32) { (it * 7 + 3).toByte() }
+        every { session_key_store.get_data_kek() } answers { other_key.copyOf() }
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        val shown = vm.state.value.aliases.single()
+        assertTrue(shown.decryption_failed)
+        assertTrue(vm.alias_is_restorable(shown))
+        coVerify(exactly = 1) { settings_api.list_aliases(limit = any(), offset = any()) }
     }
 
     @Test
