@@ -901,7 +901,7 @@
     <string name="message">Сообщение</string>
     <string name="feedback_placeholder">Опишите, что вам нравится, чего не хватает или что не работает.</string>
     <string name="feedback_privacy_note">Ваш адрес электронной почты будет прикреплён, чтобы мы могли ответить. Мы никогда не делимся отзывами.</string>
-    <string name="feedback_support_notice">Отзывы не проверяются на наличие обращений в поддержку или вопросов. Чтобы получить помощь, напишите в службу поддержки по адресу %1$s.</string>
+    <string name="feedback_support_notice">Эта форма предназначена для отзывов, идей и сообщений об ошибках. С вопросами или за помощью с аккаунтом пишите в службу поддержки по адресу %1$s.</string>
     <string name="send_feedback">Отправить отзыв</string>
     <string name="sending_feedback">Отправка...</string>
     <string name="sent">Отправлено</string>

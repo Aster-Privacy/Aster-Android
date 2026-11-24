@@ -901,7 +901,7 @@
     <string name="message">Mesaj</string>
     <string name="feedback_placeholder">Neyi sevdiğinizi, neyin eksik olduğunu veya neyin bozuk olduğunu açıklayın.</string>
     <string name="feedback_privacy_note">Yanıt verebilmemiz için hesap e-postanız eklenecektir. Geri bildirimleri asla paylaşmayız.</string>
-    <string name="feedback_support_notice">Geri bildirimler destek talepleri veya sorular için takip edilmez. Yardım almak için %1$s adresinden destek ekibiyle iletişime geçin.</string>
+    <string name="feedback_support_notice">Bu form geri bildirim, fikir ve hata bildirimleri içindir. Sorularınız veya hesabınızla ilgili yardım için bunun yerine %1$s adresinden destek ekibine e-posta gönderin.</string>
     <string name="send_feedback">Geri bildirim gönder</string>
     <string name="sending_feedback">Gönderiliyor...</string>
     <string name="sent">Gönderildi</string>

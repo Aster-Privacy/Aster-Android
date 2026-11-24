@@ -900,7 +900,7 @@
     <string name="message">Mensagem</string>
     <string name="feedback_placeholder">Descreva o que você gosta, o que falta ou o que está quebrado.</string>
     <string name="feedback_privacy_note">Seu e-mail da conta será anexado para que possamos responder. Nunca compartilhamos feedback.</string>
-    <string name="feedback_support_notice">O feedback não é monitorado para solicitações de suporte ou perguntas. Para receber ajuda, fale com a equipe de suporte em %1$s.</string>
+    <string name="feedback_support_notice">Este formulário é para feedback, ideias e relatos de bugs. Para dúvidas ou ajuda com sua conta, envie um e-mail para a equipe de suporte em %1$s.</string>
     <string name="send_feedback">Enviar feedback</string>
     <string name="sending_feedback">Enviando...</string>
     <string name="sent">Enviado</string>

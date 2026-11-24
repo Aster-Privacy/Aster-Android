@@ -901,7 +901,7 @@
     <string name="message">Wiadomość</string>
     <string name="feedback_placeholder">Opisz, co Ci się podoba, czego brakuje lub co nie działa.</string>
     <string name="feedback_privacy_note">Twój adres e-mail zostanie dołączony, abyśmy mogli odpowiedzieć. Nigdy nie udostępniamy opinii.</string>
-    <string name="feedback_support_notice">Opinie nie są sprawdzane pod kątem zgłoszeń do pomocy technicznej ani pytań. Aby uzyskać pomoc, skontaktuj się z zespołem pomocy technicznej pod adresem %1$s.</string>
+    <string name="feedback_support_notice">Ten formularz służy do przesyłania opinii, pomysłów i zgłoszeń błędów. W razie pytań lub potrzeby pomocy z kontem napisz zamiast tego do zespołu pomocy technicznej na adres %1$s.</string>
     <string name="send_feedback">Wyślij opinię</string>
     <string name="sending_feedback">Wysyłanie...</string>
     <string name="sent">Wysłano</string>
