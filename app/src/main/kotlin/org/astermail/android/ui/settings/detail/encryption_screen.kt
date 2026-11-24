@@ -588,12 +588,7 @@ fun EncryptionScreen(
                     on_click = { vm.load_encryption_settings() },
                 )
             } else if (prefs == null || enc == null) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-                }
+                settings_pending_spinner(padding = AsterSpacing.xl)
             } else {
                 detail_row(
                     title = stringResource(R.string.auto_discover_keys),

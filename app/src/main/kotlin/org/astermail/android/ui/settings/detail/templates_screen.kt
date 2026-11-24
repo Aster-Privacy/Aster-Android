@@ -28,7 +28,6 @@ import androidx.activity.compose.BackHandler
 import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -112,12 +111,7 @@ fun TemplatesScreen(
         },
     ) {
         if (state.is_loading && state.items.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
             return@detail_scaffold
         }
 

@@ -44,7 +44,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,12 +98,7 @@ fun TwoFactorScreen(
 
     detail_scaffold(title = stringResource(R.string.two_factor_authentication), on_back = on_back) {
         if (state.is_loading) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
             return@detail_scaffold
         }
 

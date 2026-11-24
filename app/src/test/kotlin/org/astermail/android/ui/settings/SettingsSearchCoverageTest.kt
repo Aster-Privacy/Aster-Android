@@ -38,7 +38,7 @@ class SettingsSearchCoverageTest {
     private val text_arguments = setOf("title", "label", "subtitle", "text", "description")
 
     private val not_settings = setOf(
-        "failed_to_load", "retry", "no_aliases", "no_aliases_subtitle", "no_results_found",
+        "failed_to_load", "retry", "loading", "no_aliases", "no_aliases_subtitle", "no_results_found",
         "recently_deleted_aliases_empty", "no_custom_domains", "no_custom_domains_subtitle",
         "no_directories_yet", "no_directories_subtitle", "no_ghost_aliases", "no_ghost_aliases_subtitle",
         "alias_detail_unavailable", "delete_alias", "email_address", "allowlist_entire_domain",

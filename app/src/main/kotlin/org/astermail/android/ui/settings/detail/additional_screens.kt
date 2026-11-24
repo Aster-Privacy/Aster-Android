@@ -509,12 +509,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         if (referral == null && state.referral_load_failed) {
             load_failed_card(null) { vm.load_referral_info() }
         } else if (referral == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else {
             val commission_percent =
                 if (referral.commission_percent > 0) referral.commission_percent else 10
@@ -1195,12 +1190,7 @@ fun LabelsScreen(
         v_gap(AsterSpacing.md)
 
         if (state.is_loading && rows.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else if (rows.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
                 vm.load_labels(folder_type = "label")
@@ -1419,12 +1409,7 @@ fun FoldersScreen(
         v_gap(AsterSpacing.md)
 
         if (state.is_loading && folder_nodes.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else if (folder_nodes.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
                 vm.load_labels(folder_type = "folder")
@@ -1719,12 +1704,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     detail_scaffold(title = stringResource(R.string.api_keys), on_back = on_back) {
         if (state.is_loading && state.api_keys.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else if (state.api_keys.isEmpty() && state.error != null) {
             load_failed_card(state.error) { vm.load_api_keys() }
         } else if (state.api_keys.isEmpty()) {
@@ -1861,12 +1841,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     detail_scaffold(title = stringResource(R.string.family_plan), on_back = on_back) {
         if (state.is_loading && sub == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else if (state.subscription_load_failed && sub == null) {
             load_failed_card(state.error) { vm.load_subscription() }
         } else if (is_family) {
@@ -2138,12 +2113,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {
         if (prefs == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-            }
+            settings_pending_spinner()
         } else {
             section_label(stringResource(R.string.display_language))
             AsterCard(modifier = Modifier.fillMaxWidth()) {

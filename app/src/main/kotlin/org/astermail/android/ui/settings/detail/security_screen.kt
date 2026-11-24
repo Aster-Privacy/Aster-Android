@@ -236,11 +236,13 @@ fun SecurityScreen(
         prefs != null &&
         state.login_alerts_enabled != null &&
         state.vanguard_enabled != null &&
+        (state.hardware_keys_loaded || state.hardware_keys_load_failed) &&
         !state.is_loading
 
     var content_ready by remember {
         mutableStateOf(
-            sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null,
+            sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null &&
+                (state.hardware_keys_loaded || state.hardware_keys_load_failed),
         )
     }
     LaunchedEffect(security_signals_ready) {
@@ -541,6 +543,12 @@ fun SecurityScreen(
             )
             settings_row_gap()
             Column(modifier = anchor_modifier(security_anchor.passkeys)) {
+                if (hardware_keys_count == 0 && !state.hardware_keys_loaded && !state.hardware_keys_load_failed) {
+                    settings_loading_row(
+                        title = stringResource(R.string.passkeys_security_keys),
+                        icon = TablerIcons.Key,
+                    )
+                }
                 if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
                     detail_row(
                         title = stringResource(R.string.passkeys_security_keys),
@@ -582,7 +590,7 @@ fun SecurityScreen(
                             }
                         }
                     }
-                } else if (!state.hardware_keys_load_failed) {
+                } else if (state.hardware_keys_loaded) {
                     detail_row(
                         title = stringResource(R.string.passkeys_security_keys),
                         subtitle = stringResource(R.string.passkeys_none_subtitle),
@@ -608,7 +616,12 @@ fun SecurityScreen(
 
         section_label(stringResource(R.string.section_trusted_devices))
         AsterCard(modifier = Modifier.fillMaxWidth().testTag("trusted_devices_card")) {
-            if (state.trusted_devices.isEmpty() && state.trusted_devices_load_failed) {
+            if (state.trusted_devices.isEmpty() && !state.trusted_devices_loaded && !state.trusted_devices_load_failed) {
+                settings_loading_row(
+                    title = stringResource(R.string.section_trusted_devices),
+                    icon = TablerIcons.Shield,
+                )
+            } else if (state.trusted_devices.isEmpty() && state.trusted_devices_load_failed) {
                 detail_row(
                     title = stringResource(R.string.failed_to_load),
                     subtitle = stringResource(R.string.retry),
@@ -866,6 +879,7 @@ fun SecurityScreen(
         recent_activity_section(
             events = state.audit_events,
             load_failed = state.audit_events_load_failed,
+            loading = !state.audit_events_loaded && !state.audit_events_load_failed,
             on_retry = { vm.load_audit_log() },
             colors = colors,
         )
@@ -1701,6 +1715,7 @@ private fun group_audit_events(
 private fun recent_activity_section(
     events: List<AuditEvent>,
     load_failed: Boolean,
+    loading: Boolean,
     on_retry: () -> Unit,
     colors: org.astermail.android.design.AsterSemanticColors,
 ) {
@@ -1790,6 +1805,11 @@ private fun recent_activity_section(
                     subtitle = stringResource(R.string.retry),
                     icon = TablerIcons.AlertCircle,
                     on_click = on_retry,
+                )
+            } else if (loading) {
+                settings_loading_row(
+                    title = stringResource(R.string.section_recent_activity),
+                    icon = TablerIcons.History,
                 )
             } else {
                 detail_row(

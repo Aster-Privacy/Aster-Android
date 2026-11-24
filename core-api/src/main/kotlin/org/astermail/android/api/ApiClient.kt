@@ -226,8 +226,22 @@ private val sign_in_path_suffixes = listOf(
     "/auth/hardware-keys/assert/verify",
 )
 
+private val public_recovery_paths = listOf(
+    "/recovery/initiate",
+    "/recovery/verifier-salts",
+    "/recovery/complete",
+    "/recovery/forgot-password",
+    "/recovery/reset-password",
+    "/recovery/phrase/initiate",
+    "/recovery/escrow/fetch",
+    "/recovery/email/verify-token",
+    "/recovery/email/link-status",
+    "/recovery/email/resend-pending",
+)
+
 fun is_sign_in_path(path: String): Boolean =
-    path.contains("/recovery/") ||
+    path.contains("/auth/recovery/") ||
+        public_recovery_paths.any { path.contains(it) } ||
         path.contains("/guard/sign-in/") ||
         path.endsWith("/guard/veto") ||
         sign_in_path_suffixes.any { path.endsWith(it) }

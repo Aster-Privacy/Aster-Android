@@ -331,6 +331,7 @@ class SettingsViewModelTest {
         )
         vm.default_dispatcher = dispatcher
         vm.io_dispatcher = dispatcher
+        vm.await_session_ready = {}
     }
 
     @After
@@ -5714,5 +5715,131 @@ class SettingsViewModelTest {
 
         assertNull(vm.state.value.smtp_token_rename_error)
         assertFalse(vm.state.value.smtp_token_renaming)
+    }
+
+    @Test
+    fun `first security load survives a transient server error on every list`() = runTest {
+        var key_calls = 0
+        var device_calls = 0
+        var audit_calls = 0
+        coEvery { security_api.list_hardware_keys() } answers {
+            key_calls++
+            if (key_calls == 1) throw ApiError.ServerError(502)
+            org.astermail.android.api.security.HardwareKeysResponse(
+                keys = listOf(org.astermail.android.api.security.HardwareKey(id = "k1", name = "Laptop")),
+            )
+        }
+        coEvery { security_api.list_trusted_devices() } answers {
+            device_calls++
+            if (device_calls == 1) throw ApiError.RateLimited()
+            org.astermail.android.api.security.TrustedDevicesResponse(
+                devices = listOf(org.astermail.android.api.security.TrustedDevice(id = "d1", label = "Phone")),
+            )
+        }
+        coEvery { security_api.get_audit_log(any(), any()) } answers {
+            audit_calls++
+            if (audit_calls == 1) throw ApiError.UnauthorizedError
+            org.astermail.android.api.security.AuditLogResponse(
+                events = listOf(org.astermail.android.api.security.AuditEvent(id = "e1", event_type = "login")),
+            )
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        vm.load_audit_log()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(1, state.hardware_keys.size)
+        assertFalse(state.hardware_keys_load_failed)
+        assertEquals(1, state.trusted_devices.size)
+        assertFalse(state.trusted_devices_load_failed)
+        assertEquals(1, state.audit_events.size)
+        assertFalse(state.audit_events_load_failed)
+    }
+
+    @Test
+    fun `security lists read as loading until the first response arrives`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        coEvery { security_api.list_hardware_keys() } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.HardwareKeysResponse()
+        }
+        coEvery { security_api.list_trusted_devices() } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.TrustedDevicesResponse()
+        }
+        coEvery { security_api.get_audit_log(any(), any()) } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.AuditLogResponse()
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        vm.load_audit_log()
+        runCurrent()
+
+        var state = vm.state.value
+        assertFalse(state.hardware_keys_loaded || state.hardware_keys_load_failed)
+        assertFalse(state.trusted_devices_loaded || state.trusted_devices_load_failed)
+        assertFalse(state.audit_events_loaded || state.audit_events_load_failed)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        state = vm.state.value
+        assertTrue(state.hardware_keys_loaded)
+        assertTrue(state.trusted_devices_loaded)
+        assertTrue(state.audit_events_loaded)
+        assertFalse(state.hardware_keys_load_failed)
+    }
+
+    @Test
+    fun `security lists fail only after retries run out or on a real error`() = runTest {
+        var key_calls = 0
+        coEvery { security_api.list_hardware_keys() } answers {
+            key_calls++
+            throw ApiError.ServerError(503)
+        }
+        var device_calls = 0
+        coEvery { security_api.list_trusted_devices() } answers {
+            device_calls++
+            throw ApiError.ForbiddenError()
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(settings_load_backoff_ms.size + 1, key_calls)
+        assertTrue(state.hardware_keys_load_failed)
+        assertEquals(1, device_calls)
+        assertTrue(state.trusted_devices_load_failed)
+
+        coEvery { security_api.list_hardware_keys() } returns org.astermail.android.api.security.HardwareKeysResponse()
+        vm.load_hardware_keys()
+        runCurrent()
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.hardware_keys_loaded)
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+    }
+
+    @Test
+    fun `security lists wait for the session before the first request`() = runTest {
+        val session = CompletableDeferred<Unit>()
+        vm.await_session_ready = { session.await() }
+        coEvery { security_api.list_hardware_keys() } returns org.astermail.android.api.security.HardwareKeysResponse()
+
+        vm.load_hardware_keys()
+        runCurrent()
+        coVerify(exactly = 0) { security_api.list_hardware_keys() }
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+
+        session.complete(Unit)
+        advanceUntilIdle()
+        coVerify(exactly = 1) { security_api.list_hardware_keys() }
+        assertTrue(vm.state.value.hardware_keys_loaded)
     }
 }

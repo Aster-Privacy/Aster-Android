@@ -280,14 +280,17 @@ data class SettingsUiState(
     val login_alerts_load_failed: Boolean = false,
     val hardware_keys: List<HardwareKey> = emptyList(),
     val hardware_keys_load_failed: Boolean = false,
+    val hardware_keys_loaded: Boolean = false,
     val is_adding_passkey: Boolean = false,
     val hardware_key_step_up_id: String? = null,
     val hardware_key_step_up: ReauthPrompt = ReauthPrompt(),
     val passkey_reauth: ReauthPrompt? = null,
     val trusted_devices: List<TrustedDevice> = emptyList(),
     val trusted_devices_load_failed: Boolean = false,
+    val trusted_devices_loaded: Boolean = false,
     val audit_events: List<AuditEvent> = emptyList(),
     val audit_events_load_failed: Boolean = false,
+    val audit_events_loaded: Boolean = false,
     val vanguard_enabled: Boolean? = null,
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
@@ -407,6 +410,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     internal var io_dispatcher: CoroutineDispatcher = Dispatchers.IO
+
+    internal var await_session_ready: suspend () -> Unit = {
+        await_settings_session(
+            signed_in = runCatching { auth_repository.is_signed_in }.getOrNull(),
+            session_expired = runCatching { auth_repository.session_expired }.getOrNull(),
+        )
+        await_settings_network(context)
+    }
+    internal var settings_load_backoff: List<Long> = settings_load_backoff_ms
+    private var hardware_keys_job: kotlinx.coroutines.Job? = null
+    private var trusted_devices_job: kotlinx.coroutines.Job? = null
+    private var audit_log_job: kotlinx.coroutines.Job? = null
 
     private val _state = MutableStateFlow(SettingsUiState())
     private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
@@ -1029,6 +1044,12 @@ class SettingsViewModel @Inject constructor(
         smtp_tokens_job?.cancel()
         smtp_tokens_job = null
         last_storage_load_ms = 0L
+        hardware_keys_job?.cancel()
+        hardware_keys_job = null
+        trusted_devices_job?.cancel()
+        trusted_devices_job = null
+        audit_log_job?.cancel()
+        audit_log_job = null
         last_labels_load_ms.clear()
         _state.value = SettingsUiState()
         _signatures.value = emptyList()
@@ -3099,7 +3120,7 @@ class SettingsViewModel @Inject constructor(
         _state.update { it.copy(smtp_tokens_loading = true) }
         smtp_tokens_job = viewModelScope.launch {
             try {
-                val response = settings_api.list_smtp_tokens()
+                val response = load_settings_resource(await_session_ready, settings_load_backoff) { settings_api.list_smtp_tokens() }.getOrThrow()
                 val decrypted = withContext(default_dispatcher) {
                     response.tokens.map { decrypt_smtp_token(it) }
                 }
@@ -3335,7 +3356,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_alias_preferences()
         viewModelScope.launch {
             try {
-                val prefs = settings_api.get_alias_preferences()
+                val prefs = load_settings_resource(await_session_ready, settings_load_backoff) { settings_api.get_alias_preferences() }.getOrThrow()
                 _state.value = _state.value.copy(alias_preferences = prefs, alias_preferences_load_failed = false)
                 persist_cached_alias_preferences(prefs)
             } catch (t: Throwable) {
@@ -3767,7 +3788,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null, subscription_load_failed = false)
             try {
-                val sub = settings_api.get_subscription()
+                val sub = load_settings_resource(await_session_ready, settings_load_backoff) { settings_api.get_subscription() }.getOrThrow()
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.i("SettingsVM", "subscription loaded status=${sub.status} plan=${sub.plan_name}")
                 }
@@ -3820,7 +3841,7 @@ class SettingsViewModel @Inject constructor(
         _state.update { it.copy(login_alerts_load_failed = false) }
         viewModelScope.launch {
             try {
-                val status = security_api.get_login_alerts()
+                val status = load_settings_resource(await_session_ready, settings_load_backoff) { security_api.get_login_alerts() }.getOrThrow()
                 _state.update { it.copy(login_alerts_enabled = status.enabled, login_alerts_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -3845,15 +3866,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_hardware_keys() {
-        viewModelScope.launch {
-            try {
-                val response = security_api.list_hardware_keys()
-                val keys = open_hardware_key_names(response.keys)
-                _state.update { it.copy(hardware_keys = keys, hardware_keys_load_failed = false) }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.update { it.copy(hardware_keys_load_failed = it.hardware_keys.isEmpty()) }
+    fun load_hardware_keys(force: Boolean = false) {
+        if (hardware_keys_job?.isActive == true) {
+            if (!force) return
+            hardware_keys_job?.cancel()
+        }
+        _state.update { it.copy(hardware_keys_load_failed = false) }
+        hardware_keys_job = viewModelScope.launch {
+            load_settings_resource(await_session = await_session_ready, backoff_ms = settings_load_backoff) {
+                open_hardware_key_names(security_api.list_hardware_keys().keys)
+            }.onSuccess { keys ->
+                _state.update { it.copy(hardware_keys = keys, hardware_keys_load_failed = false, hardware_keys_loaded = true) }
+            }.onFailure { t ->
+                _state.update { it.copy(hardware_keys_load_failed = !it.hardware_keys_loaded) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_hardware_keys", t)
             }
         }
@@ -3972,7 +3997,7 @@ class SettingsViewModel @Inject constructor(
                     else -> R.string.passkey_added_second_step_only
                 }
                 _state.update { it.copy(is_adding_passkey = false, action_result = context.getString(message)) }
-                load_hardware_keys()
+                load_hardware_keys(force = true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "add_passkey", t)
@@ -4090,13 +4115,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_trusted_devices() {
-        viewModelScope.launch {
-            try {
-                val response = security_api.list_trusted_devices()
-                _state.update { it.copy(trusted_devices = response.devices, trusted_devices_load_failed = false) }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.update { it.copy(trusted_devices_load_failed = it.trusted_devices.isEmpty()) }
+        if (trusted_devices_job?.isActive == true) return
+        _state.update { it.copy(trusted_devices_load_failed = false) }
+        trusted_devices_job = viewModelScope.launch {
+            load_settings_resource(await_session = await_session_ready, backoff_ms = settings_load_backoff) {
+                security_api.list_trusted_devices()
+            }.onSuccess { response ->
+                _state.update { it.copy(trusted_devices = response.devices, trusted_devices_load_failed = false, trusted_devices_loaded = true) }
+            }.onFailure { t ->
+                _state.update { it.copy(trusted_devices_load_failed = !it.trusted_devices_loaded) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_trusted_devices", t)
             }
         }
@@ -4129,13 +4156,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_audit_log() {
-        viewModelScope.launch {
-            try {
-                val response = security_api.get_audit_log(per_page = 10)
-                _state.update { it.copy(audit_events = response.events, audit_events_load_failed = false) }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.update { it.copy(audit_events_load_failed = it.audit_events.isEmpty()) }
+        if (audit_log_job?.isActive == true) return
+        _state.update { it.copy(audit_events_load_failed = false) }
+        audit_log_job = viewModelScope.launch {
+            load_settings_resource(await_session = await_session_ready, backoff_ms = settings_load_backoff) {
+                security_api.get_audit_log(per_page = 10)
+            }.onSuccess { response ->
+                _state.update { it.copy(audit_events = response.events, audit_events_load_failed = false, audit_events_loaded = true) }
+            }.onFailure { t ->
+                _state.update { it.copy(audit_events_load_failed = !it.audit_events_loaded) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_audit_log", t)
             }
         }
@@ -4145,7 +4174,7 @@ class SettingsViewModel @Inject constructor(
         _state.update { it.copy(vanguard_status_load_failed = false) }
         viewModelScope.launch {
             try {
-                val v = security_api.get_vanguard_status()
+                val v = load_settings_resource(await_session_ready, settings_load_backoff) { security_api.get_vanguard_status() }.getOrThrow()
                 _state.update { it.copy(vanguard_enabled = v.enabled, vanguard_status_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -4197,7 +4226,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(recovery_codes_status_load_failed = false) }
             try {
-                val status = encryption_api.get_recovery_codes_status()
+                val status = load_settings_resource(await_session_ready, settings_load_backoff) { encryption_api.get_recovery_codes_status() }.getOrThrow()
                 _state.update { it.copy(recovery_codes_status = status, recovery_codes_status_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -4264,9 +4293,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_encryption_settings() {
+        _state.update { it.copy(encryption_settings_load_failed = false) }
         viewModelScope.launch {
             try {
-                val settings = encryption_api.get_encryption_settings()
+                val settings = load_settings_resource(await_session_ready, settings_load_backoff) { encryption_api.get_encryption_settings() }.getOrThrow()
                 _state.update { it.copy(encryption_settings = settings, encryption_settings_load_failed = false) }
                 converge_require_encryption(settings.require_encryption)
                 converge_encrypt_by_default(settings.encrypt_by_default == true)
@@ -4432,9 +4462,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_wkd_keyserver_status() {
+        _state.update { it.copy(wkd_status_load_failed = false) }
         viewModelScope.launch {
             try {
-                val wkd = encryption_api.get_wkd_status()
+                val wkd = load_settings_resource(await_session_ready, settings_load_backoff) { encryption_api.get_wkd_status() }.getOrThrow()
                 _state.update { it.copy(wkd_status = wkd, wkd_status_load_failed = false) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
@@ -7497,7 +7528,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
             try {
-                val response = auto_forward_api.list_rules()
+                val response = load_settings_resource(await_session_ready, settings_load_backoff) { auto_forward_api.list_rules() }.getOrThrow()
                 _state.value = _state.value.copy(
                     forwarding_rules = response.rules,
                     forwarding_rules_load_failed = false,

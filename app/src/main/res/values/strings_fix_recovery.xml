@@ -5,5 +5,4 @@
     <string name="recovery_email_not_verified_badge">Not verified</string>
     <string name="recovery_email_action_resend">Resend</string>
     <string name="recovery_email_action_remove">Remove</string>
-    <string name="delete_account_second_factor_checking">Checking your security settings</string>
 </resources>

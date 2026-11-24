@@ -41,6 +41,18 @@ class SignInPathTest {
             "/api/core/v1/guard/sign-in/status",
             "/api/core/v1/guard/sign-in/rescue/status",
             "/api/core/v1/guard/veto",
+            "/api/core/v1/recovery/initiate",
+            "/api/core/v1/recovery/verifier-salts",
+            "/api/core/v1/recovery/complete",
+            "/api/core/v1/recovery/forgot-password",
+            "/api/core/v1/recovery/reset-password",
+            "/api/core/v1/recovery/reset-password/vault",
+            "/api/core/v1/recovery/reset-password/second-factor/status",
+            "/api/core/v1/recovery/phrase/initiate",
+            "/api/core/v1/recovery/escrow/fetch",
+            "/api/core/v1/recovery/email/verify-token",
+            "/api/core/v1/recovery/email/link-status",
+            "/api/core/v1/recovery/email/resend-pending",
         ).forEach { assertTrue(it, is_sign_in_path(it)) }
     }
 
@@ -57,6 +69,30 @@ class SignInPathTest {
             "/api/mail/v1/messages",
             "/api/core/v1/guard/requests",
             "/api/core/v1/guard",
+        ).forEach { assertFalse(it, is_sign_in_path(it)) }
+    }
+
+    @Test
+    fun signed_in_recovery_paths_keep_the_bearer() {
+        listOf(
+            "/api/core/v1/recovery/methods",
+            "/api/core/v1/recovery/inactive",
+            "/api/core/v1/recovery/inactive/fetch",
+            "/api/core/v1/recovery/inactive/consume",
+            "/api/core/v1/recovery/inactive/unlock-with-code",
+            "/api/core/v1/recovery/codes/status",
+            "/api/core/v1/recovery/codes/verify-step-up",
+            "/api/core/v1/recovery/backup",
+            "/api/core/v1/recovery/phrase",
+            "/api/core/v1/recovery/escrow",
+            "/api/core/v1/recovery/escrow/key",
+            "/api/core/v1/recovery/device-secrets",
+            "/api/core/v1/recovery/device-secrets/fetch",
+            "/api/core/v1/recovery/device-secrets/delete",
+            "/api/core/v1/recovery/options",
+            "/api/core/v1/recovery/email",
+            "/api/core/v1/recovery/email/resend",
+            "/api/core/v1/recovery/email/server-enc",
         ).forEach { assertFalse(it, is_sign_in_path(it)) }
     }
 }
