@@ -63,7 +63,7 @@ class VacationReplyViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null, load_failed = false)
-            val outcome = org.astermail.android.settings.load_settings_resource(await_session = {}) { vacation_api.get() }
+            val outcome = org.astermail.android.settings.load_settings_resource(await_session = { org.astermail.android.settings.await_settings_network(context) }) { vacation_api.get() }
             _state.value = outcome.fold(
                 onSuccess = { reply ->
                     if (reply == null) {

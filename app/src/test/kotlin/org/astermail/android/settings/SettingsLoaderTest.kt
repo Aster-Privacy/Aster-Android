@@ -21,10 +21,16 @@
 
 package org.astermail.android.settings
 
+import android.content.Context
+import android.net.ConnectivityManager
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -102,5 +108,46 @@ class SettingsLoaderTest {
         }
         advanceUntilIdle()
         assertTrue(done)
+    }
+
+    @Test
+    fun `waits for the network instead of spending retries while offline`() = runTest {
+        var online = false
+        val callback = slot<ConnectivityManager.NetworkCallback>()
+        val manager = mockk<ConnectivityManager>(relaxed = true)
+        every { manager.activeNetwork } answers { if (online) mockk(relaxed = true) else null }
+        every { manager.registerDefaultNetworkCallback(capture(callback)) } returns Unit
+        val context = mockk<Context>()
+        every { context.getSystemService(Context.CONNECTIVITY_SERVICE) } returns manager
+        var calls = 0
+        var result: Result<String>? = null
+        launch {
+            result = load_settings_resource(await_session = { await_settings_network(context) }) {
+                calls++
+                if (!online) throw IOException("offline")
+                "ok"
+            }
+        }
+        advanceTimeBy(10_000)
+        runCurrent()
+        assertEquals(0, calls)
+        assertEquals(null, result)
+        online = true
+        callback.captured.onAvailable(mockk(relaxed = true))
+        advanceUntilIdle()
+        assertEquals(1, calls)
+        assertEquals("ok", result?.getOrNull())
+    }
+
+    @Test
+    fun `network wait returns at once without a connectivity service`() = runTest {
+        val context = mockk<Context>(relaxed = true)
+        var calls = 0
+        val result = load_settings_resource(await_session = { await_settings_network(context) }) {
+            calls++
+            "ok"
+        }
+        assertEquals("ok", result.getOrNull())
+        assertEquals(1, calls)
     }
 }

@@ -21,11 +21,17 @@
 
 package org.astermail.android.settings
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -34,6 +40,7 @@ import org.astermail.android.mail.is_transient_failure
 
 internal val settings_load_backoff_ms: List<Long> = listOf(800L, 2_000L, 4_000L)
 internal const val settings_session_wait_ms: Long = 10_000L
+internal const val settings_network_wait_ms: Long = 15_000L
 
 internal fun is_retryable_settings_load_error(error: Throwable?): Boolean =
     error is ApiError.UnauthorizedError || is_transient_failure(error)
@@ -46,6 +53,33 @@ internal suspend fun await_settings_session(
     withTimeoutOrNull(wait_ms) {
         signed_in?.first { it }
         session_expired?.first { !it }
+    }
+}
+
+private fun ConnectivityManager.has_internet(): Boolean {
+    val network = activeNetwork ?: return false
+    return getNetworkCapabilities(network)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+}
+
+internal suspend fun await_settings_network(context: Context?, wait_ms: Long = settings_network_wait_ms) {
+    val manager = runCatching { context?.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager }
+        .getOrNull() ?: return
+    if (runCatching { manager.has_internet() }.getOrDefault(true)) return
+    withTimeoutOrNull(wait_ms) {
+        callbackFlow {
+            val callback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    trySend(Unit)
+                }
+
+                override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+                    if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) trySend(Unit)
+                }
+            }
+            val registered = runCatching { manager.registerDefaultNetworkCallback(callback) }.isSuccess
+            if (!registered || runCatching { manager.has_internet() }.getOrDefault(true)) trySend(Unit)
+            awaitClose { runCatching { manager.unregisterNetworkCallback(callback) } }
+        }.first()
     }
 }
 

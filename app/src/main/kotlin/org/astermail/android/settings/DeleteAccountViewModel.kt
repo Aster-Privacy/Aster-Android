@@ -69,6 +69,7 @@ class DeleteAccountViewModel @Inject constructor(
             signed_in = runCatching { auth_repository.is_signed_in }.getOrNull(),
             session_expired = runCatching { auth_repository.session_expired }.getOrNull(),
         )
+        await_settings_network(context)
     }
     internal var load_backoff: List<Long> = settings_load_backoff_ms
     private var totp_status_job: kotlinx.coroutines.Job? = null
