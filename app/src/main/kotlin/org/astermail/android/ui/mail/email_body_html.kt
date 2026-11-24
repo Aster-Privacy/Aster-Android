@@ -291,7 +291,7 @@ a{color:$PAPER_LINK}
     val table_css = if (has_newsletter_layout) {
         "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
-        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:anywhere}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
+        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
     val viewport_meta = EMAIL_VIEWPORT_META
     val color_scheme_meta = if (force_light) "<meta name=\"color-scheme\" content=\"light only\">" else ""
@@ -408,7 +408,7 @@ $underline_css
 $dyslexia_css
 $dark_css
 $forced_dark_css
-${if (is_html_body) text_contrast_css() else ""}
+${if (is_html_body && contrast_ready_body.contains(INK_ATTRIBUTE)) text_contrast_css() else ""}
 </style>
 </head><body style="$body_style"><div id="m"${if (painted_seed != null) " style=\"background-color:$painted_seed\"" else ""}>$prepared_body</div>
 </body></html>"""

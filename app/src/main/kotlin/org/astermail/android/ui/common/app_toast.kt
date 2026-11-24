@@ -77,7 +77,11 @@ const val toast_settle_ms = 450L
 const val toast_plain_duration_ms = 2600L
 const val toast_action_duration_ms = 4500L
 
-class ToastController(private val scope: CoroutineScope) {
+class ToastController(scope_factory: () -> CoroutineScope) {
+
+    constructor(scope: CoroutineScope) : this({ scope })
+
+    private val scope: CoroutineScope by lazy(scope_factory)
     private val visible = MutableStateFlow<TopToastState?>(null)
     private var transient: TopToastState? = null
     private var sticky: TopToastState? = null
@@ -258,7 +262,7 @@ class ToastController(private val scope: CoroutineScope) {
     }
 }
 
-val app_toast = ToastController(CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
+val app_toast = ToastController { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
 private val toast_edge_state = MutableStateFlow(toast_edge_for(null))
 

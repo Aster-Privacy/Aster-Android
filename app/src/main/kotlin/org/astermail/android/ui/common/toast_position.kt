@@ -38,7 +38,7 @@ fun toast_position_choice_for(value: String?): String =
 
 fun toast_position_after_pick(stored: String?, picked: String): String? {
     if (picked !in toast_position_choices) return stored
-    if (toast_position_choice_for(stored) == picked) return stored
+    if (stored != null && toast_position_choice_for(stored) == picked) return stored
     return picked
 }
 

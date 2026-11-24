@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">%1$sにアップグレード</string>
+    <string name="billing_compare_switch_to">%1$sに切り替え</string>
+    <string name="billing_compare_downgrade_to">%1$sにダウングレード</string>
+    <string name="billing_compare_gains_title">%1$sで追加されるもの</string>
+    <string name="billing_compare_you_have">現在のプラン: %1$s</string>
+    <string name="billing_compare_not_in_plan">現在のプランには含まれません</string>
+    <string name="billing_compare_everything_in">%1$sのすべての機能</string>
+    <string name="billing_compare_free_forever">ずっと無料</string>
+    <string name="billing_compare_free_note">無料プランに移行するには、現在のプランをキャンセルしてください。</string>
+    <string name="billing_compare_tagline_free">はじめてのプライベートメール</string>
+    <string name="billing_compare_tagline_star">より多くの容量と最大5ドメイン</string>
+    <string name="billing_compare_tagline_nova">無制限のエイリアスと30ドメイン</string>
+    <string name="billing_compare_tagline_supernova">最大のストレージとサポート</string>
+    <string name="billing_compare_tagline_duo">2つのアカウント、1つの請求</string>
+    <string name="billing_compare_tagline_family">最大6人で1つのプラン</string>
+    <string name="contacts_close_search">検索を閉じる</string>
+    <string name="contacts_show_favorites_only">お気に入りのみ表示</string>
+    <string name="contacts_show_all">すべての連絡先を表示</string>
+    <string name="guard_changes_subtitle">アカウントへの変更は、有効になる前にここで保留されます。</string>
+    <string name="hide_quoted_text">引用文を非表示</string>
+    <string name="search_keywords_more_exit">終了, 戻る, ダブルタップ, 2回戻る, 戻るを2回押す, 戻るボタン, アプリを閉じる, アプリを終了, exit, back</string>
+    <string name="search_keywords_more_quick_actions">クイックアクション, クイックフィルタ, 受信トレイのボタン, ヘッダーのボタン, フィルタボタン, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">モーションを軽減, アニメーション, モーション, 画面切り替え, アクセシビリティ, 乗り物酔い, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">コントラスト, アクセシビリティ, 視覚, 読みやすさ, ロービジョン, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">すべてからサインアウト, すべてのデバイスからサインアウト, ログアウト, セッションを終了, デバイスを削除, sign out</string>
+    <string name="search_keywords_more_cancel_plan">サブスクリプションをキャンセル, プランをキャンセル, ダウングレード, 解約, 更新, 自動更新, 請求, cancel subscription</string>
+    <string name="search_keywords_more_sound">着信音, 通知音, チャイム, アラート音, トーン, サウンド, ringtone</string>
+</resources>

@@ -144,7 +144,7 @@ internal class live_view_lru<K : Any, V : Any>(
         val previous = entries.put(key, value)
         if (attach) attached.add(key)
         if (previous != null && previous !== value) safe_release(previous)
-        trim()
+        trim(keep = key)
     }
 
     fun attach(key: K) {
@@ -173,9 +173,9 @@ internal class live_view_lru<K : Any, V : Any>(
         for (value in values) safe_release(value)
     }
 
-    private fun trim() {
+    private fun trim(keep: K? = null) {
         while (entries.size > capacity.coerceAtLeast(1)) {
-            val victim = entries.keys.firstOrNull { it !in attached } ?: return
+            val victim = entries.keys.firstOrNull { it !in attached && it != keep } ?: return
             entries.remove(victim)?.let { safe_release(it) }
         }
     }

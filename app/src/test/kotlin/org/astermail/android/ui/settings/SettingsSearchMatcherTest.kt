@@ -251,7 +251,7 @@ class SettingsSearchMatcherTest {
         assert_finds("log out everywhere", "sessions", top = 3)
         assert_finds("cancel subscription", "billing", top = 3)
         assert_finds("reduce animations", "accessibility", top = 3)
-        assert_finds("quick actions", "behavior", top = 3)
+        assert_finds("quick actions", "appearance", top = 3)
         assert_finds("ringtone", "notifications", top = 3)
         assert_finds("how do i change my password", "password", top = 3)
         assert_finds("turn on 2fa", "two_factor", top = 3)

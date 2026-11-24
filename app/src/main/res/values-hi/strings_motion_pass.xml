@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">%1$s पर अपग्रेड करें</string>
+    <string name="billing_compare_switch_to">%1$s पर स्विच करें</string>
+    <string name="billing_compare_downgrade_to">%1$s पर प्लान घटाएं</string>
+    <string name="billing_compare_gains_title">%1$s में क्या ज़्यादा है</string>
+    <string name="billing_compare_you_have">आपके पास %1$s है</string>
+    <string name="billing_compare_not_in_plan">आपके प्लान में नहीं</string>
+    <string name="billing_compare_everything_in">%1$s की हर सुविधा</string>
+    <string name="billing_compare_free_forever">हमेशा मुफ़्त</string>
+    <string name="billing_compare_free_note">मुफ़्त प्लान पर जाने के लिए, अपना प्लान रद्द करें।</string>
+    <string name="billing_compare_tagline_free">शुरुआत के लिए निजी ईमेल</string>
+    <string name="billing_compare_tagline_star">ज़्यादा जगह और 5 डोमेन तक</string>
+    <string name="billing_compare_tagline_nova">असीमित उपनाम और 30 डोमेन</string>
+    <string name="billing_compare_tagline_supernova">सबसे ज़्यादा स्टोरेज और सहायता</string>
+    <string name="billing_compare_tagline_duo">दो खाते, एक बिल</string>
+    <string name="billing_compare_tagline_family">छह लोगों तक, एक प्लान</string>
+    <string name="contacts_close_search">खोज बंद करें</string>
+    <string name="contacts_show_favorites_only">सिर्फ़ पसंदीदा दिखाएं</string>
+    <string name="contacts_show_all">सभी संपर्क दिखाएं</string>
+    <string name="guard_changes_subtitle">आपके खाते में किए गए बदलाव लागू होने से पहले यहां रुकते हैं।</string>
+    <string name="hide_quoted_text">उद्धृत टेक्स्ट छिपाएं</string>
+    <string name="search_keywords_more_exit">बाहर निकलें, वापस, डबल टैप, दो बार वापस, दो बार वापस दबाएं, वापस बटन, ऐप बंद करें, ऐप छोड़ें, exit, back</string>
+    <string name="search_keywords_more_quick_actions">त्वरित कार्रवाइयां, त्वरित फ़िल्टर, इनबॉक्स बटन, हेडर बटन, फ़िल्टर बटन, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">गति घटाएं, एनिमेशन, गति, ट्रांज़िशन, सुलभता, मोशन सिकनेस, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">कंट्रास्ट, सुलभता, दृष्टि, पठनीयता, कम दृष्टि, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">हर जगह से साइन आउट, सभी डिवाइस से साइन आउट, लॉग आउट, सेशन खत्म करें, डिवाइस हटाएं, sign out</string>
+    <string name="search_keywords_more_cancel_plan">सदस्यता रद्द करें, प्लान रद्द करें, प्लान घटाएं, सदस्यता रोकें, नवीनीकरण, ऑटो रिन्यू, बिलिंग, cancel subscription</string>
+    <string name="search_keywords_more_sound">रिंगटोन, सूचना ध्वनि, घंटी, अलर्ट ध्वनि, टोन, ध्वनियां, ringtone</string>
+</resources>

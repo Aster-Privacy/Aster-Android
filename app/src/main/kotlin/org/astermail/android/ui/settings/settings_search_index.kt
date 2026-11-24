@@ -1098,6 +1098,15 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("smtp_tokens", R.string.settings_smtp_tokens, R.string.smtp_token_port, false),
     settings_index_entry("smtp_tokens", R.string.settings_smtp_tokens, R.string.smtp_token_username, false),
     settings_index_entry("diagnostics", R.string.diagnostics, R.string.settings_crash_reports_info, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_mgmt_settings_title, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_mgmt_catch_all_locked, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_catch_all_hint, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.domain_mgmt_addresses_title, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.dns_provider_subtitle, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.dns_zone_protected_group, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.dns_field_caa_critical_label, false),
+    settings_index_entry("domains", R.string.settings_domains, R.string.dns_field_caa_critical_helper, false),
+    settings_index_entry("notifications", R.string.notifications, R.string.toast_position_title, false),
 )
 
 internal val settings_search_index: List<settings_index_entry> =

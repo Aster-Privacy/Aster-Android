@@ -19,6 +19,7 @@
 package org.astermail.android.accountlink
 
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.verify
 import org.junit.Test
 
@@ -35,5 +36,18 @@ class AccountLinkProviderApprovedTest : AccountLinkProviderConfirmTest() {
 
         verify(exactly = 1) { session_key_store.get_passphrase() }
         coVerify(exactly = 1) { device_code_api.verify_code(code) }
+    }
+
+    @Test
+    fun a_session_for_another_account_never_reads_the_passphrase() {
+        every { session_key_store.get_user_id() } returns "acct-2"
+        val request = AccountLinkRequest(code, account_id, binding_tag, "")
+        val id = AccountLinkApprovals.shared.open(request, AccountLinkPrompt("Aster Calendar", "a@example.org"))
+        AccountLinkApprovals.shared.approve(id)
+
+        runCatching { provider.call(AccountLinkProvider.METHOD_LINK, null, link_extras()) }
+
+        verify(exactly = 0) { session_key_store.get_passphrase() }
+        coVerify(exactly = 0) { device_code_api.verify_code(any()) }
     }
 }

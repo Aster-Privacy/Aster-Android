@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">%1$s planına yükselt</string>
+    <string name="billing_compare_switch_to">%1$s planına geç</string>
+    <string name="billing_compare_downgrade_to">%1$s planına düşür</string>
+    <string name="billing_compare_gains_title">%1$s neler ekler</string>
+    <string name="billing_compare_you_have">%1$s planındasınız</string>
+    <string name="billing_compare_not_in_plan">Planınızda yok</string>
+    <string name="billing_compare_everything_in">%1$s planındaki her şey</string>
+    <string name="billing_compare_free_forever">Sonsuza kadar ücretsiz</string>
+    <string name="billing_compare_free_note">Ücretsiz plana geçmek için planınızı iptal edin.</string>
+    <string name="billing_compare_tagline_free">Başlamak için gizli e-posta</string>
+    <string name="billing_compare_tagline_star">Daha fazla alan ve 5 alan adına kadar</string>
+    <string name="billing_compare_tagline_nova">Sınırsız takma ad ve 30 alan adı</string>
+    <string name="billing_compare_tagline_supernova">En fazla depolama ve destek</string>
+    <string name="billing_compare_tagline_duo">İki hesap, tek fatura</string>
+    <string name="billing_compare_tagline_family">Altı kişiye kadar, tek plan</string>
+    <string name="contacts_close_search">Aramayı kapat</string>
+    <string name="contacts_show_favorites_only">Yalnızca favorileri göster</string>
+    <string name="contacts_show_all">Tüm kişileri göster</string>
+    <string name="guard_changes_subtitle">Hesabınızdaki değişiklikler geçerli olmadan önce burada bekler.</string>
+    <string name="hide_quoted_text">Alıntılanan metni gizle</string>
+    <string name="search_keywords_more_exit">çıkış, geri, çift dokunma, çift geri, iki kez geri bas, geri tuşu, uygulamayı kapat, uygulamadan çık, exit, back</string>
+    <string name="search_keywords_more_quick_actions">hızlı işlemler, hızlı filtreler, gelen kutusu düğmeleri, başlık düğmeleri, filtre düğmeleri, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">hareketi azalt, animasyonlar, hareket, geçişler, erişilebilirlik, hareket hastalığı, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">kontrast, erişilebilirlik, görme, okunabilirlik, az görme, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">her yerden çıkış yap, tüm cihazlardan çıkış yap, oturumları sonlandır, cihazları kaldır, sign out</string>
+    <string name="search_keywords_more_cancel_plan">aboneliği iptal et, planı iptal et, plan düşür, aboneliği durdur, yenileme, otomatik yenileme, faturalandırma, cancel subscription</string>
+    <string name="search_keywords_more_sound">zil sesi, bildirim sesi, uyarı sesi, ton, sesler, ringtone</string>
+</resources>

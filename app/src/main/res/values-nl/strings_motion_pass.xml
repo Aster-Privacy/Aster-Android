@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">Upgraden naar %1$s</string>
+    <string name="billing_compare_switch_to">Overstappen naar %1$s</string>
+    <string name="billing_compare_downgrade_to">Downgraden naar %1$s</string>
+    <string name="billing_compare_gains_title">Wat %1$s toevoegt</string>
+    <string name="billing_compare_you_have">Je hebt %1$s</string>
+    <string name="billing_compare_not_in_plan">Niet in je abonnement</string>
+    <string name="billing_compare_everything_in">Alles uit %1$s</string>
+    <string name="billing_compare_free_forever">Altijd gratis</string>
+    <string name="billing_compare_free_note">Zeg je abonnement op om naar Gratis over te stappen.</string>
+    <string name="billing_compare_tagline_free">Privé-e-mail om mee te beginnen</string>
+    <string name="billing_compare_tagline_star">Meer ruimte en tot 5 domeinen</string>
+    <string name="billing_compare_tagline_nova">Onbeperkt aliassen en 30 domeinen</string>
+    <string name="billing_compare_tagline_supernova">De meeste opslag en ondersteuning</string>
+    <string name="billing_compare_tagline_duo">Twee accounts, één rekening</string>
+    <string name="billing_compare_tagline_family">Tot zes personen, één abonnement</string>
+    <string name="contacts_close_search">Zoeken sluiten</string>
+    <string name="contacts_show_favorites_only">Alleen favorieten tonen</string>
+    <string name="contacts_show_all">Alle contacten tonen</string>
+    <string name="guard_changes_subtitle">Wijzigingen aan je account wachten hier voordat ze ingaan.</string>
+    <string name="hide_quoted_text">Geciteerde tekst verbergen</string>
+    <string name="search_keywords_more_exit">afsluiten, terug, dubbeltikken, twee keer terug, twee keer op terug drukken, terugknop, app sluiten, app verlaten, exit, back</string>
+    <string name="search_keywords_more_quick_actions">snelle acties, snelfilters, inboxknoppen, kopknoppen, filterknoppen, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">beweging verminderen, animaties, beweging, overgangen, toegankelijkheid, bewegingsziekte, wagenziekte, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">contrast, toegankelijkheid, zicht, leesbaarheid, slechtziend</string>
+    <string name="search_keywords_more_sign_out_everywhere">overal uitloggen, overal afmelden, alle apparaten uitloggen, sessies beëindigen, apparaten verwijderen, sign out</string>
+    <string name="search_keywords_more_cancel_plan">abonnement opzeggen, abonnement annuleren, downgraden, abonnement stoppen, verlenging, automatische verlenging, facturering, cancel subscription</string>
+    <string name="search_keywords_more_sound">beltoon, meldingsgeluid, belgeluid, waarschuwingsgeluid, toon, geluiden, ringtone</string>
+</resources>

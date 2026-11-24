@@ -18,14 +18,15 @@ package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
 import android.content.Context
-import android.widget.Toast
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.write_sensitive_to_clipboard
 import org.astermail.android.ui.common.write_to_clipboard
 import org.astermail.android.util.schedule_sensitive_clipboard_clear
@@ -45,7 +46,6 @@ class ClaimLinkCopyTest {
         mockkStatic("org.astermail.android.ui.common.Copy_feedbackKt")
         mockkStatic("org.astermail.android.util.ClipboardUtilKt")
         mockkStatic(ClipData::class)
-        mockkStatic(Toast::class)
         every { ClipData.newPlainText(any(), any()) } returns mockk(relaxed = true)
         every { write_to_clipboard(any(), any()) } returns true
         every { write_sensitive_to_clipboard(any(), any(), any()) } returns true
@@ -56,10 +56,8 @@ class ClaimLinkCopyTest {
                 if (arg is Array<*>) arg.joinToString() else arg.toString()
             }
         }
-        every { Toast.makeText(any(), any<CharSequence>(), any()) } answers {
-            toasts += secondArg<CharSequence>().toString()
-            mockk(relaxed = true)
-        }
+        mockkObject(app_toast)
+        every { app_toast.show(any<String>()) } answers { toasts += firstArg<String>() }
     }
 
     @After

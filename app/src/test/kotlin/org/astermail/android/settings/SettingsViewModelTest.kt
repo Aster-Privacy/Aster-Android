@@ -1738,8 +1738,10 @@ class SettingsViewModelTest {
         vm.load_subscription()
         advanceUntilIdle()
 
-        assertFalse(vm.state.value.is_loading)
-        assertEquals("no subscription", vm.state.value.error)
+        assertFalse(vm.state.value.subscription_loading)
+        assertTrue(vm.state.value.subscription_load_failed)
+        assertNotNull(vm.state.value.subscription_error)
+        assertNull(vm.state.value.error)
         assertNull(vm.state.value.subscription)
     }
 
@@ -4975,12 +4977,13 @@ class SettingsViewModelTest {
         coEvery { settings_api.get_subscription() } throws RuntimeException("fail")
         vm.load_subscription()
         advanceUntilIdle()
-        assertNotNull(vm.state.value.error)
+        assertNotNull(vm.state.value.subscription_error)
 
         coEvery { settings_api.get_subscription() } returns SubscriptionInfo(plan_name = "Star")
         vm.load_subscription()
         advanceUntilIdle()
-        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.subscription_error)
+        assertFalse(vm.state.value.subscription_load_failed)
     }
 
     private fun preferences_vm(api: PreferencesApi): SettingsViewModel = SettingsViewModel(

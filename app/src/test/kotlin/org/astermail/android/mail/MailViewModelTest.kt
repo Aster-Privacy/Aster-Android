@@ -82,6 +82,7 @@ class MailViewModelTest {
             "Something went wrong"
         repository = mockk(relaxed = true)
         every { repository.is_conversation_grouping_enabled } returns true
+        every { repository.visible_order } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
         search_index_manager = mockk(relaxed = true)
         folder_cache_store = mockk(relaxed = true)
         every { folder_cache_store.cached_stats(any()) } returns null

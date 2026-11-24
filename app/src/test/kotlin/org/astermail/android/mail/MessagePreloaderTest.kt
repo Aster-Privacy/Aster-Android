@@ -22,8 +22,11 @@
 package org.astermail.android.mail
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -39,7 +42,7 @@ import org.junit.Test
 class MessagePreloaderTest {
 
     private fun TestScope.cache(capacity: Int = 3, ttl_ms: Long = Long.MAX_VALUE, clock: () -> Long = { 0L }) =
-        preload_cache<String, String>(capacity, backgroundScope, ttl_ms, clock)
+        preload_cache<String, String>(capacity, CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler)), ttl_ms, clock)
 
     @Test
     fun prepare_reuses_the_running_load() = runTest {

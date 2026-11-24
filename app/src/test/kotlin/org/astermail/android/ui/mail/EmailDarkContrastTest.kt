@@ -523,7 +523,7 @@ class EmailDarkContrastTest {
         assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
         val content = doc.getElementById("m")!!
         assertEquals("", content.attr("style"))
-        assertEquals(INK_DARK, content.selectFirst("div")!!.attr(INK_ATTRIBUTE))
+        assertEquals(INK_DARK, content.child(0).attr(INK_ATTRIBUTE))
         assertFalse(content.selectFirst("p")!!.hasAttr(INK_ATTRIBUTE))
     }
 
