@@ -64,14 +64,26 @@ class DeleteAccountViewModel @Inject constructor(
     private val _state = MutableStateFlow(DeleteAccountUiState())
     val state: StateFlow<DeleteAccountUiState> = _state.asStateFlow()
 
+    internal var await_session_ready: suspend () -> Unit = {
+        await_settings_session(
+            signed_in = runCatching { auth_repository.is_signed_in }.getOrNull(),
+            session_expired = runCatching { auth_repository.session_expired }.getOrNull(),
+        )
+    }
+    internal var load_backoff: List<Long> = settings_load_backoff_ms
+    private var totp_status_job: kotlinx.coroutines.Job? = null
+
     init {
         load_totp_status()
     }
 
     fun load_totp_status() {
-        _state.value = _state.value.copy(totp_status_loading = true)
-        viewModelScope.launch {
-            runCatching { totp_api.status() }.onSuccess { status ->
+        if (totp_status_job?.isActive == true) return
+        _state.value = _state.value.copy(totp_status_loading = true, totp_status_unknown = false)
+        totp_status_job = viewModelScope.launch {
+            load_settings_resource(await_session = { await_session_ready() }, backoff_ms = load_backoff) {
+                totp_api.status()
+            }.onSuccess { status ->
                 _state.value = _state.value.copy(
                     totp_enabled = status.enabled,
                     totp_status_unknown = false,

@@ -78,4 +78,24 @@ class TwoFactorHeldTest {
         assertFalse(s.is_busy)
         assertEquals(TwoFactorMode.Disable, s.mode)
     }
+
+    @Test
+    fun `status survives a transient error on open`() = runTest(dispatcher) {
+        val totp_api = mockk<TotpApi>(relaxed = true)
+        var calls = 0
+        coEvery { totp_api.status() } answers {
+            calls++
+            if (calls == 1) throw ApiError.ServerError(503)
+            org.astermail.android.api.totp.TotpStatusResponse(enabled = true)
+        }
+        val vm = TwoFactorViewModel(totp_api, mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true))
+
+        vm.load_status()
+        advanceUntilIdle()
+
+        val s = vm.state.value
+        assertNull(s.error)
+        assertFalse(s.is_loading)
+        assertEquals(true, s.enabled)
+    }
 }

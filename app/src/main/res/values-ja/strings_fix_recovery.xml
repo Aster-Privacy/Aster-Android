@@ -5,5 +5,4 @@
     <string name="recovery_email_not_verified_badge">未確認</string>
     <string name="recovery_email_action_resend">再送信</string>
     <string name="recovery_email_action_remove">削除</string>
-    <string name="delete_account_second_factor_checking">セキュリティ設定を確認しています</string>
 </resources>

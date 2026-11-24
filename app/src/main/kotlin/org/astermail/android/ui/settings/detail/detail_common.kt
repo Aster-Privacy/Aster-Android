@@ -76,6 +76,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import kotlinx.coroutines.delay
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
@@ -255,12 +256,7 @@ internal fun preferences_load_placeholder() {
     val colors = AsterMaterial.colors
 
     if (state.is_loading || state.error == null) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
-        }
+        settings_pending_spinner()
 
         return
     }
@@ -799,6 +795,46 @@ internal fun tone_badge(
 @Composable
 internal fun v_gap(height: androidx.compose.ui.unit.Dp = AsterSpacing.md) {
     Spacer(Modifier.height(height))
+}
+
+internal const val settings_spinner_delay_ms = 400L
+
+@Composable
+internal fun settings_pending_spinner(padding: Dp = AsterSpacing.xxl) {
+    val colors = AsterMaterial.colors
+    var spinner_visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(settings_spinner_delay_ms)
+        spinner_visible = true
+    }
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(padding),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (spinner_visible) {
+            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+        } else {
+            Spacer(Modifier.size(24.dp))
+        }
+    }
+}
+
+@Composable
+internal fun settings_loading_row(title: String, icon: ImageVector? = null) {
+    val colors = AsterMaterial.colors
+    detail_row(
+        title = title,
+        subtitle = stringResource(R.string.loading),
+        icon = icon,
+        muted = true,
+        trailing = {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = colors.text_tertiary,
+                strokeWidth = 2.dp,
+            )
+        },
+    )
 }
 
 @Composable

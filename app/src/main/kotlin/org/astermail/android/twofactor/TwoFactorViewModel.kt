@@ -106,7 +106,7 @@ class TwoFactorViewModel @Inject constructor(
     fun load_status() {
         viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null)
-            val outcome = runCatching { totp_api.status() }
+            val outcome = org.astermail.android.settings.load_settings_resource(await_session = {}) { totp_api.status() }
             _state.value = outcome.fold(
                 onSuccess = {
                     _state.value.copy(
