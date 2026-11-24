@@ -2486,6 +2486,10 @@ class MailRepository @Inject constructor(
         _send_problem.value = false
     }
 
+    fun forget_decrypt_failures() {
+        ratchet_undecryptable_at.clear()
+    }
+
     fun begin_decrypt_retry() {
         ratchet_undecryptable_at.clear()
         forced_envelope_heal_until = System.currentTimeMillis() + ENVELOPE_HEAL_FORCED_WINDOW_MS
@@ -3184,8 +3188,9 @@ class MailRepository @Inject constructor(
         } else {
             unique
         }
+        val refilled = refill_thread_envelopes(capped, ::fetch_envelope_single)
         withContext(Dispatchers.IO) {
-            val decrypted = capped.map { msg ->
+            val decrypted = refilled.map { msg ->
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
@@ -4521,6 +4526,8 @@ class MailRepository @Inject constructor(
     private suspend fun fetch_envelope_batch(ids: List<String>): List<MailItem> =
         mail_api.batch_messages(ids).items
 
+    private suspend fun fetch_envelope_single(id: String): MailItem? = mail_api.get_message(id)
+
     suspend fun refill_missing_envelopes(
         items: List<InboxItem>,
         budget_ms: Long = envelope_refill_budget_ms,
@@ -4528,7 +4535,12 @@ class MailRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val raw = items.filter { it.is_envelope_missing }.map { it.raw_item }
             if (raw.isEmpty()) return@withContext emptyMap()
-            val filled = backfill_missing_envelopes(raw, ::fetch_envelope_batch, budget_ms = budget_ms)
+            val filled = refill_missing_envelopes_with_fallback(
+                raw,
+                ::fetch_envelope_batch,
+                ::fetch_envelope_single,
+                budget_ms = budget_ms,
+            )
             val ready = filled.filterNot(::needs_envelope_backfill)
             if (ready.isEmpty()) return@withContext emptyMap()
             decrypt_items_batch(ready).visible
@@ -4784,7 +4796,8 @@ class MailRepository @Inject constructor(
                 capture_decrypt_readiness(session_key_store),
                 is_transient_decrypt_error(envelope_error),
             ) == DecryptVerdict.pending
-        val is_body_settling = is_envelope_settling || envelope?.is_decrypt_pending == true
+        val is_body_settling = is_envelope_settling || envelope?.is_decrypt_pending == true ||
+            (envelope == null && needs_thread_envelope_refill(item))
         val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
