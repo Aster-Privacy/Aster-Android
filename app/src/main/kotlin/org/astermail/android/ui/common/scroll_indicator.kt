@@ -125,21 +125,39 @@ internal fun scroll_thumb_left(
 
 internal class lazy_extent_estimator {
     private val keys = HashMap<Int, Any>()
-    private val sizes = HashMap<Int, Int>()
+    private var sizes = IntArray(0)
+    private var tree_sum = LongArray(1)
+    private var tree_count = IntArray(1)
     private val seen = HashMap<Any, Int>()
+    private val size_counts = java.util.TreeMap<Int, Int>()
     private var typical = 0
     private var typical_stale = false
 
     fun record(index: Int, key: Any, size_px: Int) {
+        if (index < 0) return
         val known = keys[index]
-        if (known != null && known != key) {
-            keys.clear()
-            sizes.clear()
-        }
+        if (known != null && known != key) reset_positions()
         keys[index] = key
-        sizes[index] = size_px
-        if (seen.size >= seen_limit && !seen.containsKey(key)) seen.clear()
-        if (seen.put(key, size_px) != size_px) typical_stale = true
+        ensure_capacity(index + 1)
+        val previous = sizes[index]
+        if (previous != size_px) {
+            if (previous >= 0) {
+                tree_add(index, (size_px - previous).toLong(), 0)
+            } else {
+                tree_add(index, size_px.toLong(), 1)
+            }
+            sizes[index] = size_px
+        }
+        if (seen.size >= seen_limit && !seen.containsKey(key)) {
+            seen.clear()
+            size_counts.clear()
+        }
+        val old = seen.put(key, size_px)
+        if (old != size_px) {
+            if (old != null) remove_size(old)
+            size_counts[size_px] = (size_counts[size_px] ?: 0) + 1
+            typical_stale = true
+        }
     }
 
     fun extent(
@@ -152,19 +170,10 @@ internal class lazy_extent_estimator {
         if (total_items <= 0) return lazy_extent(padding_px.toFloat(), 0f)
         refresh_typical()
         val before = first_index.coerceIn(0, total_items)
-        var known = 0f
-        var known_count = 0
-        var known_before = 0f
-        var known_before_count = 0
-        for ((index, size) in sizes) {
-            if (index >= total_items) continue
-            known += size
-            known_count++
-            if (index < before) {
-                known_before += size
-                known_before_count++
-            }
-        }
+        val known = prefix_sum(total_items).toFloat()
+        val known_count = prefix_count(total_items)
+        val known_before = prefix_sum(before).toFloat()
+        val known_before_count = prefix_count(before)
         val fallback = typical.toFloat()
         val content = known + fallback * (total_items - known_count) +
             spacing_px.toFloat() * (total_items - 1) + padding_px
@@ -176,12 +185,17 @@ internal class lazy_extent_estimator {
     fun snapshot(total_items: Int, spacing_px: Int = 0): lazy_offset_map {
         refresh_typical()
         val total = total_items.coerceAtLeast(0)
-        val indices = sizes.keys.filter { it in 0 until total }.sorted()
-        val known_index = IntArray(indices.size)
-        val known_prefix = DoubleArray(indices.size + 1)
-        for (i in indices.indices) {
-            known_index[i] = indices[i]
-            known_prefix[i + 1] = known_prefix[i] + (sizes[indices[i]] ?: 0)
+        val limit = min(total, sizes.size)
+        val count = prefix_count(limit)
+        val known_index = IntArray(count)
+        val known_prefix = DoubleArray(count + 1)
+        var n = 0
+        for (i in 0 until limit) {
+            val size = sizes[i]
+            if (size < 0) continue
+            known_index[n] = i
+            known_prefix[n + 1] = known_prefix[n] + size
+            n++
         }
         return lazy_offset_map(
             known_index = known_index,
@@ -192,16 +206,78 @@ internal class lazy_extent_estimator {
         )
     }
 
+    private fun reset_positions() {
+        keys.clear()
+        sizes.fill(-1)
+        tree_sum.fill(0L)
+        tree_count.fill(0)
+    }
+
+    private fun ensure_capacity(needed: Int) {
+        if (needed <= sizes.size) return
+        var capacity = maxOf(64, sizes.size)
+        while (capacity < needed) capacity *= 2
+        val old = sizes
+        sizes = IntArray(capacity) { -1 }
+        tree_sum = LongArray(capacity + 1)
+        tree_count = IntArray(capacity + 1)
+        for (i in old.indices) {
+            val size = old[i]
+            if (size < 0) continue
+            sizes[i] = size
+            tree_add(i, size.toLong(), 1)
+        }
+    }
+
+    private fun tree_add(index: Int, delta_sum: Long, delta_count: Int) {
+        var i = index + 1
+        while (i < tree_sum.size) {
+            tree_sum[i] += delta_sum
+            tree_count[i] += delta_count
+            i += i and -i
+        }
+    }
+
+    private fun prefix_sum(end_exclusive: Int): Long {
+        var i = min(end_exclusive, tree_sum.size - 1)
+        var total = 0L
+        while (i > 0) {
+            total += tree_sum[i]
+            i -= i and -i
+        }
+        return total
+    }
+
+    private fun prefix_count(end_exclusive: Int): Int {
+        var i = min(end_exclusive, tree_count.size - 1)
+        var total = 0
+        while (i > 0) {
+            total += tree_count[i]
+            i -= i and -i
+        }
+        return total
+    }
+
+    private fun remove_size(size: Int) {
+        val count = size_counts[size] ?: return
+        if (count <= 1) size_counts.remove(size) else size_counts[size] = count - 1
+    }
+
     private fun refresh_typical() {
         if (!typical_stale) return
-        typical = lower_median(seen.values)
+        typical = lower_median()
         typical_stale = false
     }
 
-    private fun lower_median(values: Collection<Int>): Int {
-        if (values.isEmpty()) return 0
-        val sorted = values.sorted()
-        return sorted[(sorted.size - 1) / 2]
+    private fun lower_median(): Int {
+        if (seen.isEmpty()) return 0
+        val target = (seen.size - 1) / 2
+        var walked = 0
+        for ((size, count) in size_counts) {
+            walked += count
+            if (walked > target) return size
+        }
+        return size_counts.lastKey() ?: 0
     }
 
     private companion object {

@@ -275,6 +275,7 @@ class SettingsViewModelTest {
         auth_repository = mockk(relaxed = true)
         session_key_store = mockk(relaxed = true)
         every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
+        every { session_key_store.keys_settled() } returns true
         token_store = mockk(relaxed = true)
         account_store = mockk(relaxed = true)
         preferences_cache = mockk(relaxed = true)
@@ -331,6 +332,7 @@ class SettingsViewModelTest {
         )
         vm.default_dispatcher = dispatcher
         vm.io_dispatcher = dispatcher
+        vm.await_session_ready = {}
     }
 
     @After
@@ -1113,6 +1115,114 @@ class SettingsViewModelTest {
         coVerify(exactly = 0) { settings_api.update_domain_address(any(), any(), any()) }
         coVerify(exactly = 0) { settings_api.delete_domain_address(any(), any(), any()) }
         coVerify(exactly = 0) { settings_api.normalize_alias(any(), any()) }
+    }
+
+    private class KeyGate(private val store: SessionKeyStore, private val data_kek: ByteArray) {
+        var open = false
+        val material = MutableStateFlow(0L)
+
+        init {
+            every { store.keys_settled() } answers { open }
+            every { store.is_locked() } answers { !open }
+            every { store.get_data_kek() } answers { if (open) data_kek.copyOf() else null }
+            every { store.get_identity_key() } returns null
+            every { store.identity_key_events() } returns MutableStateFlow(0L)
+            every { store.account_keys_ready_events() } returns MutableStateFlow(0L)
+            every { store.key_material_events() } returns material
+            every { store.key_readiness_epoch() } answers { material.value }
+        }
+
+        fun unlock() {
+            open = true
+            material.value = material.value + 1
+        }
+    }
+
+    @Test
+    fun `aliases loaded before sealed keys open are not shown as locked`() = runTest {
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_aliases()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertTrue(vm.state.value.aliases.none { it.decryption_failed })
+        assertTrue(vm.state.value.aliases.none { vm.alias_is_restorable(it) })
+
+        gate.unlock()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        val shown = vm.state.value.aliases.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("news", shown.encrypted_local_part)
+    }
+
+    @Test
+    fun `aliases screen reload inside the list ttl still decrypts after keys open`() = runTest {
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_aliases()
+        runCurrent()
+        gate.open = true
+        vm.load_aliases()
+        runCurrent()
+
+        val shown = vm.state.value.aliases.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("news", shown.encrypted_local_part)
+    }
+
+    @Test
+    fun `domain addresses loaded before sealed keys open are not shown as locked`() = runTest {
+        val sealed = sealed_alias("seal", "billing", "", domain = "custom.example")
+        val address = CustomDomainAddressInfo(
+            id = "addr-1",
+            domain_name = "custom.example",
+            encrypted_local_part = sealed.encrypted_local_part,
+            local_part_nonce = sealed.local_part_nonce,
+        )
+        coEvery { settings_api.list_all_domain_addresses() } returns AllDomainAddressesResponse(listOf(address))
+        val gate = KeyGate(session_key_store, test_data_kek)
+
+        vm.load_custom_domain_addresses()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertTrue(vm.state.value.custom_domain_addresses.none { it.decryption_failed })
+
+        gate.unlock()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        val shown = vm.state.value.custom_domain_addresses.single()
+        assertFalse(shown.decryption_failed)
+        assertEquals("billing@custom.example", shown.address)
+    }
+
+    @Test
+    fun `aliases sealed under a changed password stay locked once keys are settled`() = runTest {
+        val other_key = ByteArray(32) { (it * 7 + 3).toByte() }
+        every { session_key_store.get_data_kek() } answers { other_key.copyOf() }
+        val alias = sealed_alias("a1", "news", routing_hash_of("news@aster.cx"))
+        every { session_key_store.get_data_kek() } answers { test_data_kek.copyOf() }
+        every { session_key_store.get_identity_key() } returns null
+        coEvery { settings_api.list_aliases(limit = any(), offset = any()) } returns AliasListResponse(listOf(alias))
+        coEvery { auth_repository.try_refresh_vault_keys() } returns false
+
+        vm.load_aliases()
+        advanceUntilIdle()
+
+        val shown = vm.state.value.aliases.single()
+        assertTrue(shown.decryption_failed)
+        assertTrue(vm.alias_is_restorable(shown))
+        coVerify(exactly = 1) { settings_api.list_aliases(limit = any(), offset = any()) }
     }
 
     @Test
@@ -5714,5 +5824,131 @@ class SettingsViewModelTest {
 
         assertNull(vm.state.value.smtp_token_rename_error)
         assertFalse(vm.state.value.smtp_token_renaming)
+    }
+
+    @Test
+    fun `first security load survives a transient server error on every list`() = runTest {
+        var key_calls = 0
+        var device_calls = 0
+        var audit_calls = 0
+        coEvery { security_api.list_hardware_keys() } answers {
+            key_calls++
+            if (key_calls == 1) throw ApiError.ServerError(502)
+            org.astermail.android.api.security.HardwareKeysResponse(
+                keys = listOf(org.astermail.android.api.security.HardwareKey(id = "k1", name = "Laptop")),
+            )
+        }
+        coEvery { security_api.list_trusted_devices() } answers {
+            device_calls++
+            if (device_calls == 1) throw ApiError.RateLimited()
+            org.astermail.android.api.security.TrustedDevicesResponse(
+                devices = listOf(org.astermail.android.api.security.TrustedDevice(id = "d1", label = "Phone")),
+            )
+        }
+        coEvery { security_api.get_audit_log(any(), any()) } answers {
+            audit_calls++
+            if (audit_calls == 1) throw ApiError.UnauthorizedError
+            org.astermail.android.api.security.AuditLogResponse(
+                events = listOf(org.astermail.android.api.security.AuditEvent(id = "e1", event_type = "login")),
+            )
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        vm.load_audit_log()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(1, state.hardware_keys.size)
+        assertFalse(state.hardware_keys_load_failed)
+        assertEquals(1, state.trusted_devices.size)
+        assertFalse(state.trusted_devices_load_failed)
+        assertEquals(1, state.audit_events.size)
+        assertFalse(state.audit_events_load_failed)
+    }
+
+    @Test
+    fun `security lists read as loading until the first response arrives`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        coEvery { security_api.list_hardware_keys() } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.HardwareKeysResponse()
+        }
+        coEvery { security_api.list_trusted_devices() } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.TrustedDevicesResponse()
+        }
+        coEvery { security_api.get_audit_log(any(), any()) } coAnswers {
+            gate.await()
+            org.astermail.android.api.security.AuditLogResponse()
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        vm.load_audit_log()
+        runCurrent()
+
+        var state = vm.state.value
+        assertFalse(state.hardware_keys_loaded || state.hardware_keys_load_failed)
+        assertFalse(state.trusted_devices_loaded || state.trusted_devices_load_failed)
+        assertFalse(state.audit_events_loaded || state.audit_events_load_failed)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        state = vm.state.value
+        assertTrue(state.hardware_keys_loaded)
+        assertTrue(state.trusted_devices_loaded)
+        assertTrue(state.audit_events_loaded)
+        assertFalse(state.hardware_keys_load_failed)
+    }
+
+    @Test
+    fun `security lists fail only after retries run out or on a real error`() = runTest {
+        var key_calls = 0
+        coEvery { security_api.list_hardware_keys() } answers {
+            key_calls++
+            throw ApiError.ServerError(503)
+        }
+        var device_calls = 0
+        coEvery { security_api.list_trusted_devices() } answers {
+            device_calls++
+            throw ApiError.ForbiddenError()
+        }
+
+        vm.load_hardware_keys()
+        vm.load_trusted_devices()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertEquals(settings_load_backoff_ms.size + 1, key_calls)
+        assertTrue(state.hardware_keys_load_failed)
+        assertEquals(1, device_calls)
+        assertTrue(state.trusted_devices_load_failed)
+
+        coEvery { security_api.list_hardware_keys() } returns org.astermail.android.api.security.HardwareKeysResponse()
+        vm.load_hardware_keys()
+        runCurrent()
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.hardware_keys_loaded)
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+    }
+
+    @Test
+    fun `security lists wait for the session before the first request`() = runTest {
+        val session = CompletableDeferred<Unit>()
+        vm.await_session_ready = { session.await() }
+        coEvery { security_api.list_hardware_keys() } returns org.astermail.android.api.security.HardwareKeysResponse()
+
+        vm.load_hardware_keys()
+        runCurrent()
+        coVerify(exactly = 0) { security_api.list_hardware_keys() }
+        assertFalse(vm.state.value.hardware_keys_load_failed)
+
+        session.complete(Unit)
+        advanceUntilIdle()
+        coVerify(exactly = 1) { security_api.list_hardware_keys() }
+        assertTrue(vm.state.value.hardware_keys_loaded)
     }
 }

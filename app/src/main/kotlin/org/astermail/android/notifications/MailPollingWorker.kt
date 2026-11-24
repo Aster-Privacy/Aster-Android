@@ -270,8 +270,8 @@ class MailPollingWorker(
             } catch (_: Throwable) {
                 null
             }
-            val app_lock_configured = runCatching { entry?.app_lock_store()?.is_configured() ?: true }.getOrDefault(true)
-            val content_hidden = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured
+            val app_lock_hides = runCatching { entry?.app_lock_store()?.hides_notification_content() ?: true }.getOrDefault(true)
+            val content_hidden = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_hides
             val muted_categories = muted_notification_categories(context)
             val mute_filters_active = has_mute_filters(muted_categories, muted_folder_tokens(context))
             if (content_hidden && !mute_filters_active) {
@@ -290,7 +290,7 @@ class MailPollingWorker(
             var sender: String? = null
             var also_arrived: List<org.astermail.android.mail.InboxItem> = emptyList()
             fun resolve_sender(item: org.astermail.android.mail.InboxItem): String =
-                if (!MailPollingWorker.has_notifiable_text(item.is_envelope_missing, item.is_undecryptable, item.is_decrypt_pending)) {
+                if (!MailPollingWorker.has_notifiable_text(item.is_envelope_missing || item.is_envelope_settling, item.is_undecryptable, item.is_decrypt_pending)) {
                     ""
                 } else if (item.is_undecryptable) {
                     localized(context).getString(org.astermail.android.R.string.app_name)
@@ -1174,13 +1174,18 @@ class MailPollingWorker(
             large_icon: android.graphics.Bitmap? = null,
         ) {
             if (!can_post(context)) return
-            val private_mode = is_private_notifications(context)
+            val app_lock_on = app_lock_configured(context)
+            val private_mode = org.astermail.android.security.AppLockNotificationPolicy.redacts_public_version(
+                app_lock_on,
+                is_private_notifications(context),
+            )
             val safe_sender = org.astermail.android.mail.safe_display_text(sender, SENDER_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.app_name) }
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
             val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
+                ?.takeIf { org.astermail.android.security.AppLockNotificationPolicy.offers_copy_code(app_lock_on, true) }
             val builder = base_builder(context, silent)
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
@@ -1245,6 +1250,14 @@ class MailPollingWorker(
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager, message_id)
         }
+
+        private fun app_lock_configured(context: Context): Boolean =
+            runCatching {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    MailRepositoryEntryPoint::class.java,
+                ).app_lock_store().is_configured()
+            }.getOrDefault(true)
 
         private fun add_message_actions(
             context: Context,

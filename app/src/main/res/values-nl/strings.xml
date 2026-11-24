@@ -262,6 +262,7 @@
     <string name="failed_to_save">Bestand opslaan mislukt</string>
     <string name="failed_to_download">%s downloaden mislukt</string>
     <string name="could_not_open_link">Link kon niet worden geopend</string>
+    <string name="open_address_in_maps">Openen in kaarten-app</string>
     <string name="move_to_trash">Naar prullenbak verplaatsen</string>
     <string name="archived">Gearchiveerd</string>
     <string name="unstarred">Ster verwijderd</string>
@@ -901,6 +902,7 @@
     <string name="message">Bericht</string>
     <string name="feedback_placeholder">Beschrijf wat je goed vindt, wat er mist of wat er niet werkt.</string>
     <string name="feedback_privacy_note">Je account-e-mailadres wordt bijgevoegd zodat we kunnen antwoorden. We delen feedback nooit.</string>
+    <string name="feedback_support_notice">Dit formulier is bedoeld voor feedback, ideeën en bugmeldingen. Stuur voor vragen of hulp met je account in plaats daarvan een e-mail naar het supportteam via %1$s.</string>
     <string name="send_feedback">Feedback verzenden</string>
     <string name="sending_feedback">Verzenden...</string>
     <string name="sent">Verzonden</string>
@@ -2274,7 +2276,7 @@
     <string name="vanguard_description">Extra app-bescherming met appvergrendeling en strengere beveiliging.</string>
     <string name="vanguard_upgrade_cta">Upgraden</string>
     <string name="vanguard_confirm_disable_title">Vanguard uitschakelen?</string>
-    <string name="vanguard_confirm_disable_desc">De appvergrendeling en de andere Vanguard-bescherming worden uitgezet.</string>
+    <string name="vanguard_confirm_disable_desc">De Vanguard-bescherming wordt uitgezet. De appvergrendeling blijft aan.</string>
     <string name="vanguard_disable">Uitschakelen</string>
     <string name="app_lock_pin">Appvergrendeling</string>
     <string name="app_lock_pin_description">Vraag om een pincode of wachtwoordzin om de app te openen.</string>
@@ -2856,6 +2858,8 @@
     <string name="contact_add_failed">%1$s kon niet worden opgeslagen in contacten</string>
     <string name="contact_remove_failed">%1$s kon niet uit contacten worden verwijderd</string>
     <string name="copy_failed">Kopiëren mislukt. Probeer het opnieuw.</string>
+    <string name="copy_subject">Onderwerp kopiëren</string>
+    <string name="subject_copied">Onderwerp gekopieerd</string>
     <string name="create_label_subtitle">Markeer berichten met een kleur die je kiest</string>
     <string name="delete_signature_message">“%1$s” wordt definitief verwijderd en je kunt dit niet ongedaan maken.</string>
     <string name="delete_vacation_reply_confirm">Je afwezigheidsbericht en de bijbehorende datums worden verwijderd. Dit kan niet ongedaan worden gemaakt.</string>
@@ -3743,4 +3747,10 @@
     <string name="toast_position_subtitle">Waar meldingen verschijnen terwijl je de app gebruikt</string>
     <string name="toast_position_top">Boven</string>
     <string name="toast_position_bottom">Onder</string>
+    <string name="mail_priority">Prioriteit</string>
+    <string name="mail_priority_high">Hoog</string>
+    <string name="mail_priority_normal">Normaal</string>
+    <string name="mail_priority_low">Laag</string>
+    <string name="mail_high_priority">Hoge prioriteit</string>
+    <string name="mail_low_priority">Lage prioriteit</string>
 </resources>

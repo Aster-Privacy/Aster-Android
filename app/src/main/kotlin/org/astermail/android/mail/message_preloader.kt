@@ -123,6 +123,24 @@ class preload_cache<K : Any, V : Any>(
         jobs.forEach { if (!it.isCompleted) it.cancel() }
     }
 
+    fun remove_if(predicate: (V) -> Boolean) {
+        val jobs = synchronized(lock) {
+            val dropped = ArrayList<Deferred<V?>>()
+            val iterator = entries.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next().value
+                val value = job_value_or_null(entry.job)
+                val drop = !entry.job.isCompleted || value == null || predicate(value)
+                if (drop) {
+                    iterator.remove()
+                    dropped += entry.job
+                }
+            }
+            dropped
+        }
+        jobs.forEach { if (!it.isCompleted) it.cancel() }
+    }
+
     fun size(): Int = synchronized(lock) { entries.size }
 
     fun contains(key: K): Boolean = synchronized(lock) { entries[key]?.let { usable(it) } == true }
@@ -182,6 +200,19 @@ object message_preloader {
     fun cancel_if_running(id: String) = cache.cancel_if_running(id)
 
     fun clear() = cache.clear()
+
+    fun invalidate_thread(thread_token: String?, item_ids: Collection<String> = emptyList()) {
+        val token = thread_token?.takeIf { it.isNotBlank() }
+        if (token == null && item_ids.isEmpty()) {
+            cache.clear()
+            return
+        }
+        cache.remove_if { entry ->
+            (token != null && entry.thread_token == token) ||
+                entry.item.id in item_ids ||
+                entry.messages.any { it.id in item_ids }
+        }
+    }
 
     @Volatile
     private var requester: ((String) -> Unit)? = null

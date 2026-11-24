@@ -304,7 +304,7 @@ fun SignInScreen(
             Image(
                 painter = painterResource(R.drawable.aster_wordmark),
                 contentDescription = null,
-                modifier = Modifier.height(40.dp),
+                modifier = Modifier.height(auth_logo_height),
             )
 
             Spacer(Modifier.height(AsterSpacing.xl))

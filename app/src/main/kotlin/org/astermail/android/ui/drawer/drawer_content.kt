@@ -111,6 +111,8 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.plan_ring_gap
+import org.astermail.android.ui.common.plan_ring_stroke
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
@@ -927,6 +929,13 @@ fun DrawerContent(
     androidx.compose.runtime.LaunchedEffect(current_account_id, show_workspace_sheet) {
         resubscribe_vm.load(current_account_id)
     }
+    val latest_open_workspace_sheet by androidx.compose.runtime.rememberUpdatedState(on_open_workspace_sheet)
+    androidx.compose.runtime.LaunchedEffect(current_account_id) {
+        latest_open_workspace_sheet()
+    }
+    val preloaded_paid_ids = remember_cached_paid_account_ids(
+        accounts.map { it.id }.filter { it != current_account_id },
+    )
 
     if (show_workspace_sheet) {
         val sheet_account = accounts.firstOrNull { it.id == current_account_id }
@@ -979,6 +988,7 @@ fun DrawerContent(
                 show_workspace_sheet = false
                 on_logout_all()
             },
+            preloaded_paid_ids = preloaded_paid_ids,
         )
     }
 
@@ -2268,6 +2278,20 @@ private fun profile_menu_tile(
     }
 }
 
+@Composable
+internal fun remember_cached_paid_account_ids(account_ids: List<String>): Set<String> {
+    val context = LocalContext.current
+    val paid_ids by androidx.compose.runtime.produceState(
+        initialValue = emptySet<String>(),
+        account_ids,
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            org.astermail.android.accounts.cached_paid_account_ids(context, account_ids)
+        }
+    }
+    return paid_ids
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun workspace_switcher_sheet(
@@ -2294,6 +2318,7 @@ internal fun workspace_switcher_sheet(
     on_open_storage: () -> Unit,
     on_logout: () -> Unit,
     on_logout_all: () -> Unit,
+    preloaded_paid_ids: Set<String>? = null,
 ) {
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -2318,6 +2343,7 @@ internal fun workspace_switcher_sheet(
         sheet_state = sheet_state,
         container_color = surface,
         drag_handle = { AsterDragHandle() },
+        animate_height = true,
     ) {
         Column(
             modifier = Modifier
@@ -2493,6 +2519,9 @@ internal fun workspace_switcher_sheet(
                 }
             }
 
+            val loaded_paid_ids = preloaded_paid_ids
+                ?: remember_cached_paid_account_ids(other_accounts.map { it.id })
+            val paid_other_ids = loaded_paid_ids.intersect(other_accounts.map { it.id }.toSet())
             other_accounts.forEach { account ->
                 val name = account.display_name?.takeIf { it.isNotBlank() }
                     ?: account.email.substringBefore('@')
@@ -2507,14 +2536,25 @@ internal fun workspace_switcher_sheet(
                         .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SenderAvatar(
-                        email = account.email,
-                        name = name,
-                        size = 32.dp,
-                        profile_picture_url = account.profile_picture,
-                        profile_color = account.profile_color,
-                        use_contact_photo = false,
-                    )
+                    Box(
+                        modifier = if (paid_other_ids.isEmpty()) {
+                            Modifier
+                        } else {
+                            Modifier.size(32.dp + (plan_ring_stroke + plan_ring_gap) * 2)
+                        },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        plan_ring(size = 32.dp, enabled = account.id in paid_other_ids) {
+                            SenderAvatar(
+                                email = account.email,
+                                name = name,
+                                size = 32.dp,
+                                profile_picture_url = account.profile_picture,
+                                profile_color = account.profile_color,
+                                use_contact_photo = false,
+                            )
+                        }
+                    }
                     Spacer(Modifier.width(14.dp))
                     Column(
                         modifier = Modifier.weight(1f),

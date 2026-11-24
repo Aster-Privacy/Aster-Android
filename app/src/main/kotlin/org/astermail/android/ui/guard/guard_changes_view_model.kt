@@ -86,6 +86,7 @@ enum class guard_changes_notice {
 
 data class guard_changes_ui(
     val loading: Boolean = true,
+    val loaded: Boolean = false,
     val hidden: Boolean = false,
     val load_failed: Boolean = false,
     val changes: List<guard_change_row> = emptyList(),
@@ -111,6 +112,29 @@ private enum class guard_change_op(val code: GuardActionCode, val done: guard_ch
     stop(GuardActionCode.VETO, guard_changes_notice.change_stopped),
 }
 
+private data class guard_changes_snapshot(
+    val user_id: java.util.UUID,
+    val changes: List<guard_change_row>,
+    val is_guard_device: Boolean,
+    val long_trusted: Boolean,
+)
+
+private object guard_changes_memo {
+    @Volatile
+    var last: guard_changes_snapshot? = null
+}
+
+private fun guard_changes_initial(user_id: java.util.UUID?): guard_changes_ui {
+    val cached = guard_changes_memo.last?.takeIf { user_id != null && it.user_id == user_id } ?: return guard_changes_ui()
+    return guard_changes_ui(
+        loading = false,
+        loaded = true,
+        changes = cached.changes,
+        is_guard_device = cached.is_guard_device,
+        long_trusted = cached.long_trusted,
+    )
+}
+
 @HiltViewModel
 class GuardChangesViewModel @Inject constructor(
     private val api: GuardApi,
@@ -118,7 +142,7 @@ class GuardChangesViewModel @Inject constructor(
     private val user: guard_current_user,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(guard_changes_ui())
+    private val _state = MutableStateFlow(guard_changes_initial(user.user_id()))
     val state: StateFlow<guard_changes_ui> = _state.asStateFlow()
 
     init {
@@ -131,18 +155,25 @@ class GuardChangesViewModel @Inject constructor(
     }
 
     suspend fun load() {
-        _state.update { it.copy(loading = it.changes.isEmpty(), load_failed = false) }
+        _state.update { it.copy(loading = !it.loaded, load_failed = false) }
         try {
             val status = api.status()
             val list = api.changes()
+            val rows = list.changes.map { change -> change.to_row() }.sortedBy { row -> row.apply_after ?: Instant.MAX }
+            val is_guard_device = status.this_device != null
+            val long_trusted = status.this_device?.long_trusted == true
             _state.update {
                 it.copy(
                     loading = false,
+                    loaded = true,
                     hidden = false,
-                    changes = list.changes.map { change -> change.to_row() }.sortedBy { row -> row.apply_after ?: Instant.MAX },
-                    is_guard_device = status.this_device != null,
-                    long_trusted = status.this_device?.long_trusted == true,
+                    changes = rows,
+                    is_guard_device = is_guard_device,
+                    long_trusted = long_trusted,
                 )
+            }
+            user.user_id()?.let { id ->
+                guard_changes_memo.last = guard_changes_snapshot(id, rows, is_guard_device, long_trusted)
             }
         } catch (t: CancellationException) {
             throw t

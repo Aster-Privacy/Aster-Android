@@ -44,7 +44,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -107,12 +106,7 @@ fun TwoFactorScreen(
         refresh_enabled = !state.is_loading && !state.is_busy && state.mode == TwoFactorMode.Idle,
     ) {
         if (state.is_loading) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                settings_load_spinner()
-            }
+            settings_pending_spinner()
             return@detail_scaffold
         }
 

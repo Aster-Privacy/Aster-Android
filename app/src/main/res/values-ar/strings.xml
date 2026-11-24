@@ -262,6 +262,7 @@
     <string name="failed_to_save">فشل في حفظ الملف</string>
     <string name="failed_to_download">فشل في تنزيل %s</string>
     <string name="could_not_open_link">تعذر فتح الرابط</string>
+    <string name="open_address_in_maps">فتح في تطبيق الخرائط</string>
     <string name="move_to_trash">نقل إلى سلة المهملات</string>
     <string name="archived">تمت الأرشفة</string>
     <string name="unstarred">تمت إزالة النجمة</string>
@@ -901,6 +902,7 @@
     <string name="message">الرسالة</string>
     <string name="feedback_placeholder">صف ما تحبه، أو ما ينقص، أو ما لا يعمل.</string>
     <string name="feedback_privacy_note">سيتم إرفاق بريد حسابك حتى نتمكن من الرد. لا نشارك الملاحظات أبداً.</string>
+    <string name="feedback_support_notice">هذا النموذج مخصص للملاحظات والأفكار والإبلاغ عن الأخطاء. للأسئلة أو للمساعدة في حسابك، راسل فريق الدعم على %1$s بدلاً من ذلك.</string>
     <string name="send_feedback">إرسال ملاحظات</string>
     <string name="sending_feedback">جارٍ الإرسال...</string>
     <string name="sent">تم الإرسال</string>
@@ -2294,7 +2296,7 @@
     <string name="vanguard_description">حماية متقدمة للتطبيق مع قفل التطبيق وأمان أقوى.</string>
     <string name="vanguard_upgrade_cta">ترقية</string>
     <string name="vanguard_confirm_disable_title">تعطيل Vanguard؟</string>
-    <string name="vanguard_confirm_disable_desc">سيتم إيقاف قفل التطبيق وبقية وسائل حماية Vanguard.</string>
+    <string name="vanguard_confirm_disable_desc">سيتم إيقاف وسائل حماية Vanguard. يبقى قفل التطبيق مفعّلًا.</string>
     <string name="vanguard_disable">تعطيل</string>
     <string name="app_lock_pin">قفل التطبيق</string>
     <string name="app_lock_pin_description">طلب رمز PIN أو عبارة مرور لفتح التطبيق.</string>
@@ -2932,6 +2934,8 @@
     <string name="contact_add_failed">تعذّر حفظ %1$s في جهات الاتصال</string>
     <string name="contact_remove_failed">تعذّرت إزالة %1$s من جهات الاتصال</string>
     <string name="copy_failed">تعذّر النسخ. حاول مرة أخرى.</string>
+    <string name="copy_subject">نسخ الموضوع</string>
+    <string name="subject_copied">تم نسخ الموضوع</string>
     <string name="create_label_subtitle">ميّز الرسائل بلون تختاره</string>
     <string name="delete_signature_message">هل تريد حذف «%1$s»؟ لا يمكن التراجع عن ذلك.</string>
     <string name="delete_vacation_reply_confirm">سيتم حذف رسالة الغياب وتواريخها، ولا يمكن التراجع عن ذلك.</string>
@@ -3866,4 +3870,10 @@
     <string name="toast_position_subtitle">مكان ظهور التنبيهات أثناء استخدام التطبيق</string>
     <string name="toast_position_top">أعلى</string>
     <string name="toast_position_bottom">أسفل</string>
+    <string name="mail_priority">الأولوية</string>
+    <string name="mail_priority_high">عالية</string>
+    <string name="mail_priority_normal">عادية</string>
+    <string name="mail_priority_low">منخفضة</string>
+    <string name="mail_high_priority">أولوية عالية</string>
+    <string name="mail_low_priority">أولوية منخفضة</string>
 </resources>

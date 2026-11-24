@@ -3506,7 +3506,7 @@ class MailViewModelTest {
     }
 
     @Test
-    fun `fallback tick refetches after a live event dropped while loading more`() = runTest {
+    fun `live event during load more is replayed when loading finishes`() = runTest {
         var now = 1_000_000L
         vm.override_clock_ms = { now }
         vm.foreground_check = { true }
@@ -3531,13 +3531,47 @@ class MailViewModelTest {
 
         gate.complete(Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 3)))
         advanceUntilIdle()
-        val after_drop = fetches
 
-        now += 60_000L
-        vm.foreground_fallback_tick(live_sync_connected = true)
+        assertTrue(fetches > before_event)
+    }
+
+    @Test
+    fun `live event is ignored while the app is locked`() = runTest {
+        vm.foreground_check = { true }
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+        every { repository.session_locked() } returns true
+        val before = fetches
+
+        vm.on_live_sync_event(LiveSyncEvent.new_mail)
+        vm.on_live_sync_poll()
         advanceUntilIdle()
 
-        assertTrue(fetches > after_drop)
+        assertEquals(before, fetches)
+    }
+
+    @Test
+    fun `live sync poll revalidates the list when idle`() = runTest {
+        vm.foreground_check = { true }
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+        every { repository.session_locked() } returns false
+        val before = fetches
+
+        vm.on_live_sync_poll()
+        advanceUntilIdle()
+
+        assertTrue(fetches > before)
     }
 
     @Test
@@ -3700,5 +3734,270 @@ class MailViewModelTest {
         vm.apply_tag("s1", "tag_a", "Receipts")
 
         assertEquals(listOf("tag_a"), search_tags("s1"))
+    }
+
+    @Test
+    fun `returning after a long background fetches the unread count without waiting`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        var list_fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            list_fetches += 1
+            Result.success(fake_inbox_page(3))
+        }
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+        assertEquals(7, vm.inbox_state.value.stats?.unread)
+
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 1, starred = 0),
+        )
+        clock += 10 * 60_000L
+        vm.refresh_on_resume("inbox")
+        runCurrent()
+
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+    }
+
+    @Test
+    fun `a short app switch keeps the list on screen and fetches it once`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        var list_fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            list_fetches += 1
+            Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        clock += 5_000L
+        vm.refresh_on_resume("inbox")
+        runCurrent()
+
+        assertEquals(3, vm.inbox_state.value.items.size)
+        assertFalse(vm.inbox_state.value.is_loading)
+        advanceUntilIdle()
+        assertEquals(1, list_fetches)
+    }
+
+    @Test
+    fun `process start after a long background refreshes count and list once`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        var list_fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            list_fetches += 1
+            Result.success(fake_inbox_page(3))
+        }
+        var stats_fetches = 0
+        coEvery { repository.get_stats() } answers {
+            stats_fetches += 1
+            Result.success(MailUserStatsResponse(total_items = 3, unread = 7, starred = 0))
+        }
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        val stats_gate = kotlinx.coroutines.CompletableDeferred<Result<MailUserStatsResponse>>()
+        coEvery { repository.get_stats() } coAnswers {
+            stats_fetches += 1
+            stats_gate.await()
+        }
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        runCurrent()
+
+        assertTrue(vm.inbox_state.value.stats_refreshing)
+        assertEquals(2, stats_fetches)
+        assertEquals(2, list_fetches)
+
+        vm.refresh_on_resume("inbox")
+        vm.refresh_after_background()
+        vm.load_stats(force = false)
+        runCurrent()
+        stats_gate.complete(Result.success(MailUserStatsResponse(total_items = 3, unread = 1, starred = 0)))
+        advanceUntilIdle()
+
+        assertEquals(1, vm.inbox_state.value.stats?.unread)
+        assertFalse(vm.inbox_state.value.stats_refreshing)
+        assertEquals(3, vm.inbox_state.value.items.size)
+        assertEquals(2, stats_fetches)
+        assertEquals(2, list_fetches)
+    }
+
+    @Test
+    fun `process start after a short switch leaves the screen alone`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        var list_fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            list_fetches += 1
+            Result.success(fake_inbox_page(3))
+        }
+        var stats_fetches = 0
+        coEvery { repository.get_stats() } answers {
+            stats_fetches += 1
+            Result.success(MailUserStatsResponse(total_items = 3, unread = 7, starred = 0))
+        }
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        vm.on_process_background()
+        clock += 5_000L
+        vm.on_process_foreground()
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.stats_refreshing)
+        assertEquals(1, stats_fetches)
+        assertEquals(1, list_fetches)
+    }
+
+    @Test
+    fun `a failed count refresh clears the refreshing state`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        var list_fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } answers {
+            list_fetches += 1
+            Result.success(fake_inbox_page(3))
+        }
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        coEvery { repository.get_stats() } returns Result.failure(java.io.IOException("offline"))
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        advanceUntilIdle()
+
+        assertFalse(vm.inbox_state.value.stats_refreshing)
+        assertEquals(7, vm.inbox_state.value.stats?.unread)
+    }
+
+    @Test
+    fun `process start after a long background marks the list count stale until the list lands`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+
+        val list_gate = kotlinx.coroutines.CompletableDeferred<Result<InboxPage>>()
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers { list_gate.await() }
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        runCurrent()
+
+        assertTrue(list_count_refreshing(vm.inbox_state.value))
+
+        clock += 2_500L
+        list_gate.complete(Result.success(fake_inbox_page(3)))
+        advanceUntilIdle()
+
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+        assertEquals(3, vm.inbox_state.value.items.size)
+    }
+
+    @Test
+    fun `a failed list refresh after a long background stops marking the count stale`() = runTest {
+        var clock = 1_000_000L
+        vm.override_clock_ms = { clock }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+        coEvery { repository.get_stats() } returns Result.success(
+            MailUserStatsResponse(total_items = 3, unread = 7, starred = 0),
+        )
+        vm.load_inbox("inbox")
+        vm.load_stats(force = true)
+        advanceUntilIdle()
+
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.failure(java.io.IOException("offline"))
+        vm.on_process_background()
+        clock += 10 * 60_000L
+        vm.on_process_foreground()
+        advanceUntilIdle()
+
+        assertFalse(list_count_refreshing(vm.inbox_state.value))
+        assertEquals(3, vm.inbox_state.value.items.size)
+    }
+
+    @Test
+    fun `opening a message that decrypts replaces its failed list row`() = runTest {
+        val good = fake_inbox_page(1).items[0]
+        val failed = good.copy(
+            sender_name = "Encrypted",
+            sender_email = "",
+            subject = "Could not decrypt",
+            preview = "",
+            is_read = true,
+            labels = listOf("work_token"),
+            is_undecryptable = true,
+        )
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(InboxPage(listOf(failed), false, null, 1))
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(good.copy(is_read = false))
+        coEvery { repository.fetch_thread(any()) } returns Result.success(emptyList())
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items.single().is_undecryptable)
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val row = vm.inbox_state.value.items.single()
+        assertFalse(row.is_undecryptable)
+        assertEquals("sender1@example.com", row.sender_email)
+        assertEquals("Subject 1", row.subject)
+        assertTrue(row.is_read)
+        assertEquals(listOf("work_token"), row.labels)
+    }
+
+    @Test
+    fun `opening a message that still fails keeps the existing row`() = runTest {
+        val good = fake_inbox_page(1).items[0]
+        val failed = good.copy(sender_email = "", subject = "", preview = "", is_undecryptable = true)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(InboxPage(listOf(good), false, null, 1))
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(failed)
+        coEvery { repository.fetch_thread(any()) } returns Result.success(emptyList())
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val row = vm.inbox_state.value.items.single()
+        assertFalse(row.is_undecryptable)
+        assertEquals("Subject 1", row.subject)
+    }
+
+    @Test
+    fun `pull to refresh forgets remembered decrypt failures`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.refresh()
+        advanceUntilIdle()
+
+        io.mockk.verify { repository.forget_decrypt_failures() }
     }
 }

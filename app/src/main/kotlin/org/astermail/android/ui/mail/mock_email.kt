@@ -570,6 +570,9 @@ private val re_strip_blank_lines = Regex("\\n{3,}")
 private val re_strip_spaces = Regex("[ \\t]+")
 
 private fun strip_html_simple(text: String): String {
+    if (text.indexOf('<') < 0 && text.indexOf('&') < 0) {
+        return text.replace(re_strip_blank_lines, "\n\n").replace(re_strip_spaces, " ").trim()
+    }
     var t = text
     t = t.replace(re_strip_style, "")
     t = t.replace(re_strip_script, "")

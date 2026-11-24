@@ -207,6 +207,7 @@ private const val MAX_ATTACHMENT_META_BATCH_SIZE = 50
 private const val MAX_ATTACHMENT_META_CACHE_SIZE = 200
 
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
+internal const val RATCHET_PENDING_MARKER = "\u0000aster_ratchet_pending"
 private const val RATCHET_PREFETCH_CONCURRENCY = 8
 private const val RATCHET_PREFETCH_BUDGET_MS = 1_500L
 private const val RATCHET_BACKFILL_BUDGET_MS = 60_000L
@@ -500,6 +501,7 @@ data class InboxItem(
     val has_unseen_reaction: Boolean = false,
     val is_pgp_placeholder: Boolean = false,
     val is_envelope_missing: Boolean = false,
+    val is_envelope_settling: Boolean = false,
 )
 
 class MetadataUndecryptableException : IllegalStateException("metadata cannot be decrypted on this device")
@@ -754,6 +756,25 @@ class MailRepository @Inject constructor(
     fun identity_key_events(): kotlinx.coroutines.flow.StateFlow<Long> = session_key_store.identity_key_events()
 
     fun has_identity_key(): Boolean = !session_key_store.get_identity_key().isNullOrBlank()
+
+    fun session_locked(): Boolean = runCatching { session_key_store.is_locked() }.getOrDefault(false)
+
+    fun key_readiness_events(): kotlinx.coroutines.flow.Flow<Long> = kotlinx.coroutines.flow.combine(
+        session_key_store.identity_key_events(),
+        session_key_store.account_keys_ready_events(),
+        session_key_store.key_material_events(),
+    ) { identity, account, material -> identity + account + material }
+
+    fun keys_settled(): Boolean = session_key_store.keys_settled()
+
+    suspend fun settle_pending_rows(items: List<InboxItem>): Map<String, InboxItem> =
+        withContext(Dispatchers.IO) {
+            val raw = items.filter(::is_envelope_pending_row)
+                .map { it.raw_item }
+                .filterNot { it.encrypted_envelope.isNullOrBlank() }
+            if (raw.isEmpty()) return@withContext emptyMap()
+            decrypt_items_batch(raw).visible.associateBy { it.id }
+        }
 
     suspend fun drain_pending_actions_now() {
         val queue = pending_action_queue ?: return
@@ -1208,7 +1229,9 @@ class MailRepository @Inject constructor(
         session_key_store,
         account_key_capabilities,
     )
-    private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private data class RatchetFailureMark(val at_ms: Long, val key_epoch: Long)
+
+    private val ratchet_undecryptable_at = java.util.concurrent.ConcurrentHashMap<String, RatchetFailureMark>()
     private val envelope_heal_mutex = kotlinx.coroutines.sync.Mutex()
     @Volatile private var last_envelope_heal_at = 0L
     @Volatile private var last_envelope_heal_changed = false
@@ -1520,7 +1543,7 @@ class MailRepository @Inject constructor(
         }
         if (listed_without_sent) {
             val healed = try {
-                system_folder_bootstrap.ensure_system_folders()["sent"]
+                system_folder_bootstrap.ensure_system_folders(attempts = 1)["sent"]
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
@@ -1700,34 +1723,26 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val started_at_ms = System.currentTimeMillis()
-        if (!thread_token.isNullOrBlank()) {
-            optimistic_send_store.add(
-                OptimisticSend(
-                    pending_id = pending_id,
-                    account_id = session_key_store.get_user_id(),
-                    thread_token = thread_token,
-                    reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
-                    started_at_ms = started_at_ms,
-                    send_at_ms = started_at_ms + delay_ms,
-                    message = build_optimistic_send_message(
-                        pending_id = pending_id,
-                        started_at_ms = started_at_ms,
-                        sender_email = sender_email,
-                        sender_display_name = sender_display_name,
-                        to = to,
-                        cc = cc,
-                        bcc = bcc,
-                        subject = subject,
-                        body_html = body_html,
-                        has_attachments = attachments.isNotEmpty(),
-                    ),
-                ),
-            )
-        }
+        add_optimistic_send(
+            pending_id = pending_id,
+            started_at_ms = started_at_ms,
+            send_at_ms = started_at_ms + delay_ms,
+            thread_token = thread_token,
+            reply_to_id = reply_to_id,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            has_attachments = attachments.isNotEmpty(),
+        )
         val persisted = app_scope.async {
             runCatching {
                 persist_and_schedule_undo_send(
@@ -1751,6 +1766,7 @@ class MailRepository @Inject constructor(
                     reply_to_id = reply_to_id,
                     force_pgp = force_pgp,
                     pgp_recipients = pgp_recipients,
+                    priority = priority,
                 )
             }
         }
@@ -1809,6 +1825,7 @@ class MailRepository @Inject constructor(
         reply_to_id: String? = null,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        priority: String? = null,
     ): String {
         val already_queued = draft_id?.takeIf { it.isNotBlank() }?.let { existing_draft_id ->
             pending_rows_for_current_account()?.firstOrNull { queued ->
@@ -1842,6 +1859,7 @@ class MailRepository @Inject constructor(
             allow_non_post_quantum = allow_non_post_quantum,
             force_pgp = force_pgp,
             pgp_recipients_json = pgp_recipients.takeIf { it.isNotEmpty() }?.let { outbox_json.encodeToString(it) },
+            priority = MailPriorityRules.outgoing(MailPriorityRules.from_wire(priority)),
         )
         pending_send_dao.upsert(row)
         if (clear_undo_canceled(pending_id)) {
@@ -1979,11 +1997,121 @@ class MailRepository @Inject constructor(
         return true
     }
 
+    private fun add_optimistic_send(
+        pending_id: String,
+        started_at_ms: Long,
+        send_at_ms: Long,
+        thread_token: String?,
+        reply_to_id: String?,
+        sender_email: String?,
+        sender_display_name: String?,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        has_attachments: Boolean,
+    ): Boolean {
+        val token = thread_token?.takeIf { it.isNotBlank() }
+        val parent = reply_to_id?.takeIf { it.isNotBlank() }
+        if (token == null && parent == null) return false
+        optimistic_send_store.add(
+            OptimisticSend(
+                pending_id = pending_id,
+                account_id = session_key_store.get_user_id(),
+                thread_token = token,
+                reply_to_id = parent,
+                started_at_ms = started_at_ms,
+                send_at_ms = send_at_ms,
+                message = build_optimistic_send_message(
+                    pending_id = pending_id,
+                    started_at_ms = started_at_ms,
+                    sender_email = sender_email,
+                    sender_display_name = sender_display_name,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    subject = subject,
+                    body_html = body_html,
+                    has_attachments = has_attachments,
+                ),
+            ),
+        )
+        return true
+    }
+
+    fun begin_direct_optimistic_send(
+        thread_token: String?,
+        reply_to_id: String?,
+        sender_email: String?,
+        sender_display_name: String?,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        has_attachments: Boolean,
+    ): String? {
+        val pending_id = java.util.UUID.randomUUID().toString()
+        val started_at_ms = System.currentTimeMillis()
+        val added = add_optimistic_send(
+            pending_id = pending_id,
+            started_at_ms = started_at_ms,
+            send_at_ms = started_at_ms,
+            thread_token = thread_token,
+            reply_to_id = reply_to_id,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            has_attachments = has_attachments,
+        )
+        return pending_id.takeIf { added }
+    }
+
+    fun finish_direct_optimistic_send(pending_id: String?, delivered: Boolean, mail_item_id: String?) {
+        if (pending_id.isNullOrBlank()) return
+        if (delivered) {
+            commit_optimistic_send(pending_id, mail_item_id)
+        } else if (optimistic_send_store.get(pending_id)?.committed == false) {
+            optimistic_send_store.remove(pending_id)
+        }
+    }
+
     private fun commit_optimistic_send(pending_id: String, mail_item_id: String?) {
         if (!optimistic_send_store.mark_committed(pending_id, mail_item_id)) return
+        val committed = optimistic_send_store.get(pending_id)
+        if (committed != null) {
+            message_preloader.invalidate_thread(
+                committed.thread_token,
+                listOfNotNull(committed.reply_to_id),
+            )
+            app_scope.launch { patch_thread_snapshot_with_send(committed) }
+        }
         app_scope.launch {
             kotlinx.coroutines.delay(OPTIMISTIC_SEND_LINGER_MS)
             optimistic_send_store.remove(pending_id)
+        }
+    }
+
+    private val snapshot_patch_mutex = kotlinx.coroutines.sync.Mutex()
+
+    private suspend fun patch_thread_snapshot_with_send(send: OptimisticSend) {
+        val token = send.thread_token?.takeIf { it.isNotBlank() } ?: return
+        if (send.account_id != session_key_store.get_user_id()) return
+        snapshot_patch_mutex.withLock {
+            withContext(Dispatchers.IO) {
+                suspend fun stamp(): Long? =
+                    runCatching { thread_snapshot_dao.stamps(listOf(token)) }.getOrNull()?.firstOrNull()?.cached_at
+                val before = stamp() ?: return@withContext
+                val existing = cached_thread_messages(token)
+                val patched = thread_snapshot_with_sent_copy(existing, send) ?: return@withContext
+                if (stamp() != before) return@withContext
+                store_thread_snapshot(token, patched)
+            }
         }
     }
 
@@ -2137,6 +2265,7 @@ class MailRepository @Inject constructor(
             force_pgp = row.force_pgp,
             pgp_recipients = row_pgp_recipients,
             ack_scope = pending_ack_scope(pending_id),
+            priority = row.priority,
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -2490,6 +2619,10 @@ class MailRepository @Inject constructor(
         _send_problem.value = false
     }
 
+    fun forget_decrypt_failures() {
+        ratchet_undecryptable_at.clear()
+    }
+
     fun begin_decrypt_retry() {
         ratchet_undecryptable_at.clear()
         forced_envelope_heal_until = System.currentTimeMillis() + ENVELOPE_HEAL_FORCED_WINDOW_MS
@@ -2624,8 +2757,9 @@ class MailRepository @Inject constructor(
     }
 
     private fun ratchet_recently_undecryptable(message_id: String): Boolean {
-        val failed_at = ratchet_undecryptable_at[message_id] ?: return false
-        if (System.currentTimeMillis() - failed_at < RATCHET_UNDECRYPTABLE_TTL_MS) return true
+        val mark = ratchet_undecryptable_at[message_id] ?: return false
+        val fresh = System.currentTimeMillis() - mark.at_ms < RATCHET_UNDECRYPTABLE_TTL_MS
+        if (fresh && mark.key_epoch == session_key_store.key_readiness_epoch()) return true
         ratchet_undecryptable_at.remove(message_id)
         return false
     }
@@ -3199,8 +3333,9 @@ class MailRepository @Inject constructor(
         } else {
             unique
         }
+        val refilled = refill_thread_envelopes(capped, ::fetch_envelope_single)
         withContext(Dispatchers.IO) {
-            val decrypted = capped.map { msg ->
+            val decrypted = refilled.map { msg ->
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
@@ -3266,12 +3401,13 @@ class MailRepository @Inject constructor(
     suspend fun fetch_single_message(item_id: String): Result<InboxItem> = runCatching {
         val item = mail_api.get_message(item_id)
         withContext(Dispatchers.IO) {
+            val readiness = capture_decrypt_readiness(session_key_store)
             val decrypted = try {
                 decrypt_inbox_item(item)
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (_: Throwable) {
-                fallback_undecryptable_item(item)
+            } catch (error: Throwable) {
+                fallback_undecryptable_item(item, readiness, error)
             }
             if (decrypted.is_undecryptable && is_sealed_inbound_nonce(item.envelope_nonce) && heal_envelope_keys()) {
                 runCatching { decrypt_inbox_item(item) }.getOrElse { decrypted }
@@ -4482,18 +4618,27 @@ class MailRepository @Inject constructor(
         )
     }
 
-    private fun fallback_undecryptable_item(item: MailItem): InboxItem {
+    private fun fallback_undecryptable_item(
+        item: MailItem,
+        readiness: DecryptReadiness,
+        error: Throwable,
+    ): InboxItem {
         val missing = needs_envelope_backfill(item)
-        return fallback_row(item, missing)
+        val settling = !missing && classify_decrypt_failure(
+            readiness,
+            capture_decrypt_readiness(session_key_store),
+            is_transient_decrypt_error(error),
+        ) == DecryptVerdict.pending
+        return fallback_row(item, missing, settling)
     }
 
-    private fun fallback_row(item: MailItem, missing: Boolean): InboxItem = InboxItem(
+    private fun fallback_row(item: MailItem, missing: Boolean, settling: Boolean = false): InboxItem = InboxItem(
         id = item.id,
         thread_token = item.thread_token,
         thread_message_count = item.thread_message_count ?: 1,
-        sender_name = context.getString(if (missing) R.string.loading else R.string.encrypted),
+        sender_name = context.getString(if (missing || settling) R.string.loading else R.string.encrypted),
         sender_email = "",
-        subject = context.getString(if (missing) R.string.loading else R.string.decrypt_failed_title),
+        subject = context.getString(if (missing || settling) R.string.loading else R.string.decrypt_failed_title),
         preview = "",
         timestamp = item.message_ts ?: item.created_at ?: "",
         is_read = item.is_read ?: item.metadata?.is_read ?: false,
@@ -4507,8 +4652,9 @@ class MailRepository @Inject constructor(
         tag_tokens = item.tag_tokens ?: emptyList(),
         routing_token = item.routing_token,
         is_undecryptable = !missing,
-        is_decrypt_pending = missing,
+        is_decrypt_pending = missing || settling,
         is_envelope_missing = missing,
+        is_envelope_settling = settling,
         raw_item = item,
         has_unseen_reaction = item.has_unseen_reaction == true,
     )
@@ -4527,6 +4673,8 @@ class MailRepository @Inject constructor(
     private suspend fun fetch_envelope_batch(ids: List<String>): List<MailItem> =
         mail_api.batch_messages(ids).items
 
+    private suspend fun fetch_envelope_single(id: String): MailItem? = mail_api.get_message(id)
+
     suspend fun refill_missing_envelopes(
         items: List<InboxItem>,
         budget_ms: Long = envelope_refill_budget_ms,
@@ -4534,7 +4682,12 @@ class MailRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val raw = items.filter { it.is_envelope_missing }.map { it.raw_item }
             if (raw.isEmpty()) return@withContext emptyMap()
-            val filled = backfill_missing_envelopes(raw, ::fetch_envelope_batch, budget_ms = budget_ms)
+            val filled = refill_missing_envelopes_with_fallback(
+                raw,
+                ::fetch_envelope_batch,
+                ::fetch_envelope_single,
+                budget_ms = budget_ms,
+            )
             val ready = filled.filterNot(::needs_envelope_backfill)
             if (ready.isEmpty()) return@withContext emptyMap()
             decrypt_items_batch(ready).visible
@@ -4580,12 +4733,13 @@ class MailRepository @Inject constructor(
             val overrides = prefetch_ratchet_plaintexts(items, key_sets, base_envelopes)
             val decrypted = items.map { item ->
                 async(Dispatchers.IO) {
+                    val readiness = capture_decrypt_readiness(session_key_store)
                     try {
                         decrypt_inbox_item(item, overrides[item.id], key_sets, base_envelopes[item.id])
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Throwable) {
-                        fallback_undecryptable_item(item)
+                        fallback_undecryptable_item(item, readiness, error)
                     }
                 }
             }.awaitAll().filterNotNull()
@@ -4617,6 +4771,8 @@ class MailRepository @Inject constructor(
     ): InboxItem {
         get_user_email()
         note_own_authored(item.id, item.item_type ?: item.metadata?.item_type)
+        val readiness = capture_decrypt_readiness(session_key_store)
+        var envelope_error: Throwable? = null
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
@@ -4626,13 +4782,25 @@ class MailRepository @Inject constructor(
             key_sets = key_sets,
             base_envelope = base_envelope,
             allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
+            on_error = { envelope_error = it },
         )
         val is_envelope_missing = envelope == null && needs_envelope_backfill(item)
         val is_undecryptable = envelope?.is_undecryptable
             ?: !item.encrypted_envelope.isNullOrBlank()
-        val is_decrypt_pending = (is_undecryptable && envelope?.is_decrypt_pending == true) || is_envelope_missing
+        val is_envelope_settling = envelope == null && is_undecryptable && !is_envelope_missing &&
+            classify_decrypt_failure(
+                readiness,
+                capture_decrypt_readiness(session_key_store),
+                is_transient_decrypt_error(envelope_error),
+            ) == DecryptVerdict.pending
+        val is_decrypt_pending = (is_undecryptable && envelope?.is_decrypt_pending == true) ||
+            is_envelope_missing || is_envelope_settling
         val show_placeholder = is_undecryptable && !is_decrypt_pending
-        val loading_text = if (is_envelope_missing) context.getString(R.string.loading) else null
+        val loading_text = if (is_envelope_missing || is_envelope_settling) {
+            context.getString(R.string.loading)
+        } else {
+            null
+        }
         val decrypted_meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
         val meta = decrypted_meta?.let { merge_server_flags(it, item) }
@@ -4714,6 +4882,7 @@ class MailRepository @Inject constructor(
             has_unseen_reaction = item.has_unseen_reaction == true,
             is_pgp_placeholder = envelope?.is_pgp_placeholder == true,
             is_envelope_missing = is_envelope_missing,
+            is_envelope_settling = is_envelope_settling,
         )
     }
 
@@ -4757,6 +4926,8 @@ class MailRepository @Inject constructor(
         get_user_email()
         note_own_authored(item.id, item.item_type ?: item.metadata?.item_type)
         var keys_missing = false
+        var envelope_error: Throwable? = null
+        val readiness = capture_decrypt_readiness(session_key_store)
         val envelope = try_decrypt_envelope(
             item.encrypted_envelope,
             item.envelope_nonce,
@@ -4764,7 +4935,16 @@ class MailRepository @Inject constructor(
             received_at = item.created_at,
             on_keys_missing = { keys_missing = true },
             allow_external_pgp = ExternalPgpKeyCodec.allows_item_type(item.item_type ?: item.metadata?.item_type),
+            on_error = { envelope_error = it },
         )
+        val is_envelope_settling = envelope == null && !item.encrypted_envelope.isNullOrBlank() &&
+            classify_decrypt_failure(
+                readiness,
+                capture_decrypt_readiness(session_key_store),
+                is_transient_decrypt_error(envelope_error),
+            ) == DecryptVerdict.pending
+        val is_body_settling = is_envelope_settling || envelope?.is_decrypt_pending == true ||
+            (envelope == null && needs_thread_envelope_refill(item))
         val meta = decrypt_blob_metadata(item.encrypted_metadata, item.metadata_nonce)
             ?: item.metadata
         val to_names = envelope?.to?.map { it.second.ifBlank { it.first } } ?: listOf("me")
@@ -4799,11 +4979,13 @@ class MailRepository @Inject constructor(
             has_attachments = (meta?.has_attachments ?: false) || (item.has_attachments ?: false) ||
                 DecryptedMimeAttachments.has(item.id),
             raw_headers = envelope?.raw_headers ?: emptyList(),
-            is_undecryptable = envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank(),
-            is_sealed_to_missing_keys = envelope == null && keys_missing,
+            is_undecryptable = !is_body_settling &&
+                (envelope?.is_undecryptable ?: !item.encrypted_envelope.isNullOrBlank()),
+            is_sealed_to_missing_keys = !is_body_settling && envelope == null && keys_missing,
             subject = envelope?.subject ?: "",
             display_sender_name = forwarding?.display_sender_name,
             display_sender_email = forwarding?.display_sender_email,
+            is_body_pending = is_body_settling,
             pgp_encrypted = envelope?.pgp_encrypted ?: false,
             pgp_signature = envelope?.pgp_signature
                 ?: org.astermail.android.crypto.PgpSignatureStatus.NONE,
@@ -4862,6 +5044,7 @@ class MailRepository @Inject constructor(
         received_at: String? = null,
         own_authored_only: Boolean = false,
         on_refused: (() -> Unit)? = null,
+        on_error: ((Throwable) -> Unit)? = null,
     ): DecryptedEnvelope? {
         if (encrypted_envelope.isNullOrBlank()) return null
         var unauthenticated = false
@@ -5020,6 +5203,7 @@ class MailRepository @Inject constructor(
             }
             if (t is EnvelopeKeysMissingException) on_keys_missing?.invoke()
             if (t is DraftFormRefusedException) on_refused?.invoke()
+            on_error?.invoke(t)
             null
         }
     }
@@ -6613,7 +6797,7 @@ class MailRepository @Inject constructor(
         envelope: DecryptedEnvelope,
         candidate: String,
         message_id: String?,
-    ): String {
+    ): String? {
         val delivered_to = org.astermail.android.ui.mail.extract_delivered_to(envelope.raw_headers)
         val our_addresses = buildList {
             session_key_store.get_user_email()?.let { add(it) }
@@ -6628,6 +6812,7 @@ class MailRepository @Inject constructor(
         if (!message_id.isNullOrBlank() && ratchet_recently_undecryptable(message_id)) {
             return org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
         }
+        val readiness = capture_decrypt_readiness(session_key_store)
         val attempted = ratchet_decryptor.try_decrypt(candidate, our_addresses, envelope.from_email, message_id)
         val result = if (
             attempted == org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL && !message_id.isNullOrBlank()
@@ -6636,14 +6821,17 @@ class MailRepository @Inject constructor(
         } else {
             attempted
         }
+        val settled = settle_ratchet_result(result, readiness, capture_decrypt_readiness(session_key_store))
         if (!message_id.isNullOrBlank()) {
-            if (result != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL) {
-                ratchet_undecryptable_at.remove(message_id)
-            } else {
-                ratchet_undecryptable_at[message_id] = System.currentTimeMillis()
+            when (settled) {
+                org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL ->
+                    ratchet_undecryptable_at[message_id] =
+                        RatchetFailureMark(System.currentTimeMillis(), readiness.key_epoch)
+                null -> Unit
+                else -> ratchet_undecryptable_at.remove(message_id)
             }
         }
-        return result
+        return settled
     }
 
     private suspend fun resolve_ratchet_plaintext(
@@ -6664,7 +6852,7 @@ class MailRepository @Inject constructor(
         val candidate = ratchet_body_candidate(envelope) ?: return null
         val our_email = session_key_store.get_user_email()
         if (our_email.isNullOrBlank() || envelope.from_email.isBlank()) return null
-        return resolve_ratchet_body(envelope, candidate, item.id)
+        return resolve_ratchet_body(envelope, candidate, item.id) ?: RATCHET_PENDING_MARKER
     }
 
     private val ratchet_backfill_running = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -6716,6 +6904,7 @@ class MailRepository @Inject constructor(
                                     gate.withPermit {
                                         val plaintext = runCatching { resolve_ratchet_plaintext(item) }.getOrNull()
                                         if (plaintext != null &&
+                                            plaintext != RATCHET_PENDING_MARKER &&
                                             plaintext != org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL
                                         ) {
                                             recovered.set(true)
@@ -6752,12 +6941,18 @@ class MailRepository @Inject constructor(
             val our_email = session_key_store.get_user_email()
             val sender_email = envelope.from_email
             if (!our_email.isNullOrBlank() && sender_email.isNotBlank()) {
-                val decrypted = ratchet_override ?: kotlinx.coroutines.runBlocking {
-                    runCatching {
-                        kotlinx.coroutines.withTimeoutOrNull(RATCHET_INLINE_TIMEOUT_MS) {
-                            resolve_ratchet_body(envelope, ratchet_candidate, message_id)
+                val decrypted = when (ratchet_override) {
+                    RATCHET_PENDING_MARKER -> null
+                    null -> kotlinx.coroutines.runBlocking {
+                        try {
+                            kotlinx.coroutines.withTimeoutOrNull(RATCHET_INLINE_TIMEOUT_MS) {
+                                resolve_ratchet_body(envelope, ratchet_candidate, message_id)
+                            }
+                        } catch (_: Throwable) {
+                            null
                         }
-                    }.getOrDefault(org.astermail.android.mail.ratchet.RATCHET_UNDECRYPTABLE_SENTINEL)
+                    }
+                    else -> ratchet_override
                 }
                 if (decrypted == null) {
                     body_text = ""
@@ -7195,12 +7390,14 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<SimpleSendResponse> {
         val used_acknowledgments = java.util.Collections.synchronizedList(mutableListOf<ExternalKeyAcknowledgmentUse>())
         return send_email_inner(
             to, cc, bcc, subject, body_html, sender_email, sender_display_name, thread_token, expires_at,
             expiry_password, attachments, sender_alias_hash, suppress_branding, allow_non_post_quantum,
             client_send_id, force_pgp, pgp_recipients, ack_scope, used_acknowledgments,
+            MailPriorityRules.outgoing(MailPriorityRules.from_wire(priority)),
         ).also { result ->
             if (result.getOrNull()?.success == true) {
                 consume_unpinned_acknowledgments(ack_scope, used_acknowledgments.toList())
@@ -7228,6 +7425,7 @@ class MailRepository @Inject constructor(
         pgp_recipients: List<String>,
         ack_scope: String?,
         used_acknowledgments: MutableList<ExternalKeyAcknowledgmentUse>,
+        priority: String?,
     ): Result<SimpleSendResponse> = runCatching {
         classify_recipients(to + cc + bcc)
         val is_mixed = has_mixed_recipients(to + cc + bcc)
@@ -7263,6 +7461,7 @@ class MailRepository @Inject constructor(
                     to = to,
                     cc = cc,
                     bcc = bcc,
+                    raw_headers = MailPriorityRules.headers(MailPriorityRules.from_wire(priority)),
                 ),
                 evidence,
             )
@@ -7373,6 +7572,7 @@ class MailRepository @Inject constructor(
                     external_pgp_bodies = client_copies,
                     force_pgp = force_pgp,
                     pgp_recipients = listed_pgp_recipients.takeIf { it.isNotEmpty() },
+                    priority = priority,
                 ),
             )
             val mail_item_id = await_queued_send(queued.queue_id)
@@ -7496,6 +7696,7 @@ class MailRepository @Inject constructor(
                         it.isNotEmpty() && expiry_password.isNullOrEmpty()
                     },
                     secure_message = secure_message,
+                    priority = priority,
                 ),
             )
             val sent_item_id = result.mail_item_id
@@ -7582,6 +7783,7 @@ class MailRepository @Inject constructor(
                     recipient_bodies = recipient_bodies,
                     hosted_recipients = hosted_recipients_of(to + cc + bcc)
                         .takeIf { ratchet_body != null && it.isNotEmpty() },
+                    priority = priority,
                 ),
             )
         }
@@ -8654,6 +8856,7 @@ class MailRepository @Inject constructor(
         cc: List<String>,
         bcc: List<String> = emptyList(),
         attachments: List<ExternalAttachmentPayload> = emptyList(),
+        raw_headers: List<Pair<String, String>> = emptyList(),
     ): String {
         val obj = org.json.JSONObject()
         obj.put("subject", subject)
@@ -8676,6 +8879,13 @@ class MailRepository @Inject constructor(
             "yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US,
         ).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date()))
         if (attachments.isNotEmpty()) obj.put(DRAFT_ATTACHMENTS_KEY, draft_attachments_json(attachments))
+        if (raw_headers.isNotEmpty()) {
+            obj.put("raw_headers", org.json.JSONArray().apply {
+                raw_headers.forEach { (name, value) ->
+                    put(org.json.JSONObject().apply { put("name", name); put("value", value) })
+                }
+            })
+        }
         return obj.toString()
     }
 

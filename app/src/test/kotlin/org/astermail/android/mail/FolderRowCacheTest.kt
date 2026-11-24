@@ -308,6 +308,22 @@ class FolderRowCacheTest {
     }
 
     @Test
+    fun `placeholder rows loaded from disk wait as loading rows instead of showing a failure`() {
+        val placeholder = item(id = "m6", subject = "Message couldn't be decrypted").copy(sender_name = "Encrypted")
+        val marked = folder_cache_mark_placeholders(
+            listOf(placeholder),
+            placeholder_sender = "Encrypted",
+            placeholder_subject = "Message couldn't be decrypted",
+            loading_text = "Loading",
+        ).single()
+        assertTrue(marked.is_undecryptable)
+        assertTrue(marked.is_decrypt_pending)
+        assertFalse(marked.is_envelope_missing)
+        assertEquals("Loading", marked.sender_name)
+        assertEquals("Loading", marked.subject)
+    }
+
+    @Test
     fun `placeholder rows loaded from disk are flagged undecryptable`() {
         val placeholder = item(id = "m4", subject = "Message couldn't be decrypted").copy(sender_name = "Encrypted")
         val normal = item(id = "m5")

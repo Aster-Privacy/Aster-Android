@@ -111,6 +111,7 @@ fun DomainPurchaseProgressScreen(
             ?.let { stringResource(R.string.domain_purchase_progress_title, it) }
             ?: stringResource(R.string.domain_purchase_title),
         on_back = on_back,
+        on_refresh = { retry_key += 1 },
     ) {
         progress_body(
             order = order,

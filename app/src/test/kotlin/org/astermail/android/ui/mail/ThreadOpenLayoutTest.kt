@@ -238,4 +238,62 @@ class ThreadOpenLayoutTest {
     fun a_short_thread_stays_at_the_top() {
         assertNull(initial_thread_scroll_index(listOf("m1", "m2"), "m2", header_item_count = 1))
     }
+
+    @Test
+    fun anchor_moves_to_own_reply_after_the_opened_message() {
+        assertEquals("m5", thread_open_anchor_id(ids, setOf("m5"), "m4"))
+    }
+
+    @Test
+    fun anchor_moves_past_several_own_replies() {
+        assertEquals("m5", thread_open_anchor_id(ids, setOf("m4", "m5"), "m3"))
+    }
+
+    @Test
+    fun anchor_stays_when_someone_else_replied_after_the_opened_message() {
+        assertEquals("m3", thread_open_anchor_id(ids, setOf("m5"), "m3"))
+    }
+
+    @Test
+    fun anchor_stays_on_the_last_message() {
+        assertEquals("m5", thread_open_anchor_id(ids, setOf("m1"), "m5"))
+    }
+
+    @Test
+    fun anchor_stays_when_the_opened_message_is_missing() {
+        assertEquals("x", thread_open_anchor_id(ids, setOf("m5"), "x"))
+    }
+
+    @Test
+    fun anchor_index_targets_the_own_reply() {
+        val anchor = thread_open_anchor_id(ids, setOf("m5"), "m4")
+        assertEquals(5, initial_thread_scroll_index(ids, anchor, header_item_count = 1))
+    }
+
+    @Test
+    fun follows_a_new_own_tail_until_the_user_drags() {
+        assertTrue(should_follow_tail(false, "m6", "m5", tail_is_own = true))
+        assertFalse(should_follow_tail(true, "m6", "m5", tail_is_own = true))
+    }
+
+    @Test
+    fun does_not_follow_the_same_tail_twice() {
+        assertFalse(should_follow_tail(false, "m5", "m5", tail_is_own = true))
+    }
+
+    @Test
+    fun does_not_follow_a_tail_from_someone_else() {
+        assertFalse(should_follow_tail(false, "m6", "m5", tail_is_own = false))
+        assertFalse(should_follow_tail(false, null, "m5", tail_is_own = true))
+    }
+
+    @Test
+    fun layout_refreshes_when_an_own_message_is_missing_from_it() {
+        assertTrue(thread_layout_needs_refresh(setOf("m1", "m2"), listOf("m1", "m2", "s1"), setOf("s1")))
+    }
+
+    @Test
+    fun layout_keeps_when_new_message_is_from_someone_else() {
+        assertFalse(thread_layout_needs_refresh(setOf("m1", "m2"), listOf("m1", "m2", "m3"), setOf("s1")))
+    }
 }

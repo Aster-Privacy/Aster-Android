@@ -21,6 +21,11 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +54,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_finite_spec
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
@@ -224,13 +232,30 @@ internal fun detail_skeleton_phase_of(wanted: Boolean): SkeletonPhase =
 fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): SkeletonPhase =
     key(thread_key) { detail_skeleton_phase_of(wanted) }
 
-fun Modifier.detail_content_handoff(thread_key: String, revealed: Boolean): Modifier =
-    this.graphicsLayer { alpha = if (revealed) 1f else 0f }
+internal fun detail_content_alpha(revealed: Boolean): Float = if (revealed) 1f else 0f
+
+@Composable
+fun Modifier.detail_content_handoff(thread_key: String, revealed: Boolean): Modifier {
+    val reduce_motion = aster_reduce_motion()
+    val alpha = key(thread_key) {
+        animateFloatAsState(
+            targetValue = detail_content_alpha(revealed),
+            animationSpec = aster_finite_spec(reduce_motion, AsterSpring.effects<Float>()),
+            label = "detail_content_handoff",
+        )
+    }
+    return this.graphicsLayer { this.alpha = alpha.value }
+}
 
 @Composable
 fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, message_count: Int = 1) {
-    if (phase != SkeletonPhase.skeleton) return
-    Box(modifier = modifier) {
+    val reduce_motion = aster_reduce_motion()
+    AnimatedVisibility(
+        visible = phase == SkeletonPhase.skeleton,
+        enter = EnterTransition.None,
+        exit = if (reduce_motion) ExitTransition.None else fadeOut(animationSpec = AsterSpring.effects<Float>()),
+        modifier = modifier,
+    ) {
         detail_skeleton(message_count = message_count)
     }
 }

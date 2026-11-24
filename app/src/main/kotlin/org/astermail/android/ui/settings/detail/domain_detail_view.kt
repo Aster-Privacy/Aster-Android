@@ -22,6 +22,7 @@ package org.astermail.android.ui.settings.detail
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,8 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -128,7 +131,7 @@ internal fun format_domain_grace_end(value: String?): String? {
 internal fun domain_detail_view(
     domain: CustomDomain,
     vm: SettingsViewModel,
-    health: DomainHealth?,
+    live_health: DomainHealth?,
     dns_records: List<DnsRecord>?,
     addresses: List<String>,
     address_ids: List<String>,
@@ -146,6 +149,8 @@ internal fun domain_detail_view(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val can_manage = !domain.is_shared
     val active = is_domain_active(domain)
+    val cached_health = remember(domain.id) { vm.cached_domain_health(domain.id) }
+    val health = live_health ?: cached_health
     val tone = domain_tone(domain, health)
     var rechecking by remember { mutableStateOf(false) }
     var confirm_delete by remember { mutableStateOf(false) }
@@ -388,7 +393,7 @@ internal fun domain_detail_view(
 @Composable
 private fun domain_detail_hero(domain: CustomDomain, tone: DomainTone) {
     val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs, bottom = AsterSpacing.xs)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs, bottom = AsterSpacing.md)) {
         Text(
             text = domain.domain_name,
             color = colors.text_primary,
@@ -466,17 +471,26 @@ private fun domain_health_card(
                 )
             }
             v_gap(AsterSpacing.md)
+            val badges_ready = health != null
+            val badges_alpha by animateFloatAsState(
+                targetValue = if (badges_ready) 1f else 0f,
+                animationSpec = domain_tween(),
+                label = "domain_capability_badges",
+            )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
                 verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                modifier = Modifier
+                    .graphicsLayer { alpha = badges_alpha }
+                    .then(if (badges_ready) Modifier else Modifier.clearAndSetSemantics {}),
             ) {
                 domain_capability_badge(
                     label = stringResource(R.string.domain_health_receiving),
-                    ok = health?.receiving_mail,
+                    ok = health?.receiving_mail ?: true,
                 )
                 domain_capability_badge(
                     label = stringResource(R.string.domain_health_sending),
-                    ok = health?.sending_trusted,
+                    ok = health?.sending_trusted ?: true,
                 )
             }
             checks.filter(::is_check_failing).forEachIndexed { index, check ->
@@ -516,20 +530,12 @@ private fun domain_checked_label(checked_at: String?): String {
 }
 
 @Composable
-private fun domain_capability_badge(label: String, ok: Boolean?) {
+private fun domain_capability_badge(label: String, ok: Boolean) {
     val colors = AsterMaterial.colors
     tone_badge(
         text = label,
-        tone = when (ok) {
-            true -> colors.success
-            false -> colors.warning
-            null -> colors.text_tertiary
-        },
-        icon = when (ok) {
-            true -> TablerIcons.CircleCheck
-            false -> TablerIcons.AlertTriangle
-            null -> TablerIcons.Clock
-        },
+        tone = if (ok) colors.success else colors.warning,
+        icon = if (ok) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
     )
 }
 

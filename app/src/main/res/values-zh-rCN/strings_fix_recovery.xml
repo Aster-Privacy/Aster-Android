@@ -5,5 +5,4 @@
     <string name="recovery_email_not_verified_badge">未验证</string>
     <string name="recovery_email_action_resend">重新发送</string>
     <string name="recovery_email_action_remove">移除</string>
-    <string name="delete_account_second_factor_checking">正在检查您的安全设置</string>
 </resources>

@@ -141,6 +141,9 @@ class RatchetDecryptor @Inject constructor(
             return RATCHET_UNDECRYPTABLE_SENTINEL
         } catch (t: Throwable) {
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.e("AsterRatchet", "decrypt threw")
+            if (org.astermail.android.mail.is_transient_decrypt_error(t)) {
+                org.astermail.android.api.network.TransientFailureSignal.note()
+            }
             null
         }
         if (result != null) return result

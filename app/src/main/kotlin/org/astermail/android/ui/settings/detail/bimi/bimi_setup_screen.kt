@@ -118,6 +118,8 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
         title = stringResource(R.string.domain_bimi_title),
         on_back = on_back,
         scrollable = false,
+        on_refresh = { vm.reload() },
+        refresh_enabled = state.step == BimiStep.manage && !state.busy,
     ) {
         Column(
             modifier = Modifier

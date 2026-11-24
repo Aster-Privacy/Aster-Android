@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_off_description">Запрашивать блокировку экрана или PIN-код приложения при каждом открытии Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Разблокировка с помощью блокировки экрана</string>
+    <string name="app_lock_status_app_pin">Разблокировка с помощью PIN-кода или парольной фразы приложения</string>
+    <string name="app_lock_mode_screen_lock">Блокировка экрана</string>
+    <string name="app_lock_mode_screen_lock_desc">Используйте PIN-код, графический ключ, пароль или биометрию, которыми вы разблокируете телефон</string>
+    <string name="app_lock_use_screen_lock">Использовать блокировку экрана</string>
+    <string name="app_lock_device_subtitle">Чтобы открыть Aster Mail, используйте блокировку экрана.</string>
+    <string name="app_lock_device_error">Aster Mail не удалось подтвердить блокировку экрана. Повторите попытку.</string>
+    <string name="app_lock_device_unavailable">Блокировка экрана недоступна. Чтобы разблокировать Aster Mail, настройте блокировку экрана в настройках телефона.</string>
+    <string name="app_lock_device_key_lost">Блокировка экрана изменилась, поэтому Aster Mail не может разблокироваться. Чтобы продолжить, выйдите из аккаунта и войдите снова.</string>
+    <string name="app_lock_biometric_failed_device">Биометрическая разблокировка недоступна. Используйте блокировку экрана.</string>
+    <string name="app_lock_biometric_error_device">Биометрическая разблокировка не сработала. Повторите попытку или используйте блокировку экрана.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail выключил биометрическую разблокировку. Чтобы снова включить ее, используйте блокировку экрана.</string>
+    <string name="app_lock_device_setup_title">Настроить блокировку приложения</string>
+    <string name="app_lock_device_setup_subtitle">Чтобы использовать блокировку экрана для Aster Mail, подтвердите ее сейчас.</string>
+    <string name="app_lock_setup_unavailable">Не удалось настроить блокировку приложения. Повторите попытку.</string>
+    <string name="app_lock_confirm_to_disable">Чтобы выключить блокировку приложения, подтвердите блокировку экрана.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Чтобы включить биометрическую разблокировку, подтвердите блокировку экрана.</string>
+    <string name="app_lock_confirm_to_change_settings">Чтобы изменить настройки блокировки приложения, подтвердите, что это вы.</string>
+    <string name="app_lock_hide_notification_content">Скрывать содержимое уведомлений</string>
+    <string name="app_lock_hide_notification_content_desc">Уведомления сообщают только о новой почте. Отправитель и предпросмотр скрыты.</string>
+    <string name="app_lock_timeout_title">Блокировать через</string>
+    <string name="app_lock_timeout_immediately">Сразу</string>
+    <string name="app_lock_timeout_one_minute">1 минуту</string>
+    <string name="app_lock_timeout_five_minutes">5 минут</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 минут</string>
+    <string name="app_lock_timeout_one_hour">1 час</string>
+</resources>

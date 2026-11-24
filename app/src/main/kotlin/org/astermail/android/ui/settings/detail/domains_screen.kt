@@ -282,7 +282,7 @@ fun DomainsScreen(
                     domain_detail_view(
                         domain = domain,
                         vm = vm,
-                        health = state.domain_health[domain.id],
+                        live_health = state.domain_health[domain.id],
                         dns_records = effective_dns[domain.id],
                         addresses = addresses.map { it.address },
                         address_ids = addresses.map { it.id },

@@ -263,6 +263,7 @@
     <string name="failed_to_save">Error al guardar el archivo</string>
     <string name="failed_to_download">Error al descargar %s</string>
     <string name="could_not_open_link">No se pudo abrir el enlace</string>
+    <string name="open_address_in_maps">Abrir en la app de mapas</string>
     <string name="move_to_trash">Mover a la papelera</string>
     <string name="archived">Archivado</string>
     <string name="unstarred">Quitado de destacados</string>
@@ -902,6 +903,7 @@
     <string name="message">Mensaje</string>
     <string name="feedback_placeholder">Describe lo que te gusta, lo que falta o lo que no funciona.</string>
     <string name="feedback_privacy_note">Se adjuntará la dirección de correo de tu cuenta para que podamos responderte. Nunca compartimos tus comentarios.</string>
+    <string name="feedback_support_notice">Este formulario es para comentarios, ideas e informes de errores. Si tienes preguntas o necesitas ayuda con tu cuenta, escribe al equipo de soporte a %1$s.</string>
     <string name="send_feedback">Enviar comentarios</string>
     <string name="sending_feedback">Enviando...</string>
     <string name="sent">Enviado</string>
@@ -2280,7 +2282,7 @@
     <string name="vanguard_description">Protección avanzada de la app con bloqueo y seguridad reforzada.</string>
     <string name="vanguard_upgrade_cta">Mejorar plan</string>
     <string name="vanguard_confirm_disable_title">¿Desactivar Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">Se apagarán el bloqueo de la app y el resto de protecciones de Vanguard.</string>
+    <string name="vanguard_confirm_disable_desc">Se apagarán las protecciones de Vanguard. El bloqueo de la app sigue activo.</string>
     <string name="vanguard_disable">Desactivar</string>
     <string name="app_lock_pin">Bloqueo de la app</string>
     <string name="app_lock_pin_description">Pedir un PIN o una frase de acceso para abrir la app.</string>
@@ -2876,6 +2878,8 @@
     <string name="contact_add_failed">No se pudo guardar %1$s en los contactos</string>
     <string name="contact_remove_failed">No se pudo quitar %1$s de los contactos</string>
     <string name="copy_failed">No se pudo copiar. Inténtalo de nuevo.</string>
+    <string name="copy_subject">Copiar asunto</string>
+    <string name="subject_copied">Asunto copiado</string>
     <string name="create_label_subtitle">Marca mensajes con el color que elijas</string>
     <string name="delete_signature_message">¿Eliminar «%1$s»? Esta acción no se puede deshacer.</string>
     <string name="delete_vacation_reply_confirm">Se eliminarán tu mensaje de ausencia y sus fechas. Esta acción no se puede deshacer.</string>
@@ -3769,4 +3773,10 @@
     <string name="toast_position_subtitle">Dónde aparecen los avisos mientras usas la app</string>
     <string name="toast_position_top">Arriba</string>
     <string name="toast_position_bottom">Abajo</string>
+    <string name="mail_priority">Prioridad</string>
+    <string name="mail_priority_high">Alta</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Baja</string>
+    <string name="mail_high_priority">Prioridad alta</string>
+    <string name="mail_low_priority">Prioridad baja</string>
 </resources>

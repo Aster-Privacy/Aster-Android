@@ -56,6 +56,7 @@ private val secure_prefs_namespaces = listOf(
     "aster_ratchet_identity_pins",
     "aster_ratchet_plaintext_v1",
     "aster_app_lock_biometric",
+    "aster_app_lock_device",
 )
 
 private val deferred_secure_prefs_namespaces = listOf(
@@ -286,15 +287,21 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
 
     private fun register_app_lock_lifecycle() {
         val store = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java).app_lock_store()
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val expire = Runnable { if (store.is_store_open()) store.expire_in_background() }
         androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(
             androidx.lifecycle.LifecycleEventObserver { _, event ->
                 when (event) {
                     androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
-                        if (store.is_store_open()) store.lock()
+                        handler.removeCallbacks(expire)
+                        if (store.is_store_open()) {
+                            store.on_background()?.let { delay -> handler.postDelayed(expire, delay) }
+                        }
                         org.astermail.android.ui.common.app_session.mark_backgrounded()
                         org.astermail.android.mail.ReactionHoldQueue.flush_all()
                     }
                     androidx.lifecycle.Lifecycle.Event.ON_START -> {
+                        handler.removeCallbacks(expire)
                         if (store.is_store_open()) store.check_on_foreground()
                         org.astermail.android.ui.common.app_session.mark_foregrounded()
                         runCatching {

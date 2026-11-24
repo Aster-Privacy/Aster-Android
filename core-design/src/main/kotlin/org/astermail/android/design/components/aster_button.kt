@@ -41,6 +41,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -76,6 +81,7 @@ private val aster_button_compact_label_size = 14.sp
 private val aster_button_shape = AsterShapes.control
 private val aster_button_label_size = 16.sp
 private val aster_button_spinner_size = 20.dp
+private const val aster_button_min_label_scale = 0.75f
 
 private val depth_red = Color(0xFFDC2626)
 
@@ -85,15 +91,38 @@ private fun aster_button_label(
     content_color: Color,
     label_size: androidx.compose.ui.unit.TextUnit = aster_button_label_size,
     modifier: Modifier = Modifier,
+    fit_width: Boolean = false,
 ) {
-    Text(
+    if (!fit_width) {
+        Text(
+            text = label,
+            fontSize = label_size,
+            fontWeight = FontWeight.SemiBold,
+            color = content_color,
+            maxLines = 1,
+            softWrap = false,
+            modifier = modifier,
+        )
+        return
+    }
+    BasicText(
         text = label,
-        fontSize = label_size,
-        fontWeight = FontWeight.SemiBold,
-        color = content_color,
+        modifier = modifier,
+        style = LocalTextStyle.current.merge(
+            TextStyle(
+                fontSize = label_size,
+                fontWeight = FontWeight.SemiBold,
+                color = content_color,
+                textAlign = TextAlign.Center,
+            ),
+        ),
         maxLines = 1,
         softWrap = false,
-        modifier = modifier,
+        autoSize = TextAutoSize.StepBased(
+            minFontSize = label_size * aster_button_min_label_scale,
+            maxFontSize = label_size,
+            stepSize = 0.5.sp,
+        ),
     )
 }
 
@@ -151,7 +180,13 @@ private fun aster_button_content(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_label(label, content_color, label_size, Modifier.graphicsLayer { alpha = label_alpha })
+        aster_button_label(
+            label,
+            content_color,
+            label_size,
+            Modifier.graphicsLayer { alpha = label_alpha },
+            fit_width = true,
+        )
         AnimatedVisibility(
             visible = is_loading,
             enter = aster_fade_in(reduce_motion),

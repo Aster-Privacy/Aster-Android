@@ -13,7 +13,5 @@
     <string name="inbox_a11y_state_read">Leído</string>
     <string name="inbox_a11y_state_unread">No leído</string>
     <string name="copy_code">Copiar código</string>
-    <string name="copy_subject">Copiar asunto</string>
     <string name="code_copied">Código copiado</string>
-    <string name="subject_copied">Asunto copiado</string>
 </resources>

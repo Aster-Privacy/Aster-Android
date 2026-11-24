@@ -75,6 +75,7 @@ import org.astermail.android.api.mail_rules.Condition as MailRuleCondition
 sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
     object UnauthorizedError : ApiError("unauthorized")
+    object RefreshTokenRevoked : ApiError("refresh token revoked")
     object InvalidCredentials : ApiError("invalid credentials")
     data class PaymentRequired(val detail: String = "") : ApiError(detail)
     data class AttachmentTooLarge(val detail: String = "") : ApiError(detail)
@@ -176,6 +177,7 @@ const val VAULT_LEVEL = "2"
 
 const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
+const val REFRESH_TOKEN_REVOKED_CODE = "REFRESH_TOKEN_REVOKED"
 const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
 const val ACCOUNT_SUSPENDED_CODE = "ACCOUNT_SUSPENDED"
 const val CAPTCHA_FAILED_CODE = "CAPTCHA_FAILED"
@@ -184,6 +186,7 @@ fun map_unauthorized(server_code: String?, detail: String): ApiError =
     when (server_code) {
         FINGERPRINT_MISMATCH_CODE -> ApiError.StepUpRequired(detail.ifBlank { "step up required" })
         INVALID_CREDENTIALS_CODE -> ApiError.InvalidCredentials
+        REFRESH_TOKEN_REVOKED_CODE -> ApiError.RefreshTokenRevoked
         else -> ApiError.UnauthorizedError
     }
 
@@ -226,8 +229,22 @@ private val sign_in_path_suffixes = listOf(
     "/auth/hardware-keys/assert/verify",
 )
 
+private val public_recovery_paths = listOf(
+    "/recovery/initiate",
+    "/recovery/verifier-salts",
+    "/recovery/complete",
+    "/recovery/forgot-password",
+    "/recovery/reset-password",
+    "/recovery/phrase/initiate",
+    "/recovery/escrow/fetch",
+    "/recovery/email/verify-token",
+    "/recovery/email/link-status",
+    "/recovery/email/resend-pending",
+)
+
 fun is_sign_in_path(path: String): Boolean =
-    path.contains("/recovery/") ||
+    path.contains("/auth/recovery/") ||
+        public_recovery_paths.any { path.contains(it) } ||
         path.contains("/guard/sign-in/") ||
         path.endsWith("/guard/veto") ||
         sign_in_path_suffixes.any { path.endsWith(it) }
@@ -397,6 +414,7 @@ class ApiClient(
             val original_call: HttpClientCall = try {
                 execute(request)
             } catch (error: Throwable) {
+                org.astermail.android.api.network.TransientFailureSignal.note()
                 note_slow_link(error)
                 report_transport_failure(
                     request.url.encodedPathSegments.joinToString("/"),
@@ -404,6 +422,7 @@ class ApiClient(
                 )
                 throw error
             }
+            org.astermail.android.api.network.TransientFailureSignal.note_status(original_call.response.status.value)
             report_failed_call(request.url.encodedPathSegments.joinToString("/"), original_call.response.status.value)
             if (original_call.response.status == HttpStatusCode.Accepted) {
                 val saved_accepted = original_call.save()

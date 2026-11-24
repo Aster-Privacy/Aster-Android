@@ -97,6 +97,7 @@ import org.astermail.android.storage.StoredAccount
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.ui.common.plan_ring
 import org.astermail.android.ui.common.remember_has_paid_plan
+import org.astermail.android.ui.drawer.remember_cached_paid_account_ids
 import org.astermail.android.ui.drawer.workspace_switcher_sheet
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.settings.detail.ExportScreen
@@ -137,6 +138,12 @@ fun SuspendedAccountGate(
     val context = LocalContext.current
     var show_switcher by remember { mutableStateOf(false) }
     var show_export by remember { mutableStateOf(false) }
+    LaunchedEffect(accounts_state.current_account_id) {
+        accounts_view_model.refresh_with_profile()
+    }
+    val preloaded_paid_ids = remember_cached_paid_account_ids(
+        accounts_state.accounts.map { it.id }.filter { it != accounts_state.current_account_id },
+    )
 
     val profile = state.profile
     val current_account = accounts_state.accounts.firstOrNull { it.id == (profile?.user_id ?: accounts_state.current_account_id) }
@@ -179,7 +186,7 @@ fun SuspendedAccountGate(
                 Image(
                     painter = painterResource(R.drawable.aster_wordmark),
                     contentDescription = null,
-                    modifier = Modifier.height(28.dp),
+                    modifier = Modifier.height(org.astermail.android.ui.auth.auth_logo_height),
                 )
 
                 Spacer(Modifier.height(24.dp))
@@ -421,6 +428,7 @@ fun SuspendedAccountGate(
                 show_switcher = false
                 view_model.sign_out(on_signed_out)
             },
+            preloaded_paid_ids = preloaded_paid_ids,
         )
     }
 }

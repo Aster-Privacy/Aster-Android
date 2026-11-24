@@ -69,7 +69,11 @@ fun DiagnosticsScreen(
     val copied_text = stringResource(R.string.copied_to_clipboard)
     val clip_label = stringResource(R.string.settings_diagnostics_clip_label)
 
-    detail_scaffold(title = stringResource(R.string.diagnostics), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.diagnostics),
+        on_back = on_back,
+        on_refresh = { crash_reports_on = crash_reports.read(context) },
+    ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.app_version), subtitle = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             settings_row_gap()

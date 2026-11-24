@@ -202,14 +202,13 @@ fun swipe_action_row(
     Box(
         modifier = modifier
             .pointerInput(start_enabled, end_enabled) {
-                if (!start_enabled && !end_enabled) return@pointerInput
                 val slop = viewConfiguration.touchSlop
                 val claim_distance = slop * swipe_claim_slop_multiplier
                 val fling_px = swipe_fling_velocity_dp.toPx()
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        if (is_dismissed || current_list_scrolling()) continue
+                        val swipe_blocked = is_dismissed || current_list_scrolling() || (!start_enabled && !end_enabled)
                         val limit = size.width.toFloat()
                         val commit_distance = limit * swipe_commit_fraction
                         val lower = if (end_enabled) -limit else 0f
@@ -220,6 +219,7 @@ fun swipe_action_row(
                         var claimed = false
                         var released = false
                         var passed_commit = false
+                        var swallowing = false
                         val velocity_tracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
                         velocity_tracker.addPosition(down.uptimeMillis, down.position)
                         try {
@@ -227,6 +227,10 @@ fun swipe_action_row(
                                 val event = awaitPointerEvent()
                                 val change = event.changes.firstOrNull { it.id == down.id } ?: break
                                 if (!change.pressed) break
+                                if (swallowing) {
+                                    change.consume()
+                                    continue
+                                }
                                 val delta = change.positionChange()
                                 dx += delta.x
                                 dy += delta.y
@@ -235,7 +239,11 @@ fun swipe_action_row(
                                     val axis = swipe_axis_for(dx, dy, slop)
                                     if (axis == SwipeAxis.vertical) break
                                     if (axis == SwipeAxis.undecided) continue
-                                    if (if (dx > 0f) !start_enabled else !end_enabled) break
+                                    if (swipe_blocked || (if (dx > 0f) !start_enabled else !end_enabled)) {
+                                        swallowing = true
+                                        change.consume()
+                                        continue
+                                    }
                                     claimed = true
                                     shown_faces = current_faces
                                     change.consume()

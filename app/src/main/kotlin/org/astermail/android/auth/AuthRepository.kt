@@ -176,6 +176,7 @@ class AuthRepository @Inject constructor(
     private val login_pins: LoginProofPinStore,
     private val external_pgp_key_store: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>,
     private val guard_device_store: dagger.Lazy<org.astermail.android.guard.GuardDeviceStore>,
+    private val app_lock_store: dagger.Lazy<org.astermail.android.security.AppLockStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -262,6 +263,9 @@ class AuthRepository @Inject constructor(
     init {
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
+        }
+        session_refresher.on_revoked { presented ->
+            handle_refresh_revoked(presented)
         }
         LockKeyHolder.add_open_listener { resume_after_unlock() }
         org.astermail.android.crypto.sync_format_readiness.install_api_if_absent {
@@ -356,8 +360,10 @@ class AuthRepository @Inject constructor(
         val user_id = session_key_store.get_user_id() ?: return
         if (!system_folder_heal_attempted_user_ids.add(user_id)) return
         background_scope.launch {
-            runCatching { system_folder_bootstrap.ensure_system_folders() }
-                .onFailure { system_folder_heal_attempted_user_ids.remove(user_id) }
+            val complete = runCatching { system_folder_bootstrap.ensure_system_folders() }
+                .map { org.astermail.android.mail.SystemFolderBootstrap.has_every_system_folder(it) }
+                .getOrDefault(false)
+            if (!complete) system_folder_heal_attempted_user_ids.remove(user_id)
         }
     }
 
@@ -420,7 +426,7 @@ class AuthRepository @Inject constructor(
                     } catch (_: Throwable) {
                     }
                 }
-                RefreshOutcome.AuthFailed -> sign_out_dead_session(presented)
+                RefreshOutcome.AuthFailed, RefreshOutcome.Revoked -> sign_out_dead_session(presented)
                 RefreshOutcome.Transient -> {
                 }
             }
@@ -436,6 +442,12 @@ class AuthRepository @Inject constructor(
         if (presented.isNullOrEmpty()) return
         if (!_is_signed_in.value || presented != token_store.refresh_token) return
         if (!org.astermail.android.api.auth.confirm_session_rejected { auth_api.me() }) return
+        sign_out_dead_session(presented)
+    }
+
+    private suspend fun handle_refresh_revoked(presented: String?) {
+        if (presented.isNullOrEmpty()) return
+        if (!_is_signed_in.value || presented != token_store.refresh_token) return
         sign_out_dead_session(presented)
     }
 
@@ -1806,7 +1818,7 @@ class AuthRepository @Inject constructor(
         if (api_client.get_csrf() != null) return true
         return when (try_refresh_session()) {
             RefreshOutcome.Success -> api_client.get_csrf() != null
-            RefreshOutcome.AuthFailed, RefreshOutcome.Transient -> false
+            RefreshOutcome.AuthFailed, RefreshOutcome.Transient, RefreshOutcome.Revoked -> false
         }
     }
 
@@ -2223,6 +2235,7 @@ class AuthRepository @Inject constructor(
         if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
+        runCatching { app_lock_store.get().forget_after_last_sign_out() }
     }
 
     private fun forget_guard_device(account_id: String) {
@@ -2972,6 +2985,7 @@ class AuthRepository @Inject constructor(
         if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
+        runCatching { app_lock_store.get().forget_after_last_sign_out() }
     }
 
     fun cached_password_hash_b64(): String? {

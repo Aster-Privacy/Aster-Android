@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,12 +136,7 @@ fun AutoForwardScreen(
             return@detail_scaffold
         }
         if (state.is_loading && rules.isEmpty() && active_rule == null) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                settings_load_spinner()
-            }
+            settings_pending_spinner()
         } else {
             if (active_rule != null) {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {

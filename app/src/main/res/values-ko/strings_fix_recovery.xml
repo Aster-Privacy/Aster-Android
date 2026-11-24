@@ -5,5 +5,4 @@
     <string name="recovery_email_not_verified_badge">확인되지 않음</string>
     <string name="recovery_email_action_resend">다시 보내기</string>
     <string name="recovery_email_action_remove">삭제</string>
-    <string name="delete_account_second_factor_checking">보안 설정을 확인하는 중</string>
 </resources>

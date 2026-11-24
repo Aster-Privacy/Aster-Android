@@ -661,9 +661,11 @@ fun MailDetailScreen(
         fallback = mail_vm.is_conversation_grouping_enabled,
     )
 
+    var load_requested by remember(email_id) { mutableStateOf(false) }
     LaunchedEffect(email_id, detail_grouping) {
         mail_vm.set_conversation_grouping(detail_grouping)
         mail_vm.load_thread(email_id)
+        load_requested = true
     }
 
     LaunchedEffect(has_message_sealed_to_missing_keys) {
@@ -1009,6 +1011,10 @@ fun MailDetailScreen(
                 .map { thread_message_to_mock(it) }
         }
     }
+    val display_ids = remember(display_messages) { display_messages.map { it.id } }
+    val own_sent_ids = remember(display_messages) {
+        display_messages.asSequence().filter { it.is_own_copy }.map { it.id }.toSet()
+    }
     val detail_count_corrections by mail_vm.thread_count_corrections.collectAsStateWithLifecycle()
     val expected_message_count = remember(
         email_id,
@@ -1030,23 +1036,28 @@ fun MailDetailScreen(
         if (thread_matches_email && !thread_state.is_loading && messages.isNotEmpty()) thread_settled = true
     }
     val thread_complete = email != null && thread_is_complete(
-        loaded_count = messages.size,
+        loaded_count = display_messages.size,
         expected_count = expected_message_count,
         settled = thread_settled,
         any_body_pending = messages.any { it.is_body_pending },
     )
     val single_message_open = expected_message_count <= 1 &&
-        messages.size <= 1 &&
-        messages.any { it.id == email_id }
+        display_messages.size <= 1 &&
+        display_messages.any { it.id == email_id }
     val layout_ready = thread_complete || single_message_open
     var open_layout by remember(email_id, detail_grouping) {
         mutableStateOf(
-            if (layout_ready) initial_thread_layout(messages.map { it.id }, email_id) else null,
+            if (layout_ready) initial_thread_layout(display_ids, email_id) else null,
         )
     }
-    LaunchedEffect(email_id, layout_ready, messages) {
-        if (open_layout == null && layout_ready) {
-            open_layout = initial_thread_layout(messages.map { it.id }, email_id)
+    var initial_scroll_done by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, layout_ready, display_ids, own_sent_ids) {
+        if (!layout_ready) return@LaunchedEffect
+        val layout = open_layout
+        if (layout == null) {
+            open_layout = initial_thread_layout(display_ids, email_id)
+        } else if (!initial_scroll_done && thread_layout_needs_refresh(layout.known_ids, display_ids, own_sent_ids)) {
+            open_layout = initial_thread_layout(display_ids, email_id)
         }
     }
     val is_thread_encrypted = remember(messages) { thread_is_end_to_end_encrypted(messages) }
@@ -1058,14 +1069,14 @@ fun MailDetailScreen(
     var bottom_bar_height by remember { mutableStateOf(132.dp) }
 
     val hidden_seed_ids = open_layout?.hidden_ids.orEmpty()
-    val hidden_id_set = remember(messages, hidden_group_revealed, hidden_seed_ids) {
+    val hidden_id_set = remember(display_messages, hidden_group_revealed, hidden_seed_ids) {
         if (hidden_group_revealed) emptySet()
-        else messages.asSequence().map { it.id }.filter { it in hidden_seed_ids }.toSet()
+        else display_messages.asSequence().map { it.id }.filter { it in hidden_seed_ids }.toSet()
     }
-    val hidden_run_sizes = remember(messages, hidden_id_set) {
+    val hidden_run_sizes = remember(display_messages, hidden_id_set) {
         val sizes = mutableMapOf<Int, Int>()
         var run_start = -1
-        messages.forEachIndexed { idx, msg ->
+        display_messages.forEachIndexed { idx, msg ->
             if (msg.id in hidden_id_set) {
                 if (run_start < 0) run_start = idx
                 sizes[run_start] = (sizes[run_start] ?: 0) + 1
@@ -1088,7 +1099,7 @@ fun MailDetailScreen(
         body_wait_expired = true
     }
     var thread_revealed by remember(email_id) {
-        mutableStateOf(thread_revealed_cache.was_revealed(email_id) || single_message_open)
+        mutableStateOf(thread_revealed_cache.was_revealed(email_id))
     }
     LaunchedEffect(
         email_id,
@@ -1101,12 +1112,8 @@ fun MailDetailScreen(
     ) {
         val layout = open_layout ?: return@LaunchedEffect
         if (thread_revealed) return@LaunchedEffect
-        if (single_message_open) {
-            thread_revealed = true
-            return@LaunchedEffect
-        }
         if (thread_reveal_ready(
-                complete = thread_complete,
+                complete = thread_complete || single_message_open,
                 expanded_ids = layout.expanded_ids,
                 hidden_ids = hidden_id_set,
                 ready_body_ids = ready_body_ids.value,
@@ -1189,13 +1196,18 @@ fun MailDetailScreen(
     }
 
     val list_state = rememberLazyListState()
-    val optimistic_tail_id = optimistic_thread_messages.lastOrNull()?.id
-    val opened_tail_id = remember(email_id) { optimistic_tail_id }
-    LaunchedEffect(optimistic_tail_id) {
-        if (optimistic_tail_id == null || optimistic_tail_id == opened_tail_id) return@LaunchedEffect
-        val total = list_state.layoutInfo.totalItemsCount
-        if (total > 0) list_state.animateScrollToItem(total - 1)
+    val tail_message = display_messages.lastOrNull()
+    val tail_key = remember(display_ids, thread_send_aliases) {
+        thread_item_keys(display_ids, thread_send_aliases).lastOrNull()
     }
+    val tail_is_own = tail_message?.is_own_copy == true
+    var user_dragged by remember(email_id) { mutableStateOf(false) }
+    LaunchedEffect(email_id, list_state) {
+        list_state.interactionSource.interactions.collect { interaction ->
+            if (interaction is androidx.compose.foundation.interaction.DragInteraction.Start) user_dragged = true
+        }
+    }
+    var followed_tail_key by remember(email_id) { mutableStateOf<String?>(null) }
     val pan_signal = remember { horizontal_pan_signal() }
     val card_reduce_motion = org.astermail.android.design.aster_reduce_motion()
     val card_placement_spec: androidx.compose.animation.core.FiniteAnimationSpec<androidx.compose.ui.unit.IntOffset>? =
@@ -1230,16 +1242,31 @@ fun MailDetailScreen(
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
 
-    var initial_scroll_done by remember(email_id) { mutableStateOf(false) }
-    LaunchedEffect(email_id, open_layout != null) {
+    LaunchedEffect(email_id, open_layout) {
         if (initial_scroll_done || open_layout == null) return@LaunchedEffect
+        val anchor = thread_open_anchor_id(display_ids, own_sent_ids, email_id)
         val target = initial_thread_scroll_index(
-            message_ids = messages.map { it.id },
-            opened_id = email_id,
+            message_ids = display_ids,
+            opened_id = anchor,
             header_item_count = 1,
         )
+        followed_tail_key = tail_key
         initial_scroll_done = true
         if (target != null) list_state.scrollToItem(target)
+    }
+    LaunchedEffect(email_id, tail_key, tail_is_own, initial_scroll_done, user_dragged) {
+        if (!initial_scroll_done) return@LaunchedEffect
+        if (!should_follow_tail(user_dragged, tail_key, followed_tail_key, tail_is_own)) {
+            if (!tail_is_own || user_dragged) followed_tail_key = tail_key
+            return@LaunchedEffect
+        }
+        followed_tail_key = tail_key
+        androidx.compose.runtime.withFrameNanos { }
+        val index = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == tail_key }?.index
+            ?: (list_state.layoutInfo.totalItemsCount - 1)
+        if (index >= 0 && !user_dragged) {
+            if (card_reduce_motion) list_state.scrollToItem(index) else list_state.animateScrollToItem(index)
+        }
     }
 
     val pending_anchor = remember { mutableStateOf<Triple<String, Int, Int>?>(null) }
@@ -1598,7 +1625,7 @@ fun MailDetailScreen(
             val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
             val subject_copy_value = translated_thread_subject?.ifBlank { null } ?: email?.subject?.ifBlank { null }
 
-            if (email == null && !thread_state.is_loading) {
+            if (email == null && load_requested && !thread_state.is_loading) {
                 Box(
                     Modifier.fillMaxSize().detail_swipe_navigation(detail_swipe, on_next, on_previous),
                     contentAlignment = Alignment.Center,
@@ -2951,6 +2978,7 @@ internal fun expanded_message(
                             unverified = trust?.auth_state == org.astermail.android.security.SenderAuthState.unverified,
                             unverified_domain = trust?.domain,
                         )
+                        priority_badge(raw_headers = msg.raw_headers)
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
                     val header_yesterday_label = stringResource(R.string.yesterday)
@@ -3458,7 +3486,15 @@ internal fun expanded_message(
                 org.astermail.android.mail.build_plain_text_html(body_source)
                 }
             }
-            email_html_view(
+            if (plain_html.isEmpty()) {
+                email_body_skeleton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(placeholder_body_height)
+                        .clipToBounds()
+                        .testTag("message_body"),
+                )
+            } else email_html_view(
                 html = plain_html,
                 message_key = msg.id,
                 allow_external = false,
@@ -5766,6 +5802,8 @@ internal fun label_picker_sheet(
     applied_tokens: Set<String> = emptySet(),
     on_move_to_inbox: (() -> Unit)? = null,
     depths: Map<String, Int> = emptyMap(),
+    system_targets: List<String> = emptyList(),
+    on_system_target: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -5801,6 +5839,25 @@ internal fun label_picker_sheet(
                     icon = TablerIcons.Inbox,
                     on_click = on_move_to_inbox,
                 )
+            }
+            system_targets.forEach { target ->
+                val (label_res, icon) = when (target) {
+                    "archive" -> R.string.folder_archive to TablerIcons.Archive
+                    "spam" -> R.string.folder_spam to spam_action_icon(is_spam = false)
+                    "trash" -> R.string.folder_trash to TablerIcons.Trash
+                    "star" -> R.string.folder_starred to TablerIcons.Star
+                    else -> return@forEach
+                }
+                Box(modifier = Modifier.testTag("move_sheet_$target")) {
+                    sheet_row(
+                        label = stringResource(label_res),
+                        tint = colors.text_primary,
+                        icon = icon,
+                        on_click = { on_system_target(target) },
+                    )
+                }
+            }
+            if (on_move_to_inbox != null || system_targets.isNotEmpty()) {
                 AsterDivider(modifier = Modifier.padding(horizontal = AsterSpacing.xl))
             }
             if (items.isEmpty()) {
@@ -7071,9 +7128,15 @@ internal fun email_html_view(
     }
     remember(measure, base_height_key) {
         if (measure.height_key != base_height_key) {
+            val previous_dp = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
+                measure.view_dp.takeIf { it >= 1f } ?: measure.reserve_dp.takeIf { it > 1f }
+            }
             measure.begin_key(
                 base_height_key,
-                seed_body_height(body_height_cache.get(base_height_key), estimated_height.value),
+                seed_body_height(
+                    body_height_cache.get(base_height_key),
+                    previous_dp ?: estimated_height.value,
+                ),
                 android.os.SystemClock.uptimeMillis(),
             )
         }
@@ -7642,7 +7705,8 @@ internal fun email_html_view(
       val view_dp = measure.view_dp
       val probing_now = measure.probing
       val measured_now = measure.measured
-      var skeleton_due by remember(measure) { mutableStateOf(false) }
+      var skeleton_due by remember(measure) { mutableStateOf(!measure.measured) }
+      val body_skeleton_reduce_motion = aster_reduce_motion()
       LaunchedEffect(measure, measured_now, base_height_key) {
           if (measured_now) {
               skeleton_due = false
@@ -7865,12 +7929,22 @@ internal fun email_html_view(
             },
         )
         }
-        if (!renderer_exhausted.value && skeleton_due && !measured_now) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !renderer_exhausted.value && skeleton_due && !measured_now,
+            enter = androidx.compose.animation.EnterTransition.None,
+            exit = if (body_skeleton_reduce_motion) {
+                androidx.compose.animation.ExitTransition.None
+            } else {
+                fadeOut(animationSpec = org.astermail.android.design.AsterSpring.effects<Float>())
+            },
+            modifier = Modifier
+                .matchParentSize()
+                .align(Alignment.TopStart),
+        ) {
             email_body_skeleton(
                 modifier = Modifier
-                    .matchParentSize()
-                    .background(if (colors.is_translucent) Color.Transparent else inbox_card_read_color(colors))
-                    .align(Alignment.TopStart),
+                    .fillMaxSize()
+                    .background(if (colors.is_translucent) Color.Transparent else inbox_card_read_color(colors)),
             )
         }
       }
@@ -8476,7 +8550,7 @@ private fun show_download_notification(
             dagger.hilt.android.EntryPointAccessors.fromApplication(
                 context.applicationContext,
                 org.astermail.android.notifications.MailPollingWorker.MailRepositoryEntryPoint::class.java,
-            ).app_lock_store().is_configured()
+            ).app_lock_store().hides_notification_content()
         }.getOrDefault(true)
         val content_hidden = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured
         val notification = androidx.core.app.NotificationCompat.Builder(context, channel_id)

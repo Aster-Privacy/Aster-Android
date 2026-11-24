@@ -87,6 +87,7 @@ import org.astermail.android.ui.settings.detail.error_banner
 import org.astermail.android.ui.settings.detail.info_dialog_button
 import org.astermail.android.ui.settings.detail.load_failed_card
 import org.astermail.android.ui.settings.detail.recommendation_note
+import org.astermail.android.ui.settings.detail.skeleton_hero_card
 
 @Composable
 fun guard_changes_host(
@@ -114,6 +115,7 @@ fun guard_changes_host(
         },
         on_not_me = on_not_me,
         on_change_password = on_change_password,
+        on_refresh = { view_model.load() },
     )
 }
 
@@ -129,8 +131,14 @@ fun guard_changes_screen(
     on_not_me: () -> Unit = {},
     on_change_password: (() -> Unit)? = null,
     on_skip_passkey: (String) -> Unit = {},
+    on_refresh: (suspend () -> Unit)? = null,
 ) {
-    detail_scaffold(title = "", on_back = on_back) {
+    detail_scaffold(
+        title = "",
+        on_back = on_back,
+        on_refresh = on_refresh,
+        refresh_enabled = state.working_id == null,
+    ) {
         if (guard_changes_shows_stopped(state.notice, on_change_password != null)) {
             Spacer(Modifier.height(AsterSpacing.xl))
             guard_result_block(
@@ -145,13 +153,12 @@ fun guard_changes_screen(
         }
         guard_page_hero(
             title = stringResource(R.string.guard_changes_title),
-            body = stringResource(R.string.guard_changes_subtitle),
             info = stringResource(R.string.guard_changes_body),
         )
         when {
             state.hidden -> error_banner(stringResource(R.string.guard_setup_unavailable))
-            state.load_failed && state.changes.isEmpty() -> load_failed_card(null, on_retry)
-            state.loading -> Unit
+            state.load_failed && !state.loaded -> load_failed_card(null, on_retry)
+            state.loading -> skeleton_hero_card(lines = 2, bar = true)
             else -> guard_changes_content(state, on_cancel, on_skip, on_stop, on_not_me, live, on_skip_passkey)
         }
     }

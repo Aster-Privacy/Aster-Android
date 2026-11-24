@@ -107,6 +107,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
+import org.astermail.android.ui.settings.join_launched
 
 private const val domain_min_query_length = 3
 private const val domain_results_page_size = 10
@@ -168,6 +169,13 @@ fun DomainPurchaseScreen(
     detail_scaffold(
         title = stringResource(R.string.domain_purchase_title),
         on_back = { if (state.selected != null) vm.clear_selected() else on_back() },
+        on_refresh = {
+            vm.join_launched {
+                vm.retry_search()
+                vm.check_pending_order()
+            }
+        },
+        refresh_enabled = state.selected == null && !state.searching && !state.search_rate_limited,
     ) {
         if (state.selected == null) {
             purchase_search_content(vm = vm, state = state)

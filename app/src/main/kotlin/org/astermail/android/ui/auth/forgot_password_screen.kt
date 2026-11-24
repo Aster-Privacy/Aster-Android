@@ -283,7 +283,7 @@ private fun recovery_step_header(
         Image(
             painter = painterResource(R.drawable.aster_wordmark),
             contentDescription = null,
-            modifier = Modifier.height(28.dp),
+            modifier = Modifier.height(auth_logo_height),
         )
         Spacer(Modifier.height(AsterSpacing.xxl))
     }

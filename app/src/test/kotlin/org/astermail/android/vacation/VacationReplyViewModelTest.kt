@@ -110,4 +110,22 @@ class VacationReplyViewModelTest {
 
         assertFalse(vm.state.value.load_failed)
     }
+
+    @Test
+    fun `open reads as loading and survives a transient error`() = runTest {
+        assertTrue(vm.state.value.is_loading)
+        var calls = 0
+        coEvery { api.get() } answers {
+            calls++
+            if (calls == 1) throw org.astermail.android.api.ApiError.ServerError(502)
+            null
+        }
+
+        vm.load()
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.load_failed)
+        assertFalse(vm.state.value.is_loading)
+        assertFalse(vm.state.value.exists)
+    }
 }

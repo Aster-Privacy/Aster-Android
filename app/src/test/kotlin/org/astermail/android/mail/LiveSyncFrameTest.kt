@@ -123,4 +123,27 @@ class LiveSyncFrameTest {
         assertNull(parse_mail_mutation_frame("""{"type":"new_mail","action":"delete","item_ids":["a"]}"""))
         assertNull(parse_mail_mutation_frame("not json"))
     }
+
+    @Test
+    fun a_suspended_auth_error_is_its_own_frame() {
+        assertEquals(
+            LiveSyncFrame.account_suspended,
+            parse_live_sync_frame("""{"type":"auth_error","message":"Session invalidated","code":"ACCOUNT_SUSPENDED"}"""),
+        )
+        assertEquals(
+            LiveSyncFrame.auth_error,
+            parse_live_sync_frame("""{"type":"auth_error","message":"Session invalidated"}"""),
+        )
+    }
+
+    @Test
+    fun only_a_suspended_403_stops_the_upgrade_retries() {
+        val suspended = """{"error":"ACCOUNT_SUSPENDED","code":"ACCOUNT_SUSPENDED","message":"x"}"""
+        assertEquals(true, is_suspended_upgrade_refusal(403, suspended))
+        assertEquals(false, is_suspended_upgrade_refusal(403, """{"code":"FORBIDDEN"}"""))
+        assertEquals(false, is_suspended_upgrade_refusal(403, "<html>blocked</html>"))
+        assertEquals(false, is_suspended_upgrade_refusal(403, null))
+        assertEquals(false, is_suspended_upgrade_refusal(503, suspended))
+        assertEquals(false, is_suspended_upgrade_refusal(null, suspended))
+    }
 }

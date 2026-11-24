@@ -5,5 +5,4 @@
     <string name="recovery_email_not_verified_badge">Doğrulanmadı</string>
     <string name="recovery_email_action_resend">Yeniden gönder</string>
     <string name="recovery_email_action_remove">Kaldır</string>
-    <string name="delete_account_second_factor_checking">Güvenlik ayarlarınız denetleniyor</string>
 </resources>

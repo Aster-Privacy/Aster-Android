@@ -29,7 +29,6 @@ import androidx.compose.animation.AnimatedContent
 import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -126,12 +125,7 @@ fun TemplatesScreen(
         refresh_enabled = !state.is_saving && pending_delete == null,
     ) {
         if (state.is_loading && state.items.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                settings_load_spinner()
-            }
+            settings_pending_spinner()
             return@detail_scaffold
         }
 

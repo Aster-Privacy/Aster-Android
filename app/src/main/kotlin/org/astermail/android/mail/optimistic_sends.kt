@@ -30,7 +30,7 @@ const val OPTIMISTIC_SEND_ID_PREFIX = "pending_send_"
 const val OPTIMISTIC_SEND_STATUS = "sending"
 const val OPTIMISTIC_SENT_STATUS = "sent"
 const val OPTIMISTIC_SEND_CLOCK_SKEW_MS = 15_000L
-const val OPTIMISTIC_SEND_LINGER_MS = 30_000L
+const val OPTIMISTIC_SEND_LINGER_MS = 600_000L
 
 fun is_optimistic_send_id(id: String): Boolean = id.startsWith(OPTIMISTIC_SEND_ID_PREFIX)
 
@@ -164,12 +164,32 @@ fun optimistic_send_has_server_copy(send: OptimisticSend, server_messages: List<
 
 private fun server_copy_of(send: OptimisticSend, real: List<ThreadMessageDecrypted>): ThreadMessageDecrypted? {
     val mail_item_id = send.mail_item_id
-    if (mail_item_id != null) real.firstOrNull { it.id == mail_item_id }?.let { return it }
+    if (mail_item_id != null) return real.firstOrNull { it.id == mail_item_id }
     val floor = send.started_at_ms - OPTIMISTIC_SEND_CLOCK_SKEW_MS
     return real.lastOrNull { message ->
         message.raw_item.item_type == "sent" &&
             (iso_to_epoch_ms(message.raw_item.created_at ?: message.timestamp) ?: Long.MIN_VALUE) >= floor
     }
+}
+
+fun committed_send_server_message(send: OptimisticSend): ThreadMessageDecrypted? {
+    if (!send.committed) return null
+    val mail_item_id = send.mail_item_id?.takeIf { it.isNotBlank() } ?: return null
+    return send.message.copy(
+        id = mail_item_id,
+        pending_send_at_ms = null,
+        raw_item = send.message.raw_item.copy(id = mail_item_id, send_status = null),
+    )
+}
+
+fun thread_snapshot_with_sent_copy(
+    existing: List<ThreadMessageDecrypted>?,
+    send: OptimisticSend,
+): List<ThreadMessageDecrypted>? {
+    if (existing.isNullOrEmpty()) return null
+    val copy = committed_send_server_message(send) ?: return null
+    if (existing.any { it.id == copy.id }) return null
+    return existing.filterNot { is_optimistic_send_id(it.id) } + copy
 }
 
 fun optimistic_send_aliases(

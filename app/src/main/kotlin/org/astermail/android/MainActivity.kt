@@ -30,6 +30,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import org.astermail.android.ui.common.apply_secure_window
+import org.astermail.android.ui.common.note_app_lock_launch
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -519,6 +521,7 @@ class MainActivity :
 
     override fun onResume() {
         super.onResume()
+        app_lock_store.end_external_flow()
         enforce_secure_flag()
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),
@@ -546,17 +549,31 @@ class MainActivity :
     override fun enforce_secure_flag() {
         val app_lock_configured = !app_lock_store.is_store_open() ||
             runCatching { app_lock_store.is_configured() }.getOrDefault(true)
-        if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
-            LockdownStore.is_enabled(applicationContext) ||
-            app_lock_configured
-        ) {
-            window.setFlags(
-                android.view.WindowManager.LayoutParams.FLAG_SECURE,
-                android.view.WindowManager.LayoutParams.FLAG_SECURE,
-            )
-        } else {
-            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
-        }
+        apply_secure_window(
+            org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
+                LockdownStore.is_enabled(applicationContext) ||
+                app_lock_configured,
+        )
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun startActivityForResult(intent: Intent, request_code: Int, options: Bundle?) {
+        note_app_lock_launch(app_lock_store, intent)
+        super.startActivityForResult(intent, request_code, options)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun startIntentSenderForResult(
+        intent: android.content.IntentSender,
+        request_code: Int,
+        fill_in_intent: Intent?,
+        flags_mask: Int,
+        flags_values: Int,
+        extra_flags: Int,
+        options: Bundle?,
+    ) {
+        app_lock_store.begin_external_flow()
+        super.startIntentSenderForResult(intent, request_code, fill_in_intent, flags_mask, flags_values, extra_flags, options)
     }
 }
 
@@ -984,6 +1001,11 @@ private fun AsterNavHost() {
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {
             preferences_sync_vm.load_preferences()
         }
+        org.astermail.android.ui.mail.live_sync_host(
+            active = !is_locked,
+            on_folders_changed = { preferences_sync_vm.reload_labels_from_sync() },
+            on_tags_changed = { preferences_sync_vm.reload_tags_from_sync() },
+        )
         val undo_route by nav_controller.currentBackStackEntryAsState()
         val undo_context = androidx.compose.ui.platform.LocalContext.current
         org.astermail.android.ui.mail.undo_send_events(

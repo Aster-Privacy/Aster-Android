@@ -30,7 +30,7 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidableCompositionLocal
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -124,14 +124,17 @@ fun aster_popup_window_effect(
 ) {
     val view = LocalView.current
     val context = LocalContext.current
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        prepare_popup_window(
-            window = window,
-            host = aster_host_window(context),
-            light_status_bars = light_status_bars,
-            light_navigation_bars = light_navigation_bars,
-            full_window = full_window,
-        )
+    DisposableEffect(view, context, light_status_bars, light_navigation_bars, full_window) {
+        val window = (view.parent as? DialogWindowProvider)?.window
+        if (window != null) {
+            prepare_popup_window(
+                window = window,
+                host = aster_host_window(context),
+                light_status_bars = light_status_bars,
+                light_navigation_bars = light_navigation_bars,
+                full_window = full_window,
+            )
+        }
+        onDispose {}
     }
 }

@@ -22,6 +22,7 @@
 package org.astermail.android.ui.search
 
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.lazy_top_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -720,8 +721,6 @@ fun SearchScreen(
             )
         }
 
-        AsterDivider()
-
         val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
         val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
         val search_status = search_status_of(
@@ -1412,6 +1411,7 @@ internal fun search_results_list(
         state = list_state,
         modifier = Modifier
             .fillMaxSize()
+            .lazy_top_fade(list_state)
             .testTag("search_results")
             .pointerInput(Unit) {
                 detectDragGesturesAfterLongPress(

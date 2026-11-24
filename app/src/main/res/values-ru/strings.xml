@@ -262,6 +262,7 @@
     <string name="failed_to_save">Не удалось сохранить файл</string>
     <string name="failed_to_download">Не удалось скачать %s</string>
     <string name="could_not_open_link">Не удалось открыть ссылку</string>
+    <string name="open_address_in_maps">Открыть в приложении карт</string>
     <string name="move_to_trash">Переместить в корзину</string>
     <string name="archived">Архивировано</string>
     <string name="unstarred">Убрано из избранного</string>
@@ -901,6 +902,7 @@
     <string name="message">Сообщение</string>
     <string name="feedback_placeholder">Опишите, что вам нравится, чего не хватает или что не работает.</string>
     <string name="feedback_privacy_note">Ваш адрес электронной почты будет прикреплён, чтобы мы могли ответить. Мы никогда не делимся отзывами.</string>
+    <string name="feedback_support_notice">Эта форма предназначена для отзывов, идей и сообщений об ошибках. С вопросами или за помощью с аккаунтом пишите в службу поддержки по адресу %1$s.</string>
     <string name="send_feedback">Отправить отзыв</string>
     <string name="sending_feedback">Отправка...</string>
     <string name="sent">Отправлено</string>
@@ -2284,7 +2286,7 @@
     <string name="vanguard_description">Усиленная защита приложения: блокировка входа и повышенная безопасность.</string>
     <string name="vanguard_upgrade_cta">Улучшить тариф</string>
     <string name="vanguard_confirm_disable_title">Отключить Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">Блокировка приложения и остальные средства защиты Vanguard будут выключены.</string>
+    <string name="vanguard_confirm_disable_desc">Средства защиты Vanguard будут выключены. Блокировка приложения останется включенной.</string>
     <string name="vanguard_disable">Отключить</string>
     <string name="app_lock_pin">Блокировка приложения</string>
     <string name="app_lock_pin_description">Спрашивать PIN-код или пароль при открытии приложения.</string>
@@ -2894,6 +2896,8 @@
     <string name="contact_add_failed">Не удалось сохранить %1$s в контактах</string>
     <string name="contact_remove_failed">Не удалось удалить %1$s из контактов</string>
     <string name="copy_failed">Не удалось скопировать. Попробуйте ещё раз.</string>
+    <string name="copy_subject">Копировать тему</string>
+    <string name="subject_copied">Тема скопирована</string>
     <string name="create_label_subtitle">Отмечайте письма цветом на ваш выбор</string>
     <string name="delete_signature_message">Удалить «%1$s»? Отменить это действие нельзя.</string>
     <string name="delete_vacation_reply_confirm">Сообщение об отсутствии и его даты будут удалены. Отменить это нельзя.</string>
@@ -3805,4 +3809,10 @@
     <string name="toast_position_subtitle">Где появляются уведомления во время работы с приложением</string>
     <string name="toast_position_top">Сверху</string>
     <string name="toast_position_bottom">Снизу</string>
+    <string name="mail_priority">Приоритет</string>
+    <string name="mail_priority_high">Высокий</string>
+    <string name="mail_priority_normal">Обычный</string>
+    <string name="mail_priority_low">Низкий</string>
+    <string name="mail_high_priority">Высокий приоритет</string>
+    <string name="mail_low_priority">Низкий приоритет</string>
 </resources>

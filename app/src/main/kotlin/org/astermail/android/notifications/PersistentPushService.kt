@@ -59,6 +59,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.astermail.android.MainActivity
 import org.astermail.android.R
+import org.astermail.android.api.AuthEventBus
 import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.SessionRefresher
@@ -310,6 +311,12 @@ class PersistentPushService : Service() {
         runCatching { current?.cancel() }
     }
 
+    private fun stop_for_suspension() {
+        reconnect_job?.cancel()
+        AuthEventBus.emit_suspended()
+        stop_cleanly()
+    }
+
     private fun stop_cleanly() {
         close_socket()
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
@@ -445,6 +452,10 @@ class PersistentPushService : Service() {
                 }
                 "auth_error" -> {
                     authenticated = false
+                    if (org.astermail.android.mail.is_suspended_refusal(text)) {
+                        stop_for_suspension()
+                        return
+                    }
                     runCatching { webSocket.close(NORMAL_CLOSURE, null) }
                     recover_session()
                 }
@@ -489,6 +500,11 @@ class PersistentPushService : Service() {
             if (stale()) return
             authenticated = false
             heartbeat_job?.cancel()
+            val body = org.astermail.android.mail.upgrade_refusal_body(response)
+            if (org.astermail.android.mail.is_suspended_upgrade_refusal(response?.code, body)) {
+                stop_for_suspension()
+                return
+            }
             schedule_reconnect()
         }
 

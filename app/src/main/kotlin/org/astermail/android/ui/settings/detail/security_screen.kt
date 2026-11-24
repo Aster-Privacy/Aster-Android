@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -104,15 +105,12 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
-import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.host_activity
 import org.astermail.android.auth.create_passkey_json
 import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.ui.common.find_host_activity
-import org.astermail.android.ui.security.AppLockSetupSheet
-import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.settings.join_launched
@@ -237,11 +235,13 @@ fun SecurityScreen(
         prefs != null &&
         state.login_alerts_enabled != null &&
         state.vanguard_enabled != null &&
+        (state.hardware_keys_loaded || state.hardware_keys_load_failed) &&
         !state.is_loading
 
     var content_ready by remember {
         mutableStateOf(
-            sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null,
+            sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null &&
+                (state.hardware_keys_loaded || state.hardware_keys_load_failed),
         )
     }
     LaunchedEffect(security_signals_ready) {
@@ -560,6 +560,12 @@ fun SecurityScreen(
             )
             settings_row_gap()
             Column(modifier = anchor_modifier(security_anchor.passkeys)) {
+                if (hardware_keys_count == 0 && !state.hardware_keys_loaded && !state.hardware_keys_load_failed) {
+                    settings_loading_row(
+                        title = stringResource(R.string.passkeys_security_keys),
+                        icon = TablerIcons.Key,
+                    )
+                }
                 if (hardware_keys_count == 0 && state.hardware_keys_load_failed) {
                     detail_row(
                         title = stringResource(R.string.passkeys_security_keys),
@@ -601,7 +607,7 @@ fun SecurityScreen(
                             }
                         }
                     }
-                } else if (!state.hardware_keys_load_failed) {
+                } else if (state.hardware_keys_loaded) {
                     detail_row(
                         title = stringResource(R.string.passkeys_security_keys),
                         subtitle = stringResource(R.string.passkeys_none_subtitle),
@@ -627,7 +633,12 @@ fun SecurityScreen(
 
         section_label(stringResource(R.string.section_trusted_devices))
         AsterCard(modifier = Modifier.fillMaxWidth().testTag("trusted_devices_card")) {
-            if (state.trusted_devices.isEmpty() && state.trusted_devices_load_failed) {
+            if (state.trusted_devices.isEmpty() && !state.trusted_devices_loaded && !state.trusted_devices_load_failed) {
+                settings_loading_row(
+                    title = stringResource(R.string.section_trusted_devices),
+                    icon = TablerIcons.Shield,
+                )
+            } else if (state.trusted_devices.isEmpty() && state.trusted_devices_load_failed) {
                 detail_row(
                     title = stringResource(R.string.failed_to_load),
                     subtitle = stringResource(R.string.retry),
@@ -878,13 +889,14 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        vanguard_section(vm = vm, lock_vm = lock_vm, on_upgrade = { on_open("billing") })
+        vanguard_section(vm = vm, lock_store = lock_vm.store, on_upgrade = { on_open("billing") })
 
         v_gap(AsterSpacing.lg)
 
         recent_activity_section(
             events = state.audit_events,
             load_failed = state.audit_events_load_failed,
+            loading = !state.audit_events_loaded && !state.audit_events_load_failed,
             on_retry = { vm.load_audit_log() },
             colors = colors,
         )
@@ -956,129 +968,100 @@ fun SecurityScreen(
     }
 }
 
-private enum class AppLockModal { setup, verify_to_change, change, disable, verify_to_enable_biometric }
-
 @Composable
 private fun vanguard_section(
     vm: SettingsViewModel,
-    lock_vm: AppLockViewModel,
+    lock_store: org.astermail.android.security.AppLockStore,
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
-    val store = lock_vm.store
 
     val is_nova_plus = is_vanguard_plan(state.subscription)
     val vanguard_enabled = state.vanguard_enabled == true
 
     var show_disable_confirm by remember { mutableStateOf(false) }
-    var app_lock_enabled by remember { mutableStateOf(store.is_configured()) }
-    var modal by remember { mutableStateOf<AppLockModal?>(null) }
     val lock_context = LocalContext.current
-    val biometric_available = remember {
-        androidx.biometric.BiometricManager.from(lock_context).canAuthenticate(
-            androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG,
-        ) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
-    }
-    var biometric_enabled by remember {
-        mutableStateOf(org.astermail.android.security.BiometricUnlockGate.is_enrolled(lock_context))
-    }
+
+    val lock_config_version by lock_store.config_version.collectAsState()
+    val lock_configured = remember(lock_config_version) { lock_store.is_configured() }
 
     section_label(stringResource(R.string.section_vanguard))
 
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(AsterSpacing.md)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stringResource(R.string.vanguard_enable),
-                            color = colors.text_primary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        if (vanguard_enabled) {
-                            Spacer(Modifier.width(AsterSpacing.xs))
-                            verified_badge(stringResource(R.string.vanguard_active))
+    AsterCard(modifier = Modifier.fillMaxWidth().testTag("vanguard_card")) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(AsterSpacing.md)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = stringResource(R.string.vanguard_enable),
+                                color = colors.text_primary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            if (vanguard_enabled) {
+                                Spacer(Modifier.width(AsterSpacing.xs))
+                                verified_badge(stringResource(R.string.vanguard_active))
+                            }
                         }
-                    }
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(R.string.vanguard_description),
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                    )
-                }
-                if (state.vanguard_enabled == null && state.vanguard_status_load_failed) {
-                    AsterGhostButton(
-                        label = stringResource(R.string.retry),
-                        onClick = { vm.load_vanguard_status() },
-                    )
-                } else if (state.vanguard_enabled == null) {
-                    org.astermail.android.design.components.aster_spinner(
-                        modifier = Modifier.size(20.dp).skeleton_reveal(),
-                        stroke_width = 2.dp,
-                        color = colors.text_muted,
-                    )
-                } else if (is_nova_plus || state.subscription == null) {
-                    AsterSwitch(
-                        checked = vanguard_enabled,
-                        onCheckedChange = { v ->
-                            if (v) vm.enable_vanguard()
-                            else show_disable_confirm = true
-                        },
-                        enabled = state.vanguard_enabled != null,
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .clip(SquircleShape(10.dp))
-                            .background(colors.accent_blue)
-                            .clickable(onClick = on_upgrade)
-                            .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
-                    ) {
+                        Spacer(Modifier.height(2.dp))
                         Text(
-                            text = stringResource(R.string.vanguard_upgrade_cta),
-                            color = colors.on_accent,
+                            text = stringResource(R.string.vanguard_description),
+                            color = colors.text_muted,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
                         )
+                    }
+                    if (state.vanguard_enabled == null && state.vanguard_status_load_failed) {
+                        AsterGhostButton(
+                            label = stringResource(R.string.retry),
+                            onClick = { vm.load_vanguard_status() },
+                        )
+                    } else if (state.vanguard_enabled == null) {
+                        org.astermail.android.design.components.aster_spinner(
+                            modifier = Modifier.size(20.dp).skeleton_reveal(),
+                            stroke_width = 2.dp,
+                            color = colors.text_muted,
+                        )
+                    } else if (is_nova_plus || state.subscription == null) {
+                        AsterSwitch(
+                            checked = vanguard_enabled,
+                            onCheckedChange = { v ->
+                                if (v) vm.enable_vanguard()
+                                else show_disable_confirm = true
+                            },
+                            enabled = state.vanguard_enabled != null,
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(SquircleShape(10.dp))
+                                .background(colors.accent_blue)
+                                .clickable(onClick = on_upgrade)
+                                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.vanguard_upgrade_cta),
+                                color = colors.on_accent,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
                     }
                 }
             }
-
             AnimatedVisibility(
-                visible = vanguard_enabled,
+                visible = app_lock_rows_visible(state.vanguard_enabled, lock_configured),
                 enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
                 exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
             ) {
-                Column {
-                    Spacer(Modifier.height(AsterSpacing.md))
+                Column(modifier = Modifier.fillMaxWidth()) {
                     settings_row_gap()
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    app_lock_row(
-                        store = store,
-                        enabled = app_lock_enabled,
-                        on_toggle = { want ->
-                            if (want) modal = AppLockModal.setup
-                            else modal = AppLockModal.disable
-                        },
-                        on_change_pin = { modal = AppLockModal.verify_to_change },
-                        biometric_available = biometric_available,
-                        biometric_enabled = biometric_enabled,
-                        on_toggle_biometric = { want ->
-                            if (want) {
-                                modal = AppLockModal.verify_to_enable_biometric
-                            } else {
-                                org.astermail.android.security.BiometricUnlockGate.reset(lock_context)
-                                biometric_enabled = false
-                            }
-                        },
-                    )
+                    app_lock_rows(store = lock_store)
                 }
             }
         }
@@ -1138,136 +1121,9 @@ private fun vanguard_section(
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             on_confirm = {
                 show_disable_confirm = false
-                vm.disable_vanguard {
-                    if (store.disable()) {
-                        app_lock_enabled = false
-                        biometric_enabled = false
-                    }
-                }
+                vm.disable_vanguard()
             },
         )
-    }
-
-    when (modal) {
-        AppLockModal.setup, AppLockModal.change -> AppLockSetupSheet(
-            store = store,
-            on_dismiss = { modal = null },
-            on_success = { app_lock_enabled = true; biometric_enabled = false; modal = null },
-        )
-        AppLockModal.verify_to_change -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_change),
-            on_dismiss = { modal = null },
-            on_success = { modal = AppLockModal.change },
-        )
-        AppLockModal.disable -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_disable),
-            on_dismiss = { modal = null },
-            on_success = {
-                if (store.disable()) {
-                    app_lock_enabled = false
-                    biometric_enabled = false
-                }
-                modal = null
-            },
-        )
-        AppLockModal.verify_to_enable_biometric -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_enable_biometric),
-            on_dismiss = { modal = null },
-            on_success = {
-                modal = null
-                val activity = lock_context.find_host_activity() as? androidx.fragment.app.FragmentActivity
-                if (activity != null) {
-                    org.astermail.android.ui.security.launch_biometric_enroll(
-                        activity = activity,
-                        origin = org.astermail.android.security.BiometricEnrollOrigin.SETTINGS_AFTER_PIN,
-                        pin_verified = true,
-                        biometric_available = biometric_available,
-                    ) { enrolled -> biometric_enabled = enrolled }
-                }
-            },
-        )
-        null -> {}
-    }
-}
-
-@Composable
-private fun app_lock_row(
-    store: AppLockStore,
-    enabled: Boolean,
-    on_toggle: (Boolean) -> Unit,
-    on_change_pin: () -> Unit,
-    biometric_available: Boolean,
-    biometric_enabled: Boolean,
-    on_toggle_biometric: (Boolean) -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                Text(
-                    text = stringResource(R.string.app_lock_pin),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.app_lock_pin_description),
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
-                )
-            }
-            AsterSwitch(
-                checked = enabled,
-                onCheckedChange = on_toggle,
-            )
-        }
-        if (enabled) {
-            Spacer(Modifier.height(AsterSpacing.xs))
-            Text(
-                text = stringResource(R.string.app_lock_change_pin),
-                color = colors.accent_blue,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .clip(SquircleShape(8.dp))
-                    .clickable(onClick = on_change_pin)
-                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
-            )
-        }
-        if (enabled && biometric_available) {
-            Spacer(Modifier.height(AsterSpacing.md))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                    Text(
-                        text = stringResource(R.string.app_lock_use_biometric),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(R.string.app_lock_biometric_subtitle),
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                    )
-                }
-                AsterSwitch(
-                    checked = biometric_enabled,
-                    onCheckedChange = on_toggle_biometric,
-                )
-            }
-        }
     }
 }
 
@@ -1758,6 +1614,7 @@ private fun group_audit_events(
 private fun recent_activity_section(
     events: List<AuditEvent>,
     load_failed: Boolean,
+    loading: Boolean,
     on_retry: () -> Unit,
     colors: org.astermail.android.design.AsterSemanticColors,
 ) {
@@ -1847,6 +1704,11 @@ private fun recent_activity_section(
                     subtitle = stringResource(R.string.retry),
                     icon = TablerIcons.AlertCircle,
                     on_click = on_retry,
+                )
+            } else if (loading) {
+                settings_loading_row(
+                    title = stringResource(R.string.section_recent_activity),
+                    icon = TablerIcons.History,
                 )
             } else {
                 detail_row(

@@ -430,6 +430,7 @@
     <string name="failed_to_save">Failed to save file</string>
     <string name="failed_to_download">Failed to download %s</string>
     <string name="could_not_open_link">Could not open link</string>
+    <string name="open_address_in_maps">Open in maps app</string>
     <string name="move_to_trash">Move to trash</string>
     <string name="trash">Trash</string>
     <string name="archive">Archive</string>
@@ -1401,6 +1402,7 @@
     <string name="message">Message</string>
     <string name="feedback_placeholder">Describe what you love, what\'s missing, or what\'s broken.</string>
     <string name="feedback_privacy_note">Your account email will be attached so we can reply. We never share feedback.</string>
+    <string name="feedback_support_notice">This form is for feedback, ideas, and bug reports. For questions or help with your account, email the support team at %1$s instead.</string>
     <string name="send_feedback">Send feedback</string>
     <string name="sending_feedback">Sending...</string>
     <string name="sent">Sent</string>
@@ -2466,7 +2468,7 @@
     <string name="vanguard_description">Advanced app protection with app lock and enhanced security.</string>
     <string name="vanguard_upgrade_cta">Upgrade</string>
     <string name="vanguard_confirm_disable_title">Disable Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">App lock and other Vanguard protections will be turned off.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard protections will be turned off. App Lock stays on.</string>
     <string name="vanguard_disable">Disable</string>
 
     <!-- App Lock settings -->
@@ -3103,6 +3105,8 @@
     <string name="contact_add_failed">Could not save %1$s to contacts</string>
     <string name="contact_remove_failed">Could not remove %1$s from contacts</string>
     <string name="copy_failed">Couldn’t copy. Try again.</string>
+    <string name="copy_subject">Copy subject</string>
+    <string name="subject_copied">Subject copied</string>
     <string name="create_label_subtitle">Tag messages with a color you choose</string>
     <string name="delete_signature_message">Delete “%1$s”? This cannot be undone.</string>
     <string name="delete_vacation_reply_confirm">Your away message and its dates will be deleted. This cannot be undone.</string>
@@ -3795,4 +3799,10 @@
     <string name="toast_position_subtitle">Where alerts appear while you use the app</string>
     <string name="toast_position_top">Top</string>
     <string name="toast_position_bottom">Bottom</string>
+    <string name="mail_priority">Priority</string>
+    <string name="mail_priority_high">High</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Low</string>
+    <string name="mail_high_priority">High priority</string>
+    <string name="mail_low_priority">Low priority</string>
 </resources>

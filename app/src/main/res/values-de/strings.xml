@@ -263,6 +263,7 @@
     <string name="failed_to_save">Speichern fehlgeschlagen</string>
     <string name="failed_to_download">Download von %s fehlgeschlagen</string>
     <string name="could_not_open_link">Link konnte nicht geöffnet werden</string>
+    <string name="open_address_in_maps">In Karten-App öffnen</string>
     <string name="move_to_trash">In den Papierkorb verschieben</string>
     <string name="archived">Archiviert</string>
     <string name="unstarred">Stern entfernt</string>
@@ -902,6 +903,7 @@
     <string name="message">Nachricht</string>
     <string name="feedback_placeholder">Beschreiben Sie, was Ihnen gefällt, was fehlt oder was nicht funktioniert.</string>
     <string name="feedback_privacy_note">Ihre Konto-E-Mail wird angehängt, damit wir antworten können. Wir teilen Feedback niemals.</string>
+    <string name="feedback_support_notice">Dieses Formular ist für Feedback, Ideen und Fehlerberichte gedacht. Bei Fragen oder für Hilfe mit Ihrem Konto senden Sie stattdessen eine E-Mail an das Support-Team unter %1$s.</string>
     <string name="send_feedback">Feedback senden</string>
     <string name="sending_feedback">Wird gesendet...</string>
     <string name="sent">Gesendet</string>
@@ -2275,7 +2277,7 @@
     <string name="vanguard_description">Erweiterter App-Schutz mit App-Sperre und zusätzlicher Sicherheit.</string>
     <string name="vanguard_upgrade_cta">Upgraden</string>
     <string name="vanguard_confirm_disable_title">Vanguard deaktivieren?</string>
-    <string name="vanguard_confirm_disable_desc">App-Sperre und die übrigen Vanguard-Schutzfunktionen werden abgeschaltet.</string>
+    <string name="vanguard_confirm_disable_desc">Die Vanguard-Schutzfunktionen werden abgeschaltet. Die App-Sperre bleibt aktiv.</string>
     <string name="vanguard_disable">Deaktivieren</string>
     <string name="app_lock_pin">App-Sperre</string>
     <string name="app_lock_pin_description">PIN oder Passphrase verlangen, um die App zu öffnen.</string>
@@ -2857,6 +2859,8 @@
     <string name="contact_add_failed">%1$s konnte nicht in den Kontakten gespeichert werden</string>
     <string name="contact_remove_failed">%1$s konnte nicht aus den Kontakten entfernt werden</string>
     <string name="copy_failed">Kopieren fehlgeschlagen. Versuchen Sie es erneut.</string>
+    <string name="copy_subject">Betreff kopieren</string>
+    <string name="subject_copied">Betreff kopiert</string>
     <string name="create_label_subtitle">Nachrichten mit einer Farbe Ihrer Wahl markieren</string>
     <string name="delete_signature_message">„%1$s“ wird endgültig gelöscht, und Sie können das nicht rückgängig machen.</string>
     <string name="delete_vacation_reply_confirm">Ihre Abwesenheitsnotiz und ihre Daten werden gelöscht. Das lässt sich nicht rückgängig machen.</string>
@@ -3744,4 +3748,10 @@
     <string name="toast_position_subtitle">Wo Hinweise erscheinen, während die App geöffnet ist</string>
     <string name="toast_position_top">Oben</string>
     <string name="toast_position_bottom">Unten</string>
+    <string name="mail_priority">Priorität</string>
+    <string name="mail_priority_high">Hoch</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Niedrig</string>
+    <string name="mail_high_priority">Hohe Priorität</string>
+    <string name="mail_low_priority">Niedrige Priorität</string>
 </resources>

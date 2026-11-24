@@ -152,6 +152,8 @@ class SessionKeyStore(context: Context? = null) {
 
     private val identity_key_count = MutableStateFlow(0L)
 
+    private val key_material_count = MutableStateFlow(0L)
+
     @Volatile
     private var data_kek: ByteArray? = null
     private var storage_kdf_version: Int? = null
@@ -207,10 +209,28 @@ class SessionKeyStore(context: Context? = null) {
         load_persisted()
         if (prefs != null) {
             LockKeyHolder.add_open_listener { synchronized(lock) { load_persisted() } }
+            LockKeyHolder.add_close_listener { loaded_while_open = false }
         }
     }
 
+    @Volatile
+    private var persisted_loading = false
+
+    @Volatile
+    private var loaded_while_open = false
+
     private fun load_persisted() {
+        persisted_loading = true
+        try {
+            load_persisted_fields()
+            loaded_while_open = LockKeyHolder.is_open()
+        } finally {
+            persisted_loading = false
+            key_material_count.value = key_material_count.value + 1
+        }
+    }
+
+    private fun load_persisted_fields() {
         prefs?.let { p ->
             runCatching {
                 key_material = decode_b64_field(p, key_session_key)
@@ -299,6 +319,7 @@ class SessionKeyStore(context: Context? = null) {
                 editor?.putString(key_ratchet_spk_pub, signed_prekey_public_b64)
             }
             editor?.commit()
+            key_material_count.value = key_material_count.value + 1
         }
     }
 
@@ -765,6 +786,17 @@ class SessionKeyStore(context: Context? = null) {
     fun account_keys_ready_events(): StateFlow<Long> = account_keys_ready_count
 
     fun identity_key_events(): StateFlow<Long> = identity_key_count
+
+    fun key_material_events(): StateFlow<Long> = key_material_count
+
+    fun keys_settled(): Boolean {
+        if (persisted_loading || account_key_load_pending()) return false
+        if (!has_sealed_values()) return true
+        return LockKeyHolder.is_open() && loaded_while_open
+    }
+
+    fun key_readiness_epoch(): Long =
+        identity_key_count.value + account_keys_ready_count.value + key_material_count.value
 
     private fun set_identity_key_locked(key: String?) {
         if (identity_key == key) return

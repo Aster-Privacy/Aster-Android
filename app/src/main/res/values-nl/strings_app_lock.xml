@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_off_description">Vraag om je schermvergrendeling of een app-pincode telkens als je Aster Mail opent.</string>
+    <string name="app_lock_status_screen_lock">Ontgrendelt met je schermvergrendeling</string>
+    <string name="app_lock_status_app_pin">Ontgrendelt met je app-pincode of wachtwoordzin</string>
+    <string name="app_lock_mode_screen_lock">Schermvergrendeling</string>
+    <string name="app_lock_mode_screen_lock_desc">Gebruik de pincode, het patroon, het wachtwoord of de biometrie waarmee je je telefoon ontgrendelt</string>
+    <string name="app_lock_use_screen_lock">Schermvergrendeling gebruiken</string>
+    <string name="app_lock_device_subtitle">Gebruik je schermvergrendeling om Aster Mail te openen.</string>
+    <string name="app_lock_device_error">Aster Mail kon je schermvergrendeling niet bevestigen. Probeer het opnieuw.</string>
+    <string name="app_lock_device_unavailable">Je schermvergrendeling is niet beschikbaar. Stel een schermvergrendeling in via de instellingen van je telefoon om Aster Mail te ontgrendelen.</string>
+    <string name="app_lock_device_key_lost">Je schermvergrendeling is gewijzigd, dus Aster Mail kan niet ontgrendelen. Log uit en weer in om door te gaan.</string>
+    <string name="app_lock_biometric_failed_device">Biometrisch ontgrendelen is niet beschikbaar. Gebruik je schermvergrendeling.</string>
+    <string name="app_lock_biometric_error_device">Biometrisch ontgrendelen werkte niet. Probeer het opnieuw of gebruik je schermvergrendeling.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail heeft biometrisch ontgrendelen uitgezet. Gebruik je schermvergrendeling om het weer aan te zetten.</string>
+    <string name="app_lock_device_setup_title">Appvergrendeling instellen</string>
+    <string name="app_lock_device_setup_subtitle">Bevestig nu je schermvergrendeling om die voor Aster Mail te gebruiken.</string>
+    <string name="app_lock_setup_unavailable">De appvergrendeling kon niet worden ingesteld. Probeer het opnieuw.</string>
+    <string name="app_lock_confirm_to_disable">Bevestig je schermvergrendeling om de appvergrendeling uit te zetten.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Bevestig je schermvergrendeling om biometrisch ontgrendelen aan te zetten.</string>
+    <string name="app_lock_confirm_to_change_settings">Bevestig dat jij het bent om de instellingen van de appvergrendeling te wijzigen.</string>
+    <string name="app_lock_hide_notification_content">Inhoud van meldingen verbergen</string>
+    <string name="app_lock_hide_notification_content_desc">Meldingen laten alleen zien dat je nieuwe mail hebt. De afzender en het voorbeeld blijven verborgen.</string>
+    <string name="app_lock_timeout_title">Vergrendelen na</string>
+    <string name="app_lock_timeout_immediately">Direct</string>
+    <string name="app_lock_timeout_one_minute">1 minuut</string>
+    <string name="app_lock_timeout_five_minutes">5 minuten</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minuten</string>
+    <string name="app_lock_timeout_one_hour">1 uur</string>
+</resources>

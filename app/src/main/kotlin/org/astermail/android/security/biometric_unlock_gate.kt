@@ -41,29 +41,34 @@ sealed class BiometricGatePreparation {
     object Unavailable : BiometricGatePreparation()
 }
 
-object BiometricUnlockGate {
+open class KeystoreTokenGate(
+    private val key_alias: String,
+    private val prefs_name: String,
+    private val binding_version: Int,
+    private val authorize: (KeyGenParameterSpec.Builder) -> KeyGenParameterSpec.Builder,
+) {
 
-    private const val KEY_ALIAS = "aster_app_lock_biometric_v1"
-    private const val ANDROID_KEY_STORE = "AndroidKeyStore"
-    private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private const val PREFS_NAME = "aster_app_lock_biometric"
-    private const val KEY_TOKEN_CIPHERTEXT = "token_ciphertext"
-    private const val KEY_TOKEN_IV = "token_iv"
-    private const val KEY_TOKEN_DIGEST = "token_digest"
-    private const val KEY_BINDING_VERSION = "binding_version"
-    private const val KEY_REBIND_PENDING = "rebind_pending"
-    private const val TOKEN_BYTES = 32
-    private const val GCM_TAG_BITS = 128
+    private companion object {
+        private const val ANDROID_KEY_STORE = "AndroidKeyStore"
+        private const val TRANSFORMATION = "AES/GCM/NoPadding"
+        private const val KEY_TOKEN_CIPHERTEXT = "token_ciphertext"
+        private const val KEY_TOKEN_IV = "token_iv"
+        private const val KEY_TOKEN_DIGEST = "token_digest"
+        private const val KEY_BINDING_VERSION = "binding_version"
+        private const val KEY_REBIND_PENDING = "rebind_pending"
+        private const val TOKEN_BYTES = 32
+        private const val GCM_TAG_BITS = 128
+    }
 
-    private fun prefs(context: Context) = SecurePrefs.open(context, PREFS_NAME)
+    private fun prefs(context: Context) = SecurePrefs.open(context, prefs_name)
 
     private fun keystore(): KeyStore =
         KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
 
     private fun load_key(): SecretKey? {
         val store = keystore()
-        if (!store.containsAlias(KEY_ALIAS)) return null
-        return store.getKey(KEY_ALIAS, null) as? SecretKey
+        if (!store.containsAlias(key_alias)) return null
+        return store.getKey(key_alias, null) as? SecretKey
     }
 
     private fun create_key(context: Context): SecretKey =
@@ -76,13 +81,13 @@ object BiometricUnlockGate {
     private fun create_key_with(strongbox: Boolean): SecretKey {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE)
         val spec = KeyGenParameterSpec.Builder(
-            KEY_ALIAS,
+            key_alias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setUserAuthenticationRequired(true)
-            .setInvalidatedByBiometricEnrollment(true)
+            .let(authorize)
             .setRandomizedEncryptionRequired(true)
             .let { StrongBoxKeys.request(it, strongbox) }
             .build()
@@ -93,7 +98,7 @@ object BiometricUnlockGate {
     private fun delete_key() {
         runCatching {
             val store = keystore()
-            if (store.containsAlias(KEY_ALIAS)) store.deleteEntry(KEY_ALIAS)
+            if (store.containsAlias(key_alias)) store.deleteEntry(key_alias)
         }
     }
 
@@ -127,6 +132,7 @@ object BiometricUnlockGate {
 
     private fun binding_state(context: Context, key_present: Boolean, key_valid: Boolean) =
         BiometricBindingState(
+            expected_version = binding_version,
             has_token = has_token(context),
             binding_version = prefs(context).getInt(KEY_BINDING_VERSION, 0),
             key_present = key_present,
@@ -143,7 +149,7 @@ object BiometricUnlockGate {
 
     fun is_enrolled(context: Context): Boolean = runCatching {
         val p = prefs(context)
-        has_token(context) && p.getInt(KEY_BINDING_VERSION, 0) == BIOMETRIC_BINDING_VERSION
+        has_token(context) && p.getInt(KEY_BINDING_VERSION, 0) == binding_version
     }.getOrDefault(false)
 
     fun is_rebind_pending(context: Context): Boolean =
@@ -182,14 +188,14 @@ object BiometricUnlockGate {
         BiometricGatePreparation.Unavailable
     }
 
-    fun complete_enroll(context: Context, cipher: Cipher): Boolean = try {
-        val token = LockKeyHolder.current()?.takeIf { it.size == TOKEN_BYTES } ?: return false
+    fun complete_enroll(context: Context, cipher: Cipher, provided_token: ByteArray? = null): Boolean = try {
+        val token = (provided_token?.copyOf() ?: LockKeyHolder.current())?.takeIf { it.size == TOKEN_BYTES } ?: return false
         val ciphertext = cipher.doFinal(token)
         val stored = prefs(context).edit()
             .putString(KEY_TOKEN_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
             .putString(KEY_TOKEN_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
             .putString(KEY_TOKEN_DIGEST, Base64.encodeToString(digest(token), Base64.NO_WRAP))
-            .putInt(KEY_BINDING_VERSION, BIOMETRIC_BINDING_VERSION)
+            .putInt(KEY_BINDING_VERSION, binding_version)
             .remove(KEY_REBIND_PENDING)
             .commit()
         token.fill(0)
@@ -221,3 +227,25 @@ object BiometricUnlockGate {
         return diff == 0
     }
 }
+
+object BiometricUnlockGate : KeystoreTokenGate(
+    key_alias = "aster_app_lock_biometric_v1",
+    prefs_name = "aster_app_lock_biometric",
+    binding_version = BIOMETRIC_BINDING_VERSION,
+    authorize = { it.setInvalidatedByBiometricEnrollment(true) },
+)
+
+object DeviceCredentialUnlockGate : KeystoreTokenGate(
+    key_alias = "aster_app_lock_device_v1",
+    prefs_name = "aster_app_lock_device",
+    binding_version = DEVICE_CREDENTIAL_BINDING_VERSION,
+    authorize = { builder ->
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_DEVICE_CREDENTIAL)
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setUserAuthenticationValidityDurationSeconds(DEVICE_CREDENTIAL_LEGACY_VALIDITY_SECONDS)
+        }
+        builder.setInvalidatedByBiometricEnrollment(false)
+    },
+)

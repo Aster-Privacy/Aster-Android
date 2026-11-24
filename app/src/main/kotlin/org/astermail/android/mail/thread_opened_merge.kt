@@ -50,6 +50,9 @@ internal fun include_opened_message(
     }
     val existing = messages[index]
     if (existing.has_readable_body() || !opened.has_readable_body()) return messages
+    if (existing.raw_item.encrypted_envelope.isNullOrBlank() && !opened.raw_item.encrypted_envelope.isNullOrBlank()) {
+        return messages.toMutableList().also { it[index] = opened }
+    }
     return messages.toMutableList().also {
         it[index] = existing.copy(
             body_text = opened.body_text,

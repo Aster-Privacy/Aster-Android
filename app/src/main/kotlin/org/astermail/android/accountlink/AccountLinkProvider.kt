@@ -38,7 +38,11 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import org.astermail.android.MainActivity
+import org.astermail.android.accounts.cached_account_paid
+import org.astermail.android.auth.SessionRefreshGate
+import org.astermail.android.auth.same_account
 import org.astermail.android.api.ApiClient
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.BuildConfig as ApiBuildConfig
@@ -52,6 +56,7 @@ import org.astermail.android.crypto.DeviceEnvelope
 import org.astermail.android.crypto.DeviceLinkBinding
 import org.astermail.android.crypto.zeroize
 import org.astermail.android.storage.AccountStore
+import org.astermail.android.storage.PreferencesCacheStore
 import org.astermail.android.storage.SessionKeyStore
 import org.astermail.android.storage.SessionSnapshot
 import org.astermail.android.storage.SessionSnapshotStore
@@ -65,6 +70,7 @@ class AccountLinkProvider : ContentProvider() {
         fun session_key_store(): SessionKeyStore
         fun session_snapshot_store(): SessionSnapshotStore
         fun device_code_api(): DeviceCodeApi
+        fun preferences_cache(): PreferencesCacheStore
     }
 
     override fun onCreate(): Boolean = true
@@ -96,8 +102,12 @@ class AccountLinkProvider : ContentProvider() {
         val current_paid = runCatching {
             app.getSharedPreferences(PLAN_PREFS, Context.MODE_PRIVATE).getBoolean(PLAN_PAID_KEY, false)
         }.getOrDefault(false)
+        val snapshots = entry.session_snapshot_store()
+        val cache = entry.preferences_cache()
         val rows = entry.account_store().get_all().map { account ->
             val is_current = account.id == current_id
+            val signed_in = is_current || snapshots.has(account.id)
+            val paid = cached_account_paid(cache, account.id) ?: (is_current && current_paid)
             Bundle().apply {
                 putString(KEY_ID, account.id)
                 putString(KEY_EMAIL, account.email)
@@ -107,7 +117,8 @@ class AccountLinkProvider : ContentProvider() {
                 putString(KEY_API_BASE, ApiBuildConfig.API_BASE_URL)
                 putBoolean(KEY_IS_CURRENT, is_current)
                 putBoolean(KEY_LOCKED, locked)
-                putBoolean(KEY_HAS_PAID, is_current && current_paid)
+                putBoolean(KEY_SIGNED_IN, signed_in)
+                putBoolean(KEY_HAS_PAID, paid)
             }
         }
         return Bundle().apply {
@@ -128,15 +139,22 @@ class AccountLinkProvider : ContentProvider() {
         if (code.isBlank() || account_id.isBlank()) return error_bundle(ERROR_BAD_REQUEST)
         if (!entry.account_store().account_exists(account_id)) return error_bundle(ERROR_NO_ACCOUNT)
         if (!AccountLinkApprovals.shared.consume(request)) return confirm_required(app, entry, request)
+        val keys = entry.session_key_store()
         val is_current = entry.account_store().get_current_id() == account_id
+        val keys_match = keys.get_user_id()?.let { same_account(it, account_id) } ?: true
+        if (is_current && !keys_match) return error_bundle(ERROR_SESSION)
         return try {
             if (is_current) {
-                val passphrase = entry.session_key_store().get_passphrase() ?: return error_bundle(ERROR_LOCKED)
+                val passphrase = keys.get_passphrase() ?: return error_bundle(ERROR_LOCKED)
                 confirm(entry.device_code_api(), code, passphrase, binding_tag, peer_envelope_versions)
             } else {
                 val snapshot = entry.session_snapshot_store().load(account_id) ?: return error_bundle(ERROR_NO_ACCOUNT)
                 val passphrase = snapshot.passphrase ?: return error_bundle(ERROR_LOCKED)
-                with_snapshot_client(entry.session_snapshot_store(), account_id, snapshot) { client ->
+                if (!same_account(snapshot.user_id ?: account_id, account_id)) {
+                    zeroize(passphrase)
+                    return error_bundle(ERROR_SESSION)
+                }
+                with_snapshot_client(entry.account_store(), entry.session_snapshot_store(), account_id, snapshot) { client ->
                     confirm(DeviceCodeApiImpl(client), code, passphrase, binding_tag, peer_envelope_versions)
                 }
             }
@@ -148,7 +166,7 @@ class AccountLinkProvider : ContentProvider() {
                     is DeviceEnvelope.InvalidDeviceKeyException -> ERROR_BINDING
                     is DeviceLinkError.CodeNotFound -> ERROR_CODE_NOT_FOUND
                     is DeviceLinkError.PlanUpgradeRequired -> ERROR_PLAN
-                    is ApiError.UnauthorizedError, is ApiError.ForbiddenError -> ERROR_SESSION
+                    is ApiError.UnauthorizedError, is ApiError.RefreshTokenRevoked, is ApiError.ForbiddenError -> ERROR_SESSION
                     is ApiError.NetworkError, is java.io.IOException -> ERROR_OFFLINE
                     is ApiError.RateLimited -> ERROR_RATE_LIMITED
                     else -> ERROR_UNAVAILABLE
@@ -234,7 +252,8 @@ class AccountLinkProvider : ContentProvider() {
         return DeviceEnvelope.base64url_encode(sealed)
     }
 
-    private inline fun with_snapshot_client(
+    private fun with_snapshot_client(
+        accounts: AccountStore,
         store: SessionSnapshotStore,
         account_id: String,
         snapshot: SessionSnapshot,
@@ -242,22 +261,39 @@ class AccountLinkProvider : ContentProvider() {
     ) {
         var tokens = BearerTokens(snapshot.token_access, snapshot.token_refresh)
         lateinit var client: ApiClient
+        suspend fun refresh_tokens(): BearerTokens? = SessionRefreshGate.mutex.withLock {
+            if (accounts.get_current_id() == account_id || !accounts.account_exists(account_id)) {
+                return@withLock null
+            }
+            val stored = store.load(account_id) ?: return@withLock null
+            stored.passphrase?.fill(0)
+            stored.session_key?.fill(0)
+            stored.password_salt?.fill(0)
+            if (stored.token_refresh != tokens.refreshToken) {
+                tokens = BearerTokens(stored.token_access, stored.token_refresh)
+                client.set_csrf(stored.csrf_token)
+                return@withLock tokens
+            }
+            val presented = tokens.refreshToken
+            val response = try {
+                AuthApiImpl(client).refresh(presented)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (t: Throwable) {
+                if (t is ApiError.UnauthorizedError || t is ApiError.RefreshTokenRevoked || t is ApiError.ForbiddenError) {
+                    return@withLock null
+                }
+                throw t
+            }
+            val rotated = response.refresh_token ?: presented ?: response.access_token
+            tokens = BearerTokens(response.access_token, rotated)
+            response.csrf_token?.let { client.set_csrf(it) }
+            store.update_tokens(account_id, presented, response.access_token, rotated, client.get_csrf())
+            tokens
+        }
         val provider = object : TokenProvider {
             override suspend fun load(): BearerTokens = tokens
-            override suspend fun refresh(): BearerTokens? {
-                val response = try {
-                    AuthApiImpl(client).refresh(tokens.refreshToken)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (t: Throwable) {
-                    return if (t is ApiError.UnauthorizedError || t is ApiError.ForbiddenError) null else tokens
-                }
-                val refresh = response.refresh_token ?: tokens.refreshToken ?: response.access_token
-                tokens = BearerTokens(response.access_token, refresh)
-                client.set_csrf(response.csrf_token)
-                persist(store, account_id, snapshot, tokens, response.csrf_token)
-                return tokens
-            }
+            override suspend fun refresh(): BearerTokens? = refresh_tokens()
             override suspend fun clear() {}
         }
         client = ApiClient(
@@ -266,38 +302,15 @@ class AccountLinkProvider : ContentProvider() {
             token_provider = provider,
             initial_csrf = snapshot.csrf_token,
             device_id = context?.let { org.astermail.android.api.DeviceIdStore.get(it) },
+            csrf_refresher = { refresh_tokens()?.let { client.get_csrf() } },
         )
         try {
             block(client)
         } finally {
             client.close()
+            snapshot.session_key?.fill(0)
+            snapshot.password_salt?.fill(0)
         }
-    }
-
-    private fun persist(
-        store: SessionSnapshotStore,
-        account_id: String,
-        snapshot: SessionSnapshot,
-        tokens: BearerTokens,
-        csrf_token: String?,
-    ) {
-        store.save(
-            account_id = account_id,
-            token_access = tokens.accessToken,
-            token_refresh = tokens.refreshToken,
-            csrf_token = csrf_token ?: snapshot.csrf_token,
-            session_key = snapshot.session_key,
-            passphrase = snapshot.passphrase,
-            identity_key = snapshot.identity_key,
-            encrypted_vault = snapshot.encrypted_vault,
-            vault_nonce = snapshot.vault_nonce,
-            password_salt = snapshot.password_salt,
-            user_id = snapshot.user_id,
-            user_email = snapshot.user_email,
-            recovery_codes = snapshot.recovery_codes,
-            previous_keys = snapshot.previous_keys,
-            legacy_keks = snapshot.legacy_keks,
-        )
     }
 
     private fun caller_shares_signature(): Boolean {
@@ -338,6 +351,7 @@ class AccountLinkProvider : ContentProvider() {
         const val KEY_CONFIRM_INTENT = "confirm_intent"
         const val KEY_LOCKED = "locked"
         const val KEY_HAS_PAID = "has_paid"
+        const val KEY_SIGNED_IN = "signed_in"
         const val KEY_PROTOCOL = "protocol"
         const val PROTOCOL_VERSION = 2
         private const val PLAN_PREFS = "aster_plan"

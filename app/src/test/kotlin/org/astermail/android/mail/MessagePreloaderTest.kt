@@ -156,6 +156,22 @@ class MessagePreloaderTest {
     }
 
     @Test
+    fun remove_if_drops_matching_and_running_entries() = runTest {
+        val cache = cache()
+        val gate = CompletableDeferred<String>()
+        cache.prepare("keep") { "other thread" }
+        cache.prepare("stale") { "this thread" }
+        advanceUntilIdle()
+        val running = cache.prepare("slow") { gate.await() }
+        runCurrent()
+        cache.remove_if { it == "this thread" }
+        assertTrue(running.isCancelled)
+        assertFalse(cache.contains("stale"))
+        assertFalse(cache.contains("slow"))
+        assertEquals("other thread", cache.take("keep"))
+    }
+
+    @Test
     fun expired_entries_are_not_handed_over() = runTest {
         var now = 0L
         val cache = cache(ttl_ms = 1_000L, clock = { now })

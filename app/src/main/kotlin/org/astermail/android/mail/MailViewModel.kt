@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -68,6 +69,7 @@ private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val PENDING_DRAIN_BEFORE_REFRESH_MS = 8_000L
 private const val LIVE_SYNC_DEBOUNCE_MS = 600L
+private const val LIVE_SYNC_PENDING_WAIT_MS = 30_000L
 private const val DRAFT_DISCARD_MAX_WAIT_MS = 10_000L
 private const val DRAFT_DISCARD_PENDING = 0
 private const val DRAFT_DISCARD_UNDONE = 1
@@ -83,6 +85,7 @@ private const val STATS_TTL_MS = 30_000L
 private const val RESUME_FRESH_MS = 20_000L
 private const val RESUME_RETRY_MS = 5_000L
 private const val STATS_DEBOUNCE_MS = 400L
+internal const val RESUME_REFRESH_AFTER_MS = 30_000L
 private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
 private const val REACTION_SEEN_OVERRIDE_MS = 30_000L
@@ -133,6 +136,8 @@ data class InboxUiState(
     val is_refreshing: Boolean = false,
     val list_loaded_at: Long = 0L,
     val stats_loaded_at: Long = 0L,
+    val stats_refreshing: Boolean = false,
+    val list_stale_since: Long = 0L,
     val cache_pending: Boolean = false,
     val read_filter: ListReadFilter = ListReadFilter.all,
 )
@@ -179,7 +184,7 @@ class MailViewModel @Inject constructor(
     private val account_data_conversion: AccountDataConversion,
     private val device_recovery: org.astermail.android.auth.DeviceRecovery,
     ratchet_plaintext_cache: org.astermail.android.mail.ratchet.RatchetPlaintextCache,
-) : ViewModel() {
+) : ViewModel(), live_sync_listener {
 
     val unauthenticated_message_ids: StateFlow<Set<String>> = ratchet_plaintext_cache.unauthenticated_ids
 
@@ -652,6 +657,7 @@ class MailViewModel @Inject constructor(
     var last_list_scope_key: String = ""
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val disk_rows = java.util.concurrent.ConcurrentHashMap<String, List<InboxItem>>()
+    private val envelope_refill_round = MutableStateFlow(0L)
     private val disk_probed = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val disk_probe_jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -666,6 +672,9 @@ class MailViewModel @Inject constructor(
     @Volatile private var stats_seed_blocked_account: String? = null
     @Volatile private var stats_owner_account: String? = current_account_id_or_null()
     private var stats_job: Job? = null
+    @Volatile private var stats_priority = false
+    @Volatile private var backgrounded_at_ms = 0L
+    @Volatile private var foreground_refresh_at_ms = 0L
     private val _emptying_spam = MutableStateFlow(false)
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private val _emptying_trash = MutableStateFlow(false)
@@ -751,6 +760,20 @@ class MailViewModel @Inject constructor(
         watch_folder_locks()
         viewModelScope.launch {
             _inbox_state
+                .map { envelope_pending_ids(it.items) }
+                .distinctUntilChanged()
+                .collectLatest { ids -> if (ids.isNotEmpty()) settle_pending_rows() }
+        }
+        viewModelScope.launch {
+            _thread_state
+                .map { state ->
+                    if (state.is_loading) emptySet() else settleable_thread_messages(state.messages).map { it.id }.toSet()
+                }
+                .distinctUntilChanged()
+                .collectLatest { ids -> if (ids.isNotEmpty()) settle_pending_thread() }
+        }
+        viewModelScope.launch {
+            _inbox_state
                 .map { state -> state.stats?.let { Triple(it, stats_owner_account, account_generation) } }
                 .distinctUntilChanged()
                 .debounce(folder_cache_persist_debounce_ms)
@@ -762,10 +785,12 @@ class MailViewModel @Inject constructor(
                 }
         }
         viewModelScope.launch {
-            _inbox_state
-                .map { envelope_missing_ids(it.items) }
+            combine(
+                _inbox_state.map { envelope_missing_ids(it.items) }.distinctUntilChanged(),
+                envelope_refill_round,
+            ) { ids, round -> ids to round }
                 .distinctUntilChanged()
-                .collectLatest { ids -> if (ids.isNotEmpty()) refill_missing_rows() }
+                .collectLatest { (ids, _) -> if (ids.isNotEmpty()) refill_missing_rows() }
         }
         viewModelScope.launch {
             _inbox_state
@@ -849,6 +874,71 @@ class MailViewModel @Inject constructor(
         return folder to items.take(folder_cache_row_limit)
     }
 
+    private suspend fun settle_pending_rows() {
+        val events = runCatching { repository.key_readiness_events() }.getOrNull() ?: return
+        for (wait in decrypt_settle_delays_ms) {
+            withTimeoutOrNull(wait) { events.drop(1).first() }
+            if (!repository.keys_settled()) {
+                withTimeoutOrNull(wait) { events.first { repository.keys_settled() } }
+                if (!repository.keys_settled()) continue
+            }
+            val pending = _inbox_state.value.items.filter(::is_envelope_pending_row)
+            if (pending.isEmpty()) return
+            val settled = try {
+                repository.settle_pending_rows(pending)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                emptyMap()
+            }
+            if (settled.isNotEmpty()) {
+                _inbox_state.update { it.copy(items = replace_settled_items(it.items, settled)) }
+            }
+            if (_inbox_state.value.items.none(::is_envelope_pending_row)) return
+        }
+    }
+
+    private suspend fun settle_pending_thread() {
+        val events = runCatching { repository.key_readiness_events() }.getOrNull() ?: return
+        for (wait in decrypt_settle_delays_ms) {
+            withTimeoutOrNull(wait) { events.drop(1).first() }
+            if (!repository.keys_settled()) {
+                withTimeoutOrNull(wait) { events.first { repository.keys_settled() } }
+                if (!repository.keys_settled()) continue
+            }
+            val state = _thread_state.value
+            val item_id = state.item?.id ?: return
+            val pending = settleable_thread_messages(state.messages)
+            if (pending.isEmpty() || state.is_loading) return
+            val settled = pending.mapNotNull { message ->
+                try {
+                    repository.decrypt_single_thread_message(message.raw_item)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    null
+                }
+            }.filterNot { it.is_body_pending }.associateBy { it.id }
+            if (settled.isNotEmpty()) {
+                _thread_state.update { current ->
+                    if (current.item?.id != item_id) {
+                        current
+                    } else {
+                        current.copy(
+                            messages = current.messages.map { message ->
+                                if (message.is_body_pending) settled[message.id] ?: message else message
+                            },
+                        )
+                    }
+                }
+            }
+            if (settleable_thread_messages(_thread_state.value.messages).isEmpty()) return
+        }
+    }
+
+    private fun settleable_thread_messages(messages: List<ThreadMessageDecrypted>): List<ThreadMessageDecrypted> =
+        messages.filter { it.is_body_pending && !it.raw_item.encrypted_envelope.isNullOrBlank() }
+
     private suspend fun refill_missing_rows() {
         for (wait in envelope_refill_delays_ms) {
             delay(wait)
@@ -864,6 +954,32 @@ class MailViewModel @Inject constructor(
             if (refilled.isNotEmpty()) {
                 _inbox_state.update { it.copy(items = replace_refilled_items(it.items, refilled)) }
                 return
+            }
+        }
+    }
+
+    private fun adopt_opened_item(opened: InboxItem) {
+        if (!inbox_row_is_settled(opened)) return
+        _inbox_state.update { state ->
+            val items = adopt_opened_row(state.items, opened)
+            if (items === state.items) state else state.copy(items = items)
+        }
+        folder_cache.keys.toList().forEach { key ->
+            val cached = folder_cache[key] ?: return@forEach
+            val items = adopt_opened_row(cached.items, opened)
+            if (items !== cached.items) folder_cache[key] = cached.copy(items = items)
+        }
+        _search_state.update { state ->
+            val items = adopt_opened_row(state.all_items, opened)
+            if (items === state.all_items) state else state.copy(all_items = items)
+        }
+        disk_rows.keys.toList().forEach { folder ->
+            val rows = disk_rows[folder] ?: return@forEach
+            val adopted = adopt_opened_row(rows, opened)
+            if (adopted === rows) return@forEach
+            disk_rows[folder] = adopted
+            viewModelScope.launch {
+                runCatching { folder_cache_store.save(folder, adopted, System.currentTimeMillis()) }
             }
         }
     }
@@ -1024,6 +1140,9 @@ class MailViewModel @Inject constructor(
         removed_protected_until.clear()
         last_stats_load_ms = 0L
         stats_job?.cancel()
+        stats_priority = false
+        foreground_refresh_at_ms = 0L
+        _inbox_state.update { it.copy(stats_refreshing = false) }
         stats_seed_blocked_account = current_account_id_or_null()
         stats_owner_account = null
         star_overrides.clear()
@@ -1063,9 +1182,61 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private val process_observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+        when (event) {
+            androidx.lifecycle.Lifecycle.Event.ON_STOP -> on_process_background()
+            androidx.lifecycle.Lifecycle.Event.ON_START -> on_process_foreground()
+            else -> Unit
+        }
+    }
+
+    private val process_observer_registered = runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(process_observer)
+    }.isSuccess
+
+    fun on_process_background() {
+        backgrounded_at_ms = override_clock_ms()
+    }
+
+    fun on_process_foreground() {
+        val since = backgrounded_at_ms
+        backgrounded_at_ms = 0L
+        val now = override_clock_ms()
+        if (!resume_refresh_due(since, now)) return
+        foreground_refresh_at_ms = now
+        val s = _inbox_state.value
+        refresh_stats_after_return(stale = true)
+        if (s.is_loading_more) return
+        _inbox_state.update { it.copy(list_stale_since = now) }
+        if (s.initial || s.is_loading || s.is_refreshing) return
+        silent_revalidate(s.current_folder)
+        retry_resume_revalidate(s.current_folder)
+        val thread = _thread_state.value
+        if (thread.item != null && !thread.is_loading) refresh_current_thread()
+    }
+
+    private fun refresh_stats_after_return(
+        stale: Boolean = stats_stale(_inbox_state.value.stats_loaded_at, override_clock_ms()),
+    ) {
+        if (!stale) {
+            load_stats(force = true)
+            return
+        }
+        if (stats_priority && stats_job?.isActive == true) return
+        if (_inbox_state.value.stats != null) _inbox_state.update { it.copy(stats_refreshing = true) }
+        start_stats_fetch(debounce = false)
+    }
+
+    private fun foreground_refresh_recent(): Boolean =
+        override_clock_ms() - foreground_refresh_at_ms in 0..RESUME_FRESH_MS
+
     override fun onCleared() {
+        if (process_observer_registered) {
+            runCatching { androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.removeObserver(process_observer) }
+        }
         search_index_manager.remove_read_overlay(index_read_overlay)
         message_preloader.unbind_requester(preload_requester)
+        live_sync_hub.unregister(this)
         super.onCleared()
     }
 
@@ -1691,14 +1862,16 @@ class MailViewModel @Inject constructor(
             current.error == null &&
             age in 0..RESUME_FRESH_MS
         resume_stale = false
-        load_stats(force = true)
+        if (foreground_refresh_recent() && current.current_folder == folder) return
+        refresh_stats_after_return()
         if (fresh) return
         load_inbox(folder, force = true)
         retry_resume_revalidate(folder)
     }
 
     fun refresh_after_background() {
-        load_stats(force = true)
+        if (foreground_refresh_recent()) return
+        refresh_stats_after_return()
         val s = _inbox_state.value
         if (!s.initial && !s.is_loading && !s.is_loading_more && !s.is_refreshing) {
             silent_revalidate(s.current_folder)
@@ -1735,19 +1908,40 @@ class MailViewModel @Inject constructor(
 
     @Volatile private var last_live_event_at = 0L
 
-    fun on_live_sync_event(event: LiveSyncEvent) {
+    private fun sync_paused(): Boolean = runCatching { repository.session_locked() }.getOrDefault(false)
+
+    private fun inbox_busy(s: InboxUiState): Boolean =
+        s.initial || s.is_loading || s.is_loading_more || s.is_refreshing
+
+    override fun on_live_sync_event(event: LiveSyncEvent) {
         last_live_event_at = override_clock_ms()
+        if (sync_paused()) return
         live_sync_job?.cancel()
         live_sync_job = viewModelScope.launch {
             kotlinx.coroutines.delay(LIVE_SYNC_DEBOUNCE_MS)
+            if (sync_paused()) return@launch
+            revalidate_open_thread()
             load_stats(force = true)
-            val s = _inbox_state.value
-            if (s.initial || s.is_loading || s.is_loading_more || s.is_refreshing) return@launch
-            silent_revalidate(s.current_folder)
+            if (inbox_busy(_inbox_state.value)) {
+                kotlinx.coroutines.withTimeoutOrNull(LIVE_SYNC_PENDING_WAIT_MS) {
+                    _inbox_state.first { !inbox_busy(it) }
+                } ?: return@launch
+                if (sync_paused()) return@launch
+            }
+            silent_revalidate(_inbox_state.value.current_folder)
         }
     }
 
-    fun on_live_mail_mutation(action: String, item_ids: List<String>) {
+    override fun on_live_sync_poll() {
+        if (sync_paused() || !foreground_check()) return
+        revalidate_open_thread()
+        val s = _inbox_state.value
+        if (inbox_busy(s) || silent_revalidate_job?.isActive == true) return
+        load_stats(force = true)
+        silent_revalidate(s.current_folder)
+    }
+
+    override fun on_live_mail_mutation(action: String, item_ids: List<String>) {
         if (item_ids.isEmpty() || !is_remote_removal_action(action)) return
         val now = System.currentTimeMillis()
         val ids = item_ids.filter { !restore_protected(it, now) }.toSet()
@@ -1817,6 +2011,10 @@ class MailViewModel @Inject constructor(
                     filtered_list_time = System.currentTimeMillis()
                 }
                 search_index_manager.ensure_index_built()
+            }
+            result.onFailure {
+                if (coroutineContext[Job]?.isActive == false) return@onFailure
+                _inbox_state.update { it.copy(list_stale_since = 0L) }
             }
         }
     }
@@ -2163,14 +2361,26 @@ class MailViewModel @Inject constructor(
         )
         seed_cached_stats()
         if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < stats_ttl) return
+        if (stats_priority && stats_job?.isActive == true) return
+        start_stats_fetch(debounce = true)
+    }
+
+    private fun start_stats_fetch(debounce: Boolean) {
         stats_job?.cancel()
+        stats_priority = !debounce
         val gen = account_generation
         val account_id = current_account_id_or_null()
+        if (!debounce) last_stats_load_ms = System.currentTimeMillis()
         stats_job = viewModelScope.launch {
-            delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
+            if (debounce) delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
             last_stats_load_ms = System.currentTimeMillis()
             val started = override_clock_ms()
-            repository.get_stats().onSuccess { stats ->
+            val result = repository.get_stats()
+            if (gen == account_generation) {
+                stats_priority = false
+                if (result.isFailure) _inbox_state.update { it.copy(stats_refreshing = false) }
+            }
+            result.onSuccess { stats ->
                 if (gen != account_generation || current_account_id_or_null() != account_id) return@onSuccess
                 val pending = read_flips.values.sumOf { flip ->
                     val confirmed_at = flip.confirmed_at
@@ -2192,6 +2402,7 @@ class MailViewModel @Inject constructor(
                     it.copy(
                         stats = stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)),
                         stats_loaded_at = started,
+                        stats_refreshing = false,
                     )
                 }
             }
@@ -2300,15 +2511,78 @@ class MailViewModel @Inject constructor(
         val target_id = _thread_state.value.item?.id ?: return
         viewModelScope.launch {
             val before_ids = _thread_state.value.messages.map { it.id }.toSet()
-            refresh_current_thread()
+            revalidate_open_thread()
             repeat(3) { attempt ->
                 kotlinx.coroutines.delay(if (attempt == 0) 1_500L else 4_000L)
                 val cur = _thread_state.value
                 if (cur.item == null || cur.item.id != target_id) return@launch
                 if (cur.messages.any { it.id !in before_ids }) return@launch
-                refresh_current_thread()
+                revalidate_open_thread()
             }
         }
+    }
+
+    private var thread_revalidate_job: Job? = null
+
+    @Volatile private var thread_revalidate_again = false
+
+    fun revalidate_open_thread() {
+        if (sync_paused()) return
+        val target = _thread_state.value.item ?: return
+        if (target.id == DEMO_PHISH_ITEM_ID) return
+        if (!repository.is_conversation_grouping_enabled) return
+        if (target.thread_token.isNullOrBlank()) return
+        if (thread_revalidate_job?.isActive == true) {
+            thread_revalidate_again = true
+            return
+        }
+        thread_revalidate_again = false
+        val item_id = target.id
+        val job = viewModelScope.launch {
+            withTimeoutOrNull(THREAD_REVALIDATE_WAIT_MS) {
+                _thread_state.first { it.item?.id != item_id || !it.is_loading }
+            } ?: return@launch
+            run_thread_revalidate(item_id)
+        }
+        thread_revalidate_job = job
+        job.invokeOnCompletion { cause ->
+            if (cause != null || !thread_revalidate_again) return@invokeOnCompletion
+            viewModelScope.launch {
+                if (thread_revalidate_job === job) revalidate_open_thread()
+            }
+        }
+    }
+
+    private suspend fun run_thread_revalidate(item_id: String) {
+        val start = _thread_state.value
+        val item = start.item?.takeIf { it.id == item_id } ?: return
+        if (start.is_loading) return
+        val token = item.thread_token?.takeIf { it.isNotBlank() } ?: return
+        val gen = thread_load_generation
+        val fetched = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            withTimeoutOrNull(thread_open_timeout_ms()) { repository.fetch_thread(token) }
+        }
+            ?.getOrNull()
+            ?: return
+        if (gen != thread_load_generation || fetched.isEmpty()) return
+        val keep_unconfirmed = System.currentTimeMillis() < send_guard_until
+        var merged: List<ThreadMessageDecrypted>? = null
+        _thread_state.update { state ->
+            if (state.item?.id != item_id || state.is_loading || gen != thread_load_generation) {
+                merged = null
+                return@update state
+            }
+            val next = merge_revalidated_thread(state.messages, fetched, item_id, keep_unconfirmed)
+            merged = next
+            if (next == null) state else apply_thread_read_overrides(state.copy(messages = next, error = null))
+        }
+        val applied = merged ?: return
+        val before_ids = start.messages.map { it.id }.toSet()
+        val added = applied.filter { it.id !in before_ids }
+        cache_thread_participants(token, applied)
+        record_thread_count(token, item.thread_message_count, fetched)
+        if (added.isNotEmpty()) load_attachments_for_thread(added)
+        load_reactions(applied)
     }
 
     private var thread_load_job: kotlinx.coroutines.Job? = null
@@ -2460,6 +2734,7 @@ class MailViewModel @Inject constructor(
                 return@launch
             }
             val item = item_result.getOrNull()?.let { apply_tag_override(it) }
+            if (item != null) adopt_opened_item(item)
             if (item != null) resume_failed_open(item_id)
             if (item != null) mark_reactions_seen(item)
             val thread_token = item?.thread_token?.takeIf { grouping }
@@ -6043,6 +6318,8 @@ class MailViewModel @Inject constructor(
         load_more_failures = 0
         load_more_retry_at = 0L
         _inbox_state.update { it.copy(is_refreshing = true, is_loading_more = false) }
+        repository.forget_decrypt_failures()
+        envelope_refill_round.update { it + 1 }
         load_stats()
         val refresh_gen = ++refresh_generation
         inbox_load_generation++
@@ -6171,7 +6448,58 @@ class MailViewModel @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
+        reply_to_id: String? = null,
     ): Result<org.astermail.android.api.send.SimpleSendResponse> = repository.durable_async {
+        val optimistic_id = repository.begin_direct_optimistic_send(
+            thread_token = thread_token,
+            reply_to_id = reply_to_id,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            has_attachments = attachments.isNotEmpty(),
+        )
+        var delivered = false
+        var mail_item_id: String? = null
+        try {
+            val result = send_email_direct(
+                to, cc, bcc, subject, body_html, sender_email, sender_display_name, thread_token, expires_at,
+                expiry_password, attachments, sender_alias_hash, suppress_branding, allow_non_post_quantum,
+                force_pgp, pgp_recipients, ack_scope, priority,
+            )
+            val response = result.getOrNull()
+            delivered = result.isSuccess && response?.success == true
+            mail_item_id = response?.mail_item_id
+            result
+        } finally {
+            repository.finish_direct_optimistic_send(optimistic_id, delivered, mail_item_id)
+        }
+    }.await()
+
+    private suspend fun send_email_direct(
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        sender_email: String?,
+        sender_display_name: String?,
+        thread_token: String?,
+        expires_at: String?,
+        expiry_password: String?,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_alias_hash: String?,
+        suppress_branding: Boolean?,
+        allow_non_post_quantum: Boolean,
+        force_pgp: Boolean?,
+        pgp_recipients: List<String>,
+        ack_scope: String?,
+        priority: String?,
+    ): Result<org.astermail.android.api.send.SimpleSendResponse> {
         val result = repository.send_email(
             to = to,
             cc = cc,
@@ -6190,13 +6518,14 @@ class MailViewModel @Inject constructor(
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
             ack_scope = ack_scope,
+            priority = priority,
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
             repository.notify_send_success()
         }
-        result
-    }.await()
+        return result
+    }
 
     val search_index_progress: StateFlow<IndexProgress?> = search_index_manager.index_progress
 
@@ -6251,6 +6580,7 @@ class MailViewModel @Inject constructor(
 
     init {
         message_preloader.bind_requester(preload_requester)
+        live_sync_hub.register(this)
         seed_inbox_attachment_flags()
         observe_pending_actions()
         viewModelScope.launch {
@@ -6340,6 +6670,7 @@ class MailViewModel @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<String> {
         return repository.schedule_send_with_undo(
             to = to,
@@ -6362,6 +6693,7 @@ class MailViewModel @Inject constructor(
             force_pgp = force_pgp,
             pgp_recipients = pgp_recipients,
             ack_scope = ack_scope,
+            priority = priority,
         )
     }
 
@@ -6739,6 +7071,12 @@ private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "
 internal fun resume_retry_due(loaded_at: Long?, resumed_at: Long): Boolean =
     loaded_at == null || loaded_at < resumed_at
 
+internal fun stats_stale(stats_loaded_at: Long, now: Long): Boolean =
+    stats_loaded_at <= 0L || now - stats_loaded_at >= STATS_TTL_MS
+
+internal fun resume_refresh_due(backgrounded_at: Long, foregrounded_at: Long): Boolean =
+    backgrounded_at > 0L && foregrounded_at - backgrounded_at >= RESUME_REFRESH_AFTER_MS
+
 internal fun fallback_tick_due(
     live_sync_connected: Boolean,
     list_loaded_at: Long,
@@ -6832,3 +7170,8 @@ internal fun send_result_message_for(error: Throwable): SendResultMessage = when
         SendResultMessage(R.string.sent_copy_attachments_missing, error.failed_count)
     else -> SendResultMessage(R.string.send_problem_failed_message, null)
 }
+
+internal fun list_count_refreshing(state: InboxUiState): Boolean =
+    state.list_stale_since > 0L &&
+        state.list_loaded_at < state.list_stale_since &&
+        state.error == null

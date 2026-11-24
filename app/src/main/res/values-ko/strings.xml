@@ -262,6 +262,7 @@
     <string name="failed_to_save">파일 저장 실패</string>
     <string name="failed_to_download">%s 다운로드 실패</string>
     <string name="could_not_open_link">링크를 열 수 없습니다</string>
+    <string name="open_address_in_maps">지도 앱에서 열기</string>
     <string name="move_to_trash">휴지통으로 이동</string>
     <string name="archived">보관됨</string>
     <string name="unstarred">별표 해제됨</string>
@@ -901,6 +902,7 @@
     <string name="message">메시지</string>
     <string name="feedback_placeholder">좋은 점, 부족한 점, 문제점을 알려주세요.</string>
     <string name="feedback_privacy_note">답변을 위해 계정 이메일이 첨부됩니다. 피드백은 절대 외부에 공유하지 않습니다.</string>
+    <string name="feedback_support_notice">이 양식은 피드백, 아이디어, 버그 신고용입니다. 질문이 있거나 계정 관련 도움이 필요하면 대신 지원팀(%1$s)으로 이메일을 보내세요.</string>
     <string name="send_feedback">피드백 보내기</string>
     <string name="sending_feedback">전송 중...</string>
     <string name="sent">보냄</string>
@@ -2269,7 +2271,7 @@
     <string name="vanguard_description">앱 잠금을 비롯한 한층 강화된 앱 보호 기능입니다.</string>
     <string name="vanguard_upgrade_cta">업그레이드</string>
     <string name="vanguard_confirm_disable_title">Vanguard를 끌까요?</string>
-    <string name="vanguard_confirm_disable_desc">앱 잠금과 나머지 Vanguard 보호 기능이 모두 꺼집니다.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard 보호 기능이 꺼집니다. 앱 잠금은 계속 켜져 있습니다.</string>
     <string name="vanguard_disable">끄기</string>
     <string name="app_lock_pin">앱 잠금</string>
     <string name="app_lock_pin_description">앱을 열 때 PIN이나 암호문을 요구합니다.</string>
@@ -2839,6 +2841,8 @@
     <string name="contact_add_failed">%1$s을(를) 연락처에 저장하지 못했습니다</string>
     <string name="contact_remove_failed">%1$s을(를) 연락처에서 삭제하지 못했습니다</string>
     <string name="copy_failed">복사하지 못했습니다. 다시 시도하세요.</string>
+    <string name="copy_subject">제목 복사</string>
+    <string name="subject_copied">제목을 복사했습니다</string>
     <string name="create_label_subtitle">원하는 색으로 메일에 표시하세요</string>
     <string name="delete_signature_message">“%1$s”을(를) 삭제할까요? 되돌릴 수 없습니다.</string>
     <string name="delete_vacation_reply_confirm">부재중 메시지와 기간이 삭제됩니다. 되돌릴 수 없습니다.</string>
@@ -3714,4 +3718,10 @@
     <string name="toast_position_subtitle">앱을 사용하는 동안 알림이 표시되는 위치</string>
     <string name="toast_position_top">위</string>
     <string name="toast_position_bottom">아래</string>
+    <string name="mail_priority">중요도</string>
+    <string name="mail_priority_high">높음</string>
+    <string name="mail_priority_normal">보통</string>
+    <string name="mail_priority_low">낮음</string>
+    <string name="mail_high_priority">높은 중요도</string>
+    <string name="mail_low_priority">낮은 중요도</string>
 </resources>

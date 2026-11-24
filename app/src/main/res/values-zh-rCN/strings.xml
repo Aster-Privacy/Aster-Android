@@ -262,6 +262,7 @@
     <string name="failed_to_save">文件保存失败</string>
     <string name="failed_to_download">%s 下载失败</string>
     <string name="could_not_open_link">无法打开链接</string>
+    <string name="open_address_in_maps">在地图应用中打开</string>
     <string name="move_to_trash">移至回收站</string>
     <string name="archived">已归档</string>
     <string name="unstarred">已取消星标</string>
@@ -901,6 +902,7 @@
     <string name="message">消息</string>
     <string name="feedback_placeholder">描述您喜欢的、缺少的或有问题的地方。</string>
     <string name="feedback_privacy_note">我们会附上您的账户邮箱以便回复。我们绝不会分享您的反馈。</string>
+    <string name="feedback_support_notice">此表单用于提交反馈、想法和错误报告。如有疑问或需要账户方面的帮助，请改为发送电子邮件至 %1$s 联系支持团队。</string>
     <string name="send_feedback">发送反馈</string>
     <string name="sending_feedback">发送中...</string>
     <string name="sent">已发送</string>
@@ -2269,7 +2271,7 @@
     <string name="vanguard_description">进阶应用保护，含应用锁与更严格的安全措施。</string>
     <string name="vanguard_upgrade_cta">升级</string>
     <string name="vanguard_confirm_disable_title">要停用 Vanguard 吗？</string>
-    <string name="vanguard_confirm_disable_desc">应用锁和其他 Vanguard 保护都会被关闭。</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard 保护将被关闭。应用锁会保持开启。</string>
     <string name="vanguard_disable">停用</string>
     <string name="app_lock_pin">应用锁</string>
     <string name="app_lock_pin_description">打开应用时需要输入 PIN 码或口令。</string>
@@ -2839,6 +2841,8 @@
     <string name="contact_add_failed">无法将 %1$s 保存到联系人</string>
     <string name="contact_remove_failed">无法从联系人中移除 %1$s</string>
     <string name="copy_failed">无法复制。请重试。</string>
+    <string name="copy_subject">复制主题</string>
+    <string name="subject_copied">已复制主题</string>
     <string name="create_label_subtitle">用您选择的颜色标记邮件</string>
     <string name="delete_signature_message">要删除“%1$s”吗？此操作无法撤销。</string>
     <string name="delete_vacation_reply_confirm">您的外出回复及其日期将被删除，且无法撤销。</string>
@@ -3714,4 +3718,10 @@
     <string name="toast_position_subtitle">使用应用时提示显示的位置</string>
     <string name="toast_position_top">顶部</string>
     <string name="toast_position_bottom">底部</string>
+    <string name="mail_priority">优先级</string>
+    <string name="mail_priority_high">高</string>
+    <string name="mail_priority_normal">普通</string>
+    <string name="mail_priority_low">低</string>
+    <string name="mail_high_priority">高优先级</string>
+    <string name="mail_low_priority">低优先级</string>
 </resources>

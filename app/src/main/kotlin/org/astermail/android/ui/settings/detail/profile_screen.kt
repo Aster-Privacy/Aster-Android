@@ -407,6 +407,7 @@ fun ProfileScreen(
                     } else {
                         primary_address_label
                     },
+                    subtitle_min_lines = if (address_state.eligibility_loaded) 1 else 2,
                     icon = TablerIcons.At,
                     icon_tint = if (address_plan_locked) colors.text_tertiary else null,
                     muted = address_plan_locked,

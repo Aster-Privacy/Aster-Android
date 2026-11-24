@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_finite
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.ime_settle_anchor
 import org.astermail.android.design.remember_ime_settle
@@ -60,10 +64,16 @@ fun aster_modal_sheet(
     shape: Shape = aster_sheet_shape,
     scrim_color: Color = BottomSheetDefaults.ScrimColor,
     drag_handle: (@Composable () -> Unit)? = { BottomSheetDefaults.DragHandle() },
+    animate_height: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val content_color = AsterMaterial.colors.text_primary
     val settle = remember_ime_settle()
+    val height_modifier = if (animate_height) {
+        Modifier.animateContentSize(aster_finite(AsterSpring.fast_spatial<IntSize>()))
+    } else {
+        Modifier
+    }
     ModalBottomSheet(
         onDismissRequest = on_dismiss_request,
         modifier = modifier,
@@ -78,7 +88,7 @@ fun aster_modal_sheet(
         aster_popup_window_effect(light_navigation_bars = container_color.luminance() > 0.5f)
         sheet_toast_host()
         Column(
-            modifier = Modifier.fillMaxWidth().ime_settle_anchor(settle),
+            modifier = Modifier.fillMaxWidth().then(height_modifier).ime_settle_anchor(settle),
             content = content,
         )
     }

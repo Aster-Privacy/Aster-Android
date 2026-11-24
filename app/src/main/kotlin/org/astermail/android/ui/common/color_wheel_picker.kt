@@ -31,8 +31,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -51,12 +55,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +75,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -86,7 +94,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -180,6 +190,8 @@ fun color_swatch_row(
 
 private val min_swatch_target = 48.dp
 
+private const val ime_close_timeout_ms = 450L
+
 private fun Modifier.swatch_target(swatch_size: Dp): Modifier =
     sizeIn(minWidth = min_swatch_target, minHeight = min_swatch_target)
         .sizeIn(minWidth = swatch_size, minHeight = swatch_size)
@@ -218,6 +230,7 @@ private fun swatch_check(fill_rgb: Int, swatch_size: Dp) {
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun custom_color_swatch(
     value: String?,
@@ -230,7 +243,24 @@ fun custom_color_swatch(
     val is_selected = is_custom_color(value, presets)
     val selected_rgb = if (is_selected) hex_to_rgb(value ?: "") else null
     var is_open by remember { mutableStateOf(false) }
+    var is_pending by remember { mutableStateOf(false) }
     val label = stringResource(R.string.custom_color)
+    val focus_manager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
+    val ime = WindowInsets.ime
+    val ime_target = WindowInsets.imeAnimationTarget
+    val keyboard_closed = {
+        ime.getBottom(density) == 0 && ime_target.getBottom(density) == 0
+    }
+    LaunchedEffect(is_pending) {
+        if (!is_pending) return@LaunchedEffect
+        withTimeoutOrNull(ime_close_timeout_ms) {
+            snapshotFlow { keyboard_closed() }.first { it }
+        }
+        is_pending = false
+        is_open = true
+    }
     Box(
         modifier = modifier
             .swatch_target(size)
@@ -239,7 +269,13 @@ fun custom_color_swatch(
                 interactionSource = null,
                 indication = ripple(bounded = false, radius = size / 2 + 4.dp),
                 role = Role.RadioButton,
-            ) { is_open = true }
+            ) {
+                if (is_open || is_pending) return@selectable
+                val was_closed = keyboard_closed()
+                focus_manager.clearFocus()
+                keyboard?.hide()
+                if (was_closed) is_open = true else is_pending = true
+            }
             .semantics { contentDescription = label }
             .testTag(test_tag),
         contentAlignment = Alignment.Center,

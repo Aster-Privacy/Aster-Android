@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.api.mail.MailItem
+import org.astermail.android.api.mail.ThreadMessageItem
 
 const val envelope_backfill_chunk_size = 16
 const val envelope_backfill_parallel_chunks = 4
@@ -39,14 +40,79 @@ const val envelope_inline_budget_ms = 7_000L
 const val envelope_refill_budget_ms = 15_000L
 const val envelope_open_budget_ms = 4_000L
 val envelope_refill_delays_ms = listOf(500L, 3_000L, 12_000L, 30_000L, 60_000L, 120_000L)
+const val envelope_single_refetch_cap = 8
+
+private val envelope_exempt_item_types = setOf("draft", "scheduled")
+
+private fun is_envelope_exempt(item_type: String?, is_reaction: Boolean?): Boolean =
+    is_reaction == true || item_type in envelope_exempt_item_types
 
 fun list_envelope_backfill_budget_ms(inline: Boolean): Long = if (inline) envelope_inline_budget_ms else 0L
 
 fun needs_envelope_backfill(item: MailItem): Boolean =
     item.id.isNotBlank() &&
         item.encrypted_envelope.isNullOrBlank() &&
-        item.is_reaction != true &&
-        (item.item_type ?: item.metadata?.item_type) != "draft"
+        !is_envelope_exempt(item.item_type ?: item.metadata?.item_type, item.is_reaction)
+
+fun needs_thread_envelope_refill(item: ThreadMessageItem): Boolean =
+    item.id.isNotBlank() &&
+        item.encrypted_envelope.isNullOrBlank() &&
+        !is_envelope_exempt(item.item_type ?: item.metadata?.item_type, item.is_reaction)
+
+suspend fun refetch_missing_singly(
+    ids: List<String>,
+    fetch_one: suspend (String) -> MailItem?,
+    cap: Int = envelope_single_refetch_cap,
+): Map<String, MailItem> {
+    val found = LinkedHashMap<String, MailItem>()
+    for (id in ids.asSequence().filter { it.isNotBlank() }.distinct().take(cap)) {
+        val fetched = try {
+            fetch_one(id)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            null
+        } ?: continue
+        if (fetched.id == id && !fetched.encrypted_envelope.isNullOrBlank()) found[id] = fetched
+    }
+    return found
+}
+
+suspend fun refill_missing_envelopes_with_fallback(
+    items: List<MailItem>,
+    fetch_batch: suspend (List<String>) -> List<MailItem>,
+    fetch_one: suspend (String) -> MailItem?,
+    budget_ms: Long = envelope_refill_budget_ms,
+    cap: Int = envelope_single_refetch_cap,
+): List<MailItem> {
+    val batched = backfill_missing_envelopes(items, fetch_batch, budget_ms = budget_ms)
+    val still_missing = envelope_backfill_ids(batched)
+    if (still_missing.isEmpty()) return batched
+    val found = refetch_missing_singly(still_missing, fetch_one, cap)
+    if (found.isEmpty()) return batched
+    return batched.map { item -> found[item.id]?.let { merge_backfilled_envelope(item, it) } ?: item }
+}
+
+suspend fun refill_thread_envelopes(
+    messages: List<ThreadMessageItem>,
+    fetch_one: suspend (String) -> MailItem?,
+    cap: Int = envelope_single_refetch_cap,
+): List<ThreadMessageItem> {
+    val ids = messages.filter(::needs_thread_envelope_refill).map { it.id }
+    if (ids.isEmpty()) return messages
+    val found = refetch_missing_singly(ids, fetch_one, cap)
+    if (found.isEmpty()) return messages
+    return messages.map { message ->
+        val fetched = found[message.id] ?: return@map message
+        if (!needs_thread_envelope_refill(message)) return@map message
+        message.copy(
+            encrypted_envelope = fetched.encrypted_envelope,
+            envelope_nonce = fetched.envelope_nonce ?: message.envelope_nonce,
+            encrypted_metadata = message.encrypted_metadata ?: fetched.encrypted_metadata,
+            metadata_nonce = message.metadata_nonce ?: fetched.metadata_nonce,
+        )
+    }
+}
 
 fun merge_backfilled_envelope(item: MailItem, fetched: MailItem): MailItem {
     if (fetched.id != item.id || fetched.encrypted_envelope.isNullOrBlank()) return item

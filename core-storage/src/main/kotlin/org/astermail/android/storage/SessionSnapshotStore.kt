@@ -118,27 +118,31 @@ class SessionSnapshotStore(context: Context? = null) {
         val p = prefs ?: return null
         val token_access = runCatching { p.getString("${account_id}_$key_token_access", null) }
             .getOrNull() ?: return null
-        runCatching {
-            SessionSnapshot(
-                token_access = token_access,
-                token_refresh = p.getString("${account_id}_$key_token_refresh", null) ?: token_access,
-                csrf_token = p.getString("${account_id}_$key_csrf_token", null),
-                session_key = decode_b64_field(p, "${account_id}_$key_session_key"),
-                passphrase = decode_b64_field(p, "${account_id}_$key_passphrase"),
-                identity_key = p.getString("${account_id}_$key_identity", null),
-                encrypted_vault = p.getString("${account_id}_$key_enc_vault", null),
-                vault_nonce = p.getString("${account_id}_$key_vault_nonce", null),
-                vault_kdf_iterations = SessionKeyStore.sanitize_vault_kdf_iterations(
-                    p.getInt("${account_id}_$key_vault_kdf_iterations", SessionKeyStore.default_vault_kdf_iterations),
-                ),
-                password_salt = decode_b64_field(p, "${account_id}_$key_password_salt"),
-                user_id = p.getString("${account_id}_$key_user_id", null),
-                user_email = p.getString("${account_id}_$key_user_email", null),
-                recovery_codes = p.getString("${account_id}_$key_recovery_codes", null)?.split("\n")?.filter { it.isNotBlank() },
-                previous_keys = p.getString("${account_id}_$key_previous_keys", null)?.split("\n")?.filter { it.isNotBlank() },
-                legacy_keks = p.getString("${account_id}_$key_legacy_keks", null)?.split("\n")?.filter { it.isNotBlank() },
-            )
-        }.getOrNull()
+        fun read(key: String): String? =
+            runCatching { p.getString("${account_id}_$key", null) }.getOrNull()
+        fun read_list(key: String): List<String>? =
+            read(key)?.split('\n')?.filter { it.isNotBlank() }
+        SessionSnapshot(
+            token_access = token_access,
+            token_refresh = read(key_token_refresh) ?: token_access,
+            csrf_token = read(key_csrf_token),
+            session_key = decode_b64_field(p, "${account_id}_$key_session_key"),
+            passphrase = decode_b64_field(p, "${account_id}_$key_passphrase"),
+            identity_key = read(key_identity),
+            encrypted_vault = read(key_enc_vault),
+            vault_nonce = read(key_vault_nonce),
+            vault_kdf_iterations = SessionKeyStore.sanitize_vault_kdf_iterations(
+                runCatching {
+                    p.getInt("${account_id}_$key_vault_kdf_iterations", SessionKeyStore.default_vault_kdf_iterations)
+                }.getOrDefault(SessionKeyStore.default_vault_kdf_iterations),
+            ),
+            password_salt = decode_b64_field(p, "${account_id}_$key_password_salt"),
+            user_id = read(key_user_id),
+            user_email = read(key_user_email),
+            recovery_codes = read_list(key_recovery_codes),
+            previous_keys = read_list(key_previous_keys),
+            legacy_keks = read_list(key_legacy_keks),
+        )
     }
 
     fun remove(account_id: String) {

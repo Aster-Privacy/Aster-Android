@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_off_description">Aster Mail\'i her açtığınızda ekran kilidinizi veya bir uygulama PIN\'ini isteyin.</string>
+    <string name="app_lock_status_screen_lock">Ekran kilidinizle açılır</string>
+    <string name="app_lock_status_app_pin">Uygulama PIN\'iniz veya parolanızla açılır</string>
+    <string name="app_lock_mode_screen_lock">Ekran kilidi</string>
+    <string name="app_lock_mode_screen_lock_desc">Telefonunuzun kilidini açan PIN, desen, şifre veya biyometriyi kullanın</string>
+    <string name="app_lock_use_screen_lock">Ekran kilidini kullan</string>
+    <string name="app_lock_device_subtitle">Aster Mail\'i açmak için ekran kilidinizi kullanın.</string>
+    <string name="app_lock_device_error">Aster Mail ekran kilidinizi doğrulayamadı. Tekrar deneyin.</string>
+    <string name="app_lock_device_unavailable">Ekran kilidiniz kullanılamıyor. Aster Mail\'in kilidini açmak için telefonunuzun ayarlarından bir ekran kilidi ayarlayın.</string>
+    <string name="app_lock_device_key_lost">Ekran kilidiniz değişti, bu yüzden Aster Mail\'in kilidi açılamıyor. Devam etmek için oturumu kapatıp yeniden açın.</string>
+    <string name="app_lock_biometric_failed_device">Biyometrik kilit açma kullanılamıyor. Ekran kilidinizi kullanın.</string>
+    <string name="app_lock_biometric_error_device">Biyometrik kilit açma çalışmadı. Tekrar deneyin veya ekran kilidinizi kullanın.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail biyometrik kilit açmayı kapattı. Yeniden açmak için ekran kilidinizi kullanın.</string>
+    <string name="app_lock_device_setup_title">Uygulama kilidini ayarla</string>
+    <string name="app_lock_device_setup_subtitle">Ekran kilidinizi Aster Mail için kullanmak üzere şimdi doğrulayın.</string>
+    <string name="app_lock_setup_unavailable">Uygulama kilidi ayarlanamadı. Tekrar deneyin.</string>
+    <string name="app_lock_confirm_to_disable">Uygulama kilidini kapatmak için ekran kilidinizi doğrulayın.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Biyometrik kilit açmayı açmak için ekran kilidinizi doğrulayın.</string>
+    <string name="app_lock_confirm_to_change_settings">Uygulama kilidi ayarlarını değiştirmek için kimliğinizi doğrulayın.</string>
+    <string name="app_lock_hide_notification_content">Bildirim içeriğini gizle</string>
+    <string name="app_lock_hide_notification_content_desc">Bildirimler yalnızca yeni postanız olduğunu gösterir. Gönderen ve önizleme gizli kalır.</string>
+    <string name="app_lock_timeout_title">Şu süreden sonra kilitle</string>
+    <string name="app_lock_timeout_immediately">Hemen</string>
+    <string name="app_lock_timeout_one_minute">1 dakika</string>
+    <string name="app_lock_timeout_five_minutes">5 dakika</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 dakika</string>
+    <string name="app_lock_timeout_one_hour">1 saat</string>
+</resources>

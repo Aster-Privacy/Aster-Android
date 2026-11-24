@@ -357,6 +357,7 @@
     <string name="failed_to_save">फ़ाइल सहेजी नहीं जा सकी</string>
     <string name="failed_to_download">%s डाउनलोड नहीं हो सका</string>
     <string name="could_not_open_link">लिंक नहीं खुल सका</string>
+    <string name="open_address_in_maps">मैप्स ऐप में खोलें</string>
     <string name="move_to_trash">ट्रैश में ले जाएं</string>
     <string name="trash">ट्रैश</string>
     <string name="archive">आर्काइव</string>
@@ -1238,6 +1239,7 @@
     <string name="message">संदेश</string>
     <string name="feedback_placeholder">बताएं कि आपको क्या पसंद है, क्या कमी है, या क्या काम नहीं कर रहा।</string>
     <string name="feedback_privacy_note">जवाब देने के लिए आपके खाते का ईमेल साथ जोड़ा जाएगा। हम फ़ीडबैक कभी साझा नहीं करते।</string>
+    <string name="feedback_support_notice">यह फ़ॉर्म फ़ीडबैक, सुझावों और बग रिपोर्ट के लिए है। सवालों या अपने खाते से जुड़ी मदद के लिए, इसके बजाय सहायता टीम को %1$s पर ईमेल करें।</string>
     <string name="send_feedback">फ़ीडबैक भेजें</string>
     <string name="sending_feedback">भेजा जा रहा है...</string>
     <string name="sent">भेजे गए</string>
@@ -2183,7 +2185,7 @@
     <string name="vanguard_description">ऐप लॉक और बेहतर सुरक्षा के साथ उन्नत ऐप सुरक्षा।</string>
     <string name="vanguard_upgrade_cta">अपग्रेड करें</string>
     <string name="vanguard_confirm_disable_title">Vanguard बंद करें?</string>
-    <string name="vanguard_confirm_disable_desc">ऐप लॉक और Vanguard की दूसरी सुरक्षाएं बंद हो जाएंगी।</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard की सुरक्षाएं बंद हो जाएंगी। ऐप लॉक चालू रहेगा।</string>
     <string name="vanguard_disable">बंद करें</string>
     <string name="app_lock_pin">ऐप लॉक</string>
     <string name="app_lock_pin_description">ऐप खोलने के लिए PIN या पासफ़्रेज़ ज़रूरी करें।</string>
@@ -2799,6 +2801,8 @@
     <string name="contact_add_failed">%1$s संपर्कों में सहेजा नहीं जा सका</string>
     <string name="contact_remove_failed">%1$s संपर्कों से हटाया नहीं जा सका</string>
     <string name="copy_failed">कॉपी नहीं हो सका। फिर से कोशिश करें।</string>
+    <string name="copy_subject">विषय कॉपी करें</string>
+    <string name="subject_copied">विषय कॉपी किया गया</string>
     <string name="create_label_subtitle">संदेशों पर अपनी पसंद के रंग का टैग लगाएं</string>
     <string name="delete_signature_message">“%1$s” हटाएं? इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="delete_vacation_reply_confirm">आपका बाहर होने का संदेश और उसकी तारीख़ें हटा दी जाएंगी। इसे पहले जैसा नहीं किया जा सकता।</string>
@@ -3635,4 +3639,10 @@
     <string name="toast_position_subtitle">ऐप इस्तेमाल करते समय अलर्ट कहां दिखें</string>
     <string name="toast_position_top">ऊपर</string>
     <string name="toast_position_bottom">नीचे</string>
+    <string name="mail_priority">प्राथमिकता</string>
+    <string name="mail_priority_high">उच्च</string>
+    <string name="mail_priority_normal">सामान्य</string>
+    <string name="mail_priority_low">निम्न</string>
+    <string name="mail_high_priority">उच्च प्राथमिकता</string>
+    <string name="mail_low_priority">निम्न प्राथमिकता</string>
 </resources>

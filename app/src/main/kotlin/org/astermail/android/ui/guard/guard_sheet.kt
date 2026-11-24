@@ -57,7 +57,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -214,16 +214,20 @@ private fun guard_dialog_window() {
     val view = LocalView.current
     val context = LocalContext.current
     val colors = AsterMaterial.colors
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        prepare_popup_window(
-            window = window,
-            host = aster_host_window(context),
-            light_navigation_bars = sheet_container_color(colors).luminance() > 0.5f,
-            full_window = true,
-        )
-        view.filterTouchesWhenObscured = true
+    val light_navigation_bars = sheet_container_color(colors).luminance() > 0.5f
+    DisposableEffect(view, context, light_navigation_bars) {
+        val window = (view.parent as? DialogWindowProvider)?.window
+        if (window != null) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            prepare_popup_window(
+                window = window,
+                host = aster_host_window(context),
+                light_navigation_bars = light_navigation_bars,
+                full_window = true,
+            )
+            view.filterTouchesWhenObscured = true
+        }
+        onDispose {}
     }
 }
 
@@ -278,7 +282,7 @@ fun guard_sheet_frame(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = 32.dp) {
+fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = org.astermail.android.ui.auth.auth_logo_height) {
     Image(
         painter = painterResource(R.drawable.aster_wordmark),
         contentDescription = stringResource(R.string.guard_logo_description),

@@ -86,6 +86,30 @@ fun initial_thread_scroll_index(
     return header_item_count + target
 }
 
+fun thread_open_anchor_id(
+    message_ids: List<String>,
+    own_sent_ids: Set<String>,
+    opened_id: String,
+): String {
+    val opened_index = message_ids.indexOf(opened_id)
+    if (opened_index < 0 || opened_index == message_ids.lastIndex) return opened_id
+    val after = message_ids.subList(opened_index + 1, message_ids.size)
+    return if (after.all { it in own_sent_ids }) message_ids.last() else opened_id
+}
+
+fun should_follow_tail(
+    user_dragged: Boolean,
+    tail_id: String?,
+    followed_tail_id: String?,
+    tail_is_own: Boolean,
+): Boolean = !user_dragged && tail_is_own && tail_id != null && tail_id != followed_tail_id
+
+fun thread_layout_needs_refresh(
+    layout_ids: Set<String>,
+    display_ids: List<String>,
+    own_sent_ids: Set<String>,
+): Boolean = display_ids.any { it !in layout_ids && it in own_sent_ids }
+
 fun thread_message_is_expanded(
     message_id: String,
     is_last: Boolean,

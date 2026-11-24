@@ -262,6 +262,7 @@
     <string name="failed_to_save">Salvataggio file non riuscito</string>
     <string name="failed_to_download">Download di %s non riuscito</string>
     <string name="could_not_open_link">Impossibile aprire il link</string>
+    <string name="open_address_in_maps">Apri nell\'app di mappe</string>
     <string name="move_to_trash">Sposta nel cestino</string>
     <string name="archived">Archiviata</string>
     <string name="unstarred">Rimossa da Speciali</string>
@@ -901,6 +902,7 @@
     <string name="message">Messaggio</string>
     <string name="feedback_placeholder">Descrivi cosa ti piace, cosa manca o cosa non funziona.</string>
     <string name="feedback_privacy_note">L\'indirizzo email del tuo account verrà allegato così possiamo risponderti. Non condividiamo mai il feedback.</string>
+    <string name="feedback_support_notice">Questo modulo è per feedback, idee e segnalazioni di bug. Per domande o assistenza con il tuo account, scrivi invece al team di assistenza all\'indirizzo %1$s.</string>
     <string name="send_feedback">Invia feedback</string>
     <string name="sending_feedback">Invio...</string>
     <string name="sent">Inviato</string>
@@ -2279,7 +2281,7 @@
     <string name="vanguard_description">Protezione avanzata dell\'app con blocco e sicurezza rafforzata.</string>
     <string name="vanguard_upgrade_cta">Aggiorna piano</string>
     <string name="vanguard_confirm_disable_title">Disattivare Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">Il blocco dell\'app e le altre protezioni di Vanguard verranno disattivati.</string>
+    <string name="vanguard_confirm_disable_desc">Le protezioni di Vanguard verranno disattivate. Il blocco app resta attivo.</string>
     <string name="vanguard_disable">Disattiva</string>
     <string name="app_lock_pin">Blocco app</string>
     <string name="app_lock_pin_description">Richiedi un PIN o una passphrase per aprire l\'app.</string>
@@ -2875,6 +2877,8 @@
     <string name="contact_add_failed">Non è stato possibile salvare %1$s nei contatti</string>
     <string name="contact_remove_failed">Non è stato possibile rimuovere %1$s dai contatti</string>
     <string name="copy_failed">Impossibile copiare. Riprova.</string>
+    <string name="copy_subject">Copia oggetto</string>
+    <string name="subject_copied">Oggetto copiato</string>
     <string name="create_label_subtitle">Contrassegna i messaggi con il colore che scegli</string>
     <string name="delete_signature_message">Eliminare “%1$s”? L\'operazione non può essere annullata.</string>
     <string name="delete_vacation_reply_confirm">Il messaggio di assenza e le relative date verranno eliminati. L’operazione non può essere annullata.</string>
@@ -3768,4 +3772,10 @@
     <string name="toast_position_subtitle">Dove compaiono gli avvisi mentre usi l\'app</string>
     <string name="toast_position_top">In alto</string>
     <string name="toast_position_bottom">In basso</string>
+    <string name="mail_priority">Priorità</string>
+    <string name="mail_priority_high">Alta</string>
+    <string name="mail_priority_normal">Normale</string>
+    <string name="mail_priority_low">Bassa</string>
+    <string name="mail_high_priority">Priorità alta</string>
+    <string name="mail_low_priority">Priorità bassa</string>
 </resources>

@@ -111,9 +111,58 @@ class SystemFolderBootstrapTest {
             CreateLabelResponse(id = "new", label_token = "ignored")
         }
 
-        val tokens = bootstrap.ensure_system_folders()
+        val tokens = bootstrap.ensure_system_folders(attempts = 1)
 
         assertEquals(setOf("inbox", "sent", "trash", "spam", "archive"), tokens.keys)
+    }
+
+    @Test
+    fun `retries a failed inbox creation until every system folder exists`() = runTest {
+        val created = mutableListOf<String>()
+        coEvery { labels_api.list_labels(include_counts = false) } answers {
+            LabelsListResponse(
+                labels = created.map { LabelItem(id = it, label_token = it + "_token", is_system = true, folder_type = it) },
+            )
+        }
+        var inbox_failures = 0
+        val request = slot<CreateLabelRequest>()
+        coEvery { labels_api.create_label(capture(request)) } answers {
+            val type = request.captured.folder_type
+            if (type == "inbox" && inbox_failures++ == 0) throw RuntimeException("server error")
+            created.add(type)
+            CreateLabelResponse(id = "new", label_token = "ignored")
+        }
+
+        val tokens = bootstrap.ensure_system_folders()
+
+        assertTrue(SystemFolderBootstrap.has_every_system_folder(tokens))
+        coVerify(exactly = 7) { labels_api.create_label(any()) }
+        coVerify(exactly = 2) { labels_api.list_labels(include_counts = false) }
+    }
+
+    @Test
+    fun `retries after the folder list fails`() = runTest {
+        var list_calls = 0
+        coEvery { labels_api.list_labels(include_counts = false) } answers {
+            if (list_calls++ == 0) throw RuntimeException("offline")
+            LabelsListResponse(labels = emptyList())
+        }
+
+        val tokens = bootstrap.ensure_system_folders()
+
+        assertTrue(SystemFolderBootstrap.has_every_system_folder(tokens))
+        coVerify(exactly = 6) { labels_api.create_label(any()) }
+    }
+
+    @Test
+    fun `rethrows when the folder list fails on every attempt`() = runTest {
+        coEvery { labels_api.list_labels(include_counts = false) } throws RuntimeException("offline")
+
+        val outcome = runCatching { bootstrap.ensure_system_folders() }
+
+        assertTrue(outcome.isFailure)
+        coVerify(exactly = 3) { labels_api.list_labels(include_counts = false) }
+        coVerify(exactly = 0) { labels_api.create_label(any()) }
     }
 
     @Test
@@ -124,6 +173,7 @@ class SystemFolderBootstrapTest {
         val tokens = bootstrap.ensure_system_folders()
 
         coVerify(exactly = 0) { labels_api.create_label(any()) }
+        coVerify(exactly = 1) { labels_api.list_labels(include_counts = false) }
         assertTrue(tokens.isEmpty())
     }
 }

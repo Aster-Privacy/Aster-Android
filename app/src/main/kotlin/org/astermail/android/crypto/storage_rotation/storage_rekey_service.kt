@@ -337,6 +337,7 @@ class StorageRekeyService @Inject constructor(
 
     private val healed_users = Collections.synchronizedSet(HashSet<String>())
     private val side_copied = Collections.synchronizedSet(HashSet<String>())
+    private val wraps_throttle = StorageKeyWrapsThrottle()
     private val constant_sweep_users = Collections.synchronizedSet(HashSet<String>())
 
     companion object {
@@ -414,6 +415,7 @@ class StorageRekeyService @Inject constructor(
     fun forget_session() {
         healed_users.clear()
         side_copied.clear()
+        wraps_throttle.forget()
         coverage_asked.clear()
         folder_queue.forget()
     }
@@ -465,8 +467,14 @@ class StorageRekeyService @Inject constructor(
     private suspend fun heal_once(api: ResealApi, force: Boolean) {
         val user_id = session_key_store.get_user_id() ?: return
         if (!force && user_id in healed_users) return
-        val result = heal_storage_key_from_side_copy(api, session_vault_updater(api, session_key_store), wrap_crypto())
-        if (result !is StorageKeyHeal.Skipped) healed_users.add(user_id)
+        val gated = ThrottledWrapsApi(api, wraps_throttle, user_id)
+        val result = heal_storage_key_from_side_copy(gated, session_vault_updater(api, session_key_store), wrap_crypto())
+        if (result !is StorageKeyHeal.Skipped) {
+            healed_users.add(user_id)
+            wraps_throttle.note_settled(user_id)
+        } else if (gated.fetched_ok) {
+            wraps_throttle.note_unsettled(user_id)
+        }
     }
 
     private suspend fun keep_side_copy(api: ResealApi, vault: JSONObject) {
@@ -475,9 +483,15 @@ class StorageRekeyService @Inject constructor(
         val marker = user_id + ":" + wrap_key_id(key) + ":" + vault_identity_marker(vault).hashCode()
         key.fill(0)
         if (marker in side_copied) return
-        val wraps = runCatching { list_storage_key_wraps(api) }.getOrNull() ?: return
-        val stored = runCatching { store_side_copy(api, wrap_crypto(), vault, wraps) }.getOrNull()
-        if (stored == SideCopyStore.STORED || stored == SideCopyStore.CURRENT) side_copied.add(marker)
+        val gated = ThrottledWrapsApi(api, wraps_throttle, user_id)
+        val wraps = runCatching { list_storage_key_wraps(gated) }.getOrNull()
+        val stored = wraps?.let { runCatching { store_side_copy(gated, wrap_crypto(), vault, it) }.getOrNull() }
+        if (stored == SideCopyStore.STORED || stored == SideCopyStore.CURRENT) {
+            side_copied.add(marker)
+            wraps_throttle.note_settled(user_id)
+        } else if (gated.fetched_ok) {
+            wraps_throttle.note_unsettled(user_id)
+        }
     }
 
     private val coverage_asked = Collections.synchronizedSet(HashSet<String>())

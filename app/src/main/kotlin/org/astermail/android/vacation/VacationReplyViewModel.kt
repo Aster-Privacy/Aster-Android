@@ -36,7 +36,7 @@ import org.astermail.android.api.vacation.UpsertVacationReplyRequest
 import org.astermail.android.api.vacation.VacationReplyApi
 
 data class VacationReplyUiState(
-    val is_loading: Boolean = false,
+    val is_loading: Boolean = true,
     val is_busy: Boolean = false,
     val load_failed: Boolean = false,
     val error: String? = null,
@@ -64,7 +64,7 @@ class VacationReplyViewModel @Inject constructor(
     fun load(quiet: Boolean = false) {
         viewModelScope.launch {
             if (!quiet) _state.value = _state.value.copy(is_loading = true, error = null, load_failed = false)
-            val outcome = runCatching { vacation_api.get() }
+            val outcome = org.astermail.android.settings.load_settings_resource(await_session = { org.astermail.android.settings.await_settings_network(context) }) { vacation_api.get() }
             val current = _state.value
             if (quiet && (current.dirty || current.is_busy)) return@launch
             if (quiet && outcome.isFailure && !current.load_failed) {

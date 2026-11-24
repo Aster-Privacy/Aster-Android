@@ -262,6 +262,7 @@
     <string name="failed_to_save">Dosya kaydedilemedi</string>
     <string name="failed_to_download">%s indirilemedi</string>
     <string name="could_not_open_link">Bağlantı açılamadı</string>
+    <string name="open_address_in_maps">Harita uygulamasında aç</string>
     <string name="move_to_trash">Çöp kutusuna taşı</string>
     <string name="archived">Arşivlendi</string>
     <string name="unstarred">Yıldız kaldırıldı</string>
@@ -901,6 +902,7 @@
     <string name="message">Mesaj</string>
     <string name="feedback_placeholder">Neyi sevdiğinizi, neyin eksik olduğunu veya neyin bozuk olduğunu açıklayın.</string>
     <string name="feedback_privacy_note">Yanıt verebilmemiz için hesap e-postanız eklenecektir. Geri bildirimleri asla paylaşmayız.</string>
+    <string name="feedback_support_notice">Bu form geri bildirim, fikir ve hata bildirimleri içindir. Sorularınız veya hesabınızla ilgili yardım için bunun yerine %1$s adresinden destek ekibine e-posta gönderin.</string>
     <string name="send_feedback">Geri bildirim gönder</string>
     <string name="sending_feedback">Gönderiliyor...</string>
     <string name="sent">Gönderildi</string>
@@ -2274,7 +2276,7 @@
     <string name="vanguard_description">Uygulama kilidi ve güçlendirilmiş güvenlikle gelişmiş uygulama koruması.</string>
     <string name="vanguard_upgrade_cta">Yükselt</string>
     <string name="vanguard_confirm_disable_title">Vanguard kapatılsın mı?</string>
-    <string name="vanguard_confirm_disable_desc">Uygulama kilidi ve diğer Vanguard korumaları kapatılacak.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard korumaları kapatılacak. Uygulama kilidi açık kalır.</string>
     <string name="vanguard_disable">Kapat</string>
     <string name="app_lock_pin">Uygulama kilidi</string>
     <string name="app_lock_pin_description">Uygulamayı açmak için PIN ya da parola gerekir.</string>
@@ -2856,6 +2858,8 @@
     <string name="contact_add_failed">%1$s kişilere kaydedilemedi</string>
     <string name="contact_remove_failed">%1$s kişilerden kaldırılamadı</string>
     <string name="copy_failed">Kopyalanamadı. Tekrar deneyin.</string>
+    <string name="copy_subject">Konuyu kopyala</string>
+    <string name="subject_copied">Konu kopyalandı</string>
     <string name="create_label_subtitle">İletileri seçtiğiniz bir renkle işaretleyin</string>
     <string name="delete_signature_message">“%1$s” silinsin mi? Bu işlem geri alınamaz.</string>
     <string name="delete_vacation_reply_confirm">Otomatik yanıtınız ve tarihleri silinecek. Bu işlem geri alınamaz.</string>
@@ -3743,4 +3747,10 @@
     <string name="toast_position_subtitle">Uygulamayı kullanırken uyarıların göründüğü yer</string>
     <string name="toast_position_top">Üst</string>
     <string name="toast_position_bottom">Alt</string>
+    <string name="mail_priority">Öncelik</string>
+    <string name="mail_priority_high">Yüksek</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Düşük</string>
+    <string name="mail_high_priority">Yüksek öncelik</string>
+    <string name="mail_low_priority">Düşük öncelik</string>
 </resources>
