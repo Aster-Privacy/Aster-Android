@@ -33,7 +33,7 @@ import kotlinx.coroutines.withContext
 import org.astermail.android.api.ApiError
 import java.util.concurrent.CopyOnWriteArrayList
 
-enum class RefreshOutcome { Success, AuthFailed, Transient }
+enum class RefreshOutcome { Success, AuthFailed, Transient, Revoked }
 
 suspend fun confirm_session_rejected(me: suspend () -> Unit): Boolean =
     try {
@@ -58,6 +58,7 @@ class SessionRefresher(
     private val mutex = Mutex()
     private val auth_failure_listeners = CopyOnWriteArrayList<suspend (String?) -> Unit>()
     private val refreshed_listeners = CopyOnWriteArrayList<suspend (String?) -> Unit>()
+    private val revoked_listeners = CopyOnWriteArrayList<suspend (String?) -> Unit>()
 
     @Volatile
     private var dead_token: String? = null
@@ -70,6 +71,10 @@ class SessionRefresher(
 
     fun on_auth_failure(listener: suspend (String?) -> Unit) {
         auth_failure_listeners.add(listener)
+    }
+
+    fun on_revoked(listener: suspend (String?) -> Unit) {
+        revoked_listeners.add(listener)
     }
 
     fun on_refreshed(listener: suspend (String?) -> Unit) {
@@ -101,6 +106,7 @@ class SessionRefresher(
             val listeners = when (outcome) {
                 RefreshOutcome.AuthFailed -> auth_failure_listeners
                 RefreshOutcome.Success -> refreshed_listeners
+                RefreshOutcome.Revoked -> revoked_listeners
                 RefreshOutcome.Transient -> null
             }
             if (!listeners.isNullOrEmpty()) {
@@ -110,7 +116,7 @@ class SessionRefresher(
                 }
             }
         }
-        return outcome
+        return if (outcome == RefreshOutcome.Revoked) RefreshOutcome.AuthFailed else outcome
     }
 
     private fun record(presented: String, outcome: RefreshOutcome) {
@@ -131,6 +137,13 @@ class SessionRefresher(
                     dead_token = presented
                     clear_rejection()
                 }
+            }
+            RefreshOutcome.Revoked -> {
+                transient_token = null
+                transient_failures = 0
+                retry_after_ms = 0L
+                dead_token = presented
+                clear_rejection()
             }
             RefreshOutcome.Transient -> {
                 if (transient_token != presented) {

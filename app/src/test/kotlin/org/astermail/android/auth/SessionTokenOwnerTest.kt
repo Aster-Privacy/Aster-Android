@@ -192,6 +192,15 @@ class SessionTokenOwnerTest {
     }
 
     @Test
+    fun a_revoked_refresh_token_maps_to_revoked() = runBlocking {
+        val presented = jwt("a", "r1")
+        val harness = Harness(access = jwt("a", "x1"), refresh = presented)
+        harness.on_call = { throw ApiError.RefreshTokenRevoked }
+        assertEquals(RefreshOutcome.Revoked, harness.build().refresh(presented))
+        assertNull(harness.saved_current)
+    }
+
+    @Test
     fun network_failure_maps_to_transient() = runBlocking {
         val presented = jwt("a", "r1")
         val harness = Harness(access = jwt("a", "x1"), refresh = presented)

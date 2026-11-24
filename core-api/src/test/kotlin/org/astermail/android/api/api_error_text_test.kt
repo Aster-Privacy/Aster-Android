@@ -40,6 +40,7 @@ class api_error_text_test {
         val errors = listOf(
             ApiError.NetworkError,
             ApiError.UnauthorizedError,
+            ApiError.RefreshTokenRevoked,
             ApiError.NotFoundError,
             ApiError.ForbiddenError(),
             ApiError.ForbiddenError("forbidden"),

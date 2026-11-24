@@ -196,7 +196,7 @@ private fun open_snapshot_session(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (t: Throwable) {
-            if (t is ApiError.UnauthorizedError || t is ApiError.ForbiddenError) lost = true
+            if (t is ApiError.UnauthorizedError || t is ApiError.RefreshTokenRevoked || t is ApiError.ForbiddenError) lost = true
             return@withLock null
         }
         val rotated = response.refresh_token ?: presented ?: response.access_token

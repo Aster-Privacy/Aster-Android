@@ -89,6 +89,7 @@ fun server_supplied_detail(t: Throwable): String? {
         ApiError.InvalidCredentials,
         ApiError.NetworkError,
         ApiError.UnauthorizedError,
+        ApiError.RefreshTokenRevoked,
         ApiError.NotFoundError,
         is ApiError.ServerError,
         is ApiError.GuardRequired,

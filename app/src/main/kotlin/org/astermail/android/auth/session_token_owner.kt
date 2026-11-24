@@ -76,6 +76,8 @@ class AccountBoundRefresh(
             throw cancelled
         } catch (_: ApiError.UnauthorizedError) {
             return@withLock RefreshOutcome.AuthFailed
+        } catch (_: ApiError.RefreshTokenRevoked) {
+            return@withLock RefreshOutcome.Revoked
         } catch (_: Throwable) {
             return@withLock RefreshOutcome.Transient
         }

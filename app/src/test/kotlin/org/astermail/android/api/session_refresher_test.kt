@@ -338,4 +338,87 @@ class session_refresher_test {
             confirm_session_rejected { throw kotlinx.coroutines.CancellationException("left") }
         }
     }
+
+    @Test
+    fun the_revoked_code_maps_to_its_own_error() {
+        assertEquals(ApiError.RefreshTokenRevoked, map_unauthorized("REFRESH_TOKEN_REVOKED", ""))
+        assertEquals(ApiError.UnauthorizedError, map_unauthorized("UNAUTHORIZED", ""))
+        assertEquals(ApiError.UnauthorizedError, map_unauthorized(null, ""))
+    }
+
+    @Test
+    fun a_revoked_token_ends_the_session_at_once_while_the_access_token_still_works() = runBlocking {
+        val calls = AtomicInteger(0)
+        val revoked = AtomicInteger(0)
+        val auth_failures = AtomicInteger(0)
+        var clock = 0L
+        val refresher = SessionRefresher(
+            read_refresh_token = { "spent" },
+            perform_refresh = {
+                calls.incrementAndGet()
+                RefreshOutcome.Revoked
+            },
+            notify_scope = inline_scope,
+            now_ms = { clock },
+            access_token_valid = { true },
+        )
+        refresher.on_revoked { presented ->
+            assertEquals("spent", presented)
+            revoked.incrementAndGet()
+        }
+        refresher.on_auth_failure { auth_failures.incrementAndGet() }
+
+        assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        repeat(30) {
+            clock += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+            assertEquals(RefreshOutcome.AuthFailed, refresher.refresh())
+        }
+
+        assertEquals(1, calls.get())
+        assertEquals(1, revoked.get())
+        assertEquals(0, auth_failures.get())
+    }
+
+    @Test
+    fun a_plain_rejection_with_a_working_access_token_is_retried_not_ended() = runBlocking {
+        val calls = AtomicInteger(0)
+        val revoked = AtomicInteger(0)
+        var clock = 0L
+        val refresher = SessionRefresher(
+            read_refresh_token = { "maybe" },
+            perform_refresh = {
+                calls.incrementAndGet()
+                RefreshOutcome.AuthFailed
+            },
+            notify_scope = inline_scope,
+            now_ms = { clock },
+            access_token_valid = { true },
+        )
+        refresher.on_revoked { revoked.incrementAndGet() }
+
+        refresher.refresh()
+        clock += SessionRefresher.REJECTED_RETRY_INTERVAL_MS
+        refresher.refresh()
+
+        assertEquals(2, calls.get())
+        assertEquals(0, revoked.get())
+    }
+
+    @Test
+    fun a_server_error_keeps_the_session() = runBlocking {
+        val revoked = AtomicInteger(0)
+        val auth_failures = AtomicInteger(0)
+        val refresher = SessionRefresher(
+            read_refresh_token = { "live" },
+            perform_refresh = { RefreshOutcome.Transient },
+            notify_scope = inline_scope,
+            access_token_valid = { true },
+        )
+        refresher.on_revoked { revoked.incrementAndGet() }
+        refresher.on_auth_failure { auth_failures.incrementAndGet() }
+
+        assertEquals(RefreshOutcome.Transient, refresher.refresh())
+        assertEquals(0, revoked.get())
+        assertEquals(0, auth_failures.get())
+    }
 }

@@ -165,7 +165,7 @@ fun localized_api_error(context: Context, t: Throwable, fallback: String): Strin
     server_supplied_detail(t)?.let { return it }
     return when (t) {
         is ApiError.NetworkError -> context.getString(R.string.error_no_connection)
-        is ApiError.UnauthorizedError -> context.getString(R.string.session_expired_sign_in)
+        is ApiError.UnauthorizedError, is ApiError.RefreshTokenRevoked -> context.getString(R.string.session_expired_sign_in)
         is ApiError.InvalidCredentials -> context.getString(R.string.incorrect_password)
         else -> fallback
     }

@@ -263,6 +263,9 @@ class AuthRepository @Inject constructor(
         session_refresher.on_auth_failure { presented ->
             handle_refresh_auth_failure(presented)
         }
+        session_refresher.on_revoked { presented ->
+            handle_refresh_revoked(presented)
+        }
         LockKeyHolder.add_open_listener { resume_after_unlock() }
         org.astermail.android.crypto.sync_format_readiness.install_api_if_absent {
             org.astermail.android.api.ratchet.RatchetApiImpl(api_client)
@@ -422,7 +425,7 @@ class AuthRepository @Inject constructor(
                     } catch (_: Throwable) {
                     }
                 }
-                RefreshOutcome.AuthFailed -> sign_out_dead_session(presented)
+                RefreshOutcome.AuthFailed, RefreshOutcome.Revoked -> sign_out_dead_session(presented)
                 RefreshOutcome.Transient -> {
                 }
             }
@@ -438,6 +441,12 @@ class AuthRepository @Inject constructor(
         if (presented.isNullOrEmpty()) return
         if (!_is_signed_in.value || presented != token_store.refresh_token) return
         if (!org.astermail.android.api.auth.confirm_session_rejected { auth_api.me() }) return
+        sign_out_dead_session(presented)
+    }
+
+    private suspend fun handle_refresh_revoked(presented: String?) {
+        if (presented.isNullOrEmpty()) return
+        if (!_is_signed_in.value || presented != token_store.refresh_token) return
         sign_out_dead_session(presented)
     }
 
@@ -1808,7 +1817,7 @@ class AuthRepository @Inject constructor(
         if (api_client.get_csrf() != null) return true
         return when (try_refresh_session()) {
             RefreshOutcome.Success -> api_client.get_csrf() != null
-            RefreshOutcome.AuthFailed, RefreshOutcome.Transient -> false
+            RefreshOutcome.AuthFailed, RefreshOutcome.Transient, RefreshOutcome.Revoked -> false
         }
     }
 
