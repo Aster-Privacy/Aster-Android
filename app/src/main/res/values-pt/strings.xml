@@ -3746,4 +3746,10 @@
     <string name="attachment_unverified">Anexo não verificado</string>
     <string name="confirm_back_exit">Confirmar antes de sair</string>
     <string name="confirm_back_exit_subtitle">Prima Voltar duas vezes para sair da app a partir da caixa de entrada</string>
+    <string name="mail_priority">Prioridade</string>
+    <string name="mail_priority_high">Alta</string>
+    <string name="mail_priority_normal">Normal</string>
+    <string name="mail_priority_low">Baixa</string>
+    <string name="mail_high_priority">Prioridade alta</string>
+    <string name="mail_low_priority">Prioridade baixa</string>
 </resources>

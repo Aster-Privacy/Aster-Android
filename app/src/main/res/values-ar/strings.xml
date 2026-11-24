@@ -3844,4 +3844,10 @@
     <string name="attachment_unverified">مرفق لم يتم التحقق منه</string>
     <string name="confirm_back_exit">التأكيد قبل الخروج</string>
     <string name="confirm_back_exit_subtitle">اضغط على زر الرجوع مرتين لمغادرة التطبيق من البريد الوارد</string>
+    <string name="mail_priority">الأولوية</string>
+    <string name="mail_priority_high">عالية</string>
+    <string name="mail_priority_normal">عادية</string>
+    <string name="mail_priority_low">منخفضة</string>
+    <string name="mail_high_priority">أولوية عالية</string>
+    <string name="mail_low_priority">أولوية منخفضة</string>
 </resources>

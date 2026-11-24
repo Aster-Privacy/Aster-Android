@@ -1937,6 +1937,62 @@ class MailRepositoryTest {
         val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
         coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
         assertEquals("7d4f2c1a-9b3e-4f6a-8c2d-1e5b7a9c3f80", request.captured.client_send_id)
+        assertNull(request.captured.priority)
+    }
+
+    @Test
+    fun `send_email passes a chosen priority to an internal send`() = runTest {
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_1")
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        repo.send_email(
+            to = listOf("recipient@astermail.org"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            priority = "high",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("high", request.captured.priority)
+    }
+
+    @Test
+    fun `send_email sends no priority for normal`() = runTest {
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_1")
+        every { session_key_store.get_identity_key() } returns "test_identity_key"
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+
+        repo.send_email(
+            to = listOf("recipient@astermail.org"),
+            subject = "Test",
+            body_html = "<p>Hello</p>",
+            priority = "normal",
+        )
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertNull(request.captured.priority)
+    }
+
+    @Test
+    fun `run_pending_send keeps the queued priority`() = runTest {
+        pending_send_dao.upsert(pending_row("pend_priority", priority = "low"))
+        every { session_key_store.has_ratchet_keys() } returns true
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
+        coEvery { send_api.send_simple(any()) } returns
+            SimpleSendResponse(success = true, message = "ok", mail_item_id = "sent_priority")
+
+        assertEquals(PendingSendOutcome.SENT, repo.run_pending_send("pend_priority"))
+
+        val request = slot<org.astermail.android.api.send.SimpleSendRequest>()
+        coVerify(exactly = 1) { send_api.send_simple(capture(request)) }
+        assertEquals("low", request.captured.priority)
     }
 
     @Test
@@ -3012,6 +3068,7 @@ class MailRepositoryTest {
         draft_id: String? = null,
         to: String = "friend@astermail.org",
         fire_at_ms: Long = 0L,
+        priority: String? = null,
     ): PendingSendEntity = PendingSendEntity(
         id = id,
         to_json = "[\"$to\"]",
@@ -3031,6 +3088,7 @@ class MailRepositoryTest {
         fire_at_ms = fire_at_ms,
         status = status,
         created_at_ms = 0L,
+        priority = priority,
     )
 
     private fun wait_until(timeout_ms: Long = 2000L, predicate: () -> Boolean) {

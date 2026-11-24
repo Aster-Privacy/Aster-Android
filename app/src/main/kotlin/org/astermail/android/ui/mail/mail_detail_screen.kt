@@ -2844,6 +2844,7 @@ internal fun expanded_message(
                             unverified = trust?.auth_state == org.astermail.android.security.SenderAuthState.unverified,
                             unverified_domain = trust?.domain,
                         )
+                        priority_badge(raw_headers = msg.raw_headers)
                     }
                     Spacer(Modifier.width(AsterSpacing.sm))
                     val header_yesterday_label = stringResource(R.string.yesterday)

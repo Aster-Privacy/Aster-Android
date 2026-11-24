@@ -3783,4 +3783,10 @@
     <string name="attachment_unverified">Niezweryfikowany załącznik</string>
     <string name="confirm_back_exit">Potwierdzaj przed wyjściem</string>
     <string name="confirm_back_exit_subtitle">Naciśnij Wstecz dwa razy, aby opuścić aplikację ze skrzynki odbiorczej</string>
+    <string name="mail_priority">Priorytet</string>
+    <string name="mail_priority_high">Wysoki</string>
+    <string name="mail_priority_normal">Normalny</string>
+    <string name="mail_priority_low">Niski</string>
+    <string name="mail_high_priority">Wysoki priorytet</string>
+    <string name="mail_low_priority">Niski priorytet</string>
 </resources>

@@ -3692,4 +3692,10 @@
     <string name="attachment_unverified">未验证的附件</string>
     <string name="confirm_back_exit">退出前确认</string>
     <string name="confirm_back_exit_subtitle">在收件箱中按两次返回键退出应用</string>
+    <string name="mail_priority">优先级</string>
+    <string name="mail_priority_high">高</string>
+    <string name="mail_priority_normal">普通</string>
+    <string name="mail_priority_low">低</string>
+    <string name="mail_high_priority">高优先级</string>
+    <string name="mail_low_priority">低优先级</string>
 </resources>

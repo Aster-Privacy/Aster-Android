@@ -1670,6 +1670,7 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<String> {
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
@@ -1721,6 +1722,7 @@ class MailRepository @Inject constructor(
                     reply_to_id = reply_to_id,
                     force_pgp = force_pgp,
                     pgp_recipients = pgp_recipients,
+                    priority = priority,
                 )
             }
         }
@@ -1779,6 +1781,7 @@ class MailRepository @Inject constructor(
         reply_to_id: String? = null,
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
+        priority: String? = null,
     ): String {
         val already_queued = draft_id?.takeIf { it.isNotBlank() }?.let { existing_draft_id ->
             pending_rows_for_current_account()?.firstOrNull { queued ->
@@ -1812,6 +1815,7 @@ class MailRepository @Inject constructor(
             allow_non_post_quantum = allow_non_post_quantum,
             force_pgp = force_pgp,
             pgp_recipients_json = pgp_recipients.takeIf { it.isNotEmpty() }?.let { outbox_json.encodeToString(it) },
+            priority = MailPriorityRules.outgoing(MailPriorityRules.from_wire(priority)),
         )
         pending_send_dao.upsert(row)
         if (clear_undo_canceled(pending_id)) {
@@ -2107,6 +2111,7 @@ class MailRepository @Inject constructor(
             force_pgp = row.force_pgp,
             pgp_recipients = row_pgp_recipients,
             ack_scope = pending_ack_scope(pending_id),
+            priority = row.priority,
         )
         val response = result.getOrNull()
         return if (result.isSuccess && response?.success == true) {
@@ -7146,12 +7151,14 @@ class MailRepository @Inject constructor(
         force_pgp: Boolean? = null,
         pgp_recipients: List<String> = emptyList(),
         ack_scope: String? = null,
+        priority: String? = null,
     ): Result<SimpleSendResponse> {
         val used_acknowledgments = java.util.Collections.synchronizedList(mutableListOf<ExternalKeyAcknowledgmentUse>())
         return send_email_inner(
             to, cc, bcc, subject, body_html, sender_email, sender_display_name, thread_token, expires_at,
             expiry_password, attachments, sender_alias_hash, suppress_branding, allow_non_post_quantum,
             client_send_id, force_pgp, pgp_recipients, ack_scope, used_acknowledgments,
+            MailPriorityRules.outgoing(MailPriorityRules.from_wire(priority)),
         ).also { result ->
             if (result.getOrNull()?.success == true) {
                 consume_unpinned_acknowledgments(ack_scope, used_acknowledgments.toList())
@@ -7179,6 +7186,7 @@ class MailRepository @Inject constructor(
         pgp_recipients: List<String>,
         ack_scope: String?,
         used_acknowledgments: MutableList<ExternalKeyAcknowledgmentUse>,
+        priority: String?,
     ): Result<SimpleSendResponse> = runCatching {
         classify_recipients(to + cc + bcc)
         val is_mixed = has_mixed_recipients(to + cc + bcc)
@@ -7214,6 +7222,7 @@ class MailRepository @Inject constructor(
                     to = to,
                     cc = cc,
                     bcc = bcc,
+                    raw_headers = MailPriorityRules.headers(MailPriorityRules.from_wire(priority)),
                 ),
                 evidence,
             )
@@ -7321,6 +7330,7 @@ class MailRepository @Inject constructor(
                     external_pgp_bodies = client_copies,
                     force_pgp = force_pgp,
                     pgp_recipients = listed_pgp_recipients.takeIf { it.isNotEmpty() },
+                    priority = priority,
                 ),
             )
             val mail_item_id = await_queued_send(queued.queue_id)
@@ -7444,6 +7454,7 @@ class MailRepository @Inject constructor(
                         it.isNotEmpty() && expiry_password.isNullOrEmpty()
                     },
                     secure_message = secure_message,
+                    priority = priority,
                 ),
             )
             val sent_item_id = result.mail_item_id
@@ -7526,6 +7537,7 @@ class MailRepository @Inject constructor(
                     recipient_bodies = recipient_bodies,
                     hosted_recipients = hosted_recipients_of(to + cc + bcc)
                         .takeIf { ratchet_body != null && it.isNotEmpty() },
+                    priority = priority,
                 ),
             )
         }
@@ -8561,6 +8573,7 @@ class MailRepository @Inject constructor(
         cc: List<String>,
         bcc: List<String> = emptyList(),
         attachments: List<ExternalAttachmentPayload> = emptyList(),
+        raw_headers: List<Pair<String, String>> = emptyList(),
     ): String {
         val obj = org.json.JSONObject()
         obj.put("subject", subject)
@@ -8583,6 +8596,13 @@ class MailRepository @Inject constructor(
             "yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US,
         ).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date()))
         if (attachments.isNotEmpty()) obj.put(DRAFT_ATTACHMENTS_KEY, draft_attachments_json(attachments))
+        if (raw_headers.isNotEmpty()) {
+            obj.put("raw_headers", org.json.JSONArray().apply {
+                raw_headers.forEach { (name, value) ->
+                    put(org.json.JSONObject().apply { put("name", name); put("value", value) })
+                }
+            })
+        }
         return obj.toString()
     }
 

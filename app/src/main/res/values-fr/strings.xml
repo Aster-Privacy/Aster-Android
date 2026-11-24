@@ -3775,4 +3775,10 @@
     <string name="attachment_unverified">Pièce jointe non vérifiée</string>
     <string name="confirm_back_exit">Confirmer avant de quitter</string>
     <string name="confirm_back_exit_subtitle">Appuyez deux fois sur Retour pour quitter l\'app depuis la boîte de réception</string>
+    <string name="mail_priority">Priorité</string>
+    <string name="mail_priority_high">Haute</string>
+    <string name="mail_priority_normal">Normale</string>
+    <string name="mail_priority_low">Basse</string>
+    <string name="mail_high_priority">Priorité haute</string>
+    <string name="mail_low_priority">Priorité basse</string>
 </resources>
