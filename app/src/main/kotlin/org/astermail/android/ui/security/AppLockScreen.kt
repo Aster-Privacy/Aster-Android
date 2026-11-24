@@ -310,12 +310,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             .build()
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                val authenticated_cipher = result.cryptoObject?.cipher
-                if (authenticated_cipher == null) {
-                    error_msg = biometric_error_str
-                    return
-                }
-                if (!store.complete_biometric_unlock(authenticated_cipher)) {
+                if (!store.complete_biometric_unlock(result.cryptoObject?.cipher ?: cipher)) {
                     BiometricUnlockGate.invalidate(context)
                     biometric_enrolled = false
                     error_msg = biometric_reset_str

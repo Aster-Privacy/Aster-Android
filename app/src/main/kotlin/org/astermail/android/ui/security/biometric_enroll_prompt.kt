@@ -58,9 +58,7 @@ fun launch_biometric_enroll(
         .build()
     val callback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-            val authenticated_cipher = result.cryptoObject?.cipher
-            val ok = authenticated_cipher != null &&
-                BiometricUnlockGate.complete_enroll(app_context, authenticated_cipher)
+            val ok = BiometricUnlockGate.complete_enroll(app_context, result.cryptoObject?.cipher ?: cipher)
             if (!ok) BiometricUnlockGate.reset(app_context)
             on_finished(ok)
         }

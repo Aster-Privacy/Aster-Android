@@ -83,12 +83,13 @@ fun launch_device_credential(
             .build()
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                val authenticated = result.cryptoObject?.cipher
-                val ok = authenticated != null && complete(authenticated)
+                store.end_external_flow()
+                val ok = complete(result.cryptoObject?.cipher ?: cipher)
                 on_result(if (ok) DeviceCredentialResult.SUCCESS else DeviceCredentialResult.FAILED)
             }
 
             override fun onAuthenticationError(code: Int, message: CharSequence) {
+                store.end_external_flow()
                 on_result(prompt_error_result(code))
             }
         }
@@ -113,6 +114,7 @@ fun launch_device_credential(
     val holder = arrayOfNulls<androidx.activity.result.ActivityResultLauncher<android.content.Intent>>(1)
     val launcher = activity.activityResultRegistry.register(key, ActivityResultContracts.StartActivityForResult()) { result ->
         holder[0]?.unregister()
+        store.end_external_flow()
         if (result.resultCode != Activity.RESULT_OK) {
             on_result(DeviceCredentialResult.CANCELED)
             return@register
