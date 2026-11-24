@@ -25,11 +25,15 @@ import android.content.Context
 import dagger.hilt.android.EntryPointAccessors
 import org.astermail.android.mail.ReactionFrame
 import org.astermail.android.mail.safe_display_text
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
 enum class PushResult { Shown, NeedsFetch, Ignore }
 
 private const val max_alert_field_length = 96
+
+private const val PUSH_AVATAR_GRACE_MS = 500L
 
 private fun sanitize_alert_field(raw: String): String {
     val collapsed = raw
@@ -101,6 +105,20 @@ fun handle_reaction_added(context: Context, frame: ReactionFrame): PushResult {
     return PushResult.Shown
 }
 
+fun post_push_generic(
+    context: Context,
+    item_id: String,
+    show: () -> Boolean = { MailPollingWorker.show_generic(context, 1) },
+): PushResult {
+    if (!MailPollingWorker.claim_push_generic(context, item_id)) return PushResult.Ignore
+    if (show()) {
+        MailPollingWorker.note_push_notification_posted(context)
+    } else if (item_id.isNotBlank()) {
+        MailPollingWorker.release_item_notification(context, item_id)
+    }
+    return PushResult.Shown
+}
+
 fun handle_push_payload(context: Context, payload: String): PushResult {
     val obj = JSONObject(payload)
     val type = obj.optString("type")
@@ -158,11 +176,9 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     }
     val app_lock_hides = runCatching { entry.app_lock_store().hides_notification_content() }.getOrDefault(true)
     if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_hides) {
+        val pushed_item_id = obj.optString("item_id", "")
         if (runCatching { entry.mail_repository().keys_locked() }.getOrDefault(false)) {
-            if (MailPollingWorker.show_generic(context, 1)) {
-                MailPollingWorker.note_push_notification_posted(context)
-            }
-            return PushResult.Shown
+            return post_push_generic(context, pushed_item_id)
         }
         if (
             MailPollingWorker.locked_push_needs_fetch(
@@ -172,10 +188,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
         ) {
             return PushResult.NeedsFetch
         }
-        if (MailPollingWorker.show_generic(context, 1)) {
-            MailPollingWorker.note_push_notification_posted(context)
-        }
-        return PushResult.Shown
+        return post_push_generic(context, pushed_item_id)
     }
     if (type == "wake") return PushResult.NeedsFetch
     if (!MailPollingWorker.protected_folder_state_known(context)) {
@@ -254,7 +267,22 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             preview = repo.notification_preview(envelope),
             message_id = notification_id,
             item_id = item_id,
-            large_icon = push_large_icon(context, repo, shown_email, sender),
+            large_icon = push_large_icon(
+                context = context,
+                repo = repo,
+                entry = entry,
+                trust_message = push_trust_message(
+                    item_type = obj.optString("item_type", "").ifBlank { null },
+                    is_external = if (obj.has("is_external")) obj.optBoolean("is_external", true) else null,
+                    sender_name = envelope.from_name,
+                    sender_email = envelope.from_email,
+                    display_sender_name = forwarding?.display_sender_name,
+                    display_sender_email = forwarding?.display_sender_email,
+                    sender_verification = envelope.sender_verification,
+                ),
+                shown_email = shown_email,
+                shown_name = sender,
+            ),
         )
     }.isSuccess
     if (!shown) {
@@ -268,11 +296,42 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
 private fun push_large_icon(
     context: Context,
     repo: org.astermail.android.mail.MailRepository,
+    entry: MailPollingWorker.MailRepositoryEntryPoint,
+    trust_message: org.astermail.android.security.SenderTrustMessage?,
     shown_email: String,
     shown_name: String,
 ): android.graphics.Bitmap? = runCatching {
     val settings = notification_avatar_settings(context, runCatching { repo.cached_avatar_preferences() }.getOrNull())
-    NotificationAvatars.offline_icon(context, push_avatar_plan(shown_email, shown_name, settings))
+    val offline = { NotificationAvatars.offline_icon(context, push_avatar_plan(shown_email, shown_name, settings)) }
+    if (trust_message == null || !settings.show_pictures) return@runCatching offline()
+    runBlocking {
+        withTimeoutOrNull(NOTIFICATION_AVATAR_RUN_BUDGET_MS + PUSH_AVATAR_GRACE_MS) {
+            val budget = NotificationAvatarBudget()
+            warm_avatar_trust(
+                settings = settings,
+                content_hidden = false,
+                budget = budget,
+                ready = org.astermail.android.security.SenderTrustStore::contacts_ready,
+                warm = { entry.notification_contacts().get().warm_sender_trust() },
+            )
+            val plan = runCatching {
+                plan_notification_avatar(
+                    notification_avatar_facts(
+                        message = trust_message,
+                        shown_email = shown_email,
+                        shown_name = shown_name,
+                        undecryptable = false,
+                        system_sender = false,
+                        settings = settings,
+                        content_hidden = false,
+                        trust_context = org.astermail.android.security.SenderTrustStore.context.value,
+                        trust_context_ready = org.astermail.android.security.SenderTrustStore.contacts_ready(),
+                    ),
+                )
+            }.getOrElse { push_avatar_plan(shown_email, shown_name, settings) }
+            NotificationAvatars.large_icon(context, plan, budget)
+        }
+    } ?: offline()
 }.getOrNull()
 
 private fun guard_known_accounts(context: Context): List<String> =
