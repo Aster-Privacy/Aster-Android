@@ -58,7 +58,35 @@ data class AliasDetailState(
     val rules_locked: Boolean = false,
     val apply_run: AliasRun? = null,
     val apply_busy: Boolean = false,
+    val apply_unsupported: Boolean = false,
 )
 
 fun is_alias_run_active(run: AliasRun?): Boolean =
     run != null && (run.status == "pending" || run.status == "running")
+
+enum class AliasRunConfirmKind { FOLDER_LABEL, FOLDER, LABEL }
+
+fun alias_run_confirm_kind(
+    folder_token: String?,
+    never_inbox: Boolean,
+    label_token: String?,
+): AliasRunConfirmKind? {
+    val has_folder = folder_token != null || never_inbox
+    val has_label = label_token != null
+    return when {
+        has_folder && has_label -> AliasRunConfirmKind.FOLDER_LABEL
+        has_folder -> AliasRunConfirmKind.FOLDER
+        has_label -> AliasRunConfirmKind.LABEL
+        else -> null
+    }
+}
+
+fun can_start_alias_run(
+    kind: AliasRunConfirmKind?,
+    folder_is_spam: Boolean,
+    run: AliasRun?,
+    busy: Boolean,
+): Boolean = kind != null && !folder_is_spam && !busy && !is_alias_run_active(run)
+
+fun alias_run_finished(previous: AliasRun?, next: AliasRun?): AliasRun? =
+    if (is_alias_run_active(previous) && next != null && !is_alias_run_active(next)) next else null

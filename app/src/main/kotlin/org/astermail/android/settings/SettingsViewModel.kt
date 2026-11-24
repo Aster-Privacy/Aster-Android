@@ -1753,7 +1753,12 @@ class SettingsViewModel @Inject constructor(
                 start_alias_run_poll(alias_id)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
-                update_alias_detail(alias_id) { it.copy(apply_busy = false) }
+                update_alias_detail(alias_id) {
+                    it.copy(
+                        apply_busy = false,
+                        apply_unsupported = it.apply_unsupported || t is ApiError.NotFoundError,
+                    )
+                }
                 _state.value = _state.value.copy(
                     action_result = context.getString(R.string.alias_apply_existing_failed),
                 )
@@ -1813,13 +1818,24 @@ class SettingsViewModel @Inject constructor(
                     if (failures >= ALIAS_RUN_POLL_MAX_FAILURES) break
                 } else {
                     failures = 0
+                    val previous = _state.value.alias_details[alias_id]?.apply_run
                     update_alias_detail(alias_id) { it.copy(apply_run = next) }
+                    alias_run_finished(previous, next)?.let { announce_alias_run_finished(it) }
                     if (!is_alias_run_active(next)) break
                 }
                 delay_ms = (delay_ms * 3 / 2).coerceAtMost(ALIAS_RUN_POLL_MAX_MS)
             }
             alias_run_polls.remove(alias_id)
         }
+    }
+
+    private fun announce_alias_run_finished(run: AliasRun) {
+        val message = when (run.status) {
+            "completed" -> context.getString(R.string.alias_apply_existing_done, run.scanned, run.applied)
+            "failed" -> context.getString(R.string.alias_apply_existing_error)
+            else -> return
+        }
+        _state.value = _state.value.copy(action_result = message)
     }
 
     fun toggle_alias(alias_id: String) {
@@ -2011,7 +2027,15 @@ class SettingsViewModel @Inject constructor(
             val contacts = fetch_alias_section { alias_detail_api.list_contacts(alias_id) }
             val log = fetch_alias_section { alias_detail_api.get_delivery_log(alias_id) }
             val rules = fetch_alias_section { alias_detail_api.list_rules(alias_id) }
-            val apply_run = fetch_alias_section { settings_api.get_alias_run(alias_id) }
+            var apply_unsupported = false
+            val apply_run = fetch_alias_section {
+                try {
+                    settings_api.get_alias_run(alias_id)
+                } catch (_: ApiError.NotFoundError) {
+                    apply_unsupported = true
+                    null
+                }
+            }
             val decrypted_pins = withContext(default_dispatcher) {
                 pins.value?.pins.orEmpty().map { pin ->
                     DecryptedAliasPin(
@@ -2051,6 +2075,7 @@ class SettingsViewModel @Inject constructor(
                     rules = rules.value?.rules.orEmpty(),
                     rules_locked = rules.locked,
                     apply_run = apply_run.value?.run ?: it.apply_run,
+                    apply_unsupported = apply_unsupported,
                 )
             }
             start_alias_run_poll(alias_id)

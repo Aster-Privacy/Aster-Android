@@ -23,7 +23,6 @@ package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,7 +60,10 @@ import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronDown
 import compose.icons.tablericons.Copy
+import compose.icons.tablericons.DotsVertical
 import compose.icons.tablericons.Pencil
+import compose.icons.tablericons.PlayerPlay
+import compose.icons.tablericons.PlayerStop
 import compose.icons.tablericons.Send
 import compose.icons.tablericons.Settings
 import org.astermail.android.R
@@ -69,11 +72,17 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogOutlineButton
+import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.settings.AliasDetailState
+import org.astermail.android.settings.AliasRunConfirmKind
+import org.astermail.android.settings.alias_run_confirm_kind
+import org.astermail.android.settings.can_start_alias_run
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.is_alias_run_active
 import org.astermail.android.design.mirror_in_rtl
@@ -422,9 +431,40 @@ private fun alias_delivery_section(
     val apply_unsupported = alias.delivery_folder_token?.let { token ->
         state.labels.firstOrNull { it.label_token == token }?.folder_type == "spam"
     } ?: false
-    val nothing_to_apply = alias.delivery_folder_token == null &&
-        !alias.never_inbox &&
-        alias.delivery_label_token == null
+    val confirm_kind = alias_run_confirm_kind(
+        folder_token = alias.delivery_folder_token,
+        never_inbox = alias.never_inbox,
+        label_token = alias.delivery_label_token,
+    )
+    val can_start = can_start_alias_run(
+        kind = confirm_kind,
+        folder_is_spam = apply_unsupported,
+        run = detail.apply_run,
+        busy = detail.apply_busy,
+    )
+    val show_run_menu = !detail.apply_unsupported
+    var confirm_open by remember { mutableStateOf(false) }
+
+    if (confirm_open && confirm_kind != null) {
+        AsterDialog(
+            on_dismiss = { confirm_open = false },
+            title = stringResource(R.string.alias_apply_existing),
+            message = alias_apply_existing_confirm_message(confirm_kind, selected_label, selected_label_name),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_open = false },
+                )
+                AsterDialogPrimaryButton(
+                    label = stringResource(R.string.alias_apply_existing),
+                    onClick = {
+                        confirm_open = false
+                        vm.run_alias_on_existing(alias.id)
+                    },
+                )
+            },
+        )
+    }
 
     alias_delivery_picker(
         selected_label = selected_label,
@@ -437,17 +477,37 @@ private fun alias_delivery_section(
         on_select_archive = { vm.set_alias_delivery(alias.id, null, to_archive = true) },
         on_select_folder = { token -> vm.set_alias_delivery(alias.id, token, to_archive = false) },
         on_select_delivery_label = { token -> vm.set_alias_delivery_label(alias.id, token) },
-        apply_section = {
-            alias_apply_existing_row(
-                run = detail.apply_run,
-                busy = detail.apply_busy,
-                unsupported = apply_unsupported,
-                nothing_to_apply = nothing_to_apply,
-                on_apply = { vm.run_alias_on_existing(alias.id) },
-                on_cancel = { vm.cancel_alias_run(alias.id) },
-            )
+        run_menu = if (show_run_menu) {
+            {
+                alias_apply_existing_menu(
+                    run = detail.apply_run,
+                    busy = detail.apply_busy,
+                    can_start = can_start,
+                    on_apply = { confirm_open = true },
+                    on_cancel = { vm.cancel_alias_run(alias.id) },
+                )
+            }
+        } else {
+            null
+        },
+        apply_section = if (show_run_menu) {
+            { alias_apply_existing_status_text(detail.apply_run, apply_unsupported) }
+        } else {
+            null
         },
     )
+}
+
+@Composable
+private fun alias_apply_existing_confirm_message(
+    kind: AliasRunConfirmKind,
+    folder_name: String,
+    label_name: String,
+): String = when (kind) {
+    AliasRunConfirmKind.FOLDER_LABEL ->
+        stringResource(R.string.alias_apply_existing_confirm_folder_label, folder_name, label_name)
+    AliasRunConfirmKind.FOLDER -> stringResource(R.string.alias_apply_existing_confirm_folder, folder_name)
+    AliasRunConfirmKind.LABEL -> stringResource(R.string.alias_apply_existing_confirm_label, label_name)
 }
 
 @Composable
@@ -508,6 +568,7 @@ internal fun alias_delivery_picker(
     on_select_archive: () -> Unit,
     on_select_folder: (String) -> Unit,
     on_select_delivery_label: (String?) -> Unit = {},
+    run_menu: (@Composable () -> Unit)? = null,
     apply_section: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -581,6 +642,7 @@ internal fun alias_delivery_picker(
                     }
                 }
             }
+            run_menu?.invoke()
         }
         rule_delivery?.let { alias_delivery_rule_note(it, selected_label) }
 
@@ -643,6 +705,9 @@ internal fun alias_delivery_picker(
                     }
                 }
             }
+            if (run_menu != null) {
+                Spacer(Modifier.size(ALIAS_RUN_MENU_SIZE))
+            }
         }
         rule_label?.let { alias_delivery_label_rule_note(it, selected_label_name) }
         apply_section?.invoke()
@@ -668,72 +733,70 @@ private fun alias_apply_existing_status(run: AliasRun?, unsupported: Boolean): S
     }
 }
 
+private val ALIAS_RUN_MENU_SIZE = 48.dp
+
 @Composable
-internal fun alias_apply_existing_row(
+internal fun alias_apply_existing_menu(
     run: AliasRun?,
     busy: Boolean,
-    unsupported: Boolean,
-    nothing_to_apply: Boolean,
+    can_start: Boolean,
     on_apply: () -> Unit,
     on_cancel: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val active = is_alias_run_active(run)
-    val enabled = !busy && !unsupported && (active || !nothing_to_apply)
-    val disabled_interaction = remember { MutableInteractionSource() }
+    var open by remember { mutableStateOf(false) }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.alias_apply_existing),
-                color = colors.text_primary,
-                fontSize = 13.sp,
-            )
-            panel_hint_text(stringResource(R.string.alias_apply_existing_desc))
-        }
-        Spacer(Modifier.width(AsterSpacing.sm))
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-                .then(
-                    if (enabled) {
-                        Modifier.clickable { if (active) on_cancel() else on_apply() }
-                    } else {
-                        Modifier.clickable(
-                            interactionSource = disabled_interaction,
-                            indication = null,
-                            onClick = {},
-                        )
-                    },
-                )
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-                .testTag("alias_apply_existing_button"),
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = Modifier.size(ALIAS_RUN_MENU_SIZE), contentAlignment = Alignment.Center) {
+        IconButton(
+            onClick = { open = true },
+            modifier = Modifier.testTag("alias_delivery_menu_button"),
         ) {
-            Text(
-                text = stringResource(
-                    if (active) {
-                        R.string.alias_apply_existing_cancel
-                    } else {
-                        R.string.alias_apply_existing_action
-                    },
-                ),
-                color = if (enabled) colors.text_primary else colors.text_muted,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
             if (busy) {
-                Spacer(Modifier.width(6.dp))
                 CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp,
                     color = colors.text_muted,
+                )
+            } else {
+                Icon(
+                    imageVector = TablerIcons.DotsVertical,
+                    contentDescription = stringResource(R.string.more_options),
+                    tint = colors.text_secondary,
+                )
+            }
+        }
+        aster_menu(expanded = open, on_dismiss = { open = false }) {
+            if (active) {
+                aster_menu_item(
+                    label = stringResource(R.string.alias_apply_existing_cancel),
+                    icon = TablerIcons.PlayerStop,
+                    enabled = !busy,
+                    test_tag = "alias_apply_existing_stop",
+                    on_click = {
+                        open = false
+                        on_cancel()
+                    },
+                )
+            } else {
+                aster_menu_item(
+                    label = stringResource(R.string.alias_apply_existing),
+                    icon = TablerIcons.PlayerPlay,
+                    enabled = can_start,
+                    test_tag = "alias_apply_existing_button",
+                    on_click = {
+                        open = false
+                        on_apply()
+                    },
                 )
             }
         }
     }
+}
+
+@Composable
+internal fun alias_apply_existing_status_text(run: AliasRun?, unsupported: Boolean) {
+    val colors = AsterMaterial.colors
     alias_apply_existing_status(run, unsupported)?.let { status ->
         Text(
             text = status,

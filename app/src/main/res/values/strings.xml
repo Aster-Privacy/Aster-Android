@@ -2746,9 +2746,8 @@
     <string name="alias_delivery_label_subtitle">Apply a label to mail sent to this alias</string>
     <string name="alias_delivery_label_none">No label</string>
     <string name="alias_delivery_label_missing">Unavailable label</string>
-    <string name="alias_apply_existing">Apply to existing mail</string>
+    <string name="alias_apply_existing">Run on existing mail</string>
     <string name="alias_apply_existing_desc">Sort mail this alias already received into the folder and label you chose.</string>
-    <string name="alias_apply_existing_action">Apply now</string>
     <string name="alias_apply_existing_cancel">Stop</string>
     <string name="alias_apply_existing_failed">Could not start applying these settings.</string>
     <string name="alias_apply_existing_cancel_failed">Could not stop this run.</string>
@@ -2758,6 +2757,9 @@
     <string name="alias_apply_existing_done" tools:ignore="PluralsCandidate">Done: %1$d scanned, %2$d updated</string>
     <string name="alias_apply_existing_error">Applying to existing mail failed. Try again.</string>
     <string name="alias_apply_existing_unavailable">Mail already in your account can\'t be moved to Spam.</string>
+    <string name="alias_apply_existing_confirm_folder_label">Mail this alias already received moves to %1$s and gets the %2$s label. Mail in Trash and Spam stays where it is.</string>
+    <string name="alias_apply_existing_confirm_folder">Mail this alias already received moves to %1$s. Mail in Trash and Spam stays where it is.</string>
+    <string name="alias_apply_existing_confirm_label">Mail this alias already received gets the %1$s label. Mail in Trash and Spam stays where it is.</string>
     <string name="alias_delivery_label_rule_note">Mail rule \"%1$s\" already labels mail for this alias %2$s.</string>
     <string name="alias_delivery_label_rule_conflict">Mail rule \"%1$s\" labels mail for this alias %2$s, in addition to %3$s.</string>
     <string name="mail_rules_alias_label_conflict">%1$s already labels its mail %2$s. This rule adds %3$s as well.</string>
