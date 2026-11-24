@@ -2179,7 +2179,7 @@
     <string name="vanguard_description">ऐप लॉक और बेहतर सुरक्षा के साथ उन्नत ऐप सुरक्षा।</string>
     <string name="vanguard_upgrade_cta">अपग्रेड करें</string>
     <string name="vanguard_confirm_disable_title">Vanguard बंद करें?</string>
-    <string name="vanguard_confirm_disable_desc">ऐप लॉक और Vanguard की दूसरी सुरक्षाएं बंद हो जाएंगी।</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard की सुरक्षाएं बंद हो जाएंगी। ऐप लॉक चालू रहेगा।</string>
     <string name="vanguard_disable">बंद करें</string>
     <string name="app_lock_pin">ऐप लॉक</string>
     <string name="app_lock_pin_description">ऐप खोलने के लिए PIN या पासफ़्रेज़ ज़रूरी करें।</string>

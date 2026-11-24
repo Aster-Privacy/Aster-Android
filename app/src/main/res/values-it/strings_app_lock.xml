@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">Richiedi sblocco</string>
+    <string name="app_lock_off_description">Chiedi il blocco schermo o un PIN dell\'app a ogni apertura di Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Si sblocca con il blocco schermo</string>
+    <string name="app_lock_status_app_pin">Si sblocca con il PIN o la passphrase dell\'app</string>
+    <string name="app_lock_mode_screen_lock">Blocco schermo</string>
+    <string name="app_lock_mode_screen_lock_desc">Usa il PIN, la sequenza, la password o la biometria con cui sblocchi il telefono</string>
+    <string name="app_lock_use_screen_lock">Usa il blocco schermo</string>
+    <string name="app_lock_device_subtitle">Per aprire Aster Mail, usa il blocco schermo.</string>
+    <string name="app_lock_device_error">Aster Mail non è riuscita a confermare il blocco schermo. Riprova.</string>
+    <string name="app_lock_device_unavailable">Il blocco schermo non è disponibile. Per sbloccare Aster Mail, imposta un blocco schermo nelle impostazioni del telefono.</string>
+    <string name="app_lock_device_key_lost">Il blocco schermo è cambiato, quindi Aster Mail non può sbloccarsi. Per continuare, esci e accedi di nuovo.</string>
+    <string name="app_lock_biometric_failed_device">Lo sblocco biometrico non è disponibile. Usa il blocco schermo.</string>
+    <string name="app_lock_biometric_error_device">Lo sblocco biometrico non ha funzionato. Riprova o usa il blocco schermo.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail ha disattivato lo sblocco biometrico. Per riattivarlo, usa il blocco schermo.</string>
+    <string name="app_lock_device_setup_title">Configura il blocco app</string>
+    <string name="app_lock_device_setup_subtitle">Per usare il blocco schermo con Aster Mail, confermalo ora.</string>
+    <string name="app_lock_setup_unavailable">Impossibile configurare il blocco app. Riprova.</string>
+    <string name="app_lock_confirm_to_disable">Per disattivare il blocco app, conferma il blocco schermo.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Per attivare lo sblocco biometrico, conferma il blocco schermo.</string>
+    <string name="app_lock_confirm_to_change_settings">Per modificare le impostazioni del blocco app, conferma la tua identità.</string>
+    <string name="app_lock_hide_notification_content">Nascondi il contenuto delle notifiche</string>
+    <string name="app_lock_hide_notification_content_desc">Le notifiche indicano solo che hai nuova posta. Mittente e anteprima restano nascosti.</string>
+    <string name="app_lock_timeout_title">Blocca dopo</string>
+    <string name="app_lock_timeout_immediately">Subito</string>
+    <string name="app_lock_timeout_one_minute">1 minuto</string>
+    <string name="app_lock_timeout_five_minutes">5 minuti</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minuti</string>
+    <string name="app_lock_timeout_one_hour">1 ora</string>
+</resources>

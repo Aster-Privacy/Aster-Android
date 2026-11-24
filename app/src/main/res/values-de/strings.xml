@@ -2271,7 +2271,7 @@
     <string name="vanguard_description">Erweiterter App-Schutz mit App-Sperre und zusätzlicher Sicherheit.</string>
     <string name="vanguard_upgrade_cta">Upgraden</string>
     <string name="vanguard_confirm_disable_title">Vanguard deaktivieren?</string>
-    <string name="vanguard_confirm_disable_desc">App-Sperre und die übrigen Vanguard-Schutzfunktionen werden abgeschaltet.</string>
+    <string name="vanguard_confirm_disable_desc">Die Vanguard-Schutzfunktionen werden abgeschaltet. Die App-Sperre bleibt aktiv.</string>
     <string name="vanguard_disable">Deaktivieren</string>
     <string name="app_lock_pin">App-Sperre</string>
     <string name="app_lock_pin_description">PIN oder Passphrase verlangen, um die App zu öffnen.</string>

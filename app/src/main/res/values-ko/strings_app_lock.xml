@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">잠금 해제 필요</string>
+    <string name="app_lock_off_description">Aster Mail을 열 때마다 화면 잠금 또는 앱 PIN을 요청합니다.</string>
+    <string name="app_lock_status_screen_lock">화면 잠금으로 해제</string>
+    <string name="app_lock_status_app_pin">앱 PIN 또는 암호 문구로 해제</string>
+    <string name="app_lock_mode_screen_lock">화면 잠금</string>
+    <string name="app_lock_mode_screen_lock_desc">휴대전화 잠금 해제에 쓰는 PIN, 패턴, 비밀번호 또는 생체 인식을 사용합니다</string>
+    <string name="app_lock_use_screen_lock">화면 잠금 사용</string>
+    <string name="app_lock_device_subtitle">Aster Mail을 열려면 화면 잠금을 사용하세요.</string>
+    <string name="app_lock_device_error">Aster Mail에서 화면 잠금을 확인하지 못했습니다. 다시 시도하세요.</string>
+    <string name="app_lock_device_unavailable">화면 잠금을 사용할 수 없습니다. Aster Mail 잠금을 해제하려면 휴대전화 설정에서 화면 잠금을 설정하세요.</string>
+    <string name="app_lock_device_key_lost">화면 잠금이 변경되어 Aster Mail 잠금을 해제할 수 없습니다. 계속하려면 로그아웃한 후 다시 로그인하세요.</string>
+    <string name="app_lock_biometric_failed_device">생체 인식 잠금 해제를 사용할 수 없습니다. 화면 잠금을 사용하세요.</string>
+    <string name="app_lock_biometric_error_device">생체 인식 잠금 해제가 작동하지 않았습니다. 다시 시도하거나 화면 잠금을 사용하세요.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail에서 생체 인식 잠금 해제를 껐습니다. 다시 켜려면 화면 잠금을 사용하세요.</string>
+    <string name="app_lock_device_setup_title">앱 잠금 설정</string>
+    <string name="app_lock_device_setup_subtitle">Aster Mail에서 화면 잠금을 사용하려면 지금 확인하세요.</string>
+    <string name="app_lock_setup_unavailable">앱 잠금을 설정하지 못했습니다. 다시 시도하세요.</string>
+    <string name="app_lock_confirm_to_disable">앱 잠금을 끄려면 화면 잠금을 확인하세요.</string>
+    <string name="app_lock_confirm_to_enable_biometric">생체 인식 잠금 해제를 켜려면 화면 잠금을 확인하세요.</string>
+    <string name="app_lock_confirm_to_change_settings">앱 잠금 설정을 변경하려면 본인임을 확인하세요.</string>
+    <string name="app_lock_hide_notification_content">알림 내용 숨기기</string>
+    <string name="app_lock_hide_notification_content_desc">알림에는 새 메일이 있다는 사실만 표시되며 보낸 사람과 미리보기는 숨겨집니다.</string>
+    <string name="app_lock_timeout_title">잠금 시간</string>
+    <string name="app_lock_timeout_immediately">즉시</string>
+    <string name="app_lock_timeout_one_minute">1분</string>
+    <string name="app_lock_timeout_five_minutes">5분</string>
+    <string name="app_lock_timeout_fifteen_minutes">15분</string>
+    <string name="app_lock_timeout_one_hour">1시간</string>
+</resources>

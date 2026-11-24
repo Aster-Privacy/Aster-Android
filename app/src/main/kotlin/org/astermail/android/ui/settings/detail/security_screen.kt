@@ -104,15 +104,12 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
-import org.astermail.android.security.AppLockStore
 import org.astermail.android.security.AppLockViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.host_activity
 import org.astermail.android.auth.create_passkey_json
 import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.ui.common.find_host_activity
-import org.astermail.android.ui.security.AppLockSetupSheet
-import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 
@@ -859,7 +856,8 @@ fun SecurityScreen(
 
         v_gap(AsterSpacing.lg)
 
-        vanguard_section(vm = vm, lock_vm = lock_vm, on_upgrade = { on_open("billing") })
+        app_lock_section(store = lock_vm.store)
+        vanguard_section(vm = vm, on_upgrade = { on_open("billing") })
 
         v_gap(AsterSpacing.lg)
 
@@ -937,33 +935,19 @@ fun SecurityScreen(
     }
 }
 
-private enum class AppLockModal { setup, verify_to_change, change, disable, verify_to_enable_biometric }
-
 @Composable
 private fun vanguard_section(
     vm: SettingsViewModel,
-    lock_vm: AppLockViewModel,
     on_upgrade: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
-    val store = lock_vm.store
 
     val is_nova_plus = is_vanguard_plan(state.subscription)
     val vanguard_enabled = state.vanguard_enabled == true
 
     var show_disable_confirm by remember { mutableStateOf(false) }
-    var app_lock_enabled by remember { mutableStateOf(store.is_configured()) }
-    var modal by remember { mutableStateOf<AppLockModal?>(null) }
     val lock_context = LocalContext.current
-    val biometric_available = remember {
-        androidx.biometric.BiometricManager.from(lock_context).canAuthenticate(
-            androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG,
-        ) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
-    }
-    var biometric_enabled by remember {
-        mutableStateOf(org.astermail.android.security.BiometricUnlockGate.is_enrolled(lock_context))
-    }
 
     section_label(stringResource(R.string.section_vanguard))
 
@@ -1031,37 +1015,6 @@ private fun vanguard_section(
                     }
                 }
             }
-
-            AnimatedVisibility(
-                visible = vanguard_enabled,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-            ) {
-                Column {
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    settings_row_gap()
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    app_lock_row(
-                        store = store,
-                        enabled = app_lock_enabled,
-                        on_toggle = { want ->
-                            if (want) modal = AppLockModal.setup
-                            else modal = AppLockModal.disable
-                        },
-                        on_change_pin = { modal = AppLockModal.verify_to_change },
-                        biometric_available = biometric_available,
-                        biometric_enabled = biometric_enabled,
-                        on_toggle_biometric = { want ->
-                            if (want) {
-                                modal = AppLockModal.verify_to_enable_biometric
-                            } else {
-                                org.astermail.android.security.BiometricUnlockGate.reset(lock_context)
-                                biometric_enabled = false
-                            }
-                        },
-                    )
-                }
-            }
         }
     }
 
@@ -1119,136 +1072,9 @@ private fun vanguard_section(
             confirm_style = org.astermail.android.design.components.DialogConfirmStyle.destructive,
             on_confirm = {
                 show_disable_confirm = false
-                vm.disable_vanguard {
-                    if (store.disable()) {
-                        app_lock_enabled = false
-                        biometric_enabled = false
-                    }
-                }
+                vm.disable_vanguard()
             },
         )
-    }
-
-    when (modal) {
-        AppLockModal.setup, AppLockModal.change -> AppLockSetupSheet(
-            store = store,
-            on_dismiss = { modal = null },
-            on_success = { app_lock_enabled = true; biometric_enabled = false; modal = null },
-        )
-        AppLockModal.verify_to_change -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_change),
-            on_dismiss = { modal = null },
-            on_success = { modal = AppLockModal.change },
-        )
-        AppLockModal.disable -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_disable),
-            on_dismiss = { modal = null },
-            on_success = {
-                if (store.disable()) {
-                    app_lock_enabled = false
-                    biometric_enabled = false
-                }
-                modal = null
-            },
-        )
-        AppLockModal.verify_to_enable_biometric -> AppLockVerifySheet(
-            store = store,
-            description = stringResource(R.string.app_lock_enter_to_enable_biometric),
-            on_dismiss = { modal = null },
-            on_success = {
-                modal = null
-                val activity = lock_context.find_host_activity() as? androidx.fragment.app.FragmentActivity
-                if (activity != null) {
-                    org.astermail.android.ui.security.launch_biometric_enroll(
-                        activity = activity,
-                        origin = org.astermail.android.security.BiometricEnrollOrigin.SETTINGS_AFTER_PIN,
-                        pin_verified = true,
-                        biometric_available = biometric_available,
-                    ) { enrolled -> biometric_enabled = enrolled }
-                }
-            },
-        )
-        null -> {}
-    }
-}
-
-@Composable
-private fun app_lock_row(
-    store: AppLockStore,
-    enabled: Boolean,
-    on_toggle: (Boolean) -> Unit,
-    on_change_pin: () -> Unit,
-    biometric_available: Boolean,
-    biometric_enabled: Boolean,
-    on_toggle_biometric: (Boolean) -> Unit,
-) {
-    val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                Text(
-                    text = stringResource(R.string.app_lock_pin),
-                    color = colors.text_primary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.app_lock_pin_description),
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
-                )
-            }
-            AsterSwitch(
-                checked = enabled,
-                onCheckedChange = on_toggle,
-            )
-        }
-        if (enabled) {
-            Spacer(Modifier.height(AsterSpacing.xs))
-            Text(
-                text = stringResource(R.string.app_lock_change_pin),
-                color = colors.accent_blue,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .clip(SquircleShape(8.dp))
-                    .clickable(onClick = on_change_pin)
-                    .padding(horizontal = AsterSpacing.xs, vertical = 2.dp),
-            )
-        }
-        if (enabled && biometric_available) {
-            Spacer(Modifier.height(AsterSpacing.md))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = AsterSpacing.md)) {
-                    Text(
-                        text = stringResource(R.string.app_lock_use_biometric),
-                        color = colors.text_primary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(R.string.app_lock_biometric_subtitle),
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                    )
-                }
-                AsterSwitch(
-                    checked = biometric_enabled,
-                    onCheckedChange = on_toggle_biometric,
-                )
-            }
-        }
     }
 }
 

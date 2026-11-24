@@ -2280,7 +2280,7 @@
     <string name="vanguard_description">Rozszerzona ochrona aplikacji z blokadą i mocniejszym zabezpieczeniem.</string>
     <string name="vanguard_upgrade_cta">Ulepsz plan</string>
     <string name="vanguard_confirm_disable_title">Wyłączyć Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">Blokada aplikacji i pozostałe zabezpieczenia Vanguard zostaną wyłączone.</string>
+    <string name="vanguard_confirm_disable_desc">Zabezpieczenia Vanguard zostaną wyłączone. Blokada aplikacji pozostanie włączona.</string>
     <string name="vanguard_disable">Wyłącz</string>
     <string name="app_lock_pin">Blokada aplikacji</string>
     <string name="app_lock_pin_description">Wymagaj kodu PIN lub hasła, aby otworzyć aplikację.</string>

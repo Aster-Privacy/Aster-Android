@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">طلب فتح القفل</string>
+    <string name="app_lock_off_description">اطلب قفل الشاشة أو رمز PIN للتطبيق في كل مرة تفتح فيها Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">يُفتح بقفل الشاشة</string>
+    <string name="app_lock_status_app_pin">يُفتح برمز PIN للتطبيق أو بعبارة المرور</string>
+    <string name="app_lock_mode_screen_lock">قفل الشاشة</string>
+    <string name="app_lock_mode_screen_lock_desc">استخدم رمز PIN أو النمط أو كلمة المرور أو المقاييس الحيوية التي تفتح بها هاتفك</string>
+    <string name="app_lock_use_screen_lock">استخدام قفل الشاشة</string>
+    <string name="app_lock_device_subtitle">لفتح Aster Mail، استخدم قفل الشاشة.</string>
+    <string name="app_lock_device_error">تعذّر على Aster Mail تأكيد قفل الشاشة. حاول مرة أخرى.</string>
+    <string name="app_lock_device_unavailable">قفل الشاشة غير متاح. لفتح قفل Aster Mail، اضبط قفل الشاشة من إعدادات الهاتف.</string>
+    <string name="app_lock_device_key_lost">تغيّر قفل الشاشة، لذا لا يمكن فتح قفل Aster Mail. للمتابعة، سجّل الخروج ثم سجّل الدخول مرة أخرى.</string>
+    <string name="app_lock_biometric_failed_device">فتح القفل بالمقاييس الحيوية غير متاح. استخدم قفل الشاشة.</string>
+    <string name="app_lock_biometric_error_device">لم ينجح فتح القفل بالمقاييس الحيوية. حاول مرة أخرى أو استخدم قفل الشاشة.</string>
+    <string name="app_lock_biometric_reset_device">أوقف Aster Mail فتح القفل بالمقاييس الحيوية. لتشغيله مرة أخرى، استخدم قفل الشاشة.</string>
+    <string name="app_lock_device_setup_title">إعداد قفل التطبيق</string>
+    <string name="app_lock_device_setup_subtitle">لاستخدام قفل الشاشة مع Aster Mail، أكّده الآن.</string>
+    <string name="app_lock_setup_unavailable">تعذّر إعداد قفل التطبيق. حاول مرة أخرى.</string>
+    <string name="app_lock_confirm_to_disable">لإيقاف قفل التطبيق، أكّد قفل الشاشة.</string>
+    <string name="app_lock_confirm_to_enable_biometric">لتشغيل فتح القفل بالمقاييس الحيوية، أكّد قفل الشاشة.</string>
+    <string name="app_lock_confirm_to_change_settings">لتغيير إعدادات قفل التطبيق، أكّد هويتك.</string>
+    <string name="app_lock_hide_notification_content">إخفاء محتوى الإشعارات</string>
+    <string name="app_lock_hide_notification_content_desc">تُظهر الإشعارات فقط أن لديك بريدًا جديدًا، ويبقى المرسل والمعاينة مخفيين.</string>
+    <string name="app_lock_timeout_title">القفل بعد</string>
+    <string name="app_lock_timeout_immediately">فورًا</string>
+    <string name="app_lock_timeout_one_minute">دقيقة واحدة</string>
+    <string name="app_lock_timeout_five_minutes">5 دقائق</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 دقيقة</string>
+    <string name="app_lock_timeout_one_hour">ساعة واحدة</string>
+</resources>

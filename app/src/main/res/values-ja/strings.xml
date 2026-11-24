@@ -2265,7 +2265,7 @@
     <string name="vanguard_description">アプリロックなど、より強力なアプリ保護機能です。</string>
     <string name="vanguard_upgrade_cta">アップグレード</string>
     <string name="vanguard_confirm_disable_title">Vanguard を無効にしますか？</string>
-    <string name="vanguard_confirm_disable_desc">アプリロックをはじめ、Vanguard の保護機能がすべて解除されます。</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard の保護機能がオフになります。アプリロックはオンのままです。</string>
     <string name="vanguard_disable">無効にする</string>
     <string name="app_lock_pin">アプリロック</string>
     <string name="app_lock_pin_description">アプリを開くときに PIN またはパスフレーズを求めます。</string>

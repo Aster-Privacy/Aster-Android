@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">Wymagaj odblokowania</string>
+    <string name="app_lock_off_description">Pytaj o blokadę ekranu lub kod PIN aplikacji przy każdym otwarciu Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Odblokowanie blokadą ekranu</string>
+    <string name="app_lock_status_app_pin">Odblokowanie kodem PIN lub hasłem aplikacji</string>
+    <string name="app_lock_mode_screen_lock">Blokada ekranu</string>
+    <string name="app_lock_mode_screen_lock_desc">Używaj kodu PIN, wzoru, hasła lub biometrii, którymi odblokowujesz telefon</string>
+    <string name="app_lock_use_screen_lock">Użyj blokady ekranu</string>
+    <string name="app_lock_device_subtitle">Aby otworzyć Aster Mail, użyj blokady ekranu.</string>
+    <string name="app_lock_device_error">Aster Mail nie może potwierdzić blokady ekranu. Spróbuj ponownie.</string>
+    <string name="app_lock_device_unavailable">Blokada ekranu jest niedostępna. Aby odblokować Aster Mail, ustaw blokadę ekranu w ustawieniach telefonu.</string>
+    <string name="app_lock_device_key_lost">Blokada ekranu się zmieniła, więc Aster Mail nie może się odblokować. Aby kontynuować, wyloguj się i zaloguj ponownie.</string>
+    <string name="app_lock_biometric_failed_device">Odblokowanie biometryczne jest niedostępne. Użyj blokady ekranu.</string>
+    <string name="app_lock_biometric_error_device">Odblokowanie biometryczne nie zadziałało. Spróbuj ponownie lub użyj blokady ekranu.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail wyłączył odblokowanie biometryczne. Aby włączyć je ponownie, użyj blokady ekranu.</string>
+    <string name="app_lock_device_setup_title">Skonfiguruj blokadę aplikacji</string>
+    <string name="app_lock_device_setup_subtitle">Aby używać blokady ekranu w Aster Mail, potwierdź ją teraz.</string>
+    <string name="app_lock_setup_unavailable">Nie udało się skonfigurować blokady aplikacji. Spróbuj ponownie.</string>
+    <string name="app_lock_confirm_to_disable">Aby wyłączyć blokadę aplikacji, potwierdź blokadę ekranu.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Aby włączyć odblokowanie biometryczne, potwierdź blokadę ekranu.</string>
+    <string name="app_lock_confirm_to_change_settings">Aby zmienić ustawienia blokady aplikacji, potwierdź swoją tożsamość.</string>
+    <string name="app_lock_hide_notification_content">Ukryj treść powiadomień</string>
+    <string name="app_lock_hide_notification_content_desc">Powiadomienia informują tylko o nowej poczcie. Nadawca i podgląd pozostają ukryte.</string>
+    <string name="app_lock_timeout_title">Zablokuj po</string>
+    <string name="app_lock_timeout_immediately">Natychmiast</string>
+    <string name="app_lock_timeout_one_minute">1 minucie</string>
+    <string name="app_lock_timeout_five_minutes">5 minutach</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minutach</string>
+    <string name="app_lock_timeout_one_hour">1 godzinie</string>
+</resources>

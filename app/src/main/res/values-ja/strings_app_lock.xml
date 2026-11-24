@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">ロック解除を必須にする</string>
+    <string name="app_lock_off_description">Aster Mail を開くたびに、画面ロックまたはアプリの PIN を求めます。</string>
+    <string name="app_lock_status_screen_lock">画面ロックで解除します</string>
+    <string name="app_lock_status_app_pin">アプリの PIN またはパスフレーズで解除します</string>
+    <string name="app_lock_mode_screen_lock">画面ロック</string>
+    <string name="app_lock_mode_screen_lock_desc">スマートフォンのロック解除に使う PIN、パターン、パスワード、生体認証を使います</string>
+    <string name="app_lock_use_screen_lock">画面ロックを使う</string>
+    <string name="app_lock_device_subtitle">Aster Mail を開くには、画面ロックを使ってください。</string>
+    <string name="app_lock_device_error">Aster Mail は画面ロックを確認できませんでした。もう一度お試しください。</string>
+    <string name="app_lock_device_unavailable">画面ロックを利用できません。Aster Mail のロックを解除するには、スマートフォンの設定で画面ロックを設定してください。</string>
+    <string name="app_lock_device_key_lost">画面ロックが変更されたため、Aster Mail のロックを解除できません。続けるには、ログアウトしてもう一度ログインしてください。</string>
+    <string name="app_lock_biometric_failed_device">生体認証によるロック解除は利用できません。画面ロックを使ってください。</string>
+    <string name="app_lock_biometric_error_device">生体認証によるロック解除に失敗しました。もう一度試すか、画面ロックを使ってください。</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail は生体認証によるロック解除をオフにしました。再度オンにするには、画面ロックを使ってください。</string>
+    <string name="app_lock_device_setup_title">アプリロックを設定</string>
+    <string name="app_lock_device_setup_subtitle">画面ロックを Aster Mail で使うには、今すぐ確認してください。</string>
+    <string name="app_lock_setup_unavailable">アプリロックを設定できませんでした。もう一度お試しください。</string>
+    <string name="app_lock_confirm_to_disable">アプリロックをオフにするには、画面ロックを確認してください。</string>
+    <string name="app_lock_confirm_to_enable_biometric">生体認証によるロック解除をオンにするには、画面ロックを確認してください。</string>
+    <string name="app_lock_confirm_to_change_settings">アプリロックの設定を変更するには、本人確認をしてください。</string>
+    <string name="app_lock_hide_notification_content">通知の内容を非表示</string>
+    <string name="app_lock_hide_notification_content_desc">通知には新着メールがあることだけが表示され、差出人とプレビューは表示されません。</string>
+    <string name="app_lock_timeout_title">ロックまでの時間</string>
+    <string name="app_lock_timeout_immediately">すぐに</string>
+    <string name="app_lock_timeout_one_minute">1 分</string>
+    <string name="app_lock_timeout_five_minutes">5 分</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 分</string>
+    <string name="app_lock_timeout_one_hour">1 時間</string>
+</resources>

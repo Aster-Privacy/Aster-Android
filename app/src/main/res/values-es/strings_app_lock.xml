@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">Pedir desbloqueo</string>
+    <string name="app_lock_off_description">Pide el bloqueo de pantalla o un PIN de la app cada vez que abres Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Se desbloquea con el bloqueo de pantalla</string>
+    <string name="app_lock_status_app_pin">Se desbloquea con el PIN o la frase de contraseña de la app</string>
+    <string name="app_lock_mode_screen_lock">Bloqueo de pantalla</string>
+    <string name="app_lock_mode_screen_lock_desc">Usa el PIN, el patrón, la contraseña o la biometría con que desbloqueas el teléfono</string>
+    <string name="app_lock_use_screen_lock">Usar bloqueo de pantalla</string>
+    <string name="app_lock_device_subtitle">Para abrir Aster Mail, usa el bloqueo de pantalla.</string>
+    <string name="app_lock_device_error">Aster Mail no pudo confirmar el bloqueo de pantalla. Inténtalo de nuevo.</string>
+    <string name="app_lock_device_unavailable">El bloqueo de pantalla no está disponible. Para desbloquear Aster Mail, configura un bloqueo de pantalla en los ajustes del teléfono.</string>
+    <string name="app_lock_device_key_lost">El bloqueo de pantalla cambió y Aster Mail no puede desbloquearse. Para continuar, cierra sesión y vuelve a iniciarla.</string>
+    <string name="app_lock_biometric_failed_device">El desbloqueo biométrico no está disponible. Usa el bloqueo de pantalla.</string>
+    <string name="app_lock_biometric_error_device">El desbloqueo biométrico no funcionó. Inténtalo de nuevo o usa el bloqueo de pantalla.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail desactivó el desbloqueo biométrico. Para volver a activarlo, usa el bloqueo de pantalla.</string>
+    <string name="app_lock_device_setup_title">Configurar el bloqueo de la app</string>
+    <string name="app_lock_device_setup_subtitle">Para usar el bloqueo de pantalla en Aster Mail, confírmalo ahora.</string>
+    <string name="app_lock_setup_unavailable">No se pudo configurar el bloqueo de la app. Inténtalo de nuevo.</string>
+    <string name="app_lock_confirm_to_disable">Para desactivar el bloqueo de la app, confirma el bloqueo de pantalla.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Para activar el desbloqueo biométrico, confirma el bloqueo de pantalla.</string>
+    <string name="app_lock_confirm_to_change_settings">Para cambiar los ajustes del bloqueo de la app, confirma que eres tú.</string>
+    <string name="app_lock_hide_notification_content">Ocultar el contenido de las notificaciones</string>
+    <string name="app_lock_hide_notification_content_desc">Las notificaciones solo indican que tienes correo nuevo. El remitente y la vista previa quedan ocultos.</string>
+    <string name="app_lock_timeout_title">Bloquear después de</string>
+    <string name="app_lock_timeout_immediately">Inmediatamente</string>
+    <string name="app_lock_timeout_one_minute">1 minuto</string>
+    <string name="app_lock_timeout_five_minutes">5 minutos</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minutos</string>
+    <string name="app_lock_timeout_one_hour">1 hora</string>
+</resources>

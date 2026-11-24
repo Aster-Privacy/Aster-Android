@@ -2265,7 +2265,7 @@
     <string name="vanguard_description">앱 잠금을 비롯한 한층 강화된 앱 보호 기능입니다.</string>
     <string name="vanguard_upgrade_cta">업그레이드</string>
     <string name="vanguard_confirm_disable_title">Vanguard를 끌까요?</string>
-    <string name="vanguard_confirm_disable_desc">앱 잠금과 나머지 Vanguard 보호 기능이 모두 꺼집니다.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard 보호 기능이 꺼집니다. 앱 잠금은 계속 켜져 있습니다.</string>
     <string name="vanguard_disable">끄기</string>
     <string name="app_lock_pin">앱 잠금</string>
     <string name="app_lock_pin_description">앱을 열 때 PIN이나 암호문을 요구합니다.</string>

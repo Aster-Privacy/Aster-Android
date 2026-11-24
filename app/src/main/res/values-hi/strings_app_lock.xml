@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">अनलॉक ज़रूरी करें</string>
+    <string name="app_lock_off_description">हर बार Aster Mail खोलने पर स्क्रीन लॉक या ऐप PIN मांगें।</string>
+    <string name="app_lock_status_screen_lock">आपके स्क्रीन लॉक से अनलॉक होता है</string>
+    <string name="app_lock_status_app_pin">आपके ऐप PIN या पासफ़्रेज़ से अनलॉक होता है</string>
+    <string name="app_lock_mode_screen_lock">स्क्रीन लॉक</string>
+    <string name="app_lock_mode_screen_lock_desc">वही PIN, पैटर्न, पासवर्ड या बायोमेट्रिक इस्तेमाल करें जिससे आप फ़ोन अनलॉक करते हैं</string>
+    <string name="app_lock_use_screen_lock">स्क्रीन लॉक इस्तेमाल करें</string>
+    <string name="app_lock_device_subtitle">Aster Mail खोलने के लिए अपना स्क्रीन लॉक इस्तेमाल करें।</string>
+    <string name="app_lock_device_error">Aster Mail आपके स्क्रीन लॉक की पुष्टि नहीं कर सका। फिर से कोशिश करें।</string>
+    <string name="app_lock_device_unavailable">आपका स्क्रीन लॉक उपलब्ध नहीं है। Aster Mail अनलॉक करने के लिए फ़ोन की सेटिंग में स्क्रीन लॉक सेट करें।</string>
+    <string name="app_lock_device_key_lost">आपका स्क्रीन लॉक बदल गया है, इसलिए Aster Mail अनलॉक नहीं हो सकता। जारी रखने के लिए साइन आउट करें और फिर से साइन इन करें।</string>
+    <string name="app_lock_biometric_failed_device">बायोमेट्रिक अनलॉक उपलब्ध नहीं है। अपना स्क्रीन लॉक इस्तेमाल करें।</string>
+    <string name="app_lock_biometric_error_device">बायोमेट्रिक अनलॉक काम नहीं किया। फिर से कोशिश करें या अपना स्क्रीन लॉक इस्तेमाल करें।</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail ने बायोमेट्रिक अनलॉक बंद कर दिया है। इसे फिर से चालू करने के लिए अपना स्क्रीन लॉक इस्तेमाल करें।</string>
+    <string name="app_lock_device_setup_title">ऐप लॉक सेट करें</string>
+    <string name="app_lock_device_setup_subtitle">Aster Mail के लिए स्क्रीन लॉक इस्तेमाल करने के लिए अभी उसकी पुष्टि करें।</string>
+    <string name="app_lock_setup_unavailable">ऐप लॉक सेट नहीं हो सका। फिर से कोशिश करें।</string>
+    <string name="app_lock_confirm_to_disable">ऐप लॉक बंद करने के लिए अपने स्क्रीन लॉक की पुष्टि करें।</string>
+    <string name="app_lock_confirm_to_enable_biometric">बायोमेट्रिक अनलॉक चालू करने के लिए अपने स्क्रीन लॉक की पुष्टि करें।</string>
+    <string name="app_lock_confirm_to_change_settings">ऐप लॉक की सेटिंग बदलने के लिए पुष्टि करें कि यह आप ही हैं।</string>
+    <string name="app_lock_hide_notification_content">सूचना की सामग्री छिपाएं</string>
+    <string name="app_lock_hide_notification_content_desc">सूचनाएं सिर्फ़ यह बताती हैं कि आपको नया मेल मिला है। भेजने वाला और प्रीव्यू छिपे रहते हैं।</string>
+    <string name="app_lock_timeout_title">इतनी देर बाद लॉक करें</string>
+    <string name="app_lock_timeout_immediately">तुरंत</string>
+    <string name="app_lock_timeout_one_minute">1 मिनट</string>
+    <string name="app_lock_timeout_five_minutes">5 मिनट</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 मिनट</string>
+    <string name="app_lock_timeout_one_hour">1 घंटा</string>
+</resources>

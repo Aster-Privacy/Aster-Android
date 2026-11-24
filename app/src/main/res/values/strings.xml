@@ -2462,7 +2462,7 @@
     <string name="vanguard_description">Advanced app protection with app lock and enhanced security.</string>
     <string name="vanguard_upgrade_cta">Upgrade</string>
     <string name="vanguard_confirm_disable_title">Disable Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">App lock and other Vanguard protections will be turned off.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard protections will be turned off. App Lock stays on.</string>
     <string name="vanguard_disable">Disable</string>
 
     <!-- App Lock settings -->

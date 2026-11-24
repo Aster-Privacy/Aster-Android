@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">Exiger le déverrouillage</string>
+    <string name="app_lock_off_description">Demander le verrouillage de l\'écran ou un code PIN de l\'application à chaque ouverture d\'Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Se déverrouille avec le verrouillage de l\'écran</string>
+    <string name="app_lock_status_app_pin">Se déverrouille avec le code PIN ou la phrase secrète de l\'application</string>
+    <string name="app_lock_mode_screen_lock">Verrouillage de l\'écran</string>
+    <string name="app_lock_mode_screen_lock_desc">Utilisez le code PIN, le schéma, le mot de passe ou la biométrie qui déverrouillent votre téléphone</string>
+    <string name="app_lock_use_screen_lock">Utiliser le verrouillage de l\'écran</string>
+    <string name="app_lock_device_subtitle">Pour ouvrir Aster Mail, utilisez le verrouillage de l\'écran.</string>
+    <string name="app_lock_device_error">Aster Mail n\'a pas pu confirmer le verrouillage de l\'écran. Réessayez.</string>
+    <string name="app_lock_device_unavailable">Le verrouillage de l\'écran n\'est pas disponible. Pour déverrouiller Aster Mail, configurez un verrouillage de l\'écran dans les réglages du téléphone.</string>
+    <string name="app_lock_device_key_lost">Le verrouillage de l\'écran a changé, donc Aster Mail ne peut pas se déverrouiller. Pour continuer, déconnectez-vous puis reconnectez-vous.</string>
+    <string name="app_lock_biometric_failed_device">Le déverrouillage biométrique n\'est pas disponible. Utilisez le verrouillage de l\'écran.</string>
+    <string name="app_lock_biometric_error_device">Le déverrouillage biométrique n\'a pas fonctionné. Réessayez ou utilisez le verrouillage de l\'écran.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail a désactivé le déverrouillage biométrique. Pour le réactiver, utilisez le verrouillage de l\'écran.</string>
+    <string name="app_lock_device_setup_title">Configurer le verrouillage de l\'application</string>
+    <string name="app_lock_device_setup_subtitle">Pour utiliser le verrouillage de l\'écran dans Aster Mail, confirmez-le maintenant.</string>
+    <string name="app_lock_setup_unavailable">Impossible de configurer le verrouillage de l\'application. Réessayez.</string>
+    <string name="app_lock_confirm_to_disable">Pour désactiver le verrouillage de l\'application, confirmez le verrouillage de l\'écran.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Pour activer le déverrouillage biométrique, confirmez le verrouillage de l\'écran.</string>
+    <string name="app_lock_confirm_to_change_settings">Pour modifier les réglages du verrouillage de l\'application, confirmez votre identité.</string>
+    <string name="app_lock_hide_notification_content">Masquer le contenu des notifications</string>
+    <string name="app_lock_hide_notification_content_desc">Les notifications indiquent seulement l\'arrivée d\'un nouveau message. L\'expéditeur et l\'aperçu restent masqués.</string>
+    <string name="app_lock_timeout_title">Verrouiller après</string>
+    <string name="app_lock_timeout_immediately">Immédiatement</string>
+    <string name="app_lock_timeout_one_minute">1 minute</string>
+    <string name="app_lock_timeout_five_minutes">5 minutes</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minutes</string>
+    <string name="app_lock_timeout_one_hour">1 heure</string>
+</resources>

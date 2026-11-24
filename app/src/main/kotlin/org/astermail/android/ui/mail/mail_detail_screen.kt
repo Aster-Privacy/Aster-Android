@@ -8647,7 +8647,7 @@ private fun show_download_notification(
             dagger.hilt.android.EntryPointAccessors.fromApplication(
                 context.applicationContext,
                 org.astermail.android.notifications.MailPollingWorker.MailRepositoryEntryPoint::class.java,
-            ).app_lock_store().is_configured()
+            ).app_lock_store().hides_notification_content()
         }.getOrDefault(true)
         val content_hidden = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured
         val notification = androidx.core.app.NotificationCompat.Builder(context, channel_id)

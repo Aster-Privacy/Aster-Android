@@ -22,12 +22,15 @@
 package org.astermail.android.security
 
 const val BIOMETRIC_BINDING_VERSION = 3
+const val DEVICE_CREDENTIAL_BINDING_VERSION = 1
+const val DEVICE_CREDENTIAL_LEGACY_VALIDITY_SECONDS = 15
 
 data class BiometricBindingState(
     val has_token: Boolean,
     val binding_version: Int,
     val key_present: Boolean,
     val key_valid: Boolean,
+    val expected_version: Int = BIOMETRIC_BINDING_VERSION,
 )
 
 enum class BiometricUnlockAction { VERIFY, PIN_REQUIRED }
@@ -37,7 +40,7 @@ enum class BiometricEnrollOrigin { LOCK_SCREEN_BEFORE_PIN, AFTER_PIN_ON_LOCK_SCR
 fun biometric_unlock_action(state: BiometricBindingState): BiometricUnlockAction =
     if (
         state.has_token &&
-        state.binding_version == BIOMETRIC_BINDING_VERSION &&
+        state.binding_version == state.expected_version &&
         state.key_present &&
         state.key_valid
     ) {
@@ -59,7 +62,7 @@ fun may_enroll_biometric_unlock(
 fun should_offer_biometric_unlock(biometric_available: Boolean, state: BiometricBindingState): Boolean =
     biometric_available &&
         state.has_token &&
-        state.binding_version == BIOMETRIC_BINDING_VERSION
+        state.binding_version == state.expected_version
 
 fun should_rebind_after_pin(rebind_pending: Boolean, biometric_available: Boolean): Boolean =
     rebind_pending && biometric_available

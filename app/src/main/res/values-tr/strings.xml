@@ -2270,7 +2270,7 @@
     <string name="vanguard_description">Uygulama kilidi ve güçlendirilmiş güvenlikle gelişmiş uygulama koruması.</string>
     <string name="vanguard_upgrade_cta">Yükselt</string>
     <string name="vanguard_confirm_disable_title">Vanguard kapatılsın mı?</string>
-    <string name="vanguard_confirm_disable_desc">Uygulama kilidi ve diğer Vanguard korumaları kapatılacak.</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard korumaları kapatılacak. Uygulama kilidi açık kalır.</string>
     <string name="vanguard_disable">Kapat</string>
     <string name="app_lock_pin">Uygulama kilidi</string>
     <string name="app_lock_pin_description">Uygulamayı açmak için PIN ya da parola gerekir.</string>

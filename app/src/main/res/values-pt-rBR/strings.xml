@@ -2274,7 +2274,7 @@
     <string name="vanguard_description">Proteção avançada do app, com bloqueio e segurança reforçada.</string>
     <string name="vanguard_upgrade_cta">Fazer upgrade</string>
     <string name="vanguard_confirm_disable_title">Desativar o Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">O bloqueio do app e as demais proteções do Vanguard serão desligados.</string>
+    <string name="vanguard_confirm_disable_desc">As proteções do Vanguard serão desligadas. O bloqueio do app continua ativo.</string>
     <string name="vanguard_disable">Desativar</string>
     <string name="app_lock_pin">Bloqueio do app</string>
     <string name="app_lock_pin_description">Exigir PIN ou frase secreta para abrir o app.</string>

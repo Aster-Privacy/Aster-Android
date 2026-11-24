@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_require_unlock">Entsperren verlangen</string>
+    <string name="app_lock_off_description">Bei jedem Öffnen von Aster Mail nach Ihrer Displaysperre oder einer App-PIN fragen.</string>
+    <string name="app_lock_status_screen_lock">Entsperren mit Ihrer Displaysperre</string>
+    <string name="app_lock_status_app_pin">Entsperren mit Ihrer App-PIN oder Passphrase</string>
+    <string name="app_lock_mode_screen_lock">Displaysperre</string>
+    <string name="app_lock_mode_screen_lock_desc">PIN, Muster, Passwort oder Biometrie verwenden, mit denen Sie Ihr Telefon entsperren</string>
+    <string name="app_lock_use_screen_lock">Displaysperre verwenden</string>
+    <string name="app_lock_device_subtitle">Verwenden Sie Ihre Displaysperre, um Aster Mail zu öffnen.</string>
+    <string name="app_lock_device_error">Aster Mail konnte Ihre Displaysperre nicht bestätigen. Versuchen Sie es erneut.</string>
+    <string name="app_lock_device_unavailable">Ihre Displaysperre ist nicht verfügbar. Richten Sie in den Einstellungen Ihres Telefons eine Displaysperre ein, um Aster Mail zu entsperren.</string>
+    <string name="app_lock_device_key_lost">Ihre Displaysperre wurde geändert, daher kann Aster Mail nicht entsperrt werden. Melden Sie sich ab und wieder an, um fortzufahren.</string>
+    <string name="app_lock_biometric_failed_device">Biometrisches Entsperren ist nicht verfügbar. Verwenden Sie Ihre Displaysperre.</string>
+    <string name="app_lock_biometric_error_device">Biometrisches Entsperren hat nicht funktioniert. Versuchen Sie es erneut oder verwenden Sie Ihre Displaysperre.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail hat das biometrische Entsperren deaktiviert. Verwenden Sie Ihre Displaysperre, um es wieder zu aktivieren.</string>
+    <string name="app_lock_device_setup_title">App-Sperre einrichten</string>
+    <string name="app_lock_device_setup_subtitle">Bestätigen Sie jetzt Ihre Displaysperre, um sie für Aster Mail zu verwenden.</string>
+    <string name="app_lock_setup_unavailable">Die App-Sperre konnte nicht eingerichtet werden. Versuchen Sie es erneut.</string>
+    <string name="app_lock_confirm_to_disable">Bestätigen Sie Ihre Displaysperre, um die App-Sperre zu deaktivieren.</string>
+    <string name="app_lock_confirm_to_enable_biometric">Bestätigen Sie Ihre Displaysperre, um das biometrische Entsperren zu aktivieren.</string>
+    <string name="app_lock_confirm_to_change_settings">Bestätigen Sie Ihre Identität, um die Einstellungen der App-Sperre zu ändern.</string>
+    <string name="app_lock_hide_notification_content">Benachrichtigungsinhalt ausblenden</string>
+    <string name="app_lock_hide_notification_content_desc">Benachrichtigungen zeigen nur, dass neue E-Mails da sind. Absender und Vorschau bleiben verborgen.</string>
+    <string name="app_lock_timeout_title">Sperren nach</string>
+    <string name="app_lock_timeout_immediately">Sofort</string>
+    <string name="app_lock_timeout_one_minute">1 Minute</string>
+    <string name="app_lock_timeout_five_minutes">5 Minuten</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 Minuten</string>
+    <string name="app_lock_timeout_one_hour">1 Stunde</string>
+</resources>

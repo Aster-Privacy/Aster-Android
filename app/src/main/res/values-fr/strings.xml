@@ -2304,7 +2304,7 @@
     <string name="vanguard_description">Protection avancée de l\'application, avec verrouillage et sécurité renforcée.</string>
     <string name="vanguard_upgrade_cta">Mettre à niveau</string>
     <string name="vanguard_confirm_disable_title">Désactiver Vanguard ?</string>
-    <string name="vanguard_confirm_disable_desc">Le verrouillage de l\'application et les autres protections Vanguard seront désactivés.</string>
+    <string name="vanguard_confirm_disable_desc">Les protections Vanguard seront désactivées. Le verrouillage de l\'application reste actif.</string>
     <string name="vanguard_disable">Désactiver</string>
     <string name="app_lock_pin">Verrouillage de l\'application</string>
     <string name="app_lock_pin_description">Demander un code PIN ou une phrase secrète pour ouvrir l\'application.</string>
