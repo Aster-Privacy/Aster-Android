@@ -5657,6 +5657,8 @@ internal fun label_picker_sheet(
     applied_tokens: Set<String> = emptySet(),
     on_move_to_inbox: (() -> Unit)? = null,
     depths: Map<String, Int> = emptyMap(),
+    system_targets: List<String> = emptyList(),
+    on_system_target: (String) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val state = rememberModalBottomSheetState()
@@ -5692,6 +5694,25 @@ internal fun label_picker_sheet(
                     icon = TablerIcons.Inbox,
                     on_click = on_move_to_inbox,
                 )
+            }
+            system_targets.forEach { target ->
+                val (label_res, icon) = when (target) {
+                    "archive" -> R.string.folder_archive to TablerIcons.Archive
+                    "spam" -> R.string.folder_spam to spam_action_icon(is_spam = false)
+                    "trash" -> R.string.folder_trash to TablerIcons.Trash
+                    "star" -> R.string.folder_starred to TablerIcons.Star
+                    else -> return@forEach
+                }
+                Box(modifier = Modifier.testTag("move_sheet_$target")) {
+                    sheet_row(
+                        label = stringResource(label_res),
+                        tint = colors.text_primary,
+                        icon = icon,
+                        on_click = { on_system_target(target) },
+                    )
+                }
+            }
+            if (on_move_to_inbox != null || system_targets.isNotEmpty()) {
                 AsterDivider(modifier = Modifier.padding(horizontal = AsterSpacing.xl))
             }
             if (items.isEmpty()) {

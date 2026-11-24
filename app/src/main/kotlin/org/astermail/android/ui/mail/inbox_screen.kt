@@ -1667,6 +1667,10 @@ fun InboxScreen(
     }
 
     fun archive_selected() {
+        if (org.astermail.android.mail.is_unmovable_mail_folder(current_folder)) {
+            exit_select_mode()
+            return
+        }
         if (current_folder == "scheduled") return
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
@@ -1737,6 +1741,10 @@ fun InboxScreen(
     }
 
     fun mark_spam_selected() {
+        if (org.astermail.android.mail.is_unmovable_mail_folder(current_folder)) {
+            exit_select_mode()
+            return
+        }
         val thread_count = selected_ids.size
         val to_remove = selected_ids.toSet()
         with_selection_ids { ids ->
@@ -3107,6 +3115,11 @@ fun InboxScreen(
                 } else {
                     null
                 },
+                system_targets = org.astermail.android.mail.system_move_targets(selection_folder, selection_all_starred),
+                on_system_target = { target ->
+                    show_bulk_folder_sheet = false
+                    run_selection_action(target)
+                },
             )
         }
 
@@ -4143,6 +4156,12 @@ internal fun select_mode_bottom_bar(
                     else -> {
                         custom_actions.forEach { action_id ->
                             if (action_id == "category" && !show_category) return@forEach
+                            if (
+                                (action_id == "spam" || action_id == "archive") &&
+                                org.astermail.android.mail.is_unmovable_mail_folder(current_folder)
+                            ) {
+                                return@forEach
+                            }
                             val action = selection_toolbar_action_for(
                                 action_id,
                                 selection_all_starred,
@@ -4266,7 +4285,8 @@ internal fun selection_overflow_sheet(
             if (in_archive) {
                 overflow_sheet_row("unarchive", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("unarchive") }
             }
-            if (!in_trash && !in_spam && !in_archive) {
+            val unmovable = org.astermail.android.mail.is_unmovable_mail_folder(current_folder)
+            if (!in_trash && !in_spam && !in_archive && !unmovable) {
                 overflow_sheet_row("archive", TablerIcons.Archive, stringResource(R.string.archive_action), colors.text_primary) { on_action("archive") }
             }
             if (!in_trash && !in_spam) {
@@ -4291,7 +4311,7 @@ internal fun selection_overflow_sheet(
                     colors.danger,
                 ) { on_action("trash") }
             }
-            if (!in_spam) {
+            if (!in_spam && !unmovable) {
                 overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
             }
             if (on_customize != null) {
