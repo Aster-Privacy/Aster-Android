@@ -50,13 +50,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.ComposeActivity
 import org.astermail.android.R
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterShapes
@@ -94,6 +100,50 @@ private fun category_chip(label: String, icon: ImageVector, selected: Boolean, o
 }
 
 private const val MAX_FEEDBACK_LENGTH = 2000
+private const val SUPPORT_ADDRESS = "hello@astermail.org"
+private const val NOTICE_EMAIL_TOKEN = "\u0000"
+
+@Composable
+private fun support_notice() {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val parts = stringResource(R.string.feedback_support_notice, NOTICE_EMAIL_TOKEN).split(NOTICE_EMAIL_TOKEN)
+    val notice_text = buildAnnotatedString {
+        append(parts.first())
+        withLink(
+            LinkAnnotation.Clickable(
+                tag = "support_email",
+                styles = TextLinkStyles(style = SpanStyle(color = colors.accent_blue, fontWeight = FontWeight.Medium)),
+                linkInteractionListener = {
+                    context.startActivity(ComposeActivity.intent_for(context, prefill_to = SUPPORT_ADDRESS))
+                },
+            ),
+        ) {
+            append(SUPPORT_ADDRESS)
+        }
+        append(parts.drop(1).joinToString(""))
+    }
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.md),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Icon(
+                imageVector = TablerIcons.InfoCircle,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.padding(top = 1.dp).size(16.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Text(
+                text = notice_text,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+            )
+        }
+    }
+}
 
 @Composable
 fun FeedbackScreen(
@@ -119,6 +169,8 @@ fun FeedbackScreen(
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = AsterSpacing.md),
         )
+        support_notice()
+        v_gap(AsterSpacing.md)
         section_label(stringResource(R.string.category))
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm)) {
             category_chip(stringResource(R.string.category_feedback), TablerIcons.Heart, category == "general") { category = "general" }

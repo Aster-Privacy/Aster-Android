@@ -901,6 +901,7 @@
     <string name="message">Messaggio</string>
     <string name="feedback_placeholder">Descrivi cosa ti piace, cosa manca o cosa non funziona.</string>
     <string name="feedback_privacy_note">L\'indirizzo email del tuo account verrà allegato così possiamo risponderti. Non condividiamo mai il feedback.</string>
+    <string name="feedback_support_notice">Il feedback non viene monitorato per richieste di assistenza o domande. Per ricevere aiuto, contatta il team di assistenza all\'indirizzo %1$s.</string>
     <string name="send_feedback">Invia feedback</string>
     <string name="sending_feedback">Invio...</string>
     <string name="sent">Inviato</string>

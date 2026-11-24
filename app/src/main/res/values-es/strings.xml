@@ -902,6 +902,7 @@
     <string name="message">Mensaje</string>
     <string name="feedback_placeholder">Describe lo que te gusta, lo que falta o lo que no funciona.</string>
     <string name="feedback_privacy_note">Se adjuntará la dirección de correo de tu cuenta para que podamos responderte. Nunca compartimos tus comentarios.</string>
+    <string name="feedback_support_notice">Los comentarios no se revisan para atender solicitudes de soporte ni preguntas. Para obtener ayuda, contacta con el equipo de soporte en %1$s.</string>
     <string name="send_feedback">Enviar comentarios</string>
     <string name="sending_feedback">Enviando...</string>
     <string name="sent">Enviado</string>

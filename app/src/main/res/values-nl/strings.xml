@@ -901,6 +901,7 @@
     <string name="message">Bericht</string>
     <string name="feedback_placeholder">Beschrijf wat je goed vindt, wat er mist of wat er niet werkt.</string>
     <string name="feedback_privacy_note">Je account-e-mailadres wordt bijgevoegd zodat we kunnen antwoorden. We delen feedback nooit.</string>
+    <string name="feedback_support_notice">Feedback wordt niet gecontroleerd op supportverzoeken of vragen. Neem voor hulp contact op met het supportteam via %1$s.</string>
     <string name="send_feedback">Feedback verzenden</string>
     <string name="sending_feedback">Verzenden...</string>
     <string name="sent">Verzonden</string>

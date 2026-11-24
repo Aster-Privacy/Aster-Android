@@ -901,6 +901,7 @@
     <string name="message">الرسالة</string>
     <string name="feedback_placeholder">صف ما تحبه، أو ما ينقص، أو ما لا يعمل.</string>
     <string name="feedback_privacy_note">سيتم إرفاق بريد حسابك حتى نتمكن من الرد. لا نشارك الملاحظات أبداً.</string>
+    <string name="feedback_support_notice">لا تتم مراجعة الملاحظات للرد على طلبات الدعم أو الأسئلة. للحصول على المساعدة، تواصل مع فريق الدعم على %1$s.</string>
     <string name="send_feedback">إرسال ملاحظات</string>
     <string name="sending_feedback">جارٍ الإرسال...</string>
     <string name="sent">تم الإرسال</string>
