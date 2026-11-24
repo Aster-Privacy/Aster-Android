@@ -84,6 +84,7 @@ private const val STATS_TTL_MS = 30_000L
 private const val RESUME_FRESH_MS = 20_000L
 private const val RESUME_RETRY_MS = 5_000L
 private const val STATS_DEBOUNCE_MS = 400L
+internal const val RESUME_REFRESH_AFTER_MS = 30_000L
 private const val STATS_DIRTY_MS = 1_200L
 private const val OVERRIDE_TTL_MS = 30_000L
 private const val REACTION_SEEN_OVERRIDE_MS = 30_000L
@@ -134,6 +135,8 @@ data class InboxUiState(
     val is_refreshing: Boolean = false,
     val list_loaded_at: Long = 0L,
     val stats_loaded_at: Long = 0L,
+    val stats_refreshing: Boolean = false,
+    val list_stale_since: Long = 0L,
     val cache_pending: Boolean = false,
     val read_filter: ListReadFilter = ListReadFilter.all,
 )
@@ -666,6 +669,9 @@ class MailViewModel @Inject constructor(
     @Volatile private var stats_seed_blocked_account: String? = null
     @Volatile private var stats_owner_account: String? = current_account_id_or_null()
     private var stats_job: Job? = null
+    @Volatile private var stats_priority = false
+    @Volatile private var backgrounded_at_ms = 0L
+    @Volatile private var foreground_refresh_at_ms = 0L
     private val _emptying_spam = MutableStateFlow(false)
     val emptying_spam_state: StateFlow<Boolean> = _emptying_spam.asStateFlow()
     private val _emptying_trash = MutableStateFlow(false)
@@ -1103,6 +1109,9 @@ class MailViewModel @Inject constructor(
         removed_protected_until.clear()
         last_stats_load_ms = 0L
         stats_job?.cancel()
+        stats_priority = false
+        foreground_refresh_at_ms = 0L
+        _inbox_state.update { it.copy(stats_refreshing = false) }
         stats_seed_blocked_account = current_account_id_or_null()
         stats_owner_account = null
         star_overrides.clear()
@@ -1142,7 +1151,58 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private val process_observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+        when (event) {
+            androidx.lifecycle.Lifecycle.Event.ON_STOP -> on_process_background()
+            androidx.lifecycle.Lifecycle.Event.ON_START -> on_process_foreground()
+            else -> Unit
+        }
+    }
+
+    private val process_observer_registered = runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(process_observer)
+    }.isSuccess
+
+    fun on_process_background() {
+        backgrounded_at_ms = override_clock_ms()
+    }
+
+    fun on_process_foreground() {
+        val since = backgrounded_at_ms
+        backgrounded_at_ms = 0L
+        val now = override_clock_ms()
+        if (!resume_refresh_due(since, now)) return
+        foreground_refresh_at_ms = now
+        val s = _inbox_state.value
+        refresh_stats_after_return(stale = true)
+        if (s.is_loading_more) return
+        _inbox_state.update { it.copy(list_stale_since = now) }
+        if (s.initial || s.is_loading || s.is_refreshing) return
+        silent_revalidate(s.current_folder)
+        retry_resume_revalidate(s.current_folder)
+        val thread = _thread_state.value
+        if (thread.item != null && !thread.is_loading) refresh_current_thread()
+    }
+
+    private fun refresh_stats_after_return(
+        stale: Boolean = stats_stale(_inbox_state.value.stats_loaded_at, override_clock_ms()),
+    ) {
+        if (!stale) {
+            load_stats(force = true)
+            return
+        }
+        if (stats_priority && stats_job?.isActive == true) return
+        if (_inbox_state.value.stats != null) _inbox_state.update { it.copy(stats_refreshing = true) }
+        start_stats_fetch(debounce = false)
+    }
+
+    private fun foreground_refresh_recent(): Boolean =
+        override_clock_ms() - foreground_refresh_at_ms in 0..RESUME_FRESH_MS
+
     override fun onCleared() {
+        if (process_observer_registered) {
+            runCatching { androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.removeObserver(process_observer) }
+        }
         search_index_manager.remove_read_overlay(index_read_overlay)
         super.onCleared()
     }
@@ -1769,14 +1829,16 @@ class MailViewModel @Inject constructor(
             current.error == null &&
             age in 0..RESUME_FRESH_MS
         resume_stale = false
-        load_stats(force = true)
+        if (foreground_refresh_recent() && current.current_folder == folder) return
+        refresh_stats_after_return()
         if (fresh) return
         load_inbox(folder, force = true)
         retry_resume_revalidate(folder)
     }
 
     fun refresh_after_background() {
-        load_stats(force = true)
+        if (foreground_refresh_recent()) return
+        refresh_stats_after_return()
         val s = _inbox_state.value
         if (!s.initial && !s.is_loading && !s.is_loading_more && !s.is_refreshing) {
             silent_revalidate(s.current_folder)
@@ -1895,6 +1957,10 @@ class MailViewModel @Inject constructor(
                     filtered_list_time = System.currentTimeMillis()
                 }
                 search_index_manager.ensure_index_built()
+            }
+            result.onFailure {
+                if (coroutineContext[Job]?.isActive == false) return@onFailure
+                _inbox_state.update { it.copy(list_stale_since = 0L) }
             }
         }
     }
@@ -2241,14 +2307,26 @@ class MailViewModel @Inject constructor(
         )
         seed_cached_stats()
         if (!force && _inbox_state.value.stats != null && now - last_stats_load_ms < stats_ttl) return
+        if (stats_priority && stats_job?.isActive == true) return
+        start_stats_fetch(debounce = true)
+    }
+
+    private fun start_stats_fetch(debounce: Boolean) {
         stats_job?.cancel()
+        stats_priority = !debounce
         val gen = account_generation
         val account_id = current_account_id_or_null()
+        if (!debounce) last_stats_load_ms = System.currentTimeMillis()
         stats_job = viewModelScope.launch {
-            delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
+            if (debounce) delay(maxOf(STATS_DEBOUNCE_MS, stats_dirty_until - System.currentTimeMillis()))
             last_stats_load_ms = System.currentTimeMillis()
             val started = override_clock_ms()
-            repository.get_stats().onSuccess { stats ->
+            val result = repository.get_stats()
+            if (gen == account_generation) {
+                stats_priority = false
+                if (result.isFailure) _inbox_state.update { it.copy(stats_refreshing = false) }
+            }
+            result.onSuccess { stats ->
                 if (gen != account_generation || current_account_id_or_null() != account_id) return@onSuccess
                 val pending = read_flips.values.sumOf { flip ->
                     val confirmed_at = flip.confirmed_at
@@ -2270,6 +2348,7 @@ class MailViewModel @Inject constructor(
                     it.copy(
                         stats = stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)),
                         stats_loaded_at = started,
+                        stats_refreshing = false,
                     )
                 }
             }
@@ -6695,6 +6774,12 @@ private val CURSOR_PAGED_FOLDERS = setOf("inbox", "sent", "drafts", "starred", "
 internal fun resume_retry_due(loaded_at: Long?, resumed_at: Long): Boolean =
     loaded_at == null || loaded_at < resumed_at
 
+internal fun stats_stale(stats_loaded_at: Long, now: Long): Boolean =
+    stats_loaded_at <= 0L || now - stats_loaded_at >= STATS_TTL_MS
+
+internal fun resume_refresh_due(backgrounded_at: Long, foregrounded_at: Long): Boolean =
+    backgrounded_at > 0L && foregrounded_at - backgrounded_at >= RESUME_REFRESH_AFTER_MS
+
 internal fun fallback_tick_due(
     live_sync_connected: Boolean,
     list_loaded_at: Long,
@@ -6788,3 +6873,8 @@ internal fun send_result_message_for(error: Throwable): SendResultMessage = when
         SendResultMessage(R.string.sent_copy_attachments_missing, error.failed_count)
     else -> SendResultMessage(R.string.send_problem_failed_message, null)
 }
+
+internal fun list_count_refreshing(state: InboxUiState): Boolean =
+    state.list_stale_since > 0L &&
+        state.list_loaded_at < state.list_stale_since &&
+        state.error == null
