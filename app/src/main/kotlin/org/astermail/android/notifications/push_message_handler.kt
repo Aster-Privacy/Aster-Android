@@ -80,8 +80,8 @@ fun handle_reaction_added(context: Context, frame: ReactionFrame): PushResult {
     } catch (_: Throwable) {
         return PushResult.NeedsFetch
     }
-    val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
-    val is_locked = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured
+    val app_lock_hides = runCatching { entry.app_lock_store().hides_notification_content() }.getOrDefault(true)
+    val is_locked = org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_hides
     if (!is_locked) {
         if (!MailPollingWorker.protected_folder_state_known(context)) return PushResult.NeedsFetch
         if (MailPollingWorker.protected_folder_tokens(context).isNotEmpty()) return PushResult.NeedsFetch
@@ -156,8 +156,8 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
     } catch (_: Throwable) {
         return PushResult.NeedsFetch
     }
-    val app_lock_configured = runCatching { entry.app_lock_store().is_configured() }.getOrDefault(true)
-    if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_configured) {
+    val app_lock_hides = runCatching { entry.app_lock_store().hides_notification_content() }.getOrDefault(true)
+    if (org.astermail.android.security.LockdownStore.is_enabled(context) || app_lock_hides) {
         if (runCatching { entry.mail_repository().keys_locked() }.getOrDefault(false)) {
             if (MailPollingWorker.show_generic(context, 1)) {
                 MailPollingWorker.note_push_notification_posted(context)

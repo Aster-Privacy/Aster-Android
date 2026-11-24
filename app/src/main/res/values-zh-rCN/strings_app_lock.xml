@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_off_description">每次打开 Aster Mail 时，要求使用屏幕锁定或应用 PIN 码。</string>
+    <string name="app_lock_status_screen_lock">使用屏幕锁定解锁</string>
+    <string name="app_lock_status_app_pin">使用应用 PIN 码或密码短语解锁</string>
+    <string name="app_lock_mode_screen_lock">屏幕锁定</string>
+    <string name="app_lock_mode_screen_lock_desc">使用解锁手机时所用的 PIN 码、图案、密码或生物识别</string>
+    <string name="app_lock_use_screen_lock">使用屏幕锁定</string>
+    <string name="app_lock_device_subtitle">如需打开 Aster Mail，请使用屏幕锁定。</string>
+    <string name="app_lock_device_error">Aster Mail 无法确认你的屏幕锁定。请重试。</string>
+    <string name="app_lock_device_unavailable">屏幕锁定不可用。如需解锁 Aster Mail，请在手机设置中设置屏幕锁定。</string>
+    <string name="app_lock_device_key_lost">你的屏幕锁定已更改，因此 Aster Mail 无法解锁。如需继续，请退出登录后重新登录。</string>
+    <string name="app_lock_biometric_failed_device">生物识别解锁不可用。请使用屏幕锁定。</string>
+    <string name="app_lock_biometric_error_device">生物识别解锁失败。请重试或使用屏幕锁定。</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail 已关闭生物识别解锁。如需重新开启，请使用屏幕锁定。</string>
+    <string name="app_lock_device_setup_title">设置应用锁</string>
+    <string name="app_lock_device_setup_subtitle">如需在 Aster Mail 中使用屏幕锁定，请立即确认。</string>
+    <string name="app_lock_setup_unavailable">无法设置应用锁。请重试。</string>
+    <string name="app_lock_confirm_to_disable">如需关闭应用锁，请确认你的屏幕锁定。</string>
+    <string name="app_lock_confirm_to_enable_biometric">如需开启生物识别解锁，请确认你的屏幕锁定。</string>
+    <string name="app_lock_confirm_to_change_settings">如需更改应用锁设置，请确认是你本人。</string>
+    <string name="app_lock_hide_notification_content">隐藏通知内容</string>
+    <string name="app_lock_hide_notification_content_desc">通知只会显示你有新邮件，发件人和预览会保持隐藏。</string>
+    <string name="app_lock_timeout_title">锁定时间</string>
+    <string name="app_lock_timeout_immediately">立即</string>
+    <string name="app_lock_timeout_one_minute">1 分钟</string>
+    <string name="app_lock_timeout_five_minutes">5 分钟</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 分钟</string>
+    <string name="app_lock_timeout_one_hour">1 小时</string>
+</resources>

@@ -35,9 +35,12 @@ import org.astermail.android.storage.LockSeal
 import javax.inject.Inject
 import javax.inject.Singleton
 
+enum class AppLockMode { PIN, DEVICE }
+
 data class AppLockConfig(
     val pin_type: String,
     val digits: Int?,
+    val mode: AppLockMode = AppLockMode.PIN,
 )
 
 @Singleton
@@ -56,6 +59,10 @@ class AppLockStore @Inject constructor(
         const val KEY_PIN_TYPE = "pin_type"
         const val KEY_PIN_DIGITS = "pin_digits"
         const val KEY_LOCK_KEY_WRAP = "lock_key_wrap"
+        const val KEY_MODE = "unlock_mode"
+        const val MODE_DEVICE = "device"
+        const val KEY_TIMEOUT = "lock_timeout"
+        const val KEY_HIDE_NOTIFICATION_CONTENT = "hide_notification_content"
         const val KEY_LOCKOUT_COUNT = "lockout_count"
         const val KEY_LEGACY_LOCKOUT_UNTIL = "lockout_until_ms"
         const val KEY_LEGACY_LOCKOUT_UNTIL_ELAPSED = "lockout_until_elapsed_ms"
@@ -84,7 +91,10 @@ class AppLockStore @Inject constructor(
         context.getSharedPreferences(PRESENCE_PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    @Volatile private var session_unlocked = false
+    private val session = AppLockSession(
+        elapsed_clock = { android.os.SystemClock.elapsedRealtime() },
+        wall_clock = { System.currentTimeMillis() },
+    )
 
     private val lock_key_guard = Any()
 
@@ -144,8 +154,11 @@ class AppLockStore @Inject constructor(
             }.commit()
         }.getOrDefault(false)
 
+    private fun device_mode_set(): Boolean =
+        runCatching { prefs.getString(KEY_MODE, null) == MODE_DEVICE }.getOrDefault(false)
+
     fun presence(): AppLockPresence {
-        val has_pin_hash = prefs.contains(KEY_PIN_HASH)
+        val has_pin_hash = prefs.contains(KEY_PIN_HASH) || device_mode_set()
         val marker = marker_present()
         if (AppLockPresenceRule.should_write_marker(has_pin_hash, marker)) write_marker(true)
         return AppLockPresenceRule.resolve(has_pin_hash, marker)
@@ -156,7 +169,7 @@ class AppLockStore @Inject constructor(
     fun forget_unverifiable_lock(signed_in: Boolean) {
         if (!AppLockPresenceRule.may_forget_marker(presence(), signed_in)) return
         if (!write_marker(false)) return
-        session_unlocked = false
+        session.mark_locked()
         _is_locked.value = false
         _config_version.value += 1
     }
@@ -168,26 +181,85 @@ class AppLockStore @Inject constructor(
         return AppLockConfig(
             pin_type = prefs.getString(KEY_PIN_TYPE, "numeric") ?: "numeric",
             digits = prefs.getInt(KEY_PIN_DIGITS, 6).takeIf { prefs.contains(KEY_PIN_DIGITS) },
+            mode = unlock_mode(),
         )
     }
 
-    fun lock() {
-        if (!is_configured()) return
-        session_unlocked = false
+    fun unlock_mode(): AppLockMode =
+        if (device_mode_set() && !prefs.contains(KEY_PIN_HASH)) AppLockMode.DEVICE else AppLockMode.PIN
+
+    fun is_device_mode(): Boolean = runCatching { is_configured() && unlock_mode() == AppLockMode.DEVICE }.getOrDefault(false)
+
+    fun timeout(): AppLockTimeout =
+        runCatching { AppLockTimeout.from_key(prefs.getString(KEY_TIMEOUT, null)) }
+            .getOrDefault(AppLockTimeout.DEFAULT)
+
+    fun set_timeout(value: AppLockTimeout): Boolean {
+        val stored = runCatching { prefs.edit().putString(KEY_TIMEOUT, value.key).commit() }.getOrDefault(false)
+        if (stored) _config_version.value += 1
+        return stored
+    }
+
+    fun notification_content_hidden_setting(): Boolean =
+        runCatching { prefs.getBoolean(KEY_HIDE_NOTIFICATION_CONTENT, true) }.getOrDefault(true)
+
+    fun set_notification_content_hidden(hidden: Boolean): Boolean {
+        val stored = runCatching {
+            prefs.edit().putBoolean(KEY_HIDE_NOTIFICATION_CONTENT, hidden).commit()
+        }.getOrDefault(false)
+        if (stored) _config_version.value += 1
+        return stored
+    }
+
+    fun hides_notification_content(): Boolean {
+        val configured = runCatching { is_configured() }.getOrDefault(true)
+        return AppLockNotificationPolicy.hides_content(configured, notification_content_hidden_setting())
+    }
+
+    private fun engage_lock() {
         _is_locked.value = true
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
     }
 
+    fun lock() {
+        if (!is_configured()) return
+        session.mark_locked()
+        engage_lock()
+    }
+
     fun mark_session_unlocked() {
-        session_unlocked = true
+        session.mark_unlocked()
         _is_locked.value = false
     }
 
     fun check_on_foreground() {
-        if (is_configured() && !session_unlocked) {
-            _is_locked.value = true
-            runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
+        if (!is_configured()) return
+        if (session.on_return(timeout())) engage_lock()
+    }
+
+    fun on_background(): Long? {
+        if (!is_configured()) return null
+        val current = timeout()
+        val external = session.external_flow_active()
+        if (session.on_leave(current)) {
+            engage_lock()
+            return null
         }
+        if (!session.unlocked) return null
+        return AppLockTimeoutPolicy.background_lock_delay_ms(current, external)
+    }
+
+    fun expire_in_background() {
+        if (!is_configured()) return
+        if (session.expire_if_due(timeout())) engage_lock()
+    }
+
+    fun begin_external_flow() {
+        if (runCatching { is_configured() }.getOrDefault(false)) session.begin_external_flow()
+    }
+
+    fun end_external_flow() {
+        session.end_external_flow()
     }
 
     fun is_locked_out(): Boolean = lockout_remaining_ms() > 0L
@@ -258,8 +330,78 @@ class AppLockStore @Inject constructor(
 
     fun attempt_notice(): PinAttemptNotice = PinLockout.notice_for(failed_attempt_count())
 
+    fun can_setup(): Boolean = LockKeyHolder.is_open() || !stores_hold_sealed_values()
+
+    fun new_device_lock_key(): ByteArray? {
+        if (!can_setup()) return null
+        return LockKeyHolder.current() ?: LockSeal.new_lock_key()
+    }
+
+    fun setup_device(cipher: javax.crypto.Cipher, lock_key: ByteArray): Boolean {
+        try {
+            if (!can_setup()) return false
+            if (!DeviceCredentialUnlockGate.complete_enroll(context, cipher, lock_key)) {
+                runCatching { DeviceCredentialUnlockGate.reset(context) }
+                return false
+            }
+            val stored = runCatching {
+                prefs.edit().apply {
+                    putString(KEY_MODE, MODE_DEVICE)
+                    remove(KEY_LOCK_KEY_WRAP)
+                    remove(KEY_PIN_HASH)
+                    remove(KEY_PIN_SALT)
+                    remove(KEY_PIN_TYPE)
+                    remove(KEY_PIN_DIGITS)
+                    clear_lockout(this)
+                }.commit()
+            }.getOrDefault(false)
+            if (!stored || !write_marker(true)) {
+                runCatching { prefs.edit().remove(KEY_MODE).commit() }
+                runCatching { DeviceCredentialUnlockGate.reset(context) }
+                return false
+            }
+            LockKeyHolder.open(lock_key)
+            runCatching { BiometricUnlockGate.reset(context) }
+            _config_version.value += 1
+            mark_session_unlocked()
+            return true
+        } finally {
+            lock_key.fill(0)
+        }
+    }
+
+    fun complete_device_unlock(cipher: javax.crypto.Cipher, unlock_session: Boolean = true): Boolean {
+        val ok = DeviceCredentialUnlockGate.complete_verify(context, cipher)
+        if (ok && unlock_session) mark_session_unlocked()
+        return ok
+    }
+
+    fun complete_biometric_unlock(cipher: javax.crypto.Cipher, unlock_session: Boolean = true): Boolean {
+        val ok = BiometricUnlockGate.complete_verify(context, cipher)
+        if (ok && unlock_session) mark_session_unlocked()
+        return ok
+    }
+
+    fun forget_after_last_sign_out() {
+        if (!runCatching { is_configured() }.getOrDefault(false)) return
+        if (LockKeyHolder.is_open() && disable()) {
+            runCatching { prefs.edit().remove(KEY_TIMEOUT).remove(KEY_HIDE_NOTIFICATION_CONTENT).commit() }
+            return
+        }
+        if (stores_hold_sealed_values()) return
+        runCatching { LockKeyHolder.close() }
+        clear_pin_settings()
+        runCatching { prefs.edit().remove(KEY_TIMEOUT).remove(KEY_HIDE_NOTIFICATION_CONTENT).commit() }
+        write_marker(false)
+        runCatching { BiometricUnlockGate.reset(context) }
+        runCatching { DeviceCredentialUnlockGate.reset(context) }
+        session.mark_locked()
+        _is_locked.value = false
+        _config_version.value += 1
+    }
+
     fun setup_pin(pin: String, pin_type: String, digits: Int?) {
-        if (!LockKeyHolder.is_open() && stores_hold_sealed_values()) return
+        if (!can_setup()) return
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val hash = hash_pin(pin, salt)
         val lock_key = LockKeyHolder.current() ?: LockSeal.new_lock_key()
@@ -269,6 +411,7 @@ class AppLockStore @Inject constructor(
             putString(KEY_PIN_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
             putString(KEY_PIN_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
             putString(KEY_PIN_TYPE, pin_type)
+            remove(KEY_MODE)
             if (digits != null) putInt(KEY_PIN_DIGITS, digits) else remove(KEY_PIN_DIGITS)
             clear_lockout(this)
         }.commit()
@@ -278,6 +421,7 @@ class AppLockStore @Inject constructor(
         }
         lock_key.fill(0)
         runCatching { BiometricUnlockGate.reset(context) }
+        if (stored) runCatching { DeviceCredentialUnlockGate.reset(context) }
         _config_version.value += 1
         mark_session_unlocked()
     }
@@ -318,7 +462,8 @@ class AppLockStore @Inject constructor(
         }
         if (!disabled) return false
         runCatching { BiometricUnlockGate.reset(context) }
-        session_unlocked = false
+        runCatching { DeviceCredentialUnlockGate.reset(context) }
+        session.mark_locked()
         _is_locked.value = false
         _config_version.value += 1
         return true
@@ -332,6 +477,7 @@ class AppLockStore @Inject constructor(
                 remove(KEY_PIN_SALT)
                 remove(KEY_PIN_TYPE)
                 remove(KEY_PIN_DIGITS)
+                remove(KEY_MODE)
                 clear_lockout(this)
             }.commit()
         }.getOrDefault(false)

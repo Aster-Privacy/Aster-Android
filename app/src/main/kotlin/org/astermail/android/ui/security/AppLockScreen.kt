@@ -109,7 +109,10 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.security.AppLockMode
 import org.astermail.android.security.AppLockStore
+import org.astermail.android.security.DeviceCredentialResult
+import org.astermail.android.security.DeviceCredentialUnlockGate
 import org.astermail.android.security.BiometricEnrollOrigin
 import org.astermail.android.security.BiometricErrorOutcome
 import org.astermail.android.security.BiometricLaunchBlock
@@ -169,6 +172,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     val config = remember { store.get_config() }
     val pin_type = config?.pin_type ?: "numeric"
     val digits = config?.digits ?: 6
+    val device_mode = config?.mode == AppLockMode.DEVICE
 
     var input by remember { mutableStateOf("") }
     var verifying by remember { mutableStateOf(false) }
@@ -182,6 +186,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
     }
     var auto_prompt_armed by remember { mutableStateOf(true) }
+    var device_prompt_in_flight by remember { mutableStateOf(false) }
     val host_activity = remember(context) { context.find_host_activity() as? FragmentActivity }
     val lifecycle_owner = host_activity ?: LocalLifecycleOwner.current
     val lifecycle_state by lifecycle_owner.lifecycle.currentStateAsState()
@@ -195,9 +200,12 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     }
 
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
-    val biometric_failed_str = stringResource(R.string.app_lock_biometric_failed)
-    val biometric_error_str = stringResource(R.string.app_lock_biometric_error)
-    val biometric_reset_str = stringResource(R.string.app_lock_biometric_reset)
+    val biometric_failed_str = stringResource(if (device_mode) R.string.app_lock_biometric_failed_device else R.string.app_lock_biometric_failed)
+    val biometric_error_str = stringResource(if (device_mode) R.string.app_lock_biometric_error_device else R.string.app_lock_biometric_error)
+    val biometric_reset_str = stringResource(if (device_mode) R.string.app_lock_biometric_reset_device else R.string.app_lock_biometric_reset)
+    val device_error_str = stringResource(R.string.app_lock_device_error)
+    val device_unavailable_str = stringResource(R.string.app_lock_device_unavailable)
+    val device_key_lost_str = stringResource(R.string.app_lock_device_key_lost)
 
     LaunchedEffect(locked_out) {
         if (!locked_out) return@LaunchedEffect
@@ -206,6 +214,56 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             lockout_secs = secs
             if (secs <= 0) { locked_out = false; break }
             delay(1000)
+        }
+    }
+
+    fun finish_pin_unlock() {
+        val activity = host_activity
+        val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
+        if (activity == null || !rebind) {
+            store.mark_session_unlocked()
+            return
+        }
+        BiometricUnlockGate.clear_rebind_pending(context)
+        launch_biometric_enroll(
+            activity = activity,
+            origin = BiometricEnrollOrigin.AFTER_PIN_ON_LOCK_SCREEN,
+            pin_verified = true,
+            biometric_available = biometric_available,
+        ) { store.mark_session_unlocked() }
+    }
+
+    fun launch_device(from_user: Boolean) {
+        val activity = host_activity
+        val block = biometric_launch_block(
+            has_host = activity != null,
+            resumed = activity?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == true,
+            state_saved = activity?.supportFragmentManager?.isStateSaved == true,
+        )
+        if (activity == null || block != BiometricLaunchBlock.NONE) {
+            if (from_user) error_msg = device_error_str
+            else auto_prompt_armed = block == BiometricLaunchBlock.NOT_RESUMED
+            return
+        }
+        if (device_prompt_in_flight) return
+        error_msg = null
+        device_prompt_in_flight = true
+        launch_device_unlock(
+            activity = activity,
+            store = store,
+            title = activity.getString(R.string.app_lock_biometric_title),
+            subtitle = activity.getString(R.string.app_lock_device_subtitle),
+            unlock_session = false,
+        ) { result ->
+            device_prompt_in_flight = false
+            when (result) {
+                DeviceCredentialResult.SUCCESS -> finish_pin_unlock()
+                DeviceCredentialResult.CANCELED -> {}
+                DeviceCredentialResult.UNAVAILABLE -> {
+                    error_msg = if (DeviceCredentialUnlockGate.is_enrolled(context)) device_unavailable_str else device_key_lost_str
+                }
+                DeviceCredentialResult.FAILED -> error_msg = device_error_str
+            }
         }
     }
 
@@ -244,20 +302,15 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(activity.getString(R.string.app_lock_biometric_title))
             .setSubtitle(activity.getString(R.string.app_lock_biometric_subtitle))
-            .setNegativeButtonText(activity.getString(R.string.app_lock_use_pin))
+            .setNegativeButtonText(
+                activity.getString(if (device_mode) R.string.app_lock_use_screen_lock else R.string.app_lock_use_pin),
+            )
             .setAllowedAuthenticators(BIOMETRIC_STRONG)
             .setConfirmationRequired(false)
             .build()
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                val authenticated_cipher = result.cryptoObject?.cipher
-                if (authenticated_cipher == null) {
-                    error_msg = biometric_error_str
-                    return
-                }
-                if (BiometricUnlockGate.complete_verify(context, authenticated_cipher)) {
-                    store.mark_session_unlocked()
-                } else {
+                if (!store.complete_biometric_unlock(result.cryptoObject?.cipher ?: cipher)) {
                     BiometricUnlockGate.invalidate(context)
                     biometric_enrolled = false
                     error_msg = biometric_reset_str
@@ -265,6 +318,10 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             }
 
             override fun onAuthenticationError(code: Int, message: CharSequence) {
+                if (device_mode && code == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                    launch_device(from_user = true)
+                    return
+                }
                 when (biometric_error_outcome(code)) {
                     BiometricErrorOutcome.IGNORE -> {}
                     BiometricErrorOutcome.SHOW_MESSAGE -> {
@@ -277,30 +334,17 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
         }
-        try {
-            BiometricPrompt(activity, executor, callback).authenticate(info, BiometricPrompt.CryptoObject(cipher))
-        } catch (e: Exception) {
-            error_msg = biometric_error_str
+        activity.after_prompt_closed {
+            try {
+                BiometricPrompt(activity, executor, callback).authenticate(info, BiometricPrompt.CryptoObject(cipher))
+            } catch (e: Exception) {
+                error_msg = biometric_error_str
+            }
         }
-    }
-
-    fun finish_pin_unlock() {
-        val activity = host_activity
-        val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
-        if (activity == null || !rebind) {
-            store.mark_session_unlocked()
-            return
-        }
-        BiometricUnlockGate.clear_rebind_pending(context)
-        launch_biometric_enroll(
-            activity = activity,
-            origin = BiometricEnrollOrigin.AFTER_PIN_ON_LOCK_SCREEN,
-            pin_verified = true,
-            biometric_available = biometric_available,
-        ) { store.mark_session_unlocked() }
     }
 
     LaunchedEffect(lifecycle_state) {
+        if (device_prompt_in_flight) return@LaunchedEffect
         if (should_rearm_auto_prompt(lifecycle_state.isAtLeast(Lifecycle.State.STARTED))) auto_prompt_armed = true
     }
 
@@ -309,6 +353,9 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         if (should_auto_prompt_biometric(auto_prompt_armed, resumed, biometric_available, biometric_enrolled)) {
             auto_prompt_armed = false
             launch_biometric(from_user = false)
+        } else if (device_mode && auto_prompt_armed && resumed && !(biometric_available && biometric_enrolled)) {
+            auto_prompt_armed = false
+            launch_device(from_user = false)
         }
     }
 
@@ -389,7 +436,29 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
 
-            if (pin_type == "numeric") {
+            if (device_mode) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.width(280.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.app_lock_device_subtitle),
+                        color = colors.text_muted,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                    if (error_msg != null) {
+                        Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    }
+                    AsterButton(
+                        label = stringResource(R.string.app_lock_unlock),
+                        onClick = { launch_device(from_user = true) },
+                        enabled = !device_prompt_in_flight,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else if (pin_type == "numeric") {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),

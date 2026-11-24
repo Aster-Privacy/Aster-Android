@@ -25,6 +25,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import org.astermail.android.ui.common.apply_secure_window
+import org.astermail.android.ui.common.note_app_lock_launch
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -203,6 +205,7 @@ class ComposeActivity :
 
     override fun onResume() {
         super.onResume()
+        app_lock_store.end_external_flow()
         enforce_secure_flag()
     }
 
@@ -214,17 +217,31 @@ class ComposeActivity :
     override fun enforce_secure_flag() {
         val app_lock_configured = !app_lock_store.is_store_open() ||
             runCatching { app_lock_store.is_configured() }.getOrDefault(true)
-        if (org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
-            LockdownStore.is_enabled(applicationContext) ||
-            app_lock_configured
-        ) {
-            window.setFlags(
-                android.view.WindowManager.LayoutParams.FLAG_SECURE,
-                android.view.WindowManager.LayoutParams.FLAG_SECURE,
-            )
-        } else {
-            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
-        }
+        apply_secure_window(
+            org.astermail.android.ui.common.SecureScreenGuard.is_active() ||
+                LockdownStore.is_enabled(applicationContext) ||
+                app_lock_configured,
+        )
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun startActivityForResult(intent: Intent, request_code: Int, options: Bundle?) {
+        note_app_lock_launch(app_lock_store, intent)
+        super.startActivityForResult(intent, request_code, options)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun startIntentSenderForResult(
+        intent: android.content.IntentSender,
+        request_code: Int,
+        fill_in_intent: Intent?,
+        flags_mask: Int,
+        flags_values: Int,
+        extra_flags: Int,
+        options: Bundle?,
+    ) {
+        app_lock_store.begin_external_flow()
+        super.startIntentSenderForResult(intent, request_code, fill_in_intent, flags_mask, flags_values, extra_flags, options)
     }
 }
 

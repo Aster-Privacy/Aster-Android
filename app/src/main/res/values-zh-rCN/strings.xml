@@ -2267,7 +2267,7 @@
     <string name="vanguard_description">进阶应用保护，含应用锁与更严格的安全措施。</string>
     <string name="vanguard_upgrade_cta">升级</string>
     <string name="vanguard_confirm_disable_title">要停用 Vanguard 吗？</string>
-    <string name="vanguard_confirm_disable_desc">应用锁和其他 Vanguard 保护都会被关闭。</string>
+    <string name="vanguard_confirm_disable_desc">Vanguard 保护将被关闭。应用锁会保持开启。</string>
     <string name="vanguard_disable">停用</string>
     <string name="app_lock_pin">应用锁</string>
     <string name="app_lock_pin_description">打开应用时需要输入 PIN 码或口令。</string>

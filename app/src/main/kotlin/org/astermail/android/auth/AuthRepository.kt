@@ -176,6 +176,7 @@ class AuthRepository @Inject constructor(
     private val login_pins: LoginProofPinStore,
     private val external_pgp_key_store: dagger.Lazy<org.astermail.android.crypto.ExternalPgpKeyStore>,
     private val guard_device_store: dagger.Lazy<org.astermail.android.guard.GuardDeviceStore>,
+    private val app_lock_store: dagger.Lazy<org.astermail.android.security.AppLockStore>,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -2234,6 +2235,7 @@ class AuthRepository @Inject constructor(
         if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
+        runCatching { app_lock_store.get().forget_after_last_sign_out() }
     }
 
     private fun forget_guard_device(account_id: String) {
@@ -2983,6 +2985,7 @@ class AuthRepository @Inject constructor(
         if (restore_first_candidate(current_id)) return@runCatching
         _active_account_id.value = null
         _is_signed_in.value = false
+        runCatching { app_lock_store.get().forget_after_last_sign_out() }
     }
 
     fun cached_password_hash_b64(): String? {

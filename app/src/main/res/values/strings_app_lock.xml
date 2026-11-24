@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_off_description">Ask for your screen lock or an app PIN each time you open Aster Mail.</string>
+    <string name="app_lock_status_screen_lock">Unlocks with your screen lock</string>
+    <string name="app_lock_status_app_pin">Unlocks with your app PIN or passphrase</string>
+    <string name="app_lock_mode_screen_lock">Screen lock</string>
+    <string name="app_lock_mode_screen_lock_desc">Use the PIN, pattern, password, or biometrics that unlock your phone</string>
+    <string name="app_lock_use_screen_lock">Use screen lock</string>
+    <string name="app_lock_device_subtitle">To open Aster Mail, use your screen lock.</string>
+    <string name="app_lock_device_error">Aster Mail couldn\'t confirm your screen lock. Try again.</string>
+    <string name="app_lock_device_unavailable">Your screen lock isn\'t available. To unlock Aster Mail, set a screen lock in your phone\'s settings.</string>
+    <string name="app_lock_device_key_lost">Your screen lock changed, so Aster Mail can\'t unlock. To continue, sign out and sign in again.</string>
+    <string name="app_lock_biometric_failed_device">Biometric unlock isn\'t available. Use your screen lock.</string>
+    <string name="app_lock_biometric_error_device">Biometric unlock didn\'t work. Try again or use your screen lock.</string>
+    <string name="app_lock_biometric_reset_device">Aster Mail turned off biometric unlock. To turn it back on, use your screen lock.</string>
+    <string name="app_lock_device_setup_title">Set up App Lock</string>
+    <string name="app_lock_device_setup_subtitle">To use your screen lock for Aster Mail, confirm it now.</string>
+    <string name="app_lock_setup_unavailable">App Lock couldn\'t be set up. Try again.</string>
+    <string name="app_lock_confirm_to_disable">To turn off App Lock, confirm your screen lock.</string>
+    <string name="app_lock_confirm_to_enable_biometric">To turn on biometric unlock, confirm your screen lock.</string>
+    <string name="app_lock_confirm_to_change_settings">To change App Lock settings, confirm it\'s you.</string>
+    <string name="app_lock_hide_notification_content">Hide notification content</string>
+    <string name="app_lock_hide_notification_content_desc">Notifications say only that you have new mail. The sender and preview stay hidden.</string>
+    <string name="app_lock_timeout_title">Lock after</string>
+    <string name="app_lock_timeout_immediately">Immediately</string>
+    <string name="app_lock_timeout_one_minute">1 minute</string>
+    <string name="app_lock_timeout_five_minutes">5 minutes</string>
+    <string name="app_lock_timeout_fifteen_minutes">15 minutes</string>
+    <string name="app_lock_timeout_one_hour">1 hour</string>
+</resources>

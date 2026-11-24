@@ -58,6 +58,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -102,6 +103,7 @@ fun AppLockSetupSheet(
     store: AppLockStore,
     on_dismiss: () -> Unit,
     on_success: () -> Unit,
+    on_choose_device: (() -> Unit)? = null,
 ) {
     org.astermail.android.ui.common.secure_screen()
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -109,7 +111,7 @@ fun AppLockSetupSheet(
     val scope = rememberCoroutineScope()
 
     var step by remember { mutableStateOf(SetupStep.choose_mode) }
-    var chosen_mode by remember { mutableStateOf("numeric") }
+    var chosen_mode by remember { mutableStateOf(if (on_choose_device != null) "device" else "numeric") }
     var chosen_digits by remember { mutableIntStateOf(4) }
     var first_pin by remember { mutableStateOf("") }
     var confirm_input by remember { mutableStateOf("") }
@@ -285,6 +287,14 @@ fun AppLockSetupSheet(
 
             when (step) {
                 SetupStep.choose_mode -> {
+                    if (on_choose_device != null) {
+                        mode_option_row(
+                            label = stringResource(R.string.app_lock_mode_screen_lock),
+                            desc = stringResource(R.string.app_lock_mode_screen_lock_desc),
+                            selected = chosen_mode == "device",
+                            on_click = { chosen_mode = "device" },
+                        )
+                    }
                     mode_option_row(
                         label = stringResource(R.string.app_lock_mode_numeric),
                         desc = stringResource(R.string.app_lock_mode_numeric_desc),
@@ -309,7 +319,13 @@ fun AppLockSetupSheet(
                         )
                         AsterButton(
                             label = stringResource(R.string.action_continue),
-                            onClick = { if (chosen_mode == "numeric") step = SetupStep.choose_digits else step = SetupStep.set_text },
+                            onClick = {
+                                when (chosen_mode) {
+                                    "device" -> on_choose_device?.invoke()
+                                    "numeric" -> step = SetupStep.choose_digits
+                                    else -> step = SetupStep.set_text
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -556,7 +572,7 @@ private fun mode_option_row(label: String, desc: String?, selected: Boolean, on_
             .clip(SquircleShape(14.dp))
             .background(bg)
             .border(1.dp, if (selected) colors.accent_blue else colors.border_secondary, SquircleShape(14.dp))
-            .clickable(onClick = on_click)
+            .selectable(selected = selected, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = on_click)
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
     ) {
         Text(text = label, color = title_color, fontSize = 15.sp, fontWeight = FontWeight.Medium)

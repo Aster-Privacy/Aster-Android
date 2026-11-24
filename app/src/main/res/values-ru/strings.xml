@@ -2282,7 +2282,7 @@
     <string name="vanguard_description">Усиленная защита приложения: блокировка входа и повышенная безопасность.</string>
     <string name="vanguard_upgrade_cta">Улучшить тариф</string>
     <string name="vanguard_confirm_disable_title">Отключить Vanguard?</string>
-    <string name="vanguard_confirm_disable_desc">Блокировка приложения и остальные средства защиты Vanguard будут выключены.</string>
+    <string name="vanguard_confirm_disable_desc">Средства защиты Vanguard будут выключены. Блокировка приложения останется включенной.</string>
     <string name="vanguard_disable">Отключить</string>
     <string name="app_lock_pin">Блокировка приложения</string>
     <string name="app_lock_pin_description">Спрашивать PIN-код или пароль при открытии приложения.</string>
