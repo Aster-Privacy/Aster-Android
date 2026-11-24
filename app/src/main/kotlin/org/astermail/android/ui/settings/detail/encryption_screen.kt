@@ -32,7 +32,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.util.Base64
-import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -203,7 +202,7 @@ fun EncryptionScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -317,7 +316,7 @@ fun EncryptionScreen(
                 exporting_public_key = exporting_public_key,
                 on_copy_fingerprint = { grouped ->
                     if (copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_fingerprint), grouped)) {
-                        Toast.makeText(context, context.getString(R.string.fingerprint_copied), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.fingerprint_copied).toString())
                     } else {
                         show_copy_failed_toast(context)
                     }
@@ -327,14 +326,14 @@ fun EncryptionScreen(
                         if (armored != null) {
                             share_public_key(context, armored)
                         } else {
-                            Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.something_went_wrong).toString())
                         }
                     }
                 },
                 on_copy_public_key = {
                     with_public_key { armored ->
                         if (armored != null && copy_to_clipboard(context, context.getString(R.string.clipboard_label_identity_public_key), armored)) {
-                            Toast.makeText(context, context.getString(R.string.public_key_copied), Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.public_key_copied).toString())
                         } else {
                             show_copy_failed_toast(context)
                         }
@@ -504,14 +503,14 @@ fun EncryptionScreen(
                                     export_private_password = ""
                                     if (copy_to_clipboard(context_export, "private_key", armored)) {
                                         org.astermail.android.util.schedule_sensitive_clipboard_clear(context_export)
-                                        Toast.makeText(context_export, context_export.getString(R.string.toast_private_key_copied), Toast.LENGTH_LONG).show()
+                                        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context_export.getString(R.string.toast_private_key_copied).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
                                     } else {
                                         show_copy_failed_toast(context_export)
                                     }
                                 } else if (vm.state.value.pgp_export_held != null) {
                                     show_export_private_dialog = false
                                     export_private_password = ""
-                                    Toast.makeText(context_export, context_export.getString(R.string.guard_held_toast), Toast.LENGTH_LONG).show()
+                                    org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context_export.getString(R.string.guard_held_toast).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
                                 } else {
                                     export_private_error = context_export.getString(R.string.error_private_key_export)
                                 }
@@ -602,16 +601,14 @@ private fun identity_key_card(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(SquircleShape(AsterRadius.md))
-                    .background(colors.accent_blue.copy(alpha = if (colors.is_dark) 0.18f else 0.10f)),
+                    .size(40.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = TablerIcons.Key,
                     contentDescription = null,
                     tint = colors.accent_blue,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
             Spacer(Modifier.width(AsterSpacing.md))
@@ -1150,7 +1147,7 @@ internal fun share_public_key(context: Context, armored: String) {
         started
     }.getOrDefault(false)
     if (!shared) {
-        Toast.makeText(context, context.getString(R.string.something_went_wrong), Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.something_went_wrong).toString())
     }
 }
 
@@ -1178,7 +1175,7 @@ internal fun save_recovery_codes(context: Context, codes: List<String>) {
         started
     }.getOrDefault(false)
     if (!saved) {
-        Toast.makeText(context, context.getString(R.string.fix_enc_codes_save_failed), Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.fix_enc_codes_save_failed).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
     }
 }
 

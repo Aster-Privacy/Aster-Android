@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import android.content.ClipData
 import org.astermail.android.design.readable_on
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -30,7 +30,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -216,7 +215,7 @@ internal fun crypto_invoice_screen(
         AsterTopBar(title = stringResource(R.string.crypto_native_invoice_screen_title), on_back = on_back)
         settings_row_gap()
         Column(
-            modifier = Modifier.fillMaxSize().vertical_scroll_with_indicator().padding(AsterSpacing.lg),
+            modifier = Modifier.fillMaxSize().vertical_scroll_with_fade().padding(AsterSpacing.lg),
         ) {
             when {
                 invoice == null && state.is_loading -> crypto_loading_view()
@@ -737,7 +736,7 @@ private fun crypto_detail_row(label: String, value: String, monospace: Boolean =
                     .clip(RoundedCornerShape(8.dp))
                     .clickable {
                         if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
-                            Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(copied_message.toString())
                         } else {
                             show_copy_failed_toast(context)
                         }
@@ -789,7 +788,7 @@ private fun crypto_wallet_button(target_uri: String) {
             try {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target_uri)))
             } catch (_: Throwable) {
-                Toast.makeText(context, missing_app_message, Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(missing_app_message.toString())
             }
         },
         modifier = Modifier.fillMaxWidth(),

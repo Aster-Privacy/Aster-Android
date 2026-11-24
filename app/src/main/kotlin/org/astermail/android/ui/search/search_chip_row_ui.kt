@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -58,7 +59,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.ScrollState
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import org.astermail.android.design.AsterSpacing
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -90,6 +101,51 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 private val chip_height = 34.dp
+
+private val chip_label_max_width = 200.dp
+
+private val chip_row_fade_width = 24.dp
+
+internal fun chip_row_fade_strength(distance_px: Float, fade_px: Float): Float =
+    if (fade_px <= 0f) 0f else (distance_px / fade_px).coerceIn(0f, 1f)
+
+private fun Modifier.chip_row_edge_fade(state: ScrollState, fade: Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val fade_px = fade.toPx().coerceAtMost(size.width / 2f)
+        if (fade_px <= 0f) return@drawWithContent
+        val before = chip_row_fade_strength(state.value.toFloat(), fade_px)
+        val after = chip_row_fade_strength((state.maxValue - state.value).toFloat(), fade_px)
+        val rtl = layoutDirection == LayoutDirection.Rtl
+        val left = if (rtl) after else before
+        val right = if (rtl) before else after
+        if (left > 0f) {
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    0f to Color.Black.copy(alpha = 1f - left),
+                    1f to Color.Black,
+                    startX = 0f,
+                    endX = fade_px,
+                ),
+                size = size.copy(width = fade_px),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+        if (right > 0f) {
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    0f to Color.Black,
+                    1f to Color.Black.copy(alpha = 1f - right),
+                    startX = size.width - fade_px,
+                    endX = size.width,
+                ),
+                topLeft = androidx.compose.ui.geometry.Offset(size.width - fade_px, 0f),
+                size = size.copy(width = fade_px),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+    }
 
 internal val DATE_PRESET_LABELS: List<Pair<DatePreset, Int>> = listOf(
     DatePreset.ANY to R.string.chip_any_time,
@@ -198,7 +254,7 @@ internal fun quick_chip(
 
     Row(
         modifier = Modifier
-            .height(chip_height)
+            .heightIn(min = chip_height)
             .clip(shape)
             .then(
                 if (active) {
@@ -207,18 +263,26 @@ internal fun quick_chip(
                     Modifier.acrylic(colors, shape, field_surface_color(colors))
                 },
             )
-            .clickable(onClick = on_click)
-            .padding(start = 14.dp, end = if (show_caret) 10.dp else 14.dp),
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(
+                start = AsterSpacing.md + AsterSpacing.xs / 2,
+                end = if (show_caret) AsterSpacing.sm else AsterSpacing.md + AsterSpacing.xs / 2,
+                top = AsterSpacing.xs,
+                bottom = AsterSpacing.xs,
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
         Text(
             text = label,
             fontSize = 13.sp,
+            lineHeight = 18.sp,
             fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
             color = text_color,
             maxLines = 1,
+            softWrap = false,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = chip_label_max_width),
         )
         if (show_caret) {
             Icon(
@@ -237,13 +301,18 @@ private fun outline_chip(label: String, icon: ImageVector?, on_click: () -> Unit
 
     Row(
         modifier = Modifier
-            .height(chip_height)
+            .heightIn(min = chip_height)
             .clip(CircleShape)
             .acrylic(colors, CircleShape, field_surface_color(colors))
-            .clickable(onClick = on_click)
-            .padding(start = if (icon != null) 12.dp else 14.dp, end = 14.dp),
+            .clickable(role = Role.Button, onClick = on_click)
+            .padding(
+                start = if (icon != null) AsterSpacing.md else AsterSpacing.md + AsterSpacing.xs / 2,
+                end = AsterSpacing.md + AsterSpacing.xs / 2,
+                top = AsterSpacing.xs,
+                bottom = AsterSpacing.xs,
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs + AsterSpacing.xs / 2),
     ) {
         if (icon != null) {
             Icon(
@@ -256,10 +325,13 @@ private fun outline_chip(label: String, icon: ImageVector?, on_click: () -> Unit
         Text(
             text = label,
             fontSize = 13.sp,
+            lineHeight = 18.sp,
             fontWeight = FontWeight.Medium,
             color = colors.accent_blue,
             maxLines = 1,
+            softWrap = false,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = chip_label_max_width),
         )
     }
 }
@@ -297,25 +369,30 @@ internal fun operator_chip(op: SearchOperator, on_remove: () -> Unit) {
     }
     Row(
         modifier = Modifier
-            .height(chip_height)
+            .heightIn(min = chip_height)
             .clip(CircleShape)
             .background(colors.accent_blue.copy(alpha = 0.14f))
             .border(1.dp, colors.accent_blue.copy(alpha = 0.35f), CircleShape)
-            .padding(start = 12.dp, end = 4.dp),
+            .padding(start = AsterSpacing.md, end = AsterSpacing.xs / 2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = chip_label,
             color = colors.accent_blue,
             fontSize = 13.sp,
+            lineHeight = 18.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
+            softWrap = false,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .widthIn(max = chip_label_max_width)
+                .padding(vertical = AsterSpacing.xs),
         )
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(AsterSpacing.xs / 2))
         Box(
             modifier = Modifier
-                .size(22.dp)
+                .size(30.dp)
                 .clip(CircleShape)
                 .clickable(role = Role.Button, onClick = on_remove),
             contentAlignment = Alignment.Center,
@@ -584,13 +661,15 @@ internal fun search_chip_row(
         on_operators_change(apply_custom_range(operators, first_day, last_day))
     }
 
+    val chip_scroll = rememberScrollState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .chip_row_edge_fade(chip_scroll, chip_row_fade_width)
+            .horizontalScroll(chip_scroll)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         folder_operators.forEach { op ->
             operator_chip(op) {

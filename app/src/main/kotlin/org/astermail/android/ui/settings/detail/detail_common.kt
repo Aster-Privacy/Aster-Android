@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import androidx.compose.ui.text.style.TextOverflow
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -39,6 +39,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
@@ -287,7 +288,7 @@ internal fun detail_scaffold(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .vertical_scroll_with_indicator(effective_scroll)
+                            .vertical_scroll_with_fade(effective_scroll)
                             .settings_search_content(anchor_host)
                             .padding(AsterSpacing.lg),
                         content = content,
@@ -336,7 +337,7 @@ internal fun embeddable_detail_scaffold(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .vertical_scroll_with_indicator(scroll_state)
+                        .vertical_scroll_with_fade(scroll_state)
                         .settings_search_content(anchor_host)
                         .padding(AsterSpacing.lg),
                     content = content,
@@ -345,6 +346,29 @@ internal fun embeddable_detail_scaffold(
         } else {
             Column(modifier = Modifier.fillMaxSize(), content = content)
         }
+    }
+}
+
+@Composable
+internal fun pinned_segmented_header(
+    value: String,
+    options: List<switcher_option>,
+    on_change: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = AsterSpacing.lg)
+            .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs),
+    ) {
+        aster_segmented(
+            value = value,
+            options = options,
+            on_change = on_change,
+            modifier = modifier,
+        )
     }
 }
 

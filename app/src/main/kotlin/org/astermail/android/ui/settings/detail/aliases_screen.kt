@@ -22,6 +22,8 @@
 package org.astermail.android.ui.settings.detail
 
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.scroll_top_fade
+import org.astermail.android.ui.common.lazy_top_fade
 import kotlinx.coroutines.CancellationException
 import org.astermail.android.design.acrylic
 import org.astermail.android.ui.mail.format_long_date
@@ -206,7 +208,7 @@ fun AliasesScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -486,6 +488,7 @@ private fun tab_scroll(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .scroll_top_fade(scroll_state)
             .verticalScroll(scroll_state)
             .padding(horizontal = AsterSpacing.lg)
             .padding(bottom = AsterSpacing.lg),
@@ -806,8 +809,10 @@ private fun aliases_tab(
             }
         }
         settings_row_gap(modifier = Modifier.fillMaxWidth())
+        val aliases_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            state = aliases_list_state,
+            modifier = Modifier.fillMaxWidth().weight(1f).lazy_top_fade(aliases_list_state),
             contentPadding = PaddingValues(
                 start = AsterSpacing.lg,
                 end = AsterSpacing.lg,
@@ -1222,17 +1227,14 @@ internal fun alias_list_row(
         ) {
             if (alias.decryption_failed) {
                 Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(colors.bg_tertiary),
+                    modifier = Modifier.size(40.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = TablerIcons.Lock,
                         contentDescription = null,
                         tint = colors.danger,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(22.dp),
                     )
                 }
             } else {
@@ -1247,7 +1249,7 @@ internal fun alias_list_row(
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     alias_address_text(
@@ -1263,7 +1265,9 @@ internal fun alias_list_row(
                             imageVector = pin_icon_filled,
                             contentDescription = stringResource(R.string.pinned),
                             tint = colors.accent_blue,
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier
+                                .padding(top = 3.dp)
+                                .size(14.dp),
                         )
                     }
                 }
@@ -1823,8 +1827,10 @@ internal fun deleted_aliases_screen(
                     detail_row(title = stringResource(R.string.recently_deleted_aliases_empty))
                 }
             } else {
+                val deleted_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    state = deleted_list_state,
+                    modifier = Modifier.fillMaxWidth().weight(1f).lazy_top_fade(deleted_list_state),
                     contentPadding = PaddingValues(bottom = AsterSpacing.lg),
                 ) {
                     itemsIndexed(
@@ -1839,13 +1845,10 @@ internal fun deleted_aliases_screen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = alias.address,
-                                        color = colors.text_primary,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
+                                    alias_address_text(
+                                        address = alias.address,
+                                        font_size = 14.sp,
+                                        font_weight = FontWeight.Medium,
                                     )
                                     Text(
                                         text = stringResource(
@@ -2406,13 +2409,12 @@ internal fun ghost_tab(
     var ghost_notice by remember { mutableStateOf<Pair<Int, String>?>(null) }
     var list_top_px by remember { mutableStateOf(0) }
     var scroll_to_new_ghost by remember { mutableStateOf(false) }
-    var expanded_ghost_id by remember { mutableStateOf<String?>(null) }
 
     val report_action = { error: String?, title: Int, success_message: Int ->
         if (error != null) {
             ghost_notice = title to error
         } else {
-            android.widget.Toast.makeText(context, context.getString(success_message), android.widget.Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(success_message).toString())
         }
     }
 
@@ -2470,14 +2472,14 @@ internal fun ghost_tab(
             state.ghost_aliases.forEachIndexed { idx, g ->
                 val ghost_address = g.address.ifBlank { stringResource(R.string.ghost_unnamed, g.id.take(8)) }
                 val expiry_label = ghost_expiry_label(g.expires_at, g.enabled)
-                val name_expanded = expanded_ghost_id == g.id
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
                             hapticFeedbackEnabled = false,
                             onClick = {
-                                expanded_ghost_id = if (name_expanded) null else g.id
+                                val copied = write_to_clipboard(context, ClipData.newPlainText("ghost", ghost_address))
+                                show_copy_result_toast(context, ghost_address, copied)
                             },
                             onLongClick = {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2490,14 +2492,12 @@ internal fun ghost_tab(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            text = ghost_address,
+                        alias_address_text(
+                            address = ghost_address,
                             color = if (g.enabled) colors.text_primary else colors.text_muted,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = if (name_expanded) 4 else 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.testTag("ghost_address_${g.id}"),
+                            font_size = 14.sp,
+                            font_weight = FontWeight.Medium,
+                            test_tag = "ghost_address_${g.id}",
                         )
                         if (expiry_label != null) {
                             Spacer(Modifier.height(4.dp))
@@ -2662,15 +2662,11 @@ internal fun ghost_tab(
                             when (result) {
                                 is SettingsViewModel.GhostAliasResult.Success -> {
                                     scroll_to_new_ghost = true
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        context.getString(R.string.ghost_alias_created, result.address),
-                                        android.widget.Toast.LENGTH_LONG,
-                                    ).show()
+                                    org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = (context.getString(R.string.ghost_alias_created, result.address)).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
                                     if (result.address.isNotBlank()) on_compose_from(result.address)
                                 }
                                 is SettingsViewModel.GhostAliasResult.Failure ->
-                                    android.widget.Toast.makeText(context, result.message, android.widget.Toast.LENGTH_SHORT).show()
+                                    org.astermail.android.ui.common.app_toast.show(result.message.toString())
                             }
                         }
                     },
@@ -3096,7 +3092,6 @@ private fun domain_card(
     var confirm_rotate_dkim by remember(domain.id) { mutableStateOf(false) }
     var is_rotating_dkim by remember(domain.id) { mutableStateOf(false) }
     var rotated_dkim_record by remember(domain.id) { mutableStateOf<DnsRecord?>(null) }
-    var name_expanded by remember(domain.id) { mutableStateOf(false) }
     val shared_label = domain.shared_from?.let { stringResource(R.string.domain_shared_by, it) }
         ?: stringResource(R.string.domain_shared_label)
 
@@ -3137,12 +3132,14 @@ private fun domain_card(
 
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.Top) {
                 Icon(
                     imageVector = TablerIcons.Building,
                     contentDescription = null,
                     tint = colors.text_tertiary,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier
+                        .padding(top = 1.dp)
+                        .size(20.dp),
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Column(modifier = Modifier.weight(1f)) {
@@ -3150,28 +3147,29 @@ private fun domain_card(
                         text = domain.domain_name,
                         color = colors.text_primary,
                         fontSize = 15.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = if (name_expanded) Int.MAX_VALUE else 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.combinedClickable(
                             hapticFeedbackEnabled = false,
-                            onClick = { name_expanded = !name_expanded },
+                            onClick = on_expand,
                             onLongClick = {
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 copy_dns_value(context, "domain", domain.domain_name)
                             },
                         ),
                     )
-                    v_gap(3.dp)
-                    domain_status_badge(
-                        text = status_label,
-                        tint = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
-                    )
-                    if (domain.is_shared) {
-                        v_gap(3.dp)
-                        domain_status_badge(text = shared_label, tint = colors.accent_blue)
+                    v_gap(AsterSpacing.sm)
+                    Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
+                        domain_status_badge(
+                            text = status_label,
+                            tint = if (is_active) colors.success else if (is_blocked) colors.danger else colors.warning,
+                        )
+                        if (domain.is_shared) {
+                            domain_status_badge(text = shared_label, tint = colors.accent_blue)
+                        }
                     }
                     if (grace_ends != null) {
+                        v_gap(AsterSpacing.xs)
                         Text(
                             text = stringResource(R.string.domain_grace_ends, grace_ends),
                             color = colors.warning,
@@ -3439,11 +3437,7 @@ private fun dkim_record_notes(
 
 internal fun copy_dns_value(context: Context, label: String, value: String) {
     if (write_to_clipboard(context, ClipData.newPlainText(label, value))) {
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.copied_to_clipboard),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
     } else {
         show_copy_failed_toast(context)
     }

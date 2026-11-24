@@ -3064,6 +3064,9 @@
     <string name="translation_storage_remove_all">Удалить все</string>
     <string name="translation_storage_removed">Языковые пакеты удалены</string>
     <string name="translation_offer_download">Это сообщение на языке %1$s. При переводе будет загружен языковой пакет.</string>
+    <string name="translation_bar_translate_to">Перевести: %1$s</string>
+    <string name="translation_bar_translated_from">Переведено с языка: %1$s</string>
+    <string name="translation_bar_downloading">Загрузка языкового пакета: %1$s</string>
     <string name="contact_support">Связаться с поддержкой</string>
     <string name="domain_purchase_manage">Управление</string>
     <string name="domain_purchase_cancel_payment_title">Отменить этот платёж?</string>
@@ -3192,6 +3195,10 @@
     <string name="remove_photo">Удалить фото</string>
     <string name="add_photo">Добавить фото</string>
     <string name="photo_too_large">Выберите изображение меньшего размера</string>
+    <string name="contact_photo_unreadable">Aster не может открыть это изображение. Выберите другое фото.</string>
+    <string name="contact_discard_changes_title">Отменить изменения?</string>
+    <string name="contact_discard_changes_message">Изменения в этом контакте не сохранены.</string>
+    <string name="contact_keep_editing">Продолжить редактирование</string>
     <string name="no_contacts_yet">Контактов пока нет</string>
     <string name="no_contacts_match">Нет контактов по запросу «%1$s»</string>
     <string name="no_contacts_in_trash">Корзина пуста</string>
@@ -3757,6 +3764,13 @@
         <item quantity="other">Добавлено %d контакта</item>
     </plurals>
     <string name="body_index_status">Индексация текста писем для поиска: %1$d из %2$d</string>
+    <string name="search_status_indexing_mail">Индексация почты</string>
+    <string name="search_status_indexing_text">Индексация текста писем</string>
+    <string name="search_status_waiting_wifi">Индексация текста продолжится через Wi-Fi</string>
+    <string name="search_status_paused">Индексация приостановлена</string>
+    <string name="search_status_partial">Результаты могут быть неполными</string>
+    <string name="search_status_count">%1$s из %2$s</string>
+    <string name="search_refine_placeholder">Искать в результатах</string>
     <string name="mail_key_upgrade_title">Обновление сохранённой почты</string>
     <string name="mail_key_upgrade_running">Aster Mail повторно шифрует ваши сохранённые сообщения текущими ключами. Не закрывайте это окно до завершения.</string>
     <string name="mail_key_upgrade_failed">Aster Mail не удалось завершить обновление сохранённых сообщений. Ваша почта не изменилась. Проверьте подключение и повторите попытку.</string>
@@ -3787,4 +3801,8 @@
     <string name="attachment_unverified">Непроверенное вложение</string>
     <string name="confirm_back_exit">Подтверждать выход</string>
     <string name="confirm_back_exit_subtitle">Нажмите «Назад» дважды, чтобы выйти из приложения из папки «Входящие»</string>
+    <string name="toast_position_title">Положение уведомлений в приложении</string>
+    <string name="toast_position_subtitle">Где появляются уведомления во время работы с приложением</string>
+    <string name="toast_position_top">Сверху</string>
+    <string name="toast_position_bottom">Снизу</string>
 </resources>

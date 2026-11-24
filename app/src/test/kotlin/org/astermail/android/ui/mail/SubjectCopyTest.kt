@@ -19,34 +19,56 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+
 package org.astermail.android.ui.mail
 
-import org.junit.Assert.assertEquals
+import java.io.File
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SubjectCopyTest {
 
-    @Test
-    fun copied_subject_drops_inline_chip_placeholders() {
-        val copied = "Quarterly report" + detail_chip_placeholder_gap + detail_chip_placeholder_text +
-            detail_chip_placeholder_gap + detail_chip_placeholder_text
-        assertEquals("Quarterly report", strip_subject_chip_placeholders(copied))
+    private val chips = File("src/main/kotlin/org/astermail/android/ui/mail/detail_context_chips.kt").readText()
+    private val detail = File("src/main/kotlin/org/astermail/android/ui/mail/mail_detail_screen.kt").readText()
+
+    private fun press_block(): String {
+        val start = chips.indexOf("fun Modifier.subject_press_actions(")
+        val end = chips.indexOf("internal const val subject_pressed_alpha", start)
+        return chips.substring(start, end)
     }
 
     @Test
-    fun partial_selection_ending_inside_subject_is_untouched() {
-        assertEquals("Quarterly rep", strip_subject_chip_placeholders("Quarterly rep"))
+    fun long_press_copies_the_subject_as_plain_text() {
+        val block = press_block()
+        assertTrue(block.contains("write_to_clipboard(context, ClipData.newPlainText(\"subject\", value))"))
+        assertTrue(block.contains("HapticFeedbackType.LongPress"))
+        assertTrue(block.contains("onLongClickLabel = if (copy_value != null) copy_label else null"))
     }
 
     @Test
-    fun inner_no_break_spaces_survive() {
-        val subject = "Re:" + detail_chip_placeholder_gap + "hello"
-        assertEquals(subject, strip_subject_chip_placeholders(subject))
+    fun the_toast_only_shows_where_the_system_has_no_clipboard_preview() {
+        val block = press_block()
+        assertTrue(block.contains("!copied -> app_toast.show(failed_message)"))
+        assertTrue(block.contains("!system_confirms_copy() -> app_toast.show(copied_message)"))
+        assertTrue(block.contains("R.string.subject_copied"))
     }
 
     @Test
-    fun placeholder_constants_match_the_layout_glyphs() {
-        assertEquals("\u00A0", detail_chip_placeholder_gap)
-        assertEquals("\u200B", detail_chip_placeholder_text)
+    fun the_pressed_state_stays_inside_the_subject_bounds() {
+        val block = press_block()
+        assertTrue(block.contains("indication = null"))
+        assertTrue(block.contains("drawRoundRect("))
+        assertFalse(block.contains("topLeft"))
+    }
+
+    @Test
+    fun the_detail_header_copies_the_full_subject_without_the_count() {
+        assertTrue(detail.contains("copy_value = subject_copy_value"))
+        assertTrue(
+            detail.contains(
+                "val subject_copy_value = translated_thread_subject?.ifBlank { null } ?: email?.subject?.ifBlank { null }",
+            ),
+        )
     }
 }

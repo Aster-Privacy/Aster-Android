@@ -31,7 +31,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.ext.SdkExtensions
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -194,7 +193,7 @@ private fun launch_image_picker(
         }
         if (launched) return
     }
-    Toast.makeText(context, context.getString(R.string.image_picker_unavailable), Toast.LENGTH_LONG).show()
+    app_toast.show(TopToastState(message = context.getString(R.string.image_picker_unavailable), duration_ms = toast_action_duration_ms))
 }
 
 private fun image_pick_intent(

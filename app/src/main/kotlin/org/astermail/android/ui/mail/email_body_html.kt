@@ -274,6 +274,7 @@ ${image_paper_css()}
 """
         white_page -> """
 html,body{background-color:#ffffff!important}
+a{color:$PAPER_LINK}
 """
         else -> ""
     }
@@ -313,8 +314,30 @@ html,body{background-color:#ffffff!important}
         else -> render_body
     }
 
+    val page_ink = when {
+        simple_dark -> FORCED_DARK_INK
+        white_page -> "#111827"
+        has_newsletter_layout && is_html_body -> "#000000"
+        else -> fg_hex
+    }
+    val page_surface = if (is_dark && !white_page) DARK_PAGE_SURFACE else "#ffffff"
+    val painted_seed = seeded_background?.takeIf { seed ->
+        !force_dark_emails && keeps_readable_contrast(seed, page_ink)
+    }
+    val contrast_ready_body = if (is_html_body) {
+        enforce_text_contrast(
+            body = dark_ready_body,
+            page_background = painted_seed ?: page_surface,
+            page_ink = page_ink,
+            link_color = if (white_page) PAPER_LINK else link_hex,
+            forced_dark = force_dark_emails,
+        )
+    } else {
+        dark_ready_body
+    }
+
     val prepared_body = prepare_email_body(
-        body = dark_ready_body,
+        body = contrast_ready_body,
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         is_newsletter = has_newsletter_layout,
@@ -363,10 +386,9 @@ details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
 .aster-quote-toggle::before{content:'';display:block;flex:none;width:${scaled_px(4f)};height:${scaled_px(4f)};border-radius:50%;background:currentColor;box-shadow:${scaled_px(-6.4f)} 0 0 currentColor,${scaled_px(6.4f)} 0 0 currentColor}
 .aster-quote-toggle::marker{content:''}
 .aster-quote-toggle,#m .aster-quote-toggle,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"}!important;color:${if (chip_dark) "rgba(255,255,255,0.75)" else "rgba(0,0,0,0.65)"}!important}
-.aster-quote-toggle:active,#m .aster-quote-toggle:active,a.aster-quote-hide:active,#m a.aster-quote-hide:active{background:${if (chip_dark) "rgba(255,255,255,0.18)" else "rgba(0,0,0,0.12)"}!important}
+.aster-quote-toggle:active,#m .aster-quote-toggle:active{background:${if (chip_dark) "rgba(255,255,255,0.18)" else "rgba(0,0,0,0.12)"}!important}
 .aster-quoted-content{margin-top:14px;padding-top:14px;border-top:1px solid $detail_border;color:$bq_color;font-family:inherit;font-size:1em;line-height:1.45}
 .aster-quoted-content.aster-quoted-solo{margin-top:0;padding-top:0;border-top:none}
-a.aster-quote-hide,#m a.aster-quote-hide{display:flex;width:max-content;align-items:center;min-height:${scaled_px(28f)};padding:0 ${scaled_px(14f)};margin:16px 0 4px 0;border-radius:${scaled_px(14f)};background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"}!important;color:${if (chip_dark) "rgba(255,255,255,0.75)" else "rgba(0,0,0,0.65)"}!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;user-select:none;-webkit-tap-highlight-color:transparent}
 a.aster-quote-close,a.aster-quote-cover{display:none}
 details[open].aster-quoted-wrapper>.aster-quote-toggle::before{display:none}
 details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close,#m details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close{display:flex;align-items:center;align-self:stretch;margin:0 -${scaled_px(16f)};padding:0 ${scaled_px(16f)};color:inherit!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;-webkit-tap-highlight-color:transparent}
@@ -386,7 +408,8 @@ $underline_css
 $dyslexia_css
 $dark_css
 $forced_dark_css
+${if (is_html_body) text_contrast_css() else ""}
 </style>
-</head><body style="$body_style"><div id="m"${if (seeded_background != null) " style=\"background-color:$seeded_background\"" else ""}>$prepared_body</div>
+</head><body style="$body_style"><div id="m"${if (painted_seed != null) " style=\"background-color:$painted_seed\"" else ""}>$prepared_body</div>
 </body></html>"""
 }

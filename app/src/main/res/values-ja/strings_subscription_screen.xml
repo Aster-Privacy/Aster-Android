@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster でプランを読み込めませんでした。接続を確認してから、もう一度お試しください。</string>
+    <string name="billing_source_play">Google Play で請求</string>
+    <string name="billing_source_card">カードで請求</string>
+    <string name="billing_source_crypto">暗号資産で支払い済み</string>
+    <string name="billing_status_trial">トライアル</string>
+    <string name="billing_top_plan_title">最上位のプランをご利用中です</string>
+    <string name="billing_section_load_failed">Aster でこのセクションを読み込めませんでした。</string>
+</resources>

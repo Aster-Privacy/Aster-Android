@@ -24,12 +24,13 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.CircleX
 import compose.icons.tablericons.Clock
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Refresh
 import compose.icons.tablericons.Search
-import compose.icons.tablericons.X
 
 import android.content.Intent
 import android.net.Uri
@@ -103,7 +104,6 @@ import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.readable_on
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
@@ -119,11 +119,7 @@ internal fun open_url(context: android.content.Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: Throwable) {
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.could_not_open_link),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link).toString())
     }
 }
 
@@ -189,23 +185,16 @@ internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp, unchecked:
         unchecked -> colors.warning
         else -> colors.danger
     }
-    Box(
-        modifier = Modifier
-            .size(size)
-            .background(disc, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = when {
-                available -> TablerIcons.Check
-                unchecked -> TablerIcons.Clock
-                else -> TablerIcons.X
-            },
-            contentDescription = null,
-            tint = readable_on(disc),
-            modifier = Modifier.size(size * 0.62f),
-        )
-    }
+    Icon(
+        imageVector = when {
+            available -> TablerIcons.CircleCheck
+            unchecked -> TablerIcons.Clock
+            else -> TablerIcons.CircleX
+        },
+        contentDescription = null,
+        tint = disc,
+        modifier = Modifier.size(size),
+    )
 }
 
 @Composable

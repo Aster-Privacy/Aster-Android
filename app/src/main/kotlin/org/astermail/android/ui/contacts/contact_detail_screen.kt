@@ -28,7 +28,6 @@ import compose.icons.tablericons.*
 
 import android.content.ClipData
 import android.content.Intent
-import android.widget.Toast
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -52,10 +51,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -80,6 +82,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -111,6 +114,7 @@ import androidx.compose.material.icons.filled.Star
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.ui.common.show_copy_failed_toast
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ContactDetailScreen(
     contact_id: String,
@@ -135,7 +139,7 @@ fun ContactDetailScreen(
                 clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value)))
             }.isSuccess
             if (copied) {
-                Toast.makeText(context, copied_value_message, Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(copied_value_message.toString())
             } else {
                 show_copy_failed_toast(context)
             }
@@ -157,8 +161,14 @@ fun ContactDetailScreen(
     var show_delete_confirm by remember { mutableStateOf(false) }
     var favorite_pending by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.load_contacts() }
-    val contact = ui_state.selected_contact ?: ui_state.contacts.firstOrNull { it.id == contact_id }
+    LaunchedEffect(Unit) {
+        if (!vm.state.value.contacts_loaded) vm.load_contacts(quiet = vm.state.value.contacts.isNotEmpty())
+    }
+    val contact = ui_state.selected_contact?.takeIf { it.id == contact_id }
+        ?: ui_state.contacts.firstOrNull { it.id == contact_id }
+    val nav_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars
+        .asPaddingValues()
+        .calculateBottomPadding()
     var is_favorite by remember(contact) { mutableStateOf(contact?.is_favorite == true) }
 
     LaunchedEffect(ui_state.error) {
@@ -169,7 +179,7 @@ fun ContactDetailScreen(
             is_favorite = contact?.is_favorite == true
         }
         delete_requested = false
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         vm.clear_flags()
     }
 
@@ -184,7 +194,11 @@ fun ContactDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding(),
+            .statusBarsPadding()
+            .windowInsetsPadding(
+                androidx.compose.foundation.layout.WindowInsets.navigationBars
+                    .only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal),
+            ),
     ) {
         Row(
             modifier = Modifier
@@ -232,7 +246,7 @@ fun ContactDetailScreen(
                             show_share_menu = false
                             val target = contact ?: return@aster_menu_item
                             if (!share_contact_as_text(context, target)) {
-                                Toast.makeText(context, share_failed_message, Toast.LENGTH_SHORT).show()
+                                org.astermail.android.ui.common.app_toast.show(share_failed_message.toString())
                             }
                         },
                     )
@@ -244,7 +258,7 @@ fun ContactDetailScreen(
                             val target = contact ?: return@aster_menu_item
                             share_scope.launch {
                                 if (!share_contact_as_vcard(context, target)) {
-                                    Toast.makeText(context, share_failed_message, Toast.LENGTH_SHORT).show()
+                                    org.astermail.android.ui.common.app_toast.show(share_failed_message.toString())
                                 }
                             }
                         },
@@ -260,8 +274,8 @@ fun ContactDetailScreen(
         AsterDivider()
 
         if (contact == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (ui_state.is_loading) {
+            Box(Modifier.fillMaxSize().padding(bottom = nav_bottom), contentAlignment = Alignment.Center) {
+                if (ui_state.contact_loading || ui_state.is_loading) {
                     org.astermail.android.design.components.aster_spinner(
                         color = colors.accent_blue,
                         modifier = Modifier.size(28.dp),
@@ -281,47 +295,70 @@ fun ContactDetailScreen(
             modifier = Modifier
                 .weight(1f)
                 .vertical_scroll_with_indicator()
-                .padding(bottom = AsterSpacing.xxl),
+                .padding(bottom = AsterSpacing.xxl + nav_bottom),
         ) {
-            Column(
+            val header_shape = SquircleShape(AsterRadius.xl)
+            val header_email = contact.email_entries().firstOrNull()?.value.orEmpty().ifBlank { contact.email }
+            val header_title = contact.name.ifBlank { header_email }
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = AsterSpacing.xl, bottom = AsterSpacing.xxl),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(horizontal = AsterSpacing.lg)
+                    .padding(top = AsterSpacing.md, bottom = AsterSpacing.lg)
+                    .clip(header_shape)
+                    .acrylic(colors, header_shape, colors.bg_secondary)
+                    .padding(AsterSpacing.lg),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 ContactAvatar(
                     avatar_url = contact.avatar_url,
-                    email = contact.email,
+                    email = header_email,
                     name = contact.name,
-                    size = 96.dp,
+                    size = contact_header_avatar_size,
                     content_description = stringResource(R.string.contact_photo),
                     profile_color = contact.profile_color,
                 )
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Text(
-                    text = contact.name.ifBlank { contact.email },
-                    color = colors.text_primary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 24.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = AsterSpacing.xxl),
-                )
-                if (contact.company.isNotBlank() || contact.title.isNotBlank()) {
-                    val sub = listOf(contact.title, contact.company)
-                        .filter { it.isNotBlank() }
-                        .joinToString(" - ")
-                    Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.width(AsterSpacing.lg))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = sub,
-                        color = colors.text_secondary,
-                        fontSize = 15.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = AsterSpacing.xxl),
+                        text = header_title,
+                        color = colors.text_primary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                }
-                if (contact.id in ui_state.pending_ids) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    contact_pending_sync_label()
+                    if (header_email.isNotBlank() && header_email != header_title) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = header_email,
+                            color = colors.text_secondary,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.combinedClickable(
+                                onClick = {},
+                                onLongClick = { copy_value(header_email) },
+                            ),
+                        )
+                    }
+                    if (contact.company.isNotBlank() || contact.title.isNotBlank()) {
+                        val sub = listOf(contact.title, contact.company)
+                            .filter { it.isNotBlank() }
+                            .joinToString(" - ")
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = sub,
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (contact.id in ui_state.pending_ids) {
+                        Spacer(Modifier.height(AsterSpacing.xs))
+                        contact_pending_sync_label()
+                    }
                 }
             }
 
@@ -336,11 +373,7 @@ fun ContactDetailScreen(
                 try {
                     context.startActivity(intent)
                 } catch (_: Throwable) {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.could_not_open_link),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link).toString())
                 }
             }
             val can_mail = on_compose != null && primary_email.isNotBlank()
@@ -350,7 +383,7 @@ fun ContactDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xxl),
+                    .padding(horizontal = AsterSpacing.lg),
                 horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
             ) {
                 if (can_mail) {
@@ -394,7 +427,7 @@ fun ContactDetailScreen(
                                 )
                             }.isSuccess
                             if (copied) {
-                                Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                                org.astermail.android.ui.common.app_toast.show(copied_message.toString())
                             } else {
                                 show_copy_failed_toast(context)
                             }
@@ -488,11 +521,7 @@ fun ContactDetailScreen(
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Throwable) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.could_not_open_link),
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link).toString())
                     }
                 }
                 detail_section(stringResource(R.string.social)) {
@@ -610,49 +639,56 @@ private fun QuickAction(
         ),
         label = "quick_action_scale",
     )
+    val resting = org.astermail.android.design.control_surface_color(colors)
     val container by animateColorAsState(
-        targetValue = if (pressed) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_secondary,
+        targetValue = if (pressed) {
+            colors.text_primary.copy(alpha = 0.08f).compositeOver(resting)
+        } else {
+            resting
+        },
         animationSpec = tween(durationMillis = AsterDuration.tap_up, easing = AsterEasing.standard),
         label = "quick_action_container",
     )
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(container)
-                .clickable(
-                    interactionSource = interaction_source,
-                    indication = ripple(color = colors.accent_blue, bounded = false),
-                    onClick = on_click,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.accent_blue,
-                modifier = Modifier.size(22.dp),
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .height(quick_action_height)
+            .clip(org.astermail.android.design.AsterShapes.control)
+            .background(container)
+            .clickable(
+                interactionSource = interaction_source,
+                indication = ripple(color = colors.text_secondary),
+                role = androidx.compose.ui.semantics.Role.Button,
+                onClick = on_click,
             )
-        }
+            .padding(horizontal = AsterSpacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.text_primary,
+            modifier = Modifier.size(22.dp),
+        )
         Spacer(Modifier.height(6.dp))
         Text(
             text = label,
-            color = colors.text_secondary,
-            fontSize = 12.sp,
+            color = colors.text_primary,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
     }
 }
+
+private val quick_action_height = 68.dp
+
+private val contact_header_avatar_size = 64.dp
 
 @Composable
 private fun detail_section(label: String, content: @Composable ColumnScope.() -> Unit) {

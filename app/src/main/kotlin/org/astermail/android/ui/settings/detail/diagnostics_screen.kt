@@ -28,7 +28,6 @@ import android.content.ClipDescription
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -109,7 +108,7 @@ fun DiagnosticsScreen(
                     clip.description.extras = extras
                 }
                 if (write_to_clipboard(context, clip)) {
-                    Toast.makeText(context, copied_text, Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show(copied_text.toString())
                 } else {
                     show_copy_failed_toast(context)
                 }

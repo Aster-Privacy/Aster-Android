@@ -24,7 +24,6 @@ package org.astermail.android.ui.mail
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -49,7 +49,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +67,6 @@ import compose.icons.tablericons.User
 import compose.icons.tablericons.UserMinus
 import compose.icons.tablericons.UserPlus
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import org.astermail.android.R
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.design.AsterMaterial
@@ -96,7 +94,7 @@ fun is_internal_sender(email: String): Boolean {
     return domain in internal_sender_domains
 }
 
-private enum class sender_contact_slot { loading, add, adding, view, saved }
+private enum class sender_contact_slot { add, adding, view, saved }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -144,15 +142,12 @@ fun sender_profile_sheet(
         if (display_name == null) normalized else "$display_name <$normalized>"
     }
 
-    var contacts_resolved by remember { mutableStateOf(false) }
     var adding_contact by remember { mutableStateOf(false) }
     var contact_added by remember { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        contacts_vm.load_contacts()
-        contacts_vm.state.first { !it.is_loading }
-        contacts_resolved = true
+        contacts_vm.load_contacts(quiet = contacts_vm.state.value.contacts.isNotEmpty())
     }
     LaunchedEffect(copied) {
         if (copied) {
@@ -171,17 +166,16 @@ fun sender_profile_sheet(
         adding_contact -> sender_contact_slot.adding
         existing_contact != null && on_open_contact != null -> sender_contact_slot.view
         existing_contact != null || contact_added -> sender_contact_slot.saved
-        !contacts_resolved -> sender_contact_slot.loading
         else -> sender_contact_slot.add
     }
 
-    val label_new_message = stringResource(R.string.sender_action_new_message)
-    val label_copy = stringResource(R.string.copy)
     val label_copied = stringResource(R.string.copied)
-    val label_add_contact = stringResource(R.string.sender_action_add_contact)
-    val label_view_contact = stringResource(R.string.sender_action_view_contact)
-    val label_in_contacts = stringResource(R.string.sender_action_in_contacts)
-    val label_search = stringResource(R.string.search)
+
+    val copy_address = {
+        aster_haptics(aster_haptic.tap)
+        on_copy(normalized)
+        copied = true
+    }
 
     val add_contact = {
         aster_haptics(aster_haptic.tap)
@@ -224,135 +218,133 @@ fun sender_profile_sheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = AsterSpacing.xl)
+                .padding(horizontal = AsterSpacing.lg)
                 .padding(bottom = AsterSpacing.xl),
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .combinedClickable(
                         interactionSource = header_tap,
                         indication = null,
-                        onClick = {},
+                        onClickLabel = stringResource(R.string.copy_address),
+                        onClick = copy_address,
                         onLongClickLabel = stringResource(R.string.copy_address),
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             on_copy(identity_text)
+                            copied = true
                         },
                     )
-                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.xl),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(horizontal = AsterSpacing.xs)
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.lg),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                SenderAvatar(email = normalized, name = sender_name, size = 72.dp, plain = marks_hidden)
-                Spacer(Modifier.height(AsterSpacing.md))
-                Text(
-                    text = display_name ?: normalized,
-                    color = colors.text_primary,
-                    fontSize = 20.sp,
-                    lineHeight = 26.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    maxLines = if (display_name == null) 1 else 2,
-                    overflow = if (display_name == null) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (display_name != null) {
-                    Spacer(Modifier.height(2.dp))
+                SenderAvatar(email = normalized, name = sender_name, size = 56.dp, plain = marks_hidden)
+                Spacer(Modifier.width(AsterSpacing.md))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = normalized,
-                        color = colors.text_tertiary,
-                        fontSize = 14.sp,
-                        lineHeight = 19.sp,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.MiddleEllipsis,
-                        modifier = Modifier.fillMaxWidth(),
+                        text = display_name ?: normalized,
+                        color = colors.text_primary,
+                        fontSize = 18.sp,
+                        lineHeight = 23.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = if (display_name == null) 1 else 2,
+                        overflow = if (display_name == null) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
                     )
-                }
-                if (is_internal || shows_verified) {
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    if (is_internal) {
-                        sender_identity_badge(
-                            label = stringResource(R.string.sender_on_aster),
-                            icon = TablerIcons.ShieldLock,
-                            tint = colors.text_primary,
+                    if (display_name != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = if (copied) label_copied else normalized,
+                            color = if (copied) colors.accent_blue else colors.text_secondary,
+                            fontSize = 14.sp,
+                            lineHeight = 19.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.MiddleEllipsis,
                         )
-                    } else {
-                        sender_identity_badge(
-                            label = stringResource(R.string.sender_verified_badge),
-                            icon = TablerIcons.CircleCheck,
-                            tint = colors.accent_blue,
-                        )
+                    }
+                    if (is_internal || shows_verified) {
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        if (is_internal) {
+                            sender_identity_badge(
+                                label = stringResource(R.string.sender_on_aster),
+                                icon = TablerIcons.ShieldLock,
+                                tint = colors.text_primary,
+                            )
+                        } else {
+                            sender_identity_badge(
+                                label = stringResource(R.string.sender_verified_badge),
+                                icon = TablerIcons.CircleCheck,
+                                tint = colors.accent_blue,
+                            )
+                        }
                     }
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                verticalAlignment = Alignment.Top,
-            ) {
-                sender_quick_action(
-                    face = sender_quick_action_face(label_new_message, TablerIcons.Mail),
-                    on_click = {
-                        on_close()
-                        on_send_email(normalized)
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                sender_quick_action(
-                    face = sender_quick_action_face(
-                        label = if (copied) label_copied else label_copy,
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    sender_sheet_row(
+                        label = stringResource(R.string.sender_action_new_message),
+                        icon = TablerIcons.Mail,
+                        on_click = {
+                            on_close()
+                            on_send_email(normalized)
+                        },
+                    )
+                    settings_row_gap()
+                    sender_sheet_row(
+                        label = if (copied) label_copied else stringResource(R.string.copy_address),
                         icon = if (copied) TablerIcons.Check else TablerIcons.Copy,
                         highlighted = copied,
-                    ),
-                    on_click = {
-                        aster_haptics(aster_haptic.tap)
-                        on_copy(normalized)
-                        copied = true
-                    },
-                    state_description = if (copied) label_copied else null,
-                    modifier = Modifier.weight(1f),
-                )
-                sender_quick_action(
-                    face = when (contact_slot) {
-                        sender_contact_slot.loading -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus)
-                        sender_contact_slot.add -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus)
-                        sender_contact_slot.adding -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus, busy = true)
-                        sender_contact_slot.view -> sender_quick_action_face(label_view_contact, TablerIcons.User, highlighted = true)
-                        sender_contact_slot.saved -> sender_quick_action_face(label_in_contacts, TablerIcons.Check, highlighted = true)
-                    },
-                    on_click = {
-                        when (contact_slot) {
-                            sender_contact_slot.add -> add_contact()
-                            sender_contact_slot.view -> {
+                        state_description = if (copied) label_copied else null,
+                        on_click = copy_address,
+                    )
+                    settings_row_gap()
+                    when (contact_slot) {
+                        sender_contact_slot.view -> sender_sheet_row(
+                            label = stringResource(R.string.sender_action_view_contact),
+                            icon = TablerIcons.User,
+                            show_chevron = true,
+                            on_click = {
                                 val id = existing_contact?.id
                                 val open = on_open_contact
                                 if (id != null && open != null) {
                                     on_close()
                                     open(id)
                                 }
-                            }
-                            else -> Unit
-                        }
-                    },
-                    enabled = contact_slot == sender_contact_slot.add || contact_slot == sender_contact_slot.view,
-                    placeholder = contact_slot == sender_contact_slot.loading,
-                    modifier = Modifier.weight(1f),
-                )
-                sender_quick_action(
-                    face = sender_quick_action_face(label_search, TablerIcons.Search),
-                    on_click = {
-                        on_close()
-                        on_search_sender(normalized)
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+                            },
+                        )
+                        sender_contact_slot.saved -> sender_sheet_row(
+                            label = stringResource(R.string.sender_action_in_contacts),
+                            icon = TablerIcons.Check,
+                            highlighted = true,
+                            enabled = false,
+                            on_click = {},
+                        )
+                        else -> sender_sheet_row(
+                            label = stringResource(R.string.sender_action_add_contact),
+                            icon = TablerIcons.UserPlus,
+                            busy = contact_slot == sender_contact_slot.adding,
+                            enabled = contact_slot == sender_contact_slot.add,
+                            on_click = add_contact,
+                        )
+                    }
+                    settings_row_gap()
+                    sender_sheet_row(
+                        label = stringResource(R.string.search_mail),
+                        icon = TablerIcons.Search,
+                        on_click = {
+                            on_close()
+                            on_search_sender(normalized)
+                        },
+                    )
+                }
             }
 
             if (has_secondary_rows) {
-                Spacer(Modifier.height(AsterSpacing.xl))
+                Spacer(Modifier.height(AsterSpacing.md))
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         var row_index = 0

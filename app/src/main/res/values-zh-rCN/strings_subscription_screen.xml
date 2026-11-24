@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster 无法加载你的套餐。请检查网络连接，然后重试。</string>
+    <string name="billing_source_play">通过 Google Play 计费</string>
+    <string name="billing_source_card">通过银行卡计费</string>
+    <string name="billing_source_crypto">已使用加密货币支付</string>
+    <string name="billing_status_trial">试用</string>
+    <string name="billing_top_plan_title">你使用的是最高套餐</string>
+    <string name="billing_section_load_failed">Aster 无法加载此部分。</string>
+</resources>

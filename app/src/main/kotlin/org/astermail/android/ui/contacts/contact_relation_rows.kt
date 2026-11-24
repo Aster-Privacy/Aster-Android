@@ -232,6 +232,7 @@ fun ContactRelationRows(
                 }
                 if (relation.kind == RelationKind.CUSTOM) {
                     AsterTextField(
+                        rest_border = true,
                         value = relation.label,
                         onValueChange = { update(relation.copy(label = cap_code_points(it, MAX_RELATION_LABEL))) },
                         label = stringResource(R.string.contact_entry_label),
@@ -242,6 +243,7 @@ fun ContactRelationRows(
                     )
                 }
                 AsterTextField(
+                    rest_border = true,
                     value = relation.value,
                     onValueChange = { update(relation.copy(value = cap_code_points(it, MAX_RELATION_VALUE))) },
                     label = stringResource(R.string.contact_relation_name),
@@ -290,6 +292,7 @@ fun ContactSocialRows(
                 }
                 if (custom) {
                     AsterTextField(
+                        rest_border = true,
                         value = social.label,
                         onValueChange = { update(social.copy(label = cap_code_points(it, MAX_SOCIAL_LABEL))) },
                         label = stringResource(R.string.contact_entry_label),
@@ -300,6 +303,7 @@ fun ContactSocialRows(
                     )
                 }
                 AsterTextField(
+                    rest_border = true,
                     value = social.value,
                     onValueChange = { update(social.copy(value = cap_code_points(it, MAX_SOCIAL_VALUE))) },
                     label = stringResource(R.string.contact_social_link_value),

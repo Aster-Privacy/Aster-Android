@@ -20,11 +20,13 @@
 //
 package org.astermail.android.ui.settings.detail
 
-import android.widget.Toast
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +53,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -324,7 +326,7 @@ internal fun domain_detail_view(
                     if (manual != null) {
                         rotated_record = manual
                     } else {
-                        Toast.makeText(context, context.getString(R.string.domain_mgmt_dkim_rotated), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.domain_mgmt_dkim_rotated).toString())
                     }
                     on_load_dns()
                     vm.get_domain_health_now(domain.id)
@@ -356,7 +358,7 @@ internal fun domain_detail_view(
                                 SettingsViewModel.DkimShortKeyOutcome.RateLimited -> R.string.dkim_short_key_wait
                                 SettingsViewModel.DkimShortKeyOutcome.Failed -> R.string.domain_check_generic_failure
                             }
-                            Toast.makeText(context, context.getString(message), Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(message).toString())
                         } finally {
                             shortening = false
                         }
@@ -382,21 +384,24 @@ internal fun domain_detail_view(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun domain_detail_hero(domain: CustomDomain, tone: DomainTone) {
     val colors = AsterMaterial.colors
-    Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.xs, bottom = AsterSpacing.xs)) {
         Text(
             text = domain.domain_name,
             color = colors.text_primary,
             fontSize = 22.sp,
+            lineHeight = 28.sp,
             fontWeight = FontWeight.SemiBold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.semantics { heading() },
         )
-        v_gap(6.dp)
-        Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
+        v_gap(AsterSpacing.md)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
             tone_badge(text = stringResource(domain_tone_res(tone)), tone = domain_tone_color(tone))
             if (domain.is_shared) {
                 tone_badge(text = stringResource(R.string.domain_shared_label), tone = colors.accent_blue)
@@ -408,6 +413,7 @@ private fun domain_detail_hero(domain: CustomDomain, tone: DomainTone) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun domain_health_card(
     health: DomainHealth?,
@@ -431,7 +437,13 @@ private fun domain_health_card(
                 .padding(AsterSpacing.lg),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+                Crossfade(
+                    targetState = icon to tint,
+                    animationSpec = domain_tween(),
+                    label = "domain_health_icon",
+                ) { (shown_icon, shown_tint) ->
+                    Icon(imageVector = shown_icon, contentDescription = null, tint = shown_tint, modifier = Modifier.size(22.dp))
+                }
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -453,22 +465,25 @@ private fun domain_health_card(
                     is_loading = rechecking,
                 )
             }
-            if (health != null) {
-                v_gap(AsterSpacing.sm)
-                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    domain_capability_badge(
-                        label = stringResource(R.string.domain_health_receiving),
-                        ok = health.receiving_mail,
-                    )
-                    domain_capability_badge(
-                        label = stringResource(R.string.domain_health_sending),
-                        ok = health.sending_trusted,
-                    )
-                }
+            v_gap(AsterSpacing.md)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                domain_capability_badge(
+                    label = stringResource(R.string.domain_health_receiving),
+                    ok = health?.receiving_mail,
+                )
+                domain_capability_badge(
+                    label = stringResource(R.string.domain_health_sending),
+                    ok = health?.sending_trusted,
+                )
             }
-            checks.filter(::is_check_failing).forEach { check ->
-                v_gap(AsterSpacing.sm)
-                domain_check_line(check)
+            checks.filter(::is_check_failing).forEachIndexed { index, check ->
+                key(check.key, index) {
+                    v_gap(AsterSpacing.sm)
+                    domain_check_line(check)
+                }
             }
         }
     }
@@ -501,12 +516,20 @@ private fun domain_checked_label(checked_at: String?): String {
 }
 
 @Composable
-private fun domain_capability_badge(label: String, ok: Boolean) {
+private fun domain_capability_badge(label: String, ok: Boolean?) {
     val colors = AsterMaterial.colors
     tone_badge(
         text = label,
-        tone = if (ok) colors.success else colors.warning,
-        icon = if (ok) TablerIcons.CircleCheck else TablerIcons.AlertTriangle,
+        tone = when (ok) {
+            true -> colors.success
+            false -> colors.warning
+            null -> colors.text_tertiary
+        },
+        icon = when (ok) {
+            true -> TablerIcons.CircleCheck
+            false -> TablerIcons.AlertTriangle
+            null -> TablerIcons.Clock
+        },
     )
 }
 
@@ -562,7 +585,8 @@ private fun domain_setup_records(
                     modifier = Modifier.padding(AsterSpacing.sm),
                 )
             }
-            records.forEach { record ->
+            records.forEachIndexed { index, record ->
+                key(record.type, record.name, record.value, index) {
                 Column {
                     dns_setup_record_card(record = record, domain_name = domain.domain_name, provider = provider)
                     val offer_short = is_dkim_record(record) && should_offer_short_dkim_key(
@@ -580,6 +604,7 @@ private fun domain_setup_records(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
+                }
                 }
             }
         }
@@ -642,6 +667,7 @@ private fun domain_addresses_group(
             )
         }
         addresses.forEachIndexed { index, address ->
+            key(address_ids.getOrNull(index) ?: address, index) {
             if (index > 0) HorizontalDivider(color = colors.border_secondary, thickness = 0.5.dp)
             Row(
                 modifier = Modifier
@@ -650,23 +676,24 @@ private fun domain_addresses_group(
                     .padding(start = AsterSpacing.lg, end = AsterSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = address,
-                    color = colors.text_primary,
-                    fontSize = 14.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                alias_address_text(
+                    address = address,
+                    font_size = 14.sp,
+                    font_weight = FontWeight.Normal,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = AsterSpacing.sm),
                 )
                 if (can_manage) {
                     AsterIconButton(
                         icon = TablerIcons.Trash,
                         content_description = stringResource(R.string.domain_mgmt_address_delete_label, address),
-                        onClick = { on_delete(address_ids[index], address) },
+                        onClick = { address_ids.getOrNull(index)?.let { on_delete(it, address) } },
                         tint = colors.text_tertiary,
                         icon_size = 18,
                     )
                 }
+            }
             }
         }
     }

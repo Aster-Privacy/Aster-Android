@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">تعذّر على Aster تحميل خطتك. تحقّق من اتصالك ثم حاول مرة أخرى.</string>
+    <string name="billing_source_play">تتم الفوترة عبر Google Play</string>
+    <string name="billing_source_card">تتم الفوترة بالبطاقة</string>
+    <string name="billing_source_crypto">مدفوعة بالعملات المشفرة</string>
+    <string name="billing_status_trial">تجربة</string>
+    <string name="billing_top_plan_title">لديك أعلى خطة</string>
+    <string name="billing_section_load_failed">تعذّر على Aster تحميل هذا القسم.</string>
+</resources>

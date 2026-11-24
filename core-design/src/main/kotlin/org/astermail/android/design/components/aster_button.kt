@@ -382,6 +382,27 @@ fun AsterCompactGhostButton(
 }
 
 @Composable
+fun AsterCompactDestructiveButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    is_loading: Boolean = false,
+) {
+    depth_button(
+        label = label,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        is_loading = is_loading,
+        fill = depth_red,
+        stretch = false,
+        height = aster_button_compact_height,
+        label_size = aster_button_compact_label_size,
+    )
+}
+
+@Composable
 fun AsterDestructiveButton(
     label: String,
     onClick: () -> Unit,

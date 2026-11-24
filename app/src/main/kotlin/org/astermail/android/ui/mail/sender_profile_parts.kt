@@ -204,24 +204,48 @@ internal fun sender_sheet_row(
     on_click: () -> Unit,
     destructive: Boolean = false,
     show_chevron: Boolean = false,
+    enabled: Boolean = true,
+    highlighted: Boolean = false,
+    busy: Boolean = false,
+    state_description: String? = null,
 ) {
     val colors = AsterMaterial.colors
-    val label_color = if (destructive) colors.danger else colors.text_primary
-    val icon_color = if (destructive) colors.danger else colors.text_secondary
+    val label_color = when {
+        destructive -> colors.danger
+        highlighted -> colors.accent_blue
+        else -> colors.text_primary
+    }
+    val icon_color = when {
+        destructive -> colors.danger
+        highlighted -> colors.accent_blue
+        else -> colors.text_secondary
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = on_click)
+            .clickable(role = Role.Button, enabled = enabled && !busy, onClick = on_click)
+            .semantics { if (state_description != null) stateDescription = state_description }
             .heightIn(min = 56.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = icon_color,
-            modifier = Modifier.size(22.dp),
-        )
+        Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) {
+            if (busy) {
+                aster_spinner(
+                    modifier = Modifier.size(18.dp),
+                    color = icon_color,
+                    stroke_width = 2.dp,
+                    track_color = Color.Transparent,
+                )
+            } else {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = icon_color,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
         Spacer(Modifier.width(AsterSpacing.md))
         Text(
             text = label,

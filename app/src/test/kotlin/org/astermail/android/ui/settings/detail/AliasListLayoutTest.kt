@@ -44,6 +44,25 @@ class AliasListLayoutTest {
     }
 
     @Test
+    fun wrappable_address_breaks_before_at_and_after_separators() {
+        val z = alias_break_opportunity
+        assertEquals(
+            "shop.${z}a1b2$z@astermail.org",
+            alias_wrappable_address(split_alias_address("shop.a1b2@astermail.org")),
+        )
+        assertEquals("plain", alias_wrappable_address(split_alias_address("plain")))
+        assertEquals("a-${z}b_${z}c+${z}d", alias_wrappable_local("a-b_c+d"))
+        assertEquals("trailing.", alias_wrappable_local("trailing."))
+    }
+
+    @Test
+    fun wrappable_address_keeps_every_visible_character() {
+        val address = "first.last-name+tag@sub.example.org"
+        val shown = alias_wrappable_address(split_alias_address(address))
+        assertEquals(address, shown.replace(alias_break_opportunity.toString(), ""))
+    }
+
+    @Test
     fun group_puts_pinned_first_and_keeps_order() {
         val groups = group_aliases(listOf("a" to false, "b" to true, "c" to false, "d" to true)) { it.second }
         assertEquals(listOf("b", "d"), groups.pinned.map { it.first })

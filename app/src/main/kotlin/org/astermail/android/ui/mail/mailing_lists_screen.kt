@@ -24,7 +24,6 @@ package org.astermail.android.ui.mail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -142,6 +141,8 @@ fun MailingListsScreen(
     on_open_drawer: (() -> Unit)? = null,
     on_open_search: () -> Unit = {},
     on_search_sender: (String) -> Unit = {},
+    on_open_account: (() -> Unit)? = null,
+    stored_account: org.astermail.android.storage.StoredAccount? = null,
 ) {
     val vm: MailingListsViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -161,14 +162,14 @@ fun MailingListsScreen(
 
     LaunchedEffect(state.message) {
         state.message?.let { msg ->
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(msg.toString())
             vm.clear_message()
         }
     }
 
     LaunchedEffect(state.error) {
         state.error?.let { err ->
-            Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(err.toString())
             vm.clear_error()
         }
     }
@@ -519,6 +520,8 @@ fun MailingListsScreen(
                     on_scan = { vm.scan() },
                     on_cancel_scan = { vm.cancel_scan() },
                     is_scanning = state.is_scanning,
+                    on_open_account = on_open_account,
+                    stored_account = stored_account,
                 )
             }
         }
@@ -621,8 +624,35 @@ private fun subscription_top_bar(
     on_scan: () -> Unit,
     on_cancel_scan: () -> Unit,
     is_scanning: Boolean,
+    on_open_account: (() -> Unit)?,
+    stored_account: org.astermail.android.storage.StoredAccount?,
 ) {
     val colors = AsterMaterial.colors
+    val scan_action: @Composable () -> Unit = {
+        if (is_scanning) {
+            val cancel_label = stringResource(R.string.cancel)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(SquircleShape(24.dp))
+                    .clickable { on_cancel_scan() }
+                    .semantics { contentDescription = cancel_label },
+                contentAlignment = Alignment.Center,
+            ) {
+                org.astermail.android.design.components.aster_spinner(
+                    color = colors.accent_blue,
+                    stroke_width = 2.dp,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        } else {
+            AsterIconButton(
+                icon = TablerIcons.Refresh,
+                content_description = stringResource(R.string.scan_inbox),
+                onClick = on_scan,
+            )
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -666,35 +696,20 @@ private fun subscription_top_bar(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (is_scanning) {
-                val cancel_label = stringResource(R.string.cancel)
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(SquircleShape(24.dp))
-                        .clickable { on_cancel_scan() }
-                        .semantics { contentDescription = cancel_label },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    org.astermail.android.design.components.aster_spinner(
-                        color = colors.accent_blue,
-                        stroke_width = 2.dp,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            } else {
-                AsterIconButton(
-                    icon = TablerIcons.Refresh,
-                    content_description = stringResource(R.string.scan_inbox),
-                    onClick = on_scan,
+            if (on_open_account != null) {
+                org.astermail.android.ui.common.top_bar_account_button(
+                    stored_account = stored_account,
+                    on_click = on_open_account,
                 )
+            } else {
+                scan_action()
             }
         }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = AsterSpacing.lg, end = AsterSpacing.sm)
-                .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs),
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.xs)
+                .padding(top = AsterSpacing.xs, bottom = AsterSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -702,7 +717,9 @@ private fun subscription_top_bar(
                 color = colors.text_secondary,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
+                modifier = Modifier.weight(1f),
             )
+            if (on_open_account != null) scan_action()
         }
     }
 }

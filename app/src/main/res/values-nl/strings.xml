@@ -3022,6 +3022,9 @@
     <string name="translation_storage_remove_all">Alles verwijderen</string>
     <string name="translation_storage_removed">Taalpakketten verwijderd</string>
     <string name="translation_offer_download">Dit bericht is in het %1$s. Vertalen downloadt een taalpakket.</string>
+    <string name="translation_bar_translate_to">Vertalen naar het %1$s</string>
+    <string name="translation_bar_translated_from">Vertaald uit het %1$s</string>
+    <string name="translation_bar_downloading">Taalpakket voor %1$s downloaden</string>
     <string name="contact_support">Contact opnemen met support</string>
     <string name="domain_purchase_manage">Beheren</string>
     <string name="domain_purchase_cancel_payment_title">Deze betaling annuleren?</string>
@@ -3144,6 +3147,10 @@
     <string name="remove_photo">Foto verwijderen</string>
     <string name="add_photo">Foto toevoegen</string>
     <string name="photo_too_large">Kies een kleinere afbeelding</string>
+    <string name="contact_photo_unreadable">Aster kan deze afbeelding niet openen. Probeer een andere foto.</string>
+    <string name="contact_discard_changes_title">Wijzigingen verwijderen?</string>
+    <string name="contact_discard_changes_message">Je wijzigingen aan dit contact zijn niet opgeslagen.</string>
+    <string name="contact_keep_editing">Verder bewerken</string>
     <string name="no_contacts_yet">Nog geen contacten</string>
     <string name="no_contacts_match">Geen contacten komen overeen met \"%1$s\"</string>
     <string name="no_contacts_in_trash">De prullenmand is leeg</string>
@@ -3701,6 +3708,13 @@
         <item quantity="other">%d contacten toegevoegd</item>
     </plurals>
     <string name="body_index_status">Berichttekst wordt geïndexeerd voor zoeken: %1$d van %2$d</string>
+    <string name="search_status_indexing_mail">E-mail indexeren</string>
+    <string name="search_status_indexing_text">Berichttekst indexeren</string>
+    <string name="search_status_waiting_wifi">Indexeren van berichttekst gaat verder via wifi</string>
+    <string name="search_status_paused">Indexeren gepauzeerd</string>
+    <string name="search_status_partial">Resultaten zijn mogelijk onvolledig</string>
+    <string name="search_status_count">%1$s van %2$s</string>
+    <string name="search_refine_placeholder">Zoeken in resultaten</string>
     <string name="mail_key_upgrade_title">Je opgeslagen e-mail wordt bijgewerkt</string>
     <string name="mail_key_upgrade_running">Aster Mail versleutelt je opgeslagen berichten opnieuw met je huidige sleutels. Houd dit venster open tot het klaar is.</string>
     <string name="mail_key_upgrade_failed">Aster Mail kon het bijwerken van je opgeslagen berichten niet voltooien. Je e-mail is niet gewijzigd. Controleer je verbinding en probeer het opnieuw.</string>
@@ -3725,4 +3739,8 @@
     <string name="attachment_unverified">Niet-geverifieerde bijlage</string>
     <string name="confirm_back_exit">Bevestigen voor afsluiten</string>
     <string name="confirm_back_exit_subtitle">Druk twee keer op Terug om de app vanuit de inbox te verlaten</string>
+    <string name="toast_position_title">Positie van meldingen in de app</string>
+    <string name="toast_position_subtitle">Waar meldingen verschijnen terwijl je de app gebruikt</string>
+    <string name="toast_position_top">Boven</string>
+    <string name="toast_position_bottom">Onder</string>
 </resources>

@@ -50,7 +50,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
-import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
@@ -225,7 +224,7 @@ fun SecurityScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -1610,17 +1609,14 @@ private fun trusted_device_row(
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        org.astermail.android.design.components.AsterCompactButton(
+        org.astermail.android.design.components.AsterCompactDestructiveButton(
             label = stringResource(R.string.revoke),
             onClick = { show_revoke_confirm = true },
-            fill = trusted_revoke_red,
-            content_color = Color.White,
             modifier = Modifier.widthIn(min = 84.dp).testTag("trusted_device_revoke"),
         )
     }
 }
 
-private val trusted_revoke_red = Color(0xFFB91C1C)
 
 internal enum class TrustedDeviceKind { phone, tablet, desktop, laptop }
 
@@ -1636,26 +1632,19 @@ internal fun trusted_device_kind_of(label: String): TrustedDeviceKind {
 
 @Composable
 private fun trusted_device_tile(kind: TrustedDeviceKind) {
-    val tint = when (kind) {
-        TrustedDeviceKind.phone -> Color(0xFF22C55E)
-        TrustedDeviceKind.tablet -> Color(0xFFA855F7)
-        TrustedDeviceKind.desktop -> Color(0xFFF59E0B)
-        TrustedDeviceKind.laptop -> Color(0xFF3B82F6)
-    }
     val icon = when (kind) {
         TrustedDeviceKind.phone -> TablerIcons.DeviceMobile
         TrustedDeviceKind.tablet -> TablerIcons.DeviceTablet
         TrustedDeviceKind.desktop -> TablerIcons.DeviceDesktop
         TrustedDeviceKind.laptop -> TablerIcons.DeviceLaptop
     }
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(AsterRadius.md))
-            .background(tint.copy(alpha = 0.16f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+    Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = AsterMaterial.colors.text_secondary,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 

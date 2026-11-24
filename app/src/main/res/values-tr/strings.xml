@@ -3022,6 +3022,9 @@
     <string name="translation_storage_remove_all">Tümünü kaldır</string>
     <string name="translation_storage_removed">Dil paketleri kaldırıldı</string>
     <string name="translation_offer_download">Bu ileti %1$s dilinde. Çevirmek bir dil paketi indirir.</string>
+    <string name="translation_bar_translate_to">Şu dile çevir: %1$s</string>
+    <string name="translation_bar_translated_from">Şu dilden çevrildi: %1$s</string>
+    <string name="translation_bar_downloading">%1$s dil paketi indiriliyor</string>
     <string name="contact_support">Destek ile iletişime geç</string>
     <string name="domain_purchase_manage">Yönet</string>
     <string name="domain_purchase_cancel_payment_title">Bu ödeme iptal edilsin mi?</string>
@@ -3144,6 +3147,10 @@
     <string name="remove_photo">Fotoğrafı kaldır</string>
     <string name="add_photo">Fotoğraf ekle</string>
     <string name="photo_too_large">Daha küçük bir görsel seçin</string>
+    <string name="contact_photo_unreadable">Aster bu görseli açamıyor. Başka bir fotoğraf deneyin.</string>
+    <string name="contact_discard_changes_title">Değişiklikler silinsin mi?</string>
+    <string name="contact_discard_changes_message">Bu kişide yaptığınız değişiklikler kaydedilmedi.</string>
+    <string name="contact_keep_editing">Düzenlemeye devam et</string>
     <string name="no_contacts_yet">Henüz kişi yok</string>
     <string name="no_contacts_match">“%1$s” ile eşleşen kişi yok</string>
     <string name="no_contacts_in_trash">Çöp kutusu boş</string>
@@ -3701,6 +3708,13 @@
         <item quantity="other">%d kişi eklendi</item>
     </plurals>
     <string name="body_index_status">Arama için ileti metni dizine ekleniyor: %1$d / %2$d</string>
+    <string name="search_status_indexing_mail">Posta dizine ekleniyor</string>
+    <string name="search_status_indexing_text">Mesaj metni dizine ekleniyor</string>
+    <string name="search_status_waiting_wifi">Metin dizinleme Wi-Fi\'da devam eder</string>
+    <string name="search_status_paused">Dizinleme duraklatıldı</string>
+    <string name="search_status_partial">Sonuçlar eksik olabilir</string>
+    <string name="search_status_count">%1$s / %2$s</string>
+    <string name="search_refine_placeholder">Sonuçlarda ara</string>
     <string name="mail_key_upgrade_title">Kayıtlı e-postalarınız güncelleniyor</string>
     <string name="mail_key_upgrade_running">Aster Mail, kayıtlı iletilerinizi mevcut anahtarlarınızla yeniden şifreliyor. İşlem bitene kadar bu pencereyi açık tutun.</string>
     <string name="mail_key_upgrade_failed">Aster Mail kayıtlı iletilerinizin güncellenmesini tamamlayamadı. E-postalarınız değişmedi. Bağlantınızı kontrol edip yeniden deneyin.</string>
@@ -3725,4 +3739,8 @@
     <string name="attachment_unverified">Doğrulanmamış ek</string>
     <string name="confirm_back_exit">Çıkmadan önce onayla</string>
     <string name="confirm_back_exit_subtitle">Gelen kutusundan uygulamadan çıkmak için Geri tuşuna iki kez basın</string>
+    <string name="toast_position_title">Uygulama içi uyarı konumu</string>
+    <string name="toast_position_subtitle">Uygulamayı kullanırken uyarıların göründüğü yer</string>
+    <string name="toast_position_top">Üst</string>
+    <string name="toast_position_bottom">Alt</string>
 </resources>

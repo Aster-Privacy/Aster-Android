@@ -60,16 +60,12 @@ private val unpaid_subscription_states = setOf(
 fun plan_ring_brush(): Brush {
     val accent = AsterMaterial.colors.accent_blue
     return remember(accent) {
-        val light = lerp(accent, Color.White, 0.32f)
-        val deep = lerp(accent, Color.Black, 0.22f)
-        val seam = lerp(accent, deep, 0.5f)
-        Brush.sweepGradient(
-            0.000f to seam,
-            0.125f to deep,
-            0.375f to accent,
-            0.625f to light,
-            0.875f to accent,
-            1.000f to seam,
+        val light = lerp(accent, Color.White, 0.18f)
+        val deep = lerp(accent, Color.Black, 0.12f)
+        Brush.linearGradient(
+            0.0f to light,
+            0.5f to accent,
+            1.0f to deep,
         )
     }
 }

@@ -24,7 +24,6 @@ package org.astermail.android.ui.settings.detail
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -36,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +51,12 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -73,7 +78,26 @@ internal fun split_alias_address(address: String): AliasAddressParts {
     return AliasAddressParts(trimmed.substring(0, at), trimmed.substring(at))
 }
 
-internal const val alias_domain_max_fraction = 0.6f
+internal const val alias_break_opportunity = '​'
+
+private val alias_local_break_after = setOf('.', '-', '_', '+')
+
+internal fun alias_wrappable_local(local: String): String {
+    if (local.length < 2) return local
+    val out = StringBuilder(local.length + 4)
+    local.forEachIndexed { index, ch ->
+        out.append(ch)
+        if (ch in alias_local_break_after && index < local.length - 1) out.append(alias_break_opportunity)
+    }
+    return out.toString()
+}
+
+internal fun alias_wrappable_address(parts: AliasAddressParts): String =
+    if (parts.domain.isEmpty()) {
+        alias_wrappable_local(parts.local)
+    } else {
+        alias_wrappable_local(parts.local) + alias_break_opportunity + parts.domain
+    }
 
 @Composable
 internal fun alias_address_text(
@@ -83,42 +107,42 @@ internal fun alias_address_text(
     font_size: TextUnit = 15.sp,
     font_weight: FontWeight = FontWeight.Medium,
     test_tag: String? = null,
+    domain_color: Color = Color.Unspecified,
 ) {
+    val colors = AsterMaterial.colors
+    val resolved_domain_color = when {
+        domain_color != Color.Unspecified -> domain_color
+        color == colors.text_primary -> colors.text_secondary
+        else -> color
+    }
     val parts = remember(address) { split_alias_address(address) }
-    BoxWithConstraints(
+    val display = remember(parts, color, resolved_domain_color) {
+        val local = alias_wrappable_local(parts.local)
+        buildAnnotatedString {
+            withStyle(SpanStyle(color = color)) { append(local) }
+            if (parts.domain.isNotEmpty()) {
+                append(alias_break_opportunity)
+                withStyle(SpanStyle(color = resolved_domain_color)) { append(parts.domain) }
+            }
+        }
+    }
+    Text(
+        text = display,
+        color = color,
+        fontSize = font_size,
+        fontWeight = font_weight,
+        lineHeight = font_size * 1.3f,
+        style = LocalTextStyle.current.copy(
+            lineBreak = LineBreak.Simple,
+            hyphens = Hyphens.None,
+        ),
         modifier = modifier
             .clearAndSetSemantics {
                 contentDescription = address
                 text = AnnotatedString(address)
             }
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier),
-    ) {
-        val domain_max = maxWidth * alias_domain_max_fraction
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = parts.local,
-                color = color,
-                fontSize = font_size,
-                fontWeight = font_weight,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.MiddleEllipsis,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            if (parts.domain.isNotEmpty()) {
-                Text(
-                    text = parts.domain,
-                    color = color,
-                    fontSize = font_size,
-                    fontWeight = font_weight,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.StartEllipsis,
-                    modifier = Modifier.widthIn(max = domain_max),
-                )
-            }
-        }
-    }
+    )
 }
 
 @Composable

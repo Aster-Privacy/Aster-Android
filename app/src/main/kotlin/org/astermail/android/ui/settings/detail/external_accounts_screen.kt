@@ -1266,15 +1266,13 @@ private fun oauth_provider_row(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(SquircleShape(8.dp))
-                .background(colors.bg_tertiary),
+                .size(36.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(id = icon_res),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(28.dp),
             )
         }
         Spacer(Modifier.size(AsterSpacing.md))

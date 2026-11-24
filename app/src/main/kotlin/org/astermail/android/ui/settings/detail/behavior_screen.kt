@@ -46,7 +46,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -344,7 +343,7 @@ fun BehaviorScreen(
     val toast_context = LocalContext.current
     LaunchedEffect(state.action_result) {
         val message = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(toast_context, message, Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         vm.clear_action_result()
     }
 
@@ -960,11 +959,7 @@ internal fun ColumnScope.translation_settings_section(
                             TranslationAssets.clear_cache(context)
                             TranslationDownloadPolicy.clear_consent(context)
                             on_packs_cleared()
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.translation_storage_removed),
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.translation_storage_removed).toString())
                         },
                     )
                 }
@@ -1030,7 +1025,7 @@ private fun phone_contacts_sync_section() {
         } else if (contacts_permission_blocked(context)) {
             show_settings_prompt = true
         } else {
-            Toast.makeText(context, context.getString(R.string.contact_sync_permission_denied), Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.contact_sync_permission_denied).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         }
     }
 

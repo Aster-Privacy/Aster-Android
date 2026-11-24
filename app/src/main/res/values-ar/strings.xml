@@ -3106,6 +3106,9 @@
     <string name="translation_storage_remove_all">إزالة الكل</string>
     <string name="translation_storage_removed">تمت إزالة حزم اللغات</string>
     <string name="translation_offer_download">هذه الرسالة بلغة %1$s. ستؤدي ترجمتها إلى تنزيل حزمة لغة.</string>
+    <string name="translation_bar_translate_to">الترجمة إلى %1$s</string>
+    <string name="translation_bar_translated_from">مترجمة من %1$s</string>
+    <string name="translation_bar_downloading">جارٍ تنزيل حزمة لغة %1$s</string>
     <string name="contact_support">تواصل مع الدعم</string>
     <string name="domain_purchase_manage">إدارة</string>
     <string name="domain_purchase_cancel_payment_title">إلغاء هذه الدفعة؟</string>
@@ -3240,6 +3243,10 @@
     <string name="remove_photo">إزالة الصورة</string>
     <string name="add_photo">إضافة صورة</string>
     <string name="photo_too_large">اختر صورة أصغر</string>
+    <string name="contact_photo_unreadable">يتعذر على Aster فتح هذه الصورة. جرّب صورة أخرى.</string>
+    <string name="contact_discard_changes_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="contact_discard_changes_message">لم يتم حفظ تغييراتك على جهة الاتصال هذه.</string>
+    <string name="contact_keep_editing">متابعة التعديل</string>
     <string name="no_contacts_yet">لا توجد جهات اتصال بعد</string>
     <string name="no_contacts_match">لا توجد جهات اتصال تطابق \"%1$s\"</string>
     <string name="no_contacts_in_trash">المهملات فارغة</string>
@@ -3812,6 +3819,13 @@
         <item quantity="other">تمت إضافة %d جهة اتصال</item>
     </plurals>
     <string name="body_index_status">جارٍ فهرسة نصوص الرسائل للبحث: %1$d من %2$d</string>
+    <string name="search_status_indexing_mail">جارٍ فهرسة البريد</string>
+    <string name="search_status_indexing_text">جارٍ فهرسة نص الرسائل</string>
+    <string name="search_status_waiting_wifi">تُستأنف فهرسة نص الرسائل عند الاتصال بشبكة Wi-Fi</string>
+    <string name="search_status_paused">الفهرسة متوقفة مؤقتًا</string>
+    <string name="search_status_partial">قد تكون النتائج غير مكتملة</string>
+    <string name="search_status_count">%1$s من %2$s</string>
+    <string name="search_refine_placeholder">البحث ضمن النتائج</string>
     <string name="mail_key_upgrade_title">جارٍ تحديث بريدك المحفوظ</string>
     <string name="mail_key_upgrade_running">يعيد Aster Mail تشفير رسائلك المحفوظة باستخدام مفاتيحك الحالية. أبقِ هذه النافذة مفتوحة حتى تنتهي العملية.</string>
     <string name="mail_key_upgrade_failed">تعذّر على Aster Mail إكمال تحديث رسائلك المحفوظة. لم يتغير بريدك. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
@@ -3848,4 +3862,8 @@
     <string name="attachment_unverified">مرفق لم يتم التحقق منه</string>
     <string name="confirm_back_exit">التأكيد قبل الخروج</string>
     <string name="confirm_back_exit_subtitle">اضغط على زر الرجوع مرتين لمغادرة التطبيق من البريد الوارد</string>
+    <string name="toast_position_title">موضع التنبيهات داخل التطبيق</string>
+    <string name="toast_position_subtitle">مكان ظهور التنبيهات أثناء استخدام التطبيق</string>
+    <string name="toast_position_top">أعلى</string>
+    <string name="toast_position_bottom">أسفل</string>
 </resources>

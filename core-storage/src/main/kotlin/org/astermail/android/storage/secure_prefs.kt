@@ -106,26 +106,31 @@ object SecurePrefs {
         with_off_main(context, name) { prefs -> prefs.edit().also(change).apply() }
     }
 
-    fun warm(context: Context, names: Collection<String>) {
+    fun warm(context: Context, names: Collection<String>, deferred: Collection<String> = emptyList()) {
         val app = context.applicationContext
         try {
             val pending = names.filterNot { opened.containsKey(it) }
-            if (pending.isEmpty()) return
-            runCatching { master_key(app) }
-            val threads = pending.map { name ->
-                Thread { runCatching { open(app, name) } }.apply {
-                    priority = Thread.NORM_PRIORITY
-                    start()
+            if (pending.isNotEmpty()) {
+                runCatching { master_key(app) }
+                val threads = pending.map { name ->
+                    Thread { runCatching { open(app, name) } }.apply {
+                        priority = Thread.NORM_PRIORITY
+                        start()
+                    }
                 }
-            }
-            for (thread in threads) {
-                runCatching { thread.join(warm_join_timeout_ms) }
-            }
-            for (name in pending) {
-                runCatching { open(app, name) }
+                for (thread in threads) {
+                    runCatching { thread.join(warm_join_timeout_ms) }
+                }
+                for (name in pending) {
+                    runCatching { open(app, name) }
+                }
             }
         } finally {
             _warm_complete.value = true
+        }
+        for (name in deferred) {
+            if (Thread.currentThread().isInterrupted) return
+            runCatching { open(app, name) }
         }
     }
 

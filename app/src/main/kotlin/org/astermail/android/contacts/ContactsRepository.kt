@@ -25,6 +25,8 @@ import java.security.MessageDigest
 import javax.crypto.Mac
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -100,6 +102,10 @@ private const val GROUP_MEMBERS_BATCH = 500
 
 internal fun group_membership_map(entries: List<GroupMembershipEntry>): Map<String, Set<String>> =
     entries.groupBy({ it.group_id }, { it.contact_id }).mapValues { it.value.toSet() }
+
+private const val CONTACT_DECRYPT_PARALLEL_MIN = 48
+
+private const val CONTACT_DECRYPT_MAX_WORKERS = 4
 
 class ContactUndecryptableException : IllegalStateException("failed to decrypt contact")
 
@@ -311,7 +317,26 @@ class ContactsRepository @Inject constructor(
     }
 
     private suspend fun decrypt_contacts(items: List<ContactItem>): List<Contact> =
-        withContext(default_dispatcher) { items.mapNotNull { decrypt_contact(it) } }
+        withContext(default_dispatcher) {
+            if (items.size < CONTACT_DECRYPT_PARALLEL_MIN) return@withContext items.mapNotNull { decrypt_contact(it) }
+            val workers = Runtime.getRuntime().availableProcessors().coerceIn(2, CONTACT_DECRYPT_MAX_WORKERS)
+            val chunk_size = (items.size + workers - 1) / workers
+            kotlinx.coroutines.coroutineScope {
+                items.chunked(chunk_size)
+                    .map { chunk -> async { chunk.mapNotNull { decrypt_contact(it) } } }
+                    .awaitAll()
+                    .flatten()
+            }
+        }
+
+    suspend fun cached_contacts_snapshot(): List<Contact>? {
+        val account = current_account() ?: return null
+        val dao = cache_dao ?: return null
+        return runCatching { cached_contacts(account, dao) }
+            .onFailure { if (it is kotlin.coroutines.cancellation.CancellationException) throw it }
+            .getOrNull()
+            ?.takeIf { current_account() == account }
+    }
 
     suspend fun fetch_contact(contact_id: String): Result<Contact> = runCatching {
         val id = resolve_contact_id(contact_id)

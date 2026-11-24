@@ -434,10 +434,12 @@ fun InboxScreen(
     on_alias_direction_change: (String) -> Unit = {},
     select_back_enabled: Boolean = true,
     on_select_mode_change: (Boolean) -> Unit = {},
+    on_list_settled: (List<String>) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val list_state = org.astermail.android.ui.common.remember_session_lazy_list_state()
+    val fast_scroll_drag = remember { org.astermail.android.ui.common.fast_scroll_drag_signal() }
     val scope = rememberCoroutineScope()
     val mail_vm: MailViewModel = hiltViewModel()
     val settings_vm: SettingsViewModel = shared_settings_view_model()
@@ -723,6 +725,7 @@ fun InboxScreen(
     }
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
+    warm_body_web_view()
 
     failed_send_dialog(mail_vm)
 
@@ -1146,15 +1149,18 @@ fun InboxScreen(
     var last_scroll_reset_key by rememberSaveable { mutableStateOf("") }
     var pending_scroll_reset by remember { mutableStateOf(false) }
     val scroll_scope_key = "$sort_mode|$current_folder|${if (categories_enabled) active_category else ""}"
+    val top_token_seen = remember {
+        intArrayOf(
+            if (scroll_top_token > 0 && scroll_top_token != mail_vm.consumed_scroll_top_token) 0 else scroll_top_token,
+        )
+    }
     val scroll_restore = remember {
         val fresh_top_request = scroll_top_token > 0 && scroll_top_token != mail_vm.consumed_scroll_top_token
         if (fresh_top_request) {
             mail_vm.consumed_scroll_top_token = scroll_top_token
-            mail_vm.list_scroll_anchors.clear()
+            mail_vm.list_scroll_anchors.remove(scroll_scope_key)
         }
-        val same_scope = mail_vm.last_list_scope_key == scroll_scope_key
-        if (!same_scope) mail_vm.list_scroll_anchors.clear()
-        InboxScrollRestore(if (fresh_top_request || !same_scope) null else mail_vm.list_scroll_anchors[scroll_scope_key])
+        InboxScrollRestore(if (fresh_top_request) null else mail_vm.list_scroll_anchors[scroll_scope_key])
     }
     var scroll_restore_active by remember { mutableStateOf(scroll_restore.anchor != null) }
     LaunchedEffect(sort_mode, current_folder, active_category, categories_enabled) {
@@ -1242,6 +1248,7 @@ fun InboxScreen(
         }
         withTimeoutOrNull(SCROLL_RESTORE_WINDOW_MS) {
             snapshotFlow { list_state.layoutInfo }.collect { info ->
+                if (fast_scroll_drag.dragging) scroll_restore_active = false
                 if (!scroll_restore_active) return@collect
                 val first = info.visibleItemsInfo.firstOrNull() ?: return@collect
                 if (first.key == anchor.key) {
@@ -1294,7 +1301,7 @@ fun InboxScreen(
         if (scroll_restore_active) return@LaunchedEffect
         val near_top = list_state.firstVisibleItemIndex == 0 ||
             (list_state.firstVisibleItemIndex == 1 && list_state.firstVisibleItemScrollOffset == 0)
-        if (top_thread_key != null && near_top && !list_state.isScrollInProgress) {
+        if (top_thread_key != null && near_top && !list_state.isScrollInProgress && !fast_scroll_drag.dragging) {
             if (list_state.firstVisibleItemScrollOffset > 0) {
                 list_state.animateScrollToItem(0)
             } else {
@@ -1306,6 +1313,29 @@ fun InboxScreen(
     val visible_order_ids = remember(visible_threads) { visible_threads.map { it.newest.id } }
     LaunchedEffect(visible_order_ids) {
         mail_vm.set_visible_order(visible_order_ids)
+    }
+
+    val latest_on_list_settled by rememberUpdatedState(on_list_settled)
+    LaunchedEffect(list_state) {
+        snapshotFlow {
+            list_settle_key(
+                scrolling = list_state.isScrollInProgress,
+                fast_scroll_dragging = fast_scroll_drag.dragging,
+                first_visible_index = list_state.firstVisibleItemIndex,
+                row_count = latest_visible_threads.size,
+            )
+        }.distinctUntilChanged().collectLatest { settle_key ->
+            if (settle_key == null) return@collectLatest
+            kotlinx.coroutines.delay(LIST_SETTLE_DELAY_MS)
+            val rows = latest_visible_threads
+            val by_key = HashMap<Any, String>(rows.size)
+            val visible = list_state.layoutInfo.visibleItemsInfo
+            val wanted = HashSet<Any>(visible.size)
+            for (item in visible) wanted.add(item.key)
+            for (row in rows) if (row.thread_id in wanted) by_key[row.thread_id] = row.newest.id
+            val ids = visible.mapNotNull { by_key[it.key] }
+            if (ids.isNotEmpty()) latest_on_list_settled(ids)
+        }
     }
 
     LaunchedEffect(select_all_active, scope_selection_confirmed, visible_order_ids) {
@@ -1350,6 +1380,7 @@ fun InboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
+                !fast_scroll_drag.dragging &&
                 scroll_paging_allowed(active_filter, list_state.canScrollBackward, s.items.size) &&
                 s.has_more &&
                 !s.is_loading &&
@@ -1412,7 +1443,7 @@ fun InboxScreen(
 
     fun do_refresh() {
         refresh_top_key_before[0] = top_thread_key
-        refresh_scroll_pending = true
+        refresh_scroll_pending = list_near_top(list_state.firstVisibleItemIndex)
         mail_vm.refresh()
     }
 
@@ -2035,16 +2066,19 @@ fun InboxScreen(
     }
 
     org.astermail.android.ui.common.on_return_to_foreground {
-        list_state.scrollToItem(0)
+        if (list_state.firstVisibleItemIndex == 0 && !list_state.isScrollInProgress) {
+            list_state.scrollToItem(0)
+        }
         header_offset_px.floatValue = 0f
         header_hidden = false
     }
-    LaunchedEffect(scroll_top_token, list_state) {
-        if (scroll_top_token > 0) {
-            list_state.scrollToItem(0)
-            header_offset_px.floatValue = 0f
-            header_hidden = false
-        }
+    LaunchedEffect(scroll_top_token) {
+        if (scroll_top_token <= 0 || scroll_top_token == top_token_seen[0]) return@LaunchedEffect
+        top_token_seen[0] = scroll_top_token
+        mail_vm.consumed_scroll_top_token = scroll_top_token
+        list_state.scrollToItem(0)
+        header_offset_px.floatValue = 0f
+        header_hidden = false
     }
     LaunchedEffect(list_state) {
         snapshotFlow {
@@ -2113,6 +2147,7 @@ fun InboxScreen(
         }
         refresh_scroll_pending = false
         if (changed == null || drag_selecting || list_state.isScrollInProgress) return@LaunchedEffect
+        if (!list_near_top(list_state.firstVisibleItemIndex)) return@LaunchedEffect
         if (list_state.firstVisibleItemIndex == 0 && list_state.firstVisibleItemScrollOffset == 0) return@LaunchedEffect
         list_state.scrollToItem(0)
         settle_clipped_top()
@@ -2854,6 +2889,7 @@ fun InboxScreen(
                         modifier = Modifier.align(Alignment.TopEnd),
                         top_inset = header_height_dp,
                         bottom_inset = list_bottom_pad,
+                        drag_signal = fast_scroll_drag,
                     )
                 }
                 inbox_skeleton_layer(
@@ -3091,18 +3127,10 @@ fun InboxScreen(
                         on_picked = { iso -> mail_vm.reschedule_scheduled(scheduled_item.id, iso) },
                         on_cancel = {},
                         on_invalid = {
-                            android.widget.Toast.makeText(
-                                picker_context,
-                                picker_context.getString(R.string.schedule_time_in_past),
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(picker_context.getString(R.string.schedule_time_in_past).toString())
                         },
                         on_too_far_ahead = {
-                            android.widget.Toast.makeText(
-                                picker_context,
-                                picker_context.getString(R.string.scheduled_too_far_ahead),
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(picker_context.getString(R.string.scheduled_too_far_ahead).toString())
                         },
                     )
                 },
@@ -3950,6 +3978,7 @@ private fun sort_menu_item(label: String, is_selected: Boolean, on_click: () -> 
     aster_menu_item(
         label = label,
         selected = is_selected,
+        reserve_check = true,
         on_click = on_click,
     )
 }
@@ -4624,6 +4653,23 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
 private fun drafts_swipe_label(folder: String, action: String, label: String, discard_label: String): String =
     if (folder == "drafts" && (action == "delete" || action == "trash")) discard_label else label
 
+internal const val LIST_NEAR_TOP_ROWS = 2
+
+internal const val LIST_SETTLE_DELAY_MS = 180L
+
+internal fun list_settle_key(
+    scrolling: Boolean,
+    fast_scroll_dragging: Boolean,
+    first_visible_index: Int,
+    row_count: Int,
+): Long? {
+    if (scrolling || fast_scroll_dragging || row_count <= 0) return null
+    return (first_visible_index.toLong() shl 32) or (row_count.toLong() and 0xffffffffL)
+}
+
+internal fun list_near_top(first_visible_index: Int): Boolean =
+    first_visible_index in 0..LIST_NEAR_TOP_ROWS
+
 internal fun read_toggle_row_keys(emails: List<Email>, grouping_enabled: Boolean): Set<String> {
     val keys = HashSet<String>()
     for (email in emails) {
@@ -5264,8 +5310,10 @@ private fun inbox_account_button(
 ) {
     val description = stringResource(R.string.account)
     val avatar_size = 34.dp
+    val ring_enabled = org.astermail.android.ui.common.remember_has_paid_plan()
     Box(
         modifier = Modifier
+            .padding(end = org.astermail.android.ui.common.top_bar_account_end_inset(ring_enabled))
             .size(48.dp)
             .clip(CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = on_click)
@@ -5273,7 +5321,7 @@ private fun inbox_account_button(
             .testTag("open_account"),
         contentAlignment = Alignment.Center,
     ) {
-        org.astermail.android.ui.common.plan_ring(size = avatar_size, enabled = org.astermail.android.ui.common.remember_has_paid_plan()) {
+        org.astermail.android.ui.common.plan_ring(size = avatar_size, enabled = ring_enabled) {
             if (email.isBlank() && name.isBlank()) {
                 Box(
                     modifier = Modifier

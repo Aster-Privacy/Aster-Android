@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -52,12 +54,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.aster_haptic
@@ -146,10 +150,7 @@ internal class lazy_extent_estimator {
         padding_px: Int = 0,
     ): lazy_extent {
         if (total_items <= 0) return lazy_extent(padding_px.toFloat(), 0f)
-        if (typical_stale) {
-            typical = lower_median(seen.values)
-            typical_stale = false
-        }
+        refresh_typical()
         val before = first_index.coerceIn(0, total_items)
         var known = 0f
         var known_count = 0
@@ -172,6 +173,31 @@ internal class lazy_extent_estimator {
         return lazy_extent(content, offset)
     }
 
+    fun snapshot(total_items: Int, spacing_px: Int = 0): lazy_offset_map {
+        refresh_typical()
+        val total = total_items.coerceAtLeast(0)
+        val indices = sizes.keys.filter { it in 0 until total }.sorted()
+        val known_index = IntArray(indices.size)
+        val known_prefix = DoubleArray(indices.size + 1)
+        for (i in indices.indices) {
+            known_index[i] = indices[i]
+            known_prefix[i + 1] = known_prefix[i] + (sizes[indices[i]] ?: 0)
+        }
+        return lazy_offset_map(
+            known_index = known_index,
+            known_prefix = known_prefix,
+            fallback = typical.toDouble(),
+            spacing = spacing_px.toDouble(),
+            total_items = total,
+        )
+    }
+
+    private fun refresh_typical() {
+        if (!typical_stale) return
+        typical = lower_median(seen.values)
+        typical_stale = false
+    }
+
     private fun lower_median(values: Collection<Int>): Int {
         if (values.isEmpty()) return 0
         val sorted = values.sorted()
@@ -181,6 +207,78 @@ internal class lazy_extent_estimator {
     private companion object {
         const val seen_limit = 4096
     }
+}
+
+internal data class lazy_position(val index: Int, val offset_px: Int)
+
+internal class lazy_offset_map(
+    private val known_index: IntArray,
+    private val known_prefix: DoubleArray,
+    private val fallback: Double,
+    private val spacing: Double,
+    val total_items: Int,
+) {
+    private fun known_below(index: Int): Int {
+        var low = 0
+        var high = known_index.size
+        while (low < high) {
+            val mid = (low + high) ushr 1
+            if (known_index[mid] < index) low = mid + 1 else high = mid
+        }
+        return low
+    }
+
+    fun offset_of(index: Int): Double {
+        val i = index.coerceIn(0, total_items)
+        val count = known_below(i)
+        return known_prefix[count] + fallback * (i - count) + spacing * i
+    }
+
+    fun content_px(padding_px: Int = 0): Double {
+        if (total_items <= 0) return padding_px.toDouble()
+        return offset_of(total_items) - spacing + padding_px
+    }
+
+    fun locate(offset_px: Double): lazy_position {
+        if (total_items <= 0 || offset_px.isNaN()) return lazy_position(0, 0)
+        val target = offset_px.coerceAtLeast(0.0)
+        var low = 0
+        var high = total_items - 1
+        while (low < high) {
+            val mid = (low + high + 1) ushr 1
+            if (offset_of(mid) <= target) low = mid else high = mid - 1
+        }
+        val intra = (target - offset_of(low)).coerceAtLeast(0.0)
+        return lazy_position(low, min(intra, Int.MAX_VALUE.toDouble() / 2).roundToInt())
+    }
+}
+
+internal fun fast_scroll_drag_offset(
+    top_px: Float,
+    start_top_px: Float,
+    travel_px: Float,
+    start_offset_px: Double,
+    range_px: Double,
+): Double {
+    if (range_px <= 0.0) return 0.0
+    val start = start_offset_px.coerceIn(0.0, range_px)
+    if (travel_px <= 0f || top_px.isNaN()) return start
+    val top = top_px.coerceIn(0f, travel_px).toDouble()
+    val start_top = start_top_px.coerceIn(0f, travel_px).toDouble()
+    return if (top <= start_top) {
+        if (start_top <= 0.0) start else start * (top / start_top)
+    } else {
+        val span = travel_px - start_top
+        if (span <= 0.0) range_px else start + (range_px - start) * ((top - start_top) / span)
+    }
+}
+
+internal const val fast_scroll_end_target = Int.MAX_VALUE
+
+internal fun fast_scroll_target_px(offset_px: Double, range_px: Double): Int {
+    if (offset_px.isNaN()) return 0
+    if (range_px > 0.0 && offset_px >= range_px - 0.5) return fast_scroll_end_target
+    return offset_px.coerceIn(0.0, (fast_scroll_end_target - 1).toDouble()).roundToInt()
 }
 
 internal fun pinned_lazy_extent(
@@ -343,6 +441,47 @@ fun Modifier.vertical_scroll_indicator(
 fun Modifier.vertical_scroll_with_indicator(state: ScrollState = rememberScrollState()): Modifier =
     vertical_scroll_indicator(state).verticalScroll(state)
 
+internal fun fast_scroll_thumb_fraction(thumb_top_px: Float, track_px: Float, thumb_px: Float): Float {
+    val travel = track_px - thumb_px
+    if (travel <= 0f || thumb_top_px.isNaN()) return 0f
+    return (thumb_top_px / travel).coerceIn(0f, 1f)
+}
+
+internal fun fast_scroll_target_index(fraction: Float, total_items: Int, visible_items: Int = 1): Int {
+    if (total_items <= 1 || fraction.isNaN()) return 0
+    val last_first = (total_items - visible_items.coerceAtLeast(1)).coerceAtLeast(0)
+    return (fraction.coerceIn(0f, 1f) * last_first).roundToInt().coerceIn(0, last_first)
+}
+
+internal class fast_scroll_coalescer {
+    private var pending = -1
+    private var applied = -1
+
+    fun offer(index: Int) {
+        if (index >= 0) pending = index
+    }
+
+    fun take(): Int? {
+        val next = pending
+        if (next < 0 || next == applied) return null
+        applied = next
+        return next
+    }
+
+    fun reset() {
+        pending = -1
+        applied = -1
+    }
+}
+
+@Stable
+class fast_scroll_drag_signal {
+    var dragging by mutableStateOf(false)
+        internal set
+}
+
+val local_fast_scroll_drag = staticCompositionLocalOf<fast_scroll_drag_signal?> { null }
+
 private fun lazy_scroll_thumb(
     state: LazyListState,
     estimator: lazy_extent_estimator,
@@ -383,12 +522,24 @@ private fun lazy_scroll_thumb(
     return thumb
 }
 
+private class fast_scroll_plan(
+    val map: lazy_offset_map,
+    val start_top: Float,
+    val travel: Float,
+    val start_offset: Double,
+    val range: Double,
+    val end_overscroll_px: Int,
+)
+
+private const val release_settle_ms = 220
+
 @Composable
 fun vertical_scroll_bar(
     state: LazyListState,
     modifier: Modifier = Modifier,
     top_inset: Dp = 0.dp,
     bottom_inset: Dp = 0.dp,
+    drag_signal: fast_scroll_drag_signal? = null,
 ) {
     if (local_accessibility.current.hide_scrollbars) return
     val colors = AsterMaterial.colors
@@ -397,19 +548,81 @@ fun vertical_scroll_bar(
     val haptics = remember_haptic()
     val haptic_enabled = local_accessibility.current.haptic_enabled
     val scope = rememberCoroutineScope()
+    val min_thumb_px = with(LocalDensity.current) { bar_min_thumb.toPx() }
+    val reduce_motion = aster_reduce_motion()
+    val live_reduce_motion by rememberUpdatedState(reduce_motion)
     val estimator = remember(state) { lazy_extent_estimator() }
-    val geometry = remember(state) { FloatArray(5) }
-    val drag = remember(state) { FloatArray(2) }
+    val geometry = remember(state) { FloatArray(6) }
+    val grab = remember(state) { FloatArray(1) }
+    val plan_holder = remember(state) { arrayOfNulls<fast_scroll_plan>(1) }
+    val coalescer = remember(state) { fast_scroll_coalescer() }
+    val finger_top = remember(state) { mutableFloatStateOf(0f) }
+    val correction = remember(state) { Animatable(0f) }
     var dragging by remember(state) { mutableStateOf(false) }
-    val alpha = remember_bar_alpha(state) { state.isScrollInProgress || dragging }
+    var thumb_pinned by remember(state) { mutableStateOf(false) }
+    val live_signal by rememberUpdatedState(drag_signal)
+    val alpha = remember_bar_alpha(state) { state.isScrollInProgress || dragging || thumb_pinned }
     val shown by remember(state, alpha) { derivedStateOf { alpha.value > 0f } }
 
-    LaunchedEffect(state) {
-        snapshotFlow { state.layoutInfo.visibleItemsInfo.map { Triple(it.index, it.key, it.size) } }
-            .collect { items -> items.forEach { estimator.record(it.first, it.second, it.third) } }
+    fun apply_target(target: Int) {
+        val plan = plan_holder[0] ?: return
+        val total = state.layoutInfo.totalItemsCount
+        if (total <= 0) return
+        if (target == fast_scroll_end_target) {
+            state.requestScrollToItem(total - 1, plan.end_overscroll_px)
+            return
+        }
+        val position = plan.map.locate(target.toDouble())
+        if (position.index >= total) {
+            state.requestScrollToItem(total - 1, plan.end_overscroll_px)
+        } else {
+            state.requestScrollToItem(position.index, position.offset_px)
+        }
     }
 
-    if (!shown && !dragging) return
+    LaunchedEffect(state) {
+        snapshotFlow { state.layoutInfo }.collect { info ->
+            if (dragging) return@collect
+            val visible = info.visibleItemsInfo
+            for (i in visible.indices) {
+                val item = visible[i]
+                estimator.record(item.index, item.key, item.size)
+            }
+        }
+    }
+
+    LaunchedEffect(state, dragging) {
+        live_signal?.dragging = dragging
+        if (dragging) {
+            while (isActive) {
+                withFrameNanos { }
+                val target = coalescer.take() ?: continue
+                apply_target(target)
+            }
+            return@LaunchedEffect
+        }
+        if (!thumb_pinned) return@LaunchedEffect
+        coalescer.take()?.let { apply_target(it) }
+        withFrameNanos { }
+        withFrameNanos { }
+        val live = lazy_scroll_thumb(
+            state = state,
+            estimator = estimator,
+            track_px = geometry[2],
+            min_thumb_px = min_thumb_px,
+            geometry = FloatArray(6),
+        )
+        val gap = if (live == null) 0f else finger_top.floatValue - live.top
+        correction.snapTo(if (live_reduce_motion) 0f else gap)
+        thumb_pinned = false
+        if (correction.value != 0f) correction.animateTo(0f, tween(release_settle_ms))
+    }
+
+    DisposableEffect(state) {
+        onDispose { live_signal?.dragging = false }
+    }
+
+    if (!shown && !dragging && !thumb_pinned) return
 
     Box(
         modifier = modifier
@@ -421,46 +634,92 @@ fun vertical_scroll_bar(
             modifier = Modifier
                 .layout { measurable, constraints ->
                     val track_top = indicator_track_inset.toPx()
-                    val thumb = lazy_scroll_thumb(
-                        state = state,
-                        estimator = estimator,
-                        track_px = constraints.maxHeight - track_top * 2f,
-                        min_thumb_px = bar_min_thumb.toPx(),
-                        geometry = geometry,
-                    )
-                    drag[1] = 0f
+                    val track_px = constraints.maxHeight - track_top * 2f
+                    val follow_finger = (dragging || thumb_pinned) && geometry[1] > 0f
+                    val thumb = if (follow_finger) {
+                        val height = min(geometry[1], max(track_px, 0f))
+                        scroll_thumb(
+                            top = finger_top.floatValue.coerceIn(0f, max(track_px - height, 0f)),
+                            height = height,
+                        )
+                    } else {
+                        lazy_scroll_thumb(
+                            state = state,
+                            estimator = estimator,
+                            track_px = track_px,
+                            min_thumb_px = min_thumb_px,
+                            geometry = geometry,
+                        )?.let { base ->
+                            val shift = correction.value
+                            if (shift == 0f) {
+                                base
+                            } else {
+                                base.copy(top = (base.top + shift).coerceIn(0f, max(track_px - base.height, 0f)))
+                            }
+                        }
+                    }
                     if (thumb == null) geometry[1] = 0f
+                    geometry[2] = track_px
+                    val placed_y = (track_top + (thumb?.top ?: 0f)).roundToInt()
+                    geometry[5] = placed_y - track_top
                     val placeable = measurable.measure(
                         Constraints.fixed(constraints.maxWidth, thumb?.height?.roundToInt() ?: 0),
                     )
                     layout(constraints.maxWidth, constraints.maxHeight) {
-                        placeable.place(0, (track_top + (thumb?.top ?: 0f)).roundToInt())
+                        placeable.place(0, placed_y)
                     }
                 }
                 .pointerInput(state) {
                     detectVerticalDragGestures(
                         onDragStart = { start ->
-                            drag[0] = start.y
-                            drag[1] = 0f
+                            val info = state.layoutInfo
+                            val first = info.visibleItemsInfo.firstOrNull()
+                            val map = estimator.snapshot(info.totalItemsCount, info.mainAxisItemSpacing)
+                            val viewport = (info.viewportEndOffset - info.viewportStartOffset).toDouble()
+                            val start_offset = if (first == null) 0.0 else max(map.offset_of(first.index) - first.offset, 0.0)
+                            val content = map.content_px(info.beforeContentPadding + info.afterContentPadding)
+                            val start_top = geometry[5]
+                            plan_holder[0] = fast_scroll_plan(
+                                map = map,
+                                start_top = start_top,
+                                travel = max(geometry[2] - geometry[1], 0f),
+                                start_offset = start_offset,
+                                range = max(content - viewport, start_offset),
+                                end_overscroll_px = (viewport * 4).toInt().coerceIn(4096, 1 shl 22),
+                            )
+                            grab[0] = start.y
+                            finger_top.floatValue = start_top
+                            coalescer.reset()
+                            thumb_pinned = false
                             dragging = true
-                            scope.launch { state.stopScroll(MutatePriority.UserInput) }
+                            scope.launch {
+                                correction.snapTo(0f)
+                                state.stopScroll(MutatePriority.UserInput)
+                            }
                             if (haptic_enabled) haptics(aster_haptic.tick)
                         },
-                        onDragEnd = { dragging = false },
-                        onDragCancel = { dragging = false },
+                        onDragEnd = {
+                            thumb_pinned = true
+                            dragging = false
+                        },
+                        onDragCancel = {
+                            thumb_pinned = true
+                            dragging = false
+                        },
                         onVerticalDrag = { change, _ ->
                             change.consume()
-                            val thumb_delta = change.position.y - drag[0] - drag[1]
-                            val content_delta = thumb_drag_to_content_delta(
-                                thumb_delta_px = thumb_delta,
-                                track_px = geometry[2],
-                                thumb_px = geometry[1],
-                                content_px = geometry[3],
-                                viewport_px = geometry[4],
-                            )
-                            if (content_delta != 0f) {
-                                val consumed = state.dispatchRawDelta(content_delta)
-                                drag[1] += thumb_delta * (consumed / content_delta)
+                            val plan = plan_holder[0]
+                            if (plan != null) {
+                                val top = (geometry[5] + change.position.y - grab[0]).coerceIn(0f, plan.travel)
+                                finger_top.floatValue = top
+                                val offset = fast_scroll_drag_offset(
+                                    top_px = top,
+                                    start_top_px = plan.start_top,
+                                    travel_px = plan.travel,
+                                    start_offset_px = plan.start_offset,
+                                    range_px = plan.range,
+                                )
+                                coalescer.offer(fast_scroll_target_px(offset, plan.range))
                             }
                         },
                     )
@@ -476,7 +735,7 @@ fun vertical_scroll_bar(
                         ),
                         size = Size(width, size.height),
                         cornerRadius = CornerRadius(width / 2f),
-                        alpha = if (dragging) 1f else alpha.value,
+                        alpha = if (dragging || thumb_pinned) 1f else alpha.value,
                     )
                 },
         )

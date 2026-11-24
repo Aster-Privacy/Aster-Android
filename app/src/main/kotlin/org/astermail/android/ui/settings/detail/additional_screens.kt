@@ -35,7 +35,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -88,6 +87,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -381,36 +381,13 @@ internal fun revoke_pill_button(
     in_flight: Boolean,
     on_click: () -> Unit,
 ) {
-    val colors = AsterMaterial.colors
-    val shape = RoundedCornerShape(AsterRadius.pill)
-    Box(
-        modifier = Modifier
-            .height(36.dp)
-            .widthIn(min = 84.dp)
-            .clip(shape)
-            .background(if (in_flight) revoke_deep_red.copy(alpha = 0.55f) else revoke_deep_red)
-            .clickable(enabled = !in_flight, onClick = on_click)
-            .padding(horizontal = AsterSpacing.md),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            color = Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.alpha(if (in_flight) 0f else 1f),
-        )
-        if (in_flight) {
-            org.astermail.android.design.components.aster_spinner(
-                modifier = Modifier.size(16.dp),
-                color = Color.White,
-                stroke_width = 2.dp,
-            )
-        }
-    }
+    org.astermail.android.design.components.AsterCompactDestructiveButton(
+        label = label,
+        onClick = on_click,
+        is_loading = in_flight,
+        modifier = Modifier.widthIn(min = 84.dp),
+    )
 }
-
-private val revoke_deep_red = Color(0xFFB91C1C)
 
 private const val devices_page_size = 10
 
@@ -488,7 +465,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val copy_link = {
         if (link.isNotEmpty()) {
             if (write_to_clipboard(context, ClipData.newPlainText(clipboard_label, link))) {
-                Toast.makeText(context, link_copied_text, Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(link_copied_text.toString())
             } else {
                 show_copy_failed_toast(context)
             }
@@ -796,22 +773,16 @@ private fun referral_steps_card() {
 private fun referral_step_row(number: Int, title: String, body: String) {
     val colors = AsterMaterial.colors
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Box(
-            modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(colors.bg_tertiary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = number.toString(),
-                color = colors.text_primary,
-                fontSize = 13.sp,
-                lineHeight = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Spacer(Modifier.width(AsterSpacing.md))
+        Text(
+            text = number.toString(),
+            color = colors.text_tertiary,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(20.dp),
+        )
+        Spacer(Modifier.width(AsterSpacing.sm))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -900,20 +871,12 @@ private fun referral_empty_history() {
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .acrylic(colors, CircleShape, colors.bg_secondary),
-                contentAlignment = Alignment.Center,
-            ) {
-                androidx.compose.material3.Icon(
-                    imageVector = TablerIcons.Users,
-                    contentDescription = null,
-                    tint = colors.text_secondary,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
+            androidx.compose.material3.Icon(
+                imageVector = TablerIcons.Users,
+                contentDescription = null,
+                tint = colors.text_tertiary,
+                modifier = Modifier.size(28.dp),
+            )
             Spacer(Modifier.height(AsterSpacing.md))
             Text(
                 text = stringResource(R.string.no_referrals_yet),
@@ -1092,11 +1055,11 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                         try {
                             context.cacheDir.deleteRecursively()
                             cache_cleared = true
-                            Toast.makeText(context, cache_cleared_text, Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(cache_cleared_text.toString())
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (_: Throwable) {
-                            Toast.makeText(context, cache_clear_failed_text, Toast.LENGTH_SHORT).show()
+                            org.astermail.android.ui.common.app_toast.show(cache_clear_failed_text.toString())
                         }
                     },
                 )
@@ -1177,7 +1140,7 @@ fun LabelsScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(labels_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -1415,7 +1378,7 @@ fun FoldersScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(folders_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -1755,7 +1718,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -1910,10 +1873,12 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) { if (state.subscription == null) vm.load_subscription() }
+    LaunchedEffect(Unit) { vm.load_subscription(force = false) }
 
     val sub = state.subscription
-    val is_family = sub?.effective_plan_name?.contains("family", ignoreCase = true) == true
+    val family_code = sub?.plan?.code?.trim()?.lowercase().orEmpty()
+    val is_family = family_code == "duo" || family_code.startsWith("family") ||
+        sub?.effective_plan_name?.contains("family", ignoreCase = true) == true
     val play_install = org.astermail.android.billing.remember_play_install()
 
     detail_scaffold(
@@ -1921,15 +1886,17 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         on_back = on_back,
         on_refresh = { vm.join_launched { vm.load_subscription(force = true) } },
     ) {
-        if (state.is_loading && sub == null) {
+        if (sub == null && state.subscription_load_failed && !state.subscription_loading) {
+            load_failed_card(
+                state.subscription_error ?: stringResource(R.string.subscription_load_failed_body),
+            ) { vm.load_subscription(force = true) }
+        } else if (sub == null) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
                 settings_load_spinner()
             }
-        } else if (state.subscription_load_failed && sub == null) {
-            load_failed_card(state.error) { vm.load_subscription() }
         } else if (is_family) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 if (!play_install) {
@@ -1987,7 +1954,7 @@ internal fun copy_claim_link(context: Context, url: String, toast: String) {
         return
     }
     schedule_sensitive_clipboard_clear(context)
-    Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
+    org.astermail.android.ui.common.app_toast.show(toast.toString())
 }
 
 @Composable
@@ -2124,7 +2091,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                                             if (new_url != null) {
                                                 copy_claim_link(context, new_url, context.getString(R.string.kids_link_regenerated))
                                             } else {
-                                                Toast.makeText(context, context.getString(R.string.kids_action_failed), Toast.LENGTH_SHORT).show()
+                                                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.kids_action_failed).toString())
                                             }
                                         }
                                     },
@@ -2155,9 +2122,9 @@ fun KidsReservedScreen(on_back: () -> Unit) {
             on_confirm = {
                 vm.release_reservation(target.id) { ok ->
                     if (ok) {
-                        Toast.makeText(context, context.getString(R.string.kids_released), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.kids_released).toString())
                     } else {
-                        Toast.makeText(context, context.getString(R.string.kids_action_failed), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.kids_action_failed).toString())
                     }
                 }
                 release_target = null

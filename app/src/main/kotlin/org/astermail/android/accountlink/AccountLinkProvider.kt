@@ -74,7 +74,7 @@ class AccountLinkProvider : ContentProvider() {
         val app = context?.applicationContext ?: return error_bundle(ERROR_UNAVAILABLE)
         val entry = EntryPointAccessors.fromApplication(app, AccountLinkEntryPoint::class.java)
         return when (method) {
-            METHOD_ACCOUNTS -> list_accounts(entry)
+            METHOD_ACCOUNTS -> list_accounts(app, entry)
             METHOD_LINK -> link_account(
                 app,
                 entry,
@@ -90,16 +90,14 @@ class AccountLinkProvider : ContentProvider() {
         }
     }
 
-    private fun list_accounts(entry: AccountLinkEntryPoint): Bundle {
+    private fun list_accounts(app: Context, entry: AccountLinkEntryPoint): Bundle {
         val current_id = entry.account_store().get_current_id()
-        val rows = entry.account_store().get_all().mapNotNull { account ->
+        val locked = entry.session_key_store().is_locked()
+        val current_paid = runCatching {
+            app.getSharedPreferences(PLAN_PREFS, Context.MODE_PRIVATE).getBoolean(PLAN_PAID_KEY, false)
+        }.getOrDefault(false)
+        val rows = entry.account_store().get_all().map { account ->
             val is_current = account.id == current_id
-            val passphrase = if (is_current) {
-                entry.session_key_store().get_passphrase()
-            } else {
-                entry.session_snapshot_store().load(account.id)?.passphrase
-            } ?: return@mapNotNull null
-            zeroize(passphrase)
             Bundle().apply {
                 putString(KEY_ID, account.id)
                 putString(KEY_EMAIL, account.email)
@@ -108,9 +106,14 @@ class AccountLinkProvider : ContentProvider() {
                 putString(KEY_PROFILE_PICTURE, account.profile_picture)
                 putString(KEY_API_BASE, ApiBuildConfig.API_BASE_URL)
                 putBoolean(KEY_IS_CURRENT, is_current)
+                putBoolean(KEY_LOCKED, locked)
+                putBoolean(KEY_HAS_PAID, is_current && current_paid)
             }
         }
-        return Bundle().apply { putParcelableArrayList(KEY_ACCOUNTS, ArrayList(rows)) }
+        return Bundle().apply {
+            putParcelableArrayList(KEY_ACCOUNTS, ArrayList(rows))
+            putInt(KEY_PROTOCOL, PROTOCOL_VERSION)
+        }
     }
 
     private fun link_account(
@@ -146,6 +149,8 @@ class AccountLinkProvider : ContentProvider() {
                     is DeviceLinkError.CodeNotFound -> ERROR_CODE_NOT_FOUND
                     is DeviceLinkError.PlanUpgradeRequired -> ERROR_PLAN
                     is ApiError.UnauthorizedError, is ApiError.ForbiddenError -> ERROR_SESSION
+                    is ApiError.NetworkError, is java.io.IOException -> ERROR_OFFLINE
+                    is ApiError.RateLimited -> ERROR_RATE_LIMITED
                     else -> ERROR_UNAVAILABLE
                 },
             )
@@ -331,6 +336,12 @@ class AccountLinkProvider : ContentProvider() {
         const val KEY_OK = "ok"
         const val KEY_ERROR = "error"
         const val KEY_CONFIRM_INTENT = "confirm_intent"
+        const val KEY_LOCKED = "locked"
+        const val KEY_HAS_PAID = "has_paid"
+        const val KEY_PROTOCOL = "protocol"
+        const val PROTOCOL_VERSION = 2
+        private const val PLAN_PREFS = "aster_plan"
+        private const val PLAN_PAID_KEY = "has_paid"
         const val ERROR_FORBIDDEN = "forbidden"
         const val ERROR_UNKNOWN_METHOD = "unknown_method"
         const val ERROR_BAD_REQUEST = "bad_request"
@@ -342,5 +353,7 @@ class AccountLinkProvider : ContentProvider() {
         const val ERROR_PLAN = "plan"
         const val ERROR_SESSION = "session"
         const val ERROR_UNAVAILABLE = "unavailable"
+        const val ERROR_OFFLINE = "offline"
+        const val ERROR_RATE_LIMITED = "rate_limited"
     }
 }

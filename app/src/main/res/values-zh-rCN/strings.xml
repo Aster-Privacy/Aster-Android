@@ -3003,6 +3003,9 @@
     <string name="translation_storage_remove_all">全部删除</string>
     <string name="translation_storage_removed">语言包已删除</string>
     <string name="translation_offer_download">此邮件为%1$s。翻译时会下载语言包。</string>
+    <string name="translation_bar_translate_to">翻译为%1$s</string>
+    <string name="translation_bar_translated_from">已从%1$s翻译</string>
+    <string name="translation_bar_downloading">正在下载%1$s语言包</string>
     <string name="contact_support">联系支持团队</string>
     <string name="domain_purchase_manage">管理</string>
     <string name="domain_purchase_cancel_payment_title">取消此付款？</string>
@@ -3122,6 +3125,10 @@
     <string name="remove_photo">移除照片</string>
     <string name="add_photo">添加照片</string>
     <string name="photo_too_large">请选择较小的图片</string>
+    <string name="contact_photo_unreadable">Aster 无法打开此图片。请尝试其他照片。</string>
+    <string name="contact_discard_changes_title">要舍弃更改吗？</string>
+    <string name="contact_discard_changes_message">你对此联系人的更改尚未保存。</string>
+    <string name="contact_keep_editing">继续编辑</string>
     <string name="no_contacts_yet">暂无联系人</string>
     <string name="no_contacts_match">没有匹配 \"%1$s\" 的联系人</string>
     <string name="no_contacts_in_trash">废纸篓是空的</string>
@@ -3675,6 +3682,13 @@
         <item quantity="other">已添加 %d 个联系人</item>
     </plurals>
     <string name="body_index_status">正在为搜索索引邮件正文：%1$d / %2$d</string>
+    <string name="search_status_indexing_mail">正在为邮件编制索引</string>
+    <string name="search_status_indexing_text">正在为邮件正文编制索引</string>
+    <string name="search_status_waiting_wifi">连接 Wi-Fi 后将继续为正文编制索引</string>
+    <string name="search_status_paused">索引已暂停</string>
+    <string name="search_status_partial">结果可能不完整</string>
+    <string name="search_status_count">%1$s / %2$s</string>
+    <string name="search_refine_placeholder">在结果中搜索</string>
     <string name="mail_key_upgrade_title">正在更新已保存的邮件</string>
     <string name="mail_key_upgrade_running">Aster Mail 正在使用你当前的密钥重新加密已保存的邮件。请在完成前保持此窗口打开。</string>
     <string name="mail_key_upgrade_failed">Aster Mail 未能完成已保存邮件的更新。你的邮件没有任何改动。请检查网络连接，然后重试。</string>
@@ -3696,4 +3710,8 @@
     <string name="attachment_unverified">未验证的附件</string>
     <string name="confirm_back_exit">退出前确认</string>
     <string name="confirm_back_exit_subtitle">在收件箱中按两次返回键退出应用</string>
+    <string name="toast_position_title">应用内提示位置</string>
+    <string name="toast_position_subtitle">使用应用时提示显示的位置</string>
+    <string name="toast_position_top">顶部</string>
+    <string name="toast_position_bottom">底部</string>
 </resources>

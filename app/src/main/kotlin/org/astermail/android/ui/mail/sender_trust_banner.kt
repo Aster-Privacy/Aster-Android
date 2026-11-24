@@ -184,6 +184,22 @@ private fun sender_trust_note(
     tag: String,
 ) {
     val colors = AsterMaterial.colors
+    if (!is_warning && title == null) {
+        compact_notice_bar(
+            modifier = Modifier.testTag(tag),
+            leading = { compact_notice_icon(TablerIcons.InfoCircle, icon_tint) },
+            surface = surface,
+        ) {
+            Text(
+                text = body,
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()

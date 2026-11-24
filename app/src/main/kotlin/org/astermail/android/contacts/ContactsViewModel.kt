@@ -70,6 +70,7 @@ data class ContactsUiState(
     val trashed_contacts: List<Contact> = emptyList(),
     val selected_contact: Contact? = null,
     val is_loading: Boolean = false,
+    val contact_loading: Boolean = false,
     val is_syncing: Boolean = false,
     val sync_message: String? = null,
     val error: String? = null,
@@ -156,8 +157,18 @@ class ContactsViewModel @Inject constructor(
     fun load_contacts(quiet: Boolean = false) {
         if (list_in_flight) return
         list_in_flight = true
-        if (!quiet) _state.value = _state.value.copy(is_loading = true, error = null)
+        val needs_first_paint = _state.value.contacts.isEmpty() && !_state.value.contacts_loaded
+        if (!quiet) {
+            _state.value = _state.value.copy(is_loading = _state.value.contacts.isEmpty(), error = null)
+        }
         viewModelScope.launch {
+            if (needs_first_paint) {
+                val cached = repository.cached_contacts_snapshot()
+                    ?.filterNot { is_trash_expired(it.deleted_at) }
+                if (!cached.isNullOrEmpty() && _state.value.contacts.isEmpty() && !_state.value.contacts_loaded) {
+                    _state.value = with_contacts(_state.value, cached).copy(is_loading = false)
+                }
+            }
             val outcome = repository.fetch_contacts()
             list_in_flight = false
             outcome.fold(
@@ -189,7 +200,11 @@ class ContactsViewModel @Inject constructor(
 
     fun load_contact(contact_id: String) {
         latest_contact_request = contact_id
-        _state.value = _state.value.copy(is_loading = true, error = null, selected_contact = null)
+        _state.value = _state.value.copy(
+            contact_loading = true,
+            error = null,
+            selected_contact = _state.value.selected_contact?.takeIf { it.id == contact_id },
+        )
         viewModelScope.launch {
             val result = repository.fetch_contact(contact_id)
             if (latest_contact_request != contact_id) return@launch
@@ -197,12 +212,12 @@ class ContactsViewModel @Inject constructor(
                 onSuccess = { contact ->
                     _state.value = _state.value.copy(
                         selected_contact = contact,
-                        is_loading = false,
+                        contact_loading = false,
                     )
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(
-                        is_loading = false,
+                        contact_loading = false,
                         error = friendly_error(t),
                     )
                 },
@@ -220,19 +235,29 @@ class ContactsViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null, save_success = false)
         viewModelScope.launch {
             val result = if (existing_id != null) {
-                repository.update_contact(existing_id, contact).map { }
+                repository.update_contact(existing_id, contact).map { existing_id }
             } else {
-                repository.create_contact(contact).map { }
+                repository.create_contact(contact).map { it.id.orEmpty() }
             }
             mutation_in_flight = false
             result.fold(
-                onSuccess = {
-                    _state.value = _state.value.copy(
+                onSuccess = { saved_id ->
+                    val current = _state.value
+                    val next = if (saved_id.isNotBlank()) {
+                        val saved = contact.copy(id = saved_id)
+                        val merged = current.contacts.filter { it.id != saved_id } + saved
+                        with_contacts(current, merged + current.trashed_contacts).let { updated ->
+                            if (updated.selected_contact?.id == saved_id) updated.copy(selected_contact = saved) else updated
+                        }
+                    } else {
+                        current
+                    }
+                    _state.value = next.copy(
                         is_loading = false,
                         save_success = true,
                     )
                     on_complete?.invoke(true)
-                    load_contacts()
+                    load_contacts(quiet = true)
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(

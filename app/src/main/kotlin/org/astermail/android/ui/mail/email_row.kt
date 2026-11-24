@@ -271,9 +271,10 @@ fun EmailRow(
         stringResource(R.string.unknown),
     )
     val marks_hidden = trust?.show_identity_marks == false
-    val sender_color = inbox_sender_color(colors, is_unread)
-    val subject_color = inbox_subject_color(colors, is_unread)
-    val preview_color = inbox_preview_color(colors, is_unread)
+    val read_fade_scale = local_read_fade_scale.current
+    val sender_color = inbox_sender_color(colors, is_unread, read_fade_scale)
+    val subject_color = inbox_subject_color(colors, is_unread, read_fade_scale)
+    val preview_color = inbox_preview_color(colors, is_unread, read_fade_scale)
     val row_bg = aster_animate_color(
         target = when {
             is_selected -> inbox_card_selected_color(colors)
@@ -298,6 +299,7 @@ fun EmailRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .press_preload(email.id, enabled = !select_mode)
             .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
@@ -394,7 +396,7 @@ fun EmailRow(
                 Text(
                     text = relative_time,
                     style = MaterialTheme.typography.labelSmall,
-                    color = inbox_time_color(colors, is_unread),
+                    color = inbox_time_color(colors, is_unread, read_fade_scale),
                     fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (email.has_attachment) 4.dp else AsterSpacing.sm),
@@ -624,9 +626,10 @@ fun ThreadInboxRow(
             newest_vetted = trust != null,
         )
     }
-    val sender_color = inbox_sender_color(colors, is_unread)
-    val subject_color = inbox_subject_color(colors, is_unread)
-    val preview_color = inbox_preview_color(colors, is_unread)
+    val read_fade_scale = local_read_fade_scale.current
+    val sender_color = inbox_sender_color(colors, is_unread, read_fade_scale)
+    val subject_color = inbox_subject_color(colors, is_unread, read_fade_scale)
+    val preview_color = inbox_preview_color(colors, is_unread, read_fade_scale)
     val row_bg = aster_animate_color(
         target = when {
             is_selected -> inbox_card_selected_color(colors)
@@ -651,6 +654,7 @@ fun ThreadInboxRow(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .press_preload(email.id, enabled = !select_mode)
             .then(
                 if (select_mode) {
                     Modifier.select_tap(click_label = select_tap_label, on_tap = on_click, interaction_source = interaction_source)
@@ -784,7 +788,7 @@ fun ThreadInboxRow(
                 Text(
                     text = relative_time,
                     style = inbox_time_text_style(),
-                    color = inbox_time_color(colors, is_unread),
+                    color = inbox_time_color(colors, is_unread, read_fade_scale),
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (thread.has_attachment) 4.dp else AsterSpacing.sm),
                 )
@@ -1040,22 +1044,24 @@ private const val read_subject_fade = 0.46f
 private const val read_preview_fade = 0.56f
 private const val unread_preview_fade = 0.30f
 
+val local_read_fade_scale = androidx.compose.runtime.staticCompositionLocalOf { 1f }
+
 private fun fade_toward_surface(colors: AsterSemanticColors, amount: Float): Color {
     val surface = if (colors.is_glass) colors.solid_bg else colors.bg_primary
     return androidx.compose.ui.graphics.lerp(colors.text_primary, surface.copy(alpha = 1f), amount)
 }
 
-internal fun inbox_sender_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.text_primary else fade_toward_surface(colors, read_sender_fade)
+internal fun inbox_sender_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.text_primary else fade_toward_surface(colors, read_sender_fade * fade_scale)
 
-internal fun inbox_subject_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.text_primary else fade_toward_surface(colors, read_subject_fade)
+internal fun inbox_subject_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.text_primary else fade_toward_surface(colors, read_subject_fade * fade_scale)
 
-internal fun inbox_preview_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    fade_toward_surface(colors, if (unread) unread_preview_fade else read_preview_fade)
+internal fun inbox_preview_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    fade_toward_surface(colors, if (unread) unread_preview_fade else read_preview_fade * fade_scale)
 
-internal fun inbox_time_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.accent_blue else fade_toward_surface(colors, read_preview_fade)
+internal fun inbox_time_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.accent_blue else fade_toward_surface(colors, read_preview_fade * fade_scale)
 
 internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {

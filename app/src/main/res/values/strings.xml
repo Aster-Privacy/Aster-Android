@@ -3213,6 +3213,9 @@
     <string name="translation_storage_remove_all">Remove all</string>
     <string name="translation_storage_removed">Language packs removed</string>
     <string name="translation_offer_download">This message is in %1$s. Translating it downloads a language pack.</string>
+    <string name="translation_bar_translate_to">Translate to %1$s</string>
+    <string name="translation_bar_translated_from">Translated from %1$s</string>
+    <string name="translation_bar_downloading">Downloading the %1$s language pack</string>
     <string name="contact_support">Contact support</string>
     <string name="domain_purchase_manage">Manage</string>
     <string name="domain_purchase_cancel_payment_title">Cancel this payment?</string>
@@ -3281,6 +3284,10 @@
     <string name="remove_photo">Remove photo</string>
     <string name="add_photo">Add photo</string>
     <string name="photo_too_large">Pick a smaller image</string>
+    <string name="contact_photo_unreadable">Aster can\'t open this image. Try a different photo.</string>
+    <string name="contact_discard_changes_title">Discard changes?</string>
+    <string name="contact_discard_changes_message">Your changes to this contact aren\'t saved.</string>
+    <string name="contact_keep_editing">Keep editing</string>
     <string name="no_contacts_yet">No contacts yet</string>
     <string name="no_contacts_match">No contacts match \"%1$s\"</string>
     <string name="no_contacts_in_trash">Trash is empty</string>
@@ -3752,6 +3759,13 @@
         <item quantity="other">%d contacts added</item>
     </plurals>
     <string name="body_index_status" tools:ignore="PluralsCandidate">Indexing message text for search: %1$d of %2$d</string>
+    <string name="search_status_indexing_mail">Indexing mail</string>
+    <string name="search_status_indexing_text">Indexing message text</string>
+    <string name="search_status_waiting_wifi">Message text indexing continues on Wi-Fi</string>
+    <string name="search_status_paused">Indexing paused</string>
+    <string name="search_status_partial">Results might be incomplete</string>
+    <string name="search_status_count">%1$s of %2$s</string>
+    <string name="search_refine_placeholder">Search within results</string>
     <string name="mail_key_upgrade_title">Updating your saved mail</string>
     <string name="mail_key_upgrade_running">Aster Mail is re-encrypting your saved messages with your current keys. Keep this window open until it finishes.</string>
     <string name="mail_key_upgrade_failed">Aster Mail couldn\'t finish updating your saved messages. Your mail is unchanged. Check your connection, then try again.</string>
@@ -3777,4 +3791,8 @@
     <string name="confirm_back_exit">Confirm before exiting</string>
     <string name="confirm_back_exit_subtitle">Press back twice to leave the app from the inbox</string>
     <string name="hide_quoted_text">Hide quoted text</string>
+    <string name="toast_position_title">In-app alert position</string>
+    <string name="toast_position_subtitle">Where alerts appear while you use the app</string>
+    <string name="toast_position_top">Top</string>
+    <string name="toast_position_bottom">Bottom</string>
 </resources>

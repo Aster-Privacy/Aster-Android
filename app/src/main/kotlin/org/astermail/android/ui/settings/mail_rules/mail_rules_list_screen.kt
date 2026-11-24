@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -131,11 +131,7 @@ fun MailRulesListScreen(
     LaunchedEffect(state.error, state.rules.isEmpty()) {
         val message_res = state.error ?: return@LaunchedEffect
         if (state.rules.isEmpty()) return@LaunchedEffect
-        android.widget.Toast.makeText(
-            rules_context,
-            rules_context.getString(message_res),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(rules_context.getString(message_res).toString())
         vm.clear_error()
     }
     Box(
@@ -193,8 +189,9 @@ fun MailRulesListScreen(
                         else -> Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .vertical_scroll_with_indicator()
-                                .padding(horizontal = AsterSpacing.lg),
+                                .vertical_scroll_with_fade()
+                                .padding(horizontal = AsterSpacing.lg)
+                                .padding(top = AsterSpacing.lg),
                         ) {
                             settings_group {
                                 sort_rules_for_display(state.rules).forEachIndexed { index, rule ->
@@ -256,7 +253,8 @@ private fun mail_rules_skeleton() {
         modifier = Modifier
             .fillMaxSize()
             .skeleton_reveal()
-            .padding(horizontal = AsterSpacing.lg),
+            .padding(horizontal = AsterSpacing.lg)
+            .padding(top = AsterSpacing.lg),
     ) {
         settings_group {
             repeat(6) { index ->

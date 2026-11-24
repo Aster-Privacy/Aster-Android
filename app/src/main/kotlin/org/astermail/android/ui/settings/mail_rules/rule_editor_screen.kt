@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -153,7 +153,7 @@ fun RuleEditorScreen(
     val editor_context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(settings_state.action_result) {
         val msg = settings_state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(editor_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         settings_vm.clear_action_result()
     }
 
@@ -348,7 +348,7 @@ fun RuleEditorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .vertical_scroll_with_indicator()
+                .vertical_scroll_with_fade()
                 .padding(AsterSpacing.lg),
         ) {
             if (is_read_only) {

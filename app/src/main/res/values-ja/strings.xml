@@ -3005,6 +3005,9 @@
     <string name="translation_storage_remove_all">すべて削除</string>
     <string name="translation_storage_removed">言語パックを削除しました</string>
     <string name="translation_offer_download">このメッセージは%1$sです。翻訳すると言語パックをダウンロードします。</string>
+    <string name="translation_bar_translate_to">%1$sに翻訳</string>
+    <string name="translation_bar_translated_from">%1$sから翻訳</string>
+    <string name="translation_bar_downloading">%1$sの言語パックをダウンロードしています</string>
     <string name="contact_support">サポートに問い合わせる</string>
     <string name="domain_purchase_manage">管理</string>
     <string name="domain_purchase_cancel_payment_title">この支払いをキャンセルしますか？</string>
@@ -3124,6 +3127,10 @@
     <string name="remove_photo">写真を削除</string>
     <string name="add_photo">写真を追加</string>
     <string name="photo_too_large">もっと小さい画像を選んでください</string>
+    <string name="contact_photo_unreadable">Aster はこの画像を開けません。別の写真をお試しください。</string>
+    <string name="contact_discard_changes_title">変更を破棄しますか？</string>
+    <string name="contact_discard_changes_message">この連絡先への変更は保存されていません。</string>
+    <string name="contact_keep_editing">編集を続ける</string>
     <string name="no_contacts_yet">連絡先はまだありません</string>
     <string name="no_contacts_match">\"%1$s\" に一致する連絡先はありません</string>
     <string name="no_contacts_in_trash">ゴミ箱は空です</string>
@@ -3682,6 +3689,13 @@
         <item quantity="other">%d 件の連絡先を追加しました</item>
     </plurals>
     <string name="body_index_status">検索用にメッセージ本文をインデックス中: %1$d / %2$d</string>
+    <string name="search_status_indexing_mail">メールをインデックス中</string>
+    <string name="search_status_indexing_text">メッセージ本文をインデックス中</string>
+    <string name="search_status_waiting_wifi">本文のインデックス作成はWi-Fi接続時に再開します</string>
+    <string name="search_status_paused">インデックス作成を一時停止中</string>
+    <string name="search_status_partial">結果が不完全な可能性があります</string>
+    <string name="search_status_count">%1$s / %2$s</string>
+    <string name="search_refine_placeholder">結果内を検索</string>
     <string name="mail_key_upgrade_title">保存済みのメールを更新しています</string>
     <string name="mail_key_upgrade_running">Aster Mail は保存済みのメッセージを現在の鍵で再暗号化しています。完了するまでこのウィンドウを開いたままにしてください。</string>
     <string name="mail_key_upgrade_failed">Aster Mail は保存済みのメッセージの更新を完了できませんでした。メールは変更されていません。接続を確認してから、もう一度お試しください。</string>
@@ -3703,4 +3717,8 @@
     <string name="attachment_unverified">未確認の添付ファイル</string>
     <string name="confirm_back_exit">終了前に確認</string>
     <string name="confirm_back_exit_subtitle">受信トレイで戻るを2回押してアプリを終了します</string>
+    <string name="toast_position_title">アプリ内通知の位置</string>
+    <string name="toast_position_subtitle">アプリの使用中に通知を表示する位置</string>
+    <string name="toast_position_top">上</string>
+    <string name="toast_position_bottom">下</string>
 </resources>

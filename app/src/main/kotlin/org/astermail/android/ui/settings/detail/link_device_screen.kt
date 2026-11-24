@@ -41,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,10 +73,9 @@ import org.astermail.android.ui.settings.link_device_icon
 
 private const val MAX_MACHINE_NAME_CHARS = 64
 private const val step_fill_ms = 260
-private const val hero_badge_alpha = 0.14f
 private val step_track_height = 4.dp
 private val hero_badge_size = 72.dp
-private val hero_icon_size = 34.dp
+private val hero_icon_size = 48.dp
 
 private val link_device_step_titles = listOf(
     R.string.link_device_step_code,
@@ -316,8 +314,7 @@ private fun link_device_hero(
     ) {
         Box(
             modifier = Modifier
-                .size(hero_badge_size)
-                .background(tint.copy(alpha = hero_badge_alpha).compositeOver(colors.bg_primary), CircleShape),
+                .size(hero_badge_size),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

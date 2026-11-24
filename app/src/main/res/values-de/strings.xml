@@ -3023,6 +3023,9 @@
     <string name="translation_storage_remove_all">Alle entfernen</string>
     <string name="translation_storage_removed">Sprachpakete entfernt</string>
     <string name="translation_offer_download">Diese Nachricht ist auf %1$s. Beim Übersetzen wird ein Sprachpaket heruntergeladen.</string>
+    <string name="translation_bar_translate_to">Auf %1$s übersetzen</string>
+    <string name="translation_bar_translated_from">Übersetzt aus: %1$s</string>
+    <string name="translation_bar_downloading">Sprachpaket für %1$s wird heruntergeladen</string>
     <string name="contact_support">Support kontaktieren</string>
     <string name="domain_purchase_manage">Verwalten</string>
     <string name="domain_purchase_cancel_payment_title">Diese Zahlung abbrechen?</string>
@@ -3145,6 +3148,10 @@
     <string name="remove_photo">Foto entfernen</string>
     <string name="add_photo">Foto hinzufügen</string>
     <string name="photo_too_large">Wählen Sie ein kleineres Bild</string>
+    <string name="contact_photo_unreadable">Aster kann dieses Bild nicht öffnen. Versuche es mit einem anderen Foto.</string>
+    <string name="contact_discard_changes_title">Änderungen verwerfen?</string>
+    <string name="contact_discard_changes_message">Deine Änderungen an diesem Kontakt sind nicht gespeichert.</string>
+    <string name="contact_keep_editing">Weiter bearbeiten</string>
     <string name="no_contacts_yet">Noch keine Kontakte</string>
     <string name="no_contacts_match">Keine Kontakte stimmen mit \"%1$s\" überein</string>
     <string name="no_contacts_in_trash">Der Papierkorb ist leer</string>
@@ -3702,6 +3709,13 @@
         <item quantity="other">%d Kontakte hinzugefügt</item>
     </plurals>
     <string name="body_index_status">Nachrichtentext wird für die Suche indexiert: %1$d von %2$d</string>
+    <string name="search_status_indexing_mail">E-Mails werden indexiert</string>
+    <string name="search_status_indexing_text">Nachrichtentext wird indexiert</string>
+    <string name="search_status_waiting_wifi">Indexierung des Nachrichtentexts wird im WLAN fortgesetzt</string>
+    <string name="search_status_paused">Indexierung pausiert</string>
+    <string name="search_status_partial">Ergebnisse sind möglicherweise unvollständig</string>
+    <string name="search_status_count">%1$s von %2$s</string>
+    <string name="search_refine_placeholder">In Ergebnissen suchen</string>
     <string name="mail_key_upgrade_title">Gespeicherte E-Mails werden aktualisiert</string>
     <string name="mail_key_upgrade_running">Aster Mail verschlüsselt deine gespeicherten Nachrichten mit deinen aktuellen Schlüsseln neu. Lass dieses Fenster geöffnet, bis der Vorgang abgeschlossen ist.</string>
     <string name="mail_key_upgrade_failed">Aster Mail konnte deine gespeicherten Nachrichten nicht vollständig aktualisieren. Deine E-Mails sind unverändert. Prüfe deine Verbindung und versuche es erneut.</string>
@@ -3726,4 +3740,8 @@
     <string name="attachment_unverified">Nicht bestätigter Anhang</string>
     <string name="confirm_back_exit">Vor dem Beenden bestätigen</string>
     <string name="confirm_back_exit_subtitle">Zweimal Zurück drücken, um die App im Posteingang zu verlassen</string>
+    <string name="toast_position_title">Position der App-Hinweise</string>
+    <string name="toast_position_subtitle">Wo Hinweise erscheinen, während die App geöffnet ist</string>
+    <string name="toast_position_top">Oben</string>
+    <string name="toast_position_bottom">Unten</string>
 </resources>

@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -88,7 +87,7 @@ fun AutoForwardScreen(
     LaunchedEffect(state.save_status) {
         if (state.save_status == SaveStatus.SAVED) {
             if (state.forwarding_notice == null) {
-                Toast.makeText(context, context.getString(R.string.auto_forward_saved), Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.auto_forward_saved).toString())
             }
             vm.reset_save_status()
         }
@@ -98,14 +97,14 @@ fun AutoForwardScreen(
         if (state.save_status == SaveStatus.ERROR) {
             val message = state.error ?: context.getString(R.string.settings_save_failed_banner)
             active_rule?.let { enabled = it.enabled }
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
             vm.reset_transient_state()
         }
     }
 
     LaunchedEffect(state.forwarding_notice) {
         val notice = state.forwarding_notice ?: return@LaunchedEffect
-        Toast.makeText(context, notice, Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = notice.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         vm.clear_forwarding_notice()
     }
 

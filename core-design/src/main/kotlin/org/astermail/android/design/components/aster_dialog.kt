@@ -58,8 +58,6 @@ import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,6 +84,7 @@ import org.astermail.android.design.aster_fade_in
 import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.aster_threshold_easing
+import org.astermail.android.design.settled_safe_drawing_padding
 
 private val dialog_shape = SquircleShape(26.dp)
 private val dialog_button_shape = org.astermail.android.design.AsterShapes.control
@@ -188,8 +187,7 @@ private fun dialog_scrim(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
-                .imePadding(),
+                .settled_safe_drawing_padding(),
             contentAlignment = Alignment.Center,
             content = { content() },
         )

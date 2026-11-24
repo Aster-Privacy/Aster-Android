@@ -145,6 +145,7 @@ data class ThreadUiState(
     val attachments: Map<String, List<MessageAttachment>> = emptyMap(),
     val attachments_failed: Boolean = false,
     val attachments_loading: Set<String> = emptySet(),
+    val attachments_settled: Set<String> = emptySet(),
 )
 
 data class SearchUiState(
@@ -1064,6 +1065,7 @@ class MailViewModel @Inject constructor(
 
     override fun onCleared() {
         search_index_manager.remove_read_overlay(index_read_overlay)
+        message_preloader.unbind_requester(preload_requester)
         super.onCleared()
     }
 
@@ -2392,6 +2394,17 @@ class MailViewModel @Inject constructor(
         }
         val cur_thread = _thread_state.value
         val seed = find_item(item_id)
+        val preloaded = message_preloader.take(item_id)
+            ?.takeIf { it.grouped == repository.is_conversation_grouping_enabled && it.messages.isNotEmpty() }
+        if (preloaded != null) {
+            thread_load_job?.cancel()
+            offline_retry_item_id = null
+            thread_open_started_at = android.os.SystemClock.elapsedRealtime()
+            thread_open_painted.clear()
+            ++thread_load_generation
+            apply_preloaded_thread(item_id, preloaded, null)
+            return
+        }
         _thread_state.value = if (cur_thread.item?.id == item_id && cur_thread.messages.isNotEmpty()) {
             cur_thread.copy(is_loading = true, error = null)
         } else {
@@ -2418,6 +2431,17 @@ class MailViewModel @Inject constructor(
                 ?.takeIf { grouping && it.isNotBlank() }
             if (!paint_cached_thread(item_id, seed_token, thread_gen)) {
                 paint_cached_bodies(item_id, thread_gen)
+            }
+            val in_flight = if (message_preloader.pending(item_id) != null) {
+                withTimeoutOrNull(thread_open_timeout_ms()) { message_preloader.await_and_take(item_id) }
+                    ?.takeIf { it.grouped == grouping && it.messages.isNotEmpty() }
+            } else {
+                null
+            }
+            if (thread_gen != thread_load_generation) return@launch
+            if (in_flight != null) {
+                apply_preloaded_thread(item_id, in_flight, null)
+                return@launch
             }
             val early_attachments = start_early_attachment_fetch(item_id)
             val early_thread = if (seed_token != null) {
@@ -2476,6 +2500,7 @@ class MailViewModel @Inject constructor(
                             ),
                         )
                         log_body_paint("network")
+                        preload_neighbors_later(item_id)
                         cache_thread_participants(thread_token, resolved)
                         if (messages.isNotEmpty()) {
                             record_thread_count(thread_token, item.thread_message_count, messages)
@@ -2562,6 +2587,105 @@ class MailViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun apply_preloaded_thread(
+        item_id: String,
+        preloaded: preloaded_thread,
+        early: EarlyAttachmentFetch?,
+    ) {
+        val item = apply_tag_override(preloaded.item)
+        val messages = preloaded.messages
+        resume_failed_open(item_id)
+        mark_reactions_seen(item)
+        _thread_state.value = apply_thread_read_overrides(
+            ThreadUiState(
+                messages = messages,
+                item = item,
+                attachments = carried_attachments(item_id),
+            ),
+        )
+        log_body_paint("preload")
+        preload_neighbors_later(item_id)
+        val token = preloaded.thread_token
+        if (token != null) {
+            cache_thread_participants(token, messages)
+            record_thread_count(token, item.thread_message_count, messages)
+            viewModelScope.launch(Dispatchers.IO) {
+                runCatching { repository.persist_opened_thread(token, messages) }
+            }
+            if (messages.any { message -> message.raw_item.reactions.orEmpty().any { it.is_unseen } }) {
+                runCatching {
+                    org.astermail.android.notifications.MailPollingWorker
+                        .clear_reaction_notifications(context, token, messages.map { it.id })
+                }
+            }
+        }
+        load_attachments_for_thread(messages, early)
+        load_reactions(messages)
+    }
+
+    fun preload_message(item_id: String) {
+        if (item_id.isBlank() || item_id == DEMO_PHISH_ITEM_ID) return
+        if (_thread_state.value.item?.id == item_id) return
+        if (message_preloader.contains(item_id)) return
+        if (!preload_allowed()) return
+        if (find_item(item_id) == null) return
+        val grouping = repository.is_conversation_grouping_enabled
+        message_preloader.prepare(item_id) {
+            withTimeoutOrNull(thread_open_timeout_ms()) { build_preloaded_thread(item_id, grouping) }
+        }
+    }
+
+    private fun preload_neighbors_of(item_id: String, ordered_ids: List<String>) {
+        preload_neighbors(ordered_ids, item_id).forEach { preload_message(it) }
+    }
+
+    private var neighbor_preload_job: Job? = null
+
+    private fun preload_neighbors_later(item_id: String) {
+        neighbor_preload_job?.cancel()
+        neighbor_preload_job = viewModelScope.launch {
+            delay(message_preload_neighbor_delay_ms)
+            if (_thread_state.value.item?.id != item_id) return@launch
+            preload_neighbors_of(item_id, visible_order.value)
+        }
+    }
+
+    private suspend fun build_preloaded_thread(item_id: String, grouping: Boolean): preloaded_thread? {
+        val item = repository.fetch_single_message(item_id).getOrNull()?.let { apply_tag_override(it) }
+            ?: return null
+        val opened = message_from_item_safe(item)
+        val token = item.thread_token?.takeIf { grouping && it.isNotBlank() }
+        val messages = if (token != null) {
+            val fetched = repository.fetch_thread(token, persist = false).getOrNull() ?: return null
+            if (fetched.isEmpty()) listOf(opened) else include_opened_message(fetched, opened)
+        } else {
+            listOf(opened)
+        }
+        warm_preloaded_bodies(messages, item_id)
+        return preloaded_thread(item = item, messages = messages, thread_token = token, grouped = grouping)
+    }
+
+    private fun warm_preloaded_bodies(messages: List<ThreadMessageDecrypted>, opened_id: String) {
+        val targets = listOfNotNull(messages.firstOrNull { it.id == opened_id }, messages.lastOrNull()).distinctBy { it.id }
+        for (message in targets) {
+            runCatching {
+                org.astermail.android.ui.mail.sanitized_html_memo.warm(
+                    org.astermail.android.ui.mail.select_display_html(message.body_text, message.body_html),
+                )
+            }
+        }
+    }
+
+    private fun preload_allowed(): Boolean {
+        if (org.astermail.android.api.network.low_network_state.active()) return false
+        val power = context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+        if (power?.isPowerSaveMode == true) return false
+        val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            ?: return false
+        if (connectivity.activeNetwork == null) return false
+        return !connectivity.isActiveNetworkMetered
     }
 
     private fun forget_missing_search_item(item_id: String) {
@@ -2696,6 +2820,7 @@ class MailViewModel @Inject constructor(
                         attachments = state.attachments + fresh,
                         attachments_failed = false,
                         attachments_loading = state.attachments_loading - loading_ids,
+                        attachments_settled = state.attachments_settled + expected_ids,
                     )
                 }
                 if (metas.isEmpty()) return@launch
@@ -6122,7 +6247,10 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch { runCatching { repository.dismiss_failed_send(pending_id) } }
     }
 
+    private val preload_requester: (String) -> Unit = { id -> preload_message(id) }
+
     init {
+        message_preloader.bind_requester(preload_requester)
         seed_inbox_attachment_flags()
         observe_pending_actions()
         viewModelScope.launch {

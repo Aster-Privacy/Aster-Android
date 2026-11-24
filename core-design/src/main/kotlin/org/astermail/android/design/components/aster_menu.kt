@@ -18,6 +18,9 @@
 
 package org.astermail.android.design.components
 
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
@@ -201,6 +204,11 @@ fun aster_menu(
 
     val anchor = remember { menu_anchor_state() }
     val provider = remember(anchor) { menu_full_window_provider(anchor) }
+    val frozen_size = remember { IntArray(2) }
+    if (!visible_state.currentState && visible_state.targetState) {
+        frozen_size[0] = 0
+        frozen_size[1] = 0
+    }
     val transition = rememberTransition(visible_state, label = "aster_menu")
     val scale by transition.animateFloat(
         transitionSpec = {
@@ -266,12 +274,18 @@ fun aster_menu(
                 },
             ) { measurables, constraints ->
                 val margin = menu_screen_margin.roundToPx()
+                val limit_width = (constraints.maxWidth - margin * 2).coerceAtLeast(0)
+                val limit_height = (constraints.maxHeight - margin * 2).coerceAtLeast(0)
                 val placeable = measurables.first().measure(
                     Constraints(
-                        maxWidth = (constraints.maxWidth - margin * 2).coerceAtLeast(0),
-                        maxHeight = (constraints.maxHeight - margin * 2).coerceAtLeast(0),
+                        minWidth = frozen_size[0].coerceAtMost(limit_width),
+                        maxWidth = limit_width,
+                        minHeight = frozen_size[1].coerceAtMost(limit_height),
+                        maxHeight = limit_height,
                     ),
                 )
+                frozen_size[0] = maxOf(frozen_size[0], placeable.width)
+                frozen_size[1] = maxOf(frozen_size[1], placeable.height)
                 layout(constraints.maxWidth, constraints.maxHeight) {
                     val bounds = anchor.bounds ?: return@layout
                     val parent_screen = IntArray(2).also { parent_view.getLocationOnScreen(it) }
@@ -334,6 +348,7 @@ fun aster_menu_item(
     test_tag: String? = null,
     count: Int = 0,
     indent: Dp = 0.dp,
+    reserve_check: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -406,8 +421,34 @@ fun aster_menu_item(
                 tint = if (enabled) colors.accent_blue else colors.text_muted,
                 modifier = Modifier.size(menu_check_size),
             )
+        } else if (reserve_check) {
+            Spacer(Modifier.width(12.dp + menu_check_size))
         }
     }
+}
+
+@Composable
+fun aster_menu_toggle_item(
+    label: String,
+    checked: Boolean,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    test_tag: String? = null,
+) {
+    aster_menu_item(
+        label = label,
+        on_click = on_click,
+        modifier = modifier.semantics {
+            toggleableState = if (checked) ToggleableState.On else ToggleableState.Off
+        },
+        icon = icon,
+        selected = checked,
+        enabled = enabled,
+        test_tag = test_tag,
+        reserve_check = true,
+    )
 }
 
 @Composable

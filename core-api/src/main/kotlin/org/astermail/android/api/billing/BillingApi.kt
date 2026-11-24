@@ -1025,6 +1025,10 @@ class BillingApiImpl(private val client: ApiClient) : BillingApi {
         }
         return try {
             response.body()
+        } catch (t: kotlin.coroutines.cancellation.CancellationException) {
+            throw t
+        } catch (t: java.io.IOException) {
+            throw t
         } catch (t: Throwable) {
             throw ApiError.ServerError(response.status.value)
         }

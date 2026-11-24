@@ -31,7 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -123,7 +123,7 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(scroll_state)
+                .vertical_scroll_with_fade(scroll_state)
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
         ) {
             if (domain_name.isNotEmpty() && state.step != BimiStep.manage) {

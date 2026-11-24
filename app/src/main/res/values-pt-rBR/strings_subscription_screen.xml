@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">O Aster não conseguiu carregar seu plano. Verifique sua conexão e tente novamente.</string>
+    <string name="billing_source_play">Cobrado pelo Google Play</string>
+    <string name="billing_source_card">Cobrado no cartão</string>
+    <string name="billing_source_crypto">Pago com criptomoeda</string>
+    <string name="billing_status_trial">Teste</string>
+    <string name="billing_top_plan_title">Você tem o plano mais alto</string>
+    <string name="billing_section_load_failed">O Aster não conseguiu carregar esta seção.</string>
+</resources>

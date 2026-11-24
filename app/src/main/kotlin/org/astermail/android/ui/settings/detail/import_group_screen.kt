@@ -20,11 +20,8 @@
 //
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
-import org.astermail.android.design.AsterSpacing
 
 internal const val import_tab_import = "import"
 internal const val import_tab_external_accounts = "external_accounts"
@@ -80,27 +76,19 @@ fun ImportGroupScreen(
         on_back = on_back,
         scrollable = false,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = AsterSpacing.lg)
-                .padding(top = AsterSpacing.sm),
-        ) {
-            aster_segmented(
-                value = active_tab,
-                options = listOf(
-                    switcher_option(import_tab_import, stringResource(R.string.import_title)),
-                    switcher_option(import_tab_external_accounts, stringResource(R.string.external_accounts)),
-                    switcher_option(import_tab_export, stringResource(R.string.export_label)),
-                ),
-                on_change = { tab ->
-                    open_gmail_wizard = false
-                    active_tab = tab
-                },
-                modifier = Modifier.testTag("import_group_tabs"),
-            )
-        }
+        pinned_segmented_header(
+            value = active_tab,
+            options = listOf(
+                switcher_option(import_tab_import, stringResource(R.string.import_title)),
+                switcher_option(import_tab_external_accounts, stringResource(R.string.external_accounts)),
+                switcher_option(import_tab_export, stringResource(R.string.export_label)),
+            ),
+            on_change = { tab ->
+                open_gmail_wizard = false
+                active_tab = tab
+            },
+            modifier = Modifier.testTag("import_group_tabs"),
+        )
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when (active_tab) {
                 import_tab_external_accounts -> ExternalAccountsScreen(

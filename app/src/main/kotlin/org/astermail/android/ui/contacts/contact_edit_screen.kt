@@ -26,7 +26,6 @@ import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.widget.Toast
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -49,14 +48,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.MaterialTheme
@@ -72,18 +75,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.contacts.ContactsViewModel
-import org.astermail.android.contacts.encode_contact_photo
+import org.astermail.android.contacts.ContactPhotoEncodeResult
+import org.astermail.android.contacts.encode_contact_photo_result
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDivider
@@ -103,7 +105,7 @@ fun ContactEditScreen(
     val ui_state by vm.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(contact_id) {
-        if (contact_id != null) vm.load_contact(contact_id)
+        if (contact_id != null && vm.state.value.selected_contact?.id != contact_id) vm.load_contact(contact_id)
     }
 
     val context = LocalContext.current
@@ -121,12 +123,17 @@ fun ContactEditScreen(
         val message = ui_state.error
         if (message != null && save_requested) {
             save_requested = false
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
             vm.clear_flags()
         }
     }
 
-    val source = ui_state.selected_contact?.takeIf { it.id == contact_id }
+    val source = if (contact_id == null) {
+        null
+    } else {
+        ui_state.selected_contact?.takeIf { it.id == contact_id }
+            ?: ui_state.contacts.firstOrNull { it.id == contact_id }
+    }
     val contact_unavailable = contact_id != null && source == null
 
     var name by rememberSaveable { mutableStateOf(source?.name.orEmpty()) }
@@ -183,29 +190,99 @@ fun ContactEditScreen(
     }
 
     val photo_scope = rememberCoroutineScope()
+    var photo_busy by remember { mutableStateOf(false) }
     val photo_picker = remember_image_picker { uri ->
-        photo_scope.launch {
-            val encoded = withContext(Dispatchers.IO) {
-                runCatching { encode_contact_photo(context, uri) }.getOrNull()
-            }
-            if (encoded == null) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.photo_too_large),
-                    Toast.LENGTH_LONG,
-                ).show()
-            } else {
-                avatar_url = encoded
+        if (!photo_busy) {
+            photo_busy = true
+            photo_scope.launch {
+                val result = withContext(Dispatchers.Default) {
+                    runCatching { encode_contact_photo_result(context, uri) }
+                        .getOrDefault(ContactPhotoEncodeResult.Unreadable)
+                }
+                photo_busy = false
+                when (result) {
+                    is ContactPhotoEncodeResult.Encoded -> avatar_url = result.data_uri
+                    ContactPhotoEncodeResult.TooLarge -> org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.photo_too_large).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
+                    ContactPhotoEncodeResult.Unreadable -> org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.contact_photo_unreadable).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
+                }
             }
         }
+    }
+
+    val baseline_fingerprint = remember(source?.id, loaded_contact_id) {
+        contact_edit_fingerprint(
+            name = source?.name.orEmpty(),
+            emails = initial_email_rows(source),
+            phones = initial_phone_rows(source),
+            postals = initial_postal_rows(source),
+            fields = listOf(
+                source?.company.orEmpty(),
+                source?.title.orEmpty(),
+                source?.birthday.orEmpty(),
+                source?.website.orEmpty(),
+                source?.twitter.orEmpty(),
+                source?.linkedin.orEmpty(),
+                source?.notes.orEmpty(),
+            ),
+            relations = initial_relation_rows(source),
+            socials = initial_social_rows(source),
+            avatar_url = source?.avatar_url.orEmpty(),
+        )
+    }
+    val current_fingerprint = contact_edit_fingerprint(
+        name = name,
+        emails = emails,
+        phones = phones,
+        postals = postals,
+        fields = listOf(company, title, birthday, website, twitter, linkedin, notes),
+        relations = relations,
+        socials = socials,
+        avatar_url = avatar_url,
+    )
+    val is_dirty = current_fingerprint != baseline_fingerprint
+    var show_discard_dialog by rememberSaveable { mutableStateOf(false) }
+    val guard_back = is_dirty && !save_requested && !contact_unavailable
+    val request_back: () -> Unit = {
+        if (guard_back) show_discard_dialog = true else on_back()
+    }
+    androidx.activity.compose.BackHandler(enabled = guard_back) {
+        show_discard_dialog = true
+    }
+    val nav_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars
+        .exclude(androidx.compose.foundation.layout.WindowInsets.ime)
+        .asPaddingValues()
+        .calculateBottomPadding()
+
+    if (show_discard_dialog) {
+        org.astermail.android.design.components.AsterDialog(
+            on_dismiss = { show_discard_dialog = false },
+            title = stringResource(R.string.contact_discard_changes_title),
+            message = stringResource(R.string.contact_discard_changes_message),
+            footer = {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.contact_keep_editing),
+                    onClick = { show_discard_dialog = false },
+                    modifier = Modifier.weight(1f),
+                )
+                org.astermail.android.design.components.AsterDialogDestructiveButton(
+                    label = stringResource(R.string.discard),
+                    onClick = {
+                        show_discard_dialog = false
+                        on_back()
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            },
+        )
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding()
-            .imePadding(),
+            .statusBarsPadding()
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.navigationBars.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal))
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.ime.only(androidx.compose.foundation.layout.WindowInsetsSides.Bottom)),
     ) {
         Row(
             modifier = Modifier
@@ -218,7 +295,7 @@ fun ContactEditScreen(
                 icon = TablerIcons.ArrowLeft,
                 auto_mirror = true,
                 content_description = stringResource(R.string.back),
-                onClick = on_back,
+                onClick = request_back,
             )
             Spacer(Modifier.width(AsterSpacing.sm))
             Text(
@@ -226,30 +303,34 @@ fun ContactEditScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.text_primary,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            val can_save = name.isNotBlank() ||
+            val has_content = name.isNotBlank() ||
                 emails.any { it.value.isNotBlank() } ||
                 phones.any { it.value.isNotBlank() }
+            val can_save = has_content && (contact_id == null || is_dirty)
             AsterGhostButton(
                 label = stringResource(R.string.save),
-                enabled = can_save && !ui_state.is_loading && !contact_unavailable,
+                enabled = can_save && !save_requested && !photo_busy && !ui_state.is_loading && !contact_unavailable,
                 onClick = {
+                    if (save_requested) return@AsterGhostButton
                     if (emails.any { !is_valid_contact_email(it.value) }) {
                         show_email_errors = true
                         return@AsterGhostButton
                     }
                     val contact = Contact(
                         id = contact_id ?: "",
-                        name = name,
+                        name = name.trim(),
                         email = "",
-                        company = company,
-                        title = title,
-                        birthday = birthday,
-                        website = website,
-                        twitter = twitter,
-                        linkedin = linkedin,
-                        notes = notes,
+                        company = company.trim(),
+                        title = title.trim(),
+                        birthday = birthday.trim(),
+                        website = website.trim(),
+                        twitter = twitter.trim(),
+                        linkedin = linkedin.trim(),
+                        notes = notes.trim(),
                         avatar_url = avatar_url,
                         profile_color = source?.profile_color.orEmpty(),
                         is_favorite = source?.is_favorite ?: false,
@@ -269,7 +350,7 @@ fun ContactEditScreen(
         }
         AsterDivider()
 
-        if (contact_unavailable && !ui_state.is_loading) {
+        if (contact_unavailable && !ui_state.contact_loading) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -294,7 +375,7 @@ fun ContactEditScreen(
                 .weight(1f)
                 .vertical_scroll_with_indicator()
                 .padding(horizontal = AsterSpacing.md)
-                .padding(top = AsterSpacing.md, bottom = AsterSpacing.xxl),
+                .padding(top = AsterSpacing.md, bottom = AsterSpacing.xxl + nav_bottom),
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
         ) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -306,17 +387,14 @@ fun ContactEditScreen(
             ) {
                 if (avatar_url.isBlank() && name.isBlank() && email.isBlank()) {
                     Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .acrylic(colors, CircleShape, colors.bg_secondary),
+                        modifier = Modifier.size(80.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         androidx.compose.material3.Icon(
                             imageVector = TablerIcons.User,
                             contentDescription = stringResource(R.string.contact_photo),
                             tint = colors.text_muted,
-                            modifier = Modifier.size(34.dp),
+                            modifier = Modifier.size(56.dp),
                         )
                     }
                 } else {
@@ -340,11 +418,12 @@ fun ContactEditScreen(
                         } else {
                             stringResource(R.string.change_photo)
                         },
+                        enabled = !photo_busy,
                         onClick = {
                             photo_picker.launch()
                         },
                     )
-                    if (avatar_url.isNotBlank()) {
+                    if (avatar_url.isNotBlank() && !photo_busy) {
                         AsterGhostButton(
                             label = stringResource(R.string.remove_photo),
                             onClick = { avatar_url = "" },
@@ -353,10 +432,14 @@ fun ContactEditScreen(
                 }
                 Spacer(Modifier.height(AsterSpacing.sm))
                 Text(
-                    text = name.ifBlank { stringResource(R.string.unnamed_contact) },
+                    text = name.trim().ifBlank { stringResource(R.string.unnamed_contact) },
                     color = if (name.isBlank()) colors.text_muted else colors.text_primary,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 17.sp,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = AsterSpacing.lg),
                 )
             }
             }
@@ -374,8 +457,8 @@ fun ContactEditScreen(
                     add_label = stringResource(R.string.contact_add_email),
                     field_label = stringResource(R.string.email),
                     keyboard_type = KeyboardType.Email,
-                    error_for = { value ->
-                        invalid_email_text.takeIf { show_email_errors && !is_valid_contact_email(value) }
+                    error_for = { value, blurred ->
+                        invalid_email_text.takeIf { (show_email_errors || blurred) && !is_valid_contact_email(value) }
                     },
                 )
             }
@@ -462,20 +545,12 @@ private fun FormSection(
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .acrylic(colors, CircleShape, colors.bg_secondary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = colors.text_secondary,
-                        modifier = Modifier.size(15.dp),
-                    )
-                }
+                androidx.compose.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(18.dp),
+                )
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Text(
                     text = title,
@@ -502,6 +577,7 @@ private fun FormField(
     on_change: (String) -> Unit,
 ) {
     AsterTextField(
+        rest_border = true,
         value = value,
         onValueChange = on_change,
         modifier = modifier,
@@ -518,6 +594,26 @@ private fun FormField(
 }
 
 private const val NOTES_SCROLL_DELAY_MS = 250L
+
+private fun contact_edit_fingerprint(
+    name: String,
+    emails: List<EditableEntry>,
+    phones: List<EditableEntry>,
+    postals: List<EditablePostal>,
+    fields: List<String>,
+    relations: List<EditableRelation>,
+    socials: List<EditableSocial>,
+    avatar_url: String,
+): List<Any> = listOf(
+    name.trim(),
+    emails.map { it.to_entry().trimmed() }.filter { it.value.isNotEmpty() },
+    phones.map { it.to_entry().trimmed() }.filter { it.value.isNotEmpty() },
+    postals.map { it.to_postal().trimmed() }.filterNot { it.is_blank() },
+    fields.map { it.trim() },
+    relations.map { it.to_relation() }.filter { it.value.isNotBlank() },
+    socials.map { it.to_social() }.filter { it.value.isNotBlank() },
+    avatar_url,
+)
 
 private fun initial_email_rows(source: Contact?): List<EditableEntry> =
     source?.email_entries()?.map { EditableEntry.of(it) }?.ifEmpty { null }

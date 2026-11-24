@@ -3043,6 +3043,9 @@
     <string name="translation_storage_remove_all">Rimuovi tutti</string>
     <string name="translation_storage_removed">Pacchetti lingua rimossi</string>
     <string name="translation_offer_download">Questo messaggio è in %1$s. Tradurlo scarica un pacchetto lingua.</string>
+    <string name="translation_bar_translate_to">Traduci in %1$s</string>
+    <string name="translation_bar_translated_from">Tradotto da: %1$s</string>
+    <string name="translation_bar_downloading">Download del pacchetto lingua %1$s in corso</string>
     <string name="contact_support">Contatta l\'assistenza</string>
     <string name="domain_purchase_manage">Gestisci</string>
     <string name="domain_purchase_cancel_payment_title">Annullare questo pagamento?</string>
@@ -3168,6 +3171,10 @@
     <string name="remove_photo">Rimuovi la foto</string>
     <string name="add_photo">Aggiungi una foto</string>
     <string name="photo_too_large">Scegli un\'immagine più piccola</string>
+    <string name="contact_photo_unreadable">Aster non riesce ad aprire questa immagine. Prova con un\'altra foto.</string>
+    <string name="contact_discard_changes_title">Eliminare le modifiche?</string>
+    <string name="contact_discard_changes_message">Le modifiche a questo contatto non sono salvate.</string>
+    <string name="contact_keep_editing">Continua a modificare</string>
     <string name="no_contacts_yet">Nessun contatto ancora</string>
     <string name="no_contacts_match">Nessun contatto corrisponde a \"%1$s\"</string>
     <string name="no_contacts_in_trash">Il cestino è vuoto</string>
@@ -3726,6 +3733,13 @@
         <item quantity="other">%d contatti aggiunti</item>
     </plurals>
     <string name="body_index_status">Indicizzazione del testo dei messaggi per la ricerca: %1$d di %2$d</string>
+    <string name="search_status_indexing_mail">Indicizzazione della posta</string>
+    <string name="search_status_indexing_text">Indicizzazione del testo dei messaggi</string>
+    <string name="search_status_waiting_wifi">L\'indicizzazione del testo riprende con il Wi-Fi</string>
+    <string name="search_status_paused">Indicizzazione in pausa</string>
+    <string name="search_status_partial">I risultati potrebbero essere incompleti</string>
+    <string name="search_status_count">%1$s di %2$s</string>
+    <string name="search_refine_placeholder">Cerca nei risultati</string>
     <string name="mail_key_upgrade_title">Aggiornamento della posta salvata</string>
     <string name="mail_key_upgrade_running">Aster Mail sta crittografando di nuovo i tuoi messaggi salvati con le tue chiavi attuali. Tieni aperta questa finestra fino al termine.</string>
     <string name="mail_key_upgrade_failed">Aster Mail non è riuscito a completare l\'aggiornamento dei messaggi salvati. La tua posta non è cambiata. Controlla la connessione e riprova.</string>
@@ -3750,4 +3764,8 @@
     <string name="attachment_unverified">Allegato non verificato</string>
     <string name="confirm_back_exit">Conferma prima di uscire</string>
     <string name="confirm_back_exit_subtitle">Premi Indietro due volte per uscire dall\'app dalla posta in arrivo</string>
+    <string name="toast_position_title">Posizione degli avvisi nell\'app</string>
+    <string name="toast_position_subtitle">Dove compaiono gli avvisi mentre usi l\'app</string>
+    <string name="toast_position_top">In alto</string>
+    <string name="toast_position_bottom">In basso</string>
 </resources>

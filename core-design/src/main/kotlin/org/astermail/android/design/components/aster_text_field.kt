@@ -93,6 +93,7 @@ fun AsterTextField(
     min_lines: Int = 1,
     max_lines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     text_style: TextStyle? = null,
+    rest_border: Boolean = false,
 ) {
     val colors = AsterMaterial.colors
     val interaction_source = remember { MutableInteractionSource() }
@@ -117,10 +118,16 @@ fun AsterTextField(
     }
 
     val ring_base = if (has_error) colors.danger else colors.accent_blue
+    val ring_active = has_error || is_focused
     val ring_color by aster_animate_color(
-        ring_base.copy(alpha = if (has_error || is_focused) ring_base.alpha else 0f),
+        when {
+            ring_active -> ring_base
+            rest_border -> colors.border_primary
+            else -> ring_base.copy(alpha = 0f)
+        },
         label = "aster_text_field_ring",
     )
+    val ring_width = if (rest_border && !ring_active) 1.dp else 2.dp
     val last_below = remember { text_field_below_holder() }
     if (error_text != null) last_below.error = error_text
     if (helper_text != null) last_below.helper = helper_text
@@ -140,7 +147,7 @@ fun AsterTextField(
                 .fillMaxWidth()
                 .heightIn(min = min_height)
                 .background(field_surface_color(colors), AsterShapes.control)
-                .border(2.dp, ring_color, AsterShapes.control)
+                .border(ring_width, ring_color, AsterShapes.control)
                 .padding(horizontal = AsterSpacing.md, vertical = if (singleLine) 0.dp else 14.dp),
             contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
         ) {

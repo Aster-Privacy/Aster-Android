@@ -55,8 +55,11 @@ private val secure_prefs_namespaces = listOf(
     "aster_ratchet_state_v1",
     "aster_ratchet_identity_pins",
     "aster_ratchet_plaintext_v1",
-    "aster_unifiedpush_secure",
     "aster_app_lock_biometric",
+)
+
+private val deferred_secure_prefs_namespaces = listOf(
+    "aster_unifiedpush_secure",
     "aster_compose_seed",
     "aster_recent_emoji_v1",
     "aster_unsubscribed_sender_keys",
@@ -228,7 +231,11 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
     private fun start_secure_prefs_warm() {
         Thread {
             runCatching {
-                org.astermail.android.storage.SecurePrefs.warm(this, secure_prefs_namespaces)
+                org.astermail.android.storage.SecurePrefs.warm(
+                    this,
+                    secure_prefs_namespaces,
+                    deferred_secure_prefs_namespaces,
+                )
             }
         }.apply { name = "aster-prefs-warm" }.start()
     }

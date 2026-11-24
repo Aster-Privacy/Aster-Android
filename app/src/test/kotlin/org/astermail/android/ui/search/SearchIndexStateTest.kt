@@ -100,7 +100,10 @@ class SearchIndexStateTest {
 
     @Test
     fun body_progress_counts_skipped_mail_as_handled() {
+        val waiting = body_index_progress_of(indexed = 1, skipped = 0, total = 3, started_at_ms = 0L, waiting = true)
+        assertEquals(true, waiting?.waiting)
         val progress = body_index_progress_of(indexed = 100, skipped = 20, total = 153, started_at_ms = 5L)
+        assertEquals(false, progress?.waiting)
         assertEquals(120, progress?.indexed)
         assertEquals(153, progress?.total)
         assertEquals(5L, progress?.started_at_ms)
@@ -124,9 +127,9 @@ class SearchIndexStateTest {
     fun body_index_step_changes_in_coarse_steps() {
         assertEquals(-1, body_index_step(null))
         assertEquals(0, body_index_step(0))
-        assertEquals(0, body_index_step(19))
-        assertEquals(1, body_index_step(20))
-        assertEquals(6, body_index_step(120))
+        assertEquals(0, body_index_step(99))
+        assertEquals(1, body_index_step(100))
+        assertEquals(6, body_index_step(650))
         assertEquals(0, body_index_step(-5))
     }
 

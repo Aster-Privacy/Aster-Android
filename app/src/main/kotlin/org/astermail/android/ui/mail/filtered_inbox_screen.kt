@@ -87,7 +87,10 @@ fun FilteredInboxScreen(
 ) {
     val colors = AsterMaterial.colors
     val list_state = org.astermail.android.ui.common.remember_session_lazy_list_state()
-    org.astermail.android.ui.common.on_return_to_foreground { list_state.scrollToItem(0) }
+    val fast_scroll_drag = remember { org.astermail.android.ui.common.fast_scroll_drag_signal() }
+    org.astermail.android.ui.common.on_return_to_foreground {
+        if (list_state.firstVisibleItemIndex == 0 && !list_state.isScrollInProgress) list_state.scrollToItem(0)
+    }
     val inbox_state by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val settings_vm = org.astermail.android.settings.shared_settings_view_model()
     val settings_state by settings_vm.state.collectAsStateWithLifecycle()
@@ -131,6 +134,7 @@ fun FilteredInboxScreen(
             val near_end = total > 0 && (total - last_visible) <= 3
             val s = inbox_state
             near_end &&
+                !fast_scroll_drag.dragging &&
                 s.has_more &&
                 !s.is_loading &&
                 !s.is_loading_more &&
@@ -284,6 +288,7 @@ fun FilteredInboxScreen(
                     org.astermail.android.ui.common.vertical_scroll_bar(
                         state = list_state,
                         modifier = Modifier.align(Alignment.TopEnd),
+                        drag_signal = fast_scroll_drag,
                     )
                 }
             }

@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import android.content.ClipData
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -384,11 +383,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                             }
                             if (write_to_clipboard(context, clip)) {
                                 org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.codes_copied),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.codes_copied).toString())
                             } else {
                                 show_copy_failed_toast(context)
                             }
@@ -409,11 +404,7 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
                                 codes = codes,
                                 created_at = created_on,
                                 on_failure = {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.print_not_available),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.print_not_available).toString())
                                 },
                             )
                         },

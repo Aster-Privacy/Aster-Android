@@ -444,28 +444,37 @@ class AttachmentMetaSealedTest {
     }
 
     @Test
-    fun the_attachment_chip_labels_unverified_attachments() {
+    fun the_attachment_section_shows_one_unverified_indicator_per_message() {
         val source = java.io.File("src/main/kotlin/org/astermail/android/ui/mail/mail_detail_screen.kt")
             .readText()
             .replace("\r\n", "\n")
+        val section = source.substringAfter("private fun attachment_section(").substringBefore("\n}\n")
         val chip = source.substringAfter("private fun attachment_chip(").substringBefore("\n}\n")
+        val preview = source.substringAfter("private fun attachment_preview_dialog(").substringBefore("\n}\n")
+        val options = source.substringAfter("private fun attachment_options_sheet(").substringBefore("\n}\n")
         assertTrue(
-            "the attachment chip must label unverified attachments",
-            Regex("""if \(attachment\.is_unverified\) \{\s*Text\(\s*text = stringResource\(R\.string\.attachment_unverified\)""")
-                .containsMatchIn(chip),
+            "the attachment section must show one indicator for the message",
+            Regex("""attachments\.any \{ it\.is_unverified \}""").containsMatchIn(section) &&
+                section.contains("R.string.attachment_unverified"),
         )
+        assertFalse("the chip must not repeat the label", chip.contains("R.string.attachment_unverified"))
+        assertFalse("the preview must not repeat the label", preview.contains("R.string.attachment_unverified"))
+        assertFalse("the options must not repeat the label", options.contains("R.string.attachment_unverified"))
     }
 
     @Test
-    fun the_attachment_preview_and_options_label_unverified_attachments() {
-        val source = java.io.File("src/main/kotlin/org/astermail/android/ui/mail/mail_detail_screen.kt")
-            .readText()
-            .replace("\r\n", "\n")
-        val label = Regex("""if \(attachment\.is_unverified\) \{\s*Text\(\s*text = stringResource\(R\.string\.attachment_unverified\)""")
-        val preview = source.substringAfter("private fun attachment_preview_dialog(").substringBefore("\n}\n")
-        val options = source.substringAfter("private fun attachment_options_sheet(").substringBefore("\n}\n")
-        assertTrue("the attachment preview must label unverified attachments", label.containsMatchIn(preview))
-        assertTrue("the attachment options must label unverified attachments", label.containsMatchIn(options))
+    fun unsigned_pgp_meta_is_not_a_verification_failure() {
+        use_own_pgp_key()
+        val armored = org.astermail.android.crypto.PgpEncryptor.encrypt_to_keys(
+            pgp_meta_json,
+            listOf(own_pgp_key.armored_public_key),
+        )!!
+        val encoded = b64(armored.toByteArray(Charsets.UTF_8))
+
+        val meta = repo.decrypt_attachment_meta(encoded, b64(ByteArray(12)), "item-unsigned", 0, 5L)
+
+        assertEquals("invoice.pdf", meta.filename)
+        assertFalse("a sender that does not sign attachment meta has not failed verification", meta.verification_failed)
     }
 
     @Test
@@ -540,7 +549,7 @@ class AttachmentMetaSealedTest {
     }
 
     @Test
-    fun the_attachment_model_carries_the_unverified_flag() {
+    fun the_attachment_model_flags_only_verification_failures() {
         val plaintext = """{"filename":"legacy.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
         val response = org.astermail.android.api.mail.AttachmentResponse(
             id = "att-1",
@@ -556,7 +565,7 @@ class AttachmentMetaSealedTest {
         val attachment = kotlinx.coroutines.runBlocking { repo.fetch_attachment("att-1") }.getOrThrow()
 
         assertEquals("legacy.txt", attachment.filename)
-        assertTrue("the UI model must know the row fields are unverified", attachment.is_unverified)
+        assertFalse("plain row fields without a signature are not a verification failure", attachment.is_unverified)
     }
 
     private val own_pgp_key by lazy {
@@ -570,6 +579,30 @@ class AttachmentMetaSealedTest {
     }
 
     private val pgp_meta_json = """{"filename":"invoice.pdf","content_type":"application/pdf","session_key":"c2VydmVy"}"""
+
+    private val ios_meta_json =
+        """{"session_key":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=","is_inline":true,""" +
+            """"content_type":"image\/jpeg","content_id":"img-1@aster","filename":"IMG_0042.JPG"}"""
+
+    @Test
+    fun ios_shaped_unsigned_meta_reads_cleanly_and_is_not_flagged() {
+        use_own_pgp_key()
+        val armored = org.astermail.android.crypto.PgpEncryptor.encrypt_to_keys(
+            ios_meta_json,
+            listOf(own_pgp_key.armored_public_key),
+        )!!
+        val encoded = b64(armored.toByteArray(Charsets.UTF_8))
+
+        val meta = repo.decrypt_attachment_meta(encoded, null, "item-ios", 0, 2048L)
+
+        assertFalse(meta.is_placeholder)
+        assertEquals("IMG_0042.JPG", meta.filename)
+        assertEquals("image/jpeg", meta.content_type)
+        assertEquals("img-1@aster", meta.content_id)
+        assertEquals("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=", meta.session_key)
+        assertEquals(2048L, meta.size_bytes)
+        assertFalse("an unsigned row is not a failed signature", meta.verification_failed)
+    }
 
     @Test
     fun received_unsigned_pgp_row_from_another_sender_still_downloads() {

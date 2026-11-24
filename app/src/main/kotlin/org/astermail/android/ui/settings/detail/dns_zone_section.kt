@@ -52,6 +52,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -131,7 +132,8 @@ internal fun dns_zone_section(state: DnsZoneUiState, vm: DnsZoneViewModel) {
     var editor by remember { mutableStateOf<DnsEditorTarget?>(null) }
     var deleting by remember { mutableStateOf<DnsZoneRecord?>(null) }
 
-    domain_reveal(visible = state.phase != DnsZonePhase.unavailable) {
+    val settled = state.phase != DnsZonePhase.idle && state.phase != DnsZonePhase.loading
+    domain_reveal(visible = state.phase != DnsZonePhase.unavailable && (settled || state.records.isNotEmpty())) {
         Column(modifier = Modifier.fillMaxWidth()) {
             settings_row_gap()
             dns_zone_header(state = state, on_add = { editor = DnsEditorTarget.add })
@@ -305,14 +307,16 @@ private fun dns_zone_records(
                 )
             }
             editable.forEachIndexed { index, record ->
-                if (index > 0) HorizontalDivider(color = colors.border_secondary, thickness = 0.5.dp)
-                dns_zone_record_row(
-                    record = record,
-                    domain_name = state.domain_name,
-                    pending = state.pending[record.id],
-                    on_edit = { on_edit(record) },
-                    on_delete = { on_delete(record) },
-                )
+                key(record.id, index) {
+                    if (index > 0) HorizontalDivider(color = colors.border_secondary, thickness = 0.5.dp)
+                    dns_zone_record_row(
+                        record = record,
+                        domain_name = state.domain_name,
+                        pending = state.pending[record.id],
+                        on_edit = { on_edit(record) },
+                        on_delete = { on_delete(record) },
+                    )
+                }
             }
         }
     }
@@ -320,14 +324,16 @@ private fun dns_zone_records(
         v_gap(AsterSpacing.md)
         settings_group(title = stringResource(R.string.dns_zone_protected_group)) {
             managed.forEachIndexed { index, record ->
-                if (index > 0) HorizontalDivider(color = colors.border_secondary, thickness = 0.5.dp)
-                dns_zone_record_row(
-                    record = record,
-                    domain_name = state.domain_name,
-                    pending = null,
-                    on_edit = null,
-                    on_delete = null,
-                )
+                key(record.id, index) {
+                    if (index > 0) HorizontalDivider(color = colors.border_secondary, thickness = 0.5.dp)
+                    dns_zone_record_row(
+                        record = record,
+                        domain_name = state.domain_name,
+                        pending = null,
+                        on_edit = null,
+                        on_delete = null,
+                    )
+                }
             }
         }
     }

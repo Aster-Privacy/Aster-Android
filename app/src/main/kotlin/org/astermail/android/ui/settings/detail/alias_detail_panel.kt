@@ -21,6 +21,23 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.ripple
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.control_surface_color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +52,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,7 +87,6 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
-import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogOutlineButton
@@ -170,12 +185,26 @@ internal fun alias_compact_panel(
     on_open_settings: (() -> Unit)?,
 ) {
     val colors = AsterMaterial.colors
+    val compose_label = stringResource(R.string.compose)
+    val compose_a11y = stringResource(R.string.new_message)
+    val copy_label = stringResource(R.string.copy)
+    val copy_a11y = stringResource(R.string.copy_address)
+    val settings_label = stringResource(R.string.settings)
+    val settings_a11y = stringResource(R.string.alias_open_settings)
+    val actions = buildList {
+        if (on_compose_from != null) {
+            add(AliasQuickAction(TablerIcons.Pencil, compose_label, compose_a11y, "alias_quick_compose", on_compose_from))
+        }
+        add(AliasQuickAction(TablerIcons.Copy, copy_label, copy_a11y, "alias_quick_copy", on_copy))
+        if (on_open_settings != null) {
+            add(AliasQuickAction(TablerIcons.Settings, settings_label, settings_a11y, "alias_quick_settings", on_open_settings))
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = AsterSpacing.md)
+            .padding(top = AsterSpacing.sm)
             .testTag("alias_compact_panel"),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         Spacer(
             Modifier
@@ -183,70 +212,121 @@ internal fun alias_compact_panel(
                 .height(1.dp)
                 .background(colors.border_secondary),
         )
-        if (delivery_summary.isNotBlank()) panel_hint_text(delivery_summary)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            if (on_compose_from != null) {
-                alias_quick_action(
-                    icon = TablerIcons.Pencil,
-                    label = stringResource(R.string.new_message),
-                    modifier = Modifier.weight(1f),
-                    test_tag = "alias_quick_compose",
-                    on_click = on_compose_from,
-                )
-            }
-            alias_quick_action(
-                icon = TablerIcons.Copy,
-                label = stringResource(R.string.copy_address),
-                modifier = Modifier.weight(1f),
-                test_tag = "alias_quick_copy",
-                on_click = on_copy,
+        if (delivery_summary.isNotBlank()) {
+            Text(
+                text = delivery_summary,
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = AsterSpacing.md),
             )
-            if (on_open_settings != null) {
-                alias_quick_action(
-                    icon = TablerIcons.Settings,
-                    label = stringResource(R.string.alias_open_settings),
-                    modifier = Modifier.weight(1f),
-                    test_tag = "alias_quick_settings",
-                    on_click = on_open_settings,
-                )
+        }
+        Spacer(Modifier.height(AsterSpacing.md))
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val gap = AsterSpacing.sm
+            val count = actions.size.coerceAtLeast(1)
+            val slot = (maxWidth - gap * (count - 1)) / count
+            val measurer = rememberTextMeasurer()
+            val density = LocalDensity.current
+            val label_style = LocalTextStyle.current.merge(
+                TextStyle(fontSize = alias_quick_label_size, fontWeight = FontWeight.Medium),
+            )
+            val labels = actions.map { it.label }
+            val show_icons = remember(labels, slot, density, label_style) {
+                val budget = with(density) {
+                    (slot - alias_quick_padding * 2 - alias_quick_icon_size - alias_quick_icon_gap).toPx()
+                }
+                labels.all { label ->
+                    measurer.measure(label, label_style, maxLines = 1, softWrap = false).size.width <= budget
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(gap),
+            ) {
+                actions.forEach { action ->
+                    alias_quick_action(
+                        action = action,
+                        show_icon = show_icons,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
     }
 }
 
+private val alias_quick_height = 40.dp
+private val alias_quick_padding = 10.dp
+private val alias_quick_icon_size = 16.dp
+private val alias_quick_icon_gap = 6.dp
+private val alias_quick_label_size = 13.sp
+
+private class AliasQuickAction(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val label: String,
+    val a11y: String,
+    val test_tag: String,
+    val on_click: () -> Unit,
+)
+
 @Composable
 private fun alias_quick_action(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
+    action: AliasQuickAction,
+    show_icon: Boolean,
     modifier: Modifier,
-    test_tag: String,
-    on_click: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    Column(
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.965f else 1f,
+        animationSpec = tween(
+            durationMillis = if (pressed) AsterDuration.tap_down else AsterDuration.tap_up,
+            easing = AsterEasing.tap_down,
+        ),
+        label = "alias_quick_scale",
+    )
+    Row(
         modifier = modifier
-            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-            .clickable(onClick = on_click)
-            .padding(vertical = AsterSpacing.sm)
-            .testTag(test_tag),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .height(alias_quick_height)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(AsterShapes.control)
+            .background(control_surface_color(colors))
+            .clickable(
+                role = Role.Button,
+                interactionSource = interaction,
+                indication = ripple(color = colors.text_primary),
+                onClick = action.on_click,
+            )
+            .semantics { contentDescription = action.a11y }
+            .padding(horizontal = alias_quick_padding)
+            .testTag(action.test_tag),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.text_secondary,
-            modifier = Modifier.size(18.dp),
-        )
+        if (show_icon) {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(alias_quick_icon_size),
+            )
+            Spacer(Modifier.width(alias_quick_icon_gap))
+        }
         Text(
-            text = label,
-            color = colors.text_secondary,
-            fontSize = 11.sp,
+            text = action.label,
+            color = colors.text_primary,
+            fontSize = alias_quick_label_size,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
+            softWrap = false,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.clearAndSetSemantics {},
         )
     }
 }

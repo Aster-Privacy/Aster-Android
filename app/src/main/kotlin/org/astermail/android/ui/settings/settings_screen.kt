@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -220,7 +220,7 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .vertical_scroll_with_indicator(),
+                    .vertical_scroll_with_fade(),
             ) {
                 Spacer(Modifier.size(AsterSpacing.md))
                 val live_account by settings_vm.account_store.current_account.collectAsStateWithLifecycle(

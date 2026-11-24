@@ -167,7 +167,7 @@ private fun category_mute_button(
                 if (is_enabled) {
                     Modifier.clickable {
                         on_toggle()
-                        android.widget.Toast.makeText(context, toast_text, android.widget.Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(toast_text.toString())
                     }
                 } else {
                     Modifier

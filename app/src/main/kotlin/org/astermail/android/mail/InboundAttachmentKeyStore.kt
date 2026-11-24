@@ -203,6 +203,18 @@ object InboundAttachmentKeyStore {
         }.filter { it.isNotBlank() }.distinct()
     }
 
+    fun listed_entries(mail_item_id: String?): List<InboundAttachmentEntry> {
+        if (mail_item_id.isNullOrBlank()) return emptyList()
+        val prefix = "$mail_item_id:"
+        return synchronized(lock) {
+            sealed_items[mail_item_id]?.entries?.sortedBy { it.key }?.map { it.value }
+                ?: metas.entries
+                    .filter { it.key.startsWith(prefix) }
+                    .sortedBy { it.key.removePrefix(prefix).toIntOrNull() ?: Int.MAX_VALUE }
+                    .map { it.value }
+        }.filterNot { it.is_inline }
+    }
+
     fun mark_unreadable(mail_item_id: String?, seq_num: Int?) {
         if (mail_item_id.isNullOrBlank() || seq_num == null) return
         synchronized(lock) {

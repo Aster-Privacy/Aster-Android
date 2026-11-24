@@ -91,6 +91,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -229,6 +230,8 @@ class MainActivity :
 
     val pending_launch = pending_launch_state()
 
+    private var boot_background_argb: Int = 0
+
     @javax.inject.Inject
     lateinit var app_lock_store: org.astermail.android.security.AppLockStore
 
@@ -283,6 +286,8 @@ class MainActivity :
                 ) {
                     if (secure_storage_ready.value) {
                         AsterRoot()
+                    } else {
+                        org.astermail.android.ui.common.aster_boot_placeholder(boot_background_argb)
                     }
                 }
             }
@@ -331,6 +336,7 @@ class MainActivity :
 
     private fun apply_boot_background() {
         val argb = org.astermail.android.ui.common.theme_boot_background_argb(this)
+        boot_background_argb = argb
         window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(argb))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching {
@@ -806,11 +812,12 @@ private fun AsterNavHost() {
     androidx.compose.runtime.LaunchedEffect(session_expired_state, is_signed_in_state) {
         if (!session_expired_state || is_signed_in_state) return@LaunchedEffect
         auth_gate.consume_session_expired()
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.session_expired_sign_in),
-            android.widget.Toast.LENGTH_LONG,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.session_expired_sign_in),
+                duration_ms = org.astermail.android.ui.common.toast_action_duration_ms,
+            ),
+        )
         nav_controller.navigate(routes.welcome) {
             popUpTo(0) { inclusive = true }
             launchSingleTop = true
@@ -821,11 +828,12 @@ private fun AsterNavHost() {
     androidx.compose.runtime.LaunchedEffect(vault_open_failed_state, is_signed_in_state) {
         if (!vault_open_failed_state || !is_signed_in_state) return@LaunchedEffect
         auth_gate.consume_vault_open_failed()
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.vault_open_failed_notice),
-            android.widget.Toast.LENGTH_LONG,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.vault_open_failed_notice),
+                duration_ms = org.astermail.android.ui.common.toast_action_duration_ms,
+            ),
+        )
     }
 
     val forced_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
@@ -1173,11 +1181,7 @@ private fun AsterNavHost() {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                         )
                     } catch (_: Throwable) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.could_not_open_link),
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link))
                     }
                 },
                 on_privacy_click = {
@@ -1187,11 +1191,7 @@ private fun AsterNavHost() {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                         )
                     } catch (_: Throwable) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.could_not_open_link),
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link))
                     }
                 },
             )
@@ -2381,7 +2381,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     androidx.compose.runtime.LaunchedEffect(settings_state.action_result) {
         val msg = settings_state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(drawer_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg)
         settings_vm.clear_action_result()
     }
 
@@ -2452,6 +2452,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         org.astermail.android.ui.mail.AsterTimePreferences.set_account_relative_dates(
             prefs?.relative_dates ?: true,
         )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(prefs?.toast_position) {
+        org.astermail.android.ui.common.set_toast_position(prefs?.toast_position)
     }
 
     androidx.compose.runtime.LaunchedEffect(
@@ -3145,7 +3149,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 exit_context.find_host_activity()?.finish()
             } else {
                 last_back_press = now
-                android.widget.Toast.makeText(exit_context, exit_hint, android.widget.Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(exit_hint)
             }
         }
         val saveable_state_holder = rememberSaveableStateHolder()
@@ -3153,13 +3157,15 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         val folder_anim_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
         AnimatedContent(
             targetState = folder_key,
-            modifier = Modifier.edge_swipe_to_open(enabled = !drawer_state.isOpen) {
-                scope.launch { drawer_state.open() }
-            },
+            modifier = Modifier
+                .fillMaxSize()
+                .edge_swipe_to_open(enabled = !drawer_state.isOpen) {
+                    scope.launch { drawer_state.open() }
+                },
             transitionSpec = {
                 val from_depth = folder_key_depth(initialState)
                 val to_depth = folder_key_depth(targetState)
-                when {
+                val transform = when {
                     folder_anim_duration == 0 ->
                         org.astermail.android.design.aster_crossfade(true)
                     to_depth > from_depth ->
@@ -3170,6 +3176,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         fadeIn(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_in_easing)) togetherWith
                             fadeOut(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_out_easing))
                 }
+                transform using null
             },
             label = "folder_switch",
         ) { active_key ->
@@ -3265,6 +3272,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
                             select_back_enabled = !drawer_state.isOpen,
                             on_select_mode_change = { active -> inbox_selection_active = active },
+                            on_list_settled = { ids -> org.astermail.android.mail.message_preloader.request_visible(ids) },
                         )
                     }
                     slot_selected_folder == "subscriptions" -> {
@@ -3275,6 +3283,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         }
                         MailingListsScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_search = { nav_controller.navigate(routes.search) },
                             on_search_sender = { sender ->
                                 org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
@@ -3292,6 +3305,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         ContactsScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             search_back_enabled = !drawer_state.isOpen,
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                             on_open_group = { id -> navigate_once(nav_controller, routes.contact_group_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
@@ -3369,6 +3387,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             },
                             select_back_enabled = !drawer_state.isOpen,
                             on_select_mode_change = { active -> inbox_selection_active = active },
+                            on_list_settled = { ids -> org.astermail.android.mail.message_preloader.request_visible(ids) },
                         )
                     }
                 }

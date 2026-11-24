@@ -2913,6 +2913,9 @@
     <string name="translation_storage_remove_all">सब हटाएं</string>
     <string name="translation_storage_removed">भाषा पैक हटाए गए</string>
     <string name="translation_offer_download">यह संदेश %1$s में है। इसका अनुवाद करने पर एक भाषा पैक डाउनलोड होगा।</string>
+    <string name="translation_bar_translate_to">%1$s में अनुवाद करें</string>
+    <string name="translation_bar_translated_from">%1$s से अनुवादित</string>
+    <string name="translation_bar_downloading">%1$s भाषा पैक डाउनलोड हो रहा है</string>
     <string name="contact_support">सहायता से संपर्क करें</string>
     <string name="domain_purchase_manage">प्रबंधित करें</string>
     <string name="domain_purchase_cancel_payment_title">यह भुगतान रद्द करें?</string>
@@ -3036,6 +3039,10 @@
     <string name="remove_photo">फ़ोटो निकालें</string>
     <string name="add_photo">फ़ोटो जोड़ें</string>
     <string name="photo_too_large">कोई छोटी तस्वीर चुनें</string>
+    <string name="contact_photo_unreadable">Aster यह इमेज नहीं खोल सकता. कोई दूसरी फ़ोटो आज़माएं.</string>
+    <string name="contact_discard_changes_title">बदलाव छोड़ें?</string>
+    <string name="contact_discard_changes_message">इस संपर्क में किए गए आपके बदलाव सेव नहीं हुए हैं.</string>
+    <string name="contact_keep_editing">बदलाव जारी रखें</string>
     <string name="no_contacts_yet">अभी कोई संपर्क नहीं</string>
     <string name="no_contacts_match">\"%1$s\" से कोई संपर्क मेल नहीं खाता</string>
     <string name="no_contacts_in_trash">ट्रैश खाली है</string>
@@ -3593,6 +3600,13 @@
         <item quantity="other">%d संपर्क जोड़े गए</item>
     </plurals>
     <string name="body_index_status">खोज के लिए संदेश टेक्स्ट इंडेक्स हो रहा है: %2$d में से %1$d</string>
+    <string name="search_status_indexing_mail">मेल इंडेक्स हो रहा है</string>
+    <string name="search_status_indexing_text">संदेश टेक्स्ट इंडेक्स हो रहा है</string>
+    <string name="search_status_waiting_wifi">संदेश टेक्स्ट की इंडेक्सिंग Wi-Fi पर फिर से शुरू होगी</string>
+    <string name="search_status_paused">इंडेक्सिंग रोकी गई</string>
+    <string name="search_status_partial">परिणाम अधूरे हो सकते हैं</string>
+    <string name="search_status_count">%2$s में से %1$s</string>
+    <string name="search_refine_placeholder">परिणामों में खोजें</string>
     <string name="mail_key_upgrade_title">आपके सहेजे गए मेल अपडेट हो रहे हैं</string>
     <string name="mail_key_upgrade_running">Aster Mail आपके सहेजे गए संदेशों को आपकी मौजूदा कुंजियों से फिर से एन्क्रिप्ट कर रहा है। पूरा होने तक यह विंडो खुली रखें।</string>
     <string name="mail_key_upgrade_failed">Aster Mail आपके सहेजे गए संदेशों को अपडेट करना पूरा नहीं कर सका। आपका मेल नहीं बदला है। अपना कनेक्शन जांचें, फिर दोबारा कोशिश करें।</string>
@@ -3617,4 +3631,8 @@
     <string name="attachment_unverified">असत्यापित अटैचमेंट</string>
     <string name="confirm_back_exit">बाहर निकलने से पहले पुष्टि करें</string>
     <string name="confirm_back_exit_subtitle">इनबॉक्स से ऐप छोड़ने के लिए दो बार वापस दबाएं</string>
+    <string name="toast_position_title">ऐप में अलर्ट की जगह</string>
+    <string name="toast_position_subtitle">ऐप इस्तेमाल करते समय अलर्ट कहां दिखें</string>
+    <string name="toast_position_top">ऊपर</string>
+    <string name="toast_position_bottom">नीचे</string>
 </resources>

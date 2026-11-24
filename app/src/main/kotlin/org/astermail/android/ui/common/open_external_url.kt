@@ -19,7 +19,6 @@ package org.astermail.android.ui.common
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import org.astermail.android.R
 
 fun open_external_url(context: Context, url: String): Boolean {
@@ -31,11 +30,7 @@ fun start_external_intent(context: Context, intent: Intent): Boolean {
         context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         true
     } catch (_: Throwable) {
-        Toast.makeText(
-            context,
-            context.getString(R.string.could_not_open_link),
-            Toast.LENGTH_SHORT,
-        ).show()
+        app_toast.show(context.getString(R.string.could_not_open_link))
         false
     }
 }

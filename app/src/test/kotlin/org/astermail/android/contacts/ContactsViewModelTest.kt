@@ -313,12 +313,12 @@ class ContactsViewModelTest {
         coEvery { repository.fetch_contact("c_42") } returns Result.success(contact)
 
         vm.load_contact("c_42")
-        assertTrue(vm.state.value.is_loading)
+        assertTrue(vm.state.value.contact_loading)
 
         advanceUntilIdle()
 
         val state = vm.state.value
-        assertFalse(state.is_loading)
+        assertFalse(state.contact_loading)
         assertNull(state.error)
         assertEquals("c_42", state.selected_contact?.id)
         assertEquals("Diana Prince", state.selected_contact?.name)
@@ -333,7 +333,7 @@ class ContactsViewModelTest {
         advanceUntilIdle()
 
         val state = vm.state.value
-        assertFalse(state.is_loading)
+        assertFalse(state.contact_loading)
         assertEquals("not found", state.error)
         assertNull(state.selected_contact)
     }

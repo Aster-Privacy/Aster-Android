@@ -158,18 +158,6 @@ internal const val QUOTE_HIDE_SCHEME = "asterquote"
 internal const val QUOTE_CLOSE_ACTION = "close"
 
 private fun append_quote_hide_pills(root: Element, label: String) {
-    for (details in root.select("details.aster-quoted-wrapper")) {
-        if (details.parents().any { it.tagName().equals("details", ignoreCase = true) }) continue
-        val content = details.children().firstOrNull { it.hasClass("aster-quoted-content") } ?: continue
-        if (content.children().any { it.hasClass("aster-quote-hide") }) continue
-        val pill = Element("a")
-            .addClass("aster-quote-hide")
-            .attr("href", "$QUOTE_HIDE_SCHEME:hide")
-            .attr("translate", "no")
-            .attr("role", "button")
-        pill.text(label)
-        content.appendChild(pill)
-    }
     for (summary in root.select("details.aster-quoted-wrapper>summary, details.aster-forwarded-collapse>summary")) {
         if (summary.children().any { it.hasClass("aster-quote-close") || it.hasClass("aster-quote-cover") }) continue
         val forwarded = summary.parent()?.hasClass("aster-forwarded-collapse") == true

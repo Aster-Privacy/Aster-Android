@@ -323,6 +323,17 @@ fun Modifier.skeleton_handoff(phase: SkeletonPhase): Modifier {
     return this.graphicsLayer { this.alpha = alpha.value }
 }
 
+internal data class SkeletonRowGroupPosition(val is_first: Boolean, val is_last: Boolean)
+
+internal fun skeleton_row_group_position(
+    index: Int,
+    row_count: Int,
+    list_ends_on_screen: Boolean = false,
+): SkeletonRowGroupPosition = SkeletonRowGroupPosition(
+    is_first = index == 0,
+    is_last = list_ends_on_screen && index == row_count - 1,
+)
+
 @Composable
 fun inbox_skeleton(
     modifier: Modifier = Modifier,
@@ -344,11 +355,12 @@ fun inbox_skeleton(
             .skeleton_reveal(),
     ) {
         repeat(row_count) { index ->
+            val position = skeleton_row_group_position(index, row_count)
             inbox_skeleton_row(
                 state = state,
                 list_density = list_density,
-                is_first = index == 0,
-                is_last = index == row_count - 1,
+                is_first = position.is_first,
+                is_last = position.is_last,
                 show_avatar = show_avatar,
                 show_preview = show_preview,
                 row_height = if (index == 0 && first_row_height > 0.dp) first_row_height else row_height,

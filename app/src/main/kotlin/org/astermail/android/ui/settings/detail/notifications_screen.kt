@@ -111,11 +111,7 @@ fun NotificationsScreen(
     LaunchedEffect(Unit) { offer_vm.load() }
     LaunchedEffect(offer_prefs.save_failed) {
         if (!offer_prefs.save_failed) return@LaunchedEffect
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.special_offers_save_failed),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.special_offers_save_failed).toString())
         offer_vm.clear_save_failed()
     }
 
@@ -128,6 +124,7 @@ fun NotificationsScreen(
     var quiet_hours by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_enabled ?: false) }
     var quiet_hours_start by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_start?.takeIf { it.isNotBlank() } ?: "22:00") }
     var quiet_hours_end by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_end?.takeIf { it.isNotBlank() } ?: "07:00") }
+    var toast_position by remember(prefs_seeded) { mutableStateOf(prefs?.toast_position ?: org.astermail.android.ui.common.default_toast_position) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
@@ -166,6 +163,7 @@ fun NotificationsScreen(
             quiet_hours = prefs.quiet_hours_enabled
             quiet_hours_start = prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
             quiet_hours_end = prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
+            toast_position = prefs.toast_position
             MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
             MailPollingWorker.set_notify_new_email(context, new_email)
             MailPollingWorker.set_notify_replies(context, replies)
@@ -184,6 +182,8 @@ fun NotificationsScreen(
         quiet_hours = base.quiet_hours_enabled
         quiet_hours_start = base.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
         quiet_hours_end = base.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
+        toast_position = base.toast_position
+        org.astermail.android.ui.common.set_toast_position(toast_position)
         save_trigger = 0
         MailPollingWorker.set_push_enabled(context, push)
         MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
@@ -204,6 +204,7 @@ fun NotificationsScreen(
                 quiet_hours_enabled = quiet_hours,
                 quiet_hours_start = quiet_hours_start,
                 quiet_hours_end = quiet_hours_end,
+                toast_position = toast_position,
             ),
         )
         MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
@@ -460,6 +461,34 @@ fun NotificationsScreen(
                     }
                 }
             }
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.toast_position_title))
+            Text(
+                text = stringResource(R.string.toast_position_subtitle),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(
+                    start = AsterSpacing.lg,
+                    end = AsterSpacing.lg,
+                    bottom = AsterSpacing.sm,
+                ),
+            )
+            aster_segmented(
+                value = org.astermail.android.ui.common.toast_position_choice_for(toast_position),
+                options = listOf(
+                    switcher_option(org.astermail.android.ui.common.toast_position_top, stringResource(R.string.toast_position_top)),
+                    switcher_option(org.astermail.android.ui.common.toast_position_bottom, stringResource(R.string.toast_position_bottom)),
+                ),
+                on_change = { picked ->
+                    val next = org.astermail.android.ui.common.toast_position_after_pick(toast_position, picked) ?: picked
+                    if (next != toast_position) {
+                        toast_position = next
+                        org.astermail.android.ui.common.set_toast_position(next)
+                        save_trigger++
+                    }
+                },
+                modifier = Modifier.padding(horizontal = AsterSpacing.lg),
+            )
         }
         v_gap(AsterSpacing.xxl)
     }

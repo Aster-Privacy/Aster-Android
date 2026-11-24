@@ -45,7 +45,7 @@ fun shared_settings_view_model(): SettingsViewModel {
     LaunchedEffect(Unit) { view_model.reset_transient_state() }
     LaunchedEffect(view_model) {
         view_model.preference_save_failures.collect { message ->
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         }
     }
     return view_model

@@ -95,16 +95,27 @@ internal fun release_body_view_later(view: mail_body_web_view) {
 internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
     private var released = false
     private val entries = live_view_lru<String, held_body>(capacity) { it.release(released) }
+    private val measures = object : LinkedHashMap<String, body_measure>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, body_measure>?): Boolean =
+            size > KEPT_BODY_MEASURE_CAPACITY
+    }
 
     val is_released: Boolean get() = released
 
     var on_quote_collapse: ((String, Float) -> Unit)? = null
 
     fun measure_for(key: String): body_measure {
-        entries.get(key)?.let { return it.measure }
-        val fresh = held_body(body_measure())
-        if (!released) entries.put(key, fresh)
-        return fresh.measure
+        val held = entries.get(key)
+        if (held != null) {
+            if (!released) measures[key] = held.measure
+            return held.measure
+        }
+        val measure = measures[key] ?: body_measure()
+        if (!released) {
+            measures[key] = measure
+            entries.put(key, held_body(measure))
+        }
+        return measure
     }
 
     fun take_view(key: String, measure: body_measure): mail_body_web_view? {
@@ -157,7 +168,11 @@ internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
         released = true
         on_quote_collapse = null
         entries.release_all()
+        measures.values.forEach { it.gate.release() }
+        measures.clear()
     }
 }
+
+internal const val KEPT_BODY_MEASURE_CAPACITY = 96
 
 internal val local_body_view_holder = staticCompositionLocalOf<body_view_holder?> { null }

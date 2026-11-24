@@ -103,6 +103,7 @@ internal fun ContactBirthdayField(
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
                 .background(field_surface_color(colors), AsterShapes.control)
+                .border(1.dp, colors.border_primary, AsterShapes.control)
                 .clip(AsterShapes.control)
                 .clickable(role = Role.Button, onClickLabel = label) { show_picker = true }
                 .padding(horizontal = AsterSpacing.md),

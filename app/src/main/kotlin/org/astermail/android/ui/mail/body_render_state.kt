@@ -91,6 +91,12 @@ internal fun seed_body_height(cached_dp: Float?, estimate_dp: Float): body_heigh
 internal fun show_body_skeleton(measured: Boolean, elapsed_ms: Long): Boolean =
     !measured && elapsed_ms >= BODY_SKELETON_DELAY_MS
 
+internal class pending_collapse(
+    val generation: Int,
+    val collapsed_dp: Float?,
+    val shift_dp: Float,
+)
+
 internal class quote_toggle_state {
     private var base_dp = 0f
     private var current_dp = 0f

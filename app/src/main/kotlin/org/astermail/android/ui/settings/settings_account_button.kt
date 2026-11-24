@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -55,7 +54,7 @@ import org.astermail.android.ui.drawer.workspace_switcher_sheet
 import org.astermail.android.ui.mail.SenderAvatar
 
 val settings_account_button_size: Dp = 48.dp
-private val settings_account_avatar_size: Dp = 36.dp
+private val settings_account_avatar_size: Dp = 34.dp
 
 @Composable
 fun settings_account_button(
@@ -183,7 +182,7 @@ fun account_manager_sheet(
         on_resubscribe = {
             on_dismiss()
             resubscribe_vm.resubscribe { message ->
-                Toast.makeText(resubscribe_context, message, Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(message.toString())
             }
         },
         on_switch = { account ->

@@ -220,6 +220,9 @@ data class SettingsUiState(
     val storage: StorageOverview? = null,
     val subscription: SubscriptionInfo? = null,
     val subscription_load_failed: Boolean = false,
+    val subscription_loading: Boolean = false,
+    val subscription_error: String? = null,
+    val subscription_cached: Boolean = false,
     val security_status: SecurityStatusResponse? = null,
     val labels: List<LabelItem> = emptyList(),
     val tags: List<TagItem> = emptyList(),
@@ -359,6 +362,7 @@ private val cached_preferences_json = kotlinx.serialization.json.Json {
 }
 
 private const val SUBSCRIPTION_TTL_MS = 300_000L
+private const val SUBSCRIPTION_RETRY_DELAY_MS = 800L
 private const val TAGS_TTL_MS = 60_000L
 private const val SYNC_RELOAD_DEBOUNCE_MS = 300L
 private const val PREFERENCES_TTL_MS = 30_000L
@@ -412,6 +416,7 @@ class SettingsViewModel @Inject constructor(
     private val _state = MutableStateFlow(SettingsUiState())
     private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
     private var last_subscription_load_ms = 0L
+    private var subscription_job: kotlinx.coroutines.Job? = null
     private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
         ConcurrentHashMap<String, Boolean>(),
@@ -469,6 +474,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_tags()
         hydrate_twin_address()
         hydrate_cached_storage()
+        hydrate_cached_subscription()
         load_preferences()
         watch_account_key_readiness()
         watch_identity_key()
@@ -522,6 +528,24 @@ class SettingsViewModel @Inject constructor(
             cached_preferences_json.encodeToString(StorageOverview.serializer(), overview)
         }.getOrNull() ?: return
         preferences_cache.write_storage(key, raw)
+    }
+
+    private fun hydrate_cached_subscription() {
+        if (_state.value.subscription != null) return
+        val raw = preferences_cache.read_subscription(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(SubscriptionInfo.serializer(), raw)
+        }.getOrNull() ?: return
+        if (cached.effective_plan_name.isNullOrBlank() && cached.status.isNullOrBlank()) return
+        _state.update { if (it.subscription == null) it.copy(subscription = cached, subscription_cached = true) else it }
+    }
+
+    private fun persist_cached_subscription(sub: SubscriptionInfo) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(SubscriptionInfo.serializer(), sub)
+        }.getOrNull() ?: return
+        preferences_cache.write_subscription(key, raw)
     }
 
     fun clear_cached_preferences(account_key: String?) {
@@ -1018,6 +1042,8 @@ class SettingsViewModel @Inject constructor(
         last_preferences_raw_json = null
         last_synced_preferences = null
         last_subscription_load_ms = 0L
+        subscription_job?.cancel()
+        subscription_job = null
         last_tags_load_ms = 0L
         last_preferences_load_ms = 0L
         last_default_sender_load_ms = 0L
@@ -1040,6 +1066,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
         hydrate_cached_tags()
         hydrate_cached_storage()
+        hydrate_cached_subscription()
     }
 
     fun load_blocked_senders() {
@@ -3769,20 +3796,29 @@ class SettingsViewModel @Inject constructor(
 
     fun load_subscription(force: Boolean = true) {
         val now = System.currentTimeMillis()
-        if (!force && _state.value.subscription != null && now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS) return
+        val current = _state.value
+        if (!force && current.subscription != null && !current.subscription_cached &&
+            now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS
+        ) return
+        if (subscription_job?.isActive == true) return
         last_subscription_load_ms = now
-        viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null, subscription_load_failed = false)
+        subscription_job = viewModelScope.launch {
+            _state.update { it.copy(subscription_loading = true, subscription_error = null, subscription_load_failed = false) }
             try {
-                val sub = settings_api.get_subscription()
+                val sub = fetch_subscription_with_retry()
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.i("SettingsVM", "subscription loaded status=${sub.status} plan=${sub.plan_name}")
                 }
-                _state.value = _state.value.copy(
-                    subscription = sub,
-                    is_loading = false,
-                    subscription_load_failed = false,
-                )
+                _state.update {
+                    it.copy(
+                        subscription = sub,
+                        subscription_loading = false,
+                        subscription_error = null,
+                        subscription_load_failed = false,
+                        subscription_cached = false,
+                    )
+                }
+                persist_cached_subscription(sub)
                 org.astermail.android.billing.PaymentFailedNotifier.observe(
                     context,
                     sub.status,
@@ -3795,12 +3831,34 @@ class SettingsViewModel @Inject constructor(
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_subscription failed", t)
                 }
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                    subscription_load_failed = true,
-                )
+                last_subscription_load_ms = 0L
+                _state.update {
+                    it.copy(
+                        subscription_loading = false,
+                        subscription_error = org.astermail.android.localized_api_error(
+                            context,
+                            t,
+                            context.getString(R.string.subscription_load_failed_body),
+                        ),
+                        subscription_load_failed = true,
+                    )
+                }
             }
+        }
+    }
+
+    fun clear_subscription_error() {
+        _state.update { it.copy(subscription_error = null) }
+    }
+
+    private suspend fun fetch_subscription_with_retry(): SubscriptionInfo {
+        try {
+            return settings_api.get_subscription()
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            if (!org.astermail.android.billing.is_transient_billing_failure(t)) throw t
+            delay(SUBSCRIPTION_RETRY_DELAY_MS)
+            return settings_api.get_subscription()
         }
     }
 
@@ -6158,7 +6216,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_referral_info() {
+        hydrate_cached_referral()
         viewModelScope.launch {
+            val history_job = async {
+                try {
+                    kotlinx.coroutines.withTimeout(10_000L) {
+                        labels_api.get_referral_history().referrals
+                    }
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+            }
             val info: ReferralInfoResponse? = try {
                 kotlinx.coroutines.withTimeout(10_000L) {
                     labels_api.get_referral_info()
@@ -6167,20 +6236,41 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 null
             }
-            val history = try {
-                kotlinx.coroutines.withTimeout(10_000L) {
-                    labels_api.get_referral_history().referrals
-                }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                emptyList()
+            _state.update {
+                it.copy(
+                    referral = info ?: it.referral,
+                    referral_load_failed = info == null && it.referral == null,
+                )
             }
-            _state.value = _state.value.copy(
-                referral = info ?: _state.value.referral,
-                referral_history = history,
-                referral_load_failed = info == null,
-            )
+            val history = history_job.await()
+            _state.update { it.copy(referral_history = history ?: it.referral_history) }
+            if (info != null) persist_cached_referral(info, history ?: _state.value.referral_history)
         }
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class cached_referral(
+        val info: ReferralInfoResponse,
+        val history: List<ReferralHistoryItem> = emptyList(),
+    )
+
+    private fun hydrate_cached_referral() {
+        if (_state.value.referral != null) return
+        val raw = preferences_cache.read_referral(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(cached_referral.serializer(), raw)
+        }.getOrNull() ?: return
+        _state.update {
+            if (it.referral == null) it.copy(referral = cached.info, referral_history = cached.history, referral_load_failed = false) else it
+        }
+    }
+
+    private fun persist_cached_referral(info: ReferralInfoResponse, history: List<ReferralHistoryItem>) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(cached_referral.serializer(), cached_referral(info, history))
+        }.getOrNull() ?: return
+        preferences_cache.write_referral(key, raw)
     }
 
     private suspend fun await_identity_key(max_attempts: Int = 12, delay_ms: Long = 200): String? {

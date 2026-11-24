@@ -115,9 +115,8 @@ private fun domain_list_row(
                 text = domain.domain_name,
                 color = colors.text_primary,
                 fontSize = 15.sp,
+                lineHeight = 20.sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
             )
             if (subtitle != null) {
                 Text(

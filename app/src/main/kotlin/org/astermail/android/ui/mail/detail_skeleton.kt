@@ -21,10 +21,6 @@
 
 package org.astermail.android.ui.mail
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,7 +49,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
@@ -222,28 +217,20 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
     }
 }
 
-@Composable
-fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): SkeletonPhase =
-    key(thread_key) { remember_skeleton_phase(wanted = wanted).value }
+internal fun detail_skeleton_phase_of(wanted: Boolean): SkeletonPhase =
+    if (wanted) SkeletonPhase.skeleton else SkeletonPhase.content
 
 @Composable
-fun Modifier.detail_content_handoff(thread_key: String, phase: SkeletonPhase): Modifier =
-    key(thread_key) { this.skeleton_handoff(phase) }
+fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): SkeletonPhase =
+    key(thread_key) { detail_skeleton_phase_of(wanted) }
+
+fun Modifier.detail_content_handoff(thread_key: String, revealed: Boolean): Modifier =
+    this.graphicsLayer { alpha = if (revealed) 1f else 0f }
 
 @Composable
 fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, message_count: Int = 1) {
-    val reduce_motion = aster_reduce_motion()
-    AnimatedVisibility(
-        visible = phase == SkeletonPhase.skeleton,
-        modifier = modifier,
-        enter = EnterTransition.None,
-        exit = fadeOut(
-            tween(
-                if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_fade_out_ms,
-                easing = org.astermail.android.design.AsterEasing.emphasized_accelerate,
-            ),
-        ),
-    ) {
+    if (phase != SkeletonPhase.skeleton) return
+    Box(modifier = modifier) {
         detail_skeleton(message_count = message_count)
     }
 }

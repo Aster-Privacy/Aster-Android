@@ -952,7 +952,7 @@ fun DrawerContent(
             on_resubscribe = {
                 show_workspace_sheet = false
                 resubscribe_vm.resubscribe { message ->
-                    android.widget.Toast.makeText(resubscribe_context, message, android.widget.Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show(message.toString())
                 }
             },
             on_switch = { account ->

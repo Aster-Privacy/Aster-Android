@@ -1319,7 +1319,16 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
 
     override suspend fun get_subscription(): SubscriptionInfo {
         val response = client.http.get("${client.base_url}/api/payments/v1/subscription")
-        return decode_or_throw(response)
+        if (response.status.value !in 200..299) {
+            val body = try { response.body<String>() } catch (_: Throwable) { "" }
+            throw client.map_http_status(response.status.value, body)
+        }
+        val text = response.body<String>()
+        return try {
+            client.json.decodeFromString(SubscriptionInfo.serializer(), text)
+        } catch (t: IllegalArgumentException) {
+            throw ApiError.ServerError(response.status.value)
+        }
     }
 
     override suspend fun send_feedback(request: FeedbackRequest) {

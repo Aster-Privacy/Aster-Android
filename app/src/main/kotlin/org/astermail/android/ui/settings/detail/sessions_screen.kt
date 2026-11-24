@@ -21,12 +21,12 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -74,7 +74,7 @@ fun SessionsScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -269,7 +269,11 @@ private fun session_row(
         if (on_revoke == null) {
             this_device_badge()
         } else {
-            AsterGhostButton(label = stringResource(R.string.sign_out), onClick = on_revoke)
+            org.astermail.android.design.components.AsterCompactDestructiveButton(
+                label = stringResource(R.string.sign_out),
+                onClick = on_revoke,
+                modifier = Modifier.widthIn(min = 84.dp),
+            )
         }
     }
 }

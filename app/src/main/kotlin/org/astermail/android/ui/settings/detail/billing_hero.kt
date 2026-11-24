@@ -129,6 +129,8 @@ internal fun billing_hero_card(
     on_primary: (() -> Unit)?,
     actions: List<billing_hero_action>,
     danger_action: billing_hero_action?,
+    payment_source_text: String? = null,
+    payment_source_icon: ImageVector? = null,
 ) {
     val colors = AsterMaterial.colors
     AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -231,6 +233,27 @@ internal fun billing_hero_card(
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+            if (payment_source_text != null) {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (payment_source_icon != null) {
+                        Icon(
+                            imageVector = payment_source_icon,
+                            contentDescription = null,
+                            tint = colors.text_tertiary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.xs))
+                    }
+                    Text(
+                        text = payment_source_text,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

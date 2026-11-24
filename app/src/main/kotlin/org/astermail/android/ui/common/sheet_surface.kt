@@ -21,7 +21,9 @@
 
 package org.astermail.android.ui.common
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +41,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSemanticColors
+import org.astermail.android.design.ime_settle_anchor
+import org.astermail.android.design.remember_ime_settle
 import org.astermail.android.design.components.aster_popup_window_effect
 
 fun sheet_container_color(colors: AsterSemanticColors): Color =
@@ -59,6 +63,7 @@ fun aster_modal_sheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val content_color = AsterMaterial.colors.text_primary
+    val settle = remember_ime_settle()
     ModalBottomSheet(
         onDismissRequest = on_dismiss_request,
         modifier = modifier,
@@ -72,7 +77,10 @@ fun aster_modal_sheet(
     ) {
         aster_popup_window_effect(light_navigation_bars = container_color.luminance() > 0.5f)
         sheet_toast_host()
-        content()
+        Column(
+            modifier = Modifier.fillMaxWidth().ime_settle_anchor(settle),
+            content = content,
+        )
     }
 }
 

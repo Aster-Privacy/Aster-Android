@@ -176,6 +176,7 @@ class AppLockStore @Inject constructor(
         session_unlocked = false
         _is_locked.value = true
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
+        org.astermail.android.mail.message_preloader.clear()
     }
 
     fun mark_session_unlocked() {
@@ -187,6 +188,7 @@ class AppLockStore @Inject constructor(
         if (is_configured() && !session_unlocked) {
             _is_locked.value = true
             runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
+            org.astermail.android.mail.message_preloader.clear()
         }
     }
 

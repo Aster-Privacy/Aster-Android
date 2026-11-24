@@ -24,7 +24,6 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -129,11 +128,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             show_step_up = false
             step_up_password = ""
             step_up_code = ""
-            Toast.makeText(
-                context,
-                context.getString(R.string.recovery_email_saved),
-                Toast.LENGTH_SHORT,
-            ).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.recovery_email_saved).toString())
             vm.reset_save_status()
         }
         if (state.save_status == SaveStatus.ERROR && show_step_up) {
@@ -144,7 +139,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     LaunchedEffect(state.action_result) {
         state.action_result?.let {
             resend_pending = false
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(it.toString())
             vm.clear_action_result()
         }
     }

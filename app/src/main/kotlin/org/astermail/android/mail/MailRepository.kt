@@ -526,6 +526,7 @@ data class AttachmentMeta(
     val size_bytes: Long? = null,
     val is_placeholder: Boolean = false,
     val is_unverified: Boolean = false,
+    val verification_failed: Boolean = false,
 )
 
 data class DecryptedReaction(
@@ -1013,6 +1014,35 @@ class MailRepository @Inject constructor(
             store_body_index(decrypted, expected_ids)
             decrypted.size
         }
+    }
+
+    suspend fun thread_body_index_rows(
+        thread_token: String,
+        expected_ids: Collection<String>,
+    ): List<org.astermail.android.storage.search.MessageBodyIndexEntity> {
+        val cached = cached_thread_messages(thread_token)
+        val ready_ids = cached.orEmpty()
+            .filterNot { it.is_body_pending || it.is_pgp_placeholder }
+            .mapTo(HashSet()) { it.id }
+        val messages = if (cached != null && snapshot_covers(ready_ids, expected_ids)) {
+            cached
+        } else {
+            val response = mail_api.get_thread_messages(thread_token)
+            withContext(Dispatchers.Default) {
+                response.messages.distinctBy { it.id }.map { msg ->
+                    async { decrypt_thread_message(msg) }
+                }.awaitAll()
+            }
+        }
+        return withContext(Dispatchers.Default) {
+            body_index_thread_rows(messages, expected_ids, InboundAttachmentKeyStore::filenames, System.currentTimeMillis())
+        }
+    }
+
+    suspend fun store_body_index_rows(rows: List<org.astermail.android.storage.search.MessageBodyIndexEntity>) {
+        if (rows.isEmpty()) return
+        val dao = body_index_dao_provider?.get() ?: return
+        withContext(Dispatchers.IO) { dao.replace_all(rows) }
     }
 
     private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {
@@ -2617,6 +2647,9 @@ class MailRepository @Inject constructor(
         thread_snapshot_id_cache.clear()
         clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
+        message_preloader.clear()
+        org.astermail.android.ui.mail.sanitized_html_memo.clear()
+        org.astermail.android.ui.mail.inline_images_memo.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
         org.astermail.android.translation.TranslationMemory.clear()
         DecryptedMimeAttachments.clear()
@@ -3146,7 +3179,16 @@ class MailRepository @Inject constructor(
         all.toList()
     }
 
-    suspend fun fetch_thread(thread_token: String): Result<List<ThreadMessageDecrypted>> = runCatching {
+    suspend fun persist_opened_thread(thread_token: String, messages: List<ThreadMessageDecrypted>) {
+        if (messages.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            store_message_bodies(messages)
+            store_thread_snapshot(thread_token, messages)
+            prefetch_sender_profiles(messages.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+        }
+    }
+
+    suspend fun fetch_thread(thread_token: String, persist: Boolean = true): Result<List<ThreadMessageDecrypted>> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
         val thread_limit = org.astermail.android.api.network.thread_message_load_limit(
             org.astermail.android.api.network.low_network_state.active(),
@@ -3162,9 +3204,11 @@ class MailRepository @Inject constructor(
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
-            store_message_bodies(healed)
-            store_thread_snapshot(thread_token, healed)
-            prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            if (persist) {
+                store_message_bodies(healed)
+                store_thread_snapshot(thread_token, healed)
+                prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            }
             healed
         }
     }
@@ -5601,6 +5645,7 @@ class MailRepository @Inject constructor(
             size_bytes = size,
             is_placeholder = filename == null,
             is_unverified = row_unverified && shows_row_fields,
+            verification_failed = row_meta?.verification_failed == true && shows_row_fields,
         )
     }
 
@@ -5648,9 +5693,10 @@ class MailRepository @Inject constructor(
             val result = try_pgp_decrypt_own_account_result(text)
             val plaintext = result?.plaintext
             val signed = result?.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
+            val forged = result?.signature == org.astermail.android.crypto.PgpSignatureStatus.INVALID
             if (plaintext != null && (signed || !own_authored)) {
                 parse_attachment_meta_json(plaintext.toByteArray(Charsets.UTF_8))?.let { meta ->
-                    return if (signed) meta else meta.copy(is_unverified = true)
+                    return if (signed) meta else meta.copy(is_unverified = true, verification_failed = forged)
                 }
             }
         }
@@ -5809,7 +5855,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 )
             }
         }
@@ -5878,7 +5924,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 )
             }
             Result.success(DecryptedMimeAttachments.merge_into(mail_item_id, resolved))
@@ -5930,7 +5976,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 ),
             )
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
@@ -5965,7 +6011,7 @@ class MailRepository @Inject constructor(
                     session_key = meta.session_key,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 ),
                 data,
             ).let { Result.success(it) }

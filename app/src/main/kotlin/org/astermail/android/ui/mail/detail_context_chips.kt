@@ -117,9 +117,16 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import android.content.ClipData
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.system_confirms_copy
-import org.astermail.android.ui.common.write_sensitive_to_clipboard
+import org.astermail.android.ui.common.write_to_clipboard
 import org.astermail.android.ui.theme.local_accessibility
 
 internal val detail_chip_text_size = 10.sp
@@ -491,34 +498,55 @@ internal fun strip_subject_chip_placeholders(copied: String): String =
 internal fun Modifier.subject_press_actions(
     expandable: Boolean,
     on_toggle_expand: () -> Unit,
-    verification_code: String?,
+    copy_value: String?,
 ): Modifier {
-    if (!expandable && verification_code == null) return this
+    if (!expandable && copy_value == null) return this
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val haptic_enabled = local_accessibility.current.haptic_enabled
-    val copy_label = stringResource(R.string.copy_code)
-    val copied_message = stringResource(R.string.code_copied)
+    val copy_label = stringResource(R.string.copy_subject)
+    val copied_message = stringResource(R.string.subject_copied)
     val failed_message = stringResource(R.string.copy_failed)
-    val on_long_click: (() -> Unit)? = verification_code?.let { code ->
+    val pressed_tint = AsterMaterial.colors.text_primary.copy(alpha = subject_pressed_alpha)
+    val interaction_source = remember { MutableInteractionSource() }
+    val pressed by interaction_source.collectIsPressedAsState()
+    val pressed_fill by animateColorAsState(
+        targetValue = if (pressed) pressed_tint else pressed_tint.copy(alpha = 0f),
+        animationSpec = tween(durationMillis = subject_pressed_fade_ms),
+        label = "subject_pressed",
+    )
+    val on_long_click: (() -> Unit)? = copy_value?.let { value ->
         {
             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-            val copied = write_sensitive_to_clipboard(context, context.getString(R.string.app_name), code)
+            val copied = write_to_clipboard(context, ClipData.newPlainText("subject", value))
             when {
                 !copied -> app_toast.show(failed_message)
                 !system_confirms_copy() -> app_toast.show(copied_message)
             }
         }
     }
-    return this.combinedClickable(
-        interactionSource = null,
-        indication = if (expandable) androidx.compose.foundation.LocalIndication.current else null,
-        onClick = { if (expandable) on_toggle_expand() },
-        onLongClick = on_long_click,
-        onLongClickLabel = if (verification_code != null) copy_label else null,
-        hapticFeedbackEnabled = false,
-    )
+    return this
+        .drawBehind {
+            if (pressed_fill.alpha > 0f) {
+                drawRoundRect(
+                    color = pressed_fill,
+                    cornerRadius = CornerRadius(subject_pressed_radius.toPx()),
+                )
+            }
+        }
+        .combinedClickable(
+            interactionSource = interaction_source,
+            indication = null,
+            onClick = { if (expandable) on_toggle_expand() },
+            onLongClick = on_long_click,
+            onLongClickLabel = if (copy_value != null) copy_label else null,
+            hapticFeedbackEnabled = false,
+        )
 }
+
+internal const val subject_pressed_alpha = 0.06f
+internal const val subject_pressed_fade_ms = 120
+internal val subject_pressed_radius = 8.dp
 
 @Stable
 internal class subject_selection_state {

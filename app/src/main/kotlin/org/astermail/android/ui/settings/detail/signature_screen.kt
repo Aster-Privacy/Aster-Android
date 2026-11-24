@@ -102,7 +102,7 @@ fun SignatureScreen(
     LaunchedEffect(state.save_status) {
         if (state.save_status == org.astermail.android.settings.SaveStatus.ERROR) {
             val message = state.error ?: context.getString(R.string.settings_save_failed_banner)
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
             vm.reset_transient_state()
         }
     }
@@ -143,11 +143,7 @@ fun SignatureScreen(
                     }
                     fitting_signature = false
                     if (content == null) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.signature_too_large),
-                            android.widget.Toast.LENGTH_LONG,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.signature_too_large).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
                         return@launch
                     }
                     val target = editing

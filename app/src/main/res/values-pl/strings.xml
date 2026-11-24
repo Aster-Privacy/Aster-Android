@@ -3064,6 +3064,9 @@
     <string name="translation_storage_remove_all">Usuń wszystkie</string>
     <string name="translation_storage_removed">Pakiety językowe usunięte</string>
     <string name="translation_offer_download">Ta wiadomość jest w języku %1$s. Tłumaczenie pobierze pakiet językowy.</string>
+    <string name="translation_bar_translate_to">Przetłumacz na: %1$s</string>
+    <string name="translation_bar_translated_from">Przetłumaczono z: %1$s</string>
+    <string name="translation_bar_downloading">Pobieranie pakietu językowego: %1$s</string>
     <string name="contact_support">Skontaktuj się z pomocą techniczną</string>
     <string name="domain_purchase_manage">Zarządzaj</string>
     <string name="domain_purchase_cancel_payment_title">Anulować tę płatność?</string>
@@ -3192,6 +3195,10 @@
     <string name="remove_photo">Usuń zdjęcie</string>
     <string name="add_photo">Dodaj zdjęcie</string>
     <string name="photo_too_large">Wybierz mniejszy obraz</string>
+    <string name="contact_photo_unreadable">Aster nie może otworzyć tego obrazu. Wybierz inne zdjęcie.</string>
+    <string name="contact_discard_changes_title">Odrzucić zmiany?</string>
+    <string name="contact_discard_changes_message">Zmiany w tym kontakcie nie zostały zapisane.</string>
+    <string name="contact_keep_editing">Kontynuuj edycję</string>
     <string name="no_contacts_yet">Brak kontaktów</string>
     <string name="no_contacts_match">Brak kontaktów pasujących do \"%1$s\"</string>
     <string name="no_contacts_in_trash">Kosz jest pusty</string>
@@ -3757,6 +3764,13 @@
         <item quantity="other">Dodano %d kontaktu</item>
     </plurals>
     <string name="body_index_status">Indeksowanie treści wiadomości do wyszukiwania: %1$d z %2$d</string>
+    <string name="search_status_indexing_mail">Indeksowanie poczty</string>
+    <string name="search_status_indexing_text">Indeksowanie treści wiadomości</string>
+    <string name="search_status_waiting_wifi">Indeksowanie treści zostanie wznowione po połączeniu z Wi-Fi</string>
+    <string name="search_status_paused">Indeksowanie wstrzymane</string>
+    <string name="search_status_partial">Wyniki mogą być niepełne</string>
+    <string name="search_status_count">%1$s z %2$s</string>
+    <string name="search_refine_placeholder">Szukaj w wynikach</string>
     <string name="mail_key_upgrade_title">Aktualizowanie zapisanej poczty</string>
     <string name="mail_key_upgrade_running">Aster Mail ponownie szyfruje zapisane wiadomości przy użyciu bieżących kluczy. Nie zamykaj tego okna do zakończenia.</string>
     <string name="mail_key_upgrade_failed">Aster Mail nie może dokończyć aktualizacji zapisanych wiadomości. Twoja poczta nie została zmieniona. Sprawdź połączenie i spróbuj ponownie.</string>
@@ -3787,4 +3801,8 @@
     <string name="attachment_unverified">Niezweryfikowany załącznik</string>
     <string name="confirm_back_exit">Potwierdzaj przed wyjściem</string>
     <string name="confirm_back_exit_subtitle">Naciśnij Wstecz dwa razy, aby opuścić aplikację ze skrzynki odbiorczej</string>
+    <string name="toast_position_title">Położenie powiadomień w aplikacji</string>
+    <string name="toast_position_subtitle">Miejsce wyświetlania powiadomień podczas korzystania z aplikacji</string>
+    <string name="toast_position_top">Na górze</string>
+    <string name="toast_position_bottom">Na dole</string>
 </resources>

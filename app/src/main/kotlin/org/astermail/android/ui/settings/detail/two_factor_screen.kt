@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
-import android.widget.Toast
 import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
@@ -499,5 +498,5 @@ private fun copy_to_clipboard(context: Context, label: String, value: String) {
         return
     }
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
-    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
 }

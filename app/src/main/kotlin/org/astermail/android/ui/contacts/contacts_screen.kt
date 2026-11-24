@@ -22,11 +22,14 @@
 package org.astermail.android.ui.contacts
 
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.lazy_top_fade
+import org.astermail.android.ui.common.top_bar_account_button
+import org.astermail.android.ui.settings.detail.aster_segmented
+import org.astermail.android.ui.settings.detail.switcher_option
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.Manifest
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -58,9 +61,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -90,7 +99,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -151,6 +159,8 @@ fun ContactsScreen(
     on_open_drawer: (() -> Unit)? = null,
     on_compose_to: ((List<String>) -> Unit)? = null,
     search_back_enabled: Boolean = true,
+    on_open_account: (() -> Unit)? = null,
+    stored_account: org.astermail.android.storage.StoredAccount? = null,
     vm: ContactsViewModel = hiltViewModel(),
 ) {
     val colors = AsterMaterial.colors
@@ -210,7 +220,7 @@ fun ContactsScreen(
         if (granted) {
             vm.sync_device_contacts(context)
         } else {
-            Toast.makeText(context, context.getString(R.string.contacts_permission_required), Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.contacts_permission_required).toString())
         }
     }
 
@@ -221,14 +231,14 @@ fun ContactsScreen(
 
     LaunchedEffect(ui_state.sync_message) {
         ui_state.sync_message?.let { msg ->
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(msg.toString())
             vm.clear_sync_message()
         }
     }
 
     LaunchedEffect(ui_state.error) {
         ui_state.error?.let { err ->
-            Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(err.toString())
             vm.clear_flags()
         }
     }
@@ -283,12 +293,28 @@ fun ContactsScreen(
         vm.clear_selection()
     }
 
+    val ime_bottom = if (search_focused) {
+        androidx.compose.foundation.layout.WindowInsets.ime
+            .exclude(androidx.compose.foundation.layout.WindowInsets.navigationBars)
+            .asPaddingValues()
+            .calculateBottomPadding()
+    } else {
+        0.dp
+    }
+    val nav_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars
+        .asPaddingValues()
+        .calculateBottomPadding()
+    val contacts_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
     Box(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding()
-            .imePadding(),
+            .statusBarsPadding()
+            .windowInsetsPadding(
+                androidx.compose.foundation.layout.WindowInsets.navigationBars
+                    .only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal),
+            )
+            .padding(bottom = ime_bottom),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (ui_state.is_bulk_working && ui_state.bulk_total > 1) {
@@ -437,6 +463,52 @@ fun ContactsScreen(
                     on_focus_change = { search_focused = it },
                     on_exit_search = exit_search,
                 ) {
+                    if (on_open_account != null) {
+                        top_bar_account_button(
+                            stored_account = stored_account,
+                            on_click = on_open_account,
+                        )
+                    }
+                }
+            }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = AsterSpacing.lg, end = AsterSpacing.xs)
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                ) {
+                    aster_segmented(
+                        value = ui_state.tab.name,
+                        options = listOf(
+                            switcher_option(
+                                id = ContactsTab.CONTACTS.name,
+                                label = stringResource(R.string.contacts),
+                                badge = ui_state.contacts.size.takeIf { it > 0 }?.toString(),
+                            ),
+                            switcher_option(
+                                id = ContactsTab.GROUPS.name,
+                                label = stringResource(R.string.contact_groups),
+                                badge = ui_state.groups.size.takeIf { it > 0 }?.toString(),
+                            ),
+                            switcher_option(
+                                id = ContactsTab.TRASH.name,
+                                label = stringResource(R.string.trash),
+                                badge = ui_state.trashed_contacts.size.takeIf { it > 0 }?.toString(),
+                            ),
+                        ),
+                        on_change = { id -> vm.select_tab(ContactsTab.valueOf(id)) },
+                        modifier = Modifier.testTag("contacts_tabs"),
+                    )
+                }
+                if (!ui_state.is_selecting) {
+                    Spacer(Modifier.width(AsterSpacing.xs))
                     Box {
                         AsterIconButton(
                             icon = TablerIcons.DotsVertical,
@@ -449,15 +521,10 @@ fun ContactsScreen(
                             on_dismiss = { show_overflow_menu = false },
                         ) {
                             if (ui_state.tab == ContactsTab.CONTACTS) {
-                                aster_menu_item(
-                                    label = stringResource(
-                                        if (filter_favorites) {
-                                            R.string.contacts_show_all
-                                        } else {
-                                            R.string.contacts_show_favorites_only
-                                        },
-                                    ),
-                                    icon = if (filter_favorites) TablerIcons.Users else TablerIcons.Star,
+                                org.astermail.android.design.components.aster_menu_toggle_item(
+                                    label = stringResource(R.string.contacts_show_favorites_only),
+                                    checked = filter_favorites,
+                                    icon = TablerIcons.Star,
                                     test_tag = "contacts_favorites_filter",
                                     on_click = {
                                         show_overflow_menu = false
@@ -526,40 +593,12 @@ fun ContactsScreen(
                     }
                 }
             }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(start = AsterSpacing.lg, end = AsterSpacing.lg)
-                    .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md),
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FilterChip(
-                    label = stringResource(R.string.contacts),
-                    active = ui_state.tab == ContactsTab.CONTACTS,
-                    count = ui_state.contacts.size,
-                    on_click = { vm.select_tab(ContactsTab.CONTACTS) },
-                )
-                FilterChip(
-                    label = stringResource(R.string.contact_groups),
-                    active = ui_state.tab == ContactsTab.GROUPS,
-                    count = ui_state.groups.size,
-                    on_click = { vm.select_tab(ContactsTab.GROUPS) },
-                )
-                FilterChip(
-                    label = stringResource(R.string.trash),
-                    active = ui_state.tab == ContactsTab.TRASH,
-                    count = ui_state.trashed_contacts.size,
-                    on_click = { vm.select_tab(ContactsTab.TRASH) },
-                )
-            }
 
             if (ui_state.tab == ContactsTab.GROUPS) {
                 groups_pane(
                     groups = filtered_groups,
                     query = query.trim(),
+                    bottom_inset = nav_bottom,
                     is_loading = !ui_state.groups_loaded && ui_state.groups.isEmpty(),
                     count_of = { ui_state.group_member_count(it) },
                     modifier = Modifier.weight(1f),
@@ -571,16 +610,13 @@ fun ContactsScreen(
                 trash_pane(
                     contacts = filtered_trash,
                     query = query.trim(),
+                    bottom_inset = nav_bottom,
                     is_busy = ui_state.is_bulk_working,
                     modifier = Modifier.weight(1f),
                     on_restore = { contact ->
                         vm.restore_contact(contact) { ok ->
                             if (ok) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.contact_restored),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.contact_restored).toString())
                             }
                         }
                     },
@@ -604,7 +640,7 @@ fun ContactsScreen(
 
                 if (ui_state.is_loading && ui_state.contacts.isEmpty()) {
                     Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = nav_bottom),
                         contentAlignment = Alignment.Center,
                     ) {
                         org.astermail.android.design.components.aster_spinner(color = colors.accent_blue)
@@ -614,6 +650,7 @@ fun ContactsScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
+                            .padding(bottom = nav_bottom)
                             .padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -634,8 +671,9 @@ fun ContactsScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(bottom = 96.dp),
+                        state = contacts_list_state,
+                        modifier = Modifier.weight(1f).lazy_top_fade(contacts_list_state),
+                        contentPadding = PaddingValues(bottom = 96.dp + nav_bottom),
                     ) {
                         if (!filter_favorites && query.isBlank()) {
                             val favorites = filtered.filter { it.is_favorite }
@@ -707,6 +745,7 @@ fun ContactsScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
+                    .padding(bottom = nav_bottom)
                     .padding(AsterSpacing.lg)
                     .semantics { contentDescription = fab_label }
                     .testTag("fab_add_contact"),
@@ -742,7 +781,7 @@ fun ContactsScreen(
             on_confirm = {
                 show_delete_confirm = false
                 vm.delete_selection { ok ->
-                    if (ok) Toast.makeText(context, deleted_message, Toast.LENGTH_SHORT).show()
+                    if (ok) org.astermail.android.ui.common.app_toast.show(deleted_message.toString())
                 }
             },
         )
@@ -797,11 +836,7 @@ fun ContactsScreen(
                 new_group_for_selection = false
                 vm.create_group(name, color, icon, add_selection = add_selection) { ok ->
                     if (ok) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.group_created),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.group_created).toString())
                     }
                 }
             },
@@ -817,11 +852,7 @@ fun ContactsScreen(
                 editing_group = null
                 vm.update_group(group.id, name, color, icon) { ok ->
                     if (ok) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.saved),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.saved).toString())
                     }
                 }
             },
@@ -838,11 +869,7 @@ fun ContactsScreen(
                 show_group_picker = false
                 vm.add_selection_to_group(group.id) { added ->
                     if (added > 0) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.added_to_group),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.added_to_group).toString())
                     }
                 }
             },
@@ -863,11 +890,7 @@ fun ContactsScreen(
                 merge_cluster = null
                 vm.merge_duplicates(ordered) { ok ->
                     if (ok) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.contacts_merged),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.contacts_merged).toString())
                     }
                 }
             },
@@ -960,49 +983,6 @@ internal fun group_avatar(
 }
 
 @Composable
-private fun FilterChip(
-    label: String,
-    active: Boolean,
-    on_click: () -> Unit,
-    count: Int? = null,
-) {
-    val colors = AsterMaterial.colors
-    val bg = if (active) {
-        org.astermail.android.design.tonal_surface_color(colors, colors.accent_blue)
-    } else {
-        org.astermail.android.design.field_surface_color(colors)
-    }
-    val fg = if (active) colors.accent_blue else colors.text_secondary
-    Row(
-        modifier = Modifier
-            .clip(AsterShapes.control)
-            .background(bg)
-            .clickable(onClick = on_click)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .semantics { selected = active },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            color = fg,
-            fontSize = 13.sp,
-            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 1,
-        )
-        if (count != null && count > 0) {
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = count.toString(),
-                color = if (active) colors.accent_blue.copy(alpha = 0.75f) else colors.text_muted,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-@Composable
 private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -> Unit) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
@@ -1058,9 +1038,59 @@ private fun duplicate_banner(count: Int, on_review: () -> Unit, on_dismiss: () -
 }
 
 @Composable
+private fun contacts_empty_state(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    body: String?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.xl)
+            .padding(bottom = contacts_empty_state_bottom_offset),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier.widthIn(max = 320.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(28.dp),
+            )
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+            if (body != null) {
+                Spacer(Modifier.height(AsterSpacing.xs))
+                Text(
+                    text = body,
+                    color = colors.text_muted,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+private val contacts_empty_state_bottom_offset = 72.dp
+
+@Composable
 private fun trash_pane(
     contacts: List<Contact>,
     query: String,
+    bottom_inset: Dp,
     is_busy: Boolean,
     modifier: Modifier = Modifier,
     on_restore: (Contact) -> Unit,
@@ -1069,39 +1099,16 @@ private fun trash_pane(
 ) {
     val colors = AsterMaterial.colors
     if (contacts.isEmpty()) {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(AsterSpacing.xxl),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                imageVector = if (query.isBlank()) TablerIcons.Trash else TablerIcons.Search,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(32.dp),
-            )
-            Spacer(Modifier.height(AsterSpacing.md))
-            Text(
-                text = if (query.isBlank()) {
-                    stringResource(R.string.no_contacts_in_trash)
-                } else {
-                    stringResource(R.string.no_contacts_match, query)
-                },
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            if (query.isBlank()) {
-                Spacer(Modifier.height(AsterSpacing.xs))
-                Text(
-                    text = stringResource(R.string.contacts_in_trash_notice),
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
-                )
-            }
-        }
+        contacts_empty_state(
+            icon = if (query.isBlank()) TablerIcons.Trash else TablerIcons.Search,
+            title = if (query.isBlank()) {
+                stringResource(R.string.no_contacts_in_trash)
+            } else {
+                stringResource(R.string.no_contacts_match, query)
+            },
+            body = if (query.isBlank()) stringResource(R.string.contacts_in_trash_notice) else null,
+            modifier = modifier.padding(bottom = bottom_inset),
+        )
         return
     }
     Column(modifier = modifier) {
@@ -1129,7 +1136,12 @@ private fun trash_pane(
             )
         }
         AsterDivider()
-        LazyColumn(contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp)) {
+        val trash_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(
+            state = trash_list_state,
+            modifier = Modifier.lazy_top_fade(trash_list_state),
+            contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
+        ) {
             itemsIndexed(contacts, key = { _, c -> c.id }) { index, contact ->
                 Row(
                     modifier = contact_card_modifier(
@@ -1197,6 +1209,7 @@ private fun trash_pane(
 private fun groups_pane(
     groups: List<ContactGroup>,
     query: String,
+    bottom_inset: Dp,
     is_loading: Boolean,
     count_of: (ContactGroup) -> Int,
     modifier: Modifier = Modifier,
@@ -1207,50 +1220,29 @@ private fun groups_pane(
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     if (groups.isEmpty() && is_loading) {
-        Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxWidth().padding(bottom = bottom_inset), contentAlignment = Alignment.Center) {
             org.astermail.android.design.components.aster_spinner(color = colors.accent_blue)
         }
         return
     }
     if (groups.isEmpty()) {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(AsterSpacing.xxl),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                imageVector = if (query.isBlank()) TablerIcons.Users else TablerIcons.Search,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(32.dp),
-            )
-            Spacer(Modifier.height(AsterSpacing.md))
-            Text(
-                text = if (query.isBlank()) {
-                    stringResource(R.string.no_groups_yet)
-                } else {
-                    stringResource(R.string.no_groups_match, query)
-                },
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            if (query.isBlank()) {
-                Spacer(Modifier.height(AsterSpacing.xs))
-                Text(
-                    text = stringResource(R.string.no_groups_description),
-                    color = colors.text_muted,
-                    fontSize = 13.sp,
-                )
-            }
-        }
+        contacts_empty_state(
+            icon = if (query.isBlank()) TablerIcons.Users else TablerIcons.Search,
+            title = if (query.isBlank()) {
+                stringResource(R.string.no_groups_yet)
+            } else {
+                stringResource(R.string.no_groups_match, query)
+            },
+            body = if (query.isBlank()) stringResource(R.string.no_groups_description) else null,
+            modifier = modifier.padding(bottom = bottom_inset),
+        )
         return
     }
+    val groups_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp),
+        state = groups_list_state,
+        modifier = modifier.lazy_top_fade(groups_list_state),
+        contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
     ) {
         itemsIndexed(groups, key = { _, group -> group.id }) { index, group ->
             val count = count_of(group)

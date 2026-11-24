@@ -56,6 +56,8 @@ fun account_link_confirm_dialog(
     val decline = {
         approvals.decline(request_id)
         on_done()
+        activity?.moveTaskToBack(true)
+        Unit
     }
     AsterDialog(
         on_dismiss = decline,

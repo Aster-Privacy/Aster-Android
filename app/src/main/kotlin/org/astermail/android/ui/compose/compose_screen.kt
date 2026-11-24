@@ -4708,11 +4708,7 @@ private fun FromAliasSheet(
                             .clip(SquircleShape(8.dp))
                             .clickable {
                                 if (sending_blocked) {
-                                    android.widget.Toast.makeText(
-                                        sheet_context,
-                                        sheet_context.getString(R.string.error_alias_sending_disabled),
-                                        android.widget.Toast.LENGTH_SHORT,
-                                    ).show()
+                                    org.astermail.android.ui.common.app_toast.show(sheet_context.getString(R.string.error_alias_sending_disabled).toString())
                                 } else {
                                     on_select(opt)
                                 }

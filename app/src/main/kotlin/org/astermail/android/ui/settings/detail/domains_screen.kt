@@ -154,6 +154,14 @@ fun DomainsScreen(
         domains_settled_tick = domains_reload_tick
     }
 
+    val managed_domain_ids = remember(state.domains) { state.domains.filter { !it.is_shared }.map { it.id } }
+    LaunchedEffect(managed_domain_ids) {
+        val missing = managed_domain_ids.filter { it !in vm.state.value.domain_health }
+        coroutineScope {
+            missing.forEach { id -> launch { vm.get_domain_health_now(id) } }
+        }
+    }
+
     LaunchedEffect(selected_domain_id, state.domains, domains_phase) {
         val id = selected_domain_id ?: return@LaunchedEffect
         if (domains_phase == domains_load_phase.loaded && state.domains.none { it.id == id }) {
@@ -193,7 +201,7 @@ fun DomainsScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
