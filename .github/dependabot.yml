@@ -6,6 +6,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "androidx.compose:compose-bom"
+        versions: [">= 2026.11.0"]
     groups:
       patches:
         update-types:
