@@ -1234,6 +1234,7 @@
     <string name="message">संदेश</string>
     <string name="feedback_placeholder">बताएं कि आपको क्या पसंद है, क्या कमी है, या क्या काम नहीं कर रहा।</string>
     <string name="feedback_privacy_note">जवाब देने के लिए आपके खाते का ईमेल साथ जोड़ा जाएगा। हम फ़ीडबैक कभी साझा नहीं करते।</string>
+    <string name="feedback_support_notice">यह फ़ॉर्म फ़ीडबैक, सुझावों और बग रिपोर्ट के लिए है। सवालों या अपने खाते से जुड़ी मदद के लिए, इसके बजाय सहायता टीम को %1$s पर ईमेल करें।</string>
     <string name="send_feedback">फ़ीडबैक भेजें</string>
     <string name="sending_feedback">भेजा जा रहा है...</string>
     <string name="sent">भेजे गए</string>

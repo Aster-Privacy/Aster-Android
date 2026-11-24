@@ -901,6 +901,7 @@
     <string name="message">メッセージ</string>
     <string name="feedback_placeholder">気に入った点、不足している点、問題のある点を教えてください。</string>
     <string name="feedback_privacy_note">返信のためにアカウントのメールアドレスが添付されます。フィードバックを第三者と共有することはありません。</string>
+    <string name="feedback_support_notice">このフォームは、フィードバック、アイデア、バグの報告用です。ご質問やアカウントに関するサポートについては、サポートチーム（%1$s）までメールでお問い合わせください。</string>
     <string name="send_feedback">フィードバックを送信</string>
     <string name="sending_feedback">送信中...</string>
     <string name="sent">送信済み</string>

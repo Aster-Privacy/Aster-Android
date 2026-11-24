@@ -902,6 +902,7 @@
     <string name="message">Nachricht</string>
     <string name="feedback_placeholder">Beschreiben Sie, was Ihnen gefällt, was fehlt oder was nicht funktioniert.</string>
     <string name="feedback_privacy_note">Ihre Konto-E-Mail wird angehängt, damit wir antworten können. Wir teilen Feedback niemals.</string>
+    <string name="feedback_support_notice">Dieses Formular ist für Feedback, Ideen und Fehlerberichte gedacht. Bei Fragen oder für Hilfe mit Ihrem Konto senden Sie stattdessen eine E-Mail an das Support-Team unter %1$s.</string>
     <string name="send_feedback">Feedback senden</string>
     <string name="sending_feedback">Wird gesendet...</string>
     <string name="sent">Gesendet</string>

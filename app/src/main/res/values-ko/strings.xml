@@ -901,6 +901,7 @@
     <string name="message">메시지</string>
     <string name="feedback_placeholder">좋은 점, 부족한 점, 문제점을 알려주세요.</string>
     <string name="feedback_privacy_note">답변을 위해 계정 이메일이 첨부됩니다. 피드백은 절대 외부에 공유하지 않습니다.</string>
+    <string name="feedback_support_notice">이 양식은 피드백, 아이디어, 버그 신고용입니다. 질문이 있거나 계정 관련 도움이 필요하면 대신 지원팀(%1$s)으로 이메일을 보내세요.</string>
     <string name="send_feedback">피드백 보내기</string>
     <string name="sending_feedback">전송 중...</string>
     <string name="sent">보냄</string>

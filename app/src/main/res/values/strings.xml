@@ -1397,6 +1397,7 @@
     <string name="message">Message</string>
     <string name="feedback_placeholder">Describe what you love, what\'s missing, or what\'s broken.</string>
     <string name="feedback_privacy_note">Your account email will be attached so we can reply. We never share feedback.</string>
+    <string name="feedback_support_notice">This form is for feedback, ideas, and bug reports. For questions or help with your account, email the support team at %1$s instead.</string>
     <string name="send_feedback">Send feedback</string>
     <string name="sending_feedback">Sending...</string>
     <string name="sent">Sent</string>

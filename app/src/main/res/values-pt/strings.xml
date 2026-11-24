@@ -901,6 +901,7 @@
     <string name="message">Mensagem</string>
     <string name="feedback_placeholder">Descreva o que adora, o que falta ou o que não funciona.</string>
     <string name="feedback_privacy_note">O e-mail da sua conta será anexado para podermos responder. Nunca partilhamos o feedback.</string>
+    <string name="feedback_support_notice">Este formulário destina-se a feedback, ideias e relatórios de erros. Para questões ou ajuda com a sua conta, envie um e-mail à equipa de suporte para %1$s.</string>
     <string name="send_feedback">Enviar feedback</string>
     <string name="sending_feedback">A enviar...</string>
     <string name="sent">Enviado</string>
