@@ -53,6 +53,10 @@ import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.ui.common.nav_forward_exit
 import org.astermail.android.ui.common.nav_sheet_enter
 import org.astermail.android.ui.common.nav_sheet_exit
+import org.astermail.android.ui.common.nav_predictive_pop_enter
+import org.astermail.android.ui.common.nav_predictive_pop_exit
+import org.astermail.android.ui.common.nav_search_enter
+import org.astermail.android.ui.common.nav_search_exit
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -729,29 +733,9 @@ private fun AsterNavHost() {
 
     val nav_scope = rememberCoroutineScope()
 
+    val splash_was_shown = remember { mutableStateOf(!is_ready) }
     if (!is_ready) {
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AsterMaterial.colors.bg_primary),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        ) {
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
-                contentDescription = null,
-                modifier = Modifier.height(22.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(20.dp))
-            androidx.compose.material3.LinearProgressIndicator(
-                color = AsterMaterial.colors.accent_blue,
-                trackColor = AsterMaterial.colors.border_secondary,
-                modifier = Modifier
-                    .width(160.dp)
-                    .height(3.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
-            )
-        }
+        aster_launch_splash(Modifier)
         return
     }
 
@@ -969,7 +953,7 @@ private fun AsterNavHost() {
 
     val nav_pop_enter: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> EnterTransition = {
         val initial = initialState.destination.route
-        if (initial?.startsWith("compose") == true) {
+        if (initial?.startsWith("compose") == true || is_search_route(initial)) {
             androidx.compose.animation.EnterTransition.None
         } else {
             nav_backward_enter(nav_duration)
@@ -978,6 +962,8 @@ private fun AsterNavHost() {
     val nav_pop_exit: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> ExitTransition = {
         if (targetState.destination.route?.startsWith("compose") == true) {
             androidx.compose.animation.ExitTransition.None
+        } else if (is_search_route(initialState.destination.route)) {
+            nav_search_exit(nav_duration)
         } else {
             nav_backward_exit(nav_duration)
         }
@@ -999,13 +985,15 @@ private fun AsterNavHost() {
         enterTransition = {
             if (initialState.destination.route?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.EnterTransition.None
+            } else if (is_search_route(targetState.destination.route)) {
+                nav_search_enter(nav_duration)
             } else {
                 nav_forward_enter(nav_duration)
             }
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true || is_detail_swipe(targetState)) {
+            if (target?.startsWith("compose") == true || is_detail_swipe(targetState) || is_search_route(target)) {
                 androidx.compose.animation.ExitTransition.None
             } else {
                 nav_forward_exit(nav_duration)
@@ -1013,12 +1001,21 @@ private fun AsterNavHost() {
         },
         popEnterTransition = nav_pop_enter,
         popExitTransition = nav_pop_exit,
-        predictivePopEnterTransition = { nav_pop_enter() },
+        predictivePopEnterTransition = {
+            val initial = initialState.destination.route
+            if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+                androidx.compose.animation.EnterTransition.None
+            } else {
+                nav_predictive_pop_enter(nav_duration)
+            }
+        },
         predictivePopExitTransition = {
             if (initialState.destination.route?.startsWith("compose") == true) {
                 nav_sheet_exit(nav_duration)
+            } else if (targetState.destination.route?.startsWith("compose") == true) {
+                androidx.compose.animation.ExitTransition.None
             } else {
-                nav_pop_exit()
+                nav_predictive_pop_exit(nav_duration)
             }
         },
     ) {
@@ -2146,6 +2143,51 @@ composable(routes.settings_detail("family")) {
         )
     }
     }
+    if (splash_was_shown.value) {
+        val splash_alpha = remember { androidx.compose.animation.core.Animatable(1f) }
+        val splash_reduce = local_accessibility.current.reduce_motion
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            splash_alpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = if (splash_reduce) {
+                        org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms
+                    } else {
+                        org.astermail.android.design.AsterMotionSpec.fade_exit_ms
+                    },
+                    easing = org.astermail.android.design.AsterEasing.emphasized_accelerate,
+                ),
+            )
+            splash_was_shown.value = false
+        }
+        aster_launch_splash(Modifier.graphicsLayer { alpha = splash_alpha.value })
+    }
+}
+
+@Composable
+private fun aster_launch_splash(modifier: Modifier) {
+    androidx.compose.foundation.layout.Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AsterMaterial.colors.bg_primary),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+    ) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(22.dp),
+        )
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(20.dp))
+        androidx.compose.material3.LinearProgressIndicator(
+            color = AsterMaterial.colors.accent_blue,
+            trackColor = AsterMaterial.colors.border_secondary,
+            modifier = Modifier
+                .width(160.dp)
+                .height(3.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+        )
+    }
 }
 
 private val mail_folder_ids = setOf(
@@ -2739,14 +2781,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 selected_id = selected_folder,
                 on_select = { id ->
                     when {
-                        id == "settings" -> nav_controller.navigate(routes.settings)
+                        id == "settings" -> { nav_controller.navigate(routes.settings); scope.launch { drawer_state.close() } }
                         id == "contacts" -> { filter_kind = null; selected_folder = "contacts"; scope.launch { drawer_state.close() } }
                         id == "subscriptions" -> { filter_kind = null; selected_folder = "subscriptions"; scope.launch { drawer_state.close() } }
-                        id == "plan" -> nav_controller.navigate(routes.settings_detail("billing"))
-                        id == "aliases_settings" -> nav_controller.navigate(routes.settings_detail("aliases"))
-                        id == "aliases_create" -> nav_controller.navigate(routes.settings_detail("aliases") + "?create=true")
-                        id == "referral" -> nav_controller.navigate(routes.settings_detail("referral"))
-                        id == "feedback" -> nav_controller.navigate(routes.settings_detail("feedback"))
+                        id == "plan" -> { nav_controller.navigate(routes.settings_detail("billing")); scope.launch { drawer_state.close() } }
+                        id == "aliases_settings" -> { nav_controller.navigate(routes.settings_detail("aliases")); scope.launch { drawer_state.close() } }
+                        id == "aliases_create" -> { nav_controller.navigate(routes.settings_detail("aliases") + "?create=true"); scope.launch { drawer_state.close() } }
+                        id == "referral" -> { nav_controller.navigate(routes.settings_detail("referral")); scope.launch { drawer_state.close() } }
+                        id == "feedback" -> { nav_controller.navigate(routes.settings_detail("feedback")); scope.launch { drawer_state.close() } }
                         id in mail_folder_ids -> { filter_kind = null; selected_folder = id; scope.launch { drawer_state.close() } }
                         else -> { filter_kind = null; selected_folder = id; scope.launch { drawer_state.close() } }
                     }
@@ -2842,6 +2884,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 on_add_account = {
                     if (accounts_state.can_add_more) {
                         nav_controller.navigate(routes.sign_in_for(""))
+                        scope.launch { drawer_state.close() }
                     } else {
                         scope.launch { drawer_state.close() }
                         nav_controller.navigate(routes.settings_detail("billing"))
@@ -3034,13 +3077,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 val to_depth = folder_key_depth(targetState)
                 when {
                     folder_anim_duration == 0 ->
-                        EnterTransition.None togetherWith ExitTransition.None
+                        org.astermail.android.design.aster_crossfade(true)
                     to_depth > from_depth ->
                         nav_forward_enter(folder_anim_duration) togetherWith nav_forward_exit(folder_anim_duration)
                     to_depth < from_depth ->
                         nav_backward_enter(folder_anim_duration) togetherWith nav_backward_exit(folder_anim_duration)
                     else ->
-                        fadeIn(animationSpec = tween(120)) togetherWith fadeOut(animationSpec = tween(80))
+                        fadeIn(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_in_easing)) togetherWith
+                            fadeOut(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_out_easing))
                 }
             },
             label = "folder_switch",
@@ -3449,6 +3493,23 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         )
     }
 }
+
+private const val folder_switch_fade_ms = 200
+
+private val folder_switch_out_easing = org.astermail.android.design.aster_threshold_easing(
+    org.astermail.android.design.AsterEasing.emphasized,
+    0f,
+    org.astermail.android.design.AsterMotionSpec.fade_through_threshold,
+)
+
+private val folder_switch_in_easing = org.astermail.android.design.aster_threshold_easing(
+    org.astermail.android.design.AsterEasing.emphasized,
+    org.astermail.android.design.AsterMotionSpec.fade_through_threshold,
+    1f,
+)
+
+private fun is_search_route(route: String?): Boolean =
+    route == routes.search || route == routes.search_with_query
 
 private fun is_detail_swipe(entry: androidx.navigation.NavBackStackEntry): Boolean =
     entry.destination.route == routes.mail_detail && (entry.arguments?.getInt("swipe") ?: 0) != 0

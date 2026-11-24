@@ -23,10 +23,8 @@ package org.astermail.android.ui.guard
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import org.astermail.android.design.aster_crossfade
+import org.astermail.android.design.aster_reduce_motion
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -124,11 +122,12 @@ fun guard_approve_screen(
 ) {
     secure_screen()
     BackHandler { on_close() }
+    val reduce_motion = aster_reduce_motion()
     guard_sheet_frame {
         AnimatedContent(
             targetState = state,
             contentKey = { it::class },
-            transitionSpec = { fadeIn(tween(200, delayMillis = 60)) togetherWith fadeOut(tween(120)) },
+            transitionSpec = { aster_crossfade(reduce_motion) },
             label = "guard_approve",
         ) { current ->
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {

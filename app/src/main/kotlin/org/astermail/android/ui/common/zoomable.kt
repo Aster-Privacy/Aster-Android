@@ -132,7 +132,7 @@ internal class zoom_state(val max_scale: Float = ZOOM_DEFAULT_MAX_SCALE) {
 
     suspend fun animate_scale_to(target: Float, anchor: Offset) {
         val goal = target.coerceIn(ZOOM_MIN_SCALE, max_scale)
-        animate(initialValue = scale, targetValue = goal, animationSpec = tween(ZOOM_DOUBLE_TAP_MS)) { value, _ ->
+        animate(initialValue = scale, targetValue = goal, animationSpec = tween(ZOOM_DOUBLE_TAP_MS, easing = org.astermail.android.design.AsterEasing.emphasized)) { value, _ ->
             if (scale > 0f) transform(anchor, Offset.Zero, value / scale)
         }
         if (goal <= ZOOM_MIN_SCALE) {

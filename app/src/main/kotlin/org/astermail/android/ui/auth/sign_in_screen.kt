@@ -25,11 +25,8 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import org.astermail.android.design.AsterExpandVisibility
+import org.astermail.android.design.AsterFadeThrough
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -380,10 +377,8 @@ private fun aster_variant_body(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
-        AnimatedVisibility(
+        AsterExpandVisibility(
             visible = fields.error_message != null,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
         ) {
             Column {
                 error_banner(message = fields.error_message ?: "")
@@ -645,99 +640,125 @@ internal fun TotpVerifyScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    text = when {
-                        use_passkey -> stringResource(R.string.totp_passkey_subtitle)
-                        use_security_key -> stringResource(R.string.totp_security_key_subtitle)
-                        use_backup -> stringResource(R.string.totp_backup_code_subtitle)
-                        else -> stringResource(R.string.totp_verify_subtitle)
+                AsterFadeThrough(
+                    target_state = when {
+                        use_passkey -> R.string.totp_passkey_subtitle
+                        use_security_key -> R.string.totp_security_key_subtitle
+                        use_backup -> R.string.totp_backup_code_subtitle
+                        else -> R.string.totp_verify_subtitle
                     },
-                    color = colors.text_tertiary,
-                    fontSize = 14.sp,
-                )
+                    label = "second_factor_subtitle",
+                ) { subtitle_res ->
+                    Text(
+                        text = stringResource(subtitle_res),
+                        color = colors.text_tertiary,
+                        fontSize = 14.sp,
+                    )
+                }
 
                 Spacer(Modifier.height(AsterSpacing.xl))
 
-                if (error_message != null) {
-                    error_banner(error_message)
-                    if (use_passkey && (state as? AuthUiState.Error)?.passkey_settings == true) {
-                        second_factor_method_switch(
-                            label = stringResource(R.string.passkey_open_settings),
-                            visible = true,
-                            enabled = !is_loading,
-                            on_click = { open_passkey_settings(context.host_activity() ?: context) },
-                        )
-                    }
-                    Spacer(Modifier.height(AsterSpacing.md))
-                }
-
-                if (use_passkey || use_security_key) {
-                    Icon(
-                        imageVector = if (use_security_key) TablerIcons.Key else TablerIcons.Fingerprint,
-                        contentDescription = null,
-                        tint = colors.accent_blue,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(56.dp),
-                    )
-                    Spacer(Modifier.height(AsterSpacing.md))
-                    if (use_security_key && key_active) {
-                        security_key_status(
-                            state = key_state,
-                            pin = key_pin,
-                            on_pin_change = { value -> key_pin = value.take(security_key_max_pin_input) },
-                            on_submit_pin = submit_key_pin,
-                            on_open_nfc_settings = { open_nfc_settings(host_activity ?: context) },
-                        )
+                var held_error by remember { mutableStateOf(error_message) }
+                LaunchedEffect(error_message) { if (error_message != null) held_error = error_message }
+                AsterExpandVisibility(visible = error_message != null) {
+                    Column {
+                        error_banner(error_message ?: held_error.orEmpty())
+                        if (use_passkey && (state as? AuthUiState.Error)?.passkey_settings == true) {
+                            second_factor_method_switch(
+                                label = stringResource(R.string.passkey_open_settings),
+                                visible = true,
+                                enabled = !is_loading,
+                                on_click = { open_passkey_settings(context.host_activity() ?: context) },
+                            )
+                        }
                         Spacer(Modifier.height(AsterSpacing.md))
                     }
-                } else {
-                    AsterTextField(
-                        value = code,
-                        onValueChange = { v ->
-                            code = if (use_backup) {
-                                latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, max_code_input_length)
-                            } else {
-                                latest_code_input(ascii_digits(v), 6)
-                            }
-                            if (state is AuthUiState.Error) view_model.reset_state()
-                        },
-                        label = if (use_backup) {
-                            stringResource(R.string.totp_backup_code_label)
-                        } else {
-                            stringResource(R.string.totp_code_label)
-                        },
-                        keyboard_options = KeyboardOptions(
-                            keyboardType = if (use_backup) KeyboardType.Text else KeyboardType.Number,
-                            imeAction = ImeAction.Done,
-                        ),
-                        keyboard_actions = KeyboardActions(
-                            onDone = { submit_code() },
-                        ),
-                        leading_icon = {
-                            Icon(
-                                imageVector = TablerIcons.Lock,
-                                contentDescription = null,
-                                tint = colors.text_muted,
-                            )
-                        },
-                        modifier = Modifier.focusRequester(code_focus),
-                    )
+                }
 
-                    if (is_recovery_code) {
-                        Spacer(Modifier.height(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.totp_recovery_code_detected),
-                            color = colors.danger,
-                            fontSize = 13.sp,
-                        )
-                    } else if (use_backup) {
-                        Spacer(Modifier.height(AsterSpacing.sm))
-                        Text(
-                            text = stringResource(R.string.totp_backup_code_hint),
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                        )
+                AsterFadeThrough(
+                    target_state = when {
+                        use_passkey -> second_factor_ui_method_passkey
+                        use_security_key -> second_factor_ui_method_security_key
+                        else -> second_factor_ui_method_totp
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = "second_factor_method",
+                ) { method_area ->
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (method_area != second_factor_ui_method_totp) {
+                            Icon(
+                                imageVector = if (method_area == second_factor_ui_method_security_key) TablerIcons.Key else TablerIcons.Fingerprint,
+                                contentDescription = null,
+                                tint = colors.accent_blue,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .size(56.dp),
+                            )
+                            Spacer(Modifier.height(AsterSpacing.md))
+                            if (method_area == second_factor_ui_method_security_key && key_active) {
+                                security_key_status(
+                                    state = key_state,
+                                    pin = key_pin,
+                                    on_pin_change = { value -> key_pin = value.take(security_key_max_pin_input) },
+                                    on_submit_pin = submit_key_pin,
+                                    on_open_nfc_settings = { open_nfc_settings(host_activity ?: context) },
+                                )
+                                Spacer(Modifier.height(AsterSpacing.md))
+                            }
+                        } else {
+                            AsterTextField(
+                                value = code,
+                                onValueChange = { v ->
+                                    code = if (use_backup) {
+                                        latest_code_input(v.filter { it.isLetterOrDigit() || it == '-' }, max_code_input_length)
+                                    } else {
+                                        latest_code_input(ascii_digits(v), 6)
+                                    }
+                                    if (state is AuthUiState.Error) view_model.reset_state()
+                                },
+                                label = if (use_backup) {
+                                    stringResource(R.string.totp_backup_code_label)
+                                } else {
+                                    stringResource(R.string.totp_code_label)
+                                },
+                                keyboard_options = KeyboardOptions(
+                                    keyboardType = if (use_backup) KeyboardType.Text else KeyboardType.Number,
+                                    imeAction = ImeAction.Done,
+                                ),
+                                keyboard_actions = KeyboardActions(
+                                    onDone = { submit_code() },
+                                ),
+                                leading_icon = {
+                                    Icon(
+                                        imageVector = TablerIcons.Lock,
+                                        contentDescription = null,
+                                        tint = colors.text_muted,
+                                    )
+                                },
+                                modifier = Modifier.focusRequester(code_focus),
+                            )
+
+                            AsterExpandVisibility(visible = is_recovery_code) {
+                                Column {
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                    Text(
+                                        text = stringResource(R.string.totp_recovery_code_detected),
+                                        color = colors.danger,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                            AsterExpandVisibility(visible = use_backup && !is_recovery_code) {
+                                Column {
+                                    Spacer(Modifier.height(AsterSpacing.sm))
+                                    Text(
+                                        text = stringResource(R.string.totp_backup_code_hint),
+                                        color = colors.text_tertiary,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -951,14 +972,17 @@ private fun ColumnScope.second_factor_method_switch(
     enabled: Boolean,
     on_click: () -> Unit,
 ) {
-    if (!visible) return
-    Spacer(Modifier.height(AsterSpacing.xs))
-    AsterGhostButton(
-        label = label,
-        onClick = on_click,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
-    )
+    AsterExpandVisibility(visible = visible) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            AsterGhostButton(
+                label = label,
+                onClick = on_click,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
 }
 
 private const val second_factor_method_totp = "totp"

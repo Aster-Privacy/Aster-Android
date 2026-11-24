@@ -34,8 +34,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
+import org.astermail.android.design.aster_reduce_motion
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -554,7 +553,8 @@ fun BehaviorScreen(
                 }
             }
 
-            if (inbox_categories) {
+            SettingsExpand(visible = inbox_categories) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                 v_gap(AsterSpacing.lg)
                 category_settings_section(
                     enabled_categories = enabled_categories,
@@ -572,6 +572,7 @@ fun BehaviorScreen(
                     on_learn_change = { vm.set_learn_from_category_moves(it) },
                     on_forget_learned = { vm.forget_learned_category_senders() },
                 )
+                }
             }
 
             translation_settings_section(
@@ -655,8 +656,8 @@ fun BehaviorScreen(
                 )
                 AnimatedVisibility(
                     visible = undo_send,
-                    enter = expandVertically(tween(220, easing = FastOutSlowInEasing)) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
+                    enter = settings_expand_in(aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(aster_reduce_motion()),
                 ) {
                     Column {
                         settings_row_gap(modifier = Modifier)
@@ -695,8 +696,8 @@ fun BehaviorScreen(
                 )
                 AnimatedVisibility(
                     visible = spam_filter_enabled,
-                    enter = expandVertically(tween(220, easing = FastOutSlowInEasing)) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
+                    enter = settings_expand_in(aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(aster_reduce_motion()),
                 ) {
                     Column {
                         settings_row_gap(modifier = Modifier)

@@ -75,7 +75,7 @@ private const val LIGHTBOX_SCRIM_ALPHA = 0.94f
 
 private fun lightbox_scrim_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
     durationMillis = when {
-        reduce_motion -> AsterDuration.instant
+        reduce_motion -> if (visible) org.astermail.android.design.AsterMotionSpec.reduced_fade_ms else org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms
         visible -> AsterDuration.scrim_enter
         else -> AsterDuration.scrim_exit
     },
@@ -84,7 +84,7 @@ private fun lightbox_scrim_spec(visible: Boolean, reduce_motion: Boolean): Tween
 
 private fun lightbox_content_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
     durationMillis = when {
-        reduce_motion -> AsterDuration.instant
+        reduce_motion -> if (visible) org.astermail.android.design.AsterMotionSpec.reduced_fade_ms else org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms
         visible -> AsterDuration.dialog_enter
         else -> AsterDuration.dialog_exit
     },
@@ -194,8 +194,8 @@ fun email_image_lightbox(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer(
-                        scaleX = lightbox_scale(content_progress),
-                        scaleY = lightbox_scale(content_progress),
+                        scaleX = if (reduce_motion) 1f else lightbox_scale(content_progress),
+                        scaleY = if (reduce_motion) 1f else lightbox_scale(content_progress),
                         alpha = content_progress,
                     ),
                 contentAlignment = Alignment.Center,

@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.account
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +38,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +55,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.account.PendingDeletionViewModel
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterButton
 
@@ -64,82 +73,96 @@ fun PendingDeletionGate(
 
     LaunchedEffect(Unit) { view_model.check() }
 
-    if (!state.visible) return
+    val reduce_motion = aster_reduce_motion()
+    val gate_state = remember { MutableTransitionState(state.visible) }
+    gate_state.targetState = state.visible
+    if (!gate_state.currentState && !gate_state.targetState) return
 
     val colors = AsterMaterial.colors
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.solid_bg)
-            .clickable(enabled = false) {},
-        contentAlignment = Alignment.Center,
+    AnimatedVisibility(
+        visibleState = gate_state,
+        enter = aster_fade_in(reduce_motion),
+        exit = aster_fade_out(reduce_motion),
+        label = "pending_deletion_gate",
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 28.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .acrylic(colors, RoundedCornerShape(18.dp), colors.bg_secondary)
-                .border(1.dp, colors.border_primary, RoundedCornerShape(18.dp))
-                .padding(24.dp),
-            horizontalAlignment = Alignment.Start,
+                .fillMaxSize()
+                .background(colors.solid_bg)
+                .clickable(enabled = false) {},
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = stringResource(R.string.pending_deletion_title),
-                color = colors.text_primary,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            val days = state.days_remaining
-            Text(
-                text = if (days != null && days > 0L) {
-                    pluralStringResource(R.plurals.pending_deletion_body_days, days.toInt(), days.toInt())
-                } else {
-                    stringResource(R.string.pending_deletion_body)
-                },
-                color = colors.text_secondary,
-                fontSize = 14.sp,
-            )
-            val error = state.error
-            if (error != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = error,
-                    color = AsterMaterial.colors.accent_blue,
-                    fontSize = 13.sp,
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            AsterButton(
-                label = if (state.is_cancelling) {
-                    stringResource(R.string.pending_deletion_restoring)
-                } else {
-                    stringResource(R.string.pending_deletion_keep)
-                },
-                onClick = { view_model.keep_account(on_reactivated) },
-                enabled = !state.is_cancelling,
-                is_loading = state.is_cancelling,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .clickable(enabled = !state.is_cancelling) {
-                        view_model.sign_out(on_signed_out)
-                    },
-                contentAlignment = Alignment.Center,
+                    .padding(horizontal = 28.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .acrylic(colors, RoundedCornerShape(18.dp), colors.bg_secondary)
+                    .border(1.dp, colors.border_primary, RoundedCornerShape(18.dp))
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.Start,
             ) {
                 Text(
-                    text = stringResource(R.string.pending_deletion_sign_out),
-                    color = colors.text_muted,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
+                    text = stringResource(R.string.pending_deletion_title),
+                    color = colors.text_primary,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                val days = state.days_remaining
+                Text(
+                    text = if (days != null && days > 0L) {
+                        pluralStringResource(R.plurals.pending_deletion_body_days, days.toInt(), days.toInt())
+                    } else {
+                        stringResource(R.string.pending_deletion_body)
+                    },
+                    color = colors.text_secondary,
+                    fontSize = 14.sp,
+                )
+                val error = state.error
+                var held_error by remember { mutableStateOf(error) }
+                LaunchedEffect(error) { if (error != null) held_error = error }
+                AsterExpandVisibility(visible = error != null) {
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = error ?: held_error.orEmpty(),
+                            color = AsterMaterial.colors.accent_blue,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                AsterButton(
+                    label = if (state.is_cancelling) {
+                        stringResource(R.string.pending_deletion_restoring)
+                    } else {
+                        stringResource(R.string.pending_deletion_keep)
+                    },
+                    onClick = { view_model.keep_account(on_reactivated) },
+                    enabled = !state.is_cancelling,
+                    is_loading = state.is_cancelling,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(enabled = !state.is_cancelling) {
+                            view_model.sign_out(on_signed_out)
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.pending_deletion_sign_out),
+                        color = colors.text_muted,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }

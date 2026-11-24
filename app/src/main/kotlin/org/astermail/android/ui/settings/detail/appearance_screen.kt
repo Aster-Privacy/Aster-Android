@@ -604,7 +604,7 @@ fun AppearanceScreen(
             collapsed_swatches
         }
         AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(AsterSpacing.lg).animateContentSize()) {
+            Column(modifier = Modifier.padding(AsterSpacing.lg).animateContentSize(org.astermail.android.design.AsterSpring.spatial())) {
                 shown_swatches.chunked(3).forEachIndexed { row_index, row ->
                     if (row_index > 0) v_gap(AsterSpacing.lg)
                     Row(
@@ -656,18 +656,24 @@ fun AppearanceScreen(
                             fontWeight = FontWeight.Medium,
                         )
                         Spacer(Modifier.width(AsterSpacing.xs))
+                        val colors_chevron_rotation by androidx.compose.animation.core.animateFloatAsState(
+                            targetValue = if (colors_expanded) 180f else 0f,
+                            animationSpec = androidx.compose.animation.core.tween(200, easing = org.astermail.android.design.AsterEasing.emphasized),
+                            label = "colors_chevron_rotation",
+                        )
                         Icon(
-                            imageVector = if (colors_expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                            imageVector = TablerIcons.ChevronDown,
                             contentDescription = null,
                             tint = colors.accent_blue,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(16.dp).graphicsLayer { rotationZ = colors_chevron_rotation },
                         )
                     }
                 }
             }
         }
 
-        if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
+        SettingsExpand(visible = color_theme == ColorThemeId.custom && !custom_theme_locked) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             v_gap(AsterSpacing.xxl)
             section_label(stringResource(R.string.custom_theme_base_color))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -733,7 +739,9 @@ fun AppearanceScreen(
                 }
             }
         }
-        if (color_theme == ColorThemeId.custom && !custom_theme_locked) {
+        }
+        SettingsExpand(visible = color_theme == ColorThemeId.custom && !custom_theme_locked) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             v_gap(AsterSpacing.xxl)
             section_label(stringResource(R.string.custom_theme_colors_title))
             val role_vars = remember(custom_preview_seed, custom_theme_overrides, colors.bg_primary) {
@@ -768,6 +776,7 @@ fun AppearanceScreen(
                     }
                 }
             }
+        }
         }
         v_gap(AsterSpacing.xxl)
         section_label(stringResource(R.string.image_themes))
@@ -813,8 +822,8 @@ fun AppearanceScreen(
             }
             androidx.compose.animation.AnimatedVisibility(
                 visible = glass_on,
-                enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-                exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
+                enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     v_gap(AsterSpacing.xxl)
@@ -1110,8 +1119,8 @@ internal fun theme_swatch(
             modifier = Modifier
                 .size(66.dp)
                 .border(
-                    width = if (selected) 2.dp else 0.dp,
-                    color = if (selected) ring else Color.Transparent,
+                    width = 2.dp,
+                    color = org.astermail.android.design.aster_animate_color(if (selected) ring else Color.Transparent, "swatch_ring").value,
                     shape = CircleShape,
                 )
                 .padding(5.dp),
@@ -1140,11 +1149,13 @@ internal fun theme_swatch(
                     text = stringResource(R.string.plan_badge_star),
                     modifier = Modifier.align(Alignment.BottomCenter).offset(y = 7.dp),
                 )
-            } else if (selected) {
+            }
+            org.astermail.android.design.AsterPopVisibility(
+                visible = selected,
+                modifier = Modifier.align(Alignment.BottomEnd).offset(x = 3.dp, y = 3.dp),
+            ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = 3.dp, y = 3.dp)
                         .size(23.dp)
                         .background(ring, CircleShape)
                         .border(2.dp, ring_gap_color.takeOrElse { colors.bg_card }, CircleShape),

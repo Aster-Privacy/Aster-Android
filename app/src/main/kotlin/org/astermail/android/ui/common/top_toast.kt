@@ -22,7 +22,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
@@ -82,7 +81,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicLong
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.lighten
 import org.astermail.android.R
 
@@ -180,24 +185,40 @@ fun top_toast_overlay(
 ) {
     var last_state by remember { mutableStateOf<TopToastState?>(null) }
     if (state != null) last_state = state
+    val reduce_motion = aster_reduce_motion()
     Box(modifier = Modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
         AnimatedVisibility(
             visible = state != null,
-            enter = slideInVertically(
-                animationSpec = spring(
-                    dampingRatio = 0.78f,
-                    stiffness = Spring.StiffnessMediumLow,
-                    visibilityThreshold = IntOffset(1, 1),
-                ),
-                initialOffsetY = { -it },
-            ) + fadeIn(animationSpec = tween(140)) + scaleIn(
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
-                initialScale = 0.92f,
-                transformOrigin = TransformOrigin(0.5f, 0f),
-            ),
-            exit = slideOutVertically(animationSpec = tween(180), targetOffsetY = { -it }) +
-                fadeOut(animationSpec = tween(140)) +
-                scaleOut(animationSpec = tween(180), targetScale = 0.94f, transformOrigin = TransformOrigin(0.5f, 0f)),
+            enter = if (reduce_motion) {
+                aster_fade_in(true)
+            } else {
+                slideInVertically(
+                    animationSpec = spring(
+                        dampingRatio = AsterSpring.spatial_damping,
+                        stiffness = AsterSpring.fast_spatial_stiffness,
+                        visibilityThreshold = IntOffset(1, 1),
+                    ),
+                    initialOffsetY = { -it },
+                ) + fadeIn(animationSpec = AsterSpring.fast_effects()) + scaleIn(
+                    animationSpec = AsterSpring.fast_spatial(),
+                    initialScale = 0.92f,
+                    transformOrigin = TransformOrigin(0.5f, 0f),
+                )
+            },
+            exit = if (reduce_motion) {
+                aster_fade_out(true)
+            } else {
+                slideOutVertically(
+                    animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate),
+                    targetOffsetY = { -it },
+                ) +
+                    fadeOut(animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)) +
+                    scaleOut(
+                        animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate),
+                        targetScale = 0.94f,
+                        transformOrigin = TransformOrigin(0.5f, 0f),
+                    )
+            },
         ) {
             val shown = last_state ?: return@AnimatedVisibility
             key(shown.key) {
@@ -281,16 +302,14 @@ private fun toast_card(
         }
         .pointerInput(Unit) {
             val tracker = VelocityTracker()
-            val spring_back: (Float) -> Unit = { damping ->
+            val spring_back: (Float) -> Unit = { velocity ->
                 settle?.cancel()
                 settle = scope.launch {
                     animate(
                         initialValue = offset,
                         targetValue = 0f,
-                        animationSpec = spring(
-                            dampingRatio = damping,
-                            stiffness = Spring.StiffnessMediumLow,
-                        ),
+                        initialVelocity = velocity,
+                        animationSpec = AsterSpring.spatial(),
                     ) { value, _ -> offset = value }
                 }
             }
@@ -302,7 +321,7 @@ private fun toast_card(
                 },
                 onDragCancel = {
                     set_dragging(false)
-                    spring_back(0.68f)
+                    spring_back(0f)
                 },
                 onDragEnd = {
                     set_dragging(false)
@@ -312,15 +331,20 @@ private fun toast_card(
                     if ((far_enough || fast_enough) && active && !consumed) {
                         settle?.cancel()
                         settle = scope.launch {
+                            val off_screen = -(toast_height + 120f)
                             animate(
                                 initialValue = offset,
-                                targetValue = -(toast_height + 120f),
-                                animationSpec = tween(durationMillis = 150),
-                            ) { value, _ -> offset = value }
+                                targetValue = off_screen,
+                                initialVelocity = velocity.coerceAtMost(0f),
+                                animationSpec = AsterSpring.fast_spatial(),
+                            ) { value, _ ->
+                                offset = value
+                                if (value <= -toast_height) finish { it.on_close?.invoke() }
+                            }
                             finish { it.on_close?.invoke() }
                         }
                     } else {
-                        spring_back(0.62f)
+                        spring_back(velocity)
                     }
                 },
             ) { change, drag ->

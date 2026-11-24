@@ -64,7 +64,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
 import org.astermail.android.design.aster_haptic
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.remember_haptic
@@ -265,7 +267,7 @@ fun aster_pull_refresh_indicator(
                         if (reduce_motion) {
                             travel.snapTo(1f)
                         } else {
-                            travel.animateTo(1f, spring(dampingRatio = 0.62f, stiffness = 340f))
+                            travel.animateTo(1f, AsterSpring.spatial())
                         }
                     }
                     travel.value > 0f && spin_mode -> {
@@ -297,8 +299,8 @@ fun aster_pull_refresh_indicator(
 
     LaunchedEffect(state.threshold_crossings) {
         if (state.threshold_crossings == 0 || reduce_motion) return@LaunchedEffect
-        pop.animateTo(1f, tween(durationMillis = 90, easing = FastOutSlowInEasing))
-        pop.animateTo(0f, spring(dampingRatio = 0.42f, stiffness = 520f))
+        pop.animateTo(1f, tween(durationMillis = 90, easing = AsterEasing.standard))
+        pop.animateTo(0f, AsterSpring.fast_spatial())
     }
 
     val spinning = spin_mode || state.holding
@@ -310,9 +312,9 @@ fun aster_pull_refresh_indicator(
         }
         if (reduce_motion) {
             arrow.snapTo(0f)
-            return@LaunchedEffect
+        } else {
+            launch { arrow.animateTo(0f, tween(durationMillis = 200, easing = AsterEasing.standard)) }
         }
-        launch { arrow.animateTo(0f, tween(durationMillis = 200, easing = FastOutSlowInEasing)) }
         val start = withFrameNanos { it }
         while (true) {
             withFrameNanos { now -> spin_ms.longValue = (now - start) / 1_000_000L }

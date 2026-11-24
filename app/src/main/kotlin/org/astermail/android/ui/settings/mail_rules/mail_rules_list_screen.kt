@@ -44,6 +44,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
+import org.astermail.android.design.AsterEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -159,8 +160,8 @@ fun MailRulesListScreen(
             AnimatedContent(
                 targetState = rules_key,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(200)) togetherWith
-                        fadeOut(animationSpec = tween(150))
+                    fadeIn(animationSpec = tween(200, easing = AsterEasing.emphasized_decelerate)) togetherWith
+                        fadeOut(animationSpec = tween(150, easing = AsterEasing.emphasized_accelerate))
                 },
                 label = "rules_content",
             ) { key ->
@@ -179,6 +180,7 @@ fun MailRulesListScreen(
                     ) {
                         settings_group {
                             sort_rules_for_display(state.rules).forEachIndexed { index, rule ->
+                                androidx.compose.runtime.key(rule.id) {
                                 if (index > 0) settings_row_gap()
                                 rule_row(
                                     rule = rule,
@@ -189,6 +191,7 @@ fun MailRulesListScreen(
                                     on_delete = { vm.delete_rule(rule.id) },
                                     on_run = { vm.run_on_existing(rule.id) },
                                 )
+                                }
                             }
                         }
                         caption(stringResource(R.string.mail_rules_subtitle))

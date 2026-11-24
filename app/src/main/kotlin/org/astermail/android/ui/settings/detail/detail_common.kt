@@ -26,6 +26,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -86,6 +96,16 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterIconSwap
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_collapse_out
+import org.astermail.android.design.aster_crossfade
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_threshold_easing
 import org.astermail.android.design.aster_haptic
 import org.astermail.android.design.aster_perform_haptic
 import org.astermail.android.design.components.AsterAlert
@@ -104,6 +124,63 @@ import org.astermail.android.ui.settings.settings_search_content
 import androidx.compose.runtime.CompositionLocalProvider
 
 internal val settings_row_min_height = 56.dp
+
+private val settings_motion_out_easing = aster_threshold_easing(AsterEasing.emphasized, 0f, AsterMotionSpec.fade_through_threshold)
+private val settings_motion_in_easing = aster_threshold_easing(AsterEasing.emphasized, AsterMotionSpec.fade_through_threshold, 1f)
+
+internal fun settings_sub_screen_axis_x(forward: Boolean, slide_px: Int, reduce_motion: Boolean): ContentTransform {
+    if (reduce_motion) return aster_crossfade(true)
+    val dir = if (forward) 1 else -1
+    val duration = AsterDuration.medium_3
+    return ContentTransform(
+        targetContentEnter = slideInHorizontally(
+            animationSpec = tween(duration, easing = AsterEasing.emphasized),
+            initialOffsetX = { dir * slide_px },
+        ) + fadeIn(tween(duration, easing = settings_motion_in_easing)),
+        initialContentExit = slideOutHorizontally(
+            animationSpec = tween(duration, easing = AsterEasing.emphasized),
+            targetOffsetX = { -dir * slide_px },
+        ) + fadeOut(tween(duration, easing = settings_motion_out_easing)),
+        sizeTransform = SizeTransform(clip = false) { _, _ -> tween(duration, easing = AsterEasing.emphasized) },
+    )
+}
+
+internal fun settings_expand_in(reduce_motion: Boolean): EnterTransition {
+    if (reduce_motion) return aster_fade_in(true)
+    return expandVertically(
+        animationSpec = tween(AsterDuration.medium_2, easing = AsterEasing.emphasized),
+    ) + fadeIn(tween(AsterDuration.medium_2, easing = settings_motion_in_easing))
+}
+
+@Composable
+internal fun SettingsExpand(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val reduce = aster_reduce_motion()
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = settings_expand_in(reduce),
+        exit = aster_collapse_out(reduce),
+    ) { content() }
+}
+
+@Composable
+internal fun ColumnScope.SettingsExpand(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val reduce = aster_reduce_motion()
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = settings_expand_in(reduce),
+        exit = aster_collapse_out(reduce),
+    ) { content() }
+}
 internal val settings_group_inset = AsterSpacing.xs
 internal val settings_row_gap_height = AsterSpacing.row_gap
 
@@ -287,8 +364,8 @@ internal fun preferences_load_placeholder() {
 internal fun preferences_save_error_banner() {
     val vm = shared_settings_view_model()
     val state by vm.state.collectAsStateWithLifecycle()
-    if (state.save_status != SaveStatus.ERROR) return
     val colors = AsterMaterial.colors
+    SettingsExpand(visible = state.save_status == SaveStatus.ERROR) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,6 +390,7 @@ internal fun preferences_save_error_banner() {
                 .padding(start = AsterSpacing.md)
                 .clickable { vm.retry_preferences_save() },
         )
+    }
     }
 }
 
@@ -501,7 +579,7 @@ internal fun choice_option_row(
             .fillMaxWidth()
             .clip(androidx.compose.ui.graphics.RectangleShape)
             .then(interaction)
-            .background(choice_row_fill(colors, selected))
+            .background(aster_animate_color(choice_row_fill(colors, selected), "choice_row_fill").value)
             .then(if (test_tag != null) Modifier.testTag(test_tag) else Modifier)
             .heightIn(min = 54.dp)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
@@ -540,23 +618,29 @@ private fun choice_indicator(selected: Boolean, enabled: Boolean, multi_select: 
     val accent = if (enabled) colors.accent_blue else colors.accent_blue.copy(alpha = 0.4f)
     val ring = if (enabled) colors.text_tertiary else colors.text_tertiary.copy(alpha = 0.4f)
     val shape = if (multi_select) RoundedCornerShape(6.dp) else CircleShape
+    val fill by aster_animate_color(if (selected && multi_select) accent else Color.Transparent, "choice_indicator_fill")
+    val border_color by aster_animate_color(if (selected) accent else ring, "choice_indicator_ring")
     Box(
         modifier = Modifier
             .size(22.dp)
             .clip(shape)
-            .background(if (selected && multi_select) accent else Color.Transparent)
-            .border(2.dp, if (selected) accent else ring, shape),
+            .background(fill)
+            .border(2.dp, border_color, shape),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected && multi_select) {
-            Icon(
-                imageVector = TablerIcons.Check,
-                contentDescription = null,
-                tint = colors.on_accent,
-                modifier = Modifier.size(14.dp),
-            )
-        } else if (selected) {
-            Box(modifier = Modifier.size(11.dp).background(accent, CircleShape))
+        AsterIconSwap(target_state = selected, label = "choice_indicator_mark") { shown ->
+            if (shown && multi_select) {
+                Icon(
+                    imageVector = TablerIcons.Check,
+                    contentDescription = null,
+                    tint = colors.on_accent,
+                    modifier = Modifier.size(14.dp),
+                )
+            } else if (shown) {
+                Box(modifier = Modifier.size(11.dp).background(accent, CircleShape))
+            } else {
+                Box(modifier = Modifier.size(11.dp))
+            }
         }
     }
 }

@@ -257,6 +257,7 @@ fun FilteredInboxScreen(
                         ) { row_index, thread ->
                             Box(
                                 modifier = Modifier
+                                    .animateItem(fadeInSpec = null)
                                     .page_surface(colors)
                                     .onSizeChanged { record_row_height(row_index, it.height) },
                             ) {

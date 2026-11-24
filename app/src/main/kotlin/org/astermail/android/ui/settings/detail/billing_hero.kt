@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -579,11 +581,16 @@ internal fun billing_expander_row(
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
+        val chevron_rotation by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (expanded) 180f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(200, easing = org.astermail.android.design.AsterEasing.emphasized),
+            label = "chevron_rotation",
+        )
         Icon(
-            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+            imageVector = TablerIcons.ChevronDown,
             contentDescription = null,
             tint = colors.text_tertiary,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = chevron_rotation },
         )
     }
 }

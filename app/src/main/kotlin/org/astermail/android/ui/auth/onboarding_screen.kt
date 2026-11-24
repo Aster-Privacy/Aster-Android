@@ -26,6 +26,7 @@ import compose.icons.tablericons.*
 
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -75,6 +76,11 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_crossfade
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
 
@@ -91,14 +97,7 @@ fun OnboardingScreen(
     on_skip: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val context = LocalContext.current
-    val reduce_motion = remember {
-        Settings.Global.getFloat(
-            context.contentResolver,
-            Settings.Global.ANIMATOR_DURATION_SCALE,
-            1f,
-        ) == 0f
-    }
+    val reduce_motion = aster_reduce_motion()
 
     val slides = remember {
         listOf(
@@ -159,8 +158,8 @@ fun OnboardingScreen(
         ) {
             AnimatedVisibility(
                 visible = !is_last_page,
-                enter = fadeIn(),
-                exit = fadeOut(),
+                enter = aster_fade_in(reduce_motion),
+                exit = aster_fade_out(reduce_motion),
             ) {
                 Text(
                     text = stringResource(R.string.onboarding_skip),
@@ -202,42 +201,56 @@ fun OnboardingScreen(
                         animationSpec = tween(durationMillis = AsterDuration.short_4, easing = AsterEasing.standard_enter),
                         label = "dot",
                     )
+                    val dot_color by aster_animate_color(
+                        if (is_selected) colors.accent_blue else colors.border_secondary,
+                        label = "dot_color",
+                    )
                     Box(
                         modifier = Modifier
                             .height(8.dp)
                             .width(dot_width)
                             .clip(CircleShape)
-                            .background(
-                                if (is_selected) colors.accent_blue else colors.border_secondary,
-                            ),
+                            .background(dot_color),
                     )
                 }
             }
 
-            if (is_last_page) {
-                AsterButton(
-                    label = stringResource(R.string.log_in),
-                    onClick = on_sign_in,
-                )
-                AsterSecondaryButton(
-                    label = stringResource(R.string.create_account),
-                    onClick = on_create_account,
-                )
-            } else {
-                AsterButton(
-                    label = stringResource(R.string.next),
-                    onClick = {
-                        scope.launch {
-                            pager_state.animateScrollToPage(
-                                page = pager_state.currentPage + 1,
-                                animationSpec = tween(
-                                    durationMillis = AsterDuration.medium_3,
-                                    easing = AsterEasing.standard_enter,
-                                ),
-                            )
-                        }
-                    },
-                )
+            AnimatedContent(
+                targetState = is_last_page,
+                transitionSpec = { aster_crossfade(reduce_motion) },
+                contentAlignment = Alignment.TopCenter,
+                label = "onboarding_actions",
+            ) { last_page ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (last_page) {
+                        AsterButton(
+                            label = stringResource(R.string.log_in),
+                            onClick = on_sign_in,
+                        )
+                        AsterSecondaryButton(
+                            label = stringResource(R.string.create_account),
+                            onClick = on_create_account,
+                        )
+                    } else {
+                        AsterButton(
+                            label = stringResource(R.string.next),
+                            onClick = {
+                                scope.launch {
+                                    pager_state.animateScrollToPage(
+                                        page = pager_state.currentPage + 1,
+                                        animationSpec = tween(
+                                            durationMillis = AsterDuration.medium_3,
+                                            easing = AsterEasing.standard_enter,
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
             }
         }
     }

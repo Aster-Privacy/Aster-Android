@@ -24,25 +24,40 @@ package org.astermail.android.design
 import android.content.Context
 import android.provider.Settings
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.PathEasing
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 
 object AsterEasing {
-    val standard_in_out = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
-    val standard_enter = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
-    val standard_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
-    val emphasized_in_out = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
-    val emphasized_enter = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
-    val emphasized_exit = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+    val emphasized: Easing = PathEasing(
+        PathParser().parsePathString("M 0,0 C 0.05, 0, 0.133333, 0.06, 0.166666, 0.4 C 0.208333, 0.82, 0.25, 1, 1, 1").toPath(),
+    )
+    val emphasized_decelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    val emphasized_accelerate = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+    val legacy = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
+    val back_progress = CubicBezierEasing(0.1f, 0.1f, 0f, 1f)
+    val standard = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val standard_decelerate = CubicBezierEasing(0f, 0f, 0f, 1f)
+    val standard_accelerate = CubicBezierEasing(0.3f, 0f, 1f, 1f)
+    val standard_in_out = standard
+    val standard_enter = standard_decelerate
+    val standard_exit = standard_accelerate
+    val emphasized_in_out = emphasized
+    val emphasized_enter = emphasized_decelerate
+    val emphasized_exit = emphasized_accelerate
     val tap_down = CubicBezierEasing(0f, 0f, 0.58f, 1f)
     val tap_up = CubicBezierEasing(0f, 0f, 0.58f, 1f)
-    val menu_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-    val menu_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
-    val dialog_enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-    val dialog_exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
-    val scrim = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
+    val menu_enter = emphasized_decelerate
+    val menu_exit = emphasized_accelerate
+    val dialog_enter = emphasized_decelerate
+    val dialog_exit = emphasized_accelerate
+    val scrim = standard
     val island = AsterIslandMotion.ease
 }
 
@@ -79,6 +94,25 @@ object AsterDuration {
     const val scrim_exit = 130
 
     const val instant = 0
+}
+
+object AsterSpring {
+    const val spatial_damping = 0.9f
+    const val spatial_stiffness = 700f
+    const val fast_spatial_stiffness = 1400f
+    const val slow_spatial_stiffness = 300f
+    const val effects_damping = 1f
+    const val effects_stiffness = 1600f
+    const val fast_effects_stiffness = 3800f
+    const val expressive_fast_spatial_damping = 0.6f
+    const val expressive_fast_spatial_stiffness = 800f
+
+    fun <T> spatial(): SpringSpec<T> = spring(spatial_damping, spatial_stiffness)
+    fun <T> fast_spatial(): SpringSpec<T> = spring(spatial_damping, fast_spatial_stiffness)
+    fun <T> slow_spatial(): SpringSpec<T> = spring(spatial_damping, slow_spatial_stiffness)
+    fun <T> effects(): SpringSpec<T> = spring(effects_damping, effects_stiffness)
+    fun <T> fast_effects(): SpringSpec<T> = spring(effects_damping, fast_effects_stiffness)
+    fun <T> pop(): SpringSpec<T> = spring(expressive_fast_spatial_damping, expressive_fast_spatial_stiffness)
 }
 
 object AsterScale {

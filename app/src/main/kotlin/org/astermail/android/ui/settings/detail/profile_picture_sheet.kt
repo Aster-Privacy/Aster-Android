@@ -216,7 +216,7 @@ private fun view_transition(): AnimatedContentTransitionScope<profile_picture_vi
     return remember(reduce_motion, rtl, shift_px) {
         {
             if (reduce_motion) {
-                fadeIn(animationSpec = snap()) togetherWith fadeOut(animationSpec = snap()) using null
+                org.astermail.android.design.aster_crossfade(true)
             } else {
                 val sign = profile_picture_slide_sign(targetState, rtl)
                 val spec_float = tween<Float>(view_duration_ms, easing = view_ease)

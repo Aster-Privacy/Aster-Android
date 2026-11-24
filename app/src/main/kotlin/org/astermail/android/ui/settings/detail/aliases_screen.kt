@@ -34,6 +34,7 @@ import compose.icons.tablericons.*
 
 import android.content.ClipData
 import android.content.Context
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -127,6 +128,8 @@ import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -231,7 +234,14 @@ fun AliasesScreen(
         }
     }
 
-    if (show_deleted_aliases) {
+    val sub_reduce_motion = aster_reduce_motion()
+    val sub_slide_px = aster_shared_axis_slide_px()
+    AnimatedContent(
+        targetState = show_deleted_aliases,
+        transitionSpec = { settings_sub_screen_axis_x(forward = targetState, slide_px = sub_slide_px, reduce_motion = sub_reduce_motion) },
+        label = "deleted_aliases_screen",
+    ) { deleted_open ->
+    if (deleted_open) {
         deleted_aliases_screen(
             deleted = state.deleted_aliases,
             restore_locked = alias_restore_locked,
@@ -241,9 +251,7 @@ fun AliasesScreen(
             on_upgrade = { on_open("billing") },
             on_back = { show_deleted_aliases = false },
         )
-        return
-    }
-
+    } else {
     detail_scaffold(
         title = stringResource(R.string.aliases),
         on_back = on_back,
@@ -318,8 +326,14 @@ fun AliasesScreen(
         }
         v_gap(AsterSpacing.sm)
 
-        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-            when (selected_tab) {
+        AnimatedContent(
+            targetState = selected_tab,
+            modifier = Modifier.weight(1f).fillMaxSize(),
+            transitionSpec = { settings_sub_screen_axis_x(forward = targetState > initialState, slide_px = sub_slide_px, reduce_motion = sub_reduce_motion) },
+            label = "aliases_tab",
+        ) { shown_tab ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (shown_tab) {
                 0 -> aliases_tab(
                     vm = vm,
                     state = state,
@@ -391,6 +405,7 @@ fun AliasesScreen(
                 }
             }
         }
+        }
     }
 
     if (show_create_alias) {
@@ -437,6 +452,8 @@ fun AliasesScreen(
                 )
             },
         )
+    }
+    }
     }
 }
 
@@ -809,6 +826,7 @@ private fun aliases_tab(
                     LaunchedEffect(alias.id, always_expand_aliases) {
                         if (always_expand_aliases) vm.set_alias_expanded(alias.id, true)
                     }
+                    Box(modifier = Modifier.animateItem()) {
                     alias_list_row(
                         alias = alias,
                         idx = idx,
@@ -834,6 +852,7 @@ private fun aliases_tab(
                         on_open_detail = { on_open_alias_detail(alias.id) },
                         on_compose_from = { on_compose_from(alias.address) },
                     )
+                    }
                 }
             }
 
@@ -851,6 +870,7 @@ private fun aliases_tab(
                     items = visible_domain_addresses,
                     key = { _, addr -> "cda_${addr.id}" },
                 ) { idx, addr ->
+                    Box(modifier = Modifier.animateItem()) {
                     custom_domain_address_row(
                         addr = addr,
                         idx = idx,
@@ -861,6 +881,7 @@ private fun aliases_tab(
                         on_delete = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
                         on_change_avatar = { vm.update_domain_address_avatar(addr.id, addr.domain_name, it) },
                     )
+                    }
                 }
             }
 

@@ -224,14 +224,24 @@ fun recover_data_dialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                val last_notice = remember { mutableStateOf(notice_res) }
+                val last_partial = remember { mutableStateOf(false) }
                 if (notice_res != null) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(notice_res),
-                        color = if (outcome == LockedDataRecoveryOutcome.PARTIAL) colors.text_secondary else colors.danger,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
+                    last_notice.value = notice_res
+                    last_partial.value = outcome == LockedDataRecoveryOutcome.PARTIAL
+                }
+                org.astermail.android.design.AsterExpandVisibility(visible = notice_res != null) {
+                    Column {
+                        Spacer(Modifier.height(AsterSpacing.sm))
+                        last_notice.value?.let { shown_notice ->
+                            Text(
+                                text = stringResource(shown_notice),
+                                color = if (last_partial.value) colors.text_secondary else colors.danger,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                            )
+                        }
+                    }
                 }
             }
         },

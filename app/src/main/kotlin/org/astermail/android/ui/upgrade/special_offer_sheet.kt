@@ -24,12 +24,7 @@ package org.astermail.android.ui.upgrade
 import org.astermail.android.api.billing.AvailablePlan
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.alpha
@@ -50,8 +45,6 @@ import androidx.activity.compose.BackHandler
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -130,7 +123,13 @@ import org.astermail.android.billing.play_price_cents
 import org.astermail.android.billing.api_plan_price_cents
 import org.astermail.android.billing.billing_interval_per_label
 import org.astermail.android.billing.format_money
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_fade_through
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
@@ -164,8 +163,6 @@ private const val HERO_FADE_START = 0.58f
 private val DIVIDER_THICKNESS = 1.5.dp
 private val CLOSE_TOUCH_TARGET = 48.dp
 private val BENEFIT_CHECK_SIZE = 20.dp
-private const val OPEN_DAMPING = 0.78f
-private const val OPEN_STIFFNESS = 420f
 private const val CLOSE_MS = 200
 private const val SCRIM_LEAD = 1.6f
 private const val APPEAR_START_SCALE = 0.94f
@@ -352,14 +349,15 @@ fun SpecialOfferHost() {
         offer_vm.close()
     }
 
+    val reduce_motion = aster_reduce_motion()
     val appear = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
     LaunchedEffect(offer_state.is_open) {
         if (offer_state.is_open) {
             mounted = true
-            appear.animateTo(1f, spring(dampingRatio = OPEN_DAMPING, stiffness = OPEN_STIFFNESS))
+            appear.animateTo(1f, AsterSpring.spatial())
         } else if (mounted) {
-            appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = LinearOutSlowInEasing))
+            appear.animateTo(0f, tween(durationMillis = CLOSE_MS, easing = AsterEasing.emphasized_accelerate))
             mounted = false
             offer_success = false
             purchased_plan_code = ""
@@ -409,6 +407,20 @@ fun SpecialOfferHost() {
     }
     val info_text = billing_state.info
         ?.takeIf { error_text == null && play_cta_pressed && !billing_state.is_acting && it.isNotBlank() }
+    var held_error_text by remember { mutableStateOf(error_text) }
+    var held_info_text by remember { mutableStateOf(info_text) }
+    LaunchedEffect(error_text) { error_text?.let { held_error_text = it } }
+    LaunchedEffect(info_text) { info_text?.let { held_info_text = it } }
+    val price_alpha by animateFloatAsState(
+        targetValue = if (prices_pending) 0f else 1f,
+        animationSpec = tween(durationMillis = AsterMotionSpec.color_ms, easing = AsterEasing.standard),
+        label = "offer_price_alpha",
+    )
+    val price_note_alpha by animateFloatAsState(
+        targetValue = if (prices_pending || !is_discounted) 0f else 1f,
+        animationSpec = tween(durationMillis = AsterMotionSpec.color_ms, easing = AsterEasing.standard),
+        label = "offer_price_note_alpha",
+    )
 
     val benefits = special_offer_benefit_rows(plan_code, billing_state.available_plans)
     val success_plan_code = purchased_plan_code.ifEmpty { plan_code }
@@ -461,281 +473,291 @@ fun SpecialOfferHost() {
                 .clip(CARD_SHAPE)
                 .acrylic(colors, CARD_SHAPE, colors.bg_card),
         ) {
-            if (offer_success) {
-                SpecialOfferSuccess(plan_label = success_plan_label, benefits = success_benefits, onDone = { offer_vm.close() })
-            } else Column {
-                Column(modifier = Modifier.weight(1f, fill = false).vertical_scroll_with_indicator()) {
-                    SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
+            AnimatedContent(
+                targetState = offer_success,
+                transitionSpec = { aster_fade_through(reduce_motion) },
+                label = "special_offer_success",
+            ) { show_success ->
+                if (show_success) {
+                    SpecialOfferSuccess(plan_label = success_plan_label, benefits = success_benefits, onDone = { offer_vm.close() })
+                } else Column {
+                    Column(modifier = Modifier.weight(1f, fill = false).vertical_scroll_with_indicator()) {
+                        SpecialOfferHero(aspect_ratio = if (compact) HERO_ASPECT_RATIO_COMPACT else HERO_ASPECT_RATIO)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = CARD_PADDING,
+                                    top = 6.dp,
+                                    end = CARD_PADDING,
+                                    bottom = 8.dp,
+                                ),
+                        ) {
+                            SpecialOfferBadge()
+
+                            Spacer(Modifier.height(10.dp))
+
+                            Text(
+                                text = if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
+                                    stringResource(R.string.special_offer_black_friday_title, percent_off, months)
+                                } else {
+                                    stringResource(R.string.special_offer_title)
+                                },
+                                color = colors.text_primary,
+                                fontSize = 22.sp,
+                                lineHeight = 27.sp,
+                                letterSpacing = (-0.3).sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+
+                            if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = stringResource(R.string.special_offer_black_friday_body, percent_off, months),
+                                    color = colors.text_secondary,
+                                    fontSize = 14.sp,
+                                    lineHeight = 19.sp,
+                                )
+                                parse_offer_end(offer_state.ends_at)?.let { ends ->
+                                    Spacer(Modifier.height(6.dp))
+                                    offer_countdown(ends_at = ends)
+                                }
+                            }
+
+                            if (!offer_state.offer_expired) {
+                                Spacer(Modifier.height(12.dp))
+
+                                if (plan_codes.size > 1) {
+                                    aster_segmented(
+                                        value = plan_code,
+                                        options = plan_codes.map { code ->
+                                            switcher_option(
+                                                code,
+                                                plan_display_name(billing_state.available_plans, code)
+                                                    ?: code.replaceFirstChar { it.uppercase() },
+                                            )
+                                        },
+                                        on_change = { next -> if (!is_busy) selected_plan_code = next },
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                }
+
+                                aster_segmented(
+                                    value = checkout_interval,
+                                    options = listOf(
+                                        switcher_option(SPECIAL_OFFER_INTERVAL, stringResource(R.string.settings_billing_monthly)),
+                                        switcher_option(SPECIAL_OFFER_YEARLY_INTERVAL, stringResource(R.string.settings_billing_yearly)),
+                                    ),
+                                    on_change = { next -> if (!is_busy) interval = next },
+                                )
+
+                                Spacer(Modifier.height(10.dp))
+                            } else {
+                                Spacer(Modifier.height(6.dp))
+                            }
+
+                            FlowRow(
+                                modifier = Modifier.graphicsLayer { alpha = price_alpha },
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                Text(
+                                    text = offer_label,
+                                    color = colors.text_primary,
+                                    fontSize = 38.sp,
+                                    lineHeight = 42.sp,
+                                    letterSpacing = (-1).sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.alignByBaseline(),
+                                )
+                                Text(
+                                    text = stringResource(
+                                        if (is_yearly) R.string.special_offer_price_period_year else R.string.special_offer_price_period,
+                                    ),
+                                    color = colors.text_secondary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.alignByBaseline(),
+                                )
+                                if (is_discounted) {
+                                    Text(
+                                        text = list_label,
+                                        color = colors.text_tertiary,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        textDecoration = TextDecoration.LineThrough,
+                                        modifier = Modifier.alignByBaseline(),
+                                    )
+                                }
+                            }
+
+                            if (!covered && !prices_pending) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.special_offer_not_on_star_monthly),
+                                    color = colors.text_secondary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
+                                )
+                            }
+
+                            Spacer(Modifier.height(gap + 4.dp))
+
+                            SpecialOfferDivider()
+
+                            Spacer(Modifier.height(gap + 4.dp))
+
+                            SpecialOfferBenefits(benefits = benefits, show_details = !compact)
+
+                            Spacer(Modifier.height(gap))
+
+                            SpecialOfferWhy()
+                        }
+                    }
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                start = CARD_PADDING,
-                                top = 6.dp,
-                                end = CARD_PADDING,
-                                bottom = 8.dp,
-                            ),
+                            .padding(start = CARD_PADDING, top = gap, end = CARD_PADDING, bottom = 2.dp),
                     ) {
-                        SpecialOfferBadge()
+                        AsterExpandVisibility(visible = error_text != null) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(ERROR_SHAPE)
+                                        .background(colors.danger.copy(alpha = 0.08f))
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = TablerIcons.AlertCircle,
+                                        contentDescription = null,
+                                        tint = colors.danger,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = error_text ?: held_error_text.orEmpty(),
+                                        color = colors.text_primary,
+                                        fontSize = 13.sp,
+                                        lineHeight = 18.sp,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
+                            }
+                        }
+
+                        AsterExpandVisibility(visible = info_text != null) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(ERROR_SHAPE)
+                                        .background(colors.accent_blue.copy(alpha = 0.08f))
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = TablerIcons.InfoCircle,
+                                        contentDescription = null,
+                                        tint = colors.accent_blue,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = info_text ?: held_info_text.orEmpty(),
+                                        color = colors.text_primary,
+                                        fontSize = 13.sp,
+                                        lineHeight = 18.sp,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
+                            }
+                        }
+
+                        SpecialOfferDepthButton(
+                            label = if (offer_state.offer_expired) {
+                                stringResource(R.string.close)
+                            } else if (!is_discounted) {
+                                stringResource(R.string.special_offer_switch_to_yearly)
+                            } else {
+                                stringResource(R.string.special_offer_cta_claim, percent_off)
+                            },
+                            is_loading = is_busy || (play_install && !play_ready && !offer_state.offer_expired),
+                            enabled = offer_state.offer_expired || is_discounted || can_switch_to_yearly,
+                            onClick = {
+                                if (offer_state.offer_expired) {
+                                    offer_vm.close()
+                                } else if (!is_discounted) {
+                                    if (can_switch_to_yearly) interval = SPECIAL_OFFER_YEARLY_INTERVAL
+                                } else if (route is OfferRoute.Play) {
+                                    billing_vm.clear_messages()
+                                    play_cta_pressed = true
+                                    purchased_plan_code = plan_code
+                                    billing_vm.start_play_special_offer(route.product_id, route.base_plan_id)
+                                } else {
+                                    billing_vm.clear_messages()
+                                    offer_vm.release_checkout()
+                                    offer_vm.accept()
+                                }
+                            },
+                        )
 
                         Spacer(Modifier.height(10.dp))
 
                         Text(
-                            text = if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
-                                stringResource(R.string.special_offer_black_friday_title, percent_off, months)
+                            text = if (is_yearly) {
+                                stringResource(R.string.special_offer_fine_print_year, offer_label, list_label)
                             } else {
-                                stringResource(R.string.special_offer_title)
+                                pluralStringResource(
+                                    R.plurals.special_offer_fine_print,
+                                    months,
+                                    offer_label,
+                                    months,
+                                    list_label,
+                                )
                             },
-                            color = colors.text_primary,
-                            fontSize = 22.sp,
-                            lineHeight = 27.sp,
-                            letterSpacing = (-0.3).sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-
-                        if (offer_state.theme == SPECIAL_OFFER_BLACK_FRIDAY_THEME) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                text = stringResource(R.string.special_offer_black_friday_body, percent_off, months),
-                                color = colors.text_secondary,
-                                fontSize = 14.sp,
-                                lineHeight = 19.sp,
-                            )
-                            parse_offer_end(offer_state.ends_at)?.let { ends ->
-                                Spacer(Modifier.height(6.dp))
-                                offer_countdown(ends_at = ends)
-                            }
-                        }
-
-                        if (!offer_state.offer_expired) {
-                            Spacer(Modifier.height(12.dp))
-
-                            if (plan_codes.size > 1) {
-                                aster_segmented(
-                                    value = plan_code,
-                                    options = plan_codes.map { code ->
-                                        switcher_option(
-                                            code,
-                                            plan_display_name(billing_state.available_plans, code)
-                                                ?: code.replaceFirstChar { it.uppercase() },
-                                        )
-                                    },
-                                    on_change = { next -> if (!is_busy) selected_plan_code = next },
-                                )
-                                Spacer(Modifier.height(8.dp))
-                            }
-
-                            aster_segmented(
-                                value = checkout_interval,
-                                options = listOf(
-                                    switcher_option(SPECIAL_OFFER_INTERVAL, stringResource(R.string.settings_billing_monthly)),
-                                    switcher_option(SPECIAL_OFFER_YEARLY_INTERVAL, stringResource(R.string.settings_billing_yearly)),
-                                ),
-                                on_change = { next -> if (!is_busy) interval = next },
-                            )
-
-                            Spacer(Modifier.height(10.dp))
-                        } else {
-                            Spacer(Modifier.height(6.dp))
-                        }
-
-                        FlowRow(
-                            modifier = Modifier.alpha(if (prices_pending) 0f else 1f),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            Text(
-                                text = offer_label,
-                                color = colors.text_primary,
-                                fontSize = 38.sp,
-                                lineHeight = 42.sp,
-                                letterSpacing = (-1).sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.alignByBaseline(),
-                            )
-                            Text(
-                                text = stringResource(
-                                    if (is_yearly) R.string.special_offer_price_period_year else R.string.special_offer_price_period,
-                                ),
-                                color = colors.text_secondary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.alignByBaseline(),
-                            )
-                            if (is_discounted) {
-                                Text(
-                                    text = list_label,
-                                    color = colors.text_tertiary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    textDecoration = TextDecoration.LineThrough,
-                                    modifier = Modifier.alignByBaseline(),
-                                )
-                            }
-                        }
-
-                        if (!covered && !prices_pending) {
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.special_offer_not_on_star_monthly),
-                                color = colors.text_secondary,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                            )
-                        }
-
-                        Spacer(Modifier.height(gap + 4.dp))
-
-                        SpecialOfferDivider()
-
-                        Spacer(Modifier.height(gap + 4.dp))
-
-                        SpecialOfferBenefits(benefits = benefits, show_details = !compact)
-
-                        Spacer(Modifier.height(gap))
-
-                        SpecialOfferWhy()
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = CARD_PADDING, top = gap, end = CARD_PADDING, bottom = 2.dp),
-                ) {
-                    if (error_text != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(ERROR_SHAPE)
-                                .background(colors.danger.copy(alpha = 0.08f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.AlertCircle,
-                                contentDescription = null,
-                                tint = colors.danger,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = error_text,
-                                color = colors.text_primary,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                    }
-
-                    if (info_text != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(ERROR_SHAPE)
-                                .background(colors.accent_blue.copy(alpha = 0.08f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.InfoCircle,
-                                contentDescription = null,
-                                tint = colors.accent_blue,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = info_text,
-                                color = colors.text_primary,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                    }
-
-                    SpecialOfferDepthButton(
-                        label = if (offer_state.offer_expired) {
-                            stringResource(R.string.close)
-                        } else if (!is_discounted) {
-                            stringResource(R.string.special_offer_switch_to_yearly)
-                        } else {
-                            stringResource(R.string.special_offer_cta_claim, percent_off)
-                        },
-                        is_loading = is_busy || (play_install && !play_ready && !offer_state.offer_expired),
-                        enabled = offer_state.offer_expired || is_discounted || can_switch_to_yearly,
-                        onClick = {
-                            if (offer_state.offer_expired) {
-                                offer_vm.close()
-                            } else if (!is_discounted) {
-                                if (can_switch_to_yearly) interval = SPECIAL_OFFER_YEARLY_INTERVAL
-                            } else if (route is OfferRoute.Play) {
-                                billing_vm.clear_messages()
-                                play_cta_pressed = true
-                                purchased_plan_code = plan_code
-                                billing_vm.start_play_special_offer(route.product_id, route.base_plan_id)
-                            } else {
-                                billing_vm.clear_messages()
-                                offer_vm.release_checkout()
-                                offer_vm.accept()
-                            }
-                        },
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    Text(
-                        text = if (is_yearly) {
-                            stringResource(R.string.special_offer_fine_print_year, offer_label, list_label)
-                        } else {
-                            pluralStringResource(
-                                R.plurals.special_offer_fine_print,
-                                months,
-                                offer_label,
-                                months,
-                                list_label,
-                            )
-                        },
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().alpha(if (prices_pending || !is_discounted) 0f else 1f),
-                    )
-
-                    if (is_discounted && !is_yearly) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.special_offer_renews_at, list_label, months),
                             color = colors.text_tertiary,
                             fontSize = 12.sp,
                             lineHeight = 17.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = price_note_alpha },
                         )
-                    }
-                }
 
-                Text(
-                    text = stringResource(R.string.special_offer_dismiss),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = CARD_PADDING, end = CARD_PADDING, bottom = 8.dp)
-                        .clip(CircleShape)
-                        .clickable(enabled = interactive, role = Role.Button) {
-                            billing_vm.cancel_play_special_offer()
-                            offer_vm.dismiss_forever()
+                        if (is_discounted && !is_yearly) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.special_offer_renews_at, list_label, months),
+                                color = colors.text_tertiary,
+                                fontSize = 12.sp,
+                                lineHeight = 17.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
-                        .padding(vertical = 10.dp),
-                )
+                    }
+
+                    Text(
+                        text = stringResource(R.string.special_offer_dismiss),
+                        color = colors.text_secondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = CARD_PADDING, end = CARD_PADDING, bottom = 8.dp)
+                            .clip(CircleShape)
+                            .clickable(enabled = interactive, role = Role.Button) {
+                                billing_vm.cancel_play_special_offer()
+                                offer_vm.dismiss_forever()
+                            }
+                            .padding(vertical = 10.dp),
+                    )
+                }
             }
 
             Box(
@@ -857,7 +879,7 @@ private fun SpecialOfferWhy() {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val chevron by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = AsterMotionSpec.icon_ms, easing = AsterEasing.emphasized),
         label = "offer_why_chevron",
     )
 
@@ -893,10 +915,8 @@ private fun SpecialOfferWhy() {
                     .graphicsLayer { rotationZ = chevron },
             )
         }
-        AnimatedVisibility(
+        AsterExpandVisibility(
             visible = expanded,
-            enter = fadeIn(tween(200, delayMillis = 40)) + expandVertically(tween(220, easing = FastOutSlowInEasing)),
-            exit = fadeOut(tween(120)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
         ) {
             Text(
                 text = stringResource(R.string.special_offer_why_body),
@@ -985,8 +1005,8 @@ private fun SpecialOfferBenefits(benefits: List<Pair<String, String>>, show_deta
 @Composable
 private fun SpecialOfferSuccess(plan_label: String, benefits: List<Pair<String, String>>, onDone: () -> Unit) {
     val colors = AsterMaterial.colors
-    val pop = remember { Animatable(0.6f) }
-    LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 420f)) }
+    val pop = remember { Animatable(0.8f) }
+    LaunchedEffect(Unit) { pop.animateTo(1f, AsterSpring.spatial()) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1039,12 +1059,12 @@ private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, enabled:
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed && !is_loading) 0.97f else 1f,
-        animationSpec = tween(durationMillis = if (pressed) 90 else 160),
+        animationSpec = tween(durationMillis = if (pressed) 90 else 160, easing = AsterEasing.standard),
         label = "offer_cta_scale",
     )
     val lip by animateDpAsState(
         targetValue = if (pressed && !is_loading) 1.dp else CTA_LIP,
-        animationSpec = tween(durationMillis = if (pressed) 90 else 160),
+        animationSpec = tween(durationMillis = if (pressed) 90 else 160, easing = AsterEasing.standard),
         label = "offer_cta_lip",
     )
     val shade = if (pressed) 0.08f else 0f
@@ -1073,7 +1093,8 @@ private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, enabled:
     ) {
         Box(
             modifier = Modifier
-                .padding(top = CTA_LIP - lip, bottom = lip)
+                .graphicsLayer { translationY = (CTA_LIP - lip).toPx() }
+                .padding(bottom = CTA_LIP)
                 .fillMaxWidth()
                 .heightIn(min = CTA_HEIGHT - CTA_LIP)
                 .clip(CTA_SHAPE)

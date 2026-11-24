@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +62,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
@@ -85,9 +88,19 @@ fun TemplatesScreen(
 
     var pending_delete by remember { mutableStateOf<DecryptedTemplate?>(null) }
 
-    val draft = state.draft
-    if (draft != null) {
-        BackHandler { vm.cancel_edit() }
+    val live_draft = state.draft
+    val reduce_motion = aster_reduce_motion()
+    val slide_px = aster_shared_axis_slide_px()
+    AnimatedContent(
+        targetState = live_draft != null,
+        transitionSpec = { settings_sub_screen_axis_x(forward = targetState, slide_px = slide_px, reduce_motion = reduce_motion) },
+        label = "template_editor",
+    ) { editor_open ->
+    if (editor_open) {
+        val held_draft = remember { arrayOfNulls<DecryptedTemplate>(1) }
+        if (live_draft != null) held_draft[0] = live_draft
+        val draft = held_draft[0] ?: return@AnimatedContent
+        if (live_draft != null) BackHandler { vm.cancel_edit() }
         template_editor(
             title = if (draft.id.isBlank()) stringResource(R.string.new_template) else stringResource(R.string.edit_template),
             name = draft.name,
@@ -101,9 +114,7 @@ fun TemplatesScreen(
             on_content_change = { vm.update_draft(content = it) },
             on_save = { vm.save_draft() },
         )
-        return
-    }
-
+    } else {
     detail_scaffold(
         title = stringResource(R.string.templates),
         on_back = on_back,
@@ -181,6 +192,8 @@ fun TemplatesScreen(
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+    }
     }
 
     val doomed = pending_delete

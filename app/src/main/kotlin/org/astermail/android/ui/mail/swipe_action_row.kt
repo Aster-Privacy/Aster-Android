@@ -23,6 +23,8 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -66,6 +68,10 @@ import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlinx.coroutines.launch
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.mail.folder_keeps_archived
 
 const val swipe_claim_slop_multiplier = 1f
@@ -73,6 +79,7 @@ const val swipe_dominance_ratio = 1.2f
 const val swipe_commit_fraction = 0.25f
 const val swipe_fling_velocity = 600f
 const val swipe_fling_min_fraction = 0.06f
+val swipe_fling_velocity_dp = 125.dp
 
 enum class SwipeAxis { undecided, horizontal, vertical }
 
@@ -180,13 +187,16 @@ fun swipe_action_row(
     val current_on_swipe_end by rememberUpdatedState(on_swipe_end)
     val current_haptic_enabled by rememberUpdatedState(haptic_enabled)
     val current_list_scrolling by rememberUpdatedState(list_scrolling)
+    var armed by remember { mutableStateOf(false) }
+    val reduce_motion = aster_reduce_motion()
     val start_enabled = start_action != "none"
     val end_enabled = end_action != "none"
 
     LaunchedEffect(reset_token) {
         if (reset_token == 0) return@LaunchedEffect
         is_dismissed = false
-        offset_x.animateTo(0f, tween(220))
+        armed = false
+        offset_x.animateTo(0f, spring(AsterSpring.effects_damping, AsterSpring.fast_spatial_stiffness))
     }
 
     Box(
@@ -195,6 +205,7 @@ fun swipe_action_row(
                 if (!start_enabled && !end_enabled) return@pointerInput
                 val slop = viewConfiguration.touchSlop
                 val claim_distance = slop * swipe_claim_slop_multiplier
+                val fling_px = swipe_fling_velocity_dp.toPx()
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -238,6 +249,7 @@ fun swipe_action_row(
                                 val past = abs(target) >= commit_distance
                                 if (past != passed_commit) {
                                     passed_commit = past
+                                    armed = past
                                     if (current_haptic_enabled) {
                                         haptics(
                                             if (past) {
@@ -251,21 +263,27 @@ fun swipe_action_row(
                             }
                             released = true
                         } finally {
-                            if (claimed && !released) scope.launch { offset_x.animateTo(0f, tween(220)) }
+                            if (claimed && !released) {
+                                armed = false
+                                scope.launch { offset_x.animateTo(0f, spring(AsterSpring.effects_damping, AsterSpring.fast_spatial_stiffness)) }
+                            }
                         }
                         if (!claimed) continue
                         val travelled = position
                         val velocity_x = velocity_tracker.calculateVelocity().x
-                        if (!swipe_commits(travelled, velocity_x, limit)) {
-                            scope.launch { offset_x.animateTo(0f, tween(220)) }
+                        val settle_spec = spring<Float>(AsterSpring.effects_damping, AsterSpring.fast_spatial_stiffness)
+                        if (!swipe_commits(travelled, velocity_x, limit, fling_velocity = fling_px)) {
+                            armed = false
+                            scope.launch { offset_x.animateTo(0f, settle_spec, initialVelocity = velocity_x) }
                             continue
                         }
                         val action = if (travelled > 0f) current_start_action else current_end_action
                         if (current_removes_row(action)) {
                             is_dismissed = true
-                            scope.launch { offset_x.animateTo(sign(travelled) * limit, tween(180)) }
+                            scope.launch { offset_x.animateTo(sign(travelled) * limit, settle_spec, initialVelocity = velocity_x) }
                         } else {
-                            scope.launch { offset_x.animateTo(0f, tween(220)) }
+                            armed = false
+                            scope.launch { offset_x.animateTo(0f, settle_spec, initialVelocity = velocity_x) }
                         }
                         if (travelled > 0f) current_on_swipe_start() else current_on_swipe_end()
                     }
@@ -273,11 +291,20 @@ fun swipe_action_row(
             },
     ) {
         val travelled = offset_x.value
+        val towards_start = travelled > 0f
+        val surface by aster_animate_color(swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors), label = "swipe_surface")
+        val ink by aster_animate_color(swipe_ink(surface), label = "swipe_ink")
+        val icon_scale = remember { Animatable(1f) }
+        LaunchedEffect(armed, reduce_motion) {
+            if (!armed || reduce_motion) {
+                icon_scale.snapTo(1f)
+                return@LaunchedEffect
+            }
+            icon_scale.animateTo(1.15f, tween(100, easing = AsterEasing.emphasized_decelerate))
+            icon_scale.animateTo(1f, tween(100, easing = AsterEasing.standard))
+        }
         if (travelled != 0f) {
             val faces = shown_faces ?: current_faces
-            val towards_start = travelled > 0f
-            val surface = swipe_tone(if (towards_start) start_color else end_color, AsterMaterial.colors)
-            val ink = swipe_ink(surface)
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -292,7 +319,12 @@ fun swipe_action_row(
                         imageVector = if (towards_start) faces.start_icon else faces.end_icon,
                         contentDescription = if (towards_start) faces.start_label else faces.end_label,
                         tint = ink,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer {
+                                scaleX = icon_scale.value
+                                scaleY = icon_scale.value
+                            },
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(

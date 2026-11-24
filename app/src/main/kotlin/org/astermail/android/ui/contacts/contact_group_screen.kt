@@ -343,7 +343,7 @@ fun ContactGroupScreen(
                     contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp),
                 ) {
                     itemsIndexed(members, key = { _, contact -> contact.id }) { index, contact ->
-                        Box(modifier = Modifier.testTag("contact_group_member_" + contact.id)) {
+                        Box(modifier = Modifier.animateItem().testTag("contact_group_member_" + contact.id)) {
                             ContactRow(
                                 contact = contact,
                                 is_selected = false,

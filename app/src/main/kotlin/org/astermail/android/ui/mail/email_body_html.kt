@@ -369,6 +369,9 @@ details.aster-forwarded-collapse>summary::-webkit-details-marker{display:none}
 details.aster-forwarded-collapse>summary::before{content:'\25B6';display:inline-block;font-size:0.62em;margin-right:6px;transition:transform 0.15s ease}
 details[open].aster-forwarded-collapse>summary::before{transform:rotate(90deg)}
 details.aster-forwarded-collapse>.aster-forwarded-content{padding-top:8px}
+@keyframes aster-reveal-in{from{opacity:0}to{opacity:1}}
+details[open].aster-quoted-wrapper .aster-quoted-content,details[open].aster-forwarded-collapse .aster-forwarded-content{animation:aster-reveal-in 150ms cubic-bezier(0.05,0.7,0.1,1)}
+@media (prefers-reduced-motion:reduce){details[open].aster-quoted-wrapper .aster-quoted-content,details[open].aster-forwarded-collapse .aster-forwarded-content{animation:none}}
 $user_font_css
 $underline_css
 $dyslexia_css

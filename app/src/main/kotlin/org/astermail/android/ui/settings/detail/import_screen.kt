@@ -667,14 +667,8 @@ fun ImportScreen(
                             }
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = is_expanded,
-                                enter = androidx.compose.animation.expandVertically(
-                                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                    expandFrom = androidx.compose.ui.Alignment.Top,
-                                ) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 180)),
-                                exit = androidx.compose.animation.shrinkVertically(
-                                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200, easing = androidx.compose.animation.core.FastOutLinearInEasing),
-                                    shrinkTowards = androidx.compose.ui.Alignment.Top,
-                                ) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 140)),
+                                enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                                exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                 val details = state.expanded_details

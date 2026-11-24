@@ -17,11 +17,9 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import org.astermail.android.design.AsterSpring
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.WindowInsets
@@ -64,7 +62,6 @@ internal const val DETAIL_SWIPE_EDGE_STRETCH_FRACTION = 0.1f
 internal const val DETAIL_SWIPE_HORIZONTAL_DOMINANCE = 2.5f
 internal const val DETAIL_SWIPE_RELEASE_DOMINANCE = 2f
 internal const val DETAIL_SWIPE_CLAIM_SLOP_FACTOR = 2.5f
-private const val DETAIL_SWIPE_ENTER_MS = 260
 private const val DETAIL_SWIPE_STUCK_RECOVERY_MS = 600L
 private val detail_swipe_fling_velocity = 1200.dp
 
@@ -149,14 +146,19 @@ internal fun remember_detail_swipe_state(key: String, direction: Int): DetailSwi
     LaunchedEffect(state) {
         if (arrived) return@LaunchedEffect
         arrived = true
+        state.motion = coroutineContext[Job]
         try {
             animate(
                 initialValue = state.offset,
                 targetValue = 0f,
-                animationSpec = tween(DETAIL_SWIPE_ENTER_MS, easing = LinearOutSlowInEasing),
+                animationSpec = spring(
+                    dampingRatio = AsterSpring.spatial_damping,
+                    stiffness = AsterSpring.fast_spatial_stiffness,
+                    visibilityThreshold = 0.001f,
+                ),
             ) { value, _ -> state.offset = value }
         } finally {
-            state.offset = 0f
+            if (state.entering) state.offset = 0f
             state.entering = false
         }
     }
@@ -191,14 +193,14 @@ internal fun Modifier.detail_swipe_navigation(
     }
 
     fun settle(velocity: Float) {
-        run_motion(0f, velocity, spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium))
+        run_motion(0f, velocity, AsterSpring.spatial())
     }
 
     pointerInput(rtl, slop) {
         val fling_px_s = detail_swipe_fling_velocity.toPx()
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false)
-            if (state.committing || state.entering) return@awaitEachGesture
+            if (state.committing) return@awaitEachGesture
             val width = size.width.toFloat()
             if (width <= 0f) return@awaitEachGesture
             val left_zone = live_insets.getLeft(density, layout_direction).toFloat()
@@ -228,6 +230,7 @@ internal fun Modifier.detail_swipe_navigation(
                     DetailSwipeClaim.pending -> Unit
                 }
             }
+            state.entering = false
             state.motion?.cancel()
             val base_px = state.offset * width
             var raw = 0f
@@ -295,7 +298,11 @@ internal fun Modifier.detail_swipe_navigation(
             run_motion(
                 target = sign(offset_px),
                 velocity = velocity / width,
-                spec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow, visibilityThreshold = 0.02f),
+                spec = spring(
+                    dampingRatio = AsterSpring.spatial_damping,
+                    stiffness = AsterSpring.spatial_stiffness,
+                    visibilityThreshold = 0.02f,
+                ),
             ) {
                 action()
                 delay(DETAIL_SWIPE_STUCK_RECOVERY_MS)

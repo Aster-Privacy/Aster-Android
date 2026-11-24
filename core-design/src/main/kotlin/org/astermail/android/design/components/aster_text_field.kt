@@ -65,7 +65,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_animate_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.field_surface_color
@@ -114,11 +116,14 @@ fun AsterTextField(
         if (field_value != field_state) field_state = field_value
     }
 
-    val ring_color = when {
-        has_error -> colors.danger
-        is_focused -> colors.accent_blue
-        else -> Color.Transparent
-    }
+    val ring_base = if (has_error) colors.danger else colors.accent_blue
+    val ring_color by aster_animate_color(
+        ring_base.copy(alpha = if (has_error || is_focused) ring_base.alpha else 0f),
+        label = "aster_text_field_ring",
+    )
+    val last_below = remember { text_field_below_holder() }
+    if (error_text != null) last_below.error = error_text
+    if (helper_text != null) last_below.helper = helper_text
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (label != null) {
@@ -196,14 +201,30 @@ fun AsterTextField(
                 }
             }
         }
-        val below = error_text ?: helper_text
-        if (below != null) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = below,
-                fontSize = 12.sp,
-                color = if (has_error) colors.danger else colors.text_muted,
-            )
+        AsterExpandVisibility(visible = !has_error && helper_text != null) {
+            Column {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = helper_text ?: last_below.helper.orEmpty(),
+                    fontSize = 12.sp,
+                    color = colors.text_muted,
+                )
+            }
+        }
+        AsterExpandVisibility(visible = has_error) {
+            Column {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = error_text ?: last_below.error.orEmpty(),
+                    fontSize = 12.sp,
+                    color = colors.danger,
+                )
+            }
         }
     }
+}
+
+private class text_field_below_holder {
+    var error: String? = null
+    var helper: String? = null
 }

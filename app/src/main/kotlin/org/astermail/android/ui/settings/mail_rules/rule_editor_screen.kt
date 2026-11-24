@@ -663,13 +663,17 @@ fun RuleEditorScreen(
             save_held?.let {
                 org.astermail.android.guard.GuardHeldBanner(it, Modifier.padding(bottom = AsterSpacing.sm))
             }
-            save_error?.let { msg ->
-                Text(
-                    text = stringResource(msg),
-                    color = colors.danger,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(bottom = AsterSpacing.sm),
-                )
+            val held_save_error = remember { intArrayOf(0) }
+            save_error?.let { held_save_error[0] = it }
+            org.astermail.android.ui.settings.detail.SettingsExpand(visible = save_error != null) {
+                if (held_save_error[0] != 0) {
+                    Text(
+                        text = stringResource(held_save_error[0]),
+                        color = colors.danger,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = AsterSpacing.sm),
+                    )
+                }
             }
             if (save_hint != null) {
                 Text(

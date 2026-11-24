@@ -57,6 +57,10 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.AsterExpandVisibility
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.ui.common.pill_toggle
@@ -102,13 +106,11 @@ fun RegisterUsernameStep(
 
         Spacer(Modifier.height(AsterSpacing.xxl))
 
-        androidx.compose.animation.AnimatedVisibility(
-            visible = error_message != null,
-            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
-        ) {
+        var held_error by remember { mutableStateOf(error_message) }
+        LaunchedEffect(error_message) { if (error_message != null) held_error = error_message }
+        AsterExpandVisibility(visible = error_message != null) {
             Column {
-                error_banner(message = error_message ?: "")
+                error_banner(message = error_message ?: held_error.orEmpty())
                 Spacer(Modifier.height(AsterSpacing.lg))
             }
         }

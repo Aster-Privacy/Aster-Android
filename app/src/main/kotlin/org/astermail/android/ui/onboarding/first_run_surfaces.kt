@@ -23,10 +23,6 @@ package org.astermail.android.ui.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +54,9 @@ import compose.icons.tablericons.Star
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_collapse_out
+import org.astermail.android.design.aster_expand_in
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
@@ -177,11 +176,12 @@ fun FirstRunPromptCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn() + slideInVertically { it / 2 },
-        exit = fadeOut() + slideOutVertically { it / 2 },
+        enter = aster_expand_in(reduce_motion),
+        exit = aster_collapse_out(reduce_motion),
         modifier = modifier,
     ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {

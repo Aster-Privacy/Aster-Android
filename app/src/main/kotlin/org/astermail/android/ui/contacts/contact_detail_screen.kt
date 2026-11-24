@@ -612,7 +612,7 @@ private fun QuickAction(
     )
     val container by animateColorAsState(
         targetValue = if (pressed) colors.accent_blue.copy(alpha = 0.16f) else colors.bg_secondary,
-        animationSpec = tween(durationMillis = AsterDuration.tap_up),
+        animationSpec = tween(durationMillis = AsterDuration.tap_up, easing = AsterEasing.standard),
         label = "quick_action_container",
     )
     Column(

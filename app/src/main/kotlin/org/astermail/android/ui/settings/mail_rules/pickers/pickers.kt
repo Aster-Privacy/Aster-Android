@@ -197,7 +197,7 @@ fun row_select(
         AnimatedVisibility(
             visible = selected,
             enter = if (reduce_motion) {
-                EnterTransition.None
+                org.astermail.android.design.aster_fade_in(true)
             } else {
                 fadeIn(
                     animationSpec = tween(
@@ -213,7 +213,7 @@ fun row_select(
                 )
             },
             exit = if (reduce_motion) {
-                ExitTransition.None
+                org.astermail.android.design.aster_fade_out(true)
             } else {
                 fadeOut(
                     animationSpec = tween(

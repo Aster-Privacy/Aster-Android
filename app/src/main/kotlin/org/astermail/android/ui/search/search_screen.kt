@@ -26,8 +26,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -345,6 +343,8 @@ fun SearchScreen(
 
     BackHandler(enabled = select_mode && !sheet_open) { exit_select_mode() }
 
+    val reduce_motion = org.astermail.android.design.aster_reduce_motion()
+
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
     fun dismiss_keyboard() {
@@ -359,8 +359,6 @@ fun SearchScreen(
             on_back()
         }
     }
-
-    BackHandler(enabled = !select_mode && !sheet_open) { dismiss_and_back() }
 
     LaunchedEffect(Unit) {
         mail_vm.build_search_index()
@@ -669,7 +667,12 @@ fun SearchScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
-        if (select_mode) {
+        androidx.compose.animation.AnimatedContent(
+            targetState = select_mode,
+            transitionSpec = { org.astermail.android.design.aster_crossfade(reduce_motion) },
+            label = "search_top_bar",
+        ) { top_select_mode ->
+        if (top_select_mode) {
             search_select_top_bar(
                 selected_count = selected_ids.size,
                 on_close = { exit_select_mode() },
@@ -703,8 +706,9 @@ fun SearchScreen(
                 },
             )
         }
+        }
 
-        if (!select_mode) {
+        org.astermail.android.design.AsterExpandVisibility(visible = !select_mode) {
             search_chip_row(
                 operators = shown_operators,
                 people = chip_people,
@@ -992,7 +996,7 @@ fun SearchScreen(
                 },
                 modifier = Modifier.weight(1f),
             )
-            if (select_mode) {
+            org.astermail.android.design.AsterExpandVisibility(visible = select_mode) {
                 search_select_bottom_bar(
                     selected_count = selected_ids.size,
                     custom_actions = selection_toolbar_slots,
@@ -1200,16 +1204,8 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
         colors.bg_secondary
     }
     val text_color = if (selected) colors.on_accent else colors.text_secondary
-    val animated_bg by animateColorAsState(
-        targetValue = bg,
-        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
-        label = "chip_bg",
-    )
-    val animated_text by animateColorAsState(
-        targetValue = text_color,
-        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
-        label = "chip_text",
-    )
+    val animated_bg by org.astermail.android.design.aster_animate_color(bg, label = "chip_bg")
+    val animated_text by org.astermail.android.design.aster_animate_color(text_color, label = "chip_text")
     Box(
         modifier = Modifier
             .clip(SquircleShape(999.dp))

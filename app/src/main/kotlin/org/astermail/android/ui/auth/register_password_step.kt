@@ -72,8 +72,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_animate_color
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterTextField
@@ -127,10 +130,8 @@ fun RegisterPasswordStep(
 
         Spacer(Modifier.height(AsterSpacing.xl))
 
-        androidx.compose.animation.AnimatedVisibility(
+        AsterExpandVisibility(
             visible = error_message != null,
-            enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-            exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
         ) {
             Column {
                 error_banner(message = error_message ?: "")
@@ -187,13 +188,15 @@ fun RegisterPasswordStep(
             modifier = Modifier.focusRequester(confirm_focus),
         )
 
-        if (passwords_mismatch) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.error_passwords_no_match),
-                color = colors.danger,
-                fontSize = 12.sp,
-            )
+        AsterExpandVisibility(visible = passwords_mismatch) {
+            Column {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.error_passwords_no_match),
+                    color = colors.danger,
+                    fontSize = 12.sp,
+                )
+            }
         }
 
         Spacer(Modifier.height(AsterSpacing.md))
@@ -318,18 +321,17 @@ private fun password_strength_hint(
     val colors = AsterMaterial.colors
     val met_count = listOf(length_ok, upper_ok, lower_ok, number_ok).count { it }
 
-    val bar_color by androidx.compose.animation.animateColorAsState(
-        targetValue = when (met_count) {
+    val bar_color by aster_animate_color(
+        target = when (met_count) {
             4 -> colors.success
             0, 1 -> colors.danger
             else -> colors.warning
         },
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
         label = "password_strength_color",
     )
     val bar_fraction by androidx.compose.animation.core.animateFloatAsState(
         targetValue = met_count / 4f,
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220, easing = AsterEasing.standard),
         label = "password_strength_fraction",
     )
 
@@ -361,14 +363,12 @@ private fun password_requirement_row(
     met: Boolean,
 ) {
     val colors = AsterMaterial.colors
-    val icon_color by androidx.compose.animation.animateColorAsState(
-        targetValue = if (met) colors.success else colors.text_muted,
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+    val icon_color by aster_animate_color(
+        target = if (met) colors.success else colors.text_muted,
         label = "password_requirement_icon",
     )
-    val text_color by androidx.compose.animation.animateColorAsState(
-        targetValue = if (met) colors.text_primary else colors.text_tertiary,
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 220),
+    val text_color by aster_animate_color(
+        target = if (met) colors.text_primary else colors.text_tertiary,
         label = "password_requirement_text",
     )
     Row(
@@ -443,10 +443,8 @@ internal fun captcha_status_row(
     on_retry: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    androidx.compose.animation.AnimatedVisibility(
+    AsterExpandVisibility(
         visible = failed || pending,
-        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
-        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut(),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(Modifier.height(AsterSpacing.sm))

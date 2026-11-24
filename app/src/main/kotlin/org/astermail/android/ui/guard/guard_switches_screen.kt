@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.guard
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,6 +48,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.api.guard.GuardDeviceInfo
 import org.astermail.android.api.guard.GuardSwitch
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
@@ -202,28 +204,30 @@ private fun guard_switches_on_content(
             },
         )
     }
-    if (state.dirty) {
-        Spacer(Modifier.height(AsterSpacing.md))
-        Text(
-            text = stringResource(R.string.guard_switches_off_waits),
-            color = AsterMaterial.colors.text_secondary,
-            fontSize = 13.sp,
-        )
-        Spacer(Modifier.height(AsterSpacing.sm))
-        AsterButton(
-            label = stringResource(R.string.guard_switches_save),
-            onClick = on_save,
-            enabled = state.can_save,
-            is_loading = state.saving,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(AsterSpacing.sm))
-        AsterGhostButton(
-            label = stringResource(R.string.guard_switches_discard),
-            onClick = on_discard,
-            enabled = !state.saving,
-            modifier = Modifier.fillMaxWidth(),
-        )
+    AsterExpandVisibility(visible = state.dirty) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.guard_switches_off_waits),
+                color = AsterMaterial.colors.text_secondary,
+                fontSize = 13.sp,
+            )
+            Spacer(Modifier.height(AsterSpacing.sm))
+            AsterButton(
+                label = stringResource(R.string.guard_switches_save),
+                onClick = on_save,
+                enabled = state.can_save,
+                is_loading = state.saving,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(AsterSpacing.sm))
+            AsterGhostButton(
+                label = stringResource(R.string.guard_switches_discard),
+                onClick = on_discard,
+                enabled = !state.saving,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 
     Spacer(Modifier.height(AsterSpacing.lg))

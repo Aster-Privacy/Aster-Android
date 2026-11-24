@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,6 +64,8 @@ import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
@@ -114,9 +117,17 @@ fun SignatureScreen(
         vm.load_preferences()
     }
 
-    if (editing != null || creating) {
+    val reduce_motion = aster_reduce_motion()
+    val slide_px = aster_shared_axis_slide_px()
+    AnimatedContent(
+        targetState = editing != null || creating,
+        transitionSpec = { settings_sub_screen_axis_x(forward = targetState, slide_px = slide_px, reduce_motion = reduce_motion) },
+        label = "signature_editor",
+    ) { editor_open ->
+    if (editor_open) {
+        val held_initial = remember { editing }
         signature_edit_modal(
-            initial = editing,
+            initial = held_initial,
             aliases = state.aliases,
             all_signatures = signatures,
             on_cancel = { editing = null; editing_id = null; creating = false },
@@ -190,9 +201,7 @@ fun SignatureScreen(
                 },
             )
         }
-        return
-    }
-
+    } else {
     detail_scaffold(
         title = stringResource(R.string.signature),
         on_back = on_back,
@@ -281,6 +290,8 @@ fun SignatureScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+    }
     }
 }
 

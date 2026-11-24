@@ -69,6 +69,7 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.X
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.auto_mirrored
@@ -119,8 +120,10 @@ fun onboarding_checklist_card(
         )
         AnimatedVisibility(
             visible = is_open,
-            enter = expandVertically(tween(tutorial_list_motion_ms)) + fadeIn(tween(tutorial_list_motion_ms)),
-            exit = shrinkVertically(tween(tutorial_list_motion_ms)) + fadeOut(tween(tutorial_list_motion_ms)),
+            enter = expandVertically(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized)) +
+                fadeIn(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_decelerate)),
+            exit = shrinkVertically(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_accelerate)) +
+                fadeOut(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_accelerate)),
         ) {
             tutorial_list_panel(
                 rows = rows,
@@ -214,7 +217,7 @@ private fun tutorial_list_panel(
     val completed_label = stringResource(R.string.completed)
     val animated_fraction by animateFloatAsState(
         targetValue = progress.fraction,
-        animationSpec = tween(300),
+        animationSpec = tween(300, easing = AsterEasing.standard),
         label = "tutorial_list_progress",
     )
     Column(

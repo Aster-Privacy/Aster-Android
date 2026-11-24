@@ -30,7 +30,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -246,8 +245,8 @@ fun image_theme_library(
     val pending = remember(pending_id, library_custom_meta, shelf_categories) { theme_background_for(pending_id) }
     val color = ColorThemeId.from_key(pending_color)
     val dirty = pending_id != (active?.id ?: no_theme_background) || color != active_color
-    val accent by animateColorAsState(accent_for(color), tween(260), label = "library_accent")
-    val on_accent by animateColorAsState(on_accent_for(color), tween(260), label = "library_on_accent")
+    val accent by animateColorAsState(accent_for(color), tween(260, easing = org.astermail.android.design.AsterEasing.standard), label = "library_accent")
+    val on_accent by animateColorAsState(on_accent_for(color), tween(260, easing = org.astermail.android.design.AsterEasing.standard), label = "library_on_accent")
     val context = LocalContext.current
     var applied_tick by remember { mutableIntStateOf(0) }
     var show_applied by remember { mutableStateOf(false) }
@@ -428,8 +427,8 @@ fun image_theme_library(
                 }
                 AnimatedVisibility(
                     visible = dirty,
-                    enter = fadeIn(tween(180)) + slideInVertically(tween(240)) { it / 2 },
-                    exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 2 },
+                    enter = fadeIn(tween(180, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)) + slideInVertically(tween(240, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)) { it / 2 },
+                    exit = fadeOut(tween(160, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)) + slideOutVertically(tween(200, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)) { it / 2 },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 ) {
                     apply_bar(
@@ -444,8 +443,8 @@ fun image_theme_library(
                 }
                 AnimatedVisibility(
                     visible = show_applied && !dirty,
-                    enter = fadeIn(tween(160)),
-                    exit = fadeOut(tween(200)),
+                    enter = fadeIn(tween(160, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)),
+                    exit = fadeOut(tween(200, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 24.dp + nav_bottom),
@@ -470,7 +469,7 @@ fun image_theme_library(
 
 @Composable
 private fun library_top_bar(reset_enabled: Boolean, on_back: () -> Unit, on_reset: () -> Unit) {
-    val reset_tint by animateColorAsState(if (reset_enabled) local_library_palette.current.accent else disabled_icon, tween(200), label = "reset_tint")
+    val reset_tint by animateColorAsState(if (reset_enabled) local_library_palette.current.accent else disabled_icon, tween(200, easing = org.astermail.android.design.AsterEasing.standard), label = "reset_tint")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -601,7 +600,7 @@ private fun colors_section(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
-            Crossfade(targetState = selected, animationSpec = tween(180), label = "color_name") { shown ->
+            Crossfade(targetState = selected, animationSpec = tween(180, easing = org.astermail.android.design.AsterEasing.standard), label = "color_name") { shown ->
                 Text(
                     text = stringResource(color_theme_label_res(shown)),
                     color = accent_for(shown),
@@ -1048,7 +1047,7 @@ private fun custom_photo_preview(
     on_click: () -> Unit,
     max_height: Dp,
 ) {
-    val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "photo_select")
+    val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200, easing = org.astermail.android.design.AsterEasing.emphasized), label = "photo_select")
     val shape = SquircleShape(24.dp)
     val photo = remember_theme_bitmap(background)
     val ratio = (photo?.let { it.width.toFloat() / it.height.toFloat() } ?: (3f / 4f))
@@ -1125,7 +1124,7 @@ private fun shelf_tile(
     fill_width: Boolean = false,
     shape: androidx.compose.ui.graphics.Shape = shelf_tile_shape,
 ) {
-    val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200), label = "tile_select")
+    val progress by animateFloatAsState(if (selected) 1f else 0f, tween(200, easing = org.astermail.android.design.AsterEasing.emphasized), label = "tile_select")
     Box(
         modifier = Modifier
             .then(if (fill_width) Modifier.fillMaxWidth() else Modifier.width(width))
@@ -1193,7 +1192,7 @@ fun image_theme_thumbnail(background: ThemeBackground, modifier: Modifier = Modi
     val unavailable = !background.is_custom && thumb == null && remote_key in failed_keys
     val reveal by animateFloatAsState(
         targetValue = if (thumb == null) 0f else 1f,
-        animationSpec = tween(durationMillis = 260, easing = LinearOutSlowInEasing),
+        animationSpec = tween(durationMillis = 260, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate),
         label = "thumb_reveal",
     )
     Box(modifier = modifier.background(background.tint), contentAlignment = Alignment.Center) {

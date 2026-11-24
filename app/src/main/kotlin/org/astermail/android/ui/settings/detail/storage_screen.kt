@@ -236,7 +236,7 @@ fun StorageScreen(
                     Spacer(Modifier.height(AsterSpacing.md))
                     val animated_fraction by animateFloatAsState(
                         targetValue = display_fraction,
-                        animationSpec = tween(durationMillis = 420),
+                        animationSpec = tween(durationMillis = org.astermail.android.design.AsterMotionSpec.expand_ms, easing = org.astermail.android.design.AsterEasing.emphasized),
                         label = "storage_bar",
                     )
                     storage_usage_bar(

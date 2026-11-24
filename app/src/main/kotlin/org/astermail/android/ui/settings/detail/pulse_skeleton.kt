@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -68,7 +67,7 @@ private fun pulse_alpha(reduce_motion: Boolean): State<Float> {
         initialValue = 1f,
         targetValue = pulse_min_alpha,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = pulse_period_ms, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = pulse_period_ms, easing = org.astermail.android.design.AsterEasing.standard),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulse_alpha",

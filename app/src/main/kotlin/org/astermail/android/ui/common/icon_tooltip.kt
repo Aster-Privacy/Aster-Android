@@ -26,8 +26,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +68,10 @@ import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterIconSwap
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.ui.theme.local_accessibility
 
@@ -135,7 +137,7 @@ fun icon_tooltip_host(
                 AnimatedVisibility(
                     visibleState = tooltip_state,
                     enter = if (reduce_motion) {
-                        EnterTransition.None
+                        aster_fade_in(true)
                     } else {
                         fadeIn(
                             tween(
@@ -145,7 +147,7 @@ fun icon_tooltip_host(
                         )
                     },
                     exit = if (reduce_motion) {
-                        ExitTransition.None
+                        aster_fade_out(true)
                     } else {
                         fadeOut(
                             tween(
@@ -201,7 +203,7 @@ fun star_toggle_icon(
                 .combinedClickable(
                     hapticFeedbackEnabled = false,
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
+                    indication = ripple(bounded = false, radius = touch_size / 2),
                     onClick = onClick,
                     onLongClick = {
                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -211,12 +213,15 @@ fun star_toggle_icon(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = if (tint == Color.Unspecified) colors.text_secondary else tint,
-                modifier = Modifier.size(icon_size),
-            )
+            val resolved_tint = if (tint == Color.Unspecified) colors.text_secondary else tint
+            AsterIconSwap(target_state = icon to resolved_tint, label = "star_toggle_icon") { (shown_icon, shown_tint) ->
+                Icon(
+                    imageVector = shown_icon,
+                    contentDescription = label,
+                    tint = shown_tint,
+                    modifier = Modifier.size(icon_size),
+                )
+            }
         }
     }
 }

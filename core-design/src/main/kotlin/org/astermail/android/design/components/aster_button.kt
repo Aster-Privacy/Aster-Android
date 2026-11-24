@@ -21,7 +21,9 @@
 
 package org.astermail.android.design.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -55,6 +57,12 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_collapse_horizontal_out
+import org.astermail.android.design.aster_expand_horizontal_in
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
 import androidx.compose.material3.ripple
@@ -107,25 +115,50 @@ private fun aster_button_content(
     stretch: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val reduce_motion = aster_reduce_motion()
     if (!stretch) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
             aster_button_label(label, content_color, label_size)
-            if (is_loading) {
-                Spacer(modifier = Modifier.width(AsterSpacing.sm))
-                aster_button_spinner(content_color)
+            AnimatedVisibility(
+                visible = is_loading,
+                enter = aster_expand_horizontal_in(reduce_motion),
+                exit = aster_collapse_horizontal_out(reduce_motion),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(AsterSpacing.sm))
+                    aster_button_spinner(content_color)
+                }
             }
         }
         return
     }
+    val label_alpha by animateFloatAsState(
+        targetValue = if (is_loading) 0f else 1f,
+        animationSpec = when {
+            reduce_motion -> tween(
+                if (is_loading) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.reduced_fade_ms,
+                easing = LinearEasing,
+            )
+            is_loading -> tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)
+            else -> tween(AsterMotionSpec.fade_enter_ms, easing = AsterEasing.emphasized_decelerate)
+        },
+        label = "btn_label_alpha",
+    )
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_label(label, content_color, label_size, Modifier.alpha(if (is_loading) 0f else 1f))
-        if (is_loading) aster_button_spinner(content_color)
+        aster_button_label(label, content_color, label_size, Modifier.graphicsLayer { alpha = label_alpha })
+        AnimatedVisibility(
+            visible = is_loading,
+            enter = aster_fade_in(reduce_motion),
+            exit = aster_fade_out(reduce_motion),
+        ) {
+            aster_button_spinner(content_color)
+        }
     }
 }
 

@@ -135,7 +135,7 @@ fun AccessibilityScreen(
     var focus_visible by remember { mutableStateOf(false) }
     val focus_alpha by animateFloatAsState(
         targetValue = if (focus_visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 350),
+        animationSpec = tween(durationMillis = org.astermail.android.design.AsterDuration.medium_4, easing = org.astermail.android.design.AsterEasing.standard),
         label = "low_network_focus",
     )
 

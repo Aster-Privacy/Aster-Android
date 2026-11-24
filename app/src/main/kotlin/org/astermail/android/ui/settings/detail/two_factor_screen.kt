@@ -32,6 +32,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -73,6 +74,8 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDestructiveButton
@@ -117,7 +120,22 @@ fun TwoFactorScreen(
             v_gap(AsterSpacing.md)
         }
 
-        when (state.mode) {
+        val reduce_motion = aster_reduce_motion()
+        val slide_px = aster_shared_axis_slide_px()
+        AnimatedContent(
+            targetState = state.mode,
+            modifier = Modifier.fillMaxWidth(),
+            transitionSpec = {
+                settings_sub_screen_axis_x(
+                    forward = targetState.ordinal > initialState.ordinal,
+                    slide_px = slide_px,
+                    reduce_motion = reduce_motion,
+                )
+            },
+            label = "two_factor_step",
+        ) { mode ->
+        Column(modifier = Modifier.fillMaxWidth()) {
+        when (mode) {
             TwoFactorMode.Idle -> idle_panel(state, vm)
             TwoFactorMode.SetupReauth -> setup_reauth_panel(state, vm)
             TwoFactorMode.Setup -> setup_panel(state, vm)
@@ -136,6 +154,8 @@ fun TwoFactorScreen(
                 codes = state.backup_codes,
                 on_done = { vm.acknowledge_backup_codes() },
             )
+        }
+        }
         }
         v_gap(AsterSpacing.xxl)
     }

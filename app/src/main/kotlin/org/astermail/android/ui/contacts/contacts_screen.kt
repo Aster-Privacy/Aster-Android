@@ -30,7 +30,13 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -98,6 +104,11 @@ import org.astermail.android.contacts.ContactsTab
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.contacts.DuplicateCluster
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterExpandVisibility
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_fade_through
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.AsterShapes
@@ -277,7 +288,15 @@ fun ContactsScreen(
                     label_res = R.plurals.contacts_import_progress,
                 )
             }
-            if (ui_state.is_selecting) {
+            val top_bar_reduce_motion = aster_reduce_motion()
+            val last_selected_count = remember { intArrayOf(0) }
+            if (ui_state.selected_ids.isNotEmpty()) last_selected_count[0] = ui_state.selected_ids.size
+            AnimatedContent(
+                targetState = ui_state.is_selecting,
+                transitionSpec = { aster_fade_through(top_bar_reduce_motion) },
+                label = "contacts_top_bar",
+            ) { selecting ->
+            if (selecting) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -292,7 +311,7 @@ fun ContactsScreen(
                     )
                     Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = pluralStringResource(R.plurals.count_selected, ui_state.selected_ids.size, ui_state.selected_ids.size),
+                        text = pluralStringResource(R.plurals.count_selected, last_selected_count[0], last_selected_count[0]),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.text_primary,
                         fontWeight = FontWeight.SemiBold,
@@ -494,6 +513,7 @@ fun ContactsScreen(
                     }
                 }
             }
+            }
             AsterDivider()
 
             Row(
@@ -589,14 +609,16 @@ fun ContactsScreen(
                     on_empty_trash = { show_empty_trash_confirm = true },
                 )
             } else {
-                if (
-                    !ui_state.duplicates_dismissed &&
-                    ui_state.duplicate_clusters.isNotEmpty() &&
-                    !ui_state.is_selecting
+                AsterExpandVisibility(
+                    visible = !ui_state.duplicates_dismissed &&
+                        ui_state.duplicate_clusters.isNotEmpty() &&
+                        !ui_state.is_selecting,
                 ) {
                     duplicate_banner(
                         count = ui_state.duplicate_count,
-                        on_review = { merge_cluster = ui_state.duplicate_clusters.first() },
+                        on_review = {
+                            ui_state.duplicate_clusters.firstOrNull()?.let { merge_cluster = it }
+                        },
                         on_dismiss = { vm.dismiss_duplicates() },
                     )
                 }
@@ -640,18 +662,23 @@ fun ContactsScreen(
                             val favorites = filtered.filter { it.is_favorite }
                             if (favorites.isNotEmpty()) {
                                 item(key = "favorites_strip") {
-                                    favorites_strip(
-                                        favorites = favorites,
-                                        on_open_contact = on_open_contact,
-                                    )
+                                    Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
+                                        favorites_strip(
+                                            favorites = favorites,
+                                            on_open_contact = on_open_contact,
+                                        )
+                                    }
                                 }
                             }
                         }
                         grouped.entries.forEachIndexed { group_index, (letter, group) ->
                             item(key = "letter_$letter", contentType = "letter_header") {
-                                section_letter_header(letter = letter, is_first_group = group_index == 0)
+                                Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
+                                    section_letter_header(letter = letter, is_first_group = group_index == 0)
+                                }
                             }
                             itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
+                                Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
                                 ContactRow(
                                     contact = c,
                                     is_selected = c.id in ui_state.selected_ids,
@@ -668,6 +695,7 @@ fun ContactsScreen(
                                     },
                                     on_toggle_selection = { vm.toggle_selection(c.id) },
                                 )
+                                }
                             }
                         }
                     }
@@ -1763,29 +1791,67 @@ internal fun ContactRow(
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            if (is_selected) {
-                Box(
-                    modifier = Modifier
-                        .size(contact_row_avatar_size)
-                        .clip(CircleShape)
-                        .background(colors.accent_blue),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = TablerIcons.Check,
-                        contentDescription = stringResource(R.string.selected),
-                        tint = colors.on_accent,
-                        modifier = Modifier.size(22.dp),
+            val avatar_reduce_motion = aster_reduce_motion()
+            val flip_state = animateFloatAsState(
+                targetValue = if (is_selected) 180f else 0f,
+                animationSpec = if (avatar_reduce_motion) {
+                    snap()
+                } else {
+                    tween(AsterMotionSpec.icon_ms, easing = AsterEasing.emphasized)
+                },
+                label = "contact_avatar_flip",
+            )
+            val check_state = animateFloatAsState(
+                targetValue = if (is_selected) 1f else 0f,
+                animationSpec = tween(
+                    durationMillis = if (avatar_reduce_motion) AsterMotionSpec.reduced_fade_ms else AsterMotionSpec.icon_ms,
+                    easing = if (avatar_reduce_motion) LinearEasing else AsterEasing.emphasized_decelerate,
+                ),
+                label = "contact_avatar_check",
+            )
+            val show_check by remember { derivedStateOf { flip_state.value > 90f } }
+            Box(
+                modifier = Modifier
+                    .size(contact_row_avatar_size)
+                    .graphicsLayer {
+                        rotationY = flip_state.value
+                        cameraDistance = 12f * density
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (show_check) {
+                    Box(
+                        modifier = Modifier
+                            .size(contact_row_avatar_size)
+                            .graphicsLayer { rotationY = 180f }
+                            .clip(CircleShape)
+                            .background(colors.accent_blue),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.Check,
+                            contentDescription = stringResource(R.string.selected),
+                            tint = colors.on_accent,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .graphicsLayer {
+                                    val t = check_state.value
+                                    alpha = t
+                                    val s = AsterMotionSpec.pop_from + (1f - AsterMotionSpec.pop_from) * t
+                                    scaleX = s
+                                    scaleY = s
+                                },
+                        )
+                    }
+                } else {
+                    ContactAvatar(
+                        avatar_url = contact.avatar_url,
+                        email = contact.email,
+                        name = contact.name,
+                        size = contact_row_avatar_size,
+                        profile_color = contact.profile_color,
                     )
                 }
-            } else {
-                ContactAvatar(
-                    avatar_url = contact.avatar_url,
-                    email = contact.email,
-                    name = contact.name,
-                    size = contact_row_avatar_size,
-                    profile_color = contact.profile_color,
-                )
             }
         }
         Spacer(Modifier.width(AsterSpacing.md))

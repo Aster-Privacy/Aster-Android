@@ -22,6 +22,9 @@
 package org.astermail.android.ui.upgrade
 
 import org.astermail.android.ui.common.aster_modal_sheet
+import org.astermail.android.ui.common.remember_sheet_dismiss
+import org.astermail.android.design.AsterPopVisibility
+import org.astermail.android.design.aster_animate_color
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -148,6 +151,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
     if (!state.is_open) return
 
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val dismiss_sheet = remember_sheet_dismiss(sheet_state) { UpgradeStore.close() }
     val plan_vm: PlanLimitsViewModel = hiltViewModel()
     val plan_state by plan_vm.state.collectAsStateWithLifecycle()
     val billing_vm: BillingViewModel = org.astermail.android.billing.billing_view_model()
@@ -362,7 +366,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
             }
 
             val open_billing: () -> Unit = {
-                UpgradeStore.close()
+                dismiss_sheet()
                 on_navigate_to_billing()
             }
 
@@ -494,7 +498,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
             ) {
                 AsterGhostButton(
                     label = stringResource(R.string.upgrade_not_now),
-                    onClick = { UpgradeStore.close() },
+                    onClick = dismiss_sheet,
                 )
             }
         }
@@ -524,6 +528,10 @@ internal fun UpgradePlanCard(
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
+    val border_color by aster_animate_color(
+        if (is_selected) colors.accent_blue else colors.border_secondary,
+        label = "upgrade_plan_border",
+    )
 
     val body: @Composable () -> Unit = {
         Column {
@@ -535,7 +543,7 @@ internal fun UpgradePlanCard(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
-                if (is_selected) {
+                AsterPopVisibility(visible = is_selected) {
                     Icon(
                         imageVector = TablerIcons.CircleCheck,
                         contentDescription = null,
@@ -629,7 +637,7 @@ internal fun UpgradePlanCard(
                 .acrylic(colors, SquircleShape(18.dp), colors.bg_card)
                 .border(
                     if (is_selected) 2.dp else 1.dp,
-                    if (is_selected) colors.accent_blue else colors.border_secondary,
+                    border_color,
                     SquircleShape(18.dp),
                 )
                 .clickable { on_select() }

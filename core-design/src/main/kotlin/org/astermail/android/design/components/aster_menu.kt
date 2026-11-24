@@ -18,15 +18,11 @@
 
 package org.astermail.android.design.components
 
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -91,6 +87,8 @@ import androidx.core.view.WindowInsetsCompat
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.AsterSpring
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_reduce_motion
@@ -111,8 +109,6 @@ private val menu_label_size = 12.sp
 private const val menu_surface_lift = 0.14f
 private const val menu_border_lift_dark = 0.09f
 private const val menu_border_lift_light = 0.07f
-private const val menu_enter_scale = 0.85f
-private const val menu_exit_scale = 0.88f
 
 private class menu_anchor_state {
     var bounds by mutableStateOf<IntRect?>(null)
@@ -209,43 +205,31 @@ fun aster_menu(
     val scale by transition.animateFloat(
         transitionSpec = {
             when {
-                reduce_motion -> snap()
-                targetState -> spring(dampingRatio = 0.86f, stiffness = 700f)
-                else -> tween(120, easing = FastOutLinearInEasing)
+                reduce_motion || !targetState -> tween(0)
+                else -> AsterSpring.fast_spatial<Float>()
             }
         },
         label = "aster_menu_scale",
     ) { shown ->
         when {
             shown || reduce_motion -> 1f
-            visible_state.targetState -> menu_enter_scale
-            else -> menu_exit_scale
+            visible_state.targetState -> AsterMotionSpec.fade_from
+            else -> 1f
         }
     }
     val fade by transition.animateFloat(
         transitionSpec = {
             when {
-                reduce_motion -> snap()
-                targetState -> tween(120, easing = LinearOutSlowInEasing)
-                else -> tween(110, easing = FastOutLinearInEasing)
+                reduce_motion && targetState -> tween(AsterMotionSpec.reduced_fade_ms, easing = LinearEasing)
+                reduce_motion -> tween(AsterMotionSpec.reduced_fade_out_ms, easing = LinearEasing)
+                else -> AsterSpring.fast_effects<Float>()
             }
         },
         label = "aster_menu_fade",
     ) { shown -> if (shown) 1f else 0f }
-    val content_fade by transition.animateFloat(
-        transitionSpec = {
-            when {
-                reduce_motion -> snap()
-                targetState -> tween(150, delayMillis = 50, easing = LinearOutSlowInEasing)
-                else -> tween(80)
-            }
-        },
-        label = "aster_menu_content_fade",
-    ) { shown -> if (shown) 1f else 0f }
 
     val menu_colors = AsterMaterial.colors
     val surface_color = aster_menu_surface_color()
-    val scrim_color = Color.Black.copy(alpha = if (menu_colors.is_dark) 0.34f else 0.16f)
     val surface_tap = remember { MutableInteractionSource() }
 
     Popup(
@@ -258,8 +242,6 @@ fun aster_menu(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = fade }
-                    .background(scrim_color)
                     .pointerInput(on_dismiss) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
@@ -278,8 +260,7 @@ fun aster_menu(
                             .width(IntrinsicSize.Max)
                             .heightIn(max = max_height)
                             .verticalScroll(rememberScrollState())
-                            .padding(menu_surface_padding)
-                            .graphicsLayer { alpha = content_fade },
+                            .padding(menu_surface_padding),
                         content = content,
                     )
                 },

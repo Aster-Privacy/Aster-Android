@@ -23,6 +23,7 @@ package org.astermail.android.ui.guard
 
 import androidx.annotation.PluralsRes
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -401,7 +402,7 @@ fun guard_progress_bar(progress: Float, color: Color, modifier: Modifier = Modif
     val colors = AsterMaterial.colors
     val shown by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(durationMillis = 420, easing = AsterEasing.standard_enter),
+        animationSpec = tween(durationMillis = 420, easing = LinearEasing),
         label = "guard_progress",
     )
     Box(

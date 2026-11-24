@@ -22,7 +22,6 @@
 package org.astermail.android.design.components
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.util.lerp
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.aster_reduce_motion
 
 private const val morph_grid = 24f
@@ -61,7 +61,7 @@ fun menu_back_return_morph_icon(
                     targetValue = 0f,
                     animationSpec = tween(
                         durationMillis = menu_back_morph_ms,
-                        easing = FastOutSlowInEasing,
+                        easing = AsterEasing.emphasized,
                     ),
                 )
             }

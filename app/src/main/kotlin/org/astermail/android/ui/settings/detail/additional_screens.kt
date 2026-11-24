@@ -367,8 +367,8 @@ private fun animated_session_row(
     }
     AnimatedVisibility(
         visibleState = transition,
-        enter = expandVertically(tween(220)) + fadeIn(tween(160)),
-        exit = shrinkVertically(tween(220)) + fadeOut(tween(160)),
+        enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+        exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
     ) {
         content()
     }
@@ -1217,6 +1217,7 @@ fun LabelsScreen(
             section_label(pluralStringResource(R.plurals.labels_count, rows.size, rows.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 rows.forEachIndexed { idx, row ->
+                    androidx.compose.runtime.key(row.is_tag, row.id) {
                     label_settings_row(
                         name = row.name,
                         color = row.color,
@@ -1236,6 +1237,7 @@ fun LabelsScreen(
                         depth = row.depth,
                     )
                     if (idx < rows.lastIndex) settings_row_gap(modifier = Modifier)
+                    }
                 }
             }
         }
@@ -1441,6 +1443,7 @@ fun FoldersScreen(
             section_label(pluralStringResource(R.plurals.common_folders_count, folder_nodes.size, folder_nodes.size))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 folder_nodes.forEachIndexed { idx, node ->
+                    androidx.compose.runtime.key(node.label.id) {
                     val f = node.label
                     val folder_name = f.encrypted_name ?: f.label_token
                     val count_text = f.item_count?.let { pluralStringResource(R.plurals.common_messages_count, it.toInt(), it) } ?: ""
@@ -1472,18 +1475,20 @@ fun FoldersScreen(
                                                 .clickable { vm.toggle_folder_notifications(f.label_token) },
                                             contentAlignment = Alignment.Center,
                                         ) {
+                                            org.astermail.android.design.AsterIconSwap(target_state = is_muted, label = "folder_bell") { shown_muted ->
                                             androidx.compose.material3.Icon(
-                                                imageVector = if (is_muted) TablerIcons.BellOff else TablerIcons.Bell,
+                                                imageVector = if (shown_muted) TablerIcons.BellOff else TablerIcons.Bell,
                                                 contentDescription = stringResource(
-                                                    if (is_muted) {
+                                                    if (shown_muted) {
                                                         R.string.unmute_folder_notifications
                                                     } else {
                                                         R.string.mute_folder_notifications
                                                     },
                                                 ),
-                                                tint = if (is_muted) colors.text_muted else colors.text_secondary,
+                                                tint = if (shown_muted) colors.text_muted else colors.text_secondary,
                                                 modifier = Modifier.size(18.dp),
                                             )
+                                            }
                                         }
                                     }
                                     Box(
@@ -1535,6 +1540,7 @@ fun FoldersScreen(
                         }
                     }
                     if (idx < folder_nodes.lastIndex) settings_row_gap(modifier = Modifier)
+                    }
                 }
             }
         }

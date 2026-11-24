@@ -30,6 +30,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -72,6 +76,20 @@ fun aster_modal_sheet(
     ) {
         sheet_navigation_bar(light_bars = container_color.luminance() > 0.5f)
         content()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun remember_sheet_dismiss(sheet_state: SheetState, on_hidden: () -> Unit): () -> Unit {
+    val scope = rememberCoroutineScope()
+    val latest = rememberUpdatedState(on_hidden)
+    return remember(sheet_state) {
+        {
+            scope.launch { sheet_state.hide() }.invokeOnCompletion {
+                if (!sheet_state.isVisible) latest.value()
+            }
+        }
     }
 }
 

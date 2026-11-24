@@ -27,10 +27,6 @@ import compose.icons.tablericons.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -462,8 +459,8 @@ fun SecurityScreen(
             prefs?.account_security_banner_dismissed != true
         AnimatedVisibility(
             visible = banner_visible,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
+            enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+            exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md)) {
                 protection_banner(
@@ -567,8 +564,8 @@ fun SecurityScreen(
                     )
                     AnimatedVisibility(
                         visible = hardware_keys_expanded,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut(),
+                        enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                        exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                     ) {
                         Column {
                             state.hardware_keys.forEach { key ->
@@ -1034,8 +1031,8 @@ private fun vanguard_section(
 
             AnimatedVisibility(
                 visible = vanguard_enabled,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
+                enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
             ) {
                 Column {
                     Spacer(Modifier.height(AsterSpacing.md))
@@ -1369,17 +1366,22 @@ private fun protection_banner(
                     Spacer(Modifier.width(AsterSpacing.xs))
                     tone_badge(text = protected_items.size.toString(), tone = colors.success)
                     Spacer(Modifier.weight(1f))
+                    val protected_chevron_rotation by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (show_protected) 180f else 0f,
+                        animationSpec = androidx.compose.animation.core.tween(200, easing = org.astermail.android.design.AsterEasing.emphasized),
+                        label = "protected_chevron_rotation",
+                    )
                     Icon(
-                        imageVector = if (show_protected) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                        imageVector = TablerIcons.ChevronDown,
                         contentDescription = null,
                         tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = protected_chevron_rotation },
                     )
                 }
                 AnimatedVisibility(
                     visible = show_protected,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
+                    enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                 ) {
                     Column { protected_items.forEach { protection_item_row(it) } }
                 }

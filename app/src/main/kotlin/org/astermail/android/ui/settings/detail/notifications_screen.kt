@@ -333,7 +333,8 @@ fun NotificationsScreen(
                     persistent_push = it
                     org.astermail.android.notifications.PersistentPushService.set_enabled(context, it)
                 }
-                if (persistent_push) {
+                SettingsExpand(visible = persistent_push) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                     settings_row_gap(modifier = Modifier)
                     detail_row(
                         title = stringResource(R.string.persistent_push_autostart_title),
@@ -345,6 +346,7 @@ fun NotificationsScreen(
                             )
                         },
                     )
+                    }
                 }
             }
             v_gap(AsterSpacing.lg)

@@ -50,7 +50,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.graphicsLayer
@@ -2829,7 +2828,7 @@ private fun folder_expand_toggle(
     }
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 0f else -90f,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = org.astermail.android.design.AsterEasing.emphasized),
         label = "folder_chevron",
     )
     val description = if (expanded) {
@@ -2866,9 +2865,10 @@ private fun special_offer_drawer_entry(
     val colors = AsterMaterial.colors
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)) +
-            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)),
-        exit = fadeOut(tween(160)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
+        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)) +
+            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = org.astermail.android.design.AsterEasing.emphasized)),
+        exit = fadeOut(tween(160, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)) +
+            shrinkVertically(tween(200, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)),
     ) {
         Row(
             modifier = Modifier
@@ -3286,20 +3286,20 @@ private fun section_expand_enter(): androidx.compose.animation.EnterTransition =
     androidx.compose.animation.expandVertically(
         animationSpec = androidx.compose.animation.core.tween(
             durationMillis = 220,
-            easing = androidx.compose.animation.core.FastOutSlowInEasing,
+            easing = org.astermail.android.design.AsterEasing.emphasized,
         ),
     ) + androidx.compose.animation.fadeIn(
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 180),
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 180, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate),
     )
 
 private fun section_expand_exit(): androidx.compose.animation.ExitTransition =
     androidx.compose.animation.shrinkVertically(
         animationSpec = androidx.compose.animation.core.tween(
             durationMillis = 200,
-            easing = androidx.compose.animation.core.FastOutLinearInEasing,
+            easing = org.astermail.android.design.AsterEasing.emphasized_accelerate,
         ),
     ) + androidx.compose.animation.fadeOut(
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 140, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate),
     )
 
 @Composable
@@ -3307,7 +3307,7 @@ private fun show_more_row(text: String, expanded: Boolean, on_click: () -> Unit)
     val colors = AsterMaterial.colors
     val chevron_rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = org.astermail.android.design.AsterEasing.emphasized),
         label = "chevron",
     )
     Row(

@@ -105,6 +105,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetState
+import org.astermail.android.ui.common.remember_sheet_dismiss
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -176,6 +178,14 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.AsterExpandVisibility
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_expand_in
+import org.astermail.android.design.aster_collapse_out
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.AsterScale
 import org.astermail.android.design.AsterSlide
 import org.astermail.android.design.aster_reduce_motion
@@ -805,6 +815,23 @@ private fun compose_screen_content(
     var expires_at_iso by remember { mutableStateOf<String?>(null) }
     var expiry_password by remember { mutableStateOf<String?>(null) }
     var show_expiring_sheet by remember { mutableStateOf(false) }
+    val attach_sheet_state = rememberModalBottomSheetState()
+    val from_sheet_state = rememberModalBottomSheetState()
+    val overflow_sheet_state = rememberModalBottomSheetState()
+    val template_sheet_state = rememberModalBottomSheetState()
+    val signature_sheet_state = rememberModalBottomSheetState()
+    val ghost_alias_sheet_state = rememberModalBottomSheetState()
+    val expiring_sheet_state = rememberModalBottomSheetState()
+    val schedule_sheet_state = rememberModalBottomSheetState()
+    val close_attach_sheet = remember_sheet_dismiss(attach_sheet_state) { show_attach_sheet = false }
+    val close_from_sheet = remember_sheet_dismiss(from_sheet_state) { show_from_sheet = false }
+    val close_overflow_sheet = remember_sheet_dismiss(overflow_sheet_state) { show_overflow_sheet = false }
+    val close_template_sheet = remember_sheet_dismiss(template_sheet_state) { show_template_sheet = false }
+    val close_signature_sheet = remember_sheet_dismiss(signature_sheet_state) { show_signature_sheet = false }
+    val close_ghost_alias_sheet = remember_sheet_dismiss(ghost_alias_sheet_state) { show_ghost_alias_sheet = false }
+    val close_expiring_sheet = remember_sheet_dismiss(expiring_sheet_state) { show_expiring_sheet = false }
+    val close_schedule_sheet = remember_sheet_dismiss(schedule_sheet_state) { show_schedule_sheet = false }
+    val compose_reduce_motion = aster_reduce_motion()
     var to_chips_set by rememberSaveable {
         mutableStateOf(!initial_state.thread_is_skeleton && initial_state.to_chips.isNotEmpty())
     }
@@ -2619,8 +2646,8 @@ private fun compose_screen_content(
                 }
                 AnimatedVisibility(
                     visible = status_text.isNotBlank(),
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    enter = aster_fade_in(compose_reduce_motion),
+                    exit = aster_fade_out(compose_reduce_motion),
                 ) {
                     Text(
                         text = status_text,
@@ -2648,6 +2675,7 @@ private fun compose_screen_content(
             Spacer(Modifier.width(AsterSpacing.xs))
             androidx.compose.animation.Crossfade(
                 targetState = is_sending || send_queued_at != null,
+                animationSpec = tween(AsterMotionSpec.color_ms, easing = AsterEasing.standard),
                 label = "send_state",
             ) { sending ->
                 if (sending) {
@@ -2679,10 +2707,12 @@ private fun compose_screen_content(
                 .vertical_scroll_with_indicator(),
         ) {
             val scheduled_label = iso_to_epoch_ms(scheduled_at_iso)?.format_full_datetime()
-            if (scheduled_send && scheduled_label != null) {
+            val last_scheduled_label = remember { arrayOf<String?>(null) }
+            if (scheduled_label != null) last_scheduled_label[0] = scheduled_label
+            AsterExpandVisibility(visible = scheduled_send && scheduled_label != null) {
                 compose_status_banner(
                     icon = TablerIcons.Clock,
-                    text = stringResource(R.string.scheduled_for, scheduled_label),
+                    text = stringResource(R.string.scheduled_for, last_scheduled_label[0].orEmpty()),
                     change_label = stringResource(R.string.change),
                     on_change = { show_schedule_sheet = true },
                     on_cancel = {
@@ -2693,10 +2723,12 @@ private fun compose_screen_content(
                 )
             }
             val expires_label = iso_to_epoch_ms(expires_at_iso)?.format_full_datetime()
-            if (expiring && expires_label != null) {
+            val last_expires_label = remember { arrayOf<String?>(null) }
+            if (expires_label != null) last_expires_label[0] = expires_label
+            AsterExpandVisibility(visible = expiring && expires_label != null) {
                 compose_status_banner(
                     icon = TablerIcons.Lock,
-                    text = stringResource(R.string.expires_format, expires_label),
+                    text = stringResource(R.string.expires_format, last_expires_label[0].orEmpty()),
                     change_label = stringResource(R.string.change),
                     on_change = { show_expiring_sheet = true },
                     on_cancel = {
@@ -2721,7 +2753,7 @@ private fun compose_screen_content(
                 },
             )
             AsterDivider()
-            androidx.compose.animation.AnimatedVisibility(visible = show_sender_mismatch) {
+            AsterExpandVisibility(visible = show_sender_mismatch) {
                 val received_address = received_on_alias.orEmpty()
                 sender_mismatch_banner(
                     received = received_address,
@@ -2788,12 +2820,8 @@ private fun compose_screen_content(
 
             AnimatedVisibility(
                 visible = cc_expanded,
-                enter = androidx.compose.animation.expandVertically(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_2, easing = org.astermail.android.design.AsterEasing.emphasized_enter),
-                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_1)),
-                exit = androidx.compose.animation.shrinkVertically(
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.medium_1, easing = org.astermail.android.design.AsterEasing.emphasized_exit),
-                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = org.astermail.android.design.AsterDuration.dialog_exit)),
+                enter = aster_expand_in(compose_reduce_motion),
+                exit = aster_collapse_out(compose_reduce_motion),
             ) {
             Column {
             compose_field_row(label = stringResource(R.string.cc)) {
@@ -2902,10 +2930,12 @@ private fun compose_screen_content(
             }
             AsterDivider()
 
+            val last_send_error = remember { arrayOf<String?>(null) }
+            if (send_error != null) last_send_error[0] = send_error
             AnimatedVisibility(
                 visible = send_error != null,
-                enter = androidx.compose.animation.expandVertically() + fadeIn(),
-                exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+                enter = aster_expand_in(compose_reduce_motion),
+                exit = aster_collapse_out(compose_reduce_motion),
             ) {
                 Row(
                     modifier = Modifier
@@ -2916,7 +2946,7 @@ private fun compose_screen_content(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = send_error ?: "",
+                            text = send_error ?: last_send_error[0].orEmpty(),
                             color = colors.danger,
                             fontSize = 13.sp,
                         )
@@ -3060,23 +3090,6 @@ private fun compose_screen_content(
                 } else {
                     quote_show_template.format(quote_target_label)
                 }
-                val quote_reduce_motion = aster_reduce_motion()
-                val quote_expand_spec = tween<IntSize>(
-                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.medium_1,
-                    easing = AsterEasing.standard_enter,
-                )
-                val quote_shrink_spec = tween<IntSize>(
-                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.short_4,
-                    easing = AsterEasing.standard_exit,
-                )
-                val quote_fade_in_spec = tween<Float>(
-                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.medium_1,
-                    easing = AsterEasing.standard_enter,
-                )
-                val quote_fade_out_spec = tween<Float>(
-                    durationMillis = if (quote_reduce_motion) 0 else AsterDuration.short_2,
-                    easing = AsterEasing.standard_exit,
-                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3100,10 +3113,8 @@ private fun compose_screen_content(
                     }
                     AnimatedVisibility(
                         visible = quoted_expanded,
-                        enter = androidx.compose.animation.expandVertically(animationSpec = quote_expand_spec) +
-                            fadeIn(animationSpec = quote_fade_in_spec),
-                        exit = androidx.compose.animation.shrinkVertically(animationSpec = quote_shrink_spec) +
-                            fadeOut(animationSpec = quote_fade_out_spec),
+                        enter = aster_expand_in(compose_reduce_motion),
+                        exit = aster_collapse_out(compose_reduce_motion),
                     ) {
                         val editable_forward_seed = forward_seed_html
                         val editable_reply_seed = reply_seed_html
@@ -3169,8 +3180,8 @@ private fun compose_screen_content(
 
             AnimatedVisibility(
                 visible = attachments.isNotEmpty() || inline_images.isNotEmpty(),
-                enter = androidx.compose.animation.expandVertically() + fadeIn(),
-                exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+                enter = aster_expand_in(compose_reduce_motion),
+                exit = aster_collapse_out(compose_reduce_motion),
             ) {
                 Column {
                 AsterDivider()
@@ -3189,10 +3200,12 @@ private fun compose_screen_content(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .animateContentSize(AsterSpring.spatial())
                         .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     attachments.forEachIndexed { idx, att ->
+                        androidx.compose.runtime.key(att.uri) {
                         val att_desc = "${att.name}, ${format_file_size(att.size)}"
                         Row(
                             modifier = Modifier
@@ -3244,6 +3257,7 @@ private fun compose_screen_content(
                                 )
                             }
                         }
+                        }
                     }
                 }
                 }
@@ -3284,8 +3298,8 @@ private fun compose_screen_content(
 
         AnimatedVisibility(
             visible = show_format_bar.value,
-            enter = androidx.compose.animation.expandVertically() + fadeIn(),
-            exit = androidx.compose.animation.shrinkVertically() + fadeOut(),
+            enter = aster_expand_in(compose_reduce_motion, expand_from = Alignment.Bottom),
+            exit = aster_collapse_out(compose_reduce_motion, shrink_towards = Alignment.Bottom),
         ) {
             Column {
                 AsterDivider()
@@ -3312,19 +3326,21 @@ private fun compose_screen_content(
 
     if (show_attach_sheet) {
         AttachSheet(
+            state = attach_sheet_state,
             on_close = { show_attach_sheet = false },
             on_pick_file = {
-                show_attach_sheet = false
+                close_attach_sheet()
                 file_picker.launch(arrayOf("*/*"))
             },
             on_pick_photo = {
-                show_attach_sheet = false
+                close_attach_sheet()
                 image_picker.launch()
             },
         )
     }
     if (show_from_sheet) {
         FromAliasSheet(
+            state = from_sheet_state,
             current = from_alias,
             primary = primary_sender_email,
             options = alias_options,
@@ -3336,7 +3352,7 @@ private fun compose_screen_content(
             on_select = { selected ->
                 from_alias = selected
                 from_manually_selected = true
-                show_from_sheet = false
+                close_from_sheet()
             },
             on_set_primary = { selected ->
                 val next = if (selected == primary_sender_email) {
@@ -3354,7 +3370,7 @@ private fun compose_screen_content(
                 settings_vm.set_default_sender(next)
             },
             on_create_ghost_alias = {
-                show_from_sheet = false
+                close_from_sheet()
                 show_ghost_alias_sheet = true
             },
             resolve_display_name = resolve_sender_display_name,
@@ -3363,6 +3379,7 @@ private fun compose_screen_content(
     }
     if (show_overflow_sheet) {
         OverflowSheet(
+            state = overflow_sheet_state,
             scheduled_send = scheduled_send,
             expiring = expiring,
             on_close = { show_overflow_sheet = false },
@@ -3373,7 +3390,7 @@ private fun compose_screen_content(
                 } else if (expiring) {
                     app_toast.show(context.getString(R.string.expiring_not_with_schedule))
                 } else {
-                    show_overflow_sheet = false
+                    close_overflow_sheet()
                     show_schedule_sheet = true
                 }
             },
@@ -3385,20 +3402,20 @@ private fun compose_screen_content(
                 } else if (scheduled_send) {
                     app_toast.show(context.getString(R.string.expiring_not_with_schedule))
                 } else if (plan_vm.is_feature_locked("has_email_expiration") && !plan_state.is_loading) {
-                    show_overflow_sheet = false
+                    close_overflow_sheet()
                     org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
                 } else {
-                    show_overflow_sheet = false
+                    close_overflow_sheet()
                     show_expiring_sheet = true
                 }
             },
             on_open_templates = {
-                show_overflow_sheet = false
+                close_overflow_sheet()
                 templates_vm.load()
                 show_template_sheet = true
             },
             on_open_signature = {
-                show_overflow_sheet = false
+                close_overflow_sheet()
                 show_signature_sheet = true
             },
         )
@@ -3406,11 +3423,12 @@ private fun compose_screen_content(
 
     if (show_template_sheet) {
         TemplatePickerSheet(
+            state = template_sheet_state,
             items = templates_state.items,
             is_loading = templates_state.is_loading,
             on_close = { show_template_sheet = false },
             on_pick = { tpl ->
-                show_template_sheet = false
+                close_template_sheet()
                 body = insert_template_body(
                     body = body,
                     template = tpl.content,
@@ -3424,11 +3442,12 @@ private fun compose_screen_content(
 
     if (show_signature_sheet) {
         SignaturePickerSheet(
+            state = signature_sheet_state,
             signatures = signatures_for_alias(signatures_list, current_alias_id),
             current_id = manual_signature_id,
             on_close = { show_signature_sheet = false },
             on_pick = { picked_id ->
-                show_signature_sheet = false
+                close_signature_sheet()
                 val picked = if (picked_id == null) null
                     else signatures_list.firstOrNull { it.id == picked_id }
                 val new_content = plain_signature_with_separator(
@@ -3460,9 +3479,10 @@ private fun compose_screen_content(
 
     if (show_ghost_alias_sheet) {
         GhostAliasSheet(
+            state = ghost_alias_sheet_state,
             on_close = { show_ghost_alias_sheet = false },
             on_pick = { days ->
-                show_ghost_alias_sheet = false
+                close_ghost_alias_sheet()
                 scope.launch {
                     when (val result = settings_vm.create_ghost_alias_now(expires_in_days = days)) {
                         is SettingsViewModel.GhostAliasResult.Success -> {
@@ -3483,17 +3503,18 @@ private fun compose_screen_content(
     if (show_expiring_sheet) {
         val expiry_recipients = to_chips.toList() + cc_chips.toList() + bcc_chips.toList()
         ExpiringSheet(
+            state = expiring_sheet_state,
             password_mode = expiry_password_mode_for(
                 recipients = expiry_recipients,
                 password_locked = plan_vm.is_feature_locked("has_password_protected_messages") && !plan_state.is_loading,
             ),
             on_password_locked = {
-                show_expiring_sheet = false
+                close_expiring_sheet()
                 org.astermail.android.ui.upgrade.UpgradeStore.show_plan_limit(null, null)
             },
-            on_close = { show_expiring_sheet = false },
+            on_close = close_expiring_sheet,
             on_pick = { expires_epoch_ms, label, password ->
-                show_expiring_sheet = false
+                close_expiring_sheet()
                 expires_at_iso = java.time.Instant.ofEpochMilli(expires_epoch_ms).toString()
                 expiry_password = password
                 expiring = true
@@ -3504,17 +3525,18 @@ private fun compose_screen_content(
 
     if (show_schedule_sheet) {
         ScheduleSheet(
+            state = schedule_sheet_state,
             on_close = {
                 show_schedule_sheet = false
                 if (scheduled_at_iso == null) scheduled_send = false
             },
             on_select = { target ->
-                show_schedule_sheet = false
+                close_schedule_sheet()
                 scheduled_at_iso = target.toInstant().toString()
                 scheduled_send = true
             },
             on_pick_custom = {
-                show_schedule_sheet = false
+                close_schedule_sheet()
                 show_schedule_picker = true
             },
         )
@@ -3785,8 +3807,8 @@ private fun format_file_size(bytes: Long): String {
 @Composable
 private fun send_fab(active: Boolean, enabled: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
-    val bg = if (active) colors.accent_blue else colors.bg_hover
-    val tint = if (active) colors.on_accent else colors.text_muted
+    val bg by aster_animate_color(if (active) colors.accent_blue else colors.bg_hover, label = "send_fab_bg")
+    val tint by aster_animate_color(if (active) colors.on_accent else colors.text_muted, label = "send_fab_tint")
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -3885,6 +3907,8 @@ private fun chip_input(
     val active_focus_requester = focus_requester ?: internal_focus_requester
     var field_focused by remember { mutableStateOf(false) }
     val field_interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val known_chips = remember { chips.toMutableSet() }
+    val chip_reduce_motion = aster_reduce_motion()
     Box(modifier = Modifier.fillMaxWidth()) {
         androidx.compose.foundation.layout.FlowRow(
             modifier = Modifier
@@ -3899,13 +3923,32 @@ private fun chip_input(
             verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
         ) {
             chips.forEachIndexed { idx, chip ->
-                recipient_chip(
-                    text = chip,
-                    show_encryption_indicator = show_encryption_indicator && !hide_lock_for(chip),
-                    lock_status = lock_status_for(chip),
-                    pgp_override = pgp_override,
-                    on_toggle_pgp = on_toggle_pgp,
-                ) { on_remove(idx) }
+                androidx.compose.runtime.key(chip) {
+                    val chip_appear = remember { MutableTransitionState(chip in known_chips) }
+                    chip_appear.targetState = true
+                    androidx.compose.runtime.SideEffect { known_chips.add(chip) }
+                    AnimatedVisibility(
+                        visibleState = chip_appear,
+                        enter = if (chip_reduce_motion) {
+                            org.astermail.android.design.aster_fade_in(true)
+                        } else {
+                            fadeIn(tween(AsterMotionSpec.color_ms, easing = AsterEasing.emphasized_decelerate)) +
+                                scaleIn(
+                                    animationSpec = tween(AsterMotionSpec.color_ms, easing = AsterEasing.emphasized_decelerate),
+                                    initialScale = AsterMotionSpec.pop_from,
+                                )
+                        },
+                        exit = ExitTransition.None,
+                    ) {
+                        recipient_chip(
+                            text = chip,
+                            show_encryption_indicator = show_encryption_indicator && !hide_lock_for(chip),
+                            lock_status = lock_status_for(chip),
+                            pgp_override = pgp_override,
+                            on_toggle_pgp = on_toggle_pgp,
+                        ) { on_remove(idx) }
+                    }
+                }
             }
             BasicTextField(
                 value = input,
@@ -3956,9 +3999,9 @@ private fun chip_input(
             on_suggestion_pick != null
         val suggestions_state = remember { MutableTransitionState(false) }
         suggestions_state.targetState = suggestions_visible
-        val rendered_suggestions by remember(filtered_suggestions) {
-            mutableStateOf(filtered_suggestions)
-        }
+        val last_suggestions = remember { arrayOf(filtered_suggestions) }
+        if (filtered_suggestions.isNotEmpty()) last_suggestions[0] = filtered_suggestions
+        val rendered_suggestions = last_suggestions[0]
         if (suggestions_state.currentState || suggestions_state.targetState) {
             val suggestions_reduce_motion = aster_reduce_motion()
             val suggestions_density = LocalDensity.current
@@ -3983,7 +4026,7 @@ private fun chip_input(
                 AnimatedVisibility(
                     visibleState = suggestions_state,
                     enter = if (suggestions_reduce_motion) {
-                        EnterTransition.None
+                        org.astermail.android.design.aster_fade_in(true)
                     } else {
                         fadeIn(
                             animationSpec = tween(
@@ -4006,7 +4049,7 @@ private fun chip_input(
                         )
                     },
                     exit = if (suggestions_reduce_motion) {
-                        ExitTransition.None
+                        org.astermail.android.design.aster_fade_out(true)
                     } else {
                         fadeOut(
                             animationSpec = tween(
@@ -4429,12 +4472,12 @@ private fun build_attachment_from_uri(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScheduleSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     on_close: () -> Unit,
     on_select: (java.time.ZonedDateTime) -> Unit,
     on_pick_custom: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     val now = java.time.ZonedDateTime.now(
         org.astermail.android.ui.mail.AsterTimePreferences.account_zone_id(),
     )
@@ -4493,12 +4536,12 @@ private fun ScheduleSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AttachSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     on_close: () -> Unit,
     on_pick_file: () -> Unit,
     on_pick_photo: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         on_dismiss_request = on_close,
@@ -4532,6 +4575,7 @@ private fun AttachSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FromAliasSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     current: String,
     primary: String,
     options: List<String>,
@@ -4548,7 +4592,6 @@ private fun FromAliasSheet(
 ) {
     val colors = AsterMaterial.colors
     val sheet_context = LocalContext.current
-    val state = rememberModalBottomSheetState()
     var query by remember { mutableStateOf("") }
     val normalized_query = org.astermail.android.ui.search.fold_text(query.trim())
     val first_option = options.firstOrNull()
@@ -4827,6 +4870,7 @@ private fun sender_mismatch_banner(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OverflowSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     scheduled_send: Boolean,
     expiring: Boolean,
     on_close: () -> Unit,
@@ -4836,7 +4880,6 @@ private fun OverflowSheet(
     on_open_signature: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         on_dismiss_request = on_close,
@@ -4892,13 +4935,13 @@ private fun OverflowSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TemplatePickerSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     items: List<org.astermail.android.templates.DecryptedTemplate>,
     is_loading: Boolean,
     on_close: () -> Unit,
     on_pick: (org.astermail.android.templates.DecryptedTemplate) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         on_dismiss_request = on_close,
@@ -5185,13 +5228,13 @@ internal fun signature_html_web_preview(html: String, modifier: Modifier = Modif
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SignaturePickerSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     signatures: List<DecryptedSignature>,
     current_id: String?,
     on_close: () -> Unit,
     on_pick: (String?) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         on_dismiss_request = on_close,
@@ -5298,11 +5341,11 @@ private fun SignaturePickerSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GhostAliasSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     on_close: () -> Unit,
     on_pick: (Int) -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     aster_modal_sheet(
         shape = org.astermail.android.ui.common.aster_sheet_shape,
         on_dismiss_request = on_close,
@@ -5345,13 +5388,13 @@ private fun GhostAliasSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExpiringSheet(
+    state: SheetState = rememberModalBottomSheetState(),
     on_close: () -> Unit,
     on_pick: (expires_epoch_ms: Long, label: String, password: String?) -> Unit,
     password_mode: ExpiryPasswordMode = ExpiryPasswordMode.AVAILABLE,
     on_password_locked: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
-    val state = rememberModalBottomSheetState()
     val sheet_context = LocalContext.current
     val sheet_picker_theme = picker_theme_res()
     var password by remember { mutableStateOf("") }

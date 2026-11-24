@@ -306,7 +306,7 @@ fun Modifier.skeleton_handoff(phase: SkeletonPhase): Modifier {
             SkeletonPhase.skeleton -> alpha.snapTo(0f)
             SkeletonPhase.blank -> Unit
             SkeletonPhase.content -> if (alpha.value < 1f) {
-                if (reduce_motion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(skeleton_handoff_ms))
+                alpha.animateTo(1f, tween(if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_handoff_ms, easing = org.astermail.android.design.AsterEasing.standard_decelerate))
             }
         }
     }
@@ -368,7 +368,7 @@ fun inbox_skeleton_layer(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
         enter = EnterTransition.None,
-        exit = if (reduce_motion) ExitTransition.None else fadeOut(tween(skeleton_fade_out_ms)),
+        exit = fadeOut(tween(if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_fade_out_ms, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)),
     ) {
         val loading_label = stringResource(R.string.loading)
         inbox_skeleton(

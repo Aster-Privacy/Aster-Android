@@ -23,7 +23,6 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -235,7 +234,12 @@ fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, m
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
         enter = EnterTransition.None,
-        exit = if (reduce_motion) ExitTransition.None else fadeOut(tween(skeleton_fade_out_ms)),
+        exit = fadeOut(
+            tween(
+                if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_fade_out_ms,
+                easing = org.astermail.android.design.AsterEasing.emphasized_accelerate,
+            ),
+        ),
     ) {
         detail_skeleton(message_count = message_count)
     }

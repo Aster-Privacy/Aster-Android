@@ -22,9 +22,7 @@
 package org.astermail.android.ui.common
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,12 +48,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.AsterSpring
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.field_surface_color
@@ -84,16 +84,13 @@ fun pill_toggle(
         val pill_width = ((maxWidth - 6.dp) / labels.size.coerceAtLeast(1)).coerceAtLeast(0.dp)
         val pill_offset by animateDpAsState(
             targetValue = pill_width * active_index,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow,
-            ),
+            animationSpec = AsterSpring.fast_spatial(),
             label = "pill_toggle_offset",
         )
 
         Box(
             modifier = Modifier
-                .offset(x = pill_offset)
+                .offset { IntOffset(pill_offset.roundToPx(), 0) }
                 .width(pill_width)
                 .fillMaxHeight()
                 .background(colors.accent_blue, SquircleShape(13.dp)),

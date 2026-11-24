@@ -25,7 +25,6 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import android.widget.Toast
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -84,6 +83,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -113,7 +113,13 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.withTimeout
 import org.astermail.android.R
 import org.astermail.android.api.subscriptions.MailingListSubscription
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic_backdrop
@@ -447,6 +453,7 @@ fun MailingListsScreen(
                 }
                 else -> itemsIndexed(visible, key = { _, item -> item.id }) { idx, item ->
                     subscription_row(
+                        modifier = Modifier.animateItem(fadeInSpec = null),
                         item = item,
                         is_pending = item.id in state.pending_ids,
                         is_selected = item.id in selected_ids,
@@ -516,9 +523,31 @@ fun MailingListsScreen(
             }
         }
 
-        if (selected_ids.isNotEmpty()) {
+        val select_bar_reduce = aster_reduce_motion()
+        val last_select_count = remember { mutableIntStateOf(0) }
+        if (selected_ids.isNotEmpty()) last_select_count.intValue = selected_ids.size
+        androidx.compose.animation.AnimatedVisibility(
+            visible = selected_ids.isNotEmpty(),
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = if (select_bar_reduce) {
+                aster_fade_in(true)
+            } else {
+                androidx.compose.animation.slideInVertically(
+                    animationSpec = tween(AsterMotionSpec.fade_enter_ms, easing = AsterEasing.emphasized_decelerate),
+                    initialOffsetY = { it },
+                ) + aster_fade_in()
+            },
+            exit = if (select_bar_reduce) {
+                aster_fade_out(true)
+            } else {
+                androidx.compose.animation.slideOutVertically(
+                    animationSpec = tween(AsterMotionSpec.icon_ms, easing = AsterEasing.emphasized_accelerate),
+                    targetOffsetY = { it },
+                ) + aster_fade_out()
+            },
+        ) {
             subscription_select_bar(
-                count = selected_ids.size,
+                count = last_select_count.intValue,
                 is_unsubscribed_tab = show_unsubscribed,
                 on_action = { action ->
                     val result = reduce_subscription_selection(selected_ids, visible_ids, action)
@@ -527,7 +556,6 @@ fun MailingListsScreen(
                     if (result.unsubscribe_request.isNotEmpty()) confirm_bulk = result.unsubscribe_request
                     if (result.delete_request.isNotEmpty()) confirm_delete = result.delete_request
                 },
-                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
     }
@@ -823,16 +851,8 @@ private fun subscription_chip(text: String, selected: Boolean, on_click: () -> U
     val colors = AsterMaterial.colors
     val bg = if (selected) colors.accent_blue else search_field_bg_color(colors)
     val text_color = if (selected) colors.on_accent else colors.text_secondary
-    val animated_bg by animateColorAsState(
-        targetValue = bg,
-        animationSpec = tween(150),
-        label = "subscription_chip_bg",
-    )
-    val animated_text by animateColorAsState(
-        targetValue = text_color,
-        animationSpec = tween(150),
-        label = "subscription_chip_text",
-    )
+    val animated_bg by aster_animate_color(target = bg, label = "subscription_chip_bg")
+    val animated_text by aster_animate_color(target = text_color, label = "subscription_chip_text")
     Box(
         modifier = Modifier
             .clip(SquircleShape(999.dp))
@@ -889,6 +909,7 @@ private fun subscription_empty_state(title: String, hint: String?, modifier: Mod
 
 @Composable
 private fun subscription_row(
+    modifier: Modifier = Modifier,
     item: MailingListSubscription,
     is_pending: Boolean,
     is_selected: Boolean,
@@ -906,18 +927,17 @@ private fun subscription_row(
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val interaction_source = remember { MutableInteractionSource() }
-    val row_bg = animateColorAsState(
-        targetValue = if (is_selected) {
+    val row_bg = aster_animate_color(
+        target = if (is_selected) {
             inbox_card_selected_color(colors)
         } else {
             inbox_card_read_color(colors)
         },
-        animationSpec = tween(durationMillis = 220),
         label = "subscription_row_bg",
     )
     val group_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(
                 start = inbox_card_horizontal_margin,
@@ -947,27 +967,67 @@ private fun subscription_row(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (is_selected) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = colors.on_accent,
-                    modifier = Modifier.size(20.dp),
+        val flip_reduce = aster_reduce_motion()
+        val flip by animateFloatAsState(
+            targetValue = if (is_selected) 180f else 0f,
+            animationSpec = tween(
+                durationMillis = if (flip_reduce) 0 else AsterMotionSpec.icon_ms,
+                easing = AsterEasing.emphasized,
+            ),
+            label = "subscription_avatar_flip",
+        )
+        val check_reveal by animateFloatAsState(
+            targetValue = if (is_selected) 1f else 0f,
+            animationSpec = when {
+                !is_selected -> tween(AsterMotionSpec.fade_out_ms, easing = AsterEasing.emphasized_accelerate)
+                flip_reduce -> tween(AsterMotionSpec.reduced_fade_ms)
+                else -> tween(
+                    durationMillis = AsterMotionSpec.icon_ms / 2,
+                    delayMillis = AsterMotionSpec.icon_ms / 2,
+                    easing = AsterEasing.emphasized_decelerate,
+                )
+            },
+            label = "subscription_check_reveal",
+        )
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .graphicsLayer {
+                    rotationY = flip
+                    cameraDistance = 12f * density
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (flip > 90f) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .graphicsLayer { rotationY = 180f }
+                        .clip(CircleShape)
+                        .background(colors.accent_blue),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Check,
+                        contentDescription = null,
+                        tint = colors.on_accent,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .graphicsLayer {
+                                alpha = check_reveal
+                                val check_scale = AsterMotionSpec.icon_from + (1f - AsterMotionSpec.icon_from) * check_reveal
+                                scaleX = check_scale
+                                scaleY = check_scale
+                            },
+                    )
+                }
+            } else {
+                SenderAvatar(
+                    email = item.sender_email,
+                    name = item.sender_name,
+                    size = 44.dp,
                 )
             }
-        } else {
-            SenderAvatar(
-                email = item.sender_email,
-                name = item.sender_name,
-                size = 44.dp,
-            )
         }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
@@ -1044,14 +1104,12 @@ private fun row_action_button(
     val interaction_source = remember { MutableInteractionSource() }
     val pressed by interaction_source.collectIsPressedAsState()
     val intent = if (is_destructive) colors.danger else colors.accent_blue
-    val tint by animateColorAsState(
-        targetValue = if (is_loading || pressed) intent else colors.text_secondary,
-        animationSpec = tween(durationMillis = 140),
+    val tint by aster_animate_color(
+        target = if (is_loading || pressed) intent else colors.text_secondary,
         label = "subscription_action_tint",
     )
-    val container by animateColorAsState(
-        targetValue = intent.copy(alpha = if (pressed) 0.2f else 0.1f),
-        animationSpec = tween(durationMillis = 140),
+    val container by aster_animate_color(
+        target = intent.copy(alpha = if (pressed) 0.2f else 0.1f),
         label = "subscription_action_container",
     )
     Box(

@@ -38,11 +38,6 @@ import android.content.ClipData
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -109,6 +104,9 @@ import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
+import org.astermail.android.design.aster_shared_axis_x
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.design.components.AsterIconButton
@@ -163,17 +161,17 @@ fun ForgotPasswordScreen(
             }
             AsterTopBar(title = "", on_back = top_bar_back)
 
+            val reduce_motion = aster_reduce_motion()
+            val slide_px = aster_shared_axis_slide_px()
             AnimatedContent(
                 targetState = state.step,
                 modifier = Modifier.weight(1f),
                 transitionSpec = {
-                    if (targetState.ordinal >= initialState.ordinal) {
-                        (slideInHorizontally { it / 3 } + fadeIn()) togetherWith
-                            (slideOutHorizontally { -it / 3 } + fadeOut())
-                    } else {
-                        (slideInHorizontally { -it / 3 } + fadeIn()) togetherWith
-                            (slideOutHorizontally { it / 3 } + fadeOut())
-                    }
+                    aster_shared_axis_x(
+                        forward = targetState.ordinal >= initialState.ordinal,
+                        slide_px = slide_px,
+                        reduce_motion = reduce_motion,
+                    )
                 },
                 label = "recovery_step",
             ) { step ->

@@ -71,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -105,7 +106,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_error_shake
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
@@ -194,6 +199,25 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         )
     }
 
+    val reduce_motion = aster_reduce_motion()
+    val reveal_alpha = remember { Animatable(1f) }
+    var revealing by remember { mutableStateOf(false) }
+
+    fun reveal_app() {
+        if (revealing) return
+        revealing = true
+        scope.launch {
+            reveal_alpha.animateTo(
+                0f,
+                tween(
+                    durationMillis = if (reduce_motion) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.fade_exit_ms,
+                    easing = AsterEasing.emphasized_accelerate,
+                ),
+            )
+            store.mark_session_unlocked()
+        }
+    }
+
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
     val biometric_failed_str = stringResource(R.string.app_lock_biometric_failed)
     val biometric_error_str = stringResource(R.string.app_lock_biometric_error)
@@ -256,7 +280,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                     return
                 }
                 if (BiometricUnlockGate.complete_verify(context, authenticated_cipher)) {
-                    store.mark_session_unlocked()
+                    reveal_app()
                 } else {
                     BiometricUnlockGate.invalidate(context)
                     biometric_enrolled = false
@@ -288,7 +312,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         val activity = host_activity
         val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
         if (activity == null || !rebind) {
-            store.mark_session_unlocked()
+            reveal_app()
             return
         }
         BiometricUnlockGate.clear_rebind_pending(context)
@@ -297,7 +321,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             origin = BiometricEnrollOrigin.AFTER_PIN_ON_LOCK_SCREEN,
             pin_verified = true,
             biometric_available = biometric_available,
-        ) { store.mark_session_unlocked() }
+        ) { reveal_app() }
     }
 
     LaunchedEffect(lifecycle_state) {
@@ -357,6 +381,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer { alpha = reveal_alpha.value }
             .background(colors.solid_bg)
             .pointerInput(Unit) {},
         contentAlignment = Alignment.Center,
@@ -523,18 +548,10 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 @Composable
 fun PinDots(digits: Int, filled: Int, shake_trigger: Int) {
     val colors = AsterMaterial.colors
-    val offset_x = remember { Animatable(0f) }
-
-    LaunchedEffect(shake_trigger) {
-        if (shake_trigger == 0) return@LaunchedEffect
-        for (x in listOf(-10f, 10f, -10f, 10f, 0f)) {
-            offset_x.animateTo(x, animationSpec = tween(60))
-        }
-    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) },
+        modifier = Modifier.aster_error_shake(shake_trigger),
     ) {
         repeat(digits) { i ->
             Box(
@@ -646,14 +663,7 @@ fun PinIconKey(
 
 @Composable
 fun ShakeBox(trigger: Int, content: @Composable () -> Unit) {
-    val offset_x = remember { Animatable(0f) }
-    LaunchedEffect(trigger) {
-        if (trigger == 0) return@LaunchedEffect
-        for (x in listOf(-10f, 10f, -10f, 10f, 0f)) {
-            offset_x.animateTo(x, animationSpec = tween(60))
-        }
-    }
-    Box(modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) }) {
+    Box(modifier = Modifier.aster_error_shake(trigger)) {
         content()
     }
 }
