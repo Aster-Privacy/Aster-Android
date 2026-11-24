@@ -75,6 +75,7 @@ import org.astermail.android.api.mail_rules.Condition as MailRuleCondition
 sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
     object UnauthorizedError : ApiError("unauthorized")
+    object RefreshTokenRevoked : ApiError("refresh token revoked")
     object InvalidCredentials : ApiError("invalid credentials")
     data class PaymentRequired(val detail: String = "") : ApiError(detail)
     data class AttachmentTooLarge(val detail: String = "") : ApiError(detail)
@@ -176,6 +177,7 @@ const val VAULT_LEVEL = "2"
 
 const val FINGERPRINT_MISMATCH_CODE = "FINGERPRINT_MISMATCH"
 const val INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS"
+const val REFRESH_TOKEN_REVOKED_CODE = "REFRESH_TOKEN_REVOKED"
 const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
 const val ACCOUNT_SUSPENDED_CODE = "ACCOUNT_SUSPENDED"
 const val CAPTCHA_FAILED_CODE = "CAPTCHA_FAILED"
@@ -184,6 +186,7 @@ fun map_unauthorized(server_code: String?, detail: String): ApiError =
     when (server_code) {
         FINGERPRINT_MISMATCH_CODE -> ApiError.StepUpRequired(detail.ifBlank { "step up required" })
         INVALID_CREDENTIALS_CODE -> ApiError.InvalidCredentials
+        REFRESH_TOKEN_REVOKED_CODE -> ApiError.RefreshTokenRevoked
         else -> ApiError.UnauthorizedError
     }
 

@@ -145,7 +145,7 @@ class AccountLinkProvider : ContentProvider() {
                     is DeviceEnvelope.InvalidDeviceKeyException -> ERROR_BINDING
                     is DeviceLinkError.CodeNotFound -> ERROR_CODE_NOT_FOUND
                     is DeviceLinkError.PlanUpgradeRequired -> ERROR_PLAN
-                    is ApiError.UnauthorizedError, is ApiError.ForbiddenError -> ERROR_SESSION
+                    is ApiError.UnauthorizedError, is ApiError.RefreshTokenRevoked, is ApiError.ForbiddenError -> ERROR_SESSION
                     else -> ERROR_UNAVAILABLE
                 },
             )

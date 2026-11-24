@@ -44,7 +44,7 @@ class SessionTokenProvider(
             return load()
         }
         return when (refresh_session()) {
-            RefreshOutcome.AuthFailed -> null
+            RefreshOutcome.AuthFailed, RefreshOutcome.Revoked -> null
             RefreshOutcome.Success -> load()
             RefreshOutcome.Transient -> {
                 val unchanged = !failed_access_token.isNullOrEmpty() && read_access_token() == failed_access_token
