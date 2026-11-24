@@ -107,7 +107,7 @@ private val dlg_red_border_bot = Color(0xFF991B1B)
 
 enum class DialogConfirmStyle { primary, destructive }
 
-private const val dialog_scrim_alpha = 0.46f
+private const val dialog_scrim_alpha = 0.32f
 private val dialog_enter_alpha_easing = aster_threshold_easing(
     AsterEasing.emphasized_decelerate,
     0f,
@@ -167,6 +167,16 @@ private fun prepare_dialog_window() {
             android.view.WindowManager.LayoutParams.MATCH_PARENT,
         )
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+            window.isStatusBarContrastEnforced = false
+        }
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             @Suppress("DEPRECATION")
             window.statusBarColor = android.graphics.Color.TRANSPARENT
@@ -246,7 +256,7 @@ fun AsterDialog(
             shape = dialog_shape,
             color = dialog_fill(colors),
             tonalElevation = 0.dp,
-            shadowElevation = 18.dp,
+            shadowElevation = 6.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -363,7 +373,7 @@ fun AsterAlertDialog(
             shape = dialog_shape,
             color = dialog_fill(colors),
             tonalElevation = 0.dp,
-            shadowElevation = 18.dp,
+            shadowElevation = 6.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(

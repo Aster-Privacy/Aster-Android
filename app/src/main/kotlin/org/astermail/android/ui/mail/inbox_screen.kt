@@ -3684,7 +3684,6 @@ internal fun inbox_top_bar(
                 expanded = quick_menu_open,
                 on_dismiss = { quick_menu_open = false },
             ) {
-                aster_menu_section_label(stringResource(R.string.quick_actions))
                 overflow_menu_item(
                     label = stringResource(R.string.mark_all_read),
                     icon = TablerIcons.MailOpened,

@@ -158,7 +158,7 @@ private fun build_light_color_scheme(palette: ColorThemePalette?) = lightColorSc
     onError = Color.White,
     errorContainer = Color(0xFFFEE2E2),
     onErrorContainer = AsterColors.destructive,
-    scrim = AsterColors.light_modal_overlay,
+    scrim = Color(0x52000000),
 )
 
 private fun build_dark_color_scheme(palette: ColorThemePalette?) = darkColorScheme(
@@ -187,5 +187,5 @@ private fun build_dark_color_scheme(palette: ColorThemePalette?) = darkColorSche
     onError = Color.White,
     errorContainer = Color(0xFF3F1212),
     onErrorContainer = Color(0xFFFCA5A5),
-    scrim = Color(0x66000000),
+    scrim = Color(0x52000000),
 )

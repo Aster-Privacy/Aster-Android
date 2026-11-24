@@ -4076,7 +4076,7 @@ private fun chip_input(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(16.dp, suggestions_shape, clip = false)
+                            .shadow(3.dp, suggestions_shape, clip = false)
                             .acrylic(colors, suggestions_shape, aster_menu_surface_color())
                             .padding(vertical = 4.dp),
                     ) {

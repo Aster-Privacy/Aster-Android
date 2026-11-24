@@ -3425,8 +3425,8 @@
     <string name="read_only">Read only</string>
     <string name="with_attachments">With attachments</string>
     <string name="quick_actions">Quick actions</string>
-    <string name="archive_all_read_emails">Archive read emails</string>
-    <string name="delete_emails_older_than_30_days">Delete emails older than 30 days</string>
+    <string name="archive_all_read_emails">Archive read</string>
+    <string name="delete_emails_older_than_30_days">Delete older than 30 days</string>
     <string name="quick_action_unavailable">That quick action isn\'t available in this folder</string>
     <string name="quick_action_no_unread">Nothing to mark as read here</string>
     <string name="quick_action_no_read">No read emails to archive here</string>

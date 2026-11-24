@@ -290,7 +290,7 @@ private fun toast_card(
                 1f
             }
         }
-        .shadow(18.dp, shape, clip = false)
+        .shadow(6.dp, shape, clip = false)
         .clip(shape)
         .background(fill)
         .then(if (colors.is_dark) Modifier else Modifier.border(1.dp, colors.border_secondary, shape))
