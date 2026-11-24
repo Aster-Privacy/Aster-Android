@@ -2423,7 +2423,9 @@ fun InboxScreen(
                     }
                     removal_quiet = false
                 }
-                val footer_skeleton_shown = footer_skeleton_wanted(inbox_state.is_loading_more, removal_quiet)
+                val footer_skeleton_shown = org.astermail.android.design.remember_steady_flag(
+                    footer_skeleton_wanted(inbox_state.is_loading_more, removal_quiet),
+                )
                 val skeleton_showing = remember { booleanArrayOf(false) }
                 val skeleton_now = inbox_skeleton_wanted(
                     rows_deriving = rows_deriving,

@@ -213,10 +213,15 @@ fun FilteredInboxScreen(
             AsterDivider(modifier = Modifier.fillMaxWidth())
             val showing_requested = inbox_state.current_folder == requested_folder
             val has_rows = showing_requested && threads.isNotEmpty()
+            val refill_pending = showing_requested &&
+                threads.isEmpty() &&
+                inbox_state.has_more &&
+                inbox_state.next_cursor != null &&
+                inbox_state.error == null
             val skeleton_now = filtered_inbox_skeleton_wanted(
                 cache_skeleton_allowed = folder_cache_skeleton_allowed(inbox_state.cache_pending, threads.size),
                 has_rows = has_rows,
-                is_loading = inbox_state.is_loading,
+                is_loading = inbox_state.is_loading || refill_pending,
                 initial = inbox_state.initial,
                 has_error = inbox_state.error != null,
                 showing_requested = showing_requested,

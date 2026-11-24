@@ -3473,7 +3473,7 @@ private fun compose_screen_content(
         TemplatePickerSheet(
             state = template_sheet_state,
             items = templates_state.items,
-            is_loading = templates_state.is_loading,
+            is_loading = templates_state.is_loading && templates_state.items.isEmpty(),
             on_close = { show_template_sheet = false },
             on_pick = { tpl ->
                 close_template_sheet()

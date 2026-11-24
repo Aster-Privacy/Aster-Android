@@ -334,6 +334,10 @@ class MailViewModel @Inject constructor(
         }
         val direct = LinkedHashMap<String, MutableList<DecryptedReaction>>()
         val unresolved = ArrayList<Triple<String, String, Boolean>>()
+        val known_resolved = HashMap<String, DecryptedReaction>()
+        _message_reactions.value.forEach { (message_id, list) ->
+            list.forEach { known_resolved["$message_id\u0000${it.reaction_mail_item_id}"] = it }
+        }
         for (msg in messages) {
             for (summary in msg.raw_item.reactions.orEmpty()) {
                 val emoji = summary.emoji
@@ -348,9 +352,16 @@ class MailViewModel @Inject constructor(
                         ),
                     )
                 } else {
-                    unresolved.add(
-                        Triple(msg.id, summary.reaction_mail_item_id, summary.is_own),
-                    )
+                    val known = known_resolved["${msg.id}\u0000${summary.reaction_mail_item_id}"]
+                    if (known != null) {
+                        direct.getOrPut(msg.id) { ArrayList() }.add(
+                            known.copy(is_own = summary.is_own, is_unseen = summary.is_unseen),
+                        )
+                    } else {
+                        unresolved.add(
+                            Triple(msg.id, summary.reaction_mail_item_id, summary.is_own),
+                        )
+                    }
                 }
             }
         }
