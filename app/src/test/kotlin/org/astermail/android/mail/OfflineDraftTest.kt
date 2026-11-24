@@ -125,7 +125,7 @@ class OfflineDraftTest {
         val prefs = fake_prefs()
         every { context.getSharedPreferences(any(), any()) } returns prefs
         val system_folder_bootstrap: SystemFolderBootstrap = mockk(relaxed = true)
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns emptyMap()
         coEvery { mail_api.create_draft(any()) } returns CreateDraftResponse(id = server_id, version = 1)
         coEvery { mail_api.update_draft(server_id, any()) } returns UpdateDraftResponse(success = true, version = 2)
         repo = MailRepository(

@@ -29,6 +29,7 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.astermail.android.R
@@ -56,7 +57,27 @@ class SystemFolderBootstrap @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    suspend fun ensure_system_folders(): Map<String, String> = mutex.withLock {
+    suspend fun ensure_system_folders(attempts: Int = DEFAULT_ATTEMPTS): Map<String, String> = mutex.withLock {
+        val total = attempts.coerceAtLeast(1)
+        var tokens: Map<String, String> = emptyMap()
+        for (attempt in 0 until total) {
+            val is_last = attempt == total - 1
+            tokens = try {
+                create_missing_folders()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                if (is_last) throw t
+                tokens
+            }
+            if (has_every_system_folder(tokens)) return@withLock tokens
+            if (session_key_store.get_identity_key().isNullOrBlank()) return@withLock tokens
+            if (!is_last) delay(RETRY_DELAYS_MS[attempt.coerceAtMost(RETRY_DELAYS_MS.size - 1)])
+        }
+        tokens
+    }
+
+    private suspend fun create_missing_folders(): Map<String, String> {
         val existing = LinkedHashMap<String, String>()
         for (label in labels_api.list_labels(include_counts = false).labels) {
             if (label.label_token.isBlank() || existing.containsKey(label.folder_type)) continue
@@ -64,9 +85,9 @@ class SystemFolderBootstrap @Inject constructor(
             existing[label.folder_type] = label.label_token
         }
         val missing = SYSTEM_FOLDER_SPECS.filter { !existing.containsKey(it.folder_type) }
-        if (missing.isEmpty()) return@withLock existing
+        if (missing.isEmpty()) return existing
         val identity_key = session_key_store.get_identity_key()?.takeIf { it.isNotBlank() }
-            ?: return@withLock existing
+            ?: return existing
         for (spec in missing) {
             val token = generate_token_b64()
             val name = encrypt_field(context.getString(spec.name_res), identity_key)
@@ -88,7 +109,7 @@ class SystemFolderBootstrap @Inject constructor(
             }
             if (created) existing[spec.folder_type] = token
         }
-        existing
+        return existing
     }
 
     private data class EncryptedField(val ciphertext_b64: String, val nonce_b64: String)
@@ -120,5 +141,10 @@ class SystemFolderBootstrap @Inject constructor(
 
     companion object {
         private const val FIELD_VERSION = "astermail-labels-v1"
+        const val DEFAULT_ATTEMPTS = 3
+        private val RETRY_DELAYS_MS = longArrayOf(2_000L, 8_000L)
+
+        fun has_every_system_folder(tokens: Map<String, String>): Boolean =
+            SYSTEM_FOLDER_SPECS.all { !tokens[it.folder_type].isNullOrBlank() }
     }
 }
