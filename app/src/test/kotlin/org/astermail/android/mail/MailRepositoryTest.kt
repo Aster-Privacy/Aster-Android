@@ -159,7 +159,7 @@ class MailRepositoryTest {
         every { send_failure_editor.putStringSet(any(), any()) } returns send_failure_editor
         every { send_failure_editor.remove(any()) } returns send_failure_editor
         system_folder_bootstrap = mockk(relaxed = true)
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns emptyMap()
         every { session_key_store.get_identity_key() } returns "test_identity_key"
         every { session_key_store.get_passphrase() } returns null
         every { session_key_store.get_user_email() } returns "me@astermail.org"
@@ -1943,7 +1943,7 @@ class MailRepositoryTest {
     fun `send_email passes the client send id to an external send`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns mapOf("sent" to "healed_sent_token")
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -1965,7 +1965,7 @@ class MailRepositoryTest {
     fun `a password protected external send keeps the password and the content on the device`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns mapOf("sent" to "healed_sent_token")
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -2057,7 +2057,7 @@ class MailRepositoryTest {
     fun `send_email seals a password protected external message on the device`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns mapOf("sent" to "healed_sent_token")
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -2100,7 +2100,7 @@ class MailRepositoryTest {
     fun `send_email without a message password sends no sealed message`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns mapOf("sent" to "healed_sent_token")
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -2138,7 +2138,7 @@ class MailRepositoryTest {
     fun `send_email creates the missing sent folder before relaying`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns mapOf("sent" to "healed_sent_token")
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns mapOf("sent" to "healed_sent_token")
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -2154,14 +2154,14 @@ class MailRepositoryTest {
         val request = slot<org.astermail.android.api.send.ExternalSendRequest>()
         coVerify(exactly = 1) { send_api.send_external(capture(request)) }
         assertEquals("healed_sent_token", request.captured.folder_token)
-        coVerify(exactly = 1) { system_folder_bootstrap.ensure_system_folders() }
+        coVerify(exactly = 1) { system_folder_bootstrap.ensure_system_folders(any()) }
     }
 
     @Test
     fun `send_email derives the sent folder token when the folder cannot be created`() = runTest {
         coEvery { labels_api.list_labels(include_counts = false) } returns
             org.astermail.android.api.labels.LabelsListResponse(labels = emptyList())
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns emptyMap()
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } returns "enc_ratchet_body"
         coEvery { send_api.send_external(any()) } returns
@@ -2196,7 +2196,7 @@ class MailRepositoryTest {
         )
 
         assertTrue(result.isFailure)
-        coVerify(exactly = 0) { system_folder_bootstrap.ensure_system_folders() }
+        coVerify(exactly = 0) { system_folder_bootstrap.ensure_system_folders(any()) }
         coVerify(exactly = 0) { send_api.send_external(any()) }
     }
 

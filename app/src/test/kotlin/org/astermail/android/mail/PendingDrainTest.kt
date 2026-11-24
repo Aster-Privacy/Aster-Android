@@ -79,7 +79,7 @@ class PendingDrainTest {
         }
         coEvery { queue.record_attempt(any()) } answers { recorded.add(firstArg()) }
         val system_folder_bootstrap: SystemFolderBootstrap = mockk(relaxed = true)
-        coEvery { system_folder_bootstrap.ensure_system_folders() } returns emptyMap()
+        coEvery { system_folder_bootstrap.ensure_system_folders(any()) } returns emptyMap()
         repo = MailRepository(
             mail_api = mail_api,
             send_api = mockk(relaxed = true),
