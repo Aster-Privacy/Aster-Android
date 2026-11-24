@@ -72,55 +72,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.mirror_in_rtl
-import org.astermail.android.design.mix_rgb
-import org.astermail.android.design.relative_luminance
-
-internal data class storage_tones(
-    val brand: Color,
-    val strong: Color,
-    val soft: Color,
-    val neutral: Color,
-    val neutral_soft: Color,
-    val neutral_strong: Color,
-)
-
-internal fun is_achromatic(color: Color): Boolean =
-    maxOf(color.red, color.green, color.blue) - minOf(color.red, color.green, color.blue) < 0.16f
-
-internal fun storage_tones_for(
-    accent: Color,
-    text_primary: Color,
-    surface: Color,
-): storage_tones {
-    val brand = accent.copy(alpha = 1f)
-    val ink = text_primary.copy(alpha = 1f)
-    val base = surface.copy(alpha = 1f)
-    if (!is_achromatic(brand)) {
-        return storage_tones(
-            brand = brand,
-            strong = mix_rgb(ink, brand, 0.40f),
-            soft = mix_rgb(base, brand, 0.35f),
-            neutral = mix_rgb(base, ink, 0.60f),
-            neutral_soft = mix_rgb(base, ink, 0.40f),
-            neutral_strong = mix_rgb(base, ink, 0.85f),
-        )
-    }
-    val bright_accent = relative_luminance(brand) > 0.6
-    return storage_tones(
-        brand = brand,
-        strong = mix_rgb(base, ink, if (bright_accent) 0.74f else 0.94f),
-        soft = mix_rgb(base, ink, 0.18f),
-        neutral = mix_rgb(base, ink, if (bright_accent) 0.54f else 0.76f),
-        neutral_soft = mix_rgb(base, ink, if (bright_accent) 0.36f else 0.58f),
-        neutral_strong = mix_rgb(base, brand, if (bright_accent) 0.30f else 0.40f),
-    )
-}
-
-@Composable
-internal fun current_storage_tones(): storage_tones {
-    val colors = AsterMaterial.colors
-    return storage_tones_for(colors.accent_blue, colors.text_primary, colors.bg_card)
-}
+import org.astermail.android.design.current_storage_palette
 
 internal data class storage_segment(
     val label: String,
@@ -275,14 +227,13 @@ internal fun storage_usage_bar(
     fraction: Float,
     fallback_color: Color,
 ) {
-    val colors = AsterMaterial.colors
     val visible = segments.filter { it.count > 0 }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(12.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(colors.bg_hover)
+            .background(current_storage_palette().track)
             .testTag("storage_usage_bar"),
     ) {
         if (fraction > 0f) {
@@ -347,30 +298,30 @@ internal fun storage_legend(segments: List<storage_segment>) {
 @Composable
 internal fun storage_segments(stats: MailUserStatsResponse): List<storage_segment> {
     val distribution = compute_distribution(stats)
-    val tones = current_storage_tones()
+    val palette = current_storage_palette()
     return listOf(
         storage_segment(
-            stringResource(R.string.folder_inbox), distribution.inbox, tones.brand,
+            stringResource(R.string.folder_inbox), distribution.inbox, palette.blue,
             "inbox", TablerIcons.Inbox,
         ),
         storage_segment(
-            stringResource(R.string.archived), distribution.archived, tones.strong,
+            stringResource(R.string.archived), distribution.archived, palette.violet,
             "archive", TablerIcons.Archive,
         ),
         storage_segment(
-            stringResource(R.string.sent), distribution.sent, tones.soft,
+            stringResource(R.string.sent), distribution.sent, palette.teal,
             "sent", TablerIcons.Send.auto_mirrored(),
         ),
         storage_segment(
-            stringResource(R.string.folder_drafts), distribution.drafts, tones.neutral,
+            stringResource(R.string.folder_drafts), distribution.drafts, palette.amber,
             "drafts", TablerIcons.FileText,
         ),
         storage_segment(
-            stringResource(R.string.folder_spam), distribution.spam, tones.neutral_soft,
+            stringResource(R.string.folder_spam), distribution.spam, palette.rose,
             "spam", TablerIcons.AlertOctagon,
         ),
         storage_segment(
-            stringResource(R.string.folder_trash), distribution.trash, tones.neutral_strong,
+            stringResource(R.string.folder_trash), distribution.trash, palette.fuchsia,
             "trash", TablerIcons.Trash,
         ),
     )
