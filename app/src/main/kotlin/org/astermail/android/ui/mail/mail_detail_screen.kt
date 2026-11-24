@@ -134,6 +134,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -1699,231 +1700,228 @@ fun MailDetailScreen(
                     val is_first_card = idx == 0 || is_after_indicator
                     val is_last_card = is_last
 
-                    val reduce_card_toggle = aster_reduce_motion()
-                    androidx.compose.animation.AnimatedContent(
-                        targetState = is_expanded,
-                        transitionSpec = { thread_card_toggle_transform(reduce_card_toggle) },
-                        contentAlignment = Alignment.TopStart,
-                        label = "thread_card_toggle",
-                    ) { shown_expanded ->
-                        if (shown_expanded) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                order_details_card_for_message(msg = msg, subject = email?.subject.orEmpty())
-                                expanded_message(
-                                    msg = msg,
-                                    is_last = is_last,
-                                    message_index = idx,
-                                    allow_auto_translate = !is_spam,
-                                    translation_subject = if (msg.id == subject_translation_owner) email?.subject else null,
-                                    on_subject_translated = { translated ->
-                                        if (msg.id == subject_translation_owner) translated_thread_subject = translated
-                                    },
-                                    thread_attachments = all_thread_attachments,
-                                    my_email = my_email,
-                                    my_profile_pic = my_profile_pic,
-                                    is_first_card = is_first_card,
-                                    is_last_card = is_last_card,
-                                    allow_external = message_loads_remote_content(
-                                        blocked = block_external_images,
-                                        granted = msg.id in allow_external_ids,
-                                        grant_allowed = image_grant_allowed,
-                                        is_system_sender = is_system_sender,
-                                    ),
-                                    blocked_for_traffic = blocked_for_traffic_only,
-                                    offer_load_once = image_grant_allowed,
-                                    offer_always_allow = offer_always_allow_external,
-                                    show_raw_headers = settings_state.preferences?.show_raw_headers == true,
-                                    on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
-                                    retry_in_progress = decrypt_retry_active,
-                                    on_recover_data = if (
-                                        org.astermail.android.mail.message_locked_by_reset(
-                                            msg.is_undecryptable && msg.is_sealed_to_missing_keys,
-                                            locked_data_state.status,
-                                        )
-                                    ) {
-                                        { show_recover_data_dialog = true }
-                                    } else {
-                                        null
-                                    },
-                                    attachments_failed = msg.id in attachment_failure_ids,
-                                    attachments_loading = msg.id in attachment_loading_ids,
-                                    on_retry_attachments = { mail_vm.retry_thread_attachments() },
-                                    identity_changed = identity_changed_senders.contains(
-                                        org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
-                                    ),
-                                    sender_unauthenticated = msg.id in unauthenticated_message_ids,
-                                    on_acknowledge_identity = {
-                                        mail_vm.acknowledge_identity_change(msg.sender_email)
-                                    },
-                                    on_load_external = {
-                                        allow_external_ids = allow_external_ids + msg.id
-                                    },
-                                    on_always_allow_external = {
-                                        allow_external_ids = allow_external_ids + msg.id
-                                        val base = settings_state.preferences
-                                        if (base != null) {
-                                            settings_vm.save_preferences(
-                                                base.copy(
-                                                    block_external_images = false,
-                                                    load_remote_images = "always",
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    on_disable_low_network = {
-                                        allow_external_ids = allow_external_ids + msg.id
-                                        val base = settings_state.preferences
-                                        if (base != null) {
-                                            settings_vm.save_preferences(base.copy(low_network_mode = false))
-                                        }
-                                    },
-                                    show_unsub = msg.id !in dismissed_unsub_ids &&
-                                        subscriptions_vm.sender_token(msg.sender_email) !in unsubscribed_tokens,
-                                    on_dismiss_unsub = {
-                                        dismissed_unsub_ids = dismissed_unsub_ids + msg.id
-                                    },
-                                    on_body_ready = { ready_body_ids.value = ready_body_ids.value + msg.id },
-                                    on_track = { _, _, _ -> },
-                                    access_token = settings_vm.get_access_token(),
-                                    on_link_click = { url ->
-                                        if (!url.startsWith("aster:") || is_system_sender) pending_link = url
-                                    },
-                                    on_image_click = { src -> lightbox_src = src },
-                                    on_unsubscribe = { info ->
-                                        dismissed_unsub_ids = dismissed_unsub_ids + msg.id
-                                        val unsubscribe_sender = resolve_unsubscribe_sender(
-                                            reaction_identity_for(msg.id),
-                                            thread_state.messages.find { it.id == msg.id }?.raw_item?.routing_token,
-                                        )
-                                        scope.launch {
-                                            val outcome = execute_unsubscribe(info, unsubscribe_sender) { request ->
-                                                subscriptions_vm.proxy_unsubscribe(request)
-                                            }
-                                            val record_unsubscribed = {
-                                                subscriptions_vm.record_unsubscribed(
-                                                    msg.sender_email,
-                                                    msg.sender_name,
-                                                    info.unsubscribe_link,
-                                                    info.list_unsubscribe_header,
-                                                )
-                                            }
-                                            if (outcome == UnsubscribeOutcome.unsubscribed) {
-                                                record_unsubscribed()
-                                                show_toast(context.getString(R.string.toast_unsubscribed))
-                                                return@launch
-                                            }
-                                            val manual_url = get_manual_unsubscribe_url(info)
-                                                ?.takeIf { is_safe_unsubscribe_url(it) }
-                                            if (manual_url == null) {
-                                                dismissed_unsub_ids = dismissed_unsub_ids - msg.id
-                                                show_toast(context.getString(R.string.could_not_unsubscribe))
-                                                return@launch
-                                            }
-                                            app_toast.show(
-                                                TopToastState(
-                                                    message = context.getString(R.string.unsubscribe_manual_required),
-                                                    undo_label = context.getString(R.string.open_unsubscribe_page),
-                                                    duration_ms = 15000L,
-                                                    on_undo = {
-                                                        try {
-                                                            context.startActivity(
-                                                                Intent(Intent.ACTION_VIEW, Uri.parse(manual_url))
-                                                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                                            )
-                                                            record_unsubscribed()
-                                                        } catch (cancelled: CancellationException) {
-                                                            throw cancelled
-                                                        } catch (_: Throwable) {
-                                                            dismissed_unsub_ids = dismissed_unsub_ids - msg.id
-                                                            show_toast(context.getString(R.string.could_not_unsubscribe))
-                                                        }
-                                                    },
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    on_collapse = {
-                                        anchor_toggle(msg.id)
-                                        user_expanded_ids.value = current_expanded_ids - msg.id
-                                    },
-                                    on_sender_trust = { tapped_trust -> profile_sender_trust = tapped_trust },
-                                    on_sender_tap = { email, name ->
-                                        profile_sender = email to name
-                                    },
-                                    on_reply = { on_reply(msg.id, thread_ghost_email) },
-                                    on_reply_all = { on_reply_all(msg.id, thread_ghost_email) },
-                                    on_forward = { on_forward(msg.id, thread_ghost_email) },
-                                    on_more = { bounds ->
-                                        action_target_id = msg.id
-                                        action_menu_anchor = bounds.takeUnless { it == IntRect.Zero }
-                                        show_action_sheet = true
-                                    },
-                                    on_attachment_tap = { att ->
-                                        is_downloading_attachment = true
-                                        mail_vm.download_attachment(att) { result ->
-                                            result.onSuccess { (resolved_att, bytes) ->
-                                                preview_attachment = resolved_att.copy(is_unverified = att.is_unverified)
-                                                preview_bytes = bytes
-                                            }.onFailure { error ->
-                                                show_toast(
-                                                    if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
-                                                    else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
-                                                    else context.getString(R.string.failed_to_load_preview),
-                                                )
-                                            }
-                                            is_downloading_attachment = false
-                                        }
-                                    },
-                                    on_attachment_download = { att ->
-                                        show_toast(context.getString(R.string.downloading_file, att.filename))
-                                        with_attachment_bytes(att) { resolved_att, bytes ->
-                                            request_storage_access {
-                                                scope.launch {
-                                                    announce_saved(save_attachment_to_storage(context, resolved_att, bytes))
-                                                }
-                                            }
-                                        }
-                                    },
-                                    on_attachment_options = { att -> options_attachment = att },
-                                    reactions = if (reactions_enabled && !is_pending_send) message_reactions[msg.id].orEmpty() else emptyList(),
-                                    on_react = { emoji ->
-                                        if (is_pending_send) return@expanded_message
-                                        val blocked = reaction_restriction_for(msg)
-                                        if (blocked != null) {
-                                            show_toast(
-                                                context.getString(
-                                                    org.astermail.android.mail.reaction_restriction_string(blocked),
-                                                ),
-                                            )
-                                            return@expanded_message
-                                        }
-                                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                        dispatch_reaction(msg.id, emoji)
-                                    },
-                                    on_unreact = { emoji ->
-                                        mail_vm.remove_reaction(message_id = msg.id, emoji = emoji) { error ->
-                                            if (error != null) show_toast(error)
-                                        }
-                                    },
-                                    is_system = is_system_sender,
-                                    can_collapse = !is_pending_send && thread_items.size > 1,
-                                    is_pending_send = is_pending_send,
+                    val body_kept = remember(msg.id) { BooleanArray(1) }
+                    if (is_expanded) body_kept[0] = true
+                    if (!is_expanded) {
+                        collapsed_message(
+                            msg = msg,
+                            is_first_card = is_first_card,
+                            is_last_card = is_last_card,
+                            my_email = my_email,
+                            my_profile_pic = my_profile_pic,
+                            message_index = idx,
+                            on_expand = {
+                                anchor_toggle(msg.id)
+                                user_expanded_ids.value = current_expanded_ids + msg.id
+                            },
+                        )
+                    }
+                    if (body_kept[0]) Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(if (is_expanded) Modifier else Modifier.kept_offscreen()),
+                    ) {
+                        order_details_card_for_message(msg = msg, subject = email?.subject.orEmpty())
+                        expanded_message(
+                            msg = msg,
+                            is_last = is_last,
+                            message_index = idx,
+                            allow_auto_translate = !is_spam,
+                            translation_subject = if (msg.id == subject_translation_owner) email?.subject else null,
+                            on_subject_translated = { translated ->
+                                if (msg.id == subject_translation_owner) translated_thread_subject = translated
+                            },
+                            thread_attachments = all_thread_attachments,
+                            my_email = my_email,
+                            my_profile_pic = my_profile_pic,
+                            is_first_card = is_first_card,
+                            is_last_card = is_last_card,
+                            allow_external = message_loads_remote_content(
+                                blocked = block_external_images,
+                                granted = msg.id in allow_external_ids,
+                                grant_allowed = image_grant_allowed,
+                                is_system_sender = is_system_sender,
+                            ),
+                            blocked_for_traffic = blocked_for_traffic_only,
+                            offer_load_once = image_grant_allowed,
+                            offer_always_allow = offer_always_allow_external,
+                            show_raw_headers = settings_state.preferences?.show_raw_headers == true,
+                            on_retry_decrypt = { mail_vm.retry_decrypt_thread() },
+                            retry_in_progress = decrypt_retry_active,
+                            on_recover_data = if (
+                                org.astermail.android.mail.message_locked_by_reset(
+                                    msg.is_undecryptable && msg.is_sealed_to_missing_keys,
+                                    locked_data_state.status,
                                 )
-                            }
-                        } else {
-                            collapsed_message(
-                                msg = msg,
-                                is_first_card = is_first_card,
-                                is_last_card = is_last_card,
-                                my_email = my_email,
-                                my_profile_pic = my_profile_pic,
-                                message_index = idx,
-                                on_expand = {
-                                    anchor_toggle(msg.id)
-                                    user_expanded_ids.value = current_expanded_ids + msg.id
-                                },
-                            )
-                        }
+                            ) {
+                                { show_recover_data_dialog = true }
+                            } else {
+                                null
+                            },
+                            attachments_failed = msg.id in attachment_failure_ids,
+                            attachments_loading = msg.id in attachment_loading_ids,
+                            on_retry_attachments = { mail_vm.retry_thread_attachments() },
+                            identity_changed = identity_changed_senders.contains(
+                                org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
+                            ),
+                            sender_unauthenticated = msg.id in unauthenticated_message_ids,
+                            on_acknowledge_identity = {
+                                mail_vm.acknowledge_identity_change(msg.sender_email)
+                            },
+                            on_load_external = {
+                                allow_external_ids = allow_external_ids + msg.id
+                            },
+                            on_always_allow_external = {
+                                allow_external_ids = allow_external_ids + msg.id
+                                val base = settings_state.preferences
+                                if (base != null) {
+                                    settings_vm.save_preferences(
+                                        base.copy(
+                                            block_external_images = false,
+                                            load_remote_images = "always",
+                                        ),
+                                    )
+                                }
+                            },
+                            on_disable_low_network = {
+                                allow_external_ids = allow_external_ids + msg.id
+                                val base = settings_state.preferences
+                                if (base != null) {
+                                    settings_vm.save_preferences(base.copy(low_network_mode = false))
+                                }
+                            },
+                            show_unsub = msg.id !in dismissed_unsub_ids &&
+                                subscriptions_vm.sender_token(msg.sender_email) !in unsubscribed_tokens,
+                            on_dismiss_unsub = {
+                                dismissed_unsub_ids = dismissed_unsub_ids + msg.id
+                            },
+                            on_body_ready = { ready_body_ids.value = ready_body_ids.value + msg.id },
+                            on_track = { _, _, _ -> },
+                            access_token = settings_vm.get_access_token(),
+                            on_link_click = { url ->
+                                if (!url.startsWith("aster:") || is_system_sender) pending_link = url
+                            },
+                            on_image_click = { src -> lightbox_src = src },
+                            on_unsubscribe = { info ->
+                                dismissed_unsub_ids = dismissed_unsub_ids + msg.id
+                                val unsubscribe_sender = resolve_unsubscribe_sender(
+                                    reaction_identity_for(msg.id),
+                                    thread_state.messages.find { it.id == msg.id }?.raw_item?.routing_token,
+                                )
+                                scope.launch {
+                                    val outcome = execute_unsubscribe(info, unsubscribe_sender) { request ->
+                                        subscriptions_vm.proxy_unsubscribe(request)
+                                    }
+                                    val record_unsubscribed = {
+                                        subscriptions_vm.record_unsubscribed(
+                                            msg.sender_email,
+                                            msg.sender_name,
+                                            info.unsubscribe_link,
+                                            info.list_unsubscribe_header,
+                                        )
+                                    }
+                                    if (outcome == UnsubscribeOutcome.unsubscribed) {
+                                        record_unsubscribed()
+                                        show_toast(context.getString(R.string.toast_unsubscribed))
+                                        return@launch
+                                    }
+                                    val manual_url = get_manual_unsubscribe_url(info)
+                                        ?.takeIf { is_safe_unsubscribe_url(it) }
+                                    if (manual_url == null) {
+                                        dismissed_unsub_ids = dismissed_unsub_ids - msg.id
+                                        show_toast(context.getString(R.string.could_not_unsubscribe))
+                                        return@launch
+                                    }
+                                    app_toast.show(
+                                        TopToastState(
+                                            message = context.getString(R.string.unsubscribe_manual_required),
+                                            undo_label = context.getString(R.string.open_unsubscribe_page),
+                                            duration_ms = 15000L,
+                                            on_undo = {
+                                                try {
+                                                    context.startActivity(
+                                                        Intent(Intent.ACTION_VIEW, Uri.parse(manual_url))
+                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                                    )
+                                                    record_unsubscribed()
+                                                } catch (cancelled: CancellationException) {
+                                                    throw cancelled
+                                                } catch (_: Throwable) {
+                                                    dismissed_unsub_ids = dismissed_unsub_ids - msg.id
+                                                    show_toast(context.getString(R.string.could_not_unsubscribe))
+                                                }
+                                            },
+                                        ),
+                                    )
+                                }
+                            },
+                            on_collapse = {
+                                anchor_toggle(msg.id)
+                                user_expanded_ids.value = current_expanded_ids - msg.id
+                            },
+                            on_sender_trust = { tapped_trust -> profile_sender_trust = tapped_trust },
+                            on_sender_tap = { email, name ->
+                                profile_sender = email to name
+                            },
+                            on_reply = { on_reply(msg.id, thread_ghost_email) },
+                            on_reply_all = { on_reply_all(msg.id, thread_ghost_email) },
+                            on_forward = { on_forward(msg.id, thread_ghost_email) },
+                            on_more = { bounds ->
+                                action_target_id = msg.id
+                                action_menu_anchor = bounds.takeUnless { it == IntRect.Zero }
+                                show_action_sheet = true
+                            },
+                            on_attachment_tap = { att ->
+                                is_downloading_attachment = true
+                                mail_vm.download_attachment(att) { result ->
+                                    result.onSuccess { (resolved_att, bytes) ->
+                                        preview_attachment = resolved_att.copy(is_unverified = att.is_unverified)
+                                        preview_bytes = bytes
+                                    }.onFailure { error ->
+                                        show_toast(
+                                            if (error is AttachmentIntegrityException) context.getString(R.string.attachment_content_mismatch)
+                                            else if (error is AttachmentKeyUnavailableException) context.getString(R.string.attachment_locked)
+                                            else context.getString(R.string.failed_to_load_preview),
+                                        )
+                                    }
+                                    is_downloading_attachment = false
+                                }
+                            },
+                            on_attachment_download = { att ->
+                                show_toast(context.getString(R.string.downloading_file, att.filename))
+                                with_attachment_bytes(att) { resolved_att, bytes ->
+                                    request_storage_access {
+                                        scope.launch {
+                                            announce_saved(save_attachment_to_storage(context, resolved_att, bytes))
+                                        }
+                                    }
+                                }
+                            },
+                            on_attachment_options = { att -> options_attachment = att },
+                            reactions = if (reactions_enabled && !is_pending_send) message_reactions[msg.id].orEmpty() else emptyList(),
+                            on_react = { emoji ->
+                                if (is_pending_send) return@expanded_message
+                                val blocked = reaction_restriction_for(msg)
+                                if (blocked != null) {
+                                    show_toast(
+                                        context.getString(
+                                            org.astermail.android.mail.reaction_restriction_string(blocked),
+                                        ),
+                                    )
+                                    return@expanded_message
+                                }
+                                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                dispatch_reaction(msg.id, emoji)
+                            },
+                            on_unreact = { emoji ->
+                                mail_vm.remove_reaction(message_id = msg.id, emoji = emoji) { error ->
+                                    if (error != null) show_toast(error)
+                                }
+                            },
+                            is_system = is_system_sender,
+                            can_collapse = !is_pending_send && thread_items.size > 1,
+                            is_pending_send = is_pending_send,
+                        )
                     }
                 }
 
@@ -7482,11 +7480,6 @@ internal fun email_html_view(
             probe_hold_dp.value = 0.dp
             probe_height_dp.value = MEASURE_PROBE_HEIGHT
             remeasure_active[0] = false
-            translation_scope.launch {
-                androidx.compose.runtime.withFrameNanos { }
-                androidx.compose.runtime.withFrameNanos { }
-                if (!remeasure_active[0]) height_instant = false
-            }
         }
     }
 
@@ -7821,10 +7814,7 @@ internal fun email_html_view(
       }
       val body_reveal by animateFloatAsState(
           targetValue = if (body_shown || ever_shown) 1f else 0f,
-          animationSpec = androidx.compose.animation.core.tween(
-              durationMillis = org.astermail.android.design.AsterMotionSpec.reduced_fade_ms,
-              easing = AsterEasing.emphasized_decelerate,
-          ),
+          animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
           label = "web_reveal",
       )
       Box(
@@ -8042,7 +8032,7 @@ internal fun email_html_view(
                     animationSpec = if (height_instant || zoom_active || !(body_shown || ever_shown) || measure_probe.value) {
                         snap()
                     } else {
-                        tween(durationMillis = org.astermail.android.design.AsterMotionSpec.collapse_ms, easing = AsterEasing.emphasized)
+                        tween(durationMillis = 220)
                     },
                     label = "body_height",
                 )
@@ -8078,11 +8068,10 @@ internal fun email_html_view(
         )
         }
         }
-        if (!renderer_exhausted.value && body_reveal < 1f) {
+        if (!renderer_exhausted.value && !body_shown && !ever_shown) {
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
-                    .graphicsLayer { alpha = 1f - body_reveal }
                     .background(if (colors.is_translucent) Color.Transparent else inbox_card_read_color(colors))
                     .clipToBounds()
                     .align(Alignment.TopStart),
@@ -8951,18 +8940,10 @@ private fun attachment_fallback_panel(
     }
 }
 
-private const val thread_card_fade_in_ms = 200
-private const val thread_card_fade_out_ms = 100
-
-private fun thread_card_toggle_transform(reduce_motion: Boolean): androidx.compose.animation.ContentTransform {
-    val enter_ms = if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_ms else thread_card_fade_in_ms
-    val exit_ms = if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else thread_card_fade_out_ms
-    return androidx.compose.animation.ContentTransform(
-        targetContentEnter = fadeIn(tween(enter_ms, easing = AsterEasing.emphasized_decelerate)),
-        initialContentExit = fadeOut(tween(exit_ms, easing = AsterEasing.emphasized_accelerate)),
-        sizeTransform = androidx.compose.animation.SizeTransform(clip = true) { _, _ -> snap() },
-    )
-}
+private fun Modifier.kept_offscreen(): Modifier =
+    this
+        .clearAndSetSemantics {}
+        .layout { _, _ -> layout(0, 0) {} }
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.bottom_action(
