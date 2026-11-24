@@ -234,6 +234,16 @@ class EnvelopeBackfillTest {
     }
 
     @Test
+    fun rows_still_waiting_for_keys_are_not_written_to_the_disk_cache() {
+        val rows = folder_cache_rows(
+            "inbox",
+            listOf(row("a"), row("b", sender_name = loading, subject = loading).copy(is_undecryptable = true, is_decrypt_pending = true)),
+            cached_at = 1L,
+        )
+        assertEquals(listOf("a"), rows.map { it.id })
+    }
+
+    @Test
     fun rows_with_a_missing_envelope_are_not_written_to_the_disk_cache() {
         val rows = folder_cache_rows(
             "inbox",
@@ -263,6 +273,9 @@ class EnvelopeBackfillTest {
         assertTrue(needs_envelope_backfill(marked[0].raw_item))
         assertFalse(marked[1].is_envelope_missing)
         assertTrue(marked[2].is_undecryptable)
+        assertTrue(marked[2].is_decrypt_pending)
+        assertEquals(loading, marked[2].sender_name)
+        assertEquals(loading, marked[2].subject)
         assertFalse(marked[2].is_envelope_missing)
         assertEquals(setOf("a"), envelope_missing_ids(marked))
     }

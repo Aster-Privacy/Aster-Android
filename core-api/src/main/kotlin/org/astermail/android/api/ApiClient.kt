@@ -411,6 +411,7 @@ class ApiClient(
             val original_call: HttpClientCall = try {
                 execute(request)
             } catch (error: Throwable) {
+                org.astermail.android.api.network.TransientFailureSignal.note()
                 note_slow_link(error)
                 report_transport_failure(
                     request.url.encodedPathSegments.joinToString("/"),
@@ -418,6 +419,7 @@ class ApiClient(
                 )
                 throw error
             }
+            org.astermail.android.api.network.TransientFailureSignal.note_status(original_call.response.status.value)
             report_failed_call(request.url.encodedPathSegments.joinToString("/"), original_call.response.status.value)
             if (original_call.response.status == HttpStatusCode.Accepted) {
                 val saved_accepted = original_call.save()

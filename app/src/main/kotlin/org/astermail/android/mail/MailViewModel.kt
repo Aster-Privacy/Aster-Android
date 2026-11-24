@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -750,6 +751,20 @@ class MailViewModel @Inject constructor(
         watch_folder_locks()
         viewModelScope.launch {
             _inbox_state
+                .map { envelope_pending_ids(it.items) }
+                .distinctUntilChanged()
+                .collectLatest { ids -> if (ids.isNotEmpty()) settle_pending_rows() }
+        }
+        viewModelScope.launch {
+            _thread_state
+                .map { state ->
+                    if (state.is_loading) emptySet() else settleable_thread_messages(state.messages).map { it.id }.toSet()
+                }
+                .distinctUntilChanged()
+                .collectLatest { ids -> if (ids.isNotEmpty()) settle_pending_thread() }
+        }
+        viewModelScope.launch {
+            _inbox_state
                 .map { state -> state.stats?.let { Triple(it, stats_owner_account, account_generation) } }
                 .distinctUntilChanged()
                 .debounce(folder_cache_persist_debounce_ms)
@@ -847,6 +862,71 @@ class MailViewModel @Inject constructor(
         if (!folder_cache_should_persist(items.isEmpty(), is_loading, initial, has_error)) return null
         return folder to items.take(folder_cache_row_limit)
     }
+
+    private suspend fun settle_pending_rows() {
+        val events = runCatching { repository.key_readiness_events() }.getOrNull() ?: return
+        for (wait in decrypt_settle_delays_ms) {
+            withTimeoutOrNull(wait) { events.drop(1).first() }
+            if (!repository.keys_settled()) {
+                withTimeoutOrNull(wait) { events.first { repository.keys_settled() } }
+                if (!repository.keys_settled()) continue
+            }
+            val pending = _inbox_state.value.items.filter(::is_envelope_pending_row)
+            if (pending.isEmpty()) return
+            val settled = try {
+                repository.settle_pending_rows(pending)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                emptyMap()
+            }
+            if (settled.isNotEmpty()) {
+                _inbox_state.update { it.copy(items = replace_settled_items(it.items, settled)) }
+            }
+            if (_inbox_state.value.items.none(::is_envelope_pending_row)) return
+        }
+    }
+
+    private suspend fun settle_pending_thread() {
+        val events = runCatching { repository.key_readiness_events() }.getOrNull() ?: return
+        for (wait in decrypt_settle_delays_ms) {
+            withTimeoutOrNull(wait) { events.drop(1).first() }
+            if (!repository.keys_settled()) {
+                withTimeoutOrNull(wait) { events.first { repository.keys_settled() } }
+                if (!repository.keys_settled()) continue
+            }
+            val state = _thread_state.value
+            val item_id = state.item?.id ?: return
+            val pending = settleable_thread_messages(state.messages)
+            if (pending.isEmpty() || state.is_loading) return
+            val settled = pending.mapNotNull { message ->
+                try {
+                    repository.decrypt_single_thread_message(message.raw_item)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    null
+                }
+            }.filterNot { it.is_body_pending }.associateBy { it.id }
+            if (settled.isNotEmpty()) {
+                _thread_state.update { current ->
+                    if (current.item?.id != item_id) {
+                        current
+                    } else {
+                        current.copy(
+                            messages = current.messages.map { message ->
+                                if (message.is_body_pending) settled[message.id] ?: message else message
+                            },
+                        )
+                    }
+                }
+            }
+            if (settleable_thread_messages(_thread_state.value.messages).isEmpty()) return
+        }
+    }
+
+    private fun settleable_thread_messages(messages: List<ThreadMessageDecrypted>): List<ThreadMessageDecrypted> =
+        messages.filter { it.is_body_pending && !it.raw_item.encrypted_envelope.isNullOrBlank() }
 
     private suspend fun refill_missing_rows() {
         for (wait in envelope_refill_delays_ms) {

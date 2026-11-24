@@ -290,7 +290,7 @@ class MailPollingWorker(
             var sender: String? = null
             var also_arrived: List<org.astermail.android.mail.InboxItem> = emptyList()
             fun resolve_sender(item: org.astermail.android.mail.InboxItem): String =
-                if (!MailPollingWorker.has_notifiable_text(item.is_envelope_missing, item.is_undecryptable, item.is_decrypt_pending)) {
+                if (!MailPollingWorker.has_notifiable_text(item.is_envelope_missing || item.is_envelope_settling, item.is_undecryptable, item.is_decrypt_pending)) {
                     ""
                 } else if (item.is_undecryptable) {
                     localized(context).getString(org.astermail.android.R.string.app_name)
