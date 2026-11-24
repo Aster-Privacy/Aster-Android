@@ -356,8 +356,10 @@ class AuthRepository @Inject constructor(
         val user_id = session_key_store.get_user_id() ?: return
         if (!system_folder_heal_attempted_user_ids.add(user_id)) return
         background_scope.launch {
-            runCatching { system_folder_bootstrap.ensure_system_folders() }
-                .onFailure { system_folder_heal_attempted_user_ids.remove(user_id) }
+            val complete = runCatching { system_folder_bootstrap.ensure_system_folders() }
+                .map { org.astermail.android.mail.SystemFolderBootstrap.has_every_system_folder(it) }
+                .getOrDefault(false)
+            if (!complete) system_folder_heal_attempted_user_ids.remove(user_id)
         }
     }
 

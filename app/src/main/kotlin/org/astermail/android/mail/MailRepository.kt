@@ -1490,7 +1490,7 @@ class MailRepository @Inject constructor(
         }
         if (listed_without_sent) {
             val healed = try {
-                system_folder_bootstrap.ensure_system_folders()["sent"]
+                system_folder_bootstrap.ensure_system_folders(attempts = 1)["sent"]
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
