@@ -655,6 +655,7 @@ class MailViewModel @Inject constructor(
     var last_list_scope_key: String = ""
     private val folder_cache_time = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val disk_rows = java.util.concurrent.ConcurrentHashMap<String, List<InboxItem>>()
+    private val envelope_refill_round = MutableStateFlow(0L)
     private val disk_probed = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val disk_probe_jobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
     private val item_last_confirmed = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -782,10 +783,12 @@ class MailViewModel @Inject constructor(
                 }
         }
         viewModelScope.launch {
-            _inbox_state
-                .map { envelope_missing_ids(it.items) }
+            combine(
+                _inbox_state.map { envelope_missing_ids(it.items) }.distinctUntilChanged(),
+                envelope_refill_round,
+            ) { ids, round -> ids to round }
                 .distinctUntilChanged()
-                .collectLatest { ids -> if (ids.isNotEmpty()) refill_missing_rows() }
+                .collectLatest { (ids, _) -> if (ids.isNotEmpty()) refill_missing_rows() }
         }
         viewModelScope.launch {
             _inbox_state
@@ -949,6 +952,32 @@ class MailViewModel @Inject constructor(
             if (refilled.isNotEmpty()) {
                 _inbox_state.update { it.copy(items = replace_refilled_items(it.items, refilled)) }
                 return
+            }
+        }
+    }
+
+    private fun adopt_opened_item(opened: InboxItem) {
+        if (!inbox_row_is_settled(opened)) return
+        _inbox_state.update { state ->
+            val items = adopt_opened_row(state.items, opened)
+            if (items === state.items) state else state.copy(items = items)
+        }
+        folder_cache.keys.toList().forEach { key ->
+            val cached = folder_cache[key] ?: return@forEach
+            val items = adopt_opened_row(cached.items, opened)
+            if (items !== cached.items) folder_cache[key] = cached.copy(items = items)
+        }
+        _search_state.update { state ->
+            val items = adopt_opened_row(state.all_items, opened)
+            if (items === state.all_items) state else state.copy(all_items = items)
+        }
+        disk_rows.keys.toList().forEach { folder ->
+            val rows = disk_rows[folder] ?: return@forEach
+            val adopted = adopt_opened_row(rows, opened)
+            if (adopted === rows) return@forEach
+            disk_rows[folder] = adopted
+            viewModelScope.launch {
+                runCatching { folder_cache_store.save(folder, adopted, System.currentTimeMillis()) }
             }
         }
     }
@@ -2595,6 +2624,7 @@ class MailViewModel @Inject constructor(
                 return@launch
             }
             val item = item_result.getOrNull()?.let { apply_tag_override(it) }
+            if (item != null) adopt_opened_item(item)
             if (item != null) resume_failed_open(item_id)
             if (item != null) mark_reactions_seen(item)
             val thread_token = item?.thread_token?.takeIf { grouping }
@@ -6077,6 +6107,8 @@ class MailViewModel @Inject constructor(
         load_more_failures = 0
         load_more_retry_at = 0L
         _inbox_state.update { it.copy(is_refreshing = true, is_loading_more = false) }
+        repository.forget_decrypt_failures()
+        envelope_refill_round.update { it + 1 }
         load_stats()
         val refresh_gen = ++refresh_generation
         inbox_load_generation++

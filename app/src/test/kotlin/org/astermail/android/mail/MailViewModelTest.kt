@@ -3903,4 +3903,67 @@ class MailViewModelTest {
         assertFalse(list_count_refreshing(vm.inbox_state.value))
         assertEquals(3, vm.inbox_state.value.items.size)
     }
+
+    @Test
+    fun `opening a message that decrypts replaces its failed list row`() = runTest {
+        val good = fake_inbox_page(1).items[0]
+        val failed = good.copy(
+            sender_name = "Encrypted",
+            sender_email = "",
+            subject = "Could not decrypt",
+            preview = "",
+            is_read = true,
+            labels = listOf("work_token"),
+            is_undecryptable = true,
+        )
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(InboxPage(listOf(failed), false, null, 1))
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(good.copy(is_read = false))
+        coEvery { repository.fetch_thread(any()) } returns Result.success(emptyList())
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        assertTrue(vm.inbox_state.value.items.single().is_undecryptable)
+
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val row = vm.inbox_state.value.items.single()
+        assertFalse(row.is_undecryptable)
+        assertEquals("sender1@example.com", row.sender_email)
+        assertEquals("Subject 1", row.subject)
+        assertTrue(row.is_read)
+        assertEquals(listOf("work_token"), row.labels)
+    }
+
+    @Test
+    fun `opening a message that still fails keeps the existing row`() = runTest {
+        val good = fake_inbox_page(1).items[0]
+        val failed = good.copy(sender_email = "", subject = "", preview = "", is_undecryptable = true)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns
+            Result.success(InboxPage(listOf(good), false, null, 1))
+        coEvery { repository.fetch_single_message("id_1") } returns Result.success(failed)
+        coEvery { repository.fetch_thread(any()) } returns Result.success(emptyList())
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.load_thread("id_1")
+        advanceUntilIdle()
+
+        val row = vm.inbox_state.value.items.single()
+        assertFalse(row.is_undecryptable)
+        assertEquals("Subject 1", row.subject)
+    }
+
+    @Test
+    fun `pull to refresh forgets remembered decrypt failures`() = runTest {
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(1))
+
+        vm.load_inbox()
+        advanceUntilIdle()
+        vm.refresh()
+        advanceUntilIdle()
+
+        io.mockk.verify { repository.forget_decrypt_failures() }
+    }
 }

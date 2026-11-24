@@ -139,8 +139,11 @@ internal fun pending_test_key_store(): SessionKeyStore {
     return store
 }
 
-internal fun build_repository(session_key_store: SessionKeyStore): MailRepository = MailRepository(
-    mail_api = mockk(relaxed = true),
+internal fun build_repository(
+    session_key_store: SessionKeyStore,
+    mail_api: org.astermail.android.api.mail.MailApi = mockk(relaxed = true),
+): MailRepository = MailRepository(
+    mail_api = mail_api,
     send_api = mockk(relaxed = true),
     snooze_api = mockk(relaxed = true),
     labels_api = mockk(relaxed = true),
