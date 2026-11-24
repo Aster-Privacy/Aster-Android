@@ -27,7 +27,10 @@ import compose.icons.tablericons.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -145,6 +148,7 @@ private fun support_notice() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FeedbackScreen(
     on_back: () -> Unit,
@@ -172,11 +176,13 @@ fun FeedbackScreen(
         support_notice()
         v_gap(AsterSpacing.md)
         section_label(stringResource(R.string.category))
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm)) {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(vertical = AsterSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+        ) {
             category_chip(stringResource(R.string.category_feedback), TablerIcons.Heart, category == "general") { category = "general" }
-            Spacer(Modifier.width(AsterSpacing.sm))
             category_chip(stringResource(R.string.category_idea), TablerIcons.Bulb, category == "feature") { category = "feature" }
-            Spacer(Modifier.width(AsterSpacing.sm))
             category_chip(stringResource(R.string.category_bug), TablerIcons.Bug, category == "bug") { category = "bug" }
         }
         v_gap(AsterSpacing.md)

@@ -149,14 +149,21 @@ fun AsterTextField(
                         leading_icon()
                     }
                 }
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
+                ) {
                     if (value.isEmpty() && placeholder != null) {
                         Text(
                             text = placeholder,
                             color = colors.text_muted,
                             fontSize = 16.sp,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                            overflow = if (singleLine) {
+                                androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            } else {
+                                androidx.compose.ui.text.style.TextOverflow.Clip
+                            },
                         )
                     }
                     BasicTextField(
