@@ -44,7 +44,7 @@ fun folder_cache_rows(
     val rows = ArrayList<FolderRowEntity>(minOf(items.size, limit))
     for (item in items) {
         if (rows.size >= limit) break
-        if (item.id.isBlank() || item.is_envelope_missing || !seen.add(item.id)) continue
+        if (item.id.isBlank() || item.is_envelope_missing || item.is_decrypt_pending || !seen.add(item.id)) continue
         rows.add(
             FolderRowEntity(
                 folder = folder,
@@ -254,7 +254,17 @@ fun folder_cache_mark_placeholders(
                 is_envelope_missing = true,
             )
         !row.is_undecryptable && row.sender_name == placeholder_sender && row.subject == placeholder_subject ->
-            row.copy(is_undecryptable = true)
+            if (loading_text != null) {
+                row.copy(
+                    sender_name = loading_text,
+                    subject = loading_text,
+                    is_undecryptable = true,
+                    is_decrypt_pending = true,
+                    is_envelope_settling = true,
+                )
+            } else {
+                row.copy(is_undecryptable = true)
+            }
         else -> row
     }
 }
