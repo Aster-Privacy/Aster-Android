@@ -26,6 +26,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -41,6 +47,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -53,6 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
+import org.astermail.android.design.AsterSpacing
 
 private const val production_release_url = "https://github.com/Aster-Privacy/Aster-Android/releases/"
 
@@ -91,6 +102,69 @@ fun debug_build_pill_inline(modifier: Modifier = Modifier) {
         ) {
             debug_build_notice(on_collapse = { expanded = false })
         }
+    }
+}
+
+@Composable
+fun debug_build_switcher_card(background: Color, modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    val link_text = stringResource(R.string.debug_banner_link)
+    val body = stringResource(R.string.debug_switcher_body, link_text)
+    val annotated = linked_body(body, link_text, colors.accent_blue)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(AsterRadius.island))
+            .background(background)
+            .padding(horizontal = AsterSpacing.lg, vertical = 14.dp)
+            .testTag("profile_menu_debug_build"),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(colors.warning),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.debug_switcher_title),
+                color = colors.warning,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Text(
+            text = annotated,
+            color = colors.text_secondary,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+private fun linked_body(body: String, link_text: String, link_color: Color) = buildAnnotatedString {
+    val link_start = body.indexOf(link_text)
+    if (link_start < 0) {
+        append(body)
+    } else {
+        append(body.substring(0, link_start))
+        withLink(
+            LinkAnnotation.Url(
+                url = production_release_url,
+                styles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = link_color,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                ),
+            ),
+        ) {
+            append(link_text)
+        }
+        append(body.substring(link_start + link_text.length))
     }
 }
 

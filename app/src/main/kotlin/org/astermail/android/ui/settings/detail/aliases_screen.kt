@@ -38,7 +38,12 @@ import android.content.ClipData
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -110,6 +115,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -128,6 +134,7 @@ import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.AsterSpring
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.tonal_surface_color
@@ -498,9 +505,62 @@ private fun tab_scroll(
 
 internal fun list_item_shape(idx: Int, last_index: Int): RoundedCornerShape = when {
     last_index == 0 -> RoundedCornerShape(AsterRadius.island)
-    idx == 0 -> RoundedCornerShape(topStart = AsterRadius.island, topEnd = AsterRadius.island)
-    idx == last_index -> RoundedCornerShape(bottomStart = AsterRadius.island, bottomEnd = AsterRadius.island)
-    else -> RoundedCornerShape(0.dp)
+    idx == 0 -> RoundedCornerShape(
+        topStart = AsterRadius.island,
+        topEnd = AsterRadius.island,
+        bottomStart = AsterRadius.item,
+        bottomEnd = AsterRadius.item,
+    )
+    idx == last_index -> RoundedCornerShape(
+        topStart = AsterRadius.item,
+        topEnd = AsterRadius.item,
+        bottomStart = AsterRadius.island,
+        bottomEnd = AsterRadius.island,
+    )
+    else -> RoundedCornerShape(AsterRadius.item)
+}
+
+private const val alias_reorder_window_ms = AsterDuration.long_1.toLong()
+
+@Composable
+private fun remember_reorder_placement_spec(order_key: Any): FiniteAnimationSpec<IntOffset>? {
+    var settled_key by remember { mutableStateOf(order_key) }
+    LaunchedEffect(order_key) {
+        delay(alias_reorder_window_ms)
+        settled_key = order_key
+    }
+    if (aster_reduce_motion() || order_key == settled_key) return null
+    return AsterSpring.spatial()
+}
+
+private fun alias_panel_enter(reduce_motion: Boolean): EnterTransition {
+    if (reduce_motion) return EnterTransition.None
+    return expandVertically(
+        animationSpec = tween(AsterDuration.medium_1, easing = AsterEasing.emphasized_decelerate),
+        expandFrom = Alignment.Top,
+    ) + fadeIn(
+        animationSpec = tween(
+            durationMillis = AsterDuration.short_4,
+            delayMillis = AsterDuration.short_1,
+            easing = AsterEasing.standard_decelerate,
+        ),
+    )
+}
+
+private fun alias_panel_exit(reduce_motion: Boolean): ExitTransition {
+    if (reduce_motion) return ExitTransition.None
+    return shrinkVertically(
+        animationSpec = tween(AsterDuration.short_4, easing = AsterEasing.standard),
+        shrinkTowards = Alignment.Top,
+    ) + fadeOut(
+        animationSpec = tween(AsterDuration.short_2, easing = AsterEasing.standard_accelerate),
+    )
+}
+
+private fun alias_chevron_spec(expanded: Boolean, reduce_motion: Boolean): FiniteAnimationSpec<Float> = when {
+    reduce_motion -> snap()
+    expanded -> tween(AsterDuration.medium_1, easing = AsterEasing.emphasized_decelerate)
+    else -> tween(AsterDuration.short_4, easing = AsterEasing.standard)
 }
 
 @Composable
@@ -615,11 +675,20 @@ private fun aliases_tab(
 
     val is_online = remember_is_online()
     val alias_groups = remember(visible_aliases) { group_aliases(visible_aliases) { it.is_pinned } }
+    val alias_order_key = remember(alias_groups, visible_domain_addresses) {
+        Triple(
+            alias_groups.pinned.map { it.id },
+            alias_groups.others.map { it.id },
+            visible_domain_addresses.map { it.id },
+        )
+    }
+    val alias_placement_spec = remember_reorder_placement_spec(alias_order_key)
     val alias_row_item: @Composable (org.astermail.android.api.settings.AliasInfo, Int, Int) -> Unit =
         { alias, idx, last_index ->
-            val expanded = state.expanded_alias_ids.contains(alias.id)
-            LaunchedEffect(alias.id, always_expand_aliases) {
-                if (always_expand_aliases) vm.set_alias_expanded(alias.id, true)
+            val expanded = if (always_expand_aliases) {
+                !state.collapsed_alias_ids.contains(alias.id)
+            } else {
+                state.expanded_alias_ids.contains(alias.id)
             }
             alias_list_row(
                 alias = alias,
@@ -642,7 +711,7 @@ private fun aliases_tab(
                 on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
                 on_restore = { claimed -> vm.restore_orphaned_alias(alias.id, claimed) },
                 expanded = expanded,
-                on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
+                on_toggle_expanded = { vm.toggle_alias_expanded(alias.id, always_expand_aliases) },
                 on_open_detail = { on_open_alias_detail(alias.id) },
                 on_compose_from = { on_compose_from(alias.address) },
                     )
@@ -876,7 +945,8 @@ private fun aliases_tab(
                         items = alias_groups.pinned,
                         key = { _, alias -> "alias_${alias.id}" },
                     ) { idx, alias ->
-                        Box(modifier = Modifier.animateItem()) {
+                        Column(modifier = Modifier.animateItem(placementSpec = alias_placement_spec)) {
+                            if (idx > 0) Spacer(Modifier.height(AsterSpacing.row_gap))
                             alias_row_item(alias, idx, alias_groups.pinned.lastIndex)
                         }
                     }
@@ -893,7 +963,8 @@ private fun aliases_tab(
                     items = alias_groups.others,
                     key = { _, alias -> "alias_${alias.id}" },
                 ) { idx, alias ->
-                    Box(modifier = Modifier.animateItem()) {
+                    Column(modifier = Modifier.animateItem(placementSpec = alias_placement_spec)) {
+                        if (idx > 0) Spacer(Modifier.height(AsterSpacing.row_gap))
                         alias_row_item(alias, idx, alias_groups.others.lastIndex)
                     }
                 }
@@ -911,7 +982,8 @@ private fun aliases_tab(
                     items = visible_domain_addresses,
                     key = { _, addr -> "cda_${addr.id}" },
                 ) { idx, addr ->
-                    Box(modifier = Modifier.animateItem()) {
+                    Column(modifier = Modifier.animateItem(placementSpec = alias_placement_spec)) {
+                    if (idx > 0) Spacer(Modifier.height(AsterSpacing.row_gap))
                     custom_domain_address_row(
                         addr = addr,
                         idx = idx,
@@ -1196,6 +1268,9 @@ internal fun alias_list_row(
     }
     val can_toggle = grace_ends == null && !alias.is_retained_primary && !alias.decryption_failed
     val receive_label = stringResource(R.string.alias_receive_mail)
+    val reduce_motion = aster_reduce_motion()
+    val panel_state = remember(alias.id) { MutableTransitionState(expanded) }
+    panel_state.targetState = expanded
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1248,29 +1323,13 @@ internal fun alias_list_row(
             }
             Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    alias_address_text(
-                        address = alias.address,
-                        color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
-                        font_size = 15.sp,
-                        font_weight = FontWeight.SemiBold,
-                        test_tag = "alias_address_${alias.id}",
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (alias.is_pinned && !alias.decryption_failed) {
-                        Icon(
-                            imageVector = pin_icon_filled,
-                            contentDescription = stringResource(R.string.pinned),
-                            tint = colors.accent_blue,
-                            modifier = Modifier
-                                .padding(top = 3.dp)
-                                .size(14.dp),
-                        )
-                    }
-                }
+                alias_address_text(
+                    address = alias.address,
+                    color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
+                    font_size = 15.sp,
+                    font_weight = FontWeight.SemiBold,
+                    test_tag = "alias_address_${alias.id}",
+                )
                 if (alias.decryption_failed) {
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -1288,6 +1347,17 @@ internal fun alias_list_row(
                     }
                     Spacer(Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (alias.is_pinned) {
+                            Icon(
+                                imageVector = pin_icon_filled,
+                                contentDescription = stringResource(R.string.pinned),
+                                tint = colors.accent_blue,
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .testTag("alias_pin_indicator_${alias.id}"),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                        }
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
@@ -1337,10 +1407,7 @@ internal fun alias_list_row(
             if (on_toggle_expanded != null && !alias.decryption_failed) {
                 val chevron_turn by animateFloatAsState(
                     targetValue = if (expanded) 180f else 0f,
-                    animationSpec = tween(
-                        durationMillis = AsterDuration.short_4,
-                        easing = AsterEasing.standard_in_out,
-                    ),
+                    animationSpec = alias_chevron_spec(expanded, reduce_motion),
                     label = "alias_chevron",
                 )
                 AsterIconButton(
@@ -1505,29 +1572,9 @@ internal fun alias_list_row(
                 stringResource(R.string.forwards_to_inbox)
             }
             AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically(
-                    animationSpec = tween(
-                        durationMillis = AsterDuration.short_4,
-                        easing = AsterEasing.standard_in_out,
-                    ),
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = AsterDuration.short_4,
-                        easing = AsterEasing.standard_in_out,
-                    ),
-                ),
-                exit = shrinkVertically(
-                    animationSpec = tween(
-                        durationMillis = AsterDuration.short_3,
-                        easing = AsterEasing.standard_in_out,
-                    ),
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = AsterDuration.short_3,
-                        easing = AsterEasing.standard_in_out,
-                    ),
-                ),
+                visibleState = panel_state,
+                enter = alias_panel_enter(reduce_motion),
+                exit = alias_panel_exit(reduce_motion),
             ) {
                 Box(
                     modifier = Modifier

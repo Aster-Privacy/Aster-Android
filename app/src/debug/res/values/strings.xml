@@ -2,5 +2,7 @@
 <resources>
     <string name="debug_banner_label" translatable="false">DEBUG BUILD</string>
     <string name="debug_banner_link" translatable="false">production build</string>
+    <string name="debug_switcher_title" translatable="false">Debug build</string>
+    <string name="debug_switcher_body" translatable="false">This build is for developers and can contain serious bugs. For everyday use, install the latest %1$s.</string>
     <string name="debug_banner_body" translatable="false">This is a debug build, intended for developers only, and may contain serious bugs. Please use the latest %1$s instead.</string>
 </resources>

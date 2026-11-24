@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.common.lazy_top_fade
 import org.astermail.android.ui.common.aster_modal_sheet
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
 import compose.icons.TablerIcons
@@ -249,6 +250,9 @@ internal fun fitted_viewport_width(document: String): Int? =
     FITTED_VIEWPORT_WIDTH.find(document)?.groupValues?.get(1)?.toIntOrNull()
 
 private val MEASURE_PROBE_HEIGHT = 24.dp
+
+private const val QUOTE_CLOSE_SCRIPT =
+    "document.querySelectorAll('details.aster-quoted-wrapper[open],details.aster-forwarded-collapse[open]').forEach(function(d){d.open=false})"
 
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
     val sample = if (html.length > 40000) html.substring(0, 40000) else html
@@ -1679,6 +1683,7 @@ fun MailDetailScreen(
                     .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
                     .detail_content_handoff(email_id, thread_revealed)
                     .clipToBounds()
+                    .lazy_top_fade(list_state, 28.dp)
             ) {
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
@@ -6284,6 +6289,8 @@ internal class mail_body_web_view(
     ctx: android.content.Context,
 ) : android.webkit.WebView(ctx) {
 
+    override fun requestRectangleOnScreen(rectangle: android.graphics.Rect?, immediate: Boolean): Boolean = false
+
     var selection_active: Boolean = false
         private set
 
@@ -7496,12 +7503,24 @@ internal fun email_html_view(
                         main_handler.post {
                             if (!alive[0] || target.destroyed || measure.loaded_built != built) return@post
                             val shift = measure.quote.on_collapse_requested()
-                            load_body(target, built)
-                            pending_quote_collapse[0] = pending_collapse(
-                                generation = measure.load_generation,
-                                collapsed_dp = measure.quote.collapsed_height_dp,
-                                shift_dp = if (compensate) shift else 0f,
-                            )
+                            val collapsed = measure.quote.collapsed_height_dp
+                            if (collapsed == null) {
+                                load_body(target, built)
+                                pending_quote_collapse[0] = pending_collapse(
+                                    generation = measure.load_generation,
+                                    collapsed_dp = null,
+                                    shift_dp = if (compensate) shift else 0f,
+                                )
+                                return@post
+                            }
+                            target.evaluateJavascript(QUOTE_CLOSE_SCRIPT, null)
+                            target.forget_content_height()
+                            measure.view_dp = collapsed
+                            measure.view_is_known_height = true
+                            val key = message_key
+                            if (compensate && shift > 0f && key != null) {
+                                body_holder?.on_quote_collapse?.invoke(key, shift)
+                            }
                         }
                         return true
                     }

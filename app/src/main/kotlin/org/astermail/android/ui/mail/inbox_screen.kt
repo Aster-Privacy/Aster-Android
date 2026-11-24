@@ -161,7 +161,6 @@ import org.astermail.android.R
 import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.glass_chrome
 import org.astermail.android.ui.common.bottom_scrim_fade
-import org.astermail.android.debugtools.debug_build_pill_inline
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterMaterial
@@ -4075,7 +4074,6 @@ internal fun inbox_top_bar(
                         }
                     }
                 }
-                debug_build_pill_inline()
                 org.astermail.android.ui.upgrade.special_offer_header_button()
                 if (show_tools) {
                     filter_button()

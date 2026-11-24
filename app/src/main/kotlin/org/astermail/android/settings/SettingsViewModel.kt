@@ -276,6 +276,7 @@ data class SettingsUiState(
     val sending_blocks_loaded: Boolean = false,
     val sending_block_pending_ids: Set<String> = emptySet(),
     val expanded_alias_ids: Set<String> = emptySet(),
+    val collapsed_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
     val recovery_email_address: String? = null,
@@ -2105,26 +2106,26 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun toggle_alias_expanded(alias_id: String) {
-        val expanded = _state.value.expanded_alias_ids.contains(alias_id)
-        set_alias_expanded(alias_id, !expanded)
-    }
-
-    fun set_alias_expanded(alias_id: String, expanded: Boolean) {
-        if (_state.value.expanded_alias_ids.contains(alias_id) == expanded) {
-            if (expanded) load_alias_detail(alias_id)
-            return
-        }
+    fun toggle_alias_expanded(alias_id: String, expanded_by_default: Boolean = false) {
         _state.update { s ->
-            s.copy(
-                expanded_alias_ids = if (expanded) {
-                    s.expanded_alias_ids + alias_id
-                } else {
-                    s.expanded_alias_ids - alias_id
-                },
-            )
+            if (expanded_by_default) {
+                s.copy(
+                    collapsed_alias_ids = if (s.collapsed_alias_ids.contains(alias_id)) {
+                        s.collapsed_alias_ids - alias_id
+                    } else {
+                        s.collapsed_alias_ids + alias_id
+                    },
+                )
+            } else {
+                s.copy(
+                    expanded_alias_ids = if (s.expanded_alias_ids.contains(alias_id)) {
+                        s.expanded_alias_ids - alias_id
+                    } else {
+                        s.expanded_alias_ids + alias_id
+                    },
+                )
+            }
         }
-        if (expanded) load_alias_detail(alias_id)
     }
 
     fun load_alias_detail(alias_id: String, force: Boolean = false) {

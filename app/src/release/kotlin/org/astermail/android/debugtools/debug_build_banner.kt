@@ -23,6 +23,7 @@ package org.astermail.android.debugtools
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun debug_build_banner() {
@@ -30,4 +31,8 @@ fun debug_build_banner() {
 
 @Composable
 fun debug_build_pill_inline(modifier: Modifier = Modifier) {
+}
+
+@Composable
+fun debug_build_switcher_card(background: Color, modifier: Modifier = Modifier) {
 }

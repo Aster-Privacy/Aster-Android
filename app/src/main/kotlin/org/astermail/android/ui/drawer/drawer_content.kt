@@ -2639,6 +2639,7 @@ internal fun workspace_switcher_sheet(
                     )
                 }
             }
+            org.astermail.android.debugtools.debug_build_switcher_card(background = card)
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }
