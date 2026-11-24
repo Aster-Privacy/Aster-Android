@@ -25,6 +25,7 @@ import android.content.Context
 import android.os.PowerManager
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlinx.coroutines.runBlocking
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.PushService
 import org.unifiedpush.android.connector.data.PushEndpoint
@@ -35,7 +36,9 @@ class AsterPushService : PushService() {
     override fun onMessage(message: PushMessage, instance: String) {
         val app = applicationContext
         if (!message.decrypted) {
-            MailPollingWorker.enqueue_forced_notify(app)
+            run_off_main(app, on_rejected = { MailPollingWorker.enqueue_forced_notify(app) }) {
+                fetch_and_notify(app)
+            }
             return
         }
         val payload = String(message.content, Charsets.UTF_8)
@@ -82,8 +85,15 @@ class AsterPushService : PushService() {
     private fun deliver_payload(context: Context, payload: String) {
         val result = runCatching { handle_push_payload(context, payload) }
             .getOrDefault(PushResult.NeedsFetch)
-        if (result == PushResult.NeedsFetch) {
-            runCatching { MailPollingWorker.enqueue_forced_notify(context) }
+        if (result == PushResult.NeedsFetch) fetch_and_notify(context)
+    }
+
+    private fun fetch_and_notify(context: Context) {
+        runBlocking {
+            settle_push_fetch(
+                fetch_now = { MailPollingWorker.notify_now(context) },
+                enqueue_fallback = { MailPollingWorker.enqueue_forced_notify(context) },
+            )
         }
     }
 
@@ -114,7 +124,7 @@ class AsterPushService : PushService() {
 
     companion object {
         private const val push_wake_lock_tag = "aster:unified_push"
-        private const val push_wake_lock_timeout_ms = 60_000L
+        private const val push_wake_lock_timeout_ms = PUSH_FETCH_WAKE_LOCK_MS
         private val push_executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "aster-unified-push").apply { isDaemon = true }
         }

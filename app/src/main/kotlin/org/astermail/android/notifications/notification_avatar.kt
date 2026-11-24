@@ -47,6 +47,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
 import okio.BufferedSource
 import org.astermail.android.R
+import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.contacts.ContactPhotoDirectory
 import org.astermail.android.mail.AsterProfileResolverHolder
 import org.astermail.android.mail.InboxItem
@@ -81,6 +82,7 @@ import org.astermail.android.ui.mail.note_favicon_hit
 import org.astermail.android.ui.mail.note_favicon_definitive_miss
 import org.astermail.android.ui.mail.read_skeleton_geometry
 import org.astermail.android.ui.mail.sender_logo_backdrop
+import java.net.URI
 import java.text.BreakIterator
 import java.util.concurrent.ConcurrentHashMap
 import java.util.Locale
@@ -465,7 +467,10 @@ object NotificationAvatars {
             NotificationAvatarPlan.AppIcon -> null
             is NotificationAvatarPlan.Initials -> initials_bitmap(context, plan)
             is NotificationAvatarPlan.SystemLogo -> system_logo_bitmap(context) ?: initials_bitmap(context, plan.fallback)
-            is NotificationAvatarPlan.Picture -> picture_bitmap(context, plan, budget) ?: initials_bitmap(context, plan.fallback)
+            is NotificationAvatarPlan.Picture -> sender_icon_or_initials(
+                picture = { picture_bitmap(context, plan, budget) },
+                initials = { initials_bitmap(context, plan.fallback) },
+            )
         }
 
     private suspend fun picture_bitmap(
@@ -474,7 +479,7 @@ object NotificationAvatars {
         budget: NotificationAvatarBudget,
     ): Bitmap? {
         contact_photo_bitmap(context, plan.email)?.let { return it }
-        if (plan.allow_profile_picture) profile_picture_bitmap(context, plan.email)?.let { return it }
+        if (plan.allow_profile_picture) profile_picture_bitmap(context, plan.email, budget)?.let { return it }
         val root_domain = plan.root_domain ?: return null
         return favicon_bitmap(context, root_domain, plan.allow_network, budget)
     }
@@ -485,18 +490,35 @@ object NotificationAvatars {
         return circle_bitmap(context, source, backdrop = 0, inset = 0f)
     }
 
-    private suspend fun profile_picture_bitmap(context: Context, email: String): Bitmap? {
+    private suspend fun profile_picture_bitmap(
+        context: Context,
+        email: String,
+        budget: NotificationAvatarBudget,
+    ): Bitmap? {
         val lower = email.trim().lowercase(Locale.ROOT)
-        val own = runCatching { OwnAddressAvatars.get(lower) }.getOrNull()
-        val aster = runCatching {
-            AsterProfileResolverHolder.shared?.profiles?.value?.get(lower)?.profile_picture
-        }.getOrNull()
-        val url = (own ?: aster)?.takeIf { it.isNotBlank() } ?: return null
+        val resolver = AsterProfileResolverHolder.shared
+        return resolve_sender_picture(
+            known_url = {
+                runCatching { OwnAddressAvatars.get(lower) }.getOrNull()?.takeIf { it.isNotBlank() }
+                    ?: resolver?.profiles?.value?.get(lower)?.profile_picture
+            },
+            lookup_url = { resolver?.resolve_picture(lower) },
+            load = { url, allow_network -> load_profile_picture(context, url, allow_network) },
+            api_host = api_host(),
+            budget = budget,
+        )
+    }
+
+    private fun api_host(): String =
+        runCatching { URI(ApiBuildConfig.API_BASE_URL).host.orEmpty() }.getOrDefault("")
+
+    private suspend fun load_profile_picture(context: Context, url: String, allow_network: Boolean): Bitmap? {
         val request = ImageRequest.Builder(context)
             .data(decode_avatar_model(url))
             .diskCacheKey(url)
             .memoryCachePolicy(CachePolicy.DISABLED)
-            .networkCachePolicy(CachePolicy.DISABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .networkCachePolicy(if (allow_network) CachePolicy.ENABLED else CachePolicy.DISABLED)
             .allowHardware(false)
             .size(NOTIFICATION_LOGO_DECODE_PX)
             .decoderFactory(notification_logo_decoder(NOTIFICATION_LOGO_DECODE_PX))

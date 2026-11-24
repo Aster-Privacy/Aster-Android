@@ -32,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -110,6 +111,20 @@ class AsterProfileResolver @Inject constructor(
                 }
             }
         }
+    }
+
+    suspend fun resolve_picture(email: String): String? {
+        val lower = email.trim().lowercase(java.util.Locale.ROOT)
+        if (lower.isEmpty() || !lower.contains('@')) return null
+        if (!is_aster_domain(lower.substringAfter('@', ""))) return null
+        _profiles.value[lower]?.profile_picture?.takeIf { it.isNotBlank() }?.let { return it }
+        if (recently_resolved(lower)) return null
+        val fetched = auth_api.batch_profiles(listOf(lower)).profiles[lower]
+        val updated = _profiles.updateAndGet { current ->
+            current + (lower to merge_profiles(current[lower], fetched))
+        }
+        resolved_at[lower] = System.currentTimeMillis()
+        return updated[lower]?.profile_picture?.takeIf { it.isNotBlank() }
     }
 
     fun request_all(emails: Collection<String>) {

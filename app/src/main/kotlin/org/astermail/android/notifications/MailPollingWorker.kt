@@ -286,6 +286,7 @@ class MailPollingWorker(
                 return true
             }
             runCatching { repo.ensure_custom_categories_loaded() }
+            runCatching { repo.await_decrypt_keys(KEY_SETTLE_TIMEOUT_MS) }
             var newest: org.astermail.android.mail.InboxItem? = null
             var sender: String? = null
             var also_arrived: List<org.astermail.android.mail.InboxItem> = emptyList()
@@ -308,6 +309,7 @@ class MailPollingWorker(
                     )
                 }
             var fetched_any_page = false
+            var unreadable: org.astermail.android.mail.InboxItem? = null
             var retry_delay_ms = 1_500L
             var protected_pending = false
             var healed = false
@@ -372,6 +374,7 @@ class MailPollingWorker(
                 }
 
                 val readable = candidates.firstOrNull { resolve_sender(it).isNotBlank() }
+                if (readable == null) unreadable = candidates.firstOrNull() ?: unreadable
                 val candidate_sender = readable?.let { resolve_sender(it) }
                 if (readable != null &&
                     !candidate_sender.isNullOrBlank() &&
@@ -384,6 +387,27 @@ class MailPollingWorker(
             }
             val fresh = newest
             val resolved_sender = sender
+            val neutral = unreadable
+            if ((fresh == null || resolved_sender.isNullOrBlank()) && neutral != null &&
+                claim_item_notification(context, neutral.id)
+            ) {
+                val neutral_silent = message_alert_silent(throttled, true, muted_categories)
+                if (content_hidden) {
+                    val posted = show_generic(context, arrived, silent = neutral_silent)
+                    if (!posted) release_item_notification(context, neutral.id)
+                    posted_this_run = posted
+                    return posted || !throttled
+                }
+                return post_message_notification(
+                    item_id = neutral.id,
+                    sender = neutral_sender_label(neutral),
+                    subject = "",
+                    preview = "",
+                    message_id = message_notification_id(neutral.id.hashCode()),
+                    silent = neutral_silent,
+                    arrived_at_ms = item_arrived_ms(neutral),
+                )
+            }
             if (fresh == null || resolved_sender.isNullOrBlank()) {
                 if (throttled) return false
                 when (fallback_alert(fetched_any_page, protected_pending, mute_filters_active)) {
@@ -405,6 +429,7 @@ class MailPollingWorker(
                 fresh.preview,
                 fresh.is_undecryptable,
                 fresh.is_decrypt_pending,
+                fresh.is_envelope_missing || fresh.is_envelope_settling,
             )
             val message_id = message_notification_id(fresh.id.hashCode())
             val avatar_settings = notification_avatar_settings(
@@ -412,6 +437,13 @@ class MailPollingWorker(
                 runCatching { repo.cached_avatar_preferences() }.getOrNull(),
             )
             val avatar_budget = NotificationAvatarBudget()
+            warm_avatar_trust(
+                settings = avatar_settings,
+                content_hidden = content_hidden,
+                budget = avatar_budget,
+                ready = org.astermail.android.security.SenderTrustStore::contacts_ready,
+                warm = { entry?.notification_contacts()?.get()?.warm_sender_trust() ?: false },
+            )
             val posted = post_message_notification(
                 item_id = fresh.id,
                 sender = resolved_sender,
@@ -420,6 +452,7 @@ class MailPollingWorker(
                 message_id = message_id,
                 silent = silent,
                 large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget, content_hidden),
+                arrived_at_ms = item_arrived_ms(fresh),
             )
             if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget, content_hidden)
             return posted
@@ -454,6 +487,7 @@ class MailPollingWorker(
                     item.preview,
                     item.is_undecryptable,
                     item.is_decrypt_pending,
+                    item.is_envelope_missing || item.is_envelope_settling,
                 )
                 post_message_notification(
                     item_id = item.id,
@@ -463,6 +497,7 @@ class MailPollingWorker(
                     message_id = message_notification_id(item.id.hashCode()),
                     silent = true,
                     large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget, content_hidden),
+                    arrived_at_ms = item_arrived_ms(item),
                 )
             }
         }
@@ -510,9 +545,9 @@ class MailPollingWorker(
             message_id: Int,
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
+            arrived_at_ms: Long? = null,
         ): Boolean {
             return notify_lock.withLock {
-                val quiet = silent || message_notified_recently(context)
                 val posted = runCatching {
                     show_message(
                         context = context,
@@ -521,8 +556,9 @@ class MailPollingWorker(
                         preview = preview,
                         message_id = message_id,
                         item_id = item_id,
-                        silent = quiet,
+                        silent = silent,
                         large_icon = large_icon,
+                        arrived_at_ms = arrived_at_ms,
                     )
                 }.isSuccess
                 if (!posted) release_item_notification(context, item_id)
@@ -545,6 +581,7 @@ class MailPollingWorker(
         fun app_lock_store(): org.astermail.android.security.AppLockStore
         fun api_client(): ApiClient
         fun account_store(): org.astermail.android.storage.AccountStore
+        fun notification_contacts(): dagger.Lazy<org.astermail.android.contacts.ContactsRepository>
     }
 
     enum class UnreadableRetry { None, Wait, Heal }
@@ -622,6 +659,9 @@ class MailPollingWorker(
         private const val KEY_LAST_GENERIC_COUNT = "last_generic_notify_count"
         private const val KEY_LAST_GENERIC_MS = "last_generic_notify_ms"
         private const val GENERIC_NOTIFY_COOLDOWN_MS = 60_000L
+        private const val KEY_LAST_GENERIC_ALERT_MS = "last_generic_alert_ms"
+        const val GENERIC_ALERT_COVER_MS = 10L * 60L * 1000L
+        const val KEY_SETTLE_TIMEOUT_MS = 8_000L
         private val notify_lock = Mutex()
         val FORCED_NOTIFY_POLICY: ExistingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE
         private const val SENDER_MAX_LENGTH = 80
@@ -866,7 +906,9 @@ class MailPollingWorker(
             preview: String,
             is_undecryptable: Boolean,
             is_decrypt_pending: Boolean,
+            is_envelope_placeholder: Boolean = false,
         ): Pair<String, String> = when {
+            is_envelope_placeholder -> "" to ""
             !is_undecryptable -> subject.trim() to preview
             is_decrypt_pending -> subject.trim() to ""
             else -> "" to ""
@@ -949,6 +991,7 @@ class MailPollingWorker(
                 .remove(KEY_BASELINE_MS)
                 .remove(KEY_NOTIFIED_ITEM_IDS)
                 .remove(KEY_LAST_MESSAGE_NOTIFY_MS)
+                .remove(KEY_LAST_GENERIC_ALERT_MS)
                 .apply()
         }
 
@@ -1096,23 +1139,94 @@ class MailPollingWorker(
             return is_within_message_dedupe_window(last, System.currentTimeMillis())
         }
 
+        fun message_alert_quiet(
+            silent: Boolean,
+            last_message_ms: Long,
+            last_generic_alert_ms: Long,
+            arrived_ms: Long?,
+            now_ms: Long,
+        ): Boolean = silent ||
+            is_within_message_dedupe_window(last_message_ms, now_ms) ||
+            is_within_message_dedupe_window(last_generic_alert_ms, now_ms) ||
+            (
+                arrived_ms != null &&
+                    last_generic_alert_ms > 0L &&
+                    arrived_ms <= last_generic_alert_ms &&
+                    now_ms - last_generic_alert_ms in 0 until GENERIC_ALERT_COVER_MS
+                )
+
+        @Synchronized
+        fun message_post_quiet(
+            context: Context,
+            silent: Boolean,
+            arrived_at_ms: Long?,
+            now_ms: Long = System.currentTimeMillis(),
+        ): Boolean {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return message_alert_quiet(
+                silent = silent,
+                last_message_ms = prefs.getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L),
+                last_generic_alert_ms = prefs.getLong(KEY_LAST_GENERIC_ALERT_MS, 0L),
+                arrived_ms = arrived_at_ms,
+                now_ms = now_ms,
+            )
+        }
+
+        @Synchronized
+        fun claim_generic_post(
+            context: Context,
+            unread_count: Int,
+            silent: Boolean,
+            now_ms: Long = System.currentTimeMillis(),
+        ): GenericPost {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            if (is_within_message_dedupe_window(prefs.getLong(KEY_LAST_MESSAGE_NOTIFY_MS, 0L), now_ms)) {
+                return GenericPost.Skip
+            }
+            val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
+                now_ms - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
+            if (repeat_of_last) return GenericPost.Skip
+            val quiet = silent ||
+                is_within_message_dedupe_window(prefs.getLong(KEY_LAST_GENERIC_ALERT_MS, 0L), now_ms)
+            val edit = prefs.edit()
+                .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
+                .putLong(KEY_LAST_GENERIC_MS, now_ms)
+            if (!quiet) edit.putLong(KEY_LAST_GENERIC_ALERT_MS, now_ms)
+            edit.commit()
+            return if (quiet) GenericPost.Quiet else GenericPost.Audible
+        }
+
+        fun claim_push_generic(context: Context, item_id: String): Boolean =
+            item_id.isBlank() || claim_item_notification(context, item_id)
+
+        fun item_arrived_ms(item: org.astermail.android.mail.InboxItem): Long? =
+            parse_timestamp_ms(item.raw_item.created_at) ?: parse_timestamp_ms(item.timestamp)
+
+        fun neutral_sender_label(item: org.astermail.android.mail.InboxItem): String =
+            if (item.is_envelope_missing || item.is_envelope_settling) {
+                ""
+            } else {
+                notification_sender_label(
+                    "",
+                    item.display_sender_email?.takeIf { it.isNotBlank() } ?: item.sender_email,
+                )
+            }
+
+        private fun parse_timestamp_ms(timestamp: String?): Long? {
+            val value = timestamp?.takeIf { it.isNotBlank() } ?: return null
+            return runCatching { java.time.Instant.parse(value).toEpochMilli() }
+                .getOrElse { runCatching { java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli() }.getOrNull() }
+        }
+
         @Synchronized
         fun show_generic(context: Context, unread_count: Int, silent: Boolean = false): Boolean {
             if (!can_post(context)) return false
-            if (message_notified_recently(context)) return false
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val now = System.currentTimeMillis()
-            val repeat_of_last = prefs.getInt(KEY_LAST_GENERIC_COUNT, -1) == unread_count &&
-                now - prefs.getLong(KEY_LAST_GENERIC_MS, 0L) < GENERIC_NOTIFY_COOLDOWN_MS
-            if (repeat_of_last) return false
-            prefs.edit()
-                .putInt(KEY_LAST_GENERIC_COUNT, unread_count)
-                .putLong(KEY_LAST_GENERIC_MS, now)
-                .commit()
+            val decision = claim_generic_post(context, unread_count, silent)
+            if (decision == GenericPost.Skip) return false
             val text = localized(context).resources.getQuantityString(
                 R.plurals.new_mail_notification, unread_count, unread_count,
             )
-            val notification = base_builder(context, silent)
+            val notification = base_builder(context, decision == GenericPost.Quiet)
                 .setContentTitle(localized(context).getString(R.string.app_name))
                 .setContentText(text)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
@@ -1172,8 +1286,10 @@ class MailPollingWorker(
             item_id: String = "",
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
+            arrived_at_ms: Long? = null,
         ) {
             if (!can_post(context)) return
+            val quiet = message_post_quiet(context, silent, arrived_at_ms)
             val app_lock_on = app_lock_configured(context)
             val private_mode = org.astermail.android.security.AppLockNotificationPolicy.redacts_public_version(
                 app_lock_on,
@@ -1186,7 +1302,7 @@ class MailPollingWorker(
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
             val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
                 ?.takeIf { org.astermail.android.security.AppLockNotificationPolicy.offers_copy_code(app_lock_on, true) }
-            val builder = base_builder(context, silent)
+            val builder = base_builder(context, quiet)
                 .setWhen(System.currentTimeMillis())
                 .setShowWhen(true)
                 .setGroup(GROUP_KEY_NEW_MAIL)
@@ -1824,3 +1940,5 @@ class MailPollingWorker(
 }
 
 enum class FallbackAlert { None, Audible, Silent }
+
+enum class GenericPost { Skip, Quiet, Audible }

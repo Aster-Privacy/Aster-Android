@@ -186,6 +186,26 @@ class ContactsRepository @Inject constructor(
         )
     }
 
+    suspend fun warm_sender_trust(): Boolean {
+        if (SenderTrustStore.contacts_ready()) return true
+        val account = current_account() ?: return false
+        val dao = cache_dao ?: return false
+        val trust_generation = SenderTrustStore.current_generation()
+        val cached = cached_contacts(account, dao)
+        val contacts = when {
+            cached.isNotEmpty() -> cached
+            is_online() -> load_contacts(null)
+            else -> return false
+        }
+        if (current_account() != account) return false
+        val photo_entries = withContext(default_dispatcher) {
+            contacts.mapNotNull { contact_photo_entry(it) }
+        }
+        ContactPhotoDirectory.offer(photo_entries)
+        publish_trust_contacts(contacts, trust_generation)
+        return SenderTrustStore.contacts_ready()
+    }
+
     override suspend fun list_photo_entries(): List<ContactPhotoEntry> {
         val passphrase = session_key_store.get_passphrase() ?: throw IllegalStateException("no session")
         passphrase.fill(0)
