@@ -61,6 +61,46 @@ class OfferPreferencesTest {
     }
 
     @Test
+    fun `view model reports settled only after the first load finishes`() = runTest {
+        val response = CompletableDeferred<OfferPreferences>()
+        coEvery { billing_api.get_offer_preferences() } coAnswers { response.await() }
+        val vm = OfferPreferencesViewModel(store)
+
+        vm.load()
+        runCurrent()
+        assertFalse(vm.state.value.settled)
+
+        response.complete(OfferPreferences(in_app_offers_enabled = false))
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.settled)
+        assertTrue(vm.state.value.available)
+        assertFalse(vm.state.value.enabled)
+    }
+
+    @Test
+    fun `view model settles with the row hidden when the load fails`() = runTest {
+        coEvery { billing_api.get_offer_preferences() } throws java.io.IOException("offline")
+        val vm = OfferPreferencesViewModel(store)
+
+        vm.load()
+        advanceUntilIdle()
+
+        assertTrue(vm.state.value.settled)
+        assertFalse(vm.state.value.available)
+    }
+
+    @Test
+    fun `view model starts settled when the store already loaded`() = runTest {
+        coEvery { billing_api.get_offer_preferences() } returns OfferPreferences(in_app_offers_enabled = false)
+        store.load()
+        val vm = OfferPreferencesViewModel(store)
+
+        assertTrue(vm.state.value.settled)
+        assertFalse(vm.state.value.enabled)
+    }
+
+    @Test
     fun `load applies the server preference`() = runTest {
         coEvery { billing_api.get_offer_preferences() } returns OfferPreferences(in_app_offers_enabled = false)
 
