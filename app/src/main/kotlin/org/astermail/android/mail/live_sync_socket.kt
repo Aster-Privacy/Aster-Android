@@ -36,6 +36,8 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import org.astermail.android.api.ACCOUNT_SUSPENDED_CODE
+import org.astermail.android.api.AuthEventBus
 import org.astermail.android.api.BuildConfig
 import org.astermail.android.api.auth.RefreshOutcome
 import org.astermail.android.api.auth.SessionRefresher
@@ -54,6 +56,7 @@ enum class LiveSyncEvent { connected, mail_changed, new_mail, folders_changed, t
 enum class LiveSyncFrame {
     auth_success,
     auth_error,
+    account_suspended,
     session_revoked,
     ping,
     mail_mutation,
@@ -68,7 +71,7 @@ fun parse_live_sync_frame(text: String): LiveSyncFrame? {
     val type = runCatching { JSONObject(text).optString("type") }.getOrNull() ?: return null
     return when (type) {
         "auth_success" -> LiveSyncFrame.auth_success
-        "auth_error" -> LiveSyncFrame.auth_error
+        "auth_error" -> if (is_suspended_refusal(text)) LiveSyncFrame.account_suspended else LiveSyncFrame.auth_error
         "session_revoked" -> LiveSyncFrame.session_revoked
         "ping" -> LiveSyncFrame.ping
         "mail_mutation" -> LiveSyncFrame.mail_mutation
@@ -79,6 +82,20 @@ fun parse_live_sync_frame(text: String): LiveSyncFrame? {
         else -> null
     }
 }
+
+fun is_suspended_refusal(body: String?): Boolean {
+    if (body.isNullOrBlank() || body.length > LIVE_SYNC_MAX_FRAME_CHARS) return false
+    return runCatching { JSONObject(body).optString("code") }.getOrNull() == ACCOUNT_SUSPENDED_CODE
+}
+
+fun is_suspended_upgrade_refusal(status: Int?, body: String?): Boolean =
+    status == HTTP_FORBIDDEN && is_suspended_refusal(body)
+
+fun upgrade_refusal_body(response: Response?): String? =
+    response?.let { runCatching { it.peekBody(UPGRADE_BODY_PEEK_BYTES).string() }.getOrNull() }
+
+private const val HTTP_FORBIDDEN = 403
+private const val UPGRADE_BODY_PEEK_BYTES = 4_096L
 
 data class ReactionFrame(
     val mail_item_id: String?,
@@ -132,7 +149,7 @@ class LiveSyncSocket @Inject constructor(
     private val session_refresher: SessionRefresher,
 ) {
 
-    private enum class SessionEnd { closed, auth_failed, revoked }
+    private enum class SessionEnd { closed, auth_failed, revoked, suspended }
 
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
@@ -177,6 +194,10 @@ class LiveSyncSocket @Inject constructor(
             }
             when (end) {
                 SessionEnd.revoked -> return
+                SessionEnd.suspended -> {
+                    AuthEventBus.emit_suspended()
+                    return
+                }
                 SessionEnd.auth_failed -> {
                     val now = System.currentTimeMillis()
                     if (now - last_refresh_ms >= REFRESH_COOLDOWN_MS) {
@@ -203,6 +224,7 @@ class LiveSyncSocket @Inject constructor(
         on_event: (LiveSyncEvent) -> Unit,
     ): SessionEnd {
         val frames = Channel<String>(Channel.BUFFERED)
+        var refused_as_suspended = false
         val request = Request.Builder().url(websocket_url_for(BuildConfig.API_BASE_URL)).build()
         val socket = runCatching {
             client.newWebSocket(
@@ -226,6 +248,9 @@ class LiveSyncSocket @Inject constructor(
                     }
 
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        if (is_suspended_upgrade_refusal(response?.code, upgrade_refusal_body(response))) {
+                            refused_as_suspended = true
+                        }
                         frames.close()
                     }
                 },
@@ -239,6 +264,7 @@ class LiveSyncSocket @Inject constructor(
                         on_event(LiveSyncEvent.connected)
                     }
                     LiveSyncFrame.auth_error -> return SessionEnd.auth_failed
+                    LiveSyncFrame.account_suspended -> return SessionEnd.suspended
                     LiveSyncFrame.session_revoked -> return SessionEnd.revoked
                     LiveSyncFrame.ping -> runCatching { socket.send(PONG_FRAME) }
                     LiveSyncFrame.mail_mutation -> {
@@ -252,7 +278,7 @@ class LiveSyncSocket @Inject constructor(
                     null -> Unit
                 }
             }
-            return SessionEnd.closed
+            return if (refused_as_suspended) SessionEnd.suspended else SessionEnd.closed
         } finally {
             _connected.value = false
             runCatching { socket.close(NORMAL_CLOSURE, null) }
